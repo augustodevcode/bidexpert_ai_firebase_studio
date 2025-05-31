@@ -22,15 +22,16 @@ import {
 
 interface AuctionStageItemProps {
   stage: AuctionStageType;
-  auctionId: string; // For unique key generation
-  index: number; // For unique key generation
+  auctionId: string; 
+  index: number; 
 }
 
 const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, auctionId, index }) => {
   const [clientTimeData, setClientTimeData] = useState<{ formattedDate: string; isPast: boolean } | null>(null);
 
   useEffect(() => {
-    const stageEndDateObj = new Date(stage.endDate);
+    // Ensure stage.endDate is a valid Date object
+    const stageEndDateObj = stage.endDate instanceof Date ? stage.endDate : new Date(stage.endDate);
     const now = new Date();
     
     setClientTimeData({
@@ -38,7 +39,7 @@ const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, auctionId, i
       isPast: stageEndDateObj < now,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stage.endDate]); // Only re-run if stage.endDate changes. ptBR and format are stable.
+  }, [stage.endDate]); 
 
   if (!clientTimeData) {
     return (
@@ -80,13 +81,20 @@ const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, auctionId, i
 
 
 interface AuctionCardProps {
-  auction: Auction;
+  auction: Auction; // Agora Auction pode não ter mais auctionStages, e sim lots
 }
 
 export default function AuctionCard({ auction }: AuctionCardProps) {
   const [isFavorite, setIsFavorite] = useState(auction.isFavorite || false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  // Removed: const now = new Date(); // This was causing issues
+  const [auctionFullUrl, setAuctionFullUrl] = useState<string>(`/auctions/${auction.id}`);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setAuctionFullUrl(`${window.location.origin}/auctions/${auction.id}`);
+    }
+  }, [auction.id]);
+
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
     e.preventDefault(); 
@@ -100,9 +108,9 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
     setIsPreviewModalOpen(true);
   };
   
-  const getSocialLink = (platform: 'x' | 'facebook' | 'whatsapp' | 'email', auctionUrl: string, auctionTitle: string) => {
-    const encodedUrl = encodeURIComponent(auctionUrl);
-    const encodedTitle = encodeURIComponent(auctionTitle);
+  const getSocialLink = (platform: 'x' | 'facebook' | 'whatsapp' | 'email', url: string, title: string) => {
+    const encodedUrl = encodeURIComponent(url);
+    const encodedTitle = encodeURIComponent(title);
     switch(platform) {
       case 'x':
         return `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
@@ -115,14 +123,10 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
     }
   }
   
-  // Moved auctionFullUrl inside the component to ensure window is defined
-  const [auctionFullUrl, setAuctionFullUrl] = useState<string>(`/auctions/${auction.id}`);
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setAuctionFullUrl(`${window.location.origin}/auctions/${auction.id}`);
-    }
-  }, [auction.id]);
-
+  // Determine a imagem principal do leilão. Pode ser auction.imageUrl ou o logo do leiloeiro.
+  const mainImageUrl = auction.imageUrl || auction.auctioneerLogoUrl || 'https://placehold.co/600x400.png';
+  const mainImageAlt = auction.title || 'Imagem do Leilão';
+  const mainImageDataAiHint = auction.dataAiHint || 'auction image';
 
   return (
     <>
@@ -134,20 +138,21 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
         )}
         <div className="relative">
           <Link href={`/auctions/${auction.id}`} className="block">
-            <div className="aspect-[16/10] relative">
+            <div className="aspect-[16/10] relative bg-muted">
               <Image
-                src={auction.imageUrl}
-                alt={auction.title}
+                src={mainImageUrl}
+                alt={mainImageAlt}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-cover"
-                data-ai-hint={auction.dataAiHint || 'auction item'}
+                data-ai-hint={mainImageDataAiHint}
               />
-              {auction.auctioneerLogoUrl && (
+              {/* Se o logo do leiloeiro não for a imagem principal, mostre-o sobreposto */}
+              {auction.auctioneerLogoUrl && auction.auctioneerLogoUrl !== auction.imageUrl && (
                 <div className="absolute bottom-2 right-2 bg-background/80 p-1.5 rounded-md shadow-md max-w-[100px] max-h-[50px] overflow-hidden">
                   <Image
                     src={auction.auctioneerLogoUrl}
-                    alt={auction.auctioneerName || 'Logo Comitente'}
+                    alt={auction.auctioneer || 'Logo Comitente'}
                     width={100}
                     height={50}
                     className="object-contain h-full w-full"
@@ -202,7 +207,7 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
         <CardContent className="p-4 flex-grow">
           <div className="flex justify-between items-start text-xs text-muted-foreground mb-1">
             <span>ID: {auction.id}</span>
-            {auction.auctioneerName && <span className="font-semibold text-primary">{auction.auctioneerName}</span>}
+            {auction.auctioneer && <span className="font-semibold text-primary">{auction.auctioneer}</span>}
           </div>
           <Link href={`/auctions/${auction.id}`}>
             <h3 className="text-md font-semibold hover:text-primary transition-colors mb-2 leading-tight min-h-[2.5em] line-clamp-2">
@@ -210,17 +215,22 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
             </h3>
           </Link>
           
-          <div className="space-y-2 mb-3">
-            {auction.auctionStages.map((stage, index) => (
-              <AuctionStageItem key={`${auction.id}-stage-${index}`} stage={stage} auctionId={auction.id} index={index} />
-            ))}
-          </div>
+          {auction.auctionStages && auction.auctionStages.length > 0 ? (
+            <div className="space-y-2 mb-3">
+              {auction.auctionStages.map((stage, index) => (
+                <AuctionStageItem key={`${auction.id}-stage-${index}`} stage={stage} auctionId={auction.id} index={index} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground mb-3">Total de Lotes: {auction.totalLots}</p>
+          )}
+
 
         </CardContent>
         <CardFooter className="p-4 border-t flex-col items-start space-y-2">
           <Badge 
             className={`w-full justify-center py-1.5 text-sm font-semibold
-              ${auction.status === 'ABERTO_PARA_LANCES' ? 'bg-green-600 hover:bg-green-700' : ''}
+              ${auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'bg-green-600 hover:bg-green-700' : ''}
               ${auction.status === 'EM_BREVE' ? 'bg-blue-500 hover:bg-blue-600' : ''}
               ${auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO' ? 'bg-gray-500 hover:bg-gray-600' : ''}
               text-white
@@ -228,18 +238,20 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
           >
             {getAuctionStatusText(auction.status)}
           </Badge>
-          <div className="w-full">
-            <p className="text-xs text-muted-foreground">Oferta Inicial</p>
-            <p className="text-2xl font-bold text-primary">
-              R$ {auction.initialOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </p>
-          </div>
+          {auction.initialOffer && (
+            <div className="w-full">
+              <p className="text-xs text-muted-foreground">A partir de</p>
+              <p className="text-2xl font-bold text-primary">
+                R$ {auction.initialOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+            </div>
+          )}
           <Button asChild className="w-full mt-2">
-            <Link href={`/auctions/${auction.id}`}>Ver Detalhes</Link>
+            <Link href={`/auctions/${auction.id}`}>Ver Lotes ({auction.totalLots})</Link>
           </Button>
         </CardFooter>
       </Card>
-      {isPreviewModalOpen && (
+      {isPreviewModalOpen && auction.auctionStages && auction.auctionStages.length > 0 && ( // Só mostrar modal se tiver auctionStages
         <AuctionPreviewModal
           auction={auction}
           isOpen={isPreviewModalOpen}

@@ -1,111 +1,122 @@
 
 import Image from 'next/image';
-import { sampleAuctions } from '@/lib/sample-data';
-import type { Auction } from '@/types';
+import Link from 'next/link';
+import { sampleAuctions, sampleLots } from '@/lib/sample-data';
+import type { Auction, Lot } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Tag, Users, MapPin, DollarSign, User, CalendarDays, ShieldCheck } from 'lucide-react';
+import LotCard from '@/components/lot-card';
+import { 
+  Clock, Tag, Users, MapPin, DollarSign, User, CalendarDays, ShieldCheck, 
+  HomeIcon, ChevronRight, FileText, Heart, Eye
+} from 'lucide-react';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale'; // Import ptBR locale
-import Link from 'next/link';
+import { ptBR } from 'date-fns/locale';
 
-// Helper function to find an auction by ID (replace with actual data fetching)
-async function getAuction(id: string): Promise<Auction | undefined> {
-  return sampleAuctions.find(auction => auction.id === id);
+async function getAuctionData(id: string): Promise<Auction | undefined> {
+  // Em um app real, buscaria o leilão e depois os lotes associados.
+  // Aqui, estamos pegando um leilão de exemplo e seus lotes filtrados.
+  const auction = sampleAuctions.find(auction => auction.id === id);
+  if (auction) {
+    // Certifica-se de que os lotes estão associados corretamente (já feito no sample-data)
+    // auction.lots = sampleLots.filter(lot => lot.auctionId === id);
+    // auction.totalLots = auction.lots.length;
+  }
+  return auction;
 }
 
-export default async function AuctionDetailPage({ params }: { params: { id: string } }) {
-  const auction = await getAuction(params.id);
+const estados = [
+  'Alagoas', 'Bahia', 'Ceará', 'Goiás', 'Mato Grosso', 'Mato Grosso do Sul', 
+  'Minas Gerais', 'Pará', 'Paraná', 'Pernambuco', 'Rio de Janeiro', 
+  'Santa Catarina', 'São Paulo', 'Tocantins'
+];
+
+export default async function AuctionLotsPage({ params }: { params: { id: string } }) {
+  const auction = await getAuctionData(params.id);
 
   if (!auction) {
     return (
       <div className="text-center py-12">
         <h1 className="text-2xl font-bold">Leilão Não Encontrado</h1>
-        <p className="text-muted-foreground">O leilão que você está procurando não existe ou pode ter terminado.</p>
+        <p className="text-muted-foreground">O leilão que você está procurando não existe.</p>
         <Button asChild className="mt-4">
-          <Link href="/">Voltar para Leilões</Link>
+          <Link href="/">Voltar para Início</Link>
         </Button>
       </div>
     );
   }
 
-  const timeLeft = auction.endDate
-    ? format(auction.endDate, "d 'de' MMMM 'de' yyyy 'às' HH:mm'h'", { locale: ptBR })
-    : "Data de encerramento não definida";
-
   return (
-    <div className="max-w-4xl mx-auto">
-      <Card className="overflow-hidden shadow-xl">
-        <CardHeader className="p-0 relative">
-          <div className="aspect-video w-full relative">
-            <Image
-              src={auction.imageUrl}
-              alt={auction.title}
-              fill
-              sizes="100vw"
-              className="object-cover"
-              data-ai-hint={auction.dataAiHint}
-              priority
-            />
-          </div>
-        </CardHeader>
+    <div className="space-y-8">
+      {/* Breadcrumbs e Cabeçalho do Leilão */}
+      <Card className="shadow-lg">
         <CardContent className="p-6">
-          <Badge variant="secondary" className="mb-2">{auction.category}</Badge>
-          <CardTitle className="text-3xl font-bold mb-2 font-headline">{auction.title}</CardTitle>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-sm">
-            <div className="flex items-center text-muted-foreground">
-              <User className="h-4 w-4 mr-2 text-primary" /> Vendedor: <span className="font-medium text-foreground ml-1">{auction.seller}</span>
-            </div>
-            <div className="flex items-center text-muted-foreground">
-              <MapPin className="h-4 w-4 mr-2 text-primary" /> Localização: <span className="font-medium text-foreground ml-1">{auction.location || 'N/A'}</span>
-            </div>
-            <div className="flex items-center text-muted-foreground">
-              <ShieldCheck className="h-4 w-4 mr-2 text-primary" /> Condição: <span className="font-medium text-foreground ml-1">{auction.condition || 'N/A'}</span>
-            </div>
-             <div className="flex items-center text-muted-foreground">
-              <CalendarDays className="h-4 w-4 mr-2 text-primary" /> Encerra: <span className="font-medium text-foreground ml-1">{timeLeft}</span>
-            </div>
-          </div>
-          
-          <CardDescription className="text-base leading-relaxed mb-6">
-            {auction.description}
-          </CardDescription>
-
-          <div className="bg-secondary/50 p-4 rounded-lg mb-6">
-            <div className="flex flex-col md:flex-row justify-between items-center">
-              <div>
-                <p className="text-sm text-muted-foreground">Lance Atual</p>
-                <p className="text-4xl font-bold text-primary">R$ {auction.currentBid ? auction.currentBid.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : auction.initialOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                 {auction.initialOffer && ( // Corrected from auction.startingBid to auction.initialOffer based on type
-                  <p className="text-xs text-muted-foreground mt-1">Lance Inicial: R$ {auction.initialOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                )}
+          <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+            <div className="flex-grow">
+              <div className="flex items-center text-sm text-muted-foreground mb-2">
+                <Link href="/" className="hover:text-primary">Home</Link>
+                <ChevronRight className="h-4 w-4 mx-1" />
+                <span>Leilão {auction.id}</span>
               </div>
-              <div className="text-right mt-4 md:mt-0">
-                 <div className="flex items-center text-muted-foreground mb-1">
-                  <Users className="h-4 w-4 mr-2" /> {auction.bidsCount || 0} lances
-                </div>
-                <Button size="lg" className="w-full md:w-auto">
-                  <DollarSign className="mr-2 h-5 w-5" /> Dar Lance
+              <div className="mb-3 space-y-0.5">
+                <p className="text-xs text-muted-foreground">
+                  Data: {format(new Date(auction.auctionDate), "dd/MM/yyyy HH:mm", { locale: ptBR })} | Lotes: {auction.totalLots} | Status: <span className="font-semibold text-primary">{auction.status}</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Leiloeiro: {auction.auctioneer} | Categoria: {auction.category}
+                </p>
+              </div>
+            </div>
+            <div className="flex-shrink-0 flex flex-col items-center md:items-end gap-3">
+              {auction.auctioneerLogoUrl && (
+                <Image src={auction.auctioneerLogoUrl} alt="Logo Leiloeiro" width={120} height={40} className="object-contain" data-ai-hint="logo leiloeiro"/>
+              )}
+              <Button variant="default" size="sm">
+                <FileText className="h-4 w-4 mr-2" /> Ver Documentos
+              </Button>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <Button variant="ghost" size="sm" className="p-0 h-auto text-muted-foreground hover:text-primary">
+                  <Heart className="h-4 w-4 mr-1" /> Favoritar Leilão
                 </Button>
+                <span>#Leilão: {auction.id}</span>
+                <div className="flex items-center">
+                  <Eye className="h-4 w-4 mr-1" />
+                  <span>Visitas: {auction.visits?.toLocaleString('pt-BR') || 0}</span>
+                </div>
               </div>
             </div>
           </div>
-
-          {/* Placeholder for Bid History */}
-          <div>
-            <h3 className="text-xl font-semibold mb-3">Histórico de Lances</h3>
-            <p className="text-muted-foreground text-sm">O histórico de lances será exibido aqui.</p>
-            {/* Example bid items
-            <div className="border-t mt-2 pt-2">
-              <div className="flex justify-between text-sm"><span>Bidder***</span><span>$7600</span><span>Just now</span></div>
-            </div>
-            */}
-          </div>
-
         </CardContent>
       </Card>
+
+      {/* Filtros de Estado */}
+      <Card className="shadow-md">
+        <CardHeader>
+            <CardTitle className="text-lg font-semibold">Selecione um estado</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          {estados.map(estado => (
+            <Button key={estado} variant="outline" size="sm">{estado}</Button>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Contagem de Lotes e Grade */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">{auction.lots.length} lote(s) encontrado(s)</h2>
+        {auction.lots.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {auction.lots.map((lot) => (
+              <LotCard key={lot.id} lot={lot} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-10 bg-secondary/30 rounded-lg">
+            <p className="text-muted-foreground">Nenhum lote encontrado para este leilão.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
