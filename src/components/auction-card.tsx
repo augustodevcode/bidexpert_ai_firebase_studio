@@ -6,13 +6,78 @@ import Image from 'next/image';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { Auction, AuctionStage } from '@/types';
+import type { Auction, AuctionStage as AuctionStageType } from '@/types';
 import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useState } from 'react';
-import AuctionPreviewModal from './auction-preview-modal'; // Assuming this will be created
+import { useState, useEffect } from 'react';
+import AuctionPreviewModal from './auction-preview-modal';
 import { getAuctionStatusText } from '@/lib/sample-data';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
+interface AuctionStageItemProps {
+  stage: AuctionStageType;
+  auctionId: string; // For unique key generation
+  index: number; // For unique key generation
+}
+
+const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, auctionId, index }) => {
+  const [clientTimeData, setClientTimeData] = useState<{ formattedDate: string; isPast: boolean } | null>(null);
+
+  useEffect(() => {
+    const stageEndDateObj = new Date(stage.endDate);
+    const now = new Date();
+    
+    setClientTimeData({
+      formattedDate: format(stageEndDateObj, "dd/MM/yyyy HH:mm", { locale: ptBR }),
+      isPast: stageEndDateObj < now,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage.endDate]); // Only re-run if stage.endDate changes. ptBR and format are stable.
+
+  if (!clientTimeData) {
+    return (
+      <div key={`${auctionId}-stage-loading-${index}`} className="p-2 rounded-md text-sm bg-muted/30 text-muted-foreground animate-pulse">
+        <div className="flex justify-between items-center">
+          <span className="font-medium">{stage.name}</span>
+        </div>
+        <div className="flex items-center justify-between mt-0.5">
+          <div className="flex items-center text-xs">
+            <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
+            {stage.statusText || 'Encerramento'}:
+          </div>
+          <span className="text-xs font-semibold">Calculando...</span>
+        </div>
+      </div>
+    );
+  }
+
+  const { formattedDate, isPast } = clientTimeData;
+
+  return (
+    <div
+      key={`${auctionId}-stage-${index}`}
+      className={`p-2 rounded-md text-sm ${isPast ? 'bg-muted/30 text-muted-foreground line-through' : 'bg-accent/20'}`}
+    >
+      <div className="flex justify-between items-center">
+        <span className={`font-medium ${isPast ? '' : 'text-accent-foreground/80'}`}>{stage.name}</span>
+      </div>
+      <div className="flex items-center justify-between mt-0.5">
+        <div className="flex items-center text-xs">
+            <CalendarDays className={`h-3.5 w-3.5 mr-1.5 ${isPast ? '' : 'text-accent-foreground/70'}`} />
+            {stage.statusText || 'Encerramento'}:
+        </div>
+        <span className={`text-xs font-semibold ${isPast ? '' : 'text-accent-foreground/90'}`}>{formattedDate}</span>
+      </div>
+    </div>
+  );
+};
+
 
 interface AuctionCardProps {
   auction: Auction;
@@ -21,13 +86,12 @@ interface AuctionCardProps {
 export default function AuctionCard({ auction }: AuctionCardProps) {
   const [isFavorite, setIsFavorite] = useState(auction.isFavorite || false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const now = new Date();
+  // Removed: const now = new Date(); // This was causing issues
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent link navigation if inside a Link
+    e.preventDefault(); 
     e.stopPropagation();
     setIsFavorite(!isFavorite);
-    // Add logic to persist favorite state, e.g., API call
   };
 
   const openPreviewModal = (e: React.MouseEvent) => {
@@ -50,7 +114,14 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
         return `mailto:?subject=${encodedTitle}&body=${encodedUrl}`;
     }
   }
-  const auctionFullUrl = typeof window !== 'undefined' ? `${window.location.origin}/auctions/${auction.id}` : `/auctions/${auction.id}`;
+  
+  // Moved auctionFullUrl inside the component to ensure window is defined
+  const [auctionFullUrl, setAuctionFullUrl] = useState<string>(`/auctions/${auction.id}`);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setAuctionFullUrl(`${window.location.origin}/auctions/${auction.id}`);
+    }
+  }, [auction.id]);
 
 
   return (
@@ -140,27 +211,9 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
           </Link>
           
           <div className="space-y-2 mb-3">
-            {auction.auctionStages.map((stage, index) => {
-              const isPast = new Date(stage.endDate) < now;
-              const stageDate = format(new Date(stage.endDate), "dd/MM/yyyy HH:mm", { locale: ptBR });
-              return (
-                <div 
-                  key={index} 
-                  className={`p-2 rounded-md text-sm ${isPast ? 'bg-muted/50 text-muted-foreground line-through' : 'bg-accent/20'}`}
-                >
-                  <div className="flex justify-between items-center">
-                    <span className={`font-medium ${isPast ? '' : 'text-accent-foreground/80'}`}>{stage.name}</span>
-                  </div>
-                  <div className="flex items-center justify-between mt-0.5">
-                    <div className="flex items-center text-xs">
-                       <CalendarDays className={`h-3.5 w-3.5 mr-1.5 ${isPast ? '' : 'text-accent-foreground/70'}`} />
-                       {stage.statusText || 'Encerramento'}:
-                    </div>
-                    <span className={`text-xs font-semibold ${isPast ? '' : 'text-accent-foreground/90'}`}>{stageDate}</span>
-                  </div>
-                </div>
-              );
-            })}
+            {auction.auctionStages.map((stage, index) => (
+              <AuctionStageItem key={`${auction.id}-stage-${index}`} stage={stage} auctionId={auction.id} index={index} />
+            ))}
           </div>
 
         </CardContent>
@@ -196,11 +249,3 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
     </>
   );
 }
-
-// DropdownMenu components needed for share functionality
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
