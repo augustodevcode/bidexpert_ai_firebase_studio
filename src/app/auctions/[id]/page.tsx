@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import { sampleAuctions } from '@/lib/sample-data';
 import type { Auction } from '@/types';
@@ -6,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Clock, Tag, Users, MapPin, DollarSign, User, CalendarDays, ShieldCheck } from 'lucide-react';
 import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale'; // Import ptBR locale
 import Link from 'next/link';
 
 // Helper function to find an auction by ID (replace with actual data fetching)
@@ -19,16 +21,18 @@ export default async function AuctionDetailPage({ params }: { params: { id: stri
   if (!auction) {
     return (
       <div className="text-center py-12">
-        <h1 className="text-2xl font-bold">Auction Not Found</h1>
-        <p className="text-muted-foreground">The auction you are looking for does not exist or may have ended.</p>
+        <h1 className="text-2xl font-bold">Leilão Não Encontrado</h1>
+        <p className="text-muted-foreground">O leilão que você está procurando não existe ou pode ter terminado.</p>
         <Button asChild className="mt-4">
-          <Link href="/">Back to Auctions</Link>
+          <Link href="/">Voltar para Leilões</Link>
         </Button>
       </div>
     );
   }
 
-  const timeLeft = format(new Date(auction.endDate), "MMMM d, yyyy 'at' h:mm a");
+  const timeLeft = auction.endDate
+    ? format(auction.endDate, "d 'de' MMMM 'de' yyyy 'às' HH:mm'h'", { locale: ptBR })
+    : "Data de encerramento não definida";
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -52,16 +56,16 @@ export default async function AuctionDetailPage({ params }: { params: { id: stri
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-sm">
             <div className="flex items-center text-muted-foreground">
-              <User className="h-4 w-4 mr-2 text-primary" /> Seller: <span className="font-medium text-foreground ml-1">{auction.seller}</span>
+              <User className="h-4 w-4 mr-2 text-primary" /> Vendedor: <span className="font-medium text-foreground ml-1">{auction.seller}</span>
             </div>
             <div className="flex items-center text-muted-foreground">
-              <MapPin className="h-4 w-4 mr-2 text-primary" /> Location: <span className="font-medium text-foreground ml-1">{auction.location || 'N/A'}</span>
+              <MapPin className="h-4 w-4 mr-2 text-primary" /> Localização: <span className="font-medium text-foreground ml-1">{auction.location || 'N/A'}</span>
             </div>
             <div className="flex items-center text-muted-foreground">
-              <ShieldCheck className="h-4 w-4 mr-2 text-primary" /> Condition: <span className="font-medium text-foreground ml-1">{auction.condition || 'N/A'}</span>
+              <ShieldCheck className="h-4 w-4 mr-2 text-primary" /> Condição: <span className="font-medium text-foreground ml-1">{auction.condition || 'N/A'}</span>
             </div>
              <div className="flex items-center text-muted-foreground">
-              <CalendarDays className="h-4 w-4 mr-2 text-primary" /> Ends: <span className="font-medium text-foreground ml-1">{timeLeft}</span>
+              <CalendarDays className="h-4 w-4 mr-2 text-primary" /> Encerra: <span className="font-medium text-foreground ml-1">{timeLeft}</span>
             </div>
           </div>
           
@@ -72,18 +76,18 @@ export default async function AuctionDetailPage({ params }: { params: { id: stri
           <div className="bg-secondary/50 p-4 rounded-lg mb-6">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div>
-                <p className="text-sm text-muted-foreground">Current Bid</p>
-                <p className="text-4xl font-bold text-primary">${auction.currentBid.toLocaleString()}</p>
-                 {auction.startingBid && (
-                  <p className="text-xs text-muted-foreground mt-1">Starting Bid: ${auction.startingBid.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">Lance Atual</p>
+                <p className="text-4xl font-bold text-primary">R$ {auction.currentBid ? auction.currentBid.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : auction.initialOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                 {auction.initialOffer && ( // Corrected from auction.startingBid to auction.initialOffer based on type
+                  <p className="text-xs text-muted-foreground mt-1">Lance Inicial: R$ {auction.initialOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 )}
               </div>
               <div className="text-right mt-4 md:mt-0">
                  <div className="flex items-center text-muted-foreground mb-1">
-                  <Users className="h-4 w-4 mr-2" /> {auction.bidsCount || 0} bids
+                  <Users className="h-4 w-4 mr-2" /> {auction.bidsCount || 0} lances
                 </div>
                 <Button size="lg" className="w-full md:w-auto">
-                  <DollarSign className="mr-2 h-5 w-5" /> Place Bid
+                  <DollarSign className="mr-2 h-5 w-5" /> Dar Lance
                 </Button>
               </div>
             </div>
@@ -91,8 +95,8 @@ export default async function AuctionDetailPage({ params }: { params: { id: stri
 
           {/* Placeholder for Bid History */}
           <div>
-            <h3 className="text-xl font-semibold mb-3">Bid History</h3>
-            <p className="text-muted-foreground text-sm">Bid history will be displayed here.</p>
+            <h3 className="text-xl font-semibold mb-3">Histórico de Lances</h3>
+            <p className="text-muted-foreground text-sm">O histórico de lances será exibido aqui.</p>
             {/* Example bid items
             <div className="border-t mt-2 pt-2">
               <div className="flex justify-between text-sm"><span>Bidder***</span><span>$7600</span><span>Just now</span></div>
