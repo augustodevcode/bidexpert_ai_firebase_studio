@@ -23,7 +23,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased flex flex-col min-h-screen bg-background">
+      <body className="font-body antialiased flex flex-col min-h-screen bg-secondary/20 dark:bg-background">
         <Header />
         <main className="flex-grow container mx-auto px-4 py-8">
           {children}
@@ -34,4 +34,3 @@ export default function RootLayout({
     </html>
   );
 }
-

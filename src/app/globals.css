@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,20 +11,20 @@
     --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
-    --primary: 207 67% 53%; /* #3498db Blue */
-    --primary-foreground: 0 0% 100%; /* White text on blue */
+    --primary: 25 95% 53%; /* Vibrant Orange e.g. #F97316 */
+    --primary-foreground: 0 0% 100%; /* White text on orange */
     --secondary: 0 0% 94.9%; /* #F2F2F2 Light Gray */
     --secondary-foreground: 0 0% 9%; /* Dark text on light gray */
     --muted: 0 0% 94.9%; /* Light Gray */
     --muted-foreground: 0 0% 45.1%; /* Medium gray text */
-    --accent: 145 63% 49%; /* #2ecc71 Soft Green */
-    --accent-foreground: 0 0% 100%; /* White text on green */
+    --accent: 210 40% 96.1%; /* Very Light Blue for accents like promo cards */
+    --accent-foreground: 25 95% 53%; /* Orange text on light blue accent */
     --destructive: 0 84.2% 60.2%; /* Default red */
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 89.8%; /* Slightly darker gray for borders */
     --input: 0 0% 89.8%; /* Same as border for input background */
-    --ring: 207 67% 53%; /* Blue for focus rings */
-    --chart-1: 207 67% 53%; /* Blue */
+    --ring: 25 95% 53%; /* Orange for focus rings */
+    --chart-1: 25 95% 53%; /* Orange */
     --chart-2: 145 63% 49%; /* Green */
     --chart-3: 0 0% 63.9%; /* Gray */
     --chart-4: 43 74% 66%;
@@ -33,12 +34,12 @@
     /* Sidebar variables aligned with the theme */
     --sidebar-background: 0 0% 98%; /* Lighter gray for sidebar */
     --sidebar-foreground: 0 0% 3.9%; /* Dark text */
-    --sidebar-primary: 207 67% 53%; /* Blue for sidebar primary elements */
-    --sidebar-primary-foreground: 0 0% 100%; /* White text on blue */
+    --sidebar-primary: 25 95% 53%; /* Orange for sidebar primary elements */
+    --sidebar-primary-foreground: 0 0% 100%; /* White text on orange */
     --sidebar-accent: 0 0% 94.9%; /* Light Gray #F2F2F2 for accents */
     --sidebar-accent-foreground: 0 0% 9%; /* Dark text on light gray */
     --sidebar-border: 0 0% 89.8%; /* Standard border color */
-    --sidebar-ring: 207 67% 53%; /* Blue for focus rings */
+    --sidebar-ring: 25 95% 53%; /* Orange for focus rings */
   }
 
   .dark {
@@ -48,20 +49,20 @@
     --card-foreground: 0 0% 98%;
     --popover: 0 0% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 207 67% 53%; /* Blue */
-    --primary-foreground: 0 0% 100%; /* White text on blue */
+    --primary: 25 95% 53%; /* Vibrant Orange */
+    --primary-foreground: 0 0% 100%; /* White text on orange */
     --secondary: 0 0% 14.9%; /* Dark Gray */
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 14.9%;
     --muted-foreground: 0 0% 63.9%;
-    --accent: 145 63% 49%; /* Green */
-    --accent-foreground: 0 0% 100%; /* White text on green */
-    --destructive: 0 62.8% 30.6%;
+    --accent: 210 40% 10.1%; /* Darker Blue for accents in dark mode */
+    --accent-foreground: 25 95% 60%; /* Lighter Orange text on dark blue accent */
+    --destructive: 0 72.2% 50.6%; /* Adjusted red for dark mode */
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
-    --ring: 207 67% 53%; /* Blue */
-    --chart-1: 207 67% 53%;
+    --ring: 25 95% 53%; /* Orange */
+    --chart-1: 25 95% 53%;
     --chart-2: 145 63% 49%;
     --chart-3: 0 0% 63.9%;
     --chart-4: 280 65% 60%;
@@ -69,12 +70,12 @@
 
     --sidebar-background: 0 0% 10%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 207 67% 53%;
+    --sidebar-primary: 25 95% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 15.9%;
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 15.9%;
-    --sidebar-ring: 207 67% 53%;
+    --sidebar-ring: 25 95% 53%;
   }
 }
 
@@ -86,3 +87,4 @@
     @apply bg-background text-foreground;
   }
 }
+
