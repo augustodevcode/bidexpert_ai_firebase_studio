@@ -47,13 +47,12 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
   const [isFavorite, setIsFavorite] = useState(lot.isFavorite || false);
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const [isPast, setIsPast]   = useState<boolean>(false);
-  const [auctionFullUrl, setAuctionFullUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`); // Placeholder, adjust if lot has own detail page
+  const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`);
 
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Adjust this URL if lots have their own detail pages
-      setAuctionFullUrl(`${window.location.origin}/auctions/${lot.auctionId}`);
+      setLotDetailUrl(`${window.location.origin}/auctions/${lot.auctionId}/lots/${lot.id}`);
     }
   }, [lot.auctionId, lot.id]);
 
@@ -74,7 +73,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
       }
       
       if (lot.status === 'EM_BREVE') {
-        setTimeRemaining(`Inicia em ${format(endDate, "dd/MM HH:mm")}`);
+        setTimeRemaining(`Inicia em ${format(endDate, "dd/MM HH:mm", { locale: ptBR })}`);
         return;
       }
 
@@ -121,24 +120,23 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
   }
 
   const getTypeIcon = (type: string) => {
-    switch (type.toUpperCase()) {
-      case 'CASA':
+    const upperType = type.toUpperCase();
+    if (upperType.includes('CASA') || upperType.includes('IMÓVEL') || upperType.includes('APARTAMENTO')) {
         return <Building className="h-3 w-3 text-muted-foreground" />;
-      case 'APARTAMENTO':
-        return <LandPlot className="h-3 w-3 text-muted-foreground" />;
-      case 'VEÍCULO':
-        return <Car className="h-3 w-3 text-muted-foreground" />;
-      case 'MAQUINÁRIO':
-        return <Truck className="h-3 w-3 text-muted-foreground" />;
-      default:
-        return <Info className="h-3 w-3 text-muted-foreground" />;
     }
+    if (upperType.includes('VEÍCULO') || upperType.includes('AUTOMÓVEL') || upperType.includes('CARRO')) {
+        return <Car className="h-3 w-3 text-muted-foreground" />;
+    }
+    if (upperType.includes('MAQUINÁRIO') || upperType.includes('TRATOR')) {
+        return <Truck className="h-3 w-3 text-muted-foreground" />;
+    }
+    return <Info className="h-3 w-3 text-muted-foreground" />;
   };
 
   return (
     <Card className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group">
       <div className="relative">
-        <Link href={`/auctions/${lot.auctionId}`}> {/* Simplified link for now */}
+        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
           <div className="aspect-[16/10] relative bg-muted">
             <Image
               src={lot.imageUrl}
@@ -163,22 +161,22 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <a href={getSocialLink('x', auctionFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
+                  <a href={getSocialLink('x', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
                     <X className="h-3.5 w-3.5" /> X (Twitter)
                   </a>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href={getSocialLink('facebook', auctionFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
+                  <a href={getSocialLink('facebook', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
                     <Facebook className="h-3.5 w-3.5" /> Facebook
                   </a>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href={getSocialLink('whatsapp', auctionFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
+                  <a href={getSocialLink('whatsapp', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
                     <MessageSquareText className="h-3.5 w-3.5" /> WhatsApp
                   </a>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href={getSocialLink('email', auctionFullUrl, lot.title)} className="flex items-center gap-2 text-xs">
+                  <a href={getSocialLink('email', lotDetailUrl, lot.title)} className="flex items-center gap-2 text-xs">
                     <Mail className="h-3.5 w-3.5" /> Email
                   </a>
                 </DropdownMenuItem>
@@ -201,7 +199,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
           </div>
         </div>
 
-        <Link href={`/auctions/${lot.auctionId}`}> {/* Simplified link */}
+        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
           <h3 className="text-sm font-semibold hover:text-primary transition-colors leading-tight min-h-[2.2em] line-clamp-2">
             {lot.title}
           </h3>
@@ -242,6 +240,9 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
             </div>
             <span className={`font-semibold ${isPast ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.id.replace('LOTE', '')}</span>
         </div>
+         <Button asChild className="w-full mt-2" size="sm">
+            <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>Ver Detalhes do Lote</Link>
+        </Button>
       </CardFooter>
     </Card>
   );
@@ -249,14 +250,12 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
 
 
 export default function LotCard({ lot }: LotCardProps) {
-    // This wrapper ensures that client-specific logic is only run on the client.
     const [isClient, setIsClient] = useState(false);
     useEffect(() => {
       setIsClient(true);
     }, []);
   
     if (!isClient) {
-      // Render a placeholder or null on the server to avoid hydration mismatch
       return (
         <Card className="flex flex-col overflow-hidden h-full shadow-md rounded-lg group">
              <div className="relative aspect-[16/10] bg-muted animate-pulse"></div>
@@ -269,6 +268,7 @@ export default function LotCard({ lot }: LotCardProps) {
                 <div className="h-6 bg-muted rounded w-1/3 animate-pulse"></div>
                 <div className="h-4 bg-muted rounded w-1/2 animate-pulse mt-1"></div>
                 <div className="h-4 bg-muted rounded w-full animate-pulse mt-1"></div>
+                 <div className="h-8 bg-muted rounded w-full animate-pulse mt-2"></div>
              </CardFooter>
         </Card>
       );
@@ -276,3 +276,4 @@ export default function LotCard({ lot }: LotCardProps) {
   
     return <LotCardClientContent lot={lot} />;
   }
+

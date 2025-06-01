@@ -16,21 +16,66 @@ export type LotStatus = 'ABERTO_PARA_LANCES' | 'EM_BREVE' | 'ENCERRADO' | 'VENDI
 
 
 export interface Lot {
-  id: string; // e.g., Lote 1, Lote 2
+  id: string; // e.g., LOTE001
   auctionId: string; // ID do leilão ao qual pertence
-  title: string; // e.g., "CASA COM 129,30 M² - CENTRO"
-  imageUrl: string;
+  title: string; // e.g., "CASA COM 129,30 M² - CENTRO" ou "2013 AUDI A4 PREMIUM PLUS"
+  imageUrl: string; // Imagem principal
   dataAiHint?: string;
+  galleryImageUrls?: string[]; // URLs para a galeria de imagens
   status: LotStatus;
-  location: string; // e.g., "TEOTÔNIO VILELA - AL"
-  type: string; // e.g., "CASA", "APARTAMENTO"
+  location: string; // e.g., "TEOTÔNIO VILELA - AL" ou "Englishtown (NJ)"
+  type: string; // e.g., "CASA", "APARTAMENTO", "Automobile"
   views: number;
-  auctionName: string; // e.g., "Leilão Único"
-  price: number;
-  endDate: Date;
+  auctionName: string; // e.g., "Leilão Único" ou nome do leilão principal
+  price: number; // Lance mínimo/atual
+  endDate: Date; // Data de encerramento do lote específico
   bidsCount: number;
   isFavorite?: boolean;
-  description?: string; // Descrição mais detalhada para um possível modal/página de detalhe do lote
+  description?: string; // Descrição mais detalhada
+  
+  // Campos detalhados do veículo (baseado na imagem)
+  year?: number;
+  make?: string; // e.g., "AUDI"
+  model?: string; // e.g., "A4" (usado em sample data, compatível com modelName da OCR)
+  series?: string; // e.g., "PREMIUM PLUS"
+
+  stockNumber?: string;
+  sellingBranch?: string;
+  vin?: string;
+  vinStatus?: string; // e.g., "WAUFFAFL3DA****** (OK)"
+  lossType?: string; // e.g., "Other"
+  primaryDamage?: string; // e.g., "Front End"
+  titleInfo?: string; // e.g., "CLEAR (New Jersey)"
+  titleBrand?: string; // e.g., "REASSIGNMENT"
+  startCode?: string; // e.g., "Stationary" (com info icon)
+  hasKey?: boolean; // e.g., "Present" (com info icon)
+  odometer?: string; // e.g., "140,846 mi (Actual)"
+  airbagsStatus?: string; // e.g., "Intact"
+  
+  // Vehicle Description section
+  bodyStyle?: string; // e.g., "SEDAN 4 DOOR"
+  engineDetails?: string; // e.g., "2.0L I4 FI DOHC 16V NF4"
+  transmissionType?: string; // e.g., "Automatic Transmission"
+  driveLineType?: string; // e.g., "All Wheel Drive"
+  fuelType?: string; // e.g., "Flexible Fuel"
+  cylinders?: string; // e.g., "4 Cylinders"
+  restraintSystem?: string; // e.g., "Du Frnt/Sd/Hd Air Bgs/Rr Hd Ar Bgs/Act Belts"
+  exteriorInteriorColor?: string; // e.g., "Black/ Unknown"
+  options?: string; // e.g., "Console Display"
+  manufacturedIn?: string; // e.g., "Germany"
+  vehicleClass?: string; // e.g., "Compact Luxury Car"
+  
+  // Sale Information section
+  lotSpecificAuctionDate?: Date; // e.g., Mon Jun 2, 8:30am (CDT)
+  vehicleLocationInBranch?: string; // e.g., "At the branch"
+  laneRunNumber?: string; // e.g., "A - #112"
+  aisleStall?: string; // e.g., "BB - 222"
+  actualCashValue?: string; // e.g., "$4,000 USD"
+  estimatedRepairCost?: string;
+  sellerName?: string; // Nome do vendedor específico do lote, se diferente do leilão
+  
+  // Campos legados que ainda podem ser úteis ou foram adaptados
+  condition?: string; // "Novo", "Usado - Como Novo", etc. (Já existe no sample-data)
 }
 
 export interface Auction {
@@ -46,7 +91,6 @@ export interface Auction {
   visits?: number;
   lots: Lot[]; // Lista de lotes pertencentes a este leilão
 
-  // Campos antigos que podem ser reutilizados ou adaptados:
   description?: string; // Descrição geral do leilão, se houver
   imageUrl?: string; // Imagem principal do leilão (se aplicável, talvez o logo do leiloeiro)
   dataAiHint?: string; // Para imagem principal do leilão
@@ -57,4 +101,8 @@ export interface Auction {
   currentBid?: number;
   endDate?: Date; // Data de encerramento geral do leilão (último lote)
   bidsCount?: number; // Total de lances em todos os lotes
+  
+  // Informações que podem ser comuns a todos os lotes em um leilão
+  sellingBranch?: string; // e.g., "Englishtown (NJ)"
+  vehicleLocation?: string; // e.g., "At the branch" - Se for o mesmo para todos. Caso contrário, no Lot.
 }
