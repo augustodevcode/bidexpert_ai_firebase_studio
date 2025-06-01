@@ -24,7 +24,6 @@ export interface DocumentType {
   description?: string; // e.g., "Foto nítida da frente do seu RG ou CNH"
   isRequired: boolean;
   allowedFormats?: string[]; // e.g., ["PDF", "JPG", "PNG"]
-  // displayOrder?: number; // Removido pois não usamos mais na versão sample-data
 }
 
 export interface UserDocument {
@@ -57,6 +56,7 @@ export interface Lot {
   endDate: Date; // Data de encerramento do lote específico
   bidsCount: number;
   isFavorite?: boolean;
+  isFeatured?: boolean; // Adicionado para lotes em destaque
   description?: string; // Descrição mais detalhada
   
   // Campos detalhados do veículo (baseado na imagem)

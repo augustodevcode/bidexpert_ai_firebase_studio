@@ -62,6 +62,7 @@ export const sampleLots: Lot[] = [
     endDate: createFutureDate(10, 2),
     bidsCount: 7,
     isFavorite: true,
+    isFeatured: true,
     description: 'Casa residencial bem localizada no centro da cidade, com 3 quartos, 2 banheiros e área de serviço. Próxima a comércios e escolas.',
     year: 2010,
     make: 'N/A',
@@ -123,6 +124,7 @@ export const sampleLots: Lot[] = [
     endDate: createFutureDate(5, 10), // Encerra em 5 dias e 10 horas
     bidsCount: 12,
     isFavorite: true,
+    isFeatured: true,
     description: 'Audi A4 Premium Plus 2013, completo, com teto solar, bancos em couro e sistema de som premium. Veículo em ótimo estado, revisões em dia.',
     stockNumber: '42362593',
     sellingBranch: 'Leiloeira SP Leste',
@@ -170,6 +172,7 @@ export const sampleLots: Lot[] = [
     endDate: createPastDate(2),
     bidsCount: 15,
     isFavorite: false,
+    isFeatured: false,
     description: 'Apartamento funcional no Cabula, 2 quartos, próximo a transporte público e comércio.',
   },
   {
@@ -187,6 +190,7 @@ export const sampleLots: Lot[] = [
     endDate: createFutureDate(8, 0),
     bidsCount: 3,
     isFavorite: true,
+    isFeatured: true,
     description: 'Belíssima pintura a óleo sobre tela representando paisagem da Toscana, Itália. Artista desconhecido, atribuído ao século XIX. Moldura original.',
   },
   {
@@ -208,6 +212,7 @@ export const sampleLots: Lot[] = [
     endDate: createFutureDate(12, 0),
     bidsCount: 8,
     isFavorite: false,
+    isFeatured: false,
     description: 'Icônico Ford Mustang Fastback 1967, motor V8 289, câmbio manual. Restaurado nos padrões originais. Placa preta de coleção.',
   },
   {
@@ -236,6 +241,7 @@ export const sampleLots: Lot[] = [
     endDate: createFutureDate(7, 1),
     bidsCount: 3,
     isFavorite: false,
+    isFeatured: true,
     description: 'Trator New Holland T7.245, ano 2018, em excelente estado de conservação. Poucas horas de uso, pneus em bom estado, revisado.',
     stockNumber: 'AGRO-T7-001',
     sellingBranch: 'AgroLeilões Rio Verde',
@@ -283,6 +289,7 @@ export const sampleLots: Lot[] = [
     endDate: createFutureDate(10, 5),
     bidsCount: 0,
     isFavorite: true,
+    isFeatured: false,
     description: 'Espaçosa casa em Lauro de Freitas, com 4 suítes, piscina e área gourmet. Ideal para famílias.',
   },
   {
@@ -300,6 +307,7 @@ export const sampleLots: Lot[] = [
     endDate: createFutureDate(3, 0),
     bidsCount: 0,
     isFavorite: true,
+    isFeatured: false,
     description: 'Casa em Fortaleza, boa localização na Vila Peri. Necessita de pequenas reformas.',
   },
   {
@@ -317,6 +325,7 @@ export const sampleLots: Lot[] = [
     endDate: createPastDate(5),
     bidsCount: 12,
     isFavorite: false,
+    isFeatured: false,
     description: 'Colheitadeira John Deere S680, usada, em bom estado de funcionamento. Plataforma de corte inclusa.',
   },
     {
@@ -334,6 +343,7 @@ export const sampleLots: Lot[] = [
     endDate: createFutureDate(15, 0), // Inicia em 15 dias
     bidsCount: 0,
     isFavorite: false,
+    isFeatured: false,
     description: 'Réplica em bronze da famosa escultura "O Pensador" de Rodin, assinada pelo artista fundidor. Altura: 45cm.',
   },
   {
@@ -355,6 +365,7 @@ export const sampleLots: Lot[] = [
     endDate: createFutureDate(10, 0),
     bidsCount: 5,
     isFavorite: true,
+    isFeatured: false,
     description: 'Excelente réplica do Porsche 356 Speedster, montada com motor VW AP 1.8. Carroceria em fibra, interior em couro. Documentação regularizada.',
   },
    {
@@ -376,6 +387,7 @@ export const sampleLots: Lot[] = [
     endDate: createFutureDate(3, 5),
     bidsCount: 6,
     isFavorite: false,
+    isFeatured: false,
     description: 'Fiat Fiorino 2019, modelo Endurance 1.4 Flex, com baú. Ideal para trabalho, baixa quilometragem. Único dono.',
   },
 ];
@@ -608,6 +620,7 @@ export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDoc
     case 'REJECTED_DOCUMENTS': return 'Documentos Rejeitados';
     case 'BLOCKED': return 'Bloqueado';
     default: {
+      // This will cause a compile-time error if a status is missed.
       const exhaustiveCheck: never = status;
       return exhaustiveCheck;
       }

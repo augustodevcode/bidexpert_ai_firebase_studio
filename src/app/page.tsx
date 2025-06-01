@@ -4,43 +4,14 @@ import AuctionFilters from '@/components/auction-filters';
 import HeroCarousel from '@/components/hero-carousel';
 import PromoCard from '@/components/promo-card';
 import FilterLinkCard from '@/components/filter-link-card'; // Import the new component
-import { sampleAuctions } from '@/lib/sample-data';
-import type { Auction } from '@/types';
+import { sampleAuctions, sampleLots } from '@/lib/sample-data';
+import type { Auction, Lot } from '@/types';
 import Link from 'next/link';
-import { Landmark, Scale, FileText, Tags, CalendarX, CheckSquare } from 'lucide-react';
+import { Landmark, Scale, FileText, Tags, CalendarX, CheckSquare, Star } from 'lucide-react';
 
 export default function HomePage() {
   const auctions: Auction[] = sampleAuctions; // Em um aplicativo real, busque esses dados
-
-  const promoCardsData = [
-    {
-      title: 'Headset Sem Fio Pulse X2',
-      description: 'Explore a nova geração.',
-      imageUrl: 'https://placehold.co/200x200.png',
-      imageAlt: 'Headset Sem Fio Pulse X2',
-      dataAiHint: 'headset gamer',
-      link: '/search?category=electronics',
-      bgColorClass: 'bg-blue-50 dark:bg-blue-900/30',
-    },
-    {
-      title: 'Controle Gamer com Fio',
-      description: 'Licenciado pelo Xbox.',
-      imageUrl: 'https://placehold.co/200x200.png',
-      imageAlt: 'Controle Gamer com Fio',
-      dataAiHint: 'controle video game',
-      link: '/search?category=gaming',
-      bgColorClass: 'bg-orange-50 dark:bg-orange-900/30',
-    },
-    {
-      title: 'Galaxy Watch Active 2',
-      description: 'Bluetooth & LTF.',
-      imageUrl: 'https://placehold.co/200x200.png',
-      imageAlt: 'Galaxy Watch Active 2',
-      dataAiHint: 'smartwatch relogio',
-      link: '/search?category=wearables',
-      bgColorClass: 'bg-slate-100 dark:bg-slate-800/30',
-    },
-  ];
+  const featuredLots: Lot[] = sampleLots.filter(lot => lot.isFeatured).slice(0, 3); // Pegar até 3 lotes em destaque
 
   const filterLinksData = [
     {
@@ -121,20 +92,27 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {promoCardsData.map((card) => (
-          <PromoCard
-            key={card.title}
-            title={card.title}
-            description={card.description}
-            imageUrl={card.imageUrl}
-            imageAlt={card.imageAlt}
-            dataAiHint={card.dataAiHint}
-            link={card.link}
-            bgColorClass={card.bgColorClass}
-          />
-        ))}
-      </section>
+      {featuredLots.length > 0 && (
+        <section>
+           <h2 className="text-2xl font-bold text-center mb-6 font-headline flex items-center justify-center">
+            <Star className="h-7 w-7 mr-2 text-amber-500" /> Lotes em Destaque
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {featuredLots.map((lot) => (
+              <PromoCard
+                key={lot.id}
+                title={lot.title}
+                description={`A partir de R$ ${lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} - ${lot.location}`}
+                imageUrl={lot.imageUrl}
+                imageAlt={lot.title}
+                dataAiHint={lot.dataAiHint || 'imagem lote destaque'}
+                link={`/auctions/${lot.auctionId}/lots/${lot.id}`}
+                bgColorClass="bg-gradient-to-br from-primary/10 via-background to-accent/10"
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="text-center py-6 bg-accent/10 rounded-lg">
         <p className="text-lg font-semibold text-accent-foreground">
