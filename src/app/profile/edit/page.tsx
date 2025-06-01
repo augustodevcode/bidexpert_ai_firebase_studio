@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea'; // Assuming you might need it, though not in current schema
+import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -37,7 +37,7 @@ import Link from 'next/link';
 
 const profileFormSchema = z.object({
   fullName: z.string().min(3, { message: 'Nome completo deve ter pelo menos 3 caracteres.' }),
-  cpf: z.string().optional(), // Add more specific CPF validation if needed
+  cpf: z.string().optional(),
   rgNumber: z.string().optional(),
   rgIssuer: z.string().optional(),
   rgIssueDate: z.date().optional().nullable(),
@@ -74,7 +74,7 @@ export default function EditProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFetchingData, setIsFetchingData] = useState(true);
+  const [isFetchingData, setIsFetchingData] = useState(true); // Start true to show loader initially
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   const form = useForm<ProfileFormValues>({
@@ -108,18 +108,12 @@ export default function EditProfilePage() {
   });
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
-      toast({ title: "Erro", description: "Você precisa estar logado para editar o perfil.", variant: "destructive" });
-      router.push('/auth/login');
-      return;
-    }
-
-    const fetchProfileData = async () => {
+    const fetchProfileData = async (uid: string) => {
       setIsFetchingData(true);
       setFetchError(null);
+      console.log('Attempting to fetch profile for UID:', uid);
       try {
-        const userDocRef = doc(db, 'users', user.uid);
+        const userDocRef = doc(db, 'users', uid);
         const docSnap = await getDoc(userDocRef);
 
         if (docSnap.exists()) {
@@ -151,20 +145,43 @@ export default function EditProfilePage() {
             optInMarketing: data.optInMarketing || false,
           });
         } else {
+          console.error('Profile not found in Firestore for UID:', uid);
           setFetchError("Perfil não encontrado no banco de dados.");
-           toast({ title: "Erro", description: "Perfil não encontrado.", variant: "destructive" });
+          toast({ title: "Erro", description: "Perfil não encontrado no banco de dados.", variant: "destructive" });
         }
       } catch (e: any) {
         console.error("Error fetching user profile for edit:", e);
         setFetchError("Erro ao buscar dados do perfil para edição.");
-        toast({ title: "Erro", description: "Não foi possível carregar os dados do perfil.", variant: "destructive" });
+        toast({ title: "Erro", description: `Não foi possível carregar os dados do perfil: ${e.message}`, variant: "destructive" });
       } finally {
         setIsFetchingData(false);
       }
     };
 
-    fetchProfileData();
-  }, [user, authLoading, router, form, toast]);
+    if (authLoading) {
+      setIsFetchingData(true); // Keep showing loader if auth is still loading
+      return;
+    }
+
+    if (!user) {
+      toast({ title: "Acesso Negado", description: "Você precisa estar logado para editar o perfil.", variant: "destructive" });
+      router.push('/auth/login');
+      setIsFetchingData(false); // Stop fetching if no user
+      return;
+    }
+
+    if (user && user.uid) {
+      fetchProfileData(user.uid);
+    } else {
+      // This case should ideally not be reached if authLoading is false and user is null (handled above)
+      // But as a safeguard:
+      console.error("User object or UID is not available after auth loading finished.");
+      setFetchError("Não foi possível obter informações do usuário.");
+      toast({ title: "Erro", description: "Não foi possível obter informações do usuário.", variant: "destructive" });
+      setIsFetchingData(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading, router, form.reset, toast]); // form.reset added to dependencies
 
   async function onSubmit(data: ProfileFormValues) {
     if (!user) {
@@ -173,11 +190,8 @@ export default function EditProfilePage() {
     }
     setIsSubmitting(true);
     
-    // Convert dates back to string if your server action expects that, or ensure Firestore handles Date objects.
-    // The current server action handles Date objects correctly.
     const dataToUpdate: EditableUserProfileData = {
       ...data,
-      // Ensure dates are Date objects or null
       dateOfBirth: data.dateOfBirth instanceof Date ? data.dateOfBirth : null,
       rgIssueDate: data.rgIssueDate instanceof Date ? data.rgIssueDate : null,
     };
@@ -187,7 +201,7 @@ export default function EditProfilePage() {
 
     if (result.success) {
       toast({ title: "Sucesso!", description: result.message });
-      router.push('/profile'); // Or router.refresh() if you want to stay on the page and re-fetch
+      router.push('/profile'); 
     } else {
       toast({ title: "Erro ao atualizar", description: result.message, variant: "destructive" });
     }
@@ -202,12 +216,15 @@ export default function EditProfilePage() {
     );
   }
 
-  if (fetchError) {
+  if (fetchError && !form.formState.isDirty) { // Show error only if form hasn't been touched yet
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold text-destructive">{fetchError}</h2>
         <Button asChild className="mt-4">
           <Link href="/profile">Voltar ao Perfil</Link>
+        </Button>
+         <Button variant="outline" onClick={() => user && user.uid && (form.reset(), useEffect(() => { /* re-trigger fetch */ }, [user, authLoading]))} className="mt-4 ml-2">
+          Tentar Novamente
         </Button>
       </div>
     );
@@ -322,7 +339,7 @@ export default function EditProfilePage() {
                         render={({ field }) => (
                         <FormItem>
                             <FormLabel>Gênero (Opcional)</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value || ''}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Selecione seu gênero" /></SelectTrigger></FormControl>
                             <SelectContent>
                                 {genderOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
@@ -362,7 +379,7 @@ export default function EditProfilePage() {
                         render={({ field }) => (
                         <FormItem>
                             <FormLabel>Estado Civil (Opcional)</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value || ''}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Selecione seu estado civil" /></SelectTrigger></FormControl>
                             <SelectContent>
                                 {maritalStatusOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
@@ -382,7 +399,7 @@ export default function EditProfilePage() {
                             render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Regime de Bens (Opcional)</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                 <Select onValueChange={field.onChange} value={field.value || ''}>
                                 <FormControl><SelectTrigger><SelectValue placeholder="Selecione o regime de bens" /></SelectTrigger></FormControl>
                                 <SelectContent>
                                     {propertyRegimeOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
@@ -606,8 +623,8 @@ export default function EditProfilePage() {
               </section>
 
             </CardContent>
-            <CardFooter>
-              <Button type="submit" disabled={isSubmitting || isFetchingData} className="w-full md:w-auto">
+            <CardFooter className="flex justify-between">
+              <Button type="submit" disabled={isSubmitting || isFetchingData || authLoading} className="w-full md:w-auto">
                 {isSubmitting ? <Loader2 className="animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 Salvar Alterações
               </Button>
@@ -621,4 +638,3 @@ export default function EditProfilePage() {
     </div>
   );
 }
-

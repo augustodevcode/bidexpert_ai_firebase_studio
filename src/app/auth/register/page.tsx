@@ -12,10 +12,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { useState, type FormEvent } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase'; // Import db from firebase
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; // Import Firestore functions
+import { auth, db } from '@/lib/firebase'; 
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; 
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -55,13 +56,14 @@ export default function RegisterPage() {
         uid: user.uid,
         fullName,
         cpf,
-        email: user.email, // Use o email verificado da autenticação
+        email: user.email, 
         cellPhone,
-        dateOfBirth, // Firestore lida bem com objetos Date
-        createdAt: serverTimestamp(), // Data de criação no servidor
-        status: 'REGISTERED', // Status inicial conforme especificação
-        optInMarketing: true, // Padrão conforme especificação
+        dateOfBirth, 
+        createdAt: serverTimestamp(), 
+        status: 'REGISTERED', 
+        optInMarketing: true, 
       });
+      console.log('User profile data successfully written to Firestore for UID:', user.uid);
       
       toast({
         title: "Registro bem-sucedido!",
@@ -137,7 +139,7 @@ export default function RegisterPage() {
                     disabled={isLoading}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateOfBirth ? format(dateOfBirth, "dd/MM/yyyy") : <span>Selecione uma data</span>}
+                    {dateOfBirth ? format(dateOfBirth, "dd/MM/yyyy", { locale: ptBR}) : <span>Selecione uma data</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -148,7 +150,7 @@ export default function RegisterPage() {
                     initialFocus
                     captionLayout="dropdown-buttons"
                     fromYear={1900}
-                    toYear={new Date().getFullYear() - 18} // Usuário deve ter pelo menos 18 anos
+                    toYear={new Date().getFullYear() - 18} 
                     disabled={isLoading}
                   />
                 </PopoverContent>
@@ -184,3 +186,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+
