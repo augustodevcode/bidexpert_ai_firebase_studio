@@ -10,14 +10,19 @@ import { Separator } from '@/components/ui/separator';
 import { 
     Printer, Share2, ArrowLeft, ChevronLeft, ChevronRight, RotateCcw, Search, Key, Info, 
     Tag, CalendarDays, Clock, Users, DollarSign, MapPin, Car, Settings, ThumbsUp, 
-    ShieldCheck, HelpCircle, ShoppingCart, Heart
+    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-// Badge não é usado diretamente aqui, mas pode ser se você tiver badges específicas do cliente.
 import { useEffect, useState } from 'react';
 import { addRecentlyViewedId } from '@/lib/recently-viewed-store';
 import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Simula o estado de autenticação. Em um app real, viria de um contexto/hook.
 const isAuthenticated = false; 
@@ -25,13 +30,21 @@ const isAuthenticated = false;
 interface LotDetailClientContentProps {
   lot: Lot;
   auction: Auction;
+  lotIndex?: number;
+  previousLotId?: string;
+  nextLotId?: string;
+  totalLotsInAuction?: number;
 }
 
-export default function LotDetailClientContent({ lot, auction }: LotDetailClientContentProps) {
-  const [isLotFavorite, setIsLotFavorite] = useState(false); // Será atualizado no useEffect
+export default function LotDetailClientContent({ lot, auction, lotIndex, previousLotId, nextLotId, totalLotsInAuction }: LotDetailClientContentProps) {
+  const [isLotFavorite, setIsLotFavorite] = useState(false);
   const { toast } = useToast();
+  const [currentUrl, setCurrentUrl] = useState('');
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setCurrentUrl(window.location.href);
+    }
     // Este efeito roda apenas no cliente.
     // Garante que 'lot' e 'lot.id' existam antes de tentar adicionar ao histórico.
     if (lot && lot.id) {
@@ -43,19 +56,38 @@ export default function LotDetailClientContent({ lot, auction }: LotDetailClient
 
   const handleToggleFavorite = () => {
     setIsLotFavorite(prev => !prev);
-    // Em um app real, você faria uma chamada API aqui para atualizar o backend
     toast({
-      title: !isLotFavorite ? "Adicionado aos Favoritos" : "Removido dos Favoritos", // Lógica invertida aqui pois o estado ainda não atualizou
+      title: !isLotFavorite ? "Adicionado aos Favoritos" : "Removido dos Favoritos",
       description: `O lote "${lotTitle}" foi ${!isLotFavorite ? 'adicionado à' : 'removido da'} sua lista.`,
     });
+  };
+  
+  const handlePrint = () => {
+    if (typeof window !== 'undefined') {
+      window.print();
+    }
+  };
+
+  const getSocialLink = (platform: 'x' | 'facebook' | 'whatsapp' | 'email', url: string, title: string) => {
+    const encodedUrl = encodeURIComponent(url);
+    const encodedTitle = encodeURIComponent(title);
+    switch(platform) {
+      case 'x':
+        return `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
+      case 'facebook':
+        return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+      case 'whatsapp':
+        return `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`;
+      case 'email':
+        return `mailto:?subject=${encodedTitle}&body=${encodedUrl}`;
+    }
   };
 
   const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || lot?.title}`.trim();
   const currentBidLabel = lot?.bidsCount && lot.bidsCount > 0 ? "Lance Atual" : "Lance Inicial";
-  const currentBidValue = lot?.price || 0; // Default to 0 if price is undefined
+  const currentBidValue = lot?.price || 0;
 
 
-  // Evita renderizar se o lote não estiver carregado para prevenir erros
   if (!lot || !auction) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
@@ -64,22 +96,61 @@ export default function LotDetailClientContent({ lot, auction }: LotDetailClient
     );
   }
 
+  const displayLotNumber = lotIndex !== undefined && lotIndex !== -1 ? lotIndex + 1 : lot.id.replace('LOTE', '');
+  const displayTotalLots = totalLotsInAuction || auction.totalLots;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-2">
         <h1 className="text-2xl md:text-3xl font-bold font-headline text-center sm:text-left">{lotTitle}</h1>
         <div className="flex items-center space-x-2 flex-wrap justify-center">
-          <Button variant="outline" size="sm"><Printer className="mr-2 h-4 w-4" /> Imprimir</Button>
-          <Button variant="outline" size="sm"><Share2 className="mr-2 h-4 w-4" /> Compartilhar</Button>
+          <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Imprimir</Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm"><Share2 className="mr-2 h-4 w-4" /> Compartilhar</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <a href={getSocialLink('x', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer">
+                  <X className="h-4 w-4" /> X (Twitter)
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href={getSocialLink('facebook', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer">
+                  <Facebook className="h-4 w-4" /> Facebook
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href={getSocialLink('whatsapp', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer">
+                  <MessageSquareText className="h-4 w-4" /> WhatsApp
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href={getSocialLink('email', currentUrl, lotTitle)} className="flex items-center gap-2 cursor-pointer">
+                  <Mail className="h-4 w-4" /> Email
+                </a>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="outline" size="sm" asChild>
-            {/* Link de volta para o leilão ao qual este lote pertence */}
             <Link href={`/auctions/${auction.id}`}><ArrowLeft className="mr-2 h-4 w-4" /> Voltar para o leilão</Link>
           </Button>
           <div className="flex items-center">
-            <Button variant="outline" size="icon" className="h-8 w-8"><ChevronLeft className="h-4 w-4" /></Button>
-            <span className="text-sm text-muted-foreground mx-2">Lote {lot.id.replace('LOTE', '')} de {auction.totalLots}</span>
-            <Button variant="outline" size="icon" className="h-8 w-8"><ChevronRight className="h-4 w-4" /></Button>
+            {previousLotId ? (
+              <Button variant="outline" size="icon" className="h-8 w-8" asChild>
+                <Link href={`/auctions/${auction.id}/lots/${previousLotId}`} aria-label="Lote Anterior"><ChevronLeft className="h-4 w-4" /></Link>
+              </Button>
+            ) : (
+              <Button variant="outline" size="icon" className="h-8 w-8" disabled aria-label="Lote Anterior"><ChevronLeft className="h-4 w-4" /></Button>
+            )}
+            <span className="text-sm text-muted-foreground mx-2">Lote {displayLotNumber} de {displayTotalLots}</span>
+            {nextLotId ? (
+              <Button variant="outline" size="icon" className="h-8 w-8" asChild>
+                <Link href={`/auctions/${auction.id}/lots/${nextLotId}`} aria-label="Próximo Lote"><ChevronRight className="h-4 w-4" /></Link>
+              </Button>
+            ) : (
+              <Button variant="outline" size="icon" className="h-8 w-8" disabled aria-label="Próximo Lote"><ChevronRight className="h-4 w-4" /></Button>
+            )}
           </div>
         </div>
       </div>
@@ -241,3 +312,4 @@ export default function LotDetailClientContent({ lot, auction }: LotDetailClient
     </div>
   );
 }
+
