@@ -83,10 +83,10 @@ export default function Header() {
                 <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0 bg-background text-foreground">
                   <Link href="/" className="flex items-center space-x-2 text-lg font-semibold mb-4 p-6 border-b">
                     <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
-                       <AvatarImage src="https://placehold.co/40x40.png?text=B" alt="Besa Logo Small" data-ai-hint="logo initial" />
-                      <AvatarFallback>B</AvatarFallback>
+                       <AvatarImage src="https://placehold.co/40x40.png?text=BE" alt="BidExpert Logo Small" data-ai-hint="logo initial" />
+                      <AvatarFallback>BE</AvatarFallback>
                     </Avatar>
-                    <span className="text-primary">Besa</span>
+                    <span className="text-primary">BidExpert</span>
                   </Link>
                   <nav className="flex flex-col gap-1 px-4">
                     <MainNav className="flex-col items-start space-x-0 space-y-0" />
@@ -100,11 +100,11 @@ export default function Header() {
 
             <Link href="/" className="mr-4 flex items-center space-x-2">
               <Avatar className="h-10 w-10 bg-primary-foreground text-primary">
-                <AvatarImage src="https://placehold.co/40x40.png?text=B" alt="Besa Logo" data-ai-hint="logo initial" />
-                <AvatarFallback className="font-bold text-xl">B</AvatarFallback>
+                <AvatarImage src="https://placehold.co/40x40.png?text=BE" alt="BidExpert Logo" data-ai-hint="logo initial" />
+                <AvatarFallback className="font-bold text-xl">BE</AvatarFallback>
               </Avatar>
               <span className="font-bold text-3xl hidden sm:inline-block">
-                Besa
+                BidExpert
               </span>
             </Link>
           </div>
@@ -139,7 +139,7 @@ export default function Header() {
 
 
           <div className="ml-auto flex items-center space-x-1 sm:space-x-2">
-            <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground sm:inline-flex hidden" asChild>
+            <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground sm:inline-flex" asChild>
               <Link href="/dashboard/favorites">
                 <Heart className="h-5 w-5 sm:h-6 sm:w-6" />
                 <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-primary-foreground text-primary border-primary">0</Badge>
