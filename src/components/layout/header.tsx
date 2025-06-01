@@ -139,10 +139,12 @@ export default function Header() {
 
 
           <div className="ml-auto flex items-center space-x-1 sm:space-x-2">
-            <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground sm:inline-flex hidden">
-              <Heart className="h-5 w-5 sm:h-6 sm:w-6" />
-              <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-primary-foreground text-primary border-primary">0</Badge>
-              <span className="sr-only">Favoritos</span>
+            <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground sm:inline-flex hidden" asChild>
+              <Link href="/dashboard/favorites">
+                <Heart className="h-5 w-5 sm:h-6 sm:w-6" />
+                <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-primary-foreground text-primary border-primary">0</Badge>
+                <span className="sr-only">Favoritos</span>
+              </Link>
             </Button>
             <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground sm:inline-flex hidden">
               <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -216,3 +218,4 @@ export default function Header() {
     </header>
   );
 }
+
