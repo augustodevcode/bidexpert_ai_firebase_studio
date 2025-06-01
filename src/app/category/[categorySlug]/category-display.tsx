@@ -29,28 +29,37 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
   const [filteredLots, setFilteredLots] = useState<Lot[]>([]);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
+  useEffect(() => {
+    setIsLoading(true);
+    let foundCategoryName: string | undefined = undefined;
+    let lotsForCategory: Lot[] = [];
+
+    if (categorySlug) {
+      // Tenta obter o nome "oficial" da categoria a partir do slug
+      const potentialCategoryName = getCategoryNameFromSlug(categorySlug);
+
+      // Filtra os lotes diretamente com base no slug
+      lotsForCategory = sampleLots.filter(lot => lot.type && slugify(lot.type) === categorySlug);
+
+      if (lotsForCategory.length > 0) {
+        // Se foram encontrados lotes, esta categoria é válida.
+        // Prioriza o nome obtido de getCategoryNameFromSlug, mas usa o tipo do primeiro lote se necessário.
+        foundCategoryName = potentialCategoryName || (lotsForCategory[0]?.type);
+      } else {
+        // Nenhum lote encontrado para este slug, então a categoria não existe ou não tem lotes.
+        foundCategoryName = undefined;
+      }
+    }
+
+    setCategoryName(foundCategoryName);
+    setFilteredLots(lotsForCategory);
+    setIsLoading(false);
+  }, [categorySlug]);
+  
   const categoryAssets = useMemo(() => {
     if (!categoryName) return getCategoryAssets(''); // Default assets
     return getCategoryAssets(categoryName);
   }, [categoryName]);
-
-  useEffect(() => {
-    setIsLoading(true);
-    if (categorySlug) {
-      const name = getCategoryNameFromSlug(categorySlug);
-      setCategoryName(name);
-      if (name) {
-        const lots = sampleLots.filter(lot => slugify(lot.type) === categorySlug);
-        setFilteredLots(lots);
-      } else {
-        setFilteredLots([]); // Category not found
-      }
-    } else {
-      setCategoryName(undefined);
-      setFilteredLots([]); 
-    }
-    setIsLoading(false);
-  }, [categorySlug]);
   
   const uniqueCategoriesForFilter = useMemo(() => getUniqueLotCategories(), []);
   const uniqueLocationsForFilter = useMemo(() => getUniqueLotLocations(), []);
@@ -69,7 +78,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     return (
       <div className="text-center py-12">
         <h1 className="text-2xl font-bold">Categoria Não Encontrada</h1>
-        <p className="text-muted-foreground">A categoria que você está procurando não existe.</p>
+        <p className="text-muted-foreground">A categoria que você está procurando não existe ou não possui lotes.</p>
         <Button asChild className="mt-4">
           <Link href="/">Voltar para Início</Link>
         </Button>
@@ -200,3 +209,4 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     </div>
   );
 }
+
