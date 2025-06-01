@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Mail, MapPin, Edit3, User, Phone, Briefcase, Landmark, Users, ShieldCheck, CreditCard, FileText, CalendarDays, Loader2 } from 'lucide-react';
+import { Mail, MapPin, Edit3, User, Phone, Briefcase, Landmark, Users, ShieldCheck, CreditCard, FileText, CalendarDays, Loader2, UserCog } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
@@ -13,52 +13,13 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import type { UserProfileData } from '@/types'; // Import UserProfileData type
 
-interface UserProfileData {
-  uid: string;
-  fullName: string;
-  email: string;
-  cpf?: string;
-  dateOfBirth?: any; // Firestore Timestamp or Date
-  cellPhone?: string;
-  homePhone?: string;
-  gender?: string;
-  profession?: string;
-  nationality?: string;
-  maritalStatus?: string;
-  createdAt?: any; // Firestore Timestamp or Date
-  zipCode?: string;
-  street?: string;
-  number?: string;
-  complement?: string;
-  neighborhood?: string;
-  city?: string;
-  state?: string;
-  status?: string; // Example: 'HABILITATED'
-  optInMarketing?: boolean;
-  // Fields for "Atividade de Leilões" - these will remain placeholders for now
-  activeBids?: number;
-  auctionsWon?: number;
-  itemsSold?: number;
-  avatarUrl?: string; // Placeholder for avatar
-  dataAiHint?: string;
-}
-
-const initialProfileData: UserProfileData = {
-  uid: '',
-  fullName: 'Carregando...',
-  email: 'Carregando...',
-  activeBids: 0,
-  auctionsWon: 0,
-  itemsSold: 0,
-  status: 'Carregando...',
-  avatarUrl: 'https://placehold.co/128x128.png',
-  dataAiHint: 'profile photo placeholder',
-};
+// Removed initialProfileData as it's now fetched
 
 export default function ProfilePage() {
   const { user: authUser, loading: authLoading } = useAuth();
-  const [profileData, setProfileData] = useState<UserProfileData | null>(initialProfileData);
+  const [profileData, setProfileData] = useState<UserProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,7 +31,6 @@ export default function ProfilePage() {
     if (!authUser) {
       setIsLoading(false);
       setError("Usuário não autenticado. Por favor, faça login.");
-      // Optionally redirect to login: router.push('/auth/login');
       return;
     }
 
@@ -82,37 +42,23 @@ export default function ProfilePage() {
         const docSnap = await getDoc(userDocRef);
 
         if (docSnap.exists()) {
-          const data = docSnap.data() as UserProfileData;
+          const data = docSnap.data() as UserProfileData; // Cast to UserProfileData
           setProfileData({
-            ...initialProfileData, // Start with defaults for activity etc.
-            uid: authUser.uid,
+            ...data, // Spread all data from Firestore
+            uid: authUser.uid, // Ensure uid from authUser is used
             email: authUser.email || data.email, // Prefer authUser email
             fullName: data.fullName || authUser.displayName || 'Nome não informado',
-            cpf: data.cpf,
-            dateOfBirth: data.dateOfBirth, // Will be Firestore Timestamp
-            cellPhone: data.cellPhone,
-            homePhone: data.homePhone,
-            gender: data.gender,
-            profession: data.profession,
-            nationality: data.nationality,
-            maritalStatus: data.maritalStatus,
-            createdAt: data.createdAt, // Will be Firestore Timestamp
-            zipCode: data.zipCode,
-            street: data.street,
-            number: data.number,
-            complement: data.complement,
-            neighborhood: data.neighborhood,
-            city: data.city,
-            state: data.state,
-            status: data.status || 'HABILITATED', // Default or from DB
-            optInMarketing: data.optInMarketing !== undefined ? data.optInMarketing : true,
-             // Use a real avatar if available in Firestore in the future
+            // Use a real avatar if available, or default placeholder
             avatarUrl: authUser.photoURL || data.avatarUrl || 'https://placehold.co/128x128.png',
-            dataAiHint: 'profile photo',
+            dataAiHint: data.dataAiHint || 'profile photo placeholder',
+            // Ensure dates are Date objects if they are Firestore Timestamps
+            dateOfBirth: data.dateOfBirth?.toDate ? data.dateOfBirth.toDate() : (data.dateOfBirth || null),
+            rgIssueDate: data.rgIssueDate?.toDate ? data.rgIssueDate.toDate() : (data.rgIssueDate || null),
+            createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt || null),
           });
         } else {
           setError("Perfil não encontrado no banco de dados.");
-          setProfileData(null); // Clear profile data if not found
+          setProfileData(null);
         }
       } catch (e: any) {
         console.error("Error fetching user profile:", e);
@@ -157,8 +103,9 @@ export default function ProfilePage() {
   }
 
   const userInitial = profileData.fullName ? profileData.fullName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : "U";
-  const formattedDateOfBirth = profileData.dateOfBirth?.toDate ? format(profileData.dateOfBirth.toDate(), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
-  const formattedMemberSince = profileData.createdAt?.toDate ? format(profileData.createdAt.toDate(), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
+  const formattedDateOfBirth = profileData.dateOfBirth ? format(new Date(profileData.dateOfBirth), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
+  const formattedRgIssueDate = profileData.rgIssueDate ? format(new Date(profileData.rgIssueDate), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
+  const formattedMemberSince = profileData.createdAt ? format(new Date(profileData.createdAt), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
 
 
   return (
@@ -180,8 +127,10 @@ export default function ProfilePage() {
                 Status da Conta: <span className="font-semibold text-green-600">{profileData.status || 'Não definido'}</span>
               </CardDescription>
             </div>
-            <Button variant="outline" size="sm" className="absolute top-4 right-4 sm:static sm:ml-auto">
-              <Edit3 className="h-4 w-4 mr-2" /> Editar Perfil
+            <Button variant="outline" size="sm" className="absolute top-4 right-4 sm:static sm:ml-auto" asChild>
+              <Link href="/profile/edit">
+                <UserCog className="h-4 w-4 mr-2" /> Editar Perfil
+              </Link>
             </Button>
           </div>
         </CardHeader>
@@ -200,7 +149,28 @@ export default function ProfilePage() {
               <div><span className="font-medium text-foreground">Profissão:</span> <span className="text-muted-foreground">{profileData.profession || 'Não informado'}</span></div>
               <div><span className="font-medium text-foreground">Nacionalidade:</span> <span className="text-muted-foreground">{profileData.nationality || 'Não informado'}</span></div>
               <div><span className="font-medium text-foreground">Estado Civil:</span> <span className="text-muted-foreground">{profileData.maritalStatus || 'Não informado'}</span></div>
+               { (profileData.maritalStatus === "Casado(a)" || profileData.maritalStatus === "União Estável") && (
+                <>
+                  <div><span className="font-medium text-foreground">Regime de Bens:</span> <span className="text-muted-foreground">{profileData.propertyRegime || 'Não informado'}</span></div>
+                  <div><span className="font-medium text-foreground">Nome do Cônjuge:</span> <span className="text-muted-foreground">{profileData.spouseName || 'Não informado'}</span></div>
+                  <div><span className="font-medium text-foreground">CPF do Cônjuge:</span> <span className="text-muted-foreground">{profileData.spouseCpf || 'Não informado'}</span></div>
+                </>
+              )}
               <div><span className="font-medium text-foreground">Membro Desde:</span> <span className="text-muted-foreground">{formattedMemberSince}</span></div>
+            </div>
+          </section>
+
+          <Separator />
+
+          <section>
+            <h3 className="text-xl font-semibold mb-3 text-primary flex items-center">
+              <FileText className="h-5 w-5 mr-2" /> Documentos (RG)
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+              <div><span className="font-medium text-foreground">RG:</span> <span className="text-muted-foreground">{profileData.rgNumber || 'Não informado'}</span></div>
+              <div><span className="font-medium text-foreground">Órgão Emissor:</span> <span className="text-muted-foreground">{profileData.rgIssuer || 'Não informado'}</span></div>
+              <div><span className="font-medium text-foreground">UF Emissor:</span> <span className="text-muted-foreground">{profileData.rgState || 'Não informado'}</span></div>
+              <div><span className="font-medium text-foreground">Data de Emissão do RG:</span> <span className="text-muted-foreground">{formattedRgIssueDate}</span></div>
             </div>
           </section>
 
@@ -289,3 +259,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+
