@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { UserCircle, Bell, ShoppingBag, Gavel, FileText, Clock, AlertCircle, Star, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { sampleLots, sampleUserWins } from '@/lib/sample-data';
-import type { Lot, UserWin } from '@/types';
+import { sampleLots, sampleUserWins, sampleUserBids, sampleUserHabilitationStatus, getUserHabilitationStatusInfo } from '@/lib/sample-data';
+import type { Lot, UserWin, UserBid } from '@/types';
 import { useEffect, useState } from 'react';
 import { format, differenceInHours, differenceInMinutes, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -47,21 +47,8 @@ export default function DashboardOverviewPage() {
   const [upcomingLots, setUpcomingLots] = useState<Lot[]>([]);
   const [pendingWinsCount, setPendingWinsCount] = useState(0);
   const [recommendedLots, setRecommendedLots] = useState<Lot[]>([]);
-
-  // Placeholder data for top widgets - in a real app, this would come from user-specific data
-  const activeBidsCount = 3; // Exemplo
-  const auctionsWonCount = sampleUserWins.filter(win => win.paymentStatus === 'PAGO').length; 
-  const habilitationStatus = "HABILITATED"; // Exemplo: "HABILITATED", "PENDING_DOCUMENTS", "REJECTED_DOCUMENTS"
-  
-  const getHabilitationStatusInfo = (status: string) => {
-    switch (status) {
-        case 'HABILITATED': return { text: 'Habilitado', icon: <CheckCircle className="h-5 w-5 text-green-500" />, color: "text-green-500" };
-        case 'PENDING_DOCUMENTS': return { text: 'Doc. Pendentes', icon: <AlertCircle className="h-5 w-5 text-yellow-500" />, color: "text-yellow-500" };
-        case 'REJECTED_DOCUMENTS': return { text: 'Doc. Rejeitados', icon: <XCircle className="h-5 w-5 text-red-500" />, color: "text-red-500" };
-        default: return { text: 'Indefinido', icon: <AlertCircle className="h-5 w-5 text-muted-foreground" />, color: "text-muted-foreground" };
-    }
-  }
-  const habilitationInfo = getHabilitationStatusInfo(habilitationStatus);
+  const [activeBidsCount, setActiveBidsCount] = useState(0);
+  const [habilitationInfo, setHabilitationInfo] = useState(getUserHabilitationStatusInfo(sampleUserHabilitationStatus));
 
 
   useEffect(() => {
@@ -77,7 +64,19 @@ export default function DashboardOverviewPage() {
 
     // Recomendações
     setRecommendedLots(sampleLots.filter(lot => lot.isFeatured).slice(0, 3));
+
+    // Lances Ativos
+    const currentActiveBids = sampleUserBids.filter(bid => 
+      bid.bidStatus === 'GANHANDO' || bid.bidStatus === 'PERDENDO' || bid.bidStatus === 'SUPERADO'
+    ).length;
+    setActiveBidsCount(currentActiveBids);
+
+    // Status da Habilitação (já definido no useState inicial, mas poderia ser atualizado aqui se fosse dinâmico)
+    setHabilitationInfo(getUserHabilitationStatusInfo(sampleUserHabilitationStatus));
+
   }, []);
+  
+  const auctionsWonCount = sampleUserWins.filter(win => win.paymentStatus === 'PAGO').length;
 
   return (
     <div className="space-y-8">
@@ -248,3 +247,5 @@ export default function DashboardOverviewPage() {
     </div>
   );
 }
+
+    
