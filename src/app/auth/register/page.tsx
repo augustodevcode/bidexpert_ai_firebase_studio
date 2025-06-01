@@ -14,7 +14,8 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useState, type FormEvent } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase'; // Import db from firebase
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; // Import Firestore functions
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -38,24 +39,48 @@ export default function RegisterPage() {
       toast({ title: "Erro", description: "As senhas não coincidem.", variant: "destructive" });
       return;
     }
+    if (!dateOfBirth) {
+      setError("Por favor, selecione sua data de nascimento.");
+      toast({ title: "Erro", description: "Por favor, selecione sua data de nascimento.", variant: "destructive" });
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      // TODO: Aqui você pode salvar informações adicionais do usuário (fullName, cpf, etc.)
-      // no Firestore ou Realtime Database, associado ao userCredential.user.uid.
-      // Por exemplo: await setDoc(doc(db, "users", userCredential.user.uid), { fullName, cpf, dateOfBirth, cellPhone });
+      const user = userCredential.user;
+
+      // Salvar dados adicionais no Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        fullName,
+        cpf,
+        email: user.email, // Use o email verificado da autenticação
+        cellPhone,
+        dateOfBirth, // Firestore lida bem com objetos Date
+        createdAt: serverTimestamp(), // Data de criação no servidor
+        status: 'REGISTERED', // Status inicial conforme especificação
+        optInMarketing: true, // Padrão conforme especificação
+      });
       
       toast({
         title: "Registro bem-sucedido!",
-        description: "Sua conta foi criada. Você pode fazer login agora.",
+        description: "Sua conta foi criada e seus dados foram salvos. Você pode fazer login agora.",
       });
       router.push('/auth/login');
     } catch (e: any) {
-      setError(e.message || 'Falha ao registrar. Tente novamente.');
+      let errorMessage = 'Falha ao registrar. Tente novamente.';
+      if (e.code === 'auth/email-already-in-use') {
+        errorMessage = 'Este email já está em uso. Tente outro.';
+      } else if (e.code === 'auth/weak-password') {
+        errorMessage = 'A senha é muito fraca. Use pelo menos 6 caracteres.';
+      } else if (e.message) {
+        errorMessage = e.message;
+      }
+      setError(errorMessage);
       toast({
         title: "Erro no Registro",
-        description: e.message || 'Falha ao registrar. Tente novamente.',
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -145,7 +170,7 @@ export default function RegisterPage() {
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? <Loader2 className="animate-spin" /> : 'Registrar (Passo 1)'}
+              {isLoading ? <Loader2 className="animate-spin" /> : 'Registrar'}
             </Button>
             <p className="text-sm text-center text-muted-foreground">
               Já tem uma conta?{' '}
