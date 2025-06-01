@@ -130,7 +130,6 @@ export default function Header() {
 
 
           <div className="ml-auto flex items-center space-x-1 sm:space-x-2">
-            <UserNav /> 
             <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground sm:inline-flex hidden">
               <Heart className="h-5 w-5 sm:h-6 sm:w-6" />
               <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-primary-foreground text-primary border-primary">0</Badge>
@@ -141,6 +140,7 @@ export default function Header() {
               <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-primary-foreground text-primary border-primary">0</Badge>
               <span className="sr-only">Carrinho</span>
             </Button>
+            <UserNav /> 
           </div>
         </div>
       </div>
@@ -153,14 +153,13 @@ export default function Header() {
             <Link href="/" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
               <HomeIcon className="h-4 w-4" /> Início
             </Link>
-            {/* Future: More dynamic breadcrumbs can be added here */}
           </div>
 
           {/* Center - Main Links */}
-          <nav className="flex items-center space-x-4 lg:space-x-6 text-sm font-medium">
-            <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-            <Link href="/sell-with-us" className="hover:text-primary transition-colors">Venda Conosco</Link>
-            <Link href="/sellers" className="hover:text-primary transition-colors">Comitentes</Link>
+          <nav className="flex items-center space-x-3 lg:space-x-4 text-xs sm:text-sm font-medium">
+              <Link href="/" className="hover:text-primary transition-colors">Home</Link>
+              <Link href="/sell-with-us" className="hover:text-primary transition-colors">Venda Conosco</Link>
+              <Link href="/sellers" className="hover:text-primary transition-colors">Comitentes</Link>
           </nav>
 
           {/* Right - Histórico de Navegação */}
@@ -200,3 +199,4 @@ export default function Header() {
     </header>
   );
 }
+
