@@ -3,16 +3,13 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Eye, History, AlertCircle, CalendarDays, Clock, Gavel } from 'lucide-react';
-import { sampleLots, getLotStatusColor, getAuctionStatusText } from '@/lib/sample-data';
+import { History, AlertCircle } from 'lucide-react';
+import { sampleLots } from '@/lib/sample-data';
 import type { Lot } from '@/types';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
-import { format, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import LotCard from '@/components/lot-card'; // Importar o LotCard
 
 export default function BrowsingHistoryPage() {
   const [viewedLots, setViewedLots] = useState<Lot[]>([]);
@@ -27,39 +24,7 @@ export default function BrowsingHistoryPage() {
     setIsLoading(false);
   }, []);
 
-  const getTimeRemaining = (endDateStr: Date | string, status: LotStatus): {text: string, isPast: boolean} => {
-    const now = new Date();
-    const endDate = new Date(endDateStr);
-    const isPast = now > endDate;
-
-    if (isPast) {
-      if (status === 'ABERTO_PARA_LANCES' || status === 'EM_BREVE') {
-        return { text: getAuctionStatusText('ENCERRADO'), isPast: true };
-      }
-      return { text: getAuctionStatusText(status), isPast: true };
-    }
-    
-    if (status === 'EM_BREVE') {
-      return {text: `Inicia em ${format(endDate, "dd/MM HH:mm", { locale: ptBR })}`, isPast: false};
-    }
-
-    const days = differenceInDays(endDate, now);
-    const hours = differenceInHours(endDate, now) % 24;
-    const minutes = differenceInMinutes(endDate, now) % 60;
-
-    if (days > 0) {
-      return { text: `em: ${days} dia(s)`, isPast: false };
-    } else if (hours > 0) {
-      return { text: `em: ${hours}h ${minutes}m`, isPast: false };
-    } else if (minutes > 0) {
-      return { text: `em: ${minutes}m`, isPast: false };
-    }
-    return { text: 'Encerrando', isPast: false };
-  };
-
-
   if (!isClient || isLoading) {
-    // Pode mostrar um skeleton loader aqui se desejar
     return (
         <div className="space-y-8">
         <Card className="shadow-lg">
@@ -76,14 +41,17 @@ export default function BrowsingHistoryPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[1,2,3].map(i => (
                         <Card key={i} className="overflow-hidden">
-                            <div className="relative aspect-video bg-muted rounded-t-lg"></div>
-                            <CardContent className="p-4 space-y-2">
-                                <div className="h-5 bg-muted rounded w-3/4"></div>
-                                <div className="h-4 bg-muted rounded w-1/2"></div>
-                                <div className="h-4 bg-muted rounded w-1/3"></div>
+                            <div className="relative aspect-[16/10] bg-muted rounded-t-lg"></div>
+                            <CardContent className="p-3 flex-grow space-y-1.5">
+                                <div className="h-4 bg-muted rounded w-3/4"></div>
+                                <div className="h-8 bg-muted rounded w-full mt-1"></div>
+                                <div className="h-4 bg-muted rounded w-1/2 mt-1"></div>
                             </CardContent>
-                            <CardFooter className="p-4 border-t">
-                                <div className="h-9 bg-muted rounded w-full"></div>
+                            <CardFooter className="p-3 border-t flex-col items-start space-y-1.5">
+                                <div className="h-6 bg-muted rounded w-1/3"></div>
+                                <div className="h-4 bg-muted rounded w-1/2 mt-1"></div>
+                                <div className="h-4 bg-muted rounded w-full mt-1"></div>
+                                <div className="h-8 bg-muted rounded w-full mt-2"></div>
                             </CardFooter>
                         </Card>
                     ))}
@@ -93,7 +61,6 @@ export default function BrowsingHistoryPage() {
         </div>
     );
   }
-
 
   return (
     <div className="space-y-8">
@@ -121,55 +88,9 @@ export default function BrowsingHistoryPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {viewedLots.map((lot) => {
-                const timeInfo = getTimeRemaining(lot.endDate, lot.status);
-                return (
-                  <Card key={lot.id} className="overflow-hidden shadow-md flex flex-col">
-                    <div className="relative aspect-[16/10]">
-                      <Image 
-                          src={lot.imageUrl} 
-                          alt={lot.title} 
-                          fill 
-                          className="object-cover"
-                          data-ai-hint={lot.dataAiHint || 'imagem lote historico'}
-                      />
-                       <Badge className={`absolute top-2 left-2 text-xs px-2 py-1 ${getLotStatusColor(lot.status)}`}>
-                          {getAuctionStatusText(lot.status)}
-                      </Badge>
-                    </div>
-                    <CardContent className="p-4 flex-grow">
-                      <h4 className="font-semibold text-md mb-1 truncate hover:text-primary">
-                          <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
-                              {lot.title}
-                          </Link>
-                      </h4>
-                      <p className="text-xs text-muted-foreground mb-0.5">Leilão: {lot.auctionName}</p>
-                      <p className="text-xs text-muted-foreground">Local: {lot.location}</p>
-                      <p className={`text-sm mt-1.5 ${timeInfo.isPast ? 'text-muted-foreground line-through' : 'text-primary'}`}>
-                          Lance Inicial:
-                          <span className="font-bold ml-1 text-md">
-                              R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </span>
-                      </p>
-                        <div className={`flex items-center text-xs mt-1 ${timeInfo.isPast ? 'text-muted-foreground line-through' : 'text-muted-foreground'}`}>
-                            <Clock className="h-3 w-3 mr-1" />
-                            <span>{timeInfo.text}</span>
-                        </div>
-                        <div className={`flex items-center text-xs mt-0.5 ${timeInfo.isPast ? 'text-muted-foreground line-through' : ''}`}>
-                            <Gavel className="h-3 w-3 mr-1" />
-                            <span>{lot.bidsCount} Lances</span>
-                        </div>
-                    </CardContent>
-                    <CardFooter className="p-4 border-t">
-                      <Button size="sm" className="w-full" asChild>
-                        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
-                          <Eye className="mr-2 h-4 w-4" /> Ver Lote
-                        </Link>
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                );
-              })}
+              {viewedLots.map((lot) => (
+                <LotCard key={lot.id} lot={lot} />
+              ))}
             </div>
           )}
         </CardContent>
