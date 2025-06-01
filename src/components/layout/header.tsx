@@ -135,7 +135,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full shadow-md">
       {/* Top Bar */}
       <div className="bg-primary text-primary-foreground">
-        <div className="container flex h-20 items-center">
+        <div className="container mx-auto px-4 flex h-20 items-center">
           <div className="flex items-center">
             <div className="md:hidden mr-2">
               <Sheet>
@@ -276,7 +276,7 @@ export default function Header() {
 
       {/* Second Bar - Navigation Links */}
       <div className="border-b bg-background text-foreground hidden md:block">
-        <div className="container flex h-12 items-center justify-between">
+        <div className="container mx-auto px-4 flex h-12 items-center justify-between">
           <div className="flex items-center text-sm font-medium">
             <Link href="/" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1" aria-label="Início">
               <HomeIcon className="h-4 w-4" />
