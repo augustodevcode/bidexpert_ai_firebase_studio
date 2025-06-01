@@ -28,8 +28,8 @@ async function getLotData(auctionId: string, lotId: string): Promise<{ lot: Lot 
   return { lot, auction };
 }
 
-export default async function LotDetailPage({ params }: { params: { id: string, lotId: string } }) {
-  const { lot, auction } = await getLotData(params.id, params.lotId);
+export default async function LotDetailPage({ params }: { params: { auctionid: string, lotId: string } }) {
+  const { lot, auction } = await getLotData(params.auctionid, params.lotId);
 
   if (!lot || !auction) {
     return (
@@ -37,13 +37,16 @@ export default async function LotDetailPage({ params }: { params: { id: string, 
         <h1 className="text-2xl font-bold">Lote Não Encontrado</h1>
         <p className="text-muted-foreground">O lote que você está procurando não existe ou não pertence a este leilão.</p>
         <Button asChild className="mt-4">
-          <Link href={`/auctions/${params.id}`}>Voltar para o Leilão</Link>
+          <Link href={`/auctions/${params.auctionid}`}>Voltar para o Leilão</Link>
         </Button>
       </div>
     );
   }
 
   const lotTitle = `${lot.year || ''} ${lot.make || ''} ${lot.model || ''} ${lot.series || lot.title}`.trim();
+  const currentBidLabel = lot.bidsCount && lot.bidsCount > 0 ? "Lance Atual" : "Lance Inicial";
+  const currentBidValue = lot.price;
+
 
   return (
     <div className="space-y-6">
@@ -53,7 +56,7 @@ export default async function LotDetailPage({ params }: { params: { id: string, 
           <Button variant="outline" size="sm"><Printer className="mr-2 h-4 w-4" /> Imprimir</Button>
           <Button variant="outline" size="sm"><Share2 className="mr-2 h-4 w-4" /> Compartilhar</Button>
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/auctions/${params.id}`}><ArrowLeft className="mr-2 h-4 w-4" /> Voltar para o leilão</Link>
+            <Link href={`/auctions/${params.auctionid}`}><ArrowLeft className="mr-2 h-4 w-4" /> Voltar para o leilão</Link>
           </Button>
           <div className="flex items-center">
             <Button variant="outline" size="icon" className="h-8 w-8"><ChevronLeft className="h-4 w-4" /></Button>
@@ -154,6 +157,10 @@ export default async function LotDetailPage({ params }: { params: { id: string, 
               <CardTitle className="text-xl">Informações do Lance</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+                <div className="text-sm">
+                    <p className="text-muted-foreground">{currentBidLabel}:</p>
+                    <p className="text-2xl font-bold text-primary">R$ {currentBidValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                </div>
               {!isAuthenticated ? (
                 <div className="text-sm text-muted-foreground p-3 bg-secondary/50 rounded-md">
                   <p>Você não está logado.</p>
@@ -220,11 +227,9 @@ export default async function LotDetailPage({ params }: { params: { id: string, 
 export async function generateStaticParams() {
   const paths = sampleAuctions.flatMap(auction => 
     auction.lots.map(lot => ({
-      id: auction.id, // Changed from auctionId to id
+      auctionid: auction.id, // Changed from id to auctionid to match folder structure
       lotId: lot.id,
     }))
   );
   return paths;
 }
-
-    
