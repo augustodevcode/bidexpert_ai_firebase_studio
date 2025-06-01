@@ -3,9 +3,11 @@ import AuctionCard from '@/components/auction-card';
 import AuctionFilters from '@/components/auction-filters';
 import HeroCarousel from '@/components/hero-carousel';
 import PromoCard from '@/components/promo-card';
+import FilterLinkCard from '@/components/filter-link-card'; // Import the new component
 import { sampleAuctions } from '@/lib/sample-data';
 import type { Auction } from '@/types';
 import Link from 'next/link';
+import { Landmark, Scale, FileText, Tags, CalendarX, CheckSquare } from 'lucide-react';
 
 export default function HomePage() {
   const auctions: Auction[] = sampleAuctions; // Em um aplicativo real, busque esses dados
@@ -40,9 +42,84 @@ export default function HomePage() {
     },
   ];
 
+  const filterLinksData = [
+    {
+      title: 'Leilões Judiciais',
+      subtitle: 'Oportunidades de processos judiciais.',
+      imageUrl: 'https://placehold.co/100x100.png',
+      imageAlt: 'Ícone Leilões Judiciais',
+      dataAiHint: 'gavel justice',
+      link: '/search?type=judicial',
+      bgColorClass: 'bg-sky-50 dark:bg-sky-900/40 hover:border-sky-300',
+    },
+    {
+      title: 'Leilões Extrajudiciais',
+      subtitle: 'Negociações diretas e mais ágeis.',
+      imageUrl: 'https://placehold.co/100x100.png',
+      imageAlt: 'Ícone Leilões Extrajudiciais',
+      dataAiHint: 'document agreement',
+      link: '/search?type=extrajudicial',
+      bgColorClass: 'bg-teal-50 dark:bg-teal-900/40 hover:border-teal-300',
+    },
+    {
+      title: 'Venda Direta',
+      subtitle: 'Compre sem a disputa de lances.',
+      imageUrl: 'https://placehold.co/100x100.png',
+      imageAlt: 'Ícone Venda Direta',
+      dataAiHint: 'property deal',
+      link: '/search?type=direct_sale',
+      bgColorClass: 'bg-amber-50 dark:bg-amber-900/40 hover:border-amber-300',
+    },
+    {
+      title: 'Em Segunda Praça',
+      subtitle: 'Novas chances com valores atrativos.',
+      imageUrl: 'https://placehold.co/100x100.png',
+      imageAlt: 'Ícone Segunda Praça',
+      dataAiHint: 'auction discount',
+      link: '/search?stage=second_praça',
+      bgColorClass: 'bg-violet-50 dark:bg-violet-900/40 hover:border-violet-300',
+    },
+    {
+      title: 'Leilões Encerrados',
+      subtitle: 'Consulte o histórico de resultados.',
+      imageUrl: 'https://placehold.co/100x100.png',
+      imageAlt: 'Ícone Leilões Encerrados',
+      dataAiHint: 'archive checkmark',
+      link: '/search?status=encerrado',
+      bgColorClass: 'bg-slate-50 dark:bg-slate-800/40 hover:border-slate-300',
+    },
+    {
+      title: 'Leilões Cancelados',
+      subtitle: 'Veja os leilões que foram cancelados.',
+      imageUrl: 'https://placehold.co/100x100.png',
+      imageAlt: 'Ícone Leilões Cancelados',
+      dataAiHint: 'stamp cancel',
+      link: '/search?status=cancelado',
+      bgColorClass: 'bg-rose-50 dark:bg-rose-900/40 hover:border-rose-300',
+    },
+  ];
+
   return (
     <div className="space-y-12">
       <HeroCarousel />
+
+      <section>
+        <h2 className="text-2xl font-bold text-center mb-6 font-headline">Acesso Rápido por Categoria</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+          {filterLinksData.map((card) => (
+            <FilterLinkCard
+              key={card.title}
+              title={card.title}
+              subtitle={card.subtitle}
+              imageUrl={card.imageUrl}
+              imageAlt={card.imageAlt}
+              dataAiHint={card.dataAiHint}
+              link={card.link}
+              bgColorClass={card.bgColorClass}
+            />
+          ))}
+        </div>
+      </section>
 
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {promoCardsData.map((card) => (
