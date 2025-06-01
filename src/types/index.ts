@@ -1,5 +1,4 @@
 
-
 export interface Bid {
   bidder: string;
   amount: number;
@@ -12,11 +11,12 @@ export interface AuctionStage {
   statusText?: string; // ex: "Encerramento"
 }
 
-export type AuctionStatus = 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'ABERTO'; // Adicionado 'ABERTO'
+export type AuctionStatus = 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'ABERTO';
 export type LotStatus = 'ABERTO_PARA_LANCES' | 'EM_BREVE' | 'ENCERRADO' | 'VENDIDO' | 'NAO_VENDIDO';
 export type UserDocumentStatus = 'NOT_SENT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'PENDING_ANALYSIS';
 export type UserHabilitationStatus = 'PENDING_DOCUMENTS' | 'PENDING_ANALYSIS' | 'HABILITATED' | 'REJECTED_DOCUMENTS' | 'BLOCKED';
-
+export type UserBidStatus = 'GANHANDO' | 'PERDENDO' | 'SUPERADO' | 'ARREMATADO' | 'NAO_ARREMATADO';
+export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO';
 
 export interface DocumentType {
   id: string;
@@ -24,7 +24,7 @@ export interface DocumentType {
   description?: string; // e.g., "Foto nítida da frente do seu RG ou CNH"
   isRequired: boolean;
   allowedFormats?: string[]; // e.g., ["PDF", "JPG", "PNG"]
-  displayOrder?: number; // Para controlar a ordem de exibição
+  // displayOrder?: number; // Removido pois não usamos mais na versão sample-data
 }
 
 export interface UserDocument {
@@ -38,7 +38,6 @@ export interface UserDocument {
   analystId?: string; // User ID of the analyst
   rejectionReason?: string;
   documentType?: DocumentType; // Populated for convenience from DocumentType definition
-  documentName?: string; // Denormalized name from DocumentType
 }
 
 
@@ -101,7 +100,6 @@ export interface Lot {
   estimatedRepairCost?: string;
   sellerName?: string; // Nome do vendedor específico do lote, se diferente do leilão
   
-  // Campos legados que ainda podem ser úteis ou foram adaptados
   condition?: string; // "Novo", "Usado - Como Novo", etc. (Já existe no sample-data)
 }
 
@@ -172,4 +170,27 @@ export interface UserProfileData {
   activeBids?: number;
   auctionsWon?: number;
   itemsSold?: number;
+}
+
+export interface UserBid {
+  id: string; // ID do lance
+  lotId: string;
+  auctionId: string;
+  lotTitle: string;
+  lotImageUrl: string;
+  lotImageAiHint?: string;
+  userBidAmount: number;
+  currentLotPrice: number;
+  bidStatus: UserBidStatus;
+  bidDate: Date;
+  lotEndDate: Date;
+}
+
+export interface UserWin {
+  id: string; // ID do arremate (pode ser o lotId se um usuário só pode arrematar um lote uma vez)
+  lot: Lot; // Dados completos do lote arrematado
+  winningBidAmount: number;
+  winDate: Date; // Geralmente a lot.endDate
+  paymentStatus: PaymentStatus;
+  invoiceUrl?: string; // Link para a nota fiscal/fatura
 }

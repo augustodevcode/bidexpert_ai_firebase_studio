@@ -1,5 +1,8 @@
 
-import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus } from '@/types';
+import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus } from '@/types';
+import { format, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
 
 const now = new Date();
 
@@ -58,7 +61,7 @@ export const sampleLots: Lot[] = [
     price: 45000,
     endDate: createFutureDate(10, 2),
     bidsCount: 7,
-    isFavorite: false,
+    isFavorite: true,
     description: 'Casa residencial bem localizada no centro da cidade, com 3 quartos, 2 banheiros e área de serviço. Próxima a comércios e escolas.',
     year: 2010,
     make: 'N/A',
@@ -93,8 +96,122 @@ export const sampleLots: Lot[] = [
     actualCashValue: 'R$ 55.000,00',
     sellerName: 'Banco Bradesco S.A.'
   },
+   {
+    id: 'LOTEVEI001',
+    auctionId: '300724car',
+    title: '2013 AUDI A4 PREMIUM PLUS',
+    year: 2013,
+    make: 'AUDI',
+    model: 'A4',
+    series: 'PREMIUM PLUS',
+    imageUrl: 'https://placehold.co/800x600.png?text=Audi+A4+2013',
+    dataAiHint: 'carro sedan preto',
+    galleryImageUrls: [
+        'https://placehold.co/150x100.png?text=Audi+A4+Frente',
+        'https://placehold.co/150x100.png?text=Audi+A4+Traseira',
+        'https://placehold.co/150x100.png?text=Audi+A4+Interior',
+        'https://placehold.co/150x100.png?text=Audi+A4+Painel',
+        'https://placehold.co/150x100.png?text=Audi+A4+Roda',
+        'https://placehold.co/150x100.png?text=Audi+A4+Motor',
+    ],
+    status: 'ABERTO_PARA_LANCES',
+    location: 'São Paulo - SP',
+    type: 'Automóvel',
+    views: 1560,
+    auctionName: 'Leilão de Veículos Premium',
+    price: 68500, // Lance atual
+    endDate: createFutureDate(5, 10), // Encerra em 5 dias e 10 horas
+    bidsCount: 12,
+    isFavorite: true,
+    description: 'Audi A4 Premium Plus 2013, completo, com teto solar, bancos em couro e sistema de som premium. Veículo em ótimo estado, revisões em dia.',
+    stockNumber: '42362593',
+    sellingBranch: 'Leiloeira SP Leste',
+    vin: 'WAUFFAFL3DA012345',
+    vinStatus: 'WAUFFAFL3DA****** (OK)',
+    lossType: 'Particular',
+    primaryDamage: 'Pequenos arranhões no para-choque dianteiro',
+    titleInfo: 'CRLV (São Paulo)',
+    titleBrand: 'Sem Reserva',
+    startCode: 'Funciona e Anda',
+    hasKey: true,
+    odometer: '140.846 km (Original)',
+    airbagsStatus: 'Intactos',
+    bodyStyle: 'SEDAN 4 PORTAS',
+    engineDetails: '2.0L I4 FI DOHC 16V TFSI',
+    transmissionType: 'Automática Multitronic',
+    driveLineType: 'Dianteira',
+    fuelType: 'Gasolina',
+    cylinders: '4 Cilindros',
+    restraintSystem: 'Airbags frontais, laterais e de cortina, ABS, ESP',
+    exteriorInteriorColor: 'Preto / Couro Bege',
+    options: 'Teto Solar, Central Multimídia, Rodas de Liga Leve 18"',
+    manufacturedIn: 'Alemanha',
+    vehicleClass: 'Sedan de Luxo Compacto',
+    lotSpecificAuctionDate: createFutureDate(5,10),
+    vehicleLocationInBranch: 'Pátio Principal',
+    laneRunNumber: 'A - #112',
+    aisleStall: 'BB - 222',
+    actualCashValue: 'R$ 75.000,00',
+    estimatedRepairCost: 'R$ 800,00 (Pintura para-choque)',
+    sellerName: 'Proprietário Particular',
+  },
   {
-    id: 'LOTE005', // Mantendo o ID para consistência com o exemplo anterior
+    id: 'LOTE003',
+    auctionId: '100625bra',
+    title: 'APARTAMENTO COM 54,25 M² - CABULA',
+    imageUrl: 'https://placehold.co/800x600.png?text=Apto+Cabula',
+    dataAiHint: 'apartamento predio residencial',
+    status: 'ENCERRADO', // Alterado para ENCERRADO pois a data é passada
+    location: 'SALVADOR - BA',
+    type: 'APARTAMENTO',
+    views: 754,
+    auctionName: 'Leilão Único Bradesco',
+    price: 105000, // Preço final arrematado
+    endDate: createPastDate(2),
+    bidsCount: 15,
+    isFavorite: false,
+    description: 'Apartamento funcional no Cabula, 2 quartos, próximo a transporte público e comércio.',
+  },
+  {
+    id: 'LOTEART001',
+    auctionId: 'ART001ANTIQ',
+    title: 'Pintura a Óleo "Paisagem Toscana" - Séc. XIX',
+    imageUrl: 'https://placehold.co/800x600.png?text=Paisagem+Toscana',
+    dataAiHint: 'pintura oleo paisagem',
+    status: 'ABERTO_PARA_LANCES',
+    location: 'RIO DE JANEIRO - RJ',
+    type: 'ARTE',
+    views: 320,
+    auctionName: 'Leilão de Arte e Antiguidades',
+    price: 7500,
+    endDate: createFutureDate(8, 0),
+    bidsCount: 3,
+    isFavorite: true,
+    description: 'Belíssima pintura a óleo sobre tela representando paisagem da Toscana, Itália. Artista desconhecido, atribuído ao século XIX. Moldura original.',
+  },
+  {
+    id: 'LOTEVCLASS001',
+    auctionId: 'CLASSICVEH24',
+    title: '1967 FORD MUSTANG FASTBACK',
+    year: 1967,
+    make: 'FORD',
+    model: 'MUSTANG',
+    series: 'FASTBACK',
+    imageUrl: 'https://placehold.co/800x600.png?text=Mustang+1967',
+    dataAiHint: 'carro classico vermelho',
+    status: 'ABERTO_PARA_LANCES',
+    location: 'CURITIBA - PR',
+    type: 'VEÍCULO CLÁSSICO',
+    views: 1850,
+    auctionName: 'Leilão de Veículos Clássicos',
+    price: 250000,
+    endDate: createFutureDate(12, 0),
+    bidsCount: 8,
+    isFavorite: false,
+    description: 'Icônico Ford Mustang Fastback 1967, motor V8 289, câmbio manual. Restaurado nos padrões originais. Placa preta de coleção.',
+  },
+  {
+    id: 'LOTE005', 
     auctionId: '20301vei',
     title: 'TRATOR AGRÍCOLA NEW HOLLAND T7',
     year: 2018,
@@ -151,66 +268,6 @@ export const sampleLots: Lot[] = [
     sellerName: 'Fazenda Boa Esperança',
   },
   {
-    id: 'LOTEVEI001',
-    auctionId: '300724car',
-    title: '2013 AUDI A4 PREMIUM PLUS',
-    year: 2013,
-    make: 'AUDI',
-    model: 'A4',
-    series: 'PREMIUM PLUS',
-    imageUrl: 'https://placehold.co/800x600.png?text=Audi+A4+2013',
-    dataAiHint: 'carro sedan preto',
-    galleryImageUrls: [
-        'https://placehold.co/150x100.png?text=Audi+A4+Frente',
-        'https://placehold.co/150x100.png?text=Audi+A4+Traseira',
-        'https://placehold.co/150x100.png?text=Audi+A4+Interior',
-        'https://placehold.co/150x100.png?text=Audi+A4+Painel',
-        'https://placehold.co/150x100.png?text=Audi+A4+Roda',
-        'https://placehold.co/150x100.png?text=Audi+A4+Motor',
-    ],
-    status: 'ABERTO_PARA_LANCES',
-    location: 'São Paulo - SP',
-    type: 'Automóvel',
-    views: 1560,
-    auctionName: 'Leilão de Veículos Premium',
-    price: 65000, // Lance mínimo
-    endDate: createFutureDate(5, 10), // Encerra em 5 dias e 10 horas
-    bidsCount: 12,
-    isFavorite: true,
-    description: 'Audi A4 Premium Plus 2013, completo, com teto solar, bancos em couro e sistema de som premium. Veículo em ótimo estado, revisões em dia.',
-    stockNumber: '42362593',
-    sellingBranch: 'Leiloeira SP Leste',
-    vin: 'WAUFFAFL3DA012345',
-    vinStatus: 'WAUFFAFL3DA****** (OK)',
-    lossType: 'Particular',
-    primaryDamage: 'Pequenos arranhões no para-choque dianteiro',
-    titleInfo: 'CRLV (São Paulo)',
-    titleBrand: 'Sem Reserva',
-    startCode: 'Funciona e Anda',
-    hasKey: true,
-    odometer: '140.846 km (Original)',
-    airbagsStatus: 'Intactos',
-    bodyStyle: 'SEDAN 4 PORTAS',
-    engineDetails: '2.0L I4 FI DOHC 16V TFSI',
-    transmissionType: 'Automática Multitronic',
-    driveLineType: 'Dianteira',
-    fuelType: 'Gasolina',
-    cylinders: '4 Cilindros',
-    restraintSystem: 'Airbags frontais, laterais e de cortina, ABS, ESP',
-    exteriorInteriorColor: 'Preto / Couro Bege',
-    options: 'Teto Solar, Central Multimídia, Rodas de Liga Leve 18"',
-    manufacturedIn: 'Alemanha',
-    vehicleClass: 'Sedan de Luxo Compacto',
-    lotSpecificAuctionDate: createFutureDate(5,10),
-    vehicleLocationInBranch: 'Pátio Principal',
-    laneRunNumber: 'A - #112',
-    aisleStall: 'BB - 222',
-    actualCashValue: 'R$ 75.000,00',
-    estimatedRepairCost: 'R$ 800,00 (Pintura para-choque)',
-    sellerName: 'Proprietário Particular',
-  },
-  // Adicionar outros lotes de exemplo aqui, variando os tipos e dados
-   {
     id: 'LOTE002',
     auctionId: '100625bra',
     title: 'CASA COM 234,50 M² - PORTÃO',
@@ -227,23 +284,6 @@ export const sampleLots: Lot[] = [
     bidsCount: 0,
     isFavorite: true,
     description: 'Espaçosa casa em Lauro de Freitas, com 4 suítes, piscina e área gourmet. Ideal para famílias.',
-  },
-  {
-    id: 'LOTE003',
-    auctionId: '100625bra',
-    title: 'APARTAMENTO COM 54,25 M² - CABULA',
-    imageUrl: 'https://placehold.co/800x600.png?text=Apto+Cabula',
-    dataAiHint: 'apartamento predio residencial',
-    status: 'ENCERRADO', // Alterado para ENCERRADO pois a data é passada
-    location: 'SALVADOR - BA',
-    type: 'APARTAMENTO',
-    views: 754,
-    auctionName: 'Leilão Único Bradesco',
-    price: 97000,
-    endDate: createPastDate(2),
-    bidsCount: 15,
-    isFavorite: false,
-    description: 'Apartamento funcional no Cabula, 2 quartos, próximo a transporte público e comércio.',
   },
   {
     id: 'LOTE004',
@@ -273,11 +313,70 @@ export const sampleLots: Lot[] = [
     type: 'MAQUINÁRIO',
     views: 450,
     auctionName: 'Leilão Físico e Online Agro',
-    price: 350000,
+    price: 365000, // Preço final arrematado
     endDate: createPastDate(5),
     bidsCount: 12,
     isFavorite: false,
     description: 'Colheitadeira John Deere S680, usada, em bom estado de funcionamento. Plataforma de corte inclusa.',
+  },
+    {
+    id: 'LOTEART002',
+    auctionId: 'ART001ANTIQ',
+    title: 'Escultura em Bronze "O Pensador" - Réplica Assinada',
+    imageUrl: 'https://placehold.co/800x600.png?text=Escultura+Pensador',
+    dataAiHint: 'escultura bronze pensador',
+    status: 'EM_BREVE',
+    location: 'SÃO PAULO - SP',
+    type: 'ESCULTURA',
+    views: 150,
+    auctionName: 'Leilão de Arte e Antiguidades',
+    price: 3200,
+    endDate: createFutureDate(15, 0), // Inicia em 15 dias
+    bidsCount: 0,
+    isFavorite: false,
+    description: 'Réplica em bronze da famosa escultura "O Pensador" de Rodin, assinada pelo artista fundidor. Altura: 45cm.',
+  },
+  {
+    id: 'LOTEVCLASS002',
+    auctionId: 'CLASSICVEH24',
+    title: '1955 PORSCHE 356 SPEEDSTER - RÉPLICA',
+    year: 1955,
+    make: 'PORSCHE',
+    model: '356 SPEEDSTER (RÉPLICA)',
+    series: '',
+    imageUrl: 'https://placehold.co/800x600.png?text=Porsche+356+Replica',
+    dataAiHint: 'carro conversivel prata antigo',
+    status: 'ABERTO_PARA_LANCES',
+    location: 'BELO HORIZONTE - MG',
+    type: 'RÉPLICA CLÁSSICA',
+    views: 990,
+    auctionName: 'Leilão de Veículos Clássicos',
+    price: 180000,
+    endDate: createFutureDate(10, 0),
+    bidsCount: 5,
+    isFavorite: true,
+    description: 'Excelente réplica do Porsche 356 Speedster, montada com motor VW AP 1.8. Carroceria em fibra, interior em couro. Documentação regularizada.',
+  },
+   {
+    id: 'LOTEUTIL001',
+    auctionId: '300724car',
+    title: '2019 FIAT FIORINO 1.4 FLEX',
+    year: 2019,
+    make: 'FIAT',
+    model: 'FIORINO',
+    series: '1.4 FLEX ENDURANCE',
+    imageUrl: 'https://placehold.co/800x600.png?text=Fiat+Fiorino+2019',
+    dataAiHint: 'furgoneta branca cidade',
+    status: 'ABERTO_PARA_LANCES',
+    location: 'Porto Alegre - RS',
+    type: 'Utilitário',
+    views: 720,
+    auctionName: 'Leilão de Veículos Premium',
+    price: 55000,
+    endDate: createFutureDate(3, 5),
+    bidsCount: 6,
+    isFavorite: false,
+    description: 'Fiat Fiorino 2019, modelo Endurance 1.4 Flex, com baú. Ideal para trabalho, baixa quilometragem. Único dono.',
   },
 ];
 
@@ -303,7 +402,7 @@ export const sampleAuctions: Auction[] = [
         { name: "1ª Praça", endDate: createFutureDate(10, 5), statusText: "Encerramento 1ª Praça" },
         { name: "2ª Praça", endDate: createFutureDate(20, 5), statusText: "Encerramento 2ª Praça" },
     ],
-    initialOffer: Math.min(...sampleLots.filter(l => l.auctionId === '100625bra').map(l => l.price)),
+    initialOffer: Math.min(...sampleLots.filter(l => l.auctionId === '100625bra' && l.price > 0).map(l => l.price)),
   },
   {
     id: '20301vei',
@@ -325,7 +424,7 @@ export const sampleAuctions: Auction[] = [
      auctionStages: [
         { name: "Leilão Online", endDate: createFutureDate(7, 1), statusText: "Encerramento Lances" },
     ],
-    initialOffer: Math.min(...sampleLots.filter(l => l.auctionId === '20301vei').map(l => l.price)),
+    initialOffer: Math.min(...sampleLots.filter(l => l.auctionId === '20301vei' && l.price > 0).map(l => l.price)),
   },
    {
     id: '300724car',
@@ -347,7 +446,7 @@ export const sampleAuctions: Auction[] = [
     auctionStages: [
         { name: "Fase de Lances Online", endDate: createFutureDate(5, 10), statusText: "Encerramento Online" },
     ],
-    initialOffer: Math.min(...sampleLots.filter(l => l.auctionId === '300724car').map(l => l.price)),
+    initialOffer: Math.min(...sampleLots.filter(l => l.auctionId === '300724car' && l.price > 0).map(l => l.price)),
   },
   {
     id: '15926',
@@ -369,6 +468,124 @@ export const sampleAuctions: Auction[] = [
     ],
     initialOffer: 0,
   },
+  {
+    id: 'ART001ANTIQ',
+    title: 'Leilão Arte & Antiguidades',
+    fullTitle: 'Leilão Especial de Obras de Arte e Peças de Antiguidade',
+    auctionDate: createFutureDate(1, 0),
+    totalLots: sampleLots.filter(l => l.auctionId === 'ART001ANTIQ').length,
+    status: 'EM_BREVE',
+    auctioneer: 'Galeria Antika - Leiloeiro Oficial A.Silva',
+    category: 'Arte e Antiguidades',
+    auctioneerLogoUrl: 'https://placehold.co/150x75.png?text=Galeria+Antika&font=merriweather',
+    visits: 1500,
+    lots: sampleLots.filter(l => l.auctionId === 'ART001ANTIQ'),
+    imageUrl: 'https://placehold.co/150x75.png?text=Leilao+Arte&font=merriweather',
+    dataAiHint: 'logo galeria arte',
+    seller: 'Colecionadores Particulares',
+    sellingBranch: 'Galeria Antika - Sede SP',
+    vehicleLocation: 'N/A',
+    auctionStages: [
+        { name: "Exposição Online", endDate: createFutureDate(7, 0), statusText: "Fim da Exposição" },
+        { name: "Leilão ao Vivo", endDate: createFutureDate(8, 0), statusText: "Encerramento Leilão" },
+    ],
+    initialOffer: Math.min(...sampleLots.filter(l => l.auctionId === 'ART001ANTIQ' && l.price > 0).map(l => l.price)),
+  },
+  {
+    id: 'CLASSICVEH24',
+    title: 'Clássicos de Garagem',
+    fullTitle: 'Leilão Anual de Veículos Clássicos e Colecionáveis',
+    auctionDate: createFutureDate(2, 0),
+    totalLots: sampleLots.filter(l => l.auctionId === 'CLASSICVEH24').length,
+    status: 'ABERTO_PARA_LANCES',
+    auctioneer: 'Clássicos Leilões BR - Leiloeiro J.Pimenta',
+    category: 'Veículos Clássicos',
+    auctioneerLogoUrl: 'https://placehold.co/150x75.png?text=Classicos+BR&font=playfair+display',
+    visits: 7600,
+    lots: sampleLots.filter(l => l.auctionId === 'CLASSICVEH24'),
+    imageUrl: 'https://placehold.co/150x75.png?text=Leilao+Classicos&font=playfair+display',
+    dataAiHint: 'logo leilao classicos',
+    seller: 'Proprietários Diversos',
+    sellingBranch: 'Pátio Clássicos BR - Curitiba',
+    vehicleLocation: 'Pátio do Leiloeiro',
+    auctionStages: [
+        { name: "Lances Online", endDate: createFutureDate(12, 0), statusText: "Encerramento Online" },
+    ],
+    initialOffer: Math.min(...sampleLots.filter(l => l.auctionId === 'CLASSICVEH24' && l.price > 0).map(l => l.price)),
+  },
+];
+
+export const sampleUserBids: UserBid[] = [
+  {
+    id: 'BID001',
+    lotId: 'LOTEVEI001', // Audi A4
+    auctionId: '300724car',
+    lotTitle: sampleLots.find(l => l.id === 'LOTEVEI001')?.title || '',
+    lotImageUrl: sampleLots.find(l => l.id === 'LOTEVEI001')?.imageUrl || '',
+    lotImageAiHint: sampleLots.find(l => l.id === 'LOTEVEI001')?.dataAiHint,
+    userBidAmount: 67000,
+    currentLotPrice: sampleLots.find(l => l.id === 'LOTEVEI001')?.price || 0,
+    bidStatus: 'PERDENDO', // O preço do lote é 68500
+    bidDate: createPastDate(0, 2), // Lance feito há 2 horas
+    lotEndDate: sampleLots.find(l => l.id === 'LOTEVEI001')?.endDate || new Date(),
+  },
+  {
+    id: 'BID002',
+    lotId: 'LOTE001', // Casa Teotônio Vilela
+    auctionId: '100625bra',
+    lotTitle: sampleLots.find(l => l.id === 'LOTE001')?.title || '',
+    lotImageUrl: sampleLots.find(l => l.id === 'LOTE001')?.imageUrl || '',
+    lotImageAiHint: sampleLots.find(l => l.id === 'LOTE001')?.dataAiHint,
+    userBidAmount: 45000,
+    currentLotPrice: sampleLots.find(l => l.id === 'LOTE001')?.price || 0,
+    bidStatus: 'GANHANDO', // Mesmo valor do preço do lote
+    bidDate: createPastDate(1, 0), // Lance feito ontem
+    lotEndDate: sampleLots.find(l => l.id === 'LOTE001')?.endDate || new Date(),
+  },
+  {
+    id: 'BID003',
+    lotId: 'LOTE003', // Apto Cabula (Encerrado)
+    auctionId: '100625bra',
+    lotTitle: sampleLots.find(l => l.id === 'LOTE003')?.title || '',
+    lotImageUrl: sampleLots.find(l => l.id === 'LOTE003')?.imageUrl || '',
+    lotImageAiHint: sampleLots.find(l => l.id === 'LOTE003')?.dataAiHint,
+    userBidAmount: 105000,
+    currentLotPrice: sampleLots.find(l => l.id === 'LOTE003')?.price || 0,
+    bidStatus: 'ARREMATADO',
+    bidDate: createPastDate(2, 1), // Lance feito antes do encerramento
+    lotEndDate: sampleLots.find(l => l.id === 'LOTE003')?.endDate || new Date(),
+  },
+    {
+    id: 'BID004',
+    lotId: 'LOTEVCLASS001', // Mustang
+    auctionId: 'CLASSICVEH24',
+    lotTitle: sampleLots.find(l => l.id === 'LOTEVCLASS001')?.title || '',
+    lotImageUrl: sampleLots.find(l => l.id === 'LOTEVCLASS001')?.imageUrl || '',
+    lotImageAiHint: sampleLots.find(l => l.id === 'LOTEVCLASS001')?.dataAiHint,
+    userBidAmount: 250000,
+    currentLotPrice: sampleLots.find(l => l.id === 'LOTEVCLASS001')?.price || 0,
+    bidStatus: 'GANHANDO',
+    bidDate: createPastDate(0, 1), // Lance feito há 1 hora
+    lotEndDate: sampleLots.find(l => l.id === 'LOTEVCLASS001')?.endDate || new Date(),
+  },
+];
+
+export const sampleUserWins: UserWin[] = [
+    {
+        id: 'WIN001',
+        lot: sampleLots.find(l => l.id === 'LOTE003')!, // Apto Cabula (Encerrado e Arrematado pelo usuário)
+        winningBidAmount: 105000,
+        winDate: sampleLots.find(l => l.id === 'LOTE003')!.endDate,
+        paymentStatus: 'PAGO',
+        invoiceUrl: '/invoices/inv-lote003.pdf' // Exemplo
+    },
+    {
+        id: 'WIN002',
+        lot: sampleLots.find(l => l.id === 'LOTE006')!, // Colheitadeira John Deere (Encerrado)
+        winningBidAmount: 365000, // Supondo que o usuário arrematou por este valor
+        winDate: sampleLots.find(l => l.id === 'LOTE006')!.endDate,
+        paymentStatus: 'PENDENTE',
+    }
 ];
 
 
@@ -391,12 +608,40 @@ export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDoc
     case 'REJECTED_DOCUMENTS': return 'Documentos Rejeitados';
     case 'BLOCKED': return 'Bloqueado';
     default: {
-      // For type safety, if a new status is added and not handled, this will give a hint.
       const exhaustiveCheck: never = status;
       return exhaustiveCheck;
       }
   }
 };
+
+export const getBidStatusText = (status: UserBidStatus): string => {
+  switch (status) {
+    case 'GANHANDO': return 'Ganhando';
+    case 'PERDENDO': return 'Perdendo';
+    case 'SUPERADO': return 'Lance Superado';
+    case 'ARREMATADO': return 'Arrematado';
+    case 'NAO_ARREMATADO': return 'Não Arrematado';
+    default: {
+      const exhaustiveCheck: never = status;
+      return exhaustiveCheck;
+    }
+  }
+};
+
+export const getPaymentStatusText = (status: PaymentStatus): string => {
+    switch (status) {
+        case 'PENDENTE': return 'Pendente';
+        case 'PROCESSANDO': return 'Processando';
+        case 'PAGO': return 'Pago';
+        case 'FALHOU': return 'Falha no Pagamento';
+        case 'REEMBOLSADO': return 'Reembolsado';
+        default: {
+            const exhaustiveCheck: never = status;
+            return exhaustiveCheck;
+        }
+    }
+};
+
 
 export const getLotStatusColor = (status: LotStatus): string => {
     switch (status) {
@@ -428,6 +673,40 @@ export const getUserDocumentStatusColor = (status: UserDocumentStatus): string =
   }
 };
 
+export const getBidStatusColor = (status: UserBidStatus): string => {
+  switch (status) {
+    case 'GANHANDO':
+      return 'bg-green-100 text-green-700 border-green-300';
+    case 'ARREMATADO':
+      return 'bg-sky-100 text-sky-700 border-sky-300'; // Usando azul/sky para arrematado
+    case 'PERDENDO':
+    case 'SUPERADO':
+      return 'bg-red-100 text-red-700 border-red-300';
+    case 'NAO_ARREMATADO':
+      return 'bg-gray-100 text-gray-700 border-gray-300';
+    default:
+      return 'bg-gray-100 text-gray-700 border-gray-300';
+  }
+};
+
+export const getPaymentStatusColor = (status: PaymentStatus): string => {
+    switch (status) {
+        case 'PAGO':
+            return 'bg-green-100 text-green-700 border-green-300';
+        case 'PENDENTE':
+            return 'bg-yellow-100 text-yellow-700 border-yellow-300';
+        case 'PROCESSANDO':
+            return 'bg-blue-100 text-blue-700 border-blue-300';
+        case 'FALHOU':
+            return 'bg-red-100 text-red-700 border-red-300';
+        case 'REEMBOLSADO':
+            return 'bg-purple-100 text-purple-700 border-purple-300';
+        default:
+            return 'bg-gray-100 text-gray-700 border-gray-300';
+    }
+};
+
+
 export const getUserHabilitationStatusInfo = (status: UserHabilitationStatus): { text: string; color: string; progress: number } => {
   switch (status) {
     case 'PENDING_DOCUMENTS':
@@ -445,5 +724,3 @@ export const getUserHabilitationStatusInfo = (status: UserHabilitationStatus): {
       return { text: exhaustiveCheck, color: 'bg-gray-500', progress: 0 };
   }
 };
-
-    
