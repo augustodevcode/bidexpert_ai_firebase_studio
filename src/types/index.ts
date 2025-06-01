@@ -24,6 +24,7 @@ export interface DocumentType {
   description?: string; // e.g., "Foto nítida da frente do seu RG ou CNH"
   isRequired: boolean;
   allowedFormats?: string[]; // e.g., ["PDF", "JPG", "PNG"]
+  displayOrder?: number;
 }
 
 export interface UserDocument {
@@ -36,7 +37,7 @@ export interface UserDocument {
   analysisDate?: Date;
   analystId?: string; // User ID of the analyst
   rejectionReason?: string;
-  documentType?: DocumentType; // Populated for convenience from DocumentType definition
+  documentType: DocumentType; // Populated for convenience from DocumentType definition
 }
 
 
@@ -193,4 +194,14 @@ export interface UserWin {
   winDate: Date; // Geralmente a lot.endDate
   paymentStatus: PaymentStatus;
   invoiceUrl?: string; // Link para a nota fiscal/fatura
+}
+
+export interface SellerProfileInfo {
+  name: string;
+  slug: string;
+  memberSince: Date;
+  rating: number; 
+  activeLotsCount: number;
+  logoUrl: string; 
+  dataAiHint: string;
 }

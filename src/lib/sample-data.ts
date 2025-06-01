@@ -1,6 +1,6 @@
 
-import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus } from '@/types';
-import { format, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
+import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo } from '@/types';
+import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 
@@ -23,18 +23,19 @@ const createPastDate = (days: number, hours: number = 0, minutes: number = 0) =>
   };
 
 export const sampleDocumentTypes: DocumentType[] = [
-  { id: 'DT001', name: 'Documento de Identidade (Frente)', description: 'Foto nítida da frente do seu RG ou CNH.', isRequired: true, allowedFormats: ['JPG', 'PNG', 'PDF'] },
-  { id: 'DT002', name: 'Documento de Identidade (Verso)', description: 'Foto nítida do verso do seu RG ou CNH.', isRequired: true, allowedFormats: ['JPG', 'PNG', 'PDF'] },
-  { id: 'DT003', name: 'CPF', description: 'Foto nítida do seu CPF (caso não conste no RG/CNH).', isRequired: false, allowedFormats: ['JPG', 'PNG', 'PDF'] },
-  { id: 'DT004', name: 'Comprovante de Residência', description: 'Conta de água, luz ou telefone recente (últimos 3 meses).', isRequired: true, allowedFormats: ['PDF', 'JPG', 'PNG'] },
-  { id: 'DT005', name: 'Certidão de Casamento (se aplicável)', description: 'Caso seja casado(a), envie a certidão.', isRequired: false, allowedFormats: ['PDF', 'JPG', 'PNG'] },
+  { id: 'DT001', name: 'Documento de Identidade (Frente)', description: 'Foto nítida da frente do seu RG ou CNH.', isRequired: true, allowedFormats: ['JPG', 'PNG', 'PDF'], displayOrder: 1 },
+  { id: 'DT002', name: 'Documento de Identidade (Verso)', description: 'Foto nítida do verso do seu RG ou CNH.', isRequired: true, allowedFormats: ['JPG', 'PNG', 'PDF'], displayOrder: 2 },
+  { id: 'DT004', name: 'Comprovante de Residência', description: 'Conta de água, luz ou telefone recente (últimos 3 meses).', isRequired: true, allowedFormats: ['PDF', 'JPG', 'PNG'], displayOrder: 3 },
+  { id: 'DT003', name: 'CPF', description: 'Foto nítida do seu CPF (caso não conste no RG/CNH).', isRequired: false, allowedFormats: ['JPG', 'PNG', 'PDF'], displayOrder: 4 },
+  { id: 'DT005', name: 'Certidão de Casamento (se aplicável)', description: 'Caso seja casado(a), envie a certidão.', isRequired: false, allowedFormats: ['PDF', 'JPG', 'PNG'], displayOrder: 5 },
 ];
 
+
 export const sampleUserDocuments: UserDocument[] = [
-  { id: 'UD001', documentTypeId: 'DT001', userId: 'user123', status: 'APPROVED', uploadDate: createPastDate(5), analysisDate: createPastDate(4), fileUrl: '#', documentType: sampleDocumentTypes.find(dt => dt.id === 'DT001') },
-  { id: 'UD002', documentTypeId: 'DT002', userId: 'user123', status: 'REJECTED', uploadDate: createPastDate(5), analysisDate: createPastDate(4), rejectionReason: 'Imagem ilegível. Por favor, envie uma foto com melhor qualidade.', fileUrl: '#', documentType: sampleDocumentTypes.find(dt => dt.id === 'DT002') },
-  { id: 'UD003', documentTypeId: 'DT003', userId: 'user123', status: 'NOT_SENT', documentType: sampleDocumentTypes.find(dt => dt.id === 'DT003') },
-  { id: 'UD004', documentTypeId: 'DT004', userId: 'user123', status: 'PENDING_ANALYSIS', uploadDate: createPastDate(1), fileUrl: '#', documentType: sampleDocumentTypes.find(dt => dt.id === 'DT004') },
+  { id: 'UD001', documentTypeId: 'DT001', userId: 'user123', status: 'APPROVED', uploadDate: createPastDate(5), analysisDate: createPastDate(4), fileUrl: '#', documentType: sampleDocumentTypes.find(dt => dt.id === 'DT001')! },
+  { id: 'UD002', documentTypeId: 'DT002', userId: 'user123', status: 'REJECTED', uploadDate: createPastDate(5), analysisDate: createPastDate(4), rejectionReason: 'Imagem ilegível. Por favor, envie uma foto com melhor qualidade.', fileUrl: '#', documentType: sampleDocumentTypes.find(dt => dt.id === 'DT002')! },
+  { id: 'UD003', documentTypeId: 'DT003', userId: 'user123', status: 'NOT_SENT', documentType: sampleDocumentTypes.find(dt => dt.id === 'DT003')! },
+  { id: 'UD004', documentTypeId: 'DT004', userId: 'user123', status: 'PENDING_ANALYSIS', uploadDate: createPastDate(1), fileUrl: '#', documentType: sampleDocumentTypes.find(dt => dt.id === 'DT004')! },
 ];
 
 export const sampleUserHabilitationStatus: UserHabilitationStatus = 'PENDING_DOCUMENTS';
@@ -757,19 +758,7 @@ export const getUniqueLotCategories = (): string[] => {
   return Array.from(categories).sort();
 };
 
-export const getUniqueSellers = (): string[] => {
-  const sellers = new Set<string>();
-  sampleAuctions.forEach(auction => {
-    if (auction.seller) sellers.add(auction.seller);
-    if (auction.auctioneer) sellers.add(auction.auctioneer);
-  });
-  sampleLots.forEach(lot => {
-    if (lot.sellerName) sellers.add(lot.sellerName);
-  });
-  return Array.from(sellers).sort();
-};
-
-// Helper para slugify nomes de comitentes para URLs
+// Helper para slugify nomes para URLs
 export const slugify = (text: string): string => {
   if (!text) return '';
   return text
@@ -779,4 +768,49 @@ export const slugify = (text: string): string => {
     .replace(/\s+/g, '-') // Substitui espaços por -
     .replace(/[^\w-]+/g, '') // Remove caracteres não alfanuméricos (exceto -)
     .replace(/--+/g, '-'); // Substitui múltiplos - por um único -
+};
+
+
+export const getUniqueSellers = (): SellerProfileInfo[] => {
+  const sellerMap = new Map<string, SellerProfileInfo>();
+
+  const addSeller = (name: string | undefined) => {
+    if (!name || sellerMap.has(name)) return;
+
+    // Simulate "memberSince" date (1-3 years ago)
+    const randomYearsAgo = Math.floor(Math.random() * 3) + 1;
+    const randomMonthsAgo = Math.floor(Math.random() * 12);
+    const randomDaysAgo = Math.floor(Math.random() * 28);
+    let memberSince = subYears(now, randomYearsAgo);
+    memberSince = subMonths(memberSince, randomMonthsAgo);
+    memberSince = subDays(memberSince, randomDaysAgo);
+
+    // Simulate rating (3.5 to 5.0)
+    const rating = Math.round((Math.random() * 1.5 + 3.5) * 10) / 10;
+
+    // Simulate active lots count (5 to 50)
+    const activeLotsCount = Math.floor(Math.random() * 46) + 5;
+    
+    const initial = name ? name.charAt(0).toUpperCase() : 'S';
+
+    sellerMap.set(name, {
+      name,
+      slug: slugify(name),
+      memberSince,
+      rating,
+      activeLotsCount,
+      logoUrl: `https://placehold.co/100x100.png?text=${initial}`,
+      dataAiHint: 'logo comitente placeholder',
+    });
+  };
+
+  sampleAuctions.forEach(auction => {
+    addSeller(auction.seller);
+    addSeller(auction.auctioneer);
+  });
+  sampleLots.forEach(lot => {
+    addSeller(lot.sellerName);
+  });
+
+  return Array.from(sellerMap.values()).sort((a, b) => a.name.localeCompare(b.name));
 };
