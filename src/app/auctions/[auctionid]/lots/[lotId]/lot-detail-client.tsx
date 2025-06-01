@@ -28,28 +28,42 @@ interface LotDetailClientContentProps {
 }
 
 export default function LotDetailClientContent({ lot, auction }: LotDetailClientContentProps) {
-  const [isLotFavorite, setIsLotFavorite] = useState(lot?.isFavorite || false);
+  const [isLotFavorite, setIsLotFavorite] = useState(false); // Será atualizado no useEffect
   const { toast } = useToast();
 
   useEffect(() => {
     // Este efeito roda apenas no cliente.
-    if (lot && lot.id) { // Adiciona verificação para lot e lot.id
+    // Garante que 'lot' e 'lot.id' existam antes de tentar adicionar ao histórico.
+    if (lot && lot.id) {
       addRecentlyViewedId(lot.id); // Adiciona o lote aos vistos recentemente
     }
-  }, [lot?.id]); // Depende especificamente de lot.id
+    // Atualiza o estado de favorito quando o lote mudar
+    setIsLotFavorite(lot?.isFavorite || false);
+  }, [lot]); // Depende do objeto 'lot' completo.
 
   const handleToggleFavorite = () => {
     setIsLotFavorite(prev => !prev);
     // Em um app real, você faria uma chamada API aqui para atualizar o backend
     toast({
-      title: isLotFavorite ? "Removido dos Favoritos" : "Adicionado aos Favoritos",
-      description: `O lote "${lotTitle}" foi ${isLotFavorite ? 'removido da' : 'adicionado à'} sua lista.`,
+      title: !isLotFavorite ? "Adicionado aos Favoritos" : "Removido dos Favoritos", // Lógica invertida aqui pois o estado ainda não atualizou
+      description: `O lote "${lotTitle}" foi ${!isLotFavorite ? 'adicionado à' : 'removido da'} sua lista.`,
     });
   };
 
-  const lotTitle = `${lot.year || ''} ${lot.make || ''} ${lot.model || ''} ${lot.series || lot.title}`.trim();
-  const currentBidLabel = lot.bidsCount && lot.bidsCount > 0 ? "Lance Atual" : "Lance Inicial";
-  const currentBidValue = lot.price;
+  const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || lot?.title}`.trim();
+  const currentBidLabel = lot?.bidsCount && lot.bidsCount > 0 ? "Lance Atual" : "Lance Inicial";
+  const currentBidValue = lot?.price || 0; // Default to 0 if price is undefined
+
+
+  // Evita renderizar se o lote não estiver carregado para prevenir erros
+  if (!lot || !auction) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
+        <p className="text-muted-foreground">Carregando detalhes do lote...</p>
+      </div>
+    );
+  }
+
 
   return (
     <div className="space-y-6">
