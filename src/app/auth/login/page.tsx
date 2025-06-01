@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -13,19 +14,19 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
           <LogIn className="mx-auto h-12 w-12 text-primary mb-2" />
-          <CardTitle className="text-2xl font-bold font-headline">Welcome Back!</CardTitle>
-          <CardDescription>Enter your credentials to access your account.</CardDescription>
+          <CardTitle className="text-2xl font-bold font-headline">Bem-vindo de Volta!</CardTitle>
+          <CardDescription>Insira suas credenciais para acessar sua conta.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="you@example.com" required />
+            <Input id="email" type="email" placeholder="seu@email.com" required />
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Senha</Label>
               <Link href="#" className="text-sm text-primary hover:underline">
-                Forgot password?
+                Esqueceu a senha?
               </Link>
             </div>
             <Input id="password" type="password" required />
@@ -36,9 +37,9 @@ export default function LoginPage() {
             Login
           </Button>
           <p className="text-sm text-center text-muted-foreground">
-            Don&apos;t have an account?{' '}
+            Não tem uma conta?{' '}
             <Link href="/auth/register" className="font-medium text-primary hover:underline">
-              Register
+              Registre-se
             </Link>
           </p>
         </CardFooter>
