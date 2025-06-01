@@ -15,43 +15,67 @@ export default function UserDocumentsPage() {
   // Simula o ID do usuário logado
   const currentUserId = 'user123'; 
 
-  // Filtra os documentos do usuário atual e popula com o DocumentType
+  // Filtra os documentos do usuário atual. O campo 'documentType' já está populado em sampleUserDocuments.
   const userDocuments = sampleUserDocuments
-    .filter(ud => ud.userId === currentUserId)
-    .map(ud => ({
-      ...ud,
-      documentType: sampleDocumentTypes.find(dt => dt.id === ud.documentTypeId)
-    }));
+    .filter(ud => ud.userId === currentUserId && ud.documentType);
 
-  // Identifica quais tipos de documentos obrigatórios ainda não foram enviados ou foram rejeitados
-  const requiredDocumentTypesNotYetApproved = sampleDocumentTypes.filter(dt => {
+  // Identifica quais tipos de documentos obrigatórios ainda não foram enviados ou foram rejeitados/pendentes
+  const requiredDocumentTypesNeedingAction = sampleDocumentTypes.filter(dt => {
     if (!dt.isRequired) return false;
     const userDoc = userDocuments.find(ud => ud.documentTypeId === dt.id);
-    return !userDoc || userDoc.status === 'NOT_SENT' || userDoc.status === 'REJECTED';
+    return !userDoc || userDoc.status === 'NOT_SENT' || userDoc.status === 'REJECTED' || userDoc.status === 'PENDING_ANALYSIS' || userDoc.status === 'SUBMITTED';
   });
 
-  // Adiciona placeholders para documentos obrigatórios não enviados
-  const allDisplayDocuments: (UserDocument & { documentType: DocumentType })[] = [
-    ...userDocuments.filter(ud => ud.documentType) as (UserDocument & { documentType: DocumentType })[],
-    ...requiredDocumentTypesNotYetApproved
-      .filter(dt => !userDocuments.some(ud => ud.documentTypeId === dt.id)) // Evita duplicados se já estiverem na lista de userDocuments (ex: rejeitados)
-      .map(dt => ({
-        id: `placeholder-${dt.id}`,
-        documentTypeId: dt.id,
-        userId: currentUserId,
-        status: 'NOT_SENT' as UserDocumentStatus,
-        documentType: dt
-      }))
+  // Cria uma lista baseada nos documentos que o usuário já tem (garantindo que documentType existe)
+  const existingUserDocsWithType = userDocuments.filter(ud => ud.documentType) as (UserDocument & { documentType: DocumentType })[];
+
+  // Adiciona placeholders para documentos obrigatórios que não foram enviados
+  // e garante que os tipos de documentos obrigatórios que foram rejeitados/pendentes também sejam incluídos se não estiverem já na lista.
+  const placeholderDocs = sampleDocumentTypes
+    .filter(dt => dt.isRequired && !existingUserDocsWithType.some(eud => eud.documentTypeId === dt.id))
+    .map(dt => ({
+      id: `placeholder-${dt.id}`,
+      documentTypeId: dt.id,
+      userId: currentUserId,
+      status: 'NOT_SENT' as UserDocumentStatus,
+      documentType: dt,
+      // Outros campos de UserDocument podem ser undefined ou default
+      fileUrl: undefined,
+      uploadDate: undefined,
+      analysisDate: undefined,
+      rejectionReason: undefined,
+    }));
+
+  let allDisplayDocuments: (UserDocument & { documentType: DocumentType })[] = [
+    ...existingUserDocsWithType,
+    ...placeholderDocs
   ];
 
-  // Ordena para que os obrigatórios e não enviados/rejeitados apareçam primeiro
+  // Remove duplicatas caso um documento rejeitado/pendente já tenha sido adicionado via existingUserDocsWithType
+  // e depois seria readicionado pelo filtro de requiredDocumentTypesNeedingAction
+  allDisplayDocuments = allDisplayDocuments.filter((doc, index, self) =>
+    index === self.findIndex((d) => (
+      d.documentTypeId === doc.documentTypeId
+    ))
+  );
+
+
+  // Ordena para que os obrigatórios e com status que exigem ação apareçam primeiro
   allDisplayDocuments.sort((a, b) => {
-    const aIsPending = a.status === 'NOT_SENT' || a.status === 'REJECTED';
-    const bIsPending = b.status === 'NOT_SENT' || b.status === 'REJECTED';
+    const aIsRequiredAndNeedsAction = a.documentType.isRequired && (a.status === 'NOT_SENT' || a.status === 'REJECTED');
+    const bIsRequiredAndNeedsAction = b.documentType.isRequired && (b.status === 'NOT_SENT' || b.status === 'REJECTED');
+
+    if (aIsRequiredAndNeedsAction && !bIsRequiredAndNeedsAction) return -1;
+    if (!aIsRequiredAndNeedsAction && bIsRequiredAndNeedsAction) return 1;
+    
     if (a.documentType.isRequired && !b.documentType.isRequired) return -1;
     if (!a.documentType.isRequired && b.documentType.isRequired) return 1;
-    if (aIsPending && !bIsPending) return -1;
-    if (!aIsPending && bIsPending) return 1;
+    
+    // Ordenar por displayOrder dentro dos grupos de 'required' e 'not required'
+    const orderA = a.documentType.displayOrder || 999;
+    const orderB = b.documentType.displayOrder || 999;
+    if (orderA !== orderB) return orderA - orderB;
+    
     return 0;
   });
 
@@ -100,6 +124,9 @@ export default function UserDocumentsPage() {
                   {sampleUserHabilitationStatus === 'REJECTED_DOCUMENTS' && (
                      <p className="text-sm text-red-600">Verifique os documentos abaixo e reenvie os necessários.</p>
                   )}
+                   {sampleUserHabilitationStatus === 'PENDING_DOCUMENTS' && (
+                     <p className="text-sm text-orange-600">Envie os documentos marcados como obrigatórios (*) para prosseguir.</p>
+                  )}
                 </div>
               </div>
               <Progress value={habilitationStatusInfo.progress} className="w-full h-3" />
@@ -111,10 +138,13 @@ export default function UserDocumentsPage() {
 
           <div>
             <h3 className="text-xl font-semibold mb-1">Documentos Necessários</h3>
-            <p className="text-sm text-muted-foreground mb-4">Envie os documentos abaixo para análise. Formatados aceitos: PDF, JPG, PNG (Máx. 5MB).</p>
+            <p className="text-sm text-muted-foreground mb-4">Envie os documentos abaixo para análise. Formatos aceitos: PDF, JPG, PNG (Máx. 5MB).</p>
+            {allDisplayDocuments.length === 0 && (
+                <p className="text-muted-foreground text-center py-4">Nenhum tipo de documento configurado ou encontrado.</p>
+            )}
             <div className="space-y-4">
               {allDisplayDocuments.map((doc) => (
-                <Card key={doc.id} className={`border-l-4 ${getUserDocumentStatusColor(doc.status).split(' ')[2] /* Get border color class */}`}>
+                <Card key={doc.id || doc.documentTypeId} className={`border-l-4 ${getUserDocumentStatusColor(doc.status).split(' ')[2] /* Get border color class */}`}>
                   <CardContent className="p-4 grid grid-cols-1 md:grid-cols-[1fr_auto_auto] items-center gap-4">
                     <div className="flex items-start space-x-3">
                       {getStatusIcon(doc.status)}
@@ -175,5 +205,3 @@ export default function UserDocumentsPage() {
     </div>
   );
 }
-
-    

@@ -1,4 +1,5 @@
 
+
 export interface Bid {
   bidder: string;
   amount: number;
@@ -23,6 +24,7 @@ export interface DocumentType {
   description?: string; // e.g., "Foto nítida da frente do seu RG ou CNH"
   isRequired: boolean;
   allowedFormats?: string[]; // e.g., ["PDF", "JPG", "PNG"]
+  displayOrder?: number; // Para controlar a ordem de exibição
 }
 
 export interface UserDocument {
@@ -35,7 +37,8 @@ export interface UserDocument {
   analysisDate?: Date;
   analystId?: string; // User ID of the analyst
   rejectionReason?: string;
-  documentType?: DocumentType; // Populated for convenience
+  documentType?: DocumentType; // Populated for convenience from DocumentType definition
+  documentName?: string; // Denormalized name from DocumentType
 }
 
 
