@@ -31,37 +31,44 @@ import {
 import { format, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
-import { getAuctionStatusText, getLotStatusColor, sampleLots } from '@/lib/sample-data'; // Importar sampleLots
+import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data'; // sampleLots não é mais necessário aqui para isso
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToast } from '@/hooks/use-toast'; // Importar useToast
+import { useToast } from '@/hooks/use-toast';
+import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store'; // Nova importação
 
 interface LotCardProps {
   lot: Lot;
 }
 
 const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
-  const [isFavorite, setIsFavorite] = useState(lot.isFavorite || false);
+  const [isFavorite, setIsFavorite] = useState(false); // Estado inicial pode ser falso
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const [isPast, setIsPast]   = useState<boolean>(false);
   const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`);
-  const { toast } = useToast(); // Inicializar useToast
+  const { toast } = useToast();
 
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setLotDetailUrl(`${window.location.origin}/auctions/${lot.auctionId}/lots/${lot.id}`);
+      // Sincroniza com o localStorage ao montar
+      setIsFavorite(isLotFavoriteInStorage(lot.id));
     }
-  }, [lot.auctionId, lot.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lot.id, lot.auctionId]); // Adicionar lot.id como dependência para re-verificar se a prop 'lot' mudar
 
-  // Sincroniza o estado local com a prop lot.isFavorite
   useEffect(() => {
-    setIsFavorite(lot.isFavorite || false);
-  }, [lot.isFavorite]);
+    // Este efeito garante que se a prop lot.id mudar, o estado de favorito é reavaliado a partir do localStorage
+    if (lot && lot.id) {
+        setIsFavorite(isLotFavoriteInStorage(lot.id));
+    }
+  }, [lot?.id]);
+
 
   useEffect(() => {
     const calculateTimeRemaining = () => {
@@ -101,7 +108,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
     };
 
     calculateTimeRemaining();
-    const interval = setInterval(calculateTimeRemaining, 60000); // Update every minute
+    const interval = setInterval(calculateTimeRemaining, 60000); 
     return () => clearInterval(interval);
   }, [lot.endDate, lot.status]);
 
@@ -109,12 +116,12 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
     e.preventDefault();
     e.stopPropagation();
     const newFavoriteState = !isFavorite;
-    setIsFavorite(newFavoriteState); // Atualiza o estado local imediatamente
+    setIsFavorite(newFavoriteState); 
 
-    // Atualiza a "fonte da verdade" (sampleLots)
-    const lotInSampleData = sampleLots.find(l => l.id === lot.id);
-    if (lotInSampleData) {
-      lotInSampleData.isFavorite = newFavoriteState;
+    if (newFavoriteState) {
+      addFavoriteLotIdToStorage(lot.id);
+    } else {
+      removeFavoriteLotIdFromStorage(lot.id);
     }
     
     toast({
@@ -295,4 +302,3 @@ export default function LotCard({ lot }: LotCardProps) {
   
     return <LotCardClientContent lot={lot} />;
   }
-

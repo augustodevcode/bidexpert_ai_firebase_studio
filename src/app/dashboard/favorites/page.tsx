@@ -7,44 +7,43 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Heart, Eye, XCircle, AlertCircle } from 'lucide-react';
-import { sampleLots, getLotStatusColor, getAuctionStatusText } from '@/lib/sample-data'; // Usaremos getAuctionStatusText e sampleLots
+import { sampleLots, getLotStatusColor, getAuctionStatusText } from '@/lib/sample-data';
 import type { Lot } from '@/types';
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast'; // Importar useToast
+import { useToast } from '@/hooks/use-toast';
+import { getFavoriteLotIdsFromStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store'; // Nova importação
 
 export default function FavoriteLotsPage() {
   const [favoriteLots, setFavoriteLots] = useState<Lot[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const { toast } = useToast(); // Inicializar useToast
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsClient(true);
-    // Filtra os lotes que estão marcados como favoritos nos dados de exemplo
-    // Em um app real, isso viria de um estado do usuário ou banco de dados
-    setFavoriteLots(sampleLots.filter(lot => lot.isFavorite));
+    const favoriteIds = getFavoriteLotIdsFromStorage();
+    const currentlyFavoriteLots = sampleLots.filter(lot => favoriteIds.includes(lot.id));
+    setFavoriteLots(currentlyFavoriteLots);
   }, []);
 
   const handleRemoveFavorite = (lotId: string) => {
     const lotToRemove = favoriteLots.find(lot => lot.id === lotId);
     
-    // Atualiza o estado local para remover o card da UI da página de favoritos
-    setFavoriteLots(prev => prev.filter(lot => lot.id !== lotId));
+    removeFavoriteLotIdFromStorage(lotId); // Remove do localStorage
+    setFavoriteLots(prev => prev.filter(lot => lot.id !== lotId)); // Atualiza UI
 
-    // Tenta atualizar o sampleLots em memória
-    const lotInSampleData = sampleLots.find(l => l.id === lotId);
-    if (lotInSampleData) {
-      lotInSampleData.isFavorite = false;
-    }
+    // Opcional: se ainda quisermos modificar sampleLots em memória para consistência na sessão atual (sem refresh)
+    // const lotInSampleData = sampleLots.find(l => l.id === lotId);
+    // if (lotInSampleData) {
+    //   lotInSampleData.isFavorite = false; 
+    // }
     
     toast({
       title: "Removido dos Favoritos",
       description: `O lote "${lotToRemove?.title || 'Selecionado'}" foi removido da sua lista.`,
     });
-    console.log(`Lote ${lotId} removido dos favoritos (simulação).`);
   };
 
   if (!isClient) {
-    // Pode mostrar um skeleton loader aqui se desejar
     return (
         <div className="space-y-8">
         <Card className="shadow-lg">
@@ -157,4 +156,3 @@ export default function FavoriteLotsPage() {
     </div>
   );
 }
-

@@ -1,5 +1,5 @@
 
-'use client'; // Este é um Client Component
+'use client'; 
 
 import type { Lot, Auction } from '@/types';
 import Image from 'next/image';
@@ -23,9 +23,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { sampleLots } from '@/lib/sample-data'; // Importar sampleLots
+import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store'; // Nova importação
 
-// Simula o estado de autenticação. Em um app real, viria de um contexto/hook.
 const isAuthenticated = false; 
 
 interface LotDetailClientContentProps {
@@ -48,19 +47,21 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
     }
     if (lot && lot.id) {
       addRecentlyViewedId(lot.id);
+      setIsLotFavorite(isLotFavoriteInStorage(lot.id)); // Sincroniza com localStorage
     }
-    setIsLotFavorite(lot?.isFavorite || false);
-  }, [lot]); 
+  }, [lot]); // Depende do objeto 'lot' inteiro para reavaliar se ele mudar
 
   const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || lot?.title}`.trim();
 
   const handleToggleFavorite = () => {
+    if (!lot || !lot.id) return;
     const newFavoriteState = !isLotFavorite;
     setIsLotFavorite(newFavoriteState);
 
-    const lotInSampleData = sampleLots.find(l => l.id === lot.id);
-    if (lotInSampleData) {
-      lotInSampleData.isFavorite = newFavoriteState;
+    if (newFavoriteState) {
+      addFavoriteLotIdToStorage(lot.id);
+    } else {
+      removeFavoriteLotIdFromStorage(lot.id);
     }
 
     toast({
@@ -318,4 +319,3 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
     </div>
   );
 }
-
