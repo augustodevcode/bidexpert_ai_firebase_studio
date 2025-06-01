@@ -1,5 +1,5 @@
 
-import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo } from '@/types';
+import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo } from '@/types';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -630,8 +630,12 @@ export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDoc
     case 'REJECTED_DOCUMENTS': return 'Documentos Rejeitados';
     case 'BLOCKED': return 'Bloqueado';
     default: {
+      // This should ideally not be reached if all statuses are handled.
+      // To satisfy TypeScript's exhaustive check, you might:
+      // 1. Log an error: console.error("Unhandled status:", status); return "Status Desconhecido";
+      // 2. Or, if you are certain all cases are covered by the union type, you can use 'never':
       const exhaustiveCheck: never = status;
-      return exhaustiveCheck;
+      return exhaustiveCheck; // This line will cause a compile-time error if a status is missed.
       }
   }
 };
@@ -786,10 +790,70 @@ export const slugify = (text: string): string => {
     .toString()
     .toLowerCase()
     .trim()
+    .normalize("NFD") // Normalize to decompose combined graphemes
+    .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
     .replace(/\s+/g, '-') 
     .replace(/[^\w-]+/g, '') 
     .replace(/--+/g, '-'); 
 };
+
+export function getCategoryNameFromSlug(slug: string): string | undefined {
+  const categories = getUniqueLotCategories();
+  const foundCategory = categories.find(cat => slugify(cat) === slug);
+  return foundCategory;
+}
+
+// Placeholder for category-specific assets
+interface CategoryAssets {
+  logoUrl: string;
+  logoAiHint: string;
+  bannerUrl: string;
+  bannerAiHint: string;
+  bannerText?: string;
+}
+
+export function getCategoryAssets(categoryNameOrSlug: string): CategoryAssets {
+  const categoryName = getCategoryNameFromSlug(categoryNameOrSlug) || categoryNameOrSlug;
+
+  // Basic placeholder logic, can be expanded
+  const defaultAssets: CategoryAssets = {
+    logoUrl: 'https://placehold.co/100x100.png?text=Categoria',
+    logoAiHint: 'logo categoria',
+    bannerUrl: 'https://placehold.co/1200x300.png?text=Banner+da+Categoria',
+    bannerAiHint: 'banner categoria',
+    bannerText: `Descubra os melhores lotes em ${categoryName}`,
+  };
+
+  if (slugify(categoryName).includes('veiculo')) {
+    return {
+      logoUrl: 'https://placehold.co/100x100.png?text=Carro',
+      logoAiHint: 'icone carro',
+      bannerUrl: 'https://placehold.co/1200x300.png?text=Veiculos+em+Destaque',
+      bannerAiHint: 'carros estrada',
+      bannerText: `Excelentes Ofertas em Veículos - ${categoryName}`,
+    };
+  }
+  if (slugify(categoryName).includes('imovel')) {
+    return {
+      logoUrl: 'https://placehold.co/100x100.png?text=Casa',
+      logoAiHint: 'icone casa',
+      bannerUrl: 'https://placehold.co/1200x300.png?text=Oportunidades+Imobiliarias',
+      bannerAiHint: 'imoveis cidade',
+      bannerText: `Seu Novo Lar ou Investimento está aqui - ${categoryName}`,
+    };
+  }
+  if (slugify(categoryName).includes('arte')) {
+    return {
+      logoUrl: 'https://placehold.co/100x100.png?text=Arte',
+      logoAiHint: 'icone arte',
+      bannerUrl: 'https://placehold.co/1200x300.png?text=Leilao+de+Arte',
+      bannerAiHint: 'galeria arte',
+      bannerText: `Obras Raras e Antiguidades - ${categoryName}`,
+    };
+  }
+
+  return defaultAssets;
+}
 
 
 export const getUniqueSellers = (): SellerProfileInfo[] => {

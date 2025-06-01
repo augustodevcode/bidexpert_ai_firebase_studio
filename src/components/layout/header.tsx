@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown, Eye } from 'lucide-react'; // Adicionado Eye
+import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown, Eye, LayoutGrid, List } from 'lucide-react'; // Adicionado Eye, LayoutGrid, List
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import MainNav from './main-nav';
@@ -157,7 +157,7 @@ export default function Header() {
                 <DropdownMenuContent align="start" className="bg-primary text-primary-foreground">
                   {lotCategories.map((category) => (
                     <DropdownMenuItem key={category} asChild className="hover:bg-primary/80 focus:bg-primary/70 cursor-pointer">
-                      <Link href={`/search?category=${slugify(category)}`}>{category}</Link>
+                      <Link href={`/category/${slugify(category)}`}>{category}</Link>
                     </DropdownMenuItem>
                   ))}
                    {lotCategories.length === 0 && <DropdownMenuItem disabled>Nenhuma categoria</DropdownMenuItem>}
