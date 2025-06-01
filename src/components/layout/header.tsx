@@ -21,20 +21,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
-import { getUniqueLotCategories, slugify, sampleLots } from '@/lib/sample-data'; 
-import type { Lot, RecentlyViewedLotInfo } from '@/types';
+import { sampleLots } from '@/lib/sample-data'; 
+import type { RecentlyViewedLotInfo } from '@/types';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 
 export default function Header() {
-  const [lotCategories, setLotCategories] = useState<string[]>([]);
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    setLotCategories(getUniqueLotCategories());
     
     const viewedIds = getRecentlyViewedIds();
     const items: RecentlyViewedLotInfo[] = viewedIds.map(id => {
@@ -123,29 +121,13 @@ export default function Header() {
       {/* Second Bar - Navigation Links */}
       <div className="border-t bg-primary/90 text-primary-foreground hidden md:block">
         <div className="container flex h-12 items-center">
-            <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="text-sm font-medium hover:bg-primary/80">
-                    <Menu className="mr-2 h-5 w-5" /> Categorias <ChevronDown className="ml-1 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="bg-primary text-primary-foreground">
-                  {lotCategories.map((category) => (
-                    <DropdownMenuItem key={category} asChild className="hover:bg-primary/80 focus:bg-primary/70 cursor-pointer">
-                      <Link href={`/category/${slugify(category)}`}>{category}</Link>
-                    </DropdownMenuItem>
-                  ))}
-                   {lotCategories.length === 0 && <DropdownMenuItem disabled>Nenhuma categoria</DropdownMenuItem>}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            {/* Categorias Dropdown Removido */}
             <nav className="flex items-center space-x-4 lg:space-x-6 text-sm font-medium mx-auto">
                 <Link href="/sell-with-us" className="hover:underline">Venda Conosco</Link>
                 <Link href="/sellers" className="hover:underline">Comitentes</Link>
                 <Link href="/contact" className="hover:underline">Fale Conosco</Link>
             </nav>
-            <div className="ml-auto">
+            <div className="ml-auto"> {/* ml-auto para empurrar o dropdown para a direita */}
               {isClient && recentlyViewedItems.length > 0 && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
