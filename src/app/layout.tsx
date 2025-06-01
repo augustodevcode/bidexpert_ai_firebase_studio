@@ -5,6 +5,7 @@ import './globals.css';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import { Toaster } from "@/components/ui/toaster"
+import { AuthProvider } from '@/contexts/auth-context';
 
 export const metadata: Metadata = {
   title: 'BidExpert - Leilões Online',
@@ -24,12 +25,14 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased flex flex-col min-h-screen bg-secondary/20 dark:bg-background">
-        <Header />
-        <main className="flex-grow container mx-auto px-4 py-8">
-          {children}
-        </main>
-        <Footer />
-        <Toaster />
+        <AuthProvider>
+          <Header />
+          <main className="flex-grow container mx-auto px-4 py-8">
+            {children}
+          </main>
+          <Footer />
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );

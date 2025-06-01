@@ -1,5 +1,8 @@
 
+'use client';
+
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,37 +14,62 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings } from 'lucide-react';
-
-// This is a placeholder for authentication state.
-// In a real app, you'd use a context or a library like NextAuth.js.
-const isAuthenticated = false; 
-const userName = "Alex Johnson"; // Placeholder
-const userEmail = "alex.j@example.com"; // Placeholder
+import { useAuth } from '@/contexts/auth-context';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
 
 export default function UserNav() {
-  if (isAuthenticated) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({ title: "Logout bem-sucedido!"});
+      router.push('/');
+    } catch (error: any) {
+      toast({ title: "Erro no Logout", description: error.message, variant: "destructive" });
+    }
+  };
+
+  if (loading) {
+    // Pode mostrar um skeleton ou spinner aqui se preferir
+    return (
+      <div className="flex items-center space-x-2">
+        <div className="h-10 w-20 bg-muted rounded-md animate-pulse"></div>
+        <div className="h-10 w-24 bg-muted rounded-md animate-pulse"></div>
+      </div>
+    );
+  }
+
+  if (user) {
+    const userDisplayName = user.displayName || user.email?.split('@')[0] || "Usuário";
+    const userInitial = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : "U";
+
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
             <Avatar className="h-10 w-10">
-              <AvatarImage src="https://placehold.co/40x40.png" alt={userName} data-ai-hint="profile avatar small" />
-              <AvatarFallback>{userName.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
+              {user.photoURL && <AvatarImage src={user.photoURL} alt={userDisplayName} data-ai-hint="profile avatar small" />}
+              <AvatarFallback>{userInitial}</AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{userName}</p>
+              <p className="text-sm font-medium leading-none">{userDisplayName}</p>
               <p className="text-xs leading-none text-muted-foreground">
-                {userEmail}
+                {user.email}
               </p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link href="/dashboard" className="flex items-center">
+            <Link href="/dashboard/overview" className="flex items-center">
               <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
             </Link>
           </DropdownMenuItem>
@@ -50,11 +78,11 @@ export default function UserNav() {
              <UserCircle2 className="mr-2 h-4 w-4" /> Meu Perfil
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem>
+          <DropdownMenuItem disabled> {/* Placeholder */}
             <Settings className="mr-2 h-4 w-4" /> Configurações
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" /> Sair
           </DropdownMenuItem>
         </DropdownMenuContent>
