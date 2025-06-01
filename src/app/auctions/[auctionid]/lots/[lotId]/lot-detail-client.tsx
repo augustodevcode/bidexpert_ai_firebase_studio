@@ -28,15 +28,15 @@ interface LotDetailClientContentProps {
 }
 
 export default function LotDetailClientContent({ lot, auction }: LotDetailClientContentProps) {
-  const [isLotFavorite, setIsLotFavorite] = useState(lot.isFavorite || false);
+  const [isLotFavorite, setIsLotFavorite] = useState(lot?.isFavorite || false);
   const { toast } = useToast();
 
   useEffect(() => {
     // Este efeito roda apenas no cliente.
-    if (lot) {
+    if (lot && lot.id) { // Adiciona verificação para lot.id também
       addRecentlyViewedId(lot.id); // Adiciona o lote aos vistos recentemente
     }
-  }, [lot]); // Dependência `lot` garante que rode se o lote mudar (embora improvável para esta página)
+  }, [lot?.id]); // Depende especificamente de lot.id
 
   const handleToggleFavorite = () => {
     setIsLotFavorite(prev => !prev);
@@ -227,3 +227,6 @@ export default function LotDetailClientContent({ lot, auction }: LotDetailClient
     </div>
   );
 }
+
+
+    
