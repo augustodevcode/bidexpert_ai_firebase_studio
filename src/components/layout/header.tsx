@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown, Eye, UserCircle, LayoutList, Tag, Home as HomeIcon } from 'lucide-react';
+import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown, Eye, UserCircle, LayoutList, Tag, Home as HomeIcon, Briefcase, Users2, MessageSquareText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import MainNav from './main-nav';
@@ -21,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { sampleLots, getUniqueLotCategories, slugify } from '@/lib/sample-data';
 import type { RecentlyViewedLotInfo } from '@/types';
 import { useEffect, useState } from 'react';
@@ -32,7 +32,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 export default function Header() {
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
-  const [topNavCategories, setTopNavCategories] = useState<{label: string, href: string}[]>([]);
   const [searchCategories, setSearchCategories] = useState<string[]>([]);
   const [isClient, setIsClient] = useState(false);
 
@@ -53,13 +52,7 @@ export default function Header() {
     setRecentlyViewedItems(items);
 
     const allCategories = getUniqueLotCategories();
-    setSearchCategories(allCategories); // For search dropdown
-    setTopNavCategories( // For second nav bar
-      allCategories.slice(0, 3).map(cat => ({ // Show top 3 in nav
-        label: cat,
-        href: `/category/${slugify(cat)}`
-      }))
-    );
+    setSearchCategories(allCategories);
 
   }, []);
 
@@ -81,6 +74,7 @@ export default function Header() {
                 <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0 bg-background text-foreground">
                   <Link href="/" className="flex items-center space-x-2 text-lg font-semibold mb-4 p-6 border-b">
                     <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
+                       <AvatarImage src="https://placehold.co/40x40.png?text=B" alt="Besa Logo Small" data-ai-hint="logo initial" />
                       <AvatarFallback>B</AvatarFallback>
                     </Avatar>
                     <span className="text-primary">Besa</span>
@@ -97,6 +91,7 @@ export default function Header() {
 
             <Link href="/" className="mr-4 flex items-center space-x-2">
               <Avatar className="h-10 w-10 bg-primary-foreground text-primary">
+                <AvatarImage src="https://placehold.co/40x40.png?text=B" alt="Besa Logo" data-ai-hint="logo initial" />
                 <AvatarFallback className="font-bold text-xl">B</AvatarFallback>
               </Avatar>
               <span className="font-bold text-3xl hidden sm:inline-block">
@@ -105,7 +100,6 @@ export default function Header() {
             </Link>
           </div>
 
-          {/* Search Bar with Category Dropdown */}
           {isClient && (
             <div className="flex-1 flex justify-center items-center px-2 sm:px-4">
               <div className="relative flex w-full max-w-xl bg-background rounded-md shadow-sm">
@@ -136,13 +130,13 @@ export default function Header() {
 
 
           <div className="ml-auto flex items-center space-x-1 sm:space-x-2">
-            <UserNav /> {/* UserNav now includes Login/Register or Profile Dropdown */}
-            <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground">
+            <UserNav /> 
+            <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground sm:inline-flex hidden">
               <Heart className="h-5 w-5 sm:h-6 sm:w-6" />
               <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-primary-foreground text-primary border-primary">0</Badge>
               <span className="sr-only">Favoritos</span>
             </Button>
-            <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground">
+            <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground sm:inline-flex hidden">
               <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" />
               <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-primary-foreground text-primary border-primary">0</Badge>
               <span className="sr-only">Carrinho</span>
@@ -153,26 +147,29 @@ export default function Header() {
 
       {/* Second Bar - Navigation Links - White Background */}
       <div className="border-b bg-background text-foreground hidden md:block">
-        <div className="container flex h-12 items-center">
-          <nav className="flex items-center space-x-4 lg:space-x-5 text-sm font-medium">
+        <div className="container flex h-12 items-center justify-between">
+          {/* Left - Breadcrumb simple */}
+          <div className="flex items-center text-sm font-medium">
+            <Link href="/" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+              <HomeIcon className="h-4 w-4" /> Início
+            </Link>
+            {/* Future: More dynamic breadcrumbs can be added here */}
+          </div>
+
+          {/* Center - Main Links */}
+          <nav className="flex items-center space-x-4 lg:space-x-6 text-sm font-medium">
             <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-            <Link href="/search" className="hover:text-primary transition-colors">Shop</Link> {/* Placeholder for "Shop" */}
-            <Link href="#" className="hover:text-primary transition-colors">Pages</Link> {/* Placeholder */}
-            {isClient && topNavCategories.map(cat => (
-              <Link key={cat.href} href={cat.href} className="hover:text-primary transition-colors">
-                {cat.label}
-              </Link>
-            ))}
-            <Link href="#" className="hover:text-primary transition-colors">Blog</Link> {/* Placeholder */}
-            <Link href="/sell-with-us" className="hover:text-primary transition-colors">Become A Vendor</Link>
-            <Link href="#" className="hover:text-primary transition-colors">Flash Deals</Link> {/* Placeholder */}
+            <Link href="/sell-with-us" className="hover:text-primary transition-colors">Venda Conosco</Link>
+            <Link href="/sellers" className="hover:text-primary transition-colors">Comitentes</Link>
           </nav>
-          <div className="ml-auto">
+
+          {/* Right - Histórico de Navegação */}
+          <div className="flex items-center">
             {isClient && recentlyViewedItems.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-sm font-medium hover:bg-accent hover:text-accent-foreground">
-                    Recently Viewed <ChevronDown className="ml-1 h-4 w-4" />
+                  <Button variant="ghost" size="sm" className="text-sm font-medium hover:bg-accent hover:text-accent-foreground text-muted-foreground">
+                    Histórico de Navegação <ChevronDown className="ml-1 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-80 bg-card text-card-foreground">
@@ -193,6 +190,9 @@ export default function Header() {
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
+            )}
+             {isClient && recentlyViewedItems.length === 0 && (
+                <span className="text-sm text-muted-foreground">Histórico de Navegação Vazio</span>
             )}
           </div>
         </div>
