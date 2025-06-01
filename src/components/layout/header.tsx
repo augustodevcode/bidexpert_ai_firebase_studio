@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown, Eye } from 'lucide-react';
+import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown, Eye, Tag, LayoutList } from 'lucide-react'; // Adicionado LayoutList, Tag
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import MainNav from './main-nav';
@@ -21,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
-import { sampleLots } from '@/lib/sample-data'; 
+import { sampleLots, getUniqueLotCategories, slugify } from '@/lib/sample-data'; 
 import type { RecentlyViewedLotInfo } from '@/types';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
@@ -29,6 +29,7 @@ import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 
 export default function Header() {
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
+  const [topNavCategories, setTopNavCategories] = useState<{label: string, href: string}[]>([]);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -46,6 +47,15 @@ export default function Header() {
       } : null;
     }).filter(item => item !== null) as RecentlyViewedLotInfo[];
     setRecentlyViewedItems(items);
+
+    const categories = getUniqueLotCategories().slice(0, 2); // Top 2 categories for desktop nav
+    setTopNavCategories(
+      categories.map(cat => ({
+        label: cat,
+        href: `/category/${slugify(cat)}`
+      }))
+    );
+
   }, []);
 
 
@@ -62,14 +72,14 @@ export default function Header() {
                   <span className="sr-only">Abrir Menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-                <nav className="flex flex-col gap-4 mt-8">
-                  <Link href="/" className="flex items-center space-x-2 text-lg font-semibold mb-4">
-                    <Coins className="h-6 w-6 text-primary" />
-                    <span>BidExpert</span>
-                  </Link>
+              <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0">
+                <Link href="/" className="flex items-center space-x-2 text-lg font-semibold mb-4 p-6 border-b">
+                  <Coins className="h-6 w-6 text-primary" />
+                  <span>BidExpert</span>
+                </Link>
+                <nav className="flex flex-col gap-1 px-4">
                   {/* MainNav for mobile drawer */}
-                  <MainNav className="flex-col items-start space-x-0 space-y-2" />
+                  <MainNav className="flex-col items-start space-x-0 space-y-0" />
                   <div className="mt-auto pt-4 border-t">
                     <UserNav />
                   </div>
@@ -86,7 +96,6 @@ export default function Header() {
           </Link>
         </div>
         
-        {/* Search bar - more central */}
         <div className="flex-1 flex justify-center px-2 sm:px-4">
           <form className="relative w-full max-w-md lg:max-w-xl">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -102,14 +111,13 @@ export default function Header() {
           </form>
         </div>
 
-        {/* Right side icons and UserNav */}
         <div className="ml-auto flex items-center space-x-1 sm:space-x-2">
-          <Button variant="ghost" size="icon" className="relative">
+          <Button variant="ghost" size="icon" className="relative hidden sm:inline-flex">
             <Heart className="h-5 w-5 sm:h-6 sm:w-6" />
             <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs">0</Badge>
             <span className="sr-only">Favoritos</span>
           </Button>
-           <Button variant="ghost" size="icon" className="relative">
+           <Button variant="ghost" size="icon" className="relative hidden sm:inline-flex">
             <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" />
              <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs">0</Badge>
             <span className="sr-only">Carrinho</span>
@@ -121,17 +129,27 @@ export default function Header() {
       {/* Second Bar - Navigation Links */}
       <div className="border-t bg-primary/90 text-primary-foreground hidden md:block">
         <div className="container flex h-12 items-center">
-            {/* Categorias Dropdown Removido */}
-            <nav className="flex items-center space-x-4 lg:space-x-6 text-sm font-medium mx-auto">
+            <nav className="flex items-center space-x-3 lg:space-x-4 text-xs sm:text-sm font-medium">
+                <Link href="/" className="hover:underline flex items-center gap-1">
+                  <Home className="h-4 w-4" /> Home
+                </Link>
+                <Link href="/search" className="hover:underline flex items-center gap-1">
+                  <LayoutList className="h-4 w-4" /> Todos os Lotes
+                </Link>
+                {isClient && topNavCategories.map(cat => (
+                  <Link key={cat.href} href={cat.href} className="hover:underline flex items-center gap-1">
+                    <Tag className="h-4 w-4" /> {cat.label}
+                  </Link>
+                ))}
                 <Link href="/sell-with-us" className="hover:underline">Venda Conosco</Link>
                 <Link href="/sellers" className="hover:underline">Comitentes</Link>
                 <Link href="/contact" className="hover:underline">Fale Conosco</Link>
             </nav>
-            <div className="ml-auto"> {/* ml-auto para empurrar o dropdown para a direita */}
+            <div className="ml-auto">
               {isClient && recentlyViewedItems.length > 0 && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-xs hover:bg-primary/80">
+                    <Button variant="ghost" size="sm" className="text-xs hover:bg-primary/80 text-primary-foreground hover:text-primary-foreground">
                       <Eye className="mr-1 h-4 w-4" /> Vistos Recentemente <ChevronDown className="ml-1 h-3 w-3" />
                     </Button>
                   </DropdownMenuTrigger>
