@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings } from 'lucide-react';
+import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
@@ -76,6 +76,11 @@ export default function UserNav() {
           <DropdownMenuItem asChild>
             <Link href="/profile" className="flex items-center">
              <UserCircle2 className="mr-2 h-4 w-4" /> Meu Perfil
+            </Link>
+          </DropdownMenuItem>
+           <DropdownMenuItem asChild>
+            <Link href="/dashboard/favorites" className="flex items-center">
+             <Heart className="mr-2 h-4 w-4" /> Lotes Favoritos
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem disabled> {/* Placeholder */}
