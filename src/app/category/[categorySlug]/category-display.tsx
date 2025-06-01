@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { sampleLots, getCategoryNameFromSlug, getCategoryAssets, getUniqueLotCategories, getUniqueLotLocations, getUniqueSellerNames, slugify } from '@/lib/sample-data';
 import type { Lot } from '@/types';
 import LotCard from '@/components/lot-card';
-import LotListItem from '@/components/lot-list-item'; // Import the new component
+import LotListItem from '@/components/lot-list-item';
 import SidebarFilters from '@/components/sidebar-filters';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -32,29 +32,36 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
 
   useEffect(() => {
     setIsLoading(true);
-    let foundCategoryName: string | undefined = undefined;
-    let lotsForCategory: Lot[] = [];
+    let tempCategoryName: string | undefined = undefined;
+    let tempFilteredLots: Lot[] = [];
 
     if (categorySlug) {
-      const potentialCategoryName = getCategoryNameFromSlug(categorySlug);
-      lotsForCategory = sampleLots.filter(lot => lot.type && slugify(lot.type) === categorySlug);
+      // Filtra os lotes cujo 'type' (após slugify) corresponde ao categorySlug da URL
+      tempFilteredLots = sampleLots.filter(lot => lot.type && slugify(lot.type) === categorySlug);
 
-      if (lotsForCategory.length > 0) {
-        foundCategoryName = potentialCategoryName || (lotsForCategory[0]?.type);
-      } else {
-        foundCategoryName = undefined;
+      if (tempFilteredLots.length > 0) {
+        // Se lotes foram encontrados, tenta obter o nome "bonito" da categoria
+        tempCategoryName = getCategoryNameFromSlug(categorySlug);
+        
+        // Fallback: Se getCategoryNameFromSlug não encontrar (ex: pequena variação no slug),
+        // mas temos lotes, usa o 'type' do primeiro lote encontrado como nome da categoria.
+        if (!tempCategoryName && tempFilteredLots[0]?.type) {
+          tempCategoryName = tempFilteredLots[0].type;
+        }
       }
+      // Se nenhum lote foi encontrado, tempCategoryName permanecerá undefined.
     }
 
-    setCategoryName(foundCategoryName);
-    setFilteredLots(lotsForCategory);
+    setCategoryName(tempCategoryName);
+    setFilteredLots(tempFilteredLots);
     setIsLoading(false);
-  }, [categorySlug]);
+  }, [categorySlug]); // A dependência está correta
   
   const categoryAssets = useMemo(() => {
-    if (!categoryName) return getCategoryAssets(''); 
-    return getCategoryAssets(categoryName);
-  }, [categoryName]);
+    // Usa categoryName para buscar os assets. Se categoryName for undefined,
+    // getCategoryAssets ainda pode retornar defaults ou assets baseados no slug.
+    return getCategoryAssets(categoryName || categorySlug);
+  }, [categoryName, categorySlug]);
   
   const uniqueCategoriesForFilter = useMemo(() => getUniqueLotCategories(), []);
   const uniqueLocationsForFilter = useMemo(() => getUniqueLotLocations(), []);
@@ -69,11 +76,12 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     );
   }
 
+  // A condição para "Categoria Não Encontrada" é se categoryName continua undefined APÓS o useEffect.
   if (!categoryName) {
     return (
       <div className="text-center py-12">
         <h1 className="text-2xl font-bold">Categoria Não Encontrada</h1>
-        <p className="text-muted-foreground">A categoria que você está procurando não existe ou não possui lotes.</p>
+        <p className="text-muted-foreground">A categoria "{categorySlug}" que você está procurando não existe ou não possui lotes.</p>
         <Button asChild className="mt-4">
           <Link href="/">Voltar para Início</Link>
         </Button>
@@ -95,7 +103,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         <div className="relative h-48 md:h-64 w-full">
           <Image 
             src={categoryAssets.bannerUrl} 
-            alt={`Banner \${categoryName}`} 
+            alt={`Banner ${categoryName}`} 
             fill 
             className="object-cover"
             data-ai-hint={categoryAssets.bannerAiHint}
@@ -105,7 +113,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
              <div className="relative h-16 w-16 mb-3">
                  <Image 
                     src={categoryAssets.logoUrl} 
-                    alt={`Logo \${categoryName}`} 
+                    alt={`Logo ${categoryName}`} 
                     fill 
                     className="object-contain p-1 bg-white/80 rounded-full"
                     data-ai-hint={categoryAssets.logoAiHint}
@@ -186,7 +194,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
           </div>
 
           {filteredLots.length > 0 ? (
-            <div className={`grid gap-6 \${viewMode === 'card' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
+            <div className={`grid gap-6 ${viewMode === 'card' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
               {filteredLots.map((lot) => (
                 viewMode === 'card' 
                   ? <LotCard key={lot.id} lot={lot} />
