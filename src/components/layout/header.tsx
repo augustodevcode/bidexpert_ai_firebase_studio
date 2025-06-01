@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown, Eye, UserCircle, LayoutList, Tag, Home as HomeIcon, Briefcase, Users2, MessageSquareText, ShoppingBasket, Package, Tv, Percent, Handshake, FileText, History, Loader2, Bell } from 'lucide-react';
+import { Coins, Search, Menu, Heart, ChevronDown, Eye, UserCircle, LayoutList, Tag, Home as HomeIcon, Briefcase, Users2, MessageSquareText, Package, Tv, Percent, Handshake, FileText, History, Loader2, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import MainNav from './main-nav';
@@ -279,11 +279,6 @@ export default function Header() {
                 <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-primary-foreground text-primary border-primary">0</Badge>
                 <span className="sr-only">Favoritos</span>
               </Link>
-            </Button>
-            <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground sm:inline-flex hidden">
-              <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" />
-              <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-primary-foreground text-primary border-primary">0</Badge>
-              <span className="sr-only">Carrinho</span>
             </Button>
              <UserNav /> 
           </div>
