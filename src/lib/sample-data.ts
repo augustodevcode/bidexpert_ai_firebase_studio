@@ -1,5 +1,5 @@
 
-import type { Auction, Lot, AuctionStatus, LotStatus } from '@/types';
+import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus } from '@/types';
 
 const now = new Date();
 
@@ -18,6 +18,24 @@ const createPastDate = (days: number, hours: number = 0, minutes: number = 0) =>
     date.setMinutes(now.getMinutes() - minutes);
     return date;
   };
+
+export const sampleDocumentTypes: DocumentType[] = [
+  { id: 'DT001', name: 'Documento de Identidade (Frente)', description: 'Foto nítida da frente do seu RG ou CNH.', isRequired: true, allowedFormats: ['JPG', 'PNG', 'PDF'] },
+  { id: 'DT002', name: 'Documento de Identidade (Verso)', description: 'Foto nítida do verso do seu RG ou CNH.', isRequired: true, allowedFormats: ['JPG', 'PNG', 'PDF'] },
+  { id: 'DT003', name: 'CPF', description: 'Foto nítida do seu CPF (caso não conste no RG/CNH).', isRequired: false, allowedFormats: ['JPG', 'PNG', 'PDF'] },
+  { id: 'DT004', name: 'Comprovante de Residência', description: 'Conta de água, luz ou telefone recente (últimos 3 meses).', isRequired: true, allowedFormats: ['PDF', 'JPG', 'PNG'] },
+  { id: 'DT005', name: 'Certidão de Casamento (se aplicável)', description: 'Caso seja casado(a), envie a certidão.', isRequired: false, allowedFormats: ['PDF', 'JPG', 'PNG'] },
+];
+
+export const sampleUserDocuments: UserDocument[] = [
+  { id: 'UD001', documentTypeId: 'DT001', userId: 'user123', status: 'APPROVED', uploadDate: createPastDate(5), analysisDate: createPastDate(4), fileUrl: '#', documentType: sampleDocumentTypes.find(dt => dt.id === 'DT001') },
+  { id: 'UD002', documentTypeId: 'DT002', userId: 'user123', status: 'REJECTED', uploadDate: createPastDate(5), analysisDate: createPastDate(4), rejectionReason: 'Imagem ilegível. Por favor, envie uma foto com melhor qualidade.', fileUrl: '#', documentType: sampleDocumentTypes.find(dt => dt.id === 'DT002') },
+  { id: 'UD003', documentTypeId: 'DT003', userId: 'user123', status: 'NOT_SENT', documentType: sampleDocumentTypes.find(dt => dt.id === 'DT003') },
+  { id: 'UD004', documentTypeId: 'DT004', userId: 'user123', status: 'PENDING_ANALYSIS', uploadDate: createPastDate(1), fileUrl: '#', documentType: sampleDocumentTypes.find(dt => dt.id === 'DT004') },
+];
+
+export const sampleUserHabilitationStatus: UserHabilitationStatus = 'PENDING_DOCUMENTS';
+
 
 export const sampleLots: Lot[] = [
   {
@@ -354,24 +372,28 @@ export const sampleAuctions: Auction[] = [
 ];
 
 
-export const getAuctionStatusText = (status: AuctionStatus | LotStatus): string => {
+export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDocumentStatus | UserHabilitationStatus ): string => {
   switch (status) {
-    case 'ABERTO_PARA_LANCES':
-      return 'Aberto para Lances';
-    case 'EM_BREVE':
-      return 'Em Breve';
-    case 'ENCERRADO':
-      return 'Encerrado';
-    case 'FINALIZADO': 
-      return 'Finalizado';
-    case 'ABERTO': 
-      return 'Aberto';
-    case 'VENDIDO': 
-      return 'Vendido';
-    case 'NAO_VENDIDO': 
-      return 'Não Vendido';
+    case 'ABERTO_PARA_LANCES': return 'Aberto para Lances';
+    case 'EM_BREVE': return 'Em Breve';
+    case 'ENCERRADO': return 'Encerrado';
+    case 'FINALIZADO': return 'Finalizado';
+    case 'ABERTO': return 'Aberto';
+    case 'VENDIDO': return 'Vendido';
+    case 'NAO_VENDIDO': return 'Não Vendido';
+    case 'NOT_SENT': return 'Não Enviado';
+    case 'SUBMITTED': return 'Enviado';
+    case 'APPROVED': return 'Aprovado';
+    case 'REJECTED': return 'Rejeitado';
+    case 'PENDING_ANALYSIS': return 'Em Análise';
+    case 'PENDING_DOCUMENTS': return 'Documentação Pendente';
+    case 'HABILITATED': return 'Habilitado';
+    case 'REJECTED_DOCUMENTS': return 'Documentos Rejeitados';
+    case 'BLOCKED': return 'Bloqueado';
     default: {
-      return status; // Retorna o próprio status se não for um dos conhecidos
+      // For type safety, if a new status is added and not handled, this will give a hint.
+      const exhaustiveCheck: never = status;
+      return exhaustiveCheck;
       }
   }
 };
@@ -391,3 +413,37 @@ export const getLotStatusColor = (status: LotStatus): string => {
     }
   };
 
+export const getUserDocumentStatusColor = (status: UserDocumentStatus): string => {
+  switch (status) {
+    case 'APPROVED':
+      return 'bg-green-100 text-green-700 border-green-300';
+    case 'REJECTED':
+      return 'bg-red-100 text-red-700 border-red-300';
+    case 'PENDING_ANALYSIS':
+    case 'SUBMITTED':
+      return 'bg-yellow-100 text-yellow-700 border-yellow-300';
+    case 'NOT_SENT':
+    default:
+      return 'bg-gray-100 text-gray-700 border-gray-300';
+  }
+};
+
+export const getUserHabilitationStatusInfo = (status: UserHabilitationStatus): { text: string; color: string; progress: number } => {
+  switch (status) {
+    case 'PENDING_DOCUMENTS':
+      return { text: 'Documentação Pendente', color: 'bg-orange-500', progress: 25 };
+    case 'PENDING_ANALYSIS':
+      return { text: 'Documentos em Análise', color: 'bg-yellow-500', progress: 50 };
+    case 'REJECTED_DOCUMENTS':
+      return { text: 'Documentos Rejeitados', color: 'bg-red-500', progress: 75 }; // Still progress, but needs action
+    case 'HABILITATED':
+      return { text: 'Habilitado para Dar Lances', color: 'bg-green-500', progress: 100 };
+    case 'BLOCKED':
+      return { text: 'Conta Bloqueada', color: 'bg-destructive', progress: 0 };
+    default:
+      const exhaustiveCheck: never = status;
+      return { text: exhaustiveCheck, color: 'bg-gray-500', progress: 0 };
+  }
+};
+
+    

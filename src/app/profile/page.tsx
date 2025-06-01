@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Mail, MapPin, CalendarDays, Edit3, User, Phone, Briefcase, Landmark, Users, ShieldCheck, CreditCard } from 'lucide-react';
+import { Mail, MapPin, CalendarDays, Edit3, User, Phone, Briefcase, Landmark, Users, ShieldCheck, CreditCard, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 // Placeholder user data - more aligned with User entity from spec
@@ -126,7 +126,7 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Button variant="outline" asChild className="justify-start text-left h-auto py-3">
                     <Link href="/dashboard/documents">
-                        <ShieldCheck className="h-5 w-5 mr-3 text-muted-foreground" />
+                        <FileText className="h-5 w-5 mr-3 text-muted-foreground" />
                         <div>
                             <span className="font-medium">Meus Documentos e Habilitação</span>
                             <p className="text-xs text-muted-foreground">Verifique o status e envie documentos.</p>
@@ -164,3 +164,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    

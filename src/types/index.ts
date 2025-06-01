@@ -13,6 +13,30 @@ export interface AuctionStage {
 
 export type AuctionStatus = 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'ABERTO'; // Adicionado 'ABERTO'
 export type LotStatus = 'ABERTO_PARA_LANCES' | 'EM_BREVE' | 'ENCERRADO' | 'VENDIDO' | 'NAO_VENDIDO';
+export type UserDocumentStatus = 'NOT_SENT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'PENDING_ANALYSIS';
+export type UserHabilitationStatus = 'PENDING_DOCUMENTS' | 'PENDING_ANALYSIS' | 'HABILITATED' | 'REJECTED_DOCUMENTS' | 'BLOCKED';
+
+
+export interface DocumentType {
+  id: string;
+  name: string; // e.g., "Documento de Identidade (Frente)"
+  description?: string; // e.g., "Foto nítida da frente do seu RG ou CNH"
+  isRequired: boolean;
+  allowedFormats?: string[]; // e.g., ["PDF", "JPG", "PNG"]
+}
+
+export interface UserDocument {
+  id: string;
+  documentTypeId: string; // Links to DocumentType
+  userId: string; // Links to User
+  fileUrl?: string; // URL of the uploaded file
+  status: UserDocumentStatus;
+  uploadDate?: Date;
+  analysisDate?: Date;
+  analystId?: string; // User ID of the analyst
+  rejectionReason?: string;
+  documentType?: DocumentType; // Populated for convenience
+}
 
 
 export interface Lot {
@@ -106,3 +130,5 @@ export interface Auction {
   sellingBranch?: string; // e.g., "Englishtown (NJ)"
   vehicleLocation?: string; // e.g., "At the branch" - Se for o mesmo para todos. Caso contrário, no Lot.
 }
+
+    
