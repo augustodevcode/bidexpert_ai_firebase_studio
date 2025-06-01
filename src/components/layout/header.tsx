@@ -1,6 +1,8 @@
 
+'use client';
+
 import Link from 'next/link';
-import { Coins, Search, UserCircle2, Menu, ShoppingCart, Heart } from 'lucide-react';
+import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import MainNav from './main-nav';
@@ -9,10 +11,24 @@ import {
   Sheet,
   SheetContent,
   SheetTrigger,
-} from "@/components/ui/sheet"
+} from "@/components/ui/sheet";
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { getUniqueLotCategories, slugify } from '@/lib/sample-data'; // Importar slugify
+import { useEffect, useState } from 'react';
 
 export default function Header() {
+  const [lotCategories, setLotCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    setLotCategories(getUniqueLotCategories());
+  }, []);
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-20 items-center">
@@ -80,23 +96,29 @@ export default function Header() {
         </div>
       </div>
       <div className="border-t bg-primary/90 text-primary-foreground hidden md:block">
-        <div className="container flex h-12 items-center justify-between">
+        <div className="container flex h-12 items-center">
             <div className="flex items-center gap-2">
-                <Button variant="ghost" className="text-sm font-medium hover:bg-primary/80">
-                    <Menu className="mr-2 h-5 w-5" /> Todos os Departamentos
-                </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="text-sm font-medium hover:bg-primary/80">
+                    <Menu className="mr-2 h-5 w-5" /> Categorias <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="bg-primary text-primary-foreground">
+                  {lotCategories.map((category) => (
+                    <DropdownMenuItem key={category} asChild className="hover:bg-primary/80 focus:bg-primary/70 cursor-pointer">
+                      <Link href={`/search?category=${slugify(category)}`}>{category}</Link>
+                    </DropdownMenuItem>
+                  ))}
+                   {lotCategories.length === 0 && <DropdownMenuItem disabled>Nenhuma categoria</DropdownMenuItem>}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            <nav className="flex items-center space-x-6 text-sm font-medium">
-                <Link href="/shop" className="hover:underline">Loja</Link>
-                <Link href="/pages" className="hover:underline">Páginas</Link>
-                <Link href="/electronics" className="hover:underline">Eletrônicos</Link>
-                <Link href="/blog" className="hover:underline">Blog</Link>
-                <Link href="/become-vendor" className="hover:underline">Seja um Vendedor</Link>
-                <Link href="/flash-deals" className="hover:underline">Ofertas Relâmpago</Link>
+            <nav className="flex items-center space-x-6 text-sm font-medium ml-auto">
+                <Link href="/sell-with-us" className="hover:underline">Venda Conosco</Link>
+                <Link href="/sellers" className="hover:underline">Comitentes</Link>
+                <Link href="/contact" className="hover:underline">Fale Conosco</Link>
             </nav>
-            <div>
-                {/* Placeholder for Recently Viewed or other right-aligned nav items */}
-            </div>
         </div>
       </div>
     </header>

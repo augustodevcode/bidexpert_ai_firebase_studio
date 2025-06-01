@@ -55,7 +55,7 @@ export const sampleLots: Lot[] = [
     ],
     status: 'ABERTO_PARA_LANCES',
     location: 'TEOTÔNIO VILELA - AL',
-    type: 'CASA',
+    type: 'Imóvel Residencial',
     views: 1018,
     auctionName: 'Leilão Único Bradesco',
     price: 45000,
@@ -117,7 +117,7 @@ export const sampleLots: Lot[] = [
     ],
     status: 'ABERTO_PARA_LANCES',
     location: 'São Paulo - SP',
-    type: 'Automóvel',
+    type: 'Veículo de Passeio',
     views: 1560,
     auctionName: 'Leilão de Veículos Premium',
     price: 68500, // Lance atual
@@ -165,7 +165,7 @@ export const sampleLots: Lot[] = [
     dataAiHint: 'apartamento predio residencial',
     status: 'ENCERRADO', // Alterado para ENCERRADO pois a data é passada
     location: 'SALVADOR - BA',
-    type: 'APARTAMENTO',
+    type: 'Imóvel Residencial',
     views: 754,
     auctionName: 'Leilão Único Bradesco',
     price: 105000, // Preço final arrematado
@@ -174,6 +174,7 @@ export const sampleLots: Lot[] = [
     isFavorite: false,
     isFeatured: false,
     description: 'Apartamento funcional no Cabula, 2 quartos, próximo a transporte público e comércio.',
+    sellerName: 'Banco Bradesco S.A.'
   },
   {
     id: 'LOTEART001',
@@ -183,7 +184,7 @@ export const sampleLots: Lot[] = [
     dataAiHint: 'pintura oleo paisagem',
     status: 'ABERTO_PARA_LANCES',
     location: 'RIO DE JANEIRO - RJ',
-    type: 'ARTE',
+    type: 'Arte e Antiguidades',
     views: 320,
     auctionName: 'Leilão de Arte e Antiguidades',
     price: 7500,
@@ -192,6 +193,7 @@ export const sampleLots: Lot[] = [
     isFavorite: true,
     isFeatured: true,
     description: 'Belíssima pintura a óleo sobre tela representando paisagem da Toscana, Itália. Artista desconhecido, atribuído ao século XIX. Moldura original.',
+    sellerName: 'Colecionador Particular RJ'
   },
   {
     id: 'LOTEVCLASS001',
@@ -205,7 +207,7 @@ export const sampleLots: Lot[] = [
     dataAiHint: 'carro classico vermelho',
     status: 'ABERTO_PARA_LANCES',
     location: 'CURITIBA - PR',
-    type: 'VEÍCULO CLÁSSICO',
+    type: 'Veículo Clássico',
     views: 1850,
     auctionName: 'Leilão de Veículos Clássicos',
     price: 250000,
@@ -214,6 +216,7 @@ export const sampleLots: Lot[] = [
     isFavorite: false,
     isFeatured: false,
     description: 'Icônico Ford Mustang Fastback 1967, motor V8 289, câmbio manual. Restaurado nos padrões originais. Placa preta de coleção.',
+    sellerName: 'Colecionador de Clássicos PR'
   },
   {
     id: 'LOTE005', 
@@ -234,7 +237,7 @@ export const sampleLots: Lot[] = [
     ],
     status: 'ABERTO_PARA_LANCES',
     location: 'RIO VERDE - GO',
-    type: 'MAQUINÁRIO',
+    type: 'Maquinário Agrícola',
     views: 305,
     auctionName: 'Leilão Online Agro',
     price: 180000,
@@ -282,7 +285,7 @@ export const sampleLots: Lot[] = [
     galleryImageUrls: ['https://placehold.co/150x100.png?text=Casa+Varanda', 'https://placehold.co/150x100.png?text=Casa+Jardim'],
     status: 'ABERTO_PARA_LANCES',
     location: 'LAURO DE FREITAS - BA',
-    type: 'CASA',
+    type: 'Imóvel Residencial',
     views: 681,
     auctionName: 'Leilão Único Bradesco',
     price: 664000,
@@ -291,6 +294,7 @@ export const sampleLots: Lot[] = [
     isFavorite: true,
     isFeatured: false,
     description: 'Espaçosa casa em Lauro de Freitas, com 4 suítes, piscina e área gourmet. Ideal para famílias.',
+    sellerName: 'Banco Bradesco S.A.'
   },
   {
     id: 'LOTE004',
@@ -300,7 +304,7 @@ export const sampleLots: Lot[] = [
     dataAiHint: 'casa terrea simples',
     status: 'EM_BREVE',
     location: 'FORTALEZA - CE',
-    type: 'CASA',
+    type: 'Imóvel Residencial',
     views: 527,
     auctionName: '1ª Praça Bradesco',
     price: 238000,
@@ -309,6 +313,7 @@ export const sampleLots: Lot[] = [
     isFavorite: true,
     isFeatured: false,
     description: 'Casa em Fortaleza, boa localização na Vila Peri. Necessita de pequenas reformas.',
+    sellerName: 'Banco Bradesco S.A.'
   },
   {
     id: 'LOTE006',
@@ -318,7 +323,7 @@ export const sampleLots: Lot[] = [
     dataAiHint: 'colheitadeira graos campo',
     status: 'ENCERRADO',
     location: 'CAMPO GRANDE - MS',
-    type: 'MAQUINÁRIO',
+    type: 'Maquinário Agrícola',
     views: 450,
     auctionName: 'Leilão Físico e Online Agro',
     price: 365000, // Preço final arrematado
@@ -327,6 +332,7 @@ export const sampleLots: Lot[] = [
     isFavorite: false,
     isFeatured: false,
     description: 'Colheitadeira John Deere S680, usada, em bom estado de funcionamento. Plataforma de corte inclusa.',
+    sellerName: 'Produtor Rural MS'
   },
     {
     id: 'LOTEART002',
@@ -336,7 +342,7 @@ export const sampleLots: Lot[] = [
     dataAiHint: 'escultura bronze pensador',
     status: 'EM_BREVE',
     location: 'SÃO PAULO - SP',
-    type: 'ESCULTURA',
+    type: 'Arte e Antiguidades',
     views: 150,
     auctionName: 'Leilão de Arte e Antiguidades',
     price: 3200,
@@ -345,6 +351,7 @@ export const sampleLots: Lot[] = [
     isFavorite: false,
     isFeatured: false,
     description: 'Réplica em bronze da famosa escultura "O Pensador" de Rodin, assinada pelo artista fundidor. Altura: 45cm.',
+    sellerName: 'Galeria de Arte SP'
   },
   {
     id: 'LOTEVCLASS002',
@@ -358,7 +365,7 @@ export const sampleLots: Lot[] = [
     dataAiHint: 'carro conversivel prata antigo',
     status: 'ABERTO_PARA_LANCES',
     location: 'BELO HORIZONTE - MG',
-    type: 'RÉPLICA CLÁSSICA',
+    type: 'Veículo Clássico',
     views: 990,
     auctionName: 'Leilão de Veículos Clássicos',
     price: 180000,
@@ -367,6 +374,7 @@ export const sampleLots: Lot[] = [
     isFavorite: true,
     isFeatured: false,
     description: 'Excelente réplica do Porsche 356 Speedster, montada com motor VW AP 1.8. Carroceria em fibra, interior em couro. Documentação regularizada.',
+    sellerName: 'Restauradora de Clássicos MG'
   },
    {
     id: 'LOTEUTIL001',
@@ -380,7 +388,7 @@ export const sampleLots: Lot[] = [
     dataAiHint: 'furgoneta branca cidade',
     status: 'ABERTO_PARA_LANCES',
     location: 'Porto Alegre - RS',
-    type: 'Utilitário',
+    type: 'Veículo Utilitário',
     views: 720,
     auctionName: 'Leilão de Veículos Premium',
     price: 55000,
@@ -389,6 +397,7 @@ export const sampleLots: Lot[] = [
     isFavorite: false,
     isFeatured: false,
     description: 'Fiat Fiorino 2019, modelo Endurance 1.4 Flex, com baú. Ideal para trabalho, baixa quilometragem. Único dono.',
+    sellerName: 'Empresa de Logística RS'
   },
 ];
 
@@ -407,7 +416,7 @@ export const sampleAuctions: Auction[] = [
     lots: sampleLots.filter(l => l.auctionId === '100625bra'),
     imageUrl: 'https://placehold.co/150x75.png?text=Leilao+Bradesco&font=roboto', 
     dataAiHint: 'logo banco leilao',
-    seller: 'Bradesco S.A.',
+    seller: 'Banco Bradesco S.A.',
     sellingBranch: 'Bradesco Matriz',
     vehicleLocation: 'Diversos Locais (ver lote)',
     auctionStages: [
@@ -430,7 +439,7 @@ export const sampleAuctions: Auction[] = [
     lots: sampleLots.filter(l => l.auctionId === '20301vei'),
     imageUrl: 'https://placehold.co/150x75.png?text=Leilao+Agro&font=roboto',
     dataAiHint: 'logo leilao agro',
-    seller: 'Diversos Comitentes',
+    seller: 'Diversos Comitentes Agro',
     sellingBranch: 'AgroLeilões Central',
     vehicleLocation: 'Pátio Central AgroLeilões',
      auctionStages: [
@@ -517,7 +526,7 @@ export const sampleAuctions: Auction[] = [
     lots: sampleLots.filter(l => l.auctionId === 'CLASSICVEH24'),
     imageUrl: 'https://placehold.co/150x75.png?text=Leilao+Classicos&font=playfair+display',
     dataAiHint: 'logo leilao classicos',
-    seller: 'Proprietários Diversos',
+    seller: 'Proprietários Diversos Clássicos',
     sellingBranch: 'Pátio Clássicos BR - Curitiba',
     vehicleLocation: 'Pátio do Leiloeiro',
     auctionStages: [
@@ -736,4 +745,38 @@ export const getUserHabilitationStatusInfo = (status: UserHabilitationStatus): {
       const exhaustiveCheck: never = status;
       return { text: exhaustiveCheck, color: 'bg-gray-500', progress: 0 };
   }
+};
+
+export const getUniqueLotCategories = (): string[] => {
+  const categories = new Set<string>();
+  sampleLots.forEach(lot => {
+    if (lot.type) { // Verifica se lot.type não é undefined
+      categories.add(lot.type);
+    }
+  });
+  return Array.from(categories).sort();
+};
+
+export const getUniqueSellers = (): string[] => {
+  const sellers = new Set<string>();
+  sampleAuctions.forEach(auction => {
+    if (auction.seller) sellers.add(auction.seller);
+    if (auction.auctioneer) sellers.add(auction.auctioneer);
+  });
+  sampleLots.forEach(lot => {
+    if (lot.sellerName) sellers.add(lot.sellerName);
+  });
+  return Array.from(sellers).sort();
+};
+
+// Helper para slugify nomes de comitentes para URLs
+export const slugify = (text: string): string => {
+  if (!text) return '';
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-') // Substitui espaços por -
+    .replace(/[^\w-]+/g, '') // Remove caracteres não alfanuméricos (exceto -)
+    .replace(/--+/g, '-'); // Substitui múltiplos - por um único -
 };
