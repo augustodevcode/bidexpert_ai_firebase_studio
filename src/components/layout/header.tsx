@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown, Eye, UserCircle, LayoutList, Tag, Home as HomeIcon, Briefcase, Users2, MessageSquareText, ShoppingBasket, Package, Tv, Percent, Handshake, FileText, History, Loader2 } from 'lucide-react';
+import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown, Eye, UserCircle, LayoutList, Tag, Home as HomeIcon, Briefcase, Users2, MessageSquareText, ShoppingBasket, Package, Tv, Percent, Handshake, FileText, History, Loader2, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import MainNav from './main-nav';
@@ -29,6 +29,7 @@ import Image from 'next/image';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/auth-context'; // Import useAuth
 
 export default function Header() {
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
@@ -43,6 +44,9 @@ export default function Header() {
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { user } = useAuth(); // Get user state from AuthContext
+
+  const placeholderNotificationsCount = 3; // Placeholder for notification count
 
   useEffect(() => {
     setIsClient(true);
@@ -61,7 +65,7 @@ export default function Header() {
     setRecentlyViewedItems(items);
 
     const allCategories = getUniqueLotCategories();
-    setSearchCategories(['Todas', ...allCategories]); // Add "Todas" option
+    setSearchCategories(['Todas', ...allCategories]);
     
     const topCategoriesForNav = allCategories.slice(0, 2);
     setDynamicCategories(
@@ -94,13 +98,12 @@ export default function Header() {
     }
 
     setIsSearchLoading(true);
-    // Simulate API call delay
     const debounceTimer = setTimeout(() => {
       const filtered = sampleLots.filter(lot => {
         const term = searchTerm.toLowerCase();
         const categoryMatch = selectedSearchCategorySlug && selectedSearchCategorySlug !== 'todas'
           ? slugify(lot.type) === selectedSearchCategorySlug
-          : true; // Match all categories if "Todas" or undefined
+          : true;
 
         const textMatch = (
           lot.title.toLowerCase().includes(term) ||
@@ -110,10 +113,10 @@ export default function Header() {
         );
         return categoryMatch && textMatch;
       });
-      setSearchResults(filtered.slice(0, 7)); // Limit results for dropdown
+      setSearchResults(filtered.slice(0, 7));
       setIsSearchDropdownOpen(true);
       setIsSearchLoading(false);
-    }, 500); // Debounce for 500ms
+    }, 500); 
 
     return () => clearTimeout(debounceTimer);
   }, [searchTerm, selectedSearchCategorySlug]);
@@ -257,6 +260,19 @@ export default function Header() {
 
 
           <div className="ml-auto flex items-center space-x-1 sm:space-x-2">
+            {user && ( // Show Bell icon only if user is logged in
+              <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground sm:inline-flex" asChild>
+                <Link href="/dashboard/notifications">
+                  <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
+                  {placeholderNotificationsCount > 0 && (
+                    <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-primary-foreground text-primary border-primary">
+                      {placeholderNotificationsCount}
+                    </Badge>
+                  )}
+                  <span className="sr-only">Notificações</span>
+                </Link>
+              </Button>
+            )}
             <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground sm:inline-flex" asChild>
               <Link href="/dashboard/favorites">
                 <Heart className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -303,7 +319,7 @@ export default function Header() {
                     <History className="h-4 w-4 text-muted-foreground" />
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {recentlyViewedItems.slice(0, 5).map(item => ( // Show max 5 items in dropdown
+                  {recentlyViewedItems.slice(0, 5).map(item => ( 
                     <DropdownMenuItem key={item.id} asChild className="cursor-pointer">
                       <Link href={`/auctions/${item.auctionId}/lots/${item.id}`} className="flex items-center gap-2 py-1.5">
                         <div className="relative h-12 w-12 flex-shrink-0 bg-muted rounded-sm overflow-hidden">
