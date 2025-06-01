@@ -19,7 +19,11 @@ const isAuthenticated = false;
 
 async function getLotData(auctionId: string, lotId: string): Promise<{ lot: Lot | undefined, auction: Auction | undefined }> {
   const auction = sampleAuctions.find(a => a.id === auctionId);
-  const lot = sampleLots.find(l => l.id === lotId && l.auctionId === auctionId);
+  if (!auction) {
+    return { lot: undefined, auction: undefined };
+  }
+  // Busca o lote diretamente dentro da lista de lotes do leilão encontrado
+  const lot = auction.lots.find(l => l.id === lotId);
   return { lot, auction };
 }
 
