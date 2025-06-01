@@ -1,28 +1,20 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { sampleAuctions, sampleLots } from '@/lib/sample-data';
-import type { Auction, Lot } from '@/types';
+import { sampleAuctions } from '@/lib/sample-data'; // sampleLots não é usado diretamente aqui
+import type { Auction } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // CardDescription não é usado
 import LotCard from '@/components/lot-card';
 import { 
-  Clock, Tag, Users, MapPin, DollarSign, User, CalendarDays, ShieldCheck, 
-  HomeIcon, ChevronRight, FileText, Heart, Eye
+  ChevronRight, FileText, Heart, Eye
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-async function getAuctionData(id: string): Promise<Auction | undefined> {
-  // Em um app real, buscaria o leilão e depois os lotes associados.
-  // Aqui, estamos pegando um leilão de exemplo e seus lotes filtrados.
-  const auction = sampleAuctions.find(auction => auction.id === id);
-  if (auction) {
-    // Certifica-se de que os lotes estão associados corretamente (já feito no sample-data)
-    // auction.lots = sampleLots.filter(lot => lot.auctionId === id);
-    // auction.totalLots = auction.lots.length;
-  }
+async function getAuctionData(auctionid: string): Promise<Auction | undefined> {
+  const auction = sampleAuctions.find(auction => auction.id === auctionid);
+  // A associação dos lotes já é feita dentro do objeto sampleAuctions
   return auction;
 }
 
@@ -32,8 +24,8 @@ const estados = [
   'Santa Catarina', 'São Paulo', 'Tocantins'
 ];
 
-export default async function AuctionLotsPage({ params }: { params: { id: string } }) {
-  const auction = await getAuctionData(params.id);
+export default async function AuctionLotsPage({ params }: { params: { auctionid: string } }) {
+  const auction = await getAuctionData(params.auctionid);
 
   if (!auction) {
     return (
@@ -57,7 +49,7 @@ export default async function AuctionLotsPage({ params }: { params: { id: string
               <div className="flex items-center text-sm text-muted-foreground mb-2">
                 <Link href="/" className="hover:text-primary">Home</Link>
                 <ChevronRight className="h-4 w-4 mx-1" />
-                <span>Leilão {auction.id}</span>
+                <span>Leilão {auction.id}</span> {/* Exibe o ID real do leilão */}
               </div>
               <div className="mb-3 space-y-0.5">
                 <p className="text-xs text-muted-foreground">
@@ -124,6 +116,6 @@ export default async function AuctionLotsPage({ params }: { params: { id: string
 // Generate static paths for sample auctions
 export async function generateStaticParams() {
   return sampleAuctions.map((auction) => ({
-    id: auction.id,
+    auctionid: auction.id, // Alterado de id para auctionid
   }));
 }
