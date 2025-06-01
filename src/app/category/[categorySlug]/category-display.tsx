@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { sampleLots, getCategoryNameFromSlug, getCategoryAssets, getUniqueLotCategories, getUniqueLotLocations, getUniqueSellerNames, slugify } from '@/lib/sample-data';
 import type { Lot } from '@/types';
 import LotCard from '@/components/lot-card';
+import LotListItem from '@/components/lot-list-item'; // Import the new component
 import SidebarFilters from '@/components/sidebar-filters';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -35,18 +36,12 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     let lotsForCategory: Lot[] = [];
 
     if (categorySlug) {
-      // Tenta obter o nome "oficial" da categoria a partir do slug
       const potentialCategoryName = getCategoryNameFromSlug(categorySlug);
-
-      // Filtra os lotes diretamente com base no slug
       lotsForCategory = sampleLots.filter(lot => lot.type && slugify(lot.type) === categorySlug);
 
       if (lotsForCategory.length > 0) {
-        // Se foram encontrados lotes, esta categoria é válida.
-        // Prioriza o nome obtido de getCategoryNameFromSlug, mas usa o tipo do primeiro lote se necessário.
         foundCategoryName = potentialCategoryName || (lotsForCategory[0]?.type);
       } else {
-        // Nenhum lote encontrado para este slug, então a categoria não existe ou não tem lotes.
         foundCategoryName = undefined;
       }
     }
@@ -57,7 +52,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
   }, [categorySlug]);
   
   const categoryAssets = useMemo(() => {
-    if (!categoryName) return getCategoryAssets(''); // Default assets
+    if (!categoryName) return getCategoryAssets(''); 
     return getCategoryAssets(categoryName);
   }, [categoryName]);
   
@@ -100,7 +95,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         <div className="relative h-48 md:h-64 w-full">
           <Image 
             src={categoryAssets.bannerUrl} 
-            alt={`Banner ${categoryName}`} 
+            alt={`Banner \${categoryName}`} 
             fill 
             className="object-cover"
             data-ai-hint={categoryAssets.bannerAiHint}
@@ -110,7 +105,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
              <div className="relative h-16 w-16 mb-3">
                  <Image 
                     src={categoryAssets.logoUrl} 
-                    alt={`Logo ${categoryName}`} 
+                    alt={`Logo \${categoryName}`} 
                     fill 
                     className="object-contain p-1 bg-white/80 rounded-full"
                     data-ai-hint={categoryAssets.logoAiHint}
@@ -191,9 +186,11 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
           </div>
 
           {filteredLots.length > 0 ? (
-            <div className={`grid gap-6 ${viewMode === 'card' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
+            <div className={`grid gap-6 \${viewMode === 'card' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
               {filteredLots.map((lot) => (
-                <LotCard key={lot.id} lot={lot} />
+                viewMode === 'card' 
+                  ? <LotCard key={lot.id} lot={lot} />
+                  : <LotListItem key={lot.id} lot={lot} />
               ))}
             </div>
           ) : (
@@ -209,4 +206,3 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     </div>
   );
 }
-
