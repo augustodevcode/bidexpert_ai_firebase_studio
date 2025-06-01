@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown, Eye, UserCircle, LayoutList, Tag, Home as HomeIcon, Briefcase, Users2, MessageSquareText, ShoppingBasket, Package, Tv, Percent, Handshake, FileText } from 'lucide-react';
+import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown, Eye, UserCircle, LayoutList, Tag, Home as HomeIcon, Briefcase, Users2, MessageSquareText, ShoppingBasket, Package, Tv, Percent, Handshake, FileText, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import MainNav from './main-nav';
@@ -55,9 +55,9 @@ export default function Header() {
     const allCategories = getUniqueLotCategories();
     setSearchCategories(allCategories);
     
-    const topCategories = allCategories.slice(0, 2); // Get first 2 for desktop header
+    const topCategoriesForNav = allCategories.slice(0, 2); // Get first 2 for desktop header nav
     setDynamicCategories(
-      topCategories.map(category => ({
+      topCategoriesForNav.map(category => ({
         href: `/category/${slugify(category)}`,
         label: category,
       }))
@@ -159,16 +159,16 @@ export default function Header() {
         <div className="container flex h-12 items-center justify-between">
           {/* Left - Breadcrumb simple */}
           <div className="flex items-center text-sm font-medium">
-            <Link href="/" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 font-medium" aria-label="Início">
+            <Link href="/" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1" aria-label="Início">
               <HomeIcon className="h-4 w-4" />
             </Link>
           </div>
 
           {/* Center - Main Links */}
-          <nav className="flex items-center space-x-3 lg:space-x-4 text-xs sm:text-sm font-medium">
-              <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">Home</Link>
-              <Link href="/sell-with-us" className="text-muted-foreground hover:text-primary transition-colors">Venda Conosco</Link>
-              <Link href="/sellers" className="text-muted-foreground hover:text-primary transition-colors">Comitentes</Link>
+          <nav className="flex items-center space-x-3 lg:space-x-4 text-xs sm:text-sm">
+              <Link href="/" className="text-muted-foreground hover:text-primary transition-colors font-medium">Home</Link>
+              <Link href="/sell-with-us" className="text-muted-foreground hover:text-primary transition-colors font-medium">Venda Conosco</Link>
+              <Link href="/sellers" className="text-muted-foreground hover:text-primary transition-colors font-medium">Comitentes</Link>
           </nav>
 
           {/* Right - Histórico de Navegação */}
@@ -181,7 +181,10 @@ export default function Header() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-80 bg-card text-card-foreground">
-                  <DropdownMenuLabel>Itens Vistos Recentemente</DropdownMenuLabel>
+                  <DropdownMenuLabel className="flex justify-between items-center">
+                    Itens Vistos Recentemente
+                    <History className="h-4 w-4 text-muted-foreground" />
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {recentlyViewedItems.map(item => (
                     <DropdownMenuItem key={item.id} asChild className="cursor-pointer">
@@ -193,14 +196,19 @@ export default function Header() {
                       </Link>
                     </DropdownMenuItem>
                   ))}
-                  {recentlyViewedItems.length === 0 && ( /* This case should ideally not be reached if the parent condition is true */
-                    <DropdownMenuItem disabled>Nenhum item visto recentemente.</DropdownMenuItem>
-                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/dashboard/history" className="flex items-center justify-center text-primary hover:underline text-xs py-1">
+                      Ver Histórico Completo
+                    </Link>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
              {isClient && recentlyViewedItems.length === 0 && (
-                <span className="text-sm text-muted-foreground font-medium">Histórico de Navegação</span>
+                <Link href="/dashboard/history" className="text-sm text-muted-foreground hover:text-primary font-medium">
+                    Histórico de Navegação
+                </Link>
             )}
           </div>
         </div>
@@ -208,4 +216,3 @@ export default function Header() {
     </header>
   );
 }
-
