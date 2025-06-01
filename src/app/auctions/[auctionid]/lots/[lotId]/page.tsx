@@ -1,4 +1,6 @@
 
+'use client'; // Adicionado 'use client' para usar useEffect
+
 import type { Lot, Auction } from '@/types';
 import { sampleLots, sampleAuctions } from '@/lib/sample-data';
 import Image from 'next/image';
@@ -14,6 +16,8 @@ import {
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
+import { useEffect } from 'react'; // Importado useEffect
+import { addRecentlyViewedId } from '@/lib/recently-viewed-store'; // Importada a função
 
 // Simula o estado de autenticação. Em um app real, viria de um contexto/hook.
 const isAuthenticated = false; 
@@ -23,13 +27,38 @@ async function getLotData(auctionId: string, lotId: string): Promise<{ lot: Lot 
   if (!auction) {
     return { lot: undefined, auction: undefined };
   }
-  // Busca o lote diretamente dentro da lista de lotes do leilão encontrado
   const lot = auction.lots.find(l => l.id === lotId);
   return { lot, auction };
 }
 
-export default async function LotDetailPage({ params }: { params: { auctionid: string, lotId: string } }) {
-  const { lot, auction } = await getLotData(params.auctionid, params.lotId);
+export default function LotDetailPage({ params }: { params: { auctionid: string, lotId: string } }) {
+  const [lot, setLot] = React.useState<Lot | undefined>(undefined);
+  const [auction, setAuction] = React.useState<Auction | undefined>(undefined);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true);
+      const { lot: fetchedLot, auction: fetchedAuction } = await getLotData(params.auctionid, params.lotId);
+      setLot(fetchedLot);
+      setAuction(fetchedAuction);
+      setIsLoading(false);
+      if (fetchedLot) {
+        addRecentlyViewedId(fetchedLot.id); // Adiciona o lote aos vistos recentemente
+      }
+    }
+    fetchData();
+  }, [params.auctionid, params.lotId]);
+
+
+  if (isLoading) {
+    return (
+        <div className="flex justify-center items-center h-screen">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
+            <p className="ml-4 text-muted-foreground">Carregando detalhes do lote...</p>
+        </div>
+    );
+  }
 
   if (!lot || !auction) {
     return (
@@ -67,7 +96,6 @@ export default async function LotDetailPage({ params }: { params: { auctionid: s
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Coluna Principal: Imagens e Detalhes do Veículo */}
         <div className="lg:col-span-2 space-y-6">
           <Card className="shadow-lg">
             <CardContent className="p-4">
@@ -89,7 +117,7 @@ export default async function LotDetailPage({ params }: { params: { auctionid: s
               )}
               <div className="flex justify-between items-center mt-4 text-sm text-muted-foreground">
                 {lot.hasKey && <span className="flex items-center"><Key className="h-4 w-4 mr-1 text-primary"/> Chave Presente</span>}
-                <span></span> {/* Placeholder for More Actions */}
+                <span></span> 
               </div>
             </CardContent>
           </Card>
@@ -121,7 +149,7 @@ export default async function LotDetailPage({ params }: { params: { auctionid: s
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
               {Object.entries({
-                "VIN (Status):": lot.vinStatus, // Repetido conforme imagem
+                "VIN (Status):": lot.vinStatus, 
                 "Veículo:": lot.type,
                 "Estilo da Carroceria:": lot.bodyStyle,
                 "Motor:": lot.engineDetails,
@@ -150,7 +178,6 @@ export default async function LotDetailPage({ params }: { params: { auctionid: s
           </Card>
         </div>
 
-        {/* Coluna Lateral: Informações de Lance, Venda e Adicionais */}
         <div className="space-y-6">
           <Card className="shadow-md">
             <CardHeader>
@@ -190,8 +217,8 @@ export default async function LotDetailPage({ params }: { params: { auctionid: s
                 "Valor Real em Dinheiro (VCV):": lot.actualCashValue,
                 "Custo Estimado de Reparo:": lot.estimatedRepairCost,
                 "Vendedor:": lot.sellerName || auction.seller,
-                "Documento (Título/Venda):": lot.titleInfo, // Repetido conforme imagem
-                "Marca do Documento:": lot.titleBrand, // Repetido conforme imagem
+                "Documento (Título/Venda):": lot.titleInfo, 
+                "Marca do Documento:": lot.titleBrand, 
               }).map(([key, value]) => value ? <div key={key}><span className="font-medium text-foreground">{key}</span> <span className="text-muted-foreground">{value}</span></div> : null)}
             </CardContent>
           </Card>
@@ -223,11 +250,10 @@ export default async function LotDetailPage({ params }: { params: { auctionid: s
   );
 }
 
-// Generate static paths for sample lots to enable ISR or SSG if desired
 export async function generateStaticParams() {
   const paths = sampleAuctions.flatMap(auction => 
     auction.lots.map(lot => ({
-      auctionid: auction.id, // Changed from id to auctionid to match folder structure
+      auctionid: auction.id, 
       lotId: lot.id,
     }))
   );

@@ -57,100 +57,95 @@ export interface Lot {
   endDate: Date; // Data de encerramento do lote específico
   bidsCount: number;
   isFavorite?: boolean;
-  isFeatured?: boolean; // Adicionado para lotes em destaque
+  isFeatured?: boolean; 
   description?: string; // Descrição mais detalhada
   
-  // Campos detalhados do veículo (baseado na imagem)
   year?: number;
-  make?: string; // e.g., "AUDI"
-  model?: string; // e.g., "A4" (usado em sample data, compatível com modelName da OCR)
-  series?: string; // e.g., "PREMIUM PLUS"
+  make?: string; 
+  model?: string; 
+  series?: string; 
 
   stockNumber?: string;
   sellingBranch?: string;
   vin?: string;
-  vinStatus?: string; // e.g., "WAUFFAFL3DA****** (OK)"
-  lossType?: string; // e.g., "Other"
-  primaryDamage?: string; // e.g., "Front End"
-  titleInfo?: string; // e.g., "CLEAR (New Jersey)"
-  titleBrand?: string; // e.g., "REASSIGNMENT"
-  startCode?: string; // e.g., "Stationary" (com info icon)
-  hasKey?: boolean; // e.g., "Present" (com info icon)
-  odometer?: string; // e.g., "140,846 mi (Actual)"
-  airbagsStatus?: string; // e.g., "Intact"
+  vinStatus?: string; 
+  lossType?: string; 
+  primaryDamage?: string; 
+  titleInfo?: string; 
+  titleBrand?: string; 
+  startCode?: string; 
+  hasKey?: boolean; 
+  odometer?: string; 
+  airbagsStatus?: string; 
   
-  // Vehicle Description section
-  bodyStyle?: string; // e.g., "SEDAN 4 DOOR"
-  engineDetails?: string; // e.g., "2.0L I4 FI DOHC 16V NF4"
-  transmissionType?: string; // e.g., "Automatic Transmission"
-  driveLineType?: string; // e.g., "All Wheel Drive"
-  fuelType?: string; // e.g., "Flexible Fuel"
-  cylinders?: string; // e.g., "4 Cylinders"
-  restraintSystem?: string; // e.g., "Du Frnt/Sd/Hd Air Bgs/Rr Hd Ar Bgs/Act Belts"
-  exteriorInteriorColor?: string; // e.g., "Black/ Unknown"
-  options?: string; // e.g., "Console Display"
-  manufacturedIn?: string; // e.g., "Germany"
-  vehicleClass?: string; // e.g., "Compact Luxury Car"
+  bodyStyle?: string; 
+  engineDetails?: string; 
+  transmissionType?: string; 
+  driveLineType?: string; 
+  fuelType?: string; 
+  cylinders?: string; 
+  restraintSystem?: string; 
+  exteriorInteriorColor?: string; 
+  options?: string; 
+  manufacturedIn?: string; 
+  vehicleClass?: string; 
   
-  // Sale Information section
-  lotSpecificAuctionDate?: Date; // e.g., Mon Jun 2, 8:30am (CDT)
-  vehicleLocationInBranch?: string; // e.g., "At the branch"
-  laneRunNumber?: string; // e.g., "A - #112"
-  aisleStall?: string; // e.g., "BB - 222"
-  actualCashValue?: string; // e.g., "$4,000 USD"
+  lotSpecificAuctionDate?: Date; 
+  vehicleLocationInBranch?: string; 
+  laneRunNumber?: string; 
+  aisleStall?: string; 
+  actualCashValue?: string; 
   estimatedRepairCost?: string;
-  sellerName?: string; // Nome do vendedor específico do lote, se diferente do leilão
+  sellerName?: string; 
   
-  condition?: string; // "Novo", "Usado - Como Novo", etc. (Já existe no sample-data)
+  condition?: string; 
 }
 
 export interface Auction {
-  id: string; // ID do Leilão Principal, ex: "100625bra"
-  title: string; // Título principal do leilão, ex: "Leilão 100625bra" (pode ser o ID ou um nome)
-  fullTitle?: string; // Título completo do leilão, ex: "Leilão do Bradesco Imóveis Residenciais"
-  auctionDate: Date; // Data e hora do leilão principal
+  id: string; 
+  title: string; 
+  fullTitle?: string; 
+  auctionDate: Date; 
   totalLots: number;
-  status: AuctionStatus; // Status do leilão principal
-  auctioneer: string; // Leiloeiro: VICENTE PAULO - JUCEMA N° 12/96
-  category: string; // Categoria: Extrajudicial
-  auctioneerLogoUrl?: string; // URL do logo do leiloeiro (Bradesco no exemplo)
+  status: AuctionStatus; 
+  auctioneer: string; 
+  category: string; 
+  auctioneerLogoUrl?: string; 
   visits?: number;
-  lots: Lot[]; // Lista de lotes pertencentes a este leilão
+  lots: Lot[]; 
 
-  description?: string; // Descrição geral do leilão, se houver
-  imageUrl?: string; // Imagem principal do leilão (se aplicável, talvez o logo do leiloeiro)
-  dataAiHint?: string; // Para imagem principal do leilão
-  seller?: string; // Nome do vendedor/comitente principal
-  initialOffer?: number; // Pode não ser aplicável no nível do leilão se os lotes têm seus próprios preços
-  auctionStages?: AuctionStage[]; // Praças do leilão principal, se houver
-  isFavorite?: boolean; // Para favoritar o leilão inteiro
+  description?: string; 
+  imageUrl?: string; 
+  dataAiHint?: string; 
+  seller?: string; 
+  initialOffer?: number; 
+  auctionStages?: AuctionStage[]; 
+  isFavorite?: boolean; 
   currentBid?: number;
-  endDate?: Date; // Data de encerramento geral do leilão (último lote)
-  bidsCount?: number; // Total de lances em todos os lotes
+  endDate?: Date; 
+  bidsCount?: number; 
   
-  // Informações que podem ser comuns a todos os lotes em um leilão
-  sellingBranch?: string; // e.g., "Englishtown (NJ)"
-  vehicleLocation?: string; // e.g., "At the branch" - Se for o mesmo para todos. Caso contrário, no Lot.
+  sellingBranch?: string; 
+  vehicleLocation?: string; 
 }
 
-// UserProfileData for displaying and editing user information
 export interface UserProfileData {
   uid: string;
-  email: string; // Usually not editable directly by user in a simple form
+  email: string; 
   fullName: string;
   cpf?: string;
   rgNumber?: string;
   rgIssuer?: string;
-  rgIssueDate?: Date | any; // Allow Firestore Timestamp
+  rgIssueDate?: Date | any; 
   rgState?: string;
-  dateOfBirth?: Date | any; // Allow Firestore Timestamp
+  dateOfBirth?: Date | any; 
   cellPhone?: string;
   homePhone?: string;
   gender?: string;
   profession?: string;
   nationality?: string;
   maritalStatus?: string;
-  propertyRegime?: string; // Regime de bens
+  propertyRegime?: string; 
   spouseName?: string;
   spouseCpf?: string;
   zipCode?: string;
@@ -159,22 +154,21 @@ export interface UserProfileData {
   complement?: string;
   neighborhood?: string;
   city?: string;
-  state?: string; // UF for address
-  status?: string; // Account status e.g., 'HABILITATED', 'REGISTERED'
+  state?: string; 
+  status?: string; 
   optInMarketing?: boolean;
-  createdAt?: Date | any; // Allow Firestore Timestamp
-  updatedAt?: Date | any; // Allow Firestore Timestamp
+  createdAt?: Date | any; 
+  updatedAt?: Date | any; 
   avatarUrl?: string;
-  dataAiHint?: string; // For avatar image
+  dataAiHint?: string; 
 
-  // Placeholders for auction activity, not directly editable here
   activeBids?: number;
   auctionsWon?: number;
   itemsSold?: number;
 }
 
 export interface UserBid {
-  id: string; // ID do lance
+  id: string; 
   lotId: string;
   auctionId: string;
   lotTitle: string;
@@ -188,12 +182,12 @@ export interface UserBid {
 }
 
 export interface UserWin {
-  id: string; // ID do arremate (pode ser o lotId se um usuário só pode arrematar um lote uma vez)
-  lot: Lot; // Dados completos do lote arrematado
+  id: string; 
+  lot: Lot; 
   winningBidAmount: number;
-  winDate: Date; // Geralmente a lot.endDate
+  winDate: Date; 
   paymentStatus: PaymentStatus;
-  invoiceUrl?: string; // Link para a nota fiscal/fatura
+  invoiceUrl?: string; 
 }
 
 export interface SellerProfileInfo {
@@ -204,4 +198,12 @@ export interface SellerProfileInfo {
   activeLotsCount: number;
   logoUrl: string; 
   dataAiHint: string;
+}
+
+export interface RecentlyViewedLotInfo {
+  id: string;
+  title: string;
+  imageUrl: string;
+  auctionId: string;
+  dataAiHint?: string;
 }

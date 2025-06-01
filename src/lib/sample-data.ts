@@ -121,8 +121,8 @@ export const sampleLots: Lot[] = [
     type: 'Veículo de Passeio',
     views: 1560,
     auctionName: 'Leilão de Veículos Premium',
-    price: 68500, // Lance atual
-    endDate: createFutureDate(5, 10), // Encerra em 5 dias e 10 horas
+    price: 68500, 
+    endDate: createFutureDate(5, 10), 
     bidsCount: 12,
     isFavorite: true,
     isFeatured: true,
@@ -164,12 +164,12 @@ export const sampleLots: Lot[] = [
     title: 'APARTAMENTO COM 54,25 M² - CABULA',
     imageUrl: 'https://placehold.co/800x600.png?text=Apto+Cabula',
     dataAiHint: 'apartamento predio residencial',
-    status: 'ENCERRADO', // Alterado para ENCERRADO pois a data é passada
+    status: 'ENCERRADO', 
     location: 'SALVADOR - BA',
     type: 'Imóvel Residencial',
     views: 754,
     auctionName: 'Leilão Único Bradesco',
-    price: 105000, // Preço final arrematado
+    price: 105000, 
     endDate: createPastDate(2),
     bidsCount: 15,
     isFavorite: false,
@@ -327,7 +327,7 @@ export const sampleLots: Lot[] = [
     type: 'Maquinário Agrícola',
     views: 450,
     auctionName: 'Leilão Físico e Online Agro',
-    price: 365000, // Preço final arrematado
+    price: 365000, 
     endDate: createPastDate(5),
     bidsCount: 12,
     isFavorite: false,
@@ -347,7 +347,7 @@ export const sampleLots: Lot[] = [
     views: 150,
     auctionName: 'Leilão de Arte e Antiguidades',
     price: 3200,
-    endDate: createFutureDate(15, 0), // Inicia em 15 dias
+    endDate: createFutureDate(15, 0), 
     bidsCount: 0,
     isFavorite: false,
     isFeatured: false,
@@ -474,13 +474,13 @@ export const sampleAuctions: Auction[] = [
     id: '15926',
     fullTitle: 'Leilão Tribunal de Justiça SP',
     title: 'Leilão Judicial Imóveis Ribeirão Preto',
-    auctionDate: createPastDate(2), // Já encerrado
+    auctionDate: createPastDate(2), 
     totalLots: 0, 
     status: 'ENCERRADO',
     auctioneer: 'Bomvalor Judicial',
     category: 'Imóveis',
     auctioneerLogoUrl: 'https://placehold.co/150x75.png?text=Logo+TJSP&font=roboto',
-    lots: [], // Se quiser popular, adicione lotes aqui e atualize totalLots
+    lots: [], 
     seller: 'Tribunal de Justiça SP',
     visits: 5000,
     imageUrl: 'https://placehold.co/150x75.png?text=Leilao+TJSP&font=roboto',
@@ -540,33 +540,33 @@ export const sampleAuctions: Auction[] = [
 export const sampleUserBids: UserBid[] = [
   {
     id: 'BID001',
-    lotId: 'LOTEVEI001', // Audi A4
+    lotId: 'LOTEVEI001', 
     auctionId: '300724car',
     lotTitle: sampleLots.find(l => l.id === 'LOTEVEI001')?.title || '',
     lotImageUrl: sampleLots.find(l => l.id === 'LOTEVEI001')?.imageUrl || '',
     lotImageAiHint: sampleLots.find(l => l.id === 'LOTEVEI001')?.dataAiHint,
     userBidAmount: 67000,
     currentLotPrice: sampleLots.find(l => l.id === 'LOTEVEI001')?.price || 0,
-    bidStatus: 'PERDENDO', // O preço do lote é 68500
-    bidDate: createPastDate(0, 2), // Lance feito há 2 horas
+    bidStatus: 'PERDENDO', 
+    bidDate: createPastDate(0, 2), 
     lotEndDate: sampleLots.find(l => l.id === 'LOTEVEI001')?.endDate || new Date(),
   },
   {
     id: 'BID002',
-    lotId: 'LOTE001', // Casa Teotônio Vilela
+    lotId: 'LOTE001', 
     auctionId: '100625bra',
     lotTitle: sampleLots.find(l => l.id === 'LOTE001')?.title || '',
     lotImageUrl: sampleLots.find(l => l.id === 'LOTE001')?.imageUrl || '',
     lotImageAiHint: sampleLots.find(l => l.id === 'LOTE001')?.dataAiHint,
     userBidAmount: 45000,
     currentLotPrice: sampleLots.find(l => l.id === 'LOTE001')?.price || 0,
-    bidStatus: 'GANHANDO', // Mesmo valor do preço do lote
-    bidDate: createPastDate(1, 0), // Lance feito ontem
+    bidStatus: 'GANHANDO', 
+    bidDate: createPastDate(1, 0), 
     lotEndDate: sampleLots.find(l => l.id === 'LOTE001')?.endDate || new Date(),
   },
   {
     id: 'BID003',
-    lotId: 'LOTE003', // Apto Cabula (Encerrado)
+    lotId: 'LOTE003', 
     auctionId: '100625bra',
     lotTitle: sampleLots.find(l => l.id === 'LOTE003')?.title || '',
     lotImageUrl: sampleLots.find(l => l.id === 'LOTE003')?.imageUrl || '',
@@ -574,12 +574,12 @@ export const sampleUserBids: UserBid[] = [
     userBidAmount: 105000,
     currentLotPrice: sampleLots.find(l => l.id === 'LOTE003')?.price || 0,
     bidStatus: 'ARREMATADO',
-    bidDate: createPastDate(2, 1), // Lance feito antes do encerramento
+    bidDate: createPastDate(2, 1), 
     lotEndDate: sampleLots.find(l => l.id === 'LOTE003')?.endDate || new Date(),
   },
     {
     id: 'BID004',
-    lotId: 'LOTEVCLASS001', // Mustang
+    lotId: 'LOTEVCLASS001', 
     auctionId: 'CLASSICVEH24',
     lotTitle: sampleLots.find(l => l.id === 'LOTEVCLASS001')?.title || '',
     lotImageUrl: sampleLots.find(l => l.id === 'LOTEVCLASS001')?.imageUrl || '',
@@ -587,7 +587,7 @@ export const sampleUserBids: UserBid[] = [
     userBidAmount: 250000,
     currentLotPrice: sampleLots.find(l => l.id === 'LOTEVCLASS001')?.price || 0,
     bidStatus: 'GANHANDO',
-    bidDate: createPastDate(0, 1), // Lance feito há 1 hora
+    bidDate: createPastDate(0, 1), 
     lotEndDate: sampleLots.find(l => l.id === 'LOTEVCLASS001')?.endDate || new Date(),
   },
 ];
@@ -595,16 +595,16 @@ export const sampleUserBids: UserBid[] = [
 export const sampleUserWins: UserWin[] = [
     {
         id: 'WIN001',
-        lot: sampleLots.find(l => l.id === 'LOTE003')!, // Apto Cabula (Encerrado e Arrematado pelo usuário)
+        lot: sampleLots.find(l => l.id === 'LOTE003')!, 
         winningBidAmount: 105000,
         winDate: sampleLots.find(l => l.id === 'LOTE003')!.endDate,
         paymentStatus: 'PAGO',
-        invoiceUrl: '/invoices/inv-lote003.pdf' // Exemplo
+        invoiceUrl: '/invoices/inv-lote003.pdf' 
     },
     {
         id: 'WIN002',
-        lot: sampleLots.find(l => l.id === 'LOTE006')!, // Colheitadeira John Deere (Encerrado)
-        winningBidAmount: 365000, // Supondo que o usuário arrematou por este valor
+        lot: sampleLots.find(l => l.id === 'LOTE006')!, 
+        winningBidAmount: 365000, 
         winDate: sampleLots.find(l => l.id === 'LOTE006')!.endDate,
         paymentStatus: 'PENDENTE',
     }
@@ -630,7 +630,6 @@ export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDoc
     case 'REJECTED_DOCUMENTS': return 'Documentos Rejeitados';
     case 'BLOCKED': return 'Bloqueado';
     default: {
-      // This will cause a compile-time error if a status is missed.
       const exhaustiveCheck: never = status;
       return exhaustiveCheck;
       }
@@ -701,7 +700,7 @@ export const getBidStatusColor = (status: UserBidStatus): string => {
     case 'GANHANDO':
       return 'bg-green-100 text-green-700 border-green-300';
     case 'ARREMATADO':
-      return 'bg-sky-100 text-sky-700 border-sky-300'; // Usando azul/sky para arrematado
+      return 'bg-sky-100 text-sky-700 border-sky-300'; 
     case 'PERDENDO':
     case 'SUPERADO':
       return 'bg-red-100 text-red-700 border-red-300';
@@ -737,7 +736,7 @@ export const getUserHabilitationStatusInfo = (status: UserHabilitationStatus): {
     case 'PENDING_ANALYSIS':
       return { text: 'Documentos em Análise', color: 'bg-yellow-500', progress: 50 };
     case 'REJECTED_DOCUMENTS':
-      return { text: 'Documentos Rejeitados', color: 'bg-red-500', progress: 75 }; // Still progress, but needs action
+      return { text: 'Documentos Rejeitados', color: 'bg-red-500', progress: 75 }; 
     case 'HABILITATED':
       return { text: 'Habilitado para Dar Lances', color: 'bg-green-500', progress: 100 };
     case 'BLOCKED':
@@ -751,23 +750,45 @@ export const getUserHabilitationStatusInfo = (status: UserHabilitationStatus): {
 export const getUniqueLotCategories = (): string[] => {
   const categories = new Set<string>();
   sampleLots.forEach(lot => {
-    if (lot.type) { // Verifica se lot.type não é undefined
+    if (lot.type) { 
       categories.add(lot.type);
     }
   });
   return Array.from(categories).sort();
 };
 
-// Helper para slugify nomes para URLs
+export const getUniqueLotLocations = (): string[] => {
+  const locations = new Set<string>();
+  sampleLots.forEach(lot => {
+    if (lot.location) {
+      locations.add(lot.location);
+    }
+  });
+  return Array.from(locations).sort();
+};
+
+export const getUniqueSellerNames = (): string[] => {
+  const sellerNames = new Set<string>();
+  sampleAuctions.forEach(auction => {
+    if (auction.seller) sellerNames.add(auction.seller);
+    if (auction.auctioneer) sellerNames.add(auction.auctioneer);
+  });
+  sampleLots.forEach(lot => {
+    if (lot.sellerName) sellerNames.add(lot.sellerName);
+  });
+  return Array.from(sellerNames).sort();
+};
+
+
 export const slugify = (text: string): string => {
   if (!text) return '';
   return text
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-') // Substitui espaços por -
-    .replace(/[^\w-]+/g, '') // Remove caracteres não alfanuméricos (exceto -)
-    .replace(/--+/g, '-'); // Substitui múltiplos - por um único -
+    .replace(/\s+/g, '-') 
+    .replace(/[^\w-]+/g, '') 
+    .replace(/--+/g, '-'); 
 };
 
 
@@ -775,9 +796,8 @@ export const getUniqueSellers = (): SellerProfileInfo[] => {
   const sellerMap = new Map<string, SellerProfileInfo>();
 
   const addSeller = (name: string | undefined) => {
-    if (!name || sellerMap.has(name)) return;
+    if (!name || sellerMap.has(slugify(name))) return;
 
-    // Simulate "memberSince" date (1-3 years ago)
     const randomYearsAgo = Math.floor(Math.random() * 3) + 1;
     const randomMonthsAgo = Math.floor(Math.random() * 12);
     const randomDaysAgo = Math.floor(Math.random() * 28);
@@ -785,15 +805,12 @@ export const getUniqueSellers = (): SellerProfileInfo[] => {
     memberSince = subMonths(memberSince, randomMonthsAgo);
     memberSince = subDays(memberSince, randomDaysAgo);
 
-    // Simulate rating (3.5 to 5.0)
     const rating = Math.round((Math.random() * 1.5 + 3.5) * 10) / 10;
-
-    // Simulate active lots count (5 to 50)
     const activeLotsCount = Math.floor(Math.random() * 46) + 5;
-    
-    const initial = name ? name.charAt(0).toUpperCase() : 'S';
+    const initial = name ? name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase() : 'S';
 
-    sellerMap.set(name, {
+
+    sellerMap.set(slugify(name), {
       name,
       slug: slugify(name),
       memberSince,
@@ -814,3 +831,4 @@ export const getUniqueSellers = (): SellerProfileInfo[] => {
 
   return Array.from(sellerMap.values()).sort((a, b) => a.name.localeCompare(b.name));
 };
+

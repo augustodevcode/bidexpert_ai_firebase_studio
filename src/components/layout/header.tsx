@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown } from 'lucide-react';
+import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown, Eye } from 'lucide-react'; // Adicionado Eye
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import MainNav from './main-nav';
@@ -18,16 +18,38 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
-import { getUniqueLotCategories, slugify } from '@/lib/sample-data'; // Importar slugify
+import { getUniqueLotCategories, slugify, sampleLots } from '@/lib/sample-data'; 
+import type { Lot, RecentlyViewedLotInfo } from '@/types';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 
 export default function Header() {
   const [lotCategories, setLotCategories] = useState<string[]>([]);
+  const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     setLotCategories(getUniqueLotCategories());
+    
+    const viewedIds = getRecentlyViewedIds();
+    const items: RecentlyViewedLotInfo[] = viewedIds.map(id => {
+      const lot = sampleLots.find(l => l.id === id);
+      return lot ? { 
+        id: lot.id, 
+        title: lot.title, 
+        imageUrl: lot.imageUrl, 
+        auctionId: lot.auctionId,
+        dataAiHint: lot.dataAiHint 
+      } : null;
+    }).filter(item => item !== null) as RecentlyViewedLotInfo[];
+    setRecentlyViewedItems(items);
   }, []);
+
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -80,6 +102,34 @@ export default function Header() {
                <span className="sr-only">Buscar</span>
             </Button>
           </form>
+
+          {isClient && recentlyViewedItems.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="hidden md:inline-flex text-xs">
+                  <Eye className="mr-1 h-4 w-4" /> Vistos Recentemente <ChevronDown className="ml-1 h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel>Itens Vistos Recentemente</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {recentlyViewedItems.map(item => (
+                  <DropdownMenuItem key={item.id} asChild className="cursor-pointer">
+                    <Link href={`/auctions/${item.auctionId}/lots/${item.id}`} className="flex items-center gap-2 py-1.5">
+                      <div className="relative h-10 w-10 flex-shrink-0 bg-muted rounded-sm overflow-hidden">
+                        <Image src={item.imageUrl} alt={item.title} fill className="object-cover" data-ai-hint={item.dataAiHint || "item visto recentemente"}/>
+                      </div>
+                      <span className="text-xs truncate flex-grow">{item.title}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+                {recentlyViewedItems.length === 0 && (
+                    <DropdownMenuItem disabled>Nenhum item visto recentemente.</DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
           <Button variant="ghost" size="icon" className="relative hidden md:inline-flex">
             <Heart className="h-6 w-6" />
             <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs">0</Badge>
