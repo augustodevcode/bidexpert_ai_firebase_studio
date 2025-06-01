@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown, Eye, Tag, LayoutList } from 'lucide-react'; // Adicionado LayoutList, Tag
+import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown, Eye, Tag, LayoutList, Home } from 'lucide-react'; // Added Home
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import MainNav from './main-nav';
@@ -78,7 +78,6 @@ export default function Header() {
                   <span>BidExpert</span>
                 </Link>
                 <nav className="flex flex-col gap-1 px-4">
-                  {/* MainNav for mobile drawer */}
                   <MainNav className="flex-col items-start space-x-0 space-y-0" />
                   <div className="mt-auto pt-4 border-t">
                     <UserNav />
@@ -112,12 +111,12 @@ export default function Header() {
         </div>
 
         <div className="ml-auto flex items-center space-x-1 sm:space-x-2">
-          <Button variant="ghost" size="icon" className="relative hidden sm:inline-flex">
+          <Button variant="ghost" size="icon" className="relative sm:inline-flex">
             <Heart className="h-5 w-5 sm:h-6 sm:w-6" />
             <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs">0</Badge>
             <span className="sr-only">Favoritos</span>
           </Button>
-           <Button variant="ghost" size="icon" className="relative hidden sm:inline-flex">
+           <Button variant="ghost" size="icon" className="relative sm:inline-flex">
             <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" />
              <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs">0</Badge>
             <span className="sr-only">Carrinho</span>
