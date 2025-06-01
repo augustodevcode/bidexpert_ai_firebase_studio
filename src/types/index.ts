@@ -131,4 +131,42 @@ export interface Auction {
   vehicleLocation?: string; // e.g., "At the branch" - Se for o mesmo para todos. Caso contrário, no Lot.
 }
 
-    
+// UserProfileData for displaying and editing user information
+export interface UserProfileData {
+  uid: string;
+  email: string; // Usually not editable directly by user in a simple form
+  fullName: string;
+  cpf?: string;
+  rgNumber?: string;
+  rgIssuer?: string;
+  rgIssueDate?: Date | any; // Allow Firestore Timestamp
+  rgState?: string;
+  dateOfBirth?: Date | any; // Allow Firestore Timestamp
+  cellPhone?: string;
+  homePhone?: string;
+  gender?: string;
+  profession?: string;
+  nationality?: string;
+  maritalStatus?: string;
+  propertyRegime?: string; // Regime de bens
+  spouseName?: string;
+  spouseCpf?: string;
+  zipCode?: string;
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string; // UF for address
+  status?: string; // Account status e.g., 'HABILITATED', 'REGISTERED'
+  optInMarketing?: boolean;
+  createdAt?: Date | any; // Allow Firestore Timestamp
+  updatedAt?: Date | any; // Allow Firestore Timestamp
+  avatarUrl?: string;
+  dataAiHint?: string; // For avatar image
+
+  // Placeholders for auction activity, not directly editable here
+  activeBids?: number;
+  auctionsWon?: number;
+  itemsSold?: number;
+}
