@@ -31,13 +31,14 @@ import {
 import { format, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
-import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
+import { getAuctionStatusText, getLotStatusColor, sampleLots } from '@/lib/sample-data'; // Importar sampleLots
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from '@/hooks/use-toast'; // Importar useToast
 
 interface LotCardProps {
   lot: Lot;
@@ -48,6 +49,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const [isPast, setIsPast]   = useState<boolean>(false);
   const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`);
+  const { toast } = useToast(); // Inicializar useToast
 
 
   useEffect(() => {
@@ -55,6 +57,11 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
       setLotDetailUrl(`${window.location.origin}/auctions/${lot.auctionId}/lots/${lot.id}`);
     }
   }, [lot.auctionId, lot.id]);
+
+  // Sincroniza o estado local com a prop lot.isFavorite
+  useEffect(() => {
+    setIsFavorite(lot.isFavorite || false);
+  }, [lot.isFavorite]);
 
   useEffect(() => {
     const calculateTimeRemaining = () => {
@@ -101,7 +108,19 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
   const handleFavoriteToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsFavorite(!isFavorite);
+    const newFavoriteState = !isFavorite;
+    setIsFavorite(newFavoriteState); // Atualiza o estado local imediatamente
+
+    // Atualiza a "fonte da verdade" (sampleLots)
+    const lotInSampleData = sampleLots.find(l => l.id === lot.id);
+    if (lotInSampleData) {
+      lotInSampleData.isFavorite = newFavoriteState;
+    }
+    
+    toast({
+      title: newFavoriteState ? "Adicionado aos Favoritos" : "Removido dos Favoritos",
+      description: `O lote "${lot.title}" foi ${newFavoriteState ? 'adicionado à' : 'removido da'} sua lista.`,
+    });
   };
   
   const getSocialLink = (platform: 'x' | 'facebook' | 'whatsapp' | 'email', url: string, title: string) => {

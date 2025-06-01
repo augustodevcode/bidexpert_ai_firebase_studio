@@ -23,6 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { sampleLots } from '@/lib/sample-data'; // Importar sampleLots
 
 // Simula o estado de autenticação. Em um app real, viria de um contexto/hook.
 const isAuthenticated = false; 
@@ -45,20 +46,26 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
     if (typeof window !== 'undefined') {
       setCurrentUrl(window.location.href);
     }
-    // Este efeito roda apenas no cliente.
-    // Garante que 'lot' e 'lot.id' existam antes de tentar adicionar ao histórico.
     if (lot && lot.id) {
-      addRecentlyViewedId(lot.id); // Adiciona o lote aos vistos recentemente
+      addRecentlyViewedId(lot.id);
     }
-    // Atualiza o estado de favorito quando o lote mudar
     setIsLotFavorite(lot?.isFavorite || false);
-  }, [lot]); // Depende do objeto 'lot' completo.
+  }, [lot]); 
+
+  const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || lot?.title}`.trim();
 
   const handleToggleFavorite = () => {
-    setIsLotFavorite(prev => !prev);
+    const newFavoriteState = !isLotFavorite;
+    setIsLotFavorite(newFavoriteState);
+
+    const lotInSampleData = sampleLots.find(l => l.id === lot.id);
+    if (lotInSampleData) {
+      lotInSampleData.isFavorite = newFavoriteState;
+    }
+
     toast({
-      title: !isLotFavorite ? "Adicionado aos Favoritos" : "Removido dos Favoritos",
-      description: `O lote "${lotTitle}" foi ${!isLotFavorite ? 'adicionado à' : 'removido da'} sua lista.`,
+      title: newFavoriteState ? "Adicionado aos Favoritos" : "Removido dos Favoritos",
+      description: `O lote "${lotTitle}" foi ${newFavoriteState ? 'adicionado à' : 'removido da'} sua lista.`,
     });
   };
   
@@ -83,7 +90,6 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
     }
   };
 
-  const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || lot?.title}`.trim();
   const currentBidLabel = lot?.bidsCount && lot.bidsCount > 0 ? "Lance Atual" : "Lance Inicial";
   const currentBidValue = lot?.price || 0;
 

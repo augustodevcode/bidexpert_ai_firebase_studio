@@ -7,13 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Heart, Eye, XCircle, AlertCircle } from 'lucide-react';
-import { sampleLots, getLotStatusColor, getAuctionStatusText } from '@/lib/sample-data'; // Usaremos getAuctionStatusText
+import { sampleLots, getLotStatusColor, getAuctionStatusText } from '@/lib/sample-data'; // Usaremos getAuctionStatusText e sampleLots
 import type { Lot } from '@/types';
 import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast'; // Importar useToast
 
 export default function FavoriteLotsPage() {
   const [favoriteLots, setFavoriteLots] = useState<Lot[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const { toast } = useToast(); // Inicializar useToast
 
   useEffect(() => {
     setIsClient(true);
@@ -23,9 +25,21 @@ export default function FavoriteLotsPage() {
   }, []);
 
   const handleRemoveFavorite = (lotId: string) => {
-    // Simula a remoção dos favoritos (apenas no estado local para o protótipo)
+    const lotToRemove = favoriteLots.find(lot => lot.id === lotId);
+    
+    // Atualiza o estado local para remover o card da UI da página de favoritos
     setFavoriteLots(prev => prev.filter(lot => lot.id !== lotId));
-    // Em um app real, você chamaria uma API para atualizar o status de favorito do usuário
+
+    // Tenta atualizar o sampleLots em memória
+    const lotInSampleData = sampleLots.find(l => l.id === lotId);
+    if (lotInSampleData) {
+      lotInSampleData.isFavorite = false;
+    }
+    
+    toast({
+      title: "Removido dos Favoritos",
+      description: `O lote "${lotToRemove?.title || 'Selecionado'}" foi removido da sua lista.`,
+    });
     console.log(`Lote ${lotId} removido dos favoritos (simulação).`);
   };
 
@@ -143,3 +157,4 @@ export default function FavoriteLotsPage() {
     </div>
   );
 }
+
