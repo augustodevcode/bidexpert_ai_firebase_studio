@@ -33,7 +33,7 @@ export default function LotDetailClientContent({ lot, auction }: LotDetailClient
 
   useEffect(() => {
     // Este efeito roda apenas no cliente.
-    if (lot && lot.id) { // Adiciona verificação para lot.id também
+    if (lot && lot.id) { // Adiciona verificação para lot e lot.id
       addRecentlyViewedId(lot.id); // Adiciona o lote aos vistos recentemente
     }
   }, [lot?.id]); // Depende especificamente de lot.id
@@ -227,6 +227,3 @@ export default function LotDetailClientContent({ lot, auction }: LotDetailClient
     </div>
   );
 }
-
-
-    
