@@ -2,7 +2,7 @@
 'use client';
 
 const RECENTLY_VIEWED_KEY = 'recentlyViewedLots';
-const MAX_RECENTLY_VIEWED = 5;
+const MAX_RECENTLY_VIEWED = 10; // Updated to 10
 
 export function getRecentlyViewedIds(): string[] {
   if (typeof window === 'undefined') {

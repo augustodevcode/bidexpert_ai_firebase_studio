@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { getUniqueLotCategories, slugify } from '@/lib/sample-data';
-import { Home, Search, Building, Users, MessageSquareText, Tag, PlusCircle, ShoppingBasket, LayoutList } from 'lucide-react'; // Adicionado LayoutList
+import { Home, Search as SearchIcon, Building, Users, MessageSquareText, Tag, PlusCircle, ShoppingBasket, LayoutList, FileText, Package, Tv, Percent, Handshake, Eye } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface NavItem {
@@ -25,27 +25,32 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
     const categoryNavItems: NavItem[] = topCategories.map(category => ({
       href: `/category/${slugify(category)}`,
       label: category,
-      icon: <Tag className="h-4 w-4" /> 
+      icon: <Tag className="h-4 w-4" />
     }));
 
+    // Reflecting the new header structure for mobile menu
     const baseNavItems: NavItem[] = [
-      { href: '/', label: 'Início', icon: <Home className="h-4 w-4" /> },
-      { href: '/search', label: 'Todos os Lotes', icon: <LayoutList className="h-4 w-4" /> }, // Ícone atualizado
-      ...categoryNavItems,
-      { href: '/auctions/create', label: 'Criar Leilão', icon: <PlusCircle className="h-4 w-4" /> },
-      { href: '/sell-with-us', label: 'Venda Conosco', icon: <ShoppingBasket className="h-4 w-4" /> },
+      { href: '/', label: 'Home', icon: <Home className="h-4 w-4" /> },
+      { href: '/search', label: 'Shop (Todos os Lotes)', icon: <LayoutList className="h-4 w-4" /> },
+      { href: '#', label: 'Pages (Exemplo)', icon: <FileText className="h-4 w-4" /> }, // Placeholder
+      ...categoryNavItems, // Main lot categories
+      { href: '#', label: 'Electronics Devices (Exemplo)', icon: <Tv className="h-4 w-4" /> }, // Placeholder
+      { href: '#', label: 'Blog (Exemplo)', icon: <Package className="h-4 w-4" /> }, // Placeholder
+      { href: '/sell-with-us', label: 'Become A Vendor', icon: <Handshake className="h-4 w-4" /> },
+      { href: '#', label: 'Flash Deals (Exemplo)', icon: <Percent className="h-4 w-4" /> }, // Placeholder
       { href: '/sellers', label: 'Comitentes', icon: <Building className="h-4 w-4" /> },
       { href: '/contact', label: 'Fale Conosco', icon: <MessageSquareText className="h-4 w-4" /> },
     ];
     setDynamicNavItems(baseNavItems);
   }, []);
 
+  // Render only if className includes flex-col (mobile menu context)
   if (!isClient || !className?.includes('flex-col')) {
     return null;
   }
-  
+
   if (dynamicNavItems.length === 0 && className?.includes('flex-col')) {
-      return null; // Aguarda a montagem e o useEffect popular os itens
+      return null;
   }
 
   return (
