@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart } from 'lucide-react';
+import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
@@ -58,7 +58,7 @@ export default function UserNav() {
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuContent className="w-64" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium leading-none">{userDisplayName}</p>
@@ -70,7 +70,7 @@ export default function UserNav() {
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
             <Link href="/dashboard/overview" className="flex items-center">
-              <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+              <LayoutDashboard className="mr-2 h-4 w-4" /> Visão Geral
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
@@ -78,14 +78,44 @@ export default function UserNav() {
              <UserCircle2 className="mr-2 h-4 w-4" /> Meu Perfil
             </Link>
           </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/bids" className="flex items-center">
+             <Gavel className="mr-2 h-4 w-4" /> Meus Lances
+            </Link>
+          </DropdownMenuItem>
+           <DropdownMenuItem asChild>
+            <Link href="/dashboard/wins" className="flex items-center">
+             <ShoppingBag className="mr-2 h-4 w-4" /> Meus Arremates
+            </Link>
+          </DropdownMenuItem>
            <DropdownMenuItem asChild>
             <Link href="/dashboard/favorites" className="flex items-center">
              <Heart className="mr-2 h-4 w-4" /> Lotes Favoritos
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem disabled> {/* Placeholder */}
-            <Settings className="mr-2 h-4 w-4" /> Configurações
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/documents" className="flex items-center">
+             <FileText className="mr-2 h-4 w-4" /> Meus Documentos
+            </Link>
           </DropdownMenuItem>
+           <DropdownMenuItem asChild>
+            <Link href="/dashboard/history" className="flex items-center">
+             <History className="mr-2 h-4 w-4" /> Histórico de Navegação
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/reports" className="flex items-center">
+             <BarChart className="mr-2 h-4 w-4" /> Relatórios
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/notifications" className="flex items-center">
+             <Bell className="mr-2 h-4 w-4" /> Notificações
+            </Link>
+          </DropdownMenuItem>
+          {/* <DropdownMenuItem disabled> 
+            <Settings className="mr-2 h-4 w-4" /> Configurações
+          </DropdownMenuItem> */}
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" /> Sair
