@@ -133,15 +133,16 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
                 "Modelo:": lot.model,
                 "Série:": lot.series,
               }).map(([key, value]) => value ? <div key={key}><span className="font-medium text-foreground">{key}</span> <span className="text-muted-foreground">{value}</span></div> : null)}
-            </CardContent>
+            
              {lot.description && (
                 <>
-                    <Separator className="my-4" />
-                    <CardContent>
+                    <Separator className="my-4 md:col-span-2" />
+                    <div className="md:col-span-2">
                         <p className="text-sm text-muted-foreground whitespace-pre-line">{lot.description}</p>
-                    </CardContent>
+                    </div>
                 </>
             )}
+            </CardContent>
           </Card>
         </div>
 
