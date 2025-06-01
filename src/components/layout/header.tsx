@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown, Eye, UserCircle, LayoutList, Tag, Home as HomeIcon, Briefcase, Users2, MessageSquareText, ShoppingBasket, Package, Tv, Percent, Handshake, FileText, History } from 'lucide-react';
+import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown, Eye, UserCircle, LayoutList, Tag, Home as HomeIcon, Briefcase, Users2, MessageSquareText, ShoppingBasket, Package, Tv, Percent, Handshake, FileText, History, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import MainNav from './main-nav';
@@ -23,18 +23,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { sampleLots, getUniqueLotCategories, slugify } from '@/lib/sample-data';
-import type { RecentlyViewedLotInfo } from '@/types';
-import { useEffect, useState } from 'react';
+import type { RecentlyViewedLotInfo, Lot } from '@/types';
+import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
   const [searchCategories, setSearchCategories] = useState<string[]>([]);
   const [isClient, setIsClient] = useState(false);
   const [dynamicCategories, setDynamicCategories] = useState<Array<{ href: string; label: string }>>([]);
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSearchCategorySlug, setSelectedSearchCategorySlug] = useState<string | undefined>(undefined);
+  const [searchResults, setSearchResults] = useState<Lot[]>([]);
+  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     setIsClient(true);
@@ -53,22 +61,79 @@ export default function Header() {
     setRecentlyViewedItems(items);
 
     const allCategories = getUniqueLotCategories();
-    setSearchCategories(allCategories);
+    setSearchCategories(['Todas', ...allCategories]); // Add "Todas" option
     
-    const topCategoriesForNav = allCategories.slice(0, 2); // Get first 2 for desktop header nav
+    const topCategoriesForNav = allCategories.slice(0, 2);
     setDynamicCategories(
       topCategoriesForNav.map(category => ({
         href: `/category/${slugify(category)}`,
         label: category,
       }))
     );
-
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setIsSearchDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (searchTerm.length < 3) {
+      setSearchResults([]);
+      setIsSearchDropdownOpen(false);
+      setIsSearchLoading(false);
+      return;
+    }
+
+    setIsSearchLoading(true);
+    // Simulate API call delay
+    const debounceTimer = setTimeout(() => {
+      const filtered = sampleLots.filter(lot => {
+        const term = searchTerm.toLowerCase();
+        const categoryMatch = selectedSearchCategorySlug && selectedSearchCategorySlug !== 'todas'
+          ? slugify(lot.type) === selectedSearchCategorySlug
+          : true; // Match all categories if "Todas" or undefined
+
+        const textMatch = (
+          lot.title.toLowerCase().includes(term) ||
+          (lot.description && lot.description.toLowerCase().includes(term)) ||
+          lot.auctionName.toLowerCase().includes(term) ||
+          lot.id.toLowerCase().includes(term)
+        );
+        return categoryMatch && textMatch;
+      });
+      setSearchResults(filtered.slice(0, 7)); // Limit results for dropdown
+      setIsSearchDropdownOpen(true);
+      setIsSearchLoading(false);
+    }, 500); // Debounce for 500ms
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchTerm, selectedSearchCategorySlug]);
+  
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      let query = `?term=${encodeURIComponent(searchTerm.trim())}`;
+      if (selectedSearchCategorySlug && selectedSearchCategorySlug !== 'todas') {
+        query += `&category=${selectedSearchCategorySlug}`;
+      }
+      router.push(`/search${query}`);
+      setIsSearchDropdownOpen(false);
+    }
+  };
 
 
   return (
     <header className="sticky top-0 z-50 w-full shadow-md">
-      {/* Top Bar - Orange Background */}
+      {/* Top Bar */}
       <div className="bg-primary text-primary-foreground">
         <div className="container flex h-20 items-center">
           <div className="flex items-center">
@@ -83,7 +148,7 @@ export default function Header() {
                 <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0 bg-background text-foreground">
                   <Link href="/" className="flex items-center space-x-2 text-lg font-semibold mb-4 p-6 border-b">
                     <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
-                       <AvatarImage src="https://placehold.co/40x40.png?text=BE" alt="BidExpert Logo Small" data-ai-hint="logo initial" />
+                      <AvatarImage src="https://placehold.co/40x40.png?text=BE" alt="BidExpert Logo Small" data-ai-hint="logo initial" />
                       <AvatarFallback>BE</AvatarFallback>
                     </Avatar>
                     <span className="text-primary">BidExpert</span>
@@ -110,31 +175,84 @@ export default function Header() {
           </div>
 
           {isClient && (
-            <div className="flex-1 flex justify-center items-center px-2 sm:px-4">
-              <div className="relative flex w-full max-w-xl bg-background rounded-md shadow-sm">
-                <Select defaultValue={searchCategories.length > 0 ? slugify(searchCategories[0]) : undefined}>
-                  <SelectTrigger className="w-[150px] sm:w-[180px] h-10 text-xs sm:text-sm text-muted-foreground border-r border-input rounded-l-md rounded-r-none focus:ring-0 focus:ring-offset-0 bg-secondary/20">
-                    <SelectValue placeholder="Categorias" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {searchCategories.map(cat => (
-                      <SelectItem key={slugify(cat)} value={slugify(cat)} className="text-xs sm:text-sm">
-                        {cat}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  type="search"
-                  placeholder="Buscar em 20,000+ produtos..."
-                  className="h-10 pl-3 pr-10 flex-1 rounded-l-none rounded-r-md border-l-0 focus:ring-0 focus:ring-offset-0 text-foreground placeholder:text-muted-foreground"
-                />
-                <Button type="submit" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground">
-                  <Search className="h-4 w-4" />
-                  <span className="sr-only">Buscar</span>
-                </Button>
-              </div>
-            </div>
+             <form onSubmit={handleSearchSubmit} className="flex-1 flex justify-center items-center px-2 sm:px-4">
+                <div ref={searchContainerRef} className="relative flex w-full max-w-xl bg-background rounded-md shadow-sm">
+                  <Select 
+                    value={selectedSearchCategorySlug || 'todas'}
+                    onValueChange={(value) => setSelectedSearchCategorySlug(value === 'todas' ? undefined : value)}
+                  >
+                    <SelectTrigger 
+                      className="w-[120px] sm:w-[150px] h-10 text-xs sm:text-sm text-muted-foreground border-r border-input rounded-l-md rounded-r-none focus:ring-0 focus:ring-offset-0 bg-secondary/20 truncate"
+                      aria-label="Selecionar Categoria de Busca"
+                    >
+                      <SelectValue placeholder="Categorias" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {searchCategories.map(cat => (
+                        <SelectItem 
+                          key={slugify(cat)} 
+                          value={slugify(cat)} 
+                          className="text-xs sm:text-sm"
+                        >
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="search"
+                    placeholder="Buscar em 20,000+ produtos..."
+                    className="h-10 pl-3 pr-10 flex-1 rounded-l-none rounded-r-md border-l-0 focus:ring-0 focus:ring-offset-0 text-foreground placeholder:text-muted-foreground"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onFocus={() => searchTerm.length >= 3 && setIsSearchDropdownOpen(true)}
+                  />
+                  <Button type="submit" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground">
+                    <Search className="h-4 w-4" />
+                    <span className="sr-only">Buscar</span>
+                  </Button>
+                  {isSearchDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1.5 bg-card border border-border shadow-lg rounded-md z-50 max-h-96 overflow-y-auto">
+                      {isSearchLoading && (
+                        <div className="p-4 text-center text-muted-foreground flex items-center justify-center">
+                          <Loader2 className="h-5 w-5 animate-spin mr-2" /> Buscando...
+                        </div>
+                      )}
+                      {!isSearchLoading && searchResults.length === 0 && searchTerm.length >=3 && (
+                        <div className="p-4 text-center text-muted-foreground">Nenhum lote encontrado.</div>
+                      )}
+                      {!isSearchLoading && searchResults.length > 0 && (
+                        <ul className="divide-y divide-border">
+                          {searchResults.map(lot => (
+                            <li key={lot.id}>
+                              <Link 
+                                href={`/auctions/${lot.auctionId}/lots/${lot.id}`} 
+                                className="flex items-center p-3 hover:bg-accent transition-colors"
+                                onClick={() => setIsSearchDropdownOpen(false)}
+                              >
+                                <div className="relative h-12 w-16 flex-shrink-0 bg-muted rounded overflow-hidden mr-3">
+                                  <Image src={lot.imageUrl} alt={lot.title} fill className="object-cover" data-ai-hint={lot.dataAiHint || "resultado busca"} />
+                                </div>
+                                <div className="flex-grow overflow-hidden">
+                                  <p className="text-sm font-medium text-foreground truncate">{lot.title}</p>
+                                  <p className="text-xs text-primary font-semibold">
+                                    R$ {lot.price.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                                  </p>
+                                </div>
+                              </Link>
+                            </li>
+                          ))}
+                           <li className="p-2 border-t border-border">
+                            <Button variant="link" className="w-full text-sm text-primary" onClick={handleSearchSubmit}>
+                              Ver todos os resultados para "{searchTerm}"
+                            </Button>
+                          </li>
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </form>
           )}
 
 
@@ -156,24 +274,21 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Second Bar - Navigation Links - White Background */}
+      {/* Second Bar - Navigation Links */}
       <div className="border-b bg-background text-foreground hidden md:block">
         <div className="container flex h-12 items-center justify-between">
-          {/* Left - Breadcrumb simple */}
           <div className="flex items-center text-sm font-medium">
             <Link href="/" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1" aria-label="Início">
               <HomeIcon className="h-4 w-4" />
             </Link>
           </div>
 
-          {/* Center - Main Links */}
           <nav className="flex items-center space-x-3 lg:space-x-4 text-xs sm:text-sm">
               <Link href="/" className="text-muted-foreground hover:text-primary transition-colors font-medium">Home</Link>
               <Link href="/sell-with-us" className="text-muted-foreground hover:text-primary transition-colors font-medium">Venda Conosco</Link>
               <Link href="/sellers" className="text-muted-foreground hover:text-primary transition-colors font-medium">Comitentes</Link>
           </nav>
 
-          {/* Right - Histórico de Navegação */}
           <div className="flex items-center">
             {isClient && recentlyViewedItems.length > 0 && (
               <DropdownMenu>
@@ -188,7 +303,7 @@ export default function Header() {
                     <History className="h-4 w-4 text-muted-foreground" />
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {recentlyViewedItems.map(item => (
+                  {recentlyViewedItems.slice(0, 5).map(item => ( // Show max 5 items in dropdown
                     <DropdownMenuItem key={item.id} asChild className="cursor-pointer">
                       <Link href={`/auctions/${item.auctionId}/lots/${item.id}`} className="flex items-center gap-2 py-1.5">
                         <div className="relative h-12 w-12 flex-shrink-0 bg-muted rounded-sm overflow-hidden">
@@ -218,4 +333,3 @@ export default function Header() {
     </header>
   );
 }
-
