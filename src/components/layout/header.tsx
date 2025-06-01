@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown, Eye, UserCircle, LayoutList, Tag, Home as HomeIcon, Briefcase, Users2, MessageSquareText } from 'lucide-react';
+import { Coins, Search, Menu, ShoppingCart, Heart, ChevronDown, Eye, UserCircle, LayoutList, Tag, Home as HomeIcon, Briefcase, Users2, MessageSquareText, ShoppingBasket, Package, Tv, Percent, Handshake, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import MainNav from './main-nav';
@@ -34,6 +34,7 @@ export default function Header() {
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
   const [searchCategories, setSearchCategories] = useState<string[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const [dynamicCategories, setDynamicCategories] = useState<Array<{ href: string; label: string }>>([]);
 
   useEffect(() => {
     setIsClient(true);
@@ -53,6 +54,14 @@ export default function Header() {
 
     const allCategories = getUniqueLotCategories();
     setSearchCategories(allCategories);
+    
+    const topCategories = allCategories.slice(0, 2); // Get first 2 for desktop header
+    setDynamicCategories(
+      topCategories.map(category => ({
+        href: `/category/${slugify(category)}`,
+        label: category,
+      }))
+    );
 
   }, []);
 
@@ -140,7 +149,7 @@ export default function Header() {
               <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-primary-foreground text-primary border-primary">0</Badge>
               <span className="sr-only">Carrinho</span>
             </Button>
-            <UserNav /> 
+             <UserNav /> 
           </div>
         </div>
       </div>
@@ -150,16 +159,16 @@ export default function Header() {
         <div className="container flex h-12 items-center justify-between">
           {/* Left - Breadcrumb simple */}
           <div className="flex items-center text-sm font-medium">
-            <Link href="/" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+            <Link href="/" className="text-primary-foreground hover:text-primary-foreground/80 transition-colors flex items-center gap-1 font-medium">
               <HomeIcon className="h-4 w-4" /> Início
             </Link>
           </div>
 
           {/* Center - Main Links */}
           <nav className="flex items-center space-x-3 lg:space-x-4 text-xs sm:text-sm font-medium">
-              <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-              <Link href="/sell-with-us" className="hover:text-primary transition-colors">Venda Conosco</Link>
-              <Link href="/sellers" className="hover:text-primary transition-colors">Comitentes</Link>
+              <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">Home</Link>
+              <Link href="/sell-with-us" className="text-muted-foreground hover:text-primary transition-colors">Venda Conosco</Link>
+              <Link href="/sellers" className="text-muted-foreground hover:text-primary transition-colors">Comitentes</Link>
           </nav>
 
           {/* Right - Histórico de Navegação */}
@@ -191,7 +200,7 @@ export default function Header() {
               </DropdownMenu>
             )}
              {isClient && recentlyViewedItems.length === 0 && (
-                <span className="text-sm text-muted-foreground">Histórico de Navegação Vazio</span>
+                <span className="text-sm text-muted-foreground font-medium">Histórico de Navegação</span>
             )}
           </div>
         </div>
@@ -199,4 +208,3 @@ export default function Header() {
     </header>
   );
 }
-
