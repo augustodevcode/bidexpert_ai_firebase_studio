@@ -10,7 +10,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { Badge } from '../ui/badge';
+import { Badge } from '@/components/ui/badge';
 
 export default function Header() {
   return (
