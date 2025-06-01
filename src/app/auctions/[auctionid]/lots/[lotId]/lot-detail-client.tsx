@@ -15,8 +15,9 @@ import {
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 // Badge não é usado diretamente aqui, mas pode ser se você tiver badges específicas do cliente.
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { addRecentlyViewedId } from '@/lib/recently-viewed-store';
+import { useToast } from '@/hooks/use-toast';
 
 // Simula o estado de autenticação. Em um app real, viria de um contexto/hook.
 const isAuthenticated = false; 
@@ -27,12 +28,24 @@ interface LotDetailClientContentProps {
 }
 
 export default function LotDetailClientContent({ lot, auction }: LotDetailClientContentProps) {
+  const [isLotFavorite, setIsLotFavorite] = useState(lot.isFavorite || false);
+  const { toast } = useToast();
+
   useEffect(() => {
     // Este efeito roda apenas no cliente.
     if (lot) {
       addRecentlyViewedId(lot.id); // Adiciona o lote aos vistos recentemente
     }
   }, [lot]); // Dependência `lot` garante que rode se o lote mudar (embora improvável para esta página)
+
+  const handleToggleFavorite = () => {
+    setIsLotFavorite(prev => !prev);
+    // Em um app real, você faria uma chamada API aqui para atualizar o backend
+    toast({
+      title: isLotFavorite ? "Removido dos Favoritos" : "Adicionado aos Favoritos",
+      description: `O lote "${lotTitle}" foi ${isLotFavorite ? 'removido da' : 'adicionado à'} sua lista.`,
+    });
+  };
 
   const lotTitle = `${lot.year || ''} ${lot.make || ''} ${lot.model || ''} ${lot.series || lot.title}`.trim();
   const currentBidLabel = lot.bidsCount && lot.bidsCount > 0 ? "Lance Atual" : "Lance Inicial";
@@ -161,7 +174,10 @@ export default function LotDetailClientContent({ lot, auction }: LotDetailClient
                   {lot.status === 'ABERTO_PARA_LANCES' ? 'Fazer Pré-Lance' : 'Lances Encerrados'}
                 </Button>
               )}
-              <Button variant="outline" className="w-full"><Heart className="mr-2 h-4 w-4" /> Adicionar à Minha Lista</Button>
+              <Button variant="outline" className="w-full" onClick={handleToggleFavorite}>
+                <Heart className={`mr-2 h-4 w-4 ${isLotFavorite ? 'fill-red-500 text-red-500' : ''}`} /> 
+                {isLotFavorite ? 'Remover da Minha Lista' : 'Adicionar à Minha Lista'}
+              </Button>
             </CardContent>
           </Card>
 
