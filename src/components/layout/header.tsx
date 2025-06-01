@@ -159,8 +159,8 @@ export default function Header() {
         <div className="container flex h-12 items-center justify-between">
           {/* Left - Breadcrumb simple */}
           <div className="flex items-center text-sm font-medium">
-            <Link href="/" className="text-primary-foreground hover:text-primary-foreground/80 transition-colors flex items-center gap-1 font-medium">
-              <HomeIcon className="h-4 w-4" /> Início
+            <Link href="/" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 font-medium" aria-label="Início">
+              <HomeIcon className="h-4 w-4" />
             </Link>
           </div>
 
@@ -193,7 +193,7 @@ export default function Header() {
                       </Link>
                     </DropdownMenuItem>
                   ))}
-                  {recentlyViewedItems.length === 0 && (
+                  {recentlyViewedItems.length === 0 && ( /* This case should ideally not be reached if the parent condition is true */
                     <DropdownMenuItem disabled>Nenhum item visto recentemente.</DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
@@ -208,3 +208,4 @@ export default function Header() {
     </header>
   );
 }
+
