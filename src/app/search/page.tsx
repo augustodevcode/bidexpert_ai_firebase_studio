@@ -4,7 +4,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import AuctionCard from '@/components/auction-card';
 import LotCard from '@/components/lot-card';
-import SidebarFilters from '@/components/sidebar-filters'; 
+import LotListItem from '@/components/lot-list-item'; // Import LotListItem
+import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters'; 
 import { sampleAuctions, sampleLots, getUniqueLotCategories, getUniqueLotLocations, getUniqueSellerNames, slugify } from '@/lib/sample-data';
 import type { Auction, Lot } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search as SearchIcon, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { Search as SearchIcon, SlidersHorizontal, Loader2, LayoutGrid, List } from 'lucide-react'; // Added LayoutGrid and List
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const sortOptions = [
@@ -26,38 +27,117 @@ const sortOptions = [
   { value: 'views_desc', label: 'Mais Visitados' },
 ];
 
+const initialFiltersState: ActiveFilters = {
+  modality: 'TODAS',
+  category: 'TODAS',
+  priceRange: [0, 1000000],
+  locations: [],
+  sellers: [],
+  startDate: undefined,
+  endDate: undefined,
+  status: [],
+};
+
+
 export default function SearchPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchType, setSearchType] = useState<'auctions' | 'lots'>('auctions');
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [sortByAuctions, setSortByAuctions] = useState<string>('relevance');
   const [sortByLots, setSortByLots] = useState<string>('relevance');
-  
-  const allLots = useMemo(() => {
+  const [activeFilters, setActiveFilters] = useState<ActiveFilters>(initialFiltersState);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid'); // New state for view mode
+
+  const allLotsWithAuctionData = useMemo(() => {
     return sampleAuctions.flatMap(auction => 
       auction.lots.map(lot => ({ ...lot, auction })) 
     );
   }, []);
 
+  const applySharedFilters = <T extends Auction | Lot>(
+    items: T[],
+    filters: ActiveFilters,
+    itemType: 'auction' | 'lot'
+  ): T[] => {
+    return items.filter(item => {
+      // Price filter (check if item has price, otherwise skip)
+      const itemPrice = 'price' in item ? item.price : ('initialOffer' in item ? item.initialOffer : undefined);
+      if (itemPrice !== undefined && (itemPrice < filters.priceRange[0] || itemPrice > filters.priceRange[1])) {
+        return false;
+      }
+
+      // Location filter
+      if (filters.locations.length > 0) {
+        const itemLocation = 'location' in item ? item.location : (itemType === 'auction' ? (item as Auction).vehicleLocation : undefined);
+        if (!itemLocation || !filters.locations.includes(itemLocation)) return false;
+      }
+
+      // Seller filter
+      if (filters.sellers.length > 0) {
+        let sellerName: string | undefined = undefined;
+        if ('sellerName' in item && item.sellerName) sellerName = item.sellerName;
+        else if ('seller' in item && item.seller) sellerName = item.seller;
+        else if ('auctioneer' in item && item.auctioneer) sellerName = item.auctioneer;
+        
+        if (!sellerName || !filters.sellers.includes(sellerName)) return false;
+      }
+      
+      // Category filter
+      if (filters.category !== 'TODAS') {
+        const itemCategory = itemType === 'lot' ? (item as Lot).type : (item as Auction).category;
+        if (slugify(itemCategory) !== slugify(filters.category)) return false;
+      }
+
+      // Date filters (simplified for now, can be expanded)
+      if (filters.startDate) {
+        const itemDate = 'auctionDate' in item ? item.auctionDate : ('endDate' in item ? item.endDate : undefined);
+        if (!itemDate || new Date(itemDate) < filters.startDate) return false;
+      }
+      if (filters.endDate) {
+        const itemDate = 'auctionDate' in item ? item.auctionDate : ('endDate' in item ? item.endDate : undefined);
+         if (!itemDate || new Date(itemDate) > filters.endDate) return false;
+      }
+      
+      // Status filter
+      if (filters.status.length > 0) {
+        if (!item.status || !filters.status.includes(item.status as string)) return false;
+      }
+      
+      // Modality filter (placeholder logic)
+      // if (filters.modality !== 'TODAS') {
+      //   // Requires auction.modality field or similar logic
+      //   // For now, this will not filter if a modality other than 'TODAS' is selected
+      // }
+
+      return true;
+    });
+  };
+
   const baseFilteredAuctions = useMemo(() => {
-    if (!searchTerm) return sampleAuctions.slice(0, 12);
-    return sampleAuctions.filter(auction =>
-      auction.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (auction.fullTitle && auction.fullTitle.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      auction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      auction.id.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [searchTerm]);
+    let filtered = sampleAuctions;
+    if (searchTerm) {
+      filtered = sampleAuctions.filter(auction =>
+        auction.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (auction.fullTitle && auction.fullTitle.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        auction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        auction.id.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    return applySharedFilters(filtered, activeFilters, 'auction');
+  }, [searchTerm, activeFilters]);
 
   const baseFilteredLots = useMemo(() => {
-    if (!searchTerm) return allLots.slice(0, 12);
-    return allLots.filter(lot =>
-      lot.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (lot.description && lot.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      lot.auctionName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lot.id.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [searchTerm, allLots]);
+    let filtered = allLotsWithAuctionData;
+    if (searchTerm) {
+      filtered = allLotsWithAuctionData.filter(lot =>
+        lot.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (lot.description && lot.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        lot.auctionName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        lot.id.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    return applySharedFilters(filtered, activeFilters, 'lot');
+  }, [searchTerm, allLotsWithAuctionData, activeFilters]);
   
   const sortedAuctions = useMemo(() => {
     let auctionsToSort = [...baseFilteredAuctions];
@@ -129,9 +209,19 @@ export default function SearchPage() {
     return lotsToSort;
   }, [baseFilteredLots, sortByLots]);
 
-  const uniqueCategories = useMemo(() => getUniqueLotCategories(), []);
-  const uniqueLocations = useMemo(() => getUniqueLotLocations(), []);
-  const uniqueSellers = useMemo(() => getUniqueSellerNames(), []);
+  const uniqueCategoriesForFilter = useMemo(() => getUniqueLotCategories(), []);
+  const uniqueLocationsForFilter = useMemo(() => getUniqueLotLocations(), []);
+  const uniqueSellersForFilter = useMemo(() => getUniqueSellerNames(), []);
+
+  const handleFilterSubmit = (filters: ActiveFilters) => {
+    setActiveFilters(filters);
+    setIsFilterSheetOpen(false); // Close sheet on mobile after applying
+  };
+
+  const handleFilterReset = () => {
+    setActiveFilters(initialFiltersState);
+    setIsFilterSheetOpen(false); // Close sheet on mobile after resetting
+  };
 
   return (
     <div className="space-y-8">
@@ -161,9 +251,11 @@ export default function SearchPage() {
             <SheetContent side="left" className="p-0 w-[85vw] max-w-sm">
                 <div className="p-4 h-full overflow-y-auto">
                     <SidebarFilters 
-                        categories={uniqueCategories}
-                        locations={uniqueLocations}
-                        sellers={uniqueSellers}
+                        categories={uniqueCategoriesForFilter}
+                        locations={uniqueLocationsForFilter}
+                        sellers={uniqueSellersForFilter}
+                        onFilterSubmit={handleFilterSubmit}
+                        onFilterReset={handleFilterReset}
                     />
                 </div>
             </SheetContent>
@@ -174,9 +266,11 @@ export default function SearchPage() {
       <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
         <div className="hidden md:block">
             <SidebarFilters 
-                categories={uniqueCategories}
-                locations={uniqueLocations}
-                sellers={uniqueSellers}
+                categories={uniqueCategoriesForFilter}
+                locations={uniqueLocationsForFilter}
+                sellers={uniqueSellersForFilter}
+                onFilterSubmit={handleFilterSubmit}
+                onFilterReset={handleFilterReset}
             />
         </div>
         
@@ -192,26 +286,43 @@ export default function SearchPage() {
                     <p className="text-sm text-muted-foreground">
                         Mostrando {sortedAuctions.length} leilão{sortedAuctions.length !== 1 ? 's' : ''} {searchTerm && `contendo "${searchTerm}"`}
                     </p>
-                    <Select value={sortByAuctions} onValueChange={setSortByAuctions}>
-                        <SelectTrigger className="w-full sm:w-[200px] h-9 text-xs">
-                            <SelectValue placeholder="Ordenar leilões por" />
-                        </SelectTrigger>
-                        <SelectContent>
-                        {sortOptions.map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                            </SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-3">
+                        <Select value={sortByAuctions} onValueChange={setSortByAuctions}>
+                            <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs">
+                                <SelectValue placeholder="Ordenar leilões por" />
+                            </SelectTrigger>
+                            <SelectContent>
+                            {sortOptions.map(option => (
+                                <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <div className="flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground">Ver:</span>
+                            <Button
+                            variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                            size="icon" className="h-8 w-8" onClick={() => setViewMode('grid')}
+                            aria-label="Visualização em Grade"
+                            >
+                            <LayoutGrid className="h-4 w-4" />
+                            </Button>
+                            <Button
+                            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                            size="icon" className="h-8 w-8" onClick={() => setViewMode('list')}
+                            aria-label="Visualização em Lista"
+                            >
+                            <List className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
                 </div>
                 {sortedAuctions.length > 0 ? (
-                <div>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 lg:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
                     {sortedAuctions.map((auction) => (
                         <AuctionCard key={auction.id} auction={auction} />
                     ))}
-                    </div>
                 </div>
                 ) : (
                 <div className="text-center py-12 bg-secondary/30 rounded-lg">
@@ -229,26 +340,45 @@ export default function SearchPage() {
                     <p className="text-sm text-muted-foreground">
                         Mostrando {sortedLots.length} lote{sortedLots.length !== 1 ? 's' : ''} {searchTerm && `contendo "${searchTerm}"`}
                     </p>
-                    <Select value={sortByLots} onValueChange={setSortByLots}>
-                        <SelectTrigger className="w-full sm:w-[200px] h-9 text-xs">
-                            <SelectValue placeholder="Ordenar lotes por" />
-                        </SelectTrigger>
-                        <SelectContent>
-                        {sortOptions.map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                            </SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
+                     <div className="flex items-center gap-3">
+                        <Select value={sortByLots} onValueChange={setSortByLots}>
+                            <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs">
+                                <SelectValue placeholder="Ordenar lotes por" />
+                            </SelectTrigger>
+                            <SelectContent>
+                            {sortOptions.map(option => (
+                                <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <div className="flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground">Ver:</span>
+                            <Button
+                            variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                            size="icon" className="h-8 w-8" onClick={() => setViewMode('grid')}
+                            aria-label="Visualização em Grade"
+                            >
+                            <LayoutGrid className="h-4 w-4" />
+                            </Button>
+                            <Button
+                            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                            size="icon" className="h-8 w-8" onClick={() => setViewMode('list')}
+                            aria-label="Visualização em Lista"
+                            >
+                            <List className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
                 </div>
                 {sortedLots.length > 0 ? (
-                <div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4' : 'grid-cols-1'}`}>
                     {sortedLots.map((lot) => (
-                        <LotCard key={`${lot.auctionId}-${lot.id}`} lot={lot} />
+                        viewMode === 'grid' 
+                        ? <LotCard key={`${lot.auctionId}-${lot.id}`} lot={lot} />
+                        : <LotListItem key={`${lot.auctionId}-${lot.id}`} lot={lot} />
                     ))}
-                    </div>
                 </div>
                 ) : (
                 <div className="text-center py-12 bg-secondary/30 rounded-lg">
@@ -263,3 +393,4 @@ export default function SearchPage() {
     </div>
   );
 }
+
