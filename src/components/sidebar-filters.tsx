@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Calendar } from '@/components/ui/calendar';
@@ -15,30 +16,67 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+// Definindo os tipos para os filtros que serão passados
+export interface ActiveFilters {
+  modality: string;
+  category: string;
+  priceRange: [number, number];
+  locations: string[];
+  sellers: string[];
+  startDate?: Date;
+  endDate?: Date;
+  status: string[];
+}
+
 interface SidebarFiltersProps {
   categories?: string[];
   locations?: string[];
   sellers?: string[];
-  // Adicione mais props para outros tipos de filtros conforme necessário
+  modalities?: { value: string, label: string }[];
+  statuses?: { value: string, label: string }[];
+  onFilterSubmit: (filters: ActiveFilters) => void;
+  onFilterReset: () => void;
 }
 
-export default function SidebarFilters({ categories = [], locations = [], sellers = [] }: SidebarFiltersProps) {
+const defaultModalities = [
+  { value: 'TODAS', label: 'Todas' },
+  { value: 'JUDICIAL', label: 'Judicial' },
+  { value: 'EXTRAJUDICIAL', label: 'Extrajudicial' },
+  { value: 'VENDA_DIRETA', label: 'Venda Direta' },
+];
+
+const defaultStatuses = [
+  { value: 'EM_BREVE', label: 'Em Breve' },
+  { value: 'ABERTO_PARA_LANCES', label: 'Aberto para Lances' },
+  { value: 'ENCERRADO', label: 'Encerrado' },
+];
+
+
+export default function SidebarFilters({
+  categories = [],
+  locations = [],
+  sellers = [],
+  modalities = defaultModalities,
+  statuses = defaultStatuses,
+  onFilterSubmit,
+  onFilterReset,
+}: SidebarFiltersProps) {
+  const [selectedModality, setSelectedModality] = useState<string>(modalities.length > 0 ? modalities[0].value : '');
+  const [selectedCategory, setSelectedCategory] = useState<string>(categories.length > 0 ? categories[0] : 'TODAS'); // 'TODAS' as default
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [selectedSellers, setSelectedSellers] = useState<string[]>([]);
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
+  const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true); // Garante que o código que depende do window rode apenas no cliente
+    setIsClient(true);
   }, []);
   
   const handleCategoryChange = (category: string) => {
-    setSelectedCategories(prev => 
-      prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]
-    );
+    setSelectedCategory(category);
   };
 
   const handleLocationChange = (location: string) => {
@@ -53,31 +91,43 @@ export default function SidebarFilters({ categories = [], locations = [], seller
     );
   };
 
-  const applyFilters = () => {
-    // Lógica para aplicar filtros (simulada por enquanto)
-    console.log({
-      priceRange,
-      selectedCategories,
-      selectedLocations,
-      selectedSellers,
-      startDate,
-      endDate,
-    });
-    alert('Filtros aplicados (simulação)! Veja o console.');
+  const handleStatusChange = (statusValue: string) => {
+    setSelectedStatus(prev =>
+      prev.includes(statusValue) ? prev.filter(s => s !== statusValue) : [...prev, statusValue]
+    );
   };
 
-  const resetFilters = () => {
+  const applyFilters = () => {
+    const currentFilters: ActiveFilters = {
+      modality: selectedModality,
+      category: selectedCategory,
+      priceRange,
+      locations: selectedLocations,
+      sellers: selectedSellers,
+      startDate,
+      endDate,
+      status: selectedStatus,
+    };
+    onFilterSubmit(currentFilters);
+  };
+
+  const resetInternalFilters = () => {
+    setSelectedModality(modalities.length > 0 ? modalities[0].value : '');
+    setSelectedCategory(categories.length > 0 ? categories[0] : 'TODAS');
     setPriceRange([0, 500000]);
-    setSelectedCategories([]);
     setSelectedLocations([]);
     setSelectedSellers([]);
     setStartDate(undefined);
     setEndDate(undefined);
-    alert('Filtros resetados (simulação)!');
+    setSelectedStatus([]);
+  }
+
+  const handleResetFilters = () => {
+    resetInternalFilters();
+    onFilterReset(); // Chama o callback da página pai
   };
   
   if (!isClient) {
-    // Pode retornar um skeleton loader aqui se preferir
     return (
       <aside className="w-full md:w-72 lg:w-80 space-y-6 p-1">
         <div className="animate-pulse">
@@ -102,26 +152,43 @@ export default function SidebarFilters({ categories = [], locations = [], seller
         <h2 className="text-xl font-semibold flex items-center">
           <Filter className="mr-2 h-5 w-5 text-primary" /> Filtros
         </h2>
-        <Button variant="ghost" size="sm" onClick={resetFilters} className="text-xs text-muted-foreground hover:text-primary">
+        <Button variant="ghost" size="sm" onClick={handleResetFilters} className="text-xs text-muted-foreground hover:text-primary">
           <RefreshCw className="mr-1 h-3 w-3" /> Limpar
         </Button>
       </div>
 
-      <Accordion type="multiple" defaultValue={['categories', 'price']} className="w-full">
+      <Accordion type="multiple" defaultValue={['modality', 'categories', 'price']} className="w-full">
+        
+        <AccordionItem value="modality">
+          <AccordionTrigger className="text-md font-medium">Modalidade</AccordionTrigger>
+          <AccordionContent>
+            <RadioGroup value={selectedModality} onValueChange={setSelectedModality} className="space-y-1">
+              {modalities.map(modal => (
+                <div key={modal.value} className="flex items-center space-x-2">
+                  <RadioGroupItem value={modal.value} id={`mod-${modal.value}`} />
+                  <Label htmlFor={`mod-${modal.value}`} className="text-sm font-normal cursor-pointer">{modal.label}</Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </AccordionContent>
+        </AccordionItem>
+        
         {categories.length > 0 && (
             <AccordionItem value="categories">
             <AccordionTrigger className="text-md font-medium">Categorias</AccordionTrigger>
-            <AccordionContent className="space-y-2 max-h-60 overflow-y-auto pr-2">
-                {categories.map(category => (
-                <div key={category} className="flex items-center space-x-2">
-                    <Checkbox 
-                        id={`cat-${category}`} 
-                        checked={selectedCategories.includes(category)}
-                        onCheckedChange={() => handleCategoryChange(category)}
-                    />
-                    <Label htmlFor={`cat-${category}`} className="text-sm font-normal cursor-pointer">{category}</Label>
-                </div>
-                ))}
+            <AccordionContent>
+                <RadioGroup value={selectedCategory} onValueChange={handleCategoryChange} className="space-y-1 max-h-60 overflow-y-auto pr-2">
+                    <div key="TODAS" className="flex items-center space-x-2">
+                        <RadioGroupItem value="TODAS" id="cat-TODAS" />
+                        <Label htmlFor="cat-TODAS" className="text-sm font-normal cursor-pointer">Todas</Label>
+                    </div>
+                    {categories.map(category => (
+                        <div key={category} className="flex items-center space-x-2">
+                            <RadioGroupItem value={category} id={`cat-${category}`} />
+                            <Label htmlFor={`cat-${category}`} className="text-sm font-normal cursor-pointer">{category}</Label>
+                        </div>
+                    ))}
+                </RadioGroup>
             </AccordionContent>
             </AccordionItem>
         )}
@@ -130,9 +197,8 @@ export default function SidebarFilters({ categories = [], locations = [], seller
           <AccordionTrigger className="text-md font-medium">Faixa de Preço</AccordionTrigger>
           <AccordionContent className="pt-2 space-y-3">
             <Slider
-              defaultValue={[0, 500000]}
               min={0}
-              max={1000000} // Ajuste o máximo conforme seus dados
+              max={1000000}
               step={1000}
               value={priceRange}
               onValueChange={(value) => setPriceRange(value as [number, number])}
@@ -216,16 +282,36 @@ export default function SidebarFilters({ categories = [], locations = [], seller
         
         <AccordionItem value="status">
             <AccordionTrigger className="text-md font-medium">Status</AccordionTrigger>
-            <AccordionContent className="space-y-2">
-                 {['EM_BREVE', 'ABERTO_PARA_LANCES', 'ENCERRADO'].map(status => (
-                    <div key={status} className="flex items-center space-x-2">
-                        <Checkbox id={`status-${status}`} />
-                        <Label htmlFor={`status-${status}`} className="text-sm font-normal cursor-pointer">
-                            {status === 'EM_BREVE' ? 'Em Breve' : status === 'ABERTO_PARA_LANCES' ? 'Aberto para Lances' : 'Encerrado'}
+            <AccordionContent className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                 {statuses.map(statusItem => (
+                    <div key={statusItem.value} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`status-${statusItem.value}`}
+                          checked={selectedStatus.includes(statusItem.value)}
+                          onCheckedChange={() => handleStatusChange(statusItem.value)}
+                        />
+                        <Label htmlFor={`status-${statusItem.value}`} className="text-sm font-normal cursor-pointer">
+                            {statusItem.label}
                         </Label>
                     </div>
                  ))}
             </AccordionContent>
+        </AccordionItem>
+
+         {/* Placeholders for future filters */}
+        <AccordionItem value="subCategory_placeholder" disabled>
+          <AccordionTrigger className="text-md font-medium text-muted-foreground/70">Subcategoria (Em breve)</AccordionTrigger>
+          <AccordionContent><p className="text-xs text-muted-foreground">Filtro por subcategoria será adicionado aqui.</p></AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="brand_placeholder" disabled>
+          <AccordionTrigger className="text-md font-medium text-muted-foreground/70">Marca (Em breve)</AccordionTrigger>
+          <AccordionContent><p className="text-xs text-muted-foreground">Filtro por marca será adicionado aqui.</p></AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="model_placeholder" disabled>
+          <AccordionTrigger className="text-md font-medium text-muted-foreground/70">Modelo (Em breve)</AccordionTrigger>
+          <AccordionContent><p className="text-xs text-muted-foreground">Filtro por modelo será adicionado aqui.</p></AccordionContent>
         </AccordionItem>
 
       </Accordion>
@@ -234,3 +320,4 @@ export default function SidebarFilters({ categories = [], locations = [], seller
     </aside>
   );
 }
+
