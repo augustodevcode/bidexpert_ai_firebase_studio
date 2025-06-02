@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Lot } from '@/types';
+import type { Auction, Lot } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -14,7 +14,7 @@ import { useState, useEffect } from 'react';
 import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
 
 interface LotListItemProps {
-  lot: Lot;
+  lot: Auction['lots'][0];
 }
 
 export default function LotListItem({ lot }: LotListItemProps) {
@@ -73,9 +73,10 @@ export default function LotListItem({ lot }: LotListItemProps) {
 
   return (
     <Card className="w-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group overflow-hidden">
-      <div className="flex flex-col sm:flex-row">
-        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block sm:w-1/3 md:w-1/4 flex-shrink-0">
-          <div className="relative aspect-video sm:aspect-square h-full bg-muted">
+      {/* Alterado de flex-col sm:flex-row para flex-row para manter lado a lado */}
+      <div className="flex flex-row"> 
+        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block w-1/3 md:w-1/4 flex-shrink-0"> {/* Ajuste de largura para imagem */}
+          <div className="relative aspect-square h-full bg-muted"> {/* Alterado para aspect-square para consistência */}
             <Image
               src={lot.imageUrl}
               alt={lot.title}
@@ -102,18 +103,44 @@ export default function LotListItem({ lot }: LotListItemProps) {
               </Button>
             </div>
             
-            <p className="text-xs text-muted-foreground">Leilão: {lot.auctionName}</p>
+            <p className="text-sm text-muted-foreground">
+              Lote {lot.number}
+            </p>
             <div className="flex items-center text-xs text-muted-foreground">
               <MapPin className="h-3 w-3 mr-1" />
               <span>{lot.location}</span>
             </div>
             <div className="flex items-center text-xs text-muted-foreground">
               <Eye className="h-3 w-3 mr-1" />
-              <span>{lot.views} visualizações</span>
+              <span>{lot.views} Visitas</span>
+            </div>
+
+            {/* Auction Dates and Prices */}
+            <div className="flex flex-col sm:flex-row justify-between text-xs text-muted-foreground mt-3 pt-3 border-t border-dashed">
+              <div className="flex-1 pr-2">
+                <p>1ª leilão/praça</p>
+                <p>
+                  {lot.auctionDate && !isNaN(new Date(lot.auctionDate).getTime())
+                    ? format(new Date(lot.auctionDate), "dd/MM - HH:mm", { locale: ptBR })
+                    : 'Data inválida'}
+                </p>
+                <p>Inicial: R$ {lot.initialPrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 'Preço não disponível'}</p>
+              </div>
+              {lot.secondAuctionDate && lot.secondInitialPrice && (
+                <div className="flex-1 pl-2 border-l border-dashed">
+                  <p>2ª leilão/praça</p>
+                  <p>
+                    {lot.secondAuctionDate && !isNaN(new Date(lot.secondAuctionDate).getTime())
+                      ? format(new Date(lot.secondAuctionDate), "dd/MM - HH:mm", { locale: ptBR })
+                      : 'Data inválida'}
+                  </p>
+                  <p>Inicial: R$ {lot.secondInitialPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                </div>
+              )}
             </div>
           </CardContent>
 
-          <CardFooter className="p-4 border-t flex flex-col sm:flex-row items-start sm:items-end sm:justify-between gap-3">
+          <CardFooter className="p-4 border-t flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
             <div className="flex-grow">
               <p className="text-xs text-muted-foreground">{lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
               <p className={`text-xl font-bold ${isPast ? 'text-muted-foreground line-through' : 'text-primary'}`}>
@@ -130,7 +157,7 @@ export default function LotListItem({ lot }: LotListItemProps) {
                 </div>
               </div>
             </div>
-            <Button asChild className="w-full sm:w-auto mt-2 sm:mt-0" size="sm">
+            <Button asChild className="w-full md:w-auto mt-2 md:mt-0" size="sm">
               <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>Ver Detalhes</Link>
             </Button>
           </CardFooter>
