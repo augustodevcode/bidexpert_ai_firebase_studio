@@ -21,6 +21,18 @@ interface CategoryDisplayProps {
   };
 }
 
+const sortOptions = [
+  { value: 'relevance', label: 'Relevância' },
+  { value: 'lotNumber_asc', label: 'Nº Lote: Menor ao Maior' },
+  { value: 'lotNumber_desc', label: 'Nº Lote: Maior ao Menor' },
+  { value: 'endDate_asc', label: 'Data Encerramento: Próximos' },
+  { value: 'endDate_desc', label: 'Data Encerramento: Distantes' },
+  { value: 'price_asc', label: 'Preço: Menor para Maior' },
+  { value: 'price_desc', label: 'Preço: Maior para Menor' },
+  { value: 'views_desc', label: 'Mais Visitados' },
+  { value: 'id_desc', label: 'Adicionados Recentemente' } // Simula por ID
+];
+
 export default function CategoryDisplay({ params }: CategoryDisplayProps) {
   const { categorySlug } = params; 
 
@@ -29,6 +41,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
   const [categoryName, setCategoryName] = useState<string | undefined>(undefined);
   const [filteredLots, setFilteredLots] = useState<Lot[]>([]);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<string>('relevance');
 
   useEffect(() => {
     setIsLoading(true);
@@ -36,36 +49,64 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     let tempFilteredLots: Lot[] = [];
 
     if (categorySlug) {
-      // Filtra os lotes cujo 'type' (após slugify) corresponde ao categorySlug da URL
       tempFilteredLots = sampleLots.filter(lot => lot.type && slugify(lot.type) === categorySlug);
 
       if (tempFilteredLots.length > 0) {
-        // Se lotes foram encontrados, tenta obter o nome "bonito" da categoria
         tempCategoryName = getCategoryNameFromSlug(categorySlug);
-        
-        // Fallback: Se getCategoryNameFromSlug não encontrar (ex: pequena variação no slug),
-        // mas temos lotes, usa o 'type' do primeiro lote encontrado como nome da categoria.
         if (!tempCategoryName && tempFilteredLots[0]?.type) {
           tempCategoryName = tempFilteredLots[0].type;
         }
       }
-      // Se nenhum lote foi encontrado, tempCategoryName permanecerá undefined.
     }
 
     setCategoryName(tempCategoryName);
     setFilteredLots(tempFilteredLots);
     setIsLoading(false);
-  }, [categorySlug]); // A dependência está correta
+  }, [categorySlug]);
   
   const categoryAssets = useMemo(() => {
-    // Usa categoryName para buscar os assets. Se categoryName for undefined,
-    // getCategoryAssets ainda pode retornar defaults ou assets baseados no slug.
     return getCategoryAssets(categoryName || categorySlug);
   }, [categoryName, categorySlug]);
   
   const uniqueCategoriesForFilter = useMemo(() => getUniqueLotCategories(), []);
   const uniqueLocationsForFilter = useMemo(() => getUniqueLotLocations(), []);
   const uniqueSellersForFilter = useMemo(() => getUniqueSellerNames(), []);
+
+  const sortedAndFilteredLots = useMemo(() => {
+    let lotsToSort = [...filteredLots];
+    switch (sortBy) {
+      case 'lotNumber_asc':
+        lotsToSort.sort((a, b) => (parseInt(a.id.replace(/\D/g,'')) || 0) - (parseInt(b.id.replace(/\D/g,'')) || 0));
+        break;
+      case 'lotNumber_desc':
+        lotsToSort.sort((a, b) => (parseInt(b.id.replace(/\D/g,'')) || 0) - (parseInt(a.id.replace(/\D/g,'')) || 0));
+        break;
+      case 'endDate_asc':
+        lotsToSort.sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime());
+        break;
+      case 'endDate_desc':
+        lotsToSort.sort((a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime());
+        break;
+      case 'price_asc':
+        lotsToSort.sort((a, b) => a.price - b.price);
+        break;
+      case 'price_desc':
+        lotsToSort.sort((a, b) => b.price - a.price);
+        break;
+      case 'views_desc':
+        lotsToSort.sort((a, b) => (b.views || 0) - (a.views || 0));
+        break;
+      case 'id_desc': // Simula "Adicionados Recentemente"
+        lotsToSort.sort((a, b) => (parseInt(b.id.replace(/\D/g,'')) || 0) - (parseInt(a.id.replace(/\D/g,'')) || 0));
+        break;
+      case 'relevance':
+      default:
+        // Mantém a ordem original ou pode-se adicionar uma lógica padrão aqui
+        break;
+    }
+    return lotsToSort;
+  }, [filteredLots, sortBy]);
+
 
   if (isLoading) {
     return (
@@ -76,7 +117,6 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     );
   }
 
-  // A condição para "Categoria Não Encontrada" é se categoryName continua undefined APÓS o useEffect.
   if (!categoryName) {
     return (
       <div className="text-center py-12">
@@ -137,7 +177,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         <main className="space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-card border rounded-lg shadow-sm">
             <p className="text-sm text-muted-foreground">
-              Mostrando {filteredLots.length} lote{filteredLots.length !== 1 ? 's' : ''} em <span className="font-semibold text-foreground">{categoryName}</span>
+              Mostrando {sortedAndFilteredLots.length} lote{sortedAndFilteredLots.length !== 1 ? 's' : ''} em <span className="font-semibold text-foreground">{categoryName}</span>
             </p>
             <div className="flex items-center gap-3">
               <div className="md:hidden">
@@ -158,15 +198,16 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
                   </SheetContent>
                 </Sheet>
               </div>
-              <Select defaultValue="relevance">
-                <SelectTrigger className="w-[150px] h-9 text-xs">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-[180px] h-9 text-xs">
                   <SelectValue placeholder="Ordenar por" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="relevance">Relevância</SelectItem>
-                  <SelectItem value="price_asc">Preço: Menor</SelectItem>
-                  <SelectItem value="price_desc">Preço: Maior</SelectItem>
-                  <SelectItem value="ending_soon">Terminando Logo</SelectItem>
+                  {sortOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <div className="flex items-center gap-1">
@@ -193,9 +234,9 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
             </div>
           </div>
 
-          {filteredLots.length > 0 ? (
+          {sortedAndFilteredLots.length > 0 ? (
             <div className={`grid gap-6 ${viewMode === 'card' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
-              {filteredLots.map((lot) => (
+              {sortedAndFilteredLots.map((lot) => (
                 viewMode === 'card' 
                   ? <LotCard key={lot.id} lot={lot} />
                   : <LotListItem key={lot.id} lot={lot} />
