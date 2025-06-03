@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard } from 'lucide-react';
+import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -23,37 +23,37 @@ const sidebarNavItems = [
     title: 'Lotes',
     href: '/admin/lots',
     icon: Package,
-    disabled: false, // Habilitado
+    disabled: false,
   },
   {
     title: 'Leilões',
     href: '/admin/auctions',
-    icon: Package, // Pode usar um ícone diferente para Leilões, como Gavel
-    disabled: true, // Placeholder
+    icon: Gavel, 
+    disabled: false, 
   },
   {
     title: 'Estados',
     href: '/admin/states',
     icon: Landmark,
-    disabled: true, // Placeholder
+    disabled: true, 
   },
   {
     title: 'Cidades',
     href: '/admin/cities',
     icon: Landmark,
-    disabled: true, // Placeholder
+    disabled: true, 
   },
   {
     title: 'Usuários',
     href: '/admin/users',
     icon: Users,
-    disabled: true, // Placeholder
+    disabled: true, 
   },
   {
     title: 'Configurações',
     href: '/admin/settings',
     icon: Settings,
-    disabled: true, // Placeholder
+    disabled: true, 
   },
 ];
 

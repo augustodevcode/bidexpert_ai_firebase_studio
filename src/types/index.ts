@@ -11,7 +11,7 @@ export interface AuctionStage {
   statusText?: string; // ex: "Encerramento"
 }
 
-export type AuctionStatus = 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'ABERTO';
+export type AuctionStatus = 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'ABERTO' | 'CANCELADO' | 'SUSPENSO';
 export type LotStatus = 'ABERTO_PARA_LANCES' | 'EM_BREVE' | 'ENCERRADO' | 'VENDIDO' | 'NAO_VENDIDO';
 export type UserDocumentStatus = 'NOT_SENT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'PENDING_ANALYSIS';
 export type UserHabilitationStatus = 'PENDING_DOCUMENTS' | 'PENDING_ANALYSIS' | 'HABILITATED' | 'REJECTED_DOCUMENTS' | 'BLOCKED';
@@ -108,34 +108,42 @@ export interface Lot {
 }
 
 export interface Auction {
-  id: string;
-  title: string;
-  fullTitle?: string;
-  auctionDate: Date | any;
-  totalLots: number;
-  status: AuctionStatus;
-  auctioneer: string;
-  category: string;
-  auctioneerLogoUrl?: string;
-  visits?: number;
-  lots: Lot[];
-
+  id: string; // Gerado automaticamente ou customizado
+  title: string; // Ex: Leilão Judicial TJSP - Comarca de Campinas
+  fullTitle?: string; // Título mais descritivo se necessário
   description?: string;
-  imageUrl?: string;
+  status: AuctionStatus;
+  auctionType?: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR'; // Tipo do leilão
+  category: string; // Categoria principal (Imóveis, Veículos, Arte) - pode ser texto ou ID de LotCategory
+  auctioneer: string; // Nome do leiloeiro
+  auctioneerId?: string; // ID do leiloeiro se tiver uma entidade para isso
+  seller?: string; // Nome do comitente vendedor principal
+  sellerId?: string; // ID do comitente
+  auctionDate: Date | any; // Data principal do evento do leilão (para 1ª praça ou data única)
+  endDate?: Date | any; // Data de encerramento geral, se aplicável
+  auctionStages?: AuctionStage[]; // Para múltiplas praças/etapas
+  location?: string; // Local físico do leilão ou dos bens
+  city?: string;
+  state?: string; // UF
+  imageUrl?: string; // Imagem de capa para o leilão
   dataAiHint?: string;
-  seller?: string;
-  initialOffer?: number;
-  auctionStages?: AuctionStage[];
-  isFavorite?: boolean;
-  currentBid?: number;
-  endDate?: Date | any;
-  bidsCount?: number;
-
-  sellingBranch?: string;
-  vehicleLocation?: string;
+  documentsUrl?: string; // Link para edital e outros documentos
+  totalLots?: number; // Calculado ou manual
+  visits?: number; // Contador de visitas à página do leilão
+  
+  // Campos de controle do Firestore
+  lots?: Lot[]; // Não armazenar no documento do leilão, mas sim associar lotes a auctions pelo auctionId no lote
+  initialOffer?: number; // Não é comum ter um lance inicial para o leilão como um todo
+  isFavorite?: boolean; // Específico do usuário
+  currentBid?: number; // Não aplicável ao leilão, mas sim aos lotes
+  bidsCount?: number; // Não aplicável ao leilão
+  sellingBranch?: string; // Pode ser o mesmo que location ou mais específico
+  vehicleLocation?: string; // Redundante com location, escolher um
+  
   createdAt?: Date | any;
   updatedAt?: Date | any;
 }
+
 
 export type UserRole = 'ADMINISTRATOR' | 'AUCTION_ANALYST' | 'USER';
 
