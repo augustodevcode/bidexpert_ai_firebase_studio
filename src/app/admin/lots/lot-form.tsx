@@ -106,7 +106,6 @@ export default function LotForm({
   React.useEffect(() => {
     if (selectedStateId) {
       setFilteredCities(allCities.filter(city => city.stateId === selectedStateId));
-      // Se o estado mudar e a cidade selecionada anteriormente não pertencer ao novo estado, limpe-a.
       const currentCityId = form.getValues('cityId');
       if (currentCityId && !allCities.find(c => c.id === currentCityId && c.stateId === selectedStateId)) {
         form.setValue('cityId', undefined);
@@ -117,13 +116,12 @@ export default function LotForm({
     }
   }, [selectedStateId, allCities, form]);
 
-  // On initial load with initialData, filter cities for the pre-selected state
   React.useEffect(() => {
     if (initialData?.stateId && allCities.length > 0) {
       setFilteredCities(allCities.filter(city => city.stateId === initialData.stateId));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialData?.stateId, allCities]); // Only run once on initial load with initialData
+  }, [initialData?.stateId, allCities]);
 
   async function onSubmit(values: LotFormValues) {
     setIsSubmitting(true);
@@ -323,18 +321,22 @@ export default function LotForm({
                     render={({ field }) => (
                     <FormItem>
                         <FormLabel>Estado (Opcional)</FormLabel>
-                        <Select onValueChange={(value) => {
-                            field.onChange(value);
-                            form.setValue('cityId', undefined); // Reset city when state changes
-                        }} value={field.value || ''}>
+                        <Select 
+                            onValueChange={(value) => {
+                                const actualValue = value === "---NONE---" ? undefined : value;
+                                field.onChange(actualValue);
+                                form.setValue('cityId', undefined); 
+                            }} 
+                            value={field.value || undefined}
+                        >
                         <FormControl>
                             <SelectTrigger>
                             <SelectValue placeholder="Selecione o estado" />
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            <SelectItem value="">Nenhum</SelectItem>
-                            {states.map(state => (
+                            <SelectItem value="---NONE---">Nenhum</SelectItem>
+                            {states.filter(s => s.id && String(s.id).trim() !== "").map(state => (
                                 <SelectItem key={state.id} value={state.id}>{state.name} ({state.uf})</SelectItem>
                             ))}
                         </SelectContent>
@@ -349,15 +351,22 @@ export default function LotForm({
                     render={({ field }) => (
                     <FormItem>
                         <FormLabel>Cidade (Opcional)</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''} disabled={!selectedStateId || filteredCities.length === 0}>
+                        <Select 
+                            onValueChange={(value) => {
+                                const actualValue = value === "---NONE---" ? undefined : value;
+                                field.onChange(actualValue);
+                            }} 
+                            value={field.value || undefined} 
+                            disabled={!selectedStateId || filteredCities.length === 0}
+                        >
                         <FormControl>
                             <SelectTrigger>
                             <SelectValue placeholder={!selectedStateId ? "Selecione um estado primeiro" : "Selecione a cidade"} />
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            <SelectItem value="">Nenhuma</SelectItem>
-                            {filteredCities.map(city => (
+                            <SelectItem value="---NONE---">Nenhuma</SelectItem>
+                            {filteredCities.filter(c => c.id && String(c.id).trim() !== "").map(city => (
                             <SelectItem key={city.id} value={city.id}>{city.name}</SelectItem>
                             ))}
                         </SelectContent>
