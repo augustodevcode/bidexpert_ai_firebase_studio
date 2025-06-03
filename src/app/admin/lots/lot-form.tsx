@@ -22,8 +22,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
-import type { Lot, LotStatus } from '@/types';
-import { LotCategory } from '@/types'; // Assuming LotCategory type exists
+import type { Lot, LotStatus, LotCategory } from '@/types'; // Import LotCategory
 import { Loader2, Save, CalendarIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -33,7 +32,7 @@ import { getAuctionStatusText } from '@/lib/sample-data';
 
 interface LotFormProps {
   initialData?: Lot | null;
-  // categories: LotCategory[]; // Pass categories for the select dropdown
+  categories: LotCategory[]; // Pass categories for the select dropdown
   onSubmitAction: (data: LotFormValues) => Promise<{ success: boolean; message: string; lotId?: string }>;
   formTitle: string;
   formDescription: string;
@@ -48,19 +47,9 @@ const lotStatusOptions: { value: LotStatus; label: string }[] = [
   { value: 'NAO_VENDIDO', label: getAuctionStatusText('NAO_VENDIDO') },
 ];
 
-// Placeholder for lot types/categories. In a real app, fetch these from Firestore.
-const lotTypeOptions = [
-    "Imóvel Residencial", "Imóvel Comercial", "Terreno", 
-    "Veículo de Passeio", "Veículo Utilitário", "Motocicleta", "Veículo Pesado",
-    "Maquinário Agrícola", "Maquinário Industrial",
-    "Arte e Antiguidades", "Joias e Relógios", "Eletrônicos", "Móveis e Decoração",
-    "Outros Bens"
-];
-
-
 export default function LotForm({
   initialData,
-  // categories,
+  categories, // Receive categories
   onSubmitAction,
   formTitle,
   formDescription,
@@ -81,7 +70,7 @@ export default function LotForm({
       initialPrice: initialData?.initialPrice || undefined,
       status: initialData?.status || 'EM_BREVE',
       location: initialData?.location || '',
-      type: initialData?.type || '',
+      type: initialData?.type || '', // Categoria do lote
       imageUrl: initialData?.imageUrl || '',
       endDate: initialData?.endDate ? new Date(initialData.endDate) : new Date(),
       views: initialData?.views || 0,
@@ -150,7 +139,7 @@ export default function LotForm({
                   <FormControl>
                     <Input placeholder="ID do leilão ao qual este lote pertence" {...field} />
                   </FormControl>
-                  <FormDescription>Associe este lote a um leilão existente.</FormDescription>
+                  <FormDescription>Associe este lote a um leilão existente. (Será um select no futuro)</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -208,7 +197,7 @@ export default function LotForm({
             <div className="grid md:grid-cols-2 gap-6">
                 <FormField
                 control={form.control}
-                name="type" // Corresponde a categoria do lote
+                name="type" 
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Tipo/Categoria do Lote</FormLabel>
@@ -219,8 +208,9 @@ export default function LotForm({
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            {lotTypeOptions.map(type => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                            {categories.length === 0 && <SelectItem value="" disabled>Nenhuma categoria cadastrada</SelectItem>}
+                            {categories.map(cat => (
+                            <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
@@ -286,9 +276,8 @@ export default function LotForm({
                         selected={field.value}
                         onSelect={field.onChange}
                         initialFocus
-                        disabled={(date) => date < new Date(new Date().setHours(0,0,0,0)) } // Disable past dates
+                        disabled={(date) => date < new Date(new Date().setHours(0,0,0,0)) } 
                       />
-                      {/* Simple time picker - can be improved with a dedicated component */}
                        <div className="p-2 border-t">
                         <Input 
                           type="time"

@@ -40,6 +40,15 @@ export interface UserDocument {
   documentType: DocumentType; // Populated for convenience from DocumentType definition
 }
 
+export interface LotCategory {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+    itemCount?: number; // Optional: to store how many lots use this category
+    createdAt: Date | any; // Firestore timestamp or Date
+    updatedAt: Date | any; // Firestore timestamp or Date
+}
 
 export interface Lot {
   id: string; // e.g., LOTE001
@@ -51,7 +60,7 @@ export interface Lot {
   galleryImageUrls?: string[]; // URLs para a galeria de imagens
   status: LotStatus;
   location: string; // e.g., "TEOTÔNIO VILELA - AL" ou "Englishtown (NJ)"
-  type: string; // e.g., "CASA", "APARTAMENTO", "Automobile" // This will relate to LotCategory.name or LotCategory.slug
+  type: string; // Categoria do lote (será o nome da categoria de LotCategory)
   views?: number;
   auctionName?: string; // e.g., "Leilão Único" ou nome do leilão principal
   price: number; // Lance mínimo/atual
@@ -114,7 +123,7 @@ export interface Auction {
   description?: string;
   status: AuctionStatus;
   auctionType?: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR'; // Tipo do leilão
-  category: string; // Categoria principal (Imóveis, Veículos, Arte) - pode ser texto ou ID de LotCategory
+  category: string; // Categoria principal (será o nome da categoria de LotCategory)
   auctioneer: string; // Nome do leiloeiro
   auctioneerId?: string; // ID do leiloeiro se tiver uma entidade para isso
   seller?: string; // Nome do comitente vendedor principal
@@ -131,14 +140,13 @@ export interface Auction {
   totalLots?: number; // Calculado ou manual
   visits?: number; // Contador de visitas à página do leilão
   
-  // Campos de controle do Firestore
-  lots?: Lot[]; // Não armazenar no documento do leilão, mas sim associar lotes a auctions pelo auctionId no lote
-  initialOffer?: number; // Não é comum ter um lance inicial para o leilão como um todo
-  isFavorite?: boolean; // Específico do usuário
-  currentBid?: number; // Não aplicável ao leilão, mas sim aos lotes
-  bidsCount?: number; // Não aplicável ao leilão
-  sellingBranch?: string; // Pode ser o mesmo que location ou mais específico
-  vehicleLocation?: string; // Redundante com location, escolher um
+  lots?: Lot[]; 
+  initialOffer?: number; 
+  isFavorite?: boolean; 
+  currentBid?: number; 
+  bidsCount?: number; 
+  sellingBranch?: string; 
+  vehicleLocation?: string; 
   
   createdAt?: Date | any;
   updatedAt?: Date | any;
@@ -151,7 +159,7 @@ export interface UserProfileData {
   uid: string;
   email: string;
   fullName: string;
-  role?: UserRole; // Added user role
+  role?: UserRole; 
   cpf?: string;
   rgNumber?: string;
   rgIssuer?: string;
@@ -225,14 +233,4 @@ export interface RecentlyViewedLotInfo {
   imageUrl: string;
   auctionId: string;
   dataAiHint?: string;
-}
-
-export interface LotCategory {
-    id: string;
-    name: string;
-    slug: string;
-    description?: string;
-    itemCount?: number; // Optional: to store how many lots use this category
-    createdAt: Date | any; // Firestore timestamp or Date
-    updatedAt: Date | any; // Firestore timestamp or Date
 }

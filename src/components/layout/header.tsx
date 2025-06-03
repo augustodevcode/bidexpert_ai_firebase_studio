@@ -22,21 +22,21 @@ import {
   DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { sampleLots, getUniqueLotCategories, slugify } from '@/lib/sample-data';
-import type { RecentlyViewedLotInfo, Lot } from '@/types';
+import { sampleLots, slugify } from '@/lib/sample-data'; // getUniqueLotCategories from sample-data removed
+import { getLotCategories } from '@/app/admin/categories/actions'; // Import for dynamic categories
+import type { RecentlyViewedLotInfo, Lot, LotCategory } from '@/types';
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context'; // Import useAuth
+import { useAuth } from '@/contexts/auth-context';
 
 export default function Header() {
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
-  const [searchCategories, setSearchCategories] = useState<string[]>([]);
+  const [searchCategories, setSearchCategories] = useState<LotCategory[]>([]); // Changed to LotCategory[]
   const [isClient, setIsClient] = useState(false);
-  const [dynamicCategories, setDynamicCategories] = useState<Array<{ href: string; label: string }>>([]);
-
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSearchCategorySlug, setSelectedSearchCategorySlug] = useState<string | undefined>(undefined);
   const [searchResults, setSearchResults] = useState<Lot[]>([]);
@@ -44,16 +44,16 @@ export default function Header() {
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { user } = useAuth(); // Get user state from AuthContext
+  const { user } = useAuth();
 
-  const placeholderNotificationsCount = 3; // Placeholder for notification count
+  const placeholderNotificationsCount = 3; 
 
   useEffect(() => {
     setIsClient(true);
 
     const viewedIds = getRecentlyViewedIds();
     const items: RecentlyViewedLotInfo[] = viewedIds.map(id => {
-      const lot = sampleLots.find(l => l.id === id);
+      const lot = sampleLots.find(l => l.id === id); // Still uses sampleLots for viewed items
       return lot ? {
         id: lot.id,
         title: lot.title,
@@ -64,16 +64,17 @@ export default function Header() {
     }).filter(item => item !== null) as RecentlyViewedLotInfo[];
     setRecentlyViewedItems(items);
 
-    const allCategories = getUniqueLotCategories();
-    setSearchCategories(['Todas', ...allCategories]);
+    async function fetchCategoriesForSearch() {
+      try {
+        const fetchedCategories = await getLotCategories();
+        setSearchCategories(fetchedCategories);
+      } catch (error) {
+        console.error("Error fetching categories for search dropdown:", error);
+        setSearchCategories([]); // Set to empty or some default on error
+      }
+    }
+    fetchCategoriesForSearch();
     
-    const topCategoriesForNav = allCategories.slice(0, 2);
-    setDynamicCategories(
-      topCategoriesForNav.map(category => ({
-        href: `/category/${slugify(category)}`,
-        label: category,
-      }))
-    );
   }, []);
 
   useEffect(() => {
@@ -99,10 +100,11 @@ export default function Header() {
 
     setIsSearchLoading(true);
     const debounceTimer = setTimeout(() => {
+      // TODO: Replace sampleLots.filter with a proper backend search/filter API call
       const filtered = sampleLots.filter(lot => {
         const term = searchTerm.toLowerCase();
         const categoryMatch = selectedSearchCategorySlug && selectedSearchCategorySlug !== 'todas'
-          ? slugify(lot.type) === selectedSearchCategorySlug
+          ? slugify(lot.type) === selectedSearchCategorySlug // lot.type is the category name
           : true;
 
         const textMatch = (
@@ -124,11 +126,12 @@ export default function Header() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      let query = `?term=${encodeURIComponent(searchTerm.trim())}`;
+      let query = `term=${encodeURIComponent(searchTerm.trim())}`; // Always start with term
       if (selectedSearchCategorySlug && selectedSearchCategorySlug !== 'todas') {
         query += `&category=${selectedSearchCategorySlug}`;
       }
-      router.push(`/search${query}`);
+      // Redirect to /search with query params. The SearchPage will handle these.
+      router.push(`/search?${query}`);
       setIsSearchDropdownOpen(false);
     }
   };
@@ -191,20 +194,21 @@ export default function Header() {
                       <SelectValue placeholder="Categorias" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="todas" className="text-xs sm:text-sm">Todas</SelectItem>
                       {searchCategories.map(cat => (
                         <SelectItem 
-                          key={slugify(cat)} 
-                          value={slugify(cat)} 
+                          key={cat.slug} 
+                          value={cat.slug} 
                           className="text-xs sm:text-sm"
                         >
-                          {cat}
+                          {cat.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                   <Input
                     type="search"
-                    placeholder="Buscar em 20,000+ produtos..."
+                    placeholder="Buscar em produtos..."
                     className="h-10 pl-3 pr-10 flex-1 rounded-l-none rounded-r-md border-l-0 focus:ring-0 focus:ring-offset-0 text-foreground placeholder:text-muted-foreground"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -260,7 +264,7 @@ export default function Header() {
 
 
           <div className="ml-auto flex items-center space-x-1 sm:space-x-2">
-            {user && ( // Show Bell icon only if user is logged in
+            {user && ( 
               <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground sm:inline-flex" asChild>
                 <Link href="/dashboard/notifications">
                   <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -285,7 +289,6 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Second Bar - Navigation Links */}
       <div className="border-b bg-background text-foreground hidden md:block">
         <div className="container mx-auto px-4 flex h-12 items-center justify-between">
           <div className="flex items-center text-sm font-medium">

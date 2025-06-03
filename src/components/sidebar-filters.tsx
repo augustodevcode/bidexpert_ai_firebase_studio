@@ -15,11 +15,11 @@ import { Filter, CalendarIcon, RefreshCw } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import type { LotCategory } from '@/types'; // Import LotCategory
 
-// Definindo os tipos para os filtros que serão passados
 export interface ActiveFilters {
   modality: string;
-  category: string;
+  category: string; // Será o slug da categoria ou 'TODAS'
   priceRange: [number, number];
   locations: string[];
   sellers: string[];
@@ -29,13 +29,14 @@ export interface ActiveFilters {
 }
 
 interface SidebarFiltersProps {
-  categories?: string[];
+  categories?: LotCategory[]; // Alterado para LotCategory[]
   locations?: string[];
   sellers?: string[];
   modalities?: { value: string, label: string }[];
   statuses?: { value: string, label: string }[];
   onFilterSubmit: (filters: ActiveFilters) => void;
   onFilterReset: () => void;
+  initialFilters?: ActiveFilters; // Para sincronizar com a página
 }
 
 const defaultModalities = [
@@ -60,23 +61,39 @@ export default function SidebarFilters({
   statuses = defaultStatuses,
   onFilterSubmit,
   onFilterReset,
+  initialFilters,
 }: SidebarFiltersProps) {
-  const [selectedModality, setSelectedModality] = useState<string>(modalities.length > 0 ? modalities[0].value : '');
-  const [selectedCategory, setSelectedCategory] = useState<string>(categories.length > 0 ? categories[0] : 'TODAS'); // 'TODAS' as default
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000]);
-  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
-  const [selectedSellers, setSelectedSellers] = useState<string[]>([]);
-  const [startDate, setStartDate] = useState<Date | undefined>();
-  const [endDate, setEndDate] = useState<Date | undefined>();
-  const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
+  const [selectedModality, setSelectedModality] = useState<string>(initialFilters?.modality || (modalities.length > 0 ? modalities[0].value : ''));
+  const [selectedCategorySlug, setSelectedCategorySlug] = useState<string>(initialFilters?.category || 'TODAS');
+  const [priceRange, setPriceRange] = useState<[number, number]>(initialFilters?.priceRange || [0, 500000]);
+  const [selectedLocations, setSelectedLocations] = useState<string[]>(initialFilters?.locations || []);
+  const [selectedSellers, setSelectedSellers] = useState<string[]>(initialFilters?.sellers || []);
+  const [startDate, setStartDate] = useState<Date | undefined>(initialFilters?.startDate);
+  const [endDate, setEndDate] = useState<Date | undefined>(initialFilters?.endDate);
+  const [selectedStatus, setSelectedStatus] = useState<string[]>(initialFilters?.status || []);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
   
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
+  // Sincroniza o estado interno se initialFilters mudar
+  useEffect(() => {
+    if (initialFilters) {
+      setSelectedModality(initialFilters.modality);
+      setSelectedCategorySlug(initialFilters.category);
+      setPriceRange(initialFilters.priceRange);
+      setSelectedLocations(initialFilters.locations);
+      setSelectedSellers(initialFilters.sellers);
+      setStartDate(initialFilters.startDate);
+      setEndDate(initialFilters.endDate);
+      setSelectedStatus(initialFilters.status);
+    }
+  }, [initialFilters]);
+
+  
+  const handleCategoryChange = (categorySlug: string) => {
+    setSelectedCategorySlug(categorySlug);
   };
 
   const handleLocationChange = (location: string) => {
@@ -100,7 +117,7 @@ export default function SidebarFilters({
   const applyFilters = () => {
     const currentFilters: ActiveFilters = {
       modality: selectedModality,
-      category: selectedCategory,
+      category: selectedCategorySlug,
       priceRange,
       locations: selectedLocations,
       sellers: selectedSellers,
@@ -113,7 +130,7 @@ export default function SidebarFilters({
 
   const resetInternalFilters = () => {
     setSelectedModality(modalities.length > 0 ? modalities[0].value : '');
-    setSelectedCategory(categories.length > 0 ? categories[0] : 'TODAS');
+    setSelectedCategorySlug('TODAS');
     setPriceRange([0, 500000]);
     setSelectedLocations([]);
     setSelectedSellers([]);
@@ -124,7 +141,7 @@ export default function SidebarFilters({
 
   const handleResetFilters = () => {
     resetInternalFilters();
-    onFilterReset(); // Chama o callback da página pai
+    onFilterReset();
   };
   
   if (!isClient) {
@@ -177,15 +194,15 @@ export default function SidebarFilters({
             <AccordionItem value="categories">
             <AccordionTrigger className="text-md font-medium">Categorias</AccordionTrigger>
             <AccordionContent>
-                <RadioGroup value={selectedCategory} onValueChange={handleCategoryChange} className="space-y-1 max-h-60 overflow-y-auto pr-2">
+                <RadioGroup value={selectedCategorySlug} onValueChange={handleCategoryChange} className="space-y-1 max-h-60 overflow-y-auto pr-2">
                     <div key="TODAS" className="flex items-center space-x-2">
-                        <RadioGroupItem value="TODAS" id="cat-TODAS" />
-                        <Label htmlFor="cat-TODAS" className="text-sm font-normal cursor-pointer">Todas</Label>
+                        <RadioGroupItem value="TODAS" id="cat-slug-TODAS" />
+                        <Label htmlFor="cat-slug-TODAS" className="text-sm font-normal cursor-pointer">Todas as Categorias</Label>
                     </div>
                     {categories.map(category => (
-                        <div key={category} className="flex items-center space-x-2">
-                            <RadioGroupItem value={category} id={`cat-${category}`} />
-                            <Label htmlFor={`cat-${category}`} className="text-sm font-normal cursor-pointer">{category}</Label>
+                        <div key={category.id} className="flex items-center space-x-2">
+                            <RadioGroupItem value={category.slug} id={`cat-slug-${category.slug}`} />
+                            <Label htmlFor={`cat-slug-${category.slug}`} className="text-sm font-normal cursor-pointer">{category.name}</Label>
                         </div>
                     ))}
                 </RadioGroup>
@@ -298,7 +315,6 @@ export default function SidebarFilters({
             </AccordionContent>
         </AccordionItem>
 
-         {/* Placeholders for future filters */}
         <AccordionItem value="subCategory_placeholder" disabled>
           <AccordionTrigger className="text-md font-medium text-muted-foreground/70">Subcategoria (Em breve)</AccordionTrigger>
           <AccordionContent><p className="text-xs text-muted-foreground">Filtro por subcategoria será adicionado aqui.</p></AccordionContent>
@@ -320,4 +336,3 @@ export default function SidebarFilters({
     </aside>
   );
 }
-

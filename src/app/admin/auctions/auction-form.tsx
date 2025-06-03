@@ -22,7 +22,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
-import type { Auction, AuctionStatus } from '@/types';
+import type { Auction, AuctionStatus, LotCategory } from '@/types';
 import { Loader2, Save, CalendarIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -32,6 +32,7 @@ import { getAuctionStatusText } from '@/lib/sample-data';
 
 interface AuctionFormProps {
   initialData?: Auction | null;
+  categories: LotCategory[]; // Pass categories for the select dropdown
   onSubmitAction: (data: AuctionFormValues) => Promise<{ success: boolean; message: string; auctionId?: string }>;
   formTitle: string;
   formDescription: string;
@@ -54,14 +55,9 @@ const auctionTypeOptions = [
   { value: 'PARTICULAR', label: 'Particular' },
 ];
 
-// Placeholder for categories. In a real app, fetch these from LotCategories.
-const auctionCategoryOptions = [
-    "Imóveis", "Veículos", "Maquinário", "Arte e Antiguidades", "Joias e Relógios", "Eletrônicos", "Diversos"
-];
-
-
 export default function AuctionForm({
   initialData,
+  categories, // Receive categories
   onSubmitAction,
   formTitle,
   formDescription,
@@ -231,8 +227,9 @@ export default function AuctionForm({
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            {auctionCategoryOptions.map(cat => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                           {categories.length === 0 && <SelectItem value="" disabled>Nenhuma categoria cadastrada</SelectItem>}
+                           {categories.map(cat => (
+                            <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>

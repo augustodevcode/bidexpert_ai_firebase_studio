@@ -4,16 +4,17 @@
 import { useState, useEffect, useMemo } from 'react';
 import AuctionCard from '@/components/auction-card';
 import LotCard from '@/components/lot-card';
-import LotListItem from '@/components/lot-list-item'; // Import LotListItem
+import LotListItem from '@/components/lot-list-item';
 import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters'; 
-import { sampleAuctions, sampleLots, getUniqueLotCategories, getUniqueLotLocations, getUniqueSellerNames, slugify } from '@/lib/sample-data';
-import type { Auction, Lot } from '@/types';
+import { sampleAuctions, sampleLots, getUniqueLotLocations, getUniqueSellerNames, slugify } from '@/lib/sample-data';
+import { getLotCategories } from '@/app/admin/categories/actions'; // Import category action
+import type { Auction, Lot, LotCategory } from '@/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search as SearchIcon, SlidersHorizontal, Loader2, LayoutGrid, List } from 'lucide-react'; // Added LayoutGrid and List
+import { Search as SearchIcon, SlidersHorizontal, Loader2, LayoutGrid, List } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const sortOptions = [
@@ -29,7 +30,7 @@ const sortOptions = [
 
 const initialFiltersState: ActiveFilters = {
   modality: 'TODAS',
-  category: 'TODAS',
+  category: 'TODAS', // Categoria é o slug ou 'TODAS'
   priceRange: [0, 1000000],
   locations: [],
   sellers: [],
@@ -46,7 +47,32 @@ export default function SearchPage() {
   const [sortByAuctions, setSortByAuctions] = useState<string>('relevance');
   const [sortByLots, setSortByLots] = useState<string>('relevance');
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>(initialFiltersState);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid'); // New state for view mode
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  
+  const [lotCategories, setLotCategories] = useState<LotCategory[]>([]);
+  const [uniqueLocations, setUniqueLocations] = useState<string[]>([]);
+  const [uniqueSellers, setUniqueSellers] = useState<string[]>([]);
+  const [isLoadingFilters, setIsLoadingFilters] = useState(true);
+
+  useEffect(() => {
+    async function fetchFilterData() {
+      setIsLoadingFilters(true);
+      try {
+        const categories = await getLotCategories();
+        setLotCategories(categories);
+        // TODO: Fetch unique locations and sellers from Firestore in the future
+        setUniqueLocations(getUniqueLotLocations()); // Still from sample-data
+        setUniqueSellers(getUniqueSellerNames());   // Still from sample-data
+      } catch (error) {
+        console.error("Error fetching filter data:", error);
+        // Set empty or fallback data if needed
+      } finally {
+        setIsLoadingFilters(false);
+      }
+    }
+    fetchFilterData();
+  }, []);
+
 
   const allLotsWithAuctionData = useMemo(() => {
     return sampleAuctions.flatMap(auction => 
@@ -60,19 +86,16 @@ export default function SearchPage() {
     itemType: 'auction' | 'lot'
   ): T[] => {
     return items.filter(item => {
-      // Price filter (check if item has price, otherwise skip)
       const itemPrice = 'price' in item ? item.price : ('initialOffer' in item ? item.initialOffer : undefined);
       if (itemPrice !== undefined && (itemPrice < filters.priceRange[0] || itemPrice > filters.priceRange[1])) {
         return false;
       }
 
-      // Location filter
       if (filters.locations.length > 0) {
         const itemLocation = 'location' in item ? item.location : (itemType === 'auction' ? (item as Auction).vehicleLocation : undefined);
         if (!itemLocation || !filters.locations.includes(itemLocation)) return false;
       }
 
-      // Seller filter
       if (filters.sellers.length > 0) {
         let sellerName: string | undefined = undefined;
         if ('sellerName' in item && item.sellerName) sellerName = item.sellerName;
@@ -82,13 +105,11 @@ export default function SearchPage() {
         if (!sellerName || !filters.sellers.includes(sellerName)) return false;
       }
       
-      // Category filter
-      if (filters.category !== 'TODAS') {
-        const itemCategory = itemType === 'lot' ? (item as Lot).type : (item as Auction).category;
-        if (slugify(itemCategory) !== slugify(filters.category)) return false;
+      if (filters.category !== 'TODAS') { // filters.category is now slug
+        const itemCategoryName = itemType === 'lot' ? (item as Lot).type : (item as Auction).category;
+        if (slugify(itemCategoryName) !== filters.category) return false;
       }
 
-      // Date filters (simplified for now, can be expanded)
       if (filters.startDate) {
         const itemDate = 'auctionDate' in item ? item.auctionDate : ('endDate' in item ? item.endDate : undefined);
         if (!itemDate || new Date(itemDate) < filters.startDate) return false;
@@ -98,23 +119,16 @@ export default function SearchPage() {
          if (!itemDate || new Date(itemDate) > filters.endDate) return false;
       }
       
-      // Status filter
       if (filters.status.length > 0) {
         if (!item.status || !filters.status.includes(item.status as string)) return false;
       }
       
-      // Modality filter (placeholder logic)
-      // if (filters.modality !== 'TODAS') {
-      //   // Requires auction.modality field or similar logic
-      //   // For now, this will not filter if a modality other than 'TODAS' is selected
-      // }
-
       return true;
     });
   };
 
   const baseFilteredAuctions = useMemo(() => {
-    let filtered = sampleAuctions;
+    let filtered = sampleAuctions; // Replace with actual fetch if not using sample data
     if (searchTerm) {
       filtered = sampleAuctions.filter(auction =>
         auction.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -127,7 +141,7 @@ export default function SearchPage() {
   }, [searchTerm, activeFilters]);
 
   const baseFilteredLots = useMemo(() => {
-    let filtered = allLotsWithAuctionData;
+    let filtered = allLotsWithAuctionData; // Replace with actual fetch if not using sample data
     if (searchTerm) {
       filtered = allLotsWithAuctionData.filter(lot =>
         lot.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -141,6 +155,7 @@ export default function SearchPage() {
   
   const sortedAuctions = useMemo(() => {
     let auctionsToSort = [...baseFilteredAuctions];
+    // Sorting logic remains the same
     switch (sortByAuctions) {
       case 'id_asc':
         auctionsToSort.sort((a, b) => (parseInt(a.id.replace(/\D/g,'')) || 0) - (parseInt(b.id.replace(/\D/g,'')) || 0));
@@ -180,6 +195,7 @@ export default function SearchPage() {
 
   const sortedLots = useMemo(() => {
     let lotsToSort = [...baseFilteredLots];
+    // Sorting logic remains the same
     switch (sortByLots) {
       case 'id_asc':
         lotsToSort.sort((a, b) => (parseInt(a.id.replace(/\D/g,'')) || 0) - (parseInt(b.id.replace(/\D/g,'')) || 0));
@@ -209,19 +225,25 @@ export default function SearchPage() {
     return lotsToSort;
   }, [baseFilteredLots, sortByLots]);
 
-  const uniqueCategoriesForFilter = useMemo(() => getUniqueLotCategories(), []);
-  const uniqueLocationsForFilter = useMemo(() => getUniqueLotLocations(), []);
-  const uniqueSellersForFilter = useMemo(() => getUniqueSellerNames(), []);
 
   const handleFilterSubmit = (filters: ActiveFilters) => {
     setActiveFilters(filters);
-    setIsFilterSheetOpen(false); // Close sheet on mobile after applying
+    setIsFilterSheetOpen(false);
   };
 
   const handleFilterReset = () => {
     setActiveFilters(initialFiltersState);
-    setIsFilterSheetOpen(false); // Close sheet on mobile after resetting
+    setIsFilterSheetOpen(false);
   };
+
+  if (isLoadingFilters) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-4 text-muted-foreground">Carregando filtros e dados...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -251,11 +273,12 @@ export default function SearchPage() {
             <SheetContent side="left" className="p-0 w-[85vw] max-w-sm">
                 <div className="p-4 h-full overflow-y-auto">
                     <SidebarFilters 
-                        categories={uniqueCategoriesForFilter}
-                        locations={uniqueLocationsForFilter}
-                        sellers={uniqueSellersForFilter}
+                        categories={lotCategories} // Pass fetched categories
+                        locations={uniqueLocations}
+                        sellers={uniqueSellers}
                         onFilterSubmit={handleFilterSubmit}
                         onFilterReset={handleFilterReset}
+                        initialFilters={activeFilters}
                     />
                 </div>
             </SheetContent>
@@ -266,11 +289,12 @@ export default function SearchPage() {
       <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
         <div className="hidden md:block">
             <SidebarFilters 
-                categories={uniqueCategoriesForFilter}
-                locations={uniqueLocationsForFilter}
-                sellers={uniqueSellersForFilter}
+                categories={lotCategories} // Pass fetched categories
+                locations={uniqueLocations}
+                sellers={uniqueSellers}
                 onFilterSubmit={handleFilterSubmit}
                 onFilterReset={handleFilterReset}
+                initialFilters={activeFilters}
             />
         </div>
         
@@ -393,4 +417,3 @@ export default function SearchPage() {
     </div>
   );
 }
-

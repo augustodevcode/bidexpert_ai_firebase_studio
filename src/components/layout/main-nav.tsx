@@ -4,7 +4,9 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { getUniqueLotCategories, slugify } from '@/lib/sample-data';
+import { slugify } from '@/lib/sample-data'; // getUniqueLotCategories from sample-data removed
+import { getLotCategories } from '@/app/admin/categories/actions'; // Import for dynamic categories
+import type { LotCategory } from '@/types'; // Import LotCategory type
 import { Home as HomeIcon, Search as SearchIcon, Building, Users2, MessageSquareText, Tag, PlusCircle, ShoppingBasket, LayoutList, FileText, Package, Tv, Percent, Handshake, Eye, Briefcase } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -21,32 +23,49 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
 
   useEffect(() => {
     setIsClient(true);
-    const topCategories = getUniqueLotCategories().slice(0, 3);
-    const categoryNavItems: NavItem[] = topCategories.map(category => ({
-      href: `/category/${slugify(category)}`,
-      label: category,
-      icon: <Tag className="h-4 w-4" />
-    }));
+    async function fetchNavCategories() {
+      try {
+        const fetchedCategories = await getLotCategories();
+        const topCategories = fetchedCategories.slice(0, 3); // Show top 3 categories in nav
+        const categoryNavItems: NavItem[] = topCategories.map(category => ({
+          href: `/category/${category.slug}`,
+          label: category.name,
+          icon: <Tag className="h-4 w-4" />
+        }));
 
-    const baseNavItems: NavItem[] = [
-      { href: '/', label: 'Início', icon: <HomeIcon className="h-4 w-4" /> },
-      { href: '/search', label: 'Todos os Lotes', icon: <LayoutList className="h-4 w-4" /> },
-      ...categoryNavItems,
-      { href: '/auctions/create', label: 'Criar Leilão', icon: <PlusCircle className="h-4 w-4" /> },
-      { href: '/sell-with-us', label: 'Venda Conosco', icon: <Briefcase className="h-4 w-4" /> },
-      { href: '/sellers', label: 'Comitentes', icon: <Users2 className="h-4 w-4" /> },
-      { href: '/contact', label: 'Fale Conosco', icon: <MessageSquareText className="h-4 w-4" /> },
-    ];
-    setNavItems(baseNavItems);
+        const baseNavItems: NavItem[] = [
+          { href: '/', label: 'Início', icon: <HomeIcon className="h-4 w-4" /> },
+          { href: '/search', label: 'Todos os Lotes', icon: <LayoutList className="h-4 w-4" /> },
+          ...categoryNavItems,
+          { href: '/auctions/create', label: 'Criar Leilão IA', icon: <PlusCircle className="h-4 w-4" /> },
+          { href: '/sell-with-us', label: 'Venda Conosco', icon: <Briefcase className="h-4 w-4" /> },
+          { href: '/sellers', label: 'Comitentes', icon: <Users2 className="h-4 w-4" /> },
+          { href: '/contact', label: 'Fale Conosco', icon: <MessageSquareText className="h-4 w-4" /> },
+        ];
+        setNavItems(baseNavItems);
+      } catch (error) {
+        console.error("Error fetching categories for main navigation:", error);
+        // Fallback to basic nav items if fetch fails
+        const baseNavItems: NavItem[] = [
+          { href: '/', label: 'Início', icon: <HomeIcon className="h-4 w-4" /> },
+          { href: '/search', label: 'Todos os Lotes', icon: <LayoutList className="h-4 w-4" /> },
+          { href: '/auctions/create', label: 'Criar Leilão IA', icon: <PlusCircle className="h-4 w-4" /> },
+          { href: '/sell-with-us', label: 'Venda Conosco', icon: <Briefcase className="h-4 w-4" /> },
+          { href: '/sellers', label: 'Comitentes', icon: <Users2 className="h-4 w-4" /> },
+          { href: '/contact', label: 'Fale Conosco', icon: <MessageSquareText className="h-4 w-4" /> },
+        ];
+        setNavItems(baseNavItems);
+      }
+    }
+    fetchNavCategories();
   }, []);
 
-  // Render only if className includes flex-col (mobile menu context)
   if (!isClient || !className?.includes('flex-col')) {
     return null;
   }
   
   if (navItems.length === 0 && className?.includes('flex-col')) {
-      return null; // Don't render anything if items are not ready for mobile menu
+      return null;
   }
 
   return (
