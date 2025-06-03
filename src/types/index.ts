@@ -166,9 +166,9 @@ export interface Auction {
 export type AuctionFormData = Omit<Auction, 'id' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' | 'lots' | 'totalLots' | 'visits' | 'auctionStages' | 'initialOffer' | 'isFavorite' | 'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' | 'category' | 'auctioneer' | 'seller'> & {
   auctionDate: Date;
   endDate?: Date | null;
-  category: string; // ID da categoria selecionada
-  auctioneer: string; // ID do leiloeiro selecionado
-  seller?: string; // ID do comitente selecionado (opcional)
+  category: string; 
+  auctioneer: string; 
+  seller?: string; 
 };
 
 
@@ -301,4 +301,15 @@ export interface RecentlyViewedLotInfo {
   dataAiHint?: string;
 }
 
+export interface StateInfo {
+  id: string;
+  name: string;
+  uf: string; // Sigla do estado, ex: SP
+  slug: string;
+  cityCount?: number; // Optional: for display purposes
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type StateFormData = Omit<StateInfo, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'cityCount'>;
     

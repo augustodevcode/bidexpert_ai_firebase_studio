@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel } from 'lucide-react';
+import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map } from 'lucide-react'; // Added Map icon
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -41,18 +41,18 @@ const sidebarNavItems = [
     title: 'Leiloeiros', 
     href: '/admin/auctioneers', 
     icon: Landmark, 
-    disabled: false, // Habilitando o link
+    disabled: false,
   },
   {
     title: 'Estados',
     href: '/admin/states',
-    icon: Landmark,
-    disabled: true, 
+    icon: Map, // Using Map icon for States
+    disabled: false, 
   },
   {
     title: 'Cidades',
     href: '/admin/cities',
-    icon: Landmark,
+    icon: Landmark, // Can change later if a better one is found
     disabled: true, 
   },
   {
@@ -109,5 +109,4 @@ export default function AdminSidebar() {
     </aside>
   );
 }
-
     
