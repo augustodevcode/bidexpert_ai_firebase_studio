@@ -8,7 +8,7 @@ import { Loader2, ShieldAlert } from 'lucide-react';
 import AdminSidebar from '@/components/layout/admin-sidebar';
 
 // TODO: Replace this with actual role fetching and checking from Firestore
-const ALLOWED_EMAILS_FOR_ADMIN_ACCESS = ['admin@bidexpert.com', 'analyst@bidexpert.com']; // Example
+const ALLOWED_EMAILS_FOR_ADMIN_ACCESS = ['admin@bidexpert.com', 'analyst@bidexpert.com', 'augusto.devcode@gmail.com'];
 
 export default function AdminLayout({
   children,
@@ -20,7 +20,7 @@ export default function AdminLayout({
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/auth/login?redirect=/admin');
+      router.push('/auth/login?redirect=/admin/dashboard'); // Redireciona para o dashboard admin após login
     }
   }, [user, loading, router]);
 
@@ -42,9 +42,9 @@ export default function AdminLayout({
     );
   }
 
-  // TODO: Implement proper role check from user profile in Firestore
-  // For now, using a placeholder check based on email.
-  const hasAdminAccess = user.email && ALLOWED_EMAILS_FOR_ADMIN_ACCESS.includes(user.email);
+  // Placeholder for role check (case-insensitive email check)
+  const userEmailLower = user.email?.toLowerCase();
+  const hasAdminAccess = userEmailLower && ALLOWED_EMAILS_FOR_ADMIN_ACCESS.map(e => e.toLowerCase()).includes(userEmailLower);
 
   if (!hasAdminAccess) {
     return (
@@ -53,6 +53,9 @@ export default function AdminLayout({
         <h1 className="text-2xl font-bold text-destructive">Acesso Negado</h1>
         <p className="text-muted-foreground mt-2">
           Você não tem permissão para acessar esta área.
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          (Email verificado: {user.email || 'N/A'}, Permissão: {hasAdminAccess ? 'Concedida' : 'Negada'})
         </p>
         <button
           onClick={() => router.push('/')}
