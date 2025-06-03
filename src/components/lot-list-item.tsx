@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Auction, Lot } from '@/types';
+import type { Auction, Lot } from '@/types'; // Lot importada
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -14,7 +14,7 @@ import { useState, useEffect } from 'react';
 import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
 
 interface LotListItemProps {
-  lot: Auction['lots'][0];
+  lot: Lot; // Usar Lot em vez de Auction['lots'][0] para consistência
 }
 
 export default function LotListItem({ lot }: LotListItemProps) {
@@ -25,7 +25,6 @@ export default function LotListItem({ lot }: LotListItemProps) {
   useEffect(() => {
     const calculateTimeRemaining = () => {
       const now = new Date();
-      // Ensure lot.endDate is a valid Date object
       const endDate = lot.endDate instanceof Date ? lot.endDate : new Date(lot.endDate);
       
       setIsPast(now > endDate);
@@ -40,7 +39,6 @@ export default function LotListItem({ lot }: LotListItemProps) {
       }
       
       if (lot.status === 'EM_BREVE') {
-        // Corrected line: Ensured standard backticks and template literal syntax
         setTimeRemaining(`Inicia em ${format(endDate, "dd/MM HH:mm", { locale: ptBR })}`);
         return;
       }
@@ -70,13 +68,21 @@ export default function LotListItem({ lot }: LotListItemProps) {
     e.stopPropagation();
     setIsFavorite(!isFavorite);
   };
+  
+  const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
+  const displayAuctionDate = lot.auctionDate && !isNaN(new Date(lot.auctionDate).getTime())
+    ? format(new Date(lot.auctionDate), "dd/MM - HH:mm", { locale: ptBR })
+    : 'N/D';
+  const displaySecondAuctionDate = lot.secondAuctionDate && !isNaN(new Date(lot.secondAuctionDate).getTime())
+    ? format(new Date(lot.secondAuctionDate), "dd/MM - HH:mm", { locale: ptBR })
+    : 'N/D';
+
 
   return (
     <Card className="w-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group overflow-hidden">
-      {/* Alterado de flex-col sm:flex-row para flex-row para manter lado a lado */}
       <div className="flex flex-row"> 
-        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block w-1/3 md:w-1/4 flex-shrink-0"> {/* Ajuste de largura para imagem */}
-          <div className="relative aspect-square h-full bg-muted"> {/* Alterado para aspect-square para consistência */}
+        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block w-1/3 md:w-1/4 flex-shrink-0">
+          <div className="relative aspect-square h-full bg-muted">
             <Image
               src={lot.imageUrl}
               alt={lot.title}
@@ -104,37 +110,28 @@ export default function LotListItem({ lot }: LotListItemProps) {
             </div>
             
             <p className="text-sm text-muted-foreground">
-              Lote {lot.number}
+              Lote {lot.number || lot.id.replace('LOTE','')} ({lot.type})
             </p>
             <div className="flex items-center text-xs text-muted-foreground">
               <MapPin className="h-3 w-3 mr-1" />
-              <span>{lot.location}</span>
+              <span>{displayLocation}</span>
             </div>
             <div className="flex items-center text-xs text-muted-foreground">
               <Eye className="h-3 w-3 mr-1" />
               <span>{lot.views} Visitas</span>
             </div>
 
-            {/* Auction Dates and Prices */}
             <div className="flex flex-col sm:flex-row justify-between text-xs text-muted-foreground mt-3 pt-3 border-t border-dashed">
               <div className="flex-1 pr-2">
-                <p>1ª leilão/praça</p>
-                <p>
-                  {lot.auctionDate && !isNaN(new Date(lot.auctionDate).getTime())
-                    ? format(new Date(lot.auctionDate), "dd/MM - HH:mm", { locale: ptBR })
-                    : 'Data inválida'}
-                </p>
-                <p>Inicial: R$ {lot.initialPrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 'Preço não disponível'}</p>
+                <p className="font-medium">1ª Praça/Leilão:</p>
+                <p>Data: {displayAuctionDate}</p>
+                <p>Inicial: R$ {lot.initialPrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 'N/D'}</p>
               </div>
-              {lot.secondAuctionDate && lot.secondInitialPrice && (
-                <div className="flex-1 pl-2 border-l border-dashed">
-                  <p>2ª leilão/praça</p>
-                  <p>
-                    {lot.secondAuctionDate && !isNaN(new Date(lot.secondAuctionDate).getTime())
-                      ? format(new Date(lot.secondAuctionDate), "dd/MM - HH:mm", { locale: ptBR })
-                      : 'Data inválida'}
-                  </p>
-                  <p>Inicial: R$ {lot.secondInitialPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              {lot.secondAuctionDate && (
+                <div className="flex-1 pl-2 sm:border-l sm:border-dashed mt-2 sm:mt-0">
+                  <p className="font-medium">2ª Praça/Leilão:</p>
+                  <p>Data: {displaySecondAuctionDate}</p>
+                  <p>Inicial: R$ {lot.secondInitialPrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 'N/D'}</p>
                 </div>
               )}
             </div>
@@ -142,7 +139,7 @@ export default function LotListItem({ lot }: LotListItemProps) {
 
           <CardFooter className="p-4 border-t flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
             <div className="flex-grow">
-              <p className="text-xs text-muted-foreground">{lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
+              <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
               <p className={`text-xl font-bold ${isPast ? 'text-muted-foreground line-through' : 'text-primary'}`}>
                 R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
@@ -153,7 +150,7 @@ export default function LotListItem({ lot }: LotListItemProps) {
                 </div>
                 <div className={`flex items-center gap-1 ${isPast ? 'line-through' : ''}`}>
                   <Gavel className="h-3 w-3" />
-                  <span>{lot.bidsCount} Lances</span>
+                  <span>{lot.bidsCount || 0} Lances</span>
                 </div>
               </div>
             </div>
@@ -166,3 +163,5 @@ export default function LotListItem({ lot }: LotListItemProps) {
     </Card>
   );
 }
+
+    

@@ -23,7 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store'; // Nova importação
+import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 
 const isAuthenticated = false; 
 
@@ -47,11 +47,13 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
     }
     if (lot && lot.id) {
       addRecentlyViewedId(lot.id);
-      setIsLotFavorite(isLotFavoriteInStorage(lot.id)); // Sincroniza com localStorage
+      setIsLotFavorite(isLotFavoriteInStorage(lot.id));
     }
-  }, [lot]); // Depende do objeto 'lot' inteiro para reavaliar se ele mudar
+  }, [lot]);
 
   const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || lot?.title}`.trim();
+  const lotLocation = lot?.cityName && lot?.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot?.stateUf || lot?.cityName || 'Não informado';
+
 
   const handleToggleFavorite = () => {
     if (!lot || !lot.id) return;
@@ -184,7 +186,7 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
               )}
               <div className="flex justify-between items-center mt-4 text-sm text-muted-foreground">
                 {lot.hasKey && <span className="flex items-center"><Key className="h-4 w-4 mr-1 text-primary"/> Chave Presente</span>}
-                <span></span> 
+                <span className="flex items-center"><MapPin className="h-4 w-4 mr-1 text-primary"/> Localização: {lotLocation}</span>
               </div>
             </CardContent>
           </Card>
@@ -280,7 +282,7 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
             <CardContent className="space-y-1 text-sm">
               {Object.entries({
                 "Filial de Venda:": lot.sellingBranch || auction.sellingBranch,
-                "Localização do Veículo:": lot.vehicleLocationInBranch || auction.vehicleLocation,
+                "Localização do Veículo:": lot.vehicleLocationInBranch || auction.vehicleLocation || lotLocation,
                 "Data e Hora do Leilão (Lote):": lot.lotSpecificAuctionDate ? format(new Date(lot.lotSpecificAuctionDate), "dd/MM/yyyy HH:mm'h'", { locale: ptBR }) : 'N/A',
                 "Pista/Corrida #:": lot.laneRunNumber,
                 "Corredor/Vaga:": lot.aisleStall,
@@ -319,3 +321,5 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
     </div>
   );
 }
+
+    

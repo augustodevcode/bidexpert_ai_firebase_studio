@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -22,8 +22,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
-import type { Lot, LotStatus, LotCategory, Auction } from '@/types';
-import { Loader2, Save, CalendarIcon } from 'lucide-react';
+import type { Lot, LotStatus, LotCategory, Auction, StateInfo, CityInfo } from '@/types';
+import { Loader2, Save, CalendarIcon, Package } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -33,12 +33,14 @@ import { getAuctionStatusText } from '@/lib/sample-data';
 interface LotFormProps {
   initialData?: Lot | null;
   categories: LotCategory[];
-  auctions: Auction[]; // Nova prop para listar leilões
+  auctions: Auction[];
+  states: StateInfo[]; // Nova prop para estados
+  allCities: CityInfo[]; // Nova prop para todas as cidades
   onSubmitAction: (data: LotFormValues) => Promise<{ success: boolean; message: string; lotId?: string }>;
   formTitle: string;
   formDescription: string;
   submitButtonText: string;
-  defaultAuctionId?: string; // Para pré-selecionar vindo de query params
+  defaultAuctionId?: string; 
 }
 
 const lotStatusOptions: { value: LotStatus; label: string }[] = [
@@ -52,7 +54,9 @@ const lotStatusOptions: { value: LotStatus; label: string }[] = [
 export default function LotForm({
   initialData,
   categories,
-  auctions, // Recebe a lista de leilões
+  auctions,
+  states,
+  allCities,
   onSubmitAction,
   formTitle,
   formDescription,
@@ -62,6 +66,7 @@ export default function LotForm({
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [filteredCities, setFilteredCities] = React.useState<CityInfo[]>([]);
 
   const form = useForm<LotFormValues>({
     resolver: zodResolver(lotFormSchema),
@@ -73,14 +78,20 @@ export default function LotForm({
       price: initialData?.price || 0,
       initialPrice: initialData?.initialPrice || undefined,
       status: initialData?.status || 'EM_BREVE',
-      location: initialData?.location || '',
+      stateId: initialData?.stateId || undefined,
+      cityId: initialData?.cityId || undefined,
       type: initialData?.type || '',
       imageUrl: initialData?.imageUrl || '',
       endDate: initialData?.endDate ? new Date(initialData.endDate) : new Date(),
+      lotSpecificAuctionDate: initialData?.lotSpecificAuctionDate ? new Date(initialData.lotSpecificAuctionDate) : null,
+      secondAuctionDate: initialData?.secondAuctionDate ? new Date(initialData.secondAuctionDate) : null,
+      secondInitialPrice: initialData?.secondInitialPrice || null,
       views: initialData?.views || 0,
       bidsCount: initialData?.bidsCount || 0,
     },
   });
+
+  const selectedStateId = form.watch('stateId');
 
   React.useEffect(() => {
     if (defaultAuctionId) {
@@ -91,6 +102,28 @@ export default function LotForm({
       }
     }
   }, [defaultAuctionId, form, auctions]);
+
+  React.useEffect(() => {
+    if (selectedStateId) {
+      setFilteredCities(allCities.filter(city => city.stateId === selectedStateId));
+      // Se o estado mudar e a cidade selecionada anteriormente não pertencer ao novo estado, limpe-a.
+      const currentCityId = form.getValues('cityId');
+      if (currentCityId && !allCities.find(c => c.id === currentCityId && c.stateId === selectedStateId)) {
+        form.setValue('cityId', undefined);
+      }
+    } else {
+      setFilteredCities([]);
+      form.setValue('cityId', undefined);
+    }
+  }, [selectedStateId, allCities, form]);
+
+  // On initial load with initialData, filter cities for the pre-selected state
+  React.useEffect(() => {
+    if (initialData?.stateId && allCities.length > 0) {
+      setFilteredCities(allCities.filter(city => city.stateId === initialData.stateId));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData?.stateId, allCities]); // Only run once on initial load with initialData
 
   async function onSubmit(values: LotFormValues) {
     setIsSubmitting(true);
@@ -125,7 +158,7 @@ export default function LotForm({
   return (
     <Card className="max-w-3xl mx-auto shadow-lg">
       <CardHeader>
-        <CardTitle>{formTitle}</CardTitle>
+        <CardTitle className="flex items-center gap-2"><Package className="h-6 w-6 text-primary"/>{formTitle}</CardTitle>
         <CardDescription>{formDescription}</CardDescription>
       </CardHeader>
       <Form {...form}>
@@ -157,7 +190,7 @@ export default function LotForm({
                       form.setValue('auctionName', selectedAuction?.title || '');
                     }}
                     value={field.value}
-                    disabled={!!defaultAuctionId && initialData?.auctionId === defaultAuctionId} // Desabilita se pré-selecionado e não for edição
+                    disabled={!!defaultAuctionId && initialData?.auctionId === defaultAuctionId}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -183,7 +216,7 @@ export default function LotForm({
               control={form.control}
               name="auctionName"
               render={({ field }) => (
-                <FormItem className="hidden"> {/* Campo escondido, preenchido automaticamente */}
+                <FormItem className="hidden">
                   <FormLabel>Nome do Leilão (Automático)</FormLabel>
                   <FormControl>
                     <Input {...field} readOnly />
@@ -220,6 +253,21 @@ export default function LotForm({
               />
               <FormField
                 control={form.control}
+                name="initialPrice"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Lance Inicial Base (Opcional)</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="Ex: 14500.00" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+             <div className="grid md:grid-cols-2 gap-6">
+                <FormField
+                control={form.control}
                 name="status"
                 render={({ field }) => (
                   <FormItem>
@@ -240,18 +288,16 @@ export default function LotForm({
                   </FormItem>
                 )}
               />
-            </div>
-            <div className="grid md:grid-cols-2 gap-6">
-                <FormField
+               <FormField
                 control={form.control}
-                name="type"
+                name="type" /* Categoria do Lote */
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Tipo/Categoria do Lote</FormLabel>
                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                             <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo/categoria do lote" />
+                            <SelectValue placeholder="Selecione o tipo/categoria" />
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -268,20 +314,62 @@ export default function LotForm({
                     </FormItem>
                 )}
                 />
-                <FormField
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+                 <FormField
                     control={form.control}
-                    name="location"
+                    name="stateId"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Localização (Opcional)</FormLabel>
+                        <FormLabel>Estado (Opcional)</FormLabel>
+                        <Select onValueChange={(value) => {
+                            field.onChange(value);
+                            form.setValue('cityId', undefined); // Reset city when state changes
+                        }} value={field.value || ''}>
                         <FormControl>
-                        <Input placeholder="Ex: São Paulo - SP" {...field} />
+                            <SelectTrigger>
+                            <SelectValue placeholder="Selecione o estado" />
+                            </SelectTrigger>
                         </FormControl>
+                        <SelectContent>
+                            <SelectItem value="">Nenhum</SelectItem>
+                            {states.map(state => (
+                                <SelectItem key={state.id} value={state.id}>{state.name} ({state.uf})</SelectItem>
+                            ))}
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="cityId"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Cidade (Opcional)</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ''} disabled={!selectedStateId || filteredCities.length === 0}>
+                        <FormControl>
+                            <SelectTrigger>
+                            <SelectValue placeholder={!selectedStateId ? "Selecione um estado primeiro" : "Selecione a cidade"} />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="">Nenhuma</SelectItem>
+                            {filteredCities.map(city => (
+                            <SelectItem key={city.id} value={city.id}>{city.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                        </Select>
+                        {!selectedStateId && <FormDescription className="text-xs">Selecione um estado para ver as cidades.</FormDescription>}
+                        {selectedStateId && filteredCities.length === 0 && <FormDescription className="text-xs">Nenhuma cidade cadastrada para este estado.</FormDescription>}
                         <FormMessage />
                     </FormItem>
                     )}
                 />
             </div>
+
              <FormField
               control={form.control}
               name="imageUrl"
@@ -300,45 +388,29 @@ export default function LotForm({
               name="endDate"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Data de Encerramento</FormLabel>
+                  <FormLabel>Data de Encerramento do Lote</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
                           variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
+                          className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}
                         >
-                          {field.value ? (
-                            format(field.value, "PPP HH:mm:ss", { locale: ptBR })
-                          ) : (
-                            <span>Escolha uma data e hora</span>
-                          )}
+                          {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha data e hora</span>}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                        disabled={(date) => date < new Date(new Date().setHours(0,0,0,0)) }
-                      />
-                       <div className="p-2 border-t">
-                        <Input
-                          type="time"
-                          defaultValue={field.value ? format(field.value, "HH:mm") : "00:00"}
+                      <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                      <div className="p-2 border-t">
+                          <Input type="time" defaultValue={field.value ? format(field.value, "HH:mm") : "10:00"}
                           onChange={(e) => {
-                            const [hours, minutes] = e.target.value.split(':').map(Number);
-                            const newDate = field.value ? new Date(field.value) : new Date();
-                            newDate.setHours(hours, minutes);
-                            field.onChange(newDate);
-                          }}
-                        />
+                              const [hours, minutes] = e.target.value.split(':').map(Number);
+                              const newDate = field.value ? new Date(field.value) : new Date();
+                              newDate.setHours(hours, minutes);
+                              field.onChange(newDate);
+                          }} />
                       </div>
                     </PopoverContent>
                   </Popover>
@@ -346,6 +418,95 @@ export default function LotForm({
                 </FormItem>
               )}
             />
+
+            <div className="grid md:grid-cols-2 gap-6">
+                <FormField
+                control={form.control}
+                name="lotSpecificAuctionDate"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                    <FormLabel>Data 1ª Praça/Leilão (Opcional)</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button
+                            variant={"outline"}
+                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                            >
+                            {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha data e hora</span>}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                        </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus />
+                         <div className="p-2 border-t">
+                            <Input type="time" defaultValue={field.value ? format(field.value, "HH:mm") : "10:00"}
+                            onChange={(e) => {
+                                const [hours, minutes] = e.target.value.split(':').map(Number);
+                                const newDate = field.value ? new Date(field.value) : new Date();
+                                newDate.setHours(hours, minutes);
+                                field.onChange(newDate);
+                            }}/>
+                        </div>
+                        </PopoverContent>
+                    </Popover>
+                    <FormDescription>Data específica da primeira praça deste lote.</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="secondInitialPrice"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Lance Inicial 2ª Praça (Opcional)</FormLabel>
+                        <FormControl>
+                        <Input type="number" placeholder="Ex: 10000.00" {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
+            <FormField
+            control={form.control}
+            name="secondAuctionDate"
+            render={({ field }) => (
+                <FormItem className="flex flex-col">
+                <FormLabel>Data 2ª Praça/Leilão (Opcional)</FormLabel>
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <FormControl>
+                        <Button
+                        variant={"outline"}
+                        className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                        >
+                        {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha data e hora</span>}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                    </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus />
+                        <div className="p-2 border-t">
+                        <Input type="time" defaultValue={field.value ? format(field.value, "HH:mm") : "10:00"}
+                        onChange={(e) => {
+                            const [hours, minutes] = e.target.value.split(':').map(Number);
+                            const newDate = field.value ? new Date(field.value) : new Date();
+                            newDate.setHours(hours, minutes);
+                            field.onChange(newDate);
+                        }}/>
+                    </div>
+                    </PopoverContent>
+                </Popover>
+                <FormDescription>Data específica da segunda praça deste lote, se aplicável.</FormDescription>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+
             <div className="grid md:grid-cols-2 gap-6">
                 <FormField
                     control={form.control}
@@ -390,3 +551,5 @@ export default function LotForm({
     </Card>
   );
 }
+
+    

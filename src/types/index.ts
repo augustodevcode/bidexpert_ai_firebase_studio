@@ -59,7 +59,6 @@ export interface Lot {
   dataAiHint?: string;
   galleryImageUrls?: string[]; // URLs para a galeria de imagens
   status: LotStatus;
-  location: string; // e.g., "TEOTÔNIO VILELA - AL" ou "Englishtown (NJ)" -> Este será substituído por stateId e cityId
   stateId?: string; // FK para StateInfo
   cityId?: string; // FK para CityInfo
   cityName?: string; // Denormalized city name
@@ -122,7 +121,7 @@ export interface Lot {
   updatedAt?: Date;
 }
 
-export type LotFormData = Omit<Lot, 'id' | 'createdAt' | 'updatedAt' | 'endDate' | 'lotSpecificAuctionDate' | 'secondAuctionDate' | 'isFavorite' | 'isFeatured' | 'views' | 'bidsCount' | 'galleryImageUrls' | 'dataAiHint' | 'auctionDate' | 'auctioneerName' | 'location' | 'cityName' | 'stateUf'> & {
+export type LotFormData = Omit<Lot, 'id' | 'createdAt' | 'updatedAt' | 'endDate' | 'lotSpecificAuctionDate' | 'secondAuctionDate' | 'isFavorite' | 'isFeatured' | 'views' | 'bidsCount' | 'galleryImageUrls' | 'dataAiHint' | 'auctionDate' | 'auctioneerName' | 'cityName' | 'stateUf'> & {
   endDate: Date;
   lotSpecificAuctionDate?: Date | null;
   secondAuctionDate?: Date | null;
@@ -146,7 +145,7 @@ export interface Auction {
   auctionDate: Date;
   endDate?: Date | null;
   auctionStages?: AuctionStage[]; // Para múltiplas praças/etapas
-  location?: string; // Local físico do leilão ou dos bens
+  location?: string; // Local físico do leilão ou dos bens // Será substituído por city/state
   city?: string;
   state?: string; // UF
   imageUrl?: string; // Imagem de capa para o leilão
@@ -169,7 +168,7 @@ export interface Auction {
   auctioneerName?: string;
 }
 
-export type AuctionFormData = Omit<Auction, 'id' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' | 'lots' | 'totalLots' | 'visits' | 'auctionStages' | 'initialOffer' | 'isFavorite' | 'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' | 'category' | 'auctioneer' | 'seller'> & {
+export type AuctionFormData = Omit<Auction, 'id' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' | 'lots' | 'totalLots' | 'visits' | 'auctionStages' | 'initialOffer' | 'isFavorite' | 'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' | 'category' | 'auctioneer' | 'seller' | 'location'> & {
   auctionDate: Date;
   endDate?: Date | null;
   category: string; 
@@ -332,4 +331,6 @@ export interface CityInfo {
 }
 
 export type CityFormData = Omit<CityInfo, 'id' | 'slug' | 'stateUf' | 'createdAt' | 'updatedAt' | 'lotCount'>;
+    
+
     

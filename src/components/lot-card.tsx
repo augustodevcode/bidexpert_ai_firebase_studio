@@ -31,7 +31,7 @@ import {
 import { format, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
-import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data'; // sampleLots não é mais necessário aqui para isso
+import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,14 +39,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
-import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store'; // Nova importação
+import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 
 interface LotCardProps {
   lot: Lot;
 }
 
 const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
-  const [isFavorite, setIsFavorite] = useState(false); // Estado inicial pode ser falso
+  const [isFavorite, setIsFavorite] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const [isPast, setIsPast]   = useState<boolean>(false);
   const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`);
@@ -56,14 +56,11 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setLotDetailUrl(`${window.location.origin}/auctions/${lot.auctionId}/lots/${lot.id}`);
-      // Sincroniza com o localStorage ao montar
       setIsFavorite(isLotFavoriteInStorage(lot.id));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lot.id, lot.auctionId]); // Adicionar lot.id como dependência para re-verificar se a prop 'lot' mudar
+  }, [lot.id, lot.auctionId]);
 
   useEffect(() => {
-    // Este efeito garante que se a prop lot.id mudar, o estado de favorito é reavaliado a partir do localStorage
     if (lot && lot.id) {
         setIsFavorite(isLotFavoriteInStorage(lot.id));
     }
@@ -159,6 +156,8 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
     return <Info className="h-3 w-3 text-muted-foreground" />;
   };
 
+  const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
+
   return (
     <Card className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group">
       <div className="relative">
@@ -217,7 +216,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
         <div className="flex justify-between items-center text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <MapPin className="h-3 w-3" />
-            <span>{lot.location}</span>
+            <span>{displayLocation}</span>
           </div>
           <div className="flex items-center gap-1">
             {getTypeIcon(lot.type)}
@@ -264,7 +263,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
                 <Gavel className="h-3 w-3" />
                 <span>{lot.bidsCount} Lances</span>
             </div>
-            <span className={`font-semibold ${isPast ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.id.replace('LOTE', '')}</span>
+            <span className={`font-semibold ${isPast ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.number || lot.id.replace('LOTE', '')}</span>
         </div>
          <Button asChild className="w-full mt-2" size="sm">
             <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>Ver Detalhes do Lote</Link>
@@ -302,3 +301,5 @@ export default function LotCard({ lot }: LotCardProps) {
   
     return <LotCardClientContent lot={lot} />;
   }
+
+    

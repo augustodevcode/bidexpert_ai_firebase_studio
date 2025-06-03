@@ -1,17 +1,18 @@
 
 import * as z from 'zod';
-import type { AuctionStatus } from '@/types';
+import type { AuctionStatus, Auction } from '@/types'; // Auction importado para auctionTypeValues
 
 const auctionStatusValues: [AuctionStatus, ...AuctionStatus[]] = [
   'EM_BREVE',
-  'ABERTO', // Genérico para quando os lances ainda não começaram ou estão em curso
+  'ABERTO', 
   'ABERTO_PARA_LANCES',
   'ENCERRADO',
-  'FINALIZADO', // Após apuração
+  'FINALIZADO', 
   'CANCELADO',
   'SUSPENSO'
 ];
 
+// Usar `Auction['auctionType']` para garantir que os valores sejam os mesmos definidos no tipo Auction
 const auctionTypeValues: [Auction['auctionType'], ...(Auction['auctionType'])[]] = [
   'JUDICIAL',
   'EXTRAJUDICIAL',
@@ -35,15 +36,15 @@ export const auctionFormSchema = z.object({
     required_error: "O status do leilão é obrigatório.",
   }),
   auctionType: z.enum(auctionTypeValues).optional(),
-  category: z.string().min(2, { message: "A categoria é obrigatória."}).max(100),
-  auctioneer: z.string().min(3, { message: "O nome do leiloeiro é obrigatório."}).max(150),
+  category: z.string().min(1, { message: "A categoria é obrigatória."}).max(100),
+  auctioneer: z.string().min(1, { message: "O nome do leiloeiro é obrigatório."}).max(150),
   seller: z.string().max(150).optional(),
   auctionDate: z.date({
     required_error: "A data do leilão é obrigatória.",
     invalid_type_error: "Por favor, insira uma data de leilão válida.",
   }),
-  endDate: z.date().optional().nullable(), // Data de encerramento geral (opcional)
-  location: z.string().max(150).optional(),
+  endDate: z.date().optional().nullable(),
+  // location: z.string().max(150).optional(), // Removido, usar city/state
   city: z.string().max(100).optional(),
   state: z.string().max(2).optional(), // UF
   imageUrl: z.string().url({ message: "URL da imagem inválida." }).optional().or(z.literal('')),
@@ -52,3 +53,5 @@ export const auctionFormSchema = z.object({
 });
 
 export type AuctionFormValues = z.infer<typeof auctionFormSchema>;
+
+    

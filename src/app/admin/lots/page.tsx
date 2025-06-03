@@ -22,7 +22,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
 
-// Client component to handle delete action with confirmation
 function DeleteLotButton({ lotId, lotTitle, onDelete }: { lotId: string; lotTitle: string; onDelete: (id: string) => Promise<void> }) {
   return (
     <AlertDialog>
@@ -61,11 +60,13 @@ export default async function AdminLotsPage() {
 
   async function handleDeleteLot(id: string) {
     'use server';
-    const result = await deleteLot(id);
+    // A action de deleteLot não precisa necessariamente do auctionId para revalidação aqui,
+    // mas se precisar, o lote pode não estar mais associado.
+    const lotToDelete = lots.find(l => l.id === id);
+    const result = await deleteLot(id, lotToDelete?.auctionId);
     if (!result.success) {
         console.error("Failed to delete lot:", result.message);
     }
-    // Revalidation is handled by the action
   }
 
   return (
@@ -102,6 +103,7 @@ export default async function AdminLotsPage() {
                     <TableHead className="w-[80px]">ID Lote</TableHead>
                     <TableHead className="min-w-[200px]">Título</TableHead>
                     <TableHead>Leilão ID</TableHead>
+                    <TableHead>Local (Cidade/UF)</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Preço</TableHead>
                     <TableHead>Encerr. em</TableHead>
@@ -114,6 +116,9 @@ export default async function AdminLotsPage() {
                       <TableCell className="font-mono text-xs">{lot.id.substring(0,10)}{lot.id.length > 10 ? '...' : ''}</TableCell>
                       <TableCell className="font-medium">{lot.title}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{lot.auctionId}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || '-'}
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={`text-xs ${getLotStatusColor(lot.status)} border-current`}>
                           {getAuctionStatusText(lot.status)}
@@ -151,3 +156,5 @@ export default async function AdminLotsPage() {
     </div>
   );
 }
+
+    

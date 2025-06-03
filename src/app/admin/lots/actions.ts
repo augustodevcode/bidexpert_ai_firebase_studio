@@ -4,23 +4,22 @@
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp, where, writeBatch } from 'firebase/firestore';
-import type { Lot, LotFormData } from '@/types';
+import type { Lot, LotFormData, StateInfo, CityInfo } from '@/types';
 
 // Helper function to safely convert Firestore Timestamp like objects or actual Timestamps to Date
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) {
-    // console.warn(`Timestamp field is null or undefined. Returning current date as fallback.`);
-    return new Date(); // Fallback or handle as error/undefined
+    return new Date(); 
   }
   if (timestampField.toDate && typeof timestampField.toDate === 'function') {
-    return timestampField.toDate(); // Firestore Timestamp
+    return timestampField.toDate(); 
   }
   if (typeof timestampField === 'object' && timestampField !== null &&
       typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
-    return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000); // Plain object {seconds, nanoseconds}
+    return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000); 
   }
   if (timestampField instanceof Date) {
-    return timestampField; // Already a Date
+    return timestampField; 
   }
   const parsedDate = new Date(timestampField);
   if (!isNaN(parsedDate.getTime())) {
@@ -34,22 +33,8 @@ function safeConvertOptionalDate(timestampField: any): Date | undefined {
     if (!timestampField) {
       return undefined;
     }
-    if (timestampField.toDate && typeof timestampField.toDate === 'function') {
-      return timestampField.toDate();
-    }
-    if (typeof timestampField === 'object' && timestampField !== null &&
-        typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
-      return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000);
-    }
-    if (timestampField instanceof Date) {
-      return timestampField;
-    }
-    const parsedDate = new Date(timestampField);
-    if (!isNaN(parsedDate.getTime())) {
-        return parsedDate;
-    }
-    console.warn(`Could not convert optional lot timestamp to Date: ${JSON.stringify(timestampField)}. Returning undefined.`);
-    return undefined;
+    // Use the main safeConvertToDate which handles various Timestamp-like objects
+    return safeConvertToDate(timestampField);
 }
 
 
@@ -70,32 +55,49 @@ export async function createLot(
   }
 
   try {
-    // Destructure to separate optional dates and the rest of the data
-    const { lotSpecificAuctionDate, secondAuctionDate, endDate, ...restData } = data;
+    const { lotSpecificAuctionDate, secondAuctionDate, endDate, stateId, cityId, ...restData } = data;
 
     const newLotDataForFirestore: any = {
       ...restData,
       views: data.views || 0,
       bidsCount: data.bidsCount || 0,
       auctionName: data.auctionName || `Leilão do Lote ${data.title.substring(0,20)}`,
-      endDate: Timestamp.fromDate(new Date(endDate)), // endDate is mandatory
+      endDate: Timestamp.fromDate(new Date(endDate)),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
 
-    // Handle lotSpecificAuctionDate: convert to Timestamp if Date, or set to null if explicitly null
-    if (lotSpecificAuctionDate !== undefined) { // Check if the property exists on input data
+    if (stateId) {
+      const stateDoc = await getDoc(doc(db, 'states', stateId));
+      if (stateDoc.exists()) {
+        newLotDataForFirestore.stateId = stateId;
+        newLotDataForFirestore.stateUf = (stateDoc.data() as StateInfo).uf;
+      }
+    }
+    if (cityId) {
+      const cityDoc = await getDoc(doc(db, 'cities', cityId));
+      if (cityDoc.exists()) {
+        newLotDataForFirestore.cityId = cityId;
+        newLotDataForFirestore.cityName = (cityDoc.data() as CityInfo).name;
+      }
+    }
+    
+    if (lotSpecificAuctionDate !== undefined) {
       newLotDataForFirestore.lotSpecificAuctionDate = lotSpecificAuctionDate
         ? Timestamp.fromDate(new Date(lotSpecificAuctionDate))
         : null;
+    } else {
+       newLotDataForFirestore.lotSpecificAuctionDate = null;
     }
 
-    // Handle secondAuctionDate: convert to Timestamp if Date, or set to null if explicitly null
-    if (secondAuctionDate !== undefined) { // Check if the property exists on input data
+    if (secondAuctionDate !== undefined) {
       newLotDataForFirestore.secondAuctionDate = secondAuctionDate
         ? Timestamp.fromDate(new Date(secondAuctionDate))
         : null;
+    } else {
+        newLotDataForFirestore.secondAuctionDate = null;
     }
+
 
     const docRef = await addDoc(collection(db, 'lots'), newLotDataForFirestore);
     revalidatePath('/admin/lots');
@@ -117,10 +119,10 @@ export async function getLots(auctionIdParam?: string): Promise<Lot[]> {
       q = query(lotsCollection, orderBy('title', 'asc'));
     }
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => {
-      const data = doc.data();
+    return snapshot.docs.map(docSnap => {
+      const data = docSnap.data();
       return {
-        id: doc.id,
+        id: docSnap.id,
         auctionId: data.auctionId,
         title: data.title,
         number: data.number,
@@ -128,7 +130,10 @@ export async function getLots(auctionIdParam?: string): Promise<Lot[]> {
         dataAiHint: data.dataAiHint,
         galleryImageUrls: data.galleryImageUrls,
         status: data.status,
-        location: data.location,
+        stateId: data.stateId,
+        cityId: data.cityId,
+        cityName: data.cityName,
+        stateUf: data.stateUf,
         type: data.type,
         views: data.views,
         auctionName: data.auctionName,
@@ -201,7 +206,10 @@ export async function getLot(id: string): Promise<Lot | null> {
         dataAiHint: data.dataAiHint,
         galleryImageUrls: data.galleryImageUrls,
         status: data.status,
-        location: data.location,
+        stateId: data.stateId,
+        cityId: data.cityId,
+        cityName: data.cityName,
+        stateUf: data.stateUf,
         type: data.type,
         views: data.views,
         auctionName: data.auctionName,
@@ -277,17 +285,49 @@ export async function updateLot(
     const updateDataForFirestore: any = {};
 
     // Iterate over the keys in data and build the update object
-    // This ensures only provided fields are updated and handles dates correctly
     for (const key in data) {
       if (data.hasOwnProperty(key)) {
         const value = (data as any)[key];
         
         if (key === 'endDate' || key === 'lotSpecificAuctionDate' || key === 'secondAuctionDate') {
-          if (value !== undefined) { // Only process if the key is actually in the partial data
+          if (value !== undefined) { 
             updateDataForFirestore[key] = value ? Timestamp.fromDate(new Date(value)) : null;
+          } else if (key === 'lotSpecificAuctionDate' || key === 'secondAuctionDate') {
+             // Explicitly set to null if undefined for optional dates in update
+            updateDataForFirestore[key] = null;
           }
-        } else {
-           if (value !== undefined) { // Ensure other fields are also not undefined
+        } else if (key === 'stateId') {
+            if (value) {
+                const stateDoc = await getDoc(doc(db, 'states', value));
+                if (stateDoc.exists()) {
+                    updateDataForFirestore.stateId = value;
+                    updateDataForFirestore.stateUf = (stateDoc.data() as StateInfo).uf;
+                } else {
+                    // Handle case where stateId is invalid or clear if value is empty
+                    updateDataForFirestore.stateId = null;
+                    updateDataForFirestore.stateUf = null;
+                }
+            } else {
+                 updateDataForFirestore.stateId = null;
+                 updateDataForFirestore.stateUf = null;
+            }
+        } else if (key === 'cityId') {
+             if (value) {
+                const cityDoc = await getDoc(doc(db, 'cities', value));
+                if (cityDoc.exists()) {
+                    updateDataForFirestore.cityId = value;
+                    updateDataForFirestore.cityName = (cityDoc.data() as CityInfo).name;
+                } else {
+                    updateDataForFirestore.cityId = null;
+                    updateDataForFirestore.cityName = null;
+                }
+            } else {
+                updateDataForFirestore.cityId = null;
+                updateDataForFirestore.cityName = null;
+            }
+        }
+        else {
+           if (value !== undefined) { 
             updateDataForFirestore[key] = value;
            }
         }
@@ -299,7 +339,7 @@ export async function updateLot(
     await updateDoc(lotDocRef, updateDataForFirestore);
     revalidatePath('/admin/lots');
     revalidatePath(`/admin/lots/${id}/edit`);
-    if (updateDataForFirestore.auctionId || data.auctionId) { // Use updated or original auctionId for revalidation
+    if (updateDataForFirestore.auctionId || data.auctionId) { 
       revalidatePath(`/admin/auctions/${updateDataForFirestore.auctionId || data.auctionId}/edit`);
     }
     return { success: true, message: 'Lote atualizado com sucesso!' };
@@ -326,3 +366,6 @@ export async function deleteLot(
     return { success: false, message: error.message || 'Falha ao excluir lote.' };
   }
 }
+
+
+    
