@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +10,7 @@ import type { Lot, UserWin, UserBid } from '@/types';
 import { useEffect, useState } from 'react';
 import { format, differenceInHours, differenceInMinutes, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Badge } from '@/components/ui/badge'; // Importação adicionada
 
 function TimeRemaining({ endDate }: { endDate: Date }) {
   const [remaining, setRemaining] = useState('');
@@ -247,5 +247,3 @@ export default function DashboardOverviewPage() {
     </div>
   );
 }
-
-    
