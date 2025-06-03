@@ -1,6 +1,6 @@
 
 import AuctionForm from '../auction-form';
-import { getAuction, updateAuction, type AuctionFormData } from '../actions';
+import { getAuction, updateAuction, type AuctionFormData } from '../../actions'; // Corrected path
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getLots, deleteLot } from '@/app/admin/lots/actions'; // Importar getLots e deleteLot
 import type { Lot } from '@/types';
@@ -25,6 +25,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
+import { getAuctioneers } from '../../auctioneers/actions'; // Import getAuctioneers
+import { getSellers } from '../../sellers/actions'; // Import getSellers
 
 // Client component para o botão de deletar lote, para usar AlertDialog
 function DeleteLotButton({ lotId, lotTitle, auctionId, onDelete }: { lotId: string; lotTitle: string; auctionId: string; onDelete: (id: string, auctionId: string) => Promise<void> }) {
@@ -65,6 +67,9 @@ export default async function EditAuctionPage({ params }: { params: { auctionId:
   const auction = await getAuction(auctionId);
   const categories = await getLotCategories();
   const lotsInAuction = await getLots(auctionId); // Buscar lotes associados
+  const auctioneers = await getAuctioneers(); // Fetch auctioneers
+  const sellers = await getSellers(); // Fetch sellers
+
 
   if (!auction) {
     notFound();
@@ -89,6 +94,8 @@ export default async function EditAuctionPage({ params }: { params: { auctionId:
       <AuctionForm
         initialData={auction}
         categories={categories}
+        auctioneers={auctioneers}
+        sellers={sellers}
         onSubmitAction={handleUpdateAuction}
         formTitle="Editar Leilão"
         formDescription="Modifique os detalhes do leilão existente."
