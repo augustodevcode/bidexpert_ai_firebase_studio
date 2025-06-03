@@ -2,48 +2,63 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db, auth } from '@/lib/firebase'; // auth ainda pode ser útil para outras coisas no futuro, ou se as regras mudarem
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp } from 'firebase/firestore';
 import type { LotCategory } from '@/types';
 import { slugify } from '@/lib/sample-data';
 
-// Placeholder para verificação de role, não usado ativamente com as regras atuais 'if true;'
-// async function verifyAdminOrAnalystRole(userId: string | undefined): Promise<boolean> {
-//   if (!userId) return false;
-//   console.warn("Placeholder role check in categories/actions.ts. Implement actual role verification.");
-//   return true;
-// }
+// Helper function to safely convert Firestore Timestamp like objects or actual Timestamps to Date
+function safeConvertToDate(timestampField: any): Date {
+  if (!timestampField) {
+    return new Date(); // Fallback or handle as error/undefined
+  }
+  // Check for Firestore Timestamp object
+  if (timestampField.toDate && typeof timestampField.toDate === 'function') {
+    return timestampField.toDate();
+  }
+  // Check for plain object {seconds, nanoseconds}
+  if (typeof timestampField === 'object' && timestampField !== null &&
+      typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
+    return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000);
+  }
+  // Check if it's already a Date object
+  if (timestampField instanceof Date) {
+    return timestampField;
+  }
+  // Try to parse if it's a string or number that can be converted
+  const parsedDate = new Date(timestampField);
+  if (!isNaN(parsedDate.getTime())) {
+    return parsedDate;
+  }
+  // Final fallback if conversion is not possible
+  console.warn(`Could not convert timestamp to Date: ${JSON.stringify(timestampField)}. Returning current date.`);
+  return new Date();
+}
 
 
 export async function createLotCategory(
   data: { name: string; description?: string },
 ): Promise<{ success: boolean; message: string; category?: LotCategory, categoryId?: string }> {
-  
-  // console.log('[Server Action - createLotCategory] Auth Current User UID (no server action):', auth.currentUser?.uid);
-  // console.log('[Server Action - createLotCategory] Auth Current User Email (no server action):', auth.currentUser?.email);
-
-  // Com as regras 'if true;' no Firestore, esta verificação de auth.currentUser não é o fator limitante.
-  // A proteção de quem pode chamar esta action é feita pelo AdminLayout.
-  // if (!auth.currentUser) {
-  //   console.error('[Server Action - createLotCategory] Error: No authenticated user found in this server action context. Category creation might fail if Firestore rules change.');
-  //   return { success: false, message: 'Usuário não autenticado no contexto da ação do servidor. A criação da categoria falhou.' };
-  // }
-
   if (!data.name || data.name.trim() === '') {
     return { success: false, message: 'O nome da categoria é obrigatório.' };
   }
 
   try {
-    const newCategory: Omit<LotCategory, 'id'> = {
+    const newCategoryData: Omit<LotCategory, 'id' | 'createdAt' | 'updatedAt'> = {
       name: data.name.trim(),
       slug: slugify(data.name.trim()),
       description: data.description?.trim() || '',
       itemCount: 0,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
     };
-    const docRef = await addDoc(collection(db, 'lotCategories'), newCategory);
+    // Firestore will add createdAt and updatedAt as Timestamps on the server
+    const docRef = await addDoc(collection(db, 'lotCategories'), {
+        ...newCategoryData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+    });
     revalidatePath('/admin/categories');
+    // For the immediate return, we don't have the server-generated timestamps yet.
+    // If we needed them, we'd have to re-fetch, but for this return type it's okay.
     return { success: true, message: 'Categoria criada com sucesso!', categoryId: docRef.id };
   } catch (error: any) {
     console.error("[Server Action - createLotCategory] Error creating lot category:", error);
@@ -52,19 +67,22 @@ export async function createLotCategory(
 }
 
 export async function getLotCategories(): Promise<LotCategory[]> {
-  // console.log('[Server Action - getLotCategories] Auth Current User UID (no server action):', auth.currentUser?.uid);
-  // console.log('[Server Action - getLotCategories] Auth Current User Email (no server action):', auth.currentUser?.email);
-
-  // Com as regras 'if true;' no Firestore, esta verificação de auth.currentUser não é o fator limitante.
-  // if (!auth.currentUser) {
-  //   console.error('[Server Action - getLotCategories] Info: No authenticated user found in this server action context. Firestore operations might be restricted by rules if they change.');
-  // }
-  
   try {
     const categoriesCollection = collection(db, 'lotCategories');
     const q = query(categoriesCollection, orderBy('name', 'asc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LotCategory));
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data.name,
+        slug: data.slug,
+        description: data.description || '',
+        itemCount: data.itemCount || 0,
+        createdAt: safeConvertToDate(data.createdAt),
+        updatedAt: safeConvertToDate(data.updatedAt),
+      } as LotCategory;
+    });
   } catch (error: any) {
     console.error("[Server Action - getLotCategories] Error fetching lot categories:", error);
     return [];
@@ -72,12 +90,20 @@ export async function getLotCategories(): Promise<LotCategory[]> {
 }
 
 export async function getLotCategory(id: string): Promise<LotCategory | null> {
-  // console.log('[Server Action - getLotCategory] Auth Current User UID (no server action):', auth.currentUser?.uid);
   try {
     const categoryDocRef = doc(db, 'lotCategories', id);
     const docSnap = await getDoc(categoryDocRef);
     if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() } as LotCategory;
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        name: data.name,
+        slug: data.slug,
+        description: data.description || '',
+        itemCount: data.itemCount || 0,
+        createdAt: safeConvertToDate(data.createdAt),
+        updatedAt: safeConvertToDate(data.updatedAt),
+      } as LotCategory;
     }
     return null;
   } catch (error: any) {
@@ -90,23 +116,17 @@ export async function updateLotCategory(
   id: string,
   data: { name: string; description?: string },
 ): Promise<{ success: boolean; message: string }> {
-  // console.log('[Server Action - updateLotCategory] Auth Current User UID (no server action):', auth.currentUser?.uid);
-  // if (!auth.currentUser) {
-  //   console.error('[Server Action - updateLotCategory] Error: No authenticated user found in server action context.');
-  //   return { success: false, message: 'Usuário não autenticado no contexto da ação do servidor. A atualização da categoria falhou.' };
-  // }
-
   if (!data.name || data.name.trim() === '') {
     return { success: false, message: 'O nome da categoria é obrigatório.' };
   }
 
   try {
     const categoryDocRef = doc(db, 'lotCategories', id);
-    const updateData: Partial<LotCategory> = {
+    const updateData: Partial<Omit<LotCategory, 'id' | 'createdAt'>> = { // Exclude createdAt from update type
       name: data.name.trim(),
       slug: slugify(data.name.trim()),
       description: data.description?.trim() || '',
-      updatedAt: serverTimestamp(),
+      updatedAt: serverTimestamp() as any, // Firestore will convert this to Timestamp
     };
     await updateDoc(categoryDocRef, updateData);
     revalidatePath('/admin/categories');
@@ -121,12 +141,6 @@ export async function updateLotCategory(
 export async function deleteLotCategory(
   id: string,
 ): Promise<{ success: boolean; message: string }> {
-  // console.log('[Server Action - deleteLotCategory] Auth Current User UID (no server action):', auth.currentUser?.uid);
-  //  if (!auth.currentUser) {
-  //   console.error('[Server Action - deleteLotCategory] Error: No authenticated user found in server action context.');
-  //   return { success: false, message: 'Usuário não autenticado no contexto da ação do servidor. A exclusão da categoria falhou.' };
-  // }
-  
   try {
     const categoryDocRef = doc(db, 'lotCategories', id);
     await deleteDoc(categoryDocRef);
@@ -137,5 +151,3 @@ export async function deleteLotCategory(
     return { success: false, message: error.message || 'Falha ao excluir categoria.' };
   }
 }
-
-    

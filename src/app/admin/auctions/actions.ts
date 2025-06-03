@@ -6,11 +6,55 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp } from 'firebase/firestore';
 import type { Auction } from '@/types';
 
-// Firestore data typically comes with Timestamps, not JS Dates directly.
-// We might need a helper type if form data uses JS Date and Firestore uses Timestamp.
+// Helper function to safely convert Firestore Timestamp like objects or actual Timestamps to Date
+function safeConvertToDate(timestampField: any): Date {
+  if (!timestampField) {
+    return new Date(); // Fallback or handle as error/undefined
+  }
+  if (timestampField.toDate && typeof timestampField.toDate === 'function') {
+    return timestampField.toDate(); // Firestore Timestamp
+  }
+  if (typeof timestampField === 'object' && timestampField !== null &&
+      typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
+    return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000); // Plain object {seconds, nanoseconds}
+  }
+  if (timestampField instanceof Date) {
+    return timestampField; // Already a Date
+  }
+  const parsedDate = new Date(timestampField);
+  if (!isNaN(parsedDate.getTime())) {
+    return parsedDate;
+  }
+  console.warn(`Could not convert auction timestamp to Date: ${JSON.stringify(timestampField)}. Returning current date.`);
+  return new Date();
+}
+
+function safeConvertOptionalDate(timestampField: any): Date | undefined {
+    if (!timestampField) {
+      return undefined;
+    }
+    if (timestampField.toDate && typeof timestampField.toDate === 'function') {
+      return timestampField.toDate();
+    }
+    if (typeof timestampField === 'object' && timestampField !== null &&
+        typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
+      return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000);
+    }
+    if (timestampField instanceof Date) {
+      return timestampField;
+    }
+    const parsedDate = new Date(timestampField);
+    if (!isNaN(parsedDate.getTime())) {
+        return parsedDate;
+    }
+    console.warn(`Could not convert optional auction timestamp to Date: ${JSON.stringify(timestampField)}. Returning undefined.`);
+    return undefined;
+}
+
+
 export type AuctionFormData = Omit<Auction, 'id' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' | 'lots' | 'totalLots' | 'visits'> & {
-  auctionDate: Date; // From form
-  endDate?: Date; // Optional from form
+  auctionDate: Date;
+  endDate?: Date | null; // Allow null for optional reset
 };
 
 
@@ -33,19 +77,24 @@ export async function createAuction(
     return { success: false, message: 'O nome do leiloeiro é obrigatório.' };
   }
 
-
   try {
-    const newAuctionData: Omit<Auction, 'id' | 'createdAt' | 'updatedAt' | 'lots' | 'totalLots' | 'visits'> = {
+    // Data going to Firestore should use Timestamps for date fields
+    const newAuctionDataForFirestore = {
       ...data,
       auctionDate: Timestamp.fromDate(new Date(data.auctionDate)),
       endDate: data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : undefined,
-      totalLots: 0, // Initial value
-      visits: 0,    // Initial value
+      totalLots: 0,
+      visits: 0,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
+    // Remove endDate from object if it was explicitly null in form
+    if (data.endDate === null) {
+      delete (newAuctionDataForFirestore as any).endDate;
+    }
 
-    const docRef = await addDoc(collection(db, 'auctions'), newAuctionData);
+
+    const docRef = await addDoc(collection(db, 'auctions'), newAuctionDataForFirestore);
     revalidatePath('/admin/auctions');
     return { success: true, message: 'Leilão criado com sucesso!', auctionId: docRef.id };
   } catch (error: any) {
@@ -57,17 +106,33 @@ export async function createAuction(
 export async function getAuctions(): Promise<Auction[]> {
   try {
     const auctionsCollection = collection(db, 'auctions');
-    const q = query(auctionsCollection, orderBy('auctionDate', 'desc')); // Example: order by date
+    const q = query(auctionsCollection, orderBy('auctionDate', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => {
       const data = doc.data();
       return {
         id: doc.id,
-        ...data,
-        auctionDate: data.auctionDate instanceof Timestamp ? data.auctionDate.toDate() : new Date(data.auctionDate),
-        endDate: data.endDate instanceof Timestamp ? data.endDate.toDate() : (data.endDate ? new Date(data.endDate) : undefined),
-        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt),
-        updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : new Date(data.updatedAt),
+        title: data.title,
+        fullTitle: data.fullTitle,
+        description: data.description,
+        status: data.status,
+        auctionType: data.auctionType,
+        category: data.category,
+        auctioneer: data.auctioneer,
+        seller: data.seller,
+        auctionDate: safeConvertToDate(data.auctionDate),
+        endDate: safeConvertOptionalDate(data.endDate),
+        location: data.location,
+        city: data.city,
+        state: data.state,
+        imageUrl: data.imageUrl,
+        documentsUrl: data.documentsUrl,
+        sellingBranch: data.sellingBranch,
+        totalLots: data.totalLots || 0,
+        visits: data.visits || 0,
+        lots: [], // Lots are typically fetched separately or on demand
+        createdAt: safeConvertToDate(data.createdAt),
+        updatedAt: safeConvertToDate(data.updatedAt),
       } as Auction;
     });
   } catch (error: any) {
@@ -84,11 +149,27 @@ export async function getAuction(id: string): Promise<Auction | null> {
       const data = docSnap.data();
       return {
         id: docSnap.id,
-        ...data,
-        auctionDate: data.auctionDate instanceof Timestamp ? data.auctionDate.toDate() : new Date(data.auctionDate),
-        endDate: data.endDate instanceof Timestamp ? data.endDate.toDate() : (data.endDate ? new Date(data.endDate) : undefined),
-        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt),
-        updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : new Date(data.updatedAt),
+        title: data.title,
+        fullTitle: data.fullTitle,
+        description: data.description,
+        status: data.status,
+        auctionType: data.auctionType,
+        category: data.category,
+        auctioneer: data.auctioneer,
+        seller: data.seller,
+        auctionDate: safeConvertToDate(data.auctionDate),
+        endDate: safeConvertOptionalDate(data.endDate),
+        location: data.location,
+        city: data.city,
+        state: data.state,
+        imageUrl: data.imageUrl,
+        documentsUrl: data.documentsUrl,
+        sellingBranch: data.sellingBranch,
+        totalLots: data.totalLots || 0,
+        visits: data.visits || 0,
+        lots: [],
+        createdAt: safeConvertToDate(data.createdAt),
+        updatedAt: safeConvertToDate(data.updatedAt),
       } as Auction;
     }
     return null;
@@ -100,7 +181,7 @@ export async function getAuction(id: string): Promise<Auction | null> {
 
 export async function updateAuction(
   id: string,
-  data: Partial<AuctionFormData> // Use Partial for updates
+  data: Partial<AuctionFormData>
 ): Promise<{ success: boolean; message: string }> {
   if (data.title !== undefined && (data.title === null || data.title.trim() === '')) {
      return { success: false, message: 'O título do leilão não pode ser vazio se fornecido.' };
@@ -115,21 +196,25 @@ export async function updateAuction(
   try {
     const auctionDocRef = doc(db, 'auctions', id);
     
-    // Create a new object for updateData to avoid modifying the input 'data' directly
-    const updateData: Partial<Auction> = { ...data }; 
+    const updateDataForFirestore: Partial<any> = { ...data };
 
     if (data.auctionDate) {
-        updateData.auctionDate = Timestamp.fromDate(new Date(data.auctionDate));
+        updateDataForFirestore.auctionDate = Timestamp.fromDate(new Date(data.auctionDate));
     }
-    if (data.endDate) {
-        updateData.endDate = Timestamp.fromDate(new Date(data.endDate));
-    } else if (data.endDate === null) { // Explicitly handle null to remove the date
-        updateData.endDate = undefined; // Or use deleteField() if appropriate
+    if (data.endDate) { // If endDate is provided and not null
+        updateDataForFirestore.endDate = Timestamp.fromDate(new Date(data.endDate));
+    } else if (data.hasOwnProperty('endDate') && data.endDate === null) { // If endDate is explicitly set to null
+        updateDataForFirestore.endDate = undefined; // Or use deleteField() if you want to remove it
     }
-    
-    updateData.updatedAt = serverTimestamp();
+    // Remove endDate from updateDataForFirestore if it was passed as null to avoid sending 'null' to Firestore
+    if (updateDataForFirestore.endDate === null) {
+        delete updateDataForFirestore.endDate;
+    }
 
-    await updateDoc(auctionDocRef, updateData);
+
+    updateDataForFirestore.updatedAt = serverTimestamp();
+
+    await updateDoc(auctionDocRef, updateDataForFirestore);
     revalidatePath('/admin/auctions');
     revalidatePath(`/admin/auctions/${id}/edit`);
     return { success: true, message: 'Leilão atualizado com sucesso!' };
@@ -142,8 +227,6 @@ export async function updateAuction(
 export async function deleteAuction(
   id: string
 ): Promise<{ success: boolean; message: string }> {
-  // TODO: Consider implications: what happens to lots associated with this auction?
-  // This basic delete won't delete associated lots.
   try {
     const auctionDocRef = doc(db, 'auctions', id);
     await deleteDoc(auctionDocRef);
