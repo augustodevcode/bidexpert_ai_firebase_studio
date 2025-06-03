@@ -46,8 +46,8 @@ export interface LotCategory {
     slug: string;
     description?: string;
     itemCount?: number; // Optional: to store how many lots use this category
-    createdAt: Date | any; // Firestore timestamp or Date
-    updatedAt: Date | any; // Firestore timestamp or Date
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface Lot {
@@ -65,9 +65,9 @@ export interface Lot {
   auctionName?: string; // e.g., "Leilão Único" ou nome do leilão principal
   price: number; // Lance mínimo/atual
   initialPrice?: number; // Lance inicial (se diferente do preço atual)
-  secondAuctionDate?: Date | any; // Data para segunda praça
-  secondInitialPrice?: number; // Lance inicial para segunda praça
-  endDate: Date | any; // Data de encerramento do lote específico (pode ser Firestore Timestamp)
+  secondAuctionDate?: Date | null;
+  secondInitialPrice?: number;
+  endDate: Date;
   bidsCount?: number;
   isFavorite?: boolean;
   isFeatured?: boolean;
@@ -103,18 +103,26 @@ export interface Lot {
   manufacturedIn?: string;
   vehicleClass?: string;
 
-  lotSpecificAuctionDate?: Date | any;
+  lotSpecificAuctionDate?: Date | null;
   vehicleLocationInBranch?: string;
   laneRunNumber?: string;
   aisleStall?: string;
   actualCashValue?: string;
   estimatedRepairCost?: string;
-  sellerName?: string;
+  sellerName?: string; // Este campo será populado pelo nome do Comitente/Seller selecionado
 
   condition?: string;
-  createdAt?: Date | any; // Firestore timestamp or Date
-  updatedAt?: Date | any; // Firestore timestamp or Date
+  createdAt?: Date;
+  updatedAt?: Date;
 }
+
+// Renamed from LotFormData as it now represents the core data for the Lot model being saved/retrieved
+export type LotFormData = Omit<Lot, 'id' | 'createdAt' | 'updatedAt' | 'endDate' | 'lotSpecificAuctionDate' | 'secondAuctionDate' | 'isFavorite' | 'isFeatured' | 'views' | 'bidsCount' | 'galleryImageUrls' | 'dataAiHint'> & {
+  endDate: Date; // Make sure these are Date objects from the form
+  lotSpecificAuctionDate?: Date | null;
+  secondAuctionDate?: Date | null;
+};
+
 
 export interface Auction {
   id: string; // Gerado automaticamente ou customizado
@@ -124,12 +132,12 @@ export interface Auction {
   status: AuctionStatus;
   auctionType?: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR'; // Tipo do leilão
   category: string; // Categoria principal (será o nome da categoria de LotCategory)
-  auctioneer: string; // Nome do leiloeiro
-  auctioneerId?: string; // ID do leiloeiro se tiver uma entidade para isso
-  seller?: string; // Nome do comitente vendedor principal
-  sellerId?: string; // ID do comitente
-  auctionDate: Date | any; // Data principal do evento do leilão (para 1ª praça ou data única)
-  endDate?: Date | any; // Data de encerramento geral, se aplicável
+  auctioneer: string; // Nome do leiloeiro (pode se tornar auctioneerId depois)
+  auctioneerId?: string;
+  seller?: string; // Nome do comitente vendedor principal (pode se tornar sellerId depois)
+  sellerId?: string;
+  auctionDate: Date;
+  endDate?: Date | null;
   auctionStages?: AuctionStage[]; // Para múltiplas praças/etapas
   location?: string; // Local físico do leilão ou dos bens
   city?: string;
@@ -148,9 +156,16 @@ export interface Auction {
   sellingBranch?: string; 
   vehicleLocation?: string; 
   
-  createdAt?: Date | any;
-  updatedAt?: Date | any;
+  createdAt?: Date;
+  updatedAt?: Date;
+  auctioneerLogoUrl?: string; // Adicionado para consistência com sampleData
+  auctioneerName?: string; // Adicionado para consistência com sampleData
 }
+
+export type AuctionFormData = Omit<Auction, 'id' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' | 'lots' | 'totalLots' | 'visits' | 'auctionStages' | 'initialOffer' | 'isFavorite' | 'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName'> & {
+  auctionDate: Date;
+  endDate?: Date | null;
+};
 
 
 export type UserRole = 'ADMINISTRATOR' | 'AUCTION_ANALYST' | 'USER';
@@ -163,9 +178,9 @@ export interface UserProfileData {
   cpf?: string;
   rgNumber?: string;
   rgIssuer?: string;
-  rgIssueDate?: Date | any;
+  rgIssueDate?: Date | null;
   rgState?: string;
-  dateOfBirth?: Date | any;
+  dateOfBirth?: Date | null;
   cellPhone?: string;
   homePhone?: string;
   gender?: string;
@@ -182,16 +197,17 @@ export interface UserProfileData {
   neighborhood?: string;
   city?: string;
   state?: string;
-  status?: string;
+  status?: string; // e.g. 'ACTIVE', 'PENDING_VALIDATION', 'SUSPENDED'
   optInMarketing?: boolean;
-  createdAt?: Date | any;
-  updatedAt?: Date | any;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
   avatarUrl?: string;
-  dataAiHint?: string;
+  dataAiHint?: string; // For AI image search for avatar
 
+  // Stats for profile page
   activeBids?: number;
   auctionsWon?: number;
-  itemsSold?: number;
+  itemsSold?: number; // If user can also be a seller
 }
 
 export interface UserBid {
@@ -205,32 +221,52 @@ export interface UserBid {
   currentLotPrice: number;
   bidStatus: UserBidStatus;
   bidDate: Date;
-  lotEndDate: Date | any;
+  lotEndDate: Date;
 }
 
 export interface UserWin {
   id: string;
-  lot: Lot;
+  lot: Lot; // Embed Lot data for convenience
   winningBidAmount: number;
-  winDate: Date | any;
+  winDate: Date;
   paymentStatus: PaymentStatus;
-  invoiceUrl?: string;
+  invoiceUrl?: string; // Link to invoice PDF
 }
 
+// For Seller/Comitente public profile and admin management
 export interface SellerProfileInfo {
+  id: string; // Firestore document ID
   name: string;
   slug: string;
-  memberSince: Date;
-  rating: number;
-  activeLotsCount: number;
-  logoUrl: string;
-  dataAiHint: string;
+  contactName?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string; // UF
+  zipCode?: string;
+  website?: string;
+  logoUrl?: string;
+  dataAiHintLogo?: string;
+  description?: string; // Description of the seller/company
+  memberSince?: Date; // Date they became a seller on the platform
+  rating?: number; // Overall rating, 0-5
+  activeLotsCount?: number; // Dynamically calculated or admin-set
+  totalSalesValue?: number; // For stats
+  auctionsFacilitatedCount?: number; // Number of auctions they've been part of
+  createdAt: Date;
+  updatedAt: Date;
 }
+
+export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'activeLotsCount' | 'totalSalesValue' | 'auctionsFacilitatedCount'>;
+
 
 export interface RecentlyViewedLotInfo {
   id: string;
   title: string;
   imageUrl: string;
-  auctionId: string;
+  auctionId: string; // Needed to construct the link
   dataAiHint?: string;
 }
+
+    

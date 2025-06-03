@@ -15,9 +15,10 @@ const sidebarNavItems = [
     icon: LayoutDashboard,
   },
   {
-    title: 'Categorias de Lotes',
-    href: '/admin/categories',
-    icon: ListChecks,
+    title: 'Leilões',
+    href: '/admin/auctions',
+    icon: Gavel, 
+    disabled: false, 
   },
   {
     title: 'Lotes',
@@ -26,10 +27,21 @@ const sidebarNavItems = [
     disabled: false,
   },
   {
-    title: 'Leilões',
-    href: '/admin/auctions',
-    icon: Gavel, 
+    title: 'Categorias de Lotes',
+    href: '/admin/categories',
+    icon: ListChecks,
+  },
+  {
+    title: 'Comitentes',
+    href: '/admin/sellers', // Novo item
+    icon: Users, 
     disabled: false, 
+  },
+  {
+    title: 'Leiloeiros', // Placeholder
+    href: '/admin/auctioneers', 
+    icon: Landmark, // Pode ser um ícone mais específico
+    disabled: true, 
   },
   {
     title: 'Estados',
@@ -97,3 +109,5 @@ export default function AdminSidebar() {
     </aside>
   );
 }
+
+    
