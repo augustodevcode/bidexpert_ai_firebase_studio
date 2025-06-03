@@ -11,7 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 const sidebarNavItems = [
   {
     title: 'Dashboard',
-    href: '/admin/dashboard', // Assuming a future admin dashboard page
+    href: '/admin/dashboard', 
     icon: LayoutDashboard,
   },
   {
@@ -63,8 +63,7 @@ export default function AdminSidebar() {
   return (
     <aside className="sticky top-0 h-screen w-64 bg-background border-r flex flex-col">
       <div className="p-4 border-b">
-        <Link href="/admin" className="flex items-center space-x-2">
-          {/* You can replace this with your admin logo or title */}
+        <Link href="/admin/dashboard" className="flex items-center space-x-2">
           <LayoutDashboard className="h-7 w-7 text-primary" />
           <span className="font-bold text-xl text-primary">BidExpert Admin</span>
         </Link>
@@ -74,10 +73,10 @@ export default function AdminSidebar() {
           {sidebarNavItems.map((item) => (
             <Button
               key={item.title}
-              variant={pathname === item.href ? 'secondary' : 'ghost'}
+              variant={pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href)) ? 'secondary' : 'ghost'}
               className={cn(
                 'w-full justify-start',
-                pathname === item.href && 'font-semibold text-primary hover:text-primary'
+                (pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href))) && 'font-semibold text-primary hover:text-primary'
               )}
               asChild
               disabled={item.disabled}

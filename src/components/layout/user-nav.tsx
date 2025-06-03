@@ -20,7 +20,7 @@ import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
 // TODO: Replace this with actual role fetching and checking from Firestore via useAuth context
-const ALLOWED_EMAILS_FOR_ADMIN_LINKS = ['admin@bidexpert.com', 'analyst@bidexpert.com']; // Example
+const ALLOWED_EMAILS_FOR_ADMIN_LINKS = ['admin@bidexpert.com', 'analyst@bidexpert.com', 'augusto.devcode@gmail.com']; // Example
 
 export default function UserNav() {
   const { user, loading } = useAuth();
@@ -125,11 +125,17 @@ export default function UserNav() {
               <DropdownMenuSeparator />
               <DropdownMenuLabel className="text-xs text-muted-foreground px-2">Administração</DropdownMenuLabel>
               <DropdownMenuItem asChild>
+                <Link href="/admin/dashboard" className="flex items-center">
+                  <LayoutDashboard className="mr-2 h-4 w-4" /> Painel Admin
+                </Link>
+              </DropdownMenuItem>
+              {/* Add other admin links here as they are developed, e.g.,
+              <DropdownMenuItem asChild>
                 <Link href="/admin/categories" className="flex items-center">
                   <ListChecks className="mr-2 h-4 w-4" /> Gerenciar Categorias
                 </Link>
               </DropdownMenuItem>
-              {/* Add other admin links here as they are developed */}
+              */}
             </>
           )}
 

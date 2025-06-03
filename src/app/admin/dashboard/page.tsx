@@ -1,0 +1,70 @@
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { LayoutDashboard, ListChecks, Settings } from 'lucide-react';
+import Link from 'next/link';
+
+export default function AdminDashboardPage() {
+  return (
+    <div className="space-y-8">
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold font-headline flex items-center">
+            <LayoutDashboard className="h-7 w-7 mr-3 text-primary" />
+            Painel de Administração
+          </CardTitle>
+          <CardDescription>
+            Bem-vindo à área de gerenciamento do BidExpert.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <p className="text-muted-foreground">
+            Utilize o menu lateral para navegar pelas diferentes seções de gerenciamento do site.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Link href="/admin/categories" className="block hover:no-underline">
+              <Card className="hover:shadow-md transition-shadow h-full">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Categorias de Lotes</CardTitle>
+                  <ListChecks className="h-5 w-5 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground">
+                    Gerenciar as categorias utilizadas para classificar os lotes.
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Placeholder for future admin sections */}
+            <Card className="bg-muted/50 cursor-not-allowed">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Gerenciar Leilões (Em Breve)</CardTitle>
+                <Settings className="h-5 w-5 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  Administrar leilões, lotes, e outras configurações.
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-muted/50 cursor-not-allowed">
+               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Gerenciar Usuários (Em Breve)</CardTitle>
+                <Settings className="h-5 w-5 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  Visualizar e gerenciar perfis de usuários.
+                </p>
+              </CardContent>
+            </Card>
+
+          </div>
+
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
