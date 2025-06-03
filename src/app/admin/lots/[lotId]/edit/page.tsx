@@ -1,6 +1,6 @@
 
-import LotForm from '../lot-form';
-import { getLot, updateLot, type LotFormData } from '../actions';
+import LotForm from '../../lot-form'; // Corrected path
+import { getLot, updateLot, type LotFormData } from '../../actions'; // Corrected path
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctions } from '@/app/admin/auctions/actions'; // Importar getAuctions
 import { notFound } from 'next/navigation';
