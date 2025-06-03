@@ -13,11 +13,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell } from 'lucide-react';
+import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
+
+// TODO: Replace this with actual role fetching and checking from Firestore via useAuth context
+const ALLOWED_EMAILS_FOR_ADMIN_LINKS = ['admin@bidexpert.com', 'analyst@bidexpert.com']; // Example
 
 export default function UserNav() {
   const { user, loading } = useAuth();
@@ -47,6 +50,9 @@ export default function UserNav() {
   if (user) {
     const userDisplayName = user.displayName || user.email?.split('@')[0] || "Usuário";
     const userInitial = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : "U";
+    // Placeholder for admin/analyst check
+    const showAdminLinks = user.email && ALLOWED_EMAILS_FOR_ADMIN_LINKS.includes(user.email);
+
 
     return (
       <DropdownMenu>
@@ -113,9 +119,20 @@ export default function UserNav() {
              <Bell className="mr-2 h-4 w-4" /> Notificações
             </Link>
           </DropdownMenuItem>
-          {/* <DropdownMenuItem disabled> 
-            <Settings className="mr-2 h-4 w-4" /> Configurações
-          </DropdownMenuItem> */}
+          
+          {showAdminLinks && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs text-muted-foreground px-2">Administração</DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <Link href="/admin/categories" className="flex items-center">
+                  <ListChecks className="mr-2 h-4 w-4" /> Gerenciar Categorias
+                </Link>
+              </DropdownMenuItem>
+              {/* Add other admin links here as they are developed */}
+            </>
+          )}
+
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" /> Sair

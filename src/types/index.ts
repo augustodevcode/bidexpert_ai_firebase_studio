@@ -50,7 +50,7 @@ export interface Lot {
   galleryImageUrls?: string[]; // URLs para a galeria de imagens
   status: LotStatus;
   location: string; // e.g., "TEOTÔNIO VILELA - AL" ou "Englishtown (NJ)"
-  type: string; // e.g., "CASA", "APARTAMENTO", "Automobile"
+  type: string; // e.g., "CASA", "APARTAMENTO", "Automobile" // This will relate to LotCategory.name or LotCategory.slug
   views: number;
   auctionName: string; // e.g., "Leilão Único" ou nome do leilão principal
   price: number; // Lance mínimo/atual
@@ -129,10 +129,13 @@ export interface Auction {
   vehicleLocation?: string; 
 }
 
+export type UserRole = 'ADMINISTRATOR' | 'AUCTION_ANALYST' | 'USER';
+
 export interface UserProfileData {
   uid: string;
   email: string; 
   fullName: string;
+  role?: UserRole; // Added user role
   cpf?: string;
   rgNumber?: string;
   rgIssuer?: string;
@@ -206,4 +209,14 @@ export interface RecentlyViewedLotInfo {
   imageUrl: string;
   auctionId: string;
   dataAiHint?: string;
+}
+
+export interface LotCategory {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+    itemCount?: number; // Optional: to store how many lots use this category
+    createdAt: Date | any; // Firestore timestamp or Date
+    updatedAt: Date | any; // Firestore timestamp or Date
 }
