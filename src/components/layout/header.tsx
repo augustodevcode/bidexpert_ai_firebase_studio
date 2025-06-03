@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Coins, Search, Menu, Heart, ChevronDown, Eye, UserCircle, LayoutList, Tag, Home as HomeIcon, Briefcase, Users2, MessageSquareText, Package, Tv, Percent, Handshake, FileText, History, Loader2, Bell } from 'lucide-react';
+import { Coins, Search, Menu, Heart, ChevronDown, Eye, UserCircle, LayoutList, Tag, Home as HomeIcon, Briefcase, Users2, MessageSquareText, Package, Tv, Percent, Handshake, FileText, History, Loader2, Bell, Landmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import MainNav from './main-nav';
@@ -301,6 +301,7 @@ export default function Header() {
               <Link href="/" className="text-muted-foreground hover:text-primary transition-colors font-medium">Home</Link>
               <Link href="/sell-with-us" className="text-muted-foreground hover:text-primary transition-colors font-medium">Venda Conosco</Link>
               <Link href="/sellers" className="text-muted-foreground hover:text-primary transition-colors font-medium">Comitentes</Link>
+              <Link href="/auctioneers" className="text-muted-foreground hover:text-primary transition-colors font-medium">Nossos Leiloeiros</Link>
           </nav>
 
           <div className="flex items-center">
@@ -339,11 +340,4 @@ export default function Header() {
              {isClient && recentlyViewedItems.length === 0 && (
                 <Link href="/dashboard/history" className="text-sm text-muted-foreground hover:text-primary font-medium">
                     Histórico de Navegação
-                </Link>
-            )}
-          </div>
-        </div>
-      </div>
-    </header>
-  );
-}
+                </Link
