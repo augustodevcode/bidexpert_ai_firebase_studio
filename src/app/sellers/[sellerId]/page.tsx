@@ -43,23 +43,31 @@ export default function SellerDetailsPage() {
         
         setSellerProfile(foundSeller);
 
-        const auctions = sampleAuctions.filter(auction => 
-          (auction.seller && slugify(auction.seller) === sellerIdSlug) ||
-          (auction.auctioneer && slugify(auction.auctioneer) === sellerIdSlug)
+        // Filter auctions where this seller is the 'seller'
+        const auctionsByThisSeller = sampleAuctions.filter(auction => 
+          auction.seller && slugify(auction.seller) === sellerIdSlug
         );
-        setRelatedAuctions(auctions);
+        setRelatedAuctions(auctionsByThisSeller);
 
-        let lots = sampleLots.filter(lot => lot.sellerName && slugify(lot.sellerName) === sellerIdSlug);
+        // Filter lots where this seller is the 'sellerName'
+        // Also, include lots from the auctions where this seller is the 'seller',
+        // but ensure we don't duplicate lots if they also have a direct sellerName match.
+        let lotsByThisSeller = sampleLots.filter(lot => lot.sellerName && slugify(lot.sellerName) === sellerIdSlug);
         
-        auctions.forEach(auction => {
-          auction.lots.forEach(lot => {
-            if (!lots.find(l => l.id === lot.id) && (!lot.sellerName || slugify(lot.sellerName) === sellerIdSlug) ) {
-              lots.push(lot);
+        auctionsByThisSeller.forEach(auction => {
+          auction.lots.forEach(auctionLot => {
+            // Add lot if it's from an auction by this seller AND
+            // (it doesn't have a specific sellerName OR its sellerName also matches this seller)
+            // AND it's not already in lotsByThisSeller
+            if ((!auctionLot.sellerName || slugify(auctionLot.sellerName) === sellerIdSlug) && 
+                !lotsByThisSeller.find(l => l.id === auctionLot.id)) {
+              lotsByThisSeller.push(auctionLot);
             }
           });
         });
         
-        const uniqueLots = lots.filter((lot, index, self) =>
+        // Ensure unique lots if there was any overlap from direct lot.sellerName and auction.seller filtering
+        const uniqueLots = lotsByThisSeller.filter((lot, index, self) =>
           index === self.findIndex((l) => (l.id === lot.id))
         );
         setRelatedLots(uniqueLots);
@@ -97,7 +105,6 @@ export default function SellerDetailsPage() {
   }
 
   if (!sellerProfile) {
-    // This case should ideally be caught by the error state if foundSeller is null.
      return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold text-muted-foreground">Comitente não encontrado.</h2>
@@ -118,7 +125,7 @@ export default function SellerDetailsPage() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-start gap-4">
               <Avatar className="h-20 w-20 border-2 border-primary/30">
-                <AvatarImage src={sellerProfile.logoUrl} alt={sellerProfile.name} data-ai-hint={sellerProfile.dataAiHint} />
+                <AvatarImage src={sellerProfile.logoUrl} alt={sellerProfile.name} data-ai-hint={sellerProfile.dataAiHintLogo} />
                 <AvatarFallback>{sellerInitial}</AvatarFallback>
               </Avatar>
               <div>
@@ -184,3 +191,4 @@ export default function SellerDetailsPage() {
     </div>
   );
 }
+
