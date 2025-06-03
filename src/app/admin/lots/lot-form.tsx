@@ -74,7 +74,7 @@ export default function LotForm({
       initialPrice: initialData?.initialPrice || undefined,
       status: initialData?.status || 'EM_BREVE',
       location: initialData?.location || '',
-      type: initialData?.type || '', 
+      type: initialData?.type || '',
       imageUrl: initialData?.imageUrl || '',
       endDate: initialData?.endDate ? new Date(initialData.endDate) : new Date(),
       views: initialData?.views || 0,
@@ -150,12 +150,12 @@ export default function LotForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Leilão Associado</FormLabel>
-                  <Select 
+                  <Select
                     onValueChange={(value) => {
                       field.onChange(value);
                       const selectedAuction = auctions.find(a => a.id === value);
                       form.setValue('auctionName', selectedAuction?.title || '');
-                    }} 
+                    }}
                     value={field.value}
                     disabled={!!defaultAuctionId && initialData?.auctionId === defaultAuctionId} // Desabilita se pré-selecionado e não for edição
                   >
@@ -165,10 +165,13 @@ export default function LotForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {auctions.length === 0 && <SelectItem value="" disabled>Nenhum leilão cadastrado</SelectItem>}
-                      {auctions.map(auction => (
-                        <SelectItem key={auction.id} value={auction.id}>{auction.title} (ID: ...{auction.id.slice(-6)})</SelectItem>
-                      ))}
+                      {auctions.length === 0 ? (
+                        <p className="p-2 text-sm text-muted-foreground">Nenhum leilão cadastrado</p>
+                      ) : (
+                        auctions.map(auction => (
+                          <SelectItem key={auction.id} value={auction.id}>{auction.title} (ID: ...{auction.id.slice(-6)})</SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                   <FormDescription>Associe este lote a um leilão existente.</FormDescription>
@@ -241,7 +244,7 @@ export default function LotForm({
             <div className="grid md:grid-cols-2 gap-6">
                 <FormField
                 control={form.control}
-                name="type" 
+                name="type"
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Tipo/Categoria do Lote</FormLabel>
@@ -252,10 +255,13 @@ export default function LotForm({
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            {categories.length === 0 && <SelectItem value="" disabled>Nenhuma categoria cadastrada</SelectItem>}
-                            {categories.map(cat => (
-                            <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                            ))}
+                            {categories.length === 0 ? (
+                              <p className="p-2 text-sm text-muted-foreground">Nenhuma categoria cadastrada</p>
+                            ) : (
+                              categories.map(cat => (
+                                <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                              ))
+                            )}
                         </SelectContent>
                     </Select>
                     <FormMessage />
@@ -320,10 +326,10 @@ export default function LotForm({
                         selected={field.value}
                         onSelect={field.onChange}
                         initialFocus
-                        disabled={(date) => date < new Date(new Date().setHours(0,0,0,0)) } 
+                        disabled={(date) => date < new Date(new Date().setHours(0,0,0,0)) }
                       />
                        <div className="p-2 border-t">
-                        <Input 
+                        <Input
                           type="time"
                           defaultValue={field.value ? format(field.value, "HH:mm") : "00:00"}
                           onChange={(e) => {

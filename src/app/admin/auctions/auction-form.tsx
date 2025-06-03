@@ -227,10 +227,13 @@ export default function AuctionForm({
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                           {categories.length === 0 && <SelectItem value="" disabled>Nenhuma categoria cadastrada</SelectItem>}
-                           {categories.map(cat => (
-                            <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                            ))}
+                           {categories.length === 0 ? (
+                             <p className="p-2 text-sm text-muted-foreground">Nenhuma categoria cadastrada</p>
+                           ) : (
+                             categories.map(cat => (
+                               <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                             ))
+                           )}
                         </SelectContent>
                     </Select>
                     <FormMessage />
