@@ -2,39 +2,38 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase'; // Added auth
 import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import type { LotCategory } from '@/types';
-import { slugify } from '@/lib/sample-data'; // Assuming slugify is here or move it to utils
+import { slugify } from '@/lib/sample-data';
 
 // TODO: Implement proper role check for all mutating actions.
-// This function would ideally fetch the user's role from Firestore based on their auth UID.
 async function verifyAdminOrAnalystRole(userId: string | undefined): Promise<boolean> {
   if (!userId) return false;
-  // Placeholder: Replace with actual role fetching from Firestore
-  // const userDocRef = doc(db, 'users', userId);
-  // const userDocSnap = await getDoc(userDocRef);
-  // if (userDocSnap.exists()) {
-  //   const userData = userDocSnap.data() as UserProfileData;
-  //   return userData.role === 'ADMINISTRATOR' || userData.role === 'AUCTION_ANALYST';
-  // }
-  // For now, allow if any user is logged in (very insecure, for dev only)
-  // Or check a specific email for quick testing:
-  // const authUser = getAuth().currentUser; // This is not directly available in server actions like this
-  // if (authUser?.email === 'admin@bidexpert.com') return true;
   console.warn("Placeholder role check in categories/actions.ts. Implement actual role verification.");
-  return true; // In a real app, default to false if role cannot be verified.
+  return true;
 }
 
 
 export async function createLotCategory(
   data: { name: string; description?: string },
-  // userId: string | undefined // Pass userId for role check
 ): Promise<{ success: boolean; message: string; category?: LotCategory, categoryId?: string }> {
-  // const isAdminOrAnalyst = await verifyAdminOrAnalystRole(userId);
-  // if (!isAdminOrAnalyst) {
-  //   return { success: false, message: 'Acesso negado. Permissão insuficiente.' };
+  
+  console.log('[Server Action - createLotCategory] Auth Current User UID:', auth.currentUser?.uid);
+  console.log('[Server Action - createLotCategory] Auth Current User Email:', auth.currentUser?.email);
+
+  if (!auth.currentUser) {
+    console.error('[Server Action - createLotCategory] Error: No authenticated user found. Firestore operations will likely fail due to permissions.');
+    return { success: false, message: 'Usuário não autenticado no servidor. A criação da categoria falhou.' };
+  }
+
+  // Placeholder for role check based on Firestore (to be implemented later)
+  // const userDocRef = doc(db, "users", auth.currentUser.uid);
+  // const userDocSnap = await getDoc(userDocRef);
+  // if (!userDocSnap.exists() || userDocSnap.data()?.role !== 'ADMINISTRATOR') {
+  //   return { success: false, message: 'Acesso negado. Permissão insuficiente para criar categoria.' };
   // }
+
 
   if (!data.name || data.name.trim() === '') {
     return { success: false, message: 'O nome da categoria é obrigatório.' };
@@ -53,24 +52,35 @@ export async function createLotCategory(
     revalidatePath('/admin/categories');
     return { success: true, message: 'Categoria criada com sucesso!', categoryId: docRef.id };
   } catch (error: any) {
-    console.error("Error creating lot category:", error);
+    console.error("[Server Action - createLotCategory] Error creating lot category:", error);
     return { success: false, message: error.message || 'Falha ao criar categoria.' };
   }
 }
 
 export async function getLotCategories(): Promise<LotCategory[]> {
+  console.log('[Server Action - getLotCategories] Auth Current User UID:', auth.currentUser?.uid);
+  console.log('[Server Action - getLotCategories] Auth Current User Email:', auth.currentUser?.email);
+
+  if (!auth.currentUser) {
+    console.error('[Server Action - getLotCategories] Info: No authenticated user found in this server action context. Firestore operations might be restricted by rules.');
+    // Depending on rules, this might still work if rules allow unauthenticated reads,
+    // or fail if rules require auth. Current rules (if request.auth != null) will fail.
+  }
+  
   try {
     const categoriesCollection = collection(db, 'lotCategories');
     const q = query(categoriesCollection, orderBy('name', 'asc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LotCategory));
   } catch (error: any) {
-    console.error("Error fetching lot categories:", error);
+    console.error("[Server Action - getLotCategories] Error fetching lot categories:", error);
     return [];
   }
 }
 
 export async function getLotCategory(id: string): Promise<LotCategory | null> {
+  console.log('[Server Action - getLotCategory] Auth Current User UID:', auth.currentUser?.uid);
+  // Similar auth check as above can be added if needed for specific category reads
   try {
     const categoryDocRef = doc(db, 'lotCategories', id);
     const docSnap = await getDoc(categoryDocRef);
@@ -79,7 +89,7 @@ export async function getLotCategory(id: string): Promise<LotCategory | null> {
     }
     return null;
   } catch (error: any) {
-    console.error("Error fetching lot category:", error);
+    console.error("[Server Action - getLotCategory] Error fetching lot category:", error);
     return null;
   }
 }
@@ -87,12 +97,13 @@ export async function getLotCategory(id: string): Promise<LotCategory | null> {
 export async function updateLotCategory(
   id: string,
   data: { name: string; description?: string },
-  // userId: string | undefined // Pass userId for role check
 ): Promise<{ success: boolean; message: string }> {
-  // const isAdminOrAnalyst = await verifyAdminOrAnalystRole(userId);
-  // if (!isAdminOrAnalyst) {
-  //   return { success: false, message: 'Acesso negado. Permissão insuficiente.' };
-  // }
+  console.log('[Server Action - updateLotCategory] Auth Current User UID:', auth.currentUser?.uid);
+  if (!auth.currentUser) {
+    console.error('[Server Action - updateLotCategory] Error: No authenticated user found.');
+    return { success: false, message: 'Usuário não autenticado no servidor. A atualização da categoria falhou.' };
+  }
+  // Add role check similar to createLotCategory if needed
 
   if (!data.name || data.name.trim() === '') {
     return { success: false, message: 'O nome da categoria é obrigatório.' };
@@ -111,29 +122,29 @@ export async function updateLotCategory(
     revalidatePath(`/admin/categories/${id}/edit`);
     return { success: true, message: 'Categoria atualizada com sucesso!' };
   } catch (error: any) {
-    console.error("Error updating lot category:", error);
+    console.error("[Server Action - updateLotCategory] Error updating lot category:", error);
     return { success: false, message: error.message || 'Falha ao atualizar categoria.' };
   }
 }
 
 export async function deleteLotCategory(
   id: string,
-  // userId: string | undefined // Pass userId for role check
 ): Promise<{ success: boolean; message: string }> {
-  // const isAdminOrAnalyst = await verifyAdminOrAnalystRole(userId);
-  // if (!isAdminOrAnalyst) {
-  //   return { success: false, message: 'Acesso negado. Permissão insuficiente.' };
-  // }
+  console.log('[Server Action - deleteLotCategory] Auth Current User UID:', auth.currentUser?.uid);
+   if (!auth.currentUser) {
+    console.error('[Server Action - deleteLotCategory] Error: No authenticated user found.');
+    return { success: false, message: 'Usuário não autenticado no servidor. A exclusão da categoria falhou.' };
+  }
+  // Add role check similar to createLotCategory if needed
   
-  // TODO: Add check if category is in use by any lots before deleting.
-  // For now, direct delete.
   try {
     const categoryDocRef = doc(db, 'lotCategories', id);
     await deleteDoc(categoryDocRef);
     revalidatePath('/admin/categories');
     return { success: true, message: 'Categoria excluída com sucesso!' };
   } catch (error: any) {
-    console.error("Error deleting lot category:", error);
+    console.error("[Server Action - deleteLotCategory] Error deleting lot category:", error);
     return { success: false, message: error.message || 'Falha ao excluir categoria.' };
   }
 }
+
