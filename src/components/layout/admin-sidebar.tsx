@@ -33,15 +33,15 @@ const sidebarNavItems = [
   },
   {
     title: 'Comitentes',
-    href: '/admin/sellers', // Novo item
+    href: '/admin/sellers', 
     icon: Users, 
     disabled: false, 
   },
   {
-    title: 'Leiloeiros', // Placeholder
+    title: 'Leiloeiros', 
     href: '/admin/auctioneers', 
-    icon: Landmark, // Pode ser um ícone mais específico
-    disabled: true, 
+    icon: Landmark, 
+    disabled: false, // Habilitando o link
   },
   {
     title: 'Estados',
