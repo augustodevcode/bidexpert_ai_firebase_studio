@@ -15,42 +15,44 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { stateFormSchema, type StateFormValues } from './state-form-schema';
-import type { StateInfo } from '@/types';
-import { Loader2, Save, Landmark } from 'lucide-react'; // Alterado Icon para Landmark ou outro mais adequado
+import { cityFormSchema, type CityFormValues } from './city-form-schema';
+import type { CityInfo, StateInfo } from '@/types';
+import { Loader2, Save, Building2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 
-interface StateFormProps {
-  initialData?: StateInfo | null;
-  onSubmitAction: (data: StateFormValues) => Promise<{ success: boolean; message: string; stateId?: string }>;
+interface CityFormProps {
+  initialData?: CityInfo | null;
+  states: StateInfo[]; // Lista de estados para o dropdown
+  onSubmitAction: (data: CityFormValues) => Promise<{ success: boolean; message: string; cityId?: string }>;
   formTitle: string;
   formDescription: string;
   submitButtonText: string;
 }
 
-export default function StateForm({
+export default function CityForm({
   initialData,
+  states,
   onSubmitAction,
   formTitle,
   formDescription,
   submitButtonText,
-}: StateFormProps) {
+}: CityFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const form = useForm<StateFormValues>({
-    resolver: zodResolver(stateFormSchema),
+  const form = useForm<CityFormValues>({
+    resolver: zodResolver(cityFormSchema),
     defaultValues: {
       name: initialData?.name || '',
-      uf: initialData?.uf || '',
-      // cityCount não é editável aqui
+      stateId: initialData?.stateId || '',
     },
   });
 
-  async function onSubmit(values: StateFormValues) {
+  async function onSubmit(values: CityFormValues) {
     setIsSubmitting(true);
     try {
       const result = await onSubmitAction(values);
@@ -59,7 +61,7 @@ export default function StateForm({
           title: 'Sucesso!',
           description: result.message,
         });
-        router.push('/admin/states');
+        router.push('/admin/cities');
         router.refresh();
       } else {
         toast({
@@ -74,7 +76,7 @@ export default function StateForm({
         description: 'Ocorreu um erro ao processar sua solicitação.',
         variant: 'destructive',
       });
-      console.error("Unexpected error in state form:", error);
+      console.error("Unexpected error in city form:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -83,7 +85,7 @@ export default function StateForm({
   return (
     <Card className="max-w-xl mx-auto shadow-lg">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Landmark className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
+        <CardTitle className="flex items-center gap-2"><Building2 className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
         <CardDescription>{formDescription}</CardDescription>
       </CardHeader>
       <Form {...form}>
@@ -94,9 +96,9 @@ export default function StateForm({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome do Estado</FormLabel>
+                  <FormLabel>Nome da Cidade</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: São Paulo, Bahia" {...field} />
+                    <Input placeholder="Ex: Salvador, Rio de Janeiro" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -104,21 +106,36 @@ export default function StateForm({
             />
             <FormField
               control={form.control}
-              name="uf"
+              name="stateId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>UF (Sigla)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: SP, BA" {...field} maxLength={2} style={{ textTransform: 'uppercase' }} />
-                  </FormControl>
-                  <FormDescription>Sigla do estado com 2 letras maiúsculas.</FormDescription>
+                  <FormLabel>Estado</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o estado" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {states.length === 0 ? (
+                        <p className="p-2 text-sm text-muted-foreground">Nenhum estado cadastrado</p>
+                      ) : (
+                        states.map((state) => (
+                          <SelectItem key={state.id} value={state.id}>
+                            {state.name} ({state.uf})
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>Selecione o estado ao qual esta cidade pertence.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </CardContent>
           <CardFooter className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/states')} disabled={isSubmitting}>
+            <Button type="button" variant="outline" onClick={() => router.push('/admin/cities')} disabled={isSubmitting}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isSubmitting}>

@@ -59,7 +59,11 @@ export interface Lot {
   dataAiHint?: string;
   galleryImageUrls?: string[]; // URLs para a galeria de imagens
   status: LotStatus;
-  location: string; // e.g., "TEOTÔNIO VILELA - AL" ou "Englishtown (NJ)"
+  location: string; // e.g., "TEOTÔNIO VILELA - AL" ou "Englishtown (NJ)" -> Este será substituído por stateId e cityId
+  stateId?: string; // FK para StateInfo
+  cityId?: string; // FK para CityInfo
+  cityName?: string; // Denormalized city name
+  stateUf?: string; // Denormalized state UF
   type: string; // Categoria do lote (será o nome da categoria de LotCategory)
   views?: number;
   auctionName?: string; // e.g., "Leilão Único" ou nome do leilão principal
@@ -118,10 +122,12 @@ export interface Lot {
   updatedAt?: Date;
 }
 
-export type LotFormData = Omit<Lot, 'id' | 'createdAt' | 'updatedAt' | 'endDate' | 'lotSpecificAuctionDate' | 'secondAuctionDate' | 'isFavorite' | 'isFeatured' | 'views' | 'bidsCount' | 'galleryImageUrls' | 'dataAiHint' | 'auctionDate' | 'auctioneerName'> & {
+export type LotFormData = Omit<Lot, 'id' | 'createdAt' | 'updatedAt' | 'endDate' | 'lotSpecificAuctionDate' | 'secondAuctionDate' | 'isFavorite' | 'isFeatured' | 'views' | 'bidsCount' | 'galleryImageUrls' | 'dataAiHint' | 'auctionDate' | 'auctioneerName' | 'location' | 'cityName' | 'stateUf'> & {
   endDate: Date;
   lotSpecificAuctionDate?: Date | null;
   secondAuctionDate?: Date | null;
+  stateId?: string;
+  cityId?: string;
 };
 
 
@@ -306,10 +312,24 @@ export interface StateInfo {
   name: string;
   uf: string; // Sigla do estado, ex: SP
   slug: string;
-  cityCount?: number; // Optional: for display purposes
+  cityCount?: number; 
   createdAt: Date;
   updatedAt: Date;
 }
 
 export type StateFormData = Omit<StateInfo, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'cityCount'>;
+
+
+export interface CityInfo {
+  id: string;
+  name: string;
+  slug: string;
+  stateId: string; // Foreign key to StateInfo
+  stateUf: string; // Denormalized for easy display (e.g., "SP")
+  lotCount?: number; // Optional: to store how many lots are in this city
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type CityFormData = Omit<CityInfo, 'id' | 'slug' | 'stateUf' | 'createdAt' | 'updatedAt' | 'lotCount'>;
     

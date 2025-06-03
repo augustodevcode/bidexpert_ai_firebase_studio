@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map } from 'lucide-react'; // Added Map icon
+import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2 } from 'lucide-react'; // Added Building2 icon
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -46,14 +46,14 @@ const sidebarNavItems = [
   {
     title: 'Estados',
     href: '/admin/states',
-    icon: Map, // Using Map icon for States
+    icon: Map, 
     disabled: false, 
   },
   {
     title: 'Cidades',
     href: '/admin/cities',
-    icon: Landmark, // Can change later if a better one is found
-    disabled: true, 
+    icon: Building2, // Using Building2 for Cities
+    disabled: false, 
   },
   {
     title: 'Usuários',

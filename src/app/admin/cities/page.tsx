@@ -1,0 +1,130 @@
+
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { getCities, deleteCity } from './actions';
+import type { CityInfo } from '@/types';
+import { PlusCircle, Edit, Trash2, Building2, AlertTriangle } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Badge } from '@/components/ui/badge';
+
+function DeleteCityButton({ cityId, cityName, onDelete }: { cityId: string; cityName: string; onDelete: (id: string) => Promise<void> }) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80">
+          <Trash2 className="h-4 w-4" />
+          <span className="sr-only">Excluir Cidade</span>
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir a cidade "{cityName}"? Esta ação não pode ser desfeita e pode afetar lotes associados.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={async () => {
+                await onDelete(cityId);
+            }}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Excluir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+export default async function AdminCitiesPage() {
+  const cities = await getCities();
+
+  async function handleDeleteCity(id: string) {
+    'use server';
+    const result = await deleteCity(id);
+    if (!result.success) {
+        console.error("Failed to delete city:", result.message);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card className="shadow-lg">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-2xl font-bold font-headline flex items-center">
+              <Building2 className="h-6 w-6 mr-2 text-primary" />
+              Gerenciar Cidades
+            </CardTitle>
+            <CardDescription>
+              Adicione, edite ou remova cidades da plataforma.
+            </CardDescription>
+          </div>
+          <Button asChild>
+            <Link href="/admin/cities/new">
+              <PlusCircle className="mr-2 h-4 w-4" /> Nova Cidade
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {cities.length === 0 ? (
+            <div className="text-center py-10 text-muted-foreground bg-secondary/30 rounded-md">
+              <AlertTriangle className="mx-auto h-10 w-10 mb-3" />
+              <p className="font-semibold">Nenhuma cidade encontrada.</p>
+              <p className="text-sm">Comece adicionando uma nova cidade.</p>
+            </div>
+          ) : (
+            <div className="border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[250px]">Nome da Cidade</TableHead>
+                    <TableHead>UF</TableHead>
+                    <TableHead className="text-center">Lotes</TableHead>
+                    <TableHead className="text-right w-[100px]">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {cities.map((city) => (
+                    <TableRow key={city.id}>
+                      <TableCell className="font-medium">{city.name}</TableCell>
+                      <TableCell>{city.stateUf}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="secondary">{city.lotCount || 0}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" asChild className="text-blue-600 hover:text-blue-700">
+                          <Link href={`/admin/cities/${city.id}/edit`}>
+                            <Edit className="h-4 w-4" />
+                            <span className="sr-only">Editar</span>
+                          </Link>
+                        </Button>
+                        <DeleteCityButton cityId={city.id} cityName={city.name} onDelete={handleDeleteCity} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+    
