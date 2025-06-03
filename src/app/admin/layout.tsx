@@ -20,7 +20,9 @@ export default function AdminLayout({
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/auth/login?redirect=/admin/dashboard'); // Redireciona para o dashboard admin após login
+      // Se não estiver carregando e não houver usuário, redirecione para login
+      // Adicionando o redirect para voltar ao dashboard admin após o login
+      router.push('/auth/login?redirect=/admin/dashboard');
     }
   }, [user, loading, router]);
 
@@ -34,7 +36,7 @@ export default function AdminLayout({
   }
 
   if (!user) {
-    // This case should be handled by the useEffect redirect, but as a fallback:
+    // Este caso é mais para fallback se o useEffect não redirecionar a tempo.
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-muted-foreground">Redirecionando para login...</p>
