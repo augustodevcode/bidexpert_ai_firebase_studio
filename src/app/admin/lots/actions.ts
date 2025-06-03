@@ -3,14 +3,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp, where } from 'firebase/firestore';
 import type { Lot } from '@/types';
-import { slugify } from '@/lib/sample-data'; // Assuming slugify is useful for lots too, or remove if not
 
-// Firestore data typically comes with Timestamps, not JS Dates directly.
-// We might need a helper type if form data uses JS Date and Firestore uses Timestamp.
 export type LotFormData = Omit<Lot, 'id' | 'createdAt' | 'updatedAt' | 'endDate' | 'lotSpecificAuctionDate' | 'secondAuctionDate'> & {
-  endDate: Date; // From form
+  endDate: Date; 
   lotSpecificAuctionDate?: Date;
   secondAuctionDate?: Date;
 };
@@ -21,6 +18,9 @@ export async function createLot(
 ): Promise<{ success: boolean; message: string; lotId?: string }> {
   if (!data.title || data.title.trim() === '') {
     return { success: false, message: 'O título do lote é obrigatório.' };
+  }
+  if (!data.auctionId || data.auctionId.trim() === '') {
+    return { success: false, message: 'O leilão associado é obrigatório.' };
   }
   if (!data.price || data.price <= 0) {
     return { success: false, message: 'O preço inicial deve ser um valor positivo.' };
@@ -35,7 +35,7 @@ export async function createLot(
       ...data,
       views: data.views || 0,
       bidsCount: data.bidsCount || 0,
-      auctionName: data.auctionName || `Leilão do Lote ${data.title.substring(0,20)}`,
+      auctionName: data.auctionName || `Leilão do Lote ${data.title.substring(0,20)}`, // auctionName pode vir do formulário
       endDate: Timestamp.fromDate(new Date(data.endDate)),
       lotSpecificAuctionDate: data.lotSpecificAuctionDate ? Timestamp.fromDate(new Date(data.lotSpecificAuctionDate)) : undefined,
       secondAuctionDate: data.secondAuctionDate ? Timestamp.fromDate(new Date(data.secondAuctionDate)) : undefined,
@@ -45,6 +45,7 @@ export async function createLot(
 
     const docRef = await addDoc(collection(db, 'lots'), newLotData);
     revalidatePath('/admin/lots');
+    revalidatePath(`/admin/auctions/${data.auctionId}/edit`); // Revalida a página de edição do leilão associado
     return { success: true, message: 'Lote criado com sucesso!', lotId: docRef.id };
   } catch (error: any) {
     console.error("[Server Action - createLot] Error creating lot:", error);
@@ -52,17 +53,21 @@ export async function createLot(
   }
 }
 
-export async function getLots(): Promise<Lot[]> {
+export async function getLots(auctionIdParam?: string): Promise<Lot[]> {
   try {
     const lotsCollection = collection(db, 'lots');
-    const q = query(lotsCollection, orderBy('title', 'asc')); // Example: order by title
+    let q;
+    if (auctionIdParam) {
+      q = query(lotsCollection, where('auctionId', '==', auctionIdParam), orderBy('title', 'asc'));
+    } else {
+      q = query(lotsCollection, orderBy('title', 'asc'));
+    }
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => {
       const data = doc.data();
       return {
         id: doc.id,
         ...data,
-        // Convert Firestore Timestamps to JS Dates for client-side usage if needed
         endDate: data.endDate instanceof Timestamp ? data.endDate.toDate() : new Date(data.endDate),
         lotSpecificAuctionDate: data.lotSpecificAuctionDate instanceof Timestamp ? data.lotSpecificAuctionDate.toDate() : (data.lotSpecificAuctionDate ? new Date(data.lotSpecificAuctionDate) : undefined),
         secondAuctionDate: data.secondAuctionDate instanceof Timestamp ? data.secondAuctionDate.toDate() : (data.secondAuctionDate ? new Date(data.secondAuctionDate) : undefined),
@@ -101,14 +106,16 @@ export async function getLot(id: string): Promise<Lot | null> {
 
 export async function updateLot(
   id: string,
-  data: Partial<LotFormData> // Use Partial for updates
+  data: Partial<LotFormData> 
 ): Promise<{ success: boolean; message: string }> {
-  if (!data.title || data.title.trim() === '') {
-    // Allow partial updates, so only validate if title is provided
-    if (data.title !== undefined && (data.title === null || data.title.trim() === '')) {
-       return { success: false, message: 'O título do lote não pode ser vazio se fornecido.' };
-    }
+  
+  if (data.title !== undefined && (data.title === null || data.title.trim() === '')) {
+     return { success: false, message: 'O título do lote não pode ser vazio se fornecido.' };
   }
+  if (data.auctionId !== undefined && (data.auctionId === null || data.auctionId.trim() === '')) {
+    return { success: false, message: 'O leilão associado não pode ser vazio se fornecido.' };
+  }
+
 
   try {
     const lotDocRef = doc(db, 'lots', id);
@@ -128,6 +135,9 @@ export async function updateLot(
     await updateDoc(lotDocRef, updateData);
     revalidatePath('/admin/lots');
     revalidatePath(`/admin/lots/${id}/edit`);
+    if (data.auctionId) {
+      revalidatePath(`/admin/auctions/${data.auctionId}/edit`); // Revalida a página de edição do leilão associado
+    }
     return { success: true, message: 'Lote atualizado com sucesso!' };
   } catch (error: any) {
     console.error("[Server Action - updateLot] Error updating lot:", error);
@@ -136,12 +146,16 @@ export async function updateLot(
 }
 
 export async function deleteLot(
-  id: string
+  id: string,
+  auctionId?: string // Opcional, para revalidar a página do leilão
 ): Promise<{ success: boolean; message: string }> {
   try {
     const lotDocRef = doc(db, 'lots', id);
     await deleteDoc(lotDocRef);
     revalidatePath('/admin/lots');
+    if (auctionId) {
+      revalidatePath(`/admin/auctions/${auctionId}/edit`);
+    }
     return { success: true, message: 'Lote excluído com sucesso!' };
   } catch (error: any) {
     console.error("[Server Action - deleteLot] Error deleting lot:", error);

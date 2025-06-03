@@ -20,9 +20,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
-import type { Lot, LotStatus, LotCategory } from '@/types'; // Import LotCategory
+import type { Lot, LotStatus, LotCategory, Auction } from '@/types';
 import { Loader2, Save, CalendarIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -32,11 +32,13 @@ import { getAuctionStatusText } from '@/lib/sample-data';
 
 interface LotFormProps {
   initialData?: Lot | null;
-  categories: LotCategory[]; // Pass categories for the select dropdown
+  categories: LotCategory[];
+  auctions: Auction[]; // Nova prop para listar leilões
   onSubmitAction: (data: LotFormValues) => Promise<{ success: boolean; message: string; lotId?: string }>;
   formTitle: string;
   formDescription: string;
   submitButtonText: string;
+  defaultAuctionId?: string; // Para pré-selecionar vindo de query params
 }
 
 const lotStatusOptions: { value: LotStatus; label: string }[] = [
@@ -49,11 +51,13 @@ const lotStatusOptions: { value: LotStatus; label: string }[] = [
 
 export default function LotForm({
   initialData,
-  categories, // Receive categories
+  categories,
+  auctions, // Recebe a lista de leilões
   onSubmitAction,
   formTitle,
   formDescription,
   submitButtonText,
+  defaultAuctionId,
 }: LotFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -63,20 +67,30 @@ export default function LotForm({
     resolver: zodResolver(lotFormSchema),
     defaultValues: {
       title: initialData?.title || '',
-      auctionId: initialData?.auctionId || '',
+      auctionId: defaultAuctionId || initialData?.auctionId || '',
       auctionName: initialData?.auctionName || '',
       description: initialData?.description || '',
       price: initialData?.price || 0,
       initialPrice: initialData?.initialPrice || undefined,
       status: initialData?.status || 'EM_BREVE',
       location: initialData?.location || '',
-      type: initialData?.type || '', // Categoria do lote
+      type: initialData?.type || '', 
       imageUrl: initialData?.imageUrl || '',
       endDate: initialData?.endDate ? new Date(initialData.endDate) : new Date(),
       views: initialData?.views || 0,
       bidsCount: initialData?.bidsCount || 0,
     },
   });
+
+  React.useEffect(() => {
+    if (defaultAuctionId) {
+      form.setValue('auctionId', defaultAuctionId);
+      const selectedAuction = auctions.find(a => a.id === defaultAuctionId);
+      if (selectedAuction) {
+        form.setValue('auctionName', selectedAuction.title);
+      }
+    }
+  }, [defaultAuctionId, form, auctions]);
 
   async function onSubmit(values: LotFormValues) {
     setIsSubmitting(true);
@@ -135,12 +149,42 @@ export default function LotForm({
               name="auctionId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>ID do Leilão</FormLabel>
-                  <FormControl>
-                    <Input placeholder="ID do leilão ao qual este lote pertence" {...field} />
-                  </FormControl>
-                  <FormDescription>Associe este lote a um leilão existente. (Será um select no futuro)</FormDescription>
+                  <FormLabel>Leilão Associado</FormLabel>
+                  <Select 
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      const selectedAuction = auctions.find(a => a.id === value);
+                      form.setValue('auctionName', selectedAuction?.title || '');
+                    }} 
+                    value={field.value}
+                    disabled={!!defaultAuctionId && initialData?.auctionId === defaultAuctionId} // Desabilita se pré-selecionado e não for edição
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o leilão" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {auctions.length === 0 && <SelectItem value="" disabled>Nenhum leilão cadastrado</SelectItem>}
+                      {auctions.map(auction => (
+                        <SelectItem key={auction.id} value={auction.id}>{auction.title} (ID: ...{auction.id.slice(-6)})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>Associe este lote a um leilão existente.</FormDescription>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="auctionName"
+              render={({ field }) => (
+                <FormItem className="hidden"> {/* Campo escondido, preenchido automaticamente */}
+                  <FormLabel>Nome do Leilão (Automático)</FormLabel>
+                  <FormControl>
+                    <Input {...field} readOnly />
+                  </FormControl>
                 </FormItem>
               )}
             />
@@ -201,7 +245,7 @@ export default function LotForm({
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Tipo/Categoria do Lote</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                     <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                             <SelectTrigger>
                             <SelectValue placeholder="Selecione o tipo/categoria do lote" />
