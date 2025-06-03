@@ -145,7 +145,6 @@ export interface Auction {
   auctionDate: Date;
   endDate?: Date | null;
   auctionStages?: AuctionStage[]; // Para múltiplas praças/etapas
-  location?: string; // Local físico do leilão ou dos bens // Será substituído por city/state
   city?: string;
   state?: string; // UF
   imageUrl?: string; // Imagem de capa para o leilão
@@ -168,7 +167,7 @@ export interface Auction {
   auctioneerName?: string;
 }
 
-export type AuctionFormData = Omit<Auction, 'id' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' | 'lots' | 'totalLots' | 'visits' | 'auctionStages' | 'initialOffer' | 'isFavorite' | 'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' | 'category' | 'auctioneer' | 'seller' | 'location'> & {
+export type AuctionFormData = Omit<Auction, 'id' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' | 'lots' | 'totalLots' | 'visits' | 'auctionStages' | 'initialOffer' | 'isFavorite' | 'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' | 'category' | 'auctioneer' | 'seller'> & {
   auctionDate: Date;
   endDate?: Date | null;
   category: string; 
@@ -325,6 +324,7 @@ export interface CityInfo {
   slug: string;
   stateId: string; // Foreign key to StateInfo
   stateUf: string; // Denormalized for easy display (e.g., "SP")
+  ibgeCode?: string; // Novo campo para o código IBGE da cidade
   lotCount?: number; // Optional: to store how many lots are in this city
   createdAt: Date;
   updatedAt: Date;

@@ -46,6 +46,7 @@ export async function createCity(
       slug: slugify(data.name.trim()),
       stateId: data.stateId,
       stateUf: parentState.uf, // Denormalizando a UF do estado
+      ibgeCode: data.ibgeCode || '', // Adiciona o código IBGE
       lotCount: 0,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -79,6 +80,7 @@ export async function getCities(stateIdFilter?: string): Promise<CityInfo[]> {
         slug: data.slug,
         stateId: data.stateId,
         stateUf: data.stateUf,
+        ibgeCode: data.ibgeCode,
         lotCount: data.lotCount || 0,
         createdAt: safeConvertToDate(data.createdAt),
         updatedAt: safeConvertToDate(data.updatedAt),
@@ -102,6 +104,7 @@ export async function getCity(id: string): Promise<CityInfo | null> {
         slug: data.slug,
         stateId: data.stateId,
         stateUf: data.stateUf,
+        ibgeCode: data.ibgeCode,
         lotCount: data.lotCount || 0,
         createdAt: safeConvertToDate(data.createdAt),
         updatedAt: safeConvertToDate(data.updatedAt),
@@ -140,6 +143,9 @@ export async function updateCity(
         }
         updateData.stateId = data.stateId;
         updateData.stateUf = parentState.uf;
+    }
+    if (data.ibgeCode !== undefined) {
+        updateData.ibgeCode = data.ibgeCode;
     }
     
     updateData.updatedAt = serverTimestamp() as any;

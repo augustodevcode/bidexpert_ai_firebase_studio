@@ -93,8 +93,9 @@ export default async function AdminCitiesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="min-w-[250px]">Nome da Cidade</TableHead>
+                    <TableHead className="min-w-[200px]">Nome da Cidade</TableHead>
                     <TableHead>UF</TableHead>
+                    <TableHead>Cód. IBGE</TableHead>
                     <TableHead className="text-center">Lotes</TableHead>
                     <TableHead className="text-right w-[100px]">Ações</TableHead>
                   </TableRow>
@@ -104,6 +105,7 @@ export default async function AdminCitiesPage() {
                     <TableRow key={city.id}>
                       <TableCell className="font-medium">{city.name}</TableCell>
                       <TableCell>{city.stateUf}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{city.ibgeCode || '-'}</TableCell>
                       <TableCell className="text-center">
                         <Badge variant="secondary">{city.lotCount || 0}</Badge>
                       </TableCell>

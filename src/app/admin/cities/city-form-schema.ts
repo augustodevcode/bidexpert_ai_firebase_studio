@@ -10,6 +10,11 @@ export const cityFormSchema = z.object({
   stateId: z.string().min(1, {
     message: "Por favor, selecione um estado.",
   }),
+  ibgeCode: z.string().length(7, {
+    message: "O código IBGE da cidade deve ter 7 dígitos.",
+  }).regex(/^\d+$/, {
+    message: "O código IBGE deve conter apenas números."
+  }).optional().or(z.literal('')),
 });
 
 export type CityFormValues = z.infer<typeof cityFormSchema>;

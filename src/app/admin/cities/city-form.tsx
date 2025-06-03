@@ -49,6 +49,7 @@ export default function CityForm({
     defaultValues: {
       name: initialData?.name || '',
       stateId: initialData?.stateId || '',
+      ibgeCode: initialData?.ibgeCode || '',
     },
   });
 
@@ -129,6 +130,20 @@ export default function CityForm({
                     </SelectContent>
                   </Select>
                   <FormDescription>Selecione o estado ao qual esta cidade pertence.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="ibgeCode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Código IBGE da Cidade (Opcional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex: 2927408 (7 dígitos)" {...field} />
+                  </FormControl>
+                  <FormDescription>Código numérico de 7 dígitos do IBGE para o município.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
