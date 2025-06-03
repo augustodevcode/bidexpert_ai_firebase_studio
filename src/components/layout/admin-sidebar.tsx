@@ -20,6 +20,18 @@ const sidebarNavItems = [
     icon: ListChecks,
   },
   {
+    title: 'Lotes',
+    href: '/admin/lots',
+    icon: Package,
+    disabled: false, // Habilitado
+  },
+  {
+    title: 'Leilões',
+    href: '/admin/auctions',
+    icon: Package, // Pode usar um ícone diferente para Leilões, como Gavel
+    disabled: true, // Placeholder
+  },
+  {
     title: 'Estados',
     href: '/admin/states',
     icon: Landmark,
@@ -29,18 +41,6 @@ const sidebarNavItems = [
     title: 'Cidades',
     href: '/admin/cities',
     icon: Landmark,
-    disabled: true, // Placeholder
-  },
-  {
-    title: 'Leilões',
-    href: '/admin/auctions',
-    icon: Package,
-    disabled: true, // Placeholder
-  },
-   {
-    title: 'Lotes',
-    href: '/admin/lots',
-    icon: Package,
     disabled: true, // Placeholder
   },
   {
@@ -73,15 +73,15 @@ export default function AdminSidebar() {
           {sidebarNavItems.map((item) => (
             <Button
               key={item.title}
-              variant={pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href)) ? 'secondary' : 'ghost'}
+              variant={pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href) && !item.disabled) ? 'secondary' : 'ghost'}
               className={cn(
                 'w-full justify-start',
-                (pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href))) && 'font-semibold text-primary hover:text-primary'
+                (pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href)) && !item.disabled) && 'font-semibold text-primary hover:text-primary'
               )}
               asChild
               disabled={item.disabled}
             >
-              <Link href={item.href}>
+              <Link href={item.disabled ? '#' : item.href}>
                 <item.icon className="mr-2 h-4 w-4" />
                 {item.title}
               </Link>
