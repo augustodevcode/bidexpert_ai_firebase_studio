@@ -22,8 +22,8 @@ import {
   DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { sampleLots, slugify } from '@/lib/sample-data'; // getUniqueLotCategories from sample-data removed
-import { getLotCategories } from '@/app/admin/categories/actions'; // Import for dynamic categories
+import { sampleLots, slugify } from '@/lib/sample-data';
+import { getLotCategories } from '@/app/admin/categories/actions';
 import type { RecentlyViewedLotInfo, Lot, LotCategory } from '@/types';
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
@@ -34,7 +34,7 @@ import { useAuth } from '@/contexts/auth-context';
 
 export default function Header() {
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
-  const [searchCategories, setSearchCategories] = useState<LotCategory[]>([]); // Changed to LotCategory[]
+  const [searchCategories, setSearchCategories] = useState<LotCategory[]>([]);
   const [isClient, setIsClient] = useState(false);
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -53,7 +53,7 @@ export default function Header() {
 
     const viewedIds = getRecentlyViewedIds();
     const items: RecentlyViewedLotInfo[] = viewedIds.map(id => {
-      const lot = sampleLots.find(l => l.id === id); // Still uses sampleLots for viewed items
+      const lot = sampleLots.find(l => l.id === id);
       return lot ? {
         id: lot.id,
         title: lot.title,
@@ -70,7 +70,7 @@ export default function Header() {
         setSearchCategories(fetchedCategories);
       } catch (error) {
         console.error("Error fetching categories for search dropdown:", error);
-        setSearchCategories([]); // Set to empty or some default on error
+        setSearchCategories([]);
       }
     }
     fetchCategoriesForSearch();
@@ -100,11 +100,10 @@ export default function Header() {
 
     setIsSearchLoading(true);
     const debounceTimer = setTimeout(() => {
-      // TODO: Replace sampleLots.filter with a proper backend search/filter API call
       const filtered = sampleLots.filter(lot => {
         const term = searchTerm.toLowerCase();
         const categoryMatch = selectedSearchCategorySlug && selectedSearchCategorySlug !== 'todas'
-          ? slugify(lot.type) === selectedSearchCategorySlug // lot.type is the category name
+          ? slugify(lot.type) === selectedSearchCategorySlug
           : true;
 
         const textMatch = (
@@ -126,16 +125,14 @@ export default function Header() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      let query = `term=${encodeURIComponent(searchTerm.trim())}`; // Always start with term
+      let query = `term=${encodeURIComponent(searchTerm.trim())}`;
       if (selectedSearchCategorySlug && selectedSearchCategorySlug !== 'todas') {
         query += `&category=${selectedSearchCategorySlug}`;
       }
-      // Redirect to /search with query params. The SearchPage will handle these.
       router.push(`/search?${query}`);
       setIsSearchDropdownOpen(false);
     }
   };
-
 
   return (
     <header className="sticky top-0 z-50 w-full shadow-md">
@@ -340,4 +337,11 @@ export default function Header() {
              {isClient && recentlyViewedItems.length === 0 && (
                 <Link href="/dashboard/history" className="text-sm text-muted-foreground hover:text-primary font-medium">
                     Histórico de Navegação
-                </Link
+                </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
