@@ -3,12 +3,13 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp, where } from 'firebase/firestore';
-import type { Lot } from '@/types';
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp, where, writeBatch } from 'firebase/firestore';
+import type { Lot, LotFormData } from '@/types';
 
 // Helper function to safely convert Firestore Timestamp like objects or actual Timestamps to Date
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) {
+    // console.warn(`Timestamp field is null or undefined. Returning current date as fallback.`);
     return new Date(); // Fallback or handle as error/undefined
   }
   if (timestampField.toDate && typeof timestampField.toDate === 'function') {
@@ -51,12 +52,6 @@ function safeConvertOptionalDate(timestampField: any): Date | undefined {
     return undefined;
 }
 
-export type LotFormData = Omit<Lot, 'id' | 'createdAt' | 'updatedAt' | 'endDate' | 'lotSpecificAuctionDate' | 'secondAuctionDate'> & {
-  endDate: Date;
-  lotSpecificAuctionDate?: Date | null; // Allow null for optional reset
-  secondAuctionDate?: Date | null; // Allow null for optional reset
-};
-
 
 export async function createLot(
   data: LotFormData
@@ -75,24 +70,32 @@ export async function createLot(
   }
 
   try {
-    const newLotDataForFirestore = {
-      ...data,
+    // Destructure to separate optional dates and the rest of the data
+    const { lotSpecificAuctionDate, secondAuctionDate, endDate, ...restData } = data;
+
+    const newLotDataForFirestore: any = {
+      ...restData,
       views: data.views || 0,
       bidsCount: data.bidsCount || 0,
       auctionName: data.auctionName || `Leilão do Lote ${data.title.substring(0,20)}`,
-      endDate: Timestamp.fromDate(new Date(data.endDate)),
-      lotSpecificAuctionDate: data.lotSpecificAuctionDate ? Timestamp.fromDate(new Date(data.lotSpecificAuctionDate)) : undefined,
-      secondAuctionDate: data.secondAuctionDate ? Timestamp.fromDate(new Date(data.secondAuctionDate)) : undefined,
+      endDate: Timestamp.fromDate(new Date(endDate)), // endDate is mandatory
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
-    if (data.lotSpecificAuctionDate === null) {
-        delete (newLotDataForFirestore as any).lotSpecificAuctionDate;
-    }
-    if (data.secondAuctionDate === null) {
-        delete (newLotDataForFirestore as any).secondAuctionDate;
+
+    // Handle lotSpecificAuctionDate: convert to Timestamp if Date, or set to null if explicitly null
+    if (lotSpecificAuctionDate !== undefined) { // Check if the property exists on input data
+      newLotDataForFirestore.lotSpecificAuctionDate = lotSpecificAuctionDate
+        ? Timestamp.fromDate(new Date(lotSpecificAuctionDate))
+        : null;
     }
 
+    // Handle secondAuctionDate: convert to Timestamp if Date, or set to null if explicitly null
+    if (secondAuctionDate !== undefined) { // Check if the property exists on input data
+      newLotDataForFirestore.secondAuctionDate = secondAuctionDate
+        ? Timestamp.fromDate(new Date(secondAuctionDate))
+        : null;
+    }
 
     const docRef = await addDoc(collection(db, 'lots'), newLotDataForFirestore);
     revalidatePath('/admin/lots');
@@ -116,7 +119,6 @@ export async function getLots(auctionIdParam?: string): Promise<Lot[]> {
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => {
       const data = doc.data();
-      // Explicitly map all fields from Lot type
       return {
         id: doc.id,
         auctionId: data.auctionId,
@@ -272,27 +274,33 @@ export async function updateLot(
 
   try {
     const lotDocRef = doc(db, 'lots', id);
+    const updateDataForFirestore: any = {};
 
-    const updateDataForFirestore: Partial<any> = { ...data };
-    if (data.endDate) {
-        updateDataForFirestore.endDate = Timestamp.fromDate(new Date(data.endDate));
+    // Iterate over the keys in data and build the update object
+    // This ensures only provided fields are updated and handles dates correctly
+    for (const key in data) {
+      if (data.hasOwnProperty(key)) {
+        const value = (data as any)[key];
+        
+        if (key === 'endDate' || key === 'lotSpecificAuctionDate' || key === 'secondAuctionDate') {
+          if (value !== undefined) { // Only process if the key is actually in the partial data
+            updateDataForFirestore[key] = value ? Timestamp.fromDate(new Date(value)) : null;
+          }
+        } else {
+           if (value !== undefined) { // Ensure other fields are also not undefined
+            updateDataForFirestore[key] = value;
+           }
+        }
+      }
     }
-
-    if (data.hasOwnProperty('lotSpecificAuctionDate')) {
-        updateDataForFirestore.lotSpecificAuctionDate = data.lotSpecificAuctionDate ? Timestamp.fromDate(new Date(data.lotSpecificAuctionDate)) : undefined;
-        if (data.lotSpecificAuctionDate === null) delete updateDataForFirestore.lotSpecificAuctionDate;
-    }
-     if (data.hasOwnProperty('secondAuctionDate')) {
-        updateDataForFirestore.secondAuctionDate = data.secondAuctionDate ? Timestamp.fromDate(new Date(data.secondAuctionDate)) : undefined;
-        if (data.secondAuctionDate === null) delete updateDataForFirestore.secondAuctionDate;
-    }
+    
     updateDataForFirestore.updatedAt = serverTimestamp();
 
     await updateDoc(lotDocRef, updateDataForFirestore);
     revalidatePath('/admin/lots');
     revalidatePath(`/admin/lots/${id}/edit`);
-    if (data.auctionId) {
-      revalidatePath(`/admin/auctions/${data.auctionId}/edit`);
+    if (updateDataForFirestore.auctionId || data.auctionId) { // Use updated or original auctionId for revalidation
+      revalidatePath(`/admin/auctions/${updateDataForFirestore.auctionId || data.auctionId}/edit`);
     }
     return { success: true, message: 'Lote atualizado com sucesso!' };
   } catch (error: any) {
