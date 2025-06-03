@@ -1,5 +1,5 @@
 
-import AuctionForm from '../auction-form';
+import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, type AuctionFormData } from '../../actions'; // Corrected path
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getLots, deleteLot } from '@/app/admin/lots/actions'; // Importar getLots e deleteLot
@@ -25,8 +25,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
-import { getAuctioneers } from '../../auctioneers/actions'; // Import getAuctioneers
-import { getSellers } from '../../sellers/actions'; // Import getSellers
+import { getAuctioneers } from '@/app/admin/auctioneers/actions'; // Import getAuctioneers
+import { getSellers } from '@/app/admin/sellers/actions'; // Import getSellers
 
 // Client component para o botão de deletar lote, para usar AlertDialog
 function DeleteLotButton({ lotId, lotTitle, auctionId, onDelete }: { lotId: string; lotTitle: string; auctionId: string; onDelete: (id: string, auctionId: string) => Promise<void> }) {
