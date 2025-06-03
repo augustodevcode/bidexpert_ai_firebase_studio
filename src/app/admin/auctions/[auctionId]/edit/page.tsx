@@ -1,8 +1,8 @@
 
 import AuctionForm from '../../auction-form';
-import { getAuction, updateAuction, type AuctionFormData } from '../../actions'; // Corrected path
+import { getAuction, updateAuction, type AuctionFormData } from '../../actions'; 
 import { getLotCategories } from '@/app/admin/categories/actions';
-import { getLots, deleteLot } from '@/app/admin/lots/actions'; // Importar getLots e deleteLot
+import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
 import type { Lot } from '@/types';
 import { notFound } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -25,10 +25,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
-import { getAuctioneers } from '@/app/admin/auctioneers/actions'; // Import getAuctioneers
-import { getSellers } from '@/app/admin/sellers/actions'; // Import getSellers
+import { getAuctioneers } from '@/app/admin/auctioneers/actions';
+import { getSellers } from '@/app/admin/sellers/actions';
 
-// Client component para o botão de deletar lote, para usar AlertDialog
 function DeleteLotButton({ lotId, lotTitle, auctionId, onDelete }: { lotId: string; lotTitle: string; auctionId: string; onDelete: (id: string, auctionId: string) => Promise<void> }) {
   return (
     <AlertDialog>
@@ -66,9 +65,9 @@ export default async function EditAuctionPage({ params }: { params: { auctionId:
   const auctionId = params.auctionId;
   const auction = await getAuction(auctionId);
   const categories = await getLotCategories();
-  const lotsInAuction = await getLots(auctionId); // Buscar lotes associados
-  const auctioneers = await getAuctioneers(); // Fetch auctioneers
-  const sellers = await getSellers(); // Fetch sellers
+  const lotsInAuction = await getLots(auctionId); 
+  const auctioneers = await getAuctioneers(); 
+  const sellers = await getSellers(); 
 
 
   if (!auction) {
@@ -82,11 +81,10 @@ export default async function EditAuctionPage({ params }: { params: { auctionId:
 
   async function handleDeleteLotAction(lotId: string, currentAuctionId: string) {
     'use server';
-    const result = await deleteLot(lotId, currentAuctionId); // Passar auctionId para revalidação
+    const result = await deleteLot(lotId, currentAuctionId); 
     if (!result.success) {
         console.error("Failed to delete lot:", result.message);
     }
-    // Revalidação é tratada pela action deleteLot
   }
 
   return (
@@ -170,3 +168,5 @@ export default async function EditAuctionPage({ params }: { params: { auctionId:
     </div>
   );
 }
+
+    

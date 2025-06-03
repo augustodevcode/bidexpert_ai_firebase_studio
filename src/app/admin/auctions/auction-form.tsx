@@ -22,8 +22,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
-import type { Auction, AuctionStatus, LotCategory } from '@/types';
-import { Loader2, Save, CalendarIcon } from 'lucide-react';
+import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
+import { Loader2, Save, CalendarIcon, Gavel } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -32,7 +32,9 @@ import { getAuctionStatusText } from '@/lib/sample-data';
 
 interface AuctionFormProps {
   initialData?: Auction | null;
-  categories: LotCategory[]; // Pass categories for the select dropdown
+  categories: LotCategory[];
+  auctioneers: AuctioneerProfileInfo[]; // Nova prop
+  sellers: SellerProfileInfo[]; // Nova prop
   onSubmitAction: (data: AuctionFormValues) => Promise<{ success: boolean; message: string; auctionId?: string }>;
   formTitle: string;
   formDescription: string;
@@ -57,7 +59,9 @@ const auctionTypeOptions = [
 
 export default function AuctionForm({
   initialData,
-  categories, // Receive categories
+  categories,
+  auctioneers, // Receber auctioneers
+  sellers,     // Receber sellers
   onSubmitAction,
   formTitle,
   formDescription,
@@ -76,8 +80,8 @@ export default function AuctionForm({
       status: initialData?.status || 'EM_BREVE',
       auctionType: initialData?.auctionType || undefined,
       category: initialData?.category || '',
-      auctioneer: initialData?.auctioneer || '',
-      seller: initialData?.seller || '',
+      auctioneer: initialData?.auctioneer || '', // Será o nome do leiloeiro
+      seller: initialData?.seller || '',       // Será o nome do comitente
       auctionDate: initialData?.auctionDate ? new Date(initialData.auctionDate) : new Date(),
       endDate: initialData?.endDate ? new Date(initialData.endDate) : null,
       location: initialData?.location || '',
@@ -122,7 +126,7 @@ export default function AuctionForm({
   return (
     <Card className="max-w-3xl mx-auto shadow-lg">
       <CardHeader>
-        <CardTitle>{formTitle}</CardTitle>
+        <CardTitle className="flex items-center gap-2"><Gavel className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
         <CardDescription>{formDescription}</CardDescription>
       </CardHeader>
       <Form {...form}>
@@ -241,17 +245,30 @@ export default function AuctionForm({
                 )}
                 />
                 <FormField
-                    control={form.control}
-                    name="auctioneer"
-                    render={({ field }) => (
+                  control={form.control}
+                  name="auctioneer"
+                  render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Leiloeiro Responsável</FormLabel>
+                      <FormLabel>Leiloeiro Responsável</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                        <Input placeholder="Nome do Leiloeiro Oficial" {...field} />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o leiloeiro" />
+                          </SelectTrigger>
                         </FormControl>
-                        <FormMessage />
+                        <SelectContent>
+                          {auctioneers.length === 0 ? (
+                            <p className="p-2 text-sm text-muted-foreground">Nenhum leiloeiro cadastrado</p>
+                          ) : (
+                            auctioneers.map(auc => (
+                              <SelectItem key={auc.id} value={auc.name}>{auc.name}</SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
                     </FormItem>
-                    )}
+                  )}
                 />
             </div>
              <FormField
@@ -260,9 +277,22 @@ export default function AuctionForm({
                 render={({ field }) => (
                 <FormItem>
                     <FormLabel>Comitente/Vendedor Principal (Opcional)</FormLabel>
-                    <FormControl>
-                    <Input placeholder="Nome do Comitente (Ex: Banco X, Empresa Y)" {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o comitente" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                         {sellers.length === 0 ? (
+                            <p className="p-2 text-sm text-muted-foreground">Nenhum comitente cadastrado</p>
+                          ) : (
+                           sellers.map(sel => (
+                            <SelectItem key={sel.id} value={sel.name}>{sel.name}</SelectItem>
+                          ))
+                         )}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                 </FormItem>
                 )}
@@ -424,3 +454,5 @@ export default function AuctionForm({
     </Card>
   );
 }
+
+    
