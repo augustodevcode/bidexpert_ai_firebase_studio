@@ -2,6 +2,7 @@
 import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo } from '@/types';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle } from 'lucide-react';
 
 
 const now = new Date();
@@ -785,7 +786,7 @@ export const getUserHabilitationStatusInfo = (status: UserHabilitationStatus): {
       return { text: 'Conta Bloqueada', color: 'text-destructive', progress: 0, icon: ShieldAlert };
     default:
       const exhaustiveCheck: never = status;
-      return { text: exhaustiveCheck, color: 'text-muted-foreground', progress: 0, icon: HelpCircle };
+      return { text: "Status Desconhecido" as never, color: 'text-muted-foreground', progress: 0, icon: HelpCircle };
   }
 };
 
@@ -979,3 +980,6 @@ export const getUniqueAuctioneers = (): AuctioneerProfileInfo[] => {
     });
     return Array.from(auctioneerMap.values()).sort((a, b) => a.name.localeCompare(b.name));
 };
+
+
+    
