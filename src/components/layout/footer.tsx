@@ -4,10 +4,13 @@ import { Coins } from 'lucide-react';
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
-  const footerLinks = [
+  const quickLinks = [
     { href: '/about', label: 'About Us' },
     { href: '/contact', label: 'Contact' },
     { href: '/faq', label: 'FAQ' },
+  ];
+
+  const legalLinks = [
     { href: '/terms', label: 'Terms of Service' },
     { href: '/privacy', label: 'Privacy Policy' },
   ];
@@ -15,21 +18,23 @@ export default function Footer() {
   return (
     <footer className="border-t bg-secondary/50">
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div>
-            <Link href="/" className="flex items-center space-x-2 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          {/* Coluna 1: Logo e Slogan */}
+          <div className="md:col-span-1">
+            <Link href="/" className="flex items-center space-x-2 mb-3">
               <Coins className="h-8 w-8 text-primary" />
-              <span className="font-bold text-xl">BidExpert</span>
+              <span className="font-bold text-2xl">BidExpert</span>
             </Link>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-sm text-muted-foreground">
               Your expert partner in online auctions. Find rare items and bid with confidence.
             </p>
           </div>
-          
-          <div>
+
+          {/* Coluna 2: Quick Links */}
+          <div className="md:col-span-1">
             <h3 className="text-lg font-semibold mb-3">Quick Links</h3>
             <ul className="space-y-2">
-              {footerLinks.slice(0,3).map(link => (
+              {quickLinks.map(link => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors">
                     {link.label}
@@ -39,10 +44,11 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div>
+          {/* Coluna 3: Legal */}
+          <div className="md:col-span-1">
             <h3 className="text-lg font-semibold mb-3">Legal</h3>
             <ul className="space-y-2">
-               {footerLinks.slice(3).map(link => (
+              {legalLinks.map(link => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors">
                     {link.label}
@@ -52,7 +58,8 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-        <div className="mt-8 border-t pt-8 text-center">
+
+        <div className="border-t pt-8 text-center">
           <p className="text-sm text-muted-foreground">
             &copy; {currentYear} BidExpert. All rights reserved.
           </p>
