@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks } from 'lucide-react';
+import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks, Tv } from 'lucide-react'; // Added Tv
 import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
@@ -51,7 +51,6 @@ export default function UserNav() {
     const userDisplayName = user.displayName || user.email?.split('@')[0] || "Usuário";
     const userInitial = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : "U";
     
-    // Placeholder for admin/analyst check (case-insensitive)
     const userEmailLower = user.email?.toLowerCase();
     const showAdminLinks = userEmailLower && ALLOWED_EMAILS_FOR_ADMIN_LINKS.map(e => e.toLowerCase()).includes(userEmailLower);
 
@@ -134,6 +133,11 @@ export default function UserNav() {
                <DropdownMenuItem asChild>
                 <Link href="/admin/categories" className="flex items-center">
                   <ListChecks className="mr-2 h-4 w-4" /> Gerenciar Categorias
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/auctions/20301vei/live" className="flex items-center"> {/* Placeholder link to a "live" auction */}
+                  <Tv className="mr-2 h-4 w-4" /> Auditório Virtual
                 </Link>
               </DropdownMenuItem>
             </>
