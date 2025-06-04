@@ -3,8 +3,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp } from 'firebase/firestore';
-import type { Auction, AuctionFormData } from '@/types'; // AuctionFormData já está aqui
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp, where } from 'firebase/firestore';
+import type { Auction, AuctionFormData } from '@/types'; 
+import { slugify } from '@/lib/sample-data'; // Import slugify if used for sellers
 
 // Helper function to safely convert Firestore Timestamp like objects or actual Timestamps to Date
 function safeConvertToDate(timestampField: any): Date {
@@ -33,11 +34,9 @@ function safeConvertOptionalDate(timestampField: any): Date | undefined {
     if (!timestampField) {
       return undefined;
     }
-    // Use the main safeConvertToDate for conversion
     return safeConvertToDate(timestampField);
 }
 
-// AuctionFormData já está importada e definida corretamente em types.ts
 
 export async function createAuction(
   data: AuctionFormData
@@ -62,7 +61,7 @@ export async function createAuction(
     const newAuctionDataForFirestore = {
       ...data,
       auctionDate: Timestamp.fromDate(new Date(data.auctionDate)),
-      endDate: data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : null, // Store as null if undefined/null
+      endDate: data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : null, 
       totalLots: 0,
       visits: 0,
       createdAt: serverTimestamp(),
@@ -73,9 +72,9 @@ export async function createAuction(
       (newAuctionDataForFirestore as any).endDate = null;
     }
 
-
     const docRef = await addDoc(collection(db, 'auctions'), newAuctionDataForFirestore);
     revalidatePath('/admin/auctions');
+    revalidatePath('/consignor-dashboard/overview');
     return { success: true, message: 'Leilão criado com sucesso!', auctionId: docRef.id };
   } catch (error: any) {
     console.error("[Server Action - createAuction] Error creating auction:", error);
@@ -88,7 +87,7 @@ export async function getAuctions(): Promise<Auction[]> {
     const auctionsCollection = collection(db, 'auctions');
     const q = query(auctionsCollection, orderBy('auctionDate', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(docSnap => { // Renomeado doc para docSnap para evitar conflito com a função doc
+    return snapshot.docs.map(docSnap => { 
       const data = docSnap.data();
       return {
         id: docSnap.id,
@@ -99,10 +98,11 @@ export async function getAuctions(): Promise<Auction[]> {
         auctionType: data.auctionType,
         category: data.category,
         auctioneer: data.auctioneer,
+        auctioneerId: data.auctioneerId,
         seller: data.seller,
+        sellerId: data.sellerId,
         auctionDate: safeConvertToDate(data.auctionDate),
         endDate: safeConvertOptionalDate(data.endDate),
-        // location: data.location, // Removido, usar city/state
         city: data.city,
         state: data.state,
         imageUrl: data.imageUrl,
@@ -121,6 +121,30 @@ export async function getAuctions(): Promise<Auction[]> {
   }
 }
 
+export async function getAuctionsBySellerSlug(sellerSlug: string): Promise<Auction[]> {
+  try {
+    // Se o slug do vendedor for armazenado diretamente nos leilões, podemos usá-lo.
+    // No entanto, é mais comum que o sellerId seja armazenado.
+    // Se 'seller' no Auction armazena o nome e não o slug ou ID, esta query não funcionará como esperado.
+    // Assumindo que 'seller' no Auction pode ser o nome do vendedor, e nós temos o slug:
+    // Esta abordagem filtra no cliente, o que é ineficiente para grandes datasets.
+    // O ideal seria ter sellerId ou sellerSlug no documento do Leilão.
+    
+    // Se você tiver um campo sellerSlug ou sellerId no documento 'auctions':
+    // const q = query(collection(db, 'auctions'), where('sellerSlug', '==', sellerSlug), orderBy('auctionDate', 'desc'));
+    // const snapshot = await getDocs(q);
+    // A linha abaixo simula o resultado se você tiver 'seller' (nome) e precisa comparar com um slug.
+    
+    const allAuctions = await getAuctions(); // Pega todos e filtra no cliente (ineficiente)
+    return allAuctions.filter(auction => auction.seller && slugify(auction.seller) === sellerSlug);
+
+  } catch (error: any) {
+    console.error(`[Server Action - getAuctionsBySellerSlug] Error fetching auctions for seller slug ${sellerSlug}:`, error);
+    return [];
+  }
+}
+
+
 export async function getAuction(id: string): Promise<Auction | null> {
   try {
     const auctionDocRef = doc(db, 'auctions', id);
@@ -136,10 +160,11 @@ export async function getAuction(id: string): Promise<Auction | null> {
         auctionType: data.auctionType,
         category: data.category,
         auctioneer: data.auctioneer,
+        auctioneerId: data.auctioneerId,
         seller: data.seller,
+        sellerId: data.sellerId,
         auctionDate: safeConvertToDate(data.auctionDate),
         endDate: safeConvertOptionalDate(data.endDate),
-        // location: data.location, // Removido
         city: data.city,
         state: data.state,
         imageUrl: data.imageUrl,
@@ -181,21 +206,19 @@ export async function updateAuction(
     if (data.auctionDate) {
         updateDataForFirestore.auctionDate = Timestamp.fromDate(new Date(data.auctionDate));
     }
-    // Handle endDate specifically: if present and a Date, convert; if explicitly null, set to null in Firestore
-    if (data.hasOwnProperty('endDate')) { // Check if endDate key is present in data
+    if (data.hasOwnProperty('endDate')) { 
         updateDataForFirestore.endDate = data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : null;
     }
-    // Remove location if it's being phased out
     if (updateDataForFirestore.hasOwnProperty('location')) {
         delete updateDataForFirestore.location;
     }
-
 
     updateDataForFirestore.updatedAt = serverTimestamp();
 
     await updateDoc(auctionDocRef, updateDataForFirestore);
     revalidatePath('/admin/auctions');
     revalidatePath(`/admin/auctions/${id}/edit`);
+    revalidatePath('/consignor-dashboard/overview');
     return { success: true, message: 'Leilão atualizado com sucesso!' };
   } catch (error: any) {
     console.error("[Server Action - updateAuction] Error updating auction:", error);
@@ -207,15 +230,13 @@ export async function deleteAuction(
   id: string
 ): Promise<{ success: boolean; message: string }> {
   try {
-    // TODO: Consider deleting associated lots or handling them (e.g., unlinking)
     const auctionDocRef = doc(db, 'auctions', id);
     await deleteDoc(auctionDocRef);
     revalidatePath('/admin/auctions');
+    revalidatePath('/consignor-dashboard/overview');
     return { success: true, message: 'Leilão excluído com sucesso!' };
   } catch (error: any) {
     console.error("[Server Action - deleteAuction] Error deleting auction:", error);
     return { success: false, message: error.message || 'Falha ao excluir leilão.' };
   }
 }
-
-    

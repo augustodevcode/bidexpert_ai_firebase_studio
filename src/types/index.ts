@@ -1,5 +1,3 @@
-
-
 export interface Bid {
   bidder: string;
   amount: number;
@@ -115,19 +113,22 @@ export interface Lot {
   actualCashValue?: string;
   estimatedRepairCost?: string;
   sellerName?: string; // Este campo será populado pelo nome do Comitente/Seller selecionado
+  sellerId?: string; // ID do comitente, se disponível
   auctioneerName?: string; // Nome do Leiloeiro responsável pelo lote/leilão
+  auctioneerId?: string; // ID do leiloeiro, se disponível
 
   condition?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-export type LotFormData = Omit<Lot, 'id' | 'createdAt' | 'updatedAt' | 'endDate' | 'lotSpecificAuctionDate' | 'secondAuctionDate' | 'isFavorite' | 'isFeatured' | 'views' | 'bidsCount' | 'galleryImageUrls' | 'dataAiHint' | 'auctionDate' | 'auctioneerName' | 'cityName' | 'stateUf'> & {
+export type LotFormData = Omit<Lot, 'id' | 'createdAt' | 'updatedAt' | 'endDate' | 'lotSpecificAuctionDate' | 'secondAuctionDate' | 'isFavorite' | 'isFeatured' | 'views' | 'bidsCount' | 'galleryImageUrls' | 'dataAiHint' | 'auctionDate' | 'auctioneerName' | 'cityName' | 'stateUf' | 'auctioneerId'> & {
   endDate: Date;
   lotSpecificAuctionDate?: Date | null;
   secondAuctionDate?: Date | null;
-  stateId?: string;
-  cityId?: string;
+  stateId?: string | null; // Permitir null para não seleção
+  cityId?: string | null;  // Permitir null para não seleção
+  sellerId?: string;
 };
 
 
@@ -140,9 +141,9 @@ export interface Auction {
   auctionType?: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR'; // Tipo do leilão
   category: string; // Categoria principal (será o nome da categoria de LotCategory)
   auctioneer: string; // Nome do leiloeiro (pode se tornar auctioneerId depois)
-  auctioneerId?: string;
+  auctioneerId?: string; // ID do leiloeiro, se disponível
   seller?: string; // Nome do comitente vendedor principal (pode se tornar sellerId depois)
-  sellerId?: string;
+  sellerId?: string; // ID do comitente, se disponível
   auctionDate: Date;
   endDate?: Date | null;
   auctionStages?: AuctionStage[]; // Para múltiplas praças/etapas
@@ -165,7 +166,7 @@ export interface Auction {
   createdAt: Date;
   updatedAt: Date;
   auctioneerLogoUrl?: string;
-  auctioneerName?: string;
+  auctioneerName?: string; // Este campo parece redundante se tivermos 'auctioneer'
 }
 
 export type AuctionFormData = Omit<Auction, 'id' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' | 'lots' | 'totalLots' | 'visits' | 'auctionStages' | 'initialOffer' | 'isFavorite' | 'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' | 'category' | 'auctioneer' | 'seller'> & {
@@ -173,11 +174,13 @@ export type AuctionFormData = Omit<Auction, 'id' | 'createdAt' | 'updatedAt' | '
   endDate?: Date | null;
   category: string; 
   auctioneer: string; 
-  seller?: string; 
+  seller?: string;
+  auctioneerId?: string;
+  sellerId?: string;
 };
 
 
-export type UserRole = 'ADMINISTRATOR' | 'AUCTION_ANALYST' | 'USER';
+export type UserRole = 'ADMINISTRATOR' | 'AUCTION_ANALYST' | 'USER' | 'CONSIGNOR'; // Adicionado CONSIGNOR
 
 export interface UserProfileData {
   uid: string;
@@ -217,6 +220,9 @@ export interface UserProfileData {
   activeBids?: number;
   auctionsWon?: number;
   itemsSold?: number; // If user can also be a seller
+
+  // Campo para ligar o usuário ao seu perfil de comitente, se aplicável
+  sellerProfileId?: string; // ID do documento na coleção 'sellers'
 }
 
 export interface UserBid {
@@ -248,7 +254,7 @@ export interface SellerProfileInfo {
   name: string;
   slug: string;
   contactName?: string;
-  email?: string;
+  email?: string; // Pode ser o email principal de contato do comitente
   phone?: string;
   address?: string;
   city?: string;
@@ -263,11 +269,14 @@ export interface SellerProfileInfo {
   activeLotsCount?: number; // Dynamically calculated or admin-set
   totalSalesValue?: number; // For stats
   auctionsFacilitatedCount?: number; // Number of auctions they've been part of
+  userId?: string; // UID do usuário do Firebase associado a este comitente, se houver
   createdAt: Date;
   updatedAt: Date;
 }
 
-export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'activeLotsCount' | 'totalSalesValue' | 'auctionsFacilitatedCount'>;
+export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'activeLotsCount' | 'totalSalesValue' | 'auctionsFacilitatedCount' | 'userId'> & {
+  userId?: string; // Permitir definir/editar o userId associado
+};
 
 
 // For Auctioneer public profile and admin management
@@ -291,11 +300,14 @@ export interface AuctioneerProfileInfo {
   rating?: number; // Overall rating, 0-5
   auctionsConductedCount?: number; // Dynamically calculated or admin-set
   totalValueSold?: number; // For stats
+  userId?: string; // UID do usuário do Firebase associado a este leiloeiro, se houver
   createdAt: Date;
   updatedAt: Date;
 }
 
-export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'auctionsConductedCount' | 'totalValueSold'>;
+export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'auctionsConductedCount' | 'totalValueSold' | 'userId'> & {
+  userId?: string;
+};
 
 
 export interface RecentlyViewedLotInfo {
@@ -365,3 +377,8 @@ export interface DirectSaleOffer {
 }
 // --- End Venda Direta Types ---
 
+// Adicionado para consistência com o schema do formulário de edição de perfil
+export type EditableUserProfileData = Omit<UserProfileData, 'uid' | 'email' | 'status' | 'createdAt' | 'updatedAt' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'role' | 'sellerProfileId'> & {
+  role?: UserRole;
+  sellerProfileId?: string;
+};

@@ -13,14 +13,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks, Tv } from 'lucide-react'; // Added Tv
+import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks, Tv, Briefcase as ConsignorIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
-// TODO: Replace this with actual role fetching and checking from Firestore via useAuth context
-const ALLOWED_EMAILS_FOR_ADMIN_LINKS = ['admin@bidexpert.com', 'analyst@bidexpert.com', 'augusto.devcode@gmail.com'];
+// Idealmente, estas constantes viriam de um local compartilhado (ex: src/lib/auth-roles.ts)
+const ALLOWED_EMAILS_FOR_ADMIN_ACCESS = ['admin@bidexpert.com', 'analyst@bidexpert.com', 'augusto.devcode@gmail.com'];
+const EXAMPLE_CONSIGNOR_EMAIL = 'consignor@bidexpert.com';
 
 export default function UserNav() {
   const { user, loading } = useAuth();
@@ -38,7 +39,6 @@ export default function UserNav() {
   };
 
   if (loading) {
-    // Pode mostrar um skeleton ou spinner aqui se preferir
     return (
       <div className="flex items-center space-x-2">
         <div className="h-10 w-20 bg-muted rounded-md animate-pulse"></div>
@@ -52,8 +52,11 @@ export default function UserNav() {
     const userInitial = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : "U";
     
     const userEmailLower = user.email?.toLowerCase();
-    const showAdminLinks = userEmailLower && ALLOWED_EMAILS_FOR_ADMIN_LINKS.map(e => e.toLowerCase()).includes(userEmailLower);
-
+    const isAdminOrAnalyst = userEmailLower && ALLOWED_EMAILS_FOR_ADMIN_ACCESS.map(e => e.toLowerCase()).includes(userEmailLower);
+    const isTheExampleConsignor = userEmailLower === EXAMPLE_CONSIGNOR_EMAIL.toLowerCase();
+    
+    const canSeeConsignorDashboardLink = isAdminOrAnalyst || isTheExampleConsignor;
+    const showAdminSectionLinks = isAdminOrAnalyst;
 
     return (
       <DropdownMenu>
@@ -121,7 +124,18 @@ export default function UserNav() {
             </Link>
           </DropdownMenuItem>
           
-          {showAdminLinks && (
+          {canSeeConsignorDashboardLink && (
+             <>
+              <DropdownMenuSeparator />
+               <DropdownMenuItem asChild>
+                <Link href="/consignor-dashboard/overview" className="flex items-center">
+                  <ConsignorIcon className="mr-2 h-4 w-4" /> Painel do Comitente
+                </Link>
+              </DropdownMenuItem>
+             </>
+          )}
+
+          {showAdminSectionLinks && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuLabel className="text-xs text-muted-foreground px-2">Administração</DropdownMenuLabel>
@@ -167,4 +181,3 @@ export default function UserNav() {
     </div>
   );
 }
-

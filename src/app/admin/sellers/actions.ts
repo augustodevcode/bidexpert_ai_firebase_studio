@@ -3,9 +3,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp, where, limit } from 'firebase/firestore';
 import type { SellerProfileInfo, SellerFormData } from '@/types';
-import { slugify } from '@/lib/sample-data'; // Assuming slugify is in sample-data or move to utils
+import { slugify } from '@/lib/sample-data'; 
 
 // Helper function to safely convert Firestore Timestamp to Date
 function safeConvertToDate(timestampField: any): Date {
@@ -40,8 +40,7 @@ export async function createSeller(
     const newSellerData = {
       ...data,
       slug: slugify(data.name.trim()),
-      // Initialize stats fields if needed, or handle them separately
-      memberSince: serverTimestamp(), // Or set to a specific date if provided in form
+      memberSince: serverTimestamp(), 
       rating: 0,
       activeLotsCount: 0,
       totalSalesValue: 0,
@@ -133,6 +132,47 @@ export async function getSeller(id: string): Promise<SellerProfileInfo | null> {
   }
 }
 
+export async function getSellerBySlug(slug: string): Promise<SellerProfileInfo | null> {
+  try {
+    const sellersCol = collection(db, 'sellers');
+    const q = query(sellersCol, where('slug', '==', slug), limit(1));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      console.warn(`[Server Action - getSellerBySlug] No seller found with slug: ${slug}`);
+      return null;
+    }
+    const docSnap = snapshot.docs[0];
+    const data = docSnap.data();
+    return {
+        id: docSnap.id,
+        name: data.name,
+        slug: data.slug,
+        contactName: data.contactName,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+        website: data.website,
+        logoUrl: data.logoUrl,
+        dataAiHintLogo: data.dataAiHintLogo,
+        description: data.description,
+        memberSince: safeConvertOptionalDate(data.memberSince),
+        rating: data.rating || 0,
+        activeLotsCount: data.activeLotsCount || 0,
+        totalSalesValue: data.totalSalesValue || 0,
+        auctionsFacilitatedCount: data.auctionsFacilitatedCount || 0,
+        createdAt: safeConvertToDate(data.createdAt),
+        updatedAt: safeConvertToDate(data.updatedAt),
+    } as SellerProfileInfo;
+  } catch (error: any) {
+    console.error(`[Server Action - getSellerBySlug] Error fetching seller by slug ${slug}:`, error);
+    return null;
+  }
+}
+
+
 export async function updateSeller(
   id: string,
   data: Partial<SellerFormData>
@@ -148,11 +188,12 @@ export async function updateSeller(
     if (data.name) {
       updateData.slug = slugify(data.name.trim());
     }
-    updateData.updatedAt = serverTimestamp() as any; // Firestore will convert this
+    updateData.updatedAt = serverTimestamp() as any; 
 
     await updateDoc(sellerDocRef, updateData);
     revalidatePath('/admin/sellers');
     revalidatePath(`/admin/sellers/${id}/edit`);
+    revalidatePath(`/consignor-dashboard/overview`); // Revalidate consignor dashboard
     return { success: true, message: 'Comitente atualizado com sucesso!' };
   } catch (error: any) {
     console.error("[Server Action - updateSeller] Error:", error);
@@ -173,5 +214,3 @@ export async function deleteSeller(
     return { success: false, message: error.message || 'Falha ao excluir comitente.' };
   }
 }
-
-    
