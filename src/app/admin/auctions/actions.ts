@@ -4,23 +4,23 @@
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp, where } from 'firebase/firestore';
-import type { Auction, AuctionFormData } from '@/types'; 
-import { slugify } from '@/lib/sample-data'; // Import slugify if used for sellers
+import type { Auction, AuctionFormData } from '@/types';
+import { slugify, sampleAuctions } from '@/lib/sample-data'; // Import sampleAuctions
 
 // Helper function to safely convert Firestore Timestamp like objects or actual Timestamps to Date
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) {
-    return new Date(); 
+    return new Date();
   }
   if (timestampField.toDate && typeof timestampField.toDate === 'function') {
-    return timestampField.toDate(); 
+    return timestampField.toDate();
   }
   if (typeof timestampField === 'object' && timestampField !== null &&
       typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
-    return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000); 
+    return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000);
   }
   if (timestampField instanceof Date) {
-    return timestampField; 
+    return timestampField;
   }
   const parsedDate = new Date(timestampField);
   if (!isNaN(parsedDate.getTime())) {
@@ -61,7 +61,7 @@ export async function createAuction(
     const newAuctionDataForFirestore = {
       ...data,
       auctionDate: Timestamp.fromDate(new Date(data.auctionDate)),
-      endDate: data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : null, 
+      endDate: data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : null,
       totalLots: 0,
       visits: 0,
       createdAt: serverTimestamp(),
@@ -87,57 +87,85 @@ export async function getAuctions(): Promise<Auction[]> {
     const auctionsCollection = collection(db, 'auctions');
     const q = query(auctionsCollection, orderBy('auctionDate', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(docSnap => { 
-      const data = docSnap.data();
-      return {
-        id: docSnap.id,
-        title: data.title,
-        fullTitle: data.fullTitle,
-        description: data.description,
-        status: data.status,
-        auctionType: data.auctionType,
-        category: data.category,
-        auctioneer: data.auctioneer,
-        auctioneerId: data.auctioneerId,
-        seller: data.seller,
-        sellerId: data.sellerId,
-        auctionDate: safeConvertToDate(data.auctionDate),
-        endDate: safeConvertOptionalDate(data.endDate),
-        city: data.city,
-        state: data.state,
-        imageUrl: data.imageUrl,
-        documentsUrl: data.documentsUrl,
-        sellingBranch: data.sellingBranch,
-        totalLots: data.totalLots || 0,
-        visits: data.visits || 0,
-        lots: [], 
-        createdAt: safeConvertToDate(data.createdAt),
-        updatedAt: safeConvertToDate(data.updatedAt),
-      } as Auction;
-    });
+
+    if (!snapshot.empty) {
+      // console.log('[getAuctions] Fetched from Firestore');
+      return snapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          title: data.title,
+          fullTitle: data.fullTitle,
+          description: data.description,
+          status: data.status,
+          auctionType: data.auctionType,
+          category: data.category,
+          auctioneer: data.auctioneer,
+          auctioneerId: data.auctioneerId,
+          seller: data.seller,
+          sellerId: data.sellerId,
+          auctionDate: safeConvertToDate(data.auctionDate),
+          endDate: safeConvertOptionalDate(data.endDate),
+           auctionStages: data.auctionStages?.map((stage: any) => ({
+            name: stage.name,
+            endDate: safeConvertToDate(stage.endDate),
+            statusText: stage.statusText,
+          })) || [],
+          city: data.city,
+          state: data.state,
+          imageUrl: data.imageUrl,
+          dataAiHint: data.dataAiHint,
+          documentsUrl: data.documentsUrl,
+          totalLots: data.totalLots || 0,
+          visits: data.visits || 0,
+          lots: data.lots || [], // Lots are typically not embedded or fetched here for a list view
+          initialOffer: data.initialOffer,
+          isFavorite: data.isFavorite,
+          currentBid: data.currentBid,
+          bidsCount: data.bidsCount,
+          sellingBranch: data.sellingBranch,
+          vehicleLocation: data.vehicleLocation,
+          auctioneerLogoUrl: data.auctioneerLogoUrl,
+          auctioneerName: data.auctioneerName,
+          createdAt: safeConvertToDate(data.createdAt),
+          updatedAt: safeConvertToDate(data.updatedAt),
+        } as Auction;
+      });
+    } else {
+      // console.log('[getAuctions] Firestore empty, falling back to sampleAuctions');
+      return sampleAuctions.map(auction => ({
+        ...auction,
+        auctionDate: new Date(auction.auctionDate), // Ensure dates are Date objects
+        endDate: auction.endDate ? new Date(auction.endDate) : null,
+        auctionStages: auction.auctionStages?.map(stage => ({
+            ...stage,
+            endDate: new Date(stage.endDate),
+        })),
+        createdAt: new Date(auction.createdAt || new Date()), // Add fallback for createdAt
+        updatedAt: new Date(auction.updatedAt || new Date()), // Add fallback for updatedAt
+      }));
+    }
   } catch (error: any) {
     console.error("[Server Action - getAuctions] Error fetching auctions:", error);
-    return [];
+    // Fallback to sample data on error as well, ensuring dates are Date objects
+    return sampleAuctions.map(auction => ({
+        ...auction,
+        auctionDate: new Date(auction.auctionDate),
+        endDate: auction.endDate ? new Date(auction.endDate) : null,
+         auctionStages: auction.auctionStages?.map(stage => ({
+            ...stage,
+            endDate: new Date(stage.endDate),
+        })),
+        createdAt: new Date(auction.createdAt || new Date()),
+        updatedAt: new Date(auction.updatedAt || new Date()),
+      }));
   }
 }
 
 export async function getAuctionsBySellerSlug(sellerSlug: string): Promise<Auction[]> {
   try {
-    // Se o slug do vendedor for armazenado diretamente nos leilões, podemos usá-lo.
-    // No entanto, é mais comum que o sellerId seja armazenado.
-    // Se 'seller' no Auction armazena o nome e não o slug ou ID, esta query não funcionará como esperado.
-    // Assumindo que 'seller' no Auction pode ser o nome do vendedor, e nós temos o slug:
-    // Esta abordagem filtra no cliente, o que é ineficiente para grandes datasets.
-    // O ideal seria ter sellerId ou sellerSlug no documento do Leilão.
-    
-    // Se você tiver um campo sellerSlug ou sellerId no documento 'auctions':
-    // const q = query(collection(db, 'auctions'), where('sellerSlug', '==', sellerSlug), orderBy('auctionDate', 'desc'));
-    // const snapshot = await getDocs(q);
-    // A linha abaixo simula o resultado se você tiver 'seller' (nome) e precisa comparar com um slug.
-    
-    const allAuctions = await getAuctions(); // Pega todos e filtra no cliente (ineficiente)
+    const allAuctions = await getAuctions(); 
     return allAuctions.filter(auction => auction.seller && slugify(auction.seller) === sellerSlug);
-
   } catch (error: any) {
     console.error(`[Server Action - getAuctionsBySellerSlug] Error fetching auctions for seller slug ${sellerSlug}:`, error);
     return [];
@@ -165,19 +193,48 @@ export async function getAuction(id: string): Promise<Auction | null> {
         sellerId: data.sellerId,
         auctionDate: safeConvertToDate(data.auctionDate),
         endDate: safeConvertOptionalDate(data.endDate),
+        auctionStages: data.auctionStages?.map((stage: any) => ({
+            name: stage.name,
+            endDate: safeConvertToDate(stage.endDate),
+            statusText: stage.statusText,
+        })) || [],
         city: data.city,
         state: data.state,
         imageUrl: data.imageUrl,
+        dataAiHint: data.dataAiHint,
         documentsUrl: data.documentsUrl,
-        sellingBranch: data.sellingBranch,
         totalLots: data.totalLots || 0,
         visits: data.visits || 0,
-        lots: [],
+        lots: data.lots || [], // Assuming lots might be embedded or fetched separately
+        initialOffer: data.initialOffer,
+        isFavorite: data.isFavorite,
+        currentBid: data.currentBid,
+        bidsCount: data.bidsCount,
+        sellingBranch: data.sellingBranch,
+        vehicleLocation: data.vehicleLocation,
+        auctioneerLogoUrl: data.auctioneerLogoUrl,
+        auctioneerName: data.auctioneerName,
         createdAt: safeConvertToDate(data.createdAt),
         updatedAt: safeConvertToDate(data.updatedAt),
       } as Auction;
+    } else {
+        // Fallback to sample data if not found in Firestore
+        const foundInSample = sampleAuctions.find(auction => auction.id === id);
+        if (foundInSample) {
+            return {
+                ...foundInSample,
+                auctionDate: new Date(foundInSample.auctionDate),
+                endDate: foundInSample.endDate ? new Date(foundInSample.endDate) : null,
+                auctionStages: foundInSample.auctionStages?.map(stage => ({
+                    ...stage,
+                    endDate: new Date(stage.endDate),
+                })),
+                createdAt: new Date(foundInSample.createdAt || new Date()),
+                updatedAt: new Date(foundInSample.updatedAt || new Date()),
+            };
+        }
+        return null;
     }
-    return null;
   } catch (error: any) {
     console.error("[Server Action - getAuction] Error fetching auction:", error);
     return null;
@@ -206,10 +263,10 @@ export async function updateAuction(
     if (data.auctionDate) {
         updateDataForFirestore.auctionDate = Timestamp.fromDate(new Date(data.auctionDate));
     }
-    if (data.hasOwnProperty('endDate')) { 
+    if (data.hasOwnProperty('endDate')) {
         updateDataForFirestore.endDate = data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : null;
     }
-    if (updateDataForFirestore.hasOwnProperty('location')) {
+    if (updateDataForFirestore.hasOwnProperty('location')) { // 'location' removed from form
         delete updateDataForFirestore.location;
     }
 
