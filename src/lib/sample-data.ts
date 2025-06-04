@@ -1,6 +1,7 @@
 
-import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo } from '@/types';
-import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays } from 'date-fns';
+
+import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus } from '@/types';
+import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays, addDays as dateFnsAddDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle } from 'lucide-react';
 
@@ -20,7 +21,6 @@ const createPastDate = (days: number, hours: number = 0, minutes: number = 0) =>
     date.setDate(now.getDate() - days);
     date.setHours(now.getHours() - hours);
     date.setMinutes(now.getMinutes() - minutes);
-    return date;
   };
 
 export const sampleDocumentTypes: DocumentType[] = [
@@ -648,7 +648,7 @@ export const sampleUserWins: UserWin[] = [
 ];
 
 
-export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDocumentStatus | UserHabilitationStatus ): string => {
+export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDocumentStatus | UserHabilitationStatus | DirectSaleOfferStatus ): string => {
   switch (status) {
     case 'ABERTO_PARA_LANCES': return 'Aberto para Lances';
     case 'EM_BREVE': return 'Em Breve';
@@ -668,13 +668,13 @@ export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDoc
     case 'HABILITATED': return 'Habilitado';
     case 'REJECTED_DOCUMENTS': return 'Documentos Rejeitados';
     case 'BLOCKED': return 'Bloqueado';
+    case 'ACTIVE': return 'Ativa'; // DirectSaleOfferStatus
+    case 'SOLD': return 'Vendido'; // DirectSaleOfferStatus
+    case 'EXPIRED': return 'Expirada'; // DirectSaleOfferStatus
+    case 'PENDING_APPROVAL': return 'Pendente Aprovação'; // DirectSaleOfferStatus
     default: {
-      // This should ideally not be reached if all statuses are handled.
-      // To satisfy TypeScript's exhaustive check, you might:
-      // 1. Log an error: console.error("Unhandled status:", status); return "Status Desconhecido";
-      // 2. Or, if you are certain all cases are covered by the union type, you can use 'never':
       const exhaustiveCheck: never = status;
-      return exhaustiveCheck; // This line will cause a compile-time error if a status is missed.
+      return exhaustiveCheck; 
       }
   }
 };
@@ -708,15 +708,19 @@ export const getPaymentStatusText = (status: PaymentStatus): string => {
 };
 
 
-export const getLotStatusColor = (status: LotStatus): string => {
+export const getLotStatusColor = (status: LotStatus | DirectSaleOfferStatus): string => {
     switch (status) {
       case 'ABERTO_PARA_LANCES':
+      case 'ACTIVE': // DirectSaleOfferStatus
         return 'bg-green-600 text-white';
       case 'EM_BREVE':
+      case 'PENDING_APPROVAL': // DirectSaleOfferStatus
         return 'bg-blue-500 text-white';
       case 'ENCERRADO':
       case 'VENDIDO':
       case 'NAO_VENDIDO':
+      case 'SOLD': // DirectSaleOfferStatus
+      case 'EXPIRED': // DirectSaleOfferStatus
         return 'bg-gray-500 text-white';
       default:
         return 'bg-gray-300 text-gray-800';
@@ -815,8 +819,6 @@ export const getUniqueSellerNames = (): string[] => {
   const sellerNames = new Set<string>();
   sampleAuctions.forEach(auction => {
     if (auction.seller) sellerNames.add(auction.seller);
-    // If auctioneer can also be a "seller" in some contexts
-    // if (auction.auctioneer) sellerNames.add(auction.auctioneer);
   });
   sampleLots.forEach(lot => {
     if (lot.sellerName) sellerNames.add(lot.sellerName);
@@ -839,14 +841,11 @@ export const slugify = (text: string): string => {
 };
 
 export function getCategoryNameFromSlug(slug: string): string | undefined {
-  // This function would ideally fetch categories from Firestore or a global state.
-  // For now, using sample data structure (assuming LotCategory structure exists in your types)
-  const allCategoriesFromLots = getUniqueLotCategories(); // This gives names
+  const allCategoriesFromLots = getUniqueLotCategories(); 
   const foundCategoryName = allCategoriesFromLots.find(catName => slugify(catName) === slug);
   return foundCategoryName;
 }
 
-// Placeholder for category-specific assets
 interface CategoryAssets {
   logoUrl: string;
   logoAiHint: string;
@@ -858,7 +857,6 @@ interface CategoryAssets {
 export function getCategoryAssets(categoryNameOrSlug: string): CategoryAssets {
   const categoryName = getCategoryNameFromSlug(categoryNameOrSlug) || categoryNameOrSlug;
 
-  // Basic placeholder logic, can be expanded
   const defaultAssets: CategoryAssets = {
     logoUrl: 'https://placehold.co/100x100.png?text=Categoria',
     logoAiHint: 'logo categoria',
@@ -921,7 +919,7 @@ export const getUniqueSellers = (): SellerProfileInfo[] => {
 
 
     sellerMap.set(slug, {
-      id: slug, // Using slug as ID for sample data
+      id: slug, 
       name,
       slug,
       memberSince,
@@ -929,16 +927,16 @@ export const getUniqueSellers = (): SellerProfileInfo[] => {
       activeLotsCount,
       logoUrl: `https://placehold.co/100x100.png?text=${initial}`,
       dataAiHintLogo: isAuctioneer ? 'logo leiloeiro placeholder' : 'logo comitente placeholder',
-      createdAt: memberSince, // For simplicity
-      updatedAt: memberSince, // For simplicity
+      createdAt: memberSince, 
+      updatedAt: memberSince, 
     });
   };
 
   sampleAuctions.forEach(auction => {
-    addSeller(auction.seller, false); // Sellers (Comitentes)
+    addSeller(auction.seller, false); 
   });
   sampleLots.forEach(lot => {
-    addSeller(lot.sellerName, false); // Sellers (Comitentes) from lots
+    addSeller(lot.sellerName, false); 
   });
 
   return Array.from(sellerMap.values()).sort((a, b) => a.name.localeCompare(b.name));
@@ -951,29 +949,29 @@ export const getUniqueAuctioneers = (): AuctioneerProfileInfo[] => {
         if (auction.auctioneer) {
             const slug = slugify(auction.auctioneer);
             if (!auctioneerMap.has(slug)) {
-                const randomYearsAgo = Math.floor(Math.random() * 5) + 1; // 1 to 5 years
+                const randomYearsAgo = Math.floor(Math.random() * 5) + 1; 
                 let memberSince = subYears(new Date(), randomYearsAgo);
                 memberSince = subMonths(memberSince, Math.floor(Math.random() * 12));
 
                 const initial = auction.auctioneer.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
 
                 auctioneerMap.set(slug, {
-                    id: slug, // Use slug as ID for sample data
+                    id: slug, 
                     name: auction.auctioneer,
                     slug: slug,
                     logoUrl: auction.auctioneerLogoUrl || `https://placehold.co/100x100.png?text=${initial}`,
                     dataAiHintLogo: 'logo leiloeiro',
-                    registrationNumber: `JUCESP ${Math.floor(Math.random() * 900) + 100}`, // Sample reg number
+                    registrationNumber: `JUCESP ${Math.floor(Math.random() * 900) + 100}`, 
                     memberSince: memberSince,
-                    rating: parseFloat((Math.random() * 1.5 + 3.5).toFixed(1)), // Rating 3.5 to 5.0
+                    rating: parseFloat((Math.random() * 1.5 + 3.5).toFixed(1)), 
                     auctionsConductedCount: Math.floor(Math.random() * 200) + 50,
                     totalValueSold: (Math.random() * 5000000) + 1000000,
                     email: `${slug}@leiloes.com.br`,
                     phone: `(11) 9${Math.floor(Math.random() * 9000) + 1000}-${Math.floor(Math.random() * 9000) + 1000}`,
                     city: sampleLots[Math.floor(Math.random()*sampleLots.length)]?.cityName || 'São Paulo',
                     state: sampleLots[Math.floor(Math.random()*sampleLots.length)]?.stateUf || 'SP',
-                    createdAt: memberSince, // Placeholder
-                    updatedAt: new Date(), // Placeholder
+                    createdAt: memberSince, 
+                    updatedAt: new Date(), 
                 });
             }
         }
@@ -981,5 +979,155 @@ export const getUniqueAuctioneers = (): AuctioneerProfileInfo[] => {
     return Array.from(auctioneerMap.values()).sort((a, b) => a.name.localeCompare(b.name));
 };
 
+// --- Venda Direta Sample Data ---
+export const sampleDirectSaleOffers: DirectSaleOffer[] = [
+  {
+    id: 'DSO001',
+    title: 'Coleção Completa de Selos Raros do Brasil Império',
+    description: 'Uma oportunidade única para colecionadores: coleção completa e impecável de selos do período do Brasil Império, catalogada e com certificado de autenticidade para as peças mais valiosas. Inclui "Olho de Boi" e outras raridades.',
+    imageUrl: 'https://placehold.co/800x600.png?text=Selos+Raros',
+    dataAiHint: 'selos antigos colecao',
+    galleryImageUrls: [
+      'https://placehold.co/150x100.png?text=Selo+Olho+Boi',
+      'https://placehold.co/150x100.png?text=Album+Selos',
+      'https://placehold.co/150x100.png?text=Detalhe+Selo',
+    ],
+    offerType: 'ACCEPTS_PROPOSALS',
+    minimumOfferPrice: 25000,
+    category: 'Colecionáveis',
+    locationCity: 'Rio de Janeiro',
+    locationState: 'RJ',
+    sellerName: 'Antiguidades Imperial',
+    sellerId: slugify('Antiguidades Imperial'),
+    sellerLogoUrl: 'https://placehold.co/100x100.png?text=AI',
+    status: 'ACTIVE',
+    itemsIncluded: ['Coleção completa de selos do Brasil Império (aproximadamente 350 selos)', 'Álbum classificador específico', 'Certificados de autenticidade para 5 selos chave'],
+    tags: ['Selos', 'Brasil Império', 'Colecionismo', 'Raridade'],
+    views: 150,
+    proposalsCount: 2,
+    createdAt: createPastDate(10),
+    updatedAt: createPastDate(1),
+    expiresAt: createFutureDate(20),
+  },
+  {
+    id: 'DSO002',
+    title: 'MacBook Pro 16" M1 Max - Seminovo, Garantia AppleCare+',
+    description: 'MacBook Pro de 16 polegadas com chip M1 Max, 32GB RAM, 1TB SSD. Em estado de novo, pouquíssimo uso. Cobertura AppleCare+ válida até Novembro de 2025. Acompanha caixa original e todos os acessórios.',
+    imageUrl: 'https://placehold.co/800x600.png?text=MacBook+Pro+16',
+    dataAiHint: 'macbook pro aberto',
+    galleryImageUrls: [
+      'https://placehold.co/150x100.png?text=MacBook+Tela',
+      'https://placehold.co/150x100.png?text=MacBook+Teclado',
+      'https://placehold.co/150x100.png?text=MacBook+Portas',
+    ],
+    offerType: 'BUY_NOW',
+    price: 18500,
+    category: 'Eletrônicos',
+    locationCity: 'São Paulo',
+    locationState: 'SP',
+    sellerName: 'Tech Revenda SP',
+    sellerId: slugify('Tech Revenda SP'),
+    status: 'ACTIVE',
+    itemsIncluded: ['MacBook Pro 16" M1 Max', 'Carregador MagSafe Original', 'Cabo USB-C', 'Caixa Original', 'Comprovante AppleCare+'],
+    tags: ['MacBook Pro', 'Apple', 'M1 Max', 'Notebook', 'Seminovo'],
+    views: 280,
+    createdAt: createPastDate(5),
+    updatedAt: createPastDate(2),
+  },
+  {
+    id: 'DSO003',
+    title: 'Serviço de Consultoria em Marketing Digital (Pacote Startup)',
+    description: 'Pacote de consultoria completo para startups, incluindo análise de mercado, definição de persona, planejamento estratégico de marketing digital (SEO, Mídias Sociais, Email Marketing) e 2 meses de acompanhamento. Ideal para lançar ou alavancar seu negócio online.',
+    imageUrl: 'https://placehold.co/800x600.png?text=Consultoria+Marketing',
+    dataAiHint: 'marketing digital reuniao',
+    offerType: 'BUY_NOW',
+    price: 4500,
+    category: 'Serviços',
+    locationCity: 'Remoto',
+    locationState: 'BR',
+    sellerName: 'Digital Boost Consultoria',
+    sellerId: slugify('Digital Boost Consultoria'),
+    status: 'ACTIVE',
+    itemsIncluded: ['Diagnóstico de Marketing Atual', 'Planejamento Estratégico Detalhado (PDF)', 'Relatório de Persona (PDF)', '2 Sessões de Mentoria Online (2h cada)', 'Suporte via Email por 60 dias'],
+    tags: ['Marketing Digital', 'Consultoria', 'Startup', 'SEO', 'Mídias Sociais'],
+    views: 95,
+    createdAt: createPastDate(20),
+    updatedAt: createPastDate(5),
+  },
+  {
+    id: 'DSO004',
+    title: 'Automóvel Clássico: Ford Mustang 1968 Conversível',
+    description: 'Raro Ford Mustang conversível de 1968, motor V8 289, câmbio automático. Restaurado com peças originais, pintura impecável na cor "Candy Apple Red". Um verdadeiro ícone, perfeito para colecionadores e entusiastas. Placa preta.',
+    imageUrl: 'https://placehold.co/800x600.png?text=Mustang+68+Conv',
+    dataAiHint: 'mustang conversivel vermelho',
+    galleryImageUrls: [
+      'https://placehold.co/150x100.png?text=Mustang+Interior',
+      'https://placehold.co/150x100.png?text=Mustang+Motor',
+      'https://placehold.co/150x100.png?text=Mustang+Capota',
+    ],
+    offerType: 'ACCEPTS_PROPOSALS',
+    minimumOfferPrice: 320000,
+    category: 'Veículo Clássico',
+    locationCity: 'Curitiba',
+    locationState: 'PR',
+    sellerName: 'Garagem Clássicos PR',
+    sellerId: slugify('Garagem Clássicos PR'),
+    status: 'PENDING_APPROVAL',
+    itemsIncluded: ['Ford Mustang 1968 Conversível', 'Capa protetora personalizada', 'Manuais originais (cópia)', 'Histórico de restauração'],
+    tags: ['Ford Mustang', 'Clássico', 'Conversível', 'V8', 'Carro Antigo'],
+    views: 450,
+    proposalsCount: 1,
+    createdAt: createPastDate(2),
+    updatedAt: createPastDate(0),
+    expiresAt: createFutureDate(45),
+  },
+   {
+    id: 'DSO005',
+    title: 'Lote de Equipamentos de Academia Profissional',
+    description: 'Lote completo de equipamentos de academia profissional, marca Life Fitness e Technogym. Inclui esteiras, elípticos, bicicletas ergométricas, estação de musculação completa e conjunto de halteres. Ideal para montar ou renovar sua academia.',
+    imageUrl: 'https://placehold.co/800x600.png?text=Equip+Academia',
+    dataAiHint: 'academia equipamentos profissional',
+    galleryImageUrls: [
+      'https://placehold.co/150x100.png?text=Esteiras',
+      'https://placehold.co/150x100.png?text=Estacao+Musculacao',
+      'https://placehold.co/150x100.png?text=Halteres',
+    ],
+    offerType: 'BUY_NOW',
+    price: 75000,
+    category: 'Equipamentos Esportivos',
+    locationCity: 'Belo Horizonte',
+    locationState: 'MG',
+    sellerName: 'Fitness Total Equipamentos',
+    sellerId: slugify('Fitness Total Equipamentos'),
+    status: 'SOLD',
+    itemsIncluded: ['5 Esteiras Profissionais', '3 Elípticos', '2 Bicicletas Ergométricas', '1 Estação de Musculação Completa', 'Conjunto de Halteres (1kg a 30kg)'],
+    tags: ['Academia', 'Fitness', 'Equipamentos', 'Musculação', 'Cardio'],
+    views: 620,
+    createdAt: createPastDate(60),
+    updatedAt: createPastDate(35), // Data da venda
+  },
+   {
+    id: 'DSO006',
+    title: 'Obra de Arte Contemporânea - "Abstração Urbana" por Silva Jr.',
+    description: 'Pintura acrílica sobre tela de grandes dimensões (150x200cm) do renomado artista contemporâneo Silva Jr. Obra vibrante e expressiva, ideal para colecionadores e apreciadores de arte moderna. Acompanha certificado do artista.',
+    imageUrl: 'https://placehold.co/800x600.png?text=Arte+Abstrata',
+    dataAiHint: 'pintura abstrata colorida',
+    offerType: 'ACCEPTS_PROPOSALS',
+    minimumOfferPrice: 12000,
+    category: 'Arte e Antiguidades',
+    locationCity: 'Porto Alegre',
+    locationState: 'RS',
+    sellerName: 'Galeria Pampa Arte',
+    sellerId: slugify('Galeria Pampa Arte'),
+    status: 'EXPIRED', // Expirou
+    itemsIncluded: ['Pintura "Abstração Urbana"', 'Certificado de Autenticidade do Artista'],
+    tags: ['Arte Contemporânea', 'Pintura', 'Abstrato', 'Silva Jr', 'Coleção'],
+    views: 210,
+    proposalsCount: 0,
+    createdAt: createPastDate(90),
+    updatedAt: createPastDate(30),
+    expiresAt: createPastDate(30), // Expirou 30 dias atrás
+  },
+];
+// --- End Venda Direta Sample Data ---
 
-    

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -11,45 +10,61 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Filter, CalendarIcon, RefreshCw } from 'lucide-react';
+import { Filter, CalendarIcon, RefreshCw, ShoppingCart } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { LotCategory } from '@/types'; // Import LotCategory
+import type { LotCategory, DirectSaleOfferType } from '@/types';
 
 export interface ActiveFilters {
-  modality: string;
-  category: string; // Será o slug da categoria ou 'TODAS'
+  modality: string; // For auctions
+  category: string; 
   priceRange: [number, number];
   locations: string[];
   sellers: string[];
   startDate?: Date;
   endDate?: Date;
   status: string[];
+  offerType?: DirectSaleOfferType | 'ALL'; // Specific to Direct Sales
 }
 
 interface SidebarFiltersProps {
-  categories?: LotCategory[]; // Alterado para LotCategory[]
+  categories?: LotCategory[];
   locations?: string[];
   sellers?: string[];
   modalities?: { value: string, label: string }[];
   statuses?: { value: string, label: string }[];
+  offerTypes?: { value: DirectSaleOfferType | 'ALL', label: string}[]; // For Direct Sales
   onFilterSubmit: (filters: ActiveFilters) => void;
   onFilterReset: () => void;
-  initialFilters?: ActiveFilters; // Para sincronizar com a página
+  initialFilters?: ActiveFilters;
+  filterContext?: 'auctions' | 'directSales'; // To show relevant filters
 }
 
 const defaultModalities = [
   { value: 'TODAS', label: 'Todas' },
   { value: 'JUDICIAL', label: 'Judicial' },
   { value: 'EXTRAJUDICIAL', label: 'Extrajudicial' },
-  { value: 'VENDA_DIRETA', label: 'Venda Direta' },
+  // { value: 'VENDA_DIRETA', label: 'Venda Direta' }, // Venda direta é um tipo de oferta, não modalidade de leilão
 ];
 
-const defaultStatuses = [
+const defaultAuctionStatuses = [
   { value: 'EM_BREVE', label: 'Em Breve' },
   { value: 'ABERTO_PARA_LANCES', label: 'Aberto para Lances' },
   { value: 'ENCERRADO', label: 'Encerrado' },
+];
+
+const defaultDirectSaleStatuses = [
+    { value: 'ACTIVE', label: 'Ativa' },
+    { value: 'SOLD', label: 'Vendida' },
+    { value: 'EXPIRED', label: 'Expirada' },
+    { value: 'PENDING_APPROVAL', label: 'Pendente Aprovação'}
+];
+
+const defaultOfferTypes = [
+    { value: 'ALL' as 'ALL', label: 'Todos os Tipos'},
+    { value: 'BUY_NOW' as 'BUY_NOW', label: 'Comprar Agora'},
+    { value: 'ACCEPTS_PROPOSALS' as 'ACCEPTS_PROPOSALS', label: 'Aceita Propostas'}
 ];
 
 
@@ -58,11 +73,16 @@ export default function SidebarFilters({
   locations = [],
   sellers = [],
   modalities = defaultModalities,
-  statuses = defaultStatuses,
+  statuses: providedStatuses, // Renamed to avoid conflict
+  offerTypes = defaultOfferTypes,
   onFilterSubmit,
   onFilterReset,
   initialFilters,
+  filterContext = 'auctions',
 }: SidebarFiltersProps) {
+  
+  const statuses = filterContext === 'directSales' ? defaultDirectSaleStatuses : defaultAuctionStatuses;
+
   const [selectedModality, setSelectedModality] = useState<string>(initialFilters?.modality || (modalities.length > 0 ? modalities[0].value : ''));
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string>(initialFilters?.category || 'TODAS');
   const [priceRange, setPriceRange] = useState<[number, number]>(initialFilters?.priceRange || [0, 500000]);
@@ -70,14 +90,14 @@ export default function SidebarFilters({
   const [selectedSellers, setSelectedSellers] = useState<string[]>(initialFilters?.sellers || []);
   const [startDate, setStartDate] = useState<Date | undefined>(initialFilters?.startDate);
   const [endDate, setEndDate] = useState<Date | undefined>(initialFilters?.endDate);
-  const [selectedStatus, setSelectedStatus] = useState<string[]>(initialFilters?.status || []);
+  const [selectedStatus, setSelectedStatus] = useState<string[]>(initialFilters?.status || (filterContext === 'directSales' ? ['ACTIVE'] : []));
+  const [selectedOfferType, setSelectedOfferType] = useState<DirectSaleOfferType | 'ALL'>(initialFilters?.offerType || 'ALL');
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
   
-  // Sincroniza o estado interno se initialFilters mudar
   useEffect(() => {
     if (initialFilters) {
       setSelectedModality(initialFilters.modality);
@@ -87,9 +107,11 @@ export default function SidebarFilters({
       setSelectedSellers(initialFilters.sellers);
       setStartDate(initialFilters.startDate);
       setEndDate(initialFilters.endDate);
-      setSelectedStatus(initialFilters.status);
+      setSelectedStatus(initialFilters.status || (filterContext === 'directSales' ? ['ACTIVE'] : []));
+      setSelectedOfferType(initialFilters.offerType || 'ALL');
     }
-  }, [initialFilters]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialFilters, filterContext]);
 
   
   const handleCategoryChange = (categorySlug: string) => {
@@ -124,6 +146,7 @@ export default function SidebarFilters({
       startDate,
       endDate,
       status: selectedStatus,
+      offerType: filterContext === 'directSales' ? selectedOfferType : undefined,
     };
     onFilterSubmit(currentFilters);
   };
@@ -136,7 +159,8 @@ export default function SidebarFilters({
     setSelectedSellers([]);
     setStartDate(undefined);
     setEndDate(undefined);
-    setSelectedStatus([]);
+    setSelectedStatus(filterContext === 'directSales' ? ['ACTIVE'] : []);
+    setSelectedOfferType('ALL');
   }
 
   const handleResetFilters = () => {
@@ -174,21 +198,39 @@ export default function SidebarFilters({
         </Button>
       </div>
 
-      <Accordion type="multiple" defaultValue={['modality', 'categories', 'price']} className="w-full">
+      <Accordion type="multiple" defaultValue={['categories', 'price', 'status']} className="w-full">
         
-        <AccordionItem value="modality">
-          <AccordionTrigger className="text-md font-medium">Modalidade</AccordionTrigger>
-          <AccordionContent>
-            <RadioGroup value={selectedModality} onValueChange={setSelectedModality} className="space-y-1">
-              {modalities.map(modal => (
-                <div key={modal.value} className="flex items-center space-x-2">
-                  <RadioGroupItem value={modal.value} id={`mod-${modal.value}`} />
-                  <Label htmlFor={`mod-${modal.value}`} className="text-sm font-normal cursor-pointer">{modal.label}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </AccordionContent>
-        </AccordionItem>
+        {filterContext === 'auctions' && (
+            <AccordionItem value="modality">
+            <AccordionTrigger className="text-md font-medium">Modalidade do Leilão</AccordionTrigger>
+            <AccordionContent>
+                <RadioGroup value={selectedModality} onValueChange={setSelectedModality} className="space-y-1">
+                {modalities.map(modal => (
+                    <div key={modal.value} className="flex items-center space-x-2">
+                    <RadioGroupItem value={modal.value} id={`mod-${modal.value}`} />
+                    <Label htmlFor={`mod-${modal.value}`} className="text-sm font-normal cursor-pointer">{modal.label}</Label>
+                    </div>
+                ))}
+                </RadioGroup>
+            </AccordionContent>
+            </AccordionItem>
+        )}
+
+        {filterContext === 'directSales' && (
+            <AccordionItem value="offerType">
+            <AccordionTrigger className="text-md font-medium">Tipo de Oferta</AccordionTrigger>
+            <AccordionContent>
+                <RadioGroup value={selectedOfferType} onValueChange={(value) => setSelectedOfferType(value as DirectSaleOfferType | 'ALL')} className="space-y-1">
+                {offerTypes.map(type => (
+                    <div key={type.value} className="flex items-center space-x-2">
+                    <RadioGroupItem value={type.value} id={`offerType-${type.value}`} />
+                    <Label htmlFor={`offerType-${type.value}`} className="text-sm font-normal cursor-pointer">{type.label}</Label>
+                    </div>
+                ))}
+                </RadioGroup>
+            </AccordionContent>
+            </AccordionItem>
+        )}
         
         {categories.length > 0 && (
             <AccordionItem value="categories">
@@ -263,39 +305,41 @@ export default function SidebarFilters({
             </AccordionItem>
         )}
 
-        <AccordionItem value="dates">
-          <AccordionTrigger className="text-md font-medium">Período do Leilão</AccordionTrigger>
-          <AccordionContent className="space-y-3 pt-1">
-            <div>
-              <Label htmlFor="start-date" className="text-xs text-muted-foreground">Data de Início</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal h-9">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? format(startDate, 'dd/MM/yyyy', { locale: ptBR }) : <span>Selecione</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div>
-              <Label htmlFor="end-date" className="text-xs text-muted-foreground">Data de Término</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                   <Button variant="outline" className="w-full justify-start text-left font-normal h-9">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? format(endDate, 'dd/MM/yyyy', { locale: ptBR }) : <span>Selecione</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+        {filterContext === 'auctions' && (
+            <AccordionItem value="dates">
+            <AccordionTrigger className="text-md font-medium">Período do Leilão</AccordionTrigger>
+            <AccordionContent className="space-y-3 pt-1">
+                <div>
+                <Label htmlFor="start-date" className="text-xs text-muted-foreground">Data de Início</Label>
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal h-9">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {startDate ? format(startDate, 'dd/MM/yyyy', { locale: ptBR }) : <span>Selecione</span>}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                    <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus />
+                    </PopoverContent>
+                </Popover>
+                </div>
+                <div>
+                <Label htmlFor="end-date" className="text-xs text-muted-foreground">Data de Término</Label>
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal h-9">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {endDate ? format(endDate, 'dd/MM/yyyy', { locale: ptBR }) : <span>Selecione</span>}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                    <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus />
+                    </PopoverContent>
+                </Popover>
+                </div>
+            </AccordionContent>
+            </AccordionItem>
+        )}
         
         <AccordionItem value="status">
             <AccordionTrigger className="text-md font-medium">Status</AccordionTrigger>
@@ -315,20 +359,24 @@ export default function SidebarFilters({
             </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="subCategory_placeholder" disabled>
-          <AccordionTrigger className="text-md font-medium text-muted-foreground/70">Subcategoria (Em breve)</AccordionTrigger>
-          <AccordionContent><p className="text-xs text-muted-foreground">Filtro por subcategoria será adicionado aqui.</p></AccordionContent>
-        </AccordionItem>
+        {filterContext === 'auctions' && (
+            <>
+                <AccordionItem value="subCategory_placeholder" disabled>
+                <AccordionTrigger className="text-md font-medium text-muted-foreground/70">Subcategoria (Em breve)</AccordionTrigger>
+                <AccordionContent><p className="text-xs text-muted-foreground">Filtro por subcategoria será adicionado aqui.</p></AccordionContent>
+                </AccordionItem>
 
-        <AccordionItem value="brand_placeholder" disabled>
-          <AccordionTrigger className="text-md font-medium text-muted-foreground/70">Marca (Em breve)</AccordionTrigger>
-          <AccordionContent><p className="text-xs text-muted-foreground">Filtro por marca será adicionado aqui.</p></AccordionContent>
-        </AccordionItem>
+                <AccordionItem value="brand_placeholder" disabled>
+                <AccordionTrigger className="text-md font-medium text-muted-foreground/70">Marca (Em breve)</AccordionTrigger>
+                <AccordionContent><p className="text-xs text-muted-foreground">Filtro por marca será adicionado aqui.</p></AccordionContent>
+                </AccordionItem>
 
-        <AccordionItem value="model_placeholder" disabled>
-          <AccordionTrigger className="text-md font-medium text-muted-foreground/70">Modelo (Em breve)</AccordionTrigger>
-          <AccordionContent><p className="text-xs text-muted-foreground">Filtro por modelo será adicionado aqui.</p></AccordionContent>
-        </AccordionItem>
+                <AccordionItem value="model_placeholder" disabled>
+                <AccordionTrigger className="text-md font-medium text-muted-foreground/70">Modelo (Em breve)</AccordionTrigger>
+                <AccordionContent><p className="text-xs text-muted-foreground">Filtro por modelo será adicionado aqui.</p></AccordionContent>
+                </AccordionItem>
+            </>
+        )}
 
       </Accordion>
 

@@ -1,4 +1,5 @@
 
+
 export interface Bid {
   bidder: string;
   amount: number;
@@ -332,5 +333,35 @@ export interface CityInfo {
 
 export type CityFormData = Omit<CityInfo, 'id' | 'slug' | 'stateUf' | 'createdAt' | 'updatedAt' | 'lotCount'>;
     
+// --- Venda Direta Types ---
+export type DirectSaleOfferType = 'BUY_NOW' | 'ACCEPTS_PROPOSALS';
+export type DirectSaleOfferStatus = 'ACTIVE' | 'SOLD' | 'EXPIRED' | 'PENDING_APPROVAL';
 
-    
+export interface DirectSaleOffer {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  dataAiHint?: string;
+  galleryImageUrls?: string[];
+  offerType: DirectSaleOfferType;
+  price?: number; // For BUY_NOW
+  minimumOfferPrice?: number; // For ACCEPTS_PROPOSALS
+  category: string; // Could be slug of LotCategory or just name
+  locationCity?: string;
+  locationState?: string; // UF
+  sellerName: string;
+  sellerId?: string; // FK to SellerProfileInfo
+  sellerLogoUrl?: string;
+  dataAiHintSellerLogo?: string;
+  status: DirectSaleOfferStatus;
+  itemsIncluded?: string[]; // Simple list of items/services in the offer
+  tags?: string[];
+  views?: number;
+  proposalsCount?: number; // For ACCEPTS_PROPOSALS
+  createdAt: Date;
+  updatedAt: Date;
+  expiresAt?: Date;
+}
+// --- End Venda Direta Types ---
+

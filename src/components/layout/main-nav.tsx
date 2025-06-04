@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -7,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { slugify } from '@/lib/sample-data'; // getUniqueLotCategories from sample-data removed
 import { getLotCategories } from '@/app/admin/categories/actions'; // Import for dynamic categories
 import type { LotCategory } from '@/types'; // Import LotCategory type
-import { Home as HomeIcon, Search as SearchIcon, Building, Users2, MessageSquareText, Tag, PlusCircle, ShoppingBasket, LayoutList, FileText, Package, Tv, Percent, Handshake, Eye, Briefcase } from 'lucide-react';
+import { Home as HomeIcon, Search as SearchIcon, Building, Users2, MessageSquareText, Tag, PlusCircle, ShoppingBasket, LayoutList, FileText, Package, Tv, Percent, Handshake, Eye, Briefcase, ShoppingCart } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface NavItem {
@@ -36,6 +37,7 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
         const baseNavItems: NavItem[] = [
           { href: '/', label: 'Início', icon: <HomeIcon className="h-4 w-4" /> },
           { href: '/search', label: 'Todos os Lotes', icon: <LayoutList className="h-4 w-4" /> },
+          { href: '/direct-sales', label: 'Venda Direta', icon: <ShoppingCart className="h-4 w-4" /> },
           ...categoryNavItems,
           { href: '/auctions/create', label: 'Criar Leilão IA', icon: <PlusCircle className="h-4 w-4" /> },
           { href: '/sell-with-us', label: 'Venda Conosco', icon: <Briefcase className="h-4 w-4" /> },
@@ -49,6 +51,7 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
         const baseNavItems: NavItem[] = [
           { href: '/', label: 'Início', icon: <HomeIcon className="h-4 w-4" /> },
           { href: '/search', label: 'Todos os Lotes', icon: <LayoutList className="h-4 w-4" /> },
+          { href: '/direct-sales', label: 'Venda Direta', icon: <ShoppingCart className="h-4 w-4" /> },
           { href: '/auctions/create', label: 'Criar Leilão IA', icon: <PlusCircle className="h-4 w-4" /> },
           { href: '/sell-with-us', label: 'Venda Conosco', icon: <Briefcase className="h-4 w-4" /> },
           { href: '/sellers', label: 'Comitentes', icon: <Users2 className="h-4 w-4" /> },
