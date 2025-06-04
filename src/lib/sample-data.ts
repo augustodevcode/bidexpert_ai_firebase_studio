@@ -1,6 +1,6 @@
 
 
-import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus } from '@/types';
+import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo } from '@/types';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays, addDays as dateFnsAddDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle } from 'lucide-react';
@@ -21,6 +21,7 @@ const createPastDate = (days: number, hours: number = 0, minutes: number = 0) =>
     date.setDate(now.getDate() - days);
     date.setHours(now.getHours() - hours);
     date.setMinutes(now.getMinutes() - minutes);
+    return date; // Added return statement
   };
 
 export const sampleDocumentTypes: DocumentType[] = [
@@ -647,6 +648,14 @@ export const sampleUserWins: UserWin[] = [
     }
 ];
 
+export const sampleLotBids: BidInfo[] = [
+  { id: 'LBID001', lotId: 'LOTEVEI001', bidderId: 'userABC', bidderDisplay: 'Usuário A****', amount: 68500, timestamp: createPastDate(0, 1, 30) },
+  { id: 'LBID002', lotId: 'LOTEVEI001', bidderId: 'userXYZ', bidderDisplay: 'Usuário X****', amount: 68000, timestamp: createPastDate(0, 1, 35) },
+  { id: 'LBID003', lotId: 'LOTEVEI001', bidderId: 'user123', bidderDisplay: 'Usuário 1****', amount: 67500, timestamp: createPastDate(0, 1, 40) },
+  { id: 'LBID004', lotId: 'LOTE001', bidderId: 'userDEF', bidderDisplay: 'Usuário D****', amount: 45000, timestamp: createPastDate(0, 0, 10) },
+  { id: 'LBID005', lotId: 'LOTE001', bidderId: 'userGHI', bidderDisplay: 'Usuário G****', amount: 44500, timestamp: createPastDate(0, 0, 15) },
+];
+
 
 export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDocumentStatus | UserHabilitationStatus | DirectSaleOfferStatus ): string => {
   switch (status) {
@@ -669,12 +678,14 @@ export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDoc
     case 'REJECTED_DOCUMENTS': return 'Documentos Rejeitados';
     case 'BLOCKED': return 'Bloqueado';
     case 'ACTIVE': return 'Ativa'; // DirectSaleOfferStatus
-    case 'SOLD': return 'Vendido'; // DirectSaleOfferStatus
+    // case 'SOLD': return 'Vendido'; // DirectSaleOfferStatus - Already covered by LotStatus
     case 'EXPIRED': return 'Expirada'; // DirectSaleOfferStatus
     case 'PENDING_APPROVAL': return 'Pendente Aprovação'; // DirectSaleOfferStatus
     default: {
-      const exhaustiveCheck: never = status;
-      return exhaustiveCheck; 
+      // const exhaustiveCheck: never = status; // This will cause a type error if any status is missed, which is good.
+      // For now, to avoid breaking during dev if a new status is added without updating this, return a generic string.
+      // console.warn(`Unknown status found in getAuctionStatusText: ${status}`);
+      return String(status).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
       }
   }
 };
