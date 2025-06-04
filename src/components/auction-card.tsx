@@ -30,16 +30,34 @@ const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, auctionId, i
   const [clientTimeData, setClientTimeData] = useState<{ formattedDate: string; isPast: boolean } | null>(null);
 
   useEffect(() => {
-    // Ensure stage.endDate is a valid Date object
-    const stageEndDateObj = stage.endDate instanceof Date ? stage.endDate : new Date(stage.endDate);
     const now = new Date();
-    
-    setClientTimeData({
-      formattedDate: format(stageEndDateObj, "dd/MM/yyyy HH:mm", { locale: ptBR }),
-      isPast: stageEndDateObj < now,
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stage.endDate]); 
+    let stageEndDateObj: Date | null = null;
+    let isValidDate = false;
+
+    if (stage.endDate) { // Check if stage.endDate exists
+        stageEndDateObj = stage.endDate instanceof Date ? stage.endDate : new Date(stage.endDate);
+        // Further check if the conversion resulted in a valid date
+        if (stageEndDateObj && !isNaN(stageEndDateObj.getTime())) {
+            isValidDate = true;
+        }
+    }
+
+    if (isValidDate && stageEndDateObj) {
+        setClientTimeData({
+            formattedDate: format(stageEndDateObj, "dd/MM/yyyy HH:mm", { locale: ptBR }),
+            isPast: stageEndDateObj < now,
+        });
+    } else {
+        // Handle invalid or missing date
+        console.warn(`AuctionStageItem: Invalid or missing endDate for auction stage. Auction ID: ${auctionId}, Stage Name: "${stage.name}". Received endDate:`, stage.endDate);
+        setClientTimeData({
+            formattedDate: "Data Indisponível",
+            isPast: false, 
+        });
+    }
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, [stage.endDate, stage.name, auctionId]); 
+
 
   if (!clientTimeData) {
     return (
@@ -81,7 +99,7 @@ const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, auctionId, i
 
 
 interface AuctionCardProps {
-  auction: Auction; // Agora Auction pode não ter mais auctionStages, e sim lots
+  auction: Auction; 
 }
 
 export default function AuctionCard({ auction }: AuctionCardProps) {
@@ -123,7 +141,6 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
     }
   }
   
-  // Determine a imagem principal do leilão. Pode ser auction.imageUrl ou o logo do leiloeiro.
   const mainImageUrl = auction.imageUrl || auction.auctioneerLogoUrl || 'https://placehold.co/600x400.png';
   const mainImageAlt = auction.title || 'Imagem do Leilão';
   const mainImageDataAiHint = auction.dataAiHint || 'auction image';
@@ -147,7 +164,6 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
                 className="object-cover"
                 data-ai-hint={mainImageDataAiHint}
               />
-              {/* Se o logo do leiloeiro não for a imagem principal, mostre-o sobreposto */}
               {auction.auctioneerLogoUrl && auction.auctioneerLogoUrl !== auction.imageUrl && (
                 <div className="absolute bottom-2 right-2 bg-background/80 p-1.5 rounded-md shadow-md max-w-[100px] max-h-[50px] overflow-hidden">
                   <Image
@@ -251,7 +267,7 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
           </Button>
         </CardFooter>
       </Card>
-      {isPreviewModalOpen && auction.auctionStages && auction.auctionStages.length > 0 && ( // Só mostrar modal se tiver auctionStages
+      {isPreviewModalOpen && auction.auctionStages && auction.auctionStages.length > 0 && ( 
         <AuctionPreviewModal
           auction={auction}
           isOpen={isPreviewModalOpen}
