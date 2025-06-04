@@ -4,13 +4,10 @@
 
 import type { Lot, Auction } from '@/types';
 import { sampleAuctions } from '@/lib/sample-data';
-import LotDetailClientContent from './lot-detail-client';
+import LotDetailClientContent from './lot-detail-client'; // Corrected import path
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-// import { notFound } from 'next/navigation'; // Descomente se quiser usar a função notFound() do Next.js
 
-// Função para buscar dados do lote e do leilão.
-// Esta função é executada no servidor.
 async function getLotData(auctionId: string, lotId: string): Promise<{ 
   lot: Lot | undefined, 
   auction: Auction | undefined,
@@ -26,7 +23,6 @@ async function getLotData(auctionId: string, lotId: string): Promise<{
   const lotIndex = auction.lots.findIndex(l => l.id === lotId);
   
   if (lotIndex === -1) {
-    // Lote não encontrado especificamente neste leilão, mas o leilão existe.
     return { lot: undefined, auction, lotIndex: -1, totalLotsInAuction: auction.lots.length };
   }
   
@@ -42,11 +38,6 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
   const { lot, auction, lotIndex, previousLotId, nextLotId, totalLotsInAuction } = await getLotData(params.auctionId, params.lotId);
 
   if (!lot || !auction || lotIndex === -1) {
-    // Opção 1: Usar notFound() para renderizar a página de erro 404 mais próxima (e.g., /app/not-found.tsx)
-    // notFound(); 
-    // return null; // notFound() já interrompe a renderização
-
-    // Opção 2: Renderizar uma mensagem customizada de "Não Encontrado" diretamente.
     return (
       <div className="text-center py-12">
         <h1 className="text-2xl font-bold">Lote Não Encontrado</h1>
@@ -60,7 +51,6 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
     );
   }
 
-  // Passa os dados para o componente cliente que cuidará da renderização e interações do lado do cliente.
   return (
     <LotDetailClientContent 
       lot={lot} 
@@ -73,14 +63,12 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
   );
 }
 
-// generateStaticParams permanece aqui, pois é uma função do lado do servidor para build-time.
 export async function generateStaticParams() {
   const paths = sampleAuctions.flatMap(auction => 
     auction.lots.map(lot => ({
-      auctionId: auction.id, 
+      auctionId: auction.id, // Ensure this matches the folder name [auctionId]
       lotId: lot.id,
     }))
   );
   return paths;
 }
-

@@ -8,7 +8,7 @@ import type { Auction } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import LotCard from '@/components/lot-card';
-import LotListItem from '@/components/lot-list-item'; // Assuming you created this component
+import LotListItem from '@/components/lot-list-item';
 import {
   ChevronRight, FileText, Heart, Eye
 } from 'lucide-react';
@@ -38,7 +38,7 @@ export default function AuctionDetailsClient({ auction }: AuctionDetailsClientPr
               <div className="flex items-center text-sm text-muted-foreground mb-2">
                 <Link href="/" className="hover:text-primary">Home</Link>
                 <ChevronRight className="h-4 w-4 mx-1" />
-                <span>Leilão {auction.id}</span> {/* Exibe o ID real do leilão */}
+                <span>Leilão {auction.id}</span>
               </div>
               <div className="mb-3 space-y-0.5">
                 <p className="text-xs text-muted-foreground">
@@ -114,7 +114,7 @@ export default function AuctionDetailsClient({ auction }: AuctionDetailsClientPr
               ))}
             </div>
           ) : (
-            <div className="space-y-4"> {/* Added a container for list items with vertical space */}
+            <div className="space-y-4">
               {auction.lots.map((lot) => (
                 <LotListItem key={lot.id} lot={lot} />
               ))}

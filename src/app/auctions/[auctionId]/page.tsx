@@ -1,17 +1,16 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { sampleAuctions } from '@/lib/sample-data'; // sampleLots não é usado diretamente aqui
+import { sampleAuctions } from '@/lib/sample-data';
 import type { Auction } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // CardDescription não é usado
-import AuctionDetailsClient from './auction-details-client'; // Import the new client component
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import AuctionDetailsClient from './auction-details-client'; // Corrected import path
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 async function getAuctionData(auctionId: string): Promise<Auction | undefined> {
   const auction = sampleAuctions.find(auction => auction.id === auctionId);
-  // A associação dos lotes já é feita dentro do objeto sampleAuctions
   return auction;
 }
 
@@ -36,14 +35,12 @@ export default async function AuctionLotsPage({ params }: { params: { auctionId:
   }
 
   return (
-    <AuctionDetailsClient auction={auction} /> // Render the client component and pass data
+    <AuctionDetailsClient auction={auction} /> 
   );
 }
 
-// Generate static paths for sample auctions
 export async function generateStaticParams() {
   return sampleAuctions.map((auction) => ({
-    auctionId: auction.id,
+    auctionId: auction.id, // Ensure this matches the folder name [auctionId]
   }));
 }
-

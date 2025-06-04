@@ -321,4 +321,3 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
     </div>
   );
 }
-

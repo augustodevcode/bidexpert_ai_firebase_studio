@@ -7,7 +7,7 @@ import type { Auction } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import LotCard from '@/components/lot-card';
-import LotListItem from '@/components/lot-list-item'; // Assuming you have this component
+import LotListItem from '@/components/lot-list-item';
 import {
   ChevronRight, FileText, Heart, Eye
 } from 'lucide-react';
@@ -113,7 +113,7 @@ export default function AuctionLotsClient({ auction }: AuctionLotsClientProps) {
                             ))}
                         </div>
                     ) : (
-                        <div className="space-y-4"> {/* Use space-y for vertical spacing in list view */}
+                        <div className="space-y-4">
                             {auction.lots.map((lot) => (
                                 <LotListItem key={lot.id} lot={lot} />
                             ))}
