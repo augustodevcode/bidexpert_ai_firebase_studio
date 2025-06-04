@@ -1,8 +1,9 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UserCircle, Bell, ShoppingBag, Gavel, FileText, Clock, AlertCircle, Star, CheckCircle, XCircle } from 'lucide-react';
+import { UserCircle, Bell, ShoppingBag, Gavel, AlertCircle, Star, Settings, Loader2, CheckCircle2, Clock, FileText, FileWarning, ShieldAlert, HelpCircle } from 'lucide-react'; // Added more icons
 import Link from 'next/link';
 import Image from 'next/image';
 import { sampleLots, sampleUserWins, sampleUserBids, sampleUserHabilitationStatus, getUserHabilitationStatusInfo } from '@/lib/sample-data';
@@ -10,7 +11,7 @@ import type { Lot, UserWin, UserBid } from '@/types';
 import { useEffect, useState } from 'react';
 import { format, differenceInHours, differenceInMinutes, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Badge } from '@/components/ui/badge'; // Importação adicionada
+import { Badge } from '@/components/ui/badge'; 
 
 function TimeRemaining({ endDate }: { endDate: Date }) {
   const [remaining, setRemaining] = useState('');
@@ -77,6 +78,7 @@ export default function DashboardOverviewPage() {
   }, []);
   
   const auctionsWonCount = sampleUserWins.filter(win => win.paymentStatus === 'PAGO').length;
+  const HabilitationIcon = habilitationInfo.icon; // Alias for JSX rendering
 
   return (
     <div className="space-y-8">
@@ -124,7 +126,7 @@ export default function DashboardOverviewPage() {
               <Card className="hover:shadow-md transition-shadow h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Status da Habilitação</CardTitle>
-                  {habilitationInfo.icon}
+                  {HabilitationIcon && <HabilitationIcon className="h-5 w-5 text-muted-foreground" />}
                 </CardHeader>
                 <CardContent>
                   <div className={`text-3xl font-bold ${habilitationInfo.color}`}>{habilitationInfo.text}</div>
@@ -247,3 +249,4 @@ export default function DashboardOverviewPage() {
     </div>
   );
 }
+
