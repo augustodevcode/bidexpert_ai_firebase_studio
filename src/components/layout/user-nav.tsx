@@ -136,7 +136,7 @@ export default function UserNav() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/auctions/20301vei/live" className="flex items-center"> {/* Placeholder link to a "live" auction */}
+                <Link href="/live-dashboard" className="flex items-center">
                   <Tv className="mr-2 h-4 w-4" /> Auditório Virtual
                 </Link>
               </DropdownMenuItem>
@@ -167,3 +167,4 @@ export default function UserNav() {
     </div>
   );
 }
+

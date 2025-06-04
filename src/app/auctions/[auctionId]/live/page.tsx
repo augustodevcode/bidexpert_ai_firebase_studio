@@ -1,13 +1,18 @@
 
+'use client'; // This page now needs client-side hooks for searchParams
+
 import { sampleAuctions } from '@/lib/sample-data';
 import type { Auction, Lot } from '@/types';
 import VirtualAuditoriumClient from './virtual-auditorium-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
 
-async function getAuctionData(auctionId: string): Promise<{ auction: Auction | undefined; currentLot: Lot | undefined; upcomingLots: Lot[] }> {
-  console.log(`[LiveAuctionPage] getAuctionData called for auctionId: ${auctionId}`);
+// Moved getAuctionData to be callable from client component or useEffect
+async function fetchAuctionData(auctionId: string, targetLotId?: string | null): Promise<{ auction: Auction | undefined; currentLot: Lot | undefined; upcomingLots: Lot[] }> {
+  console.log(`[LiveAuctionPage] fetchAuctionData called for auctionId: ${auctionId}, targetLotId: ${targetLotId}`);
   try {
     const auction = sampleAuctions.find(a => a.id === auctionId);
     if (!auction) {
@@ -16,95 +21,143 @@ async function getAuctionData(auctionId: string): Promise<{ auction: Auction | u
     }
     console.log(`[LiveAuctionPage] Found auction: ${auction.title} (ID: ${auction.id})`);
 
-    // A propriedade auction.lots em sampleAuctions já deve estar filtrada pela definição em sample-data.ts
     const lotsArray = Array.isArray(auction.lots) ? auction.lots : [];
     console.log(`[LiveAuctionPage] auction.lots for ${auction.id} has ${lotsArray.length} items.`);
     
     if (lotsArray.length === 0) {
-      console.warn(`[LiveAuctionPage] Auction ID ${auction.id} has no lots in its 'lots' property. Returning no currentLot.`);
+      console.warn(`[LiveAuctionPage] Auction ID ${auction.id} has no lots in its 'lots' property.`);
       return { auction, currentLot: undefined, upcomingLots: [] };
     }
 
     let currentLot: Lot | undefined;
     let upcomingLots: Lot[] = [];
+    let currentLotIndex = -1;
 
-    const suitableLotIndex = lotsArray.findIndex(lot => lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE');
-    console.log(`[LiveAuctionPage] suitableLotIndex for active/upcoming: ${suitableLotIndex}`);
-
-    if (suitableLotIndex !== -1) {
-      currentLot = lotsArray[suitableLotIndex];
-      upcomingLots = lotsArray.slice(suitableLotIndex + 1, suitableLotIndex + 1 + 6);
-      console.log(`[LiveAuctionPage] Found suitable currentLot: ${currentLot?.id}, upcomingLots count: ${upcomingLots.length}`);
-    } else {
-      // Fallback: se não houver lote "ao vivo" ou "em breve", tenta pegar o primeiro lote da lista.
-      currentLot = lotsArray[0]; 
-      if (currentLot) {
-        upcomingLots = lotsArray.slice(1, 7);
-        console.log(`[LiveAuctionPage] Fallback currentLot: ${currentLot?.id}, upcomingLots count: ${upcomingLots.length}`);
+    if (targetLotId) {
+      currentLotIndex = lotsArray.findIndex(lot => lot.id === targetLotId);
+      if (currentLotIndex !== -1) {
+        currentLot = lotsArray[currentLotIndex];
+        console.log(`[LiveAuctionPage] Focused on targetLotId: ${currentLot?.id}`);
       } else {
-        // Este caso não deveria acontecer se lotsArray.length > 0
-        console.warn(`[LiveAuctionPage] Fallback failed, no lots available in lotsArray even though lotsArray.length > 0. This is unexpected.`);
+        console.warn(`[LiveAuctionPage] targetLotId ${targetLotId} not found in auction ${auctionId}. Falling back.`);
+      }
+    }
+
+    if (!currentLot) {
+      // Fallback: find first 'ABERTO_PARA_LANCES' or 'EM_BREVE'
+      currentLotIndex = lotsArray.findIndex(lot => lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE');
+      if (currentLotIndex !== -1) {
+        currentLot = lotsArray[currentLotIndex];
+        console.log(`[LiveAuctionPage] Fallback to first active/upcoming lot: ${currentLot?.id}`);
+      } else {
+        // Final fallback: first lot in the array if any exist
+        if (lotsArray.length > 0) {
+            currentLot = lotsArray[0];
+            currentLotIndex = 0;
+            console.log(`[LiveAuctionPage] Final fallback to first lot in array: ${currentLot?.id}`);
+        }
       }
     }
     
+    if (currentLotIndex !== -1) {
+        upcomingLots = lotsArray.slice(currentLotIndex + 1, currentLotIndex + 1 + 6);
+    } else if (currentLot && lotsArray.length > 1) { // Case where currentLot was set by final fallback and it's the first in array
+        upcomingLots = lotsArray.slice(1, 7);
+    }
+
+
     if (!currentLot) {
-        console.warn(`[LiveAuctionPage] currentLot is STILL UNDEFINED before returning for auction ${auction.id}. This will lead to 'Nenhum Lote Ativo' message.`);
+        console.warn(`[LiveAuctionPage] currentLot is STILL UNDEFINED for auction ${auction.id}.`);
     } else {
-        console.log(`[LiveAuctionPage] Successfully determined currentLot: ${currentLot.id} for auction ${auction.id}`);
+        console.log(`[LiveAuctionPage] Successfully determined currentLot: ${currentLot.id} for auction ${auction.id}, upcoming: ${upcomingLots.length}`);
     }
 
     return { auction, currentLot, upcomingLots };
 
   } catch (error) {
-    console.error(`[LiveAuctionPage] Critical error in getAuctionData for auctionId ${auctionId}:`, error);
+    console.error(`[LiveAuctionPage] Critical error in fetchAuctionData for auctionId ${auctionId}:`, error);
     return { auction: undefined, currentLot: undefined, upcomingLots: [] }; 
   }
 }
 
-export default async function LiveAuctionPage({ params }: { params: { auctionId: string } }) {
-  console.log(`[LiveAuctionPage Component] Rendering for auctionId: ${params.auctionId}`);
-  const { auction, currentLot, upcomingLots } = await getAuctionData(params.auctionId);
+export default function LiveAuctionPage() {
+  const params = useParams();
+  const searchParams = useSearchParams();
 
-  console.log(`[LiveAuctionPage Component] Data from getAuctionData:`, {
-    auctionId: auction?.id,
-    currentLotId: currentLot?.id,
-    upcomingLotsCount: upcomingLots.length,
-  });
+  const auctionId = typeof params.auctionId === 'string' ? params.auctionId : '';
+  const targetLotId = searchParams.get('lotId');
 
-  if (!auction) {
-    console.error(`[LiveAuctionPage Component] Auction not found (auction is ${auction}), rendering error page.`);
+  const [auctionData, setAuctionData] = useState<{ auction: Auction | undefined; currentLot: Lot | undefined; upcomingLots: Lot[] } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (auctionId) {
+      setIsLoading(true);
+      fetchAuctionData(auctionId, targetLotId)
+        .then(data => {
+          setAuctionData(data);
+          if (!data.auction) setError("Leilão não encontrado.");
+          else if (!data.currentLot) setError("Nenhum lote adequado para exibição neste leilão.");
+          else setError(null);
+        })
+        .catch(e => {
+          console.error("Error in LiveAuctionPage useEffect:", e);
+          setError("Erro ao carregar dados do auditório.");
+        })
+        .finally(() => setIsLoading(false));
+    } else {
+      setError("ID do leilão não fornecido.");
+      setIsLoading(false);
+    }
+  }, [auctionId, targetLotId]);
+
+  if (isLoading) {
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+            <Loader2 className="h-16 w-16 animate-spin text-primary mb-6" />
+            <h1 className="text-2xl font-semibold text-foreground mb-2">Carregando Auditório...</h1>
+        </div>
+    );
+  }
+
+  if (error || !auctionData || !auctionData.auction) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
         <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-        <h1 className="text-2xl font-bold">Leilão Não Encontrado</h1>
-        <p className="text-muted-foreground mb-6">O leilão que você está procurando não existe ou não pôde ser carregado (ID: {params.auctionId}).</p>
+        <h1 className="text-2xl font-bold">{error || "Leilão Não Encontrado"}</h1>
+        <p className="text-muted-foreground mb-6">
+          {error ? `Detalhes: ${error}` : `O leilão que você está procurando (ID: ${auctionId}) não existe ou não pôde ser carregado.`}
+        </p>
         <Button asChild>
-          <Link href="/">Voltar para Início</Link>
+          <Link href="/live-dashboard">Voltar ao Painel Ao Vivo</Link>
         </Button>
       </div>
     );
   }
-
-  if (!currentLot) {
-     console.error(`[LiveAuctionPage Component] CurrentLot not found (currentLot is ${currentLot}) for auction ${auction.id}, rendering error page.`);
+  
+  if (!auctionData.currentLot) {
      return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
         <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
         <h1 className="text-2xl font-bold">Nenhum Lote Ativo ou Programado</h1>
-        <p className="text-muted-foreground mb-6">Não há lotes adequados (em breve ou abertos para lance) para este leilão (ID: {auction.id}) no momento.</p>
+        <p className="text-muted-foreground mb-6">Não há lotes adequados (em breve ou abertos para lance) para este leilão (ID: {auctionData.auction.id}) no momento, ou o lote específico não foi encontrado.</p>
         <Button asChild>
-          <Link href={`/auctions/${auction.id}`}>Ver Detalhes do Leilão</Link>
+          <Link href={`/auctions/${auctionData.auction.id}`}>Ver Detalhes do Leilão</Link>
+        </Button>
+         <Button asChild variant="secondary" className="ml-2">
+          <Link href="/live-dashboard">Voltar ao Painel Ao Vivo</Link>
         </Button>
       </div>
     );
   }
 
-  console.log(`[LiveAuctionPage Component] Rendering VirtualAuditoriumClient with currentLot: ${currentLot.id}`);
   return (
     <VirtualAuditoriumClient
-      auction={auction}
-      initialCurrentLot={currentLot}
-      initialUpcomingLots={upcomingLots}
+      auction={auctionData.auction}
+      initialCurrentLot={auctionData.currentLot}
+      initialUpcomingLots={auctionData.upcomingLots}
     />
   );
 }
+
