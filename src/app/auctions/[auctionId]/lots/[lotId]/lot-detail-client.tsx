@@ -1,16 +1,17 @@
 
 'use client'; 
 
-import type { Lot, Auction } from '@/types';
+import type { Lot, Auction, BidInfo } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge'; // Importar Badge
 import { 
     Printer, Share2, ArrowLeft, ChevronLeft, ChevronRight, RotateCcw, Search, Key, Info, 
     Tag, CalendarDays, Clock, Users, DollarSign, MapPin, Car, Settings, ThumbsUp, 
-    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText
+    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -24,8 +25,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
-
-const isAuthenticated = false; 
+import { useAuth } from '@/contexts/auth-context'; // Importar useAuth
+import { sampleLotBids, getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data'; // Importar helpers de status
 
 interface LotDetailClientContentProps {
   lot: Lot;
@@ -40,6 +41,8 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
   const [isLotFavorite, setIsLotFavorite] = useState(false);
   const { toast } = useToast();
   const [currentUrl, setCurrentUrl] = useState('');
+  const { user } = useAuth(); // Usar o hook de autenticação
+  const [lotBids, setLotBids] = useState<BidInfo[]>([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -48,12 +51,19 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
     if (lot && lot.id) {
       addRecentlyViewedId(lot.id);
       setIsLotFavorite(isLotFavoriteInStorage(lot.id));
+
+      // Filtrar e ordenar lances para o lote atual
+      const bidsForThisLot = sampleLotBids
+        .filter(bid => bid.lotId === lot.id)
+        .sort((a, b) => b.amount - a.amount); // Ordenar do maior para o menor
+      setLotBids(bidsForThisLot);
     }
   }, [lot]);
 
   const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || lot?.title}`.trim();
   const lotLocation = lot?.cityName && lot?.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot?.stateUf || lot?.cityName || 'Não informado';
 
+  const canUserBid = user && user.email === 'augusto.devcode@gmail.com' && lot?.status === 'ABERTO_PARA_LANCES';
 
   const handleToggleFavorite = () => {
     if (!lot || !lot.id) return;
@@ -110,9 +120,16 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-2 mb-2">
-        <h1 className="text-2xl md:text-3xl font-bold font-headline text-center sm:text-left">{lotTitle}</h1>
-        <div className="flex items-center space-x-2 flex-wrap justify-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
+        <div className="flex-grow">
+          <h1 className="text-2xl md:text-3xl font-bold font-headline text-left">{lotTitle}</h1>
+          <div className="mt-1">
+             <Badge className={`text-xs px-2 py-0.5 ${getLotStatusColor(lot.status)}`}>
+                {getAuctionStatusText(lot.status)}
+            </Badge>
+          </div>
+        </div>
+        <div className="flex items-center space-x-2 flex-wrap justify-start sm:justify-end mt-2 sm:mt-0">
           <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Imprimir</Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -144,7 +161,10 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
           <Button variant="outline" size="sm" asChild>
             <Link href={`/auctions/${auction.id}`}><ArrowLeft className="mr-2 h-4 w-4" /> Voltar para o leilão</Link>
           </Button>
-          <div className="flex items-center">
+        </div>
+      </div>
+      <div className="flex items-center justify-end">
+        <div className="flex items-center">
             {previousLotId ? (
               <Button variant="outline" size="icon" className="h-8 w-8" asChild>
                 <Link href={`/auctions/${auction.id}/lots/${previousLotId}`} aria-label="Lote Anterior"><ChevronLeft className="h-4 w-4" /></Link>
@@ -161,7 +181,6 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
               <Button variant="outline" size="icon" className="h-8 w-8" disabled aria-label="Próximo Lote"><ChevronRight className="h-4 w-4" /></Button>
             )}
           </div>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -257,16 +276,20 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
                     <p className="text-muted-foreground">{currentBidLabel}:</p>
                     <p className="text-2xl font-bold text-primary">R$ {currentBidValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
-              {!isAuthenticated ? (
+              {!user ? (
                 <div className="text-sm text-muted-foreground p-3 bg-secondary/50 rounded-md">
                   <p>Você não está logado.</p>
                   <p>Por favor, <Link href="/auth/login" className="text-primary hover:underline font-medium">faça login</Link> ou <Link href="/auth/register" className="text-primary hover:underline font-medium">registre-se agora</Link> para dar lances.</p>
                 </div>
-              ) : (
-                <Button className="w-full" disabled={lot.status !== 'ABERTO_PARA_LANCES'}>
+              ) : canUserBid ? (
+                 <Button className="w-full" disabled={lot.status !== 'ABERTO_PARA_LANCES'}>
                   <DollarSign className="mr-2 h-4 w-4" /> 
-                  {lot.status === 'ABERTO_PARA_LANCES' ? 'Fazer Pré-Lance' : 'Lances Encerrados'}
+                  Fazer Pré-Lance
                 </Button>
+              ) : (
+                 <div className="text-sm text-muted-foreground p-3 bg-secondary/50 rounded-md">
+                  <p>Lances para este lote estão {getAuctionStatusText(lot.status).toLowerCase()} ou você não está habilitado para dar lances.</p>
+                </div>
               )}
               <Button variant="outline" className="w-full" onClick={handleToggleFavorite}>
                 <Heart className={`mr-2 h-4 w-4 ${isLotFavorite ? 'fill-red-500 text-red-500' : ''}`} /> 
@@ -316,8 +339,39 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
               </div>
             </CardContent>
           </Card>
+          
+          <Card className="shadow-md">
+            <CardHeader>
+                <CardTitle className="text-xl flex items-center">
+                    <Gavel className="h-5 w-5 mr-2 text-primary" /> Histórico de Lances
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                {lotBids.length > 0 ? (
+                    <ul className="space-y-2 text-sm">
+                        {lotBids.map(bid => (
+                            <li key={bid.id} className="flex justify-between items-center p-2 bg-secondary/40 rounded-md">
+                                <div>
+                                    <span className="font-medium text-foreground">{bid.bidderDisplay}</span>
+                                    <span className="text-xs text-muted-foreground ml-2">
+                                        ({format(new Date(bid.timestamp), "dd/MM HH:mm:ss", { locale: ptBR })})
+                                    </span>
+                                </div>
+                                <span className="font-semibold text-primary">
+                                    R$ {bid.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="text-sm text-muted-foreground text-center py-3">Nenhum lance registrado para este lote ainda.</p>
+                )}
+            </CardContent>
+          </Card>
+
         </div>
       </div>
     </div>
   );
 }
+
