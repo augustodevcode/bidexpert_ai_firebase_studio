@@ -55,7 +55,7 @@ export async function createLot(
   }
 
   try {
-    const { lotSpecificAuctionDate, secondAuctionDate, endDate, stateId, cityId, ...restData } = data;
+    const { lotSpecificAuctionDate, secondAuctionDate, endDate, stateId, cityId, mediaItemIds, galleryImageUrls, ...restData } = data;
 
     const newLotDataForFirestore: any = {
       ...restData,
@@ -63,6 +63,8 @@ export async function createLot(
       bidsCount: data.bidsCount || 0,
       auctionName: data.auctionName || `Leilão do Lote ${data.title.substring(0,20)}`,
       endDate: Timestamp.fromDate(new Date(endDate)),
+      mediaItemIds: mediaItemIds || [], // Salvar mediaItemIds
+      galleryImageUrls: galleryImageUrls || [], // Salvar galleryImageUrls
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -128,7 +130,8 @@ export async function getLots(auctionIdParam?: string): Promise<Lot[]> {
         number: data.number,
         imageUrl: data.imageUrl,
         dataAiHint: data.dataAiHint,
-        galleryImageUrls: data.galleryImageUrls,
+        galleryImageUrls: data.galleryImageUrls || [],
+        mediaItemIds: data.mediaItemIds || [],
         status: data.status,
         stateId: data.stateId,
         cityId: data.cityId,
@@ -204,7 +207,8 @@ export async function getLot(id: string): Promise<Lot | null> {
         number: data.number,
         imageUrl: data.imageUrl,
         dataAiHint: data.dataAiHint,
-        galleryImageUrls: data.galleryImageUrls,
+        galleryImageUrls: data.galleryImageUrls || [],
+        mediaItemIds: data.mediaItemIds || [],
         status: data.status,
         stateId: data.stateId,
         cityId: data.cityId,
@@ -293,7 +297,6 @@ export async function updateLot(
           if (value !== undefined) { 
             updateDataForFirestore[key] = value ? Timestamp.fromDate(new Date(value)) : null;
           } else if (key === 'lotSpecificAuctionDate' || key === 'secondAuctionDate') {
-             // Explicitly set to null if undefined for optional dates in update
             updateDataForFirestore[key] = null;
           }
         } else if (key === 'stateId') {
@@ -303,7 +306,6 @@ export async function updateLot(
                     updateDataForFirestore.stateId = value;
                     updateDataForFirestore.stateUf = (stateDoc.data() as StateInfo).uf;
                 } else {
-                    // Handle case where stateId is invalid or clear if value is empty
                     updateDataForFirestore.stateId = null;
                     updateDataForFirestore.stateUf = null;
                 }
@@ -325,6 +327,8 @@ export async function updateLot(
                 updateDataForFirestore.cityId = null;
                 updateDataForFirestore.cityName = null;
             }
+        } else if (key === 'mediaItemIds' || key === 'galleryImageUrls') {
+            updateDataForFirestore[key] = Array.isArray(value) ? value : [];
         }
         else {
            if (value !== undefined) { 
@@ -366,6 +370,3 @@ export async function deleteLot(
     return { success: false, message: error.message || 'Falha ao excluir lote.' };
   }
 }
-
-
-    

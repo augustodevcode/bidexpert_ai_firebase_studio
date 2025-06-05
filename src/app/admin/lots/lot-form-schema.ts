@@ -32,6 +32,8 @@ export const lotFormSchema = z.object({
   cityId: z.string().optional().nullable(),
   type: z.string().min(1, { message: "O tipo/categoria do lote é obrigatório."}).max(100),
   imageUrl: z.string().url({ message: "Por favor, insira uma URL de imagem válida." }).optional().or(z.literal('')),
+  galleryImageUrls: z.array(z.string().url({ message: "Uma das URLs da galeria é inválida." })).optional(),
+  mediaItemIds: z.array(z.string()).optional(),
   endDate: z.date({
     required_error: "A data de encerramento é obrigatória.",
     invalid_type_error: "Por favor, insira uma data de encerramento válida.",
