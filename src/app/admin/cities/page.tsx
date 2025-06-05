@@ -18,16 +18,21 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 function DeleteCityButton({ cityId, cityName, onDelete }: { cityId: string; cityName: string; onDelete: (id: string) => Promise<void> }) {
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80">
-          <Trash2 className="h-4 w-4" />
-          <span className="sr-only">Excluir Cidade</span>
-        </Button>
-      </AlertDialogTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label="Excluir Cidade">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent><p>Excluir Cidade</p></TooltipContent>
+      </Tooltip>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
@@ -63,70 +68,75 @@ export default async function AdminCitiesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card className="shadow-lg">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-2xl font-bold font-headline flex items-center">
-              <Building2 className="h-6 w-6 mr-2 text-primary" />
-              Gerenciar Cidades
-            </CardTitle>
-            <CardDescription>
-              Adicione, edite ou remova cidades da plataforma.
-            </CardDescription>
-          </div>
-          <Button asChild>
-            <Link href="/admin/cities/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Nova Cidade
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {cities.length === 0 ? (
-            <div className="text-center py-10 text-muted-foreground bg-secondary/30 rounded-md">
-              <AlertTriangle className="mx-auto h-10 w-10 mb-3" />
-              <p className="font-semibold">Nenhuma cidade encontrada.</p>
-              <p className="text-sm">Comece adicionando uma nova cidade.</p>
+    <TooltipProvider>
+      <div className="space-y-6">
+        <Card className="shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl font-bold font-headline flex items-center">
+                <Building2 className="h-6 w-6 mr-2 text-primary" />
+                Gerenciar Cidades
+              </CardTitle>
+              <CardDescription>
+                Adicione, edite ou remova cidades da plataforma.
+              </CardDescription>
             </div>
-          ) : (
-            <div className="border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="min-w-[200px]">Nome da Cidade</TableHead>
-                    <TableHead>UF</TableHead>
-                    <TableHead>Cód. IBGE</TableHead>
-                    <TableHead className="text-center">Lotes</TableHead>
-                    <TableHead className="text-right w-[100px]">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {cities.map((city) => (
-                    <TableRow key={city.id}>
-                      <TableCell className="font-medium">{city.name}</TableCell>
-                      <TableCell>{city.stateUf}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{city.ibgeCode || '-'}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="secondary">{city.lotCount || 0}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" asChild className="text-blue-600 hover:text-blue-700">
-                          <Link href={`/admin/cities/${city.id}/edit`}>
-                            <Edit className="h-4 w-4" />
-                            <span className="sr-only">Editar</span>
-                          </Link>
-                        </Button>
-                        <DeleteCityButton cityId={city.id} cityName={city.name} onDelete={handleDeleteCity} />
-                      </TableCell>
+            <Button asChild>
+              <Link href="/admin/cities/new">
+                <PlusCircle className="mr-2 h-4 w-4" /> Nova Cidade
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {cities.length === 0 ? (
+              <div className="text-center py-10 text-muted-foreground bg-secondary/30 rounded-md">
+                <AlertTriangle className="mx-auto h-10 w-10 mb-3" />
+                <p className="font-semibold">Nenhuma cidade encontrada.</p>
+                <p className="text-sm">Comece adicionando uma nova cidade.</p>
+              </div>
+            ) : (
+              <div className="border rounded-md">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[200px]">Nome da Cidade</TableHead>
+                      <TableHead>UF</TableHead>
+                      <TableHead>Cód. IBGE</TableHead>
+                      <TableHead className="text-center">Lotes</TableHead>
+                      <TableHead className="text-right w-[100px]">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+                  </TableHeader>
+                  <TableBody>
+                    {cities.map((city) => (
+                      <TableRow key={city.id}>
+                        <TableCell className="font-medium">{city.name}</TableCell>
+                        <TableCell>{city.stateUf}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{city.ibgeCode || '-'}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="secondary">{city.lotCount || 0}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" asChild className="text-blue-600 hover:text-blue-700" aria-label="Editar Cidade">
+                                <Link href={`/admin/cities/${city.id}/edit`}>
+                                  <Edit className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Editar Cidade</p></TooltipContent>
+                          </Tooltip>
+                          <DeleteCityButton cityId={city.id} cityName={city.name} onDelete={handleDeleteCity} />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </TooltipProvider>
   );
 }
-    

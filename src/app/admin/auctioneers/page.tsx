@@ -18,16 +18,21 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 function DeleteAuctioneerButton({ auctioneerId, auctioneerName, onDelete }: { auctioneerId: string; auctioneerName: string; onDelete: (id: string) => Promise<void> }) {
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80">
-          <Trash2 className="h-4 w-4" />
-          <span className="sr-only">Excluir Leiloeiro</span>
-        </Button>
-      </AlertDialogTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label="Excluir Leiloeiro">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent><p>Excluir Leiloeiro</p></TooltipContent>
+      </Tooltip>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
@@ -63,84 +68,92 @@ export default async function AdminAuctioneersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card className="shadow-lg">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-2xl font-bold font-headline flex items-center">
-              <Landmark className="h-6 w-6 mr-2 text-primary" />
-              Gerenciar Leiloeiros
-            </CardTitle>
-            <CardDescription>
-              Adicione, edite ou remova leiloeiros da plataforma.
-            </CardDescription>
-          </div>
-          <Button asChild>
-            <Link href="/admin/auctioneers/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Novo Leiloeiro
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {auctioneers.length === 0 ? (
-            <div className="text-center py-10 text-muted-foreground bg-secondary/30 rounded-md">
-              <AlertTriangle className="mx-auto h-10 w-10 mb-3" />
-              <p className="font-semibold">Nenhum leiloeiro encontrado.</p>
-              <p className="text-sm">Comece adicionando um novo leiloeiro.</p>
+    <TooltipProvider>
+      <div className="space-y-6">
+        <Card className="shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl font-bold font-headline flex items-center">
+                <Landmark className="h-6 w-6 mr-2 text-primary" />
+                Gerenciar Leiloeiros
+              </CardTitle>
+              <CardDescription>
+                Adicione, edite ou remova leiloeiros da plataforma.
+              </CardDescription>
             </div>
-          ) : (
-            <div className="border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[60px]">Logo</TableHead>
-                    <TableHead className="min-w-[200px]">Nome</TableHead>
-                    <TableHead>Registro</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Telefone</TableHead>
-                    <TableHead className="text-right w-[120px]">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {auctioneers.map((auctioneer) => (
-                    <TableRow key={auctioneer.id}>
-                      <TableCell>
-                        <Avatar className="h-9 w-9">
-                          <AvatarImage src={auctioneer.logoUrl || `https://placehold.co/40x40.png?text=${auctioneer.name.charAt(0)}`} alt={auctioneer.name} data-ai-hint={auctioneer.dataAiHintLogo || "logo leiloeiro"} />
-                          <AvatarFallback>{auctioneer.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                      </TableCell>
-                      <TableCell className="font-medium">{auctioneer.name}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{auctioneer.registrationNumber || '-'}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{auctioneer.email || '-'}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{auctioneer.phone || '-'}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" asChild className="text-sky-600 hover:text-sky-700" disabled>
-                          {/* Link para a página pública do leiloeiro (a ser criada) */}
-                          {/* <Link href={`/auctioneers/${auctioneer.slug}`} target="_blank">
-                            <ExternalLink className="h-4 w-4" />
-                            <span className="sr-only">Ver Leiloeiro</span>
-                          </Link> */}
-                           <ExternalLink className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" asChild className="text-blue-600 hover:text-blue-700">
-                          <Link href={`/admin/auctioneers/${auctioneer.id}/edit`}>
-                            <Edit className="h-4 w-4" />
-                            <span className="sr-only">Editar</span>
-                          </Link>
-                        </Button>
-                        <DeleteAuctioneerButton auctioneerId={auctioneer.id} auctioneerName={auctioneer.name} onDelete={handleDeleteAuctioneer} />
-                      </TableCell>
+            <Button asChild>
+              <Link href="/admin/auctioneers/new">
+                <PlusCircle className="mr-2 h-4 w-4" /> Novo Leiloeiro
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {auctioneers.length === 0 ? (
+              <div className="text-center py-10 text-muted-foreground bg-secondary/30 rounded-md">
+                <AlertTriangle className="mx-auto h-10 w-10 mb-3" />
+                <p className="font-semibold">Nenhum leiloeiro encontrado.</p>
+                <p className="text-sm">Comece adicionando um novo leiloeiro.</p>
+              </div>
+            ) : (
+              <div className="border rounded-md">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[60px]">Logo</TableHead>
+                      <TableHead className="min-w-[200px]">Nome</TableHead>
+                      <TableHead>Registro</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Telefone</TableHead>
+                      <TableHead className="text-right w-[120px]">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+                  </TableHeader>
+                  <TableBody>
+                    {auctioneers.map((auctioneer) => (
+                      <TableRow key={auctioneer.id}>
+                        <TableCell>
+                          <Avatar className="h-9 w-9">
+                            <AvatarImage src={auctioneer.logoUrl || `https://placehold.co/40x40.png?text=${auctioneer.name.charAt(0)}`} alt={auctioneer.name} data-ai-hint={auctioneer.dataAiHintLogo || "logo leiloeiro"} />
+                            <AvatarFallback>{auctioneer.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                        </TableCell>
+                        <TableCell className="font-medium">{auctioneer.name}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{auctioneer.registrationNumber || '-'}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{auctioneer.email || '-'}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{auctioneer.phone || '-'}</TableCell>
+                        <TableCell className="text-right">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" asChild className="text-sky-600 hover:text-sky-700" disabled aria-label="Ver Leiloeiro">
+                                {/* Link para a página pública do leiloeiro (a ser criada) */}
+                                {/* <Link href={`/auctioneers/${auctioneer.slug}`} target="_blank">
+                                  <ExternalLink className="h-4 w-4" />
+                                </Link> */}
+                                 <ExternalLink className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Ver Leiloeiro (Em breve)</p></TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" asChild className="text-blue-600 hover:text-blue-700" aria-label="Editar Leiloeiro">
+                                <Link href={`/admin/auctioneers/${auctioneer.id}/edit`}>
+                                  <Edit className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Editar Leiloeiro</p></TooltipContent>
+                          </Tooltip>
+                          <DeleteAuctioneerButton auctioneerId={auctioneer.id} auctioneerName={auctioneer.name} onDelete={handleDeleteAuctioneer} />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </TooltipProvider>
   );
 }
-
-    

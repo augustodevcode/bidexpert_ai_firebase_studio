@@ -19,16 +19,21 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 function DeleteSellerButton({ sellerId, sellerName, onDelete }: { sellerId: string; sellerName: string; onDelete: (id: string) => Promise<void> }) {
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80">
-          <Trash2 className="h-4 w-4" />
-          <span className="sr-only">Excluir Comitente</span>
-        </Button>
-      </AlertDialogTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label="Excluir Comitente">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent><p>Excluir Comitente</p></TooltipContent>
+      </Tooltip>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
@@ -64,86 +69,94 @@ export default async function AdminSellersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card className="shadow-lg">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-2xl font-bold font-headline flex items-center">
-              <Users className="h-6 w-6 mr-2 text-primary" />
-              Gerenciar Comitentes
-            </CardTitle>
-            <CardDescription>
-              Adicione, edite ou remova comitentes/vendedores da plataforma.
-            </CardDescription>
-          </div>
-          <Button asChild>
-            <Link href="/admin/sellers/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Novo Comitente
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {sellers.length === 0 ? (
-            <div className="text-center py-10 text-muted-foreground bg-secondary/30 rounded-md">
-              <AlertTriangle className="mx-auto h-10 w-10 mb-3" />
-              <p className="font-semibold">Nenhum comitente encontrado.</p>
-              <p className="text-sm">Comece adicionando um novo comitente.</p>
+    <TooltipProvider>
+      <div className="space-y-6">
+        <Card className="shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl font-bold font-headline flex items-center">
+                <Users className="h-6 w-6 mr-2 text-primary" />
+                Gerenciar Comitentes
+              </CardTitle>
+              <CardDescription>
+                Adicione, edite ou remova comitentes/vendedores da plataforma.
+              </CardDescription>
             </div>
-          ) : (
-            <div className="border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[60px]">Logo</TableHead>
-                    <TableHead className="min-w-[200px]">Nome</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Telefone</TableHead>
-                    <TableHead>Cidade/UF</TableHead>
-                    <TableHead className="text-right w-[120px]">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sellers.map((seller) => (
-                    <TableRow key={seller.id}>
-                      <TableCell>
-                        <Avatar className="h-9 w-9">
-                          <AvatarImage src={seller.logoUrl || `https://placehold.co/40x40.png?text=${seller.name.charAt(0)}`} alt={seller.name} data-ai-hint={seller.dataAiHintLogo || "logo comitente"} />
-                          <AvatarFallback>{seller.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                      </TableCell>
-                      <TableCell className="font-medium">{seller.name}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{seller.email || '-'}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{seller.phone || '-'}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {seller.city && seller.state ? `${seller.city} - ${seller.state}` : seller.city || seller.state || '-'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" asChild className="text-sky-600 hover:text-sky-700" disabled>
-                          {/* Link para a página pública do comitente (a ser criada) */}
-                          {/* <Link href={`/sellers/${seller.slug}`} target="_blank">
-                            <ExternalLink className="h-4 w-4" />
-                            <span className="sr-only">Ver Comitente</span>
-                          </Link> */}
-                           <ExternalLink className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" asChild className="text-blue-600 hover:text-blue-700">
-                          <Link href={`/admin/sellers/${seller.id}/edit`}>
-                            <Edit className="h-4 w-4" />
-                            <span className="sr-only">Editar</span>
-                          </Link>
-                        </Button>
-                        <DeleteSellerButton sellerId={seller.id} sellerName={seller.name} onDelete={handleDeleteSeller} />
-                      </TableCell>
+            <Button asChild>
+              <Link href="/admin/sellers/new">
+                <PlusCircle className="mr-2 h-4 w-4" /> Novo Comitente
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {sellers.length === 0 ? (
+              <div className="text-center py-10 text-muted-foreground bg-secondary/30 rounded-md">
+                <AlertTriangle className="mx-auto h-10 w-10 mb-3" />
+                <p className="font-semibold">Nenhum comitente encontrado.</p>
+                <p className="text-sm">Comece adicionando um novo comitente.</p>
+              </div>
+            ) : (
+              <div className="border rounded-md">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[60px]">Logo</TableHead>
+                      <TableHead className="min-w-[200px]">Nome</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Telefone</TableHead>
+                      <TableHead>Cidade/UF</TableHead>
+                      <TableHead className="text-right w-[120px]">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+                  </TableHeader>
+                  <TableBody>
+                    {sellers.map((seller) => (
+                      <TableRow key={seller.id}>
+                        <TableCell>
+                          <Avatar className="h-9 w-9">
+                            <AvatarImage src={seller.logoUrl || `https://placehold.co/40x40.png?text=${seller.name.charAt(0)}`} alt={seller.name} data-ai-hint={seller.dataAiHintLogo || "logo comitente"} />
+                            <AvatarFallback>{seller.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                        </TableCell>
+                        <TableCell className="font-medium">{seller.name}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{seller.email || '-'}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{seller.phone || '-'}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {seller.city && seller.state ? `${seller.city} - ${seller.state}` : seller.city || seller.state || '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" asChild className="text-sky-600 hover:text-sky-700" disabled aria-label="Ver Comitente">
+                                {/* Link para a página pública do comitente (a ser criada) */}
+                                {/* <Link href={`/sellers/${seller.slug}`} target="_blank">
+                                  <ExternalLink className="h-4 w-4" />
+                                </Link> */}
+                                 <ExternalLink className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Ver Comitente (Em breve)</p></TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" asChild className="text-blue-600 hover:text-blue-700" aria-label="Editar Comitente">
+                                <Link href={`/admin/sellers/${seller.id}/edit`}>
+                                  <Edit className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Editar Comitente</p></TooltipContent>
+                          </Tooltip>
+                          <DeleteSellerButton sellerId={seller.id} sellerName={seller.name} onDelete={handleDeleteSeller} />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </TooltipProvider>
   );
 }
-
-    
