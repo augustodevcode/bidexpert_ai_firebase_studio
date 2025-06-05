@@ -3,50 +3,58 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Input } from '@/components/ui/input'; // Necessário para o input de arquivo real
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { UploadCloud, ArrowLeft } from 'lucide-react';
+import { UploadCloud, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation'; // Para navegação programática, se necessário
+import { useRouter } from 'next/navigation';
+import { useState, type FormEvent } from 'react'; // Import useState
+import { handleImageUpload } from '../actions'; // Importar a server action
 
 export default function MediaUploadPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false); // Estado de carregamento
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
+  const processFiles = async (files: FileList | null) => {
     if (files && files.length > 0) {
-      // Placeholder: Simular início do upload
-      toast({
-        title: 'Arquivos Selecionados (Simulação)',
-        description: `${files.length} arquivo(s) selecionado(s). Em um app real, o upload começaria aqui.`,
-      });
-      // Em um app real, você chamaria uma função para fazer o upload dos `files`
-      // e depois talvez redirecionar para /admin/media ou mostrar o progresso.
-      // Por enquanto, podemos redirecionar de volta para a biblioteca após um delay simbólico.
-      setTimeout(() => {
+      const fileMetadatas = Array.from(files).map(file => ({
+        fileName: file.name,
+        mimeType: file.type,
+        sizeBytes: file.size,
+        dataAiHint: 'upload usuario' // Placeholder, pode ser melhorado no futuro
+      }));
+
+      setIsLoading(true);
+      const result = await handleImageUpload(fileMetadatas);
+      setIsLoading(false);
+
+      if (result.success) {
+        toast({
+          title: 'Upload Simulado Concluído',
+          description: result.message,
+        });
+        router.refresh(); 
         router.push('/admin/media');
-      }, 2000);
+      } else {
+        toast({
+          title: 'Falha no Upload Simulado',
+          description: result.message,
+          variant: 'destructive',
+        });
+      }
     }
   };
 
-  // Placeholder para drag and drop
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    await processFiles(event.target.files);
+  };
+
+  const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    const files = event.dataTransfer.files;
-    if (files && files.length > 0) {
-      toast({
-        title: 'Arquivos Arrastados (Simulação)',
-        description: `${files.length} arquivo(s) pronto(s) para upload.`,
-      });
-      // Simular o mesmo comportamento do handleFileSelect
-      // Em uma aplicação real, você passaria os `files` para sua função de upload.
-       setTimeout(() => {
-        router.push('/admin/media');
-      }, 2000);
-    }
+    await processFiles(event.dataTransfer.files);
   };
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
@@ -56,7 +64,7 @@ export default function MediaUploadPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <Button variant="outline" size="sm" asChild className="mb-4 print:hidden">
+      <Button variant="outline" size="sm" asChild className="mb-4 print:hidden" disabled={isLoading}>
         <Link href="/admin/media">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar para Biblioteca
@@ -71,30 +79,42 @@ export default function MediaUploadPage() {
           </CardDescription>
         </CardHeader>
         <CardContent
-          className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-10 text-center space-y-4 hover:border-primary/70 transition-colors"
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
+          className={`border-2 border-dashed border-muted-foreground/30 rounded-lg p-10 text-center space-y-4 hover:border-primary/70 transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          onDrop={isLoading ? undefined : handleDrop}
+          onDragOver={isLoading ? undefined : handleDragOver}
         >
-          <UploadCloud className="mx-auto h-16 w-16 text-muted-foreground/70" />
+          {isLoading ? (
+            <Loader2 className="mx-auto h-16 w-16 text-primary animate-spin" />
+          ) : (
+            <UploadCloud className="mx-auto h-16 w-16 text-muted-foreground/70" />
+          )}
           <p className="text-lg font-medium text-muted-foreground">
-            Solte arquivos aqui para enviar
+            {isLoading ? 'Processando...' : 'Solte arquivos aqui para enviar'}
           </p>
           <p className="text-sm text-muted-foreground">ou</p>
           
-          {/* Input de arquivo real, mas escondido e acionado pelo Label/Button */}
           <Input 
             id="file-upload" 
             type="file" 
             multiple 
             className="hidden" 
             onChange={handleFileSelect}
-            accept="image/png, image/jpeg, image/webp, application/pdf" // Limitar tipos de arquivo
+            accept="image/png, image/jpeg, image/webp, application/pdf"
+            disabled={isLoading}
           />
           <Label
             htmlFor="file-upload"
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 cursor-pointer"
+            className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-10 px-4 py-2 
+            ${isLoading ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer'}`}
           >
-            Selecionar Arquivos
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Enviando...
+              </>
+            ) : (
+              'Selecionar Arquivos'
+            )}
           </Label>
         </CardContent>
         <CardFooter className="flex-col items-start text-xs text-muted-foreground pt-4">
