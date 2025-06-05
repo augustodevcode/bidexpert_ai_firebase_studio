@@ -2,9 +2,45 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, serverTimestamp, Timestamp, updateDoc } from 'firebase/firestore';
+import admin from 'firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import type { PlatformSettings, PlatformSettingsFormData } from '@/types';
+import { config } from 'dotenv'; // Import dotenv
+
+config(); // Load .env file variables
+
+// --- INÍCIO: Lógica de Inicialização do Firebase Admin SDK ---
+if (admin.apps.length === 0) { // Verifica se já foi inicializado
+  try {
+    // Tenta inicializar com GOOGLE_APPLICATION_CREDENTIALS se estiver definida no ambiente
+    admin.initializeApp();
+    console.log("Firebase Admin SDK inicializado usando GOOGLE_APPLICATION_CREDENTIALS (settings/actions).");
+  } catch (error: any) {
+    // Se GOOGLE_APPLICATION_CREDENTIALS não estiver definida ou falhar, tenta com o caminho do .env
+    const serviceAccountPath = process.env.FIREBASE_ADMIN_SDK_PATH;
+    if (serviceAccountPath) {
+      try {
+        const serviceAccount = require(serviceAccountPath); // Node.js 'require'
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+        });
+        console.log("Firebase Admin SDK inicializado usando FIREBASE_ADMIN_SDK_PATH (settings/actions).");
+      } catch (e: any) {
+        console.error("Falha ao inicializar Firebase Admin SDK com FIREBASE_ADMIN_SDK_PATH (settings/actions):", e.message);
+        // Não lançar erro aqui, pois a próxima chamada ao db irá falhar e reportar o erro
+      }
+    } else if (error.code === 'app/no-app' && error.message.includes('GOOGLE_APPLICATION_CREDENTIALS')) {
+        // Esta condição é específica para o caso em que as credenciais não foram encontradas.
+        console.warn("Firebase Admin SDK: GOOGLE_APPLICATION_CREDENTIALS não definida e FIREBASE_ADMIN_SDK_PATH não fornecida (settings/actions). As operações do Admin SDK provavelmente falharão.");
+    } else if (error.code !== 'app/app-already-exists') { // Não registrar erro se já existe
+      console.error("Falha ao inicializar Firebase Admin SDK (settings/actions). Verifique suas credenciais.", error);
+    }
+  }
+}
+// --- FIM: Lógica de Inicialização do Firebase Admin SDK ---
+
+// Garantir que db seja inicializado após a tentativa de inicialização do app
+const db = admin.firestore();
 
 const SETTINGS_COLLECTION = 'platformSettings';
 const GLOBAL_SETTINGS_DOC_ID = 'global';
@@ -28,7 +64,6 @@ function safeConvertToDate(timestampField: any): Date {
 
 const defaultSettings: Omit<PlatformSettings, 'id' | 'updatedAt'> = {
   galleryImageBasePath: '/media/gallery/', // Default path
-  // Initialize other default settings here
 };
 
 export async function getPlatformSettings(): Promise<PlatformSettings> {
@@ -41,12 +76,10 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
       return {
         id: GLOBAL_SETTINGS_DOC_ID,
         galleryImageBasePath: data.galleryImageBasePath || defaultSettings.galleryImageBasePath,
-        // map other fields here, falling back to defaults if necessary
         updatedAt: safeConvertToDate(data.updatedAt || serverTimestamp()),
       } as PlatformSettings;
     } else {
-      // Document doesn't exist, create it with defaults
-      console.log('No global settings found, creating with defaults.');
+      console.log('No global settings found, creating with defaults (settings/actions).');
       const initialSettings = {
         ...defaultSettings,
         updatedAt: serverTimestamp(),
@@ -55,12 +88,11 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
       return {
         id: GLOBAL_SETTINGS_DOC_ID,
         ...defaultSettings,
-        updatedAt: new Date(), // Approximate for initial return
+        updatedAt: new Date(), 
       };
     }
   } catch (error: any) {
     console.error("[Server Action - getPlatformSettings] Error:", error);
-    // Fallback to defaults in case of any error
     return {
       id: GLOBAL_SETTINGS_DOC_ID,
       ...defaultSettings,
@@ -81,23 +113,24 @@ export async function updatePlatformSettings(
     
     const updateData: Partial<Omit<PlatformSettings, 'id'>> = {
       galleryImageBasePath: data.galleryImageBasePath,
-      // map other updatable fields here
       updatedAt: serverTimestamp() as any,
     };
 
-    // Use updateDoc if document exists, setDoc with merge if it might not (though getPlatformSettings should create it)
     const docSnap = await getDoc(settingsDocRef);
     if (docSnap.exists()) {
         await updateDoc(settingsDocRef, updateData);
     } else {
-        await setDoc(settingsDocRef, updateData, { merge: true }); // Create if not exists
+        await setDoc(settingsDocRef, updateData, { merge: true }); 
     }
 
     revalidatePath('/admin/settings');
     return { success: true, message: 'Configurações da plataforma atualizadas com sucesso!' };
   } catch (error: any) {
     console.error("[Server Action - updatePlatformSettings] Error:", error);
+    // FirebaseError: Missing or insufficient permissions.
+    if (error.code === 'permission-denied' || (error.message && error.message.includes('permission-denied'))) {
+        return { success: false, message: 'Erro de Permissão: Falha ao atualizar configurações. Verifique as permissões do Firebase Admin SDK (IAM) ou a configuração das credenciais no ambiente do servidor.' };
+    }
     return { success: false, message: error.message || 'Falha ao atualizar configurações da plataforma.' };
   }
 }
-
