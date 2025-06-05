@@ -110,7 +110,7 @@ export async function getMediaItems(): Promise<MediaItem[]> {
     } else if (error && typeof (error as any).message === 'string') {
       errorMessage = (error as any).message;
     }
-    console.error(`[Server Action - getMediaItems] Firestore Error: ${errorMessage}. Falling back to sample data.`);
+    console.warn(`[Server Action - getMediaItems] Firestore Error: ${errorMessage}. Falling back to sample data.`);
     // Fallback to sample data if Firestore fails
     return [
       { id: 'sample1', fileName: 'sample_image_1.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 102400, urlOriginal: 'https://placehold.co/800x600.png?text=Sample1', urlThumbnail: 'https://placehold.co/150x150.png?text=Sample1', urlMedium: 'https://placehold.co/600x400.png?text=Sample1', urlLarge: 'https://placehold.co/800x600.png?text=Sample1', title: 'Imagem de Exemplo 1', altText: 'Imagem de Exemplo 1', dataAiHint: 'amostra um' },
