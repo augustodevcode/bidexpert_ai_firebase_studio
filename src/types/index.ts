@@ -416,3 +416,15 @@ export type EditableUserProfileData = Omit<UserProfileData, 'uid' | 'email' | 's
   sellerProfileId?: string;
 };
 
+// --- Platform Settings Types ---
+export interface PlatformSettings {
+  id: 'global'; // Documento único
+  galleryImageBasePath: string;
+  // Adicionar outros campos de configuração aqui no futuro
+  // e.g., siteName: string; contactEmail: string; etc.
+  updatedAt: Date;
+}
+
+export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'>;
+// --- End Platform Settings Types ---
+

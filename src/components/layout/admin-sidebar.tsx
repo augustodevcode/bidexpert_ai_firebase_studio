@@ -71,7 +71,7 @@ const sidebarNavItems = [
     title: 'Configurações',
     href: '/admin/settings',
     icon: Settings,
-    disabled: true, 
+    disabled: false, // Habilitado
   },
 ];
 
