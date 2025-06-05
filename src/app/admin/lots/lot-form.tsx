@@ -22,20 +22,21 @@ import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
-import type { Lot, LotStatus, LotCategory, Auction, StateInfo, CityInfo } from '@/types';
-import { Loader2, Save, CalendarIcon, Package } from 'lucide-react';
+import type { Lot, LotStatus, LotCategory, Auction, StateInfo, CityInfo, MediaItem } from '@/types';
+import { Loader2, Save, CalendarIcon, Package, ImagePlus, UploadCloud } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText } from '@/lib/sample-data';
+import Image from 'next/image'; // For displaying image thumbnails
 
 interface LotFormProps {
   initialData?: Lot | null;
   categories: LotCategory[];
   auctions: Auction[];
-  states: StateInfo[]; // Nova prop para estados
-  allCities: CityInfo[]; // Nova prop para todas as cidades
+  states: StateInfo[];
+  allCities: CityInfo[];
   onSubmitAction: (data: LotFormValues) => Promise<{ success: boolean; message: string; lotId?: string }>;
   formTitle: string;
   formDescription: string;
@@ -67,6 +68,11 @@ export default function LotForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [filteredCities, setFilteredCities] = React.useState<CityInfo[]>([]);
+  // Placeholder for selected media items from library
+  const [selectedMediaItems, setSelectedMediaItems] = React.useState<Partial<MediaItem>[]>(
+    (initialData?.galleryImageUrls || []).map((url, index) => ({ id: `gallery-${index}`, urlOriginal: url, title: `Imagem da Galeria ${index + 1}`}))
+  );
+
 
   const form = useForm<LotFormValues>({
     resolver: zodResolver(lotFormSchema),
@@ -82,6 +88,7 @@ export default function LotForm({
       cityId: initialData?.cityId || undefined,
       type: initialData?.type || '',
       imageUrl: initialData?.imageUrl || '',
+      galleryImageUrls: initialData?.galleryImageUrls || [],
       endDate: initialData?.endDate ? new Date(initialData.endDate) : new Date(),
       lotSpecificAuctionDate: initialData?.lotSpecificAuctionDate ? new Date(initialData.lotSpecificAuctionDate) : null,
       secondAuctionDate: initialData?.secondAuctionDate ? new Date(initialData.secondAuctionDate) : null,
@@ -120,19 +127,35 @@ export default function LotForm({
     if (initialData?.stateId && allCities.length > 0) {
       setFilteredCities(allCities.filter(city => city.stateId === initialData.stateId));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData?.stateId, allCities]);
+
+   React.useEffect(() => {
+    // Update form's galleryImageUrls if selectedMediaItems changes
+    // This is a simplified link; a real implementation would manage MediaItem IDs
+    form.setValue('galleryImageUrls', selectedMediaItems.map(item => item.urlOriginal || ''));
+  }, [selectedMediaItems, form]);
 
   async function onSubmit(values: LotFormValues) {
     setIsSubmitting(true);
     try {
-      const result = await onSubmitAction(values);
+      // Ensure galleryImageUrls is populated from selectedMediaItems if Media Library were functional
+      const dataToSubmit = {
+        ...values,
+        galleryImageUrls: selectedMediaItems.map(item => item.urlOriginal).filter(Boolean) as string[],
+      };
+      const result = await onSubmitAction(dataToSubmit);
       if (result.success) {
         toast({
           title: 'Sucesso!',
           description: result.message,
         });
-        router.push('/admin/lots');
+        // If a defaultAuctionId was provided (meaning we came from an auction's edit page),
+        // redirect back to that auction's edit page. Otherwise, go to the general lots list.
+        if (defaultAuctionId) {
+          router.push(`/admin/auctions/${defaultAuctionId}/edit`);
+        } else {
+          router.push('/admin/lots');
+        }
         router.refresh();
       } else {
         toast({
@@ -152,6 +175,15 @@ export default function LotForm({
       setIsSubmitting(false);
     }
   }
+
+  const handleOpenMediaLibrary = () => {
+    // Placeholder: In a real app, this would open a modal to select images.
+    // For now, we can simulate adding a placeholder image URL.
+    toast({ title: "Biblioteca de Mídia", description: "Funcionalidade em desenvolvimento. Aqui você selecionaria imagens." });
+    // Example of how you might add a new image (manually for now)
+    // const newImage = { id: `new-${Date.now()}`, urlOriginal: 'https://placehold.co/600x400.png?text=Nova+Imagem', title: 'Nova Imagem Placeholder'};
+    // setSelectedMediaItems(prev => [...prev, newImage]);
+  };
 
   return (
     <Card className="max-w-3xl mx-auto shadow-lg">
@@ -256,7 +288,7 @@ export default function LotForm({
                   <FormItem>
                     <FormLabel>Lance Inicial Base (Opcional)</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Ex: 14500.00" {...field} />
+                      <Input type="number" placeholder="Ex: 14500.00" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -379,19 +411,57 @@ export default function LotForm({
                 />
             </div>
 
-             <FormField
+            <FormField
               control={form.control}
               name="imageUrl"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>URL da Imagem Principal (Opcional)</FormLabel>
-                  <FormControl>
-                    <Input type="url" placeholder="https://exemplo.com/imagem.jpg" {...field} />
-                  </FormControl>
+                  <FormControl><Input type="url" placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl>
+                  <FormDescription>Esta será a imagem de capa do lote.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            <div className="space-y-2">
+              <FormLabel>Galeria de Imagens do Lote (Opcional)</FormLabel>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2 border rounded-md min-h-[80px]">
+                {selectedMediaItems.map((item, index) => (
+                  <div key={item.id || `gallery-${index}`} className="relative aspect-square bg-muted rounded overflow-hidden">
+                    <Image src={item.urlOriginal || 'https://placehold.co/100x100.png'} alt={item.title || `Imagem ${index + 1}`} fill className="object-cover" />
+                    {/* Placeholder para botão de remover imagem da galeria do lote */}
+                    <Button type="button" size="icon" variant="destructive" className="absolute top-1 right-1 h-5 w-5 opacity-80 hover:opacity-100" onClick={() => setSelectedMediaItems(prev => prev.filter((_, i) => i !== index))} disabled>X</Button>
+                  </div>
+                ))}
+                {selectedMediaItems.length < 10 && ( // Limite de exemplo
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="aspect-square flex flex-col items-center justify-center text-muted-foreground hover:text-primary h-full"
+                    onClick={handleOpenMediaLibrary}
+                    disabled // Funcionalidade da biblioteca não implementada
+                  >
+                    <ImagePlus className="h-6 w-6 mb-1" />
+                    <span className="text-xs">Adicionar</span>
+                  </Button>
+                )}
+              </div>
+              <FormDescription>Adicione mais imagens para este lote. Clique em "Adicionar da Biblioteca" para selecionar (funcionalidade em desenvolvimento).</FormDescription>
+               <FormField
+                control={form.control}
+                name="galleryImageUrls"
+                render={({ field }) => (
+                  <FormItem className="hidden"> {/* Campo oculto para armazenar URLs, será preenchido pela seleção da biblioteca */}
+                    <FormControl>
+                      <Input type="text" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+
              <FormField
               control={form.control}
               name="endDate"
@@ -547,7 +617,7 @@ export default function LotForm({
 
           </CardContent>
           <CardFooter className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/lots')} disabled={isSubmitting}>
+            <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isSubmitting}>

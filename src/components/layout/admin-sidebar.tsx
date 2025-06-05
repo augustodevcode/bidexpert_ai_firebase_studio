@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2 } from 'lucide-react'; // Added Building2 icon
+import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library } from 'lucide-react'; // Added Library icon
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -32,6 +32,12 @@ const sidebarNavItems = [
     icon: ListChecks,
   },
   {
+    title: 'Biblioteca de Mídia', // Novo item
+    href: '/admin/media',
+    icon: Library,
+    disabled: false, 
+  },
+  {
     title: 'Comitentes',
     href: '/admin/sellers', 
     icon: Users, 
@@ -52,7 +58,7 @@ const sidebarNavItems = [
   {
     title: 'Cidades',
     href: '/admin/cities',
-    icon: Building2, // Using Building2 for Cities
+    icon: Building2,
     disabled: false, 
   },
   {

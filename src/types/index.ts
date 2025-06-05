@@ -1,3 +1,4 @@
+
 export interface Bid {
   bidder: string;
   amount: number;
@@ -49,6 +50,26 @@ export interface LotCategory {
     updatedAt: Date;
 }
 
+export interface MediaItem {
+  id: string; // Firestore document ID
+  fileName: string; // Original filename, e.g., "carro_frente.jpg"
+  uploadedAt: Date;
+  uploadedBy?: string; // User ID of uploader
+  title?: string; // User-defined title, e.g., "Foto Frontal do Veículo"
+  altText?: string; // Alt text for accessibility and SEO
+  caption?: string; // Caption for display with the image
+  description?: string; // Longer description for the image
+  mimeType: string; // e.g., "image/jpeg", "image/png"
+  sizeBytes: number; // File size in bytes
+  dimensions?: { width: number; height: number };
+  urlOriginal: string; // URL to the original uploaded image (e.g., in Firebase Storage)
+  urlThumbnail: string; // URL to a generated thumbnail (e.g., 150x150)
+  urlMedium: string; // URL to a medium-sized version (e.g., 600x400)
+  urlLarge: string; // URL to a large version (e.g., 1200x800)
+  linkedLotIds?: string[]; // Array of Lot IDs this image is currently associated with
+  dataAiHint?: string; // For placeholder generation if needed
+}
+
 export interface Lot {
   id: string; // e.g., LOTE001
   auctionId: string; // ID do leilão ao qual pertence
@@ -57,6 +78,7 @@ export interface Lot {
   imageUrl: string; // Imagem principal
   dataAiHint?: string;
   galleryImageUrls?: string[]; // URLs para a galeria de imagens
+  mediaItemIds?: string[]; // Array of MediaItem IDs for the gallery
   status: LotStatus;
   stateId?: string; // FK para StateInfo
   cityId?: string; // FK para CityInfo
@@ -122,13 +144,15 @@ export interface Lot {
   updatedAt?: Date;
 }
 
-export type LotFormData = Omit<Lot, 'id' | 'createdAt' | 'updatedAt' | 'endDate' | 'lotSpecificAuctionDate' | 'secondAuctionDate' | 'isFavorite' | 'isFeatured' | 'views' | 'bidsCount' | 'galleryImageUrls' | 'dataAiHint' | 'auctionDate' | 'auctioneerName' | 'cityName' | 'stateUf' | 'auctioneerId'> & {
+export type LotFormData = Omit<Lot, 'id' | 'createdAt' | 'updatedAt' | 'endDate' | 'lotSpecificAuctionDate' | 'secondAuctionDate' | 'isFavorite' | 'isFeatured' | 'views' | 'bidsCount' | 'galleryImageUrls' | 'dataAiHint' | 'auctionDate' | 'auctioneerName' | 'cityName' | 'stateUf' | 'auctioneerId' | 'mediaItemIds'> & {
   endDate: Date;
   lotSpecificAuctionDate?: Date | null;
   secondAuctionDate?: Date | null;
   stateId?: string | null; // Permitir null para não seleção
   cityId?: string | null;  // Permitir null para não seleção
   sellerId?: string;
+  galleryImageUrls?: string[]; // Manter para compatibilidade e input manual inicial
+  mediaItemIds?: string[]; // Para vincular com a Media Library
 };
 
 
@@ -237,6 +261,15 @@ export interface UserBid {
   bidStatus: UserBidStatus;
   bidDate: Date;
   lotEndDate: Date;
+}
+
+export interface BidInfo {
+  id: string;
+  lotId: string;
+  bidderId: string; // Internal User ID
+  bidderDisplay: string; // e.g., "Usuário A****"
+  amount: number;
+  timestamp: Date;
 }
 
 export interface UserWin {
@@ -382,3 +415,4 @@ export type EditableUserProfileData = Omit<UserProfileData, 'uid' | 'email' | 's
   role?: UserRole;
   sellerProfileId?: string;
 };
+
