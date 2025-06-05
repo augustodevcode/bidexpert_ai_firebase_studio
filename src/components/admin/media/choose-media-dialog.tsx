@@ -9,19 +9,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { getMediaItems, handleImageUpload } from '@/app/admin/media/actions'; // Importar handleImageUpload
+import { getMediaItems, handleImageUpload } from '@/app/admin/media/actions';
 import type { MediaItem } from '@/types';
 import Image from 'next/image';
-import { UploadCloud, Loader2, ImagePlus, Checkbox as CheckboxIcon, FileText, Check } from 'lucide-react'; // Adicionado CheckboxIcon
-import { Checkbox } from '@/components/ui/checkbox'; // Shadcn Checkbox
+import { UploadCloud, Loader2, ImagePlus, Checkbox as CheckboxIcon, FileText, Check } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
+import { Card } from '@/components/ui/card'; // Added Card import
 
 interface ChooseMediaDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onMediaSelect: (selectedItems: Partial<MediaItem>[]) => void; // Passa os itens selecionados
+  onMediaSelect: (selectedItems: Partial<MediaItem>[]) => void;
 }
 
-// Conteúdo da aba de Upload (adaptado de media-upload-client-content)
 function MediaUploadTab({ onUploadComplete }: { onUploadComplete: (uploadedItems: MediaItem[]) => void }) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +45,7 @@ function MediaUploadTab({ onUploadComplete }: { onUploadComplete: (uploadedItems
           title: 'Upload Simulado Concluído',
           description: result.message,
         });
-        onUploadComplete(result.items); // Chama o callback com os itens "enviados"
+        onUploadComplete(result.items);
       } else {
         toast({
           title: 'Falha no Upload Simulado',
@@ -119,6 +120,8 @@ export default function ChooseMediaDialog({ isOpen, onOpenChange, onMediaSelect 
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [isLoadingLibrary, setIsLoadingLibrary] = useState(true);
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
+  const [currentTab, setCurrentTab] = useState('library');
+
 
   const fetchLibraryItems = async () => {
     setIsLoadingLibrary(true);
@@ -127,15 +130,15 @@ export default function ChooseMediaDialog({ isOpen, onOpenChange, onMediaSelect 
       setMediaItems(items);
     } catch (error) {
       console.error("Failed to fetch media items for dialog:", error);
-      setMediaItems([]); // Set to empty on error
+      setMediaItems([]);
     }
     setIsLoadingLibrary(false);
   };
 
   useEffect(() => {
     if (isOpen) {
-      fetchLibraryItems(); // Fetch items when dialog opens
-      setSelectedItemIds([]); // Reset selection when dialog opens
+      fetchLibraryItems();
+      setSelectedItemIds([]); 
     }
   }, [isOpen]);
 
@@ -150,13 +153,12 @@ export default function ChooseMediaDialog({ isOpen, onOpenChange, onMediaSelect 
   const handleConfirmSelection = () => {
     const selected = mediaItems.filter(item => selectedItemIds.includes(item.id));
     onMediaSelect(selected);
-    onOpenChange(false); // Close dialog after selection
+    onOpenChange(false);
   };
 
   const handleUploadAndRefresh = async (uploadedItems: MediaItem[]) => {
-    // After simulated upload, refresh the library view
     await fetchLibraryItems();
-    // Potentially switch to the library tab, or let user do it
+    setCurrentTab('library'); // Switch to library tab after upload
   };
 
 
@@ -170,7 +172,7 @@ export default function ChooseMediaDialog({ isOpen, onOpenChange, onMediaSelect 
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="library" className="flex-grow flex flex-col min-h-0">
+        <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-grow flex flex-col min-h-0">
           <TabsList className="mx-4 mt-0 mb-2">
             <TabsTrigger value="upload">Enviar arquivos</TabsTrigger>
             <TabsTrigger value="library">Biblioteca de mídia</TabsTrigger>
