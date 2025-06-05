@@ -15,6 +15,10 @@ function safeConvertToDate(timestampField: any): Date {
   }
   // Handle cases where it might already be a Date or a string/number representation
   if (timestampField instanceof Date) return timestampField;
+  if (typeof timestampField === 'object' && timestampField !== null &&
+      typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
+    return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000);
+  }
   const parsedDate = new Date(timestampField);
   if (!isNaN(parsedDate.getTime())) return parsedDate;
   console.warn(`Could not convert media item timestamp: ${timestampField}. Returning current date.`);
@@ -98,8 +102,16 @@ export async function getMediaItems(): Promise<MediaItem[]> {
       } as MediaItem;
     });
   } catch (error: any) {
-    console.error("[Server Action - getMediaItems] Error:", error);
-    // Fallback to sample data if Firestore fails or is empty
+    let errorMessage = "Unknown error occurred while fetching media items.";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    } else if (error && typeof (error as any).message === 'string') {
+      errorMessage = (error as any).message;
+    }
+    console.error(`[Server Action - getMediaItems] Firestore Error: ${errorMessage}. Falling back to sample data.`);
+    // Fallback to sample data if Firestore fails
     return [
       { id: 'sample1', fileName: 'sample_image_1.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 102400, urlOriginal: 'https://placehold.co/800x600.png?text=Sample1', urlThumbnail: 'https://placehold.co/150x150.png?text=Sample1', urlMedium: 'https://placehold.co/600x400.png?text=Sample1', urlLarge: 'https://placehold.co/800x600.png?text=Sample1', title: 'Imagem de Exemplo 1', altText: 'Imagem de Exemplo 1', dataAiHint: 'amostra um' },
       { id: 'sample2', fileName: 'another_example.png', uploadedAt: new Date(), mimeType: 'image/png', sizeBytes: 204800, urlOriginal: 'https://placehold.co/800x600.png?text=Sample2', urlThumbnail: 'https://placehold.co/150x150.png?text=Sample2', urlMedium: 'https://placehold.co/600x400.png?text=Sample2', urlLarge: 'https://placehold.co/800x600.png?text=Sample2', title: 'Exemplo PNG Dois', altText: 'Outra imagem de Exemplo', dataAiHint: 'amostra dois'  },
@@ -152,4 +164,3 @@ export async function unlinkMediaItemFromLot(lotId: string, mediaItemId: string)
   console.log(`Simulating unlinking media item ${mediaItemId} from lot ${lotId}`);
   return { success: true, message: "Desvinculação de imagem simulada com sucesso." };
 }
-
