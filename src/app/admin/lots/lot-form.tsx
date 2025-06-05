@@ -71,13 +71,23 @@ export default function LotForm({
   const [filteredCities, setFilteredCities] = React.useState<CityInfo[]>([]);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
   
-  // Este estado agora vai guardar os objetos MediaItem completos selecionados
   const [selectedMediaForGallery, setSelectedMediaForGallery] = React.useState<Partial<MediaItem>[]>(
     (initialData?.galleryImageUrls || []).map((url, index) => ({ 
-        id: `initial-gallery-${index}`, // Placeholder ID for initially loaded URLs
+        id: initialData?.mediaItemIds?.[index] || `initial-gallery-${index}`, 
         urlOriginal: url, 
         title: `Imagem da Galeria ${index + 1}` 
     }))
+    .concat(
+        (initialData?.mediaItemIds || [])
+        .filter(id => !(initialData?.galleryImageUrls || []).includes(initialData?.mediaItemIds?.find(mId => mId ===id) as string)) // Basic check to avoid duplicating based on URL match
+        .map((id, index) => ({
+            id: id,
+            // Attempt to find matching URL from initialData.galleryImageUrls if it makes sense,
+            // otherwise it implies this MediaItem was linked but its URL wasn't in galleryImageUrls directly
+            urlOriginal: initialData?.galleryImageUrls?.find((_, i) => initialData?.mediaItemIds?.[i] === id) || `https://placehold.co/100x100.png?text=ID:${id.substring(0,4)}`,
+            title: `Item de Mídia ${id.substring(0,4)}`
+        }))
+    )
   );
 
 
@@ -95,14 +105,14 @@ export default function LotForm({
       cityId: initialData?.cityId || undefined,
       type: initialData?.type || '',
       imageUrl: initialData?.imageUrl || '',
-      // galleryImageUrls and mediaItemIds will be managed by selectedMediaForGallery
+      galleryImageUrls: initialData?.galleryImageUrls || [], // Initialize here
+      mediaItemIds: initialData?.mediaItemIds || [], 
       endDate: initialData?.endDate ? new Date(initialData.endDate) : new Date(),
       lotSpecificAuctionDate: initialData?.lotSpecificAuctionDate ? new Date(initialData.lotSpecificAuctionDate) : null,
       secondAuctionDate: initialData?.secondAuctionDate ? new Date(initialData.secondAuctionDate) : null,
       secondInitialPrice: initialData?.secondInitialPrice || null,
       views: initialData?.views || 0,
       bidsCount: initialData?.bidsCount || 0,
-      mediaItemIds: initialData?.mediaItemIds || [], // Initialize with existing IDs
     },
   });
 
@@ -137,7 +147,6 @@ export default function LotForm({
     }
   }, [initialData?.stateId, allCities]);
 
-  // Atualiza o campo oculto do formulário quando selectedMediaForGallery muda
   React.useEffect(() => {
     form.setValue('galleryImageUrls', selectedMediaForGallery.map(item => item.urlOriginal || '').filter(Boolean));
     form.setValue('mediaItemIds', selectedMediaForGallery.map(item => item.id || '').filter(Boolean));
@@ -145,17 +154,16 @@ export default function LotForm({
 
 
   const handleMediaSelectFromDialog = (newlySelectedItems: Partial<MediaItem>[]) => {
-    // Combina os itens já selecionados com os novos, evitando duplicatas pelo ID
-    const combinedItems = [...selectedMediaForGallery];
+    const currentMediaMap = new Map(selectedMediaForGallery.map(item => [item.id, item]));
     newlySelectedItems.forEach(newItem => {
-      if (newItem.id && !combinedItems.some(existingItem => existingItem.id === newItem.id)) {
-        combinedItems.push(newItem);
+      if (newItem.id) { // Only add if item has an ID
+        currentMediaMap.set(newItem.id, newItem);
       }
     });
-    setSelectedMediaForGallery(combinedItems);
+    setSelectedMediaForGallery(Array.from(currentMediaMap.values()));
     toast({
         title: "Mídia Selecionada",
-        description: `${newlySelectedItems.length} item(ns) adicionado(s) à galeria do lote.`
+        description: `${newlySelectedItems.length} item(ns) processado(s) para a galeria do lote.`
     });
   };
 
@@ -169,7 +177,8 @@ export default function LotForm({
     try {
       const dataToSubmit = {
         ...values,
-        // Os campos galleryImageUrls e mediaItemIds já são atualizados pelo useEffect
+        mediaItemIds: selectedMediaForGallery.map(item => item.id || '').filter(Boolean),
+        galleryImageUrls: selectedMediaForGallery.map(item => item.urlOriginal || '').filter(Boolean),
       };
       const result = await onSubmitAction(dataToSubmit);
       if (result.success) {
@@ -474,9 +483,8 @@ export default function LotForm({
                   )}
                 </div>
                 <FormDescription>Adicione mais imagens para este lote clicando em "Adicionar".</FormDescription>
-                {/* Campos ocultos para armazenar URLs e IDs de mídia, preenchidos pela seleção da biblioteca */}
-                <FormField control={form.control} name="galleryImageUrls" render={({ field }) => (<FormItem className="hidden"><FormControl><Input type="text" {...field} /></FormControl></FormItem>)} />
-                <FormField control={form.control} name="mediaItemIds" render={({ field }) => (<FormItem className="hidden"><FormControl><Input type="text" {...field} /></FormControl></FormItem>)} />
+                <FormField control={form.control} name="galleryImageUrls" render={({ field }) => (<FormItem className="hidden"><FormControl><Input type="text" {...field} value={Array.isArray(field.value) ? field.value.join(',') : ''} /></FormControl></FormItem>)} />
+                <FormField control={form.control} name="mediaItemIds" render={({ field }) => (<FormItem className="hidden"><FormControl><Input type="text" {...field} value={Array.isArray(field.value) ? field.value.join(',') : ''} /></FormControl></FormItem>)} />
               </div>
 
               <FormField
@@ -651,3 +659,4 @@ export default function LotForm({
     </>
   );
 }
+
