@@ -23,13 +23,14 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
 import type { Lot, LotStatus, LotCategory, Auction, StateInfo, CityInfo, MediaItem } from '@/types';
-import { Loader2, Save, CalendarIcon, Package, ImagePlus, UploadCloud } from 'lucide-react';
+import { Loader2, Save, CalendarIcon, Package, ImagePlus, UploadCloud, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText } from '@/lib/sample-data';
-import Image from 'next/image'; // For displaying image thumbnails
+import Image from 'next/image';
+import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog'; // Import the dialog
 
 interface LotFormProps {
   initialData?: Lot | null;
@@ -68,9 +69,15 @@ export default function LotForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [filteredCities, setFilteredCities] = React.useState<CityInfo[]>([]);
-  // Placeholder for selected media items from library
-  const [selectedMediaItems, setSelectedMediaItems] = React.useState<Partial<MediaItem>[]>(
-    (initialData?.galleryImageUrls || []).map((url, index) => ({ id: `gallery-${index}`, urlOriginal: url, title: `Imagem da Galeria ${index + 1}`}))
+  const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
+  
+  // Este estado agora vai guardar os objetos MediaItem completos selecionados
+  const [selectedMediaForGallery, setSelectedMediaForGallery] = React.useState<Partial<MediaItem>[]>(
+    (initialData?.galleryImageUrls || []).map((url, index) => ({ 
+        id: `initial-gallery-${index}`, // Placeholder ID for initially loaded URLs
+        urlOriginal: url, 
+        title: `Imagem da Galeria ${index + 1}` 
+    }))
   );
 
 
@@ -88,13 +95,14 @@ export default function LotForm({
       cityId: initialData?.cityId || undefined,
       type: initialData?.type || '',
       imageUrl: initialData?.imageUrl || '',
-      galleryImageUrls: initialData?.galleryImageUrls || [],
+      // galleryImageUrls and mediaItemIds will be managed by selectedMediaForGallery
       endDate: initialData?.endDate ? new Date(initialData.endDate) : new Date(),
       lotSpecificAuctionDate: initialData?.lotSpecificAuctionDate ? new Date(initialData.lotSpecificAuctionDate) : null,
       secondAuctionDate: initialData?.secondAuctionDate ? new Date(initialData.secondAuctionDate) : null,
       secondInitialPrice: initialData?.secondInitialPrice || null,
       views: initialData?.views || 0,
       bidsCount: initialData?.bidsCount || 0,
+      mediaItemIds: initialData?.mediaItemIds || [], // Initialize with existing IDs
     },
   });
 
@@ -129,19 +137,39 @@ export default function LotForm({
     }
   }, [initialData?.stateId, allCities]);
 
-   React.useEffect(() => {
-    // Update form's galleryImageUrls if selectedMediaItems changes
-    // This is a simplified link; a real implementation would manage MediaItem IDs
-    form.setValue('galleryImageUrls', selectedMediaItems.map(item => item.urlOriginal || ''));
-  }, [selectedMediaItems, form]);
+  // Atualiza o campo oculto do formulário quando selectedMediaForGallery muda
+  React.useEffect(() => {
+    form.setValue('galleryImageUrls', selectedMediaForGallery.map(item => item.urlOriginal || '').filter(Boolean));
+    form.setValue('mediaItemIds', selectedMediaForGallery.map(item => item.id || '').filter(Boolean));
+  }, [selectedMediaForGallery, form]);
+
+
+  const handleMediaSelectFromDialog = (newlySelectedItems: Partial<MediaItem>[]) => {
+    // Combina os itens já selecionados com os novos, evitando duplicatas pelo ID
+    const combinedItems = [...selectedMediaForGallery];
+    newlySelectedItems.forEach(newItem => {
+      if (newItem.id && !combinedItems.some(existingItem => existingItem.id === newItem.id)) {
+        combinedItems.push(newItem);
+      }
+    });
+    setSelectedMediaForGallery(combinedItems);
+    toast({
+        title: "Mídia Selecionada",
+        description: `${newlySelectedItems.length} item(ns) adicionado(s) à galeria do lote.`
+    });
+  };
+
+  const handleRemoveFromGallery = (itemIdToRemove?: string) => {
+    if (!itemIdToRemove) return;
+    setSelectedMediaForGallery(prev => prev.filter(item => item.id !== itemIdToRemove));
+  };
 
   async function onSubmit(values: LotFormValues) {
     setIsSubmitting(true);
     try {
-      // Ensure galleryImageUrls is populated from selectedMediaItems if Media Library were functional
       const dataToSubmit = {
         ...values,
-        galleryImageUrls: selectedMediaItems.map(item => item.urlOriginal).filter(Boolean) as string[],
+        // Os campos galleryImageUrls e mediaItemIds já são atualizados pelo useEffect
       };
       const result = await onSubmitAction(dataToSubmit);
       if (result.success) {
@@ -149,8 +177,6 @@ export default function LotForm({
           title: 'Sucesso!',
           description: result.message,
         });
-        // If a defaultAuctionId was provided (meaning we came from an auction's edit page),
-        // redirect back to that auction's edit page. Otherwise, go to the general lots list.
         if (defaultAuctionId) {
           router.push(`/admin/auctions/${defaultAuctionId}/edit`);
         } else {
@@ -176,106 +202,25 @@ export default function LotForm({
     }
   }
 
-  const handleOpenMediaLibrary = () => {
-    // Placeholder: In a real app, this would open a modal to select images.
-    // For now, we can simulate adding a placeholder image URL.
-    toast({ title: "Biblioteca de Mídia", description: "Funcionalidade em desenvolvimento. Aqui você selecionaria imagens." });
-    // Example of how you might add a new image (manually for now)
-    // const newImage = { id: `new-${Date.now()}`, urlOriginal: 'https://placehold.co/600x400.png?text=Nova+Imagem', title: 'Nova Imagem Placeholder'};
-    // setSelectedMediaItems(prev => [...prev, newImage]);
-  };
 
   return (
-    <Card className="max-w-3xl mx-auto shadow-lg">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Package className="h-6 w-6 text-primary"/>{formTitle}</CardTitle>
-        <CardDescription>{formDescription}</CardDescription>
-      </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Título do Lote</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Carro Ford Ka 2019" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="auctionId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Leilão Associado</FormLabel>
-                  <Select
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      const selectedAuction = auctions.find(a => a.id === value);
-                      form.setValue('auctionName', selectedAuction?.title || '');
-                    }}
-                    value={field.value}
-                    disabled={!!defaultAuctionId && initialData?.auctionId === defaultAuctionId}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o leilão" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {auctions.length === 0 ? (
-                        <p className="p-2 text-sm text-muted-foreground">Nenhum leilão cadastrado</p>
-                      ) : (
-                        auctions.map(auction => (
-                          <SelectItem key={auction.id} value={auction.id}>{auction.title} (ID: ...{auction.id.slice(-6)})</SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>Associe este lote a um leilão existente.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="auctionName"
-              render={({ field }) => (
-                <FormItem className="hidden">
-                  <FormLabel>Nome do Leilão (Automático)</FormLabel>
-                  <FormControl>
-                    <Input {...field} readOnly />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição (Opcional)</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Detalhes sobre o lote..." {...field} rows={4} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid md:grid-cols-2 gap-6">
+    <>
+      <Card className="max-w-3xl mx-auto shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Package className="h-6 w-6 text-primary"/>{formTitle}</CardTitle>
+          <CardDescription>{formDescription}</CardDescription>
+        </CardHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <CardContent className="space-y-6">
               <FormField
                 control={form.control}
-                name="price"
+                name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Preço (Lance Inicial/Atual)</FormLabel>
+                    <FormLabel>Título do Lote</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Ex: 15000.00" {...field} />
+                      <Input placeholder="Ex: Carro Ford Ka 2019" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -283,352 +228,426 @@ export default function LotForm({
               />
               <FormField
                 control={form.control}
-                name="initialPrice"
+                name="auctionId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Lance Inicial Base (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="Ex: 14500.00" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-             <div className="grid md:grid-cols-2 gap-6">
-                <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status do Lote</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>Leilão Associado</FormLabel>
+                    <Select
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        const selectedAuction = auctions.find(a => a.id === value);
+                        form.setValue('auctionName', selectedAuction?.title || '');
+                      }}
+                      value={field.value}
+                      disabled={!!defaultAuctionId && initialData?.auctionId === defaultAuctionId}
+                    >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione o status" />
+                          <SelectValue placeholder="Selecione o leilão" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {lotStatusOptions.map(option => (
-                          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                        ))}
+                        {auctions.length === 0 ? (
+                          <p className="p-2 text-sm text-muted-foreground">Nenhum leilão cadastrado</p>
+                        ) : (
+                          auctions.map(auction => (
+                            <SelectItem key={auction.id} value={auction.id}>{auction.title} (ID: ...{auction.id.slice(-6)})</SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
+                    <FormDescription>Associe este lote a um leilão existente.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-               <FormField
+              <FormField
                 control={form.control}
-                name="type" /* Categoria do Lote */
+                name="auctionName"
                 render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Tipo/Categoria do Lote</FormLabel>
-                     <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                            <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo/categoria" />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {categories.length === 0 ? (
-                              <p className="p-2 text-sm text-muted-foreground">Nenhuma categoria cadastrada</p>
-                            ) : (
-                              categories.map(cat => (
-                                <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                              ))
-                            )}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-                 <FormField
-                    control={form.control}
-                    name="stateId"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Estado (Opcional)</FormLabel>
-                        <Select 
-                            onValueChange={(value) => {
-                                const actualValue = value === "---NONE---" ? undefined : value;
-                                field.onChange(actualValue);
-                                form.setValue('cityId', undefined); 
-                            }} 
-                            value={field.value || undefined}
-                        >
-                        <FormControl>
-                            <SelectTrigger>
-                            <SelectValue placeholder="Selecione o estado" />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            <SelectItem value="---NONE---">Nenhum</SelectItem>
-                            {states.filter(s => s.id && String(s.id).trim() !== "").map(state => (
-                                <SelectItem key={state.id} value={state.id}>{state.name} ({state.uf})</SelectItem>
-                            ))}
-                        </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="cityId"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Cidade (Opcional)</FormLabel>
-                        <Select 
-                            onValueChange={(value) => {
-                                const actualValue = value === "---NONE---" ? undefined : value;
-                                field.onChange(actualValue);
-                            }} 
-                            value={field.value || undefined} 
-                            disabled={!selectedStateId || filteredCities.length === 0}
-                        >
-                        <FormControl>
-                            <SelectTrigger>
-                            <SelectValue placeholder={!selectedStateId ? "Selecione um estado primeiro" : "Selecione a cidade"} />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            <SelectItem value="---NONE---">Nenhuma</SelectItem>
-                            {filteredCities.filter(c => c.id && String(c.id).trim() !== "").map(city => (
-                            <SelectItem key={city.id} value={city.id}>{city.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                        </Select>
-                        {!selectedStateId && <FormDescription className="text-xs">Selecione um estado para ver as cidades.</FormDescription>}
-                        {selectedStateId && filteredCities.length === 0 && <FormDescription className="text-xs">Nenhuma cidade cadastrada para este estado.</FormDescription>}
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="imageUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>URL da Imagem Principal (Opcional)</FormLabel>
-                  <FormControl><Input type="url" placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl>
-                  <FormDescription>Esta será a imagem de capa do lote.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="space-y-2">
-              <FormLabel>Galeria de Imagens do Lote (Opcional)</FormLabel>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2 border rounded-md min-h-[80px]">
-                {selectedMediaItems.map((item, index) => (
-                  <div key={item.id || `gallery-${index}`} className="relative aspect-square bg-muted rounded overflow-hidden">
-                    <Image src={item.urlOriginal || 'https://placehold.co/100x100.png'} alt={item.title || `Imagem ${index + 1}`} fill className="object-cover" />
-                    {/* Placeholder para botão de remover imagem da galeria do lote */}
-                    <Button type="button" size="icon" variant="destructive" className="absolute top-1 right-1 h-5 w-5 opacity-80 hover:opacity-100" onClick={() => setSelectedMediaItems(prev => prev.filter((_, i) => i !== index))} disabled>X</Button>
-                  </div>
-                ))}
-                {selectedMediaItems.length < 10 && ( // Limite de exemplo
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="aspect-square flex flex-col items-center justify-center text-muted-foreground hover:text-primary h-full"
-                    onClick={handleOpenMediaLibrary}
-                    disabled // Funcionalidade da biblioteca não implementada
-                  >
-                    <ImagePlus className="h-6 w-6 mb-1" />
-                    <span className="text-xs">Adicionar</span>
-                  </Button>
-                )}
-              </div>
-              <FormDescription>Adicione mais imagens para este lote. Clique em "Adicionar da Biblioteca" para selecionar (funcionalidade em desenvolvimento).</FormDescription>
-               <FormField
-                control={form.control}
-                name="galleryImageUrls"
-                render={({ field }) => (
-                  <FormItem className="hidden"> {/* Campo oculto para armazenar URLs, será preenchido pela seleção da biblioteca */}
+                  <FormItem className="hidden">
+                    <FormLabel>Nome do Leilão (Automático)</FormLabel>
                     <FormControl>
-                      <Input type="text" {...field} />
+                      <Input {...field} readOnly />
                     </FormControl>
                   </FormItem>
                 )}
               />
-            </div>
-
-
-             <FormField
-              control={form.control}
-              name="endDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Data de Encerramento do Lote</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}
-                        >
-                          {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha data e hora</span>}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                      <div className="p-2 border-t">
-                          <Input type="time" defaultValue={field.value ? format(field.value, "HH:mm") : "10:00"}
-                          onChange={(e) => {
-                              const [hours, minutes] = e.target.value.split(':').map(Number);
-                              const newDate = field.value ? new Date(field.value) : new Date();
-                              newDate.setHours(hours, minutes);
-                              field.onChange(newDate);
-                          }} />
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid md:grid-cols-2 gap-6">
-                <FormField
+              <FormField
                 control={form.control}
-                name="lotSpecificAuctionDate"
+                name="description"
                 render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                    <FormLabel>Data 1ª Praça/Leilão (Opcional)</FormLabel>
-                    <Popover>
-                        <PopoverTrigger asChild>
+                  <FormItem>
+                    <FormLabel>Descrição (Opcional)</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Detalhes sobre o lote..." {...field} rows={4} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Preço (Lance Inicial/Atual)</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="Ex: 15000.00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="initialPrice"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lance Inicial Base (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="Ex: 14500.00" {...field} value={field.value ?? ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                  <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status do Lote</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                            <Button
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {lotStatusOptions.map(option => (
+                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="type" /* Categoria do Lote */
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel>Tipo/Categoria do Lote</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                              <SelectTrigger>
+                              <SelectValue placeholder="Selecione o tipo/categoria" />
+                              </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                              {categories.length === 0 ? (
+                                <p className="p-2 text-sm text-muted-foreground">Nenhuma categoria cadastrada</p>
+                              ) : (
+                                categories.map(cat => (
+                                  <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                                ))
+                              )}
+                          </SelectContent>
+                      </Select>
+                      <FormMessage />
+                      </FormItem>
+                  )}
+                  />
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                  <FormField
+                      control={form.control}
+                      name="stateId"
+                      render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Estado (Opcional)</FormLabel>
+                          <Select 
+                              onValueChange={(value) => {
+                                  const actualValue = value === "---NONE---" ? undefined : value;
+                                  field.onChange(actualValue);
+                                  form.setValue('cityId', undefined); 
+                              }} 
+                              value={field.value || undefined}
+                          >
+                          <FormControl>
+                              <SelectTrigger>
+                              <SelectValue placeholder="Selecione o estado" />
+                              </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                              <SelectItem value="---NONE---">Nenhum</SelectItem>
+                              {states.filter(s => s.id && String(s.id).trim() !== "").map(state => (
+                                  <SelectItem key={state.id} value={state.id}>{state.name} ({state.uf})</SelectItem>
+                              ))}
+                          </SelectContent>
+                          </Select>
+                          <FormMessage />
+                      </FormItem>
+                      )}
+                  />
+                  <FormField
+                      control={form.control}
+                      name="cityId"
+                      render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Cidade (Opcional)</FormLabel>
+                          <Select 
+                              onValueChange={(value) => {
+                                  const actualValue = value === "---NONE---" ? undefined : value;
+                                  field.onChange(actualValue);
+                              }} 
+                              value={field.value || undefined} 
+                              disabled={!selectedStateId || filteredCities.length === 0}
+                          >
+                          <FormControl>
+                              <SelectTrigger>
+                              <SelectValue placeholder={!selectedStateId ? "Selecione um estado primeiro" : "Selecione a cidade"} />
+                              </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                              <SelectItem value="---NONE---">Nenhuma</SelectItem>
+                              {filteredCities.filter(c => c.id && String(c.id).trim() !== "").map(city => (
+                              <SelectItem key={city.id} value={city.id}>{city.name}</SelectItem>
+                              ))}
+                          </SelectContent>
+                          </Select>
+                          {!selectedStateId && <FormDescription className="text-xs">Selecione um estado para ver as cidades.</FormDescription>}
+                          {selectedStateId && filteredCities.length === 0 && <FormDescription className="text-xs">Nenhuma cidade cadastrada para este estado.</FormDescription>}
+                          <FormMessage />
+                      </FormItem>
+                      )}
+                  />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="imageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL da Imagem Principal (Opcional)</FormLabel>
+                    <FormControl><Input type="url" placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl>
+                    <FormDescription>Esta será a imagem de capa do lote.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="space-y-2">
+                <FormLabel>Galeria de Imagens do Lote</FormLabel>
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2 border rounded-md min-h-[80px]">
+                  {selectedMediaForGallery.map((item, index) => (
+                    <div key={item.id || `gallery-preview-${index}`} className="relative aspect-square bg-muted rounded overflow-hidden">
+                      <Image src={item.urlOriginal || 'https://placehold.co/100x100.png'} alt={item.title || `Imagem ${index + 1}`} fill className="object-cover" data-ai-hint={item.dataAiHint || "miniatura galeria lote"} />
+                      <Button 
+                        type="button" 
+                        size="icon" 
+                        variant="destructive" 
+                        className="absolute top-1 right-1 h-6 w-6 opacity-80 hover:opacity-100 p-0" 
+                        onClick={() => handleRemoveFromGallery(item.id)}
+                        title="Remover da galeria do lote"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                  {selectedMediaForGallery.length < 10 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="aspect-square flex flex-col items-center justify-center text-muted-foreground hover:text-primary h-full"
+                      onClick={() => setIsMediaDialogOpen(true)}
+                    >
+                      <ImagePlus className="h-6 w-6 mb-1" />
+                      <span className="text-xs">Adicionar</span>
+                    </Button>
+                  )}
+                </div>
+                <FormDescription>Adicione mais imagens para este lote clicando em "Adicionar".</FormDescription>
+                {/* Campos ocultos para armazenar URLs e IDs de mídia, preenchidos pela seleção da biblioteca */}
+                <FormField control={form.control} name="galleryImageUrls" render={({ field }) => (<FormItem className="hidden"><FormControl><Input type="text" {...field} /></FormControl></FormItem>)} />
+                <FormField control={form.control} name="mediaItemIds" render={({ field }) => (<FormItem className="hidden"><FormControl><Input type="text" {...field} /></FormControl></FormItem>)} />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Data de Encerramento do Lote</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
                             variant={"outline"}
-                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                            >
+                            className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}
+                          >
                             {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha data e hora</span>}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
+                          </Button>
                         </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus />
-                         <div className="p-2 border-t">
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                        <div className="p-2 border-t">
                             <Input type="time" defaultValue={field.value ? format(field.value, "HH:mm") : "10:00"}
                             onChange={(e) => {
                                 const [hours, minutes] = e.target.value.split(':').map(Number);
                                 const newDate = field.value ? new Date(field.value) : new Date();
                                 newDate.setHours(hours, minutes);
                                 field.onChange(newDate);
-                            }}/>
+                            }} />
                         </div>
-                        </PopoverContent>
+                      </PopoverContent>
                     </Popover>
-                    <FormDescription>Data específica da primeira praça deste lote.</FormDescription>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="secondInitialPrice"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Lance Inicial 2ª Praça (Opcional)</FormLabel>
-                        <FormControl>
-                        <Input type="number" placeholder="Ex: 10000.00" {...field} value={field.value ?? ''} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-            </div>
-            <FormField
-            control={form.control}
-            name="secondAuctionDate"
-            render={({ field }) => (
-                <FormItem className="flex flex-col">
-                <FormLabel>Data 2ª Praça/Leilão (Opcional)</FormLabel>
-                <Popover>
-                    <PopoverTrigger asChild>
-                    <FormControl>
-                        <Button
-                        variant={"outline"}
-                        className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                        >
-                        {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha data e hora</span>}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                    </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus />
-                        <div className="p-2 border-t">
-                        <Input type="time" defaultValue={field.value ? format(field.value, "HH:mm") : "10:00"}
-                        onChange={(e) => {
-                            const [hours, minutes] = e.target.value.split(':').map(Number);
-                            const newDate = field.value ? new Date(field.value) : new Date();
-                            newDate.setHours(hours, minutes);
-                            field.onChange(newDate);
-                        }}/>
-                    </div>
-                    </PopoverContent>
-                </Popover>
-                <FormDescription>Data específica da segunda praça deste lote, se aplicável.</FormDescription>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-
-            <div className="grid md:grid-cols-2 gap-6">
-                <FormField
-                    control={form.control}
-                    name="views"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Visualizações (Opcional)</FormLabel>
-                        <FormControl>
-                        <Input type="number" placeholder="0" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="bidsCount"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Contagem de Lances (Opcional)</FormLabel>
-                        <FormControl>
-                        <Input type="number" placeholder="0" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-            </div>
-
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {submitButtonText}
-            </Button>
-          </CardFooter>
-        </form>
-      </Form>
-    </Card>
+              />
+              <div className="grid md:grid-cols-2 gap-6">
+                  <FormField
+                  control={form.control}
+                  name="lotSpecificAuctionDate"
+                  render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                      <FormLabel>Data 1ª Praça/Leilão (Opcional)</FormLabel>
+                      <Popover>
+                          <PopoverTrigger asChild>
+                          <FormControl>
+                              <Button
+                              variant={"outline"}
+                              className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                              >
+                              {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha data e hora</span>}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                          </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus />
+                          <div className="p-2 border-t">
+                              <Input type="time" defaultValue={field.value ? format(field.value, "HH:mm") : "10:00"}
+                              onChange={(e) => {
+                                  const [hours, minutes] = e.target.value.split(':').map(Number);
+                                  const newDate = field.value ? new Date(field.value) : new Date();
+                                  newDate.setHours(hours, minutes);
+                                  field.onChange(newDate);
+                              }}/>
+                          </div>
+                          </PopoverContent>
+                      </Popover>
+                      <FormDescription>Data específica da primeira praça deste lote.</FormDescription>
+                      <FormMessage />
+                      </FormItem>
+                  )}
+                  />
+                  <FormField
+                      control={form.control}
+                      name="secondInitialPrice"
+                      render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Lance Inicial 2ª Praça (Opcional)</FormLabel>
+                          <FormControl>
+                          <Input type="number" placeholder="Ex: 10000.00" {...field} value={field.value ?? ''} />
+                          </FormControl>
+                          <FormMessage />
+                      </FormItem>
+                      )}
+                  />
+              </div>
+              <FormField
+              control={form.control}
+              name="secondAuctionDate"
+              render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                  <FormLabel>Data 2ª Praça/Leilão (Opcional)</FormLabel>
+                  <Popover>
+                      <PopoverTrigger asChild>
+                      <FormControl>
+                          <Button
+                          variant={"outline"}
+                          className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                          >
+                          {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha data e hora</span>}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                      </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus />
+                          <div className="p-2 border-t">
+                          <Input type="time" defaultValue={field.value ? format(field.value, "HH:mm") : "10:00"}
+                          onChange={(e) => {
+                              const [hours, minutes] = e.target.value.split(':').map(Number);
+                              const newDate = field.value ? new Date(field.value) : new Date();
+                              newDate.setHours(hours, minutes);
+                              field.onChange(newDate);
+                          }}/>
+                      </div>
+                      </PopoverContent>
+                  </Popover>
+                  <FormDescription>Data específica da segunda praça deste lote, se aplicável.</FormDescription>
+                  <FormMessage />
+                  </FormItem>
+              )}
+              />
+              <div className="grid md:grid-cols-2 gap-6">
+                  <FormField
+                      control={form.control}
+                      name="views"
+                      render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Visualizações (Opcional)</FormLabel>
+                          <FormControl>
+                          <Input type="number" placeholder="0" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                      </FormItem>
+                      )}
+                  />
+                  <FormField
+                      control={form.control}
+                      name="bidsCount"
+                      render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Contagem de Lances (Opcional)</FormLabel>
+                          <FormControl>
+                          <Input type="number" placeholder="0" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                      </FormItem>
+                      )}
+                  />
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                {submitButtonText}
+              </Button>
+            </CardFooter>
+          </form>
+        </Form>
+      </Card>
+      
+      <ChooseMediaDialog 
+        isOpen={isMediaDialogOpen}
+        onOpenChange={setIsMediaDialogOpen}
+        onMediaSelect={handleMediaSelectFromDialog}
+      />
+    </>
   );
 }
-
-    
