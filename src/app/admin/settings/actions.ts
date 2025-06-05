@@ -2,8 +2,16 @@
 'use server';
 
 import admin from 'firebase-admin';
-// Use require for Firestore functions to ensure compatibility with Turbopack/Next.js server environments
-const firestoreFunctions = require('firebase-admin/firestore');
+// Use CJS require and destructuring for Firestore functions
+const { 
+  getFirestore, 
+  doc, 
+  getDoc, 
+  setDoc, 
+  updateDoc, 
+  serverTimestamp,
+  Timestamp // Import Timestamp for type checking and direct use if needed
+} = require('firebase-admin/firestore');
 
 import { revalidatePath } from 'next/cache';
 import type { PlatformSettings, PlatformSettingsFormData } from '@/types';
@@ -17,14 +25,12 @@ let adminInitialized = false;
 function initializeAdminSDK() {
   if (adminInitialized) {
     if (!db) {
-        // This case should ideally not happen if adminInitialized is true
-        console.warn("Admin SDK was marked initialized but Firestore DB instance is missing. Re-initializing.");
+        console.warn("Admin SDK was marked initialized but Firestore DB instance is missing (settings/actions). Attempting to re-obtain.");
         try {
-            db = firestoreFunctions.getFirestore();
+            db = getFirestore(); // Uses destructured getFirestore
             console.log("Re-obtained Firestore Admin DB instance (settings/actions).");
         } catch (e:any) {
-            console.error("Failed to re-obtain Firestore Admin DB instance after re-check:", e.message);
-            // Consider re-throwing or handling more gracefully if this state is critical
+            console.error("Failed to re-obtain Firestore Admin DB instance after re-check (settings/actions):", e.message);
         }
     }
     return;
@@ -33,7 +39,6 @@ function initializeAdminSDK() {
   if (admin.apps.length === 0) {
     console.log("Attempting to initialize Firebase Admin SDK (settings/actions)...");
     try {
-      // Attempt 1: GOOGLE_APPLICATION_CREDENTIALS (preferred for deployed environments)
       admin.initializeApp();
       console.log("Firebase Admin SDK initialized using GOOGLE_APPLICATION_CREDENTIALS (settings/actions).");
       adminInitialized = true;
@@ -56,49 +61,46 @@ function initializeAdminSDK() {
         } else {
           console.warn("FIREBASE_ADMIN_SDK_PATH not set. Admin SDK not initialized (settings/actions).");
         }
-      } else if (error.code !== 'app/app-already-exists') { // Should not happen if admin.apps.length === 0
+      } else if (error.code !== 'app/app-already-exists') {
         console.error("Falha desconhecida ao inicializar Firebase Admin SDK (settings/actions).", error);
       } else {
-         // Already initialized by another import, which is fine.
-         console.log("Firebase Admin SDK already initialized (settings/actions).");
+         console.log("Firebase Admin SDK already initialized by a previous call (settings/actions).");
          adminInitialized = true;
       }
     }
   } else {
-    console.log("Firebase Admin SDK already initialized by a previous call (settings/actions).");
+    console.log("Firebase Admin SDK already initialized (settings/actions).");
     adminInitialized = true;
   }
 
   if (adminInitialized) {
     try {
-        db = firestoreFunctions.getFirestore();
+        db = getFirestore(); // Uses destructured getFirestore
         console.log("Firestore Admin DB instance obtained (settings/actions).");
     } catch (e: any) {
-        console.error("Failed to obtain Firestore Admin DB instance even after SDK initialization:", e.message);
-        adminInitialized = false; // Mark as not truly initialized if db fails
+        console.error("Failed to obtain Firestore Admin DB instance even after SDK initialization (settings/actions):", e.message);
+        adminInitialized = false; 
     }
   }
 
   if (!adminInitialized || !db) {
-    const errorMessage = "Firebase Admin SDK or Firestore DB could not be initialized. Platform settings operations will likely fail. Check server logs for details on credential errors (GOOGLE_APPLICATION_CREDENTIALS or FIREBASE_ADMIN_SDK_PATH).";
+    const errorMessage = "CRITICAL: Firebase Admin SDK or Firestore DB could not be initialized in settings/actions.ts. Platform settings operations WILL FAIL. Check server logs for credential errors (GOOGLE_APPLICATION_CREDENTIALS or FIREBASE_ADMIN_SDK_PATH).";
     console.error(errorMessage);
-    // Not throwing here to allow the app to potentially run other parts,
-    // but functions below will check `db` and fail gracefully.
+    throw new Error(errorMessage);
   }
 }
 
-initializeAdminSDK(); // Call it once when the module loads
+initializeAdminSDK();
 
 const SETTINGS_COLLECTION = 'platformSettings';
 const GLOBAL_SETTINGS_DOC_ID = 'global';
 
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date();
-  if (timestampField instanceof admin.firestore.Timestamp || 
-      (timestampField && typeof timestampField.toDate === 'function')) { // Check for Firestore Timestamp specifically for admin SDK
+  if (timestampField instanceof Timestamp || (timestampField && typeof timestampField.toDate === 'function')) {
     return timestampField.toDate();
   }
-  // Handle cases where it might already be a Date or a string/number representation
+  if (timestampField instanceof Date) return timestampField;
   if (typeof timestampField === 'object' && timestampField !== null &&
       (typeof timestampField.seconds === 'number' || typeof (timestampField as any)._seconds === 'number') && 
       (typeof timestampField.nanoseconds === 'number' || typeof (timestampField as any)._nanoseconds === 'number')
@@ -107,13 +109,11 @@ function safeConvertToDate(timestampField: any): Date {
     const nanoseconds = typeof timestampField.nanoseconds === 'number' ? timestampField.nanoseconds : (timestampField as any)._nanoseconds;
     return new Date(seconds * 1000 + nanoseconds / 1000000);
   }
-  if (timestampField instanceof Date) return timestampField;
   const parsedDate = new Date(timestampField);
   if (!isNaN(parsedDate.getTime())) return parsedDate;
   console.warn(`Could not convert platform settings timestamp: ${JSON.stringify(timestampField)}. Returning current date.`);
   return new Date();
 }
-
 
 const defaultSettings: Omit<PlatformSettings, 'id' | 'updatedAt'> = {
   galleryImageBasePath: '/media/gallery/',
@@ -125,8 +125,9 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
     return { id: GLOBAL_SETTINGS_DOC_ID, ...defaultSettings, updatedAt: new Date() };
   }
   try {
-    const settingsDocRef = db.collection(SETTINGS_COLLECTION).doc(GLOBAL_SETTINGS_DOC_ID);
-    const docSnap = await firestoreFunctions.getDoc(settingsDocRef);
+    // doc and getDoc are now from the CJS require and destructured
+    const settingsDocRef = doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
+    const docSnap = await getDoc(settingsDocRef);
 
     if (docSnap.exists()) {
       const data = docSnap.data();
@@ -143,9 +144,9 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
       console.log('No global settings found, creating with defaults (settings/actions).');
       const initialSettingsForFirestore = {
         ...defaultSettings,
-        updatedAt: firestoreFunctions.serverTimestamp(), 
+        updatedAt: serverTimestamp(), // Uses destructured serverTimestamp
       };
-      await firestoreFunctions.setDoc(settingsDocRef, initialSettingsForFirestore);
+      await setDoc(settingsDocRef, initialSettingsForFirestore); // Uses destructured setDoc
       return {
         id: GLOBAL_SETTINGS_DOC_ID,
         ...defaultSettings,
@@ -173,18 +174,19 @@ export async function updatePlatformSettings(
   }
 
   try {
-    const settingsDocRef = db.collection(SETTINGS_COLLECTION).doc(GLOBAL_SETTINGS_DOC_ID);
+    // doc is now from the CJS require and destructured
+    const settingsDocRef = doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
     
     const updateData: Partial<Omit<PlatformSettings, 'id'>> = {
       galleryImageBasePath: data.galleryImageBasePath,
-      updatedAt: firestoreFunctions.serverTimestamp(),
+      updatedAt: serverTimestamp(), // Uses destructured serverTimestamp
     };
 
-    const docSnap = await firestoreFunctions.getDoc(settingsDocRef);
+    const docSnap = await getDoc(settingsDocRef); // Uses destructured getDoc
     if (docSnap.exists()) {
-        await firestoreFunctions.updateDoc(settingsDocRef, updateData);
+        await updateDoc(settingsDocRef, updateData); // Uses destructured updateDoc
     } else {
-        await firestoreFunctions.setDoc(settingsDocRef, updateData, { merge: true });
+        await setDoc(settingsDocRef, updateData, { merge: true }); // Uses destructured setDoc
     }
 
     revalidatePath('/admin/settings');
@@ -197,5 +199,3 @@ export async function updatePlatformSettings(
     return { success: false, message: (error as Error).message || 'Falha ao atualizar configurações da plataforma.' };
   }
 }
-
-    
