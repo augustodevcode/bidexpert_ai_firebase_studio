@@ -4,14 +4,15 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getMediaItems, deleteMediaItem } from './actions'; // handleImageUpload removido daqui
+import { getMediaItems, deleteMediaItem } from './actions'; 
 import type { MediaItem } from '@/types';
-import { UploadCloud, Filter, Edit2, Trash2, AlertTriangle, Loader2, ImageIcon as LibraryIcon, List, LayoutGrid, FileText } from 'lucide-react'; // Adicionado List e LayoutGrid, ImageIcon renomeado para LibraryIcon
+import { UploadCloud, Filter, Edit2, Trash2, AlertTriangle, Loader2, ImageIcon as LibraryIcon, List, LayoutGrid, FileText, ChevronDown } from 'lucide-react'; // Adicionado ChevronDown
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Input } from '@/components/ui/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'; // Adicionado SelectItem
 import { useEffect, useState } from 'react';
 import {
   AlertDialog,
@@ -35,7 +36,7 @@ export default function MediaLibraryPage() {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table'); // 'table' ou 'grid'
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table'); 
 
   const fetchItems = async () => {
     setIsLoading(true);
@@ -63,7 +64,7 @@ export default function MediaLibraryPage() {
       variant: result.success ? 'default' : 'destructive',
     });
     if (result.success) {
-      fetchItems(); // Refresh the list
+      fetchItems(); 
     }
   };
 
@@ -255,7 +256,7 @@ export default function MediaLibraryPage() {
                   </TableBody>
                 </Table>
               </div>
-            ) : ( // Grid view
+            ) : ( 
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                 {mediaItems.map((item) => (
                   <Card key={item.id} className="overflow-hidden group relative">
@@ -341,3 +342,4 @@ export default function MediaLibraryPage() {
     </TooltipProvider>
   );
 }
+
