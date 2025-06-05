@@ -3,48 +3,45 @@
 
 import { revalidatePath } from 'next/cache';
 import admin from 'firebase-admin';
-// Corrigido: Importar TODAS as funções necessárias de firebase-admin/firestore
-import { 
-  getFirestore, 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  serverTimestamp 
-} from 'firebase-admin/firestore';
+// Alterado para importação de namespace
+import * as firestore from 'firebase-admin/firestore';
 import type { PlatformSettings, PlatformSettingsFormData } from '@/types';
-import { config } from 'dotenv'; 
+import { config } from 'dotenv';
 
-config(); 
+config();
 
 // --- INÍCIO: Lógica de Inicialização do Firebase Admin SDK ---
-if (admin.apps.length === 0) { 
+if (admin.apps.length === 0) {
   try {
+    // Tenta inicializar com GOOGLE_APPLICATION_CREDENTIALS se estiver definida
     admin.initializeApp();
     console.log("Firebase Admin SDK inicializado usando GOOGLE_APPLICATION_CREDENTIALS (settings/actions).");
   } catch (error: any) {
+    // Se GOOGLE_APPLICATION_CREDENTIALS não estiver definida ou falhar, tenta com o caminho do .env
     const serviceAccountPath = process.env.FIREBASE_ADMIN_SDK_PATH;
     if (serviceAccountPath) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const serviceAccount = require(serviceAccountPath); 
+        const serviceAccount = require(serviceAccountPath);
         admin.initializeApp({
           credential: admin.credential.cert(serviceAccount),
         });
         console.log("Firebase Admin SDK inicializado usando FIREBASE_ADMIN_SDK_PATH (settings/actions).");
-      } catch (e: any) {
-        console.error("Falha ao inicializar Firebase Admin SDK com FIREBASE_ADMIN_SDK_PATH (settings/actions):", e.message);
+      } catch (e: any)        {
+        console.error("Falha ao inicializar Firebase Admin SDK com FIREBASE_ADMIN_SDK_PATH (settings/actions):", (e as Error).message);
+        // Não encerra o processo aqui, pode ser que o erro original fosse por outro motivo
       }
     } else if (error.code === 'app/no-app' && error.message.includes('GOOGLE_APPLICATION_CREDENTIALS')) {
+        // Este erro específico é comum se as credenciais não forem encontradas.
         console.warn("Firebase Admin SDK: GOOGLE_APPLICATION_CREDENTIALS não definida e FIREBASE_ADMIN_SDK_PATH não fornecida (settings/actions). As operações do Admin SDK provavelmente falharão.");
-    } else if (error.code !== 'app/app-already-exists') { 
+    } else if (error.code !== 'app/app-already-exists'){ // Não mostrar erro se já estiver inicializado por outro meio
       console.error("Falha ao inicializar Firebase Admin SDK (settings/actions). Verifique suas credenciais.", error);
     }
   }
 }
 // --- FIM: Lógica de Inicialização do Firebase Admin SDK ---
 
-const db = getFirestore(); // getFirestore() de firebase-admin/firestore
+const db = firestore.getFirestore(); // Usar firestore.getFirestore()
 
 const SETTINGS_COLLECTION = 'platformSettings';
 const GLOBAL_SETTINGS_DOC_ID = 'global';
@@ -52,54 +49,59 @@ const GLOBAL_SETTINGS_DOC_ID = 'global';
 // Helper function to safely convert Firestore Timestamp to Date
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date();
-  if (timestampField.toDate && typeof timestampField.toDate === 'function') {
-    return timestampField.toDate(); // Firestore Timestamp (tanto cliente quanto admin)
+  // Check for Firestore Timestamp object (admin SDK might return this directly)
+  if (timestampField instanceof firestore.Timestamp) {
+    return timestampField.toDate();
   }
-  if (timestampField instanceof Date) return timestampField;
-  // Para objetos Timestamps serializados (comuns em Server Components -> Client Components)
+  // Check for client-side Timestamp-like object (comum após serialização)
   if (typeof timestampField === 'object' && timestampField !== null &&
       typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
     return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000);
   }
-  const parsedDate = new Date(timestampField); // Tenta parsear se for string/number
-  if (!isNaN(parsedDate.getTime())) return parsedDate;
+  // Check if it's already a Date object
+  if (timestampField instanceof Date) {
+    return timestampField;
+  }
+  // Try to parse if it's a string or number that can be converted
+  const parsedDate = new Date(timestampField);
+  if (!isNaN(parsedDate.getTime())) {
+    return parsedDate;
+  }
   console.warn(`Could not convert platform settings timestamp to Date: ${JSON.stringify(timestampField)}. Returning current date.`);
   return new Date();
 }
 
 const defaultSettings: Omit<PlatformSettings, 'id' | 'updatedAt'> = {
-  galleryImageBasePath: '/media/gallery/', 
+  galleryImageBasePath: '/media/gallery/',
 };
 
 export async function getPlatformSettings(): Promise<PlatformSettings> {
   try {
-    const settingsDocRef = doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
-    const docSnap = await getDoc(settingsDocRef);
+    const settingsDocRef = firestore.doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
+    const docSnap = await firestore.getDoc(settingsDocRef);
 
     if (docSnap.exists()) {
-      const data = docSnap.data()!; // data() nunca será undefined se exists() for true
+      const data = docSnap.data()!;
       return {
         id: GLOBAL_SETTINGS_DOC_ID,
         galleryImageBasePath: data.galleryImageBasePath || defaultSettings.galleryImageBasePath,
-        updatedAt: safeConvertToDate(data.updatedAt), // safeConvertToDate lida com timestamp nulo ou undefined
+        updatedAt: safeConvertToDate(data.updatedAt),
       } as PlatformSettings;
     } else {
       console.log('No global settings found, creating with defaults (settings/actions).');
-      // Usar serverTimestamp() do Admin SDK para a criação inicial
       const initialSettingsForFirestore = {
         ...defaultSettings,
-        updatedAt: serverTimestamp(), 
+        updatedAt: firestore.serverTimestamp(),
       };
-      await setDoc(settingsDocRef, initialSettingsForFirestore);
+      await firestore.setDoc(settingsDocRef, initialSettingsForFirestore);
       return {
         id: GLOBAL_SETTINGS_DOC_ID,
         ...defaultSettings,
-        updatedAt: new Date(), // Para o retorno imediato, usamos new Date()
+        updatedAt: new Date(),
       };
     }
   } catch (error: any) {
     console.error("[Server Action - getPlatformSettings] Error:", error);
-    // Retornar defaults em caso de erro, mas logar.
     return {
       id: GLOBAL_SETTINGS_DOC_ID,
       ...defaultSettings,
@@ -116,29 +118,27 @@ export async function updatePlatformSettings(
   }
 
   try {
-    const settingsDocRef = doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
+    const settingsDocRef = firestore.doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
     
     const updateData: Partial<Omit<PlatformSettings, 'id'>> = {
       galleryImageBasePath: data.galleryImageBasePath,
-      updatedAt: serverTimestamp(), // Usar serverTimestamp() do Admin SDK
+      updatedAt: firestore.serverTimestamp() as any, // Cast to any for serverTimestamp type compatibility
     };
 
-    const docSnap = await getDoc(settingsDocRef); // Verificar se existe antes de update ou set
+    const docSnap = await firestore.getDoc(settingsDocRef);
     if (docSnap.exists()) {
-        await updateDoc(settingsDocRef, updateData);
+        await firestore.updateDoc(settingsDocRef, updateData);
     } else {
-        // Se não existir (improvável após getPlatformSettings, mas seguro), cria com set e merge.
-        await setDoc(settingsDocRef, updateData, { merge: true }); 
+        await firestore.setDoc(settingsDocRef, updateData, { merge: true });
     }
 
     revalidatePath('/admin/settings');
     return { success: true, message: 'Configurações da plataforma atualizadas com sucesso!' };
   } catch (error: any) {
     console.error("[Server Action - updatePlatformSettings] Error:", error);
-    if (error.code === 'permission-denied' || (error.message && error.message.includes('permission-denied'))) {
+    if ((error as any).code === 'permission-denied' || (error as Error).message?.includes('permission-denied')) {
         return { success: false, message: 'Erro de Permissão: Falha ao atualizar configurações. Verifique as permissões do Firebase Admin SDK (IAM) ou a configuração das credenciais no ambiente do servidor.' };
     }
-    return { success: false, message: error.message || 'Falha ao atualizar configurações da plataforma.' };
+    return { success: false, message: (error as Error).message || 'Falha ao atualizar configurações da plataforma.' };
   }
 }
-
