@@ -130,10 +130,10 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
           </div>
         </div>
         <div className="flex items-center space-x-2 flex-wrap justify-start sm:justify-end mt-2 sm:mt-0">
-          <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Imprimir</Button>
+          <Button variant="outline" size="icon" onClick={handlePrint} aria-label="Imprimir"><Printer className="h-4 w-4" /></Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm"><Share2 className="mr-2 h-4 w-4" /> Compartilhar</Button>
+              <Button variant="outline" size="icon" aria-label="Compartilhar"><Share2 className="h-4 w-4" /></Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem asChild>
@@ -158,8 +158,8 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/auctions/${auction.id}`}><ArrowLeft className="mr-2 h-4 w-4" /> Voltar para o leilão</Link>
+          <Button variant="outline" size="icon" asChild aria-label="Voltar para o leilão">
+            <Link href={`/auctions/${auction.id}`}><ArrowLeft className="h-4 w-4" /></Link>
           </Button>
         </div>
       </div>

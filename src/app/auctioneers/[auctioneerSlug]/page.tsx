@@ -147,9 +147,9 @@ export default function AuctioneerDetailsPage() {
 
   return (
     <div className="space-y-10 py-6">
-      <Button variant="outline" size="sm" asChild className="mb-4 print:hidden">
+      <Button variant="outline" size="icon" asChild className="mb-4 print:hidden" aria-label="Voltar para Leiloeiros">
         <Link href="/auctioneers">
-          <ChevronLeft className="mr-2 h-4 w-4" /> Voltar para Leiloeiros
+          <ChevronLeft className="h-4 w-4" />
         </Link>
       </Button>
 
