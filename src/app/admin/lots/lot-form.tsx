@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
 import type { Lot, LotStatus, LotCategory, Auction, StateInfo, CityInfo, MediaItem } from '@/types';
 import { Loader2, Save, CalendarIcon, Package, ImagePlus, UploadCloud, Trash2 } from 'lucide-react';
@@ -28,9 +28,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText } from '@/lib/sample-data';
+import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
 import Image from 'next/image';
-import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog'; // Import the dialog
+import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 
 interface LotFormProps {
   initialData?: Lot | null;
@@ -42,7 +42,7 @@ interface LotFormProps {
   formTitle: string;
   formDescription: string;
   submitButtonText: string;
-  defaultAuctionId?: string; 
+  defaultAuctionId?: string;
 }
 
 const lotStatusOptions: { value: LotStatus; label: string }[] = [
@@ -69,27 +69,28 @@ export default function LotForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [filteredCities, setFilteredCities] = React.useState<CityInfo[]>([]);
-  const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
   
+  const [mainImagePreviewUrl, setMainImagePreviewUrl] = React.useState<string | null>(initialData?.imageUrl || null);
+  const [isMainImageDialogOpen, setIsMainImageDialogOpen] = React.useState(false);
+  const [isGalleryDialogOpen, setIsGalleryDialogOpen] = React.useState(false);
+
   const [selectedMediaForGallery, setSelectedMediaForGallery] = React.useState<Partial<MediaItem>[]>(
-    (initialData?.galleryImageUrls || []).map((url, index) => ({ 
+    (initialData?.galleryImageUrls || [])
+    .map((url, index) => ({ 
         id: initialData?.mediaItemIds?.[index] || `initial-gallery-${index}`, 
         urlOriginal: url, 
         title: `Imagem da Galeria ${index + 1}` 
     }))
     .concat(
         (initialData?.mediaItemIds || [])
-        .filter(id => !(initialData?.galleryImageUrls || []).includes(initialData?.mediaItemIds?.find(mId => mId ===id) as string)) // Basic check to avoid duplicating based on URL match
+        .filter(id => !(initialData?.galleryImageUrls || []).includes(initialData?.mediaItemIds?.find(mId => mId ===id) as string)) 
         .map((id, index) => ({
             id: id,
-            // Attempt to find matching URL from initialData.galleryImageUrls if it makes sense,
-            // otherwise it implies this MediaItem was linked but its URL wasn't in galleryImageUrls directly
             urlOriginal: initialData?.galleryImageUrls?.find((_, i) => initialData?.mediaItemIds?.[i] === id) || `https://placehold.co/100x100.png?text=ID:${id.substring(0,4)}`,
             title: `Item de Mídia ${id.substring(0,4)}`
         }))
     )
   );
-
 
   const form = useForm<LotFormValues>({
     resolver: zodResolver(lotFormSchema),
@@ -105,8 +106,8 @@ export default function LotForm({
       cityId: initialData?.cityId || undefined,
       type: initialData?.type || '',
       imageUrl: initialData?.imageUrl || '',
-      galleryImageUrls: initialData?.galleryImageUrls || [], // Initialize here
-      mediaItemIds: initialData?.mediaItemIds || [], 
+      galleryImageUrls: initialData?.galleryImageUrls || [],
+      mediaItemIds: initialData?.mediaItemIds || [],
       endDate: initialData?.endDate ? new Date(initialData.endDate) : new Date(),
       lotSpecificAuctionDate: initialData?.lotSpecificAuctionDate ? new Date(initialData.lotSpecificAuctionDate) : null,
       secondAuctionDate: initialData?.secondAuctionDate ? new Date(initialData.secondAuctionDate) : null,
@@ -146,24 +147,37 @@ export default function LotForm({
       setFilteredCities(allCities.filter(city => city.stateId === initialData.stateId));
     }
   }, [initialData?.stateId, allCities]);
-
+  
   React.useEffect(() => {
+    // Sync selectedMediaForGallery with form fields for gallery
     form.setValue('galleryImageUrls', selectedMediaForGallery.map(item => item.urlOriginal || '').filter(Boolean));
     form.setValue('mediaItemIds', selectedMediaForGallery.map(item => item.id || '').filter(Boolean));
   }, [selectedMediaForGallery, form]);
 
 
-  const handleMediaSelectFromDialog = (newlySelectedItems: Partial<MediaItem>[]) => {
+  const handleSelectMainImageFromDialog = (selectedItems: Partial<MediaItem>[]) => {
+    if (selectedItems.length > 0) {
+      const selectedMediaItem = selectedItems[0];
+      if (selectedMediaItem.urlOriginal) {
+        setMainImagePreviewUrl(selectedMediaItem.urlOriginal);
+        form.setValue('imageUrl', selectedMediaItem.urlOriginal); // Update the hidden form field
+      } else {
+          toast({ title: "Seleção Inválida", description: "O item de mídia selecionado não possui uma URL válida.", variant: "destructive"});
+      }
+    }
+  };
+
+  const handleSelectMediaForGallery = (newlySelectedItems: Partial<MediaItem>[]) => {
     const currentMediaMap = new Map(selectedMediaForGallery.map(item => [item.id, item]));
     newlySelectedItems.forEach(newItem => {
-      if (newItem.id) { // Only add if item has an ID
+      if (newItem.id) {
         currentMediaMap.set(newItem.id, newItem);
       }
     });
     setSelectedMediaForGallery(Array.from(currentMediaMap.values()));
     toast({
-        title: "Mídia Selecionada",
-        description: `${newlySelectedItems.length} item(ns) processado(s) para a galeria do lote.`
+        title: "Mídia Adicionada à Galeria",
+        description: `${newlySelectedItems.length} item(ns) adicionado(s) à galeria do lote.`
     });
   };
 
@@ -175,11 +189,14 @@ export default function LotForm({
   async function onSubmit(values: LotFormValues) {
     setIsSubmitting(true);
     try {
-      const dataToSubmit = {
+      // Ensure values from state are up-to-date in the form values before submission
+      const dataToSubmit: LotFormValues = {
         ...values,
-        mediaItemIds: selectedMediaForGallery.map(item => item.id || '').filter(Boolean),
+        imageUrl: mainImagePreviewUrl || values.imageUrl, // Prefer preview URL if set
         galleryImageUrls: selectedMediaForGallery.map(item => item.urlOriginal || '').filter(Boolean),
+        mediaItemIds: selectedMediaForGallery.map(item => item.id || '').filter(Boolean),
       };
+      
       const result = await onSubmitAction(dataToSubmit);
       if (result.success) {
         toast({
@@ -348,7 +365,7 @@ export default function LotForm({
                 />
                 <FormField
                   control={form.control}
-                  name="type" /* Categoria do Lote */
+                  name="type" 
                   render={({ field }) => (
                       <FormItem>
                       <FormLabel>Tipo/Categoria do Lote</FormLabel>
@@ -438,19 +455,49 @@ export default function LotForm({
                       )}
                   />
               </div>
-
-              <FormField
-                control={form.control}
-                name="imageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>URL da Imagem Principal (Opcional)</FormLabel>
-                    <FormControl><Input type="url" placeholder="https://exemplo.com/imagem.jpg" {...field} /></FormControl>
-                    <FormDescription>Esta será a imagem de capa do lote.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              
+              {/* Main Image Selection - NO VISIBLE TEXT INPUT */}
+              <FormItem>
+                <FormLabel>Imagem Principal do Lote</FormLabel>
+                <Card className="mt-2">
+                  <CardContent className="p-4 flex flex-col items-center gap-3">
+                    <div className="relative w-full aspect-video bg-muted rounded-md overflow-hidden max-w-md mx-auto">
+                      {mainImagePreviewUrl ? (
+                        <Image
+                          src={mainImagePreviewUrl}
+                          alt="Prévia da Imagem Principal"
+                          fill
+                          className="object-contain"
+                          data-ai-hint="previa imagem principal"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                          <ImagePlus className="h-12 w-12 mb-2" />
+                          <span>Nenhuma imagem selecionada</span>
+                        </div>
+                      )}
+                    </div>
+                    <Button type="button" variant="outline" onClick={() => setIsMainImageDialogOpen(true)}>
+                      <ImagePlus className="mr-2 h-4 w-4" />
+                      {mainImagePreviewUrl ? "Alterar Imagem Principal" : "Escolher Imagem Principal"}
+                    </Button>
+                  </CardContent>
+                </Card>
+                {/* Hidden input to store the actual imageUrl for the form, managed by react-hook-form */}
+                <FormField
+                  control={form.control}
+                  name="imageUrl"
+                  render={({ field }) => (
+                    <FormItem className="hidden"> 
+                      <FormControl>
+                        <Input type="text" {...field} />
+                      </FormControl>
+                      <FormMessage /> 
+                    </FormItem>
+                  )}
+                />
+                <FormDescription>Selecione a imagem de capa para este lote.</FormDescription>
+              </FormItem>
 
               <div className="space-y-2">
                 <FormLabel>Galeria de Imagens do Lote</FormLabel>
@@ -475,16 +522,21 @@ export default function LotForm({
                       type="button"
                       variant="outline"
                       className="aspect-square flex flex-col items-center justify-center text-muted-foreground hover:text-primary h-full"
-                      onClick={() => setIsMediaDialogOpen(true)}
+                      onClick={() => setIsGalleryDialogOpen(true)}
                     >
                       <ImagePlus className="h-6 w-6 mb-1" />
                       <span className="text-xs">Adicionar</span>
                     </Button>
                   )}
                 </div>
-                <FormDescription>Adicione mais imagens para este lote clicando em "Adicionar".</FormDescription>
-                <FormField control={form.control} name="galleryImageUrls" render={({ field }) => (<FormItem className="hidden"><FormControl><Input type="text" {...field} value={Array.isArray(field.value) ? field.value.join(',') : ''} /></FormControl></FormItem>)} />
-                <FormField control={form.control} name="mediaItemIds" render={({ field }) => (<FormItem className="hidden"><FormControl><Input type="text" {...field} value={Array.isArray(field.value) ? field.value.join(',') : ''} /></FormControl></FormItem>)} />
+                <FormDescription>Adicione mais imagens para este lote clicando em "Adicionar". Máximo de 10 imagens.</FormDescription>
+                {/* Hidden inputs for gallery URLs and mediaItemIds, managed by react-hook-form */}
+                <FormField control={form.control} name="galleryImageUrls" render={({ field }) => (
+                    <FormItem className="hidden"><FormControl><Input type="text" {...field} value={Array.isArray(field.value) ? field.value.join(',') : ''} /></FormControl></FormItem>
+                )} />
+                <FormField control={form.control} name="mediaItemIds" render={({ field }) => (
+                    <FormItem className="hidden"><FormControl><Input type="text" {...field} value={Array.isArray(field.value) ? field.value.join(',') : ''} /></FormControl></FormItem>
+                )} />
               </div>
 
               <FormField
@@ -652,11 +704,17 @@ export default function LotForm({
       </Card>
       
       <ChooseMediaDialog 
-        isOpen={isMediaDialogOpen}
-        onOpenChange={setIsMediaDialogOpen}
-        onMediaSelect={handleMediaSelectFromDialog}
+        isOpen={isMainImageDialogOpen}
+        onOpenChange={setIsMainImageDialogOpen}
+        onMediaSelect={handleSelectMainImageFromDialog}
+      />
+      <ChooseMediaDialog 
+        isOpen={isGalleryDialogOpen}
+        onOpenChange={setIsGalleryDialogOpen}
+        onMediaSelect={handleSelectMediaForGallery}
       />
     </>
   );
 }
 
+    
