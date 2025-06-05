@@ -3,14 +3,23 @@
 
 import { revalidatePath } from 'next/cache';
 import admin from 'firebase-admin';
-// Alterado para importação de namespace
-import * as firestore from 'firebase-admin/firestore';
+// Use named imports for Firestore functions
+import { 
+  getFirestore, 
+  doc, 
+  getDoc, 
+  setDoc, 
+  updateDoc, 
+  serverTimestamp,
+  // FieldValue // Not used if serverTimestamp is used directly
+} from 'firebase-admin/firestore';
 import type { PlatformSettings, PlatformSettingsFormData } from '@/types';
 import { config } from 'dotenv';
 
 config();
 
 // --- INÍCIO: Lógica de Inicialização do Firebase Admin SDK ---
+// Esta lógica garante que o Admin SDK seja inicializado apenas uma vez.
 if (admin.apps.length === 0) {
   try {
     // Tenta inicializar com GOOGLE_APPLICATION_CREDENTIALS se estiver definida
@@ -41,7 +50,7 @@ if (admin.apps.length === 0) {
 }
 // --- FIM: Lógica de Inicialização do Firebase Admin SDK ---
 
-const db = firestore.getFirestore(); // Usar firestore.getFirestore()
+const db = getFirestore(); // Use a função importada para obter a instância do Firestore
 
 const SETTINGS_COLLECTION = 'platformSettings';
 const GLOBAL_SETTINGS_DOC_ID = 'global';
@@ -50,7 +59,7 @@ const GLOBAL_SETTINGS_DOC_ID = 'global';
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date();
   // Check for Firestore Timestamp object (admin SDK might return this directly)
-  if (timestampField instanceof firestore.Timestamp) {
+  if (timestampField instanceof admin.firestore.Timestamp) { // Use admin.firestore.Timestamp
     return timestampField.toDate();
   }
   // Check for client-side Timestamp-like object (comum após serialização)
@@ -77,31 +86,32 @@ const defaultSettings: Omit<PlatformSettings, 'id' | 'updatedAt'> = {
 
 export async function getPlatformSettings(): Promise<PlatformSettings> {
   try {
-    const settingsDocRef = firestore.doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
-    const docSnap = await firestore.getDoc(settingsDocRef);
+    const settingsDocRef = doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
+    const docSnap = await getDoc(settingsDocRef);
 
     if (docSnap.exists()) {
       const data = docSnap.data()!;
       return {
         id: GLOBAL_SETTINGS_DOC_ID,
         galleryImageBasePath: data.galleryImageBasePath || defaultSettings.galleryImageBasePath,
-        updatedAt: safeConvertToDate(data.updatedAt),
+        updatedAt: safeConvertToDate(data.updatedAt), // Use o helper para updatedAt
       } as PlatformSettings;
     } else {
       console.log('No global settings found, creating with defaults (settings/actions).');
       const initialSettingsForFirestore = {
         ...defaultSettings,
-        updatedAt: firestore.serverTimestamp(),
+        updatedAt: serverTimestamp(), // Use a função importada
       };
-      await firestore.setDoc(settingsDocRef, initialSettingsForFirestore);
+      await setDoc(settingsDocRef, initialSettingsForFirestore);
       return {
         id: GLOBAL_SETTINGS_DOC_ID,
         ...defaultSettings,
-        updatedAt: new Date(),
+        updatedAt: new Date(), // Representação imediata, Firestore terá o serverTimestamp
       };
     }
   } catch (error: any) {
     console.error("[Server Action - getPlatformSettings] Error:", error);
+    // No caso de erro, retorne os padrões para que a UI não quebre completamente
     return {
       id: GLOBAL_SETTINGS_DOC_ID,
       ...defaultSettings,
@@ -118,18 +128,19 @@ export async function updatePlatformSettings(
   }
 
   try {
-    const settingsDocRef = firestore.doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
+    const settingsDocRef = doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
     
     const updateData: Partial<Omit<PlatformSettings, 'id'>> = {
       galleryImageBasePath: data.galleryImageBasePath,
-      updatedAt: firestore.serverTimestamp() as any, // Cast to any for serverTimestamp type compatibility
+      updatedAt: serverTimestamp(), // Use a função importada
     };
 
-    const docSnap = await firestore.getDoc(settingsDocRef);
+    const docSnap = await getDoc(settingsDocRef);
     if (docSnap.exists()) {
-        await firestore.updateDoc(settingsDocRef, updateData);
+        await updateDoc(settingsDocRef, updateData);
     } else {
-        await firestore.setDoc(settingsDocRef, updateData, { merge: true });
+        // Se não existir, criamos com setDoc (merge: true é o comportamento padrão se o documento não existe)
+        await setDoc(settingsDocRef, updateData, { merge: true });
     }
 
     revalidatePath('/admin/settings');
