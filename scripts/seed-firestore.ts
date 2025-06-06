@@ -1,6 +1,6 @@
 
 import admin from 'firebase-admin';
-import { FieldValue, Timestamp } from 'firebase-admin/firestore'; // Import Timestamp
+import { FieldValue, Timestamp } from 'firebase-admin/firestore'; 
 import { config } from 'dotenv'; 
 config(); 
 
@@ -13,7 +13,7 @@ try {
   }
 } catch (error: any) {
   const serviceAccountPath = process.env.FIREBASE_ADMIN_SDK_PATH;
-  if (serviceAccountPath && admin.apps.length === 0) { // Verifica se já não foi inicializado
+  if (serviceAccountPath && admin.apps.length === 0) { 
     try {
       const serviceAccount = require(serviceAccountPath);
       admin.initializeApp({
@@ -48,10 +48,11 @@ const predefinedPermissions = [
   'cities:create', 'cities:read', 'cities:update', 'cities:delete',
   'auctioneers:create', 'auctioneers:read', 'auctioneers:update', 'auctioneers:delete',
   'sellers:create', 'sellers:read', 'sellers:update', 'sellers:delete',
-  'auctions:create', 'auctions:read', 'auctions:update', 'auctions:delete', 'auctions:publish', 'auctions:manage_own', 'auctions:manage_assigned',
-  'lots:create', 'lots:read', 'lots:update', 'lots:delete', 'lots:manage_own',
+  'auctions:create', 'auctions:read', 'auctions:update', 'auctions:delete', 'auctions:publish', 
+  'auctions:manage_own', 'auctions:manage_assigned', 'auctions:read_public',
+  'lots:create', 'lots:read', 'lots:update', 'lots:delete', 'lots:manage_own', 'lots:read_public',
   'media:upload', 'media:read', 'media:update', 'media:delete',
-  'users:create', 'users:read', 'users:update', 'users:delete', 'users:assign_roles',
+  'users:create', 'users:read', 'users:update', 'users:delete', 'users:assign_roles', 'users:manage_habilitation',
   'roles:create', 'roles:read', 'roles:update', 'roles:delete',
   'settings:read', 'settings:update',
   'view_auctions', 'view_lots', 'place_bids', 'view_reports', 'conduct_auctions'
@@ -59,9 +60,37 @@ const predefinedPermissions = [
 
 const defaultRoles = [
   { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
-  { name: 'USER', description: 'Usuário padrão com permissões de visualização e lance.', permissions: ['view_auctions', 'view_lots', 'place_bids'] },
-  { name: 'CONSIGNOR', description: 'Comitente com permissão para gerenciar seus próprios leilões e lotes.', permissions: ['manage_own_auctions', 'manage_own_lots', 'view_reports', 'media:upload', 'media:read'] },
-  { name: 'AUCTIONEER', description: 'Leiloeiro com permissão para gerenciar leilões e conduzir pregões.', permissions: ['manage_assigned_auctions', 'conduct_auctions', 'media:upload', 'media:read'] },
+  { 
+    name: 'USER', 
+    description: 'Usuário padrão. Pode ver leilões e lotes. Precisa de habilitação para dar lances.', 
+    permissions: ['view_auctions', 'view_lots', 'place_bids'] // `place_bids` será condicionado ao habilitationStatus
+  },
+  { 
+    name: 'CONSIGNOR', 
+    description: 'Comitente com permissão para gerenciar seus próprios leilões e lotes.', 
+    permissions: ['auctions:manage_own', 'lots:manage_own', 'view_reports', 'media:upload', 'media:read'] 
+  },
+  { 
+    name: 'AUCTIONEER', 
+    description: 'Leiloeiro com permissão para gerenciar leilões e conduzir pregões.', 
+    permissions: ['auctions:manage_assigned', 'lots:read', 'lots:update', 'conduct_auctions', 'media:upload', 'media:read'] 
+  },
+  {
+    name: 'AUCTION_ANALYST',
+    description: 'Analista de Leilões com permissões para gerenciar cadastros e habilitação de usuários.',
+    permissions: [
+      'categories:create', 'categories:read', 'categories:update', 'categories:delete',
+      'states:create', 'states:read', 'states:update', 'states:delete',
+      'cities:create', 'cities:read', 'cities:update', 'cities:delete',
+      'auctioneers:read', 'auctioneers:update', 
+      'sellers:read', 'sellers:update', 
+      'auctions:read', 'auctions:update',
+      'lots:read', 'lots:update',
+      'users:read', 'users:manage_habilitation', 
+      'media:read',
+      'view_reports'
+    ]
+  }
 ];
 
 async function seedRoles() {
@@ -70,25 +99,27 @@ async function seedRoles() {
   for (const roleData of defaultRoles) {
     const roleNameNormalized = roleData.name.toUpperCase();
     const roleQuery = await rolesCollection.where('name_normalized', '==', roleNameNormalized).limit(1).get();
+    
+    const validPermissions = roleData.permissions.filter(p => predefinedPermissions.includes(p));
 
     if (roleQuery.empty) {
       await rolesCollection.add({
         ...roleData,
         name_normalized: roleNameNormalized,
-        permissions: roleData.permissions.filter(p => predefinedPermissions.includes(p)), // Ensure only valid permissions
+        permissions: validPermissions,
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
       });
-      console.log(`  Perfil "${roleData.name}" criado.`);
+      console.log(`  Perfil "${roleData.name}" criado com ${validPermissions.length} permissões válidas.`);
     } else {
       console.log(`  Perfil "${roleData.name}" já existe.`);
-      // Opcional: Atualizar permissões se necessário
       const roleDoc = roleQuery.docs[0];
       await roleDoc.ref.update({ 
-        permissions: roleData.permissions.filter(p => predefinedPermissions.includes(p)),
+        permissions: validPermissions,
+        description: roleData.description, // Ensure description is also updated
         updatedAt: FieldValue.serverTimestamp() 
       });
-      console.log(`    Permissões do perfil "${roleData.name}" atualizadas/verificadas.`);
+      console.log(`    Permissões e descrição do perfil "${roleData.name}" atualizadas/verificadas.`);
     }
   }
   console.log('Seed de Perfis Padrão concluído.');
@@ -97,12 +128,12 @@ async function seedRoles() {
 async function setupAdminUser() {
   console.log('Configurando usuário administrador principal...');
   const adminEmail = "augusto.devcode@gmail.com";
-  const adminUid = "zdGL4CALTfP0zTFRIt80nU1B6An1"; // UID obtido da imagem
+  const adminUid = "zdGL4CALTfP0zTFRIt80nU1B6An1"; 
   const adminFullName = "Augusto (Admin)";
 
   const adminRoleQuery = await db.collection('roles').where('name_normalized', '==', 'ADMINISTRATOR').limit(1).get();
   if (adminRoleQuery.empty) {
-    console.error('ERRO CRÍTICO: Perfil ADMINISTRATOR não encontrado ou não pôde ser criado. Execute seedRoles primeiro.');
+    console.error('ERRO CRÍTICO: Perfil ADMINISTRATOR não encontrado. Execute seedRoles primeiro ou verifique sua criação.');
     return;
   }
   const adminRoleDoc = adminRoleQuery.docs[0];
@@ -118,25 +149,26 @@ async function setupAdminUser() {
     roleId: adminRoleId,
     roleName: adminRoleName,
     status: 'ATIVO',
+    habilitationStatus: 'HABILITADO', // Admin deve estar habilitado por padrão
     updatedAt: FieldValue.serverTimestamp(),
   };
   
-  // Remover o campo 'role' se existir e for diferente de 'roleName'
-  if (userDoc.exists() && userDoc.data()?.role && userDoc.data()?.role !== 'roleName') {
+  if (userDoc.exists() && userDoc.data()?.role) {
     userProfileData.role = FieldValue.delete();
   }
-
 
   if (!userDoc.exists()) {
     userProfileData.createdAt = FieldValue.serverTimestamp();
     await userDocRef.set(userProfileData);
-    console.log(`  Documento do usuário administrador "${adminEmail}" criado com perfil ADMINISTRATOR.`);
+    console.log(`  Documento do usuário administrador "${adminEmail}" criado com perfil ADMINISTRATOR e habilitado.`);
   } else {
-    // Atualiza se o roleId ou roleName for diferente, ou se o campo 'role' antigo existir
     const currentData = userDoc.data();
-    if (currentData?.roleId !== adminRoleId || currentData?.roleName !== adminRoleName || currentData?.role) {
+    if (currentData?.roleId !== adminRoleId || 
+        currentData?.roleName !== adminRoleName || 
+        currentData?.habilitationStatus !== 'HABILITADO' ||
+        currentData?.role) {
       await userDocRef.update(userProfileData);
-      console.log(`  Documento do usuário administrador "${adminEmail}" atualizado com perfil ADMINISTRATOR.`);
+      console.log(`  Documento do usuário administrador "${adminEmail}" atualizado com perfil ADMINISTRATOR e habilitado.`);
     } else {
       console.log(`  Usuário administrador "${adminEmail}" já está configurado corretamente.`);
     }
@@ -166,8 +198,6 @@ async function seedStatesAndCities() {
           createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
         });
         console.log(`  Estado ${stateName} (ID: ${stateSlug}) adicionado.`);
-      } else {
-        // console.log(`  Estado ${stateName} (ID: ${stateSlug}) já existe.`);
       }
 
       const responseCities = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${stateUf}/municipios?orderBy=nome`);
@@ -176,14 +206,13 @@ async function seedStatesAndCities() {
         continue;
       }
       const citiesFromIBGE: IBGECity[] = await responseCities.json();
-      // console.log(`    ${citiesFromIBGE.length} municípios encontrados para ${stateName}.`);
-
+      
       let citiesAddedToThisStateCount = 0;
       for (const ibgeCity of citiesFromIBGE) {
         const cityName = ibgeCity.nome;
         const cityIbgeCode = ibgeCity.id.toString();
         const citySlug = slugify(cityName);
-        const cityDocId = `${stateSlug}-${citySlug}`;
+        const cityDocId = `${stateSlug}-${citySlug}`; 
         const cityRef = db.collection('cities').doc(cityDocId);
 
         const cityDoc = await cityRef.get();
@@ -193,14 +222,12 @@ async function seedStatesAndCities() {
             ibgeCode: cityIbgeCode, lotCount: 0,
             createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
           });
-          // console.log(`      Município ${cityName} adicionado a ${stateName}.`);
           citiesAddedToThisStateCount++;
         }
       }
-      // Atualizar contagem de cidades no estado
       if (citiesAddedToThisStateCount > 0 && stateDoc.exists()) {
         const currentCityCount = stateDoc.data()?.cityCount || 0;
-        if(currentCityCount === 0){ // Apenas atualiza se for 0 para não somar repetidamente
+        if(currentCityCount === 0){ 
             await stateRef.update({ cityCount: citiesAddedToThisStateCount, updatedAt: FieldValue.serverTimestamp() });
         }
       }
@@ -214,12 +241,10 @@ async function seedStatesAndCities() {
 async function main() {
   await seedRoles();
   await setupAdminUser();
-  await seedStatesAndCities(); // Mantém a função original
+  await seedStatesAndCities(); 
   console.log('Processo de Seed completo.');
 }
 
 main().catch(error => {
   console.error("Erro fatal no script de seed:", error);
 });
-
-    
