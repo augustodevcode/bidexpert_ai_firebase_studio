@@ -37,23 +37,33 @@ service cloud.firestore {
     // Roles Collection
     match /roles/{roleId} {
       allow read: if isSignedIn();
-      allow list: if isSignedIn(); // Considere restringir para admin no futuro
+      allow list: if isSignedIn();
 
-      // Admin pode criar qualquer perfil.
-      // Um email na lista de admin PODE CRIAR OS PERFIS PADRÃO durante o bootstrap.
       allow create: if isSignedIn() &&
                       (
                         isActualAdmin(request.auth.uid) ||
-                        (isDefaultRoleName(request.resource.data.name) && isAdminEmail())
+                        isAdminEmail() // Admin emails can bootstrap default roles
                       ) &&
+                      request.resource.data.name is string && request.resource.data.name.size() > 0 &&
                       request.resource.data.name_normalized == request.resource.data.name.upper() &&
-                      request.resource.data.keys().hasAll(['name', 'name_normalized', 'permissions', 'createdAt', 'updatedAt']);
-                      // A verificação de 'description' foi removida temporariamente para simplificar
+                      request.resource.data.permissions is list &&
+                      request.resource.data.createdAt == request.time &&
+                      request.resource.data.updatedAt == request.time &&
+                      (request.resource.data.description == null || request.resource.data.description is string) &&
+                      // Ensure only expected fields are present (name, name_normalized, permissions, createdAt, updatedAt, description)
+                      request.resource.data.keys().hasOnly(['name', 'name_normalized', 'description', 'permissions', 'createdAt', 'updatedAt']);
 
       allow update: if isSignedIn() && isActualAdmin(request.auth.uid) &&
+                      request.resource.data.name is string && request.resource.data.name.size() > 0 &&
                       request.resource.data.name_normalized == request.resource.data.name.upper() &&
-                      (!isDefaultRoleName(resource.data.name) || request.resource.data.name == resource.data.name) && // Prevent renaming default roles
-                      request.resource.data.keys().hasAll(['name', 'name_normalized', 'permissions', 'updatedAt']);
+                      (!isDefaultRoleName(resource.data.name) || request.resource.data.name == resource.data.name) && // Prevent renaming default roles away from their default name
+                      request.resource.data.permissions is list &&
+                      request.resource.data.updatedAt == request.time &&
+                      (request.resource.data.description == null || request.resource.data.description is string) &&
+                       // Allow only these fields to be updated, plus ensure no new fields are added that are not these
+                      request.resource.data.keys().hasOnly(['name', 'name_normalized', 'description', 'permissions', 'createdAt', 'updatedAt']) &&
+                      // Prevent modification of createdAt
+                      request.resource.data.createdAt == resource.data.createdAt;
 
 
       allow delete: if isSignedIn() && isActualAdmin(request.auth.uid) &&
@@ -65,37 +75,55 @@ service cloud.firestore {
       allow read, get: if isUser(userId) || isActualAdmin(request.auth.uid);
       allow list: if isActualAdmin(request.auth.uid);
 
-      // Usuário pode criar seu próprio perfil.
-      // Ao criar, não pode se auto-atribuir um perfil privilegiado, apenas "USER" ou nenhum.
       allow create: if isUser(userId) &&
                        request.resource.data.email == request.auth.token.email &&
                        (
-                         !('roleId' in request.resource.data.keys()) || // No roleId provided
-                         request.resource.data.roleId == null ||      // roleId is explicitly null
+                         !request.resource.data.keys().hasAny(['roleId', 'roleName']) ||
+                         request.resource.data.roleId == null ||
                          (
-                           request.resource.data.roleId is string &&  // roleId is a string
+                           request.resource.data.roleId is string &&
                            exists(/databases/$(database)/documents/roles/$(request.resource.data.roleId)) &&
                            get(/databases/$(database)/documents/roles/$(request.resource.data.roleId)).data.name == 'USER'
                          )
-                       );
+                       ) &&
+                       request.resource.data.keys().hasAll(['uid', 'email', 'fullName', 'status', 'createdAt', 'updatedAt']) &&
+                       (request.resource.data.optInMarketing == null || request.resource.data.optInMarketing is bool) &&
+                       (request.resource.data.roleId == null || request.resource.data.roleId is string) &&
+                       (request.resource.data.roleName == null || request.resource.data.roleName is string) &&
+                       // Allow other optional fields only if they are of correct type
+                       (request.resource.data.cpf == null || request.resource.data.cpf is string) &&
+                       (request.resource.data.dateOfBirth == null || request.resource.data.dateOfBirth is timestamp);
+                       // Add more optional fields here as needed
 
-      // Usuário pode atualizar seu próprio perfil (exceto roleId, roleName, status).
-      // Admin pode atualizar qualquer perfil.
-      // AdminEmail pode se auto-promover para ADMINISTRATOR durante o bootstrap.
-      allow update: if (
-                        isUser(userId) &&
-                        !request.resource.data.keys().hasAny(['roleId', 'roleName', 'status']) // User cannot change their own role or status
-                      ) ||
-                      isActualAdmin(request.auth.uid) || // An actual admin can update anything
-                      ( // Bootstrapping: An admin email can set THEIR OWN role to ADMINISTRATOR
+      allow update: if
+                      // 1. Admin email bootstrapping THEMSELVES to ADMINISTRATOR role
+                      (
                         isAdminEmail() && isUser(userId) &&
                         (resource.data.roleName == null || resource.data.roleName != 'ADMINISTRATOR') && // Only if not already admin
                         request.resource.data.roleName == 'ADMINISTRATOR' &&
-                        request.resource.data.keys().hasAll(['roleId', 'roleName', 'updatedAt']) // Must set these for bootstrap
-                        // Allow other fields like fullName, email, status to be set/updated during this bootstrap as well if the action does so
+                        request.resource.data.roleId is string && // roleId must be provided
+                        request.resource.data.updatedAt == request.time &&
+                        // Check that only allowed fields are being changed during this specific bootstrap
+                        request.resource.data.keys().hasAll(['roleId', 'roleName', 'updatedAt', 'uid', 'email', 'fullName', 'status', 'createdAt', 'optInMarketing']) && // Ensure basic fields are there if they exist
+                        (request.resource.data.size() <= 10) // Example size limit, adjust based on what ensureUserRole... writes
+                      ) ||
+                      // 2. An actual admin managing any user's roleId/roleName/status or other fields
+                      (
+                        isActualAdmin(request.auth.uid) &&
+                        (
+                          // Admin can change roleId, roleName, status, and other permitted fields
+                          request.resource.data.keys().hasAny(['roleId', 'roleName', 'status']) ||
+                          // Or admin is updating other fields that a normal user can update on themselves
+                          !request.resource.data.keys().hasAny(['uid', 'email', 'createdAt']) // uid, email, createdAt are immutable
+                        )
+                      ) ||
+                      // 3. User updating their own profile (but not roleId, roleName, status, uid, email, createdAt)
+                      (
+                        isUser(userId) &&
+                        !request.resource.data.keys().hasAny(['roleId', 'roleName', 'status', 'uid', 'email', 'createdAt'])
                       );
 
-      allow delete: if isActualAdmin(request.auth.uid);
+      allow delete: if isActualAdmin(request.auth.uid); // Only actual admins can delete user documents
     }
 
     // LotCategories Collection
@@ -130,7 +158,7 @@ service cloud.firestore {
     match /sellers/{sellerId} {
       allow read: if true;
       allow list: if true;
-      allow create: if isSignedIn() && isActualAdmin(request.auth.uid); // Simplificado por agora
+      allow create: if isSignedIn() && isActualAdmin(request.auth.uid);
       allow update: if isSignedIn() && (isActualAdmin(request.auth.uid) || (isUser(resource.data.userId) && !request.resource.data.keys().hasAny(['userId', 'roleId', 'roleName'])));
       allow delete: if isSignedIn() && isActualAdmin(request.auth.uid);
     }
@@ -152,10 +180,12 @@ service cloud.firestore {
     // MediaItems Collection
     match /mediaItems/{mediaItemId} {
       allow read: if true;
-      allow list: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && isActualAdmin(request.auth.uid); // Ou proprietário da mídia
-      allow delete: if isSignedIn() && isActualAdmin(request.auth.uid); // Ou proprietário
+      allow list: if isSignedIn(); // Allow authenticated users to list (e.g., for selection)
+      allow create: if isSignedIn(); // Allow any authenticated user to upload
+      allow update: if isSignedIn() && isActualAdmin(request.auth.uid); // Only admins can update metadata for now
+      allow delete: if isSignedIn() && isActualAdmin(request.auth.uid); // Only admins can delete for now
     }
   }
 }
+
+    
