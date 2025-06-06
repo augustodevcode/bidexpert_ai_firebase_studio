@@ -4,113 +4,119 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Regras para a coleção 'lotCategories' (exemplo de CRUD anterior)
+    // Helper function to get user's role data
+    function getUserRoleData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    // Helper function to get role permissions by roleId
+    function getRolePermissions(roleId) {
+      return get(/databases/$(database)/documents/roles/$(roleId)).data.permissions;
+    }
+
+    // Helper function to check if a user has a specific permission
+    function hasPermission(userId, permission) {
+      let userRoleData = getUserRoleData(userId);
+      let roleId = userRoleData.roleId;
+      if (roleId == null) {
+        return false;
+      }
+      let rolePermissions = getRolePermissions(roleId);
+      return permission in rolePermissions || 'manage_all' in rolePermissions;
+    }
+
+    // Roles Collection
+    match /roles/{roleId} {
+      allow read: if request.auth != null; // Any authenticated user can read roles (e.g., for admin UI to assign roles)
+      allow create, update, delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
+        // Create: Only admins can create new roles.
+        // Update: Only admins can update role details (name, description, permissions).
+        // Delete: Only admins can delete roles (consider preventing deletion of system roles like ADMIN/USER).
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow create: if request.auth != null && request.auth.uid == userId; // User can create their own profile document
+      allow read: if request.auth != null && (request.auth.uid == userId || getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR');
+        // User can read their own profile.
+        // Admin can read any user's profile.
+      allow update: if request.auth != null &&
+                       ( (request.auth.uid == userId && !(request.resource.data.diff(resource.data).affectedKeys().hasAny(['roleId', 'roleName', 'status']))) ||
+                         getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR'
+                       );
+        // User can update their own profile, EXCEPT for roleId, roleName, and status.
+        // Admin can update any field on any user's profile.
+      allow delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
+        // Only admins can delete user documents from Firestore. (Auth user deletion is separate).
+    }
+
+    // Lot Categories Collection
     match /lotCategories/{categoryId} {
-      allow read: if true; // Qualquer um pode ler categorias
-      // Apenas administradores autenticados (ou com um papel específico) devem escrever.
-      // TODO: Refinar com base em custom claims (ex: request.auth.token.role == 'admin')
-      allow create, update, delete: if request.auth != null;
+      allow read: if true; // Publicly readable
+      allow create, update, delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
     }
 
-    // Regras para a coleção 'states' (exemplo de CRUD anterior)
+    // States Collection
     match /states/{stateId} {
-      allow read: if true; // Qualquer um pode ler estados
-      // Apenas administradores autenticados devem escrever.
-      // TODO: Refinar com base em custom claims
-      allow create, update, delete: if request.auth != null;
+      allow read: if true; // Publicly readable
+      allow create, update, delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
     }
 
-    // Regras para a coleção 'cities' (exemplo de CRUD anterior)
+    // Cities Collection
     match /cities/{cityId} {
-      allow read: if true; // Qualquer um pode ler cidades
-      // Apenas administradores autenticados devem escrever.
-      // TODO: Refinar com base em custom claims
-      allow create, update, delete: if request.auth != null;
-    }
-
-    // Regras para a coleção 'auctioneers'
-    match /auctioneers/{auctioneerId} {
-      allow read: if true; // Qualquer um pode ler informações de leiloeiros
-      // Apenas administradores autenticados devem escrever.
-      // TODO: Refinar com base em custom claims
-      allow create, update, delete: if request.auth != null;
-    }
-
-    // Regras para a coleção 'sellers'
-    match /sellers/{sellerId} {
-      allow read: if true; // Qualquer um pode ler informações de comitentes
-      // Usuário pode criar seu próprio perfil de comitente se userId corresponder
-      // allow create: if request.auth.uid == request.resource.data.userId;
-      // Usuário pode atualizar seu próprio perfil de comitente
-      // allow update: if request.auth.uid == resource.data.userId;
-      // Apenas administradores autenticados devem criar, atualizar todos, ou deletar.
-      // TODO: Refinar com base em custom claims (ex: e permitir que comitentes editem seus próprios dados)
-      allow create, update, delete: if request.auth != null;
+      allow read: if true; // Publicly readable
+      allow create, update, delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
     }
     
-    // Regras para a coleção 'auctions'
+    // Auctioneers Collection
+    match /auctioneers/{auctioneerId} {
+      allow read: if true; // Publicly readable
+      allow create, update, delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
+    }
+
+    // Sellers Collection
+    match /sellers/{sellerId} {
+      allow read: if true; // Publicly readable
+      allow create, update, delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
+    }
+
+    // Auctions Collection
     match /auctions/{auctionId} {
-      allow read: if true; // Qualquer um pode ler leilões
-      // Apenas usuários autenticados (ou com papel específico) devem criar/editar/deletar.
-      // TODO: Refinar com base em custom claims (ex: request.auth.token.role == 'admin' || request.auth.token.role == 'auctioneer')
-      allow create, update, delete: if request.auth != null;
+      allow read: if true; // Publicly readable
+      // TODO: Refine write rules for auctioneers/sellers to manage their own/assigned auctions
+      allow create, update, delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
     }
 
-    // Regras para a coleção 'lots'
+    // Lots Collection
     match /lots/{lotId} {
-      allow read: if true; // Qualquer um pode ler lotes
-      // Apenas usuários autenticados (ou com papel específico) devem criar/editar/deletar.
-      // TODO: Refinar com base em custom claims
-      allow create, update, delete: if request.auth != null;
+      allow read: if true; // Publicly readable
+      // TODO: Refine write rules for auctioneers/sellers to manage their own/assigned lots
+      allow create, update, delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
     }
-
-    // Regras para a coleção 'mediaItems'
+    
+    // MediaItems Collection
     match /mediaItems/{mediaItemId} {
-      allow read: if request.auth != null; // Permitir leitura para usuários autenticados (ex: para selecionar na biblioteca)
-      // Apenas usuários autenticados (ou com papel específico, ex: admin, consignor) devem criar/editar/deletar.
-      // TODO: Refinar com base em custom claims
-      allow create, update, delete: if request.auth != null;
-    }
-
-    // --- NOVAS REGRAS ---
-
-    // Regras para a coleção 'roles' (Perfis de Usuário)
-    match /roles/{roleId} {
-      // Qualquer usuário autenticado pode ler os perfis (necessário para o admin atribuir e para o sistema verificar permissões)
-      allow read: if request.auth != null;
-      // APENAS administradores deveriam poder criar, atualizar ou deletar perfis.
-      // TODO: Alterar para if request.auth.token.role == 'ADMINISTRATOR' ou similar após a lógica de verificação de permissões ser implementada nas Server Actions.
-      // Por enquanto, para facilitar o desenvolvimento da interface admin:
-      allow create, update, delete: if request.auth != null;
-    }
-
-    // Regras para a coleção 'users' (Perfis de Usuário da Plataforma)
-    match /users/{userId} {
-      // Um usuário pode ler e atualizar seu próprio perfil.
-      allow read, update: if request.auth.uid == userId;
-      // Um usuário pode criar seu próprio documento de perfil (geralmente após o registro no Firebase Auth).
-      allow create: if request.auth.uid == userId;
-      
-      // Administradores também podem ler e atualizar perfis de usuários (ex: para atribuir um perfil).
-      // TODO: Alterar a parte de update para if request.auth.token.role == 'ADMINISTRATOR'
-      // Por enquanto, para facilitar o desenvolvimento da interface admin:
-      allow read, update: if request.auth != null; 
-                                  // (Regra de read acima já permite owner, esta expande para outros auth users)
-      
-      // APENAS administradores deveriam poder deletar perfis de usuários.
-      // TODO: Alterar para if request.auth.token.role == 'ADMINISTRATOR'
-      allow delete: if request.auth != null;
-    }
-
-    // Regras para a coleção 'platformSettings'
-    match /platformSettings/{settingsId} {
-      // Qualquer usuário autenticado pode ler as configurações globais (se necessário para o frontend)
+      // Read access for media items might depend on whether they are linked to public lots/auctions
+      // For now, allow authenticated read.
       allow read: if request.auth != null; 
-      // APENAS administradores deveriam poder escrever nas configurações globais.
-      // TODO: Alterar para if request.auth.token.role == 'ADMINISTRATOR'
-      // Por enquanto, para facilitar o desenvolvimento da interface admin, especialmente via Admin SDK:
-      allow write: if request.auth != null; 
+      // Write access generally for admins or specific roles (e.g., auctioneers for their lots)
+      allow create, update, delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
     }
 
+    // Platform Settings Collection
+    match /platformSettings/{settingsId} {
+        // Only admins should read or write platform settings
+        allow read, write: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
+    }
+
+    // TODO: Add rules for Bids, UserDocuments, etc. as those features are fully developed.
+    // Example for Bids (highly dependent on auction status and user role):
+    // match /bids/{bidId} {
+    //   allow create: if request.auth != null && 
+    //                   exists(/databases/$(database)/documents/lots/$(request.resource.data.lotId)) &&
+    //                   get(/databases/$(database)/documents/lots/$(request.resource.data.lotId)).data.status == 'ABERTO_PARA_LANCES';
+    //                   // Add more checks like user habilitation status
+    //   allow read: if request.auth != null && (request.auth.uid == resource.data.userId || hasPermission(request.auth.uid, 'bids:read_all'));
+    // }
   }
 }
