@@ -6,6 +6,8 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp, where, limit } from 'firebase/firestore';
 import type { Role, RoleFormData } from '@/types';
 import { slugify } from '@/lib/sample-data';
+import { predefinedPermissions } from './role-form-schema';
+
 
 // Helper function to safely convert Firestore Timestamp like objects or actual Timestamps to Date
 function safeConvertToDate(timestampField: any): Date {
@@ -43,11 +45,13 @@ export async function createRole(
       return { success: false, message: `O perfil com o nome "${data.name.trim()}" já existe.` };
     }
 
+    const validPermissions = (data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
+
     const newRoleData = {
       name: data.name.trim(),
       name_normalized: normalizedName,
       description: data.description?.trim() || '',
-      permissions: data.permissions || [],
+      permissions: validPermissions,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -110,6 +114,7 @@ export async function getRole(id: string): Promise<Role | null> {
 
 export async function getRoleByName(roleName: string): Promise<Role | null> {
   if (!roleName || roleName.trim() === '') {
+    console.warn(`[getRoleByName] Tentativa de buscar perfil com nome vazio ou nulo.`);
     return null;
   }
   const normalizedQueryName = roleName.trim().toUpperCase();
@@ -160,7 +165,10 @@ export async function updateRole(
 
     const systemRoles = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER', 'AUCTION_ANALYST'];
     if (systemRoles.includes(currentRoleData.name.toUpperCase()) && data.name && data.name.trim().toUpperCase() !== currentRoleData.name.toUpperCase()) {
-       console.warn(`[updateRole] Tentativa de renomear perfil de sistema "${currentRoleData.name}" para "${data.name}".`);
+       console.warn(`[updateRole] Tentativa de renomear perfil de sistema "${currentRoleData.name}" para "${data.name}". Ação bloqueada para nome, mas outras atualizações permitidas.`);
+       // Não bloquear a atualização de descrição ou permissões, mas o nome_normalized não deve mudar para perfis de sistema.
+       // Se for um perfil de sistema, forçar que o name_normalized não mude, mesmo que o nome de display mude.
+       // Isso é mais uma precaução, a regra de segurança já impede a renomeação efetiva de perfis padrão.
     }
     
     if (data.name && data.name.trim().toUpperCase() !== currentRoleData.name.toUpperCase()) {
@@ -174,12 +182,20 @@ export async function updateRole(
 
     const updateData: Partial<Omit<Role, 'id' | 'createdAt'>> & { name_normalized?: string } = {};
     
-    if (data.name) {
+    if (data.name && !systemRoles.includes(currentRoleData.name.toUpperCase())) { // Só permite mudar nome se não for perfil de sistema
         updateData.name = data.name.trim();
         updateData.name_normalized = data.name.trim().toUpperCase();
+    } else if (data.name && systemRoles.includes(currentRoleData.name.toUpperCase())) {
+        // Permite atualizar o campo 'name' (display), mas mantém 'name_normalized' para perfis de sistema
+        updateData.name = data.name.trim();
+        updateData.name_normalized = currentRoleData.name.toUpperCase(); 
     }
+
+
     if (data.description !== undefined) updateData.description = data.description.trim();
-    if (data.permissions) updateData.permissions = data.permissions;
+    if (data.permissions) {
+      updateData.permissions = data.permissions.filter(p => predefinedPermissions.some(pp => pp.id === p));
+    }
     
     updateData.updatedAt = serverTimestamp();
 
@@ -222,7 +238,7 @@ export async function deleteRole(
   }
 }
 
-export async function ensureDefaultRolesExist() {
+export async function ensureDefaultRolesExist(): Promise<{ success: boolean; message: string }> {
     console.log("[ensureDefaultRolesExist] Verificando e criando perfis padrão se necessário...");
     const defaultRolesData: RoleFormData[] = [
         { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
@@ -248,37 +264,61 @@ export async function ensureDefaultRolesExist() {
     ];
 
     let createdAny = false;
-    for (const roleData of defaultRolesData) {
-        console.log(`[ensureDefaultRolesExist] Verificando perfil: ${roleData.name}`);
-        const existingRole = await getRoleByName(roleData.name);
-        if (!existingRole) {
-            console.log(`[ensureDefaultRolesExist] Perfil "${roleData.name}" não encontrado. Tentando criar...`);
-            const creationResult = await createRole(roleData);
-            if (creationResult.success) {
-                console.log(`[ensureDefaultRolesExist] Perfil "${roleData.name}" criado com ID: ${creationResult.roleId}.`);
-                createdAny = true;
+    let allSuccessful = true;
+    let overallMessage = 'Perfis padrão verificados/atualizados com sucesso.';
+
+    try {
+        for (const roleData of defaultRolesData) {
+            console.log(`[ensureDefaultRolesExist] Verificando perfil: ${roleData.name}`);
+            const existingRole = await getRoleByName(roleData.name);
+            if (!existingRole) {
+                console.log(`[ensureDefaultRolesExist] Perfil "${roleData.name}" não encontrado. Tentando criar...`);
+                const creationResult = await createRole(roleData);
+                if (creationResult.success) {
+                    console.log(`[ensureDefaultRolesExist] Perfil "${roleData.name}" criado com ID: ${creationResult.roleId}.`);
+                    createdAny = true;
+                } else {
+                    console.error(`[ensureDefaultRolesExist] Falha ao criar perfil padrão "${roleData.name}": ${creationResult.message}`);
+                    allSuccessful = false;
+                    overallMessage = `Falha ao criar o perfil "${roleData.name}".`;
+                    break; 
+                }
             } else {
-                 console.error(`[ensureDefaultRolesExist] Falha ao criar perfil padrão "${roleData.name}": ${creationResult.message}`);
-            }
-        } else {
-            console.log(`[ensureDefaultRolesExist] Perfil "${roleData.name}" já existe (ID: ${existingRole.id}). Verificando permissões...`);
-            const currentPermissions = existingRole.permissions || [];
-            const expectedPermissions = roleData.permissions || [];
-            const permissionsMatch = expectedPermissions.length === currentPermissions.length && expectedPermissions.every(p => currentPermissions.includes(p));
-            if (!permissionsMatch || existingRole.description !== (roleData.description || '')) {
-                 console.log(`[ensureDefaultRolesExist] Atualizando permissões/descrição para o perfil "${roleData.name}".`);
-                 await updateRole(existingRole.id, { 
-                     name: existingRole.name, // Manter o nome original para não re-slugificar desnecessariamente se o case mudou
-                     description: roleData.description, 
-                     permissions: roleData.permissions 
-                 });
+                console.log(`[ensureDefaultRolesExist] Perfil "${roleData.name}" já existe (ID: ${existingRole.id}). Verificando permissões e descrição...`);
+                const currentPermissions = existingRole.permissions || [];
+                const expectedPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
+                const permissionsMatch = expectedPermissions.length === currentPermissions.length && expectedPermissions.every(p => currentPermissions.includes(p));
+                const descriptionMatch = (existingRole.description || '') === (roleData.description || '');
+
+                if (!permissionsMatch || !descriptionMatch) {
+                    console.log(`[ensureDefaultRolesExist] Atualizando permissões/descrição para o perfil "${roleData.name}".`);
+                    const updateResult = await updateRole(existingRole.id, { 
+                        name: existingRole.name, // Use o nome existente para evitar problemas de case se o display name for alterado
+                        description: roleData.description, 
+                        permissions: expectedPermissions 
+                    });
+                    if (!updateResult.success) {
+                        console.error(`[ensureDefaultRolesExist] Falha ao atualizar perfil padrão "${roleData.name}": ${updateResult.message}`);
+                        allSuccessful = false;
+                        overallMessage = `Falha ao atualizar o perfil "${roleData.name}".`;
+                        break;
+                    }
+                    createdAny = true; // Considera uma atualização como uma "criação" para fins de revalidação
+                } else {
+                    console.log(`[ensureDefaultRolesExist] Perfil "${roleData.name}" está atualizado.`);
+                }
             }
         }
+    } catch (error: any) {
+        console.error("[ensureDefaultRolesExist] Erro catastrófico durante o processo de seed de perfis:", error);
+        return { success: false, message: `Erro crítico no seed de perfis: ${error.message}` };
     }
-    if (createdAny) {
+
+    if (createdAny && allSuccessful) {
         revalidatePath('/admin/roles');
     }
-    console.log("[ensureDefaultRolesExist] Verificação de perfis padrão concluída.");
+    console.log(`[ensureDefaultRolesExist] Verificação de perfis padrão concluída. Sucesso: ${allSuccessful}`);
+    return { success: allSuccessful, message: allSuccessful ? 'Perfis padrão verificados/atualizados com sucesso.' : overallMessage };
 }
 
 

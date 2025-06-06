@@ -8,7 +8,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db } from '@/lib/firebase'; 
 import { Loader2 } from 'lucide-react';
 import { ensureUserRoleInFirestore } from '@/app/admin/users/actions';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, Timestamp } from 'firebase/firestore'; // Added Timestamp
 import type { UserProfileData, Role, UserProfileWithPermissions } from '@/types';
 import { getRole } from '@/app/admin/roles/actions';
 
@@ -49,10 +49,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 currentUser.displayName || currentUser.email.split('@')[0],
                 'ADMINISTRATOR'
             );
-             // Log detalhado do resultado
             console.log('[AuthProvider] roleSetupResult:', JSON.stringify(roleSetupResult, null, 2));
 
-            if (roleSetupResult && roleSetupResult.success) {
+
+            if (roleSetupResult && roleSetupResult.success) { // Check if roleSetupResult is not undefined
               console.log(`[AuthProvider] Admin role setup for ${currentUser.email}: ${roleSetupResult.message}`);
             } else {
               console.error(`[AuthProvider] Failed to setup admin role for ${currentUser.email}: ${roleSetupResult?.message || 'Resultado indefinido ou falha sem mensagem.'}`);
@@ -83,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUserProfileWithPermissions({ ...userProfileData, permissions });
             console.log(`[AuthProvider] Profile and permissions loaded for ${currentUser.email}. Role: ${userProfileData.roleName || 'None'}, Habilitation: ${userProfileData.habilitationStatus}, Permissions: ${permissions.length}`);
           } else {
-            console.warn(`[AuthProvider] No Firestore profile found for user ${currentUser.email} (UID: ${currentUser.uid}).`);
+            console.warn(`[AuthProvider] No Firestore profile found for user ${currentUser.email} (UID: ${currentUser.uid}). This might happen if the account was just created and Firestore document creation is pending or failed.`);
           }
         } catch (profileError) {
           console.error(`[AuthProvider] Error fetching profile for ${currentUser.email}:`, profileError);

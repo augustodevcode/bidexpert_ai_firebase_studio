@@ -17,7 +17,8 @@ import {
   orderBy,
   Timestamp,
   where,
-  limit
+  limit,
+  FieldValue, // Import FieldValue
 } from 'firebase/firestore';
 import type { UserProfileData, Role, UserHabilitationStatus } from '@/types';
 import { getRoleByName, ensureDefaultRolesExist, getRole } from '@/app/admin/roles/actions';
@@ -134,6 +135,7 @@ export async function updateUserProfileAndRole(
           console.log(`[updateUserProfileAndRole] Setting roleId and roleName to null`);
           updateData.roleId = null;
           updateData.roleName = null;
+          (updateData as any).role = FieldValue.delete(); // Explicitly delete old 'role' field if it exists
       }
     }
 
@@ -183,16 +185,18 @@ export async function ensureUserRoleInFirestore(
   try {
     console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 1: Garantindo perfis padrão...`);
     const rolesEnsured = await ensureDefaultRolesExist(); 
-    if (!rolesEnsured.success && targetRoleName === 'ADMINISTRATOR') {
-      console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Falha crítica ao garantir perfis padrão: ${rolesEnsured.message}`);
-      return { success: false, message: `Falha ao criar perfis padrão necessários: ${rolesEnsured.message}` };
+    console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Resultado de ensureDefaultRolesExist: success=${rolesEnsured?.success}, message=${rolesEnsured?.message}`);
+    if (!rolesEnsured || !rolesEnsured.success) { // Check if rolesEnsured itself is truthy first
+      const errorMsg = `Falha crítica ao garantir perfis padrão: ${rolesEnsured?.message || 'Resultado indefinido de ensureDefaultRolesExist'}`;
+      console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] ${errorMsg}`);
+      return { success: false, message: errorMsg };
     }
-    console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 1.1: Perfis padrão verificados/criados. Success: ${rolesEnsured.success}`);
+    console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 1.1: Perfis padrão verificados/criados.`);
 
     console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 2: Buscando o perfil "${targetRoleName}"...`);
     const targetRole = await getRoleByName(targetRoleName);
     if (!targetRole) {
-      console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Perfil "${targetRoleName}" NÃO encontrado.`);
+      console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Perfil "${targetRoleName}" NÃO encontrado após ensureDefaultRolesExist.`);
       return { success: false, message: `Perfil "${targetRoleName}" não pôde ser encontrado ou criado.` };
     }
     console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 2.1: Perfil "${targetRoleName}" encontrado com ID: ${targetRole.id}`);
@@ -207,8 +211,8 @@ export async function ensureUserRoleInFirestore(
       const userData = userSnap.data() as UserProfileData;
       console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 3.1: Documento do usuário encontrado. RoleId atual: ${userData.roleId}, RoleName: ${userData.roleName}, Habilitation: ${userData.habilitationStatus}`);
       
-      let needsUpdate = false;
       const updatePayload: Partial<UserProfileData> = { updatedAt: serverTimestamp() as Timestamp };
+      let needsUpdate = false;
 
       if (userData.roleId !== targetRole.id) {
         updatePayload.roleId = targetRole.id;
@@ -224,10 +228,9 @@ export async function ensureUserRoleInFirestore(
       }
       // Garante que o campo 'role' legado seja removido se existir
       if (userData.hasOwnProperty('role')) {
-        (updatePayload as any).role = FieldValue.delete(); // Ensure FieldValue is imported from firebase-admin/firestore
+        (updatePayload as any).role = FieldValue.delete(); // Ensure FieldValue is imported
         needsUpdate = true;
       }
-
 
       if (needsUpdate) {
         console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 4: Atualizando perfil/habilitação do usuário... Payload:`, updatePayload);
@@ -263,9 +266,6 @@ export async function ensureUserRoleInFirestore(
     console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Error:`, error.message, error.code, error.details ? JSON.stringify(error.details) : '');
     return { success: false, message: `Falha ao configurar perfil para ${targetRoleName}: ${error.message}` };
   }
-  // Adicionando um retorno padrão para cobrir todos os caminhos, embora não deva ser alcançado idealmente.
-  console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Atingiu o final da função sem um return explícito no try. Isso não deveria acontecer.`);
-  return { success: false, message: `Erro inesperado no setup do perfil para ${targetRoleName}.` };
 }
 
     
