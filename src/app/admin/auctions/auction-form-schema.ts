@@ -12,7 +12,6 @@ const auctionStatusValues: [AuctionStatus, ...AuctionStatus[]] = [
   'SUSPENSO'
 ];
 
-// Usar `Auction['auctionType']` para garantir que os valores sejam os mesmos definidos no tipo Auction
 const auctionTypeValues: [Auction['auctionType'], ...(Auction['auctionType'])[]] = [
   'JUDICIAL',
   'EXTRAJUDICIAL',
@@ -44,7 +43,6 @@ export const auctionFormSchema = z.object({
     invalid_type_error: "Por favor, insira uma data de leilão válida.",
   }),
   endDate: z.date().optional().nullable(),
-  // location: z.string().max(150).optional(), // Removido, usar city/state
   city: z.string().max(100).optional(),
   state: z.string().max(2).optional(), // UF
   imageUrl: z.string().url({ message: "URL da imagem inválida." }).optional().or(z.literal('')),
@@ -53,5 +51,7 @@ export const auctionFormSchema = z.object({
 });
 
 export type AuctionFormValues = z.infer<typeof auctionFormSchema>;
+
+    
 
     

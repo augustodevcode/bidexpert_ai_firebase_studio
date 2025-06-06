@@ -33,8 +33,8 @@ import { getAuctionStatusText } from '@/lib/sample-data';
 interface AuctionFormProps {
   initialData?: Auction | null;
   categories: LotCategory[];
-  auctioneers: AuctioneerProfileInfo[]; // Nova prop
-  sellers: SellerProfileInfo[]; // Nova prop
+  auctioneers: AuctioneerProfileInfo[]; 
+  sellers: SellerProfileInfo[]; 
   onSubmitAction: (data: AuctionFormValues) => Promise<{ success: boolean; message: string; auctionId?: string }>;
   formTitle: string;
   formDescription: string;
@@ -60,8 +60,8 @@ const auctionTypeOptions = [
 export default function AuctionForm({
   initialData,
   categories,
-  auctioneers, // Receber auctioneers
-  sellers,     // Receber sellers
+  auctioneers, 
+  sellers,    
   onSubmitAction,
   formTitle,
   formDescription,
@@ -80,11 +80,10 @@ export default function AuctionForm({
       status: initialData?.status || 'EM_BREVE',
       auctionType: initialData?.auctionType || undefined,
       category: initialData?.category || '',
-      auctioneer: initialData?.auctioneer || '', // Será o nome do leiloeiro
-      seller: initialData?.seller || '',       // Será o nome do comitente
+      auctioneer: initialData?.auctioneer || '', 
+      seller: initialData?.seller || '',       
       auctionDate: initialData?.auctionDate ? new Date(initialData.auctionDate) : new Date(),
       endDate: initialData?.endDate ? new Date(initialData.endDate) : null,
-      location: initialData?.location || '',
       city: initialData?.city || '',
       state: initialData?.state || '',
       imageUrl: initialData?.imageUrl || '',
@@ -371,24 +370,13 @@ export default function AuctionForm({
                 )}
                 />
             </div>
-            <div className="grid md:grid-cols-3 gap-6">
-                <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Localização/Referência (Opcional)</FormLabel>
-                        <FormControl><Input placeholder="Ex: Pátio do Leiloeiro, Online" {...field} /></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
+            <div className="grid md:grid-cols-2 gap-6">
                 <FormField
                     control={form.control}
                     name="city"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Cidade (Opcional)</FormLabel>
+                        <FormLabel>Cidade Principal do Leilão (Opcional)</FormLabel>
                         <FormControl><Input placeholder="Ex: São Paulo" {...field} /></FormControl>
                         <FormMessage />
                     </FormItem>
@@ -454,5 +442,7 @@ export default function AuctionForm({
     </Card>
   );
 }
+
+    
 
     

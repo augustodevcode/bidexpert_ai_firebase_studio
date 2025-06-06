@@ -30,9 +30,9 @@ function safeConvertToDate(timestampField: any): Date {
   return new Date();
 }
 
-function safeConvertOptionalDate(timestampField: any): Date | undefined {
-    if (!timestampField) {
-      return undefined;
+function safeConvertOptionalDate(timestampField: any): Date | undefined | null { // Allow null
+    if (timestampField === null || timestampField === undefined) { // Check for null or undefined first
+      return null; // Return null if the input is null or undefined
     }
     return safeConvertToDate(timestampField);
 }
@@ -118,13 +118,12 @@ export async function getAuctions(): Promise<Auction[]> {
           documentsUrl: data.documentsUrl,
           totalLots: data.totalLots || 0,
           visits: data.visits || 0,
-          lots: data.lots || [], // Lots are typically not embedded or fetched here for a list view
+          lots: data.lots || [], 
           initialOffer: data.initialOffer,
           isFavorite: data.isFavorite,
           currentBid: data.currentBid,
           bidsCount: data.bidsCount,
           sellingBranch: data.sellingBranch,
-          vehicleLocation: data.vehicleLocation,
           auctioneerLogoUrl: data.auctioneerLogoUrl,
           auctioneerName: data.auctioneerName,
           createdAt: safeConvertToDate(data.createdAt),
@@ -135,19 +134,19 @@ export async function getAuctions(): Promise<Auction[]> {
       // console.log('[getAuctions] Firestore empty, falling back to sampleAuctions');
       return sampleAuctions.map(auction => ({
         ...auction,
-        auctionDate: new Date(auction.auctionDate), // Ensure dates are Date objects
+        auctionDate: new Date(auction.auctionDate), 
         endDate: auction.endDate ? new Date(auction.endDate) : null,
         auctionStages: auction.auctionStages?.map(stage => ({
             ...stage,
             endDate: new Date(stage.endDate),
         })),
-        createdAt: new Date(auction.createdAt || new Date()), // Add fallback for createdAt
-        updatedAt: new Date(auction.updatedAt || new Date()), // Add fallback for updatedAt
+        createdAt: new Date(auction.createdAt || new Date()), 
+        updatedAt: new Date(auction.updatedAt || new Date()), 
       }));
     }
   } catch (error: any) {
     console.error("[Server Action - getAuctions] Error fetching auctions:", error);
-    // Fallback to sample data on error as well, ensuring dates are Date objects
+    
     return sampleAuctions.map(auction => ({
         ...auction,
         auctionDate: new Date(auction.auctionDate),
@@ -205,20 +204,19 @@ export async function getAuction(id: string): Promise<Auction | null> {
         documentsUrl: data.documentsUrl,
         totalLots: data.totalLots || 0,
         visits: data.visits || 0,
-        lots: data.lots || [], // Assuming lots might be embedded or fetched separately
+        lots: data.lots || [], 
         initialOffer: data.initialOffer,
         isFavorite: data.isFavorite,
         currentBid: data.currentBid,
         bidsCount: data.bidsCount,
         sellingBranch: data.sellingBranch,
-        vehicleLocation: data.vehicleLocation,
         auctioneerLogoUrl: data.auctioneerLogoUrl,
         auctioneerName: data.auctioneerName,
         createdAt: safeConvertToDate(data.createdAt),
         updatedAt: safeConvertToDate(data.updatedAt),
       } as Auction;
     } else {
-        // Fallback to sample data if not found in Firestore
+        
         const foundInSample = sampleAuctions.find(auction => auction.id === id);
         if (foundInSample) {
             return {
@@ -263,13 +261,10 @@ export async function updateAuction(
     if (data.auctionDate) {
         updateDataForFirestore.auctionDate = Timestamp.fromDate(new Date(data.auctionDate));
     }
-    if (data.hasOwnProperty('endDate')) {
+    if (data.hasOwnProperty('endDate')) { // Check if endDate is explicitly passed (even if null)
         updateDataForFirestore.endDate = data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : null;
     }
-    if (updateDataForFirestore.hasOwnProperty('location')) { // 'location' removed from form
-        delete updateDataForFirestore.location;
-    }
-
+    
     updateDataForFirestore.updatedAt = serverTimestamp();
 
     await updateDoc(auctionDocRef, updateDataForFirestore);
@@ -297,3 +292,6 @@ export async function deleteAuction(
     return { success: false, message: error.message || 'Falha ao excluir leilão.' };
   }
 }
+
+
+    
