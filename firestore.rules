@@ -4,119 +4,141 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to get user's role data
-    function getUserRoleData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
+    // Helper function para verificar se o email do requisitante está na lista de emails de admin
+    // Esta lista deve ser mantida em sincronia com a lógica da aplicação ou gerenciada de forma mais robusta no futuro.
+    function isAdminEmail() {
+      return request.auth.token.email in [
+        'admin@bidexpert.com', 
+        'analyst@bidexpert.com', 
+        'augusto.devcode@gmail.com'
+        // Adicione outros e-mails de administradores iniciais aqui
+      ];
     }
 
-    // Helper function to get role permissions by roleId
-    function getRolePermissions(roleId) {
-      return get(/databases/$(database)/documents/roles/$(roleId)).data.permissions;
-    }
-
-    // Helper function to check if a user has a specific permission
-    function hasPermission(userId, permission) {
-      let userRoleData = getUserRoleData(userId);
-      let roleId = userRoleData.roleId;
-      if (roleId == null) {
-        return false;
-      }
-      let rolePermissions = getRolePermissions(roleId);
-      return permission in rolePermissions || 'manage_all' in rolePermissions;
-    }
-
-    // Roles Collection
+    // Coleção de Perfis (Roles)
     match /roles/{roleId} {
-      allow read: if request.auth != null; // Any authenticated user can read roles (e.g., for admin UI to assign roles)
-      allow create, update, delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
-        // Create: Only admins can create new roles.
-        // Update: Only admins can update role details (name, description, permissions).
-        // Delete: Only admins can delete roles (consider preventing deletion of system roles like ADMIN/USER).
+      // Qualquer usuário autenticado pode ler os perfis (para listagem, por exemplo)
+      allow read: if request.auth != null;
+
+      // Criar/Atualizar:
+      // 1. Usuários com roleName 'ADMINISTRATOR' no seu documento 'users'.
+      // 2. OU (para bootstrapping): Se o usuário está tentando criar/atualizar o perfil 'ADMINISTRATOR'
+      //    E o email do usuário está na lista de isAdminEmail().
+      allow create, update: if request.auth != null && (
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleName == 'ADMINISTRATOR') ||
+        (request.resource.data.name == 'ADMINISTRATOR' && isAdminEmail())
+      );
+
+      // Deletar: Apenas administradores podem deletar perfis, exceto os perfis padrão.
+      allow delete: if request.auth != null &&
+                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleName == 'ADMINISTRATOR' &&
+                       !(resource.data.name in ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER']);
     }
 
-    // Users Collection
+    // Coleção de Perfis de Usuário (Users)
     match /users/{userId} {
-      allow create: if request.auth != null && request.auth.uid == userId; // User can create their own profile document
-      allow read: if request.auth != null && (request.auth.uid == userId || getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR');
-        // User can read their own profile.
-        // Admin can read any user's profile.
-      allow update: if request.auth != null &&
-                       ( (request.auth.uid == userId && !(request.resource.data.diff(resource.data).affectedKeys().hasAny(['roleId', 'roleName', 'status']))) ||
-                         getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR'
-                       );
-        // User can update their own profile, EXCEPT for roleId, roleName, and status.
-        // Admin can update any field on any user's profile.
-      allow delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
-        // Only admins can delete user documents from Firestore. (Auth user deletion is separate).
+      // Criar: Usuário pode criar seu próprio perfil (durante o registro).
+      //        E um admin (bootstrapping) pode criar seu próprio perfil com role de admin.
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // Ler: Usuário pode ler seu próprio perfil. Administradores podem ler qualquer perfil.
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleName == 'ADMINISTRATOR'
+      );
+
+      // Atualizar:
+      // 1. Usuário pode atualizar seu próprio perfil, EXCETO os campos roleId e roleName.
+      // 2. OU Administradores podem atualizar qualquer campo de qualquer usuário.
+      // 3. OU (para bootstrapping): Usuário com email de admin pode definir SEU PRÓPRIO roleId/roleName
+      //    para 'ADMINISTRATOR' se ainda não for ou se não tiver perfil.
+      allow update: if request.auth != null && (
+        ( // Usuário atualizando seus próprios dados (não-role)
+          request.auth.uid == userId &&
+          !(request.resource.data.roleId != resource.data.roleId || 
+            request.resource.data.roleName != resource.data.roleName ||
+            request.resource.data.status != resource.data.status // Status também só admin
+           )
+        ) ||
+        ( // Admin atualizando qualquer usuário
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleName == 'ADMINISTRATOR'
+        ) ||
+        ( // Bootstrapping admin definindo seu próprio perfil para ADMINISTRATOR
+          request.auth.uid == userId &&
+          isAdminEmail() &&
+          request.resource.data.roleName == 'ADMINISTRATOR' &&
+          (resource.data.roleName == null || resource.data.roleName != 'ADMINISTRATOR')
+        )
+      );
+
+      // Deletar: Apenas administradores podem deletar (exclui auto-deleção por enquanto).
+      // A exclusão real de usuários também envolve a Auth e pode ser mais complexa.
+      allow delete: if request.auth != null &&
+                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleName == 'ADMINISTRATOR';
     }
 
-    // Lot Categories Collection
+    // Categorias de Lotes
     match /lotCategories/{categoryId} {
-      allow read: if true; // Publicly readable
-      allow create, update, delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
+      allow read: if true; // Qualquer um pode ler categorias
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleName == 'ADMINISTRATOR';
     }
 
-    // States Collection
+    // Estados
     match /states/{stateId} {
-      allow read: if true; // Publicly readable
-      allow create, update, delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
+      allow read: if true; // Qualquer um pode ler estados
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleName == 'ADMINISTRATOR';
     }
 
-    // Cities Collection
+    // Cidades
     match /cities/{cityId} {
-      allow read: if true; // Publicly readable
-      allow create, update, delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
+      allow read: if true; // Qualquer um pode ler cidades
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleName == 'ADMINISTRATOR';
     }
     
-    // Auctioneers Collection
+    // Leiloeiros (Auctioneers)
     match /auctioneers/{auctioneerId} {
-      allow read: if true; // Publicly readable
-      allow create, update, delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
+      allow read: if true;
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleName == 'ADMINISTRATOR';
+      // TODO: Adicionar regra para o próprio leiloeiro (se `resource.data.userId == request.auth.uid`) poder editar.
     }
 
-    // Sellers Collection
+    // Comitentes (Sellers)
     match /sellers/{sellerId} {
-      allow read: if true; // Publicly readable
-      allow create, update, delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
-    }
-
-    // Auctions Collection
-    match /auctions/{auctionId} {
-      allow read: if true; // Publicly readable
-      // TODO: Refine write rules for auctioneers/sellers to manage their own/assigned auctions
-      allow create, update, delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
-    }
-
-    // Lots Collection
-    match /lots/{lotId} {
-      allow read: if true; // Publicly readable
-      // TODO: Refine write rules for auctioneers/sellers to manage their own/assigned lots
-      allow create, update, delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
+      allow read: if true;
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleName == 'ADMINISTRATOR';
+      // TODO: Adicionar regra para o próprio comitente (se `resource.data.userId == request.auth.uid`) poder editar.
     }
     
-    // MediaItems Collection
+    // Leilões (Auctions)
+    match /auctions/{auctionId} {
+      allow read: if true;
+      // A escrita em leilões será mais complexa (admins, leiloeiro do leilão, comitente do leilão)
+      // Por enquanto, apenas admins.
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleName == 'ADMINISTRATOR';
+    }
+
+    // Lotes (Lots)
+    match /lots/{lotId} {
+      allow read: if true;
+      // A escrita em lotes também será complexa. Por enquanto, apenas admins.
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleName == 'ADMINISTRATOR';
+    }
+
+    // Itens de Mídia
     match /mediaItems/{mediaItemId} {
-      // Read access for media items might depend on whether they are linked to public lots/auctions
-      // For now, allow authenticated read.
-      allow read: if request.auth != null; 
-      // Write access generally for admins or specific roles (e.g., auctioneers for their lots)
-      allow create, update, delete: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
+      allow read: if true; // ou if request.auth != null; se for privado
+      // Admins podem escrever, ou o uploader original (se tivermos um campo `uploadedBy`)
+      allow write: if request.auth != null && 
+                      (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleName == 'ADMINISTRATOR' || 
+                       (request.resource.data.uploadedBy != null && request.resource.data.uploadedBy == request.auth.uid));
     }
 
-    // Platform Settings Collection
-    match /platformSettings/{settingsId} {
-        // Only admins should read or write platform settings
-        allow read, write: if request.auth != null && getUserRoleData(request.auth.uid).roleName == 'ADMINISTRATOR';
+    // Configurações da Plataforma
+    match /platformSettings/global {
+        allow read: if true; // As configurações podem precisar ser lidas pela aplicação cliente
+        allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roleName == 'ADMINISTRATOR';
     }
-
-    // TODO: Add rules for Bids, UserDocuments, etc. as those features are fully developed.
-    // Example for Bids (highly dependent on auction status and user role):
-    // match /bids/{bidId} {
-    //   allow create: if request.auth != null && 
-    //                   exists(/databases/$(database)/documents/lots/$(request.resource.data.lotId)) &&
-    //                   get(/databases/$(database)/documents/lots/$(request.resource.data.lotId)).data.status == 'ABERTO_PARA_LANCES';
-    //                   // Add more checks like user habilitation status
-    //   allow read: if request.auth != null && (request.auth.uid == resource.data.userId || hasPermission(request.auth.uid, 'bids:read_all'));
-    // }
   }
 }
+
+    
