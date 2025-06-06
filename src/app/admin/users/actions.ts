@@ -120,20 +120,25 @@ export async function updateUserProfileAndRole(
 
     if (data.hasOwnProperty('roleId')) {
       if (data.roleId) {
+          console.log(`[updateUserProfileAndRole] Trying to set roleId: ${data.roleId}`);
           const roleDoc = await getRole(data.roleId);
           if (roleDoc) {
+              console.log(`[updateUserProfileAndRole] Role found: ${roleDoc.name}`);
               updateData.roleId = data.roleId;
               updateData.roleName = roleDoc.name;
           } else {
+              console.warn(`[updateUserProfileAndRole] Role with ID ${data.roleId} not found.`);
               return { success: false, message: 'Perfil (Role) não encontrado.'};
           }
       } else { 
+          console.log(`[updateUserProfileAndRole] Setting roleId and roleName to null`);
           updateData.roleId = null;
           updateData.roleName = null;
       }
     }
 
     if (data.hasOwnProperty('habilitationStatus')) {
+        console.log(`[updateUserProfileAndRole] Setting habilitationStatus to: ${data.habilitationStatus}`);
         updateData.habilitationStatus = data.habilitationStatus || null;
     }
 
@@ -153,7 +158,6 @@ export async function deleteUser(
   userId: string
 ): Promise<{ success: boolean; message: string }> {
   try {
-    // Placeholder: In a real app, you'd delete from Firebase Auth first.
     const userDocRef = doc(db, 'users', userId);
     await deleteFirestoreDoc(userDocRef); 
     console.log(`[Server Action - deleteUser] User ${userId} deleted from Firestore.`);
@@ -174,108 +178,94 @@ export async function ensureUserRoleInFirestore(
   if (!userId || !email) {
     return { success: false, message: 'UID do usuário e email são obrigatórios.' };
   }
-  console.log(`[ensureUserRoleInFirestore] Iniciando para ${email}, alvo: ${targetRoleName}`);
+  console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Iniciando...`);
 
   try {
-    console.log(`[ensureUserRoleInFirestore] Passo 1: Garantindo que perfis padrão existam...`);
+    console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 1: Garantindo perfis padrão...`);
     const rolesEnsured = await ensureDefaultRolesExist(); 
     if (!rolesEnsured.success && targetRoleName === 'ADMINISTRATOR') {
-      console.error(`[ensureUserRoleInFirestore] Falha crítica ao garantir perfis padrão: ${rolesEnsured.message}`);
+      console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Falha crítica ao garantir perfis padrão: ${rolesEnsured.message}`);
       return { success: false, message: `Falha ao criar perfis padrão necessários: ${rolesEnsured.message}` };
     }
-    console.log(`[ensureUserRoleInFirestore] Passo 1.1: Perfis padrão verificados/criados. Success: ${rolesEnsured.success}`);
+    console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 1.1: Perfis padrão verificados/criados. Success: ${rolesEnsured.success}`);
 
-    console.log(`[ensureUserRoleInFirestore] Passo 2: Buscando o perfil "${targetRoleName}"...`);
+    console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 2: Buscando o perfil "${targetRoleName}"...`);
     const targetRole = await getRoleByName(targetRoleName);
     if (!targetRole) {
-      console.error(`[ensureUserRoleInFirestore] Perfil "${targetRoleName}" NÃO encontrado após ensureDefaultRolesExist.`);
+      console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Perfil "${targetRoleName}" NÃO encontrado.`);
       return { success: false, message: `Perfil "${targetRoleName}" não pôde ser encontrado ou criado.` };
     }
-    console.log(`[ensureUserRoleInFirestore] Passo 2.1: Perfil "${targetRoleName}" encontrado com ID: ${targetRole.id} e nome: ${targetRole.name}`);
+    console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 2.1: Perfil "${targetRoleName}" encontrado com ID: ${targetRole.id}`);
 
     const userDocRef = doc(db, 'users', userId);
-    console.log(`[ensureUserRoleInFirestore] Passo 3: Buscando documento do usuário ${userId}...`);
+    console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 3: Buscando documento do usuário ${userId}...`);
     const userSnap = await getDoc(userDocRef);
-    console.log(`[ensureUserRoleInFirestore] Verificando usuário ${userId}. UserSnap exists: ${userSnap.exists()}`);
+    console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] UserSnap exists: ${userSnap.exists()}`);
 
 
     if (userSnap.exists()) {
       const userData = userSnap.data() as UserProfileData;
-      console.log(`[ensureUserRoleInFirestore] Passo 3.1: Documento do usuário encontrado. Perfil atual: ${userData.roleId} (${userData.roleName}), Habilitação: ${userData.habilitationStatus}`);
-      if (userData.roleId !== targetRole.id || userData.roleName !== targetRole.name || userData.habilitationStatus !== 'HABILITADO') {
-        console.log(`[ensureUserRoleInFirestore] Passo 4: Atualizando perfil/habilitação do usuário ${email} para ${targetRoleName}...`);
-        const updateData: Partial<UserProfileData> = {
-          roleId: targetRole.id,
-          roleName: targetRole.name,
-          habilitationStatus: 'HABILITADO', // Admins e roles configurados aqui são habilitados por padrão
-          updatedAt: serverTimestamp() as Timestamp,
-        };
-        // Manter campos existentes se não estiverem sendo explicitamente alterados
-        if (userData.fullName && !updateData.fullName) updateData.fullName = userData.fullName;
-        if (userData.email && !updateData.email) updateData.email = userData.email;
-        if (userData.status && !updateData.status) updateData.status = userData.status;
+      console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 3.1: Documento do usuário encontrado. RoleId atual: ${userData.roleId}, RoleName: ${userData.roleName}, Habilitation: ${userData.habilitationStatus}`);
+      
+      let needsUpdate = false;
+      const updatePayload: Partial<UserProfileData> = { updatedAt: serverTimestamp() as Timestamp };
+
+      if (userData.roleId !== targetRole.id) {
+        updatePayload.roleId = targetRole.id;
+        needsUpdate = true;
+      }
+      if (userData.roleName !== targetRole.name) {
+        updatePayload.roleName = targetRole.name;
+        needsUpdate = true;
+      }
+      if (targetRoleName === 'ADMINISTRATOR' && userData.habilitationStatus !== 'HABILITADO') {
+        updatePayload.habilitationStatus = 'HABILITADO';
+        needsUpdate = true;
+      }
+      // Garante que o campo 'role' legado seja removido se existir
+      if (userData.hasOwnProperty('role')) {
+        (updatePayload as any).role = FieldValue.delete(); // Ensure FieldValue is imported from firebase-admin/firestore
+        needsUpdate = true;
+      }
 
 
-        await updateDoc(userDocRef, updateData);
-        console.log(`[ensureUserRoleInFirestore] Passo 4.1: Perfil/habilitação do usuário ${email} atualizado para ${targetRoleName}.`);
+      if (needsUpdate) {
+        console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 4: Atualizando perfil/habilitação do usuário... Payload:`, updatePayload);
+        await updateDoc(userDocRef, updatePayload);
+        console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 4.1: Perfil/habilitação do usuário atualizado.`);
         const updatedProfile = await getUserProfileData(userId); 
         return { success: true, message: 'Perfil do usuário atualizado.', userProfile: updatedProfile || undefined };
       }
-      console.log(`[ensureUserRoleInFirestore] Usuário ${email} já possui o perfil ${targetRoleName} e está habilitado. Nenhuma alteração necessária.`);
+      
+      console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Usuário já possui o perfil correto e está habilitado (se admin). Nenhuma alteração necessária.`);
       return { success: true, message: 'Perfil do usuário já está correto.', userProfile: userData };
     } else {
-      console.log(`[ensureUserRoleInFirestore] Passo 3.1: Documento do usuário ${userId} não encontrado. Criando...`);
-      const newUserProfile: UserProfileData = { // Use UserProfileData para garantir todos os campos
+      console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 3.1: Documento do usuário não encontrado. Criando...`);
+      const newUserProfile: UserProfileData = {
         uid: userId,
-        email: email,
-        fullName: fullName || email.split('@')[0],
+        email: email!,
+        fullName: fullName || email!.split('@')[0],
         roleId: targetRole.id,
         roleName: targetRole.name,
         status: 'ATIVO',
-        habilitationStatus: 'HABILITADO',
+        habilitationStatus: targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS',
         createdAt: serverTimestamp() as Timestamp,
         updatedAt: serverTimestamp() as Timestamp,
-        // Inicializar outros campos opcionais como undefined ou valores padrão
-        cpf: undefined,
-        rgNumber: undefined,
-        rgIssuer: undefined,
-        rgIssueDate: null,
-        rgState: undefined,
-        dateOfBirth: null,
-        cellPhone: undefined,
-        homePhone: undefined,
-        gender: undefined,
-        profession: undefined,
-        nationality: undefined,
-        maritalStatus: undefined,
-        propertyRegime: undefined,
-        spouseName: undefined,
-        spouseCpf: undefined,
-        zipCode: undefined,
-        street: undefined,
-        number: undefined,
-        complement: undefined,
-        neighborhood: undefined,
-        city: undefined,
-        state: undefined,
-        optInMarketing: false,
-        avatarUrl: undefined,
-        dataAiHint: undefined,
-        activeBids: 0,
-        auctionsWon: 0,
-        itemsSold: 0,
-        sellerProfileId: undefined,
-        permissions: targetRole.permissions || [], // Adicionar permissões do perfil
+        permissions: targetRole.permissions || [],
       };
+      console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Tentando criar documento do usuário com dados:`, newUserProfile);
       await setDoc(userDocRef, newUserProfile);
-      console.log(`[ensureUserRoleInFirestore] Perfil de usuário criado para ${email} com o perfil ${targetRoleName}.`);
+      console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Perfil de usuário criado.`);
       const createdProfile = await getUserProfileData(userId);
       return { success: true, message: 'Perfil de usuário criado e perfil atribuído.', userProfile: createdProfile || undefined };
     }
   } catch (error: any) {
-    console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Error:`, error.message, error.code, error.details);
+    console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Error:`, error.message, error.code, error.details ? JSON.stringify(error.details) : '');
     return { success: false, message: `Falha ao configurar perfil para ${targetRoleName}: ${error.message}` };
   }
+  // Adicionando um retorno padrão para cobrir todos os caminhos, embora não deva ser alcançado idealmente.
+  console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Atingiu o final da função sem um return explícito no try. Isso não deveria acontecer.`);
+  return { success: false, message: `Erro inesperado no setup do perfil para ${targetRoleName}.` };
 }
 
     

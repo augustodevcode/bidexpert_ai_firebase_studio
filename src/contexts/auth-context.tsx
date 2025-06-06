@@ -15,9 +15,9 @@ import { getRole } from '@/app/admin/roles/actions';
 
 interface AuthContextType {
   user: User | null;
-  userProfileWithPermissions: UserProfileWithPermissions | null; // Now includes permissions
-  loading: boolean; // Combined loading state
-  setUser: Dispatch<SetStateAction<User | null>>; // Kept for direct auth state manipulation if needed
+  userProfileWithPermissions: UserProfileWithPermissions | null;
+  loading: boolean; 
+  setUser: Dispatch<SetStateAction<User | null>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,12 +34,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setLoading(true);
       setUser(currentUser);
-      setUserProfileWithPermissions(null); // Reset profile on auth change
+      setUserProfileWithPermissions(null); 
 
       if (currentUser && currentUser.email) {
         console.log(`[AuthProvider] User ${currentUser.email} changed state. Fetching profile...`);
         
-        // Ensure admin role in Firestore if applicable
         const userEmailLower = currentUser.email.toLowerCase();
         if (ALLOWED_ADMIN_EMAILS.includes(userEmailLower)) {
           console.log(`[AuthProvider] Admin user ${currentUser.email} identified. Ensuring Firestore role...`);
@@ -50,17 +49,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 currentUser.displayName || currentUser.email.split('@')[0],
                 'ADMINISTRATOR'
             );
-            if (roleSetupResult.success) {
+             // Log detalhado do resultado
+            console.log('[AuthProvider] roleSetupResult:', JSON.stringify(roleSetupResult, null, 2));
+
+            if (roleSetupResult && roleSetupResult.success) {
               console.log(`[AuthProvider] Admin role setup for ${currentUser.email}: ${roleSetupResult.message}`);
             } else {
-              console.error(`[AuthProvider] Failed to setup admin role for ${currentUser.email}: ${roleSetupResult.message}`);
+              console.error(`[AuthProvider] Failed to setup admin role for ${currentUser.email}: ${roleSetupResult?.message || 'Resultado indefinido ou falha sem mensagem.'}`);
             }
-          } catch (error) {
+          } catch (error) { 
             console.error(`[AuthProvider] Error during admin role setup for ${currentUser.email}:`, error);
           }
         }
-
-        // Fetch UserProfileData and then their Role's permissions
+        
         try {
           const userDocRef = doc(db, 'users', currentUser.uid);
           const userDocSnap = await getDoc(userDocRef);
@@ -72,23 +73,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const roleData = await getRole(userProfileData.roleId);
               if (roleData) {
                 permissions = roleData.permissions || [];
-                // Optionally update roleName in userProfileData if it's stale, though ensureUserRoleInFirestore should handle this
                 if (userProfileData.roleName !== roleData.name) {
-                     console.warn(`[AuthProvider] Mismatch in roleName for ${currentUser.email}. Firestore: ${userProfileData.roleName}, Role Doc: ${roleData.name}. Using Role Doc name.`);
-                     userProfileData.roleName = roleData.name; // This is a local update for the context
+                     userProfileData.roleName = roleData.name;
                 }
               } else {
                 console.warn(`[AuthProvider] Role with ID ${userProfileData.roleId} not found for user ${currentUser.email}.`);
               }
             }
             setUserProfileWithPermissions({ ...userProfileData, permissions });
-            console.log(`[AuthProvider] Profile and permissions loaded for ${currentUser.email}. Role: ${userProfileData.roleName || 'None'}, Permissions: ${permissions.length}`);
+            console.log(`[AuthProvider] Profile and permissions loaded for ${currentUser.email}. Role: ${userProfileData.roleName || 'None'}, Habilitation: ${userProfileData.habilitationStatus}, Permissions: ${permissions.length}`);
           } else {
-            console.warn(`[AuthProvider] No Firestore profile found for user ${currentUser.email} (UID: ${currentUser.uid}). They might need to complete registration or be an admin being set up.`);
-             // If it's an admin user and ensureUserRoleInFirestore just created them,
-             // they might not have a roleId immediately reflected here unless we re-fetch or pass it back.
-             // For now, if an admin logs in and their Firestore doc was just created, they might temporarily have no permissions in context
-             // until the next auth state change or a manual refresh. This is a minor edge case for first-time admin login.
+            console.warn(`[AuthProvider] No Firestore profile found for user ${currentUser.email} (UID: ${currentUser.uid}).`);
           }
         } catch (profileError) {
           console.error(`[AuthProvider] Error fetching profile for ${currentUser.email}:`, profileError);
@@ -101,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, []); // Removed dependencies to run only on mount/unmount
+  }, []); 
 
   if (loading) {
     return (
@@ -126,3 +121,5 @@ export function useAuth() {
   }
   return context;
 }
+
+    
