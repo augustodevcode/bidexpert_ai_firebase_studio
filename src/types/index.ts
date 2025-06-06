@@ -20,24 +20,24 @@ export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'RE
 
 export interface DocumentType {
   id: string;
-  name: string; // e.g., "Documento de Identidade (Frente)"
-  description?: string; // e.g., "Foto nítida da frente do seu RG ou CNH"
+  name: string; 
+  description?: string; 
   isRequired: boolean;
-  allowedFormats?: string[]; // e.g., ["PDF", "JPG", "PNG"]
+  allowedFormats?: string[]; 
   displayOrder?: number;
 }
 
 export interface UserDocument {
   id: string;
-  documentTypeId: string; // Links to DocumentType
-  userId: string; // Links to User
-  fileUrl?: string; // URL of the uploaded file
+  documentTypeId: string; 
+  userId: string; 
+  fileUrl?: string; 
   status: UserDocumentStatus;
   uploadDate?: Date;
   analysisDate?: Date;
-  analystId?: string; // User ID of the analyst
+  analystId?: string; 
   rejectionReason?: string;
-  documentType: DocumentType; // Populated for convenience from DocumentType definition
+  documentType: DocumentType; 
 }
 
 export interface LotCategory {
@@ -45,58 +45,58 @@ export interface LotCategory {
     name: string;
     slug: string;
     description?: string;
-    itemCount?: number; // Optional: to store how many lots use this category
+    itemCount?: number; 
     createdAt: Date;
     updatedAt: Date;
 }
 
 export interface MediaItem {
-  id: string; // Firestore document ID
-  fileName: string; // Original filename, e.g., "carro_frente.jpg"
+  id: string; 
+  fileName: string; 
   uploadedAt: Date;
-  uploadedBy?: string; // User ID of uploader
-  title?: string; // User-defined title, e.g., "Foto Frontal do Veículo"
-  altText?: string; // Alt text for accessibility and SEO
-  caption?: string; // Caption for display with the image
-  description?: string; // Longer description for the image
-  mimeType: string; // e.g., "image/jpeg", "image/png"
-  sizeBytes: number; // File size in bytes
+  uploadedBy?: string; 
+  title?: string; 
+  altText?: string; 
+  caption?: string; 
+  description?: string; 
+  mimeType: string; 
+  sizeBytes: number; 
   dimensions?: { width: number; height: number };
-  urlOriginal: string; // URL to the original uploaded image (e.g., in Firebase Storage)
-  urlThumbnail: string; // URL to a generated thumbnail (e.g., 150x150)
-  urlMedium: string; // URL to a medium-sized version (e.g., 600x400)
-  urlLarge: string; // URL to a large version (e.g., 1200x800)
-  linkedLotIds?: string[]; // Array of Lot IDs this image is currently associated with
-  dataAiHint?: string; // For placeholder generation if needed
+  urlOriginal: string; 
+  urlThumbnail: string; 
+  urlMedium: string; 
+  urlLarge: string; 
+  linkedLotIds?: string[]; 
+  dataAiHint?: string; 
 }
 
 export interface Lot {
-  id: string; // e.g., LOTE001
-  auctionId: string; // ID do leilão ao qual pertence
-  title: string; // e.g., "CASA COM 129,30 M² - CENTRO" ou "2013 AUDI A4 PREMIUM PLUS"
-  number?: string; // Número do lote dentro do leilão
-  imageUrl: string; // Imagem principal
+  id: string; 
+  auctionId: string; 
+  title: string; 
+  number?: string; 
+  imageUrl: string; 
   dataAiHint?: string;
-  galleryImageUrls?: string[]; // URLs para a galeria de imagens
-  mediaItemIds?: string[]; // Array of MediaItem IDs for the gallery
+  galleryImageUrls?: string[]; 
+  mediaItemIds?: string[]; 
   status: LotStatus;
-  stateId?: string; // FK para StateInfo
-  cityId?: string; // FK para CityInfo
-  cityName?: string; // Denormalized city name
-  stateUf?: string; // Denormalized state UF
-  type: string; // Categoria do lote (será o nome da categoria de LotCategory)
+  stateId?: string; 
+  cityId?: string; 
+  cityName?: string; 
+  stateUf?: string; 
+  type: string; 
   views?: number;
-  auctionName?: string; // e.g., "Leilão Único" ou nome do leilão principal
-  price: number; // Lance mínimo/atual
-  initialPrice?: number; // Lance inicial (se diferente do preço atual)
-  auctionDate?: Date | null; // Data específica da praça/leilão do lote (pode vir do leilão pai)
+  auctionName?: string; 
+  price: number; 
+  initialPrice?: number; 
+  auctionDate?: Date | null; 
   secondAuctionDate?: Date | null;
   secondInitialPrice?: number;
   endDate: Date;
   bidsCount?: number;
   isFavorite?: boolean;
   isFeatured?: boolean;
-  description?: string; // Descrição mais detalhada
+  description?: string; 
 
   year?: number;
   make?: string;
@@ -134,10 +134,10 @@ export interface Lot {
   aisleStall?: string;
   actualCashValue?: string;
   estimatedRepairCost?: string;
-  sellerName?: string; // Este campo será populado pelo nome do Comitente/Seller selecionado
-  sellerId?: string; // ID do comitente, se disponível
-  auctioneerName?: string; // Nome do Leiloeiro responsável pelo lote/leilão
-  auctioneerId?: string; // ID do leiloeiro, se disponível
+  sellerName?: string; 
+  sellerId?: string; 
+  auctioneerName?: string; 
+  auctioneerId?: string; 
 
   condition?: string;
   createdAt?: Date;
@@ -148,36 +148,36 @@ export type LotFormData = Omit<Lot, 'id' | 'createdAt' | 'updatedAt' | 'endDate'
   endDate: Date;
   lotSpecificAuctionDate?: Date | null;
   secondAuctionDate?: Date | null;
-  stateId?: string | null; // Permitir null para não seleção
-  cityId?: string | null;  // Permitir null para não seleção
+  stateId?: string | null; 
+  cityId?: string | null;  
   sellerId?: string;
-  galleryImageUrls?: string[]; // Manter para compatibilidade e input manual inicial
-  mediaItemIds?: string[]; // Para vincular com a Media Library
+  galleryImageUrls?: string[]; 
+  mediaItemIds?: string[]; 
 };
 
 
 export interface Auction {
-  id: string; // Gerado automaticamente ou customizado
-  title: string; // Ex: Leilão Judicial TJSP - Comarca de Campinas
-  fullTitle?: string; // Título mais descritivo se necessário
+  id: string; 
+  title: string; 
+  fullTitle?: string; 
   description?: string;
   status: AuctionStatus;
-  auctionType?: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR'; // Tipo do leilão
-  category: string; // Categoria principal (será o nome da categoria de LotCategory)
-  auctioneer: string; // Nome do leiloeiro (pode se tornar auctioneerId depois)
-  auctioneerId?: string; // ID do leiloeiro, se disponível
-  seller?: string; // Nome do comitente vendedor principal (pode se tornar sellerId depois)
-  sellerId?: string; // ID do comitente, se disponível
+  auctionType?: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR'; 
+  category: string; 
+  auctioneer: string; 
+  auctioneerId?: string; 
+  seller?: string; 
+  sellerId?: string; 
   auctionDate: Date;
   endDate?: Date | null;
-  auctionStages?: AuctionStage[]; // Para múltiplas praças/etapas
+  auctionStages?: AuctionStage[]; 
   city?: string;
-  state?: string; // UF
-  imageUrl?: string; // Imagem de capa para o leilão
+  state?: string; 
+  imageUrl?: string; 
   dataAiHint?: string;
-  documentsUrl?: string; // Link para edital e outros documentos
-  totalLots?: number; // Calculado ou manual
-  visits?: number; // Contador de visitas à página do leilão
+  documentsUrl?: string; 
+  totalLots?: number; 
+  visits?: number; 
   
   lots?: Lot[]; 
   initialOffer?: number; 
@@ -190,7 +190,7 @@ export interface Auction {
   createdAt: Date;
   updatedAt: Date;
   auctioneerLogoUrl?: string;
-  auctioneerName?: string; // Este campo parece redundante se tivermos 'auctioneer'
+  auctioneerName?: string; 
 }
 
 export type AuctionFormData = Omit<Auction, 'id' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' | 'lots' | 'totalLots' | 'visits' | 'auctionStages' | 'initialOffer' | 'isFavorite' | 'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' | 'category' | 'auctioneer' | 'seller'> & {
@@ -204,13 +204,26 @@ export type AuctionFormData = Omit<Auction, 'id' | 'createdAt' | 'updatedAt' | '
 };
 
 
-export type UserRole = 'ADMINISTRATOR' | 'AUCTION_ANALYST' | 'USER' | 'CONSIGNOR'; // Adicionado CONSIGNOR
+export type UserRoleType = 'ADMINISTRATOR' | 'AUCTION_ANALYST' | 'USER' | 'CONSIGNOR' | 'AUCTIONEER';
+
+export interface Role {
+  id: string;
+  name: string; // e.g., "Administrator", "Comitente", "Usuário Padrão"
+  description?: string;
+  permissions: string[]; // e.g., ["manage_auctions", "view_users", "edit_lot_category:vehicles"]
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type RoleFormData = Omit<Role, 'id' | 'createdAt' | 'updatedAt'>;
+
 
 export interface UserProfileData {
   uid: string;
   email: string;
   fullName: string;
-  role?: UserRole; 
+  roleId?: string; // FK to Role
+  roleName?: string; // Denormalized role name for easier display
   cpf?: string;
   rgNumber?: string;
   rgIssuer?: string;
@@ -233,20 +246,18 @@ export interface UserProfileData {
   neighborhood?: string;
   city?: string;
   state?: string;
-  status?: string; // e.g. 'ACTIVE', 'PENDING_VALIDATION', 'SUSPENDED'
+  status?: string; 
   optInMarketing?: boolean;
   createdAt?: Date | null;
   updatedAt?: Date | null;
   avatarUrl?: string;
-  dataAiHint?: string; // For AI image search for avatar
+  dataAiHint?: string; 
 
-  // Stats for profile page
   activeBids?: number;
   auctionsWon?: number;
-  itemsSold?: number; // If user can also be a seller
+  itemsSold?: number; 
 
-  // Campo para ligar o usuário ao seu perfil de comitente, se aplicável
-  sellerProfileId?: string; // ID do documento na coleção 'sellers'
+  sellerProfileId?: string; 
 }
 
 export interface UserBid {
@@ -266,74 +277,72 @@ export interface UserBid {
 export interface BidInfo {
   id: string;
   lotId: string;
-  bidderId: string; // Internal User ID
-  bidderDisplay: string; // e.g., "Usuário A****"
+  bidderId: string; 
+  bidderDisplay: string; 
   amount: number;
   timestamp: Date;
 }
 
 export interface UserWin {
   id: string;
-  lot: Lot; // Embed Lot data for convenience
+  lot: Lot; 
   winningBidAmount: number;
   winDate: Date;
   paymentStatus: PaymentStatus;
-  invoiceUrl?: string; // Link to invoice PDF
+  invoiceUrl?: string; 
 }
 
-// For Seller/Comitente public profile and admin management
 export interface SellerProfileInfo {
-  id: string; // Firestore document ID
+  id: string; 
   name: string;
   slug: string;
   contactName?: string;
-  email?: string; // Pode ser o email principal de contato do comitente
+  email?: string; 
   phone?: string;
   address?: string;
   city?: string;
-  state?: string; // UF
+  state?: string; 
   zipCode?: string;
   website?: string;
   logoUrl?: string;
   dataAiHintLogo?: string;
-  description?: string; // Description of the seller/company
-  memberSince?: Date; // Date they became a seller on the platform
-  rating?: number; // Overall rating, 0-5
-  activeLotsCount?: number; // Dynamically calculated or admin-set
-  totalSalesValue?: number; // For stats
-  auctionsFacilitatedCount?: number; // Number of auctions they've been part of
-  userId?: string; // UID do usuário do Firebase associado a este comitente, se houver
+  description?: string; 
+  memberSince?: Date; 
+  rating?: number; 
+  activeLotsCount?: number; 
+  totalSalesValue?: number; 
+  auctionsFacilitatedCount?: number; 
+  userId?: string; 
   createdAt: Date;
   updatedAt: Date;
 }
 
 export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'activeLotsCount' | 'totalSalesValue' | 'auctionsFacilitatedCount' | 'userId'> & {
-  userId?: string; // Permitir definir/editar o userId associado
+  userId?: string; 
 };
 
 
-// For Auctioneer public profile and admin management
 export interface AuctioneerProfileInfo {
-  id: string; // Firestore document ID
+  id: string; 
   name: string;
   slug: string;
-  registrationNumber?: string; // JUCESP, JUCEMA, etc.
+  registrationNumber?: string; 
   contactName?: string;
   email?: string;
   phone?: string;
   address?: string;
   city?: string;
-  state?: string; // UF
+  state?: string; 
   zipCode?: string;
   website?: string;
   logoUrl?: string;
   dataAiHintLogo?: string;
-  description?: string; // Description of the auctioneer/company
-  memberSince?: Date; // Date they became a auctioneer on the platform
-  rating?: number; // Overall rating, 0-5
-  auctionsConductedCount?: number; // Dynamically calculated or admin-set
-  totalValueSold?: number; // For stats
-  userId?: string; // UID do usuário do Firebase associado a este leiloeiro, se houver
+  description?: string; 
+  memberSince?: Date; 
+  rating?: number; 
+  auctionsConductedCount?: number; 
+  totalValueSold?: number; 
+  userId?: string; 
   createdAt: Date;
   updatedAt: Date;
 }
@@ -347,14 +356,14 @@ export interface RecentlyViewedLotInfo {
   id: string;
   title: string;
   imageUrl: string;
-  auctionId: string; // Needed to construct the link
+  auctionId: string; 
   dataAiHint?: string;
 }
 
 export interface StateInfo {
   id: string;
   name: string;
-  uf: string; // Sigla do estado, ex: SP
+  uf: string; 
   slug: string;
   cityCount?: number; 
   createdAt: Date;
@@ -368,17 +377,16 @@ export interface CityInfo {
   id: string;
   name: string;
   slug: string;
-  stateId: string; // Foreign key to StateInfo
-  stateUf: string; // Denormalized for easy display (e.g., "SP")
-  ibgeCode?: string; // Novo campo para o código IBGE da cidade
-  lotCount?: number; // Optional: to store how many lots are in this city
+  stateId: string; 
+  stateUf: string; 
+  ibgeCode?: string; 
+  lotCount?: number; 
   createdAt: Date;
   updatedAt: Date;
 }
 
 export type CityFormData = Omit<CityInfo, 'id' | 'slug' | 'stateUf' | 'createdAt' | 'updatedAt' | 'lotCount'>;
     
-// --- Venda Direta Types ---
 export type DirectSaleOfferType = 'BUY_NOW' | 'ACCEPTS_PROPOSALS';
 export type DirectSaleOfferStatus = 'ACTIVE' | 'SOLD' | 'EXPIRED' | 'PENDING_APPROVAL';
 
@@ -390,41 +398,38 @@ export interface DirectSaleOffer {
   dataAiHint?: string;
   galleryImageUrls?: string[];
   offerType: DirectSaleOfferType;
-  price?: number; // For BUY_NOW
-  minimumOfferPrice?: number; // For ACCEPTS_PROPOSALS
-  category: string; // Could be slug of LotCategory or just name
+  price?: number; 
+  minimumOfferPrice?: number; 
+  category: string; 
   locationCity?: string;
-  locationState?: string; // UF
+  locationState?: string; 
   sellerName: string;
-  sellerId?: string; // FK to SellerProfileInfo
+  sellerId?: string; 
   sellerLogoUrl?: string;
   dataAiHintSellerLogo?: string;
   status: DirectSaleOfferStatus;
-  itemsIncluded?: string[]; // Simple list of items/services in the offer
+  itemsIncluded?: string[]; 
   tags?: string[];
   views?: number;
-  proposalsCount?: number; // For ACCEPTS_PROPOSALS
+  proposalsCount?: number; 
   createdAt: Date;
   updatedAt: Date;
   expiresAt?: Date;
 }
-// --- End Venda Direta Types ---
 
-// Adicionado para consistência com o schema do formulário de edição de perfil
-export type EditableUserProfileData = Omit<UserProfileData, 'uid' | 'email' | 'status' | 'createdAt' | 'updatedAt' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'role' | 'sellerProfileId'> & {
-  role?: UserRole;
+export type EditableUserProfileData = Omit<UserProfileData, 'uid' | 'email' | 'status' | 'createdAt' | 'updatedAt' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'roleId' | 'roleName' | 'sellerProfileId'> & {
+  roleId?: string;
+  roleName?: string;
   sellerProfileId?: string;
 };
 
-// --- Platform Settings Types ---
 export interface PlatformSettings {
-  id: 'global'; // Documento único
+  id: 'global'; 
   galleryImageBasePath: string;
-  // Adicionar outros campos de configuração aqui no futuro
-  // e.g., siteName: string; contactEmail: string; etc.
   updatedAt: Date;
 }
 
 export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'>;
-// --- End Platform Settings Types ---
 
+
+    

@@ -16,8 +16,9 @@ import { ptBR } from 'date-fns/locale';
 import { useState, type FormEvent } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase'; 
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; 
+import { doc, setDoc, serverTimestamp, collection, query, where, getDocs, limit } from 'firebase/firestore'; 
 import { useToast } from '@/hooks/use-toast';
+import type { Role } from '@/types';
 
 
 export default function RegisterPage() {
@@ -51,6 +52,26 @@ export default function RegisterPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      // Buscar o ID do perfil 'USER' padrão
+      let defaultRoleId: string | undefined = undefined;
+      let defaultRoleName: string | undefined = undefined;
+      try {
+        const rolesRef = collection(db, 'roles');
+        const q = query(rolesRef, where('name', '==', 'USER'), limit(1));
+        const roleSnapshot = await getDocs(q);
+        if (!roleSnapshot.empty) {
+          const roleDoc = roleSnapshot.docs[0];
+          defaultRoleId = roleDoc.id;
+          defaultRoleName = (roleDoc.data() as Role).name;
+        } else {
+          console.warn("Default 'USER' role not found in Firestore. New user will not have a role assigned.");
+        }
+      } catch (roleError) {
+        console.error("Error fetching default 'USER' role:", roleError);
+        // Continue without assigning a role if there's an error
+      }
+
+
       // Salvar dados adicionais no Firestore
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
@@ -59,6 +80,8 @@ export default function RegisterPage() {
         email: user.email, 
         cellPhone,
         dateOfBirth, 
+        roleId: defaultRoleId, // Atribuir o ID do perfil
+        roleName: defaultRoleName, // Atribuir o nome do perfil
         createdAt: serverTimestamp(), 
         status: 'REGISTERED', 
         optInMarketing: true, 
@@ -187,3 +210,4 @@ export default function RegisterPage() {
   );
 }
 
+    
