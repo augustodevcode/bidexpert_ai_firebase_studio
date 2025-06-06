@@ -11,7 +11,7 @@ import {
   getDoc,
   updateDoc,
   setDoc,
-  deleteDoc as deleteFirestoreDoc, // Renomeado para evitar conflito com a action deleteUser
+  deleteDoc as deleteFirestoreDoc, 
   serverTimestamp,
   query,
   orderBy,
@@ -19,10 +19,9 @@ import {
   where,
   limit
 } from 'firebase/firestore';
-import type { UserProfileData, Role } from '@/types';
+import type { UserProfileData, Role, UserHabilitationStatus } from '@/types';
 import { getRoleByName, ensureDefaultRolesExist, getRole } from '@/app/admin/roles/actions';
 
-// Helper function to safely convert Firestore Timestamp like objects or actual Timestamps to Date
 function safeConvertToDate(timestampField: any): Date | null {
   if (!timestampField) return null;
   if (timestampField.toDate && typeof timestampField.toDate === 'function') {
@@ -60,7 +59,8 @@ export async function getUsersWithRoles(): Promise<UserProfileData[]> {
         fullName: data.fullName,
         roleId: data.roleId,
         roleName: roleName || 'N/A',
-        status: data.status || 'Ativo',
+        status: data.status || 'ATIVO',
+        habilitationStatus: data.habilitationStatus || 'PENDENTE_DOCUMENTOS',
         createdAt: safeConvertToDate(data.createdAt),
       } as UserProfileData;
     }));
@@ -88,6 +88,7 @@ export async function getUserProfileData(userId: string): Promise<UserProfileDat
         uid: docSnap.id,
         ...data,
         roleName: roleName || 'N/A',
+        habilitationStatus: data.habilitationStatus || 'PENDENTE_DOCUMENTOS',
         createdAt: safeConvertToDate(data.createdAt),
         updatedAt: safeConvertToDate(data.updatedAt),
         dateOfBirth: safeConvertToDate(data.dateOfBirth),
@@ -102,40 +103,48 @@ export async function getUserProfileData(userId: string): Promise<UserProfileDat
 }
 
 
-export async function updateUserRole(
+export async function updateUserProfileAndRole(
   userId: string,
-  newRoleId: string | null
+  data: { roleId?: string | null; habilitationStatus?: UserHabilitationStatus | null }
 ): Promise<{ success: boolean; message: string }> {
   if (!userId) {
     return { success: false, message: 'ID do usuário é obrigatório.' };
   }
+  console.log(`[updateUserProfileAndRole] Attempting to update user ${userId} with data:`, data);
 
   try {
     const userDocRef = doc(db, 'users', userId);
-    const updateData: { roleId?: string | null, roleName?: string | null, updatedAt: any } = {
+    const updateData: { roleId?: string | null; roleName?: string | null; habilitationStatus?: UserHabilitationStatus | null; updatedAt: any } = {
       updatedAt: serverTimestamp(),
     };
 
-    if (newRoleId) {
-        const roleDoc = await getRole(newRoleId);
-        if (roleDoc) {
-            updateData.roleId = newRoleId;
-            updateData.roleName = roleDoc.name;
-        } else {
-            return { success: false, message: 'Perfil (Role) não encontrado.'};
-        }
-    } else {
-        updateData.roleId = null;
-        updateData.roleName = null;
+    if (data.hasOwnProperty('roleId')) {
+      if (data.roleId) {
+          const roleDoc = await getRole(data.roleId);
+          if (roleDoc) {
+              updateData.roleId = data.roleId;
+              updateData.roleName = roleDoc.name;
+          } else {
+              return { success: false, message: 'Perfil (Role) não encontrado.'};
+          }
+      } else { 
+          updateData.roleId = null;
+          updateData.roleName = null;
+      }
     }
+
+    if (data.hasOwnProperty('habilitationStatus')) {
+        updateData.habilitationStatus = data.habilitationStatus || null;
+    }
+
 
     await updateDoc(userDocRef, updateData);
     revalidatePath('/admin/users');
     revalidatePath(`/admin/users/${userId}/edit`);
-    return { success: true, message: 'Perfil do usuário atualizado com sucesso!' };
-  } catch (error: any) {
-    console.error("[Server Action - updateUserRole] Error:", error);
-    return { success: false, message: `Falha ao atualizar perfil: ${error.message}` };
+    return { success: true, message: 'Usuário atualizado com sucesso!' };
+  } catch (error: any)    {
+    console.error("[Server Action - updateUserProfileAndRole] Error:", error.message, error.code, error.details);
+    return { success: false, message: `Falha ao atualizar usuário: ${error.message}` };
   }
 }
 
@@ -145,9 +154,8 @@ export async function deleteUser(
 ): Promise<{ success: boolean; message: string }> {
   try {
     // Placeholder: In a real app, you'd delete from Firebase Auth first.
-    // For now, we only delete from Firestore.
     const userDocRef = doc(db, 'users', userId);
-    await deleteFirestoreDoc(userDocRef); // Use renamed import
+    await deleteFirestoreDoc(userDocRef); 
     console.log(`[Server Action - deleteUser] User ${userId} deleted from Firestore.`);
     revalidatePath('/admin/users');
     return { success: true, message: 'Usuário excluído do Firestore com sucesso!' };
@@ -170,48 +178,94 @@ export async function ensureUserRoleInFirestore(
 
   try {
     console.log(`[ensureUserRoleInFirestore] Passo 1: Garantindo que perfis padrão existam...`);
-    await ensureDefaultRolesExist(); // This might throw if it fails to create roles
-    console.log(`[ensureUserRoleInFirestore] Passo 1.1: Perfis padrão verificados/criados.`);
+    const rolesEnsured = await ensureDefaultRolesExist(); 
+    if (!rolesEnsured.success && targetRoleName === 'ADMINISTRATOR') {
+      console.error(`[ensureUserRoleInFirestore] Falha crítica ao garantir perfis padrão: ${rolesEnsured.message}`);
+      return { success: false, message: `Falha ao criar perfis padrão necessários: ${rolesEnsured.message}` };
+    }
+    console.log(`[ensureUserRoleInFirestore] Passo 1.1: Perfis padrão verificados/criados. Success: ${rolesEnsured.success}`);
 
     console.log(`[ensureUserRoleInFirestore] Passo 2: Buscando o perfil "${targetRoleName}"...`);
     const targetRole = await getRoleByName(targetRoleName);
     if (!targetRole) {
-      console.error(`[ensureUserRoleInFirestore] Perfil "${targetRoleName}" não encontrado após ensureDefaultRolesExist.`);
+      console.error(`[ensureUserRoleInFirestore] Perfil "${targetRoleName}" NÃO encontrado após ensureDefaultRolesExist.`);
       return { success: false, message: `Perfil "${targetRoleName}" não pôde ser encontrado ou criado.` };
     }
-    console.log(`[ensureUserRoleInFirestore] Passo 2.1: Perfil "${targetRoleName}" encontrado com ID: ${targetRole.id}`);
+    console.log(`[ensureUserRoleInFirestore] Passo 2.1: Perfil "${targetRoleName}" encontrado com ID: ${targetRole.id} e nome: ${targetRole.name}`);
 
     const userDocRef = doc(db, 'users', userId);
     console.log(`[ensureUserRoleInFirestore] Passo 3: Buscando documento do usuário ${userId}...`);
     const userSnap = await getDoc(userDocRef);
+    console.log(`[ensureUserRoleInFirestore] Verificando usuário ${userId}. UserSnap exists: ${userSnap.exists()}`);
+
 
     if (userSnap.exists()) {
       const userData = userSnap.data() as UserProfileData;
-      console.log(`[ensureUserRoleInFirestore] Passo 3.1: Documento do usuário encontrado. Perfil atual: ${userData.roleId} (${userData.roleName})`);
-      if (userData.roleId !== targetRole.id || userData.roleName !== targetRole.name) {
-        console.log(`[ensureUserRoleInFirestore] Passo 4: Atualizando perfil do usuário ${email} para ${targetRoleName}...`);
-        await updateDoc(userDocRef, {
+      console.log(`[ensureUserRoleInFirestore] Passo 3.1: Documento do usuário encontrado. Perfil atual: ${userData.roleId} (${userData.roleName}), Habilitação: ${userData.habilitationStatus}`);
+      if (userData.roleId !== targetRole.id || userData.roleName !== targetRole.name || userData.habilitationStatus !== 'HABILITADO') {
+        console.log(`[ensureUserRoleInFirestore] Passo 4: Atualizando perfil/habilitação do usuário ${email} para ${targetRoleName}...`);
+        const updateData: Partial<UserProfileData> = {
           roleId: targetRole.id,
           roleName: targetRole.name,
-          updatedAt: serverTimestamp(),
-        });
-        console.log(`[ensureUserRoleInFirestore] Passo 4.1: Perfil do usuário ${email} atualizado para ${targetRoleName}.`);
-        const updatedProfile = await getUserProfileData(userId); // Re-fetch to confirm
+          habilitationStatus: 'HABILITADO', // Admins e roles configurados aqui são habilitados por padrão
+          updatedAt: serverTimestamp() as Timestamp,
+        };
+        // Manter campos existentes se não estiverem sendo explicitamente alterados
+        if (userData.fullName && !updateData.fullName) updateData.fullName = userData.fullName;
+        if (userData.email && !updateData.email) updateData.email = userData.email;
+        if (userData.status && !updateData.status) updateData.status = userData.status;
+
+
+        await updateDoc(userDocRef, updateData);
+        console.log(`[ensureUserRoleInFirestore] Passo 4.1: Perfil/habilitação do usuário ${email} atualizado para ${targetRoleName}.`);
+        const updatedProfile = await getUserProfileData(userId); 
         return { success: true, message: 'Perfil do usuário atualizado.', userProfile: updatedProfile || undefined };
       }
-      console.log(`[ensureUserRoleInFirestore] Usuário ${email} já possui o perfil ${targetRoleName}. Nenhuma alteração necessária.`);
+      console.log(`[ensureUserRoleInFirestore] Usuário ${email} já possui o perfil ${targetRoleName} e está habilitado. Nenhuma alteração necessária.`);
       return { success: true, message: 'Perfil do usuário já está correto.', userProfile: userData };
     } else {
       console.log(`[ensureUserRoleInFirestore] Passo 3.1: Documento do usuário ${userId} não encontrado. Criando...`);
-      const newUserProfile: Partial<UserProfileData> = {
+      const newUserProfile: UserProfileData = { // Use UserProfileData para garantir todos os campos
         uid: userId,
         email: email,
         fullName: fullName || email.split('@')[0],
         roleId: targetRole.id,
         roleName: targetRole.name,
         status: 'ATIVO',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        habilitationStatus: 'HABILITADO',
+        createdAt: serverTimestamp() as Timestamp,
+        updatedAt: serverTimestamp() as Timestamp,
+        // Inicializar outros campos opcionais como undefined ou valores padrão
+        cpf: undefined,
+        rgNumber: undefined,
+        rgIssuer: undefined,
+        rgIssueDate: null,
+        rgState: undefined,
+        dateOfBirth: null,
+        cellPhone: undefined,
+        homePhone: undefined,
+        gender: undefined,
+        profession: undefined,
+        nationality: undefined,
+        maritalStatus: undefined,
+        propertyRegime: undefined,
+        spouseName: undefined,
+        spouseCpf: undefined,
+        zipCode: undefined,
+        street: undefined,
+        number: undefined,
+        complement: undefined,
+        neighborhood: undefined,
+        city: undefined,
+        state: undefined,
+        optInMarketing: false,
+        avatarUrl: undefined,
+        dataAiHint: undefined,
+        activeBids: 0,
+        auctionsWon: 0,
+        itemsSold: 0,
+        sellerProfileId: undefined,
+        permissions: targetRole.permissions || [], // Adicionar permissões do perfil
       };
       await setDoc(userDocRef, newUserProfile);
       console.log(`[ensureUserRoleInFirestore] Perfil de usuário criado para ${email} com o perfil ${targetRoleName}.`);
@@ -219,7 +273,9 @@ export async function ensureUserRoleInFirestore(
       return { success: true, message: 'Perfil de usuário criado e perfil atribuído.', userProfile: createdProfile || undefined };
     }
   } catch (error: any) {
-    console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Error:`, error);
+    console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Error:`, error.message, error.code, error.details);
     return { success: false, message: `Falha ao configurar perfil para ${targetRoleName}: ${error.message}` };
   }
 }
+
+    
