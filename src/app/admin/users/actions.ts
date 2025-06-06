@@ -2,50 +2,27 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db } from '@/lib/firebase'; 
-import admin from 'firebase-admin'; 
-import { 
-  collection, 
-  getDocs, 
-  doc, 
-  getDoc, 
-  updateDoc, 
-  setDoc, // Added setDoc for creating user profiles
-  deleteDoc as deleteFirestoreDoc, 
-  serverTimestamp, 
-  query, 
+import { db } from '@/lib/firebase';
+import {
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  getDoc,
+  updateDoc,
+  setDoc,
+  deleteDoc as deleteFirestoreDoc, // Renomeado para evitar conflito com a action deleteUser
+  serverTimestamp,
+  query,
   orderBy,
-  limit,
-  where
-} from 'firebase/firestore'; 
+  Timestamp,
+  where,
+  limit
+} from 'firebase/firestore';
 import type { UserProfileData, Role } from '@/types';
-import { getRoleByName, ensureDefaultRolesExist } from '@/app/admin/roles/actions';
+import { getRoleByName, ensureDefaultRolesExist, getRole } from '@/app/admin/roles/actions';
 
-// Ensure Firebase Admin SDK is initialized (idempotent)
-if (admin.apps.length === 0) {
-  try {
-    const serviceAccountPath = process.env.FIREBASE_ADMIN_SDK_PATH;
-    if (serviceAccountPath) {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const serviceAccount = require(serviceAccountPath);
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
-      console.log("Firebase Admin SDK initialized using FIREBASE_ADMIN_SDK_PATH (users/actions).");
-    } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-       admin.initializeApp();
-       console.log("Firebase Admin SDK initialized using GOOGLE_APPLICATION_CREDENTIALS (users/actions).");
-    } else {
-      console.warn("Admin SDK: GOOGLE_APPLICATION_CREDENTIALS or FIREBASE_ADMIN_SDK_PATH not set. User management features might be limited or fail.");
-    }
-  } catch (e: any) {
-    if (e.code !== 'app/app-already-exists') {
-      console.error("Error initializing Firebase Admin SDK (users/actions):", e.message);
-    }
-  }
-}
-
-
+// Helper function to safely convert Firestore Timestamp like objects or actual Timestamps to Date
 function safeConvertToDate(timestampField: any): Date | null {
   if (!timestampField) return null;
   if (timestampField.toDate && typeof timestampField.toDate === 'function') {
@@ -58,6 +35,7 @@ function safeConvertToDate(timestampField: any): Date | null {
   if (timestampField instanceof Date) return timestampField;
   const parsedDate = new Date(timestampField);
   if (!isNaN(parsedDate.getTime())) return parsedDate;
+  console.warn(`[users/actions] Could not convert timestamp to Date: ${JSON.stringify(timestampField)}. Returning null.`);
   return null;
 }
 
@@ -66,12 +44,12 @@ export async function getUsersWithRoles(): Promise<UserProfileData[]> {
     const usersCollection = collection(db, 'users');
     const q = query(usersCollection, orderBy('fullName', 'asc'));
     const snapshot = await getDocs(q);
-    
+
     const users = await Promise.all(snapshot.docs.map(async (docSnap) => {
       const data = docSnap.data();
       let roleName: string | undefined = undefined;
       if (data.roleId) {
-        const roleDoc = await getRole(data.roleId); // Use getRole from roles/actions
+        const roleDoc = await getRole(data.roleId);
         if (roleDoc) {
           roleName = roleDoc.name;
         }
@@ -101,7 +79,7 @@ export async function getUserProfileData(userId: string): Promise<UserProfileDat
       const data = docSnap.data();
       let roleName: string | undefined = undefined;
       if (data.roleId) {
-        const roleDoc = await getRole(data.roleId); // Use getRole from roles/actions
+        const roleDoc = await getRole(data.roleId);
         if (roleDoc) {
           roleName = roleDoc.name;
         }
@@ -126,7 +104,7 @@ export async function getUserProfileData(userId: string): Promise<UserProfileDat
 
 export async function updateUserRole(
   userId: string,
-  newRoleId: string | null 
+  newRoleId: string | null
 ): Promise<{ success: boolean; message: string }> {
   if (!userId) {
     return { success: false, message: 'ID do usuário é obrigatório.' };
@@ -134,23 +112,21 @@ export async function updateUserRole(
 
   try {
     const userDocRef = doc(db, 'users', userId);
-    const updateData: Partial<UserProfileData> = {
-      updatedAt: serverTimestamp() as any,
+    const updateData: { roleId?: string | null, roleName?: string | null, updatedAt: any } = {
+      updatedAt: serverTimestamp(),
     };
 
-    let roleName: string | undefined = undefined;
     if (newRoleId) {
-        const roleDoc = await getRole(newRoleId); // Use getRole from roles/actions
+        const roleDoc = await getRole(newRoleId);
         if (roleDoc) {
-            roleName = roleDoc.name;
             updateData.roleId = newRoleId;
-            updateData.roleName = roleName;
+            updateData.roleName = roleDoc.name;
         } else {
             return { success: false, message: 'Perfil (Role) não encontrado.'};
         }
     } else {
-        updateData.roleId = undefined; 
-        updateData.roleName = undefined;
+        updateData.roleId = null;
+        updateData.roleName = null;
     }
 
     await updateDoc(userDocRef, updateData);
@@ -159,7 +135,7 @@ export async function updateUserRole(
     return { success: true, message: 'Perfil do usuário atualizado com sucesso!' };
   } catch (error: any) {
     console.error("[Server Action - updateUserRole] Error:", error);
-    return { success: false, message: error.message || 'Falha ao atualizar perfil do usuário.' };
+    return { success: false, message: `Falha ao atualizar perfil: ${error.message}` };
   }
 }
 
@@ -168,10 +144,13 @@ export async function deleteUser(
   userId: string
 ): Promise<{ success: boolean; message: string }> {
   try {
-    // Placeholder: In a real app, you'd delete from Firebase Auth and then Firestore.
-    console.warn(`[Server Action - deleteUser] Placeholder: User ${userId} would be deleted. Actual deletion logic not implemented.`);
+    // Placeholder: In a real app, you'd delete from Firebase Auth first.
+    // For now, we only delete from Firestore.
+    const userDocRef = doc(db, 'users', userId);
+    await deleteFirestoreDoc(userDocRef); // Use renamed import
+    console.log(`[Server Action - deleteUser] User ${userId} deleted from Firestore.`);
     revalidatePath('/admin/users');
-    return { success: true, message: 'Usuário (placeholder) excluído com sucesso!' };
+    return { success: true, message: 'Usuário excluído do Firestore com sucesso!' };
   } catch (error: any) {
     console.error("[Server Action - deleteUser] Error:", error);
     return { success: false, message: error.message || 'Falha ao excluir usuário.' };
@@ -179,49 +158,58 @@ export async function deleteUser(
 }
 
 export async function ensureUserRoleInFirestore(
-  userId: string, 
-  email: string | null, 
+  userId: string,
+  email: string | null,
   fullName: string | null,
   targetRoleName: string
 ): Promise<{ success: boolean; message: string; userProfile?: UserProfileData}> {
   if (!userId || !email) {
     return { success: false, message: 'UID do usuário e email são obrigatórios.' };
   }
+  console.log(`[ensureUserRoleInFirestore] Iniciando para ${email}, alvo: ${targetRoleName}`);
 
   try {
-    await ensureDefaultRolesExist(); // Make sure default roles, including targetRoleName, exist
-    
+    console.log(`[ensureUserRoleInFirestore] Passo 1: Garantindo que perfis padrão existam...`);
+    await ensureDefaultRolesExist(); // This might throw if it fails to create roles
+    console.log(`[ensureUserRoleInFirestore] Passo 1.1: Perfis padrão verificados/criados.`);
+
+    console.log(`[ensureUserRoleInFirestore] Passo 2: Buscando o perfil "${targetRoleName}"...`);
     const targetRole = await getRoleByName(targetRoleName);
     if (!targetRole) {
-      return { success: false, message: `Perfil "${targetRoleName}" não encontrado no sistema.` };
+      console.error(`[ensureUserRoleInFirestore] Perfil "${targetRoleName}" não encontrado após ensureDefaultRolesExist.`);
+      return { success: false, message: `Perfil "${targetRoleName}" não pôde ser encontrado ou criado.` };
     }
+    console.log(`[ensureUserRoleInFirestore] Passo 2.1: Perfil "${targetRoleName}" encontrado com ID: ${targetRole.id}`);
 
     const userDocRef = doc(db, 'users', userId);
+    console.log(`[ensureUserRoleInFirestore] Passo 3: Buscando documento do usuário ${userId}...`);
     const userSnap = await getDoc(userDocRef);
 
     if (userSnap.exists()) {
       const userData = userSnap.data() as UserProfileData;
+      console.log(`[ensureUserRoleInFirestore] Passo 3.1: Documento do usuário encontrado. Perfil atual: ${userData.roleId} (${userData.roleName})`);
       if (userData.roleId !== targetRole.id || userData.roleName !== targetRole.name) {
+        console.log(`[ensureUserRoleInFirestore] Passo 4: Atualizando perfil do usuário ${email} para ${targetRoleName}...`);
         await updateDoc(userDocRef, {
           roleId: targetRole.id,
           roleName: targetRole.name,
           updatedAt: serverTimestamp(),
         });
-        console.log(`[ensureUserRoleInFirestore] Perfil do usuário ${email} atualizado para ${targetRoleName}.`);
-        const updatedProfile = await getUserProfileData(userId);
+        console.log(`[ensureUserRoleInFirestore] Passo 4.1: Perfil do usuário ${email} atualizado para ${targetRoleName}.`);
+        const updatedProfile = await getUserProfileData(userId); // Re-fetch to confirm
         return { success: true, message: 'Perfil do usuário atualizado.', userProfile: updatedProfile || undefined };
       }
       console.log(`[ensureUserRoleInFirestore] Usuário ${email} já possui o perfil ${targetRoleName}. Nenhuma alteração necessária.`);
       return { success: true, message: 'Perfil do usuário já está correto.', userProfile: userData };
     } else {
-      // Usuário existe na Auth mas não no Firestore, criar documento
+      console.log(`[ensureUserRoleInFirestore] Passo 3.1: Documento do usuário ${userId} não encontrado. Criando...`);
       const newUserProfile: Partial<UserProfileData> = {
         uid: userId,
         email: email,
-        fullName: fullName || email.split('@')[0], // Fallback para nome
+        fullName: fullName || email.split('@')[0],
         roleId: targetRole.id,
         roleName: targetRole.name,
-        status: 'ATIVO', // Ou outro status padrão
+        status: 'ATIVO',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
@@ -231,7 +219,7 @@ export async function ensureUserRoleInFirestore(
       return { success: true, message: 'Perfil de usuário criado e perfil atribuído.', userProfile: createdProfile || undefined };
     }
   } catch (error: any) {
-    console.error(`[Server Action - ensureUserRoleInFirestore for ${email}] Error:`, error);
+    console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Error:`, error);
     return { success: false, message: `Falha ao configurar perfil para ${targetRoleName}: ${error.message}` };
   }
 }
