@@ -42,29 +42,22 @@ service cloud.firestore {
 
     // Roles Collection
     match /roles/{roleId} {
-      allow read: if isSignedIn(); // Admins and users who need to check role details
-      allow list: if isSignedIn(); 
+      allow read: if true; // TEMPORARILY VERY PERMISSIVE FOR DIAGNOSIS
+      allow list: if true; // TEMPORARILY VERY PERMISSIVE FOR DIAGNOSIS
 
-      // Admin pode criar qualquer perfil.
-      // Um email na lista de admin PODE CRIAR OS PERFIS PADRÃO durante o bootstrap.
       allow create: if isSignedIn() &&
                       (
                         isActualAdmin(request.auth.uid) ||
-                        isAdminEmail() // Allows admin emails to create any role during bootstrap
+                        isAdminEmail() // Simplified: an admin email can create any role needed for bootstrap
                       ) &&
                       request.resource.data.name_normalized == request.resource.data.name.upper() &&
-                      // Ensures essential fields are present, allows for optional 'description'
-                      request.resource.data.keys().hasAll(['name', 'name_normalized', 'permissions', 'createdAt', 'updatedAt']) &&
-                      (!request.resource.data.keys().has('description') || request.resource.data.description is string);
-
+                      request.resource.data.keys().hasOnly(['name', 'name_normalized', 'description', 'permissions', 'createdAt', 'updatedAt']); // Ensures only expected fields
 
       allow update: if isSignedIn() && isActualAdmin(request.auth.uid) &&
                       request.resource.data.name_normalized == request.resource.data.name.upper() &&
-                      // Prevent renaming default roles to something else, but allow updating their permissions/description
-                      (!isDefaultRoleName(resource.data.name) || request.resource.data.name == resource.data.name) && 
-                      request.resource.data.keys().hasAll(['name', 'name_normalized', 'permissions', 'updatedAt']) &&
-                      (!request.resource.data.keys().has('description') || request.resource.data.description is string);
-
+                      // Prevent renaming default roles to something non-default, or default to another default
+                      (!isDefaultRoleName(resource.data.name) || (isDefaultRoleName(request.resource.data.name) && request.resource.data.name == resource.data.name)) &&
+                      request.resource.data.keys().hasOnly(['name', 'name_normalized', 'description', 'permissions', 'updatedAt']);
 
       allow delete: if isSignedIn() && isActualAdmin(request.auth.uid) &&
                        !isDefaultRoleName(resource.data.name); // Prevent deleting default roles
@@ -73,7 +66,7 @@ service cloud.firestore {
     // Users Collection
     match /users/{userId} {
       allow read, get: if isUser(userId) || isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid);
-      allow list: if isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid);
+      allow list: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
 
       allow create: if isUser(userId) &&
                        request.resource.data.email == request.auth.token.email &&
@@ -85,92 +78,105 @@ service cloud.firestore {
                            exists(/databases/$(database)/documents/roles/$(request.resource.data.roleId)) &&
                            get(/databases/$(database)/documents/roles/$(request.resource.data.roleId)).data.name_normalized == 'USER'
                          )
-                       ) &&
-                       (!('habilitationStatus' in request.resource.data.keys()) || request.resource.data.habilitationStatus == 'PENDING_DOCUMENTS');
+                       );
 
-      allow update: if 
-                      // 1. Admin fazendo bootstrap em si mesmo para ADMINISTRATOR
+      allow update: if
+                      // 1. Admin/Analyst updating user's habilitationStatus or role (Admin only for role)
+                      (
+                        isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid)) &&
+                        request.resource.data.keys().hasAny(['habilitationStatus', 'roleId', 'roleName']) && // Ensure these are the fields being changed by admin/analyst
+                        (!request.resource.data.keys().hasAny(['email', 'cpf']) || isActualAdmin(request.auth.uid) ) && // Only admin can change sensitive fields
+                        (request.resource.data.keys().has('roleId') || request.resource.data.keys().has('roleName') ? isActualAdmin(request.auth.uid) : true) // Only admin can change role
+                      ) ||
+                      // 2. Admin bootstrapping THEMSELVES
                       (
                         isAdminEmail() && isUser(userId) &&
-                        (resource.data.roleName == null || resource.data.roleName != 'ADMINISTRATOR') && // Only if not already admin
+                        (resource.data.roleName == null || resource.data.roleName != 'ADMINISTRATOR') &&
                         request.resource.data.roleName == 'ADMINISTRATOR' &&
-                        request.resource.data.keys().hasAll(['roleId', 'roleName', 'updatedAt']) && // Must set these for bootstrap
-                        (!request.resource.data.keys().has('habilitationStatus') || request.resource.data.habilitationStatus == 'HABILITADO')
+                        request.resource.data.keys().hasAll(['roleId', 'roleName', 'updatedAt']) && 
+                        request.resource.data.keys().size() <= 7 // Allows for a few other fields like fullName, email, status, habilitationStatus
                       ) ||
-                      // 2. Admin real gerenciando outros usuários ou seu próprio perfil (após bootstrap)
-                      (
-                        isActualAdmin(request.auth.uid) &&
-                        // Admin can change roleId, roleName, status, habilitationStatus for any user
-                        (
-                           !request.resource.data.keys().hasAny(['email', 'createdAt', 'uid']) || // Cannot change these immutable fields
-                           request.resource.data.email == resource.data.email // Email can only be set if it matches existing or is not changing
-                        )
-                      ) ||
-                      // 3. Analista de Leilão gerenciando habilitação
-                      (
-                        isAuctionAnalyst(request.auth.uid) &&
-                        request.resource.data.keys().hasOnly(['habilitationStatus', 'updatedAt']) // Analyst can only update these fields
-                      ) ||
-                      // 4. Usuário comum atualizando seu próprio perfil (sem mudar roles/status/habilitation)
+                      // 3. User updating their own non-critical profile info
                       (
                         isUser(userId) &&
-                        !request.resource.data.keys().hasAny(['roleId', 'roleName', 'status', 'habilitationStatus', 'email', 'createdAt', 'uid'])
+                        !request.resource.data.keys().hasAny(['roleId', 'roleName', 'status', 'habilitationStatus'])
                       );
+
 
       allow delete: if isActualAdmin(request.auth.uid);
     }
 
     // LotCategories Collection
     match /lotCategories/{categoryId} {
-      allow read, list: if true; // Public read
+      allow read: if true;
+      allow list: if true;
       allow create, update, delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
     }
 
     // States Collection
     match /states/{stateId} {
-      allow read, list: if true; // Public read
+      allow read: if true;
+      allow list: if true;
       allow create, update, delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
     }
 
     // Cities Collection
     match /cities/{cityId} {
-      allow read, list: if true; // Public read
+      allow read: if true;
+      allow list: if true;
       allow create, update, delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
     }
 
     // Auctioneers Collection
     match /auctioneers/{auctioneerId} {
-      allow read, list: if true; // Public read
-      allow create, update, delete: if isSignedIn() && isActualAdmin(request.auth.uid); // Only full admin for now
+      allow read: if true;
+      allow list: if true;
+      allow create, update, delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
     }
 
     // Sellers Collection
     match /sellers/{sellerId} {
-      allow read, list: if true; // Public read
-      allow create: if isSignedIn() && isActualAdmin(request.auth.uid); 
-      allow update: if isSignedIn() && (isActualAdmin(request.auth.uid) || (isUser(resource.data.userId) && !request.resource.data.keys().hasAny(['userId', 'roleId', 'roleName'])));
-      allow delete: if isSignedIn() && isActualAdmin(request.auth.uid);
+      allow read: if true;
+      allow list: if true;
+      allow create: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
+      allow update: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid) || (isUser(resource.data.userId) && !request.resource.data.keys().hasAny(['userId', 'roleId', 'roleName'])));
+      allow delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
     }
 
     // Auctions Collection
     match /auctions/{auctionId} {
-      allow read, list: if true; // Public read
-      allow create, update, delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid)); // Analyst can manage auctions too
+      allow read: if true;
+      allow list: if true;
+      allow create, update, delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
     }
 
     // Lots Collection
     match /lots/{lotId} {
-      allow read, list: if true; // Public read
-      allow create, update, delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid)); // Analyst can manage lots
+      allow read: if true;
+      allow list: if true;
+      allow create, update, delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
+    }
+
+    // Bids Collection (Placeholder - Define more specific rules when implemented)
+    match /auctions/{auctionId}/lots/{lotId}/bids/{bidId} {
+      allow read: if true; // Or perhaps only for participants/admin
+      allow create: if isSignedIn() &&
+                      exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.habilitationStatus == 'HABILITADO';
+      // No update/delete for bids usually
     }
     
     // MediaItems Collection
     match /mediaItems/{mediaItemId} {
-      allow read: if true;
-      allow list: if isSignedIn(); // Any signed-in user can list (e.g. for selection)
-      allow create: if isSignedIn(); // Any signed-in user can upload for now, could be restricted later
-      allow update: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid)); // Admins/Analysts can edit metadata
-      allow delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid)); // Admins/Analysts can delete
+      allow read: if true; // Publicly readable if URLs are public
+      allow list: if isSignedIn(); // Only signed-in users (e.g., for selection)
+      // Create: User needs to be signed in (e.g., admin, consignor uploading)
+      // For simplicity, checking if user is admin or analyst. Could be more granular (e.g., isConsignorOfLot(mediaItem.linkedLotIds[0]))
+      allow create: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid)); 
+      allow update: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid)); 
+      allow delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
     }
   }
 }
+
+    

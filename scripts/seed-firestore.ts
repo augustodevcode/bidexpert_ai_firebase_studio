@@ -128,7 +128,7 @@ async function seedRoles() {
 async function setupAdminUser() {
   console.log('Configurando usuário administrador principal...');
   const adminEmail = "augusto.devcode@gmail.com";
-  const adminUid = "zdGL4CALTfP0zTFRIt80nU1B6An1"; 
+  const adminUid = "zdGL4CALTfP0zTFRIt8OnU1B6An1"; 
   const adminFullName = "Augusto (Admin)";
 
   const adminRoleQuery = await db.collection('roles').where('name_normalized', '==', 'ADMINISTRATOR').limit(1).get();
@@ -153,20 +153,20 @@ async function setupAdminUser() {
     updatedAt: FieldValue.serverTimestamp(),
   };
   
-  if (userDoc.exists() && userDoc.data()?.role) {
+  if (userDoc.exists && userDoc.data()?.role) {
     userProfileData.role = FieldValue.delete();
   }
 
-  if (!userDoc.exists()) {
+  if (!userDoc.exists) {
     userProfileData.createdAt = FieldValue.serverTimestamp();
     await userDocRef.set(userProfileData);
     console.log(`  Documento do usuário administrador "${adminEmail}" criado com perfil ADMINISTRATOR e habilitado.`);
   } else {
     const currentData = userDoc.data();
-    if (currentData?.roleId !== adminRoleId || 
+    if (currentData?.roleId !== adminRoleId ||
         currentData?.roleName !== adminRoleName || 
         currentData?.habilitationStatus !== 'HABILITADO' ||
-        currentData?.role) {
+ currentData?.role !== undefined) { // Check if 'role' field exists and is not undefined
       await userDocRef.update(userProfileData);
       console.log(`  Documento do usuário administrador "${adminEmail}" atualizado com perfil ADMINISTRATOR e habilitado.`);
     } else {
@@ -225,10 +225,10 @@ async function seedStatesAndCities() {
           citiesAddedToThisStateCount++;
         }
       }
-      if (citiesAddedToThisStateCount > 0 && stateDoc.exists()) {
-        const currentCityCount = stateDoc.data()?.cityCount || 0;
-        if(currentCityCount === 0){ 
-            await stateRef.update({ cityCount: citiesAddedToThisStateCount, updatedAt: FieldValue.serverTimestamp() });
+      if (citiesAddedToThisStateCount > 0 && stateDoc.exists) {
+ const currentCityCount = stateDoc.data()?.cityCount || 0;
+        if (currentCityCount === 0) {
+ await stateRef.update({ cityCount: citiesAddedToThisStateCount, updatedAt: FieldValue.serverTimestamp() });
         }
       }
     }

@@ -27,7 +27,7 @@ function safeConvertToDate(timestampField: any): Date {
 export async function createRole(
   data: RoleFormData
 ): Promise<{ success: boolean; message: string; roleId?: string }> {
-  console.log(`[createRole] Attempting to create role: ${data.name}`);
+  console.log(`[createRole] Tentando criar perfil: ${data.name} com permissões:`, data.permissions);
   if (!data.name || data.name.trim() === '') {
     return { success: false, message: 'O nome do perfil é obrigatório.' };
   }
@@ -39,7 +39,7 @@ export async function createRole(
   try {
     const existingRoleSnapshot = await getDocs(q);
     if (!existingRoleSnapshot.empty) {
-      console.warn(`[createRole] Role with normalized name "${normalizedName}" already exists.`);
+      console.warn(`[createRole] Perfil com nome normalizado "${normalizedName}" já existe.`);
       return { success: false, message: `O perfil com o nome "${data.name.trim()}" já existe.` };
     }
 
@@ -53,11 +53,11 @@ export async function createRole(
     };
 
     const docRef = await addDoc(collection(db, 'roles'), newRoleData);
-    console.log(`[createRole] Role "${data.name}" created successfully with ID: ${docRef.id}`);
+    console.log(`[createRole] Perfil "${data.name}" criado com sucesso! ID: ${docRef.id}`);
     revalidatePath('/admin/roles');
     return { success: true, message: 'Perfil criado com sucesso!', roleId: docRef.id };
   } catch (error: any) {
-    console.error("[createRole] Error:", error);
+    console.error(`[createRole] ERRO ao criar perfil "${data.name}":`, error.message, error.code);
     return { success: false, message: `Falha ao criar perfil: ${error.message}` };
   }
 }
@@ -67,7 +67,7 @@ export async function getRoles(): Promise<Role[]> {
     const rolesCollection = collection(db, 'roles');
     const q = query(rolesCollection, orderBy('name', 'asc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(docSnap => {
+    const rolesList = snapshot.docs.map(docSnap => {
       const data = docSnap.data();
       return {
         id: docSnap.id,
@@ -78,8 +78,10 @@ export async function getRoles(): Promise<Role[]> {
         updatedAt: safeConvertToDate(data.updatedAt),
       } as Role;
     });
+    console.log(`[getRoles] ${rolesList.length} perfis encontrados.`);
+    return rolesList;
   } catch (error: any) {
-    console.error("[getRoles] Error:", error);
+    console.error("[getRoles] ERRO ao buscar perfis:", error.message, error.code);
     return [];
   }
 }
@@ -101,7 +103,7 @@ export async function getRole(id: string): Promise<Role | null> {
     }
     return null;
   } catch (error: any) {
-    console.error(`[getRole] Error fetching role ${id}:`, error);
+    console.error(`[getRole] ERRO ao buscar perfil ${id}:`, error.message, error.code);
     return null;
   }
 }
@@ -110,16 +112,17 @@ export async function getRoleByName(roleName: string): Promise<Role | null> {
   if (!roleName || roleName.trim() === '') {
     return null;
   }
-  console.log(`[getRoleByName] Searching for role: ${roleName}`);
+  const normalizedQueryName = roleName.trim().toUpperCase();
+  console.log(`[getRoleByName] Buscando perfil com name_normalized: "${normalizedQueryName}"`);
   try {
     const rolesRef = collection(db, 'roles');
-    const q = query(rolesRef, where('name_normalized', '==', roleName.trim().toUpperCase()), limit(1));
+    const q = query(rolesRef, where('name_normalized', '==', normalizedQueryName), limit(1));
     const snapshot = await getDocs(q);
 
     if (!snapshot.empty) {
       const docSnap = snapshot.docs[0];
       const data = docSnap.data();
-      console.log(`[getRoleByName] Role "${roleName}" found with ID: ${docSnap.id}`);
+      console.log(`[getRoleByName] Perfil "${normalizedQueryName}" ENCONTRADO. ID: ${docSnap.id}`);
       return {
         id: docSnap.id,
         name: data.name,
@@ -129,10 +132,10 @@ export async function getRoleByName(roleName: string): Promise<Role | null> {
         updatedAt: safeConvertToDate(data.updatedAt),
       } as Role;
     }
-    console.warn(`[getRoleByName] Role with name "${roleName}" not found.`);
+    console.warn(`[getRoleByName] Perfil com name_normalized "${normalizedQueryName}" NÃO encontrado.`);
     return null;
   } catch (error: any) {
-    console.error(`[getRoleByName] Error fetching role by name "${roleName}":`, error);
+    console.error(`[getRoleByName] ERRO ao buscar perfil "${normalizedQueryName}":`, error.message, error.code);
     return null;
   }
 }
@@ -145,7 +148,7 @@ export async function updateRole(
   if (data.name !== undefined && (data.name === null || data.name.trim() === '')) {
      return { success: false, message: 'O nome do perfil não pode ser vazio.' };
   }
-  console.log(`[updateRole] Attempting to update role ID: ${id} with data:`, data);
+  console.log(`[updateRole] Tentando atualizar perfil ID: ${id} com dados:`, data);
 
   try {
     const roleDocRef = doc(db, 'roles', id);
@@ -155,11 +158,9 @@ export async function updateRole(
     }
     const currentRoleData = currentRoleSnap.data() as Role;
 
-    const systemRoles = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER'];
+    const systemRoles = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER', 'AUCTION_ANALYST'];
     if (systemRoles.includes(currentRoleData.name.toUpperCase()) && data.name && data.name.trim().toUpperCase() !== currentRoleData.name.toUpperCase()) {
-      // This check might be too restrictive depending on the rules for renaming default roles.
-      // For now, allow renaming if other conditions in firestore.rules pass.
-      // return { success: false, message: `O perfil "${currentRoleData.name}" é um perfil de sistema e não pode ser renomeado para um nome diferente (case-insensitive).` };
+       console.warn(`[updateRole] Tentativa de renomear perfil de sistema "${currentRoleData.name}" para "${data.name}".`);
     }
     
     if (data.name && data.name.trim().toUpperCase() !== currentRoleData.name.toUpperCase()) {
@@ -182,13 +183,13 @@ export async function updateRole(
     
     updateData.updatedAt = serverTimestamp();
 
-    await updateDoc(roleDocRef, updateData as any); // Cast to any to satisfy Firestore update type
-    console.log(`[updateRole] Role ID: ${id} updated successfully.`);
+    await updateDoc(roleDocRef, updateData as any); 
+    console.log(`[updateRole] Perfil ID: ${id} atualizado com sucesso.`);
     revalidatePath('/admin/roles');
     revalidatePath(`/admin/roles/${id}/edit`);
     return { success: true, message: 'Perfil atualizado com sucesso!' };
   } catch (error: any) {
-    console.error(`[updateRole] Error updating role ID ${id}:`, error);
+    console.error(`[updateRole] ERRO ao atualizar perfil ID ${id}:`, error.message, error.code);
     return { success: false, message: `Falha ao atualizar perfil: ${error.message}` };
   }
 }
@@ -196,27 +197,27 @@ export async function updateRole(
 export async function deleteRole(
   id: string
 ): Promise<{ success: boolean; message: string }> {
-  console.log(`[deleteRole] Attempting to delete role ID: ${id}`);
+  console.log(`[deleteRole] Tentando excluir perfil ID: ${id}`);
   const roleToDelete = await getRole(id);
   if (roleToDelete) {
-    const systemRoles = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER'];
+    const systemRoles = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER', 'AUCTION_ANALYST'];
     if (systemRoles.includes(roleToDelete.name.toUpperCase())) {
-        console.warn(`[deleteRole] Attempt to delete system role "${roleToDelete.name}" blocked.`);
+        console.warn(`[deleteRole] Tentativa de excluir perfil de sistema "${roleToDelete.name}" bloqueada.`);
         return { success: false, message: `O perfil "${roleToDelete.name}" é um perfil de sistema e não pode ser excluído.` };
     }
   } else {
-     console.warn(`[deleteRole] Role ID ${id} not found for deletion.`);
+     console.warn(`[deleteRole] Perfil ID ${id} não encontrado para exclusão.`);
      return { success: false, message: `Perfil com ID ${id} não encontrado para exclusão.` };
   }
 
   try {
     const roleDocRef = doc(db, 'roles', id);
     await deleteDoc(roleDocRef);
-    console.log(`[deleteRole] Role ID: ${id} deleted successfully.`);
+    console.log(`[deleteRole] Perfil ID: ${id} excluído com sucesso.`);
     revalidatePath('/admin/roles');
     return { success: true, message: 'Perfil excluído com sucesso!' };
   } catch (error: any) {
-    console.error(`[deleteRole] Error deleting role ID ${id}:`, error);
+    console.error(`[deleteRole] ERRO ao excluir perfil ID ${id}:`, error.message, error.code);
     return { success: false, message: `Falha ao excluir perfil: ${error.message}` };
   }
 }
@@ -225,9 +226,25 @@ export async function ensureDefaultRolesExist() {
     console.log("[ensureDefaultRolesExist] Verificando e criando perfis padrão se necessário...");
     const defaultRolesData: RoleFormData[] = [
         { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
-        { name: 'USER', description: 'Usuário padrão com permissões de visualização e lance.', permissions: ['view_auctions', 'place_bids', 'view_lots'] },
-        { name: 'CONSIGNOR', description: 'Comitente com permissão para gerenciar seus próprios leilões e lotes.', permissions: ['manage_own_auctions', 'manage_own_lots', 'view_reports'] },
-        { name: 'AUCTIONEER', description: 'Leiloeiro com permissão para gerenciar leilões e conduzir pregões.', permissions: ['manage_assigned_auctions', 'conduct_auctions'] },
+        { name: 'USER', description: 'Usuário padrão com permissões de visualização e lance (após habilitação).', permissions: ['view_auctions', 'place_bids', 'view_lots'] },
+        { name: 'CONSIGNOR', description: 'Comitente com permissão para gerenciar seus próprios leilões e lotes.', permissions: ['auctions:manage_own', 'lots:manage_own', 'view_reports', 'media:upload', 'media:read'] },
+        { name: 'AUCTIONEER', description: 'Leiloeiro com permissão para gerenciar leilões e conduzir pregões.', permissions: ['auctions:manage_assigned', 'lots:read', 'lots:update', 'conduct_auctions', 'media:upload', 'media:read'] },
+        {
+          name: 'AUCTION_ANALYST',
+          description: 'Analista de Leilões com permissões para gerenciar cadastros e habilitação de usuários.',
+          permissions: [
+            'categories:create', 'categories:read', 'categories:update', 'categories:delete',
+            'states:create', 'states:read', 'states:update', 'states:delete',
+            'cities:create', 'cities:read', 'cities:update', 'cities:delete',
+            'auctioneers:read', 'auctioneers:update', 
+            'sellers:read', 'sellers:update', 
+            'auctions:read', 'auctions:update',
+            'lots:read', 'lots:update',
+            'users:read', 'users:manage_habilitation', 
+            'media:read',
+            'view_reports'
+          ]
+        }
     ];
 
     let createdAny = false;
@@ -244,10 +261,18 @@ export async function ensureDefaultRolesExist() {
                  console.error(`[ensureDefaultRolesExist] Falha ao criar perfil padrão "${roleData.name}": ${creationResult.message}`);
             }
         } else {
-            console.log(`[ensureDefaultRolesExist] Perfil "${roleData.name}" já existe (ID: ${existingRole.id}).`);
-            // Opcional: Verificar e atualizar permissões se necessário.
-            // Por simplicidade, vamos assumir que as permissões dos perfis padrão não mudam frequentemente após a criação.
-            // Se precisar, adicione lógica para comparar existingRole.permissions com roleData.permissions e chamar updateRole.
+            console.log(`[ensureDefaultRolesExist] Perfil "${roleData.name}" já existe (ID: ${existingRole.id}). Verificando permissões...`);
+            const currentPermissions = existingRole.permissions || [];
+            const expectedPermissions = roleData.permissions || [];
+            const permissionsMatch = expectedPermissions.length === currentPermissions.length && expectedPermissions.every(p => currentPermissions.includes(p));
+            if (!permissionsMatch || existingRole.description !== (roleData.description || '')) {
+                 console.log(`[ensureDefaultRolesExist] Atualizando permissões/descrição para o perfil "${roleData.name}".`);
+                 await updateRole(existingRole.id, { 
+                     name: existingRole.name, // Manter o nome original para não re-slugificar desnecessariamente se o case mudou
+                     description: roleData.description, 
+                     permissions: roleData.permissions 
+                 });
+            }
         }
     }
     if (createdAny) {
@@ -255,3 +280,6 @@ export async function ensureDefaultRolesExist() {
     }
     console.log("[ensureDefaultRolesExist] Verificação de perfis padrão concluída.");
 }
+
+
+    
