@@ -2,28 +2,31 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db } from '@/lib/firebase'; // Assumes db is exported from your firebase setup
-import admin from 'firebase-admin'; // For user management via Admin SDK
+import { db } from '@/lib/firebase'; 
+import admin from 'firebase-admin'; 
 import { 
   collection, 
   getDocs, 
   doc, 
   getDoc, 
   updateDoc, 
-  deleteDoc as deleteFirestoreDoc, // Alias to avoid conflict with admin.auth().deleteUser
+  setDoc, // Added setDoc for creating user profiles
+  deleteDoc as deleteFirestoreDoc, 
   serverTimestamp, 
   query, 
   orderBy,
   limit,
   where
-} from 'firebase/firestore'; // Using client SDK for Firestore queries
+} from 'firebase/firestore'; 
 import type { UserProfileData, Role } from '@/types';
+import { getRoleByName, ensureDefaultRolesExist } from '@/app/admin/roles/actions';
 
 // Ensure Firebase Admin SDK is initialized (idempotent)
 if (admin.apps.length === 0) {
   try {
     const serviceAccountPath = process.env.FIREBASE_ADMIN_SDK_PATH;
     if (serviceAccountPath) {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const serviceAccount = require(serviceAccountPath);
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
@@ -68,10 +71,9 @@ export async function getUsersWithRoles(): Promise<UserProfileData[]> {
       const data = docSnap.data();
       let roleName: string | undefined = undefined;
       if (data.roleId) {
-        const roleDocRef = doc(db, 'roles', data.roleId);
-        const roleSnap = await getDoc(roleDocRef);
-        if (roleSnap.exists()) {
-          roleName = (roleSnap.data() as Role).name;
+        const roleDoc = await getRole(data.roleId); // Use getRole from roles/actions
+        if (roleDoc) {
+          roleName = roleDoc.name;
         }
       }
       return {
@@ -82,7 +84,6 @@ export async function getUsersWithRoles(): Promise<UserProfileData[]> {
         roleName: roleName || 'N/A',
         status: data.status || 'Ativo',
         createdAt: safeConvertToDate(data.createdAt),
-        // Add other fields as needed
       } as UserProfileData;
     }));
     return users;
@@ -100,10 +101,9 @@ export async function getUserProfileData(userId: string): Promise<UserProfileDat
       const data = docSnap.data();
       let roleName: string | undefined = undefined;
       if (data.roleId) {
-        const roleDocRef = doc(db, 'roles', data.roleId);
-        const roleSnap = await getDoc(roleDocRef);
-        if (roleSnap.exists()) {
-          roleName = (roleSnap.data() as Role).name;
+        const roleDoc = await getRole(data.roleId); // Use getRole from roles/actions
+        if (roleDoc) {
+          roleName = roleDoc.name;
         }
       }
       return {
@@ -126,7 +126,7 @@ export async function getUserProfileData(userId: string): Promise<UserProfileDat
 
 export async function updateUserRole(
   userId: string,
-  newRoleId: string | null // null to remove role
+  newRoleId: string | null 
 ): Promise<{ success: boolean; message: string }> {
   if (!userId) {
     return { success: false, message: 'ID do usuário é obrigatório.' };
@@ -140,17 +140,16 @@ export async function updateUserRole(
 
     let roleName: string | undefined = undefined;
     if (newRoleId) {
-        const roleDocRef = doc(db, 'roles', newRoleId);
-        const roleSnap = await getDoc(roleDocRef);
-        if (roleSnap.exists()) {
-            roleName = (roleSnap.data() as Role).name;
+        const roleDoc = await getRole(newRoleId); // Use getRole from roles/actions
+        if (roleDoc) {
+            roleName = roleDoc.name;
             updateData.roleId = newRoleId;
             updateData.roleName = roleName;
         } else {
             return { success: false, message: 'Perfil (Role) não encontrado.'};
         }
     } else {
-        updateData.roleId = undefined; // Or FieldValue.delete() if you prefer to remove the field
+        updateData.roleId = undefined; 
         updateData.roleName = undefined;
     }
 
@@ -164,23 +163,13 @@ export async function updateUserRole(
   }
 }
 
-// Note: Full user deletion involves Firebase Auth deletion and Firestore document deletion.
-// This is a complex operation that should handle data integrity (e.g., what happens to user's auctions/lots).
-// For now, this will be a placeholder or a "soft delete" by changing status.
+
 export async function deleteUser(
   userId: string
 ): Promise<{ success: boolean; message: string }> {
   try {
     // Placeholder: In a real app, you'd delete from Firebase Auth and then Firestore.
-    // For now, just log and revalidate.
-    // await admin.auth().deleteUser(userId); // Requires Firebase Admin SDK
-    // await deleteFirestoreDoc(doc(db, 'users', userId)); 
-    console.warn(`[Server Action - deleteUser] Placeholder: User ${userId} would be deleted. Actual deletion logic not implemented in this example.`);
-    
-    // Example of a soft delete (if you have a 'status' field)
-    // const userDocRef = doc(db, 'users', userId);
-    // await updateDoc(userDocRef, { status: 'DELETED', updatedAt: serverTimestamp() });
-
+    console.warn(`[Server Action - deleteUser] Placeholder: User ${userId} would be deleted. Actual deletion logic not implemented.`);
     revalidatePath('/admin/users');
     return { success: true, message: 'Usuário (placeholder) excluído com sucesso!' };
   } catch (error: any) {
@@ -189,4 +178,60 @@ export async function deleteUser(
   }
 }
 
+export async function ensureUserRoleInFirestore(
+  userId: string, 
+  email: string | null, 
+  fullName: string | null,
+  targetRoleName: string
+): Promise<{ success: boolean; message: string; userProfile?: UserProfileData}> {
+  if (!userId || !email) {
+    return { success: false, message: 'UID do usuário e email são obrigatórios.' };
+  }
+
+  try {
+    await ensureDefaultRolesExist(); // Make sure default roles, including targetRoleName, exist
     
+    const targetRole = await getRoleByName(targetRoleName);
+    if (!targetRole) {
+      return { success: false, message: `Perfil "${targetRoleName}" não encontrado no sistema.` };
+    }
+
+    const userDocRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userDocRef);
+
+    if (userSnap.exists()) {
+      const userData = userSnap.data() as UserProfileData;
+      if (userData.roleId !== targetRole.id || userData.roleName !== targetRole.name) {
+        await updateDoc(userDocRef, {
+          roleId: targetRole.id,
+          roleName: targetRole.name,
+          updatedAt: serverTimestamp(),
+        });
+        console.log(`[ensureUserRoleInFirestore] Perfil do usuário ${email} atualizado para ${targetRoleName}.`);
+        const updatedProfile = await getUserProfileData(userId);
+        return { success: true, message: 'Perfil do usuário atualizado.', userProfile: updatedProfile || undefined };
+      }
+      console.log(`[ensureUserRoleInFirestore] Usuário ${email} já possui o perfil ${targetRoleName}. Nenhuma alteração necessária.`);
+      return { success: true, message: 'Perfil do usuário já está correto.', userProfile: userData };
+    } else {
+      // Usuário existe na Auth mas não no Firestore, criar documento
+      const newUserProfile: Partial<UserProfileData> = {
+        uid: userId,
+        email: email,
+        fullName: fullName || email.split('@')[0], // Fallback para nome
+        roleId: targetRole.id,
+        roleName: targetRole.name,
+        status: 'ATIVO', // Ou outro status padrão
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+      await setDoc(userDocRef, newUserProfile);
+      console.log(`[ensureUserRoleInFirestore] Perfil de usuário criado para ${email} com o perfil ${targetRoleName}.`);
+      const createdProfile = await getUserProfileData(userId);
+      return { success: true, message: 'Perfil de usuário criado e perfil atribuído.', userProfile: createdProfile || undefined };
+    }
+  } catch (error: any) {
+    console.error(`[Server Action - ensureUserRoleInFirestore for ${email}] Error:`, error);
+    return { success: false, message: `Falha ao configurar perfil para ${targetRoleName}: ${error.message}` };
+  }
+}

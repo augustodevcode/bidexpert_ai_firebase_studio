@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp, where, limit } from 'firebase/firestore';
 import type { Role, RoleFormData } from '@/types';
 
 // Helper function to safely convert Firestore Timestamp like objects or actual Timestamps to Date
@@ -29,15 +29,20 @@ export async function createRole(
   if (!data.name || data.name.trim() === '') {
     return { success: false, message: 'O nome do perfil é obrigatório.' };
   }
-  if (!data.permissions || data.permissions.length === 0) {
-    // return { success: false, message: 'Pelo menos uma permissão deve ser selecionada.' };
-    // Permitir criar perfil sem permissões inicialmente
+  
+  // Check if role name already exists (case-insensitive for creation)
+  const rolesRef = collection(db, 'roles');
+  const q = query(rolesRef, where('name', '==', data.name.trim().toUpperCase())); // Store/check uppercase for uniqueness
+  const existingRoleSnapshot = await getDocs(q);
+  if (!existingRoleSnapshot.empty) {
+    return { success: false, message: `O perfil com o nome "${data.name.trim()}" já existe.` };
   }
 
   try {
     const newRoleData = {
       ...data,
-      name: data.name.trim(),
+      name: data.name.trim(), // Keep original casing for display, but could store an uppercase version for querying
+      name_normalized: data.name.trim().toUpperCase(), // For case-insensitive checks
       description: data.description?.trim() || '',
       permissions: data.permissions || [],
       createdAt: serverTimestamp(),
@@ -97,6 +102,36 @@ export async function getRole(id: string): Promise<Role | null> {
   }
 }
 
+export async function getRoleByName(roleName: string): Promise<Role | null> {
+  if (!roleName || roleName.trim() === '') {
+    return null;
+  }
+  try {
+    const rolesRef = collection(db, 'roles');
+    // Query for the normalized name
+    const q = query(rolesRef, where('name_normalized', '==', roleName.trim().toUpperCase()), limit(1));
+    const snapshot = await getDocs(q);
+
+    if (!snapshot.empty) {
+      const docSnap = snapshot.docs[0];
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        name: data.name,
+        description: data.description || '',
+        permissions: data.permissions || [],
+        createdAt: safeConvertToDate(data.createdAt),
+        updatedAt: safeConvertToDate(data.updatedAt),
+      } as Role;
+    }
+    return null;
+  } catch (error: any) {
+    console.error(`[Server Action - getRoleByName] Error fetching role by name "${roleName}":`, error);
+    return null;
+  }
+}
+
+
 export async function updateRole(
   id: string,
   data: Partial<RoleFormData>
@@ -107,9 +142,35 @@ export async function updateRole(
 
   try {
     const roleDocRef = doc(db, 'roles', id);
-    const updateData: Partial<Omit<Role, 'id' | 'createdAt'>> = {};
+    const currentRoleSnap = await getDoc(roleDocRef);
+    if (!currentRoleSnap.exists()) {
+        return { success: false, message: 'Perfil não encontrado para atualização.' };
+    }
+    const currentRoleData = currentRoleSnap.data() as Role;
+
+    // Prevent renaming of core system roles if needed (e.g. "ADMINISTRATOR", "USER")
+    const systemRoles = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER'];
+    if (systemRoles.includes(currentRoleData.name.toUpperCase()) && data.name && data.name.toUpperCase() !== currentRoleData.name.toUpperCase()) {
+        // Allowing name change, but ensuring normalized name is also updated if name changes
+        // return { success: false, message: `O perfil "${currentRoleData.name}" é um perfil de sistema e não pode ser renomeado.` };
+    }
     
-    if (data.name) updateData.name = data.name.trim();
+    if (data.name && data.name.toUpperCase() !== currentRoleData.name.toUpperCase()) {
+      const rolesRef = collection(db, 'roles');
+      const q = query(rolesRef, where('name_normalized', '==', data.name.trim().toUpperCase()), limit(1));
+      const existingRoleSnapshot = await getDocs(q);
+      if (!existingRoleSnapshot.empty && existingRoleSnapshot.docs[0].id !== id) {
+        return { success: false, message: `Outro perfil com o nome "${data.name.trim()}" já existe.` };
+      }
+    }
+
+
+    const updateData: Partial<Omit<Role, 'id' | 'createdAt'>> & { name_normalized?: string } = {};
+    
+    if (data.name) {
+        updateData.name = data.name.trim();
+        updateData.name_normalized = data.name.trim().toUpperCase();
+    }
     if (data.description !== undefined) updateData.description = data.description.trim();
     if (data.permissions) updateData.permissions = data.permissions;
     
@@ -128,14 +189,20 @@ export async function updateRole(
 export async function deleteRole(
   id: string
 ): Promise<{ success: boolean; message: string }> {
-  // Basic check - prevent deletion of 'ADMINISTRATOR' or 'USER' roles if they exist and have special meaning
-  if (id === 'ADMINISTRATOR' || id === 'USER') {
-    const roleDoc = await getRole(id);
-    if (roleDoc && (roleDoc.name.toUpperCase() === 'ADMINISTRATOR' || roleDoc.name.toUpperCase() === 'USER')) {
-        return { success: false, message: `O perfil "${roleDoc.name}" é um perfil padrão e não pode ser excluído.` };
+  const roleToDelete = await getRole(id);
+  if (roleToDelete) {
+    const systemRoles = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER'];
+    if (systemRoles.includes(roleToDelete.name.toUpperCase())) {
+        return { success: false, message: `O perfil "${roleToDelete.name}" é um perfil de sistema e não pode ser excluído.` };
     }
+  } else {
+     return { success: false, message: `Perfil com ID ${id} não encontrado para exclusão.` };
   }
+
   try {
+    // TODO: Add logic here to check if any users are currently assigned this role.
+    // If so, either prevent deletion, reassign users to a default role, or warn the admin.
+    // For now, direct deletion:
     const roleDocRef = doc(db, 'roles', id);
     await deleteDoc(roleDocRef);
     revalidatePath('/admin/roles');
@@ -148,33 +215,35 @@ export async function deleteRole(
 
 // Function to ensure default roles exist
 export async function ensureDefaultRolesExist() {
-    const defaultRoles: RoleFormData[] = [
+    const defaultRolesData: RoleFormData[] = [
         { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
         { name: 'USER', description: 'Usuário padrão com permissões de visualização e lance.', permissions: ['view_auctions', 'place_bids', 'view_lots'] },
         { name: 'CONSIGNOR', description: 'Comitente com permissão para gerenciar seus próprios leilões e lotes.', permissions: ['manage_own_auctions', 'manage_own_lots', 'view_reports'] },
         { name: 'AUCTIONEER', description: 'Leiloeiro com permissão para gerenciar leilões e conduzir pregões.', permissions: ['manage_assigned_auctions', 'conduct_auctions'] },
     ];
 
-    for (const roleData of defaultRoles) {
-        const rolesRef = collection(db, 'roles');
-        const q = query(rolesRef, where('name', '==', roleData.name), limit(1));
-        const snapshot = await getDocs(q);
-
-        if (snapshot.empty) {
+    let createdAny = false;
+    for (const roleData of defaultRolesData) {
+        const existingRole = await getRoleByName(roleData.name);
+        if (!existingRole) {
             console.log(`Creating default role: ${roleData.name}`);
             await createRole(roleData);
+            createdAny = true;
         } else {
+            // Optionally, update permissions if they differ
+            // For simplicity, we'll skip this for now, assuming default permissions don't change often.
             // console.log(`Default role "${roleData.name}" already exists.`);
         }
     }
+    if (createdAny) {
+        revalidatePath('/admin/roles');
+    }
 }
 
-async function where(arg0: string, arg1: string, arg2: string): Promise<any> {
-    throw new Error('Function not implemented.');
-}
+// async function where(arg0: string, arg1: string, arg2: string): Promise<any> {
+//     throw new Error('Function not implemented.');
+// }
 
-async function limit(arg0: number): Promise<any> {
-    throw new Error('Function not implemented.');
-}
-
-    
+// async function limit(arg0: number): Promise<any> {
+//     throw new Error('Function not implemented.');
+// }

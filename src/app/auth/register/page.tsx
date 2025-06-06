@@ -14,12 +14,12 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, type FormEvent } from 'react';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase'; 
-import { doc, setDoc, serverTimestamp, collection, query, where, getDocs, limit } from 'firebase/firestore'; 
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; 
 import { useToast } from '@/hooks/use-toast';
-import type { Role } from '@/types';
-
+import type { UserProfileData } from '@/types'; 
+import { getRoleByName } from '@/app/admin/roles/actions'; // Importar para buscar o Role ID
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -52,45 +52,42 @@ export default function RegisterPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      // Atualizar o perfil do Firebase Auth com o nome completo
+      await updateProfile(user, { displayName: fullName });
+
       // Buscar o ID do perfil 'USER' padrão
       let defaultRoleId: string | undefined = undefined;
       let defaultRoleName: string | undefined = undefined;
       try {
-        const rolesRef = collection(db, 'roles');
-        const q = query(rolesRef, where('name', '==', 'USER'), limit(1));
-        const roleSnapshot = await getDocs(q);
-        if (!roleSnapshot.empty) {
-          const roleDoc = roleSnapshot.docs[0];
-          defaultRoleId = roleDoc.id;
-          defaultRoleName = (roleDoc.data() as Role).name;
+        const userRole = await getRoleByName('USER'); // Busca o perfil "USER"
+        if (userRole) {
+          defaultRoleId = userRole.id;
+          defaultRoleName = userRole.name;
         } else {
           console.warn("Default 'USER' role not found in Firestore. New user will not have a role assigned.");
         }
       } catch (roleError) {
         console.error("Error fetching default 'USER' role:", roleError);
-        // Continue without assigning a role if there's an error
       }
 
-
-      // Salvar dados adicionais no Firestore
-      await setDoc(doc(db, "users", user.uid), {
+      const userProfileToSave: Partial<UserProfileData> = {
         uid: user.uid,
         fullName,
         cpf,
         email: user.email, 
         cellPhone,
         dateOfBirth, 
-        roleId: defaultRoleId, // Atribuir o ID do perfil
-        roleName: defaultRoleName, // Atribuir o nome do perfil
-        createdAt: serverTimestamp(), 
-        status: 'REGISTERED', 
-        optInMarketing: true, 
-      });
-      console.log('User profile data successfully written to Firestore for UID:', user.uid);
+        roleId: defaultRoleId, 
+        roleName: defaultRoleName,
+        createdAt: serverTimestamp() as any, 
+        status: 'ATIVO', // Status inicial
+        optInMarketing: true, // Exemplo, pode vir de um checkbox
+      };
+      await setDoc(doc(db, "users", user.uid), userProfileToSave);
       
       toast({
         title: "Registro bem-sucedido!",
-        description: "Sua conta foi criada e seus dados foram salvos. Você pode fazer login agora.",
+        description: "Sua conta foi criada. Você pode fazer login agora.",
       });
       router.push('/auth/login');
     } catch (e: any) {
@@ -209,5 +206,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
-    
