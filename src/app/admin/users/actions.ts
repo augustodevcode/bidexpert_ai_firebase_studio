@@ -48,11 +48,16 @@ export async function getUsersWithRoles(): Promise<UserProfileData[]> {
 
     const users = await Promise.all(snapshot.docs.map(async (docSnap) => {
       const data = docSnap.data();
-      let roleName: string | undefined = undefined;
-      if (data.roleId) {
+      let roleName: string | undefined = data.roleName; 
+      let fetchedPermissions: string[] = data.permissions || [];
+
+      if (data.roleId && !roleName) { 
         const roleDoc = await getRole(data.roleId);
         if (roleDoc) {
           roleName = roleDoc.name;
+          if (fetchedPermissions.length === 0 && roleDoc.permissions) {
+            fetchedPermissions = roleDoc.permissions;
+          }
         } else {
           console.warn(`[getUsersWithRoles] Role with ID ${data.roleId} not found for user ${docSnap.id}`);
         }
@@ -65,10 +70,11 @@ export async function getUsersWithRoles(): Promise<UserProfileData[]> {
         roleName: roleName || 'N/A',
         status: data.status || 'ATIVO',
         habilitationStatus: data.habilitationStatus || 'PENDENTE_DOCUMENTOS',
+        permissions: fetchedPermissions,
         createdAt: safeConvertToDate(data.createdAt),
       } as UserProfileData;
     }));
-    console.log(`[getUsersWithRoles] Mapeados ${users.length} usuários com perfis.`);
+    console.log(`[getUsersWithRoles] Mapeados ${users.length} usuários com perfis e permissões.`);
     return users;
   } catch (error: any) {
     console.error("[getUsersWithRoles] Error fetching users:", error.message, error.code);
@@ -86,11 +92,16 @@ export async function getUserProfileData(userId: string): Promise<UserProfileDat
     const docSnap = await getDoc(userDocRef);
     if (docSnap.exists()) {
       const data = docSnap.data();
-      let roleName: string | undefined = undefined;
-      if (data.roleId) {
+      let roleName: string | undefined = data.roleName;
+      let fetchedPermissions: string[] = data.permissions || [];
+
+      if (data.roleId && !roleName) {
         const roleDoc = await getRole(data.roleId);
         if (roleDoc) {
           roleName = roleDoc.name;
+          if (fetchedPermissions.length === 0 && roleDoc.permissions) {
+            fetchedPermissions = roleDoc.permissions;
+          }
         } else {
            console.warn(`[getUserProfileData] Role com ID ${data.roleId} não encontrada para usuário ${userId}`);
         }
@@ -100,6 +111,7 @@ export async function getUserProfileData(userId: string): Promise<UserProfileDat
         uid: docSnap.id,
         ...data,
         roleName: roleName || 'N/A',
+        permissions: fetchedPermissions,
         habilitationStatus: data.habilitationStatus || 'PENDENTE_DOCUMENTOS',
         createdAt: safeConvertToDate(data.createdAt),
         updatedAt: safeConvertToDate(data.updatedAt),
@@ -127,7 +139,7 @@ export async function updateUserProfileAndRole(
 
   try {
     const userDocRef = doc(db, 'users', userId);
-    const updateData: { roleId?: string | FieldValue | null; roleName?: string | FieldValue | null; habilitationStatus?: UserHabilitationStatus | null; updatedAt: any } = {
+    const updateData: { roleId?: string | FieldValue | null; roleName?: string | FieldValue | null; habilitationStatus?: UserHabilitationStatus | FieldValue | null; permissions?: string[] | FieldValue; updatedAt: any, role?: FieldValue } = {
       updatedAt: serverTimestamp(),
     };
 
@@ -139,21 +151,23 @@ export async function updateUserProfileAndRole(
               console.log(`[updateUserProfileAndRole] Perfil encontrado: ${roleDoc.name}`);
               updateData.roleId = data.roleId;
               updateData.roleName = roleDoc.name;
+              updateData.permissions = roleDoc.permissions || [];
           } else {
               console.warn(`[updateUserProfileAndRole] Perfil com ID ${data.roleId} não encontrado.`);
               return { success: false, message: 'Perfil (Role) não encontrado.'};
           }
       } else { 
-          console.log(`[updateUserProfileAndRole] Definindo roleId e roleName para null e removendo campo 'role' legado.`);
+          console.log(`[updateUserProfileAndRole] Definindo roleId, roleName e permissions para null/delete.`);
           updateData.roleId = FieldValue.delete(); 
           updateData.roleName = FieldValue.delete();
-          (updateData as any).role = FieldValue.delete(); 
+          updateData.permissions = FieldValue.delete();
+          updateData.role = FieldValue.delete(); // Remove legacy field as well
       }
     }
 
     if (data.hasOwnProperty('habilitationStatus')) {
         console.log(`[updateUserProfileAndRole] Definindo habilitationStatus para: ${data.habilitationStatus}`);
-        updateData.habilitationStatus = data.habilitationStatus === undefined ? FieldValue.delete() : data.habilitationStatus;
+        updateData.habilitationStatus = data.habilitationStatus === null || data.habilitationStatus === undefined ? FieldValue.delete() : data.habilitationStatus;
     }
 
 
@@ -214,7 +228,7 @@ export async function ensureUserRoleInFirestore(
       console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Perfil "${targetRoleName}" NÃO encontrado após ensureDefaultRolesExist.`);
       return { success: false, message: `Perfil "${targetRoleName}" não pôde ser encontrado ou criado.` };
     }
-    console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 2.1: Perfil "${targetRoleName}" encontrado com ID: ${targetRole.id}`);
+    console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 2.1: Perfil "${targetRoleName}" encontrado com ID: ${targetRole.id}, Permissões: ${targetRole.permissions?.join(', ')}`);
 
     const userDocRef = doc(db, 'users', userId);
     console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 3: Buscando documento do usuário ${userId}...`);
@@ -226,7 +240,7 @@ export async function ensureUserRoleInFirestore(
       const userData = userSnap.data() as UserProfileData;
       console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 3.1: Documento do usuário encontrado. RoleId atual: ${userData.roleId}, RoleName: ${userData.roleName}, Habilitation: ${userData.habilitationStatus}`);
       
-      const updatePayload: Partial<UserProfileData & { role?: any }> = { updatedAt: serverTimestamp() as Timestamp };
+      const updatePayload: Partial<UserProfileData & { role?: FieldValue }> = { updatedAt: serverTimestamp() as Timestamp };
       let needsUpdate = false;
 
       if (userData.roleId !== targetRole.id) {
@@ -237,6 +251,11 @@ export async function ensureUserRoleInFirestore(
       if (userData.roleName !== targetRole.name) {
         updatePayload.roleName = targetRole.name;
         console.log(`[ensureUserRoleInFirestore] Necessário atualizar roleName para ${targetRole.name}`);
+        needsUpdate = true;
+      }
+      if (!userData.permissions || JSON.stringify(userData.permissions.sort()) !== JSON.stringify((targetRole.permissions || []).sort())) {
+        updatePayload.permissions = targetRole.permissions || [];
+        console.log(`[ensureUserRoleInFirestore] Necessário atualizar permissions para ${updatePayload.permissions.join(', ')}`);
         needsUpdate = true;
       }
       
@@ -255,7 +274,7 @@ export async function ensureUserRoleInFirestore(
 
       if (needsUpdate) {
         console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 4: Atualizando perfil/habilitação do usuário... Payload:`, JSON.stringify(updatePayload));
-        await updateDoc(userDocRef, updatePayload);
+        await updateDoc(userDocRef, updatePayload as any); // Cast as any to satisfy Firestore update type for FieldValue
         console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 4.1: Perfil/habilitação do usuário atualizado.`);
         const updatedProfile = await getUserProfileData(userId); 
         return { success: true, message: 'Perfil do usuário atualizado.', userProfile: updatedProfile || undefined };
@@ -273,9 +292,9 @@ export async function ensureUserRoleInFirestore(
         roleName: targetRole.name,
         status: 'ATIVO',
         habilitationStatus: targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS',
+        permissions: targetRole.permissions || [],
         createdAt: serverTimestamp() as Timestamp,
         updatedAt: serverTimestamp() as Timestamp,
-        permissions: targetRole.permissions || [],
       };
       console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Tentando criar documento do usuário com dados:`, JSON.stringify(newUserProfile));
       await setDoc(userDocRef, newUserProfile);
@@ -290,7 +309,4 @@ export async function ensureUserRoleInFirestore(
     }
     return { success: false, message: `Falha ao configurar perfil para ${targetRoleName}: ${error.message}` };
   }
-  // Este return só será atingido se algo muito inesperado acontecer, já que o try/catch deveria cobrir.
-  // Adicionado para satisfazer o TypeScript de que todos os caminhos retornam um valor.
-  // return { success: false, message: 'Falha inesperada na configuração do perfil ou caminho não tratado.' };
 }

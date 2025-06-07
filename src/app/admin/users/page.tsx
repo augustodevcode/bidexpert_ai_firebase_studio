@@ -44,7 +44,7 @@ function DeleteUserButton({ userId, userName, onDelete }: { userId: string; user
         <AlertDialogHeader>
           <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja excluir o usuário "{userName}" (ID: {userId})? Esta ação é IRREVERSÍVEL e removerá o usuário do sistema de autenticação e (opcionalmente) seus dados associados.
+            Tem certeza que deseja excluir o usuário "{userName}" (ID: {userId})? Esta ação é IRREVERSÍVEL e removerá o usuário do sistema de autenticação e seus dados associados do Firestore.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -54,7 +54,6 @@ function DeleteUserButton({ userId, userName, onDelete }: { userId: string; user
                 await onDelete(userId);
             }}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            // disabled // Desabilitar até a lógica real de exclusão ser implementada
           >
             Excluir
           </AlertDialogAction>
@@ -81,10 +80,10 @@ export default function AdminUsersPage() {
       console.error("[AdminUsersPage] Erro ao buscar usuários:", error);
       toast({
         title: "Erro ao Carregar Usuários",
-        description: "Não foi possível buscar a lista de usuários.",
+        description: "Não foi possível buscar la lista de usuários.",
         variant: "destructive",
       });
-      setUsers([]); // Garante que users seja um array vazio em caso de erro
+      setUsers([]); 
     } finally {
       setIsLoading(false);
       console.log("[AdminUsersPage] fetchUsers concluída, isLoading:", false);
@@ -159,7 +158,7 @@ export default function AdminUsersPage() {
                       <TableHead className="min-w-[200px]">Nome Completo</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Perfil</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Status Habilitação</TableHead>
                       <TableHead>Data de Criação</TableHead>
                       <TableHead className="text-right w-[100px]">Ações</TableHead>
                     </TableRow>
@@ -174,7 +173,20 @@ export default function AdminUsersPage() {
                             {user.roleName || 'Sem Perfil'}
                           </Badge>
                         </TableCell>
-                         <TableCell className="text-xs text-muted-foreground">{user.status || 'Ativo'}</TableCell>
+                         <TableCell className="text-xs text-muted-foreground">
+                           <Badge variant={
+                            user.habilitationStatus === 'HABILITADO' ? 'default' :
+                            user.habilitationStatus === 'PENDENTE_ANALYSIS' || user.habilitationStatus === 'PENDENTE_DOCUMENTOS' ? 'outline' :
+                            'destructive'
+                           } 
+                           className={
+                            user.habilitationStatus === 'HABILITADO' ? 'bg-green-500 text-white' :
+                            user.habilitationStatus === 'PENDENTE_ANALYSIS' || user.habilitationStatus === 'PENDENTE_DOCUMENTOS' ? 'border-yellow-500 text-yellow-600' :
+                            'border-red-500 text-red-600'
+                           }>
+                            {user.habilitationStatus || 'Pendente'}
+                           </Badge>
+                        </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                           {user.createdAt ? format(new Date(user.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : 'N/A'}
                         </TableCell>
@@ -187,7 +199,7 @@ export default function AdminUsersPage() {
                                 </Link>
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent><p>Editar Perfil/Atribuir Role</p></TooltipContent>
+                            <TooltipContent><p>Editar Perfil/Habilitação</p></TooltipContent>
                            </Tooltip>
                           <DeleteUserButton userId={user.uid} userName={user.fullName || user.email} onDelete={handleDeleteUser} />
                         </TableCell>
@@ -203,3 +215,4 @@ export default function AdminUsersPage() {
     </TooltipProvider>
   );
 }
+

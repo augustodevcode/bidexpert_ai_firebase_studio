@@ -13,107 +13,91 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Check if the requesting user's email is in the admin list
     function isAdminEmail() {
       return isSignedIn() && request.auth.token.email in ['admin@bidexpert.com', 'augusto.devcode@gmail.com', 'analyst@bidexpert.com'];
     }
     
-    // Check if the user document being read/written has the admin role
     function isActualAdmin(userId) {
-      let userDoc = get(/databases/$(database)/documents/users/$(userId));
-      return isSignedIn() && 
-             userDoc.data.roleName == 'ADMINISTRATOR' &&
-             userDoc.data.habilitationStatus == 'HABILITADO';
+      // Checks if the user document in Firestore has roleName 'ADMINISTRATOR'
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(userId)).data.roleName == 'ADMINISTRATOR';
     }
 
-    function isDefaultRoleName(roleName) {
-      return roleName.upper() in ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER', 'AUCTION_ANALYST'];
+    function isDefaultRoleName(roleNameInDb) {
+      // Checks against the name stored in the database (which should be uppercase if created by seed)
+      return roleNameInDb.upper() in ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER', 'AUCTION_ANALYST'];
     }
 
     match /roles/{roleId} {
-      allow read, list: if true; // Temporarily open for easier debugging of AuthProvider
+      allow read, list: if true; // Publicly readable
 
       allow create: if isSignedIn() &&
-                      (
-                        isActualAdmin(request.auth.uid) || 
-                        isAdminEmail() // Admin-by-email can create default roles during bootstrap
-                      ) &&
+                      (isActualAdmin(request.auth.uid) || isAdminEmail()) && // Allow admin by email to create during bootstrap
                       request.resource.data.name_normalized == request.resource.data.name.upper() &&
                       request.resource.data.keys().hasAll(['name', 'name_normalized', 'permissions', 'createdAt', 'updatedAt']) &&
                       request.resource.data.keys().hasOnly(['name', 'name_normalized', 'description', 'permissions', 'createdAt', 'updatedAt']);
 
       allow update: if isSignedIn() &&
                       (
-                        // Case 1: User is an actual admin (has ADMINISTRATOR role in their user document)
+                        // Case 1: Actual Admin can update (with some restrictions for default roles)
                         (
                           isActualAdmin(request.auth.uid) &&
-                          // Admin can update 'name' and 'name_normalized' ONLY IF it's NOT a default role
-                          // OR if it IS a default role but the name/name_normalized are NOT changing.
-                          (
-                            !isDefaultRoleName(resource.data.name) || 
-                            (
-                              (!request.resource.data.keys().hasAny(['name']) || request.resource.data.name == resource.data.name) &&
-                              (!request.resource.data.keys().hasAny(['name_normalized']) || request.resource.data.name_normalized == resource.data.name_normalized)
-                            )
+                          // For default roles, name and name_normalized cannot change
+                          (!isDefaultRoleName(resource.data.name) || 
+                            (request.resource.data.name == resource.data.name && 
+                             request.resource.data.name_normalized == resource.data.name_normalized)
                           ) &&
-                          // Admin cannot change name_normalized of default roles if it means changing the identity
-                          (!request.resource.data.keys().hasAny(['name_normalized']) || !isDefaultRoleName(resource.data.name) || request.resource.data.name_normalized == resource.data.name_normalized) &&
-                          request.resource.data.keys().hasOnly(['name', 'name_normalized', 'description', 'permissions', 'updatedAt'])
+                          // Admin can only change these fields
+                          request.resource.data.keys().hasOnly(['name', 'name_normalized', 'description', 'permissions', 'updatedAt']) &&
+                          request.resource.data.keys().hasAll(['updatedAt']) // updatedAt is always sent
                         ) ||
-                        // Case 2: Admin by email is bootstrapping/syncing default roles (e.g., "USER")
-                        // Can ONLY update description and/or permissions. 'name' and 'name_normalized' MUST NOT be in the request keys.
+                        // Case 2: Bootstrap/sync by isAdminEmail for Default Roles
                         (
-                          isAdminEmail() &&
-                          isDefaultRoleName(resource.data.name) && // Role being updated IS a default one
-                          !request.resource.data.keys().hasAny(['name', 'name_normalized']) && // Explicitly forbid 'name' or 'name_normalized' in the write request keys
-                           // Ensures at least one of description, permissions, or updatedAt is being affected/present
-                          request.resource.data.diff(resource.data).affectedKeys().hasAny(['description', 'permissions', 'updatedAt']) &&
-                           // Ensures ONLY description, permissions, or updatedAt are being affected
-                          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['description', 'permissions', 'updatedAt'])
+                          isAdminEmail() && isDefaultRoleName(resource.data.name) &&
+                          // Name and name_normalized MUST NOT be changed by this bootstrap path
+                          request.resource.data.name == resource.data.name &&
+                          request.resource.data.name_normalized == resource.data.name_normalized &&
+                          // Only 'description', 'permissions', and 'updatedAt' can be in the incoming data to be written or changed.
+                          // If other fields like 'name' or 'name_normalized' are present in request.resource.data,
+                          // they MUST be identical to resource.data (i.e., not part of the diff).
+                          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['description', 'permissions', 'updatedAt']) &&
+                          request.resource.data.keys().hasAll(['updatedAt']) // updatedAt is always sent
                         )
-                      ) &&
-                      request.resource.data.keys().hasAll(['updatedAt']); // updatedAt is always sent by the action
-
+                      );
+      
       allow delete: if isSignedIn() && isActualAdmin(request.auth.uid) && !isDefaultRoleName(resource.data.name);
     }
 
     match /users/{userId} {
-      // Bootstrap: Allow an admin-by-email to create their own user document if it's for an ADMIN role
       allow create: if isAdminEmail() && isUser(userId) &&
                       request.resource.data.roleName == 'ADMINISTRATOR' &&
-                      request.resource.data.habilitationStatus == 'HABILITADO' &&
+                      request.resource.data.permissions.hasAny(['manage_all']) &&
                       request.resource.data.keys().hasAll(['uid', 'email', 'fullName', 'roleId', 'roleName', 'status', 'habilitationStatus', 'createdAt', 'updatedAt', 'permissions']) &&
                       request.resource.data.keys().size() == 10;
       
       allow read, get: if isUser(userId) || isActualAdmin(request.auth.uid);
       
       allow update: if 
-        // Case 1: User updating their own profile (most fields)
+        // Case 1: User updating their own profile (limited fields, cannot change role or status)
         (
           isUser(userId) &&
-          !request.resource.data.keys().hasAny(['roleId', 'roleName', 'status', 'habilitationStatus', 'permissions']) 
-          // Add other fields a user *can* update here, e.g. hasOnly(['fullName', 'phone', 'updatedAt', ...])
+          !request.resource.data.keys().hasAny(['roleId', 'roleName', 'status', 'habilitationStatus', 'permissions', 'role']) // 'role' is the legacy field
         ) ||
-        // Case 2: Admin updating any user's roleId, roleName, status, habilitationStatus, permissions
+        // Case 2: An actual admin updating any user's profile (can change role, status, etc.)
         (
           isActualAdmin(request.auth.uid) &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roleId', 'roleName', 'status', 'habilitationStatus', 'updatedAt', 'permissions', 'role']) // 'role' for legacy deletion
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roleId', 'roleName', 'status', 'habilitationStatus', 'updatedAt', 'permissions', 'role'])
         ) ||
-        // Case 3: Bootstrap for an admin-by-email to set their own role to ADMINISTRATOR if not already set
-        // This is crucial for the AuthProvider flow.
+        // Case 3: Bootstrap/Sync for an Admin-by-Email becoming Actual Admin (their own profile)
         (
           isAdminEmail() && isUser(userId) && 
-          (resource.data.roleId == null || resource.data.roleName != 'ADMINISTRATOR' || resource.data.habilitationStatus != 'HABILITADO') && // Condition for update to make sense
+          (resource.data.roleId == null || resource.data.roleName != 'ADMINISTRATOR' || resource.data.habilitationStatus != 'HABILITADO') &&
           request.resource.data.roleName == 'ADMINISTRATOR' &&
           request.resource.data.habilitationStatus == 'HABILITADO' &&
-          // Verifies that the roleId being set actually corresponds to "ADMINISTRATOR" (assuming specific ID or lookup)
-          // A safer check might be to ensure roleId exists if provided, or not change it if not provided by this specific bootstrap.
-          // For simplicity, assuming the action sends the correct roleId for 'ADMINISTRATOR'
-          (request.resource.data.roleId != null && request.resource.data.roleId == get(/databases/$(database)/documents/roles/$(request.resource.data.roleName.lower().replaceAll(' ', '_'))).id) &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roleId', 'roleName', 'updatedAt', 'habilitationStatus', 'permissions', 'role']) 
+          request.resource.data.permissions.hasAny(['manage_all']) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roleId', 'roleName', 'updatedAt', 'habilitationStatus', 'permissions', 'role'])
         );
 
-      allow delete: if isActualAdmin(request.auth.uid); 
+      allow delete: if isActualAdmin(request.auth.uid);
     }
 
     match /lotCategories/{categoryId} {
@@ -144,23 +128,21 @@ service cloud.firestore {
       allow read, list: if true; 
       allow create, update, delete: if isSignedIn() && 
                                       (isActualAdmin(request.auth.uid) || 
-                                       (resource.data.sellerId != null && resource.data.sellerId == request.auth.uid) || // Seller can manage their own auctions
-                                       (resource.data.auctioneerId != null && resource.data.auctioneerId == request.auth.uid) // Auctioneer can manage assigned auctions
-                                      ); 
+                                       (request.resource.data.sellerId == request.auth.uid || resource.data.sellerId == request.auth.uid)
+                                      );
     }
 
     match /lots/{lotId} {
       allow read, list: if true;
       allow create, update, delete: if isSignedIn() && 
                                       (isActualAdmin(request.auth.uid) || 
-                                       (resource.data.sellerId != null && resource.data.sellerId == request.auth.uid) || // Seller can manage their own lots
-                                       (resource.data.auctioneerId != null && resource.data.auctioneerId == request.auth.uid) // Auctioneer can manage lots in assigned auctions
+                                       (request.resource.data.sellerId == request.auth.uid || resource.data.sellerId == request.auth.uid)
                                       );
     }
     
     match /mediaItems/{mediaItemId} {
-      allow read, list: if true; 
-      allow create, update, delete: if true; // Temporarily open
+      allow read, list: if true;
+      allow create, update, delete: if true;
     }
     
     match /platformSettings/global {
@@ -169,5 +151,3 @@ service cloud.firestore {
     }
   }
 }
-
-    

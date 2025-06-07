@@ -68,18 +68,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           if (userDocSnap.exists()) {
             const userProfileData = { uid: userDocSnap.id, ...userDocSnap.data() } as UserProfileData;
-            let permissions: string[] = [];
+            let permissions: string[] = userProfileData.permissions || []; // Use permissions from user doc if they exist
+            
             if (userProfileData.roleId) {
               const roleData = await getRole(userProfileData.roleId);
               if (roleData) {
-                permissions = roleData.permissions || [];
+                 // If user doc permissions are empty (or not set), use role permissions
+                if (permissions.length === 0 && roleData.permissions) {
+                    permissions = roleData.permissions;
+                }
+                // Ensure roleName is synced
                 if (userProfileData.roleName !== roleData.name) {
                      userProfileData.roleName = roleData.name;
                 }
               } else {
-                console.warn(`[AuthProvider] Role with ID ${userProfileData.roleId} not found for user ${currentUser.email}.`);
+                console.warn(`[AuthProvider] Role with ID ${userProfileData.roleId} not found for user ${currentUser.email}. User will have no specific role permissions.`);
               }
+            } else if (permissions.length === 0) {
+                // If no roleId and no permissions on user doc, assign USER role permissions by default
+                console.log(`[AuthProvider] User ${currentUser.email} has no roleId. Attempting to assign default USER role permissions.`);
+                const defaultUserRole = await getRoleByName('USER');
+                if (defaultUserRole && defaultUserRole.permissions) {
+                    permissions = defaultUserRole.permissions;
+                    // Optionally, you might want to update the user document here with the default USER roleId and roleName
+                    // For now, just assigning permissions in context
+                    userProfileData.roleId = defaultUserRole.id;
+                    userProfileData.roleName = defaultUserRole.name;
+                    console.log(`[AuthProvider] Assigned default USER role permissions to ${currentUser.email} in context.`);
+                } else {
+                    console.warn(`[AuthProvider] Default USER role not found or has no permissions. User ${currentUser.email} will have no permissions.`);
+                }
             }
+
             setUserProfileWithPermissions({ ...userProfileData, permissions });
             console.log(`[AuthProvider] Profile and permissions loaded for ${currentUser.email}. Role: ${userProfileData.roleName || 'None'}, Habilitation: ${userProfileData.habilitationStatus}, Permissions: ${permissions.length}`);
           } else {
@@ -121,9 +141,3 @@ export function useAuth() {
   }
   return context;
 }
-
-    
-
-
-
-    
