@@ -9,6 +9,7 @@ import AdminSidebar from '@/components/layout/admin-sidebar';
 
 // TODO: Replace this with actual role fetching and checking from Firestore
 const ALLOWED_EMAILS_FOR_ADMIN_ACCESS = ['admin@bidexpert.com', 'analyst@bidexpert.com', 'augusto.devcode@gmail.com'];
+const SUPER_TEST_USER_EMAIL = 'augusto.devcode@gmail.com';
 
 export default function AdminLayout({
   children,
@@ -46,7 +47,14 @@ export default function AdminLayout({
 
   // Placeholder for role check (case-insensitive email check)
   const userEmailLower = user.email?.toLowerCase();
-  const hasAdminAccess = userEmailLower && ALLOWED_EMAILS_FOR_ADMIN_ACCESS.map(e => e.toLowerCase()).includes(userEmailLower);
+  const isSuperTestUser = userEmailLower === SUPER_TEST_USER_EMAIL.toLowerCase();
+  const isAdminByList = userEmailLower && ALLOWED_EMAILS_FOR_ADMIN_ACCESS.map(e => e.toLowerCase()).includes(userEmailLower);
+  
+  // Grant access if super test user OR if they are in the admin list (and userProfileWithPermissions has manage_all)
+  // For development, we'll simplify to grant access if email matches or is in list.
+  // In a real app, the `userProfileWithPermissions.permissions.includes('manage_all')` would be more robust after role assignment.
+  const hasAdminAccess = isSuperTestUser || isAdminByList;
+
 
   if (!hasAdminAccess) {
     return (

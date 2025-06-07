@@ -28,8 +28,10 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useAuth } from '@/contexts/auth-context'; 
-import { sampleLotBids, getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data'; 
-import { placeBidOnLot } from './actions';
+import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data'; 
+import { placeBidOnLot, getBidsForLot } from './actions'; // Import getBidsForLot
+
+const SUPER_TEST_USER_EMAIL = 'augusto.devcode@gmail.com';
 
 interface LotDetailClientContentProps {
   lot: Lot;
@@ -79,10 +81,16 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
       addRecentlyViewedId(lot.id);
       setIsLotFavorite(isLotFavoriteInStorage(lot.id));
 
-      const bidsForThisLot = sampleLotBids // Em um app real, buscaria do Firestore ou de um estado global
-        .filter(bid => bid.lotId === lot.id)
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()); 
-      setLotBids(bidsForThisLot);
+      const fetchBids = async () => {
+        try {
+          const bids = await getBidsForLot(lot.id);
+          setLotBids(bids);
+        } catch (error) {
+          console.error("Error fetching bids for lot:", error);
+          setLotBids([]); // Fallback to empty array on error
+        }
+      };
+      fetchBids();
       setCurrentImageIndex(0); 
     }
   }, [lot, gallery]); 
@@ -90,7 +98,13 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
   const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || lot?.title}`.trim();
   const lotLocation = lot?.cityName && lot?.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot?.stateUf || lot?.cityName || 'Não informado';
   
-  const canUserBid = user && userProfileWithPermissions?.habilitationStatus === 'HABILITADO' && lot?.status === 'ABERTO_PARA_LANCES';
+  const userEmailLower = user?.email?.toLowerCase();
+  const isAugustoDev = userEmailLower === SUPER_TEST_USER_EMAIL.toLowerCase();
+  const isHabilitado = userProfileWithPermissions?.habilitationStatus === 'HABILITADO';
+  const canUserBid = user && 
+                       (isAugustoDev || isHabilitado) && 
+                       lot?.status === 'ABERTO_PARA_LANCES';
+
 
   const handleToggleFavorite = () => {
     if (!lot || !lot.id) return;
@@ -130,12 +144,12 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
     }
   };
 
-  const bidIncrement = lot.price > 10000 ? 500 : (lot.price > 1000 ? 100 : 50);
+  const bidIncrement = (lot.price || 0) > 10000 ? 500 : ((lot.price || 0) > 1000 ? 100 : 50);
   const nextMinimumBid = (lot.price || 0) + bidIncrement;
   
   const handlePlaceBid = async () => {
     if (!user || !user.uid || !user.displayName) {
-      toast({ title: "Erro", description: "Você precisa estar logado para dar um lance.", variant: "destructive" });
+      toast({ title: "Ação Requerida", description: "Você precisa estar logado para dar um lance.", variant: "destructive" });
       return;
     }
     const amountToBid = parseFloat(bidAmountInput);
@@ -143,16 +157,19 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
       toast({ title: "Erro no Lance", description: "Por favor, insira um valor de lance válido.", variant: "destructive" });
       return;
     }
-    if (amountToBid < nextMinimumBid) {
-      toast({ title: "Lance Baixo", description: `Seu lance deve ser de pelo menos R$ ${nextMinimumBid.toLocaleString('pt-BR')}.`, variant: "destructive" });
-      return;
-    }
+    
+    // A validação de nextMinimumBid será feita na server action, mas podemos manter uma aqui para feedback rápido.
+    // if (amountToBid < nextMinimumBid) {
+    //   toast({ title: "Lance Baixo", description: `Seu lance deve ser de pelo menos R$ ${nextMinimumBid.toLocaleString('pt-BR')}.`, variant: "destructive" });
+    //   return;
+    // }
   
     setIsPlacingBid(true);
     try {
       const result = await placeBidOnLot(lot.id, lot.auctionId, user.uid, user.displayName, amountToBid);
       if (result.success && result.updatedLot && result.newBid) {
         setLot(prevLot => ({ ...prevLot!, ...result.updatedLot }));
+        // Adiciona o novo lance no início da lista, garantindo a ordem correta
         setLotBids(prevBids => [result.newBid!, ...prevBids].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
         setBidAmountInput(''); // Limpar input
         toast({
@@ -191,9 +208,9 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
   const nextImage = () => setCurrentImageIndex((prev) => (gallery.length > 0 ? (prev + 1) % gallery.length : 0));
   const prevImage = () => setCurrentImageIndex((prev) => (gallery.length > 0 ? (prev - 1 + gallery.length) % gallery.length : 0));
 
+  const actualLotNumber = lot.number || lot.id; // Prioriza lot.number, fallback para lot.id completo
   const displayLotPosition = lotIndex !== undefined && lotIndex !== -1 ? lotIndex + 1 : 'N/A';
   const displayTotalLots = totalLotsInAuction || auction.totalLots || 'N/A';
-  const actualLotNumber = lot.number || lot.id; 
 
 
   return (
@@ -203,7 +220,7 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
           <div className="flex-grow">
             <h1 className="text-2xl md:text-3xl font-bold font-headline text-left">{lotTitle}</h1>
              <div className="flex items-center gap-2 mt-1">
-                <Badge variant="outline" className="text-xs">{`Leilão #${auction.id.substring(0,8)}...`}</Badge>
+                {/* Lote Nº removido daqui */}
                 <Badge className={`text-xs px-2 py-0.5 ${getLotStatusColor(lot.status)}`}>
                     {getAuctionStatusText(lot.status)}
                 </Badge>
@@ -448,7 +465,7 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
                         />
                     </div>
                     <Button onClick={handlePlaceBid} disabled={isPlacingBid || !bidAmountInput} className="w-full h-11 text-base">
-                      {isPlacingBid ? <Loader2 className="animate-spin" /> : `Dar Lance de R$ ${parseFloat(bidAmountInput || '0').toLocaleString('pt-BR') || nextMinimumBid.toLocaleString('pt-BR') }`}
+                      {isPlacingBid ? <Loader2 className="animate-spin" /> : `Dar Lance (R$ ${parseFloat(bidAmountInput || '0').toLocaleString('pt-BR') || nextMinimumBid.toLocaleString('pt-BR') })`}
                     </Button>
                   </div>
                 ) : (

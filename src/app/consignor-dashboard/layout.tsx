@@ -10,6 +10,7 @@ import ConsignorSidebar from '@/components/layout/consignor-sidebar';
 // Idealmente, estas constantes viriam de um local compartilhado (ex: src/lib/auth-roles.ts)
 const ALLOWED_EMAILS_FOR_ADMIN_ACCESS = ['admin@bidexpert.com', 'analyst@bidexpert.com', 'augusto.devcode@gmail.com'];
 const EXAMPLE_CONSIGNOR_EMAIL = 'consignor@bidexpert.com'; // Email do comitente de exemplo
+const SUPER_TEST_USER_EMAIL = 'augusto.devcode@gmail.com';
 
 export default function ConsignorDashboardLayout({
   children,
@@ -45,14 +46,11 @@ export default function ConsignorDashboardLayout({
   }
 
   const userEmailLower = user.email?.toLowerCase();
-  const isAdminOrAnalyst = userEmailLower && ALLOWED_EMAILS_FOR_ADMIN_ACCESS.map(e => e.toLowerCase()).includes(userEmailLower);
+  const isSuperTestUser = userEmailLower === SUPER_TEST_USER_EMAIL.toLowerCase();
+  const isAdminByList = userEmailLower && ALLOWED_EMAILS_FOR_ADMIN_ACCESS.map(e => e.toLowerCase()).includes(userEmailLower);
+  const isTheExampleConsignorByList = userEmailLower === EXAMPLE_CONSIGNOR_EMAIL.toLowerCase();
   
-  // Em um sistema real, você verificaria se user.uid está associado a um SellerProfileInfo.id
-  // ou se o UserProfileData tem role === 'CONSIGNOR'.
-  // Por agora, usamos um e-mail de exemplo para simular "o próprio comitente".
-  const isTheExampleConsignor = userEmailLower === EXAMPLE_CONSIGNOR_EMAIL.toLowerCase();
-  
-  const canAccessConsignorDashboard = isAdminOrAnalyst || isTheExampleConsignor;
+  const canAccessConsignorDashboard = isSuperTestUser || isAdminByList || isTheExampleConsignorByList;
 
   if (!canAccessConsignorDashboard) {
     return (
