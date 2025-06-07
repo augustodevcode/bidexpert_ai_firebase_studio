@@ -8,10 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge'; 
+import { Input } from '@/components/ui/input';
 import { 
     Printer, Share2, ArrowLeft, ChevronLeft, ChevronRight, RotateCcw, Search, Key, Info, 
     Tag, CalendarDays, Clock, Users, DollarSign, MapPin, Car, Settings, ThumbsUp, 
-    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff
+    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -28,6 +29,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useAuth } from '@/contexts/auth-context'; 
 import { sampleLotBids, getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data'; 
+import { placeBidOnLot } from './actions';
 
 interface LotDetailClientContentProps {
   lot: Lot;
@@ -38,21 +40,26 @@ interface LotDetailClientContentProps {
   totalLotsInAuction?: number;
 }
 
-export default function LotDetailClientContent({ lot, auction, lotIndex, previousLotId, nextLotId, totalLotsInAuction }: LotDetailClientContentProps) {
+export default function LotDetailClientContent({ lot: initialLot, auction, lotIndex, previousLotId, nextLotId, totalLotsInAuction }: LotDetailClientContentProps) {
+  const [lot, setLot] = useState<Lot>(initialLot); 
   const [isLotFavorite, setIsLotFavorite] = useState(false);
   const { toast } = useToast();
   const [currentUrl, setCurrentUrl] = useState('');
-  const { user } = useAuth(); 
+  const { user, userProfileWithPermissions } = useAuth(); 
   const [lotBids, setLotBids] = useState<BidInfo[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [bidAmountInput, setBidAmountInput] = useState<string>('');
+  const [isPlacingBid, setIsPlacingBid] = useState(false);
+
 
   const gallery = useMemo(() => {
     if (!lot) return [];
     const mainImage = typeof lot.imageUrl === 'string' && lot.imageUrl.trim() !== '' ? [lot.imageUrl] : [];
     const galleryImages = (lot.galleryImageUrls || []).filter(url => typeof url === 'string' && url.trim() !== '');
     const combined = [...mainImage, ...galleryImages];
-    // Remove duplicates just in case imageUrl is also in galleryImageUrls
-    return Array.from(new Set(combined)); 
+    const uniqueUrls = Array.from(new Set(combined.filter(Boolean))); // Filter out null/empty strings
+    console.log('[LotDetailClientContent] Constructed gallery:', uniqueUrls);
+    return uniqueUrls;
   }, [lot]);
 
   useEffect(() => {
@@ -60,33 +67,30 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
       setCurrentUrl(window.location.href);
     }
     if (lot && lot.id) {
-      console.log('[LotDetailClientContent] Dados do lote:', { 
+      console.log('[LotDetailClientContent] Dados do lote recebidos:', { 
         id: lot.id, 
         title: lot.title, 
         imageUrl: lot.imageUrl, 
         galleryImageUrls: lot.galleryImageUrls,
         mediaItemIds: lot.mediaItemIds
       });
-      console.log('[LotDetailClientContent] Galeria construída:', gallery);
+      console.log('[LotDetailClientContent] Galeria construída no useEffect de lot:', gallery);
       
       addRecentlyViewedId(lot.id);
       setIsLotFavorite(isLotFavoriteInStorage(lot.id));
 
-      // Simulação de busca de lances para este lote (substituir por chamada real se necessário)
-      const bidsForThisLot = sampleLotBids
+      const bidsForThisLot = sampleLotBids // Em um app real, buscaria do Firestore ou de um estado global
         .filter(bid => bid.lotId === lot.id)
-        .sort((a, b) => b.amount - a.amount); // Ordena do maior para o menor lance
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()); 
       setLotBids(bidsForThisLot);
-      setCurrentImageIndex(0); // Reset image index when lot changes
+      setCurrentImageIndex(0); 
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lot]); // Only re-run if lot object itself changes
+  }, [lot, gallery]); 
 
   const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || lot?.title}`.trim();
   const lotLocation = lot?.cityName && lot?.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot?.stateUf || lot?.cityName || 'Não informado';
-
-  // Verifica se o usuário pode dar lance (exemplo simples)
-  const canUserBid = user && user.email === 'augusto.devcode@gmail.com' && lot?.status === 'ABERTO_PARA_LANCES';
+  
+  const canUserBid = user && userProfileWithPermissions?.habilitationStatus === 'HABILITADO' && lot?.status === 'ABERTO_PARA_LANCES';
 
   const handleToggleFavorite = () => {
     if (!lot || !lot.id) return;
@@ -126,13 +130,57 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
     }
   };
 
-  // Determina qual rótulo e valor mostrar para o lance principal
+  const bidIncrement = lot.price > 10000 ? 500 : (lot.price > 1000 ? 100 : 50);
+  const nextMinimumBid = (lot.price || 0) + bidIncrement;
+  
+  const handlePlaceBid = async () => {
+    if (!user || !user.uid || !user.displayName) {
+      toast({ title: "Erro", description: "Você precisa estar logado para dar um lance.", variant: "destructive" });
+      return;
+    }
+    const amountToBid = parseFloat(bidAmountInput);
+    if (isNaN(amountToBid) || amountToBid <= 0) {
+      toast({ title: "Erro no Lance", description: "Por favor, insira um valor de lance válido.", variant: "destructive" });
+      return;
+    }
+    if (amountToBid < nextMinimumBid) {
+      toast({ title: "Lance Baixo", description: `Seu lance deve ser de pelo menos R$ ${nextMinimumBid.toLocaleString('pt-BR')}.`, variant: "destructive" });
+      return;
+    }
+  
+    setIsPlacingBid(true);
+    try {
+      const result = await placeBidOnLot(lot.id, lot.auctionId, user.uid, user.displayName, amountToBid);
+      if (result.success && result.updatedLot && result.newBid) {
+        setLot(prevLot => ({ ...prevLot!, ...result.updatedLot }));
+        setLotBids(prevBids => [result.newBid!, ...prevBids].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+        setBidAmountInput(''); // Limpar input
+        toast({
+          title: "Lance Enviado!",
+          description: result.message,
+        });
+      } else {
+        toast({
+          title: "Erro ao Dar Lance",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro Inesperado",
+        description: error.message || "Ocorreu um erro ao processar seu lance.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPlacingBid(false);
+    }
+  };
+
   const currentBidLabel = lot?.bidsCount && lot.bidsCount > 0 ? "Lance Atual" : "Lance Inicial";
   const currentBidValue = lot?.price || 0;
 
-
   if (!lot || !auction) {
-    // Pode mostrar um loader ou mensagem de erro aqui
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
         <p className="text-muted-foreground">Carregando detalhes do lote...</p>
@@ -145,15 +193,21 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
 
   const displayLotPosition = lotIndex !== undefined && lotIndex !== -1 ? lotIndex + 1 : 'N/A';
   const displayTotalLots = totalLotsInAuction || auction.totalLots || 'N/A';
-  const actualLotNumber = lot.number || `ID ${lot.id}`; // CORREÇÃO AQUI: Mostrar ID completo
+  const actualLotNumber = lot.number || lot.id; 
+
 
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        {/* Título Principal e Botões de Ação */}
         <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
           <div className="flex-grow">
             <h1 className="text-2xl md:text-3xl font-bold font-headline text-left">{lotTitle}</h1>
+             <div className="flex items-center gap-2 mt-1">
+                <Badge variant="outline" className="text-xs">{`Leilão #${auction.id.substring(0,8)}...`}</Badge>
+                <Badge className={`text-xs px-2 py-0.5 ${getLotStatusColor(lot.status)}`}>
+                    {getAuctionStatusText(lot.status)}
+                </Badge>
+            </div>
           </div>
           <div className="flex items-center space-x-2 flex-wrap justify-start sm:justify-end mt-2 sm:mt-0">
             <Tooltip>
@@ -208,33 +262,27 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
         </div>
         
         <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-          <div className="flex items-center gap-2">
-            <Badge className={`text-xs px-2 py-0.5 ${getLotStatusColor(lot.status)}`}>
-              {getAuctionStatusText(lot.status)}
-            </Badge>
-            <span className="font-medium">Lote Nº: <span className="text-foreground">{actualLotNumber}</span></span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Tooltip>
-                <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!previousLotId} disabled={!previousLotId} aria-label="Lote Anterior">
-                    {previousLotId ? <Link href={`/auctions/${auction.id}/lots/${previousLotId}`}><ChevronLeft className="h-4 w-4" /></Link> : <ChevronLeft className="h-4 w-4" />}
-                </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Lote Anterior</p></TooltipContent>
-            </Tooltip>
-            <span className="text-sm text-muted-foreground mx-1">Lote {displayLotPosition} de {displayTotalLots}</span>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">
-                    {nextLotId ? <Link href={`/auctions/${auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" />}
-                </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Próximo Lote</p></TooltipContent>
-            </Tooltip>
-          </div>
+            <span className="font-medium text-foreground">Lote Nº: {actualLotNumber}</span>
+            <div className="flex items-center gap-2">
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!previousLotId} disabled={!previousLotId} aria-label="Lote Anterior">
+                        {previousLotId ? <Link href={`/auctions/${auction.id}/lots/${previousLotId}`}><ChevronLeft className="h-4 w-4" /></Link> : <ChevronLeft className="h-4 w-4" />}
+                    </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Lote Anterior</p></TooltipContent>
+                </Tooltip>
+                <span className="text-sm text-muted-foreground mx-1">Lote {displayLotPosition} de {displayTotalLots}</span>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">
+                        {nextLotId ? <Link href={`/auctions/${auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" />}
+                    </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Próximo Lote</p></TooltipContent>
+                </Tooltip>
+            </div>
         </div>
-
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
@@ -246,7 +294,7 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
                       src={gallery[currentImageIndex]}
                       alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`}
                       fill
-                      className="object-contain" 
+                      className="object-contain"
                       data-ai-hint={lot.dataAiHint || "imagem principal lote"}
                       priority={currentImageIndex === 0}
                       unoptimized={gallery[currentImageIndex].startsWith('https://placehold.co')}
@@ -289,10 +337,10 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
                         onClick={() => setCurrentImageIndex(index)}
                         aria-label={`Ver imagem ${index + 1}`}
                       >
-                        <Image 
-                          src={url} 
-                          alt={`Miniatura ${index + 1}`} 
-                          fill 
+                        <Image
+                          src={url}
+                          alt={`Miniatura ${index + 1}`}
+                          fill
                           className="object-cover"
                           data-ai-hint={lot.dataAiHint || 'imagem galeria carro'}
                           unoptimized={url.startsWith('https://placehold.co')}
@@ -338,7 +386,7 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
                 {Object.entries({
-                  "VIN (Status):": lot.vinStatus, 
+                  "VIN (Status):": lot.vinStatus,
                   "Veículo:": lot.type,
                   "Estilo da Carroceria:": lot.bodyStyle,
                   "Motor:": lot.engineDetails,
@@ -354,7 +402,7 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
                   "Modelo:": lot.model,
                   "Série:": lot.series,
                 }).map(([key, value]) => value ? <div key={key}><span className="font-medium text-foreground">{key}</span> <span className="text-muted-foreground">{value}</span></div> : null)}
-              
+
                {lot.description && (
                   <>
                       <Separator className="my-4 md:col-span-2" />
@@ -385,17 +433,31 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
                     <p>Por favor, <Link href={`/auth/login?redirect=/auctions/${auction.id}/lots/${lot.id}`} className="text-primary hover:underline font-medium">faça login</Link> ou <Link href={`/auth/register?redirect=/auctions/${auction.id}/lots/${lot.id}`} className="text-primary hover:underline font-medium">registre-se agora</Link> para dar lances.</p>
                   </div>
                 ) : canUserBid ? (
-                   <Button className="w-full" disabled={lot.status !== 'ABERTO_PARA_LANCES'}>
-                    <DollarSign className="mr-2 h-4 w-4" /> 
-                    Fazer Pré-Lance
-                  </Button>
+                  <div className="space-y-2">
+                     <div className="relative">
+                        <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            type="number"
+                            placeholder={`Mínimo R$ ${nextMinimumBid.toLocaleString('pt-BR')}`}
+                            value={bidAmountInput}
+                            onChange={(e) => setBidAmountInput(e.target.value)}
+                            className="pl-9 h-11 text-base"
+                            min={nextMinimumBid}
+                            step={bidIncrement}
+                            disabled={isPlacingBid}
+                        />
+                    </div>
+                    <Button onClick={handlePlaceBid} disabled={isPlacingBid || !bidAmountInput} className="w-full h-11 text-base">
+                      {isPlacingBid ? <Loader2 className="animate-spin" /> : `Dar Lance de R$ ${parseFloat(bidAmountInput || '0').toLocaleString('pt-BR') || nextMinimumBid.toLocaleString('pt-BR') }`}
+                    </Button>
+                  </div>
                 ) : (
                    <div className="text-sm text-muted-foreground p-3 bg-secondary/50 rounded-md">
-                    <p>Lances para este lote estão {getAuctionStatusText(lot.status).toLowerCase()} ou você não está habilitado para dar lances.</p>
+                    <p>{lot.status !== 'ABERTO_PARA_LANCES' ? `Lances para este lote estão ${getAuctionStatusText(lot.status).toLowerCase()}.` : 'Você precisa estar habilitado para dar lances.'}</p>
                   </div>
                 )}
                 <Button variant="outline" className="w-full" onClick={handleToggleFavorite}>
-                  <Heart className={`mr-2 h-4 w-4 ${isLotFavorite ? 'fill-red-500 text-red-500' : ''}`} /> 
+                  <Heart className={`mr-2 h-4 w-4 ${isLotFavorite ? 'fill-red-500 text-red-500' : ''}`} />
                   {isLotFavorite ? 'Remover da Minha Lista' : 'Adicionar à Minha Lista'}
                 </Button>
               </CardContent>
@@ -408,15 +470,15 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
               <CardContent className="space-y-1 text-sm">
                 {Object.entries({
                   "Filial de Venda:": lot.sellingBranch || auction.sellingBranch,
-                  "Localização do Veículo:": lot.vehicleLocationInBranch || lotLocation, 
+                  "Localização do Veículo:": lot.vehicleLocationInBranch || lotLocation,
                   "Data e Hora do Leilão (Lote):": lot.lotSpecificAuctionDate ? format(new Date(lot.lotSpecificAuctionDate), "dd/MM/yyyy HH:mm'h'", { locale: ptBR }) : 'N/A',
                   "Pista/Corrida #:": lot.laneRunNumber,
                   "Corredor/Vaga:": lot.aisleStall,
                   "Valor Real em Dinheiro (VCV):": lot.actualCashValue,
                   "Custo Estimado de Reparo:": lot.estimatedRepairCost,
                   "Vendedor:": lot.sellerName || auction.seller,
-                  "Documento (Título/Venda):": lot.titleInfo, 
-                  "Marca do Documento:": lot.titleBrand, 
+                  "Documento (Título/Venda):": lot.titleInfo,
+                  "Marca do Documento:": lot.titleBrand,
                 }).map(([key, value]) => value ? <div key={key}><span className="font-medium text-foreground">{key}</span> <span className="text-muted-foreground">{value}</span></div> : null)}
               </CardContent>
             </Card>
@@ -478,5 +540,3 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
     </TooltipProvider>
   );
 }
-
-    
