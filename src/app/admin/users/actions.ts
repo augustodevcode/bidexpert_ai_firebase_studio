@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { db as firestoreClientDB } from '@/lib/firebase'; // SDK Cliente para leituras
-import admin from 'firebase-admin'; 
+import admin from 'firebase-admin';
 import { dbAdmin, authAdmin } from '@/lib/firebase/admin'; // SDK Admin para escritas e auth
 import { 
   collection, getDocs, doc, getDoc, 
@@ -11,7 +11,7 @@ import {
 } from 'firebase/firestore'; // Funções do SDK cliente
 import type { UserProfileData, Role, UserHabilitationStatus } from '@/types';
 import { getRoleByName, ensureDefaultRolesExist, getRole } from '@/app/admin/roles/actions';
-import type { UserFormValues } from './user-form-schema';
+import type { UserFormValues } from './user-form-schema';import { ensureAdminInitialized } from '@/lib/firebase/admin';
 
 // A inicialização do Admin SDK foi movida para @/lib/firebase/admin.ts
 
@@ -252,7 +252,7 @@ export async function updateUserRole(
   userId: string,
   roleId: string | null
 ): Promise<{ success: boolean; message: string }> {
-  if (!dbAdmin) {
+  if (!dbAdmin || !authAdmin) {
     const msg = 'Erro de configuração: Admin SDK Firestore não disponível para updateUserRole.';
     console.error(`[updateUserRole for UID ${userId}] ${msg}`);
     return { success: false, message: msg };
@@ -346,7 +346,8 @@ export async function ensureUserRoleInFirestore(
   fullName: string | null,
   targetRoleName: string
 ): Promise<{ success: boolean; message: string; userProfile?: UserProfileData}> {
-  if (!dbAdmin) { 
+  const { dbAdmin, authAdmin } = await ensureAdminInitialized();
+  if (!dbAdmin || !authAdmin) {
     const msg = 'Erro de configuração: Admin SDK Firestore não disponível para ensureUserRoleInFirestore.';
     console.error(`[ensureUserRoleInFirestore - Admin SDK for ${email}] ${msg}`);
     return { success: false, message: msg };

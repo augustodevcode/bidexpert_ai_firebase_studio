@@ -12,8 +12,8 @@
     "typecheck": "tsc --noEmit",
     "seed:firestore": "tsx ./scripts/seed-firestore.ts",
     "seed:lotes-data": "tsx ./scripts/seed-lotes-data.ts",
-    "rename:lotes-to-lots": "tsx /home/user/studio/scripts/rename-lotes-to-lots.ts"
-    ,"seed:lotes-images": "tsx ./scripts/seed-lotes-with-images.ts"
+    "rename:lotes-to-lots": "tsx /home/user/studio/scripts/rename-lotes-to-lots.ts",
+    "seed:lotes-images": "tsx ./scripts/seed-lotes-with-images.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.8.0",
