@@ -38,7 +38,7 @@ function DeleteUserButton({ userId, userName, onDelete }: { userId: string; user
             </Button>
           </AlertDialogTrigger>
         </TooltipTrigger>
-        <TooltipContent><p>Excluir Usuário (Placeholder)</p></TooltipContent>
+        <TooltipContent><p>Excluir Usuário</p></TooltipContent>
       </Tooltip>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -54,9 +54,9 @@ function DeleteUserButton({ userId, userName, onDelete }: { userId: string; user
                 await onDelete(userId);
             }}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            disabled // Desabilitar até a lógica real de exclusão ser implementada
+            // disabled // Desabilitar até a lógica real de exclusão ser implementada
           >
-            Excluir (Desabilitado)
+            Excluir
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -196,4 +196,10 @@ export default function AdminUsersPage() {
                   </TableBody>
                 </Table>
               </div>
-            
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </TooltipProvider>
+  );
+}

@@ -5,7 +5,6 @@ import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/firebase';
 import {
   collection,
-  addDoc,
   getDocs,
   doc,
   getDoc,
@@ -73,7 +72,9 @@ export async function getUsersWithRoles(): Promise<UserProfileData[]> {
     return users;
   } catch (error: any) {
     console.error("[getUsersWithRoles] Error fetching users:", error.message, error.code);
-    console.error("[getUsersWithRoles] Error details:", error.details);
+    if (error.details) {
+        console.error("[getUsersWithRoles] Error details:", error.details);
+    }
     return [];
   }
 }
@@ -126,7 +127,7 @@ export async function updateUserProfileAndRole(
 
   try {
     const userDocRef = doc(db, 'users', userId);
-    const updateData: { roleId?: string | null; roleName?: string | null; habilitationStatus?: UserHabilitationStatus | null; updatedAt: any } = {
+    const updateData: { roleId?: string | FieldValue | null; roleName?: string | FieldValue | null; habilitationStatus?: UserHabilitationStatus | null; updatedAt: any } = {
       updatedAt: serverTimestamp(),
     };
 
@@ -143,16 +144,16 @@ export async function updateUserProfileAndRole(
               return { success: false, message: 'Perfil (Role) não encontrado.'};
           }
       } else { 
-          console.log(`[updateUserProfileAndRole] Definindo roleId e roleName para null`);
-          updateData.roleId = null;
-          updateData.roleName = null;
+          console.log(`[updateUserProfileAndRole] Definindo roleId e roleName para null e removendo campo 'role' legado.`);
+          updateData.roleId = FieldValue.delete(); // Use FieldValue.delete() for null or removal
+          updateData.roleName = FieldValue.delete();
           (updateData as any).role = FieldValue.delete(); 
       }
     }
 
     if (data.hasOwnProperty('habilitationStatus')) {
         console.log(`[updateUserProfileAndRole] Definindo habilitationStatus para: ${data.habilitationStatus}`);
-        updateData.habilitationStatus = data.habilitationStatus || null;
+        updateData.habilitationStatus = data.habilitationStatus || null; // Allows setting to null
     }
 
 
@@ -198,15 +199,15 @@ export async function ensureUserRoleInFirestore(
 
   try {
     console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 1: Garantindo perfis padrão...`);
-    const rolesEnsured = await ensureDefaultRolesExist(); 
+    const rolesEnsured = await ensureDefaultRolesExist();
+    console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 1.1: Perfis padrão verificados/criados. Success: ${rolesEnsured?.success}, Message: ${rolesEnsured?.message}`);
     
     if (!rolesEnsured || !rolesEnsured.success) {
       const errorMsg = `Falha crítica ao garantir perfis padrão: ${rolesEnsured?.message || 'Resultado indefinido de ensureDefaultRolesExist'}`;
       console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] ${errorMsg}`);
       return { success: false, message: errorMsg };
     }
-    console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 1.1: Perfis padrão verificados/criados. Success: ${rolesEnsured.success}, Message: ${rolesEnsured.message}`);
-
+    
     console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 2: Buscando o perfil "${targetRoleName}"...`);
     const targetRole = await getRoleByName(targetRoleName);
     if (!targetRole) {
@@ -225,7 +226,7 @@ export async function ensureUserRoleInFirestore(
       const userData = userSnap.data() as UserProfileData;
       console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 3.1: Documento do usuário encontrado. RoleId atual: ${userData.roleId}, RoleName: ${userData.roleName}, Habilitation: ${userData.habilitationStatus}`);
       
-      const updatePayload: Partial<UserProfileData> = { updatedAt: serverTimestamp() as Timestamp };
+      const updatePayload: Partial<UserProfileData & { role?: any }> = { updatedAt: serverTimestamp() as Timestamp };
       let needsUpdate = false;
 
       if (userData.roleId !== targetRole.id) {
@@ -238,14 +239,17 @@ export async function ensureUserRoleInFirestore(
         console.log(`[ensureUserRoleInFirestore] Necessário atualizar roleName para ${targetRole.name}`);
         needsUpdate = true;
       }
-      if (targetRoleName === 'ADMINISTRATOR' && userData.habilitationStatus !== 'HABILITADO') {
-        updatePayload.habilitationStatus = 'HABILITADO';
-        console.log(`[ensureUserRoleInFirestore] Necessário atualizar habilitationStatus para HABILITADO para Admin.`);
+      
+      const expectedHabilitation = targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : (userData.habilitationStatus || 'PENDENTE_DOCUMENTOS');
+      if (userData.habilitationStatus !== expectedHabilitation) {
+        updatePayload.habilitationStatus = expectedHabilitation;
+        console.log(`[ensureUserRoleInFirestore] Necessário atualizar habilitationStatus para ${expectedHabilitation}.`);
         needsUpdate = true;
       }
       
+      // Check and remove legacy 'role' field if it exists
       if (userData.hasOwnProperty('role')) {
-        (updatePayload as any).role = FieldValue.delete(); 
+        updatePayload.role = FieldValue.delete(); // Firestore command to remove a field
         console.log(`[ensureUserRoleInFirestore] Necessário remover campo 'role' legado.`);
         needsUpdate = true;
       }
@@ -282,223 +286,15 @@ export async function ensureUserRoleInFirestore(
     }
   } catch (error: any) {
     console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Error:`, error.message, error.code, error.details ? JSON.stringify(error.details) : '');
+    // Verifique se a mensagem de erro já é "Missing or insufficient permissions" vinda de uma sub-chamada.
+    if (error.message && error.message.includes('Missing or insufficient permissions')) {
+        return { success: false, message: `Falha ao configurar perfil para ${targetRoleName}: ${error.message}` };
+    }
     return { success: false, message: `Falha ao configurar perfil para ${targetRoleName}: ${error.message}` };
   }
-
-  // Fallback return, should ideally not be reached if all paths within try are handled.
-  // console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Fallback return - logic error or unhandled path.`);
-  // return { success: false, message: 'Falha inesperada na configuração do perfil.' };
+  // Garantir que todos os caminhos retornem
+  return { success: false, message: 'Falha inesperada na configuração do perfil ou caminho não tratado.' };
 }
 
-    
-
-```
-  </change>
-  <change>
-    <file>/src/app/admin/users/page.tsx</file>
-    <content><![CDATA[
-'use client';
-
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getUsersWithRoles, deleteUser } from './actions'; 
-import type { UserProfileData } from '@/types';
-import { Edit, Trash2, Users, AlertTriangle, UserCog, PlusCircle } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-
-function DeleteUserButton({ userId, userName, onDelete }: { userId: string; userName: string; onDelete: (id: string) => Promise<void> }) {
-  return (
-    <AlertDialog>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label="Excluir Usuário">
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </AlertDialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent><p>Excluir Usuário (Placeholder)</p></TooltipContent>
-      </Tooltip>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-          <AlertDialogDescription>
-            Tem certeza que deseja excluir o usuário "{userName}" (ID: {userId})? Esta ação é IRREVERSÍVEL e removerá o usuário do sistema de autenticação e (opcionalmente) seus dados associados.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={async () => {
-                await onDelete(userId);
-            }}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            disabled // Desabilitar até a lógica real de exclusão ser implementada
-          >
-            Excluir (Desabilitado)
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}
-
-
-export default function AdminUsersPage() {
-  const [users, setUsers] = useState<UserProfileData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
-
-  const fetchUsers = async () => {
-    console.log("[AdminUsersPage] fetchUsers chamada");
-    setIsLoading(true);
-    try {
-      const fetchedUsers = await getUsersWithRoles();
-      console.log("[AdminUsersPage] Usuários recebidos da action:", fetchedUsers.length);
-      setUsers(fetchedUsers);
-    } catch (error) {
-      console.error("[AdminUsersPage] Erro ao buscar usuários:", error);
-      toast({
-        title: "Erro ao Carregar Usuários",
-        description: "Não foi possível buscar a lista de usuários.",
-        variant: "destructive",
-      });
-      setUsers([]); // Garante que users seja um array vazio em caso de erro
-    } finally {
-      setIsLoading(false);
-      console.log("[AdminUsersPage] fetchUsers concluída, isLoading:", false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function handleDeleteUser(id: string) {
-    const result = await deleteUser(id);
-    if (result.success) {
-        toast({
-            title: 'Sucesso!',
-            description: result.message,
-        });
-        fetchUsers(); 
-    } else {
-        toast({
-            title: 'Erro ao Excluir',
-            description: result.message,
-            variant: 'destructive',
-        });
-    }
-  }
-  
-  console.log("[AdminUsersPage] Renderizando. IsLoading:", isLoading, "Número de usuários:", users.length);
-
-  if (isLoading) {
-    return (
-        <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="ml-3 text-muted-foreground">Carregando usuários...</p>
-        </div>
-    );
-  }
-
-  return (
-    <TooltipProvider>
-      <div className="space-y-6">
-        <Card className="shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl font-bold font-headline flex items-center">
-                <Users className="h-6 w-6 mr-2 text-primary" />
-                Gerenciar Usuários da Plataforma
-              </CardTitle>
-              <CardDescription>
-                Visualize usuários, atribua perfis e gerencie o acesso.
-              </CardDescription>
-            </div>
-            <Button asChild>
-              <Link href="/admin/users/new">
-                <PlusCircle className="mr-2 h-4 w-4" /> Novo Usuário
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {users.length === 0 ? (
-              <div className="text-center py-10 text-muted-foreground bg-secondary/30 rounded-md">
-                <AlertTriangle className="mx-auto h-10 w-10 mb-3" />
-                <p className="font-semibold">Nenhum usuário encontrado.</p>
-                <p className="text-sm">Aguarde novos registros ou crie usuários manualmente.</p>
-              </div>
-            ) : (
-              <div className="border rounded-md">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[200px]">Nome Completo</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Perfil</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Data de Criação</TableHead>
-                      <TableHead className="text-right w-[100px]">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user.uid}>
-                        <TableCell className="font-medium">{user.fullName || 'Não informado'}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{user.email}</TableCell>
-                        <TableCell>
-                          <Badge variant={user.roleName && user.roleName !== 'N/A' ? 'default' : 'secondary'}>
-                            {user.roleName || 'Sem Perfil'}
-                          </Badge>
-                        </TableCell>
-                         <TableCell className="text-xs text-muted-foreground">{user.status || 'Ativo'}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {user.createdAt ? format(new Date(user.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : 'N/A'}
-                        </TableCell>
-                        <TableCell className="text-right">
-                           <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" asChild className="text-blue-600 hover:text-blue-700" aria-label="Editar Perfil do Usuário">
-                                <Link href={`/admin/users/${user.uid}/edit`}>
-                                  <UserCog className="h-4 w-4" />
-                                </Link>
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent><p>Editar Perfil/Atribuir Role</p></TooltipContent>
-                           </Tooltip>
-                          <DeleteUserButton userId={user.uid} userName={user.fullName || user.email} onDelete={handleDeleteUser} />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </TooltipProvider>
-  );
-}
+// O arquivo deve terminar aqui. Nenhum JSX abaixo.
     
