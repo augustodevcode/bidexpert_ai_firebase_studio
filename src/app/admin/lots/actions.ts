@@ -370,3 +370,4 @@ export async function deleteLot(
     return { success: false, message: error.message || 'Falha ao excluir lote.' };
   }
 }
+
