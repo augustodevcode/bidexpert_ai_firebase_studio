@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useEffect, useState, useMemo } from 'react'; // Adicionado useMemo
+import { useEffect, useState, useMemo } from 'react';
 import { addRecentlyViewedId } from '@/lib/recently-viewed-store';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -49,9 +49,12 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
   // Memoize the gallery construction
   const gallery = useMemo(() => {
     if (!lot) return [];
-    const images = [lot.imageUrl, ...(lot.galleryImageUrls || [])].filter(Boolean) as string[];
-    console.log('[LotDetailClientContent] Constructed gallery:', images);
-    return images;
+    // Ensure imageUrl is a string and not null/undefined before including
+    const mainImage = typeof lot.imageUrl === 'string' && lot.imageUrl.trim() !== '' ? [lot.imageUrl] : [];
+    const galleryImages = (lot.galleryImageUrls || []).filter(url => typeof url === 'string' && url.trim() !== '');
+    const combined = [...mainImage, ...galleryImages];
+    // Remove duplicates that might arise if imageUrl is also in galleryImageUrls
+    return Array.from(new Set(combined));
   }, [lot]);
 
   useEffect(() => {
@@ -59,9 +62,14 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
       setCurrentUrl(window.location.href);
     }
     if (lot && lot.id) {
-      console.log('[LotDetailClientContent] Initializing useEffect for lot:', lot.id);
-      console.log('[LotDetailClientContent] lot.imageUrl:', lot.imageUrl);
-      console.log('[LotDetailClientContent] lot.galleryImageUrls:', lot.galleryImageUrls);
+      console.log('[LotDetailClientContent] Dados do lote:', { 
+        id: lot.id, 
+        title: lot.title, 
+        imageUrl: lot.imageUrl, 
+        galleryImageUrls: lot.galleryImageUrls,
+        mediaItemIds: lot.mediaItemIds
+      });
+      console.log('[LotDetailClientContent] Galeria construída:', gallery);
       
       addRecentlyViewedId(lot.id);
       setIsLotFavorite(isLotFavoriteInStorage(lot.id));
@@ -70,9 +78,10 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
         .filter(bid => bid.lotId === lot.id)
         .sort((a, b) => b.amount - a.amount); 
       setLotBids(bidsForThisLot);
-      setCurrentImageIndex(0); // Reset to first image when lot changes
+      setCurrentImageIndex(0); 
     }
-  }, [lot]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lot]); // Removed 'gallery' from dependencies as it's memoized based on 'lot'
 
   const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || lot?.title}`.trim();
   const lotLocation = lot?.cityName && lot?.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot?.stateUf || lot?.cityName || 'Não informado';
@@ -128,6 +137,9 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
       </div>
     );
   }
+  
+  const nextImage = () => setCurrentImageIndex((prev) => (gallery.length > 0 ? (prev + 1) % gallery.length : 0));
+  const prevImage = () => setCurrentImageIndex((prev) => (gallery.length > 0 ? (prev - 1 + gallery.length) % gallery.length : 0));
 
   const displayLotNumber = lotIndex !== undefined && lotIndex !== -1 ? lotIndex + 1 : lot.id.replace('LOTE', '');
   const displayTotalLots = totalLotsInAuction || auction.totalLots;
@@ -227,10 +239,10 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
                       src={gallery[currentImageIndex]}
                       alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`}
                       fill
-                      className="object-contain" // Usar 'contain' para a imagem principal
+                      className="object-contain" 
                       data-ai-hint={lot.dataAiHint || "imagem principal lote"}
                       priority={currentImageIndex === 0}
-                      unoptimized={gallery[currentImageIndex].startsWith('https://placehold.co')} // Para placeholders
+                      unoptimized={gallery[currentImageIndex].startsWith('https://placehold.co')}
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
@@ -238,9 +250,31 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
                       <span>Imagem principal não disponível</span>
                     </div>
                   )}
+                   {gallery.length > 1 && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={prevImage}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md"
+                        aria-label="Imagem Anterior"
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={nextImage}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md"
+                        aria-label="Próxima Imagem"
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </Button>
+                    </>
+                  )}
                 </div>
                 {gallery.length > 1 && (
-                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                  <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2">
                     {gallery.map((url, index) => (
                       <button
                         key={index}
@@ -252,9 +286,9 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
                           src={url} 
                           alt={`Miniatura ${index + 1}`} 
                           fill 
-                          className="object-cover" // Usar 'cover' para miniaturas
+                          className="object-cover"
                           data-ai-hint={lot.dataAiHint || 'imagem galeria carro'}
-                          unoptimized={url.startsWith('https://placehold.co')} // Para placeholders
+                          unoptimized={url.startsWith('https://placehold.co')}
                         />
                       </button>
                     ))}
@@ -365,7 +399,7 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
               <CardContent className="space-y-1 text-sm">
                 {Object.entries({
                   "Filial de Venda:": lot.sellingBranch || auction.sellingBranch,
-                  "Localização do Veículo:": lot.vehicleLocationInBranch || auction.vehicleLocation || lotLocation,
+                  "Localização do Veículo:": lot.vehicleLocationInBranch || lotLocation, // auction.vehicleLocation was removed
                   "Data e Hora do Leilão (Lote):": lot.lotSpecificAuctionDate ? format(new Date(lot.lotSpecificAuctionDate), "dd/MM/yyyy HH:mm'h'", { locale: ptBR }) : 'N/A',
                   "Pista/Corrida #:": lot.laneRunNumber,
                   "Corredor/Vaga:": lot.aisleStall,
@@ -435,3 +469,4 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
     </TooltipProvider>
   );
 }
+
