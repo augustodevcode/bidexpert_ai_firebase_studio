@@ -44,7 +44,7 @@ function DeleteUserButton({ userId, userName, onDelete }: { userId: string; user
         <AlertDialogHeader>
           <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja excluir o usuário "{userName}" (ID: {userId})? Esta ação é IRREVERSÍVEL e removerá o usuário do sistema de autenticação e seus dados associados do Firestore.
+            Tem certeza que deseja excluir o usuário "{userName}" (ID: {userId})? Esta ação é IRREVERSÍVEL e removerá o usuário do sistema de autenticação (se Admin SDK estiver configurado) e seus dados associados do Firestore.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -148,7 +148,7 @@ export default function AdminUsersPage() {
               <div className="text-center py-10 text-muted-foreground bg-secondary/30 rounded-md">
                 <AlertTriangle className="mx-auto h-10 w-10 mb-3" />
                 <p className="font-semibold">Nenhum usuário encontrado.</p>
-                <p className="text-sm">Aguarde novos registros ou crie usuários manualmente.</p>
+                <p className="text-sm">Verifique os logs do servidor para erros ou adicione usuários.</p>
               </div>
             ) : (
               <div className="border rounded-md">
@@ -169,8 +169,8 @@ export default function AdminUsersPage() {
                         <TableCell className="font-medium">{user.fullName || 'Não informado'}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{user.email}</TableCell>
                         <TableCell>
-                          <Badge variant={user.roleName && user.roleName !== 'N/A' ? 'default' : 'secondary'}>
-                            {user.roleName || 'Sem Perfil'}
+                          <Badge variant={user.roleName && user.roleName !== 'Não Definido' ? 'default' : 'secondary'}>
+                            {user.roleName || 'Não Definido'}
                           </Badge>
                         </TableCell>
                          <TableCell className="text-xs text-muted-foreground">
@@ -216,3 +216,4 @@ export default function AdminUsersPage() {
   );
 }
 
+    

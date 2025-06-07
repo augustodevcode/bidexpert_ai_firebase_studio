@@ -1,29 +1,28 @@
 
 // src/app/admin/users/new/page.tsx
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserPlus } from 'lucide-react';
+import UserForm from '../user-form';
+import { createUser, type UserFormData } from '../actions'; // Renomeado para UserFormData e createUser
+import { getRoles } from '@/app/admin/roles/actions';
 
-export default function NewUserPage() {
-  // A criação de usuários pelo admin (com definição de senha, etc.)
-  // é mais complexa e geralmente envolve o Admin SDK ou funções customizadas.
-  // Por agora, esta página será um placeholder.
+export default async function NewUserPage() {
+  const roles = await getRoles();
+
+  async function handleCreateUser(data: UserFormData) {
+    'use server';
+    // A action `createUser` lidará apenas com a criação no Firestore por enquanto.
+    // A criação no Firebase Auth pelo admin é mais complexa.
+    return createUser(data); 
+  }
+
   return (
-    <Card className="max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-            <UserPlus className="h-6 w-6 text-primary" />
-            Novo Usuário
-        </CardTitle>
-        <CardDescription>
-          A funcionalidade de criação de novos usuários pelo painel administrativo está em desenvolvimento.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground">
-          Por enquanto, novos usuários devem se registrar através da página de registro pública.
-          Futuramente, administradores poderão criar contas de usuários diretamente por aqui.
-        </p>
-      </CardContent>
-    </Card>
+    <UserForm
+      roles={roles}
+      onSubmitAction={handleCreateUser}
+      formTitle="Novo Usuário"
+      formDescription="Preencha os detalhes para criar uma nova conta de usuário na plataforma."
+      submitButtonText="Criar Usuário"
+    />
   );
 }
+
+    
