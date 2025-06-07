@@ -5,17 +5,17 @@ import type { Lot, Auction, BidInfo } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge'; 
 import { 
     Printer, Share2, ArrowLeft, ChevronLeft, ChevronRight, RotateCcw, Search, Key, Info, 
     Tag, CalendarDays, Clock, Users, DollarSign, MapPin, Car, Settings, ThumbsUp, 
-    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel
+    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react'; // Adicionado useMemo
 import { addRecentlyViewedId } from '@/lib/recently-viewed-store';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -44,12 +44,25 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
   const [currentUrl, setCurrentUrl] = useState('');
   const { user } = useAuth(); 
   const [lotBids, setLotBids] = useState<BidInfo[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Memoize the gallery construction
+  const gallery = useMemo(() => {
+    if (!lot) return [];
+    const images = [lot.imageUrl, ...(lot.galleryImageUrls || [])].filter(Boolean) as string[];
+    console.log('[LotDetailClientContent] Constructed gallery:', images);
+    return images;
+  }, [lot]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setCurrentUrl(window.location.href);
     }
     if (lot && lot.id) {
+      console.log('[LotDetailClientContent] Initializing useEffect for lot:', lot.id);
+      console.log('[LotDetailClientContent] lot.imageUrl:', lot.imageUrl);
+      console.log('[LotDetailClientContent] lot.galleryImageUrls:', lot.galleryImageUrls);
+      
       addRecentlyViewedId(lot.id);
       setIsLotFavorite(isLotFavoriteInStorage(lot.id));
 
@@ -57,6 +70,7 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
         .filter(bid => bid.lotId === lot.id)
         .sort((a, b) => b.amount - a.amount); 
       setLotBids(bidsForThisLot);
+      setCurrentImageIndex(0); // Reset to first image when lot changes
     }
   }, [lot]);
 
@@ -208,21 +222,47 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
             <Card className="shadow-lg">
               <CardContent className="p-4">
                 <div className="relative aspect-[16/9] w-full bg-muted rounded-md overflow-hidden mb-4">
-                  <Image src={lot.imageUrl} alt={lot.title} fill className="object-cover" data-ai-hint={lot.dataAiHint || "imagem principal lote"}/>
-                  <div className="absolute top-2 left-2 space-x-2">
-                    <Button variant="secondary" size="sm"><RotateCcw className="mr-2 h-4 w-4" /> Ver 360°</Button>
-                    <Button variant="secondary" size="sm"><Search className="mr-2 h-4 w-4" /> Ver HD</Button>
-                  </div>
+                  {gallery.length > 0 && gallery[currentImageIndex] ? (
+                    <Image
+                      src={gallery[currentImageIndex]}
+                      alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`}
+                      fill
+                      className="object-contain" // Usar 'contain' para a imagem principal
+                      data-ai-hint={lot.dataAiHint || "imagem principal lote"}
+                      priority={currentImageIndex === 0}
+                      unoptimized={gallery[currentImageIndex].startsWith('https://placehold.co')} // Para placeholders
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                      <ImageOff className="h-16 w-16 mb-2" />
+                      <span>Imagem principal não disponível</span>
+                    </div>
+                  )}
                 </div>
-                {lot.galleryImageUrls && lot.galleryImageUrls.length > 0 && (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                    {lot.galleryImageUrls.map((url, index) => (
-                      <div key={index} className="relative aspect-square bg-muted rounded overflow-hidden">
-                        <Image src={url} alt={`Imagem ${index + 1} de ${lot.title}`} fill className="object-cover" data-ai-hint="imagem galeria carro"/>
-                      </div>
+                {gallery.length > 1 && (
+                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                    {gallery.map((url, index) => (
+                      <button
+                        key={index}
+                        className={`relative aspect-square bg-muted rounded overflow-hidden border-2 transition-all ${index === currentImageIndex ? 'border-primary ring-2 ring-primary ring-offset-2' : 'border-transparent hover:border-muted-foreground/50'}`}
+                        onClick={() => setCurrentImageIndex(index)}
+                        aria-label={`Ver imagem ${index + 1}`}
+                      >
+                        <Image 
+                          src={url} 
+                          alt={`Miniatura ${index + 1}`} 
+                          fill 
+                          className="object-cover" // Usar 'cover' para miniaturas
+                          data-ai-hint={lot.dataAiHint || 'imagem galeria carro'}
+                          unoptimized={url.startsWith('https://placehold.co')} // Para placeholders
+                        />
+                      </button>
                     ))}
                   </div>
                 )}
+                 {gallery.length === 0 && (
+                    <p className="text-sm text-center text-muted-foreground py-4">Nenhuma imagem na galeria.</p>
+                 )}
                 <div className="flex justify-between items-center mt-4 text-sm text-muted-foreground">
                   {lot.hasKey && <span className="flex items-center"><Key className="h-4 w-4 mr-1 text-primary"/> Chave Presente</span>}
                   <span className="flex items-center"><MapPin className="h-4 w-4 mr-1 text-primary"/> Localização: {lotLocation}</span>

@@ -37,7 +37,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 // scripts/seed-lotes-with-images.ts
-var admin = require("firebase-admin");
 var path = require("path");
 var fs = require("fs");
 var util_1 = require("util"); // Para usar fs.readdir, fs.stat de forma assíncrona
@@ -47,16 +46,16 @@ var admin_1 = require("../src/lib/firebase/admin");
 // ============================================================================
 // CONFIGURAÇÕES
 // ============================================================================
-// Caminho base para as imagens de exemplo locais
-var IMAGES_BASE_PATH = '/home/user/studio/CadastrosExemplo';
-// Caminho de destino dentro do seu bucket do Firebase Storage
-var STORAGE_DESTINATION_PATH = 'lotes-exemplo/';
+// Caminho base para as imagens de exemplo locais copiadas para o diretório 'public'
+var IMAGES_BASE_PATH = '/home/user/studio/public/lotes-exemplo';
+// Caminho base público para acessar as imagens no front-end
+var PUBLIC_IMAGE_BASE_URL = '/lotes-exemplo';
 // Extensões de arquivo de imagem a procurar
-var IMAGE_EXTENSIONS = ['.jpg', '.png', '.jpeg'];
+var IMAGE_EXTENSIONS = ['.jpg', '.png', '.jpeg', '.webp', '.avif'];
 // Nome da coleção de lotes no Firestore
 var LOTES_COLLECTION = 'lotes';
 // Nome do campo no documento do lote onde os URLs das imagens serão armazenados
-var IMAGE_URLS_FIELD = 'imageUrls';
+var IMAGE_URLS_FIELD = 'galleryImageUrls';
 // ============================================================================
 // PROMESSAS para funções assíncronas de fs
 // ============================================================================
@@ -116,96 +115,46 @@ function listFilesRecursive(dir_1) {
         });
     });
 }
-// Função para fazer upload de um arquivo para o Firebase Storage
-function uploadFileToStorage(localFilePath, destinationPath) {
-    return __awaiter(this, void 0, void 0, function () {
-        var bucket, filename, destination, file, url;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    bucket = admin.storage().bucket();
-                    filename = path.basename(localFilePath);
-                    destination = "".concat(destinationPath).concat(filename);
-                    console.log("Fazendo upload de ".concat(localFilePath, " para ").concat(destination, "..."));
-                    return [4 /*yield*/, bucket.upload(localFilePath, {
-                            destination: destination,
-                            metadata: {
-                                // Metadados opcionais
-                                contentType: "image/".concat(path.extname(localFilePath).substring(1)), // Tenta inferir content type
-                            },
-                        })];
-                case 1:
-                    _a.sent();
-                    file = bucket.file(destination);
-                    return [4 /*yield*/, file.getSignedUrl({
-                            action: 'read',
-                            expires: '03-09-2491', // Data de expiração bem no futuro para URLs de seeding
-                        })];
-                case 2:
-                    url = (_a.sent())[0];
-                    // Ou use getDownloadURL se as regras permitirem acesso público direto (menos recomendado para dados sensíveis)
-                    // const [url] = await file.getDownloadURL();
-                    console.log("Upload conclu\u00EDdo. URL: ".concat(url));
-                    return [2 /*return*/, url];
-            }
-        });
-    });
-}
 // Função principal para popular lotes com imagens
 function seedLotesWithImages() {
     return __awaiter(this, void 0, void 0, function () {
-        var imageFiles, imageUrls_1, _i, imageFiles_1, imageFile, url, uploadError_1, lotesRef, lotesSnapshot, updatePromises_1, imageUrlsIndex, error_1;
+        var imageFiles, imageUrls_1, publicDir, _i, imageFiles_1, imageFile, relativeToPublic, publicUrl, lotesRef, lotesSnapshot, updatePromises_1, imageFilesIndex, imageUrlsIndex, error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     console.log('--- Iniciando Seed de Lotes com Imagens ---');
                     _a.label = 1;
                 case 1:
-                    _a.trys.push([1, 11, , 12]);
-                    // 1. Listar arquivos de imagem locais
-                    console.log("Buscando imagens em ".concat(IMAGES_BASE_PATH, "..."));
+                    _a.trys.push([1, 5, , 6]);
+                    // 1. Listar arquivos de imagem locais na pasta pública
+                    console.log("Buscando imagens locais em ".concat(IMAGES_BASE_PATH, "..."));
                     return [4 /*yield*/, listFilesRecursive(IMAGES_BASE_PATH)];
                 case 2:
                     imageFiles = _a.sent();
-                    console.log("Encontradas ".concat(imageFiles.length, " imagens."));
+                    console.log("Encontradas ".concat(imageFiles.length, " imagens locais."));
                     if (imageFiles.length === 0) {
                         console.log('Nenhuma imagem encontrada. Saindo.');
                         return [2 /*return*/];
                     }
-                    // 2. Fazer upload das imagens e obter URLs
-                    console.log('Fazendo upload das imagens para o Firebase Storage...');
                     imageUrls_1 = [];
-                    _i = 0, imageFiles_1 = imageFiles;
-                    _a.label = 3;
-                case 3:
-                    if (!(_i < imageFiles_1.length)) return [3 /*break*/, 8];
-                    imageFile = imageFiles_1[_i];
-                    _a.label = 4;
-                case 4:
-                    _a.trys.push([4, 6, , 7]);
-                    return [4 /*yield*/, uploadFileToStorage(imageFile, STORAGE_DESTINATION_PATH)];
-                case 5:
-                    url = _a.sent();
-                    imageUrls_1.push(url);
-                    return [3 /*break*/, 7];
-                case 6:
-                    uploadError_1 = _a.sent();
-                    console.error("Falha no upload da imagem ".concat(imageFile, ":"), uploadError_1);
-                    return [3 /*break*/, 7];
-                case 7:
-                    _i++;
-                    return [3 /*break*/, 3];
-                case 8:
-                    console.log("Upload conclu\u00EDdo para ".concat(imageUrls_1.length, " imagens."));
+                    publicDir = '/home/user/studio/public';
+                    for (_i = 0, imageFiles_1 = imageFiles; _i < imageFiles_1.length; _i++) {
+                        imageFile = imageFiles_1[_i];
+                        relativeToPublic = path.relative(publicDir, imageFile);
+                        publicUrl = '/' + relativeToPublic.replace(/\\/g, '/');
+                        imageUrls_1.push(publicUrl);
+                        console.log("Gerado URL: ".concat(publicUrl));
+                    }
+                    console.log("Gerados ".concat(imageUrls_1.length, " URLs p\u00FAblicos."));
                     if (imageUrls_1.length === 0) {
-                        console.log('Nenhum URL de imagem obtido com sucesso após upload. Saindo.');
+                        console.log('Nenhum URL de imagem gerado. Saindo.');
                         return [2 /*return*/];
                     }
                     // 3. Listar lotes no Firestore
                     console.log("Buscando lotes na cole\u00E7\u00E3o \"".concat(LOTES_COLLECTION, "\"..."));
                     lotesRef = admin_1.dbAdmin.collection(LOTES_COLLECTION);
                     return [4 /*yield*/, lotesRef.get()];
-                case 9:
+                case 3:
                     lotesSnapshot = _a.sent();
                     if (lotesSnapshot.empty) {
                         console.log("Nenhum lote encontrado na cole\u00E7\u00E3o \"".concat(LOTES_COLLECTION, "\". Saindo."));
@@ -215,35 +164,36 @@ function seedLotesWithImages() {
                     // 4. Atualizar lotes com URLs de imagem (aleatoriamente, uma imagem por lote)
                     console.log("Associando URLs de imagens aos lotes...");
                     updatePromises_1 = [];
+                    imageFilesIndex = 0;
                     imageUrlsIndex = 0;
                     lotesSnapshot.forEach(function (doc) {
                         if (imageUrls_1.length === 0) {
                             console.warn("Sem URLs de imagem restantes para o lote ".concat(doc.id, "."));
                             return;
                         }
-                        // Seleciona uma imagem aleatória da lista
+                        // Seleciona uma imagem aleatória da lista de URLs públicos
                         var randomImageUrl = imageUrls_1[Math.floor(Math.random() * imageUrls_1.length)];
                         // Ou seleciona em sequência (menos aleatório, mas usa todas as imagens se houver mais lotes)
                         // const sequentialImageUrl = imageUrls[imageUrlsIndex % imageUrls.length];
-                        // imageUrlsIndex++; // Incrementar para sequência
                         var updateData = {};
                         // Armazena em um array para o campo imageUrls
                         updateData[IMAGE_URLS_FIELD] = [randomImageUrl]; // Associando como array com 1 imagem
+                        updateData[IMAGE_URLS_FIELD] = [publicImageUrl]; // Associando como array com 1 imagem
                         console.log("Atualizando lote ".concat(doc.id, " com URL: ").concat(randomImageUrl));
                         updatePromises_1.push(doc.ref.update(updateData));
                     });
                     // Espera todas as atualizações de lote serem concluídas
                     return [4 /*yield*/, Promise.all(updatePromises_1)];
-                case 10:
+                case 4:
                     // Espera todas as atualizações de lote serem concluídas
                     _a.sent();
                     console.log("Atualiza\u00E7\u00E3o de ".concat(updatePromises_1.length, " lotes conclu\u00EDda."));
-                    return [3 /*break*/, 12];
-                case 11:
+                    return [3 /*break*/, 6];
+                case 5:
                     error_1 = _a.sent();
                     console.error('Erro durante o seed de lotes com imagens:', error_1);
-                    return [3 /*break*/, 12];
-                case 12:
+                    return [3 /*break*/, 6];
+                case 6:
                     console.log('--- Fim do Seed de Lotes com Imagens ---');
                     return [2 /*return*/];
             }
@@ -251,4 +201,5 @@ function seedLotesWithImages() {
     });
 }
 // Executa a função principal
+// Adicione .catch() para tratar erros na execução inicial assíncrona
 seedLotesWithImages();
