@@ -33,8 +33,8 @@ import { placeBidOnLot, getBidsForLot } from './actions';
 import { auth } from '@/lib/firebase'; 
 
 const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'augusto.devcode@gmail.com'.toLowerCase();
-const SUPER_TEST_USER_UID_FOR_BYPASS = 'SUPER_TEST_USER_UID_PLACEHOLDER'; 
-const SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS = 'Augusto Dev (Modo Teste)';
+const SUPER_TEST_USER_UID_FOR_BYPASS = 'SUPER_TEST_USER_UID_PLACEHOLDER_AUG'; 
+const SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS = 'Augusto Dev (Super Test)';
 
 interface LotDetailClientContentProps {
   lot: Lot;
@@ -94,14 +94,14 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
   const firebaseAuthCurrentUser = auth.currentUser;
   const firebaseAuthEmailLower = firebaseAuthCurrentUser?.email?.toLowerCase();
   const isSuperTestUserDirectAuth = firebaseAuthEmailLower === SUPER_TEST_USER_EMAIL_FOR_BYPASS;
-
+  
   const contextUserEmailLower = user?.email?.toLowerCase();
   const isSuperTestUserContext = contextUserEmailLower === SUPER_TEST_USER_EMAIL_FOR_BYPASS;
   
   const isHabilitado = userProfileWithPermissions?.habilitationStatus === 'HABILITADO';
   
   const canUserBid = 
-    (isSuperTestUserDirectAuth || isSuperTestUserContext || (user && isHabilitado)) && 
+    ( isSuperTestUserDirectAuth || isSuperTestUserContext || (user && isHabilitado) ) &&
     lot?.status === 'ABERTO_PARA_LANCES';
 
   const handleToggleFavorite = () => {
@@ -148,43 +148,44 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
   const handlePlaceBid = async () => {
     setIsPlacingBid(true);
     setError(null);
-
+    
     let userIdForBid: string | undefined = undefined;
     let displayNameForBid: string | undefined = undefined;
 
     const currentAuthUser = auth.currentUser; 
     const currentAuthUserEmailLower = currentAuthUser?.email?.toLowerCase();
 
-    if (currentAuthUserEmailLower === SUPER_TEST_USER_EMAIL_FOR_BYPASS) {
-        console.log(`[LotDetailClient] Super test user identified via auth.currentUser: ${currentAuthUser?.email}`);
-        userIdForBid = currentAuthUser?.uid;
-        displayNameForBid = currentAuthUser?.displayName || currentAuthUser?.email || SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
-    } else if (user?.email?.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS) {
-        console.log(`[LotDetailClient] Super test user identified via useAuth() context: ${user.email}`);
-        userIdForBid = user?.uid;
-        displayNameForBid = user?.displayName || user?.email || SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
+    if (currentAuthUser && currentAuthUserEmailLower === SUPER_TEST_USER_EMAIL_FOR_BYPASS) {
+      console.log(`[LotDetailClient] Super test user identified via auth.currentUser: ${currentAuthUser?.email}`);
+      userIdForBid = currentAuthUser.uid;
+      displayNameForBid = currentAuthUser.displayName || currentAuthUser.email || SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
+    } else if (user && user.email?.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS) {
+      console.log(`[LotDetailClient] Super test user identified via useAuth() context: ${user?.email}`);
+      userIdForBid = user.uid;
+      displayNameForBid = user.displayName || user.email || SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
     } else if (!currentAuthUser && !user && SUPER_TEST_USER_EMAIL_FOR_BYPASS) { 
-        // Fallback MUITO AGRESSIVO apenas se SUPER_TEST_USER_EMAIL_FOR_BYPASS estiver ativo
-        // e nem o SDK do Firebase nem o contexto do AuthProvider tiverem um usuário carregado.
-        console.warn(`[LotDetailClient] BYPASS AGRESSIVO: Nem auth.currentUser nem user do contexto estão disponíveis. Usando placeholders para ${SUPER_TEST_USER_EMAIL_FOR_BYPASS}. Isso pode falhar na action se o Admin SDK não estiver configurado para um UID de teste.`);
-        userIdForBid = SUPER_TEST_USER_UID_FOR_BYPASS;
-        displayNameForBid = SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
+      // Bypass agressivo se SUPER_TEST_USER_EMAIL_FOR_BYPASS estiver configurado e nenhum user estiver presente
+      console.warn(`[LotDetailClient] BYPASS AGRESSIVO ATIVADO: Nem auth.currentUser nem user do contexto estão disponíveis. Usando placeholders para ${SUPER_TEST_USER_EMAIL_FOR_BYPASS}.`);
+      userIdForBid = SUPER_TEST_USER_UID_FOR_BYPASS;
+      displayNameForBid = SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
     } else if (user && user.uid) {
-        // Usuário regular logado
-        console.log(`[LotDetailClient] Regular user identified via useAuth() context: ${user.email}`);
-        userIdForBid = user.uid;
-        displayNameForBid = user.displayName || user.email?.split('@')[0] || 'Usuário Anônimo';
+      console.log(`[LotDetailClient] Regular user identified via useAuth() context: ${user.email}`);
+      userIdForBid = user.uid;
+      displayNameForBid = user.displayName || user.email?.split('@')[0] || 'Usuário Anônimo';
     }
 
-    if (!userIdForBid) {
+
+    if (!userIdForBid && !(currentAuthUserEmailLower === SUPER_TEST_USER_EMAIL_FOR_BYPASS || (user && user.email?.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS))) {
       toast({ title: "Ação Requerida", description: "Você precisa estar logado para dar um lance.", variant: "destructive" });
       setIsPlacingBid(false);
       return;
     }
     
     if (!displayNameForBid) { 
-        displayNameForBid = 'Usuário'; 
+      console.warn("[LotDetailClient] displayNameForBid ainda é indefinido, usando 'Usuário Anônimo' como fallback final.");
+      displayNameForBid = 'Usuário Anônimo';
     }
+
 
     const amountToBid = parseFloat(bidAmountInput);
     if (isNaN(amountToBid) || amountToBid <= 0) {
@@ -195,7 +196,7 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
   
     try {
       console.log(`[LotDetailClient] Chamando placeBidOnLot com: lotId=${lot.id}, auctionId=${lot.auctionId}, userId=${userIdForBid}, displayName=${displayNameForBid}, amount=${amountToBid}`);
-      const result = await placeBidOnLot(lot.id, lot.auctionId, userIdForBid, displayNameForBid, amountToBid);
+      const result = await placeBidOnLot(lot.id, lot.auctionId, userIdForBid!, displayNameForBid!, amountToBid);
       if (result.success && result.updatedLot && result.newBid) {
         setLot(prevLot => ({ ...prevLot!, ...result.updatedLot }));
         setLotBids(prevBids => [result.newBid!, ...prevBids].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
@@ -471,7 +472,7 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
                         R$ {currentBidValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
                   </div>
-                {canBid ? (
+                {canUserBid ? (
                   <div className="space-y-2">
                      <div className="relative">
                         <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -490,7 +491,7 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
                       {isPlacingBid ? <Loader2 className="animate-spin" /> : `Dar Lance (R$ ${parseFloat(bidAmountInput || '0').toLocaleString('pt-BR') || nextMinimumBid.toLocaleString('pt-BR') })`}
                     </Button>
                   </div>
-                ) : ( // User is logged in, but cannot bid (status or habilitation)
+                ) : ( 
                    <div className="text-sm text-muted-foreground p-3 bg-secondary/50 rounded-md">
                     <p>{lot.status !== 'ABERTO_PARA_LANCES' ? `Lances para este lote estão ${getAuctionStatusText(lot.status).toLowerCase()}.` : (user ? 'Você precisa estar habilitado para dar lances.' : 'Você precisa estar logado para dar lances.')}</p>
                     {!user && <Link href={`/auth/login?redirect=/auctions/${auction.id}/lots/${lot.id}`} className="text-primary hover:underline font-medium">Faça login ou registre-se.</Link>}
@@ -581,3 +582,5 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
   );
 }
 
+
+    
