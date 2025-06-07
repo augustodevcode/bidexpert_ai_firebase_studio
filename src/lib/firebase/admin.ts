@@ -3,49 +3,47 @@ import * as admin from 'firebase-admin';
 import * as fs from 'fs';
 import * as path from 'path';
 
-let dbAdmin: admin.firestore.Firestore;
-let authAdmin: admin.auth.Auth;
-let storageAdmin: admin.storage.Storage; // Adicionado para consistência, embora não usado ainda
+let dbAdmin: admin.firestore.Firestore | undefined = undefined;
+let authAdmin: admin.auth.Auth | undefined = undefined;
+let storageAdmin: admin.storage.Storage | undefined = undefined;
 
-const serviceAccountPath = '/home/user/studio/bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json';
+// Caminho relativo da raiz do projeto para o arquivo admin.ts: src/lib/firebase/admin.ts
+// Para voltar para a raiz do projeto a partir de __dirname (que é src/lib/firebase): ../../../
+const serviceAccountPath = path.resolve(__dirname, '../../../bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json');
 
 try {
   if (!admin.apps.length) {
-    console.log('[Firebase Admin SDK Central] Inicializando...');
+    console.log('[Firebase Admin SDK Central] Tentando inicializar...');
     
-    // Verificar se o arquivo da chave de serviço existe
-    if (!fs.existsSync(serviceAccountPath)) {
-        console.error(`[Firebase Admin SDK Central] ERRO CRÍTICO: Arquivo da chave de conta de serviço NÃO ENCONTRADO em: ${serviceAccountPath}`);
-        console.error("[Firebase Admin SDK Central] Certifique-se de que o arquivo JSON da chave está no local correto e o caminho está certo.");
-        // process.exit(1); // Em um ambiente de produção, você pode querer parar aqui.
-    } else {
+    if (fs.existsSync(serviceAccountPath)) {
         const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
-            // Se você usa Storage, adicione o bucket aqui:
-            // storageBucket: "bidexpert-630df.appspot.com",
+            // storageBucket: "bidexpert-630df.appspot.com", // Descomente se for usar o Firebase Storage
         });
-        console.log('[Firebase Admin SDK Central] Inicializado com sucesso via arquivo de chave.');
+        console.log('[Firebase Admin SDK Central] Admin SDK inicializado com sucesso via arquivo de chave.');
+        dbAdmin = admin.firestore();
+        authAdmin = admin.auth();
+        storageAdmin = admin.storage();
+        console.log('[Firebase Admin SDK Central] Instâncias dbAdmin, authAdmin e storageAdmin obtidas após nova inicialização.');
+    } else {
+        console.error(`[Firebase Admin SDK Central] ERRO CRÍTICO: Arquivo da chave de conta de serviço NÃO ENCONTRADO em: ${serviceAccountPath}`);
+        console.error("[Firebase Admin SDK Central] Verifique se o nome do arquivo está correto e se o arquivo existe no diretório raiz do projeto.");
     }
   } else {
-    console.log('[Firebase Admin SDK Central] Já inicializado.');
+    console.log('[Firebase Admin SDK Central] Admin SDK já estava inicializado.');
+    const app = admin.apps[0]!; 
+    dbAdmin = app.firestore();
+    authAdmin = app.auth();
+    storageAdmin = app.storage();
+    console.log('[Firebase Admin SDK Central] Instâncias dbAdmin, authAdmin e storageAdmin obtidas de app existente.');
   }
-  
-  dbAdmin = admin.firestore();
-  authAdmin = admin.auth();
-  storageAdmin = admin.storage(); // Inicializa o storage admin
-  console.log('[Firebase Admin SDK Central] Instâncias dbAdmin, authAdmin e storageAdmin obtidas.');
-
 } catch (error: any) {
-  console.error('[Firebase Admin SDK Central] ERRO CRÍTICO durante a inicialização:', error);
-  if (error.code === 'ENOENT') {
+  console.error('[Firebase Admin SDK Central] ERRO CRÍTICO durante a configuração do Admin SDK:', error);
+  if (error.code === 'ENOENT' && error.path === serviceAccountPath) {
       console.error(`[Firebase Admin SDK Central] Causa Provável: Arquivo da chave de conta de serviço não encontrado no caminho especificado: ${serviceAccountPath}`);
   }
   console.error('[Firebase Admin SDK Central] Operações dependentes do Admin SDK podem falhar.');
-  // Não re-lançar o erro para permitir que o app continue, mas logar agressivamente.
-  // Em um cenário de produção, um tratamento mais robusto seria necessário.
 }
 
-// Exporte as instâncias para serem usadas em outros lugares
-// @ts-ignore dbAdmin will be initialized or error logged
 export { dbAdmin, authAdmin, storageAdmin };
