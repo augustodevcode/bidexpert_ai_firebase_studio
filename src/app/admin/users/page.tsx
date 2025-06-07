@@ -44,7 +44,7 @@ function DeleteUserButton({ userId, userName, onDelete }: { userId: string; user
         <AlertDialogHeader>
           <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja excluir o usuário "{userName}" (ID: {userId})? Esta ação é IRREVERSÍVEL e removerá o usuário do sistema de autenticação (se Admin SDK estiver configurado) e seus dados associados do Firestore.
+            Tem certeza que deseja excluir o usuário "{userName}" (ID: {userId})? Esta ação é IRREVERSÍVEL e removerá o usuário do sistema de autenticação e seus dados associados do Firestore.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -112,8 +112,6 @@ export default function AdminUsersPage() {
     }
   }
   
-  console.log("[AdminUsersPage] Renderizando. IsLoading:", isLoading, "Número de usuários:", users.length);
-
   if (isLoading) {
     return (
         <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
@@ -201,7 +199,7 @@ export default function AdminUsersPage() {
                             </TooltipTrigger>
                             <TooltipContent><p>Editar Perfil/Habilitação</p></TooltipContent>
                            </Tooltip>
-                          <DeleteUserButton userId={user.uid} userName={user.fullName || user.email} onDelete={handleDeleteUser} />
+                          <DeleteUserButton userId={user.uid} userName={user.fullName || user.email || 'Usuário desconhecido'} onDelete={handleDeleteUser} />
                         </TableCell>
                       </TableRow>
                     ))}
