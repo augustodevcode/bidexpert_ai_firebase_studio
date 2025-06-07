@@ -3,69 +3,13 @@
 
 import { revalidatePath } from 'next/cache';
 import admin from 'firebase-admin';
-const firestoreFunctions = require('firebase-admin/firestore'); // Use require for FieldValue and Timestamp
+import { dbAdmin } from '@/lib/firebase/admin'; // SDK Admin para escritas
 import { collection, getDocs, doc, getDoc, query, orderBy, Timestamp as ClientTimestamp, where, limit, FieldValue as ClientFieldValue } from 'firebase/firestore';
 import { db as firestoreClientDB } from '@/lib/firebase'; // SDK Cliente para leituras
 import type { Role, RoleFormData } from '@/types';
 import { predefinedPermissions } from './role-form-schema';
 
-let dbAdmin: admin.firestore.Firestore;
-let adminInitialized = false;
-
-function initializeAdminSDK() {
-  if (adminInitialized && dbAdmin) {
-    // console.log("[roles/actions] Admin SDK and Firestore DB instance already initialized.");
-    return;
-  }
-  if (admin.apps.length === 0) {
-    console.log("[roles/actions] Attempting to initialize Firebase Admin SDK...");
-    try {
-      admin.initializeApp();
-      console.log("[roles/actions] Firebase Admin SDK initialized using GOOGLE_APPLICATION_CREDENTIALS.");
-      adminInitialized = true;
-    } catch (error: any) {
-      const serviceAccountPath = process.env.FIREBASE_ADMIN_SDK_PATH;
-      if (serviceAccountPath) {
-        try {
-          const serviceAccount = require(serviceAccountPath);
-          admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-          console.log("[roles/actions] Firebase Admin SDK initialized using FIREBASE_ADMIN_SDK_PATH.");
-          adminInitialized = true;
-        } catch (e: any) {
-          console.error("[roles/actions] Falha ao init Admin SDK com path:", (e as Error).message);
-        }
-      } else if (error.code !== 'app/app-already-exists') {
-         console.error("[roles/actions] Falha ao init Admin SDK (default):", error);
-      } else {
-         adminInitialized = true; 
-         console.log("[roles/actions] Firebase Admin SDK already initialized by a previous call (e.g., app/app-already-exists).");
-      }
-    }
-  } else {
-    console.log("[roles/actions] Firebase Admin SDK already initialized.");
-    adminInitialized = true;
-  }
-
-  if (adminInitialized) {
-    try {
-        dbAdmin = firestoreFunctions.getFirestore(); // Use getFirestore from the require'd module
-        if (dbAdmin) {
-            console.log("[roles/actions] Firestore Admin DB instance OBTAINED successfully. Project ID:", dbAdmin.projectId);
-        } else {
-            console.error("[roles/actions] CRITICAL: getFirestore() returned null/undefined after SDK init.");
-            adminInitialized = false;
-        }
-    } catch (e: any) {
-        console.error("[roles/actions] CRITICAL: Failed to obtain Firestore Admin DB instance after SDK init:", e.message);
-        adminInitialized = false;
-    }
-  }
-
-  if (!adminInitialized || !dbAdmin) {
-    console.error("[roles/actions] ALERTA FINAL: Firebase Admin SDK não pôde ser inicializado ou Firestore Admin DB não obtido.");
-  }
-}
-initializeAdminSDK(); // Call initialization when the module is loaded
+// A inicialização do Admin SDK foi movida para @/lib/firebase/admin.ts
 
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date();
@@ -86,8 +30,7 @@ function safeConvertToDate(timestampField: any): Date {
 export async function createRole(
   data: RoleFormData
 ): Promise<{ success: boolean; message: string; roleId?: string }> {
-  console.log("[createRole] Attempting to create role. Admin SDK initialized:", adminInitialized, "dbAdmin available:", !!dbAdmin);
-  if (!adminInitialized || !dbAdmin) {
+  if (!dbAdmin) {
     return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível para createRole.' };
   }
   if (!data.name || data.name.trim() === '') {
@@ -212,27 +155,28 @@ export async function updateRole(
   id: string,
   data: Partial<RoleFormData>
 ): Promise<{ success: boolean; message: string }> {
-  console.log(`[updateRole] Attempting to update role ID: ${id}. Admin SDK initialized: ${adminInitialized}, dbAdmin available: ${!!dbAdmin}`);
-  if (!adminInitialized || !dbAdmin) {
+  if (!dbAdmin) {
+    console.error(`[updateRole - Admin SDK] dbAdmin not initialized for role ID: ${id}`);
     return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível para updateRole.' };
   }
+  
+  console.log(`[updateRole - Admin SDK] Attempting to update role ID: ${id} with data:`, JSON.stringify(data));
 
   try {
     const rolesCollectionAdmin = dbAdmin.collection('roles');
     const roleDocRefAdmin = rolesCollectionAdmin.doc(id);
     
-    const currentRoleSnap = await roleDocRefAdmin.get(); // Read with admin to ensure we get the doc
+    const currentRoleSnap = await roleDocRefAdmin.get();
     if (!currentRoleSnap.exists) {
         return { success: false, message: 'Perfil não encontrado para atualização.' };
     }
     const currentRoleData = currentRoleSnap.data() as Role;
+    console.log(`[updateRole - Admin SDK] Current role data for ID ${id}:`, JSON.stringify(currentRoleData));
 
     const systemRoleNamesUpper = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER', 'AUCTION_ANALYST'];
     const currentNormalizedNameUpper = currentRoleData.name_normalized?.toUpperCase();
     const isSystemRole = currentNormalizedNameUpper ? systemRoleNamesUpper.includes(currentNormalizedNameUpper) : false;
     
-    console.log(`[updateRole - Admin SDK] Role ID: ${id}, isSystemRole: ${isSystemRole}, Current Name: ${currentRoleData.name}, Current Normalized: ${currentRoleData.name_normalized}`);
-
     const updatePayload: { [key: string]: any } = {};
     let hasChanges = false;
 
@@ -240,8 +184,9 @@ export async function updateRole(
       const newNameTrimmed = data.name.trim();
       if (!newNameTrimmed) return { success: false, message: 'O nome do perfil não pode ser vazio.' };
       
-      updatePayload.name = newNameTrimmed;
-      if (!isSystemRole) {
+      updatePayload.name = newNameTrimmed; // Always update display name if provided and different
+      
+      if (!isSystemRole) { // Only update name_normalized for non-system roles
         const newNormalizedName = newNameTrimmed.toUpperCase();
          if (newNormalizedName !== currentRoleData.name_normalized) {
             const q = rolesCollectionAdmin.where('name_normalized', '==', newNormalizedName).limit(1);
@@ -252,7 +197,11 @@ export async function updateRole(
             updatePayload.name_normalized = newNormalizedName;
         }
       } else {
-         console.log(`[updateRole - Admin SDK] System role ${currentRoleData.name}. Name and name_normalized will not be changed by this path.`);
+         console.log(`[updateRole - Admin SDK] System role ${currentRoleData.name}. name_normalized will not be changed by this update path. Display name can be updated.`);
+         // Ensure name_normalized is NOT in payload if it's a system role AND name_normalized hasn't changed
+         if (updatePayload.name_normalized && updatePayload.name_normalized === currentRoleData.name_normalized) {
+           delete updatePayload.name_normalized;
+         }
       }
       hasChanges = true;
     }
@@ -294,7 +243,7 @@ export async function updateRole(
 export async function deleteRole(
   id: string
 ): Promise<{ success: boolean; message: string }> {
-  if (!adminInitialized || !dbAdmin) {
+  if (!dbAdmin) {
     return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível para deleteRole.' };
   }
   
@@ -324,10 +273,11 @@ export async function deleteRole(
 }
 
 export async function ensureDefaultRolesExist(): Promise<{ success: boolean; message: string }> {
-  console.log("[ensureDefaultRolesExist] Verificando e criando/sincronizando perfis padrão. Admin SDK initialized:", adminInitialized, "dbAdmin available:", !!dbAdmin);
-  if (!adminInitialized || !dbAdmin) {
+  if (!dbAdmin) {
+    console.error("[ensureDefaultRolesExist] dbAdmin não inicializado. Verifique a inicialização centralizada.");
     return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível para ensureDefaultRolesExist.' };
   }
+  console.log("[ensureDefaultRolesExist] Verificando e criando/sincronizando perfis padrão...");
   
   const defaultRolesData: RoleFormData[] = [
       { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
@@ -369,12 +319,12 @@ export async function ensureDefaultRolesExist(): Promise<{ success: boolean; mes
             const doc = existingRoleSnapshotAdmin.docs[0];
             existingRoleDocId = doc.id;
             existingRoleData = doc.data() as Role;
-             console.log(`[ensureDefaultRolesExist] Perfil "${roleData.name}" (Norm: ${normalizedName}) encontrado no Firestore com ID: ${existingRoleDocId}. Nome no DB: "${existingRoleData.name}", Norm no DB: "${existingRoleData.name_normalized}"`);
+            console.log(`[ensureDefaultRolesExist] Perfil "${roleData.name}" (Norm: ${normalizedName}) encontrado com ID: ${existingRoleDocId}. Nome DB: "${existingRoleData.name}", Norm DB: "${existingRoleData.name_normalized}"`);
           }
 
           if (!existingRoleData) {
               console.log(`[ensureDefaultRolesExist] Perfil "${roleData.name}" não encontrado. Criando...`);
-              const creationResult = await createRole(roleData); // createRole usa dbAdmin
+              const creationResult = await createRole(roleData);
               if (creationResult.success) {
                   createdOrUpdatedAny = true;
               } else {
@@ -387,18 +337,20 @@ export async function ensureDefaultRolesExist(): Promise<{ success: boolean; mes
               const syncPayload: Partial<RoleFormData> = {};
               let needsSync = false;
 
-              // Sincronizar o nome de exibição se for diferente (exceto para "ADMINISTRATOR" que é caso especial)
-              if (roleData.name !== existingRoleData.name && existingRoleData.name_normalized !== 'ADMINISTRATOR') {
-                syncPayload.name = roleData.name;
+              // Sincronizar o nome de exibição se for diferente
+              if (roleData.name !== existingRoleData.name) {
+                syncPayload.name = roleData.name; // updateRole cuidará de não mudar name_normalized para system roles
                 needsSync = true;
+                 console.log(`[ensureDefaultRolesExist] Perfil "${existingRoleData.name_normalized}": Nome de exibição precisa de sincronização. DB: "${existingRoleData.name}", Código: "${roleData.name}"`);
               }
-              // Sincronizar descrição se for diferente
+              
               if ((roleData.description || '') !== (existingRoleData.description || '')) {
                   syncPayload.description = roleData.description || '';
                   needsSync = true;
+                  console.log(`[ensureDefaultRolesExist] Perfil "${existingRoleData.name_normalized}": Descrição precisa de sincronização.`);
               }
-              // Sincronizar permissões se forem diferentes
-              const currentPermissionsSorted = (existingRoleData.permissions || []).sort();
+              
+              const currentPermissionsSorted = [...(existingRoleData.permissions || [])].sort();
               const expectedPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
               const expectedPermissionsSorted = [...expectedPermissions].sort();
               
@@ -407,11 +359,12 @@ export async function ensureDefaultRolesExist(): Promise<{ success: boolean; mes
               if (!permissionsAreSame) {
                   syncPayload.permissions = expectedPermissions;
                   needsSync = true;
+                  console.log(`[ensureDefaultRolesExist] Perfil "${existingRoleData.name_normalized}": Permissões precisam de sincronização. DB: ${JSON.stringify(currentPermissionsSorted)}, Código: ${JSON.stringify(expectedPermissionsSorted)}`);
               }
               
               if (needsSync) {
                   console.log(`[ensureDefaultRolesExist] Sincronizando perfil padrão "${existingRoleData.name}". Payload para updateRole:`, JSON.stringify(syncPayload));
-                  const updateResult = await updateRole(existingRoleDocId!, syncPayload); // updateRole usa dbAdmin
+                  const updateResult = await updateRole(existingRoleDocId!, syncPayload); 
                   if (updateResult.success) {
                       createdOrUpdatedAny = true;
                   } else {

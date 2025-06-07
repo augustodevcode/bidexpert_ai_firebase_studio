@@ -2,72 +2,32 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db as firestoreClientDB } from '@/lib/firebase'; 
+import { db as firestoreClientDB } from '@/lib/firebase'; // SDK Cliente para leituras
 import admin from 'firebase-admin'; 
+import { dbAdmin, authAdmin } from '@/lib/firebase/admin'; // SDK Admin para escritas e auth
 import { 
   collection, getDocs, doc, getDoc, 
-  serverTimestamp as clientServerTimestamp, // Alias for client SDK
-  query, orderBy, Timestamp as ClientTimestamp, where, limit, FieldValue as ClientFieldValue, 
-  setDoc as clientSetDoc, updateDoc as clientUpdateDoc, deleteDoc as clientDeleteDoc
-} from 'firebase/firestore';
+  query, orderBy, Timestamp as ClientTimestamp, where, limit
+} from 'firebase/firestore'; // Funções do SDK cliente
 import type { UserProfileData, Role, UserHabilitationStatus } from '@/types';
 import { getRoleByName, ensureDefaultRolesExist, getRole } from '@/app/admin/roles/actions';
 import type { UserFormValues } from './user-form-schema';
 
-let dbAdmin: admin.firestore.Firestore;
-let authAdmin: admin.auth.Auth;
-let adminInitialized = false;
-
-function initializeAdminSDK() {
-  if (adminInitialized && dbAdmin && authAdmin) {
-    return;
-  }
-  if (admin.apps.length === 0) {
-    try {
-      admin.initializeApp();
-      adminInitialized = true;
-    } catch (error: any) {
-      const serviceAccountPath = process.env.FIREBASE_ADMIN_SDK_PATH;
-      if (serviceAccountPath) {
-        try {
-          const serviceAccount = require(serviceAccountPath);
-          admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-          adminInitialized = true;
-        } catch (e: any) {
-          console.error("[users/actions] Falha ao init Admin SDK com path:", (e as Error).message);
-        }
-      } else if (error.code !== 'app/app-already-exists') {
-         console.error("[users/actions] Falha ao init Admin SDK (default):", error);
-      } else {
-         adminInitialized = true; 
-      }
-    }
-  } else {
-    adminInitialized = true;
-  }
-  if (adminInitialized) {
-    try {
-        dbAdmin = admin.firestore();
-        authAdmin = admin.auth();
-    } catch (e: any) {
-        console.error("[users/actions] Falha ao obter Firestore/Auth Admin DB instance:", e.message);
-        adminInitialized = false;
-    }
-  }
-  if (!adminInitialized || !dbAdmin || !authAdmin) {
-    console.error("[users/actions] ALERTA: Firebase Admin SDK, Firestore Admin DB ou Auth Admin não pôde ser inicializado.");
-  }
-}
-initializeAdminSDK();
+// A inicialização do Admin SDK foi movida para @/lib/firebase/admin.ts
 
 function safeConvertToDate(timestampField: any): Date | null {
   if (!timestampField) return null;
-  if (timestampField.toDate && typeof timestampField.toDate === 'function') {
+  if (timestampField instanceof admin.firestore.Timestamp) { // Checa por Admin Timestamp primeiro
+    return timestampField.toDate();
+  }
+  if (timestampField instanceof ClientTimestamp) { // Checa por Client Timestamp
+    return timestampField.toDate();
+  }
+  if (timestampField.toDate && typeof timestampField.toDate === 'function') { // Genérico toDate
     return timestampField.toDate();
   }
   if (typeof timestampField === 'object' && timestampField !== null &&
       typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
-    // This handles both client and admin Timestamp-like objects
     return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000);
   }
   if (timestampField instanceof Date) return timestampField;
@@ -80,9 +40,9 @@ function safeConvertToDate(timestampField: any): Date | null {
 export async function createUser(
   data: UserFormValues
 ): Promise<{ success: boolean; message: string; userId?: string }> {
-  if (!adminInitialized || !dbAdmin) {
-    const msg = 'Erro de configuração: Admin SDK Firestore não disponível para createUser.';
-    console.error(`[createUser] ${msg}`);
+  if (!dbAdmin || !authAdmin) {
+    const msg = 'Erro de configuração: Admin SDK Firestore/Auth não disponível para createUser.';
+    console.error(`[createUser - Admin SDK] ${msg}`);
     return { success: false, message: msg };
   }
 
@@ -92,31 +52,56 @@ export async function createUser(
   if (!data.fullName || data.fullName.trim() === '') {
     return { success: false, message: 'O nome completo do usuário é obrigatório.' };
   }
-
-  console.log(`[createUser - Admin SDK] Tentando criar perfil no Firestore para: ${data.email}. Dados recebidos:`, JSON.stringify(data));
+  console.log(`[createUser - Admin SDK] Dados recebidos:`, JSON.stringify(data));
   
   try {
-    const usersRef = dbAdmin.collection('users');
-    const q = usersRef.where('email', '==', data.email.trim().toLowerCase()).limit(1);
-    const existingUserSnap = await q.get();
-    if (!existingUserSnap.empty) {
-      console.warn(`[createUser - Admin SDK] Usuário com email ${data.email} já existe no Firestore.`);
-      return { success: false, message: `Usuário com email ${data.email} já existe.` };
+    // 1. Verificar se usuário com este email já existe no Auth
+    let existingAuthUser;
+    try {
+      existingAuthUser = await authAdmin.getUserByEmail(data.email.trim().toLowerCase());
+    } catch (error: any) {
+      if (error.code !== 'auth/user-not-found') {
+        throw error; // Re-throw se for outro erro
+      }
+      // Se 'auth/user-not-found', significa que o usuário não existe, podemos prosseguir
     }
 
+    if (existingAuthUser) {
+      console.warn(`[createUser - Admin SDK] Usuário com email ${data.email} já existe no Firebase Auth (UID: ${existingAuthUser.uid}). Verificando Firestore...`);
+      const existingFirestoreUserDoc = await dbAdmin.collection('users').doc(existingAuthUser.uid).get();
+      if (existingFirestoreUserDoc.exists) {
+        return { success: false, message: `Usuário com email ${data.email} já existe no sistema (Auth e Firestore).` };
+      }
+      // Se existe no Auth mas não no Firestore, podemos criar apenas o doc do Firestore
+      // ou retornar um erro pedindo para sincronizar. Por ora, vamos retornar erro.
+      return { success: false, message: `Usuário com email ${data.email} já existe no Firebase Auth, mas não no Firestore. Sincronização manual pode ser necessária.` };
+    }
+    
+    // 2. Se não existe no Auth, criar no Auth
+    console.log(`[createUser - Admin SDK] Usuário com email ${data.email} não encontrado no Auth. Tentando criar...`);
+    const userRecord = await authAdmin.createUser({
+      email: data.email.trim().toLowerCase(),
+      emailVerified: false, // Ou true, dependendo da sua política
+      password: data.password || undefined, // Senha é opcional no formulário de admin
+      displayName: data.fullName.trim(),
+      disabled: false,
+    });
+    console.log(`[createUser - Admin SDK] Usuário criado no Firebase Auth com UID: ${userRecord.uid}`);
+
+    // 3. Buscar Role
     let roleIdToAssign: string | undefined = undefined;
     let roleNameToAssign: string | undefined = 'USER';
     let permissionsToAssign: string[] = [];
 
     if (data.roleId && data.roleId !== "---NONE---") {
-      const roleDoc = await getRole(data.roleId); // getRole uses client SDK, which is fine for reads
+      const roleDoc = await getRole(data.roleId); // getRole usa client SDK para leitura
       if (roleDoc) {
         roleIdToAssign = roleDoc.id;
         roleNameToAssign = roleDoc.name;
         permissionsToAssign = roleDoc.permissions || [];
       } else {
         console.warn(`[createUser - Admin SDK] Perfil com ID ${data.roleId} não encontrado. Atribuindo perfil USER padrão.`);
-        const userRole = await getRoleByName('USER'); // getRoleByName uses client SDK
+        const userRole = await getRoleByName('USER'); // getRoleByName usa client SDK para leitura
         if (userRole) {
           roleIdToAssign = userRole.id;
           roleNameToAssign = userRole.name;
@@ -135,14 +120,11 @@ export async function createUser(
     }
     console.log(`[createUser - Admin SDK] Perfil a ser atribuído: ID=${roleIdToAssign}, Nome=${roleNameToAssign}`);
 
-    // Simulando a criação de um UID aqui, já que não estamos criando no Auth SDK via admin.
-    // Em um cenário real onde o admin cria o usuário no Auth primeiro, usaríamos userRecord.uid.
-    const newUserId = `firestore_user_${Date.now()}`; 
-
+    // 4. Criar documento no Firestore
     const newUserProfileData: Omit<UserProfileData, 'uid'> & { uid: string, createdAt: admin.firestore.FieldValue, updatedAt: admin.firestore.FieldValue } = {
-      uid: newUserId,
-      email: data.email.trim().toLowerCase(),
-      fullName: data.fullName.trim(),
+      uid: userRecord.uid,
+      email: userRecord.email!,
+      fullName: userRecord.displayName!,
       roleId: roleIdToAssign,
       roleName: roleNameToAssign,
       permissions: permissionsToAssign,
@@ -151,26 +133,25 @@ export async function createUser(
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
+    
+    console.log(`[createUser - Admin SDK] Payload para Firestore para novo usuário ${userRecord.uid}:`, JSON.stringify(newUserProfileData));
+    await dbAdmin.collection('users').doc(userRecord.uid).set(newUserProfileData);
 
-    console.log(`[createUser - Admin SDK] Payload para Firestore para novo usuário ${newUserId}:`, JSON.stringify(newUserProfileData));
-    await usersRef.doc(newUserId).set(newUserProfileData);
-
-    console.log(`[createUser - Admin SDK] Perfil para ${data.email} criado no Firestore com ID: ${newUserId}`);
+    console.log(`[createUser - Admin SDK] Perfil para ${data.email} criado no Firestore com UID: ${userRecord.uid}`);
     revalidatePath('/admin/users');
-    return { success: true, message: 'Perfil de usuário criado no Firestore com sucesso.', userId: newUserId };
+    return { success: true, message: 'Usuário criado com sucesso no Auth e Firestore.', userId: userRecord.uid };
 
   } catch (error: any) {
-    console.error(`[createUser - Admin SDK] ERRO ao criar perfil para ${data.email} no Firestore:`, error);
-    return { success: false, message: `Falha ao criar perfil de usuário no Firestore: ${error.message}` };
+    console.error(`[createUser - Admin SDK] ERRO ao criar usuário ${data.email}:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    return { success: false, message: `Falha ao criar usuário: ${error.message}` };
   }
 }
 
-// getUsersWithRoles and getUserProfileData can remain using firestoreClientDB as they are read operations
-// and should be subject to Firestore rules if an admin is viewing them, or user their own.
+
 export async function getUsersWithRoles(): Promise<UserProfileData[]> {
   if (!firestoreClientDB) {
-    console.error("[getUsersWithRoles] Firestore (cliente) DB não inicializado. Retornando array vazio.");
-    return [];
+      console.error("[getUsersWithRoles] Firestore (cliente) DB não inicializado. Retornando array vazio.");
+      return [];
   }
   console.log("[getUsersWithRoles] Iniciando busca de usuários...");
   try {
@@ -185,19 +166,17 @@ export async function getUsersWithRoles(): Promise<UserProfileData[]> {
       let fetchedPermissions: string[] = data.permissions || [];
 
       if (data.roleId && !roleName) {
-        console.log(`[getUsersWithRoles] Usuário ${docSnap.id} tem roleId ${data.roleId}, buscando nome do perfil...`);
-        const roleDoc = await getRole(data.roleId); // getRole uses client SDK for reads
+        const roleDoc = await getRole(data.roleId); 
         if (roleDoc) {
           roleName = roleDoc.name;
-          if (fetchedPermissions.length === 0 && roleDoc.permissions && roleDoc.permissions.length > 0) {
+          if ((!fetchedPermissions || fetchedPermissions.length === 0) && roleDoc.permissions) {
             fetchedPermissions = roleDoc.permissions;
           }
         } else {
           console.warn(`[getUsersWithRoles] Perfil com ID ${data.roleId} não encontrado para usuário ${docSnap.id}`);
         }
-      } else if (!data.roleId && fetchedPermissions.length === 0) {
-        console.log(`[getUsersWithRoles] Usuário ${docSnap.id} sem roleId e sem permissões. Atribuindo perfil USER padrão...`);
-        const defaultUserRole = await getRoleByName('USER'); // getRoleByName uses client SDK
+      } else if (!data.roleId && (!fetchedPermissions || fetchedPermissions.length === 0)) {
+        const defaultUserRole = await getRoleByName('USER');
         if (defaultUserRole) {
           roleName = defaultUserRole.name;
           fetchedPermissions = defaultUserRole.permissions || [];
@@ -219,9 +198,6 @@ export async function getUsersWithRoles(): Promise<UserProfileData[]> {
     return users;
   } catch (error: any) {
     console.error("[getUsersWithRoles] Erro ao buscar usuários:", error.message, error.code);
-    if (error.details) {
-        console.error("[getUsersWithRoles] Detalhes do erro:", error.details);
-    }
     return [];
   }
 }
@@ -241,10 +217,10 @@ export async function getUserProfileData(userId: string): Promise<UserProfileDat
       let fetchedPermissions: string[] = data.permissions || [];
 
       if (data.roleId && !roleName) {
-        const roleDoc = await getRole(data.roleId); // uses client SDK for read
+        const roleDoc = await getRole(data.roleId);
         if (roleDoc) {
           roleName = roleDoc.name;
-          if (fetchedPermissions.length === 0 && roleDoc.permissions) {
+          if ((!fetchedPermissions || fetchedPermissions.length === 0) && roleDoc.permissions) {
             fetchedPermissions = roleDoc.permissions;
           }
         } else {
@@ -276,7 +252,7 @@ export async function updateUserRole(
   userId: string,
   roleId: string | null
 ): Promise<{ success: boolean; message: string }> {
-  if (!adminInitialized || !dbAdmin) {
+  if (!dbAdmin) {
     const msg = 'Erro de configuração: Admin SDK Firestore não disponível para updateUserRole.';
     console.error(`[updateUserRole for UID ${userId}] ${msg}`);
     return { success: false, message: msg };
@@ -287,19 +263,20 @@ export async function updateUserRole(
   console.log(`[updateUserRole - Admin SDK] Tentando atualizar perfil do usuário ${userId} para roleId: ${roleId}`);
 
   try {
-    const userDocRef = dbAdmin.collection('users').doc(userId); // Use dbAdmin
-    const updateData: { roleId?: string | admin.firestore.FieldValue; roleName?: string | admin.firestore.FieldValue; permissions?: string[] | admin.firestore.FieldValue; updatedAt: admin.firestore.FieldValue, role?: admin.firestore.FieldValue } = {
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(), // Use Admin SDK FieldValue
+    const userDocRef = dbAdmin.collection('users').doc(userId);
+    const updateData: { [key: string]: any } = { // Use any para permitir FieldValue.delete()
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    if (roleId) {
+    if (roleId && roleId !== "---NONE---") {
         console.log(`[updateUserRole - Admin SDK] Tentando definir roleId: ${roleId}`);
-        const roleDoc = await getRole(roleId); // getRole uses client SDK, fine for reads
+        const roleDoc = await getRole(roleId); // Leitura pode ser com client SDK
         if (roleDoc) {
             console.log(`[updateUserRole - Admin SDK] Perfil encontrado: ${roleDoc.name}`);
             updateData.roleId = roleId;
             updateData.roleName = roleDoc.name;
             updateData.permissions = roleDoc.permissions || [];
+            updateData.role = admin.firestore.FieldValue.delete(); // Remover campo legado
         } else {
             console.warn(`[updateUserRole - Admin SDK] Perfil com ID ${roleId} não encontrado.`);
             return { success: false, message: 'Perfil (Role) não encontrado.'};
@@ -309,7 +286,7 @@ export async function updateUserRole(
         updateData.roleId = admin.firestore.FieldValue.delete();
         updateData.roleName = admin.firestore.FieldValue.delete();
         updateData.permissions = admin.firestore.FieldValue.delete();
-        updateData.role = admin.firestore.FieldValue.delete(); // Remove legacy field if it exists
+        updateData.role = admin.firestore.FieldValue.delete();
     }
 
     console.log(`[updateUserRole - Admin SDK] Payload para Firestore para usuário ${userId}:`, JSON.stringify(updateData));
@@ -327,45 +304,39 @@ export async function updateUserRole(
 export async function deleteUser(
   userId: string
 ): Promise<{ success: boolean; message: string }> {
-  if (!adminInitialized || !dbAdmin || !authAdmin) {
+  if (!dbAdmin || !authAdmin) {
     const msg = 'Erro de Configuração: Admin SDK não inicializado para exclusão de usuário.';
-    console.error(`[deleteUser] ${msg}`);
+    console.error(`[deleteUser - Admin SDK] ${msg}`);
     return { success: false, message: msg };
   }
   console.log(`[deleteUser - Admin SDK] Tentando excluir usuário: ${userId}`);
   try {
-    await authAdmin.deleteUser(userId);
-    console.log(`[deleteUser - Admin SDK] Usuário ${userId} excluído do Firebase Authentication.`);
+    // Tentar excluir do Auth primeiro, pode falhar se não existir.
+    try {
+      await authAdmin.deleteUser(userId);
+      console.log(`[deleteUser - Admin SDK] Usuário ${userId} excluído do Firebase Authentication.`);
+    } catch (authError: any) {
+      if (authError.code === 'auth/user-not-found') {
+        console.warn(`[deleteUser - Admin SDK] Usuário ${userId} não encontrado no Firebase Authentication. Prosseguindo com exclusão do Firestore.`);
+      } else {
+        throw authError; // Re-lançar outros erros do Auth
+      }
+    }
 
     const userDocRef = dbAdmin.collection('users').doc(userId);
-    await userDocRef.delete();
-    console.log(`[deleteUser - Admin SDK] Documento do usuário ${userId} excluído do Firestore.`);
+    const userDoc = await userDocRef.get();
+    if (userDoc.exists) {
+        await userDocRef.delete();
+        console.log(`[deleteUser - Admin SDK] Documento do usuário ${userId} excluído do Firestore.`);
+    } else {
+        console.warn(`[deleteUser - Admin SDK] Documento do usuário ${userId} não encontrado no Firestore, mas pode ter sido removido do Auth (se existia).`);
+    }
 
     revalidatePath('/admin/users');
-    return { success: true, message: 'Usuário excluído com sucesso do Auth e Firestore!' };
+    return { success: true, message: 'Operação de exclusão de usuário concluída.' };
   } catch (error: any) {
     console.error("[deleteUser - Admin SDK] ERRO ao excluir usuário:", error);
-    let clientMessage = 'Falha ao excluir usuário.';
-    if (error.code === 'auth/user-not-found') {
-        clientMessage = "Usuário não encontrado no Firebase Authentication. Verificando Firestore...";
-        try {
-            const userDocRef = dbAdmin.collection('users').doc(userId);
-            const docSnap = await userDocRef.get();
-            if (docSnap.exists()) {
-                await userDocRef.delete();
-                revalidatePath('/admin/users');
-                return { success: true, message: "Usuário não encontrado no Auth, mas removido do Firestore." };
-            } else {
-                return { success: false, message: "Usuário não encontrado no Auth nem no Firestore." };
-            }
-        } catch (fsError: any) {
-            console.error("[deleteUser - Admin SDK] ERRO ao excluir do Firestore após falha no Auth:", fsError);
-            return { success: false, message: `Falha ao excluir do Firestore: ${fsError.message}` };
-        }
-    } else if (error.message) {
-        clientMessage = error.message;
-    }
-    return { success: false, message: clientMessage };
+    return { success: false, message: `Falha ao excluir usuário: ${error.message}` };
   }
 }
 
@@ -375,39 +346,39 @@ export async function ensureUserRoleInFirestore(
   fullName: string | null,
   targetRoleName: string
 ): Promise<{ success: boolean; message: string; userProfile?: UserProfileData}> {
-  if (!adminInitialized || !dbAdmin ) { // Check dbAdmin specifically for writes
+  if (!dbAdmin) { 
     const msg = 'Erro de configuração: Admin SDK Firestore não disponível para ensureUserRoleInFirestore.';
-    console.error(`[ensureUserRoleInFirestore for ${email}] ${msg}`);
+    console.error(`[ensureUserRoleInFirestore - Admin SDK for ${email}] ${msg}`);
     return { success: false, message: msg };
   }
   if (!userId || !email) {
-    console.error(`[ensureUserRoleInFirestore] Chamada inválida: userId ou email ausentes.`);
+    console.error(`[ensureUserRoleInFirestore - Admin SDK] Chamada inválida: userId ou email ausentes.`);
     return { success: false, message: 'UID do usuário e email são obrigatórios.' };
   }
   console.log(`[ensureUserRoleInFirestore - Admin SDK for ${email}, role ${targetRoleName}] Iniciando...`);
 
   try {
-    const rolesEnsured = await ensureDefaultRolesExist(); // ensureDefaultRolesExist uses dbAdmin for writes
+    const rolesEnsured = await ensureDefaultRolesExist(); 
     if (!rolesEnsured.success) {
       const errorMsg = `Falha crítica ao garantir perfis padrão: ${rolesEnsured.message}`;
       console.error(`[ensureUserRoleInFirestore - Admin SDK for ${email}, role ${targetRoleName}] ${errorMsg}`);
       return { success: false, message: errorMsg };
     }
 
-    const targetRole = await getRoleByName(targetRoleName); // getRoleByName uses client SDK for reads
+    const targetRole = await getRoleByName(targetRoleName); // getRoleByName usa client SDK para reads
     if (!targetRole) {
       console.error(`[ensureUserRoleInFirestore - Admin SDK for ${email}, role ${targetRoleName}] Perfil "${targetRoleName}" NÃO encontrado.`);
       return { success: false, message: `Perfil "${targetRoleName}" não pôde ser encontrado ou criado.` };
     }
 
-    const userDocRef = dbAdmin.collection('users').doc(userId); // Use dbAdmin
+    const userDocRef = dbAdmin.collection('users').doc(userId); 
     const userSnap = await userDocRef.get();
 
     if (userSnap.exists()) {
-      const userDataFromDB = userSnap.data() as UserProfileData; // Cast, assuming data structure
+      const userDataFromDB = userSnap.data() as UserProfileData; 
       console.log(`[ensureUserRoleInFirestore - Admin SDK for ${email}, role ${targetRoleName}] Documento do usuário encontrado. RoleId: ${userDataFromDB.roleId}, RoleName: ${userDataFromDB.roleName}`);
       
-      const updatePayload: { [key: string]: any } = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
+      const updatePayload: { [key:string]: any } = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
       let needsUpdate = false;
 
       if (userDataFromDB.roleId !== targetRole.id) {
@@ -418,17 +389,23 @@ export async function ensureUserRoleInFirestore(
         updatePayload.roleName = targetRole.name;
         needsUpdate = true;
       }
-      const currentPermissionsSorted = (userDataFromDB.permissions || []).sort();
-      const targetPermissionsSorted = (targetRole.permissions || []).sort();
+      
+      const currentPermissionsSorted = [...(userDataFromDB.permissions || [])].sort();
+      const targetPermissionsSorted = [...(targetRole.permissions || [])].sort();
       if (JSON.stringify(currentPermissionsSorted) !== JSON.stringify(targetPermissionsSorted)) {
         updatePayload.permissions = targetRole.permissions || [];
         needsUpdate = true;
       }
-      if (userDataFromDB.hasOwnProperty('role')) { // Check if legacy 'role' field exists
+
+      if (targetRoleName === 'ADMINISTRATOR' && userDataFromDB.habilitationStatus !== 'HABILITADO') {
+        updatePayload.habilitationStatus = 'HABILITADO';
+        needsUpdate = true;
+      }
+
+      if (userDataFromDB.hasOwnProperty('role')) {
           updatePayload.role = admin.firestore.FieldValue.delete();
           needsUpdate = true;
       }
-
 
       if (needsUpdate) {
         console.log(`[ensureUserRoleInFirestore - Admin SDK for ${email}, role ${targetRoleName}] Atualizando perfil do usuário... Payload:`, JSON.stringify(updatePayload));
@@ -436,11 +413,11 @@ export async function ensureUserRoleInFirestore(
         console.log(`[ensureUserRoleInFirestore - Admin SDK for ${email}, role ${targetRoleName}] Perfil do usuário atualizado.`);
       }
       
-      const finalProfileData = await getUserProfileData(userId); // Fetch updated profile using client SDK for consistency in return type
+      const finalProfileData = await getUserProfileData(userId); 
       return { success: true, message: 'Perfil do usuário verificado/atualizado.', userProfile: finalProfileData || undefined };
     } else {
       console.log(`[ensureUserRoleInFirestore - Admin SDK for ${email}, role ${targetRoleName}] Documento do usuário não encontrado. Criando...`);
-      const newUserProfileForFirestore = {
+      const newUserProfileForFirestore: Partial<UserProfileData> & { uid: string, createdAt: admin.firestore.FieldValue, updatedAt: admin.firestore.FieldValue } = {
         uid: userId,
         email: email!,
         fullName: fullName || email!.split('@')[0],
@@ -454,7 +431,7 @@ export async function ensureUserRoleInFirestore(
       };
       await userDocRef.set(newUserProfileForFirestore);
       console.log(`[ensureUserRoleInFirestore - Admin SDK for ${email}, role ${targetRoleName}] Perfil de usuário criado.`);
-      const createdProfile = await getUserProfileData(userId); // Fetch created profile
+      const createdProfile = await getUserProfileData(userId); 
       return { success: true, message: 'Perfil de usuário criado e perfil atribuído.', userProfile: createdProfile || undefined };
     }
   } catch (error: any) {

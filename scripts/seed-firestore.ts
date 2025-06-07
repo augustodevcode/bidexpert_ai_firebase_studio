@@ -1,36 +1,10 @@
 
 import admin from 'firebase-admin';
-import { FieldValue, Timestamp } from 'firebase-admin/firestore'; 
+import { Timestamp } from 'firebase-admin/firestore'; 
 import { config } from 'dotenv'; 
+import { dbAdmin } from '../src/lib/firebase/admin'; // Importa a instância centralizada
+
 config(); 
-
-try {
-  if (admin.apps.length === 0) {
-    admin.initializeApp();
-    console.log("Firebase Admin SDK inicializado usando GOOGLE_APPLICATION_CREDENTIALS.");
-  } else {
-    console.log("Firebase Admin SDK já inicializado.");
-  }
-} catch (error: any) {
-  const serviceAccountPath = process.env.FIREBASE_ADMIN_SDK_PATH;
-  if (serviceAccountPath && admin.apps.length === 0) { 
-    try {
-      const serviceAccount = require(serviceAccountPath);
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
-      console.log("Firebase Admin SDK inicializado usando FIREBASE_ADMIN_SDK_PATH.");
-    } catch (e: any) {
-      console.error("Falha ao inicializar Firebase Admin SDK com FIREBASE_ADMIN_SDK_PATH:", e.message);
-      process.exit(1);
-    }
-  } else if (error.code !== 'app/app-already-exists' && admin.apps.length === 0) {
-    console.error("Falha ao inicializar Firebase Admin SDK. Verifique GOOGLE_APPLICATION_CREDENTIALS ou FIREBASE_ADMIN_SDK_PATH.", error);
-    process.exit(1);
-  }
-}
-
-const db = admin.firestore();
 
 const slugify = (text: string): string => {
   if (!text) return '';
@@ -63,7 +37,7 @@ const defaultRoles = [
   { 
     name: 'USER', 
     description: 'Usuário padrão. Pode ver leilões e lotes. Precisa de habilitação para dar lances.', 
-    permissions: ['view_auctions', 'view_lots', 'place_bids'] // `place_bids` será condicionado ao habilitationStatus
+    permissions: ['view_auctions', 'view_lots', 'place_bids']
   },
   { 
     name: 'CONSIGNOR', 
@@ -94,8 +68,12 @@ const defaultRoles = [
 ];
 
 async function seedRoles() {
+  if (!dbAdmin) {
+    console.error("dbAdmin não inicializado no seedRoles. Verifique a inicialização centralizada.");
+    return;
+  }
   console.log('Iniciando seed de Perfis Padrão...');
-  const rolesCollection = db.collection('roles');
+  const rolesCollection = dbAdmin.collection('roles');
   for (const roleData of defaultRoles) {
     const roleNameNormalized = roleData.name.toUpperCase();
     const roleQuery = await rolesCollection.where('name_normalized', '==', roleNameNormalized).limit(1).get();
@@ -107,8 +85,8 @@ async function seedRoles() {
         ...roleData,
         name_normalized: roleNameNormalized,
         permissions: validPermissions,
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       console.log(`  Perfil "${roleData.name}" criado com ${validPermissions.length} permissões válidas.`);
     } else {
@@ -116,8 +94,8 @@ async function seedRoles() {
       const roleDoc = roleQuery.docs[0];
       await roleDoc.ref.update({ 
         permissions: validPermissions,
-        description: roleData.description, // Ensure description is also updated
-        updatedAt: FieldValue.serverTimestamp() 
+        description: roleData.description,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp() 
       });
       console.log(`    Permissões e descrição do perfil "${roleData.name}" atualizadas/verificadas.`);
     }
@@ -126,12 +104,16 @@ async function seedRoles() {
 }
 
 async function setupAdminUser() {
+  if (!dbAdmin) {
+    console.error("dbAdmin não inicializado no setupAdminUser. Verifique a inicialização centralizada.");
+    return;
+  }
   console.log('Configurando usuário administrador principal...');
   const adminEmail = "augusto.devcode@gmail.com";
   const adminUid = "zdGL4CALTfP0zTFRIt8OnU1B6An1"; 
   const adminFullName = "Augusto (Admin)";
 
-  const adminRoleQuery = await db.collection('roles').where('name_normalized', '==', 'ADMINISTRATOR').limit(1).get();
+  const adminRoleQuery = await dbAdmin.collection('roles').where('name_normalized', '==', 'ADMINISTRATOR').limit(1).get();
   if (adminRoleQuery.empty) {
     console.error('ERRO CRÍTICO: Perfil ADMINISTRATOR não encontrado. Execute seedRoles primeiro ou verifique sua criação.');
     return;
@@ -140,7 +122,7 @@ async function setupAdminUser() {
   const adminRoleId = adminRoleDoc.id;
   const adminRoleName = adminRoleDoc.data().name;
 
-  const userDocRef = db.collection('users').doc(adminUid);
+  const userDocRef = dbAdmin.collection('users').doc(adminUid);
   const userDoc = await userDocRef.get();
 
   const userProfileData: any = {
@@ -149,16 +131,22 @@ async function setupAdminUser() {
     roleId: adminRoleId,
     roleName: adminRoleName,
     status: 'ATIVO',
-    habilitationStatus: 'HABILITADO', // Admin deve estar habilitado por padrão
-    updatedAt: FieldValue.serverTimestamp(),
+    habilitationStatus: 'HABILITADO', 
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   };
   
   if (userDoc.exists && userDoc.data()?.role) {
-    userProfileData.role = FieldValue.delete();
+    userProfileData.role = admin.firestore.FieldValue.delete();
+  }
+   // Set permissions from the admin role if creating or if not present
+  if (!userDoc.exists || !userDoc.data()?.permissions || userDoc.data()?.permissions.length === 0) {
+    userProfileData.permissions = adminRoleDoc.data().permissions || [];
   }
 
+
   if (!userDoc.exists) {
-    userProfileData.createdAt = FieldValue.serverTimestamp();
+    userProfileData.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    userProfileData.uid = adminUid; 
     await userDocRef.set(userProfileData);
     console.log(`  Documento do usuário administrador "${adminEmail}" criado com perfil ADMINISTRATOR e habilitado.`);
   } else {
@@ -166,7 +154,8 @@ async function setupAdminUser() {
     if (currentData?.roleId !== adminRoleId ||
         currentData?.roleName !== adminRoleName || 
         currentData?.habilitationStatus !== 'HABILITADO' ||
- currentData?.role !== undefined) { // Check if 'role' field exists and is not undefined
+        currentData?.role !== undefined || 
+        JSON.stringify(currentData?.permissions || []) !== JSON.stringify(userProfileData.permissions || [])) {
       await userDocRef.update(userProfileData);
       console.log(`  Documento do usuário administrador "${adminEmail}" atualizado com perfil ADMINISTRATOR e habilitado.`);
     } else {
@@ -177,6 +166,10 @@ async function setupAdminUser() {
 
 
 async function seedStatesAndCities() {
+  if (!dbAdmin) {
+    console.error("dbAdmin não inicializado no seedStatesAndCities. Verifique a inicialização centralizada.");
+    return;
+  }
   console.log('Iniciando o processo de seed de Estados e Cidades a partir do IBGE...');
   try {
     const responseStates = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
@@ -188,14 +181,14 @@ async function seedStatesAndCities() {
       const stateName = ibgeState.nome;
       const stateUf = ibgeState.sigla;
       const stateSlug = slugify(stateName);
-      const stateRef = db.collection('states').doc(stateSlug);
+      const stateRef = dbAdmin.collection('states').doc(stateSlug);
 
       console.log(`Processando Estado: ${stateName} (UF: ${stateUf})`);
       const stateDoc = await stateRef.get();
       if (!stateDoc.exists) {
         await stateRef.set({
           name: stateName, uf: stateUf.toUpperCase(), slug: stateSlug, cityCount: 0,
-          createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
+          createdAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
         console.log(`  Estado ${stateName} (ID: ${stateSlug}) adicionado.`);
       }
@@ -213,22 +206,22 @@ async function seedStatesAndCities() {
         const cityIbgeCode = ibgeCity.id.toString();
         const citySlug = slugify(cityName);
         const cityDocId = `${stateSlug}-${citySlug}`; 
-        const cityRef = db.collection('cities').doc(cityDocId);
+        const cityRef = dbAdmin.collection('cities').doc(cityDocId);
 
         const cityDoc = await cityRef.get();
         if (!cityDoc.exists) {
           await cityRef.set({
             name: cityName, slug: citySlug, stateId: stateSlug, stateUf: stateUf.toUpperCase(),
             ibgeCode: cityIbgeCode, lotCount: 0,
-            createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
+            createdAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
           citiesAddedToThisStateCount++;
         }
       }
       if (citiesAddedToThisStateCount > 0 && stateDoc.exists) {
- const currentCityCount = stateDoc.data()?.cityCount || 0;
+        const currentCityCount = stateDoc.data()?.cityCount || 0;
         if (currentCityCount === 0) {
- await stateRef.update({ cityCount: citiesAddedToThisStateCount, updatedAt: FieldValue.serverTimestamp() });
+          await stateRef.update({ cityCount: citiesAddedToThisStateCount, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
         }
       }
     }
@@ -239,6 +232,12 @@ async function seedStatesAndCities() {
 }
 
 async function main() {
+  console.log("Verificando dbAdmin antes de iniciar o seed...");
+  if (!dbAdmin) {
+    console.error("dbAdmin não está disponível no início do main. Saindo.");
+    process.exit(1);
+  }
+  console.log("dbAdmin disponível. Prosseguindo com o seed.");
   await seedRoles();
   await setupAdminUser();
   await seedStatesAndCities(); 
