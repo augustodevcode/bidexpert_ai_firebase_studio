@@ -51,7 +51,8 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
     const mainImage = typeof lot.imageUrl === 'string' && lot.imageUrl.trim() !== '' ? [lot.imageUrl] : [];
     const galleryImages = (lot.galleryImageUrls || []).filter(url => typeof url === 'string' && url.trim() !== '');
     const combined = [...mainImage, ...galleryImages];
-    return Array.from(new Set(combined));
+    // Remove duplicates just in case imageUrl is also in galleryImageUrls
+    return Array.from(new Set(combined)); 
   }, [lot]);
 
   useEffect(() => {
@@ -71,18 +72,20 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
       addRecentlyViewedId(lot.id);
       setIsLotFavorite(isLotFavoriteInStorage(lot.id));
 
+      // Simulação de busca de lances para este lote (substituir por chamada real se necessário)
       const bidsForThisLot = sampleLotBids
         .filter(bid => bid.lotId === lot.id)
-        .sort((a, b) => b.amount - a.amount); 
+        .sort((a, b) => b.amount - a.amount); // Ordena do maior para o menor lance
       setLotBids(bidsForThisLot);
-      setCurrentImageIndex(0); 
+      setCurrentImageIndex(0); // Reset image index when lot changes
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lot]);
+  }, [lot]); // Only re-run if lot object itself changes
 
   const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || lot?.title}`.trim();
   const lotLocation = lot?.cityName && lot?.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot?.stateUf || lot?.cityName || 'Não informado';
 
+  // Verifica se o usuário pode dar lance (exemplo simples)
   const canUserBid = user && user.email === 'augusto.devcode@gmail.com' && lot?.status === 'ABERTO_PARA_LANCES';
 
   const handleToggleFavorite = () => {
@@ -123,11 +126,13 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
     }
   };
 
+  // Determina qual rótulo e valor mostrar para o lance principal
   const currentBidLabel = lot?.bidsCount && lot.bidsCount > 0 ? "Lance Atual" : "Lance Inicial";
   const currentBidValue = lot?.price || 0;
 
 
   if (!lot || !auction) {
+    // Pode mostrar um loader ou mensagem de erro aqui
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
         <p className="text-muted-foreground">Carregando detalhes do lote...</p>
@@ -140,11 +145,12 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
 
   const displayLotPosition = lotIndex !== undefined && lotIndex !== -1 ? lotIndex + 1 : 'N/A';
   const displayTotalLots = totalLotsInAuction || auction.totalLots || 'N/A';
-  const actualLotNumber = lot.number || `ID ${lot.id.substring(0,6)}...`;
+  const actualLotNumber = lot.number || `ID ${lot.id}`; // CORREÇÃO AQUI: Mostrar ID completo
 
   return (
     <TooltipProvider>
       <div className="space-y-6">
+        {/* Título Principal e Botões de Ação */}
         <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
           <div className="flex-grow">
             <h1 className="text-2xl md:text-3xl font-bold font-headline text-left">{lotTitle}</h1>
@@ -202,11 +208,11 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
         </div>
         
         <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <Badge className={`text-xs px-2 py-0.5 ${getLotStatusColor(lot.status)}`}>
               {getAuctionStatusText(lot.status)}
             </Badge>
-            <span className="font-medium ml-2">Lote Nº: <span className="text-foreground">{actualLotNumber}</span></span>
+            <span className="font-medium">Lote Nº: <span className="text-foreground">{actualLotNumber}</span></span>
           </div>
           <div className="flex items-center gap-2">
             <Tooltip>
@@ -369,7 +375,9 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
               <CardContent className="space-y-3">
                   <div className="text-sm">
                       <p className="text-muted-foreground">{currentBidLabel}:</p>
-                      <p className="text-2xl font-bold text-primary">R$ {currentBidValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                      <p className="text-2xl font-bold text-primary">
+                        R$ {currentBidValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
                   </div>
                 {!user ? (
                   <div className="text-sm text-muted-foreground p-3 bg-secondary/50 rounded-md">
