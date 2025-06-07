@@ -9,52 +9,61 @@ import { UploadCloud, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useState, type FormEvent } from 'react'; // Import useState
-import { handleImageUpload } from '../actions'; // Importar a server action
+import { useState, type FormEvent, useRef } from 'react'; 
+import { handleImageUpload } from '../actions'; 
 
 export default function MediaUploadPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false); // Estado de carregamento
+  const [isLoading, setIsLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null); // Ref para o input de arquivo
 
-  const processFiles = async (files: FileList | null) => {
-    if (files && files.length > 0) {
-      const fileMetadatas = Array.from(files).map(file => ({
-        fileName: file.name,
-        mimeType: file.type,
-        sizeBytes: file.size,
-        dataAiHint: 'upload usuario' // Placeholder, pode ser melhorado no futuro
-      }));
+  const processAndSubmitFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) {
+      toast({ title: 'Nenhum arquivo selecionado', variant: 'destructive'});
+      return;
+    }
 
-      setIsLoading(true);
-      const result = await handleImageUpload(fileMetadatas);
-      setIsLoading(false);
+    setIsLoading(true);
+    const formData = new FormData();
+    Array.from(files).forEach(file => {
+      formData.append('files', file); // O nome 'files' deve corresponder ao esperado na action
+      // Para enviar metadados adicionais por arquivo, como dataAiHint, você pode usar
+      // formData.append(`dataAiHint_${file.name}`, 'sua_dica_aqui');
+      // Isso requer que a action handleImageUpload seja ajustada para ler esses campos.
+    });
 
-      if (result.success) {
-        toast({
-          title: 'Upload Simulado Concluído',
-          description: result.message,
-        });
-        router.refresh(); 
-        router.push('/admin/media');
-      } else {
-        toast({
-          title: 'Falha no Upload Simulado',
-          description: result.message,
-          variant: 'destructive',
-        });
-      }
+    const result = await handleImageUpload(formData);
+    setIsLoading(false);
+
+    if (result.success) {
+      toast({
+        title: 'Upload Concluído',
+        description: result.message,
+      });
+      router.refresh();
+      router.push('/admin/media');
+    } else {
+      toast({
+        title: 'Falha no Upload',
+        description: result.message,
+        variant: 'destructive',
+      });
+    }
+    // Limpar o valor do input de arquivo para permitir o re-upload do mesmo arquivo se necessário
+    if (fileInputRef.current) {
+        fileInputRef.current.value = '';
     }
   };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    await processFiles(event.target.files);
+    await processAndSubmitFiles(event.target.files);
   };
 
   const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    await processFiles(event.dataTransfer.files);
+    await processAndSubmitFiles(event.dataTransfer.files);
   };
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
@@ -99,8 +108,9 @@ export default function MediaUploadPage() {
             multiple 
             className="hidden" 
             onChange={handleFileSelect}
-            accept="image/png, image/jpeg, image/webp, application/pdf"
+            accept="image/png, image/jpeg, image/webp, application/pdf" // Ajuste conforme necessário
             disabled={isLoading}
+            ref={fileInputRef} // Atribuir a ref
           />
           <Label
             htmlFor="file-upload"

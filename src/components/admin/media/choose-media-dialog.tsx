@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,58 +12,64 @@ import { useToast } from '@/hooks/use-toast';
 import { getMediaItems, handleImageUpload } from '@/app/admin/media/actions';
 import type { MediaItem } from '@/types';
 import Image from 'next/image';
-import { UploadCloud, Loader2, ImagePlus, Checkbox as CheckboxIcon, FileText, Check } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
+import { UploadCloud, Loader2, ImagePlus, FileText, Check } from 'lucide-react'; // Removed CheckboxIcon
+// import { Checkbox } from '@/components/ui/checkbox'; // Checkbox não está sendo usado no modo de seleção
 import { cn } from '@/lib/utils';
-import { Card } from '@/components/ui/card'; // Added Card import
+import { Card } from '@/components/ui/card';
 
 interface ChooseMediaDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onMediaSelect: (selectedItems: Partial<MediaItem>[]) => void;
+  allowMultiple?: boolean; // Nova prop para controlar seleção múltipla
 }
 
 function MediaUploadTab({ onUploadComplete }: { onUploadComplete: (uploadedItems: MediaItem[]) => void }) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const fileInputRefTab = useRef<HTMLInputElement>(null); // Ref para o input de arquivo da aba
 
-  const processFiles = async (files: FileList | null) => {
-    if (files && files.length > 0) {
-      const fileMetadatas = Array.from(files).map(file => ({
-        fileName: file.name,
-        mimeType: file.type,
-        sizeBytes: file.size,
-        dataAiHint: 'upload usuario'
-      }));
+  const processFilesForTab = async (files: FileList | null) => {
+    if (!files || files.length === 0) {
+      toast({ title: 'Nenhum arquivo selecionado', variant: 'destructive'});
+      return;
+    }
 
-      setIsLoading(true);
-      const result = await handleImageUpload(fileMetadatas);
-      setIsLoading(false);
+    setIsLoading(true);
+    const formData = new FormData();
+    Array.from(files).forEach(file => {
+      formData.append('files', file);
+    });
 
-      if (result.success && result.items) {
-        toast({
-          title: 'Upload Simulado Concluído',
-          description: result.message,
-        });
-        onUploadComplete(result.items);
-      } else {
-        toast({
-          title: 'Falha no Upload Simulado',
-          description: result.message,
-          variant: 'destructive',
-        });
-      }
+    const result = await handleImageUpload(formData);
+    setIsLoading(false);
+
+    if (result.success && result.items) {
+      toast({
+        title: 'Upload Concluído',
+        description: result.message,
+      });
+      onUploadComplete(result.items);
+    } else {
+      toast({
+        title: 'Falha no Upload',
+        description: result.message,
+        variant: 'destructive',
+      });
+    }
+    if (fileInputRefTab.current) {
+        fileInputRefTab.current.value = '';
     }
   };
 
   const handleFileSelectForTab = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    await processFiles(event.target.files);
+    await processFilesForTab(event.target.files);
   };
 
   const handleDropForTab = async (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    await processFiles(event.dataTransfer.files);
+    await processFilesForTab(event.dataTransfer.files);
   };
 
   const handleDragOverForTab = (event: React.DragEvent<HTMLDivElement>) => {
@@ -95,6 +101,7 @@ function MediaUploadTab({ onUploadComplete }: { onUploadComplete: (uploadedItems
           onChange={handleFileSelectForTab}
           accept="image/png, image/jpeg, image/webp, application/pdf"
           disabled={isLoading}
+          ref={fileInputRefTab}
         />
         <Label
           htmlFor="tab-file-upload"
@@ -116,7 +123,12 @@ function MediaUploadTab({ onUploadComplete }: { onUploadComplete: (uploadedItems
 }
 
 
-export default function ChooseMediaDialog({ isOpen, onOpenChange, onMediaSelect }: ChooseMediaDialogProps) {
+export default function ChooseMediaDialog({ 
+  isOpen, 
+  onOpenChange, 
+  onMediaSelect, 
+  allowMultiple = false // Default para seleção única
+}: ChooseMediaDialogProps) {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [isLoadingLibrary, setIsLoadingLibrary] = useState(true);
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
@@ -136,18 +148,25 @@ export default function ChooseMediaDialog({ isOpen, onOpenChange, onMediaSelect 
   };
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && currentTab === 'library') { // Apenas busca se a aba da biblioteca estiver ativa
       fetchLibraryItems();
+    }
+    if (isOpen) {
       setSelectedItemIds([]); 
     }
-  }, [isOpen]);
+  }, [isOpen, currentTab]);
 
   const handleItemSelectToggle = (itemId: string) => {
-    setSelectedItemIds(prevSelected =>
-      prevSelected.includes(itemId)
-        ? prevSelected.filter(id => id !== itemId)
-        : [...prevSelected, itemId]
-    );
+    setSelectedItemIds(prevSelected => {
+      if (allowMultiple) {
+        return prevSelected.includes(itemId)
+          ? prevSelected.filter(id => id !== itemId)
+          : [...prevSelected, itemId];
+      } else {
+        // Seleção única: se já selecionado, desmarca. Se outro selecionado, substitui.
+        return prevSelected.includes(itemId) ? [] : [itemId];
+      }
+    });
   };
   
   const handleConfirmSelection = () => {
@@ -157,7 +176,9 @@ export default function ChooseMediaDialog({ isOpen, onOpenChange, onMediaSelect 
   };
 
   const handleUploadAndRefresh = async (uploadedItems: MediaItem[]) => {
-    await fetchLibraryItems();
+    // Adiciona os novos itens à lista existente temporariamente para UI ou refaz o fetch
+    // setMediaItems(prev => [...uploadedItems.map(ui => ({...ui, uploadedAt: new Date(ui.uploadedAt!)})), ...prev]);
+    await fetchLibraryItems(); // Re-busca para garantir consistência
     setCurrentTab('library'); // Switch to library tab after upload
   };
 
@@ -168,7 +189,7 @@ export default function ChooseMediaDialog({ isOpen, onOpenChange, onMediaSelect 
         <DialogHeader className="p-4 border-b">
           <DialogTitle className="text-xl">Adicionar Mídia</DialogTitle>
           <DialogDescription>
-            Faça upload de novos arquivos ou selecione da sua biblioteca de mídia.
+            {allowMultiple ? "Selecione um ou mais arquivos." : "Selecione um arquivo."}
           </DialogDescription>
         </DialogHeader>
 
@@ -243,11 +264,10 @@ export default function ChooseMediaDialog({ isOpen, onOpenChange, onMediaSelect 
         <DialogFooter className="p-4 border-t">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button onClick={handleConfirmSelection} disabled={selectedItemIds.length === 0}>
-            Selecionar Mídia ({selectedItemIds.length})
+            {allowMultiple ? `Adicionar (${selectedItemIds.length})` : 'Selecionar Mídia'}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
