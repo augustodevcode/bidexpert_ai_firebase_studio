@@ -1,10 +1,11 @@
 
+// firestore.rules
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // Helper functions (mantidas para uso futuro, mas não estritamente necessárias para as regras abertas abaixo)
     function isSignedIn() {
       return request.auth != null && request.auth.uid != null;
     }
@@ -18,91 +19,31 @@ service cloud.firestore {
     }
     
     function isActualAdmin(userId) {
-      let userDoc = get(/databases/$(database)/documents/users/$(userId));
-      return isSignedIn() && userDoc.data.roleName == 'ADMINISTRATOR';
+      // Esta função dependerá que o documento do usuário seja atualizado corretamente.
+      // Para as regras abertas, ela não será o fator limitante primário.
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(userId)).data.roleName == 'ADMINISTRATOR';
     }
 
     function isDefaultRoleName(roleNameInDb) {
-      // Ensure roleNameInDb is treated as a string for .upper()
-      let upperRoleName = string(roleNameInDb).upper();
-      return upperRoleName in ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER', 'AUCTION_ANALYST'];
+      return roleNameInDb.upper() in ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER', 'AUCTION_ANALYST'];
     }
 
+    // REGRAS TEMPORARIAMENTE ABERTAS PARA DESENVOLVIMENTO
     match /roles/{roleId} {
-      allow read, list: if true;
-
-      allow create: if isSignedIn() &&
-                      (isActualAdmin(request.auth.uid) || isAdminEmail()) &&
-                      request.resource.data.name_normalized == request.resource.data.name.upper() &&
-                      request.resource.data.keys().hasAll(['name', 'name_normalized', 'permissions', 'createdAt', 'updatedAt']) &&
-                      request.resource.data.keys().hasOnly(['name', 'name_normalized', 'description', 'permissions', 'createdAt', 'updatedAt']);
-
-      allow update: if isSignedIn() &&
-                      (
-                        // Case 1: Actual Admin updating any role
-                        (
-                          isActualAdmin(request.auth.uid) &&
-                          // For default roles, name and name_normalized must not change if they are part of the request
-                          (!isDefaultRoleName(resource.data.name) || 
-                            ((!request.resource.data.keys().has('name') || request.resource.data.name == resource.data.name) && 
-                             (!request.resource.data.keys().has('name_normalized') || request.resource.data.name_normalized == resource.data.name_normalized))
-                          ) &&
-                          // Allowed fields for general update by admin
-                          request.resource.data.keys().hasOnly(['name', 'name_normalized', 'description', 'permissions', 'updatedAt']) &&
-                          request.resource.data.keys().hasAll(['updatedAt']) // updatedAt is always sent
-                        ) ||
-                        // Case 2: Bootstrap/sync by isAdminEmail for Default Roles
-                        (
-                          isAdminEmail() && isDefaultRoleName(resource.data.name) &&
-                          // Name and name_normalized MUST match existing values IF they are present in the request.
-                          // The action should only send description/permissions if name/name_normalized are unchanged.
-                          (!request.resource.data.keys().has('name') || request.resource.data.name == resource.data.name) &&
-                          (!request.resource.data.keys().has('name_normalized') || request.resource.data.name_normalized == resource.data.name_normalized) &&
-                          // Ensures that ONLY description, permissions, and updatedAt are being modified OR
-                          // if name/name_normalized are sent, they are identical to existing.
-                          request.resource.data.keys().hasOnly(['description', 'permissions', 'updatedAt', 'name', 'name_normalized']) &&
-                          request.resource.data.keys().hasAll(['updatedAt'])
-                        )
-                      );
-      
-      allow delete: if isSignedIn() && isActualAdmin(request.auth.uid) && !isDefaultRoleName(resource.data.name);
+      allow read: if true; // Leitura pública para roles
+      allow list: if true; // Leitura pública para roles
+      allow create, update, delete: if isSignedIn(); // Qualquer usuário logado pode modificar roles (Temporário!)
     }
 
     match /users/{userId} {
-      allow create: if isAdminEmail() && isUser(userId) &&
-                      request.resource.data.roleName == 'ADMINISTRATOR' &&
-                      request.resource.data.permissions.hasAny(['manage_all']) && // Check if permissions array contains 'manage_all'
-                      request.resource.data.keys().hasAll(['uid', 'email', 'fullName', 'roleId', 'roleName', 'status', 'habilitationStatus', 'createdAt', 'updatedAt', 'permissions']) &&
-                      request.resource.data.keys().size() == 10;
-      
-      allow read, get: if isUser(userId) || isActualAdmin(request.auth.uid);
-      
-      allow update: if 
-        // Case 1: User updating their own profile (limited fields)
-        (
-          isUser(userId) &&
-          !request.resource.data.keys().hasAny(['roleId', 'roleName', 'status', 'habilitationStatus', 'permissions', 'role']) 
-        ) ||
-        // Case 2: Actual admin updating any user's role/status/permissions
-        (
-          isActualAdmin(request.auth.uid) &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roleId', 'roleName', 'status', 'habilitationStatus', 'updatedAt', 'permissions', 'role'])
-        ) ||
-        // Case 3: Bootstrap for isAdminEmail to become ActualAdmin
-        (
-          isAdminEmail() && isUser(userId) && 
-          (resource.data.roleId == null || resource.data.roleName != 'ADMINISTRATOR' || resource.data.habilitationStatus != 'HABILITADO') &&
-          request.resource.data.roleName == 'ADMINISTRATOR' &&
-          request.resource.data.habilitationStatus == 'HABILITADO' &&
-          request.resource.data.permissions.hasAny(['manage_all']) && // Check if permissions array contains 'manage_all'
-          // Ensure the roleId in the request, if provided, matches an actual "ADMINISTRATOR" role document's ID
-          (!request.resource.data.keys().has('roleId') || request.resource.data.roleId == null || request.resource.data.roleId == get(/databases/$(database)/documents/roles/$(request.resource.data.roleName.lower().replaceAll(' ', '_'))).id) &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roleId', 'roleName', 'updatedAt', 'habilitationStatus', 'permissions', 'role'])
-        );
-
-      allow delete: if isActualAdmin(request.auth.uid);
+      allow read, get: if isSignedIn(); // Qualquer usuário logado pode ler qualquer perfil (Temporário!)
+      allow list: if isSignedIn() && isActualAdmin(request.auth.uid); // Apenas admins podem listar todos os usuários
+      allow create: if isSignedIn() && isUser(userId); // Usuário pode criar seu próprio perfil
+      allow update: if isSignedIn() && (isUser(userId) || isActualAdmin(request.auth.uid)); // Usuário pode atualizar seu perfil, admin pode atualizar qualquer um (Temporário!)
+      allow delete: if isSignedIn() && isActualAdmin(request.auth.uid); // Apenas admins podem deletar usuários
     }
-    
+    // FIM DAS REGRAS TEMPORARIAMENTE ABERTAS
+
     match /lotCategories/{categoryId} {
       allow read, list: if true;
       allow create, update, delete: if isSignedIn() && isActualAdmin(request.auth.uid);
@@ -145,7 +86,9 @@ service cloud.firestore {
     
     match /mediaItems/{mediaItemId} {
       allow read, list: if true;
-      allow create, update, delete: if true; // Permissions managed by application logic/user roles
+      // Temporariamente aberto para escrita por qualquer usuário logado, para facilitar o desenvolvimento do upload.
+      // TODO: Restringir para apenas admins ou usuários com permissões específicas de upload.
+      allow create, update, delete: if isSignedIn(); 
     }
     
     match /platformSettings/global {
@@ -154,5 +97,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
