@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getUsersWithRoles, deleteUser } from './actions'; 
 import type { UserProfileData } from '@/types';
-import { Edit, Trash2, Users, AlertTriangle, UserCog } from 'lucide-react';
+import { Edit, Trash2, Users, AlertTriangle, UserCog, PlusCircle } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,14 +71,29 @@ export default function AdminUsersPage() {
   const { toast } = useToast();
 
   const fetchUsers = async () => {
+    console.log("[AdminUsersPage] fetchUsers chamada");
     setIsLoading(true);
-    const fetchedUsers = await getUsersWithRoles();
-    setUsers(fetchedUsers);
-    setIsLoading(false);
+    try {
+      const fetchedUsers = await getUsersWithRoles();
+      console.log("[AdminUsersPage] Usuários recebidos da action:", fetchedUsers.length);
+      setUsers(fetchedUsers);
+    } catch (error) {
+      console.error("[AdminUsersPage] Erro ao buscar usuários:", error);
+      toast({
+        title: "Erro ao Carregar Usuários",
+        description: "Não foi possível buscar a lista de usuários.",
+        variant: "destructive",
+      });
+      setUsers([]); // Garante que users seja um array vazio em caso de erro
+    } finally {
+      setIsLoading(false);
+      console.log("[AdminUsersPage] fetchUsers concluída, isLoading:", false);
+    }
   };
 
   useEffect(() => {
     fetchUsers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleDeleteUser(id: string) {
@@ -98,6 +113,8 @@ export default function AdminUsersPage() {
     }
   }
   
+  console.log("[AdminUsersPage] Renderizando. IsLoading:", isLoading, "Número de usuários:", users.length);
+
   if (isLoading) {
     return (
         <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
@@ -121,14 +138,18 @@ export default function AdminUsersPage() {
                 Visualize usuários, atribua perfis e gerencie o acesso.
               </CardDescription>
             </div>
-            {/* Botão para criar usuário pode ser adicionado aqui no futuro */}
+            <Button asChild>
+              <Link href="/admin/users/new">
+                <PlusCircle className="mr-2 h-4 w-4" /> Novo Usuário
+              </Link>
+            </Button>
           </CardHeader>
           <CardContent>
             {users.length === 0 ? (
               <div className="text-center py-10 text-muted-foreground bg-secondary/30 rounded-md">
                 <AlertTriangle className="mx-auto h-10 w-10 mb-3" />
                 <p className="font-semibold">Nenhum usuário encontrado.</p>
-                <p className="text-sm">Aguarde novos registros ou crie usuários manualmente (funcionalidade futura).</p>
+                <p className="text-sm">Aguarde novos registros ou crie usuários manualmente.</p>
               </div>
             ) : (
               <div className="border rounded-md">
@@ -175,12 +196,4 @@ export default function AdminUsersPage() {
                   </TableBody>
                 </Table>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </TooltipProvider>
-  );
-}
-
-    
+            
