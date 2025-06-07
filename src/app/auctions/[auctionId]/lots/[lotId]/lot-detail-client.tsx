@@ -29,11 +29,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useAuth } from '@/contexts/auth-context'; 
 import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data'; 
-import { placeBidOnLot, getBidsForLot } from './actions';
-import { auth } from '@/lib/firebase'; // Importar auth diretamente
+import { placeBidOnLot, getBidsForLot } from './actions'; 
+import { auth } from '@/lib/firebase'; 
 
-const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'augusto.devcode@gmail.com';
-const SUPER_TEST_USER_UID_FOR_BYPASS = 'TEST_UID_AUGUSTO_DEV_LOT_DETAIL'; // UID Placeholder para teste
+const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'augusto.devcode@gmail.com'.toLowerCase();
+const SUPER_TEST_USER_UID_FOR_BYPASS = 'SUPER_TEST_USER_UID_PLACEHOLDER'; 
 const SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS = 'Augusto Dev (Modo Teste)';
 
 interface LotDetailClientContentProps {
@@ -55,7 +55,7 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [bidAmountInput, setBidAmountInput] = useState<string>('');
   const [isPlacingBid, setIsPlacingBid] = useState(false);
-  const [error, setError] = useState<string | null>(null); // Para erros locais
+  const [error, setError] = useState<string | null>(null);
 
   const gallery = useMemo(() => {
     if (!lot) return [];
@@ -78,8 +78,8 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
         try {
           const bids = await getBidsForLot(lot.id);
           setLotBids(bids);
-        } catch (error) {
-          console.error("Error fetching bids for lot:", error);
+        } catch (error: any) {
+          console.error("Error fetching bids for lot:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
           setLotBids([]);
         }
       };
@@ -93,17 +93,16 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
   
   const firebaseAuthCurrentUser = auth.currentUser;
   const firebaseAuthEmailLower = firebaseAuthCurrentUser?.email?.toLowerCase();
-  const isSuperTestUserDirectAuth = firebaseAuthEmailLower === SUPER_TEST_USER_EMAIL_FOR_BYPASS.toLowerCase();
+  const isSuperTestUserDirectAuth = firebaseAuthEmailLower === SUPER_TEST_USER_EMAIL_FOR_BYPASS;
 
   const contextUserEmailLower = user?.email?.toLowerCase();
-  const isSuperTestUserContext = contextUserEmailLower === SUPER_TEST_USER_EMAIL_FOR_BYPASS.toLowerCase();
+  const isSuperTestUserContext = contextUserEmailLower === SUPER_TEST_USER_EMAIL_FOR_BYPASS;
   
   const isHabilitado = userProfileWithPermissions?.habilitationStatus === 'HABILITADO';
   
   const canUserBid = 
     (isSuperTestUserDirectAuth || isSuperTestUserContext || (user && isHabilitado)) && 
     lot?.status === 'ABERTO_PARA_LANCES';
-
 
   const handleToggleFavorite = () => {
     if (!lot || !lot.id) return;
@@ -150,40 +149,42 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
     setIsPlacingBid(true);
     setError(null);
 
-    let userIdToUse: string | undefined;
-    let displayNameToUse: string | undefined;
-    let userIsConsideredLoggedIn = false;
+    let userIdForBid: string | undefined = undefined;
+    let displayNameForBid: string | undefined = undefined;
 
-    // Prioritize direct Firebase Auth SDK for test user, then context, then force for test user if others fail
-    if (isSuperTestUserDirectAuth && firebaseAuthCurrentUser?.uid) {
-        userIdToUse = firebaseAuthCurrentUser.uid;
-        displayNameToUse = firebaseAuthCurrentUser.displayName || firebaseAuthCurrentUser.email || SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
-        userIsConsideredLoggedIn = true;
-        console.log(`[LotDetailClient] Super test user identified via auth.currentUser: ${displayNameToUse}`);
-    } else if (isSuperTestUserContext && user?.uid) {
-        userIdToUse = user.uid;
-        displayNameToUse = user.displayName || user.email || SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
-        userIsConsideredLoggedIn = true;
-        console.log(`[LotDetailClient] Super test user identified via useAuth() context: ${displayNameToUse}`);
-    } else if (user?.uid) { // For regular users from context
-        userIdToUse = user.uid;
-        displayNameToUse = user.displayName || user.email?.split('@')[0];
-        userIsConsideredLoggedIn = true;
-        console.log(`[LotDetailClient] Regular user identified via useAuth() context: ${displayNameToUse}`);
-    } else if (SUPER_TEST_USER_EMAIL_FOR_BYPASS) { // Aggressive bypass if no user in context or auth, assume it's the test user for this flow
-        console.warn(`[LotDetailClient] BYPASS: No user in context or Firebase Auth. Forcing test user '${SUPER_TEST_USER_EMAIL_FOR_BYPASS}'.`);
-        userIdToUse = SUPER_TEST_USER_UID_FOR_BYPASS;
-        displayNameToUse = SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
-        userIsConsideredLoggedIn = true; // Pretend login for test user
+    const currentAuthUser = auth.currentUser; 
+    const currentAuthUserEmailLower = currentAuthUser?.email?.toLowerCase();
+
+    if (currentAuthUserEmailLower === SUPER_TEST_USER_EMAIL_FOR_BYPASS) {
+        console.log(`[LotDetailClient] Super test user identified via auth.currentUser: ${currentAuthUser?.email}`);
+        userIdForBid = currentAuthUser?.uid;
+        displayNameForBid = currentAuthUser?.displayName || currentAuthUser?.email || SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
+    } else if (user?.email?.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS) {
+        console.log(`[LotDetailClient] Super test user identified via useAuth() context: ${user.email}`);
+        userIdForBid = user?.uid;
+        displayNameForBid = user?.displayName || user?.email || SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
+    } else if (!currentAuthUser && !user && SUPER_TEST_USER_EMAIL_FOR_BYPASS) { 
+        // Fallback MUITO AGRESSIVO apenas se SUPER_TEST_USER_EMAIL_FOR_BYPASS estiver ativo
+        // e nem o SDK do Firebase nem o contexto do AuthProvider tiverem um usuário carregado.
+        console.warn(`[LotDetailClient] BYPASS AGRESSIVO: Nem auth.currentUser nem user do contexto estão disponíveis. Usando placeholders para ${SUPER_TEST_USER_EMAIL_FOR_BYPASS}. Isso pode falhar na action se o Admin SDK não estiver configurado para um UID de teste.`);
+        userIdForBid = SUPER_TEST_USER_UID_FOR_BYPASS;
+        displayNameForBid = SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
+    } else if (user && user.uid) {
+        // Usuário regular logado
+        console.log(`[LotDetailClient] Regular user identified via useAuth() context: ${user.email}`);
+        userIdForBid = user.uid;
+        displayNameForBid = user.displayName || user.email?.split('@')[0] || 'Usuário Anônimo';
     }
 
-    if (!userIsConsideredLoggedIn || !userIdToUse) {
+    if (!userIdForBid) {
       toast({ title: "Ação Requerida", description: "Você precisa estar logado para dar um lance.", variant: "destructive" });
       setIsPlacingBid(false);
       return;
     }
     
-    displayNameToUse = displayNameToUse || 'Usuário Anônimo Teste';
+    if (!displayNameForBid) { 
+        displayNameForBid = 'Usuário'; 
+    }
 
     const amountToBid = parseFloat(bidAmountInput);
     if (isNaN(amountToBid) || amountToBid <= 0) {
@@ -193,7 +194,8 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
     }
   
     try {
-      const result = await placeBidOnLot(lot.id, lot.auctionId, userIdToUse, displayNameToUse, amountToBid);
+      console.log(`[LotDetailClient] Chamando placeBidOnLot com: lotId=${lot.id}, auctionId=${lot.auctionId}, userId=${userIdForBid}, displayName=${displayNameForBid}, amount=${amountToBid}`);
+      const result = await placeBidOnLot(lot.id, lot.auctionId, userIdForBid, displayNameForBid, amountToBid);
       if (result.success && result.updatedLot && result.newBid) {
         setLot(prevLot => ({ ...prevLot!, ...result.updatedLot }));
         setLotBids(prevBids => [result.newBid!, ...prevBids].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
@@ -469,13 +471,7 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
                         R$ {currentBidValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
                   </div>
-                { !canUserBid && (!user || (!isSuperTestUserDirectAuth && !isSuperTestUserContext)) && (
-                  <div className="text-sm text-muted-foreground p-3 bg-secondary/50 rounded-md">
-                    <p>Você não está logado.</p>
-                    <p>Por favor, <Link href={`/auth/login?redirect=/auctions/${auction.id}/lots/${lot.id}`} className="text-primary hover:underline font-medium">faça login</Link> ou <Link href={`/auth/register?redirect=/auctions/${auction.id}/lots/${lot.id}`} className="text-primary hover:underline font-medium">registre-se agora</Link> para dar lances.</p>
-                  </div>
-                )}
-                {canUserBid ? (
+                {canBid ? (
                   <div className="space-y-2">
                      <div className="relative">
                         <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -494,9 +490,10 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
                       {isPlacingBid ? <Loader2 className="animate-spin" /> : `Dar Lance (R$ ${parseFloat(bidAmountInput || '0').toLocaleString('pt-BR') || nextMinimumBid.toLocaleString('pt-BR') })`}
                     </Button>
                   </div>
-                ) : (user && !isPlacingBid) && ( // User is logged in, but cannot bid (status or habilitation)
+                ) : ( // User is logged in, but cannot bid (status or habilitation)
                    <div className="text-sm text-muted-foreground p-3 bg-secondary/50 rounded-md">
-                    <p>{lot.status !== 'ABERTO_PARA_LANCES' ? `Lances para este lote estão ${getAuctionStatusText(lot.status).toLowerCase()}.` : 'Você precisa estar habilitado para dar lances.'}</p>
+                    <p>{lot.status !== 'ABERTO_PARA_LANCES' ? `Lances para este lote estão ${getAuctionStatusText(lot.status).toLowerCase()}.` : (user ? 'Você precisa estar habilitado para dar lances.' : 'Você precisa estar logado para dar lances.')}</p>
+                    {!user && <Link href={`/auth/login?redirect=/auctions/${auction.id}/lots/${lot.id}`} className="text-primary hover:underline font-medium">Faça login ou registre-se.</Link>}
                   </div>
                 )}
                 <Button variant="outline" className="w-full" onClick={handleToggleFavorite}>
@@ -557,7 +554,7 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
               <CardContent>
                   {lotBids.length > 0 ? (
                       <ul className="space-y-2 text-sm">
-                          {lotBids.map(bid => (
+                          {lotBids.slice(0, 5).map(bid => ( // Mostrar apenas os 5 lances mais recentes
                               <li key={bid.id} className="flex justify-between items-center p-2 bg-secondary/40 rounded-md">
                                   <div>
                                       <span className="font-medium text-foreground">{bid.bidderDisplay}</span>
@@ -570,6 +567,7 @@ export default function LotDetailClientContent({ lot: initialLot, auction, lotIn
                                   </span>
                               </li>
                           ))}
+                          {lotBids.length > 5 && <p className="text-xs text-center mt-2 text-muted-foreground">...</p>}
                       </ul>
                   ) : (
                       <p className="text-sm text-muted-foreground text-center py-3">Nenhum lance registrado para este lote ainda.</p>
