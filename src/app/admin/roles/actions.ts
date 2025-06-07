@@ -3,16 +3,21 @@
 
 import { revalidatePath } from 'next/cache';
 import admin from 'firebase-admin';
-import { dbAdmin } from '@/lib/firebase/admin'; // SDK Admin para escritas
+import { dbAdmin as adminFirestore, ensureAdminInitialized } from '@/lib/firebase/admin'; // SDK Admin para escritas
 import { collection, getDocs, doc, getDoc, query, orderBy, Timestamp as ClientTimestamp, where, limit, FieldValue as ClientFieldValue } from 'firebase/firestore';
 import { db as firestoreClientDB } from '@/lib/firebase'; // SDK Cliente para leituras
 import type { Role, RoleFormData } from '@/types';
 import { predefinedPermissions } from './role-form-schema';
 
-// A inicialização do Admin SDK foi movida para @/lib/firebase/admin.ts
 
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date();
+  if (timestampField instanceof admin.firestore.Timestamp) {
+    return timestampField.toDate();
+  }
+  if (timestampField instanceof ClientTimestamp) {
+    return timestampField.toDate();
+  }
   if (timestampField.toDate && typeof timestampField.toDate === 'function') {
     return timestampField.toDate();
   }
@@ -30,6 +35,7 @@ function safeConvertToDate(timestampField: any): Date {
 export async function createRole(
   data: RoleFormData
 ): Promise<{ success: boolean; message: string; roleId?: string }> {
+  const { dbAdmin } = await ensureAdminInitialized();
   if (!dbAdmin) {
     return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível para createRole.' };
   }
@@ -60,7 +66,7 @@ export async function createRole(
     revalidatePath('/admin/roles');
     return { success: true, message: 'Perfil criado com sucesso!', roleId: docRef.id };
   } catch (error: any) {
-    console.error("[createRole - Admin SDK] Error creating role:", error);
+    console.error("[createRole - Admin SDK] Error creating role:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: `Falha ao criar perfil: ${error.message}` };
   }
 }
@@ -87,7 +93,7 @@ export async function getRoles(): Promise<Role[]> {
       } as Role;
     });
   } catch (error: any) {
-    console.error("[getRoles] ERROR fetching roles:", error);
+    console.error("[getRoles] ERROR fetching roles:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return [];
   }
 }
@@ -114,7 +120,7 @@ export async function getRole(id: string): Promise<Role | null> {
     }
     return null;
   } catch (error: any) {
-    console.error(`[getRole] ERROR fetching role ${id}:`, error);
+    console.error(`[getRole] ERROR fetching role ${id}:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return null;
   }
 }
@@ -146,7 +152,7 @@ export async function getRoleByName(roleName: string): Promise<Role | null> {
     }
     return null;
   } catch (error: any) {
-    console.error(`[getRoleByName] ERROR fetching role "${normalizedQueryName}":`, error);
+    console.error(`[getRoleByName] ERROR fetching role "${normalizedQueryName}":`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return null;
   }
 }
@@ -155,6 +161,7 @@ export async function updateRole(
   id: string,
   data: Partial<RoleFormData>
 ): Promise<{ success: boolean; message: string }> {
+  const { dbAdmin } = await ensureAdminInitialized();
   if (!dbAdmin) {
     console.error(`[updateRole - Admin SDK] dbAdmin not initialized for role ID: ${id}`);
     return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível para updateRole.' };
@@ -184,9 +191,9 @@ export async function updateRole(
       const newNameTrimmed = data.name.trim();
       if (!newNameTrimmed) return { success: false, message: 'O nome do perfil não pode ser vazio.' };
       
-      updatePayload.name = newNameTrimmed; // Always update display name if provided and different
+      updatePayload.name = newNameTrimmed; 
       
-      if (!isSystemRole) { // Only update name_normalized for non-system roles
+      if (!isSystemRole) { 
         const newNormalizedName = newNameTrimmed.toUpperCase();
          if (newNormalizedName !== currentRoleData.name_normalized) {
             const q = rolesCollectionAdmin.where('name_normalized', '==', newNormalizedName).limit(1);
@@ -198,7 +205,6 @@ export async function updateRole(
         }
       } else {
          console.log(`[updateRole - Admin SDK] System role ${currentRoleData.name}. name_normalized will not be changed by this update path. Display name can be updated.`);
-         // Ensure name_normalized is NOT in payload if it's a system role AND name_normalized hasn't changed
          if (updatePayload.name_normalized && updatePayload.name_normalized === currentRoleData.name_normalized) {
            delete updatePayload.name_normalized;
          }
@@ -235,7 +241,7 @@ export async function updateRole(
     revalidatePath(`/admin/roles/${id}/edit`);
     return { success: true, message: 'Perfil atualizado com sucesso!' };
   } catch (error: any) {
-    console.error(`[updateRole - Admin SDK] ERRO ao atualizar role ID ${id} usando Admin SDK:`, error);
+    console.error(`[updateRole - Admin SDK] ERRO ao atualizar role ID ${id} usando Admin SDK:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: `Falha ao atualizar perfil: ${error.message}` };
   }
 }
@@ -243,6 +249,7 @@ export async function updateRole(
 export async function deleteRole(
   id: string
 ): Promise<{ success: boolean; message: string }> {
+  const { dbAdmin } = await ensureAdminInitialized();
   if (!dbAdmin) {
     return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível para deleteRole.' };
   }
@@ -267,12 +274,13 @@ export async function deleteRole(
     revalidatePath('/admin/roles');
     return { success: true, message: 'Perfil excluído com sucesso!' };
   } catch (error: any) {
-    console.error("[deleteRole - Admin SDK] Error:", error);
+    console.error("[deleteRole - Admin SDK] Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: `Falha ao excluir perfil: ${error.message}` };
   }
 }
 
 export async function ensureDefaultRolesExist(): Promise<{ success: boolean; message: string }> {
+  const { dbAdmin } = await ensureAdminInitialized();
   if (!dbAdmin) {
     console.error("[ensureDefaultRolesExist] dbAdmin não inicializado. Verifique a inicialização centralizada.");
     return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível para ensureDefaultRolesExist.' };
@@ -337,9 +345,8 @@ export async function ensureDefaultRolesExist(): Promise<{ success: boolean; mes
               const syncPayload: Partial<RoleFormData> = {};
               let needsSync = false;
 
-              // Sincronizar o nome de exibição se for diferente
               if (roleData.name !== existingRoleData.name) {
-                syncPayload.name = roleData.name; // updateRole cuidará de não mudar name_normalized para system roles
+                syncPayload.name = roleData.name; 
                 needsSync = true;
                  console.log(`[ensureDefaultRolesExist] Perfil "${existingRoleData.name_normalized}": Nome de exibição precisa de sincronização. DB: "${existingRoleData.name}", Código: "${roleData.name}"`);
               }
@@ -379,7 +386,7 @@ export async function ensureDefaultRolesExist(): Promise<{ success: boolean; mes
           }
       }
   } catch (error: any) {
-      console.error("[ensureDefaultRolesExist] Erro catastrófico durante o seed de perfis:", error);
+      console.error("[ensureDefaultRolesExist] Erro catastrófico durante o seed de perfis:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
       return { success: false, message: `Erro crítico no seed de perfis: ${error.message}` };
   }
 

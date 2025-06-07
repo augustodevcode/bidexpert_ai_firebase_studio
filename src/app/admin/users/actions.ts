@@ -4,7 +4,7 @@
 import { revalidatePath } from 'next/cache';
 import { db as firestoreClientDB } from '@/lib/firebase'; // SDK Cliente para leituras
 import admin from 'firebase-admin';
-import { dbAdmin, authAdmin, ensureAdminInitialized } from '@/lib/firebase/admin'; // SDK Admin para escritas e auth
+import { dbAdmin as adminFirestore, authAdmin as adminAuth, ensureAdminInitialized } from '@/lib/firebase/admin'; // SDK Admin para escritas e auth
 import { 
   collection, getDocs, doc, getDoc, 
   query, orderBy, Timestamp as ClientTimestamp, where, limit, FieldValue as ClientFieldValue 
@@ -13,7 +13,7 @@ import type { UserProfileData, Role, UserHabilitationStatus } from '@/types';
 import { getRoleByName, ensureDefaultRolesExist, getRole } from '@/app/admin/roles/actions';
 import type { UserFormValues } from './user-form-schema';
 
-const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'augusto.devcode@gmail.com';
+const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'augusto.devcode@gmail.com'.toLowerCase();
 
 function safeConvertToDate(timestampField: any): Date | null {
   if (!timestampField) return null;
@@ -40,7 +40,7 @@ function safeConvertToDate(timestampField: any): Date | null {
 export async function createUser(
   data: UserFormValues
 ): Promise<{ success: boolean; message: string; userId?: string }> {
-  await ensureAdminInitialized();
+  const { dbAdmin, authAdmin } = await ensureAdminInitialized();
   if (!dbAdmin || !authAdmin) {
     const msg = 'Erro de configuração: Admin SDK Firestore/Auth não disponível para createUser.';
     console.error(`[createUser - Admin SDK] ${msg}`);
@@ -56,13 +56,12 @@ export async function createUser(
   console.log(`[createUser - Admin SDK] Dados recebidos:`, JSON.stringify(data));
   
   try {
-    // 1. Verificar se usuário com este email já existe no Auth
     let existingAuthUser;
     try {
       existingAuthUser = await authAdmin.getUserByEmail(data.email.trim().toLowerCase());
     } catch (error: any) {
       if (error.code !== 'auth/user-not-found') {
-        throw error; // Re-throw se for outro erro
+        throw error; 
       }
     }
 
@@ -192,7 +191,7 @@ export async function getUsersWithRoles(): Promise<UserProfileData[]> {
     console.log(`[getUsersWithRoles] Mapeados ${users.length} usuários com perfis e permissões.`);
     return users;
   } catch (error: any) {
-    console.error("[getUsersWithRoles] Erro ao buscar usuários:", error.message, error.code);
+    console.error("[getUsersWithRoles] Erro ao buscar usuários:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return [];
   }
 }
@@ -238,7 +237,7 @@ export async function getUserProfileData(userId: string): Promise<UserProfileDat
     console.log(`[getUserProfileData] Nenhum perfil encontrado para UID: ${userId}`);
     return null;
   } catch (error: any) {
-    console.error(`[getUserProfileData] ERRO ao buscar perfil para UID ${userId}:`, error.message, error.code);
+    console.error(`[getUserProfileData] ERRO ao buscar perfil para UID ${userId}:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return null;
   }
 }
@@ -247,8 +246,8 @@ export async function updateUserRole(
   userId: string,
   roleId: string | null
 ): Promise<{ success: boolean; message: string }> {
-  await ensureAdminInitialized();
-  if (!dbAdmin || !authAdmin) {
+  const { dbAdmin } = await ensureAdminInitialized();
+  if (!dbAdmin) {
     const msg = 'Erro de configuração: Admin SDK Firestore não disponível para updateUserRole.';
     console.error(`[updateUserRole for UID ${userId}] ${msg}`);
     return { success: false, message: msg };
@@ -292,7 +291,7 @@ export async function updateUserRole(
     revalidatePath(`/admin/users/${userId}/edit`);
     return { success: true, message: 'Perfil do usuário atualizado com sucesso!' };
   } catch (error: any)    {
-    console.error("[updateUserRole - Admin SDK] ERRO ao atualizar perfil do usuário:", error);
+    console.error("[updateUserRole - Admin SDK] ERRO ao atualizar perfil do usuário:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: `Falha ao atualizar perfil do usuário: ${error.message}` };
   }
 }
@@ -300,7 +299,7 @@ export async function updateUserRole(
 export async function deleteUser(
   userId: string
 ): Promise<{ success: boolean; message: string }> {
-  await ensureAdminInitialized();
+  const { dbAdmin, authAdmin } = await ensureAdminInitialized();
   if (!dbAdmin || !authAdmin) {
     const msg = 'Erro de Configuração: Admin SDK não inicializado para exclusão de usuário.';
     console.error(`[deleteUser - Admin SDK] ${msg}`);
@@ -331,7 +330,7 @@ export async function deleteUser(
     revalidatePath('/admin/users');
     return { success: true, message: 'Operação de exclusão de usuário concluída.' };
   } catch (error: any) {
-    console.error("[deleteUser - Admin SDK] ERRO ao excluir usuário:", error);
+    console.error("[deleteUser - Admin SDK] ERRO ao excluir usuário:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: `Falha ao excluir usuário: ${error.message}` };
   }
 }
@@ -342,41 +341,38 @@ export async function ensureUserRoleInFirestore(
   fullName: string | null,
   targetRoleName: string
 ): Promise<{ success: boolean; message: string; userProfile?: UserProfileData}> {
-  // VERIFICAÇÃO TEMPORÁRIA PARA IGNORAR O USUÁRIO ADMIN DURANTE O DESENVOLVIMENTO
-  if (email && email.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS.toLowerCase()) {
-      console.warn(`[ensureUserRoleInFirestore - Admin SDK] BYPASS: Ignorando ensureUserRoleInFirestore para ${email} devido ao modo de desenvolvimento.`);
-      // Tenta buscar o perfil com client SDK para retornar os dados, mas sem modificar
-       try {
-        const userDocRefClient = doc(firestoreClientDB, 'users', userId);
-        const userSnapClient = await getDoc(userDocRefClient);
-        if (userSnapClient.exists()) {
-            const userDataFromDB = userSnapClient.data() as UserProfileData;
-            return { 
-                success: true, 
-                message: 'Usuário admin de desenvolvimento ignorado na configuração de role (BYPASS).', 
-                userProfile: { 
-                    ...userDataFromDB, 
-                    uid: userId,
-                    email: email,
-                    createdAt: safeConvertToDate(userDataFromDB.createdAt),
-                    updatedAt: safeConvertToDate(userDataFromDB.updatedAt),
-                    dateOfBirth: safeConvertToDate(userDataFromDB.dateOfBirth),
-                    rgIssueDate: safeConvertToDate(userDataFromDB.rgIssueDate),
-                 }
-            };
-        } else {
-             return { success: true, message: `Usuário admin de desenvolvimento ignorado (perfil não encontrado no Firestore, mas bypass ativo).`, userProfile: undefined};
-        }
-      } catch (clientError) {
-          console.error(`[ensureUserRoleInFirestore - Admin SDK] Erro ao buscar perfil (client SDK) para bypass de ${email}:`, clientError);
-          return { success: true, message: `Usuário admin de desenvolvimento ignorado (erro ao buscar perfil no Firestore, mas bypass ativo).`, userProfile: undefined};
+  if (email && email.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS) {
+    console.warn(`[ensureUserRoleInFirestore - Admin SDK] BYPASS para ${email}. Retornando sucesso sem modificar Firestore.`);
+    try {
+      const userDocRefClient = doc(firestoreClientDB, 'users', userId); // Leitura com SDK cliente
+      const userSnapClient = await getDoc(userDocRefClient);
+      if (userSnapClient.exists()) {
+          const userDataFromDB = userSnapClient.data() as UserProfileData;
+          return { 
+              success: true, 
+              message: 'Usuário admin de desenvolvimento ignorado na configuração de role (BYPASS).', 
+              userProfile: { 
+                  ...userDataFromDB, 
+                  uid: userId,
+                  email: email,
+                  createdAt: safeConvertToDate(userDataFromDB.createdAt),
+                  updatedAt: safeConvertToDate(userDataFromDB.updatedAt),
+                  dateOfBirth: safeConvertToDate(userDataFromDB.dateOfBirth),
+                  rgIssueDate: safeConvertToDate(userDataFromDB.rgIssueDate),
+                }
+          };
+      } else {
+           return { success: true, message: `Usuário admin de desenvolvimento ignorado (perfil não encontrado no Firestore, mas bypass ativo).`, userProfile: undefined};
       }
+    } catch (clientError: any) {
+        console.error(`[ensureUserRoleInFirestore - Admin SDK] Erro ao buscar perfil (client SDK) para bypass de ${email}:`, JSON.stringify(clientError, Object.getOwnPropertyNames(clientError)));
+        return { success: true, message: `Usuário admin de desenvolvimento ignorado (erro ao buscar perfil no Firestore, mas bypass ativo).`, userProfile: undefined};
+    }
   }
-  // FIM DA VERIFICAÇÃO TEMPORÁRIA
 
-  const adminSDK = await ensureAdminInitialized();
-  if (!adminSDK.dbAdmin || !adminSDK.authAdmin) {
-    const msg = 'Erro de configuração: Admin SDK Firestore ou Auth não disponível para ensureUserRoleInFirestore.';
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized(); // Renomeado para evitar conflito de nome
+  if (!currentDbAdmin) { // Usar currentDbAdmin
+    const msg = 'Erro de configuração: Admin SDK Firestore não disponível para ensureUserRoleInFirestore.';
     console.error(`[ensureUserRoleInFirestore - Admin SDK for ${email}] ${msg}`);
     return { success: false, message: msg };
   }
@@ -400,7 +396,7 @@ export async function ensureUserRoleInFirestore(
       return { success: false, message: `Perfil "${targetRoleName}" não pôde ser encontrado ou criado.` };
     }
 
-    const userDocRef = adminSDK.dbAdmin.collection('users').doc(userId); 
+    const userDocRef = currentDbAdmin.collection('users').doc(userId); 
     const userSnap = await userDocRef.get();
 
     if (userSnap.exists()) {
@@ -464,9 +460,10 @@ export async function ensureUserRoleInFirestore(
       return { success: true, message: 'Perfil de usuário criado e perfil atribuído.', userProfile: createdProfile || undefined };
     }
   } catch (error: any) {
-    console.error(`[ensureUserRoleInFirestore - Admin SDK for ${email}, role ${targetRoleName}] Error:`, error);
+    console.error(`[ensureUserRoleInFirestore - Admin SDK for ${email}, role ${targetRoleName}] Error:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: `Falha ao configurar perfil para ${targetRoleName}: ${error.message}` };
   }
 }
 
 export type UserFormData = Omit<UserFormValues, 'password'>;
+

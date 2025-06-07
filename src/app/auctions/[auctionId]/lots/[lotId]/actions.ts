@@ -2,12 +2,10 @@
 // src/app/auctions/[auctionId]/lots/[lotId]/actions.ts
 'use server';
 
-import { dbAdmin } from '@/lib/firebase/admin';
+import { dbAdmin, ensureAdminInitialized } from '@/lib/firebase/admin';
 import admin from 'firebase-admin';
 import type { Lot, BidInfo, Auction } from '@/types';
-import { getAuctionStatusText } from '@/lib/sample-data'; // For status validation
-// Timestamp é importado de admin.firestore.Timestamp se necessário, mas serverTimestamp é mais comum
-// import { Timestamp } from 'firebase-admin/firestore';
+import { getAuctionStatusText } from '@/lib/sample-data'; 
 
 interface PlaceBidResult {
   success: boolean;
@@ -24,19 +22,21 @@ export async function placeBidOnLot(
   bidAmount: number
 ): Promise<PlaceBidResult> {
   console.log(`[Server Action - placeBidOnLot] Lance para lotId: ${lotId}, auctionId: ${auctionId}, userId: ${userId}, amount: ${bidAmount}`);
+  
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized(); // Garante inicialização
 
   if (!userId || !userDisplayName) {
     return { success: false, message: 'Usuário não autenticado ou informações do usuário ausentes.' };
   }
 
-  if (!dbAdmin) {
+  if (!currentDbAdmin) {
     console.error("[Server Action - placeBidOnLot] dbAdmin não inicializado.");
-    return { success: false, message: 'Erro de configuração do servidor.' };
+    return { success: false, message: 'Erro de configuração do servidor (dbAdmin ausente).' };
   }
 
   try {
-    const lotDocRef = dbAdmin.collection('lots').doc(lotId);
-    const auctionDocRef = dbAdmin.collection('auctions').doc(auctionId);
+    const lotDocRef = currentDbAdmin.collection('lots').doc(lotId);
+    const auctionDocRef = currentDbAdmin.collection('auctions').doc(auctionId);
 
     const lotDoc = await lotDocRef.get();
     const auctionDoc = await auctionDocRef.get();
@@ -71,14 +71,14 @@ export async function placeBidOnLot(
         }
     }
     
-    const newBidRef = dbAdmin.collection('lots').doc(lotId).collection('bids').doc();
+    const newBidRef = currentDbAdmin.collection('lots').doc(lotId).collection('bids').doc();
     const newBidData: Omit<BidInfo, 'id'> = {
       lotId: lotId,
       auctionId: auctionId,
       bidderId: userId,
       bidderDisplay: userDisplayName.substring(0, Math.min(7, userDisplayName.length)) + '****',
       amount: bidAmount,
-      timestamp: admin.firestore.FieldValue.serverTimestamp() as any, // Cast to any to satisfy type if needed
+      timestamp: admin.firestore.FieldValue.serverTimestamp() as any, 
     };
 
     await newBidRef.set(newBidData);
@@ -90,7 +90,6 @@ export async function placeBidOnLot(
     };
     await lotDocRef.update(updatedLotFirestoreData);
     
-    // For UI update, simulate the serverTimestamp
     const simulatedTimestamp = new Date();
     const newBidForUI: BidInfo = {
         ...newBidData,
@@ -100,9 +99,7 @@ export async function placeBidOnLot(
     const updatedLotForUI: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>> = {
         price: bidAmount,
         bidsCount: (lot.bidsCount || 0) + 1,
-        // status doesn't change on bid, but can be returned if other logic modifies it
     };
-
 
     console.log(`[Server Action - placeBidOnLot] Lance de R$ ${bidAmount} para "${lot.title}" registrado. Novo preço: ${updatedLotFirestoreData.price}, Lances incrementados.`);
     
@@ -113,7 +110,7 @@ export async function placeBidOnLot(
       newBid: newBidForUI,
     };
   } catch (error: any) {
-    console.error(`[Server Action - placeBidOnLot] Error placing bid for lot ${lotId}:`, error);
+    console.error(`[Server Action - placeBidOnLot] Error placing bid for lot ${lotId}:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: error.message || 'Falha ao registrar o lance.' };
   }
 }
@@ -123,12 +120,14 @@ export async function getBidsForLot(lotId: string): Promise<BidInfo[]> {
     console.warn("[Server Action - getBidsForLot] Lot ID is required.");
     return [];
   }
-  if (!dbAdmin) {
-    console.error("[Server Action - getBidsForLot] dbAdmin not initialized.");
+  
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
+  if (!currentDbAdmin) {
+    console.error("[Server Action - getBidsForLot] dbAdmin não inicializado.");
     return [];
   }
   try {
-    const bidsSnapshot = await dbAdmin.collection('lots').doc(lotId).collection('bids')
+    const bidsSnapshot = await currentDbAdmin.collection('lots').doc(lotId).collection('bids')
       .orderBy('timestamp', 'desc')
       .get();
 
@@ -149,7 +148,7 @@ export async function getBidsForLot(lotId: string): Promise<BidInfo[]> {
       } as BidInfo;
     });
   } catch (error: any) {
-    console.error(`[Server Action - getBidsForLot] Error fetching bids for lot ${lotId}:`, error);
+    console.error(`[Server Action - getBidsForLot] Error fetching bids for lot ${lotId}:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return []; 
   }
 }

@@ -2,15 +2,20 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp, where } from 'firebase/firestore';
+import { db as firestoreClientDB } from '@/lib/firebase'; // SDK Cliente para leituras
+import admin from 'firebase-admin';
+import { dbAdmin, ensureAdminInitialized } from '@/lib/firebase/admin'; // SDK Admin para escritas
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp as ClientTimestamp, where } from 'firebase/firestore';
 import type { Auction, AuctionFormData } from '@/types';
-import { slugify, sampleAuctions } from '@/lib/sample-data'; // Import sampleAuctions
+import { slugify, sampleAuctions } from '@/lib/sample-data';
 
-// Helper function to safely convert Firestore Timestamp like objects or actual Timestamps to Date
 function safeConvertToDate(timestampField: any): Date {
-  if (!timestampField) {
-    return new Date();
+  if (!timestampField) return new Date();
+  if (timestampField instanceof admin.firestore.Timestamp) { 
+    return timestampField.toDate();
+  }
+  if (timestampField instanceof ClientTimestamp) { 
+    return timestampField.toDate();
   }
   if (timestampField.toDate && typeof timestampField.toDate === 'function') {
     return timestampField.toDate();
@@ -19,20 +24,16 @@ function safeConvertToDate(timestampField: any): Date {
       typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
     return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000);
   }
-  if (timestampField instanceof Date) {
-    return timestampField;
-  }
+  if (timestampField instanceof Date) return timestampField;
   const parsedDate = new Date(timestampField);
-  if (!isNaN(parsedDate.getTime())) {
-    return parsedDate;
-  }
+  if (!isNaN(parsedDate.getTime())) return parsedDate;
   console.warn(`Could not convert auction timestamp to Date: ${JSON.stringify(timestampField)}. Returning current date.`);
   return new Date();
 }
 
-function safeConvertOptionalDate(timestampField: any): Date | undefined | null { // Allow null
-    if (timestampField === null || timestampField === undefined) { // Check for null or undefined first
-      return null; // Return null if the input is null or undefined
+function safeConvertOptionalDate(timestampField: any): Date | undefined | null {
+    if (timestampField === null || timestampField === undefined) {
+      return null;
     }
     return safeConvertToDate(timestampField);
 }
@@ -41,6 +42,10 @@ function safeConvertOptionalDate(timestampField: any): Date | undefined | null {
 export async function createAuction(
   data: AuctionFormData
 ): Promise<{ success: boolean; message: string; auctionId?: string }> {
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
+  if (!currentDbAdmin) {
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  }
   if (!data.title || data.title.trim() === '') {
     return { success: false, message: 'O título do leilão é obrigatório.' };
   }
@@ -60,36 +65,49 @@ export async function createAuction(
   try {
     const newAuctionDataForFirestore = {
       ...data,
-      auctionDate: Timestamp.fromDate(new Date(data.auctionDate)),
-      endDate: data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : null,
+      auctionDate: admin.firestore.Timestamp.fromDate(new Date(data.auctionDate)),
+      endDate: data.endDate ? admin.firestore.Timestamp.fromDate(new Date(data.endDate)) : null,
       totalLots: 0,
       visits: 0,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
     
     if (data.endDate === null || data.endDate === undefined) {
       (newAuctionDataForFirestore as any).endDate = null;
     }
 
-    const docRef = await addDoc(collection(db, 'auctions'), newAuctionDataForFirestore);
+    const docRef = await addDoc(collection(currentDbAdmin, 'auctions'), newAuctionDataForFirestore);
     revalidatePath('/admin/auctions');
     revalidatePath('/consignor-dashboard/overview');
     return { success: true, message: 'Leilão criado com sucesso!', auctionId: docRef.id };
   } catch (error: any) {
-    console.error("[Server Action - createAuction] Error creating auction:", error);
+    console.error("[Server Action - createAuction] Error creating auction:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: error.message || 'Falha ao criar leilão.' };
   }
 }
 
 export async function getAuctions(): Promise<Auction[]> {
+  if (!firestoreClientDB) {
+      console.error("[getAuctions] Firestore client DB não inicializado. Retornando sample data.");
+      return sampleAuctions.map(auction => ({
+        ...auction,
+        auctionDate: new Date(auction.auctionDate), 
+        endDate: auction.endDate ? new Date(auction.endDate) : null,
+        auctionStages: auction.auctionStages?.map(stage => ({
+            ...stage,
+            endDate: new Date(stage.endDate),
+        })),
+        createdAt: new Date(auction.createdAt || new Date()), 
+        updatedAt: new Date(auction.updatedAt || new Date()), 
+      }));
+  }
   try {
-    const auctionsCollection = collection(db, 'auctions');
+    const auctionsCollection = collection(firestoreClientDB, 'auctions');
     const q = query(auctionsCollection, orderBy('auctionDate', 'desc'));
     const snapshot = await getDocs(q);
 
     if (!snapshot.empty) {
-      // console.log('[getAuctions] Fetched from Firestore');
       return snapshot.docs.map(docSnap => {
         const data = docSnap.data();
         return {
@@ -131,7 +149,6 @@ export async function getAuctions(): Promise<Auction[]> {
         } as Auction;
       });
     } else {
-      // console.log('[getAuctions] Firestore empty, falling back to sampleAuctions');
       return sampleAuctions.map(auction => ({
         ...auction,
         auctionDate: new Date(auction.auctionDate), 
@@ -145,8 +162,7 @@ export async function getAuctions(): Promise<Auction[]> {
       }));
     }
   } catch (error: any) {
-    console.error("[Server Action - getAuctions] Error fetching auctions:", error);
-    
+    console.error("[Server Action - getAuctions] Error fetching auctions:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return sampleAuctions.map(auction => ({
         ...auction,
         auctionDate: new Date(auction.auctionDate),
@@ -166,15 +182,30 @@ export async function getAuctionsBySellerSlug(sellerSlug: string): Promise<Aucti
     const allAuctions = await getAuctions(); 
     return allAuctions.filter(auction => auction.seller && slugify(auction.seller) === sellerSlug);
   } catch (error: any) {
-    console.error(`[Server Action - getAuctionsBySellerSlug] Error fetching auctions for seller slug ${sellerSlug}:`, error);
+    console.error(`[Server Action - getAuctionsBySellerSlug] Error fetching auctions for seller slug ${sellerSlug}:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return [];
   }
 }
 
 
 export async function getAuction(id: string): Promise<Auction | null> {
+  if (!firestoreClientDB) {
+    console.warn(`[getAuction for ID ${id}] Firestore client DB não inicializado. Tentando sample data.`);
+    const foundInSample = sampleAuctions.find(auction => auction.id === id);
+    return foundInSample ? {
+        ...foundInSample,
+        auctionDate: new Date(foundInSample.auctionDate),
+        endDate: foundInSample.endDate ? new Date(foundInSample.endDate) : null,
+        auctionStages: foundInSample.auctionStages?.map(stage => ({
+            ...stage,
+            endDate: new Date(stage.endDate),
+        })),
+        createdAt: new Date(foundInSample.createdAt || new Date()),
+        updatedAt: new Date(foundInSample.updatedAt || new Date()),
+    } : null;
+  }
   try {
-    const auctionDocRef = doc(db, 'auctions', id);
+    const auctionDocRef = doc(firestoreClientDB, 'auctions', id);
     const docSnap = await getDoc(auctionDocRef);
     if (docSnap.exists()) {
       const data = docSnap.data();
@@ -216,7 +247,6 @@ export async function getAuction(id: string): Promise<Auction | null> {
         updatedAt: safeConvertToDate(data.updatedAt),
       } as Auction;
     } else {
-        
         const foundInSample = sampleAuctions.find(auction => auction.id === id);
         if (foundInSample) {
             return {
@@ -234,7 +264,7 @@ export async function getAuction(id: string): Promise<Auction | null> {
         return null;
     }
   } catch (error: any) {
-    console.error("[Server Action - getAuction] Error fetching auction:", error);
+    console.error("[Server Action - getAuction] Error fetching auction:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return null;
   }
 }
@@ -243,6 +273,10 @@ export async function updateAuction(
   id: string,
   data: Partial<AuctionFormData>
 ): Promise<{ success: boolean; message: string }> {
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
+  if (!currentDbAdmin) {
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  }
   if (data.title !== undefined && (data.title === null || data.title.trim() === '')) {
      return { success: false, message: 'O título do leilão não pode ser vazio se fornecido.' };
   }
@@ -254,18 +288,18 @@ export async function updateAuction(
   }
 
   try {
-    const auctionDocRef = doc(db, 'auctions', id);
+    const auctionDocRef = doc(currentDbAdmin, 'auctions', id);
     
     const updateDataForFirestore: Partial<any> = { ...data };
 
     if (data.auctionDate) {
-        updateDataForFirestore.auctionDate = Timestamp.fromDate(new Date(data.auctionDate));
+        updateDataForFirestore.auctionDate = admin.firestore.Timestamp.fromDate(new Date(data.auctionDate));
     }
-    if (data.hasOwnProperty('endDate')) { // Check if endDate is explicitly passed (even if null)
-        updateDataForFirestore.endDate = data.endDate ? Timestamp.fromDate(new Date(data.endDate)) : null;
+    if (data.hasOwnProperty('endDate')) { 
+        updateDataForFirestore.endDate = data.endDate ? admin.firestore.Timestamp.fromDate(new Date(data.endDate)) : null;
     }
     
-    updateDataForFirestore.updatedAt = serverTimestamp();
+    updateDataForFirestore.updatedAt = admin.firestore.FieldValue.serverTimestamp();
 
     await updateDoc(auctionDocRef, updateDataForFirestore);
     revalidatePath('/admin/auctions');
@@ -273,7 +307,7 @@ export async function updateAuction(
     revalidatePath('/consignor-dashboard/overview');
     return { success: true, message: 'Leilão atualizado com sucesso!' };
   } catch (error: any) {
-    console.error("[Server Action - updateAuction] Error updating auction:", error);
+    console.error("[Server Action - updateAuction] Error updating auction:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: error.message || 'Falha ao atualizar leilão.' };
   }
 }
@@ -281,17 +315,19 @@ export async function updateAuction(
 export async function deleteAuction(
   id: string
 ): Promise<{ success: boolean; message: string }> {
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
+  if (!currentDbAdmin) {
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  }
   try {
-    const auctionDocRef = doc(db, 'auctions', id);
+    const auctionDocRef = doc(currentDbAdmin, 'auctions', id);
     await deleteDoc(auctionDocRef);
     revalidatePath('/admin/auctions');
     revalidatePath('/consignor-dashboard/overview');
     return { success: true, message: 'Leilão excluído com sucesso!' };
   } catch (error: any) {
-    console.error("[Server Action - deleteAuction] Error deleting auction:", error);
+    console.error("[Server Action - deleteAuction] Error deleting auction:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: error.message || 'Falha ao excluir leilão.' };
   }
 }
-
-
     

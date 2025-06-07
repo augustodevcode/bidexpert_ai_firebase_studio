@@ -2,14 +2,21 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp, where, writeBatch } from 'firebase/firestore';
+import { db as firestoreClientDB } from '@/lib/firebase'; // SDK Cliente para leituras
+import admin from 'firebase-admin';
+import { dbAdmin, ensureAdminInitialized } from '@/lib/firebase/admin'; // SDK Admin para escritas
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp as ClientTimestamp, where, writeBatch } from 'firebase/firestore';
 import type { Lot, LotFormData, StateInfo, CityInfo } from '@/types';
+import { getState } from '@/app/admin/states/actions'; 
+import { getCity } from '@/app/admin/cities/actions';
 
-// Helper function to safely convert Firestore Timestamp like objects or actual Timestamps to Date
 function safeConvertToDate(timestampField: any): Date {
-  if (!timestampField) {
-    return new Date(); 
+  if (!timestampField) return new Date(); 
+  if (timestampField instanceof admin.firestore.Timestamp) { 
+    return timestampField.toDate();
+  }
+  if (timestampField instanceof ClientTimestamp) { 
+    return timestampField.toDate();
   }
   if (timestampField.toDate && typeof timestampField.toDate === 'function') {
     return timestampField.toDate(); 
@@ -29,11 +36,10 @@ function safeConvertToDate(timestampField: any): Date {
   return new Date();
 }
 
-function safeConvertOptionalDate(timestampField: any): Date | undefined {
-    if (!timestampField) {
-      return undefined;
+function safeConvertOptionalDate(timestampField: any): Date | undefined | null {
+    if (timestampField === null || timestampField === undefined) {
+      return null;
     }
-    // Use the main safeConvertToDate which handles various Timestamp-like objects
     return safeConvertToDate(timestampField);
 }
 
@@ -41,6 +47,10 @@ function safeConvertOptionalDate(timestampField: any): Date | undefined {
 export async function createLot(
   data: LotFormData
 ): Promise<{ success: boolean; message: string; lotId?: string }> {
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
+  if (!currentDbAdmin) {
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  }
   if (!data.title || data.title.trim() === '') {
     return { success: false, message: 'O título do lote é obrigatório.' };
   }
@@ -62,22 +72,22 @@ export async function createLot(
       views: data.views || 0,
       bidsCount: data.bidsCount || 0,
       auctionName: data.auctionName || `Leilão do Lote ${data.title.substring(0,20)}`,
-      endDate: Timestamp.fromDate(new Date(endDate)),
-      mediaItemIds: mediaItemIds || [], // Salvar mediaItemIds
-      galleryImageUrls: galleryImageUrls || [], // Salvar galleryImageUrls
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      endDate: admin.firestore.Timestamp.fromDate(new Date(endDate)),
+      mediaItemIds: mediaItemIds || [], 
+      galleryImageUrls: galleryImageUrls || [], 
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
     if (stateId) {
-      const stateDoc = await getDoc(doc(db, 'states', stateId));
+      const stateDoc = await getDoc(doc(currentDbAdmin, 'states', stateId));
       if (stateDoc.exists()) {
         newLotDataForFirestore.stateId = stateId;
         newLotDataForFirestore.stateUf = (stateDoc.data() as StateInfo).uf;
       }
     }
     if (cityId) {
-      const cityDoc = await getDoc(doc(db, 'cities', cityId));
+      const cityDoc = await getDoc(doc(currentDbAdmin, 'cities', cityId));
       if (cityDoc.exists()) {
         newLotDataForFirestore.cityId = cityId;
         newLotDataForFirestore.cityName = (cityDoc.data() as CityInfo).name;
@@ -86,7 +96,7 @@ export async function createLot(
     
     if (lotSpecificAuctionDate !== undefined) {
       newLotDataForFirestore.lotSpecificAuctionDate = lotSpecificAuctionDate
-        ? Timestamp.fromDate(new Date(lotSpecificAuctionDate))
+        ? admin.firestore.Timestamp.fromDate(new Date(lotSpecificAuctionDate))
         : null;
     } else {
        newLotDataForFirestore.lotSpecificAuctionDate = null;
@@ -94,26 +104,30 @@ export async function createLot(
 
     if (secondAuctionDate !== undefined) {
       newLotDataForFirestore.secondAuctionDate = secondAuctionDate
-        ? Timestamp.fromDate(new Date(secondAuctionDate))
+        ? admin.firestore.Timestamp.fromDate(new Date(secondAuctionDate))
         : null;
     } else {
         newLotDataForFirestore.secondAuctionDate = null;
     }
 
 
-    const docRef = await addDoc(collection(db, 'lots'), newLotDataForFirestore);
+    const docRef = await addDoc(collection(currentDbAdmin, 'lots'), newLotDataForFirestore);
     revalidatePath('/admin/lots');
     revalidatePath(`/admin/auctions/${data.auctionId}/edit`);
     return { success: true, message: 'Lote criado com sucesso!', lotId: docRef.id };
   } catch (error: any) {
-    console.error("[Server Action - createLot] Error creating lot:", error);
+    console.error("[Server Action - createLot] Error creating lot:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: error.message || 'Falha ao criar lote.' };
   }
 }
 
 export async function getLots(auctionIdParam?: string): Promise<Lot[]> {
+   if (!firestoreClientDB) {
+      console.error("[getLots] Firestore client DB não inicializado. Retornando array vazio.");
+      return [];
+  }
   try {
-    const lotsCollection = collection(db, 'lots');
+    const lotsCollection = collection(firestoreClientDB, 'lots');
     let q;
     if (auctionIdParam) {
       q = query(lotsCollection, where('auctionId', '==', auctionIdParam), orderBy('title', 'asc'));
@@ -189,14 +203,18 @@ export async function getLots(auctionIdParam?: string): Promise<Lot[]> {
       } as Lot;
     });
   } catch (error: any) {
-    console.error("[Server Action - getLots] Error fetching lots:", error);
+    console.error("[Server Action - getLots] Error fetching lots:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return [];
   }
 }
 
 export async function getLot(id: string): Promise<Lot | null> {
+  if (!firestoreClientDB) {
+    console.error(`[getLot for ID ${id}] Firestore client DB não inicializado. Retornando null.`);
+    return null;
+  }
   try {
-    const lotDocRef = doc(db, 'lots', id);
+    const lotDocRef = doc(firestoreClientDB, 'lots', id);
     const docSnap = await getDoc(lotDocRef);
     if (docSnap.exists()) {
       const data = docSnap.data();
@@ -267,7 +285,7 @@ export async function getLot(id: string): Promise<Lot | null> {
     }
     return null;
   } catch (error: any) {
-    console.error("[Server Action - getLot] Error fetching lot:", error);
+    console.error("[Server Action - getLot] Error fetching lot:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return null;
   }
 }
@@ -276,7 +294,10 @@ export async function updateLot(
   id: string,
   data: Partial<LotFormData>
 ): Promise<{ success: boolean; message: string }> {
-
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
+  if (!currentDbAdmin) {
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  }
   if (data.title !== undefined && (data.title === null || data.title.trim() === '')) {
      return { success: false, message: 'O título do lote não pode ser vazio se fornecido.' };
   }
@@ -285,23 +306,22 @@ export async function updateLot(
   }
 
   try {
-    const lotDocRef = doc(db, 'lots', id);
+    const lotDocRef = doc(currentDbAdmin, 'lots', id);
     const updateDataForFirestore: any = {};
 
-    // Iterate over the keys in data and build the update object
     for (const key in data) {
       if (data.hasOwnProperty(key)) {
         const value = (data as any)[key];
         
         if (key === 'endDate' || key === 'lotSpecificAuctionDate' || key === 'secondAuctionDate') {
           if (value !== undefined) { 
-            updateDataForFirestore[key] = value ? Timestamp.fromDate(new Date(value)) : null;
+            updateDataForFirestore[key] = value ? admin.firestore.Timestamp.fromDate(new Date(value)) : null;
           } else if (key === 'lotSpecificAuctionDate' || key === 'secondAuctionDate') {
             updateDataForFirestore[key] = null;
           }
         } else if (key === 'stateId') {
             if (value) {
-                const stateDoc = await getDoc(doc(db, 'states', value));
+                const stateDoc = await getDoc(doc(currentDbAdmin, 'states', value));
                 if (stateDoc.exists()) {
                     updateDataForFirestore.stateId = value;
                     updateDataForFirestore.stateUf = (stateDoc.data() as StateInfo).uf;
@@ -315,7 +335,7 @@ export async function updateLot(
             }
         } else if (key === 'cityId') {
              if (value) {
-                const cityDoc = await getDoc(doc(db, 'cities', value));
+                const cityDoc = await getDoc(doc(currentDbAdmin, 'cities', value));
                 if (cityDoc.exists()) {
                     updateDataForFirestore.cityId = value;
                     updateDataForFirestore.cityName = (cityDoc.data() as CityInfo).name;
@@ -338,7 +358,7 @@ export async function updateLot(
       }
     }
     
-    updateDataForFirestore.updatedAt = serverTimestamp();
+    updateDataForFirestore.updatedAt = admin.firestore.FieldValue.serverTimestamp();
 
     await updateDoc(lotDocRef, updateDataForFirestore);
     revalidatePath('/admin/lots');
@@ -348,7 +368,7 @@ export async function updateLot(
     }
     return { success: true, message: 'Lote atualizado com sucesso!' };
   } catch (error: any) {
-    console.error("[Server Action - updateLot] Error updating lot:", error);
+    console.error("[Server Action - updateLot] Error updating lot:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: error.message || 'Falha ao atualizar lote.' };
   }
 }
@@ -357,8 +377,12 @@ export async function deleteLot(
   id: string,
   auctionId?: string
 ): Promise<{ success: boolean; message: string }> {
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
+  if (!currentDbAdmin) {
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  }
   try {
-    const lotDocRef = doc(db, 'lots', id);
+    const lotDocRef = doc(currentDbAdmin, 'lots', id);
     await deleteDoc(lotDocRef);
     revalidatePath('/admin/lots');
     if (auctionId) {
@@ -366,7 +390,7 @@ export async function deleteLot(
     }
     return { success: true, message: 'Lote excluído com sucesso!' };
   } catch (error: any) {
-    console.error("[Server Action - deleteLot] Error deleting lot:", error);
+    console.error("[Server Action - deleteLot] Error deleting lot:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: error.message || 'Falha ao excluir lote.' };
   }
 }

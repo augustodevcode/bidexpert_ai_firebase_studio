@@ -2,12 +2,12 @@
 'use server';
 
 import admin from 'firebase-admin';
-import { dbAdmin } from '@/lib/firebase/admin'; // Importa a instância centralizada
+import { dbAdmin, ensureAdminInitialized } from '@/lib/firebase/admin'; 
 import { revalidatePath } from 'next/cache';
 import type { PlatformSettings, PlatformSettingsFormData } from '@/types';
 import { config } from 'dotenv';
 
-config(); // Load .env file
+config(); 
 
 const SETTINGS_COLLECTION = 'platformSettings';
 const GLOBAL_SETTINGS_DOC_ID = 'global';
@@ -15,8 +15,6 @@ const GLOBAL_SETTINGS_DOC_ID = 'global';
 const defaultSettings: Omit<PlatformSettings, 'id' | 'updatedAt'> = {
   galleryImageBasePath: '/media/gallery/',
 };
-
-// A inicialização do Admin SDK foi movida para @/lib/firebase/admin.ts
 
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date();
@@ -39,12 +37,13 @@ function safeConvertToDate(timestampField: any): Date {
 
 
 export async function getPlatformSettings(): Promise<PlatformSettings> {
-  if (!dbAdmin) {
-    console.error("[Server Action - getPlatformSettings] Firestore Admin DB (dbAdmin) não inicializado. Retornando configurações padrão.");
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
+  if (!currentDbAdmin) {
+    console.error("[Server Action - getPlatformSettings] Firestore Admin DB (currentDbAdmin) não inicializado. Retornando configurações padrão.");
     return { id: GLOBAL_SETTINGS_DOC_ID, ...defaultSettings, updatedAt: new Date() };
   }
   try {
-    const settingsDocRef = dbAdmin.collection(SETTINGS_COLLECTION).doc(GLOBAL_SETTINGS_DOC_ID);
+    const settingsDocRef = currentDbAdmin.collection(SETTINGS_COLLECTION).doc(GLOBAL_SETTINGS_DOC_ID);
     const docSnap = await settingsDocRef.get();
 
     if (docSnap.exists) {
@@ -73,7 +72,7 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
       };
     }
   } catch (error: any) {
-    console.error("[Server Action - getPlatformSettings] Erro na operação do Firestore:", error);
+    console.error("[Server Action - getPlatformSettings] Erro na operação do Firestore:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return {
       id: GLOBAL_SETTINGS_DOC_ID,
       ...defaultSettings,
@@ -85,7 +84,8 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
 export async function updatePlatformSettings(
   data: PlatformSettingsFormData
 ): Promise<{ success: boolean; message: string }> {
-  if (!dbAdmin) {
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
+  if (!currentDbAdmin) {
     const errMsg = 'Erro de Configuração: Admin SDK Firestore não disponível para updatePlatformSettings.';
     console.error(`[Server Action - updatePlatformSettings] ${errMsg}`);
     return { success: false, message: errMsg };
@@ -95,7 +95,7 @@ export async function updatePlatformSettings(
   }
 
   try {
-    const settingsDocRef = dbAdmin.collection(SETTINGS_COLLECTION).doc(GLOBAL_SETTINGS_DOC_ID);
+    const settingsDocRef = currentDbAdmin.collection(SETTINGS_COLLECTION).doc(GLOBAL_SETTINGS_DOC_ID);
     
     const updateData: Partial<Omit<PlatformSettings, 'id' | 'createdAt'>> = {
       galleryImageBasePath: data.galleryImageBasePath,
@@ -107,7 +107,7 @@ export async function updatePlatformSettings(
     revalidatePath('/admin/settings');
     return { success: true, message: 'Configurações da plataforma atualizadas com sucesso!' };
   } catch (error: any) {
-    console.error("[Server Action - updatePlatformSettings] Erro na operação do Firestore:", error);
+    console.error("[Server Action - updatePlatformSettings] Erro na operação do Firestore:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: (error as Error).message || 'Falha ao atualizar configurações da plataforma.' };
   }
 }

@@ -1,3 +1,4 @@
+
 // src/lib/firebase/admin.ts
 import * as admin from 'firebase-admin';
 import * as fs from 'fs';
@@ -9,7 +10,8 @@ let storageAdmin: admin.storage.Storage | undefined = undefined;
 let isInitializing = false; 
 let adminApp: admin.App | undefined = undefined;
 
-const serviceAccountPath = path.resolve(__dirname, '../../../bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json');
+// Correção: Caminho relativo da raiz do projeto onde o JSON da chave está
+const serviceAccountPath = path.resolve(process.cwd(), 'bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json');
 
 async function initializeAppIfNeeded() {
     if (admin.apps.length === 0 && !isInitializing) {
@@ -20,14 +22,15 @@ async function initializeAppIfNeeded() {
                 const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
                 adminApp = admin.initializeApp({
                     credential: admin.credential.cert(serviceAccount),
-                    storageBucket: `${serviceAccount.project_id}.appspot.com` // Adicionado storageBucket
+                    storageBucket: `${serviceAccount.project_id}.appspot.com`
                 });
                 console.log('[Firebase Admin SDK Central] Admin SDK inicializado com sucesso via arquivo de chave.');
             } else {
                 console.error(`[Firebase Admin SDK Central] ERRO CRÍTICO: Arquivo da chave de conta de serviço NÃO ENCONTRADO em: ${serviceAccountPath}`);
+                adminApp = undefined; // Garante que app não seja usado se o arquivo não for encontrado
             }
         } catch (error: any) {
-            console.error('[Firebase Admin SDK Central] ERRO CRÍTICO durante a configuração do Admin SDK:', error);
+            console.error('[Firebase Admin SDK Central] ERRO CRÍTICO durante a configuração do Admin SDK:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
             adminApp = undefined; // Garante que app não seja usado se falhar
         } finally {
             isInitializing = false;
@@ -41,6 +44,9 @@ async function initializeAppIfNeeded() {
         if (!dbAdmin) dbAdmin = adminApp.firestore();
         if (!authAdmin) authAdmin = adminApp.auth();
         if (!storageAdmin) storageAdmin = adminApp.storage();
+    } else if (!isInitializing) {
+        // Se adminApp não foi definido e não estamos no meio de uma tentativa de inicialização, logue um aviso
+        console.warn('[Firebase Admin SDK Central] Admin App não está definido após tentativa de inicialização. dbAdmin, authAdmin, storageAdmin podem estar undefined.');
     }
 }
 
@@ -49,23 +55,29 @@ export async function ensureAdminInitialized(): Promise<{
     authAdmin: admin.auth.Auth | undefined, 
     storageAdmin: admin.storage.Storage | undefined 
 }> {
-    if (!adminApp && !isInitializing) { // Apenas inicializa se não estiver inicializado E não estiver em processo
+    if (!adminApp && !isInitializing) { 
         await initializeAppIfNeeded();
     } else if (isInitializing) {
-        // Se estiver inicializando, espera um pouco e tenta de novo ou retorna estado atual
-        // Para simplificar, vamos apenas logar. Uma implementação mais robusta usaria um Promise de inicialização.
         console.warn('[Firebase Admin SDK Central] ensureAdminInitialized chamado enquanto a inicialização está em andamento.');
+        // Espera um pouco para a inicialização concorrente terminar.
+        // Não é ideal, um sistema de Promise de inicialização única seria melhor.
+        await new Promise(resolve => setTimeout(resolve, 500)); 
+        if (!adminApp && admin.apps.length > 0) { // Tenta pegar o app se outro fluxo inicializou
+            adminApp = admin.apps[0]!;
+            if (adminApp) {
+                if (!dbAdmin) dbAdmin = adminApp.firestore();
+                if (!authAdmin) authAdmin = adminApp.auth();
+                if (!storageAdmin) storageAdmin = adminApp.storage();
+            }
+        }
     }
     return { dbAdmin, authAdmin, storageAdmin };
 }
 
-// Exportar as variáveis também, mas elas podem ser undefined se a inicialização falhar
 export { dbAdmin, authAdmin, storageAdmin };
 
-// Inicialização proativa ao carregar o módulo, mas protegida.
-// O objetivo é que as actions possam chamar ensureAdminInitialized se necessário.
-if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'test') { // Evita rodar em alguns contextos de teste/build
+if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'test') { 
     initializeAppIfNeeded().catch(err => {
-        console.error("[Firebase Admin SDK Central] Erro na inicialização proativa:", err);
+        console.error("[Firebase Admin SDK Central] Erro na inicialização proativa:", JSON.stringify(err, Object.getOwnPropertyNames(err)));
     });
 }

@@ -2,14 +2,21 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp, where, limit } from 'firebase/firestore';
+import { db as firestoreClientDB } from '@/lib/firebase'; // SDK Cliente para leituras
+import admin from 'firebase-admin';
+import { dbAdmin, ensureAdminInitialized } from '@/lib/firebase/admin'; // SDK Admin para escritas
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp as ClientTimestamp, where, limit } from 'firebase/firestore';
 import type { SellerProfileInfo, SellerFormData } from '@/types';
 import { slugify, getUniqueSellers as getSampleSellers } from '@/lib/sample-data';
 
-// Helper function to safely convert Firestore Timestamp to Date
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date();
+  if (timestampField instanceof admin.firestore.Timestamp) { 
+    return timestampField.toDate();
+  }
+  if (timestampField instanceof ClientTimestamp) { 
+    return timestampField.toDate();
+  }
   if (timestampField.toDate && typeof timestampField.toDate === 'function') {
     return timestampField.toDate();
   }
@@ -32,6 +39,10 @@ function safeConvertOptionalDate(timestampField: any): Date | undefined {
 export async function createSeller(
   data: SellerFormData
 ): Promise<{ success: boolean; message: string; sellerId?: string }> {
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
+  if (!currentDbAdmin) {
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  }
   if (!data.name || data.name.trim() === '') {
     return { success: false, message: 'O nome do comitente é obrigatório.' };
   }
@@ -40,27 +51,31 @@ export async function createSeller(
     const newSellerData = {
       ...data,
       slug: slugify(data.name.trim()),
-      memberSince: serverTimestamp(),
+      memberSince: admin.firestore.FieldValue.serverTimestamp(),
       rating: 0,
       activeLotsCount: 0,
       totalSalesValue: 0,
       auctionsFacilitatedCount: 0,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    const docRef = await addDoc(collection(db, 'sellers'), newSellerData);
+    const docRef = await addDoc(collection(currentDbAdmin, 'sellers'), newSellerData);
     revalidatePath('/admin/sellers');
     return { success: true, message: 'Comitente criado com sucesso!', sellerId: docRef.id };
   } catch (error: any) {
-    console.error("[Server Action - createSeller] Error:", error);
+    console.error("[Server Action - createSeller] Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: error.message || 'Falha ao criar comitente.' };
   }
 }
 
 export async function getSellers(): Promise<SellerProfileInfo[]> {
+  if (!firestoreClientDB) {
+      console.error("[getSellers] Firestore client DB não inicializado. Retornando array de exemplo.");
+      return getSampleSellers();
+  }
   try {
-    const sellersCollection = collection(db, 'sellers');
+    const sellersCollection = collection(firestoreClientDB, 'sellers');
     const q = query(sellersCollection, orderBy('name', 'asc'));
     const snapshot = await getDocs(q);
     if (!snapshot.empty) {
@@ -92,18 +107,21 @@ export async function getSellers(): Promise<SellerProfileInfo[]> {
         } as SellerProfileInfo;
         });
     } else {
-        // console.log('[getSellers] Firestore empty, falling back to sample sellers');
         return getSampleSellers();
     }
   } catch (error: any) {
-    console.error("[Server Action - getSellers] Error:", error);
+    console.error("[Server Action - getSellers] Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return getSampleSellers(); // Fallback on error as well
   }
 }
 
 export async function getSeller(id: string): Promise<SellerProfileInfo | null> {
+  if (!firestoreClientDB) {
+    console.error(`[getSeller for ID ${id}] Firestore client DB não inicializado. Retornando null.`);
+    return null;
+  }
   try {
-    const sellerDocRef = doc(db, 'sellers', id);
+    const sellerDocRef = doc(firestoreClientDB, 'sellers', id);
     const docSnap = await getDoc(sellerDocRef);
     if (docSnap.exists()) {
       const data = docSnap.data();
@@ -132,30 +150,33 @@ export async function getSeller(id: string): Promise<SellerProfileInfo | null> {
         updatedAt: safeConvertToDate(data.updatedAt),
       } as SellerProfileInfo;
     } else {
-        // Fallback for getSeller by ID (less common for slug, but good for consistency)
         const sampleSellers = getSampleSellers();
-        const foundInSample = sampleSellers.find(seller => seller.id === id || seller.slug === id); // Check both id and slug
+        const foundInSample = sampleSellers.find(seller => seller.id === id || seller.slug === id); 
         if (foundInSample) {
             return { ...foundInSample };
         }
         return null;
     }
   } catch (error: any) {
-    console.error("[Server Action - getSeller] Error:", error);
+    console.error("[Server Action - getSeller] Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return null;
   }
 }
 
 export async function getSellerBySlug(slug: string): Promise<SellerProfileInfo | null> {
+  if (!firestoreClientDB) {
+    console.warn(`[getSellerBySlug for slug ${slug}] Firestore client DB não inicializado. Tentando sample data.`);
+    const sampleSellers = getSampleSellers();
+    return sampleSellers.find(seller => seller.slug === slug) || null;
+  }
   try {
-    const sellersCol = collection(db, 'sellers');
+    const sellersCol = collection(firestoreClientDB, 'sellers');
     const q = query(sellersCol, where('slug', '==', slug), limit(1));
     const snapshot = await getDocs(q);
 
     if (!snapshot.empty) {
       const docSnap = snapshot.docs[0];
       const data = docSnap.data();
-      // console.log(`[getSellerBySlug] Found seller in Firestore: ${data.name}`);
       return {
         id: docSnap.id,
         name: data.name,
@@ -181,20 +202,13 @@ export async function getSellerBySlug(slug: string): Promise<SellerProfileInfo |
         updatedAt: safeConvertToDate(data.updatedAt),
       } as SellerProfileInfo;
     } else {
-      // console.warn(`[getSellerBySlug] Seller with slug "${slug}" not found in Firestore. Trying sample data.`);
       const sampleSellers = getSampleSellers();
       const foundInSample = sampleSellers.find(seller => seller.slug === slug);
-      
-      if (foundInSample) {
-        // console.log(`[getSellerBySlug] Found seller in sample data: ${foundInSample.name}`);
-        return { ...foundInSample }; // getUniqueSellers already returns SellerProfileInfo objects
-      } else {
-        // console.warn(`[getSellerBySlug] Seller with slug "${slug}" not found in sample data either.`);
-        return null;
-      }
+      if (foundInSample) return { ...foundInSample };
+      return null;
     }
   } catch (error: any) {
-    console.error(`[Server Action - getSellerBySlug] Error fetching seller by slug ${slug}:`, error);
+    console.error(`[Server Action - getSellerBySlug] Error fetching seller by slug ${slug}:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return null;
   }
 }
@@ -204,26 +218,30 @@ export async function updateSeller(
   id: string,
   data: Partial<SellerFormData>
 ): Promise<{ success: boolean; message: string }> {
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
+  if (!currentDbAdmin) {
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  }
   if (data.name !== undefined && (data.name === null || data.name.trim() === '')) {
      return { success: false, message: 'O nome do comitente não pode ser vazio.' };
   }
 
   try {
-    const sellerDocRef = doc(db, 'sellers', id);
+    const sellerDocRef = doc(currentDbAdmin, 'sellers', id);
     
     const updateData: Partial<SellerProfileInfo> = { ...data };
     if (data.name) {
       updateData.slug = slugify(data.name.trim());
     }
-    updateData.updatedAt = serverTimestamp() as any;
+    updateData.updatedAt = admin.firestore.FieldValue.serverTimestamp() as any;
 
     await updateDoc(sellerDocRef, updateData);
     revalidatePath('/admin/sellers');
     revalidatePath(`/admin/sellers/${id}/edit`);
-    revalidatePath(`/consignor-dashboard/overview`); // Revalidate consignor dashboard
+    revalidatePath(`/consignor-dashboard/overview`); 
     return { success: true, message: 'Comitente atualizado com sucesso!' };
   } catch (error: any) {
-    console.error("[Server Action - updateSeller] Error:", error);
+    console.error("[Server Action - updateSeller] Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: error.message || 'Falha ao atualizar comitente.' };
   }
 }
@@ -231,13 +249,17 @@ export async function updateSeller(
 export async function deleteSeller(
   id: string
 ): Promise<{ success: boolean; message: string }> {
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
+  if (!currentDbAdmin) {
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  }
   try {
-    const sellerDocRef = doc(db, 'sellers', id);
+    const sellerDocRef = doc(currentDbAdmin, 'sellers', id);
     await deleteDoc(sellerDocRef);
     revalidatePath('/admin/sellers');
     return { success: true, message: 'Comitente excluído com sucesso!' };
   } catch (error: any) {
-    console.error("[Server Action - deleteSeller] Error:", error);
+    console.error("[Server Action - deleteSeller] Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: error.message || 'Falha ao excluir comitente.' };
   }
 }

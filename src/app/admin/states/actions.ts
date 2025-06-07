@@ -2,14 +2,21 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp } from 'firebase/firestore';
+import { db as firestoreClientDB } from '@/lib/firebase'; // SDK Cliente para leituras
+import admin from 'firebase-admin';
+import { dbAdmin, ensureAdminInitialized } from '@/lib/firebase/admin'; // SDK Admin para escritas
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp as ClientTimestamp } from 'firebase/firestore';
 import type { StateInfo, StateFormData } from '@/types';
 import { slugify } from '@/lib/sample-data';
 
-// Helper function to safely convert Firestore Timestamp to Date
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date(); 
+  if (timestampField instanceof admin.firestore.Timestamp) { 
+    return timestampField.toDate();
+  }
+  if (timestampField instanceof ClientTimestamp) { 
+    return timestampField.toDate();
+  }
   if (timestampField.toDate && typeof timestampField.toDate === 'function') {
     return timestampField.toDate();
   }
@@ -27,6 +34,10 @@ function safeConvertToDate(timestampField: any): Date {
 export async function createState(
   data: StateFormData
 ): Promise<{ success: boolean; message: string; stateId?: string }> {
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
+  if (!currentDbAdmin) {
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  }
   if (!data.name || data.name.trim() === '') {
     return { success: false, message: 'O nome do estado é obrigatório.' };
   }
@@ -39,23 +50,27 @@ export async function createState(
       name: data.name.trim(),
       uf: data.uf.trim().toUpperCase(),
       slug: slugify(data.name.trim()),
-      cityCount: 0, // Initialize city count
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      cityCount: 0, 
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    const docRef = await addDoc(collection(db, 'states'), newStateData);
+    const docRef = await addDoc(collection(currentDbAdmin, 'states'), newStateData);
     revalidatePath('/admin/states');
     return { success: true, message: 'Estado criado com sucesso!', stateId: docRef.id };
   } catch (error: any) {
-    console.error("[Server Action - createState] Error:", error);
+    console.error("[Server Action - createState] Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: error.message || 'Falha ao criar estado.' };
   }
 }
 
 export async function getStates(): Promise<StateInfo[]> {
+  if (!firestoreClientDB) {
+      console.error("[getStates] Firestore client DB não inicializado. Retornando array vazio.");
+      return [];
+  }
   try {
-    const statesCollection = collection(db, 'states');
+    const statesCollection = collection(firestoreClientDB, 'states');
     const q = query(statesCollection, orderBy('name', 'asc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(docSnap => {
@@ -71,14 +86,18 @@ export async function getStates(): Promise<StateInfo[]> {
       } as StateInfo;
     });
   } catch (error: any) {
-    console.error("[Server Action - getStates] Error:", error);
+    console.error("[Server Action - getStates] Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return [];
   }
 }
 
 export async function getState(id: string): Promise<StateInfo | null> {
+  if (!firestoreClientDB) {
+    console.error(`[getState for ID ${id}] Firestore client DB não inicializado. Retornando null.`);
+    return null;
+  }
   try {
-    const stateDocRef = doc(db, 'states', id);
+    const stateDocRef = doc(firestoreClientDB, 'states', id);
     const docSnap = await getDoc(stateDocRef);
     if (docSnap.exists()) {
       const data = docSnap.data();
@@ -94,7 +113,7 @@ export async function getState(id: string): Promise<StateInfo | null> {
     }
     return null;
   } catch (error: any) {
-    console.error("[Server Action - getState] Error:", error);
+    console.error("[Server Action - getState] Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return null;
   }
 }
@@ -103,6 +122,10 @@ export async function updateState(
   id: string,
   data: Partial<StateFormData>
 ): Promise<{ success: boolean; message: string }> {
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
+  if (!currentDbAdmin) {
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  }
   if (data.name !== undefined && (data.name === null || data.name.trim() === '')) {
      return { success: false, message: 'O nome do estado não pode ser vazio.' };
   }
@@ -111,7 +134,7 @@ export async function updateState(
   }
 
   try {
-    const stateDocRef = doc(db, 'states', id);
+    const stateDocRef = doc(currentDbAdmin, 'states', id);
     
     const updateData: Partial<Omit<StateInfo, 'id' | 'createdAt' | 'cityCount'>> = {};
     if (data.name) {
@@ -121,14 +144,14 @@ export async function updateState(
     if (data.uf) {
         updateData.uf = data.uf.trim().toUpperCase();
     }
-    updateData.updatedAt = serverTimestamp() as any;
+    updateData.updatedAt = admin.firestore.FieldValue.serverTimestamp() as any;
 
     await updateDoc(stateDocRef, updateData);
     revalidatePath('/admin/states');
     revalidatePath(`/admin/states/${id}/edit`);
     return { success: true, message: 'Estado atualizado com sucesso!' };
   } catch (error: any) {
-    console.error("[Server Action - updateState] Error:", error);
+    console.error("[Server Action - updateState] Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: error.message || 'Falha ao atualizar estado.' };
   }
 }
@@ -136,16 +159,17 @@ export async function updateState(
 export async function deleteState(
   id: string
 ): Promise<{ success: boolean; message: string }> {
-  // TODO: Add check to prevent deletion if state has associated cities.
-  // This would require querying the 'cities' collection.
-  // For now, direct deletion is allowed.
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
+  if (!currentDbAdmin) {
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  }
   try {
-    const stateDocRef = doc(db, 'states', id);
+    const stateDocRef = doc(currentDbAdmin, 'states', id);
     await deleteDoc(stateDocRef);
     revalidatePath('/admin/states');
     return { success: true, message: 'Estado excluído com sucesso!' };
   } catch (error: any) {
-    console.error("[Server Action - deleteState] Error:", error);
+    console.error("[Server Action - deleteState] Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: error.message || 'Falha ao excluir estado.' };
   }
 }

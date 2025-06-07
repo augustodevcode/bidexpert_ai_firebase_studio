@@ -2,15 +2,22 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, where, Timestamp } from 'firebase/firestore';
+import { db as firestoreClientDB } from '@/lib/firebase'; // SDK Cliente para leituras
+import admin from 'firebase-admin';
+import { dbAdmin, ensureAdminInitialized } from '@/lib/firebase/admin'; // SDK Admin para escritas
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, where, Timestamp as ClientTimestamp } from 'firebase/firestore';
 import type { CityInfo, CityFormData, StateInfo } from '@/types';
 import { slugify } from '@/lib/sample-data';
-import { getState } from '@/app/admin/states/actions'; // Para buscar dados do estado
+import { getState } from '@/app/admin/states/actions'; 
 
-// Helper function to safely convert Firestore Timestamp to Date
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date();
+  if (timestampField instanceof admin.firestore.Timestamp) { 
+    return timestampField.toDate();
+  }
+  if (timestampField instanceof ClientTimestamp) { 
+    return timestampField.toDate();
+  }
   if (timestampField.toDate && typeof timestampField.toDate === 'function') {
     return timestampField.toDate();
   }
@@ -28,6 +35,10 @@ function safeConvertToDate(timestampField: any): Date {
 export async function createCity(
   data: CityFormData
 ): Promise<{ success: boolean; message: string; cityId?: string }> {
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
+  if (!currentDbAdmin) {
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  }
   if (!data.name || data.name.trim() === '') {
     return { success: false, message: 'O nome da cidade é obrigatório.' };
   }
@@ -45,26 +56,30 @@ export async function createCity(
       name: data.name.trim(),
       slug: slugify(data.name.trim()),
       stateId: data.stateId,
-      stateUf: parentState.uf, // Denormalizando a UF do estado
-      ibgeCode: data.ibgeCode || '', // Adiciona o código IBGE
+      stateUf: parentState.uf, 
+      ibgeCode: data.ibgeCode || '', 
       lotCount: 0,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    const docRef = await addDoc(collection(db, 'cities'), newCityData);
+    const docRef = await addDoc(collection(currentDbAdmin, 'cities'), newCityData);
     revalidatePath('/admin/cities');
-    revalidatePath('/admin/states'); // Revalidar estados para possível atualização de contagem de cidades (se implementado)
+    revalidatePath('/admin/states'); 
     return { success: true, message: 'Cidade criada com sucesso!', cityId: docRef.id };
   } catch (error: any) {
-    console.error("[Server Action - createCity] Error:", error);
+    console.error("[Server Action - createCity] Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: error.message || 'Falha ao criar cidade.' };
   }
 }
 
 export async function getCities(stateIdFilter?: string): Promise<CityInfo[]> {
+  if (!firestoreClientDB) {
+      console.error("[getCities] Firestore client DB não inicializado. Retornando array vazio.");
+      return [];
+  }
   try {
-    const citiesCollection = collection(db, 'cities');
+    const citiesCollection = collection(firestoreClientDB, 'cities');
     let q;
     if (stateIdFilter) {
       q = query(citiesCollection, where('stateId', '==', stateIdFilter), orderBy('name', 'asc'));
@@ -87,14 +102,18 @@ export async function getCities(stateIdFilter?: string): Promise<CityInfo[]> {
       } as CityInfo;
     });
   } catch (error: any) {
-    console.error("[Server Action - getCities] Error:", error);
+    console.error("[Server Action - getCities] Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return [];
   }
 }
 
 export async function getCity(id: string): Promise<CityInfo | null> {
+  if (!firestoreClientDB) {
+    console.error(`[getCity for ID ${id}] Firestore client DB não inicializado. Retornando null.`);
+    return null;
+  }
   try {
-    const cityDocRef = doc(db, 'cities', id);
+    const cityDocRef = doc(firestoreClientDB, 'cities', id);
     const docSnap = await getDoc(cityDocRef);
     if (docSnap.exists()) {
       const data = docSnap.data();
@@ -112,7 +131,7 @@ export async function getCity(id: string): Promise<CityInfo | null> {
     }
     return null;
   } catch (error: any) {
-    console.error("[Server Action - getCity] Error:", error);
+    console.error("[Server Action - getCity] Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return null;
   }
 }
@@ -121,6 +140,10 @@ export async function updateCity(
   id: string,
   data: Partial<CityFormData>
 ): Promise<{ success: boolean; message: string }> {
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
+  if (!currentDbAdmin) {
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  }
   if (data.name !== undefined && (data.name === null || data.name.trim() === '')) {
      return { success: false, message: 'O nome da cidade não pode ser vazio.' };
   }
@@ -129,7 +152,7 @@ export async function updateCity(
   }
 
   try {
-    const cityDocRef = doc(db, 'cities', id);
+    const cityDocRef = doc(currentDbAdmin, 'cities', id);
     const updateData: Partial<Omit<CityInfo, 'id' | 'createdAt' | 'lotCount'>> = {};
     
     if (data.name) {
@@ -148,14 +171,14 @@ export async function updateCity(
         updateData.ibgeCode = data.ibgeCode;
     }
     
-    updateData.updatedAt = serverTimestamp() as any;
+    updateData.updatedAt = admin.firestore.FieldValue.serverTimestamp() as any;
 
     await updateDoc(cityDocRef, updateData);
     revalidatePath('/admin/cities');
     revalidatePath(`/admin/cities/${id}/edit`);
     return { success: true, message: 'Cidade atualizada com sucesso!' };
   } catch (error: any) {
-    console.error("[Server Action - updateCity] Error:", error);
+    console.error("[Server Action - updateCity] Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: error.message || 'Falha ao atualizar cidade.' };
   }
 }
@@ -163,14 +186,17 @@ export async function updateCity(
 export async function deleteCity(
   id: string
 ): Promise<{ success: boolean; message: string }> {
+  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
+  if (!currentDbAdmin) {
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  }
   try {
-    const cityDocRef = doc(db, 'cities', id);
-    // TODO: Consider logic to prevent deletion if city has associated lots, or to update state cityCount.
+    const cityDocRef = doc(currentDbAdmin, 'cities', id);
     await deleteDoc(cityDocRef);
     revalidatePath('/admin/cities');
     return { success: true, message: 'Cidade excluída com sucesso!' };
   } catch (error: any) {
-    console.error("[Server Action - deleteCity] Error:", error);
+    console.error("[Server Action - deleteCity] Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return { success: false, message: error.message || 'Falha ao excluir cidade.' };
   }
 }
