@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Allow authenticated users to read their own user document
+    // and allow all authenticated users to read all user documents
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      // Add delete rules if needed, typically restricted
+      // allow delete: if false; // Explicitly deny delete by default
+    }
+
+    // Basic read-only rules for a 'roles' collection (if it exists)
+    // Adjust permissions based on your specific role management needs
+    match /roles/{roleId} {
+      allow read: if request.auth != null;
+      // Write permissions for roles are typically highly restricted,
+      // often only allowed via server-side logic (Cloud Functions)
+      allow create, update, delete: if false;
+    }
+
+    // Add rules for other collections here as needed
+    // Example: Read-only for a 'public_data' collection
+    // match /public_data/{documentId} {
+    //   allow read: if true; // Public read
+    // }
+  }
+}

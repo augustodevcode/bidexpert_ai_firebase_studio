@@ -2,9 +2,9 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db as firestoreClientDB } from '@/lib/firebase'; 
-import admin from 'firebase-admin'; 
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp, where, limit, FieldValue } from 'firebase/firestore';
+import admin from 'firebase-admin';
+import { collection, getDocs, doc, getDoc, query, orderBy, Timestamp, where, limit, FieldValue as ClientFieldValue } from 'firebase/firestore';
+import { db as firestoreClientDB } from '@/lib/firebase'; // SDK Cliente para leituras não privilegiadas
 import type { Role, RoleFormData } from '@/types';
 import { predefinedPermissions } from './role-form-schema';
 
@@ -32,7 +32,7 @@ function initializeAdminSDK() {
       } else if (error.code !== 'app/app-already-exists') {
          console.error("[roles/actions] Falha ao init Admin SDK (default):", error);
       } else {
-         adminInitialized = true; 
+         adminInitialized = true;
       }
     }
   } else {
@@ -71,19 +71,19 @@ function safeConvertToDate(timestampField: any): Date {
 export async function createRole(
   data: RoleFormData
 ): Promise<{ success: boolean; message: string; roleId?: string }> {
-  if (!firestoreClientDB) {
-    return { success: false, message: 'Erro de configuração: Banco de dados não disponível.' };
+  if (!adminInitialized || !dbAdmin) {
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível para createRole.' };
   }
   if (!data.name || data.name.trim() === '') {
     return { success: false, message: 'O nome do perfil é obrigatório.' };
   }
-  
+
   const normalizedName = data.name.trim().toUpperCase();
-  const rolesRef = collection(firestoreClientDB, 'roles');
-  const q = query(rolesRef, where('name_normalized', '==', normalizedName), limit(1));
-  
+  const rolesRef = dbAdmin.collection('roles'); // Use dbAdmin
+  const q = rolesRef.where('name_normalized', '==', normalizedName).limit(1);
+
   try {
-    const existingRoleSnapshot = await getDocs(q);
+    const existingRoleSnapshot = await q.get();
     if (!existingRoleSnapshot.empty) {
       return { success: false, message: `O perfil com o nome "${data.name.trim()}" já existe.` };
     }
@@ -93,17 +93,19 @@ export async function createRole(
       name_normalized: normalizedName,
       description: data.description?.trim() || '',
       permissions: validPermissions,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(), // Use Admin SDK FieldValue
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(), // Use Admin SDK FieldValue
     };
-    const docRef = await addDoc(rolesRef, newRoleData);
+    const docRef = await rolesRef.add(newRoleData);
     revalidatePath('/admin/roles');
     return { success: true, message: 'Perfil criado com sucesso!', roleId: docRef.id };
   } catch (error: any) {
+    console.error("[createRole] Error creating role:", error);
     return { success: false, message: `Falha ao criar perfil: ${error.message}` };
   }
 }
 
+// getRoles, getRole, getRoleByName can still use firestoreClientDB if rules allow public/admin read
 export async function getRoles(): Promise<Role[]> {
   if (!firestoreClientDB) return [];
   try {
@@ -155,7 +157,7 @@ export async function getRole(id: string): Promise<Role | null> {
 export async function getRoleByName(roleName: string): Promise<Role | null> {
   if (!firestoreClientDB) return null;
   if (!roleName || roleName.trim() === '') return null;
-  
+
   const normalizedQueryName = roleName.trim().toUpperCase();
   try {
     const rolesRef = collection(firestoreClientDB, 'roles');
@@ -183,21 +185,21 @@ export async function getRoleByName(roleName: string): Promise<Role | null> {
 
 export async function updateRole(
   id: string,
-  data: Partial<RoleFormData> 
+  data: Partial<RoleFormData>
 ): Promise<{ success: boolean; message: string }> {
-  if (!firestoreClientDB) {
-    return { success: false, message: 'Erro de configuração: Banco de dados não disponível.' };
+  if (!adminInitialized || !dbAdmin) {
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível para updateRole.' };
   }
-  console.log(`[updateRole] Tentando atualizar role ID: ${id} com dados:`, JSON.stringify(data));
+  console.log(`[updateRole - Using Admin SDK] Tentando atualizar role ID: ${id} com dados:`, JSON.stringify(data));
 
   try {
-    const roleDocRef = doc(firestoreClientDB, 'roles', id);
-    const currentRoleSnap = await getDoc(roleDocRef);
-    if (!currentRoleSnap.exists()) {
+    const roleDocRef = dbAdmin.collection('roles').doc(id); // Use dbAdmin
+    const currentRoleSnap = await roleDocRef.get();
+    if (!currentRoleSnap.exists) {
         return { success: false, message: 'Perfil não encontrado para atualização.' };
     }
     const currentRoleData = currentRoleSnap.data() as Role;
-    
+
     const systemRoleNamesUpper = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER', 'AUCTION_ANALYST'];
     const isSystemRole = systemRoleNamesUpper.includes(currentRoleData.name_normalized?.toUpperCase() || '');
 
@@ -208,55 +210,50 @@ export async function updateRole(
       const newNameTrimmed = data.name.trim();
       if (!newNameTrimmed) return { success: false, message: 'O nome do perfil não pode ser vazio.' };
       
-      if (isSystemRole) {
-        // Only sync display name for system roles if different, do not change name_normalized
-        updatePayload.name = newNameTrimmed;
-        console.log(`[updateRole - System Role ${currentRoleData.name_normalized}] Display name sync: "${currentRoleData.name}" -> "${newNameTrimmed}"`);
-      } else {
-        // For non-system roles, update name and name_normalized
+      updatePayload.name = newNameTrimmed; // Always update display name if different
+      if (!isSystemRole) { // Only update normalized name for non-system roles
         const newNormalizedName = newNameTrimmed.toUpperCase();
         if (newNormalizedName !== currentRoleData.name_normalized) {
-            const rolesRef = collection(firestoreClientDB, 'roles');
-            const q = query(rolesRef, where('name_normalized', '==', newNormalizedName), limit(1));
-            const existingRoleSnapshot = await getDocs(q);
+            const rolesRef = dbAdmin.collection('roles');
+            const q = rolesRef.where('name_normalized', '==', newNormalizedName).limit(1);
+            const existingRoleSnapshot = await q.get();
             if (!existingRoleSnapshot.empty && existingRoleSnapshot.docs[0].id !== id) {
               return { success: false, message: `Outro perfil com o nome "${newNameTrimmed}" (normalizado: ${newNormalizedName}) já existe.` };
             }
             updatePayload.name_normalized = newNormalizedName;
         }
-        updatePayload.name = newNameTrimmed;
       }
       hasChanges = true;
     }
 
-    if (data.description !== undefined && data.description.trim() !== (currentRoleData.description || '')) {
+    if (data.description !== undefined && (data.description.trim() || '') !== (currentRoleData.description || '')) {
         updatePayload.description = data.description.trim();
         hasChanges = true;
     }
     if (data.permissions) {
       const currentPermissionsSorted = (currentRoleData.permissions || []).sort();
       const newPermissions = (data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p)).sort();
-      const permissionsAreSame = newPermissions.length === currentPermissionsSorted.length && 
+      const permissionsAreSame = newPermissions.length === currentPermissionsSorted.length &&
                                  newPermissions.every((p, i) => p === currentPermissionsSorted[i]);
       if (!permissionsAreSame) {
         updatePayload.permissions = newPermissions;
         hasChanges = true;
       }
     }
-    
+
     if (hasChanges) {
-        updatePayload.updatedAt = serverTimestamp();
-        console.log(`[updateRole] Payload final para Firestore para role ID ${id}:`, JSON.stringify(updatePayload));
-        await updateDoc(roleDocRef, updatePayload); 
+        updatePayload.updatedAt = admin.firestore.FieldValue.serverTimestamp(); // Use Admin SDK FieldValue
+        console.log(`[updateRole - Admin SDK] Payload final para Firestore para role ID ${id}:`, JSON.stringify(updatePayload));
+        await roleDocRef.update(updatePayload);
     } else {
-        console.log(`[updateRole] Role ID: ${id} - Nenhuma alteração real detectada. Pulando update.`);
+        console.log(`[updateRole - Admin SDK] Role ID: ${id} - Nenhuma alteração real detectada. Pulando update.`);
     }
 
     revalidatePath('/admin/roles');
     revalidatePath(`/admin/roles/${id}/edit`);
     return { success: true, message: 'Perfil atualizado com sucesso!' };
   } catch (error: any) {
-    console.error(`[updateRole] ERRO ao atualizar role ID ${id} no Firestore:`, error);
+    console.error(`[updateRole - Admin SDK] ERRO ao atualizar role ID ${id} no Firestore:`, error);
     return { success: false, message: `Falha ao atualizar perfil: ${error.message}` };
   }
 }
@@ -264,8 +261,12 @@ export async function updateRole(
 export async function deleteRole(
   id: string
 ): Promise<{ success: boolean; message: string }> {
-  if (!firestoreClientDB) return { success: false, message: 'Erro de configuração: Banco de dados não disponível.' };
-  const roleToDelete = await getRole(id);
+  if (!adminInitialized || !dbAdmin) {
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível para deleteRole.' };
+  }
+  
+  // Fetch role using client SDK as rules might allow this for checks, but delete with admin
+  const roleToDelete = await getRole(id); 
   if (roleToDelete) {
     const systemRoles = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER', 'AUCTION_ANALYST'];
     const roleNameToCheck = roleToDelete.name_normalized || roleToDelete.name.toUpperCase();
@@ -276,20 +277,21 @@ export async function deleteRole(
      return { success: false, message: `Perfil com ID ${id} não encontrado para exclusão.` };
   }
   try {
-    const roleDocRef = doc(firestoreClientDB, 'roles', id);
-    await deleteDoc(roleDocRef);
+    const roleDocRef = dbAdmin.collection('roles').doc(id); // Use dbAdmin
+    await roleDocRef.delete();
     revalidatePath('/admin/roles');
     return { success: true, message: 'Perfil excluído com sucesso!' };
   } catch (error: any) {
+    console.error("[deleteRole - Admin SDK] Error:", error);
     return { success: false, message: `Falha ao excluir perfil: ${error.message}` };
   }
 }
 
 export async function ensureDefaultRolesExist(): Promise<{ success: boolean; message: string }> {
-  if (!firestoreClientDB) {
-    return { success: false, message: 'Erro de configuração: Banco de dados não disponível para roles.' };
+  if (!adminInitialized || !dbAdmin) { // Check dbAdmin specifically
+    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível para ensureDefaultRolesExist.' };
   }
-  console.log("[ensureDefaultRolesExist] Verificando e criando/sincronizando perfis padrão...");
+  console.log("[ensureDefaultRolesExist - Using Admin SDK] Verificando e criando/sincronizando perfis padrão...");
   const defaultRolesData: RoleFormData[] = [
       { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
       { name: 'USER', description: 'Usuário padrão com permissões de visualização e lance (após habilitação).', permissions: ['view_auctions', 'place_bids', 'view_lots'] },
@@ -319,50 +321,54 @@ export async function ensureDefaultRolesExist(): Promise<{ success: boolean; mes
 
   try {
       for (const roleData of defaultRolesData) {
-          const existingRole = await getRoleByName(roleData.name); 
+          // Use getRoleByName (which uses client SDK for reads)
+          const existingRole = await getRoleByName(roleData.name);
           if (!existingRole) {
-              const creationResult = await createRole(roleData);
+              const creationResult = await createRole(roleData); // createRole now uses dbAdmin
               if (creationResult.success) {
                   createdOrUpdatedAny = true;
               } else {
                   allSuccessful = false;
-                  overallMessage = `Falha ao criar o perfil "${roleData.name}".`;
-                  break; 
+                  overallMessage = `Falha ao criar o perfil "${roleData.name}". Detalhe: ${creationResult.message}`;
+                  console.error(`[ensureDefaultRolesExist] ${overallMessage}`);
+                  break;
               }
           } else {
-              console.log(`[ensureDefaultRolesExist] Perfil "${existingRole.name}" (ID: ${existingRole.id}) já existe. Nome no DB: "${existingRole.name}", Nome no Código: "${roleData.name}", Norm. no DB: "${existingRole.name_normalized}"`);
+              console.log(`[ensureDefaultRolesExist] Perfil "${existingRole.name}" já existe. DB Name: "${existingRole.name}", Code Name: "${roleData.name}", DB Norm: "${existingRole.name_normalized}"`);
               const currentPermissionsSorted = (existingRole.permissions || []).sort();
-              const expectedPermissionsSorted = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p)).sort();
+              const expectedPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
+              const expectedPermissionsSorted = [...expectedPermissions].sort();
               
-              const permissionsAreSame = expectedPermissionsSorted.length === currentPermissionsSorted.length && 
+              const permissionsAreSame = expectedPermissionsSorted.length === currentPermissionsSorted.length &&
                                        expectedPermissionsSorted.every((p, i) => p === currentPermissionsSorted[i]);
               const descriptionIsSame = (existingRole.description || '') === (roleData.description || '');
-              const nameIsSameAsInCode = existingRole.name === roleData.name; // Check if current display name matches the one in code
+              const nameIsSameAsInCode = existingRole.name === roleData.name;
 
               const syncPayload: Partial<RoleFormData> = {};
               let needsSync = false;
 
               if (!nameIsSameAsInCode) {
-                syncPayload.name = roleData.name; // Update display name to match code definition
-                needsSync = true;
+                  syncPayload.name = roleData.name;
+                  needsSync = true;
               }
               if (!descriptionIsSame) {
                   syncPayload.description = roleData.description;
                   needsSync = true;
               }
               if (!permissionsAreSame) {
-                  syncPayload.permissions = expectedPermissionsSorted;
+                  syncPayload.permissions = expectedPermissions;
                   needsSync = true;
               }
-
+              
               if (needsSync) {
-                  console.log(`[ensureDefaultRolesExist] Sincronizando perfil "${existingRole.name}". Payload para updateRole:`, JSON.stringify(syncPayload));
-                  const updateResult = await updateRole(existingRole.id, syncPayload);
+                  console.log(`[ensureDefaultRolesExist] Sincronizando perfil padrão "${existingRole.name}". Payload para updateRole:`, JSON.stringify(syncPayload));
+                  const updateResult = await updateRole(existingRole.id, syncPayload); // updateRole now uses dbAdmin
                   if (updateResult.success) {
                       createdOrUpdatedAny = true;
                   } else {
                       allSuccessful = false;
                       overallMessage = `Falha ao atualizar o perfil "${existingRole.name}". Detalhe: ${updateResult.message}`;
+                      console.error(`[ensureDefaultRolesExist] ${overallMessage}`);
                       break;
                   }
               }
@@ -381,5 +387,3 @@ export async function ensureDefaultRolesExist(): Promise<{ success: boolean; mes
   }
   return { success: allSuccessful, message: overallMessage };
 }
-
-    
