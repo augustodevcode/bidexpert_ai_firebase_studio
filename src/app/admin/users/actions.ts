@@ -145,7 +145,7 @@ export async function updateUserProfileAndRole(
           }
       } else { 
           console.log(`[updateUserProfileAndRole] Definindo roleId e roleName para null e removendo campo 'role' legado.`);
-          updateData.roleId = FieldValue.delete(); // Use FieldValue.delete() for null or removal
+          updateData.roleId = FieldValue.delete(); 
           updateData.roleName = FieldValue.delete();
           (updateData as any).role = FieldValue.delete(); 
       }
@@ -153,7 +153,7 @@ export async function updateUserProfileAndRole(
 
     if (data.hasOwnProperty('habilitationStatus')) {
         console.log(`[updateUserProfileAndRole] Definindo habilitationStatus para: ${data.habilitationStatus}`);
-        updateData.habilitationStatus = data.habilitationStatus || null; // Allows setting to null
+        updateData.habilitationStatus = data.habilitationStatus === undefined ? FieldValue.delete() : data.habilitationStatus;
     }
 
 
@@ -203,7 +203,7 @@ export async function ensureUserRoleInFirestore(
     console.log(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Passo 1.1: Perfis padrão verificados/criados. Success: ${rolesEnsured?.success}, Message: ${rolesEnsured?.message}`);
     
     if (!rolesEnsured || !rolesEnsured.success) {
-      const errorMsg = `Falha crítica ao garantir perfis padrão: ${rolesEnsured?.message || 'Resultado indefinido de ensureDefaultRolesExist'}`;
+      const errorMsg = `Falha crítica ao garantir perfis padrão: ${rolesEnsured.message || 'Resultado indefinido de ensureDefaultRolesExist'}`;
       console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] ${errorMsg}`);
       return { success: false, message: errorMsg };
     }
@@ -247,9 +247,8 @@ export async function ensureUserRoleInFirestore(
         needsUpdate = true;
       }
       
-      // Check and remove legacy 'role' field if it exists
       if (userData.hasOwnProperty('role')) {
-        updatePayload.role = FieldValue.delete(); // Firestore command to remove a field
+        updatePayload.role = FieldValue.delete(); 
         console.log(`[ensureUserRoleInFirestore] Necessário remover campo 'role' legado.`);
         needsUpdate = true;
       }
@@ -286,15 +285,12 @@ export async function ensureUserRoleInFirestore(
     }
   } catch (error: any) {
     console.error(`[ensureUserRoleInFirestore for ${email}, role ${targetRoleName}] Error:`, error.message, error.code, error.details ? JSON.stringify(error.details) : '');
-    // Verifique se a mensagem de erro já é "Missing or insufficient permissions" vinda de uma sub-chamada.
-    if (error.message && error.message.includes('Missing or insufficient permissions')) {
-        return { success: false, message: `Falha ao configurar perfil para ${targetRoleName}: ${error.message}` };
+    if (error.message && (error.message.includes('Missing or insufficient permissions') || error.code === 'permission-denied')) {
+        return { success: false, message: `Falha ao configurar perfil para ${targetRoleName}: Permissões insuficientes para operação no Firestore.` };
     }
     return { success: false, message: `Falha ao configurar perfil para ${targetRoleName}: ${error.message}` };
   }
-  // Garantir que todos os caminhos retornem
-  return { success: false, message: 'Falha inesperada na configuração do perfil ou caminho não tratado.' };
+  // Este return só será atingido se algo muito inesperado acontecer, já que o try/catch deveria cobrir.
+  // Adicionado para satisfazer o TypeScript de que todos os caminhos retornam um valor.
+  // return { success: false, message: 'Falha inesperada na configuração do perfil ou caminho não tratado.' };
 }
-
-// O arquivo deve terminar aqui. Nenhum JSX abaixo.
-    

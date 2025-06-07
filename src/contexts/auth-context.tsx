@@ -8,7 +8,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db } from '@/lib/firebase'; 
 import { Loader2 } from 'lucide-react';
 import { ensureUserRoleInFirestore } from '@/app/admin/users/actions';
-import { doc, getDoc, Timestamp } from 'firebase/firestore'; // Added Timestamp
+import { doc, getDoc, Timestamp } from 'firebase/firestore'; 
 import type { UserProfileData, Role, UserProfileWithPermissions } from '@/types';
 import { getRole } from '@/app/admin/roles/actions';
 
@@ -49,10 +49,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 currentUser.displayName || currentUser.email.split('@')[0],
                 'ADMINISTRATOR'
             );
-            console.log('[AuthProvider] roleSetupResult:', JSON.stringify(roleSetupResult, null, 2));
+            console.log('[AuthProvider] roleSetupResult from ensureUserRoleInFirestore:', JSON.stringify(roleSetupResult, null, 2));
 
 
-            if (roleSetupResult && roleSetupResult.success) { // Check if roleSetupResult is not undefined
+            if (roleSetupResult && roleSetupResult.success) { 
               console.log(`[AuthProvider] Admin role setup for ${currentUser.email}: ${roleSetupResult.message}`);
             } else {
               console.error(`[AuthProvider] Failed to setup admin role for ${currentUser.email}: ${roleSetupResult?.message || 'Resultado indefinido ou falha sem mensagem.'}`);
@@ -123,3 +123,4 @@ export function useAuth() {
 }
 
     
+

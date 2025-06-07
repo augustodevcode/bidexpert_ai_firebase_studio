@@ -4,202 +4,201 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // Helper Functions
     function isSignedIn() {
-      return request.auth != null;
+      return request.auth != null && request.auth.uid != null;
     }
 
     function isUser(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    // Função para verificar se o email do usuário autenticado está na lista de administradores
+    // ATENÇÃO: Esta lista deve ser mantida em sincronia com a variável de ambiente NEXT_PUBLIC_ADMIN_EMAILS
+    // ou com uma fonte de verdade única.
     function isAdminEmail() {
-      // IMPORTANT: Update this list with your actual admin emails
-      return request.auth.token.email in ["admin@bidexpert.com", "augusto.devcode@gmail.com", "analyst@bidexpert.com"];
+      return isSignedIn() && request.auth.token.email in ["admin@bidexpert.com", "augusto.devcode@gmail.com", "analyst@bidexpert.com"];
     }
 
     function isActualAdmin(userId) {
-      return isSignedIn() &&
-             exists(/databases/$(database)/documents/users/$(userId)) &&
-             get(/databases/$(database)/documents/users/$(userId)).data.roleName == 'ADMINISTRATOR';
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(userId)).data.roleName == 'ADMINISTRATOR';
     }
     
     function isAuctionAnalyst(userId) {
-      return isSignedIn() &&
-             exists(/databases/$(database)/documents/users/$(userId)) &&
-             get(/databases/$(database)/documents/users/$(userId)).data.roleName == 'AUCTION_ANALYST';
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(userId)).data.roleName == 'AUCTION_ANALYST';
     }
 
     function isDefaultRoleName(roleName) {
-      return roleName in ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER', 'AUCTION_ANALYST'];
+        return roleName == 'ADMINISTRATOR' || roleName == 'USER' || roleName == 'CONSIGNOR' || roleName == 'AUCTIONEER' || roleName == 'AUCTION_ANALYST';
+    }
+    
+    function hasPermission(permissionName) {
+      let userProfile = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      let role = get(/databases/$(database)/documents/roles/$(userProfile.roleId)).data;
+      return isSignedIn() && (role.permissions.hasAny(['manage_all', permissionName]));
     }
 
-    // platformSettings
-    match /platformSettings/global {
-      allow read: if true;
-      allow write: if isActualAdmin(request.auth.uid);
-    }
-
-    // Roles Collection
-    match /roles/{roleId} {
-      allow read: if true; // Simplificado para bootstrap
-      allow list: if true; // Simplificado para bootstrap
-
-      // Admin real pode criar qualquer perfil.
-      // Um email na lista de admin PODE CRIAR QUALQUER PERFIL durante o bootstrap.
-      allow create: if isSignedIn() &&
-                      (
-                        isActualAdmin(request.auth.uid) ||
-                        isAdminEmail() // Simplificado: se for adminEmail, pode criar qualquer role (para bootstrap)
-                      ) &&
-                      request.resource.data.name_normalized == request.resource.data.name.upper() &&
-                      // Garante que apenas os campos permitidos (incluindo opcionais) sejam escritos
-                      request.resource.data.keys().hasOnly(['name', 'name_normalized', 'description', 'permissions', 'createdAt', 'updatedAt']) &&
-                      // Garante que os campos obrigatórios estejam presentes
-                      request.resource.data.keys().hasAll(['name', 'name_normalized', 'permissions', 'createdAt', 'updatedAt']);
-
-      allow update: if isSignedIn() &&
-                      (
-                        isActualAdmin(request.auth.uid) ||
-                        (isAdminEmail() && isDefaultRoleName(resource.data.name)) // Admin por email pode ATUALIZAR perfis PADRÃO
-                      ) &&
-                      // Se name_normalized está sendo enviado, ele deve corresponder ao name.upper()
-                      (!request.resource.data.keys().hasAny(['name_normalized']) || request.resource.data.name_normalized == request.resource.data.name.upper()) &&
-                      // Se name está sendo enviado e é um perfil padrão, o nome REAL (name) não pode mudar.
-                      (!request.resource.data.keys().hasAny(['name']) || !isDefaultRoleName(resource.data.name) || request.resource.data.name == resource.data.name) &&
-                      // Garante que apenas os campos permitidos sejam escritos. `createdAt` não deve ser atualizável.
-                      request.resource.data.keys().hasOnly(['name', 'name_normalized', 'description', 'permissions', 'updatedAt']) &&
-                      // Pelo menos 'updatedAt' deve estar presente. 'permissions' também é comum em atualizações de seed.
-                      request.resource.data.keys().hasAll(['updatedAt']);
-
-
-      allow delete: if isSignedIn() && isActualAdmin(request.auth.uid) &&
-                       !isDefaultRoleName(resource.data.name); // Perfis padrão não podem ser excluídos
+    function isHabilitated() {
+        return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.habilitationStatus == 'HABILITADO';
     }
 
     // Users Collection
     match /users/{userId} {
       allow read, get: if isUser(userId) || isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid);
-      allow list: if isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid);
+      
+      // Qualquer usuário autenticado pode criar seu próprio perfil (ex: no registro)
+      // Campos iniciais são limitados. 'roleId' e 'roleName' são definidos pela ensureUserRoleInFirestore.
+      allow create: if isSignedIn() && isUser(userId) &&
+                      request.resource.data.uid == userId &&
+                      request.resource.data.email == request.auth.token.email &&
+                      request.resource.data.keys().hasAll(['uid', 'email', 'fullName', 'createdAt', 'updatedAt', 'roleId', 'roleName', 'status', 'habilitationStatus', 'permissions']) &&
+                      request.resource.data.keys().size() == 10; // Ajustar se mais campos forem adicionados no registro inicial
 
-      // Usuário pode criar seu próprio perfil (normalmente feito pelo Firebase Auth, mas aqui para criação manual via app)
-      // Ao criar, não pode se auto-atribuir um perfil privilegiado, apenas "USER" ou nenhum.
-      allow create: if isUser(userId) &&
-                       request.resource.data.email == request.auth.token.email &&
-                       (
-                         !('roleId' in request.resource.data.keys()) || 
-                         request.resource.data.roleId == null ||      
-                         (
-                           request.resource.data.roleId is string &&  
-                           exists(/databases/$(database)/documents/roles/$(request.resource.data.roleId)) &&
-                           get(/databases/$(database)/documents/roles/$(request.resource.data.roleId)).data.name == 'USER'
-                         )
-                       ) &&
-                       // Campos mínimos para criação via app
-                       request.resource.data.keys().hasAll(['uid', 'email', 'fullName', 'createdAt', 'updatedAt', 'status']);
+      // Permite que um usuário admin (por email) crie o documento de um admin durante o bootstrap.
+      // Essa regra é mais permissiva e é esperada ser usada pelo 'ensureUserRoleInFirestore'.
+      allow create: if isAdminEmail() && isUser(userId) &&
+                      request.resource.data.roleName == 'ADMINISTRATOR' &&
+                      request.resource.data.keys().hasAll(['uid', 'email', 'fullName', 'roleId', 'roleName', 'status', 'habilitationStatus', 'createdAt', 'updatedAt', 'permissions']) &&
+                      request.resource.data.keys().size() <= 15; // Permite alguns campos opcionais extras
 
+      // Usuário pode atualizar seu próprio perfil (campos limitados)
+      allow update: if isUser(userId) &&
+                      request.resource.data.uid == userId && // Não pode mudar o UID
+                      request.resource.data.email == resource.data.email && // Não pode mudar o email
+                      !request.resource.data.keys().hasAny(['roleId', 'roleName', 'status', 'permissions']) && // Não pode mudar perfil ou status por aqui
+                      request.resource.data.keys().has('updatedAt'); // Deve sempre atualizar 'updatedAt'
 
-      // Atualizações:
-      allow update: if
-                      // 1. Admin fazendo bootstrap em si mesmo (primeiro login)
-                      (
-                        isAdminEmail() && isUser(userId) &&
-                        (resource.data.roleName == null || resource.data.roleName != 'ADMINISTRATOR') && // Só se não for admin ainda
-                        request.resource.data.roleName == 'ADMINISTRATOR' &&
-                        request.resource.data.keys().hasAll(['roleId', 'roleName', 'updatedAt', 'habilitationStatus']) &&
-                        // Permite alguns campos adicionais que a action 'ensureUserRoleInFirestore' pode enviar ao criar/atualizar o doc do usuário pela primeira vez
-                        request.resource.data.keys().size() <= 8 // roleId, roleName, updatedAt, habilitationStatus, fullName, email, status, createdAt (se novo)
-                      ) ||
-                      // 2. Admin real gerenciando outros usuários ou seu próprio perfil
-                      (
-                        isActualAdmin(request.auth.uid) &&
-                        // Admin não pode mudar o UID ou email diretamente desta forma (geralmente feito pelo Firebase Auth)
-                        !request.resource.data.keys().hasAny(['uid', 'email', 'createdAt'])
-                      ) ||
-                       // 3. Analista de Leilões gerenciando habilitação
-                      (
-                        isAuctionAnalyst(request.auth.uid) &&
-                        // Analista só pode mudar 'habilitationStatus' e 'updatedAt'
-                        request.resource.data.keys().hasOnly(['habilitationStatus', 'updatedAt']) &&
-                        request.resource.data.keys().hasAll(['habilitationStatus', 'updatedAt'])
-                      ) ||
-                      // 4. Usuário comum atualizando seu próprio perfil (campos limitados)
-                      (
-                        isUser(userId) &&
-                        !request.resource.data.keys().hasAny(['uid', 'email', 'roleId', 'roleName', 'status', 'habilitationStatus', 'createdAt'])
-                        // Permite atualizar: fullName, cpf, rg*, dateOfBirth, phones, gender, profession, address, etc.
-                      );
+      // Permite que um admin ou analista atualize o roleId, roleName e habilitationStatus de qualquer usuário
+      allow update: if isSignedIn() &&
+                      (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid)) &&
+                      request.resource.data.keys().hasAll(['updatedAt']) && // updatedAt é obrigatório
+                      // Apenas os campos roleId, roleName, habilitationStatus e updatedAt podem ser modificados por esta regra específica
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roleId', 'roleName', 'habilitationStatus', 'updatedAt', 'role']); // 'role' para limpeza
+                      
+      // Regra para o bootstrap do primeiro admin pelo AuthProvider
+      // O usuário (identificado pelo email) pode se auto-promover a ADMIN se o documento dele ainda não tiver o perfil ADMIN.
+      allow update: if isSignedIn() &&
+                      isAdminEmail() && isUser(userId) &&
+                      (resource.data.roleName == null || resource.data.roleName != 'ADMINISTRATOR') && // Só se não for admin ainda
+                      request.resource.data.roleName == 'ADMINISTRATOR' &&
+                      request.resource.data.keys().hasAll(['roleId', 'roleName', 'updatedAt', 'habilitationStatus']) &&
+                      request.resource.data.keys().size() <= 8; // UID, email, fullName (se já existir), roleId, roleName, updatedAt, habilitationStatus, (opcionalmente) permissions
 
-      allow delete: if isActualAdmin(request.auth.uid); // Apenas Admin real pode excluir usuários
+      // Admin pode deletar usuários (cuidado com dados órfãos)
+      allow delete: if isSignedIn() && isActualAdmin(request.auth.uid);
     }
 
-    // LotCategories Collection
+    // Roles Collection
+    match /roles/{roleId} {
+      // Permite leitura pública de perfis por enquanto para facilitar o bootstrap do lado do cliente
+      allow read, list: if true; 
+
+      // Criação de perfis só por administradores reais
+      allow create: if isSignedIn() &&
+                      isActualAdmin(request.auth.uid) &&
+                      request.resource.data.name_normalized == request.resource.data.name.upper() &&
+                      request.resource.data.keys().hasAll(['name', 'name_normalized', 'description', 'permissions', 'createdAt', 'updatedAt']) &&
+                      request.resource.data.keys().size() == 6;
+      
+      // Somente admins ou adminEmail (para default roles) podem atualizar.
+      allow update: if isSignedIn() &&
+                      (
+                        // Caso 1: Administrador Real
+                        (
+                          isActualAdmin(request.auth.uid) &&
+                          // Se está tentando mudar o 'name_normalized', SÓ PODE se NÃO for um perfil padrão.
+                          (!request.resource.data.keys().has('name_normalized') || !isDefaultRoleName(resource.data.name) || request.resource.data.name_normalized == resource.data.name_normalized) &&
+                          // Se está tentando mudar o 'name', SÓ PODE se NÃO for um perfil padrão com um nome diferente.
+                          (!request.resource.data.keys().has('name') || !isDefaultRoleName(resource.data.name) || request.resource.data.name == resource.data.name) &&
+                           // Garante que, para Admins, name_normalized corresponda a name.upper se ambos forem passados.
+                          (!request.resource.data.keys().hasAll(['name', 'name_normalized']) || request.resource.data.name_normalized == request.resource.data.name.upper()) &&
+                          request.resource.data.keys().hasOnly(['name', 'name_normalized', 'description', 'permissions', 'updatedAt'])
+                        ) ||
+                        // Caso 2: Admin por Email (bootstrap/seed para perfis padrão)
+                        // Permite apenas atualizar 'description' e 'permissions' de perfis padrão.
+                        // 'name' e 'name_normalized' não devem ser enviados pela action neste caso se não mudaram.
+                        (
+                          isAdminEmail() && isDefaultRoleName(resource.data.name) &&
+                          !request.resource.data.keys().hasAny(['name_normalized']) && // Não pode mudar o nome normalizado (identidade)
+                           // Se 'name' for enviado, deve ser igual ao existente (permite apenas sync de display name case sensitive)
+                          (!request.resource.data.keys().has('name') || request.resource.data.name == resource.data.name) &&
+                          request.resource.data.keys().hasOnly(['name', 'description', 'permissions', 'updatedAt'])
+                        )
+                      ) &&
+                      request.resource.data.keys().hasAny(['updatedAt']);
+
+
+      // Deletar perfis (apenas se não for um perfil padrão e por um admin real)
+      allow delete: if isSignedIn() &&
+                      isActualAdmin(request.auth.uid) &&
+                      !isDefaultRoleName(resource.data.name);
+    }
+
+    // Lot Categories Collection
     match /lotCategories/{categoryId} {
-      allow read: if true;
-      allow list: if true;
+      allow read, list: if true; // Public read
       allow create, update, delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
     }
 
     // States Collection
     match /states/{stateId} {
-      allow read: if true;
-      allow list: if true;
+      allow read, list: if true; // Public read
       allow create, update, delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
     }
 
     // Cities Collection
     match /cities/{cityId} {
-      allow read: if true;
-      allow list: if true;
+      allow read, list: if true; // Public read
       allow create, update, delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
     }
-
+    
     // Auctioneers Collection
     match /auctioneers/{auctioneerId} {
-      allow read: if true;
-      allow list: if true;
-      allow create: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
-      allow update: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
-      allow delete: if isSignedIn() && isActualAdmin(request.auth.uid);
+      allow read, list: if true; // Public read
+      allow create, update, delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
     }
 
     // Sellers Collection
     match /sellers/{sellerId} {
-      allow read: if true;
-      allow list: if true;
-      allow create: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
-      allow update: if isSignedIn() && 
-                      (
-                        isActualAdmin(request.auth.uid) || 
-                        isAuctionAnalyst(request.auth.uid) ||
-                        (isUser(resource.data.userId) && !request.resource.data.keys().hasAny(['userId', 'roleId', 'roleName']))
-                      );
-      allow delete: if isSignedIn() && isActualAdmin(request.auth.uid);
+      allow read, list: if true; // Public read
+      allow create, update, delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
     }
-
+    
     // Auctions Collection
     match /auctions/{auctionId} {
-      allow read: if true;
-      allow list: if true;
+      allow read, list: if true; // Public read
       allow create, update, delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
+      // TODO: Rules for auctioneers/sellers to manage their own auctions
     }
 
     // Lots Collection
     match /lots/{lotId} {
-      allow read: if true;
-      allow list: if true;
+      allow read, list: if true; // Public read
       allow create, update, delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid));
+      // TODO: Rules for auctioneers/sellers to manage lots in their auctions
     }
-
+    
     // MediaItems Collection
     match /mediaItems/{mediaItemId} {
-      allow read: if true; // Public read for now, can be restricted
-      allow list: if isSignedIn(); // Only signed-in users can list (e.g., in media library)
-      allow create: if isSignedIn(); // Any signed-in user can upload (permissions for linking to lots are separate)
-      allow update: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid)); // Admins/Analysts can edit metadata
-      allow delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid)); // Admins/Analysts can delete
+      // Allow read if signed in for now (can be public if gallery is public)
+      allow read, list: if isSignedIn(); 
+      // Allow create, update, delete for admins or specific roles like 'AUCTION_ANALYST' or 'CONSIGNOR' (manage_own_media)
+      allow create, update, delete: if isSignedIn() && (isActualAdmin(request.auth.uid) || isAuctionAnalyst(request.auth.uid) || hasPermission('media:upload'));
+      // TODO: Add permission check for 'media:update' and 'media:delete'
     }
+
+    // Bids Collection (placeholder - implement when bidding is added)
+    // match /bids/{bidId} {
+    //   allow read: if true; // Or more restrictive
+    //   allow create: if isSignedIn() && isHabilitated();
+    // }
+    
+    // Platform Settings Collection
+    match /platformSettings/{settingsId} {
+        allow read: if true; // Settings can be public or restricted
+        allow create, update: if isSignedIn() && isActualAdmin(request.auth.uid); // Only admins can change settings
+        // No delete for global settings typically
+    }
+
   }
 }
-
-    
