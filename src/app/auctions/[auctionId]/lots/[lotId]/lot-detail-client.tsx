@@ -46,14 +46,11 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
   const [lotBids, setLotBids] = useState<BidInfo[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Memoize the gallery construction
   const gallery = useMemo(() => {
     if (!lot) return [];
-    // Ensure imageUrl is a string and not null/undefined before including
     const mainImage = typeof lot.imageUrl === 'string' && lot.imageUrl.trim() !== '' ? [lot.imageUrl] : [];
     const galleryImages = (lot.galleryImageUrls || []).filter(url => typeof url === 'string' && url.trim() !== '');
     const combined = [...mainImage, ...galleryImages];
-    // Remove duplicates that might arise if imageUrl is also in galleryImageUrls
     return Array.from(new Set(combined));
   }, [lot]);
 
@@ -152,9 +149,7 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
           <div className="flex-grow">
             <h1 className="text-2xl md:text-3xl font-bold font-headline text-left">{lotTitle}</h1>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <Badge variant="outline" className="text-sm border-primary/50 text-primary font-medium px-2.5 py-1">
-                Lote Nº: {actualLotNumber}
-              </Badge>
+              {/* Badge do Número do Lote removido daqui */}
               <Badge className={`text-xs px-2 py-0.5 ${getLotStatusColor(lot.status)}`}>
                 {getAuctionStatusText(lot.status)}
               </Badge>
@@ -211,27 +206,31 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
             </Tooltip>
           </div>
         </div>
-        <div className="flex items-center justify-end">
-          <div className="flex items-center">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!previousLotId} disabled={!previousLotId} aria-label="Lote Anterior">
-                    {previousLotId ? <Link href={`/auctions/${auction.id}/lots/${previousLotId}`}><ChevronLeft className="h-4 w-4" /></Link> : <ChevronLeft className="h-4 w-4" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Lote Anterior</p></TooltipContent>
-              </Tooltip>
-              <span className="text-sm text-muted-foreground mx-2">Lote {displayLotPosition} de {displayTotalLots}</span>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">
-                    {nextLotId ? <Link href={`/auctions/${auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Próximo Lote</p></TooltipContent>
-              </Tooltip>
+        
+        {/* Linha da Paginação e Número do Lote */}
+        <div className="flex items-center justify-end gap-4 text-sm text-muted-foreground mb-4">
+            <span className="font-medium">Lote Nº: <span className="text-foreground">{actualLotNumber}</span></span>
+            <div className="flex items-center">
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!previousLotId} disabled={!previousLotId} aria-label="Lote Anterior">
+                        {previousLotId ? <Link href={`/auctions/${auction.id}/lots/${previousLotId}`}><ChevronLeft className="h-4 w-4" /></Link> : <ChevronLeft className="h-4 w-4" />}
+                    </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Lote Anterior</p></TooltipContent>
+                </Tooltip>
+                <span className="text-sm text-muted-foreground mx-2">Lote {displayLotPosition} de {displayTotalLots}</span>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">
+                        {nextLotId ? <Link href={`/auctions/${auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" />}
+                    </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Próximo Lote</p></TooltipContent>
+                </Tooltip>
             </div>
         </div>
+
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
@@ -474,3 +473,5 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
   );
 }
 
+
+    
