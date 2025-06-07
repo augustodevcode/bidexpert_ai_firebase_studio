@@ -81,7 +81,7 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
       setCurrentImageIndex(0); 
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lot]); // Removed 'gallery' from dependencies as it's memoized based on 'lot'
+  }, [lot]);
 
   const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || lot?.title}`.trim();
   const lotLocation = lot?.cityName && lot?.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot?.stateUf || lot?.cityName || 'Não informado';
@@ -141,8 +141,9 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
   const nextImage = () => setCurrentImageIndex((prev) => (gallery.length > 0 ? (prev + 1) % gallery.length : 0));
   const prevImage = () => setCurrentImageIndex((prev) => (gallery.length > 0 ? (prev - 1 + gallery.length) % gallery.length : 0));
 
-  const displayLotNumber = lotIndex !== undefined && lotIndex !== -1 ? lotIndex + 1 : lot.id.replace('LOTE', '');
-  const displayTotalLots = totalLotsInAuction || auction.totalLots;
+  const displayLotPosition = lotIndex !== undefined && lotIndex !== -1 ? lotIndex + 1 : 'N/A';
+  const displayTotalLots = totalLotsInAuction || auction.totalLots || 'N/A';
+  const actualLotNumber = lot.number || `ID ${lot.id.substring(0,6)}...`;
 
   return (
     <TooltipProvider>
@@ -150,9 +151,12 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
         <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
           <div className="flex-grow">
             <h1 className="text-2xl md:text-3xl font-bold font-headline text-left">{lotTitle}</h1>
-            <div className="mt-1">
-               <Badge className={`text-xs px-2 py-0.5 ${getLotStatusColor(lot.status)}`}>
-                  {getAuctionStatusText(lot.status)}
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <Badge variant="outline" className="text-sm border-primary/50 text-primary font-medium px-2.5 py-1">
+                Lote Nº: {actualLotNumber}
+              </Badge>
+              <Badge className={`text-xs px-2 py-0.5 ${getLotStatusColor(lot.status)}`}>
+                {getAuctionStatusText(lot.status)}
               </Badge>
             </div>
           </div>
@@ -217,7 +221,7 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
                 </TooltipTrigger>
                 <TooltipContent><p>Lote Anterior</p></TooltipContent>
               </Tooltip>
-              <span className="text-sm text-muted-foreground mx-2">Lote {displayLotNumber} de {displayTotalLots}</span>
+              <span className="text-sm text-muted-foreground mx-2">Lote {displayLotPosition} de {displayTotalLots}</span>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">
@@ -399,7 +403,7 @@ export default function LotDetailClientContent({ lot, auction, lotIndex, previou
               <CardContent className="space-y-1 text-sm">
                 {Object.entries({
                   "Filial de Venda:": lot.sellingBranch || auction.sellingBranch,
-                  "Localização do Veículo:": lot.vehicleLocationInBranch || lotLocation, // auction.vehicleLocation was removed
+                  "Localização do Veículo:": lot.vehicleLocationInBranch || lotLocation, 
                   "Data e Hora do Leilão (Lote):": lot.lotSpecificAuctionDate ? format(new Date(lot.lotSpecificAuctionDate), "dd/MM/yyyy HH:mm'h'", { locale: ptBR }) : 'N/A',
                   "Pista/Corrida #:": lot.laneRunNumber,
                   "Corredor/Vaga:": lot.aisleStall,
