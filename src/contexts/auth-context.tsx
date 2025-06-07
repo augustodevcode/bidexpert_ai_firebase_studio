@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.log('[AuthProvider] roleSetupResult from ensureUserRoleInFirestore:', JSON.stringify(roleSetupResult, null, 2));
 
 
-            if (roleSetupResult && roleSetupResult.success) { 
+            if (roleSetupResult && roleSetupResult.success) {
               console.log(`[AuthProvider] Admin role setup for ${currentUser.email}: ${roleSetupResult.message}`);
             } else {
               console.error(`[AuthProvider] Failed to setup admin role for ${currentUser.email}: ${roleSetupResult?.message || 'Resultado indefinido ou falha sem mensagem.'}`);
@@ -83,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUserProfileWithPermissions({ ...userProfileData, permissions });
             console.log(`[AuthProvider] Profile and permissions loaded for ${currentUser.email}. Role: ${userProfileData.roleName || 'None'}, Habilitation: ${userProfileData.habilitationStatus}, Permissions: ${permissions.length}`);
           } else {
-            console.warn(`[AuthProvider] No Firestore profile found for user ${currentUser.email} (UID: ${currentUser.uid}). This might happen if the account was just created and Firestore document creation is pending or failed.`);
+            console.warn(`[AuthProvider] No Firestore profile found for user ${currentUser.email} (UID: ${currentUser.uid}). This might happen if the account was just created and Firestore document creation is pending or failed, or due to permission issues reading the user's own document.`);
           }
         } catch (profileError) {
           console.error(`[AuthProvider] Error fetching profile for ${currentUser.email}:`, profileError);
@@ -124,3 +124,6 @@ export function useAuth() {
 
     
 
+
+
+    
