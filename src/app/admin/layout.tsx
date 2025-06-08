@@ -6,23 +6,18 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import AdminSidebar from '@/components/layout/admin-sidebar';
-
-// TODO: Replace this with actual role fetching and checking from Firestore
-const ALLOWED_EMAILS_FOR_ADMIN_ACCESS = ['admin@bidexpert.com', 'analyst@bidexpert.com', 'augusto.devcode@gmail.com'];
-const SUPER_TEST_USER_EMAIL = 'augusto.devcode@gmail.com';
+import { hasPermission } from '@/lib/permissions'; // Importar hasPermission
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user, userProfileWithPermissions, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading && !user) {
-      // Se não estiver carregando e não houver usuário, redirecione para login
-      // Adicionando o redirect para voltar ao dashboard admin após o login
       router.push('/auth/login?redirect=/admin/dashboard');
     }
   }, [user, loading, router]);
@@ -31,30 +26,21 @@ export default function AdminLayout({
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-3 text-muted-foreground">Verificando autenticação...</p>
+        <p className="ml-3 text-muted-foreground">Verificando autenticação e permissões...</p>
       </div>
     );
   }
 
   if (!user) {
-    // Este caso é mais para fallback se o useEffect não redirecionar a tempo.
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-muted-foreground">Redirecionando para login...</p>
       </div>
     );
   }
-
-  // Placeholder for role check (case-insensitive email check)
-  const userEmailLower = user.email?.toLowerCase();
-  const isSuperTestUser = userEmailLower === SUPER_TEST_USER_EMAIL.toLowerCase();
-  const isAdminByList = userEmailLower && ALLOWED_EMAILS_FOR_ADMIN_ACCESS.map(e => e.toLowerCase()).includes(userEmailLower);
   
-  // Grant access if super test user OR if they are in the admin list (and userProfileWithPermissions has manage_all)
-  // For development, we'll simplify to grant access if email matches or is in list.
-  // In a real app, the `userProfileWithPermissions.permissions.includes('manage_all')` would be more robust after role assignment.
-  const hasAdminAccess = isSuperTestUser || isAdminByList;
-
+  // Agora usamos as permissões reais do userProfileWithPermissions
+  const hasAdminAccess = hasPermission(userProfileWithPermissions, 'manage_all');
 
   if (!hasAdminAccess) {
     return (
@@ -65,7 +51,7 @@ export default function AdminLayout({
           Você não tem permissão para acessar esta área.
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          (Email verificado: {user.email || 'N/A'}, Permissão: {hasAdminAccess ? 'Concedida' : 'Negada'})
+          (Perfil: {userProfileWithPermissions?.roleName || 'N/A'}, Permissões: {userProfileWithPermissions?.permissions?.join(', ') || 'Nenhuma'})
         </p>
         <button
           onClick={() => router.push('/')}

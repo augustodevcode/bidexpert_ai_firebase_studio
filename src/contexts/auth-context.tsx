@@ -5,13 +5,10 @@ import type { User } from 'firebase/auth';
 import { onAuthStateChanged } from 'firebase/auth';
 import type { ReactNode, Dispatch, SetStateAction} from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { auth, db } from '@/lib/firebase'; 
+import { auth } from '@/lib/firebase'; 
 import { Loader2 } from 'lucide-react';
 import { ensureUserRoleInFirestore } from '@/app/admin/users/actions';
-import { doc, getDoc, Timestamp } from 'firebase/firestore'; 
-import type { UserProfileData, Role, UserProfileWithPermissions } from '@/types';
-import { getRole, getRoleByName } from '@/app/admin/roles/actions';
-
+import type { UserProfileData, UserProfileWithPermissions } from '@/types';
 
 interface AuthContextType {
   user: User | null;
@@ -21,11 +18,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Emails com acesso de admin/analista. Adicione 'augusto.devcode@gmail.com' aqui explicitamente.
-const ALLOWED_ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || 'admin@bidexpert.com,analyst@bidexpert.com,augusto.devcode@gmail.com').split(',').map(e => e.trim().toLowerCase());
-const SUPER_TEST_USER_EMAIL = 'augusto.devcode@gmail.com'.toLowerCase();
-
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -39,103 +31,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUserProfileWithPermissions(null); 
 
       if (currentUser && currentUser.email) {
-        console.log(`[AuthProvider] User ${currentUser.email} changed state. Processing profile...`);
+        console.log(`[AuthProvider] Usuário ${currentUser.email} mudou de estado. Processando perfil...`);
         
-        const userEmailLower = currentUser.email.toLowerCase();
-        const isTestAdminUser = ALLOWED_ADMIN_EMAILS.includes(userEmailLower) || userEmailLower === SUPER_TEST_USER_EMAIL;
+        try {
+          // Sempre chamar ensureUserRoleInFirestore para sincronizar/criar perfil no Firestore
+          // A action determinará o perfil correto (ex: USER, ou ADMINISTRATOR se já configurado).
+          // Para um novo usuário, ele será criado com o perfil USER padrão.
+          const targetRoleForNewUsers = 'USER'; 
+          
+          const roleSetupResult = await ensureUserRoleInFirestore(
+            currentUser.uid, 
+            currentUser.email, 
+            currentUser.displayName || currentUser.email.split('@')[0], 
+            targetRoleForNewUsers // Se o usuário já for admin no Firestore, ensureUserRoleInFirestore deve respeitar isso.
+          );
 
-        if (isTestAdminUser) {
-          console.warn(`[AuthProvider] Usuário de teste/admin ${currentUser.email} detectado. Fornecendo permissões máximas no contexto do cliente (manage_all).`);
-          // Tenta carregar perfil base do Firestore (leitura, SDK cliente) para ter dados como nome, etc.
-          try {
-            const userDocRef = doc(db, 'users', currentUser.uid);
-            const userDocSnap = await getDoc(userDocRef);
-            let baseProfileData: Partial<UserProfileData> = {
-              uid: currentUser.uid,
-              email: currentUser.email,
-              fullName: currentUser.displayName || currentUser.email.split('@')[0],
-              roleName: 'ADMINISTRATOR (Modo Desenvolvedor)', // Marcar que é modo dev
-            };
-            if (userDocSnap.exists()) {
-              const firestoreData = userDocSnap.data() as UserProfileData;
-              baseProfileData.fullName = firestoreData.fullName || baseProfileData.fullName;
-              baseProfileData.roleName = firestoreData.roleName || baseProfileData.roleName;
-              // Incluir outros campos do Firestore se existirem e forem relevantes
-              Object.keys(firestoreData).forEach(key => {
-                if (!(key in baseProfileData) && firestoreData[key as keyof UserProfileData] !== undefined) {
-                    (baseProfileData as any)[key] = firestoreData[key as keyof UserProfileData];
-                }
-              });
-            }
+          if (roleSetupResult.success && roleSetupResult.userProfile) {
+            console.log(`[AuthProvider] ensureUserRoleInFirestore teve sucesso para ${currentUser.email}. Perfil:`, JSON.stringify(roleSetupResult.userProfile));
             setUserProfileWithPermissions({
-              ...(baseProfileData as UserProfileData), // Cast, pois alguns campos podem estar faltando
-              permissions: ['manage_all'], // Forçar permissão máxima
-            });
-            console.log(`[AuthProvider] Perfil (mock ou base) para ${currentUser.email} com manage_all carregado no contexto.`);
-          } catch (profileError) {
-            console.error(`[AuthProvider] Erro ao buscar perfil base para ${currentUser.email}, fornecendo mock completo:`, profileError);
-            setUserProfileWithPermissions({
-              uid: currentUser.uid,
-              email: currentUser.email!,
-              fullName: currentUser.displayName || currentUser.email!.split('@')[0],
-              roleName: 'ADMINISTRATOR (Erro Firestore - Modo Dev)',
-              permissions: ['manage_all'],
-            } as UserProfileWithPermissions);
+              ...roleSetupResult.userProfile,
+              // Certificar que as datas sejam objetos Date no cliente
+              createdAt: roleSetupResult.userProfile.createdAt ? new Date(roleSetupResult.userProfile.createdAt) : undefined,
+              updatedAt: roleSetupResult.userProfile.updatedAt ? new Date(roleSetupResult.userProfile.updatedAt) : undefined,
+              dateOfBirth: roleSetupResult.userProfile.dateOfBirth ? new Date(roleSetupResult.userProfile.dateOfBirth) : undefined,
+              rgIssueDate: roleSetupResult.userProfile.rgIssueDate ? new Date(roleSetupResult.userProfile.rgIssueDate) : undefined,
+            } as UserProfileWithPermissions); // Forçar o tipo se necessário
+          } else {
+            console.error(`[AuthProvider] Falha ao executar ensureUserRoleInFirestore para ${currentUser.email}: ${roleSetupResult?.message || 'Resultado indefinido.'}`);
+            // Em caso de falha, userProfileWithPermissions permanecerá null ou você pode definir um estado de erro
+            setUserProfileWithPermissions(null); 
           }
-        } else {
-          // Lógica original para usuários não-admin (buscar perfil e permissões reais)
-          console.log(`[AuthProvider] Usuário padrão ${currentUser.email}. Buscando perfil e permissões reais.`);
-          try {
-            const userDocRef = doc(db, 'users', currentUser.uid);
-            const userDocSnap = await getDoc(userDocRef);
-
-            if (userDocSnap.exists()) {
-              const userProfileData = { uid: userDocSnap.id, ...userDocSnap.data() } as UserProfileData;
-              let permissions: string[] = userProfileData.permissions || [];
-              
-              if (userProfileData.roleId) {
-                const roleData = await getRole(userProfileData.roleId);
-                if (roleData) {
-                  if ((!permissions || permissions.length === 0) && roleData.permissions) {
-                      permissions = roleData.permissions;
-                  }
-                  if (userProfileData.roleName !== roleData.name) {
-                       userProfileData.roleName = roleData.name;
-                  }
-                }
-              } else if (!permissions || permissions.length === 0) {
-                  const defaultUserRole = await getRoleByName('USER');
-                  if (defaultUserRole && defaultUserRole.permissions) {
-                      permissions = defaultUserRole.permissions;
-                      userProfileData.roleId = defaultUserRole.id;
-                      userProfileData.roleName = defaultUserRole.name;
-                  }
-              }
-              setUserProfileWithPermissions({ ...userProfileData, permissions });
-              console.log(`[AuthProvider] Perfil e permissões carregados para ${currentUser.email}. Role: ${userProfileData.roleName || 'None'}, Permissões: ${permissions.length}`);
-            } else {
-              console.warn(`[AuthProvider] Nenhum perfil Firestore para ${currentUser.email}. Usuário terá perfil padrão.`);
-              // Se o documento não existe, cria um perfil "USER" padrão no contexto
-                const defaultUserRole = await getRoleByName('USER');
-                setUserProfileWithPermissions({
-                    uid: currentUser.uid,
-                    email: currentUser.email!,
-                    fullName: currentUser.displayName || currentUser.email!.split('@')[0],
-                    roleId: defaultUserRole?.id,
-                    roleName: defaultUserRole?.name || 'USER',
-                    permissions: defaultUserRole?.permissions || ['view_auctions', 'view_lots', 'place_bids'],
-                    status: 'ATIVO',
-                    habilitationStatus: 'PENDENTE_DOCUMENTOS',
-                } as UserProfileWithPermissions);
-            }
-          } catch (profileError) {
-            console.error(`[AuthProvider] Erro ao buscar perfil para ${currentUser.email}:`, profileError);
-            setUserProfileWithPermissions(null);
-          }
+        } catch (error) {
+          console.error(`[AuthProvider] Erro ao chamar ensureUserRoleInFirestore para ${currentUser.email}:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
+          setUserProfileWithPermissions(null); 
         }
         setLoading(false);
       } else {
-        console.log("[AuthProvider] Nenhum usuário logado.");
+        console.log("[AuthProvider] Nenhum usuário logado ou sem e-mail.");
         setUser(null);
         setUserProfileWithPermissions(null);
         setLoading(false); 
@@ -168,4 +100,3 @@ export function useAuth() {
   }
   return context;
 }
-

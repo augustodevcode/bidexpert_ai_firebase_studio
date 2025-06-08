@@ -3,9 +3,94 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // WARNING: Open rules for development. Secure before deploying to production!
+    // Regra global padrão para desenvolvimento: permite leitura e escrita por qualquer um.
+    // ATENÇÃO: Estas regras são inseguras e NÃO DEVEM SER USADAS EM PRODUÇÃO.
+    // Substitua por regras de segurança granulares antes de ir para produção.
     match /{document=**} {
       allow read, write: if true;
     }
+
+    // Exemplo de regras mais específicas que você pode adaptar (atualmente comentadas):
+    /*
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+      // Administradores podem ter mais permissões, verificadas via custom claims ou roles
+      // allow write: if request.auth != null && (request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
+    }
+
+    match /lotCategories/{categoryId} {
+      allow read: if true; // Qualquer um pode ler categorias
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['manage_all', 'categories:create', 'categories:update', 'categories:delete']);
+    }
+
+    match /states/{stateId} {
+      allow read: if true;
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['manage_all', 'states:create', 'states:update', 'states:delete']);
+    }
+
+    match /cities/{cityId} {
+      allow read: if true;
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['manage_all', 'cities:create', 'cities:update', 'cities:delete']);
+    }
+    
+    match /auctioneers/{auctioneerId} {
+      allow read: if true;
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['manage_all', 'auctioneers:create', 'auctioneers:update', 'auctioneers:delete']);
+    }
+
+    match /sellers/{sellerId} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+                    ( get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['manage_all', 'sellers:create', 'sellers:update', 'sellers:delete']) ||
+                      (request.resource.data.userId == request.auth.uid && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['auctions:manage_own'])) // Comitente pode editar seu perfil
+                    );
+    }
+
+    match /auctions/{auctionId} {
+      allow read: if true; // Qualquer um pode ler leilões
+      // A lógica de escrita para leilões pode ser complexa (admins, leiloeiros, comitentes)
+      allow create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['manage_all', 'auctions:create', 'auctions:manage_own']);
+      allow update: if request.auth != null && 
+                      ( get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['manage_all', 'auctions:update']) ||
+                        (resource.data.sellerId == request.auth.uid && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['auctions:manage_own'])) ||
+                        (resource.data.auctioneerId == request.auth.uid && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['auctions:manage_assigned']))
+                      );
+      allow delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['manage_all', 'auctions:delete']);
+    }
+
+    match /lots/{lotId} {
+      allow read: if true; // Qualquer um pode ler lotes
+      allow create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['manage_all', 'lots:create', 'auctions:manage_own']);
+      allow update: if request.auth != null && 
+                      ( get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['manage_all', 'lots:update']) ||
+                        (resource.data.sellerId == request.auth.uid && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['lots:manage_own'])) ||
+                        (get(/databases/$(database)/documents/auctions/$(resource.data.auctionId)).data.auctioneerId == request.auth.uid && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['auctions:manage_assigned']))
+                      );
+      allow delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['manage_all', 'lots:delete']);
+
+      match /bids/{bidId} {
+        allow read: if true; // Lances podem ser públicos ou restritos dependendo da sua regra de negócio
+        allow create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['place_bids']);
+      }
+    }
+
+    match /roles/{roleId} {
+        allow read: if true; // Perfis podem ser lidos para popular dropdowns, etc.
+        allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.includes('manage_all'); // Apenas admin total pode gerenciar perfis
+    }
+
+    match /platformSettings/{settingsId} {
+        allow read: if true; // Configurações podem ser lidas por todos para o funcionamento do app
+        allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.includes('manage_all');
+    }
+    
+    match /mediaItems/{mediaId} {
+      allow read: if true; // Qualquer um pode ler mídia (se URLs são públicas)
+      allow create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['manage_all', 'media:upload']);
+      allow update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['manage_all', 'media:update']);
+      allow delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.hasAny(['manage_all', 'media:delete']);
+    }
+    */
   }
 }

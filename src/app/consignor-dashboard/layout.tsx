@@ -6,18 +6,14 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import ConsignorSidebar from '@/components/layout/consignor-sidebar';
-
-// Idealmente, estas constantes viriam de um local compartilhado (ex: src/lib/auth-roles.ts)
-const ALLOWED_EMAILS_FOR_ADMIN_ACCESS = ['admin@bidexpert.com', 'analyst@bidexpert.com', 'augusto.devcode@gmail.com'];
-const EXAMPLE_CONSIGNOR_EMAIL = 'consignor@bidexpert.com'; // Email do comitente de exemplo
-const SUPER_TEST_USER_EMAIL = 'augusto.devcode@gmail.com';
+import { hasAnyPermission } from '@/lib/permissions'; // Importar hasAnyPermission
 
 export default function ConsignorDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user, userProfileWithPermissions, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -30,27 +26,22 @@ export default function ConsignorDashboardLayout({
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-3 text-muted-foreground">Verificando autenticação...</p>
+        <p className="ml-3 text-muted-foreground">Verificando autenticação e permissões...</p>
       </div>
     );
   }
 
   if (!user) {
-    // Este caso é mais para fallback se o useEffect não redirecionar a tempo.
-    // O redirecionamento principal acontece no useEffect.
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-muted-foreground">Redirecionando para login...</p>
       </div>
     );
   }
-
-  const userEmailLower = user.email?.toLowerCase();
-  const isSuperTestUser = userEmailLower === SUPER_TEST_USER_EMAIL.toLowerCase();
-  const isAdminByList = userEmailLower && ALLOWED_EMAILS_FOR_ADMIN_ACCESS.map(e => e.toLowerCase()).includes(userEmailLower);
-  const isTheExampleConsignorByList = userEmailLower === EXAMPLE_CONSIGNOR_EMAIL.toLowerCase();
   
-  const canAccessConsignorDashboard = isSuperTestUser || isAdminByList || isTheExampleConsignorByList;
+  // Permissões que concedem acesso ao painel do comitente
+  const requiredConsignorPermissions = ['auctions:manage_own', 'lots:manage_own', 'manage_all'];
+  const canAccessConsignorDashboard = hasAnyPermission(userProfileWithPermissions, requiredConsignorPermissions);
 
   if (!canAccessConsignorDashboard) {
     return (
@@ -61,7 +52,7 @@ export default function ConsignorDashboardLayout({
           Você não tem permissão para acessar o Painel do Comitente.
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          (E-mail verificado: {user.email || 'N/A'})
+          (Perfil: {userProfileWithPermissions?.roleName || 'N/A'}, Permissões: {userProfileWithPermissions?.permissions?.join(', ') || 'Nenhuma'})
         </p>
         <button
           onClick={() => router.push('/')}
