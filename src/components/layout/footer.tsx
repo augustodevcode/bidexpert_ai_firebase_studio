@@ -1,7 +1,12 @@
+
 import Link from 'next/link';
 import { Coins } from 'lucide-react';
 
-export default function Footer() {
+interface FooterProps {
+  activeDatabaseSystem?: string;
+}
+
+export default function Footer({ activeDatabaseSystem }: FooterProps) {
   const currentYear = new Date().getFullYear();
 
   const quickLinks = [
@@ -63,6 +68,11 @@ export default function Footer() {
           <p className="text-sm text-muted-foreground">
             &copy; {currentYear} BidExpert. All rights reserved.
           </p>
+          {process.env.NODE_ENV === 'development' && activeDatabaseSystem && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Active DB System: <span className="font-semibold text-primary">{activeDatabaseSystem}</span> (Dev Only)
+            </p>
+          )}
         </div>
       </div>
     </footer>

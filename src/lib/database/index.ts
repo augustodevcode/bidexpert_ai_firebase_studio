@@ -1,6 +1,6 @@
 
 // src/lib/database/index.ts
-import type { IDatabaseAdapter } from '@/types'; // Import from types
+import type { IDatabaseAdapter } from '@/types';
 import { FirestoreAdapter } from './firestore.adapter';
 import { PostgresAdapter } from './postgres.adapter';
 import { MySqlAdapter } from './mysql.adapter';
@@ -13,7 +13,7 @@ export function getDatabaseAdapter(): IDatabaseAdapter {
   }
 
   const activeSystem = process.env.ACTIVE_DATABASE_SYSTEM || 'FIRESTORE';
-  console.log(`[DB Factory] ACTIVE_DATABASE_SYSTEM: ${activeSystem}`);
+  console.log(`[DB Factory] Initializing adapter for ACTIVE_DATABASE_SYSTEM: ${activeSystem}`);
 
   switch (activeSystem.toUpperCase()) {
     case 'POSTGRES':

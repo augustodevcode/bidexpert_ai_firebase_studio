@@ -60,8 +60,8 @@ export interface LotCategory {
     slug: string;
     description?: string;
     itemCount?: number; 
-    createdAt: AnyTimestamp; // Could be Date from SQL, Timestamp from Firestore
-    updatedAt: AnyTimestamp; // Could be Date from SQL, Timestamp from Firestore
+    createdAt: AnyTimestamp; 
+    updatedAt: AnyTimestamp; 
 }
 
 export interface MediaItem {
@@ -457,7 +457,6 @@ export interface PlatformSettings {
 
 export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'>;
     
-// Database Adapter Interface (moved here from a separate file for simplicity in this turn)
 export interface IDatabaseAdapter {
   // Categories
   createLotCategory(data: { name: string; description?: string }): Promise<{ success: boolean; message: string; categoryId?: string }>;
@@ -466,7 +465,6 @@ export interface IDatabaseAdapter {
   updateLotCategory(id: string, data: { name: string; description?: string }): Promise<{ success: boolean; message: string }>;
   deleteLotCategory(id: string): Promise<{ success: boolean; message: string }>;
   
-  // Add other entity methods here...
   // States
   createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string }>;
   getStates(): Promise<StateInfo[]>;
@@ -487,7 +485,7 @@ export interface IDatabaseAdapter {
   getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null>;
   updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string }>;
   deleteAuctioneer(id: string): Promise<{ success: boolean; message: string }>;
-  getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null>; // Added
+  getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null>;
 
   // Sellers
   createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string }>;
@@ -495,7 +493,7 @@ export interface IDatabaseAdapter {
   getSeller(id: string): Promise<SellerProfileInfo | null>;
   updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string }>;
   deleteSeller(id: string): Promise<{ success: boolean; message: string }>;
-  getSellerBySlug(slug: string): Promise<SellerProfileInfo | null>; // Added
+  getSellerBySlug(slug: string): Promise<SellerProfileInfo | null>;
 
   // Auctions
   createAuction(data: AuctionFormData): Promise<{ success: boolean; message: string; auctionId?: string }>;
@@ -503,7 +501,7 @@ export interface IDatabaseAdapter {
   getAuction(id: string): Promise<Auction | null>;
   updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string }>;
   deleteAuction(id: string): Promise<{ success: boolean; message: string }>;
-  getAuctionsBySellerSlug(sellerSlug: string): Promise<Auction[]>; // Added
+  getAuctionsBySellerSlug(sellerSlug: string): Promise<Auction[]>;
 
   // Lots
   createLot(data: LotFormData): Promise<{ success: boolean; message: string; lotId?: string }>;
@@ -511,17 +509,18 @@ export interface IDatabaseAdapter {
   getLot(id: string): Promise<Lot | null>;
   updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string }>;
   deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string }>;
-  getBidsForLot(lotId: string): Promise<BidInfo[]>; // Added
-  placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }>; // Added
+  getBidsForLot(lotId: string): Promise<BidInfo[]>;
+  placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }>;
   
   // Users (only profile data, auth is separate)
   getUserProfileData(userId: string): Promise<UserProfileData | null>;
-  updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string }>;
-  // createUserProfile: Needed if not relying on Firebase Auth sync
+  updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }>;
   ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }>;
   getUsersWithRoles(): Promise<UserProfileData[]>;
-  updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string }>;
-  deleteUserProfile(userId: string): Promise<{ success: boolean; message: string }>; // Deletes only Firestore profile
+  updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }>;
+  deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }>;
+  // Note: createUserInAuthAndFirestore will be more complex if you need it here.
+  // For now, assuming auth creation is separate or handled by Firebase client SDK.
 
   // Roles
   createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string }>;
@@ -536,13 +535,13 @@ export interface IDatabaseAdapter {
   createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }>;
   getMediaItems(): Promise<MediaItem[]>;
   updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string }>;
-  deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string }>; // Deletion from DB only
-  linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string }>;
-  unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string }>;
+  deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }>; // Deletion from DB only
+  linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }>;
+  unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }>;
 
   // Settings
   getPlatformSettings(): Promise<PlatformSettings>;
-  updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string }>;
+  updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }>;
 }
 
 // Helper types for SQL adapters (can be expanded)
@@ -550,3 +549,9 @@ export type QueryResult<T> = {
   rows: T[];
   rowCount: number;
 };
+
+// Add UserFormData to types
+export type UserFormData = Omit<UserProfileData, 'uid' | 'createdAt' | 'updatedAt' | 'status' | 'habilitationStatus' | 'permissions' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'sellerProfileId'> & {
+  password?: string; // Password is for Auth creation, not stored in profile
+};
+

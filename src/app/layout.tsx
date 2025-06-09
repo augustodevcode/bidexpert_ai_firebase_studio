@@ -17,6 +17,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const activeDatabaseSystem = process.env.ACTIVE_DATABASE_SYSTEM || 'FIRESTORE';
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
@@ -30,7 +31,7 @@ export default function RootLayout({
           <main className="flex-grow container mx-auto px-4 py-8">
             {children}
           </main>
-          <Footer />
+          <Footer activeDatabaseSystem={activeDatabaseSystem} />
           <Toaster />
         </AuthProvider>
       </body>

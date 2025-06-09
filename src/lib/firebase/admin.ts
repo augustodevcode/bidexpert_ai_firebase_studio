@@ -18,38 +18,24 @@ let authAdminInternalInstance: Auth | undefined;
 let storageAdminInternalInstance: Storage | undefined;
 let sdkInitializationError: Error | null = null;
 
-// Nome do arquivo da chave de serviço.
-// Este arquivo DEVE estar na raiz do projeto se GOOGLE_APPLICATION_CREDENTIALS não estiver definida.
 const serviceAccountKeyFileName = 'bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json';
 
 export function ensureAdminInitialized(): {
-  app?: App; // Renomeado para clareza
+  app?: App;
   db?: Firestore;
   auth?: Auth;
   storage?: Storage;
   error?: Error | null;
 } {
   if (sdkInitializationError) {
-    console.warn('[Admin SDK] Retornando erro de inicialização anterior:', sdkInitializationError.message);
+    console.warn('[Admin SDK] Returning previous initialization error:', sdkInitializationError.message);
     return { error: sdkInitializationError };
   }
 
-  if (adminAppInternalInstance && dbAdminInternalInstance && authAdminInternalInstance) {
-    // console.log('[Admin SDK] Retornando instâncias cacheadas.');
-    return { 
-      app: adminAppInternalInstance, 
-      db: dbAdminInternalInstance, 
-      auth: authAdminInternalInstance, 
-      storage: storageAdminInternalInstance, 
-      error: null 
-    };
-  }
-  
-  console.log('[Admin SDK] Tentando garantir que o admin está inicializado.');
-
-  try {
+  if (!adminAppInternalInstance) {
+    console.log('[Admin SDK] No cached app instance. Attempting to get or initialize.');
     if (!getApps().length) {
-      console.log('[Admin SDK] Nenhuma app Firebase inicializada. Tentando inicializar uma nova.');
+      console.log('[Admin SDK] No Firebase app initialized. Attempting to initialize a new one.');
       let serviceAccount: object | undefined;
       let usedPath: string | undefined;
       
@@ -57,76 +43,89 @@ export function ensureAdminInitialized(): {
       console.log(`[Admin SDK] GOOGLE_APPLICATION_CREDENTIALS: ${credentialsPathFromEnv}`);
 
       if (credentialsPathFromEnv) {
+        console.log(`[Admin SDK] Attempting to load from GOOGLE_APPLICATION_CREDENTIALS path: ${credentialsPathFromEnv}`);
         if (fs.existsSync(credentialsPathFromEnv)) {
           try {
             const serviceAccountJsonString = fs.readFileSync(credentialsPathFromEnv, 'utf8');
             serviceAccount = JSON.parse(serviceAccountJsonString);
             usedPath = credentialsPathFromEnv;
-            console.log(`[Admin SDK] Chave de serviço carregada de GOOGLE_APPLICATION_CREDENTIALS: ${usedPath}`);
+            console.log(`[Admin SDK] Successfully loaded service account from GOOGLE_APPLICATION_CREDENTIALS: ${usedPath}`);
           } catch (e: any) {
-            sdkInitializationError = new Error(`Falha ao carregar/parsear chave de GOOGLE_APPLICATION_CREDENTIALS ('${credentialsPathFromEnv}'): ${e.message}`);
+            sdkInitializationError = new Error(`Failed to load/parse service account from GOOGLE_APPLICATION_CREDENTIALS ('${credentialsPathFromEnv}'): ${e.message}`);
             console.error(`[Admin SDK] ${sdkInitializationError.message}`);
             return { error: sdkInitializationError };
           }
         } else {
-          console.warn(`[Admin SDK] Caminho GOOGLE_APPLICATION_CREDENTIALS não existe: ${credentialsPathFromEnv}. Tentando caminho manual.`);
+          console.warn(`[Admin SDK] GOOGLE_APPLICATION_CREDENTIALS path does not exist: ${credentialsPathFromEnv}. Will attempt manual path.`);
         }
       }
 
       if (!serviceAccount) {
         const manualPath = path.resolve(process.cwd(), serviceAccountKeyFileName);
-        console.log(`[Admin SDK] Tentando carregar chave de serviço do caminho manual: ${manualPath} (CWD: ${process.cwd()})`);
+        console.log(`[Admin SDK] GOOGLE_APPLICATION_CREDENTIALS not used or failed. Attempting manual path: ${manualPath}`);
         if (fs.existsSync(manualPath)) {
           try {
             const serviceAccountJsonString = fs.readFileSync(manualPath, 'utf8');
             serviceAccount = JSON.parse(serviceAccountJsonString);
             usedPath = manualPath;
-            console.log(`[Admin SDK] Chave de serviço carregada do caminho manual: ${usedPath}`);
+            console.log(`[Admin SDK] Successfully loaded service account from manual path: ${usedPath}`);
           } catch (e: any) {
-            sdkInitializationError = new Error(`Falha ao carregar/parsear chave do caminho manual ('${manualPath}'): ${e.message}`);
+            sdkInitializationError = new Error(`Failed to load/parse service account from manual path ('${manualPath}'): ${e.message}`);
             console.error(`[Admin SDK] ${sdkInitializationError.message}`);
             return { error: sdkInitializationError };
           }
         } else {
-          sdkInitializationError = new Error(`Arquivo da chave de serviço não encontrado. Verificado GOOGLE_APPLICATION_CREDENTIALS ('${credentialsPathFromEnv}') e caminho manual ('${manualPath}').`);
+          sdkInitializationError = new Error(`Service account key file not found. Checked GOOGLE_APPLICATION_CREDENTIALS ('${credentialsPathFromEnv}') and manual path ('${manualPath}'). CWD: ${process.cwd()}`);
           console.error(`[Admin SDK] ${sdkInitializationError.message}`);
           return { error: sdkInitializationError };
         }
       }
       
       if (!serviceAccount) { 
-          sdkInitializationError = new Error(`CRÍTICO: Chave de conta de serviço JSON não pôde ser carregada de nenhuma fonte. Verifique GOOGLE_APPLICATION_CREDENTIALS ou se '${serviceAccountKeyFileName}' está na raiz do projeto.`);
+          sdkInitializationError = new Error(`CRITICAL: Service account JSON could not be loaded. Ensure GOOGLE_APPLICATION_CREDENTIALS is set correctly or '${serviceAccountKeyFileName}' is in the project root.`);
           console.error(`[Admin SDK] ${sdkInitializationError.message}`);
           return { error: sdkInitializationError };
       }
 
-      console.log(`[Admin SDK] Inicializando app com chave de serviço de: ${usedPath}`);
-      adminAppInternalInstance = initializeApp({ credential: cert(serviceAccount) });
-      console.log('[Admin SDK] Firebase Admin SDK inicializado com sucesso (nova app).');
+      try {
+        console.log(`[Admin SDK] Initializing app with service account from: ${usedPath}`);
+        adminAppInternalInstance = initializeApp({ credential: cert(serviceAccount) });
+        console.log('[Admin SDK] Firebase Admin SDK initialized successfully (new app).');
+        sdkInitializationError = null; // Clear previous errors if successful
+      } catch (initError: any) {
+        const detailedError = initError.message ? initError.message : JSON.stringify(initError, Object.getOwnPropertyNames(initError));
+        console.error(`[Admin SDK] CRITICAL ERROR during initializeApp(): ${detailedError}`);
+        sdkInitializationError = new Error(`Failed Firebase Admin SDK initialization: ${detailedError}`);
+        return { error: sdkInitializationError };
+      }
     } else {
       adminAppInternalInstance = getApp();
-      console.log('[Admin SDK] Usando app Firebase Admin existente.');
+      console.log('[Admin SDK] Using existing Firebase app.');
+      sdkInitializationError = null; // Clear previous errors if using existing app
     }
-
-    // Obter serviços somente após garantir que adminAppInternalInstance está definido
-    dbAdminInternalInstance = getFirestore(adminAppInternalInstance);
-    authAdminInternalInstance = getAuth(adminAppInternalInstance);
-    try {
-      storageAdminInternalInstance = getStorage(adminAppInternalInstance);
-    } catch (storageError: any) {
-      console.warn('[Admin SDK] Não foi possível inicializar o Storage Admin (OK se não for usado):', storageError.message);
-      storageAdminInternalInstance = undefined; // Explicitamente undefined se falhar
-    }
-    console.log('[Admin SDK] Serviços Firestore, Auth e Storage (se aplicável) obtidos.');
-    sdkInitializationError = null; // Limpa erro anterior se tudo correu bem
-
-  } catch (error: any) {
-    const detailedError = error.message ? error.message : JSON.stringify(error, Object.getOwnPropertyNames(error));
-    console.error(`[Admin SDK] CRITICAL ERROR durante ensureAdminInitialized: ${detailedError}`);
-    sdkInitializationError = new Error(`Falha na inicialização do Firebase Admin SDK: ${detailedError}`);
-    return { error: sdkInitializationError };
   }
 
+  // Initialize services if not already cached
+  if (adminAppInternalInstance) {
+    dbAdminInternalInstance ??= getFirestore(adminAppInternalInstance);
+    authAdminInternalInstance ??= getAuth(adminAppInternalInstance);
+    try {
+      storageAdminInternalInstance ??= getStorage(adminAppInternalInstance);
+    } catch (storageError: any) {
+      console.warn('[Admin SDK] Could not initialize Storage Admin (OK if not used):', storageError.message);
+      storageAdminInternalInstance = undefined; // Explicitly undefined if falha
+    }
+    // console.log('[Admin SDK] Firestore, Auth, and Storage services obtained/cached.');
+  } else {
+    // This case should ideally not be reached if the above logic is sound
+    // but as a safeguard:
+    if (!sdkInitializationError) { // if no specific error yet, set one
+        sdkInitializationError = new Error('Admin app instance is unexpectedly undefined after initialization block.');
+        console.error(`[Admin SDK] ${sdkInitializationError.message}`);
+    }
+    return { error: sdkInitializationError };
+  }
+  
   return { 
     app: adminAppInternalInstance, 
     db: dbAdminInternalInstance, 
@@ -136,14 +135,14 @@ export function ensureAdminInitialized(): {
   };
 }
 
-export const AdminFieldValue = FirebaseAdminFieldValue;
-export const ServerTimestamp = FirebaseAdminTimestamp;
+export const FieldValue = FirebaseAdminFieldValue;
+export const Timestamp = FirebaseAdminTimestamp;
 
-// NOTA: As exportações abaixo são para conveniência e tipos, mas as actions DEVEM
-// obter suas instâncias de db, auth, storage a partir do retorno de ensureAdminInitialized().
+// These exports are for type convenience and legacy reasons.
+// Server Actions MUST use the instances returned by ensureAdminInitialized().
 export { 
     adminAppInternalInstance as adminApp,
-    dbAdminInternalInstance as dbAdmin, // Firestore admin instance
-    authAdminInternalInstance as authAdmin,   // Auth admin instance
-    storageAdminInternalInstance as storageAdmin // Storage admin instance
+    dbAdminInternalInstance as dbAdmin,
+    authAdminInternalInstance as authAdmin,
+    storageAdminInternalInstance as storageAdmin
 };
