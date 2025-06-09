@@ -458,6 +458,9 @@ export interface PlatformSettings {
 export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'>;
     
 export interface IDatabaseAdapter {
+  // Schema Initialization
+  initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[] }>;
+
   // Categories
   createLotCategory(data: { name: string; description?: string }): Promise<{ success: boolean; message: string; categoryId?: string }>;
   getLotCategories(): Promise<LotCategory[]>;
@@ -519,8 +522,6 @@ export interface IDatabaseAdapter {
   getUsersWithRoles(): Promise<UserProfileData[]>;
   updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }>;
   deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }>;
-  // Note: createUserInAuthAndFirestore will be more complex if you need it here.
-  // For now, assuming auth creation is separate or handled by Firebase client SDK.
 
   // Roles
   createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string }>;
@@ -534,7 +535,7 @@ export interface IDatabaseAdapter {
   // Media Items
   createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }>;
   getMediaItems(): Promise<MediaItem[]>;
-  updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string }>;
+  updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }>;
   deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }>; // Deletion from DB only
   linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }>;
   unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }>;
