@@ -5,12 +5,13 @@ import { revalidatePath } from 'next/cache';
 import { ensureAdminInitialized, AdminFieldValue, ServerTimestamp } from '@/lib/firebase/admin';
 import { getDatabaseAdapter } from '@/lib/database';
 import type { UserProfileData, Role, UserHabilitationStatus } from '@/types';
-import { getRoleByName, ensureDefaultRolesExist as ensureDefaultRolesExistDb, getRole } from '@/app/admin/roles/actions'; 
+// Renomeado para evitar conflito se este arquivo também exportar getRole, getRoleByName
+import { getRole as getRoleAdmin, getRoleByName as getRoleByNameAdmin, ensureDefaultRolesExist as ensureDefaultRolesExistAdmin } from '@/app/admin/roles/actions'; 
 import type { UserFormValues } from './user-form-schema';
 
-// This function now primarily uses the Database Adapter
+
 export async function createUser(
-  data: UserFormValues
+  data: UserFormValues // Mantém UserFormValues que pode incluir senha opcional
 ): Promise<{ success: boolean; message: string; userId?: string }> {
   const { authAdmin, error: authSdkError } = ensureAdminInitialized();
   const db = getDatabaseAdapter();
@@ -32,43 +33,59 @@ export async function createUser(
     try {
       existingAuthUser = await authAdmin.getUserByEmail(data.email.trim().toLowerCase());
     } catch (error: any) {
-      if (error.code !== 'auth/user-not-found') throw error;
+      if (error.code !== 'auth/user-not-found') throw error; // Re-throw other auth errors
     }
 
     if (existingAuthUser) {
+      // Check if user also exists in our DB profile collection
       const existingDbUser = await db.getUserProfileData(existingAuthUser.uid);
-      if (existingDbUser) return { success: false, message: `Usuário com email ${data.email} já existe.` };
-      return { success: false, message: `Usuário com email ${data.email} já existe no Auth, mas não no DB. Sincronização manual pode ser necessária.` };
+      if (existingDbUser) {
+        return { success: false, message: `Usuário com email ${data.email} já existe no Auth e no DB.` };
+      }
+      // If user exists in Auth but not DB, we might want to sync/create the DB profile for them
+      // For now, let's treat this as a conflict that needs manual resolution or different logic
+      return { success: false, message: `Usuário com email ${data.email} já existe no sistema de autenticação, mas não possui um perfil no banco de dados. Sincronização manual pode ser necessária ou use a edição de perfil.` };
     }
 
+    // Create user in Firebase Auth
     const userRecord = await authAdmin.createUser({
       email: data.email.trim().toLowerCase(),
-      emailVerified: false,
-      password: data.password || undefined,
+      emailVerified: false, // Or true if you have a verification flow
+      password: data.password || undefined, // Password is optional for admin creation
       displayName: data.fullName.trim(),
       disabled: false,
     });
 
+    // Now ensure/create the user profile in our database (Firestore, Postgres, or MySQL)
+    // The adapter's ensureUserRole will handle creating if not exists and setting role/permissions
     let roleIdToAssign: string | undefined;
-    let roleNameToAssign: string | undefined = 'USER';
+    let roleNameToAssign: string | undefined = 'USER'; // Default role
     let permissionsToAssign: string[] = [];
-    const targetRole = data.roleId && data.roleId !== "---NONE---" ? await db.getRole(data.roleId) : await db.getRoleByName('USER');
+
+    // Attempt to get the specific role or default to 'USER'
+    const targetRole = data.roleId && data.roleId !== "---NONE---" 
+      ? await db.getRole(data.roleId) // getRole from the adapter now
+      : await db.getRoleByName('USER'); // getRoleByName from the adapter
     
     if (targetRole) {
         roleIdToAssign = targetRole.id;
         roleNameToAssign = targetRole.name;
         permissionsToAssign = targetRole.permissions || [];
     } else {
-        console.warn(`[createUser] Perfil ${data.roleId || 'USER'} não encontrado. Atribuindo permissões mínimas.`);
-        const userRoleFallback = await db.getRoleByName('USER'); // Attempt to get USER role again if specific one failed
+        // This case should be rare if ensureDefaultRolesExist runs, but handle it.
+        console.warn(`[createUser] Perfil ${data.roleId || 'USER'} não encontrado. Tentando garantir perfis padrão e atribuindo USER.`);
+        await db.ensureDefaultRolesExist(); // Ensure default roles from adapter
+        const userRoleFallback = await db.getRoleByName('USER');
         if (userRoleFallback) {
             roleIdToAssign = userRoleFallback.id;
             roleNameToAssign = userRoleFallback.name;
             permissionsToAssign = userRoleFallback.permissions || [];
+        } else {
+             console.error("[createUser] CRITICAL: Perfil USER padrão não pôde ser encontrado ou criado. Usuário será criado sem perfil definido.");
         }
     }
     
-    const newUserProfileData = {
+    const newUserProfileData: Omit<UserProfileData, 'createdAt' | 'updatedAt' | 'uid'> & { uid: string } = {
       uid: userRecord.uid, // This will be the document ID
       email: userRecord.email!,
       fullName: userRecord.displayName!,
@@ -76,16 +93,23 @@ export async function createUser(
       roleName: roleNameToAssign,
       permissions: permissionsToAssign,
       status: 'ATIVO',
-      habilitationStatus: 'PENDENTE_DOCUMENTOS' as UserHabilitationStatus,
-      // createdAt and updatedAt will be handled by the adapter
+      habilitationStatus: targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS', // Adjust as needed
+      // Other fields from UserFormValues would be set here if they were part of UserProfileData
+      // e.g., cpf: data.cpf, etc. For now, focusing on core auth fields.
     };
 
-    // The adapter's ensureUserRole will create if not exists and set the role
-    const ensureResult = await db.ensureUserRole(userRecord.uid, newUserProfileData.email, newUserProfileData.fullName, roleNameToAssign || 'USER');
-    if (!ensureResult.success) {
-        // If ensureUserRole failed, we might need to rollback Auth user creation or log a critical error
-        try { await authAdmin.deleteUser(userRecord.uid); } catch (delErr) { console.error(`Failed to rollback Auth user ${userRecord.uid} after DB profile creation failure.`, delErr); }
-        return { success: false, message: `Falha ao criar perfil no DB: ${ensureResult.message}` };
+    const profileResult = await db.ensureUserRole(
+        userRecord.uid, 
+        newUserProfileData.email, 
+        newUserProfileData.fullName,
+        roleNameToAssign || 'USER' // Pass targetRoleName to ensureUserRole
+    );
+
+    if (!profileResult.success) {
+        // If DB profile creation/update fails, rollback Auth user creation
+        try { await authAdmin.deleteUser(userRecord.uid); } 
+        catch (delErr) { console.error(`[createUser] Falha ao reverter usuário Auth ${userRecord.uid} após erro no DB.`, delErr); }
+        return { success: false, message: `Falha ao criar perfil no banco de dados: ${profileResult.message}` };
     }
 
     revalidatePath('/admin/users');
@@ -93,12 +117,20 @@ export async function createUser(
 
   } catch (error: any) {
     console.error(`[createUser] ERRO:`, error);
-    return { success: false, message: `Falha ao criar usuário: ${error.message}` };
+    let friendlyMessage = `Falha ao criar usuário: ${error.message}`;
+    if (error.code === 'auth/email-already-exists') {
+        friendlyMessage = 'Este email já está em uso por outra conta.';
+    } else if (error.code === 'auth/invalid-password') {
+        friendlyMessage = 'A senha fornecida não é válida. Deve ter pelo menos 6 caracteres.';
+    }
+    return { success: false, message: friendlyMessage };
   }
 }
 
 export async function getUsersWithRoles(): Promise<UserProfileData[]> {
   const db = getDatabaseAdapter();
+  // ensureAdminInitialized is called within getDatabaseAdapter if it uses FirestoreAdapter
+  // or within each method of SQL adapters
   return db.getUsersWithRoles();
 }
 
@@ -125,29 +157,49 @@ export async function deleteUser(userId: string): Promise<{ success: boolean; me
   const db = getDatabaseAdapter();
 
   if (sdkError || !authAdmin) {
-    return { success: false, message: `Erro de Configuração: Admin SDK Auth não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}` };
+    const msg = `Erro de Configuração: Admin SDK Auth não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}`;
+    console.error(`[deleteUser - Admin SDK] ${msg}`);
+    return { success: false, message: msg };
   }
   try {
-    await authAdmin.deleteUser(userId).catch(e => { if (e.code !== 'auth/user-not-found') throw e;});
-    const dbResult = await db.deleteUserProfile(userId); // This only deletes from Firestore via adapter
+    // Delete from Firebase Auth first
+    await authAdmin.deleteUser(userId).catch(e => { 
+      // If user not found in Auth, that's okay, they might only exist in DB or already deleted from Auth
+      if (e.code !== 'auth/user-not-found') {
+        console.warn(`[deleteUser] Erro ao excluir do Firebase Auth (pode já ter sido excluído ou não existir): ${e.message}`);
+        // Não lançar erro aqui, permitir que a exclusão do DB prossiga
+      }
+    });
+    
+    // Delete from our database (Firestore, Postgres, or MySQL via adapter)
+    const dbResult = await db.deleteUserProfile(userId); 
+    
     if (dbResult.success) {
       revalidatePath('/admin/users');
+      return { success: true, message: 'Usuário excluído do Auth (se existia) e do banco de dados.' };
+    } else {
+      return { success: false, message: `Falha ao excluir perfil do DB: ${dbResult.message}. O usuário pode ter sido removido do Auth.` };
     }
-    return { success: true, message: 'Operação de exclusão de usuário (Auth e DB) concluída.' };
   } catch (error: any) {
+    console.error(`[deleteUser] Falha ao excluir usuário ${userId}:`, error);
     return { success: false, message: `Falha ao excluir usuário: ${error.message}` };
   }
 }
 
 
-export async function ensureUserRoleInFirestore(
+export async function ensureUserRoleInFirestore( // Renomear para ensureUserRoleInDB se for usado de forma genérica
   userUid: string,
   email: string | null,
   fullName: string | null,
   targetRoleName: string
 ): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }> {
   const db = getDatabaseAdapter();
-  return db.ensureUserRole(userUid, email, fullName, targetRoleName);
+  // ensureAdminInitialized is called within the adapter methods if needed
+  return db.ensureUserRole(userUid, email || '', fullName, targetRoleName);
 }
 
-export type UserFormData = Omit<UserFormValues, 'password'>;
+// Mantendo UserFormData se for diferente de UserProfileData (ex: incluindo senha)
+export type UserFormData = Omit<UserFormValues, 'password'> & { password?: string };
+
+
+    

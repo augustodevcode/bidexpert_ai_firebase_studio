@@ -10,11 +10,10 @@ import type {
   Auction, AuctionFormData,
   Lot, LotFormData,
   BidInfo,
-  UserProfileData, EditableUserProfileData,
+  UserProfileData, EditableUserProfileData, UserHabilitationStatus,
   Role, RoleFormData,
   MediaItem,
   PlatformSettings, PlatformSettingsFormData,
-  UserFormValues
 } from '@/types';
 import { slugify } from '@/lib/sample-data';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
@@ -33,21 +32,114 @@ function getPool() {
   return pool;
 }
 
-function mapToCamelCase(rows: QueryResultRow[]): any[] {
-    return rows.map(row => {
-        const newRow: { [key: string]: any } = {};
-        for (const key in row) {
-            const camelCaseKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
-            newRow[camelCaseKey] = row[key];
-        }
-        return newRow;
-    });
+function mapRowToCamelCase(row: QueryResultRow): any {
+    const newRow: { [key: string]: any } = {};
+    for (const key in row) {
+        const camelCaseKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+        newRow[camelCaseKey] = row[key];
+    }
+    return newRow;
+}
+
+function mapRowsToCamelCase(rows: QueryResultRow[]): any[] {
+    return rows.map(mapRowToCamelCase);
+}
+
+function mapToLotCategory(row: QueryResultRow): LotCategory {
+  return {
+    id: String(row.id),
+    name: row.name,
+    slug: row.slug,
+    description: row.description,
+    itemCount: Number(row.itemCount || 0),
+    createdAt: new Date(row.createdAt),
+    updatedAt: new Date(row.updatedAt),
+  };
+}
+
+function mapToStateInfo(row: QueryResultRow): StateInfo {
+    return {
+        id: String(row.id),
+        name: row.name,
+        uf: row.uf,
+        slug: row.slug,
+        cityCount: Number(row.cityCount || 0),
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+    };
+}
+
+function mapToCityInfo(row: QueryResultRow): CityInfo {
+    return {
+        id: String(row.id),
+        name: row.name,
+        slug: row.slug,
+        stateId: String(row.stateId),
+        stateUf: row.stateUf,
+        ibgeCode: row.ibgeCode,
+        lotCount: Number(row.lotCount || 0),
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+    };
+}
+
+function mapToRole(row: QueryResultRow): Role {
+    return {
+        id: String(row.id),
+        name: row.name,
+        name_normalized: row.nameNormalized,
+        description: row.description,
+        permissions: typeof row.permissions === 'string' ? JSON.parse(row.permissions) : row.permissions || [],
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+    };
+}
+
+function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProfileData {
+    const profile: UserProfileData = {
+        uid: row.uid,
+        email: row.email,
+        fullName: row.fullName,
+        roleId: row.roleId ? String(row.roleId) : undefined,
+        roleName: role?.name || row.roleName, // Use roleName from join if available
+        permissions: typeof row.permissions === 'string' ? JSON.parse(row.permissions) : (role?.permissions || row.permissions || []),
+        status: row.status,
+        habilitationStatus: row.habilitationStatus as UserHabilitationStatus,
+        cpf: row.cpf,
+        rgNumber: row.rgNumber,
+        rgIssuer: row.rgIssuer,
+        rgIssueDate: row.rgIssueDate ? new Date(row.rgIssueDate) : undefined,
+        rgState: row.rgState,
+        dateOfBirth: row.dateOfBirth ? new Date(row.dateOfBirth) : undefined,
+        cellPhone: row.cellPhone,
+        homePhone: row.homePhone,
+        gender: row.gender,
+        profession: row.profession,
+        nationality: row.nationality,
+        maritalStatus: row.maritalStatus,
+        propertyRegime: row.propertyRegime,
+        spouseName: row.spouseName,
+        spouseCpf: row.spouseCpf,
+        zipCode: row.zipCode,
+        street: row.street,
+        number: row.number,
+        complement: row.complement,
+        neighborhood: row.neighborhood,
+        city: row.city,
+        state: row.state,
+        optInMarketing: row.optInMarketing,
+        avatarUrl: row.avatarUrl,
+        dataAiHint: row.dataAiHint,
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+    };
+    return profile;
 }
 
 
 export class PostgresAdapter implements IDatabaseAdapter {
   constructor() {
-    getPool(); // Initialize pool on instantiation
+    getPool();
   }
 
   // --- Categories ---
@@ -79,7 +171,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     const client = await getPool().connect();
     try {
       const res = await client.query('SELECT id, name, slug, description, item_count, created_at, updated_at FROM lot_categories ORDER BY name ASC;');
-      return mapToCamelCase(res.rows) as LotCategory[];
+      return mapRowsToCamelCase(res.rows).map(mapToLotCategory);
     } catch (error: any) {
       console.error("[PostgresAdapter - getLotCategories] Error:", error);
       return [];
@@ -92,9 +184,9 @@ export class PostgresAdapter implements IDatabaseAdapter {
     const client = await getPool().connect();
     try {
         const queryText = 'SELECT id, name, slug, description, item_count, created_at, updated_at FROM lot_categories WHERE id = $1;';
-        const res = await client.query(queryText, [Number(id)]);
+        const res = await client.query(queryText, [Number(id)]); // Assuming ID is integer
         if (res.rows.length > 0) {
-            return mapToCamelCase(res.rows)[0] as LotCategory;
+            return mapToLotCategory(mapRowToCamelCase(res.rows[0]));
         }
         return null;
     } catch (error: any) {
@@ -140,7 +232,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-
+  
   // --- States ---
   async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> {
     const client = await getPool().connect();
@@ -149,44 +241,47 @@ export class PostgresAdapter implements IDatabaseAdapter {
       const query = `INSERT INTO states (name, uf, slug, city_count, created_at, updated_at) VALUES ($1, $2, $3, 0, NOW(), NOW()) RETURNING id`;
       const res = await client.query(query, [data.name, data.uf.toUpperCase(), slug]);
       return { success: true, message: 'Estado criado (PostgreSQL)!', stateId: String(res.rows[0].id) };
-    } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
+    } catch (e: any) { console.error(`[PostgresAdapter - createState] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
   async getStates(): Promise<StateInfo[]> {
     const client = await getPool().connect();
     try {
       const res = await client.query('SELECT id, name, uf, slug, city_count, created_at, updated_at FROM states ORDER BY name ASC');
-      return mapToCamelCase(res.rows) as StateInfo[];
-    } catch (e: any) { return []; } finally { client.release(); }
+      return mapRowsToCamelCase(res.rows).map(mapToStateInfo);
+    } catch (e: any) { console.error(`[PostgresAdapter - getStates] Error:`, e); return []; } finally { client.release(); }
   }
    async getState(id: string): Promise<StateInfo | null> {
     const client = await getPool().connect();
     try {
       const res = await client.query('SELECT id, name, uf, slug, city_count, created_at, updated_at FROM states WHERE id = $1', [Number(id)]);
       if (res.rowCount === 0) return null;
-      return mapToCamelCase(res.rows)[0] as StateInfo;
-    } catch (e: any) { return null; } finally { client.release(); }
+      return mapToStateInfo(mapRowToCamelCase(res.rows[0]));
+    } catch (e: any) { console.error(`[PostgresAdapter - getState(${id})] Error:`, e); return null; } finally { client.release(); }
   }
   async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
-      const fields = [];
-      const values = [];
+      const fields: string[] = [];
+      const values: any[] = [];
       let query = 'UPDATE states SET ';
-      if (data.name) { fields.push(`name = $${fields.length + 1}`); values.push(data.name); fields.push(`slug = $${fields.length + 1}`); values.push(slugify(data.name)); }
-      if (data.uf) { fields.push(`uf = $${fields.length + 1}`); values.push(data.uf.toUpperCase()); }
+      if (data.name) { fields.push(`name = $${values.length + 1}`); values.push(data.name); fields.push(`slug = $${values.length + 1}`); values.push(slugify(data.name)); }
+      if (data.uf) { fields.push(`uf = $${values.length + 1}`); values.push(data.uf.toUpperCase()); }
+      if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o estado."};
+      
       fields.push(`updated_at = NOW()`);
-      query += fields.join(', ') + ` WHERE id = $${fields.length + 1}`;
+      query += fields.join(', ') + ` WHERE id = $${values.length + 1}`;
       values.push(Number(id));
       await client.query(query, values);
       return { success: true, message: 'Estado atualizado (PostgreSQL)!' };
-    } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
+    } catch (e: any) { console.error(`[PostgresAdapter - updateState(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
   async deleteState(id: string): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
       await client.query('DELETE FROM states WHERE id = $1', [Number(id)]);
+      // TODO: Consider what to do with cities under this state. Cascade delete or set state_id to null?
       return { success: true, message: 'Estado excluído (PostgreSQL)!' };
-    } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
+    } catch (e: any) { console.error(`[PostgresAdapter - deleteState(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
 
   // --- Cities ---
@@ -200,7 +295,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         const query = `INSERT INTO cities (name, slug, state_id, state_uf, ibge_code, lot_count, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, 0, NOW(), NOW()) RETURNING id`;
         const res = await client.query(query, [data.name, slug, Number(data.stateId), stateUf, data.ibgeCode || null]);
         return { success: true, message: 'Cidade criada (PostgreSQL)!', cityId: String(res.rows[0].id) };
-    } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
+    } catch (e: any) { console.error(`[PostgresAdapter - createCity] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
   async getCities(stateIdFilter?: string): Promise<CityInfo[]> {
     const client = await getPool().connect();
@@ -210,47 +305,424 @@ export class PostgresAdapter implements IDatabaseAdapter {
         if (stateIdFilter) { queryText += ' WHERE state_id = $1'; values.push(Number(stateIdFilter)); }
         queryText += ' ORDER BY name ASC';
         const res = await client.query(queryText, values);
-        return mapToCamelCase(res.rows) as CityInfo[];
-    } catch (e: any) { return []; } finally { client.release(); }
+        return mapRowsToCamelCase(res.rows).map(mapToCityInfo);
+    } catch (e: any) { console.error(`[PostgresAdapter - getCities] Error:`, e); return []; } finally { client.release(); }
   }
   async getCity(id: string): Promise<CityInfo | null> {
     const client = await getPool().connect();
     try {
       const res = await client.query('SELECT id, name, slug, state_id, state_uf, ibge_code, lot_count, created_at, updated_at FROM cities WHERE id = $1', [Number(id)]);
       if (res.rowCount === 0) return null;
-      return mapToCamelCase(res.rows)[0] as CityInfo;
-    } catch (e: any) { return null; } finally { client.release(); }
+      return mapToCityInfo(mapRowToCamelCase(res.rows[0]));
+    } catch (e: any) { console.error(`[PostgresAdapter - getCity(${id})] Error:`, e); return null; } finally { client.release(); }
   }
   async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> {
      const client = await getPool().connect();
     try {
-        const fields = [];
-        const values = [];
+        const fields: string[] = [];
+        const values: any[] = [];
         let query = 'UPDATE cities SET ';
-        if (data.name) { fields.push(`name = $${fields.length + 1}`); values.push(data.name); fields.push(`slug = $${fields.length + 1}`); values.push(slugify(data.name)); }
+        if (data.name) { fields.push(`name = $${values.length + 1}`); values.push(data.name); fields.push(`slug = $${values.length + 1}`); values.push(slugify(data.name)); }
         if (data.stateId) {
             const parentStateRes = await client.query('SELECT uf FROM states WHERE id = $1', [Number(data.stateId)]);
             if (parentStateRes.rowCount === 0) return { success: false, message: 'Estado pai não encontrado.' };
-            fields.push(`state_id = $${fields.length + 1}`); values.push(Number(data.stateId));
-            fields.push(`state_uf = $${fields.length + 1}`); values.push(parentStateRes.rows[0].uf);
+            fields.push(`state_id = $${values.length + 1}`); values.push(Number(data.stateId));
+            fields.push(`state_uf = $${values.length + 1}`); values.push(parentStateRes.rows[0].uf);
         }
-        if (data.ibgeCode !== undefined) { fields.push(`ibge_code = $${fields.length + 1}`); values.push(data.ibgeCode || null); }
+        if (data.ibgeCode !== undefined) { fields.push(`ibge_code = $${values.length + 1}`); values.push(data.ibgeCode || null); }
+        
+        if (fields.length === 0) return { success: true, message: "Nenhuma alteração para a cidade."};
+
         fields.push(`updated_at = NOW()`);
-        query += fields.join(', ') + ` WHERE id = $${fields.length + 1}`;
+        query += fields.join(', ') + ` WHERE id = $${values.length + 1}`;
         values.push(Number(id));
-        if (fields.length === 1 && fields[0] === 'updated_at = NOW()') { // Only updatedAt
-            return { success: true, message: 'Nenhuma alteração para cidade (PostgreSQL).' };
-        }
+        
         await client.query(query, values);
         return { success: true, message: 'Cidade atualizada (PostgreSQL)!' };
-    } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
+    } catch (e: any) { console.error(`[PostgresAdapter - updateCity(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
   async deleteCity(id: string): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
       await client.query('DELETE FROM cities WHERE id = $1', [Number(id)]);
       return { success: true, message: 'Cidade excluída (PostgreSQL)!' };
-    } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
+    } catch (e: any) { console.error(`[PostgresAdapter - deleteCity(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
+  }
+
+  // --- Users ---
+  async getUserProfileData(userId: string): Promise<UserProfileData | null> {
+    const client = await getPool().connect();
+    try {
+      const query = `
+        SELECT up.*, r.name as role_name_from_join, r.permissions as role_permissions_from_join 
+        FROM user_profiles up 
+        LEFT JOIN roles r ON up.role_id = r.id 
+        WHERE up.uid = $1
+      `;
+      const res = await client.query(query, [userId]);
+      if (res.rowCount === 0) return null;
+      const row = mapRowToCamelCase(res.rows[0]);
+      
+      // Use role_permissions_from_join if available and user's own permissions are null/empty, otherwise use user's own.
+      let finalPermissions = row.permissions;
+      if (typeof row.permissions === 'string') {
+          try { finalPermissions = JSON.parse(row.permissions); } catch { finalPermissions = []; }
+      }
+      if ((!finalPermissions || finalPermissions.length === 0) && row.rolePermissionsFromJoin) {
+          finalPermissions = typeof row.rolePermissionsFromJoin === 'string' ? JSON.parse(row.rolePermissionsFromJoin) : row.rolePermissionsFromJoin || [];
+      }
+
+
+      return {
+        ...row,
+        uid: row.uid, // Ensure uid is present
+        roleId: row.roleId ? String(row.roleId) : undefined,
+        roleName: row.roleNameFromJoin || row.roleName, // Prefer joined role name
+        permissions: finalPermissions || [],
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+        dateOfBirth: row.dateOfBirth ? new Date(row.dateOfBirth) : undefined,
+        rgIssueDate: row.rgIssueDate ? new Date(row.rgIssueDate) : undefined,
+      } as UserProfileData;
+    } catch (e: any) {
+      console.error(`[PostgresAdapter - getUserProfileData(${userId})] Error:`, e);
+      return null;
+    } finally {
+      client.release();
+    }
+  }
+
+  async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      const fieldsToUpdate: string[] = [];
+      const values: any[] = [];
+      let paramCount = 1;
+
+      (Object.keys(data) as Array<keyof EditableUserProfileData>).forEach(key => {
+        if (data[key] !== undefined) {
+          const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+           // Handle 'number' column name if it exists
+          const escapedColumn = sqlColumn === 'number' ? `"${sqlColumn}"` : sqlColumn;
+
+          fieldsToUpdate.push(`${escapedColumn} = $${paramCount++}`);
+          values.push(data[key] === '' ? null : data[key]); // Treat empty strings as null for optional fields
+        }
+      });
+      
+      if (fieldsToUpdate.length === 0) {
+        return { success: true, message: 'Nenhum dado para atualizar.' };
+      }
+
+      fieldsToUpdate.push(`updated_at = NOW()`);
+      values.push(userId);
+
+      const queryText = `UPDATE user_profiles SET ${fieldsToUpdate.join(', ')} WHERE uid = $${paramCount}`;
+      await client.query(queryText, values);
+      return { success: true, message: 'Perfil de usuário atualizado (PostgreSQL)!' };
+    } catch (e: any) {
+      console.error(`[PostgresAdapter - updateUserProfile(${userId})] Error:`, e);
+      return { success: false, message: e.message };
+    } finally {
+      client.release();
+    }
+  }
+
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }> {
+    const client = await getPool().connect();
+    try {
+      await client.query('BEGIN'); 
+
+      const existingUserRes = await client.query('SELECT uid, email, full_name, role_id, permissions, status, habilitation_status, created_at, updated_at FROM user_profiles WHERE uid = $1', [userId]);
+      let userProfileData: UserProfileData;
+      let roleToAssign = await this.getRoleByName(targetRoleName);
+
+      if (!roleToAssign) {
+        await this.ensureDefaultRolesExist(); // Ensure default roles exist
+        roleToAssign = await this.getRoleByName('USER'); // Fallback to USER role
+        if (!roleToAssign) {
+          await client.query('ROLLBACK');
+          return { success: false, message: `Perfil padrão USER não encontrado e não pôde ser criado.` };
+        }
+      }
+      
+      const permissionsToAssign = roleToAssign.permissions || [];
+
+      if (existingUserRes.rowCount > 0) {
+        const dbUser = mapRowToCamelCase(existingUserRes.rows[0]);
+        const updateFields: any = {};
+        let needsUpdate = false;
+        if (String(dbUser.roleId) !== roleToAssign.id) { updateFields.role_id = Number(roleToAssign.id); needsUpdate = true; }
+        if (JSON.stringify(dbUser.permissions ? (typeof dbUser.permissions === 'string' ? JSON.parse(dbUser.permissions) : dbUser.permissions) : []) !== JSON.stringify(permissionsToAssign)) {
+            updateFields.permissions = JSON.stringify(permissionsToAssign);
+            needsUpdate = true;
+        }
+        if (needsUpdate) {
+            updateFields.updated_at = new Date(); // Use JS Date, PG will convert
+            const setClauses = Object.keys(updateFields).map((key, i) => `${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = $${i + 1}`).join(', ');
+            await client.query(`UPDATE user_profiles SET ${setClauses} WHERE uid = $${Object.keys(updateFields).length + 1}`, [...Object.values(updateFields), userId]);
+        }
+         userProfileData = mapToUserProfileData(dbUser, roleToAssign);
+
+      } else {
+        const habilitation = targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS';
+        const insertQuery = `
+          INSERT INTO user_profiles (uid, email, full_name, role_id, permissions, status, habilitation_status, created_at, updated_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW()) RETURNING *;
+        `;
+        const insertRes = await client.query(insertQuery, [userId, email.toLowerCase(), fullName, Number(roleToAssign.id), JSON.stringify(permissionsToAssign), 'ATIVO', habilitation]);
+        userProfileData = mapToUserProfileData(mapRowToCamelCase(insertRes.rows[0]), roleToAssign);
+      }
+      await client.query('COMMIT');
+      return { success: true, message: 'Perfil de usuário assegurado/atualizado (PostgreSQL).', userProfile: userProfileData };
+    } catch (e: any) {
+      await client.query('ROLLBACK');
+      console.error(`[PostgresAdapter - ensureUserRole(${userId})] Error:`, e);
+      return { success: false, message: e.message };
+    } finally {
+      client.release();
+    }
+  }
+
+  async getUsersWithRoles(): Promise<UserProfileData[]> {
+    const client = await getPool().connect();
+    try {
+      const query = `
+        SELECT up.*, r.name as role_name_from_join, r.permissions as role_permissions_from_join 
+        FROM user_profiles up 
+        LEFT JOIN roles r ON up.role_id = r.id 
+        ORDER BY up.full_name ASC;
+      `;
+      const res = await client.query(query);
+      return mapRowsToCamelCase(res.rows).map(row => {
+        let finalPermissions = row.permissions;
+         if (typeof row.permissions === 'string') {
+            try { finalPermissions = JSON.parse(row.permissions); } catch { finalPermissions = []; }
+        }
+        if ((!finalPermissions || finalPermissions.length === 0) && row.rolePermissionsFromJoin) {
+            finalPermissions = typeof row.rolePermissionsFromJoin === 'string' ? JSON.parse(row.rolePermissionsFromJoin) : row.rolePermissionsFromJoin || [];
+        }
+
+        return mapToUserProfileData(row, { name: row.roleNameFromJoin, permissions: finalPermissions } as Role);
+      });
+    } catch (e: any) {
+      console.error(`[PostgresAdapter - getUsersWithRoles] Error:`, e);
+      return [];
+    } finally {
+      client.release();
+    }
+  }
+
+  async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      let newRoleIdInt: number | null = null;
+      let newPermissions: string[] = [];
+      if (roleId && roleId !== "---NONE---") {
+        const role = await this.getRole(roleId); // This uses its own connection
+        if (!role) return { success: false, message: "Perfil não encontrado." };
+        newRoleIdInt = Number(role.id); // SQL ID is number
+        newPermissions = role.permissions || [];
+      }
+      
+      await client.query(
+        'UPDATE user_profiles SET role_id = $1, permissions = $2, updated_at = NOW() WHERE uid = $3',
+        [newRoleIdInt, JSON.stringify(newPermissions), userId]
+      );
+      return { success: true, message: 'Perfil do usuário atualizado (PostgreSQL)!' };
+    } catch (e: any) {
+      console.error(`[PostgresAdapter - updateUserRole(${userId})] Error:`, e);
+      return { success: false, message: e.message };
+    } finally {
+      client.release();
+    }
+  }
+
+  async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      // Auth user deletion must be handled by caller
+      await client.query('DELETE FROM user_profiles WHERE uid = $1', [userId]);
+      return { success: true, message: 'Perfil de usuário excluído do DB (PostgreSQL)!' };
+    } catch (e: any) {
+      console.error(`[PostgresAdapter - deleteUserProfile(${userId})] Error:`, e);
+      return { success: false, message: e.message };
+    } finally {
+      client.release();
+    }
+  }
+
+  // --- Roles ---
+  async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> {
+    const client = await getPool().connect();
+    try {
+      const normalizedName = data.name.trim().toUpperCase();
+      const existingRes = await client.query('SELECT id FROM roles WHERE name_normalized = $1 LIMIT 1', [normalizedName]);
+      if (existingRes.rowCount > 0) {
+        return { success: false, message: `Perfil "${data.name}" já existe (PostgreSQL).`};
+      }
+      const validPermissions = JSON.stringify((data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p)));
+      const query = `
+        INSERT INTO roles (name, name_normalized, description, permissions, created_at, updated_at) 
+        VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING id;
+      `;
+      const res = await client.query(query, [data.name.trim(), normalizedName, data.description || null, validPermissions]);
+      return { success: true, message: 'Perfil criado (PostgreSQL)!', roleId: String(res.rows[0].id) };
+    } catch (e: any) {
+      console.error(`[PostgresAdapter - createRole] Error:`, e);
+      return { success: false, message: e.message };
+    } finally {
+      client.release();
+    }
+  }
+
+  async getRoles(): Promise<Role[]> {
+    const client = await getPool().connect();
+    try {
+      const res = await client.query('SELECT * FROM roles ORDER BY name ASC;');
+      return mapRowsToCamelCase(res.rows).map(mapToRole);
+    } catch (e: any) {
+      console.error(`[PostgresAdapter - getRoles] Error:`, e);
+      return [];
+    } finally {
+      client.release();
+    }
+  }
+
+  async getRole(id: string): Promise<Role | null> {
+    const client = await getPool().connect();
+    try {
+      const res = await client.query('SELECT * FROM roles WHERE id = $1', [Number(id)]); // Assuming ID is integer
+      if (res.rowCount === 0) return null;
+      return mapToRole(mapRowToCamelCase(res.rows[0]));
+    } catch (e: any) {
+      console.error(`[PostgresAdapter - getRole(${id})] Error:`, e);
+      return null;
+    } finally {
+      client.release();
+    }
+  }
+
+  async getRoleByName(name: string): Promise<Role | null> {
+    const client = await getPool().connect();
+    try {
+      const normalizedName = name.trim().toUpperCase();
+      const res = await client.query('SELECT * FROM roles WHERE name_normalized = $1 LIMIT 1', [normalizedName]);
+      if (res.rowCount === 0) return null;
+      return mapToRole(mapRowToCamelCase(res.rows[0]));
+    } catch (e: any) {
+      console.error(`[PostgresAdapter - getRoleByName(${name})] Error:`, e);
+      return null;
+    } finally {
+      client.release();
+    }
+  }
+  
+  async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      const currentRole = await this.getRole(id); // Uses its own connection
+      if (!currentRole) return { success: false, message: 'Perfil não encontrado.' };
+
+      const fieldsToUpdate: string[] = [];
+      const values: any[] = [];
+      let paramCount = 1;
+
+      if (data.name && data.name.trim() !== currentRole.name) {
+        const normalizedName = data.name.trim().toUpperCase();
+        if (currentRole.name_normalized !== 'ADMINISTRATOR' && currentRole.name_normalized !== 'USER') {
+            const existingRes = await client.query('SELECT id FROM roles WHERE name_normalized = $1 AND id != $2 LIMIT 1', [normalizedName, Number(id)]);
+            if (existingRes.rowCount > 0) return { success: false, message: `Perfil com nome "${data.name}" já existe.`};
+            fieldsToUpdate.push(`name_normalized = $${paramCount++}`); values.push(normalizedName);
+        }
+        fieldsToUpdate.push(`name = $${paramCount++}`); values.push(data.name.trim());
+      }
+      if (data.description !== undefined && data.description !== currentRole.description) {
+        fieldsToUpdate.push(`description = $${paramCount++}`); values.push(data.description || null);
+      }
+      if (data.permissions !== undefined && JSON.stringify((data.permissions || []).sort()) !== JSON.stringify((currentRole.permissions || []).sort())) {
+        fieldsToUpdate.push(`permissions = $${paramCount++}`);
+        values.push(JSON.stringify((data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p))));
+      }
+      
+      if (fieldsToUpdate.length === 0) {
+        return { success: true, message: 'Nenhum dado para atualizar no perfil (PostgreSQL).' };
+      }
+
+      fieldsToUpdate.push(`updated_at = NOW()`);
+      values.push(Number(id));
+      const queryText = `UPDATE roles SET ${fieldsToUpdate.join(', ')} WHERE id = $${paramCount}`;
+      
+      await client.query(queryText, values);
+      return { success: true, message: 'Perfil atualizado (PostgreSQL)!' };
+    } catch (e: any) {
+      console.error(`[PostgresAdapter - updateRole(${id})] Error:`, e);
+      return { success: false, message: e.message };
+    } finally {
+      client.release();
+    }
+  }
+
+  async deleteRole(id: string): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      const role = await this.getRole(id); // Uses its own connection
+      if (role && (role.name_normalized === 'ADMINISTRATOR' || role.name_normalized === 'USER')) {
+        return { success: false, message: 'Perfis de sistema não podem ser excluídos.' };
+      }
+      // Consider implications: what happens to users with this roleId? Set to null or prevent deletion if in use?
+      // For now, simple delete:
+      await client.query('DELETE FROM roles WHERE id = $1', [Number(id)]);
+      return { success: true, message: 'Perfil excluído (PostgreSQL)!' };
+    } catch (e: any) {
+      console.error(`[PostgresAdapter - deleteRole(${id})] Error:`, e);
+      return { success: false, message: e.message };
+    } finally {
+      client.release();
+    }
+  }
+  
+  async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; }> {
+    const defaultRolesData: RoleFormData[] = [
+      { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
+      { name: 'USER', description: 'Usuário padrão.', permissions: ['view_auctions', 'place_bids', 'view_lots'] },
+      { name: 'CONSIGNOR', description: 'Comitente.', permissions: ['auctions:manage_own', 'lots:manage_own', 'view_reports', 'media:upload'] },
+      { name: 'AUCTIONEER', description: 'Leiloeiro.', permissions: ['auctions:manage_assigned', 'lots:read', 'lots:update', 'conduct_auctions'] },
+      { name: 'AUCTION_ANALYST', description: 'Analista de Leilões.', permissions: ['categories:read', 'states:read', 'users:read', 'view_reports'] }
+    ];
+     const client = await getPool().connect(); // Get one connection for the transaction
+    try {
+      await client.query('BEGIN');
+      for (const roleData of defaultRolesData) {
+        const normalizedName = roleData.name.trim().toUpperCase();
+        const existingRes = await client.query('SELECT * FROM roles WHERE name_normalized = $1 LIMIT 1', [normalizedName]);
+        
+        if (existingRes.rowCount === 0) {
+          const validPermissions = JSON.stringify((roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p)));
+          const query = `
+            INSERT INTO roles (name, name_normalized, description, permissions, created_at, updated_at) 
+            VALUES ($1, $2, $3, $4, NOW(), NOW());
+          `;
+          await client.query(query, [roleData.name.trim(), normalizedName, roleData.description || null, validPermissions]);
+        } else {
+          const role = mapToRole(mapRowToCamelCase(existingRes.rows[0]));
+          const currentPermissionsSorted = [...(role.permissions || [])].sort();
+          const expectedPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p)).sort();
+          if (JSON.stringify(currentPermissionsSorted) !== JSON.stringify(expectedPermissions) || role.description !== (roleData.description || null)) {
+            const updateQuery = `UPDATE roles SET description = $1, permissions = $2, updated_at = NOW() WHERE id = $3`;
+            await client.query(updateQuery, [roleData.description || null, JSON.stringify(expectedPermissions), Number(role.id)]);
+          }
+        }
+      }
+      await client.query('COMMIT');
+      return { success: true, message: 'Perfis padrão verificados/criados (PostgreSQL).'};
+    } catch (e: any) {
+      await client.query('ROLLBACK');
+      console.error(`[PostgresAdapter - ensureDefaultRolesExist] Error:`, e);
+      return { success: false, message: e.message };
+    } finally {
+      client.release();
+    }
   }
 
   // --- Auctioneers (Scaffold) ---
@@ -286,24 +758,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async getBidsForLot(lotId: string): Promise<BidInfo[]> { console.warn("PostgresAdapter.getBidsForLot not implemented."); return []; }
   async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }> { console.warn("PostgresAdapter.placeBidOnLot not implemented."); return {success: false, message: "Not implemented"}; }
   
-  // --- Users ---
-  async getUserProfileData(userId: string): Promise<UserProfileData | null> { console.warn("PostgresAdapter.getUserProfileData not implemented."); return null; }
-  async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.updateUserProfile not implemented."); return {success: false, message: "Not implemented"}; }
-  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }> { console.warn("PostgresAdapter.ensureUserRole not implemented."); return {success: false, message: "Not implemented"}; }
-  async getUsersWithRoles(): Promise<UserProfileData[]> { console.warn("PostgresAdapter.getUsersWithRoles not implemented."); return []; }
-  async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.updateUserRole not implemented."); return {success: false, message: "Not implemented"}; }
-  async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.deleteUserProfile not implemented."); return {success: false, message: "Not implemented"}; }
-
-  // --- Roles ---
-  async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> { console.warn("PostgresAdapter.createRole not implemented."); return {success: false, message: "Not implemented"}; }
-  async getRoles(): Promise<Role[]> { console.warn("PostgresAdapter.getRoles not implemented."); return []; }
-  async getRole(id: string): Promise<Role | null> { console.warn("PostgresAdapter.getRole not implemented."); return null; }
-  async getRoleByName(name: string): Promise<Role | null> { console.warn("PostgresAdapter.getRoleByName not implemented."); return null; }
-  async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.updateRole not implemented."); return {success: false, message: "Not implemented"}; }
-  async deleteRole(id: string): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.deleteRole not implemented."); return {success: false, message: "Not implemented"}; }
-  async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.ensureDefaultRolesExist not implemented."); return {success: false, message: "Not implemented"}; }
-  
-  // --- Media Items ---
+  // --- Media Items (Scaffold) ---
   async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> { console.warn("PostgresAdapter.createMediaItem not implemented."); return {success: false, message: "Not implemented"}; }
   async getMediaItems(): Promise<MediaItem[]> { console.warn("PostgresAdapter.getMediaItems not implemented."); return []; }
   async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.updateMediaItemMetadata not implemented."); return {success: false, message: "Not implemented"}; }
@@ -314,5 +769,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
   // Settings
   async getPlatformSettings(): Promise<PlatformSettings> { console.warn("PostgresAdapter.getPlatformSettings not implemented."); return { id: 'global', galleryImageBasePath: '/pg/default/path/', updatedAt: new Date() };}
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.updatePlatformSettings not implemented."); return {success: false, message: "Not implemented"}; }
-
 }
+
+    
