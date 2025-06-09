@@ -1,9 +1,16 @@
 
-import type { Timestamp as AdminTimestamp, FieldValue as AdminFieldValue } from 'firebase-admin/firestore';
-import type { Timestamp as ClientTimestamp } from 'firebase/firestore';
+import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
+import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
 
-export type AnyTimestamp = AdminTimestamp | ClientTimestamp | Date | null | undefined;
-export type AnyServerTimestamp = AdminFieldValue | Date | AnyTimestamp;
+// For server-side logic (Admin SDK)
+export type ServerTimestamp = FirebaseAdminTimestamp;
+export type AdminFieldValue = FirebaseAdminFieldValue;
+
+// For client-side logic or data received from client
+export type ClientTimestamp = FirebaseClientTimestamp;
+
+// Generic type for properties that could be any of these, or a JS Date
+export type AnyTimestamp = ServerTimestamp | ClientTimestamp | Date | null | undefined;
 
 
 export interface Bid {
@@ -53,8 +60,8 @@ export interface LotCategory {
     slug: string;
     description?: string;
     itemCount?: number; 
-    createdAt: AnyTimestamp;
-    updatedAt: AnyTimestamp;
+    createdAt: AnyTimestamp; // Could be Date from SQL, Timestamp from Firestore
+    updatedAt: AnyTimestamp; // Could be Date from SQL, Timestamp from Firestore
 }
 
 export interface MediaItem {
@@ -152,9 +159,9 @@ export interface Lot {
 }
 
 export type LotFormData = Omit<Lot, 'id' | 'createdAt' | 'updatedAt' | 'endDate' | 'lotSpecificAuctionDate' | 'secondAuctionDate' | 'isFavorite' | 'isFeatured' | 'views' | 'bidsCount' | 'galleryImageUrls' | 'dataAiHint' | 'auctionDate' | 'auctioneerName' | 'cityName' | 'stateUf' | 'auctioneerId' | 'mediaItemIds'> & {
-  endDate: Date; // For form input, always Date
-  lotSpecificAuctionDate?: Date | null; // For form input
-  secondAuctionDate?: Date | null; // For form input
+  endDate: Date; 
+  lotSpecificAuctionDate?: Date | null;
+  secondAuctionDate?: Date | null;
   stateId?: string | null; 
   cityId?: string | null;  
   sellerId?: string;
@@ -201,8 +208,8 @@ export interface Auction {
 }
 
 export type AuctionFormData = Omit<Auction, 'id' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' | 'lots' | 'totalLots' | 'visits' | 'auctionStages' | 'initialOffer' | 'isFavorite' | 'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' | 'category' | 'auctioneer' | 'seller'> & {
-  auctionDate: Date; // For form input, always Date
-  endDate?: Date | null; // For form input
+  auctionDate: Date;
+  endDate?: Date | null;
   category: string; 
   auctioneer: string; 
   seller?: string;
@@ -450,3 +457,96 @@ export interface PlatformSettings {
 
 export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'>;
     
+// Database Adapter Interface (moved here from a separate file for simplicity in this turn)
+export interface IDatabaseAdapter {
+  // Categories
+  createLotCategory(data: { name: string; description?: string }): Promise<{ success: boolean; message: string; categoryId?: string }>;
+  getLotCategories(): Promise<LotCategory[]>;
+  getLotCategory(id: string): Promise<LotCategory | null>;
+  updateLotCategory(id: string, data: { name: string; description?: string }): Promise<{ success: boolean; message: string }>;
+  deleteLotCategory(id: string): Promise<{ success: boolean; message: string }>;
+  
+  // Add other entity methods here...
+  // States
+  createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string }>;
+  getStates(): Promise<StateInfo[]>;
+  getState(id: string): Promise<StateInfo | null>;
+  updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string }>;
+  deleteState(id: string): Promise<{ success: boolean; message: string }>;
+
+  // Cities
+  createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string }>;
+  getCities(stateIdFilter?: string): Promise<CityInfo[]>;
+  getCity(id: string): Promise<CityInfo | null>;
+  updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string }>;
+  deleteCity(id: string): Promise<{ success: boolean; message: string }>;
+  
+  // Auctioneers
+  createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string }>;
+  getAuctioneers(): Promise<AuctioneerProfileInfo[]>;
+  getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null>;
+  updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string }>;
+  deleteAuctioneer(id: string): Promise<{ success: boolean; message: string }>;
+  getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null>; // Added
+
+  // Sellers
+  createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string }>;
+  getSellers(): Promise<SellerProfileInfo[]>;
+  getSeller(id: string): Promise<SellerProfileInfo | null>;
+  updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string }>;
+  deleteSeller(id: string): Promise<{ success: boolean; message: string }>;
+  getSellerBySlug(slug: string): Promise<SellerProfileInfo | null>; // Added
+
+  // Auctions
+  createAuction(data: AuctionFormData): Promise<{ success: boolean; message: string; auctionId?: string }>;
+  getAuctions(): Promise<Auction[]>;
+  getAuction(id: string): Promise<Auction | null>;
+  updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string }>;
+  deleteAuction(id: string): Promise<{ success: boolean; message: string }>;
+  getAuctionsBySellerSlug(sellerSlug: string): Promise<Auction[]>; // Added
+
+  // Lots
+  createLot(data: LotFormData): Promise<{ success: boolean; message: string; lotId?: string }>;
+  getLots(auctionIdParam?: string): Promise<Lot[]>;
+  getLot(id: string): Promise<Lot | null>;
+  updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string }>;
+  deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string }>;
+  getBidsForLot(lotId: string): Promise<BidInfo[]>; // Added
+  placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }>; // Added
+  
+  // Users (only profile data, auth is separate)
+  getUserProfileData(userId: string): Promise<UserProfileData | null>;
+  updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string }>;
+  // createUserProfile: Needed if not relying on Firebase Auth sync
+  ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }>;
+  getUsersWithRoles(): Promise<UserProfileData[]>;
+  updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string }>;
+  deleteUserProfile(userId: string): Promise<{ success: boolean; message: string }>; // Deletes only Firestore profile
+
+  // Roles
+  createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string }>;
+  getRoles(): Promise<Role[]>;
+  getRole(id: string): Promise<Role | null>;
+  getRoleByName(name: string): Promise<Role | null>;
+  updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string }>;
+  deleteRole(id: string): Promise<{ success: boolean; message: string }>;
+  ensureDefaultRolesExist(): Promise<{ success: boolean; message: string }>;
+
+  // Media Items
+  createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }>;
+  getMediaItems(): Promise<MediaItem[]>;
+  updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string }>;
+  deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string }>; // Deletion from DB only
+  linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string }>;
+  unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string }>;
+
+  // Settings
+  getPlatformSettings(): Promise<PlatformSettings>;
+  updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string }>;
+}
+
+// Helper types for SQL adapters (can be expanded)
+export type QueryResult<T> = {
+  rows: T[];
+  rowCount: number;
+};
