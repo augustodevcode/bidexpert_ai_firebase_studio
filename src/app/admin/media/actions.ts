@@ -2,14 +2,13 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { dbAdmin, storageAdmin, ensureAdminInitialized } from '@/lib/firebase/admin';
-import admin from 'firebase-admin';
+import { dbAdmin, storageAdmin, ensureAdminInitialized, FieldValue, Timestamp as AdminTimestamp } from '@/lib/firebase/admin';
 import type { MediaItem } from '@/types';
 import { v4 as uuidv4 } from 'uuid'; 
 
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date();
-  if (timestampField instanceof admin.firestore.Timestamp) {
+  if (timestampField instanceof AdminTimestamp) {
     return timestampField.toDate();
   }
   if (timestampField.toDate && typeof timestampField.toDate === 'function') {
@@ -17,7 +16,7 @@ function safeConvertToDate(timestampField: any): Date {
   }
   if (typeof timestampField === 'object' && timestampField !== null &&
       typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
-    return new admin.firestore.Timestamp(timestampField.seconds, timestampField.nanoseconds).toDate();
+    return new AdminTimestamp(timestampField.seconds, timestampField.nanoseconds).toDate();
   }
   if (timestampField instanceof Date) return timestampField;
   const parsedDate = new Date(timestampField);
@@ -29,10 +28,10 @@ function safeConvertToDate(timestampField: any): Date {
 export async function handleImageUpload(
   formData: FormData
 ): Promise<{ success: boolean; message: string; items?: MediaItem[] }> {
-  const { dbAdmin: currentDbAdmin, storageAdmin: currentStorageAdmin } = await ensureAdminInitialized(); 
+  const { dbAdmin: currentDbAdmin, storageAdmin: currentStorageAdmin, error: sdkError } = await ensureAdminInitialized(); 
 
-  if (!currentDbAdmin || !currentStorageAdmin) {
-    const msg = 'Erro de configuração: Admin SDK Firestore ou Storage não disponível para handleImageUpload.';
+  if (sdkError || !currentDbAdmin || !currentStorageAdmin) {
+    const msg = `Erro de configuração: Admin SDK Firestore ou Storage não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}`;
     console.error(`[Server Action - handleImageUpload] ${msg}`);
     return { success: false, message: msg };
   }
@@ -61,7 +60,7 @@ export async function handleImageUpload(
       
       const newMediaItemData = {
         fileName: file.name,
-        uploadedAt: admin.firestore.FieldValue.serverTimestamp(),
+        uploadedAt: FieldValue.serverTimestamp(),
         title: file.name, 
         altText: file.name,
         mimeType: file.type,
@@ -77,7 +76,7 @@ export async function handleImageUpload(
       uploadedItems.push({
         id: docRef.id,
         ...newMediaItemData,
-        uploadedAt: new Date(), 
+        uploadedAt: new Date(), // Representação cliente imediata
         urlOriginal: publicUrl,
         urlThumbnail: publicUrl,
         urlMedium: publicUrl,
@@ -94,9 +93,9 @@ export async function handleImageUpload(
 
 
 export async function getMediaItems(): Promise<MediaItem[]> {
-  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
-  if (!currentDbAdmin) {
-    console.warn("[Server Action - getMediaItems] dbAdmin não inicializado. Retornando array de exemplo.");
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+  if (sdkError || !currentDbAdmin) {
+    console.warn(`[Server Action - getMediaItems] dbAdmin não inicializado. Detalhe: ${sdkError?.message || 'SDK não inicializado'}. Retornando array de exemplo.`);
     return [
       { id: 'sample1', fileName: 'sample_image_1.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 102400, urlOriginal: 'https://placehold.co/800x600.png?text=Sample1', urlThumbnail: 'https://placehold.co/150x150.png?text=Sample1', urlMedium: 'https://placehold.co/600x400.png?text=Sample1', urlLarge: 'https://placehold.co/800x600.png?text=Sample1', title: 'Imagem de Exemplo 1', altText: 'Imagem de Exemplo 1', dataAiHint: 'amostra um', linkedLotIds: [] },
       { id: 'sample2', fileName: 'another_example.png', uploadedAt: new Date(), mimeType: 'image/png', sizeBytes: 204800, urlOriginal: 'https://placehold.co/800x600.png?text=Sample2', urlThumbnail: 'https://placehold.co/150x150.png?text=Sample2', urlMedium: 'https://placehold.co/600x400.png?text=Sample2', urlLarge: 'https://placehold.co/800x600.png?text=Sample2', title: 'Exemplo PNG Dois', altText: 'Outra imagem de Exemplo', dataAiHint: 'amostra dois', linkedLotIds: []  },
@@ -104,7 +103,7 @@ export async function getMediaItems(): Promise<MediaItem[]> {
   }
   try {
     const mediaCollection = currentDbAdmin.collection('mediaItems');
-    const q = query(mediaCollection, orderBy('uploadedAt', 'desc'));
+    const q = currentDbAdmin.collection('mediaItems').orderBy('uploadedAt', 'desc'); // Admin SDK query
     const snapshot = await q.get(); 
     return snapshot.docs.map(docSnap => {
       const data = docSnap.data();
@@ -149,16 +148,16 @@ export async function updateMediaItemMetadata(
   id: string,
   metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>
 ): Promise<{ success: boolean; message: string }> {
-  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
-  if (!currentDbAdmin) {
-    const msg = 'Erro de configuração: Admin SDK Firestore não disponível para updateMediaItemMetadata.';
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+  if (sdkError || !currentDbAdmin) {
+    const msg = `Erro de config: Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}`;
     console.error(`[Server Action - updateMediaItemMetadata] ${msg}`);
     return { success: false, message: msg };
   }
   if (!id) return { success: false, message: 'ID da imagem não fornecido.' };
   try {
     const mediaDocRef = currentDbAdmin.collection('mediaItems').doc(id);
-    await mediaDocRef.update({ ...metadata, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+    await mediaDocRef.update({ ...metadata, updatedAt: FieldValue.serverTimestamp() });
     revalidatePath('/admin/media');
     return { success: true, message: 'Metadados da imagem atualizados com sucesso!' };
   } catch (error: any) {
@@ -170,9 +169,9 @@ export async function updateMediaItemMetadata(
 export async function deleteMediaItem(
   id: string
 ): Promise<{ success: boolean; message: string }> {
-  const { dbAdmin: currentDbAdmin, storageAdmin: currentStorageAdmin } = await ensureAdminInitialized();
-  if (!currentDbAdmin || !currentStorageAdmin) {
-    const msg = 'Erro de configuração: Admin SDK Firestore ou Storage não disponível para deleteMediaItem.';
+  const { dbAdmin: currentDbAdmin, storageAdmin: currentStorageAdmin, error: sdkError } = await ensureAdminInitialized();
+  if (sdkError || !currentDbAdmin || !currentStorageAdmin) {
+    const msg = `Erro de config: Admin SDK Firestore ou Storage não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}`;
     console.error(`[Server Action - deleteMediaItem] ${msg}`);
     return { success: false, message: msg };
   }
@@ -216,28 +215,28 @@ export async function deleteMediaItem(
 }
 
 export async function linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string }> {
-  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
-  if (!currentDbAdmin) {
-    const msg = 'Erro de config: Admin SDK Firestore não disponível para linkMediaItemsToLot.';
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+   if (sdkError || !currentDbAdmin) {
+    const msg = `Erro de config: Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}`;
     console.error(`[Server Action - linkMediaItemsToLot] ${msg}`);
     return { success: false, message: msg };
   }
   if (!lotId || !mediaItemIds || mediaItemIds.length === 0) {
     return { success: false, message: 'IDs do lote e das mídias são obrigatórios.' };
   }
-
+  
   const batch = currentDbAdmin.batch();
   try {
     const lotRef = currentDbAdmin.collection('lots').doc(lotId);
     batch.update(lotRef, {
-      mediaItemIds: admin.firestore.FieldValue.arrayUnion(...mediaItemIds),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      mediaItemIds: FieldValue.arrayUnion(...mediaItemIds),
+      updatedAt: FieldValue.serverTimestamp()
     });
 
     mediaItemIds.forEach(mediaId => {
       const mediaRef = currentDbAdmin.collection('mediaItems').doc(mediaId);
       batch.update(mediaRef, {
-        linkedLotIds: admin.firestore.FieldValue.arrayUnion(lotId)
+        linkedLotIds: FieldValue.arrayUnion(lotId)
       });
     });
 
@@ -252,9 +251,9 @@ export async function linkMediaItemsToLot(lotId: string, mediaItemIds: string[])
 }
 
 export async function unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string }> {
-  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
-   if (!currentDbAdmin) {
-    const msg = 'Erro de config: Admin SDK Firestore não disponível para unlinkMediaItemFromLot.';
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+   if (sdkError || !currentDbAdmin) {
+    const msg = `Erro de config: Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}`;
     console.error(`[Server Action - unlinkMediaItemFromLot] ${msg}`);
     return { success: false, message: msg };
   }
@@ -266,13 +265,13 @@ export async function unlinkMediaItemFromLot(lotId: string, mediaItemId: string)
   try {
     const lotRef = currentDbAdmin.collection('lots').doc(lotId);
     batch.update(lotRef, {
-      mediaItemIds: admin.firestore.FieldValue.arrayRemove(mediaItemId),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      mediaItemIds: FieldValue.arrayRemove(mediaItemId),
+      updatedAt: FieldValue.serverTimestamp()
     });
 
     const mediaRef = currentDbAdmin.collection('mediaItems').doc(mediaItemId);
     batch.update(mediaRef, {
-      linkedLotIds: admin.firestore.FieldValue.arrayRemove(lotId)
+      linkedLotIds: FieldValue.arrayRemove(lotId)
     });
 
     await batch.commit();
@@ -284,3 +283,4 @@ export async function unlinkMediaItemFromLot(lotId: string, mediaItemId: string)
     return { success: false, message: error.message || 'Falha ao desvincular mídia.' };
   }
 }
+

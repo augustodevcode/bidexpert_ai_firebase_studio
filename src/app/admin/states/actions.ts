@@ -3,15 +3,14 @@
 
 import { revalidatePath } from 'next/cache';
 import { db as firestoreClientDB } from '@/lib/firebase'; // SDK Cliente para leituras
-import admin from 'firebase-admin';
-import { dbAdmin, ensureAdminInitialized } from '@/lib/firebase/admin'; // SDK Admin para escritas
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp as ClientTimestamp } from 'firebase/firestore';
+import { dbAdmin, ensureAdminInitialized, FieldValue, Timestamp as AdminTimestamp } from '@/lib/firebase/admin'; // SDK Admin para escritas e tipos Admin
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, orderBy, Timestamp as ClientTimestamp } from 'firebase/firestore';
 import type { StateInfo, StateFormData } from '@/types';
 import { slugify } from '@/lib/sample-data';
 
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date(); 
-  if (timestampField instanceof admin.firestore.Timestamp) { 
+  if (timestampField instanceof AdminTimestamp) { 
     return timestampField.toDate();
   }
   if (timestampField instanceof ClientTimestamp) { 
@@ -22,7 +21,7 @@ function safeConvertToDate(timestampField: any): Date {
   }
   if (typeof timestampField === 'object' && timestampField !== null &&
       typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
-    return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000);
+    return new AdminTimestamp(timestampField.seconds, timestampField.nanoseconds).toDate();
   }
   if (timestampField instanceof Date) return timestampField;
   const parsedDate = new Date(timestampField);
@@ -34,9 +33,9 @@ function safeConvertToDate(timestampField: any): Date {
 export async function createState(
   data: StateFormData
 ): Promise<{ success: boolean; message: string; stateId?: string }> {
-  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
-  if (!currentDbAdmin) {
-    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+  if (sdkError || !currentDbAdmin) {
+    return { success: false, message: `Erro de configuração: Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}` };
   }
   if (!data.name || data.name.trim() === '') {
     return { success: false, message: 'O nome do estado é obrigatório.' };
@@ -51,8 +50,8 @@ export async function createState(
       uf: data.uf.trim().toUpperCase(),
       slug: slugify(data.name.trim()),
       cityCount: 0, 
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     };
 
     const docRef = await addDoc(collection(currentDbAdmin, 'states'), newStateData);
@@ -122,9 +121,9 @@ export async function updateState(
   id: string,
   data: Partial<StateFormData>
 ): Promise<{ success: boolean; message: string }> {
-  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
-  if (!currentDbAdmin) {
-    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+  if (sdkError || !currentDbAdmin) {
+    return { success: false, message: `Erro de configuração: Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}` };
   }
   if (data.name !== undefined && (data.name === null || data.name.trim() === '')) {
      return { success: false, message: 'O nome do estado não pode ser vazio.' };
@@ -144,7 +143,7 @@ export async function updateState(
     if (data.uf) {
         updateData.uf = data.uf.trim().toUpperCase();
     }
-    updateData.updatedAt = admin.firestore.FieldValue.serverTimestamp() as any;
+    updateData.updatedAt = FieldValue.serverTimestamp() as any;
 
     await updateDoc(stateDocRef, updateData);
     revalidatePath('/admin/states');
@@ -159,9 +158,9 @@ export async function updateState(
 export async function deleteState(
   id: string
 ): Promise<{ success: boolean; message: string }> {
-  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
-  if (!currentDbAdmin) {
-    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+  if (sdkError || !currentDbAdmin) {
+    return { success: false, message: `Erro de configuração: Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}` };
   }
   try {
     const stateDocRef = doc(currentDbAdmin, 'states', id);

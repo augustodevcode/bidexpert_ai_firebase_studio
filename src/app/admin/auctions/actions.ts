@@ -3,15 +3,14 @@
 
 import { revalidatePath } from 'next/cache';
 import { db as firestoreClientDB } from '@/lib/firebase'; // SDK Cliente para leituras
-import admin from 'firebase-admin';
-import { dbAdmin, ensureAdminInitialized } from '@/lib/firebase/admin'; // SDK Admin para escritas
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp as ClientTimestamp, where } from 'firebase/firestore';
+import { dbAdmin, ensureAdminInitialized, FieldValue, Timestamp as AdminTimestamp } from '@/lib/firebase/admin'; // SDK Admin para escritas e tipos Admin
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, orderBy, Timestamp as ClientTimestamp, where } from 'firebase/firestore';
 import type { Auction, AuctionFormData } from '@/types';
 import { slugify, sampleAuctions } from '@/lib/sample-data';
 
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date();
-  if (timestampField instanceof admin.firestore.Timestamp) { 
+  if (timestampField instanceof AdminTimestamp) { 
     return timestampField.toDate();
   }
   if (timestampField instanceof ClientTimestamp) { 
@@ -22,7 +21,7 @@ function safeConvertToDate(timestampField: any): Date {
   }
   if (typeof timestampField === 'object' && timestampField !== null &&
       typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
-    return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000);
+    return new AdminTimestamp(timestampField.seconds, timestampField.nanoseconds).toDate();
   }
   if (timestampField instanceof Date) return timestampField;
   const parsedDate = new Date(timestampField);
@@ -42,9 +41,9 @@ function safeConvertOptionalDate(timestampField: any): Date | undefined | null {
 export async function createAuction(
   data: AuctionFormData
 ): Promise<{ success: boolean; message: string; auctionId?: string }> {
-  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
-  if (!currentDbAdmin) {
-    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+  if (sdkError || !currentDbAdmin) {
+    return { success: false, message: `Erro de configuração: Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}` };
   }
   if (!data.title || data.title.trim() === '') {
     return { success: false, message: 'O título do leilão é obrigatório.' };
@@ -65,12 +64,12 @@ export async function createAuction(
   try {
     const newAuctionDataForFirestore = {
       ...data,
-      auctionDate: admin.firestore.Timestamp.fromDate(new Date(data.auctionDate)),
-      endDate: data.endDate ? admin.firestore.Timestamp.fromDate(new Date(data.endDate)) : null,
+      auctionDate: AdminTimestamp.fromDate(new Date(data.auctionDate)),
+      endDate: data.endDate ? AdminTimestamp.fromDate(new Date(data.endDate)) : null,
       totalLots: 0,
       visits: 0,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     };
     
     if (data.endDate === null || data.endDate === undefined) {
@@ -92,11 +91,11 @@ export async function getAuctions(): Promise<Auction[]> {
       console.error("[getAuctions] Firestore client DB não inicializado. Retornando sample data.");
       return sampleAuctions.map(auction => ({
         ...auction,
-        auctionDate: new Date(auction.auctionDate), 
-        endDate: auction.endDate ? new Date(auction.endDate) : null,
+        auctionDate: new Date(auction.auctionDate as Date), 
+        endDate: auction.endDate ? new Date(auction.endDate as Date) : null,
         auctionStages: auction.auctionStages?.map(stage => ({
             ...stage,
-            endDate: new Date(stage.endDate),
+            endDate: new Date(stage.endDate as Date),
         })),
         createdAt: new Date(auction.createdAt || new Date()), 
         updatedAt: new Date(auction.updatedAt || new Date()), 
@@ -151,11 +150,11 @@ export async function getAuctions(): Promise<Auction[]> {
     } else {
       return sampleAuctions.map(auction => ({
         ...auction,
-        auctionDate: new Date(auction.auctionDate), 
-        endDate: auction.endDate ? new Date(auction.endDate) : null,
+        auctionDate: new Date(auction.auctionDate as Date), 
+        endDate: auction.endDate ? new Date(auction.endDate as Date) : null,
         auctionStages: auction.auctionStages?.map(stage => ({
             ...stage,
-            endDate: new Date(stage.endDate),
+            endDate: new Date(stage.endDate as Date),
         })),
         createdAt: new Date(auction.createdAt || new Date()), 
         updatedAt: new Date(auction.updatedAt || new Date()), 
@@ -165,11 +164,11 @@ export async function getAuctions(): Promise<Auction[]> {
     console.error("[Server Action - getAuctions] Error fetching auctions:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return sampleAuctions.map(auction => ({
         ...auction,
-        auctionDate: new Date(auction.auctionDate),
-        endDate: auction.endDate ? new Date(auction.endDate) : null,
+        auctionDate: new Date(auction.auctionDate as Date),
+        endDate: auction.endDate ? new Date(auction.endDate as Date) : null,
          auctionStages: auction.auctionStages?.map(stage => ({
             ...stage,
-            endDate: new Date(stage.endDate),
+            endDate: new Date(stage.endDate as Date),
         })),
         createdAt: new Date(auction.createdAt || new Date()),
         updatedAt: new Date(auction.updatedAt || new Date()),
@@ -194,11 +193,11 @@ export async function getAuction(id: string): Promise<Auction | null> {
     const foundInSample = sampleAuctions.find(auction => auction.id === id);
     return foundInSample ? {
         ...foundInSample,
-        auctionDate: new Date(foundInSample.auctionDate),
-        endDate: foundInSample.endDate ? new Date(foundInSample.endDate) : null,
+        auctionDate: new Date(foundInSample.auctionDate as Date),
+        endDate: foundInSample.endDate ? new Date(foundInSample.endDate as Date) : null,
         auctionStages: foundInSample.auctionStages?.map(stage => ({
             ...stage,
-            endDate: new Date(stage.endDate),
+            endDate: new Date(stage.endDate as Date),
         })),
         createdAt: new Date(foundInSample.createdAt || new Date()),
         updatedAt: new Date(foundInSample.updatedAt || new Date()),
@@ -251,11 +250,11 @@ export async function getAuction(id: string): Promise<Auction | null> {
         if (foundInSample) {
             return {
                 ...foundInSample,
-                auctionDate: new Date(foundInSample.auctionDate),
-                endDate: foundInSample.endDate ? new Date(foundInSample.endDate) : null,
+                auctionDate: new Date(foundInSample.auctionDate as Date),
+                endDate: foundInSample.endDate ? new Date(foundInSample.endDate as Date) : null,
                 auctionStages: foundInSample.auctionStages?.map(stage => ({
                     ...stage,
-                    endDate: new Date(stage.endDate),
+                    endDate: new Date(stage.endDate as Date),
                 })),
                 createdAt: new Date(foundInSample.createdAt || new Date()),
                 updatedAt: new Date(foundInSample.updatedAt || new Date()),
@@ -273,9 +272,9 @@ export async function updateAuction(
   id: string,
   data: Partial<AuctionFormData>
 ): Promise<{ success: boolean; message: string }> {
-  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
-  if (!currentDbAdmin) {
-    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+  if (sdkError || !currentDbAdmin) {
+    return { success: false, message: `Erro de configuração: Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}` };
   }
   if (data.title !== undefined && (data.title === null || data.title.trim() === '')) {
      return { success: false, message: 'O título do leilão não pode ser vazio se fornecido.' };
@@ -293,13 +292,13 @@ export async function updateAuction(
     const updateDataForFirestore: Partial<any> = { ...data };
 
     if (data.auctionDate) {
-        updateDataForFirestore.auctionDate = admin.firestore.Timestamp.fromDate(new Date(data.auctionDate));
+        updateDataForFirestore.auctionDate = AdminTimestamp.fromDate(new Date(data.auctionDate));
     }
     if (data.hasOwnProperty('endDate')) { 
-        updateDataForFirestore.endDate = data.endDate ? admin.firestore.Timestamp.fromDate(new Date(data.endDate)) : null;
+        updateDataForFirestore.endDate = data.endDate ? AdminTimestamp.fromDate(new Date(data.endDate)) : null;
     }
     
-    updateDataForFirestore.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+    updateDataForFirestore.updatedAt = FieldValue.serverTimestamp();
 
     await updateDoc(auctionDocRef, updateDataForFirestore);
     revalidatePath('/admin/auctions');
@@ -315,9 +314,9 @@ export async function updateAuction(
 export async function deleteAuction(
   id: string
 ): Promise<{ success: boolean; message: string }> {
-  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
-  if (!currentDbAdmin) {
-    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+  if (sdkError || !currentDbAdmin) {
+    return { success: false, message: `Erro de configuração: Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}` };
   }
   try {
     const auctionDocRef = doc(currentDbAdmin, 'auctions', id);

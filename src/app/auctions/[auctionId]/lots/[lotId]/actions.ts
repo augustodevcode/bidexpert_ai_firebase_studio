@@ -2,8 +2,7 @@
 // src/app/auctions/[auctionId]/lots/[lotId]/actions.ts
 'use server';
 
-import { dbAdmin, ensureAdminInitialized } from '@/lib/firebase/admin';
-import admin from 'firebase-admin';
+import { dbAdmin, ensureAdminInitialized, FieldValue, Timestamp as AdminTimestamp } from '@/lib/firebase/admin';
 import type { Lot, BidInfo, Auction } from '@/types';
 import { getAuctionStatusText } from '@/lib/sample-data'; 
 
@@ -23,15 +22,15 @@ export async function placeBidOnLot(
 ): Promise<PlaceBidResult> {
   console.log(`[Server Action - placeBidOnLot] Lance para lotId: ${lotId}, auctionId: ${auctionId}, userId: ${userId}, amount: ${bidAmount}`);
   
-  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized(); // Garante inicialização
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized(); 
+
+  if (sdkError || !currentDbAdmin) {
+    console.error("[Server Action - placeBidOnLot] dbAdmin não inicializado.", sdkError?.message);
+    return { success: false, message: `Erro de configuração do servidor (dbAdmin ausente). Detalhe: ${sdkError?.message || 'SDK não inicializado'}` };
+  }
 
   if (!userId || !userDisplayName) {
     return { success: false, message: 'Usuário não autenticado ou informações do usuário ausentes.' };
-  }
-
-  if (!currentDbAdmin) {
-    console.error("[Server Action - placeBidOnLot] dbAdmin não inicializado.");
-    return { success: false, message: 'Erro de configuração do servidor (dbAdmin ausente).' };
   }
 
   try {
@@ -78,15 +77,15 @@ export async function placeBidOnLot(
       bidderId: userId,
       bidderDisplay: userDisplayName.substring(0, Math.min(7, userDisplayName.length)) + '****',
       amount: bidAmount,
-      timestamp: admin.firestore.FieldValue.serverTimestamp() as any, 
+      timestamp: FieldValue.serverTimestamp() as any, 
     };
 
     await newBidRef.set(newBidData);
 
     const updatedLotFirestoreData = {
       price: bidAmount,
-      bidsCount: admin.firestore.FieldValue.increment(1),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      bidsCount: FieldValue.increment(1),
+      updatedAt: FieldValue.serverTimestamp(),
     };
     await lotDocRef.update(updatedLotFirestoreData);
     
@@ -121,9 +120,9 @@ export async function getBidsForLot(lotId: string): Promise<BidInfo[]> {
     return [];
   }
   
-  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
-  if (!currentDbAdmin) {
-    console.error("[Server Action - getBidsForLot] dbAdmin não inicializado.");
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+  if (sdkError || !currentDbAdmin) {
+    console.error("[Server Action - getBidsForLot] dbAdmin não inicializado.", sdkError?.message);
     return [];
   }
   try {
@@ -136,7 +135,7 @@ export async function getBidsForLot(lotId: string): Promise<BidInfo[]> {
     }
     return bidsSnapshot.docs.map(docSnap => {
       const data = docSnap.data();
-      const timestamp = data.timestamp as admin.firestore.Timestamp;
+      const timestamp = data.timestamp as AdminTimestamp;
       return {
         id: docSnap.id,
         lotId: data.lotId,
@@ -152,3 +151,4 @@ export async function getBidsForLot(lotId: string): Promise<BidInfo[]> {
     return []; 
   }
 }
+

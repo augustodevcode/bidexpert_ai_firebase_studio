@@ -3,16 +3,15 @@
 
 import { revalidatePath } from 'next/cache';
 import { db as firestoreClientDB } from '@/lib/firebase'; // SDK Cliente para leituras
-import admin from 'firebase-admin';
-import { dbAdmin, ensureAdminInitialized } from '@/lib/firebase/admin'; // SDK Admin para escritas
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp as ClientTimestamp, where, writeBatch } from 'firebase/firestore';
+import { dbAdmin, ensureAdminInitialized, FieldValue, Timestamp as AdminTimestamp } from '@/lib/firebase/admin'; // SDK Admin para escritas e tipos Admin
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, orderBy, Timestamp as ClientTimestamp, where, writeBatch } from 'firebase/firestore';
 import type { Lot, LotFormData, StateInfo, CityInfo } from '@/types';
 import { getState } from '@/app/admin/states/actions'; 
 import { getCity } from '@/app/admin/cities/actions';
 
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date(); 
-  if (timestampField instanceof admin.firestore.Timestamp) { 
+  if (timestampField instanceof AdminTimestamp) { 
     return timestampField.toDate();
   }
   if (timestampField instanceof ClientTimestamp) { 
@@ -23,7 +22,7 @@ function safeConvertToDate(timestampField: any): Date {
   }
   if (typeof timestampField === 'object' && timestampField !== null &&
       typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
-    return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000); 
+    return new AdminTimestamp(timestampField.seconds, timestampField.nanoseconds).toDate(); 
   }
   if (timestampField instanceof Date) {
     return timestampField; 
@@ -47,9 +46,9 @@ function safeConvertOptionalDate(timestampField: any): Date | undefined | null {
 export async function createLot(
   data: LotFormData
 ): Promise<{ success: boolean; message: string; lotId?: string }> {
-  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
-  if (!currentDbAdmin) {
-    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+  if (sdkError || !currentDbAdmin) {
+    return { success: false, message: `Erro de configuração: Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}` };
   }
   if (!data.title || data.title.trim() === '') {
     return { success: false, message: 'O título do lote é obrigatório.' };
@@ -72,22 +71,22 @@ export async function createLot(
       views: data.views || 0,
       bidsCount: data.bidsCount || 0,
       auctionName: data.auctionName || `Leilão do Lote ${data.title.substring(0,20)}`,
-      endDate: admin.firestore.Timestamp.fromDate(new Date(endDate)),
+      endDate: AdminTimestamp.fromDate(new Date(endDate)),
       mediaItemIds: mediaItemIds || [], 
       galleryImageUrls: galleryImageUrls || [], 
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     };
 
     if (stateId) {
-      const stateDoc = await getDoc(doc(currentDbAdmin, 'states', stateId));
+      const stateDoc = await getDoc(doc(currentDbAdmin, 'states', stateId)); // Use Admin SDK for consistency if possible
       if (stateDoc.exists()) {
         newLotDataForFirestore.stateId = stateId;
         newLotDataForFirestore.stateUf = (stateDoc.data() as StateInfo).uf;
       }
     }
     if (cityId) {
-      const cityDoc = await getDoc(doc(currentDbAdmin, 'cities', cityId));
+      const cityDoc = await getDoc(doc(currentDbAdmin, 'cities', cityId)); // Use Admin SDK
       if (cityDoc.exists()) {
         newLotDataForFirestore.cityId = cityId;
         newLotDataForFirestore.cityName = (cityDoc.data() as CityInfo).name;
@@ -96,7 +95,7 @@ export async function createLot(
     
     if (lotSpecificAuctionDate !== undefined) {
       newLotDataForFirestore.lotSpecificAuctionDate = lotSpecificAuctionDate
-        ? admin.firestore.Timestamp.fromDate(new Date(lotSpecificAuctionDate))
+        ? AdminTimestamp.fromDate(new Date(lotSpecificAuctionDate))
         : null;
     } else {
        newLotDataForFirestore.lotSpecificAuctionDate = null;
@@ -104,7 +103,7 @@ export async function createLot(
 
     if (secondAuctionDate !== undefined) {
       newLotDataForFirestore.secondAuctionDate = secondAuctionDate
-        ? admin.firestore.Timestamp.fromDate(new Date(secondAuctionDate))
+        ? AdminTimestamp.fromDate(new Date(secondAuctionDate))
         : null;
     } else {
         newLotDataForFirestore.secondAuctionDate = null;
@@ -294,9 +293,9 @@ export async function updateLot(
   id: string,
   data: Partial<LotFormData>
 ): Promise<{ success: boolean; message: string }> {
-  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
-  if (!currentDbAdmin) {
-    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+  if (sdkError || !currentDbAdmin) {
+    return { success: false, message: `Erro de configuração: Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}` };
   }
   if (data.title !== undefined && (data.title === null || data.title.trim() === '')) {
      return { success: false, message: 'O título do lote não pode ser vazio se fornecido.' };
@@ -315,13 +314,13 @@ export async function updateLot(
         
         if (key === 'endDate' || key === 'lotSpecificAuctionDate' || key === 'secondAuctionDate') {
           if (value !== undefined) { 
-            updateDataForFirestore[key] = value ? admin.firestore.Timestamp.fromDate(new Date(value)) : null;
+            updateDataForFirestore[key] = value ? AdminTimestamp.fromDate(new Date(value)) : null;
           } else if (key === 'lotSpecificAuctionDate' || key === 'secondAuctionDate') {
             updateDataForFirestore[key] = null;
           }
         } else if (key === 'stateId') {
             if (value) {
-                const stateDoc = await getDoc(doc(currentDbAdmin, 'states', value));
+                const stateDoc = await getDoc(doc(currentDbAdmin, 'states', value)); // Use Admin SDK
                 if (stateDoc.exists()) {
                     updateDataForFirestore.stateId = value;
                     updateDataForFirestore.stateUf = (stateDoc.data() as StateInfo).uf;
@@ -335,7 +334,7 @@ export async function updateLot(
             }
         } else if (key === 'cityId') {
              if (value) {
-                const cityDoc = await getDoc(doc(currentDbAdmin, 'cities', value));
+                const cityDoc = await getDoc(doc(currentDbAdmin, 'cities', value)); // Use Admin SDK
                 if (cityDoc.exists()) {
                     updateDataForFirestore.cityId = value;
                     updateDataForFirestore.cityName = (cityDoc.data() as CityInfo).name;
@@ -358,7 +357,7 @@ export async function updateLot(
       }
     }
     
-    updateDataForFirestore.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+    updateDataForFirestore.updatedAt = FieldValue.serverTimestamp();
 
     await updateDoc(lotDocRef, updateDataForFirestore);
     revalidatePath('/admin/lots');
@@ -377,9 +376,9 @@ export async function deleteLot(
   id: string,
   auctionId?: string
 ): Promise<{ success: boolean; message: string }> {
-  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
-  if (!currentDbAdmin) {
-    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+  if (sdkError || !currentDbAdmin) {
+    return { success: false, message: `Erro de configuração: Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}` };
   }
   try {
     const lotDocRef = doc(currentDbAdmin, 'lots', id);

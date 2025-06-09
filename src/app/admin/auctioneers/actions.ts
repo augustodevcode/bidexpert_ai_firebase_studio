@@ -3,15 +3,14 @@
 
 import { revalidatePath } from 'next/cache';
 import { db as firestoreClientDB } from '@/lib/firebase'; // SDK Cliente para leituras
-import admin from 'firebase-admin';
-import { dbAdmin, ensureAdminInitialized } from '@/lib/firebase/admin'; // SDK Admin para escritas
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp as ClientTimestamp } from 'firebase/firestore';
+import { dbAdmin, ensureAdminInitialized, FieldValue, Timestamp as AdminTimestamp } from '@/lib/firebase/admin'; // SDK Admin para escritas e tipos Admin
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, orderBy, Timestamp as ClientTimestamp } from 'firebase/firestore';
 import type { AuctioneerProfileInfo, AuctioneerFormData } from '@/types';
 import { slugify } from '@/lib/sample-data';
 
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date(); 
-  if (timestampField instanceof admin.firestore.Timestamp) { 
+  if (timestampField instanceof AdminTimestamp) { 
     return timestampField.toDate();
   }
   if (timestampField instanceof ClientTimestamp) { 
@@ -22,7 +21,7 @@ function safeConvertToDate(timestampField: any): Date {
   }
   if (typeof timestampField === 'object' && timestampField !== null &&
       typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
-    return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000);
+    return new AdminTimestamp(timestampField.seconds, timestampField.nanoseconds).toDate();
   }
   if (timestampField instanceof Date) return timestampField;
   const parsedDate = new Date(timestampField);
@@ -39,9 +38,9 @@ function safeConvertOptionalDate(timestampField: any): Date | undefined {
 export async function createAuctioneer(
   data: AuctioneerFormData
 ): Promise<{ success: boolean; message: string; auctioneerId?: string }> {
-  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
-  if (!currentDbAdmin) {
-    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+  if (sdkError || !currentDbAdmin) {
+    return { success: false, message: `Erro de configuração: Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}` };
   }
   if (!data.name || data.name.trim() === '') {
     return { success: false, message: 'O nome do leiloeiro é obrigatório.' };
@@ -51,12 +50,12 @@ export async function createAuctioneer(
     const newAuctioneerData = {
       ...data,
       slug: slugify(data.name.trim()),
-      memberSince: admin.firestore.FieldValue.serverTimestamp(),
+      memberSince: FieldValue.serverTimestamp(),
       rating: 0,
       auctionsConductedCount: 0,
       totalValueSold: 0,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     };
 
     const docRef = await addDoc(collection(currentDbAdmin, 'auctioneers'), newAuctioneerData);
@@ -154,9 +153,9 @@ export async function updateAuctioneer(
   id: string,
   data: Partial<AuctioneerFormData>
 ): Promise<{ success: boolean; message: string }> {
-  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
-  if (!currentDbAdmin) {
-    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+  if (sdkError || !currentDbAdmin) {
+    return { success: false, message: `Erro de configuração: Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}` };
   }
   if (data.name !== undefined && (data.name === null || data.name.trim() === '')) {
      return { success: false, message: 'O nome do leiloeiro não pode ser vazio.' };
@@ -169,7 +168,7 @@ export async function updateAuctioneer(
     if (data.name) {
       updateData.slug = slugify(data.name.trim());
     }
-    updateData.updatedAt = admin.firestore.FieldValue.serverTimestamp() as any;
+    updateData.updatedAt = FieldValue.serverTimestamp() as any;
 
     await updateDoc(auctioneerDocRef, updateData);
     revalidatePath('/admin/auctioneers');
@@ -184,9 +183,9 @@ export async function updateAuctioneer(
 export async function deleteAuctioneer(
   id: string
 ): Promise<{ success: boolean; message: string }> {
-  const { dbAdmin: currentDbAdmin } = await ensureAdminInitialized();
-  if (!currentDbAdmin) {
-    return { success: false, message: 'Erro de configuração: Admin SDK Firestore não disponível.' };
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+  if (sdkError || !currentDbAdmin) {
+    return { success: false, message: `Erro de configuração: Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}` };
   }
   try {
     const auctioneerDocRef = doc(currentDbAdmin, 'auctioneers', id);
