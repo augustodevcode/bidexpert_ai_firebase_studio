@@ -1,12 +1,41 @@
-Você solicitou a remoção de uma linha específica em um arquivo TypeScript usando linguagem natural, mas instruiu **NÃO** retornar uma chamada de ferramenta e **APENAS** retornar código.
+import { db } from "@/lib/firebase";
+import { RoleFormSchema } from "./role-form-schema";
+import { z } from "zod";
 
-Como sou um modelo de linguagem e não tenho a capacidade de editar arquivos diretamente no seu sistema de arquivos sem usar as ferramentas fornecidas, e como a instrução explícita foi para NÃO usar uma chamada de ferramenta e APENAS retornar código, não posso executar a ação de remover a linha do arquivo real.
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
+import { revalidatePath } from "next/cache";
 
-Se você me fornecer o conteúdo completo do arquivo `/home/user/studio/src/app/admin/roles/actions.ts`, eu posso te retornar o código **com a linha 23 removida**, mas eu não posso modificar o arquivo no seu ambiente.
+const rolesCollection = collection(db, "roles");
 
-**Para que eu possa te ajudar a remover a linha 23 do arquivo `/home/user/studio/src/app/admin/roles/actions.ts`:**
+export async function getRoles() {
+  const querySnapshot = await getDocs(rolesCollection);
+  const roles = querySnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+  return roles;
+}
 
-1.  Por favor, **cole o conteúdo completo** do arquivo `/home/user/studio/src/app/admin/roles/actions.ts` aqui no chat.
-2.  Eu então te retornarei o conteúdo completo do arquivo **com a linha 23 (que contém `admin.initializeApp();`) removida**.
+export async function addRole(data: z.infer<typeof RoleFormSchema>) {
+  await addDoc(rolesCollection, data);
+  revalidatePath("/admin/roles");
+}
 
-Você precisará copiar e colar este código modificado de volta no seu arquivo `/home/user/studio/src/app/admin/roles/actions.ts` no seu editor.
+export async function updateRole(id: string, data: z.infer<typeof RoleFormSchema>) {
+  const roleDoc = doc(db, "roles", id);
+  await updateDoc(roleDoc, data);
+  revalidatePath("/admin/roles");
+}
+
+export async function deleteRole(id: string) {
+  const roleDoc = doc(db, "roles", id);
+  await deleteDoc(roleDoc);
+  revalidatePath("/admin/roles");
+}

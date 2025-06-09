@@ -55,6 +55,8 @@ export function ensureAdminInitialized(): {
     } else {
       console.log('[Admin SDK] GOOGLE_APPLICATION_CREDENTIALS not set. Attempting manual path.');
       try {
+        console.log(`[Admin SDK] Current Working Directory (CWD): ${process.cwd()}`);
+        console.log(`[Admin SDK] Manual Service Account Path: ${manualServiceAccountPath}`);
         if (fs.existsSync(manualServiceAccountPath)) {
           const serviceAccountJsonString = fs.readFileSync(manualServiceAccountPath, 'utf8');
           serviceAccount = JSON.parse(serviceAccountJsonString);

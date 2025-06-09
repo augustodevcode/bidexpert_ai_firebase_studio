@@ -2,33 +2,39 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db as firestoreClientDB } from '@/lib/firebase'; // SDK Cliente para leituras
-import { dbAdmin, ensureAdminInitialized, FieldValue, Timestamp as AdminTimestamp } from '@/lib/firebase/admin'; // SDK Admin para escritas e tipos Admin
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, orderBy, Timestamp as ClientTimestamp } from 'firebase/firestore';
+import { 
+  ensureAdminInitialized, 
+  FieldValue, 
+  Timestamp as AdminTimestamp 
+} from '@/lib/firebase/admin'; 
+// Removed direct imports from 'firebase-admin/firestore' for collection, addDoc, etc.
+// Also removing client SDK's Timestamp if only Admin SDK operations are done here.
+// Client SDK's db instance ('@/lib/firebase') is not needed if all operations use dbAdmin.
+
 import type { LotCategory } from '@/types';
 import { slugify } from '@/lib/sample-data';
 
 function safeConvertToDate(timestampField: any): Date {
-  if (!timestampField) return new Date();
+  if (!timestampField) return new Date(); 
   if (timestampField instanceof AdminTimestamp) { 
     return timestampField.toDate();
   }
-  if (timestampField instanceof ClientTimestamp) { 
-    return timestampField.toDate();
-  }
-  // Manter a lógica de conversão para objetos { seconds, nanoseconds } e outros tipos
+  // Removed ClientTimestamp check as we'll standardize on AdminTimestamp for server actions
   if (timestampField.toDate && typeof timestampField.toDate === 'function') {
     return timestampField.toDate();
   }
   if (typeof timestampField === 'object' && timestampField !== null &&
       typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
-    // Se for um objeto simples, crie um AdminTimestamp para converter
-    return new AdminTimestamp(timestampField.seconds, timestampField.nanoseconds).toDate();
+    return new AdminTimestamp(timestampField.seconds, timestampField.nanoseconds).toDate(); 
   }
-  if (timestampField instanceof Date) return timestampField;
+  if (timestampField instanceof Date) {
+    return timestampField;
+  }
   const parsedDate = new Date(timestampField);
-  if (!isNaN(parsedDate.getTime())) return parsedDate;
-  console.warn(`Could not convert category timestamp to Date: ${JSON.stringify(timestampField)}. Returning current date.`);
+  if (!isNaN(parsedDate.getTime())) {
+    return parsedDate;
+  }
+  console.warn(`[categories/actions] Could not convert timestamp: ${JSON.stringify(timestampField)}. Returning current date.`);
   return new Date();
 }
 
@@ -38,6 +44,7 @@ export async function createLotCategory(
 ): Promise<{ success: boolean; message: string; category?: LotCategory, categoryId?: string }> {
   const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
   if (sdkError || !currentDbAdmin) {
+    console.error(`[Server Action - createLotCategory] Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}`);
     return { success: false, message: `Erro de configuração: Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}` };
   }
   if (!data.name || data.name.trim() === '') {
@@ -51,7 +58,7 @@ export async function createLotCategory(
       description: data.description?.trim() || '',
       itemCount: 0,
     };
-    const docRef = await addDoc(collection(currentDbAdmin, 'lotCategories'), {
+    const docRef = await currentDbAdmin.collection('lotCategories').add({
         ...newCategoryData,
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
@@ -65,18 +72,18 @@ export async function createLotCategory(
 }
 
 export async function getLotCategories(): Promise<LotCategory[]> {
-  if (!firestoreClientDB) {
-      console.error("[getLotCategories] Firestore client DB não inicializado. Retornando array vazio.");
-      return [];
-  }
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+   if (sdkError || !currentDbAdmin) {
+     console.warn("[Server Action - getLotCategories] Admin SDK Firestore não disponível. Retornando array vazio.", sdkError);
+     return [];
+   }
   try {
-    const categoriesCollection = collection(firestoreClientDB, 'lotCategories');
-    const q = query(categoriesCollection, orderBy('name', 'asc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => {
-      const data = doc.data();
+    const categoriesCollection = currentDbAdmin.collection('lotCategories');
+    const snapshot = await categoriesCollection.orderBy('name', 'asc').get();
+    return snapshot.docs.map(docSnap => {
+      const data = docSnap.data();
       return {
-        id: doc.id,
+        id: docSnap.id,
         name: data.name,
         slug: data.slug,
         description: data.description || '',
@@ -92,15 +99,17 @@ export async function getLotCategories(): Promise<LotCategory[]> {
 }
 
 export async function getLotCategory(id: string): Promise<LotCategory | null> {
-   if (!firestoreClientDB) {
-    console.error(`[getLotCategory for ID ${id}] Firestore client DB não inicializado. Retornando null.`);
+  const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
+  if (sdkError || !currentDbAdmin) {
+    console.warn(`[Server Action - getLotCategory for ID ${id}] Admin SDK Firestore não disponível. Retornando null.`, sdkError);
     return null;
   }
   try {
-    const categoryDocRef = doc(firestoreClientDB, 'lotCategories', id);
-    const docSnap = await getDoc(categoryDocRef);
-    if (docSnap.exists()) {
+    const categoryDocRef = currentDbAdmin.collection('lotCategories').doc(id);
+    const docSnap = await categoryDocRef.get();
+    if (docSnap.exists) {
       const data = docSnap.data();
+      if (!data) return null; // Safeguard for undefined data
       return {
         id: docSnap.id,
         name: data.name,
@@ -113,7 +122,7 @@ export async function getLotCategory(id: string): Promise<LotCategory | null> {
     }
     return null;
   } catch (error: any) {
-    console.error("[Server Action - getLotCategory] Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    console.error(`[Server Action - getLotCategory with ID ${id}] Error:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return null;
   }
 }
@@ -124,6 +133,7 @@ export async function updateLotCategory(
 ): Promise<{ success: boolean; message: string }> {
   const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
   if (sdkError || !currentDbAdmin) {
+    console.error(`[Server Action - updateLotCategory for ID ${id}] Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}`);
     return { success: false, message: `Erro de configuração: Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}` };
   }
   if (!data.name || data.name.trim() === '') {
@@ -131,16 +141,16 @@ export async function updateLotCategory(
   }
 
   try {
-    const categoryDocRef = doc(currentDbAdmin, 'lotCategories', id);
+    const categoryDocRef = currentDbAdmin.collection('lotCategories').doc(id);
     const updateData: Partial<Omit<LotCategory, 'id' | 'createdAt'>> = { 
       name: data.name.trim(),
       slug: slugify(data.name.trim()),
       description: data.description?.trim() || '',
-      updatedAt: FieldValue.serverTimestamp() as any, 
+      updatedAt: FieldValue.serverTimestamp(),
     };
-    await updateDoc(categoryDocRef, updateData);
+    await categoryDocRef.update(updateData);
     revalidatePath('/admin/categories');
-    revalidatePath(`/admin/categories/${id}/edit`);
+    revalidatePath(`/admin/categories/${id}/edit`); // Corrected revalidation path
     return { success: true, message: 'Categoria atualizada com sucesso!' };
   } catch (error: any) {
     console.error("[Server Action - updateLotCategory] Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
@@ -153,11 +163,12 @@ export async function deleteLotCategory(
 ): Promise<{ success: boolean; message: string }> {
   const { dbAdmin: currentDbAdmin, error: sdkError } = await ensureAdminInitialized();
   if (sdkError || !currentDbAdmin) {
+     console.error(`[Server Action - deleteLotCategory for ID ${id}] Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}`);
     return { success: false, message: `Erro de configuração: Admin SDK Firestore não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}` };
   }
   try {
-    const categoryDocRef = doc(currentDbAdmin, 'lotCategories', id);
-    await deleteDoc(categoryDocRef);
+    const categoryDocRef = currentDbAdmin.collection('lotCategories').doc(id);
+    await categoryDocRef.delete();
     revalidatePath('/admin/categories');
     return { success: true, message: 'Categoria excluída com sucesso!' };
   } catch (error: any) {
@@ -165,4 +176,5 @@ export async function deleteLotCategory(
     return { success: false, message: error.message || 'Falha ao excluir categoria.' };
   }
 }
-
+    
+    
