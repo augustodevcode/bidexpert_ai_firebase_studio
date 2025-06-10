@@ -1,3 +1,4 @@
+
 // src/lib/database/mysql.adapter.ts
 import mysql, { type RowDataPacket, type Pool } from 'mysql2/promise';
 import type {
@@ -126,6 +127,34 @@ function mapToAuctioneerProfileInfo(row: RowDataPacket): AuctioneerProfileInfo {
     };
 }
 
+function mapToSellerProfileInfo(row: RowDataPacket): SellerProfileInfo {
+    return {
+        id: String(row.id),
+        name: row.name,
+        slug: row.slug,
+        contactName: row.contactName,
+        email: row.email,
+        phone: row.phone,
+        address: row.address,
+        city: row.city,
+        state: row.state,
+        zipCode: row.zipCode,
+        website: row.website,
+        logoUrl: row.logoUrl,
+        dataAiHintLogo: row.dataAiHintLogo,
+        description: row.description,
+        memberSince: row.memberSince ? new Date(row.memberSince) : undefined,
+        rating: row.rating !== null ? Number(row.rating) : undefined,
+        activeLotsCount: Number(row.activeLotsCount || 0),
+        totalSalesValue: Number(row.totalSalesValue || 0),
+        auctionsFacilitatedCount: Number(row.auctionsFacilitatedCount || 0),
+        userId: row.userId,
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+    };
+}
+
+
 function mapToRole(row: RowDataPacket): Role {
     return {
         id: String(row.id),
@@ -165,7 +194,7 @@ function mapToUserProfileData(row: RowDataPacket, role?: Role | null): UserProfi
         spouseCpf: row.spouseCpf,
         zipCode: row.zipCode,
         street: row.street,
-        number: row.number, // Escaped with backticks in queries if column is named 'number'
+        number: row.number,
         complement: row.complement,
         neighborhood: row.neighborhood,
         city: row.city,
@@ -296,7 +325,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         lot_count INT UNSIGNED DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (state_id) REFERENCES states(id) ON DELETE SET NULL,
+        FOREIGN KEY (state_id) REFERENCES states(id) ON DELETE CASCADE,
         UNIQUE KEY \`unique_city_in_state\` (\`slug\`, \`state_id\`),
         INDEX idx_cities_state_id (state_id),
         INDEX idx_cities_slug_state_id (slug, state_id)
@@ -819,6 +848,95 @@ export class MySqlAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Leiloeiro excluído (MySQL)!' };
     } catch (e: any) { console.error(`[MySqlAdapter - deleteAuctioneer(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
   }
+  
+  // --- Sellers ---
+  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
+    const connection = await getPool().getConnection();
+    try {
+      const slug = slugify(data.name);
+      const query = `
+        INSERT INTO sellers 
+          (name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since, rating, active_lots_count, total_sales_value, auctions_facilitated_count, user_id, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, 0, 0, 0, ?, NOW(), NOW())
+        RETURNING id; 
+      `;
+      // Note: MySQL doesn't support RETURNING like Postgres. We'll get insertId from result.
+      const mysqlQuery = `
+        INSERT INTO sellers 
+          (name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since, rating, active_lots_count, total_sales_value, auctions_facilitated_count, user_id, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, 0, 0, 0, ?, NOW(), NOW());
+      `;
+      const values = [
+        data.name, slug, data.contactName || null, data.email || null, data.phone || null,
+        data.address || null, data.city || null, data.state || null, data.zipCode || null, data.website || null,
+        data.logoUrl || null, data.dataAiHintLogo || null, data.description || null, data.userId || null
+      ];
+      const [result] = await connection.execute(mysqlQuery, values);
+      return { success: true, message: 'Comitente criado (MySQL)!', sellerId: String((result as mysql.ResultSetHeader).insertId) };
+    } catch (e: any) { console.error(`[MySqlAdapter - createSeller] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
+  }
+
+  async getSellers(): Promise<SellerProfileInfo[]> {
+    const connection = await getPool().getConnection();
+    try {
+      const [rows] = await connection.query('SELECT * FROM sellers ORDER BY name ASC;');
+      return (rows as RowDataPacket[]).map(row => mapToSellerProfileInfo(mapMySqlRowToCamelCase(row)));
+    } catch (e: any) { console.error(`[MySqlAdapter - getSellers] Error:`, e); return []; } finally { connection.release(); }
+  }
+
+  async getSeller(id: string): Promise<SellerProfileInfo | null> {
+    const connection = await getPool().getConnection();
+    try {
+      const [rows] = await connection.query('SELECT * FROM sellers WHERE id = ?;', [Number(id)]);
+      if ((rows as RowDataPacket[]).length === 0) return null;
+      return mapToSellerProfileInfo(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
+    } catch (e: any) { console.error(`[MySqlAdapter - getSeller(${id})] Error:`, e); return null; } finally { connection.release(); }
+  }
+
+  async getSellerBySlug(slug: string): Promise<SellerProfileInfo | null> {
+    const connection = await getPool().getConnection();
+    try {
+      const [rows] = await connection.query('SELECT * FROM sellers WHERE slug = ? LIMIT 1;', [slug]);
+      if ((rows as RowDataPacket[]).length === 0) return null;
+      return mapToSellerProfileInfo(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
+    } catch (e: any) { console.error(`[MySqlAdapter - getSellerBySlug(${slug})] Error:`, e); return null; } finally { connection.release(); }
+  }
+
+  async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
+    const connection = await getPool().getConnection();
+    try {
+      const fields: string[] = [];
+      const values: any[] = [];
+      let query = 'UPDATE sellers SET ';
+
+      (Object.keys(data) as Array<keyof SellerFormData>).forEach(key => {
+        if (data[key] !== undefined) {
+            const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+            fields.push(`${sqlColumn} = ?`);
+            values.push(data[key] === '' ? null : data[key]);
+        }
+      });
+      if (data.name) { fields.push(`slug = ?`); values.push(slugify(data.name)); }
+
+      if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o comitente." };
+
+      fields.push(`updated_at = NOW()`);
+      query += fields.join(', ') + ` WHERE id = ?`;
+      values.push(Number(id));
+
+      await connection.execute(query, values);
+      return { success: true, message: 'Comitente atualizado (MySQL)!' };
+    } catch (e: any) { console.error(`[MySqlAdapter - updateSeller(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
+  }
+
+  async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
+    const connection = await getPool().getConnection();
+    try {
+      await connection.execute('DELETE FROM sellers WHERE id = ?;', [Number(id)]);
+      return { success: true, message: 'Comitente excluído (MySQL)!' };
+    } catch (e: any) { console.error(`[MySqlAdapter - deleteSeller(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
+  }
+
 
   // --- Users ---
   async getUserProfileData(userId: string): Promise<UserProfileData | null> {
@@ -890,11 +1008,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
       await connection.beginTransaction();
       const [existingUserRows] = await connection.query('SELECT * FROM user_profiles WHERE uid = ?', [userId]);
       let userProfileData: UserProfileData;
-      let roleToAssign = await this.getRoleByName(targetRoleName);
+      let roleToAssign = await this.getRoleByName(targetRoleName); // This makes its own connection
 
       if (!roleToAssign) {
-        await this.ensureDefaultRolesExist();
-        roleToAssign = await this.getRoleByName('USER');
+        await this.ensureDefaultRolesExist(); // This makes its own connection
+        roleToAssign = await this.getRoleByName('USER'); // This makes its own connection
         if (!roleToAssign) {
           await connection.rollback();
           return { success: false, message: `Perfil padrão USER não encontrado e não pôde ser criado.` };
@@ -975,7 +1093,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       let newRoleIdInt: number | null = null;
       let newPermissions: string[] = [];
       if (roleId && roleId !== "---NONE---") {
-        const role = await this.getRole(roleId); // Uses its own connection
+        const role = await this.getRole(roleId); // This uses its own connection
         if (!role) return { success: false, message: "Perfil não encontrado." };
         newRoleIdInt = Number(role.id); // SQL ID is number
         newPermissions = role.permissions || [];
@@ -1177,14 +1295,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
     }
   }
 
-  // --- Sellers (Scaffold) ---
-  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> { console.warn("MySqlAdapter.createSeller not implemented."); return {success: false, message: "Not implemented"}; }
-  async getSellers(): Promise<SellerProfileInfo[]> { console.warn("MySqlAdapter.getSellers not implemented."); return []; }
-  async getSeller(id: string): Promise<SellerProfileInfo | null> { console.warn("MySqlAdapter.getSeller not implemented."); return null; }
-  async getSellerBySlug(slug: string): Promise<SellerProfileInfo | null> { console.warn("MySqlAdapter.getSellerBySlug not implemented."); return null; }
-  async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { console.warn("MySqlAdapter.updateSeller not implemented."); return {success: false, message: "Not implemented"}; }
-  async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> { console.warn("MySqlAdapter.deleteSeller not implemented."); return {success: false, message: "Not implemented"}; }
-
   // --- Auctions (Scaffold) ---
   async createAuction(data: AuctionFormData): Promise<{ success: boolean; message: string; auctionId?: string; }> { console.warn("MySqlAdapter.createAuction not implemented."); return {success: false, message: "Not implemented"}; }
   async getAuctions(): Promise<Auction[]> { console.warn("MySqlAdapter.getAuctions not implemented."); return []; }
@@ -1221,3 +1331,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
     
 
 
+
+
+    

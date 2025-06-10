@@ -1,3 +1,4 @@
+
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -109,6 +110,33 @@ function mapToAuctioneerProfileInfo(row: QueryResultRow): AuctioneerProfileInfo 
     };
 }
 
+function mapToSellerProfileInfo(row: QueryResultRow): SellerProfileInfo {
+    return {
+        id: String(row.id),
+        name: row.name,
+        slug: row.slug,
+        contactName: row.contactName,
+        email: row.email,
+        phone: row.phone,
+        address: row.address,
+        city: row.city,
+        state: row.state,
+        zipCode: row.zipCode,
+        website: row.website,
+        logoUrl: row.logoUrl,
+        dataAiHintLogo: row.dataAiHintLogo,
+        description: row.description,
+        memberSince: row.memberSince ? new Date(row.memberSince) : undefined,
+        rating: row.rating !== null ? Number(row.rating) : undefined,
+        activeLotsCount: Number(row.activeLotsCount || 0),
+        totalSalesValue: Number(row.totalSalesValue || 0),
+        auctionsFacilitatedCount: Number(row.auctionsFacilitatedCount || 0),
+        userId: row.userId,
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+    };
+}
+
 
 function mapToRole(row: QueryResultRow): Role {
     return {
@@ -166,7 +194,7 @@ function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProf
 
 export class PostgresAdapter implements IDatabaseAdapter {
   constructor() {
-    getPool(); // Ensure pool is initialized when adapter is created
+    getPool(); 
   }
 
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[] }> {
@@ -799,7 +827,88 @@ export class PostgresAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Leiloeiro excluído (PostgreSQL)!' };
     } catch (e: any) { console.error(`[PostgresAdapter - deleteAuctioneer(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
+  
+  // --- Sellers ---
+  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
+    const client = await getPool().connect();
+    try {
+      const slug = slugify(data.name);
+      const query = `
+        INSERT INTO sellers 
+          (name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since, rating, active_lots_count, total_sales_value, auctions_facilitated_count, user_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), 0, 0, 0, 0, $15, NOW(), NOW())
+        RETURNING id;
+      `;
+      const values = [
+        data.name, slug, data.contactName || null, data.email || null, data.phone || null,
+        data.address || null, data.city || null, data.state || null, data.zipCode || null, data.website || null,
+        data.logoUrl || null, data.dataAiHintLogo || null, data.description || null, data.userId || null
+      ];
+      const res = await client.query(query, values);
+      return { success: true, message: 'Comitente criado (PostgreSQL)!', sellerId: String(res.rows[0].id) };
+    } catch (e: any) { console.error(`[PostgresAdapter - createSeller] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
+  }
 
+  async getSellers(): Promise<SellerProfileInfo[]> {
+    const client = await getPool().connect();
+    try {
+      const res = await client.query('SELECT * FROM sellers ORDER BY name ASC;');
+      return mapRowsToCamelCase(res.rows).map(mapToSellerProfileInfo);
+    } catch (e: any) { console.error(`[PostgresAdapter - getSellers] Error:`, e); return []; } finally { client.release(); }
+  }
+
+  async getSeller(id: string): Promise<SellerProfileInfo | null> {
+    const client = await getPool().connect();
+    try {
+      const res = await client.query('SELECT * FROM sellers WHERE id = $1;', [Number(id)]);
+      if (res.rowCount === 0) return null;
+      return mapToSellerProfileInfo(mapRowToCamelCase(res.rows[0]));
+    } catch (e: any) { console.error(`[PostgresAdapter - getSeller(${id})] Error:`, e); return null; } finally { client.release(); }
+  }
+
+  async getSellerBySlug(slug: string): Promise<SellerProfileInfo | null> {
+    const client = await getPool().connect();
+    try {
+      const res = await client.query('SELECT * FROM sellers WHERE slug = $1 LIMIT 1;', [slug]);
+      if (res.rowCount === 0) return null;
+      return mapToSellerProfileInfo(mapRowToCamelCase(res.rows[0]));
+    } catch (e: any) { console.error(`[PostgresAdapter - getSellerBySlug(${slug})] Error:`, e); return null; } finally { client.release(); }
+  }
+
+  async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      const fields: string[] = [];
+      const values: any[] = [];
+      let paramCount = 1;
+
+      (Object.keys(data) as Array<keyof SellerFormData>).forEach(key => {
+        if (data[key] !== undefined) {
+            const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+            fields.push(`${sqlColumn} = $${paramCount++}`);
+            values.push(data[key] === '' ? null : data[key]);
+        }
+      });
+      if (data.name) { fields.push(`slug = $${paramCount++}`); values.push(slugify(data.name)); }
+
+      if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o comitente." };
+
+      fields.push(`updated_at = NOW()`);
+      const queryText = `UPDATE sellers SET ${fields.join(', ')} WHERE id = $${paramCount}`;
+      values.push(Number(id));
+
+      await client.query(queryText, values);
+      return { success: true, message: 'Comitente atualizado (PostgreSQL)!' };
+    } catch (e: any) { console.error(`[PostgresAdapter - updateSeller(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
+  }
+
+  async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      await client.query('DELETE FROM sellers WHERE id = $1;', [Number(id)]);
+      return { success: true, message: 'Comitente excluído (PostgreSQL)!' };
+    } catch (e: any) { console.error(`[PostgresAdapter - deleteSeller(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
+  }
 
   // --- Users ---
   async getUserProfileData(userId: string): Promise<UserProfileData | null> {
@@ -833,7 +942,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       (Object.keys(data) as Array<keyof EditableUserProfileData>).forEach(key => {
         if (data[key] !== undefined) {
             const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
-            fieldsToUpdate.push(`"${sqlColumn}" = $${paramCount++}`);
+            fieldsToUpdate.push(`"${sqlColumn}" = $${paramCount++}`); // Ensure "number" is quoted
             values.push(data[key] === '' ? null : data[key]);
         }
       });
@@ -1142,14 +1251,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
     }
   }
 
-  // --- Sellers (Scaffold) ---
-  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> { console.warn("PostgresAdapter.createSeller not implemented."); return {success: false, message: "Not implemented"}; }
-  async getSellers(): Promise<SellerProfileInfo[]> { console.warn("PostgresAdapter.getSellers not implemented."); return []; }
-  async getSeller(id: string): Promise<SellerProfileInfo | null> { console.warn("PostgresAdapter.getSeller not implemented."); return null; }
-  async getSellerBySlug(slug: string): Promise<SellerProfileInfo | null> { console.warn("PostgresAdapter.getSellerBySlug not implemented."); return null; }
-  async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.updateSeller not implemented."); return {success: false, message: "Not implemented"}; }
-  async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.deleteSeller not implemented."); return {success: false, message: "Not implemented"}; }
-
   // --- Auctions (Scaffold) ---
   async createAuction(data: AuctionFormData): Promise<{ success: boolean; message: string; auctionId?: string; }> { console.warn("PostgresAdapter.createAuction not implemented."); return {success: false, message: "Not implemented"}; }
   async getAuctions(): Promise<Auction[]> { console.warn("PostgresAdapter.getAuctions not implemented."); return []; }
@@ -1186,3 +1287,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
     
 
 
+
+
+    
