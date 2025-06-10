@@ -1,3 +1,4 @@
+
 # Instructions for Maintaining Project Context
 
 These files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.md`, and `PROJECT_INSTRUCTIONS.md`) are designed to help maintain context and continuity across our interactions. Please follow these instructions to ensure they are used effectively:

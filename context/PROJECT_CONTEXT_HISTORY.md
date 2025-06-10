@@ -46,15 +46,55 @@ This file contains a summary of the project's context, including its purpose, ke
 *   Media library development will be iterative, starting with UI scaffolding and placeholder actions.
 *   Server-side errors related to expected development configurations (like Firestore permissions) will use `console.warn` to provide feedback without breaking the page rendering with Next.js error overlays, allowing fallback to sample data where implemented.
 
-**Current State:**
-
-*   The application has a foundational structure for most admin CRUD operations (Categories, States, Cities, Auctioneers, Sellers, Lots, Auctions).
-*   A basic media library page (`/admin/media`) has been created with a table layout and placeholder actions.
-*   UI refinements for icon buttons (icon-only + tooltips) have been applied to several pages.
-*   Work is ongoing to integrate real images and fully functional media management.
-*   User is currently troubleshooting Firestore permission issues for the `mediaItems` collection.
 ---
+## Session: SQL Database Adapters & Context Persistence (June 2024)
 
+**Objective:**
+*   Resolve persistent foreign key constraint issues in MySQL schema initialization.
+*   Complete the implementation of CRUD (Create, Read, Update, Delete) operations for all major entities (`lot_categories`, `states`, `cities`, `auctioneers`, `sellers`, `auctions`, `lots`, `roles`, `users`, `mediaItems`) in both `PostgresAdapter.ts` and `MySqlAdapter.ts`.
+*   Refine server actions to correctly interact with the database adapters, particularly concerning the resolution of entity names to IDs.
+*   Establish a system for context persistence between development sessions using markdown files in a `context/` directory.
+
+**Key Developments & Decisions During This Phase:**
+
+*   **MySQL Schema Initialization Resolved:**
+    *   Identified that lingering schema inconsistencies from previous script runs were causing foreign key constraint errors, even with correct column types and DDL order.
+    *   **Solution:** Implemented `DROP TABLE IF EXISTS ... CASCADE;` (Postgres) and `DROP TABLE IF EXISTS ... ;` (MySQL, with appropriate `SET FOREIGN_KEY_CHECKS`) for all tables in reverse dependency order *before* the `CREATE TABLE` statements in the SQL adapters' `initializeSchema` methods.
+    *   **Outcome:** The `initialize-db.ts --db=mysql` script now completes successfully, creating all tables without foreign key warnings.
+
+*   **Incremental CRUD Implementation in SQL Adapters (`PostgresAdapter.ts`, `MySqlAdapter.ts`):**
+    *   **`lot_categories`**: Implemented and confirmed.
+    *   **`states`**: Implemented and confirmed.
+    *   **`cities`**: Implemented, including logic to fetch `stateUf` from the parent `states` table.
+    *   **`auctioneers`**: Implemented.
+    *   **`sellers`**: Implemented.
+    *   **`auctions`**: Implemented.
+        *   Adapters now handle resolving `categoryName`, `auctioneerName`, and `sellerName` (from `AuctionDbData`) to their respective IDs (`categoryId`, `auctioneerId`, `sellerId`) before database operations.
+        *   Date/timestamp conversions and JSON serialization/deserialization for `auctionStages` were handled.
+    *   **`lots`**: Implemented.
+        *   Adapters now expect `categoryId`, `stateId`, `cityId`, `auctionId`, `sellerId`, `auctioneerId` as IDs.
+        *   Server actions (`src/app/admin/lots/actions.ts`) were refactored to perform the name-to-ID resolution for `category` before calling the adapter.
+        *   Implemented `getBidsForLot` and `placeBidOnLot` (with transaction handling for SQL).
+    *   **`roles`**: Implemented.
+        *   Includes `ensureDefaultRolesExist` in SQL adapters.
+        *   Protection for default system roles (`ADMINISTRATOR`, `USER`) against deletion/renaming of `name_normalized`.
+    *   **`users`**: Implemented.
+        *   `ensureUserRole` in adapters handles creating/updating user profiles in the database and associating them with roles and permissions.
+        *   Server actions (`src/app/admin/users/actions.ts`) were refactored to correctly call `ensureUserRole` after Firebase Auth user creation and for role updates.
+    *   **`mediaItems`**: Implemented.
+        *   Handles `linkedLotIds` as JSON arrays in SQL.
+        *   `deleteMediaItemFromDb` only handles DB record; file deletion from storage is in the server action.
+
+*   **Server Action Refinements:**
+    *   The principle that server actions resolve human-readable names/slugs (from forms) into IDs before calling database adapter methods was reinforced and applied, especially for `lots` and `users`. Database adapters now consistently expect IDs for foreign key relationships.
+    *   `FirestoreAdapter.ts` was also updated to align with this principle for `auctions` and `lots`, ensuring it resolves names to IDs similarly to how server actions prepare data for SQL adapters.
+
+*   **Context Persistence System Established:**
+    *   This current interaction focuses on creating/updating the context files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.md`, `PROJECT_INSTRUCTIONS.md`, `1st.md`) to facilitate context persistence across sessions.
+
+**Next Immediate Step (Post-Context System Setup):**
+*   Implement CRUD for the final entity, `platformSettings`, in `PostgresAdapter.ts` and `MySqlAdapter.ts`.
+*   Thoroughly test all admin CRUD functionalities with the SQL database options.
+
+---
 **Note:** This file is a living document and will be updated as the project evolves.
-
-    

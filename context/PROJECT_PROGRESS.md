@@ -3,13 +3,16 @@
 
 ## DONE
 - Created the `context` directory and initial context files.
-- Implemented CRUD for Lot Categories (`/admin/categories`).
-- Implemented CRUD for States (`/admin/states`).
-- Implemented CRUD for Cities (`/admin/cities`), including filtering cities by state in the form.
-- Implemented CRUD for Auctioneers (`/admin/auctioneers`).
-- Implemented CRUD for Sellers (`/admin/sellers`).
-- Implemented CRUD for Auctions (`/admin/auctions`), linking to categories, auctioneers, and sellers.
-- Implemented CRUD for Lots (`/admin/lots`), linking to auctions, categories, states, and cities.
+- Implemented CRUD for Lot Categories (`/admin/categories`) - Firestore and SQL adapters.
+- Implemented CRUD for States (`/admin/states`) - Firestore and SQL adapters.
+- Implemented CRUD for Cities (`/admin/cities`), including filtering cities by state in the form - Firestore and SQL adapters.
+- Implemented CRUD for Auctioneers (`/admin/auctioneers`) - Firestore and SQL adapters.
+- Implemented CRUD for Sellers (`/admin/sellers`) - Firestore and SQL adapters.
+- Implemented CRUD for Auctions (`/admin/auctions`), linking to categories, auctioneers, and sellers - Firestore and SQL adapters. Server actions for auctions refactored for ID resolution.
+- Implemented CRUD for Lots (`/admin/lots`), linking to auctions, categories, states, and cities - Firestore and SQL adapters. Server actions for lots refactored for ID resolution.
+- Implemented CRUD for Roles (`/admin/roles`) - Firestore and SQL adapters, including default roles and protection.
+- Implemented CRUD for Users (`/admin/users`) - Firestore and SQL adapters. Server actions for users refactored for role assignment.
+- Implemented CRUD for Media Items (`/admin/media`) - Firestore and SQL adapters.
 - Added a "Lots" section to the "Edit Auction" page, allowing viewing and adding lots to a specific auction.
 - Implemented basic AI flows for:
     - `suggestListingDetails`
@@ -39,34 +42,40 @@
     - Added placeholder for media gallery selection in `lot-form.tsx`.
 - Changed `console.error` to `console.warn` in `getMediaItems` action to prevent Next.js error overlay for Firestore permission issues, allowing fallback to sample data.
 - Transformed `/admin/media/page.tsx` to display media items in a detailed table layout with a toolbar (filters and actions are placeholders).
+- **MySQL schema initialization fixed with `DROP TABLE IF EXISTS`.**
+- **Context persistence file system setup (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.md`, `PROJECT_INSTRUCTIONS.md`, `1st.md`).**
 
 ## WORKING
-- Refining Media Library UI and placeholder actions on `/admin/media/page.tsx`.
-- User-side investigation of Firestore permissions for the `mediaItems` collection.
+- Finalizing SQL adapter implementations (next: `platformSettings`).
 - Ensuring robustness of fallback mechanisms when server actions encounter expected configuration issues (like permissions).
+- User-side investigation of Firestore permissions for the `mediaItems` collection (ongoing if not fully resolved by schema changes).
 
 ## NEXT
-- **Media Library - Core Functionality:**
+- **Implement CRUD for `platformSettings` in SQL adapters.**
+- **Media Library - Core Functionality (Post SQL Adapter Completion):**
     - Implement actual file upload functionality (client-side and server-side handling, likely using Firebase Storage) for the "Fazer Upload" button on the Media Library page.
     - Develop a modal component for editing `MediaItem` metadata (title, alt text, caption, description).
     - Implement the "Editar" button functionality on the Media Library page to open this modal.
-    - Implement the "Excluir" button functionality fully (delete from Firestore and Firebase Storage).
-- **Media Library - Lot Integration:**
+    - Implement the "Excluir" button functionality fully (delete from Firestore/SQL and Firebase Storage).
+- **Media Library - Lot Integration (Post SQL Adapter Completion):**
     - Create a modal component to display the Media Library (`/admin/media/page.tsx` or a dedicated selection component) when "Adicionar da Biblioteca" is clicked in `lot-form.tsx`.
     - Implement logic to select images from this modal and link their IDs (`mediaItemIds`) to the lot being edited/created.
     - Update `lot-form.tsx` to display thumbnails of linked `MediaItem`s and manage `mediaItemIds`.
-- **Firestore Seeding for Images:**
-    - Discuss and potentially implement updates to `scripts/seed-firestore.ts` to include `sampleAuctions` and `sampleLots` with the new image URLs (once user provides them in `/public` or Storage).
+- **SQL Database Seeding (Post Adapter Completion):**
+    - Potentially update `scripts/seed-firestore.ts` or create new seed scripts for SQL databases if needed for sample data.
+    - Seed images using `copy-sample-images-to-public.ts` and then update `sampleLots` with correct public URLs.
+- **Thorough Testing:**
+    - Test all admin CRUD functionalities with both PostgreSQL and MySQL (by switching `ACTIVE_DATABASE_SYSTEM`).
 - **Full Functionality for Filters & Search on Admin Pages:**
-    - Implement working filters, search, and pagination for all admin list pages (Categories, Auctions, Lots, Media, etc.).
+    - Implement working filters, search, and pagination for all admin list pages (Categories, Auctions, Lots, Media, etc.) for SQL backends.
 - **Refine AI Flow Integration:**
     - Improve how AI suggestions are presented and applied on the `/auctions/create` page.
 - **User Authentication & Authorization:**
     - Solidify role-based access control, moving beyond email string matching for admin/consignor roles.
+    - Ensure `habilitationStatus` logic is fully integrated.
 - **Frontend Polish:**
     - Continue improving UI consistency and responsiveness.
 - **Dashboard Pages - Functionality:**
-    - Implement backend logic for My Bids, My Wins, Notifications, etc.
-
-
-    
+    - Implement backend logic for My Bids, My Wins, Notifications, etc., connecting to the database.
+- **Public Facing Pages - Data Integration:**
+    - Ensure all public-facing pages (category, auction detail, lot detail, seller detail, auctioneer detail) correctly fetch and display data from the active database.
