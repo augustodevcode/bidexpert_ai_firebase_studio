@@ -16182,3 +16182,8 @@ E0610 15:39:07.484081   29903 watch.go:76] watchAllDir unable to walk dir `/home
  {"metadata":{"emulator":{"name":"dataconnect"},"message":"E0610 15:39:57.483697   29903 load.go:23] Could not load config from \"/home/user/studio/dataconnect\": could not find dataconnect.yaml in `/home/user/studio/dataconnect`\n"}}
 [debug] [2025-06-10T15:40:07.485Z] E0610 15:40:07.483798   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
  {"metadata":{"emulator":{"name":"dataconnect"},"message":"E0610 15:40:07.483798   29903 load.go:23] Could not load config from \"/home/user/studio/dataconnect\": could not find dataconnect.yaml in `/home/user/studio/dataconnect`\n"}}
+[debug] [2025-06-10T16:08:54.473Z] [Firebase Plugin] Activating Firebase extension.
+[debug] [2025-06-10T16:09:13.414Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2025-06-10T16:09:13.417Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-10T16:09:13.487Z] [Firebase Plugin] VSCode notification server listening on port 40001
+[error] [Firebase Plugin] requireAuth error: Could not refresh access token: Unsuccessful response status code. Request failed with status code 500

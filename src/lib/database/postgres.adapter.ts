@@ -333,6 +333,14 @@ function mapToMediaItem(row: QueryResultRow): MediaItem {
   };
 }
 
+function mapToPlatformSettings(row: QueryResultRow): PlatformSettings {
+    return {
+        id: String(row.id),
+        galleryImageBasePath: row.galleryImageBasePath,
+        updatedAt: new Date(row.updatedAt),
+    };
+}
+
 
 const defaultRolesData: RoleFormData[] = [ 
   { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
@@ -1149,7 +1157,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       });
       if (data.auctionDate) { fields.push(`auction_date = $${paramCount++}`); values.push(data.auctionDate); }
       if (data.hasOwnProperty('endDate')) { fields.push(`end_date = $${paramCount++}`); values.push(data.endDate); } 
-      if (data.auctionStages) { fields.push(`auction_stages = $${paramCount++}`); values.push(JSON.stringify(data.auctionStages)); }
+      if (data.auctionStages) { fields.push(`auction_stages = $${paramCount++}::jsonb`); values.push(JSON.stringify(data.auctionStages)); }
 
 
       if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o leilão." };
@@ -1290,7 +1298,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       (Object.keys(data) as Array<keyof LotDbData>).forEach(key => {
         if (data[key] !== undefined && key !== 'endDate' && key !== 'lotSpecificAuctionDate' && key !== 'secondAuctionDate' && key !== 'type' && key !== 'auctionName') {
             const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
-            const escapedColumn = sqlColumn === 'number' ? `"${sqlColumn}"` : sqlColumn;
+            const escapedColumn = sqlColumn === 'number' ? `"${sqlColumn}"` : sqlColumn; // "number" é palavra reservada
             fields.push(`${escapedColumn} = $${paramCount++}`);
             const value = data[key];
             if (key === 'galleryImageUrls' || key === 'mediaItemIds') {
@@ -1431,7 +1439,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         }
         if (data.permissions) {
             const validPermissions = (data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
-            fields.push(`permissions = $${paramCount++}`); values.push(JSON.stringify(validPermissions));
+            fields.push(`permissions = $${paramCount++}::jsonb`); values.push(JSON.stringify(validPermissions));
         }
         if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o perfil."};
         
@@ -1485,7 +1493,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         return { success: true, message: 'Perfis padrão verificados/criados (PostgreSQL).'};
     } catch (e: any) { await client.query('ROLLBACK'); return { success: false, message: e.message }; } finally { client.release(); }
   }
-
+  
   // --- Users ---
   async getUserProfileData(userId: string): Promise<UserProfileData | null> {
     const client = await getPool().connect();
@@ -1523,7 +1531,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
     const client = await getPool().connect();
     try {
-        await this.ensureDefaultRolesExist(); // Garante que perfis padrão existam
+        await this.ensureDefaultRolesExist(); 
         const targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
         if (!targetRole) return { success: false, message: 'Perfil padrão USER não encontrado.'};
 
@@ -1545,7 +1553,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
                 let pCount = 1;
                 Object.keys(updatePayload).forEach(key => {
                     updateFields.push(`${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = $${pCount++}`);
-                    updateValues.push(updatePayload[key]);
+                    updateValues.push(key === 'permissions' ? JSON.stringify(updatePayload[key]) : updatePayload[key]);
                 });
                 updateValues.push(userId);
                 await client.query(`UPDATE user_profiles SET ${updateFields.join(', ')} WHERE uid = $${pCount}`, updateValues);
@@ -1579,7 +1587,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `);
       return mapRowsToCamelCase(res.rows).map(row => {
         const profile = mapToUserProfileData(row);
-        // Se as permissões do usuário forem nulas ou vazias, usa as do perfil (se houver)
         if ((!profile.permissions || profile.permissions.length === 0) && row.rolePermissions) {
             profile.permissions = row.rolePermissions;
         }
@@ -1591,19 +1598,15 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
-      let updatePayload: any = { role_id: null, role_name: null, permissions: null, updated_at: 'NOW()' };
+      let roleName = null;
+      let permissions = null;
       if (roleId && roleId !== "---NONE---") {
         const role = await this.getRole(roleId);
-        if (role) {
-          updatePayload.role_id = Number(roleId);
-          updatePayload.role_name = role.name;
-          updatePayload.permissions = JSON.stringify(role.permissions || []);
-        } else {
-          return { success: false, message: 'Perfil não encontrado.' };
-        }
+        if (role) { roleName = role.name; permissions = JSON.stringify(role.permissions || []); }
+        else return { success: false, message: 'Perfil não encontrado.'};
       }
-      const queryText = `UPDATE user_profiles SET role_id = $1, role_name = $2, permissions = $3::jsonb, updated_at = $4 WHERE uid = $5`;
-      await client.query(queryText, [updatePayload.role_id, updatePayload.role_name, updatePayload.permissions, updatePayload.updated_at, userId]);
+      const queryText = `UPDATE user_profiles SET role_id = $1, role_name = $2, permissions = $3::jsonb, updated_at = NOW() WHERE uid = $4`;
+      await client.query(queryText, [roleId ? Number(roleId) : null, roleName, permissions, userId]);
       return { success: true, message: 'Perfil do usuário atualizado!' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
   }
@@ -1615,7 +1618,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Perfil de usuário excluído (PostgreSQL)!' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
   }
-
+  
   // --- Media Items ---
   async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> {
     const client = await getPool().connect();
@@ -1678,14 +1681,20 @@ export class PostgresAdapter implements IDatabaseAdapter {
     try {
       await client.query('BEGIN');
       for (const mediaId of mediaItemIds) {
+        // Adiciona lotId ao array linked_lot_ids do item de mídia, evitando duplicatas
         await client.query(
-          'UPDATE media_items SET linked_lot_ids = COALESCE(linked_lot_ids, \'[]\'::jsonb) || $1::jsonb WHERE id = $2 AND NOT (linked_lot_ids @> $1::jsonb);',
+          `UPDATE media_items 
+           SET linked_lot_ids = COALESCE(linked_lot_ids, '[]'::jsonb) || $1::jsonb 
+           WHERE id = $2 AND NOT (linked_lot_ids @> $1::jsonb);`,
           [JSON.stringify([lotId]), Number(mediaId)]
         );
       }
+      // Adiciona mediaItemIds ao array media_item_ids do lote
       await client.query(
-        'UPDATE lots SET media_item_ids = COALESCE(media_item_ids, \'[]\'::jsonb) || $1::jsonb, updated_at = NOW() WHERE id = $2;',
-        [JSON.stringify(mediaItemIds), Number(lotId)] // Assumes media_item_ids on lots is also JSONB
+        `UPDATE lots 
+         SET media_item_ids = COALESCE(media_item_ids, '[]'::jsonb) || $1::jsonb, updated_at = NOW() 
+         WHERE id = $2;`,
+        [JSON.stringify(mediaItemIds), Number(lotId)] 
       );
       await client.query('COMMIT');
       return { success: true, message: 'Mídias vinculadas (PostgreSQL).' };
@@ -1700,7 +1709,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         `UPDATE media_items SET linked_lot_ids = (
           SELECT jsonb_agg(elem) FROM jsonb_array_elements(COALESCE(linked_lot_ids, '[]'::jsonb)) AS elem WHERE elem::text <> $1
         ) WHERE id = $2;`,
-        [`"${lotId}"`, Number(mediaItemId)] // Ensure lotId is treated as a string within JSON array
+        [`"${lotId}"`, Number(mediaItemId)]
       );
       await client.query(
         `UPDATE lots SET media_item_ids = (
@@ -1758,4 +1767,5 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
 
     
+
 

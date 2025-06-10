@@ -306,10 +306,8 @@ function mapToLot(row: RowDataPacket): Lot {
     aisleStall: row.aisleStall,
     actualCashValue: row.actualCashValue,
     estimatedRepairCost: row.estimatedRepairCost,
-    sellerName: row.lotSellerName, 
-    sellerId: row.sellerIdFk ? String(row.sellerIdFk) : undefined,
-    auctioneerName: row.lotAuctioneerName, 
-    auctioneerId: row.auctioneerIdFk ? String(row.auctioneerIdFk) : undefined,
+    sellerIdFk: row.sellerIdFk ? String(row.sellerIdFk) : undefined,
+    auctioneerIdFk: row.auctioneerIdFk ? String(row.auctioneerIdFk) : undefined,
     condition: row.condition,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
@@ -350,6 +348,14 @@ function mapToMediaItem(row: RowDataPacket): MediaItem {
   };
 }
 
+function mapToPlatformSettings(row: RowDataPacket): PlatformSettings {
+    return {
+        id: String(row.id),
+        galleryImageBasePath: row.galleryImageBasePath,
+        updatedAt: new Date(row.updatedAt),
+    };
+}
+
 
 const defaultRolesData: RoleFormData[] = [ 
   { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
@@ -370,6 +376,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.log('[MySqlAdapter] Iniciando criação/verificação de tabelas...');
     
     const queries = [
+      `SET FOREIGN_KEY_CHECKS = 0;`,
       `DROP TABLE IF EXISTS bids;`,
       `DROP TABLE IF EXISTS media_items;`,
       `DROP TABLE IF EXISTS lots;`,
@@ -677,7 +684,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
         FOREIGN KEY (bidder_id) REFERENCES user_profiles(uid) ON DELETE CASCADE,
         INDEX idx_bids_lot_id (lot_id),
         INDEX idx_bids_bidder_id (bidder_id)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+      `SET FOREIGN_KEY_CHECKS = 1;`
     ];
 
     try {
@@ -1779,4 +1787,5 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
 
     
+
 
