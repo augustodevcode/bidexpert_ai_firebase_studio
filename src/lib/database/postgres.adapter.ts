@@ -1,4 +1,3 @@
-
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -702,16 +701,9 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
       (Object.keys(data) as Array<keyof EditableUserProfileData>).forEach(key => {
         if (data[key] !== undefined) {
-          const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
-          // Precisamos tratar "number" como um nome de coluna literal no Postgres
-          const escapedColumn = sqlColumn === 'number' ? `"${sqlColumn}"` : sqlColumn;
-          fieldsToUpdate.push(`${escapedColumn} = $${paramCount++}`);
-          // Para campos de data, se forem null, passar null para o DB
-          if ((key === 'dateOfBirth' || key === 'rgIssueDate') && data[key] === null) {
-            values.push(null);
-          } else {
+            const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+            fieldsToUpdate.push(`"${sqlColumn}" = $${paramCount++}`); // Use double quotes for "number"
             values.push(data[key] === '' ? null : data[key]);
-          }
         }
       });
       
@@ -764,11 +756,11 @@ export class PostgresAdapter implements IDatabaseAdapter {
         }
 
         if (needsUpdate) {
-            updateFields.updated_at = `NOW()`; // No placeholder needed for NOW()
+            updateFields.updated_at = `NOW()`;
             const setClauses = Object.entries(updateFields).map(([key, val]) => `${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = ${String(val).startsWith('$') ? val : `$${paramIdx++}` }`).join(', ');
-            // Rebuild values array to match paramIdx correctly for non-placeholder values
+            // Rebuild values to match correct paramIdx if not using direct value like NOW()
             const finalUpdateValues = Object.values(updateFields).filter(v => !String(v).startsWith('$') && v !== 'NOW()');
-            finalUpdateValues.push(userId); // For WHERE clause
+            finalUpdateValues.push(userId);
             const query = `UPDATE user_profiles SET ${setClauses} WHERE uid = $${finalUpdateValues.length}`;
             await client.query(query, finalUpdateValues);
         }
@@ -969,9 +961,9 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-
+  
   async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; }> {
-    const defaultRolesData: RoleFormData[] = [
+    const defaultRolesData: RoleFormData[] = [ 
       { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
       { name: 'USER', description: 'Usuário padrão.', permissions: ['view_auctions', 'place_bids', 'view_lots'] },
       { name: 'CONSIGNOR', description: 'Comitente.', permissions: ['auctions:manage_own', 'lots:manage_own', 'view_reports', 'media:upload'] },
@@ -1053,7 +1045,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.deleteMediaItemFromDb not implemented."); return {success: false, message: "Not implemented"}; }
   async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.linkMediaItemsToLot not implemented."); return {success: false, message: "Not implemented"}; }
   async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.unlinkMediaItemFromLot not implemented."); return {success: false, message: "Not implemented"}; }
-
+  
   // Settings
   async getPlatformSettings(): Promise<PlatformSettings> { console.warn("PostgresAdapter.getPlatformSettings not implemented."); return { id: 'global', galleryImageBasePath: '/pg/default/path/', updatedAt: new Date() };}
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.updatePlatformSettings not implemented."); return {success: false, message: "Not implemented"}; }

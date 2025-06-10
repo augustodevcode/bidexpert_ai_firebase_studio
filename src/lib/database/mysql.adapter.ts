@@ -1,4 +1,3 @@
-
 // src/lib/database/mysql.adapter.ts
 import mysql, { type RowDataPacket, type Pool } from 'mysql2/promise';
 import type {
@@ -270,7 +269,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         lot_count INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (state_id) REFERENCES states(id) ON DELETE CASCADE,
+        FOREIGN KEY (state_id) REFERENCES states(id) ON DELETE SET NULL,
         UNIQUE KEY \`unique_city_in_state\` (\`slug\`, \`state_id\`),
         INDEX idx_cities_state_id (state_id),
         INDEX idx_cities_slug_state_id (slug, state_id)
@@ -292,7 +291,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         logo_url TEXT,
         data_ai_hint_logo TEXT,
         description TEXT,
-        member_since DATETIME,
+        member_since TIMESTAMP,
         rating DECIMAL(3,1),
         auctions_conducted_count INT,
         total_value_sold DECIMAL(15,2),
@@ -317,7 +316,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         logo_url TEXT,
         data_ai_hint_logo TEXT,
         description TEXT,
-        member_since DATETIME,
+        member_since TIMESTAMP,
         rating DECIMAL(3,1),
         active_lots_count INT,
         total_sales_value DECIMAL(15,2),
@@ -338,8 +337,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
         category_id INT UNSIGNED,
         auctioneer_id INT UNSIGNED,
         seller_id INT UNSIGNED,
-        auction_date DATETIME NOT NULL,
-        end_date DATETIME,
+        auction_date TIMESTAMP NOT NULL,
+        end_date TIMESTAMP NULL,
         auction_stages JSON,
         city VARCHAR(100),
         state VARCHAR(2),
@@ -383,10 +382,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
         auction_name VARCHAR(255),
         price DECIMAL(15,2) NOT NULL,
         initial_price DECIMAL(15,2),
-        lot_specific_auction_date DATETIME,
-        second_auction_date DATETIME,
+        lot_specific_auction_date TIMESTAMP NULL,
+        second_auction_date TIMESTAMP NULL,
         second_initial_price DECIMAL(15,2),
-        end_date DATETIME NOT NULL,
+        end_date TIMESTAMP NOT NULL,
         bids_count INT DEFAULT 0,
         is_favorite BOOLEAN DEFAULT FALSE,
         is_featured BOOLEAN DEFAULT FALSE,
