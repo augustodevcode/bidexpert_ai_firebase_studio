@@ -1,13 +1,15 @@
 
-import UserRoleForm from '../../user-role-form'; // Ajustado o caminho para o componente de formulário
-import { getUserProfileData, updateUserRole } from '../../actions'; // Actions para buscar usuário e atualizar perfil
-import { getRoles } from '@/app/admin/roles/actions'; // Action para buscar perfis (roles)
+// src/app/admin/users/[userId]/edit/page.tsx
+import UserRoleForm from '../../user-role-form'; 
+import { getUserProfileData, updateUserRole } from '../../actions'; 
+// Importar a Server Action getRoles de roles/actions.ts
+import { getRoles } from '@/app/admin/roles/actions'; 
 import { notFound } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { FileText, Mail, Phone, UserCircle, MapPin, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { UserProfileData } from '@/types'; // Importar UserProfileData
+import type { UserProfileData } from '@/types'; 
 
 
 export default async function EditUserPage({ params }: { params: { userId: string } }) {
@@ -18,14 +20,12 @@ export default async function EditUserPage({ params }: { params: { userId: strin
     userProfile = await getUserProfileData(userId);
   } catch (error) {
     console.error("Failed to fetch user profile for edit:", error);
-    // não chamar notFound() aqui, queremos mostrar a mensagem de erro abaixo se userProfile for null
   }
   
-  const roles = await getRoles();
+  // Chamar a Server Action getRoles
+  const roles = await getRoles(); 
 
   if (!userProfile) {
-     // notFound(); // Se preferir redirecionar para 404 imediatamente.
-     // Ou pode mostrar uma mensagem de erro mais amigável:
      return (
         <div className="max-w-2xl mx-auto p-4">
             <Card>
@@ -93,5 +93,3 @@ export default async function EditUserPage({ params }: { params: { userId: strin
     </div>
   );
 }
-
-    

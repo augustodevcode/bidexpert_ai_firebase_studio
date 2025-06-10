@@ -1,4 +1,5 @@
 
+
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
 
@@ -28,7 +29,7 @@ export interface AuctionStage {
 export type AuctionStatus = 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'ABERTO' | 'CANCELADO' | 'SUSPENSO';
 export type LotStatus = 'ABERTO_PARA_LANCES' | 'EM_BREVE' | 'ENCERRADO' | 'VENDIDO' | 'NAO_VENDIDO';
 export type UserDocumentStatus = 'NOT_SENT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'PENDING_ANALYSIS';
-export type UserHabilitationStatus = 'PENDING_DOCUMENTS' | 'PENDING_ANALYSIS' | 'HABILITATED' | 'REJECTED_DOCUMENTS' | 'BLOCKED';
+export type UserHabilitationStatus = 'PENDING_DOCUMENTS' | 'PENDING_ANALYSIS' | 'HABILITADO' | 'REJECTED_DOCUMENTS' | 'BLOCKED';
 export type UserBidStatus = 'GANHANDO' | 'PERDENDO' | 'SUPERADO' | 'ARREMATADO' | 'NAO_ARREMATADO';
 export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO';
 
@@ -159,6 +160,7 @@ export interface Lot {
   updatedAt?: AnyTimestamp;
 }
 
+// Este tipo é usado pelo formulário, que envia nomes
 export type LotFormData = Omit<Lot, 
   'id' | 
   'createdAt' | 
@@ -173,12 +175,11 @@ export type LotFormData = Omit<Lot,
   'galleryImageUrls' | 
   'dataAiHint' | 
   'auctionDate' | 
-  // 'auctionName' is kept for UI, action will ignore it
   'cityName' | 
   'stateUf' | 
   'auctioneerId' | 
   'mediaItemIds' |
-  'categoryId' // categoryId será adicionado pela action
+  'categoryId' 
 > & {
   endDate: Date; 
   lotSpecificAuctionDate?: Date | null;
@@ -187,9 +188,9 @@ export type LotFormData = Omit<Lot,
   cityId?: string | null;  
   // 'type' (nome da categoria) continua vindo do form
   // 'categoryId' será o ID resolvido, usado pelos adaptadores
-  categoryId?: string; 
   galleryImageUrls?: string[]; 
   mediaItemIds?: string[]; 
+  categoryId?: string; // Adicionado para consistência interna, action resolverá isso
 };
 
 
@@ -469,11 +470,13 @@ export interface DirectSaleOffer {
 }
 
 export type EditableUserProfileData = Omit<UserProfileData, 'uid' | 'email' | 'status' | 'createdAt' | 'updatedAt' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'roleId' | 'roleName' | 'sellerProfileId' | 'permissions' | 'habilitationStatus' > & {
-  roleId?: string;
+  roleId?: string; // RoleId is managed via admin/users/[userId]/edit
   roleName?: string;
   sellerProfileId?: string;
   permissions?: string[];
   habilitationStatus?: UserHabilitationStatus;
+  dateOfBirth?: Date | null; // Assegurar que é Date ou null, não AnyTimestamp, para o formulário
+  rgIssueDate?: Date | null; // Assegurar que é Date ou null, para o formulário
 };
 
 export interface PlatformSettings {
@@ -534,10 +537,10 @@ export interface IDatabaseAdapter {
   getAuctionsBySellerSlug(sellerSlug: string): Promise<Auction[]>;
 
   // Lots
-  createLot(data: LotFormData & { categoryId?: string }): Promise<{ success: boolean; message: string; lotId?: string; }>;
+  createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; }>;
   getLots(auctionIdParam?: string): Promise<Lot[]>;
   getLot(id: string): Promise<Lot | null>;
-  updateLot(id: string, data: Partial<LotFormData & { categoryId?: string }>): Promise<{ success: boolean; message: string; }>;
+  updateLot(id: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }>;
   deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string; }>;
   getBidsForLot(lotId: string): Promise<BidInfo[]>;
   placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }>;
@@ -545,7 +548,7 @@ export interface IDatabaseAdapter {
   // Users (only profile data, auth is separate)
   getUserProfileData(userId: string): Promise<UserProfileData | null>;
   updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }>;
-  ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }>;
+  ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth'>>): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }>;
   getUsersWithRoles(): Promise<UserProfileData[]>;
   updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }>;
   deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }>;
@@ -578,10 +581,12 @@ export type QueryResult<T> = {
   rowCount: number;
 };
 
-// Add UserFormData to types
-export type UserFormData = Omit<UserProfileData, 'uid' | 'createdAt' | 'updatedAt' | 'status' | 'habilitationStatus' | 'permissions' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'sellerProfileId'> & {
-  password?: string; // Password is for Auth creation, not stored in profile
+// Type for data from UserForm, to be processed by createUser action
+export type UserFormValues = Pick<UserProfileData, 'fullName' | 'email' | 'cpf' | 'cellPhone' | 'dateOfBirth'> & {
+  password?: string;
+  roleId?: string | null;
 };
+
 
 // Type for data passed from Lot actions to DB adapters (includes categoryId)
 export type LotDbData = Omit<LotFormData, 'type' | 'auctionName'> & {
@@ -592,5 +597,6 @@ export type LotDbData = Omit<LotFormData, 'type' | 'auctionName'> & {
 export type LotWithCategoryName = Lot & {
   categoryName?: string; // Populated by JOINs in SQL, or by a separate fetch in Firestore context
 };
+
 
 

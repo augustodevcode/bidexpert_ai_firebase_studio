@@ -12,11 +12,11 @@ export const userFormSchema = z.object({
   }),
   password: z.string().min(6, {
     message: "A senha deve ter pelo menos 6 caracteres.",
-  }).optional().or(z.literal('')), // Senha opcional no formulário de admin, tratada na action
+  }).optional().or(z.literal('')),
   roleId: z.string().optional().nullable(),
-  // Adicione mais campos conforme necessário (ex: telefone, status, etc.)
+  cpf: z.string().optional(), // Adicionado
+  cellPhone: z.string().optional(), // Adicionado
+  dateOfBirth: z.date().optional().nullable(), // Adicionado
 });
 
 export type UserFormValues = z.infer<typeof userFormSchema>;
-
-    

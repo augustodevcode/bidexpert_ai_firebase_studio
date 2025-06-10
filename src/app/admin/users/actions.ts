@@ -2,14 +2,26 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { ensureAdminInitialized, AdminFieldValue } from '@/lib/firebase/admin'; // ServerTimestamp is not directly used here
+import { ensureAdminInitialized, AdminFieldValue } from '@/lib/firebase/admin'; 
 import { getDatabaseAdapter } from '@/lib/database';
 import type { UserProfileData, Role, UserHabilitationStatus } from '@/types';
-import type { UserFormValues } from './user-form-schema';
+import type { UserFormValues } from './user-form-schema'; 
+// Importar a Server Action getRoleByName de roles/actions.ts
+import { getRoleByName as getRoleByNameAction, ensureDefaultRolesExist as ensureDefaultRolesExistAction } from '@/app/admin/roles/actions'; 
+
+export interface UserCreationData {
+  fullName: string;
+  email: string;
+  password?: string; 
+  roleId?: string | null; 
+  cpf?: string;
+  cellPhone?: string;
+  dateOfBirth?: Date | null;
+}
 
 
 export async function createUser(
-  data: UserFormValues
+  data: UserCreationData
 ): Promise<{ success: boolean; message: string; userId?: string }> {
   const { authAdmin, error: authSdkError } = ensureAdminInitialized();
   const db = getDatabaseAdapter();
@@ -39,9 +51,9 @@ export async function createUser(
       if (existingDbUser) {
         return { success: false, message: `Usuário com email ${data.email} já existe no Auth e no DB.` };
       }
-      return { success: false, message: `Usuário com email ${data.email} já existe no sistema de autenticação, mas não possui um perfil no banco de dados. Sincronização manual pode ser necessária ou use a edição de perfil.` };
+      return { success: false, message: `Usuário com email ${data.email} já existe no sistema de autenticação. Considere editar o perfil existente se ele não estiver no banco de dados.` };
     }
-
+    
     const userRecord = await authAdmin.createUser({
       email: data.email.trim().toLowerCase(),
       emailVerified: false, 
@@ -52,19 +64,25 @@ export async function createUser(
 
     let targetRoleNameForDbSync: string = 'USER'; 
     if (data.roleId && data.roleId !== "---NONE---") {
-        const roleDoc = await db.getRole(data.roleId);
+        // Usar a Server Action getRole para buscar o perfil por ID
+        const roleDoc = await getRole(data.roleId); // getRole é a Server Action importada
         if (roleDoc) {
             targetRoleNameForDbSync = roleDoc.name;
         } else {
-            console.warn(`[createUser] Perfil com ID ${data.roleId} não encontrado. Usando 'USER' como padrão.`);
+            console.warn(`[createUser] Perfil com ID ${data.roleId} não encontrado usando Server Action. Usando '${targetRoleNameForDbSync}' como padrão.`);
         }
     }
-
+    
     const profileResult = await db.ensureUserRole(
         userRecord.uid, 
         userRecord.email!, 
         userRecord.displayName!,
-        targetRoleNameForDbSync
+        targetRoleNameForDbSync,
+        { 
+            cpf: data.cpf,
+            cellPhone: data.cellPhone,
+            dateOfBirth: data.dateOfBirth ? data.dateOfBirth : undefined,
+        }
     );
 
     if (!profileResult.success) {
@@ -74,11 +92,11 @@ export async function createUser(
     }
 
     revalidatePath('/admin/users');
-    return { success: true, message: 'Usuário criado com sucesso no Auth e perfil no DB.', userId: userRecord.uid };
+    return { success: true, message: 'Usuário criado com sucesso.', userId: userRecord.uid };
 
   } catch (error: any) {
     console.error(`[createUser] ERRO:`, error);
-    let friendlyMessage = `Falha ao criar usuário: ${error.message}`;
+    let friendlyMessage = `Falha ao criar usuário: ${error.message || 'Erro desconhecido'}`;
     if (error.code === 'auth/email-already-exists') {
         friendlyMessage = 'Este email já está em uso por outra conta.';
     } else if (error.code === 'auth/invalid-password') {
@@ -94,7 +112,7 @@ export async function getUsersWithRoles(): Promise<UserProfileData[]> {
     return db.getUsersWithRoles();
   } catch (error) {
     console.error("[Action - getUsersWithRoles] Falha ao buscar usuários com perfis:", error);
-    return []; // Retorna array vazio em caso de qualquer erro
+    return []; 
   }
 }
 
@@ -102,7 +120,7 @@ export async function getUserProfileData(userId: string): Promise<UserProfileDat
   try {
     const db = getDatabaseAdapter();
     return db.getUserProfileData(userId);
-  } catch (error) {
+  } catch (error: any) {
     console.error(`[Action - getUserProfileData for ID ${userId}] Falha:`, error);
     return null;
   }
@@ -156,15 +174,17 @@ export async function deleteUser(userId: string): Promise<{ success: boolean; me
   }
 }
 
-export async function ensureUserRole( // Renomeado de ensureUserRoleInFirestore
+export async function ensureUserRole( 
   userUid: string,
   email: string | null,
   fullName: string | null,
-  targetRoleName: string
+  targetRoleName: string,
+  additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth'>>
 ): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }> {
   try {
     const db = getDatabaseAdapter();
-    return db.ensureUserRole(userUid, email || '', fullName, targetRoleName);
+    // A ensureUserRole do adaptador já chama ensureDefaultRolesExist
+    return db.ensureUserRole(userUid, email || '', fullName, targetRoleName, additionalProfileData);
   } catch (error: any) {
     console.error(`[Action - ensureUserRole for user ${userUid}] Falha:`, error);
     return { success: false, message: `Erro ao garantir perfil do usuário: ${error.message}` };

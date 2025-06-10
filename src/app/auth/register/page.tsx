@@ -19,7 +19,9 @@ import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; 
 import { useToast } from '@/hooks/use-toast';
 import type { UserProfileData } from '@/types'; 
-import { getRoleByName } from '@/app/admin/roles/actions'; // Importar para buscar o Role ID
+// Removida a importação de getRoleByName:
+// import { getRoleByName } from '@/app/admin/roles/actions'; 
+import { createUser } from '@/app/admin/users/actions'; // Usaremos a action de criação de usuário
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -49,54 +51,40 @@ export default function RegisterPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Atualizar o perfil do Firebase Auth com o nome completo
-      await updateProfile(user, { displayName: fullName });
-
-      // Buscar o ID do perfil 'USER' padrão
-      let defaultRoleId: string | undefined = undefined;
-      let defaultRoleName: string | undefined = undefined;
-      try {
-        const userRole = await getRoleByName('USER'); // Busca o perfil "USER"
-        if (userRole) {
-          defaultRoleId = userRole.id;
-          defaultRoleName = userRole.name;
-        } else {
-          console.warn("Default 'USER' role not found in Firestore. New user will not have a role assigned.");
-        }
-      } catch (roleError) {
-        console.error("Error fetching default 'USER' role:", roleError);
-      }
-
-      const userProfileToSave: Partial<UserProfileData> = {
-        uid: user.uid,
+      // A action createUser agora cuidará da criação no Auth e no DB.
+      // Não precisamos mais buscar o roleId aqui.
+      const result = await createUser({
         fullName,
-        cpf,
-        email: user.email, 
-        cellPhone,
-        dateOfBirth, 
-        roleId: defaultRoleId, 
-        roleName: defaultRoleName,
-        createdAt: serverTimestamp() as any, 
-        status: 'ATIVO', // Status inicial
-        optInMarketing: true, // Exemplo, pode vir de um checkbox
-      };
-      await setDoc(doc(db, "users", user.uid), userProfileToSave);
-      
-      toast({
-        title: "Registro bem-sucedido!",
-        description: "Sua conta foi criada. Você pode fazer login agora.",
+        email,
+        password, // A action createUser pode ignorar isso se a criação no Auth for diferente
+        // Não passamos roleId, a action createUser usará 'USER' como padrão.
+        // Outros campos como cpf, cellPhone, dateOfBirth serão tratados pela action se necessário,
+        // ou podemos ajustar a action createUser para aceitá-los.
+        // Por ora, focamos no registro básico.
+        cpf, // Adicionando
+        cellPhone, // Adicionando
+        dateOfBirth: dateOfBirth, // Adicionando
       });
-      router.push('/auth/login');
+
+      if (result.success) {
+        toast({
+          title: "Registro bem-sucedido!",
+          description: result.message,
+        });
+        router.push('/auth/login');
+      } else {
+        setError(result.message);
+        toast({
+          title: "Erro no Registro",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
     } catch (e: any) {
       let errorMessage = 'Falha ao registrar. Tente novamente.';
-      if (e.code === 'auth/email-already-in-use') {
-        errorMessage = 'Este email já está em uso. Tente outro.';
-      } else if (e.code === 'auth/weak-password') {
-        errorMessage = 'A senha é muito fraca. Use pelo menos 6 caracteres.';
-      } else if (e.message) {
+      // A action createUser já deve tratar erros específicos do Auth.
+      // Este catch é para erros inesperados na chamada da action em si.
+      if (e.message) {
         errorMessage = e.message;
       }
       setError(errorMessage);

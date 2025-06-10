@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getRoles, deleteRole } from './actions';
+// Importar as Server Actions getRoles e deleteRole
+import { getRoles, deleteRole } from './actions'; 
 import type { Role } from '@/types';
 import { PlusCircle, Edit, Trash2, ShieldCheck, AlertTriangle } from 'lucide-react';
 import {
@@ -22,7 +23,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react'; // useCallback adicionado
 import { Loader2 } from 'lucide-react';
 
 function DeleteRoleButton({ roleId, roleName, onDelete }: { roleId: string; roleName: string; onDelete: (id: string) => Promise<void> }) {
@@ -67,27 +68,34 @@ export default function AdminRolesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchRoles = async () => {
+  // Usar useCallback para fetchRoles
+  const fetchRoles = useCallback(async () => {
     setIsLoading(true);
-    const fetchedRoles = await getRoles();
-    setRoles(fetchedRoles);
-    setIsLoading(false);
-  };
+    try {
+      // Chamar a Server Action getRoles
+      const fetchedRoles = await getRoles(); 
+      setRoles(fetchedRoles);
+    } catch (error) {
+        console.error("Error fetching roles:", error);
+        toast({ title: "Erro", description: "Falha ao buscar perfis.", variant: "destructive"});
+    } finally {
+        setIsLoading(false);
+    }
+  }, [toast]); // toast é uma dependência estável
 
   useEffect(() => {
     fetchRoles();
-  }, []);
+  }, [fetchRoles]); // fetchRoles agora é estável
 
   async function handleDeleteRole(id: string) {
-    // 'use server' is not needed here as this function is called by a client component
-    // and it, in turn, calls the server action 'deleteRole'
-    const result = await deleteRole(id);
+    // Chamar a Server Action deleteRole
+    const result = await deleteRole(id); 
     if (result.success) {
         toast({
             title: 'Sucesso!',
             description: result.message,
         });
-        fetchRoles(); // Re-fetch roles to update the list
+        fetchRoles(); 
     } else {
         toast({
             title: 'Erro ao Excluir',
@@ -96,7 +104,7 @@ export default function AdminRolesPage() {
         });
     }
   }
-
+  
   if (isLoading) {
     return (
         <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
@@ -179,5 +187,3 @@ export default function AdminRolesPage() {
     </TooltipProvider>
   );
 }
-
-    
