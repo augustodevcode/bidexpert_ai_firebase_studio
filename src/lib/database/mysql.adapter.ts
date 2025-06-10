@@ -1,3 +1,4 @@
+
 // src/lib/database/mysql.adapter.ts
 import mysql, { type RowDataPacket, type Pool } from 'mysql2/promise';
 import type {
@@ -165,13 +166,13 @@ export class MySqlAdapter implements IDatabaseAdapter {
     
     const queries = [
       `CREATE TABLE IF NOT EXISTS roles (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(100) NOT NULL UNIQUE,
         name_normalized VARCHAR(100) NOT NULL UNIQUE,
         description TEXT,
         permissions JSON,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_roles_name_normalized (name_normalized)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
 
@@ -179,7 +180,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         uid VARCHAR(255) PRIMARY KEY,
         email VARCHAR(255) UNIQUE,
         full_name VARCHAR(255),
-        role_id INT,
+        role_id INT UNSIGNED,
         permissions JSON,
         status VARCHAR(50),
         habilitation_status VARCHAR(50),
@@ -208,8 +209,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
         opt_in_marketing BOOLEAN DEFAULT FALSE,
         avatar_url TEXT,
         data_ai_hint TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE SET NULL,
         INDEX idx_user_profiles_email (email),
         INDEX idx_user_profiles_role_id (role_id)
@@ -218,42 +219,42 @@ export class MySqlAdapter implements IDatabaseAdapter {
       `CREATE TABLE IF NOT EXISTS platform_settings (
         id VARCHAR(50) PRIMARY KEY DEFAULT 'global',
         gallery_image_base_path TEXT NOT NULL,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
 
       `CREATE TABLE IF NOT EXISTS lot_categories (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         slug VARCHAR(255) NOT NULL UNIQUE,
         description TEXT,
         item_count INT DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_lot_categories_slug (slug)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
       
       `CREATE TABLE IF NOT EXISTS states (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
         uf VARCHAR(2) NOT NULL UNIQUE,
         slug VARCHAR(100) NOT NULL UNIQUE,
         city_count INT DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_states_slug (slug),
         INDEX idx_states_uf (uf)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
 
       `CREATE TABLE IF NOT EXISTS cities (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(150) NOT NULL,
         slug VARCHAR(150) NOT NULL,
-        state_id INT,
+        state_id INT UNSIGNED,
         state_uf VARCHAR(2),
         ibge_code VARCHAR(10) UNIQUE,
         lot_count INT DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (state_id) REFERENCES states(id) ON DELETE CASCADE,
         UNIQUE KEY \`unique_city_in_state\` (\`slug\`, \`state_id\`),
         INDEX idx_cities_state_id (state_id),
@@ -261,7 +262,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
 
       `CREATE TABLE IF NOT EXISTS auctioneers (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         slug VARCHAR(255) NOT NULL UNIQUE,
         registration_number VARCHAR(100),
@@ -281,13 +282,13 @@ export class MySqlAdapter implements IDatabaseAdapter {
         auctions_conducted_count INT,
         total_value_sold DECIMAL(15,2),
         user_id VARCHAR(255),
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_auctioneers_slug (slug)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
 
       `CREATE TABLE IF NOT EXISTS sellers (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         slug VARCHAR(255) NOT NULL UNIQUE,
         contact_name VARCHAR(255),
@@ -307,21 +308,21 @@ export class MySqlAdapter implements IDatabaseAdapter {
         total_sales_value DECIMAL(15,2),
         auctions_facilitated_count INT,
         user_id VARCHAR(255),
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_sellers_slug (slug)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
       
       `CREATE TABLE IF NOT EXISTS auctions (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
         full_title TEXT,
         description TEXT,
         status VARCHAR(50) NOT NULL,
         auction_type VARCHAR(50),
-        category_id INT,
-        auctioneer_id INT,
-        seller_id INT,
+        category_id INT UNSIGNED,
+        auctioneer_id INT UNSIGNED,
+        seller_id INT UNSIGNED,
         auction_date DATETIME NOT NULL,
         end_date DATETIME,
         auction_stages JSON,
@@ -338,8 +339,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
         bids_count INT DEFAULT 0,
         selling_branch VARCHAR(100),
         vehicle_location VARCHAR(255),
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (category_id) REFERENCES lot_categories(id) ON DELETE SET NULL,
         FOREIGN KEY (auctioneer_id) REFERENCES auctioneers(id) ON DELETE SET NULL,
         FOREIGN KEY (seller_id) REFERENCES sellers(id) ON DELETE SET NULL,
@@ -351,8 +352,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
 
       `CREATE TABLE IF NOT EXISTS lots (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        auction_id INT NOT NULL,
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        auction_id INT UNSIGNED NOT NULL,
         title VARCHAR(255) NOT NULL,
         \`number\` VARCHAR(50),
         image_url TEXT,
@@ -360,8 +361,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
         gallery_image_urls JSON,
         media_item_ids JSON,
         status VARCHAR(50) NOT NULL,
-        state_id INT,
-        city_id INT,
+        state_id INT UNSIGNED,
+        city_id INT UNSIGNED,
         type VARCHAR(100),
         views INT DEFAULT 0,
         auction_name VARCHAR(255),
@@ -408,12 +409,12 @@ export class MySqlAdapter implements IDatabaseAdapter {
         actual_cash_value VARCHAR(50),
         estimated_repair_cost VARCHAR(50),
         seller_name VARCHAR(255),
-        seller_id_fk INT,
+        seller_id_fk INT UNSIGNED,
         auctioneer_name VARCHAR(255),
-        auctioneer_id_fk INT,
-        condition TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        auctioneer_id_fk INT UNSIGNED,
+        \`condition\` TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
         FOREIGN KEY (state_id) REFERENCES states(id) ON DELETE SET NULL,
         FOREIGN KEY (city_id) REFERENCES cities(id) ON DELETE SET NULL,
@@ -425,9 +426,9 @@ export class MySqlAdapter implements IDatabaseAdapter {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
 
       `CREATE TABLE IF NOT EXISTS media_items (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         file_name VARCHAR(255) NOT NULL,
-        uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         uploaded_by VARCHAR(255),
         title TEXT,
         alt_text TEXT,
@@ -448,13 +449,13 @@ export class MySqlAdapter implements IDatabaseAdapter {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
 
       `CREATE TABLE IF NOT EXISTS bids (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        lot_id INT NOT NULL,
-        auction_id INT NOT NULL,
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        lot_id INT UNSIGNED NOT NULL,
+        auction_id INT UNSIGNED NOT NULL,
         bidder_id VARCHAR(255) NOT NULL,
         bidder_display_name VARCHAR(255),
         amount DECIMAL(15,2) NOT NULL,
-        \`timestamp\` DATETIME DEFAULT CURRENT_TIMESTAMP,
+        \`timestamp\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (lot_id) REFERENCES lots(id) ON DELETE CASCADE,
         FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
         FOREIGN KEY (bidder_id) REFERENCES user_profiles(uid) ON DELETE CASCADE,
@@ -1098,3 +1099,4 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async getPlatformSettings(): Promise<PlatformSettings> { console.warn("MySqlAdapter.getPlatformSettings not implemented."); return { id: 'global', galleryImageBasePath: '/mysql/default/path/', updatedAt: new Date() };}
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> { console.warn("MySqlAdapter.updatePlatformSettings not implemented."); return {success: false, message: "Not implemented"}; }
 }
+
