@@ -1,4 +1,3 @@
-
 // src/lib/database/mysql.adapter.ts
 import mysql, { type RowDataPacket, type Pool } from 'mysql2/promise';
 import type {
@@ -156,7 +155,340 @@ function mapToUserProfileData(row: RowDataPacket, role?: Role | null): UserProfi
 
 export class MySqlAdapter implements IDatabaseAdapter {
   constructor() {
-    getPool();
+    getPool(); // Ensure pool is initialized when adapter is created
+  }
+
+  async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[] }> {
+    const connection = await getPool().getConnection();
+    const errors: any[] = [];
+    console.log('[MySqlAdapter] Iniciando criação/verificação de tabelas...');
+    
+    const queries = [
+      `CREATE TABLE IF NOT EXISTS roles (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL UNIQUE,
+        name_normalized VARCHAR(100) NOT NULL UNIQUE,
+        description TEXT,
+        permissions JSON,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_roles_name_normalized (name_normalized)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+
+      `CREATE TABLE IF NOT EXISTS user_profiles (
+        uid VARCHAR(255) PRIMARY KEY,
+        email VARCHAR(255) UNIQUE,
+        full_name VARCHAR(255),
+        role_id INT,
+        permissions JSON,
+        status VARCHAR(50),
+        habilitation_status VARCHAR(50),
+        cpf VARCHAR(20),
+        rg_number VARCHAR(30),
+        rg_issuer VARCHAR(100),
+        rg_issue_date DATE,
+        rg_state VARCHAR(2),
+        date_of_birth DATE,
+        cell_phone VARCHAR(20),
+        home_phone VARCHAR(20),
+        gender VARCHAR(50),
+        profession VARCHAR(100),
+        nationality VARCHAR(100),
+        marital_status VARCHAR(50),
+        property_regime VARCHAR(100),
+        spouse_name VARCHAR(255),
+        spouse_cpf VARCHAR(20),
+        zip_code VARCHAR(10),
+        street VARCHAR(255),
+        \`number\` VARCHAR(20),
+        complement VARCHAR(100),
+        neighborhood VARCHAR(100),
+        city VARCHAR(100),
+        state VARCHAR(100),
+        opt_in_marketing BOOLEAN DEFAULT FALSE,
+        avatar_url TEXT,
+        data_ai_hint TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE SET NULL,
+        INDEX idx_user_profiles_email (email),
+        INDEX idx_user_profiles_role_id (role_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+      
+      `CREATE TABLE IF NOT EXISTS platform_settings (
+        id VARCHAR(50) PRIMARY KEY DEFAULT 'global',
+        gallery_image_base_path TEXT NOT NULL,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+
+      `CREATE TABLE IF NOT EXISTS lot_categories (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) NOT NULL UNIQUE,
+        description TEXT,
+        item_count INT DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_lot_categories_slug (slug)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+      
+      `CREATE TABLE IF NOT EXISTS states (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        uf VARCHAR(2) NOT NULL UNIQUE,
+        slug VARCHAR(100) NOT NULL UNIQUE,
+        city_count INT DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_states_slug (slug),
+        INDEX idx_states_uf (uf)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+
+      `CREATE TABLE IF NOT EXISTS cities (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(150) NOT NULL,
+        slug VARCHAR(150) NOT NULL,
+        state_id INT,
+        state_uf VARCHAR(2),
+        ibge_code VARCHAR(10) UNIQUE,
+        lot_count INT DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (state_id) REFERENCES states(id) ON DELETE CASCADE,
+        UNIQUE KEY \`unique_city_in_state\` (\`slug\`, \`state_id\`),
+        INDEX idx_cities_state_id (state_id),
+        INDEX idx_cities_slug_state_id (slug, state_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+
+      `CREATE TABLE IF NOT EXISTS auctioneers (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) NOT NULL UNIQUE,
+        registration_number VARCHAR(100),
+        contact_name VARCHAR(255),
+        email VARCHAR(255) UNIQUE,
+        phone VARCHAR(50),
+        address TEXT,
+        city VARCHAR(100),
+        state VARCHAR(100),
+        zip_code VARCHAR(20),
+        website TEXT,
+        logo_url TEXT,
+        data_ai_hint_logo TEXT,
+        description TEXT,
+        member_since DATETIME,
+        rating DECIMAL(3,1),
+        auctions_conducted_count INT,
+        total_value_sold DECIMAL(15,2),
+        user_id VARCHAR(255),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_auctioneers_slug (slug)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+
+      `CREATE TABLE IF NOT EXISTS sellers (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) NOT NULL UNIQUE,
+        contact_name VARCHAR(255),
+        email VARCHAR(255) UNIQUE,
+        phone VARCHAR(50),
+        address TEXT,
+        city VARCHAR(100),
+        state VARCHAR(100),
+        zip_code VARCHAR(20),
+        website TEXT,
+        logo_url TEXT,
+        data_ai_hint_logo TEXT,
+        description TEXT,
+        member_since DATETIME,
+        rating DECIMAL(3,1),
+        active_lots_count INT,
+        total_sales_value DECIMAL(15,2),
+        auctions_facilitated_count INT,
+        user_id VARCHAR(255),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_sellers_slug (slug)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+      
+      `CREATE TABLE IF NOT EXISTS auctions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        full_title TEXT,
+        description TEXT,
+        status VARCHAR(50) NOT NULL,
+        auction_type VARCHAR(50),
+        category_id INT,
+        auctioneer_id INT,
+        seller_id INT,
+        auction_date DATETIME NOT NULL,
+        end_date DATETIME,
+        auction_stages JSON,
+        city VARCHAR(100),
+        state VARCHAR(2),
+        image_url TEXT,
+        data_ai_hint TEXT,
+        documents_url TEXT,
+        total_lots INT DEFAULT 0,
+        visits INT DEFAULT 0,
+        initial_offer DECIMAL(15,2),
+        is_favorite BOOLEAN DEFAULT FALSE,
+        current_bid DECIMAL(15,2),
+        bids_count INT DEFAULT 0,
+        selling_branch VARCHAR(100),
+        vehicle_location VARCHAR(255),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (category_id) REFERENCES lot_categories(id) ON DELETE SET NULL,
+        FOREIGN KEY (auctioneer_id) REFERENCES auctioneers(id) ON DELETE SET NULL,
+        FOREIGN KEY (seller_id) REFERENCES sellers(id) ON DELETE SET NULL,
+        INDEX idx_auctions_status (status),
+        INDEX idx_auctions_auction_date (auction_date),
+        INDEX idx_auctions_category_id (category_id),
+        INDEX idx_auctions_auctioneer_id (auctioneer_id),
+        INDEX idx_auctions_seller_id (seller_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+
+      `CREATE TABLE IF NOT EXISTS lots (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        auction_id INT NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        \`number\` VARCHAR(50),
+        image_url TEXT,
+        data_ai_hint TEXT,
+        gallery_image_urls JSON,
+        media_item_ids JSON,
+        status VARCHAR(50) NOT NULL,
+        state_id INT,
+        city_id INT,
+        type VARCHAR(100),
+        views INT DEFAULT 0,
+        auction_name VARCHAR(255),
+        price DECIMAL(15,2) NOT NULL,
+        initial_price DECIMAL(15,2),
+        lot_specific_auction_date DATETIME,
+        second_auction_date DATETIME,
+        second_initial_price DECIMAL(15,2),
+        end_date DATETIME NOT NULL,
+        bids_count INT DEFAULT 0,
+        is_favorite BOOLEAN DEFAULT FALSE,
+        is_featured BOOLEAN DEFAULT FALSE,
+        description TEXT,
+        year INT,
+        make VARCHAR(100),
+        model VARCHAR(100),
+        series VARCHAR(100),
+        stock_number VARCHAR(100),
+        selling_branch VARCHAR(100),
+        vin VARCHAR(100),
+        vin_status VARCHAR(50),
+        loss_type VARCHAR(100),
+        primary_damage VARCHAR(100),
+        title_info VARCHAR(100),
+        title_brand VARCHAR(100),
+        start_code VARCHAR(100),
+        has_key BOOLEAN,
+        odometer VARCHAR(50),
+        airbags_status VARCHAR(100),
+        body_style VARCHAR(100),
+        engine_details TEXT,
+        transmission_type VARCHAR(100),
+        drive_line_type VARCHAR(50),
+        fuel_type VARCHAR(50),
+        cylinders VARCHAR(20),
+        restraint_system VARCHAR(255),
+        exterior_interior_color VARCHAR(100),
+        options TEXT,
+        manufactured_in VARCHAR(100),
+        vehicle_class VARCHAR(100),
+        vehicle_location_in_branch VARCHAR(255),
+        lane_run_number VARCHAR(50),
+        aisle_stall VARCHAR(50),
+        actual_cash_value VARCHAR(50),
+        estimated_repair_cost VARCHAR(50),
+        seller_name VARCHAR(255),
+        seller_id_fk INT,
+        auctioneer_name VARCHAR(255),
+        auctioneer_id_fk INT,
+        condition TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
+        FOREIGN KEY (state_id) REFERENCES states(id) ON DELETE SET NULL,
+        FOREIGN KEY (city_id) REFERENCES cities(id) ON DELETE SET NULL,
+        FOREIGN KEY (seller_id_fk) REFERENCES sellers(id) ON DELETE SET NULL,
+        FOREIGN KEY (auctioneer_id_fk) REFERENCES auctioneers(id) ON DELETE SET NULL,
+        INDEX idx_lots_auction_id (auction_id),
+        INDEX idx_lots_status (status),
+        INDEX idx_lots_type (type)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+
+      `CREATE TABLE IF NOT EXISTS media_items (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        file_name VARCHAR(255) NOT NULL,
+        uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        uploaded_by VARCHAR(255),
+        title TEXT,
+        alt_text TEXT,
+        caption TEXT,
+        description TEXT,
+        mime_type VARCHAR(100) NOT NULL,
+        size_bytes BIGINT NOT NULL,
+        dimensions_width INT,
+        dimensions_height INT,
+        url_original TEXT NOT NULL,
+        url_thumbnail TEXT,
+        url_medium TEXT,
+        url_large TEXT,
+        linked_lot_ids JSON,
+        data_ai_hint TEXT,
+        INDEX idx_media_items_uploaded_by (uploaded_by),
+        INDEX idx_media_items_mime_type (mime_type)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+
+      `CREATE TABLE IF NOT EXISTS bids (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        lot_id INT NOT NULL,
+        auction_id INT NOT NULL,
+        bidder_id VARCHAR(255) NOT NULL,
+        bidder_display_name VARCHAR(255),
+        amount DECIMAL(15,2) NOT NULL,
+        \`timestamp\` DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (lot_id) REFERENCES lots(id) ON DELETE CASCADE,
+        FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
+        FOREIGN KEY (bidder_id) REFERENCES user_profiles(uid) ON DELETE CASCADE,
+        INDEX idx_bids_lot_id (lot_id),
+        INDEX idx_bids_bidder_id (bidder_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
+    ];
+
+    try {
+      await connection.beginTransaction();
+      for (const query of queries) {
+        try {
+          await connection.query(query);
+          const tableNameMatch = query.match(/CREATE TABLE IF NOT EXISTS `?(\w+)`?/i);
+           if (tableNameMatch) {
+            console.log(`[MySqlAdapter] Tabela '${tableNameMatch[1]}' verificada/criada com sucesso.`);
+          } else {
+            // console.log(`[MySqlAdapter] Comando DDL executado: ${query.substring(0,50)}...`);
+          }
+        } catch (tableError: any) {
+          console.warn(`[MySqlAdapter] Aviso ao executar query: ${tableError.message}. Query: ${query.substring(0,100)}...`);
+        }
+      }
+      await connection.commit();
+      console.log('[MySqlAdapter] Esquema inicializado com sucesso.');
+      return { success: true, message: 'Esquema MySQL inicializado/verificado com sucesso.' };
+    } catch (error: any) {
+      await connection.rollback();
+      console.error('[MySqlAdapter - initializeSchema] Erro transacional:', error);
+      errors.push(error.message);
+      return { success: false, message: `Erro ao inicializar esquema MySQL: ${error.message}`, errors };
+    } finally {
+      connection.release();
+    }
   }
 
   // --- Categories ---
@@ -368,14 +700,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async getUserProfileData(userId: string): Promise<UserProfileData | null> {
     const connection = await getPool().getConnection();
     try {
-      // Note: 'number' is a reserved keyword in SQL, escape with backticks if used as column name
       const queryText = `
-        SELECT up.uid, up.email, up.full_name, up.role_id, up.permissions, up.status, up.habilitation_status, 
-               up.cpf, up.rg_number, up.rg_issuer, up.rg_issue_date, up.rg_state, up.date_of_birth, 
-               up.cell_phone, up.home_phone, up.gender, up.profession, up.nationality, up.marital_status, up.property_regime,
-               up.spouse_name, up.spouse_cpf, up.zip_code, up.street, up.\`number\`, up.complement, up.neighborhood, up.city, up.state, 
-               up.opt_in_marketing, up.avatar_url, up.data_ai_hint, up.created_at, up.updated_at,
-               r.name as role_name_from_join, r.permissions as role_permissions_from_join
+        SELECT up.*, r.name as role_name_from_join, r.permissions as role_permissions_from_join
         FROM user_profiles up
         LEFT JOIN roles r ON up.role_id = r.id
         WHERE up.uid = ?`;
@@ -383,7 +709,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       if ((rows as RowDataPacket[]).length === 0) return null;
       
       const row = mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]);
-       let finalPermissions = row.permissions;
+      let finalPermissions = row.permissions;
       if (typeof row.permissions === 'string') {
           try { finalPermissions = JSON.parse(row.permissions); } catch { finalPermissions = []; }
       }
@@ -410,7 +736,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       (Object.keys(data) as Array<keyof EditableUserProfileData>).forEach(key => {
         if (data[key] !== undefined) {
             const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
-            const escapedColumn = sqlColumn === 'number' ? `\`number\`` : sqlColumn; // Escape 'number'
+            const escapedColumn = sqlColumn === 'number' ? `\`number\`` : sqlColumn;
             fieldsToUpdate.push(`${escapedColumn} = ?`);
             values.push(data[key] === '' ? null : data[key]);
         }
@@ -464,7 +790,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         }
 
         if (needsUpdate) {
-            updateFields.updated_at = new Date();
+            updateFields.updated_at = new Date(); // MySQL NOW() will handle this
             const setClauses = Object.keys(updateFields).map(key => `${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = ?`).join(', ');
             await connection.execute(`UPDATE user_profiles SET ${setClauses} WHERE uid = ?`, [...Object.values(updateFields), userId]);
         }
@@ -530,6 +856,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         newRoleIdInt = Number(role.id);
         newPermissions = role.permissions || [];
       }
+      
       await connection.execute(
         'UPDATE user_profiles SET role_id = ?, permissions = ?, updated_at = NOW() WHERE uid = ?',
         [newRoleIdInt, JSON.stringify(newPermissions), userId]
@@ -682,9 +1009,9 @@ export class MySqlAdapter implements IDatabaseAdapter {
       connection.release();
     }
   }
-
+  
   async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; }> {
-    const defaultRolesData: RoleFormData[] = [ /* Same as Postgres */
+    const defaultRolesData: RoleFormData[] = [ 
       { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
       { name: 'USER', description: 'Usuário padrão.', permissions: ['view_auctions', 'place_bids', 'view_lots'] },
       { name: 'CONSIGNOR', description: 'Comitente.', permissions: ['auctions:manage_own', 'lots:manage_own', 'view_reports', 'media:upload'] },
@@ -695,15 +1022,24 @@ export class MySqlAdapter implements IDatabaseAdapter {
     try {
       await connection.beginTransaction();
       for (const roleData of defaultRolesData) {
-        const role = await this.getRoleByName(roleData.name); // Uses existing getRoleByName which handles its own connection
-        if (!role) {
-          await this.createRole(roleData); // Uses existing createRole
+        const normalizedName = roleData.name.trim().toUpperCase();
+        const [existingRows] = await connection.query('SELECT * FROM roles WHERE name_normalized = ? LIMIT 1', [normalizedName]);
+        
+        if ((existingRows as RowDataPacket[]).length === 0) {
+          const validPermissions = JSON.stringify((roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p)));
+          const query = `
+            INSERT INTO roles (name, name_normalized, description, permissions, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, NOW(), NOW());
+          `;
+          await connection.execute(query, [roleData.name.trim(), normalizedName, roleData.description || null, validPermissions]);
         } else {
-            const currentPermissionsSorted = [...(role.permissions || [])].sort();
-            const expectedPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p)).sort();
-            if (JSON.stringify(currentPermissionsSorted) !== JSON.stringify(expectedPermissions) || role.description !== (roleData.description || null)) {
-                await this.updateRole(role.id, { description: roleData.description, permissions: expectedPermissions });
-            }
+          const role = mapToRole(mapMySqlRowToCamelCase((existingRows as RowDataPacket[])[0]));
+          const currentPermissionsSorted = [...(role.permissions || [])].sort();
+          const expectedPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p)).sort();
+          if (JSON.stringify(currentPermissionsSorted) !== JSON.stringify(expectedPermissions) || role.description !== (roleData.description || null)) {
+            const updateQuery = `UPDATE roles SET description = ?, permissions = ?, updated_at = NOW() WHERE id = ?`;
+            await connection.execute(updateQuery, [roleData.description || null, JSON.stringify(expectedPermissions), Number(role.id)]);
+          }
         }
       }
       await connection.commit();
@@ -716,7 +1052,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       connection.release();
     }
   }
-  
+
   // --- Auctioneers (Scaffold) ---
   async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> { console.warn("MySqlAdapter.createAuctioneer not implemented."); return {success: false, message: "Not implemented"}; }
   async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { console.warn("MySqlAdapter.getAuctioneers not implemented."); return []; }
@@ -757,10 +1093,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> { console.warn("MySqlAdapter.deleteMediaItemFromDb not implemented."); return {success: false, message: "Not implemented"}; }
   async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> { console.warn("MySqlAdapter.linkMediaItemsToLot not implemented."); return {success: false, message: "Not implemented"}; }
   async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> { console.warn("MySqlAdapter.unlinkMediaItemFromLot not implemented."); return {success: false, message: "Not implemented"}; }
-
+  
   // Settings
   async getPlatformSettings(): Promise<PlatformSettings> { console.warn("MySqlAdapter.getPlatformSettings not implemented."); return { id: 'global', galleryImageBasePath: '/mysql/default/path/', updatedAt: new Date() };}
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> { console.warn("MySqlAdapter.updatePlatformSettings not implemented."); return {success: false, message: "Not implemented"}; }
 }
-
-    
