@@ -328,6 +328,29 @@ function mapToBidInfo(row: RowDataPacket): BidInfo {
     };
 }
 
+function mapToMediaItem(row: RowDataPacket): MediaItem {
+  return {
+    id: String(row.id),
+    fileName: row.fileName,
+    uploadedAt: new Date(row.uploadedAt),
+    uploadedBy: row.uploadedBy,
+    title: row.title,
+    altText: row.altText,
+    caption: row.caption,
+    description: row.description,
+    mimeType: row.mimeType,
+    sizeBytes: Number(row.sizeBytes),
+    dimensions: row.dimensionsWidth && row.dimensionsHeight ? { width: Number(row.dimensionsWidth), height: Number(row.dimensionsHeight) } : undefined,
+    urlOriginal: row.urlOriginal,
+    urlThumbnail: row.urlThumbnail,
+    urlMedium: row.urlMedium,
+    urlLarge: row.urlLarge,
+    linkedLotIds: row.linkedLotIds ? JSON.parse(row.linkedLotIds) : [],
+    dataAiHint: row.dataAiHint,
+  };
+}
+
+
 const defaultRolesData: RoleFormData[] = [ 
   { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
   { name: 'USER', description: 'Usuário padrão.', permissions: ['view_auctions', 'place_bids', 'view_lots'] },
@@ -1361,7 +1384,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         return { success: false, message: e.message }; 
     } finally { connection.release(); }
   }
-
+  
   // --- Roles ---
   async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> {
     const connection = await getPool().getConnection();
@@ -1423,11 +1446,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
             fields.push(`name = ?`); values.push(data.name.trim());
             fields.push(`name_normalized = ?`); values.push(data.name.trim().toUpperCase());
         } else if (data.name) {
-             if (data.description !== undefined) { // Allow description update for default roles
+             if (data.description !== undefined) { 
                 fields.push(`description = ?`); values.push(data.description || null);
             }
         }
-        // Ensure description can be updated even if name isn't, or for default roles
         if (data.description !== undefined && (!data.name || (currentNormalizedName === 'ADMINISTRATOR' || currentNormalizedName === 'USER'))) {
              fields.push(`description = ?`); values.push(data.description || null);
         }
@@ -1476,7 +1498,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
                 );
             } else {
                 const existingRole = mapMySqlRowToCamelCase((existingRows as RowDataPacket[])[0]);
-                const currentPermsSorted = [...(existingRole.permissions || [])].sort();
+                const currentPermsSorted = [...(typeof existingRole.permissions === 'string' ? JSON.parse(existingRole.permissions) : existingRole.permissions || [])].sort();
                 const expectedPermsSorted = [...validPermissions].sort();
                 if (JSON.stringify(currentPermsSorted) !== JSON.stringify(expectedPermsSorted) || existingRole.description !== (roleData.description || null)) {
                      await connection.query(
@@ -1491,17 +1513,261 @@ export class MySqlAdapter implements IDatabaseAdapter {
     } catch (e: any) { await connection.rollback(); return { success: false, message: e.message }; } finally { connection.release(); }
   }
   
-  // --- Media Items (Scaffold) ---
-  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> { console.warn("MySqlAdapter.createMediaItem not implemented."); return {success: false, message: "Not implemented"}; }
-  async getMediaItems(): Promise<MediaItem[]> { console.warn("MySqlAdapter.getMediaItems not implemented."); return []; }
-  async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> { console.warn("MySqlAdapter.updateMediaItemMetadata not implemented."); return {success: false, message: "Not implemented"}; }
-  async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> { console.warn("MySqlAdapter.deleteMediaItemFromDb not implemented."); return {success: false, message: "Not implemented"}; }
-  async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> { console.warn("MySqlAdapter.linkMediaItemsToLot not implemented."); return {success: false, message: "Not implemented"}; }
-  async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> { console.warn("MySqlAdapter.unlinkMediaItemFromLot not implemented."); return {success: false, message: "Not implemented"}; }
+  // --- Users ---
+  async getUserProfileData(userId: string): Promise<UserProfileData | null> {
+    const connection = await getPool().getConnection();
+    try {
+        const [rows] = await connection.query('SELECT up.*, r.name as role_name FROM user_profiles up LEFT JOIN roles r ON up.role_id = r.id WHERE up.uid = ?', [userId]);
+        if ((rows as RowDataPacket[]).length === 0) return null;
+        const userRow = mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]);
+        let role: Role | null = null;
+        if (userRow.roleId) role = await this.getRole(userRow.roleId);
+        return mapToUserProfileData(userRow, role);
+    } catch (e: any) { return null; } finally { connection.release(); }
+  }
+
+  async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
+    const connection = await getPool().getConnection();
+    try {
+        const fields: string[] = [];
+        const values: any[] = [];
+        (Object.keys(data) as Array<keyof EditableUserProfileData>).forEach(key => {
+            if (data[key] !== undefined && data[key] !== null) { // Check for null specifically
+                fields.push(`${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = ?`);
+                values.push(data[key]);
+            } else if (data[key] === null) { // Handle explicit nulls to clear fields
+                 fields.push(`${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = NULL`);
+            }
+        });
+        if (fields.length === 0) return { success: true, message: "Nenhuma alteração no perfil."};
+        fields.push(`updated_at = NOW()`);
+        const queryText = `UPDATE user_profiles SET ${fields.join(', ')} WHERE uid = ?`;
+        values.push(userId);
+        await connection.execute(queryText, values);
+        return { success: true, message: 'Perfil atualizado!'};
+    } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
+  }
+
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
+    const connection = await getPool().getConnection();
+    try {
+        await this.ensureDefaultRolesExist(); 
+        const targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
+        if (!targetRole) return { success: false, message: 'Perfil padrão USER não encontrado.'};
+
+        await connection.beginTransaction();
+        const [userRows] = await connection.query('SELECT * FROM user_profiles WHERE uid = ?', [userId]);
+        let finalProfileData: UserProfileData;
+
+        if ((userRows as RowDataPacket[]).length > 0) {
+            const userDataFromDB = mapToUserProfileData(mapMySqlRowToCamelCase((userRows as RowDataPacket[])[0]));
+            const updatePayload: any = { updatedAt: new Date() };
+            let needsUpdate = false;
+            if (userDataFromDB.roleId !== targetRole.id) { updatePayload.roleId = Number(targetRole.id); needsUpdate = true; }
+            if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; }
+            if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = targetRole.permissions || []; needsUpdate = true; }
+            
+            if (needsUpdate) {
+                const updateFields: string[] = [];
+                const updateValues: any[] = [];
+                Object.keys(updatePayload).forEach(key => {
+                    const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+                    updateFields.push(`${sqlColumn} = ?`);
+                    updateValues.push(updatePayload[key] === 'permissions' ? JSON.stringify(updatePayload[key]) : updatePayload[key]);
+                });
+                updateValues.push(userId);
+                await connection.execute(`UPDATE user_profiles SET ${updateFields.join(', ')} WHERE uid = ?`, updateValues);
+            }
+             finalProfileData = { ...userDataFromDB, ...updatePayload, uid: userId } as UserProfileData;
+        } else {
+            const insertQuery = `
+                INSERT INTO user_profiles (uid, email, full_name, role_id, permissions, status, habilitation_status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW());
+            `;
+            const insertValues = [
+                userId, email, fullName || email.split('@')[0], Number(targetRole.id), JSON.stringify(targetRole.permissions || []),
+                'ATIVO', targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS'
+            ];
+            await connection.execute(insertQuery, insertValues);
+            const [createdRows] = await connection.query('SELECT * FROM user_profiles WHERE uid = ?', [userId]);
+            finalProfileData = mapToUserProfileData(mapMySqlRowToCamelCase((createdRows as RowDataPacket[])[0]), targetRole);
+        }
+        await connection.commit();
+        return { success: true, message: 'Perfil de usuário assegurado/atualizado (MySQL).', userProfile: finalProfileData };
+    } catch (e: any) { await connection.rollback(); return { success: false, message: e.message }; } finally { connection.release(); }
+  }
+
+  async getUsersWithRoles(): Promise<UserProfileData[]> {
+    const connection = await getPool().getConnection();
+    try {
+      const [rows] = await connection.query(`
+        SELECT up.*, r.name as role_name, r.permissions as role_permissions 
+        FROM user_profiles up 
+        LEFT JOIN roles r ON up.role_id = r.id 
+        ORDER BY up.full_name ASC;
+      `);
+      return (rows as RowDataPacket[]).map(row => {
+        const profile = mapToUserProfileData(mapMySqlRowToCamelCase(row));
+        if ((!profile.permissions || profile.permissions.length === 0) && row.role_permissions) {
+            profile.permissions = typeof row.role_permissions === 'string' ? JSON.parse(row.role_permissions) : row.role_permissions;
+        }
+        return profile;
+      });
+    } catch (e: any) { return []; } finally { connection.release(); }
+  }
+
+  async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
+    const connection = await getPool().getConnection();
+    try {
+      let roleName = null;
+      let permissions = null;
+      if (roleId && roleId !== "---NONE---") {
+        const role = await this.getRole(roleId);
+        if (role) { roleName = role.name; permissions = JSON.stringify(role.permissions || []); }
+        else return { success: false, message: 'Perfil não encontrado.'};
+      }
+      const queryText = `UPDATE user_profiles SET role_id = ?, role_name = ?, permissions = ?, updated_at = NOW() WHERE uid = ?`;
+      await connection.execute(queryText, [roleId ? Number(roleId) : null, roleName, permissions, userId]);
+      return { success: true, message: 'Perfil do usuário atualizado!' };
+    } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
+  }
+
+  async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> {
+    const connection = await getPool().getConnection();
+    try {
+      await connection.execute('DELETE FROM user_profiles WHERE uid = ?', [userId]);
+      return { success: true, message: 'Perfil de usuário excluído (MySQL)!' };
+    } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
+  }
   
-  // Settings
-  async getPlatformSettings(): Promise<PlatformSettings> { console.warn("MySqlAdapter.getPlatformSettings not implemented."); return { id: 'global', galleryImageBasePath: '/mysql/default/path/', updatedAt: new Date() };}
-  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> { console.warn("MySqlAdapter.updatePlatformSettings not implemented."); return {success: false, message: "Not implemented"}; }
+  // --- Media Items ---
+  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> {
+    const connection = await getPool().getConnection();
+    try {
+      const query = `
+        INSERT INTO media_items (
+          file_name, uploaded_by, title, alt_text, caption, description, mime_type, size_bytes,
+          dimensions_width, dimensions_height, url_original, url_thumbnail, url_medium, url_large,
+          linked_lot_ids, data_ai_hint, uploaded_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW());
+      `;
+      const values = [
+        data.fileName, uploadedBy || null, data.title || null, data.altText || null, data.caption || null,
+        data.description || null, data.mimeType, data.sizeBytes, data.dimensions?.width || null,
+        data.dimensions?.height || null, filePublicUrl, filePublicUrl, filePublicUrl, filePublicUrl, // Simplified URLs
+        JSON.stringify(data.linkedLotIds || []), data.dataAiHint || null
+      ];
+      const [result] = await connection.execute(query, values);
+      const insertId = (result as mysql.ResultSetHeader).insertId;
+      const [newRows] = await connection.query('SELECT * FROM media_items WHERE id = ?', [insertId]);
+      return { success: true, message: "Item de mídia criado (MySQL).", item: mapToMediaItem(mapMySqlRowToCamelCase((newRows as RowDataPacket[])[0])) };
+    } catch (e: any) { console.error(`[MySqlAdapter - createMediaItem] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
+  }
+
+  async getMediaItems(): Promise<MediaItem[]> {
+    const connection = await getPool().getConnection();
+    try {
+      const [rows] = await connection.query('SELECT * FROM media_items ORDER BY uploaded_at DESC;');
+      return (rows as RowDataPacket[]).map(row => mapToMediaItem(mapMySqlRowToCamelCase(row)));
+    } catch (e: any) { console.error(`[MySqlAdapter - getMediaItems] Error:`, e); return []; } finally { connection.release(); }
+  }
+
+  async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> {
+    const connection = await getPool().getConnection();
+    try {
+      const fields: string[] = [];
+      const values: any[] = [];
+      (Object.keys(metadata) as Array<keyof typeof metadata>).forEach(key => {
+        fields.push(`${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = ?`);
+        values.push(metadata[key]);
+      });
+      if (fields.length === 0) return { success: true, message: "Nenhuma alteração." };
+      const query = `UPDATE media_items SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ?`;
+      values.push(Number(id));
+      await connection.execute(query, values);
+      return { success: true, message: 'Metadados atualizados (MySQL).' };
+    } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
+  }
+
+  async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> {
+    const connection = await getPool().getConnection();
+    try {
+      await connection.execute('DELETE FROM media_items WHERE id = ?;', [Number(id)]);
+      return { success: true, message: 'Item de mídia excluído do DB (MySQL).' };
+    } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
+  }
+
+  async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> {
+    const connection = await getPool().getConnection();
+    try {
+      await connection.beginTransaction();
+      // Link to media_items
+      for (const mediaId of mediaItemIds) {
+        await connection.execute(
+          'UPDATE media_items SET linked_lot_ids = JSON_MERGE_PRESERVE(COALESCE(linked_lot_ids, JSON_ARRAY()), JSON_ARRAY(?)) WHERE id = ? AND (linked_lot_ids IS NULL OR NOT JSON_CONTAINS(linked_lot_ids, JSON_QUOTE(?)))',
+          [lotId, Number(mediaId), lotId]
+        );
+      }
+      // Link to lots table (assuming media_item_ids is JSON)
+      await connection.execute(
+        'UPDATE lots SET media_item_ids = JSON_MERGE_PRESERVE(COALESCE(media_item_ids, JSON_ARRAY()), ?), updated_at = NOW() WHERE id = ?',
+        [JSON.stringify(mediaItemIds), Number(lotId)]
+      );
+      await connection.commit();
+      return { success: true, message: 'Mídias vinculadas (MySQL).' };
+    } catch (e: any) { await connection.rollback(); return { success: false, message: e.message }; } finally { connection.release(); }
+  }
+
+  async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> {
+    const connection = await getPool().getConnection();
+    try {
+      await connection.beginTransaction();
+      await connection.execute(
+        "UPDATE media_items SET linked_lot_ids = JSON_REMOVE(COALESCE(linked_lot_ids, JSON_ARRAY()), JSON_UNQUOTE(JSON_SEARCH(COALESCE(linked_lot_ids, JSON_ARRAY()), 'one', ?))) WHERE id = ?",
+        [lotId, Number(mediaItemId)]
+      );
+      await connection.execute(
+        "UPDATE lots SET media_item_ids = JSON_REMOVE(COALESCE(media_item_ids, JSON_ARRAY()), JSON_UNQUOTE(JSON_SEARCH(COALESCE(media_item_ids, JSON_ARRAY()), 'one', ?))), updated_at = NOW() WHERE id = ?",
+        [mediaItemId, Number(lotId)]
+      );
+      await connection.commit();
+      return { success: true, message: 'Mídia desvinculada (MySQL).' };
+    } catch (e: any) { await connection.rollback(); return { success: false, message: e.message }; } finally { connection.release(); }
+  }
+  
+  // --- Platform Settings ---
+  async getPlatformSettings(): Promise<PlatformSettings> {
+    const connection = await getPool().getConnection();
+    try {
+        const [rows] = await connection.query(`SELECT gallery_image_base_path, updated_at FROM platform_settings WHERE id = 'global';`);
+        if ((rows as RowDataPacket[]).length > 0) {
+            return { id: 'global', ...mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]) } as PlatformSettings;
+        }
+        // Default settings if not found
+        const defaultPath = '/media/gallery/';
+        await connection.execute(`INSERT INTO platform_settings (id, gallery_image_base_path) VALUES ('global', ?) ON DUPLICATE KEY UPDATE id=id;`, [defaultPath]);
+        return { id: 'global', galleryImageBasePath: defaultPath, updatedAt: new Date() };
+    } catch (e: any) {
+        console.error("[MySqlAdapter - getPlatformSettings] Error, returning default:", e);
+        return { id: 'global', galleryImageBasePath: '/media/gallery/', updatedAt: new Date() };
+    } finally { connection.release(); }
+  }
+
+  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
+    const connection = await getPool().getConnection();
+    if (!data.galleryImageBasePath || !data.galleryImageBasePath.startsWith('/') || !data.galleryImageBasePath.endsWith('/')) {
+        return { success: false, message: 'Caminho base da galeria inválido. Deve começar e terminar com "/".' };
+    }
+    try {
+        const query = `
+            INSERT INTO platform_settings (id, gallery_image_base_path, updated_at) 
+            VALUES ('global', ?, NOW()) 
+            ON DUPLICATE KEY UPDATE gallery_image_base_path = VALUES(gallery_image_base_path), updated_at = NOW();
+        `;
+        await connection.execute(query, [data.galleryImageBasePath]);
+        return { success: true, message: 'Configurações atualizadas (MySQL)!' };
+    } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
+  }
 }
     
 
@@ -1514,4 +1780,3 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
     
 
-```

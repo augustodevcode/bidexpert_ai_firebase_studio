@@ -311,6 +311,29 @@ function mapToBidInfo(row: QueryResultRow): BidInfo {
     };
 }
 
+function mapToMediaItem(row: QueryResultRow): MediaItem {
+  return {
+    id: String(row.id),
+    fileName: row.fileName,
+    uploadedAt: new Date(row.uploadedAt),
+    uploadedBy: row.uploadedBy,
+    title: row.title,
+    altText: row.altText,
+    caption: row.caption,
+    description: row.description,
+    mimeType: row.mimeType,
+    sizeBytes: Number(row.sizeBytes),
+    dimensions: row.dimensionsWidth && row.dimensionsHeight ? { width: Number(row.dimensionsWidth), height: Number(row.dimensionsHeight) } : undefined,
+    urlOriginal: row.urlOriginal,
+    urlThumbnail: row.urlThumbnail,
+    urlMedium: row.urlMedium,
+    urlLarge: row.urlLarge,
+    linkedLotIds: row.linkedLotIds || [], // JSONB is parsed by pg driver
+    dataAiHint: row.dataAiHint,
+  };
+}
+
+
 const defaultRolesData: RoleFormData[] = [ 
   { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
   { name: 'USER', description: 'Usuário padrão.', permissions: ['view_auctions', 'place_bids', 'view_lots'] },
@@ -330,18 +353,18 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.log('[PostgresAdapter] Iniciando criação/verificação de tabelas...');
     
     const queries = [
-      `DROP TABLE IF EXISTS bids;`,
-      `DROP TABLE IF EXISTS media_items;`,
-      `DROP TABLE IF EXISTS lots;`,
-      `DROP TABLE IF EXISTS auctions;`,
-      `DROP TABLE IF EXISTS cities;`,
-      `DROP TABLE IF EXISTS sellers;`,
-      `DROP TABLE IF EXISTS auctioneers;`,
-      `DROP TABLE IF EXISTS user_profiles;`,
-      `DROP TABLE IF EXISTS states;`,
-      `DROP TABLE IF EXISTS lot_categories;`,
-      `DROP TABLE IF EXISTS roles;`,
-      `DROP TABLE IF EXISTS platform_settings;`,
+      `DROP TABLE IF EXISTS bids CASCADE;`,
+      `DROP TABLE IF EXISTS media_items CASCADE;`,
+      `DROP TABLE IF EXISTS lots CASCADE;`,
+      `DROP TABLE IF EXISTS auctions CASCADE;`,
+      `DROP TABLE IF EXISTS cities CASCADE;`,
+      `DROP TABLE IF EXISTS sellers CASCADE;`,
+      `DROP TABLE IF EXISTS auctioneers CASCADE;`,
+      `DROP TABLE IF EXISTS user_profiles CASCADE;`,
+      `DROP TABLE IF EXISTS states CASCADE;`,
+      `DROP TABLE IF EXISTS lot_categories CASCADE;`,
+      `DROP TABLE IF EXISTS roles CASCADE;`,
+      `DROP TABLE IF EXISTS platform_settings CASCADE;`,
 
       `CREATE TABLE IF NOT EXISTS roles (
         id SERIAL PRIMARY KEY,
@@ -786,7 +809,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o estado."};
       
       fields.push(`updated_at = NOW()`);
-      query += fields.join(', ') + ` WHERE id = $${paramCount}`;
+      let query = `UPDATE states SET ${fields.join(', ')} WHERE id = $${paramCount}`;
       values.push(Number(id));
       await client.query(query, values);
       return { success: true, message: 'Estado atualizado (PostgreSQL)!' };
@@ -1031,6 +1054,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     } catch (e: any) { console.error(`[PostgresAdapter - deleteSeller(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
 
+
   // --- Auctions ---
   async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; }> {
     const client = await getPool().connect();
@@ -1038,7 +1062,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       const query = `
         INSERT INTO auctions 
           (title, full_title, description, status, auction_type, category_id, auctioneer_id, seller_id, auction_date, end_date, auction_stages, city, state, image_url, data_ai_hint, documents_url, total_lots, visits, initial_offer, selling_branch, vehicle_location, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 0, 0, $17, $18, $19, NOW(), NOW())
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12, $13, $14, $15, $16, 0, 0, $17, $18, $19, NOW(), NOW())
         RETURNING id;
       `;
       const values = [
@@ -1124,7 +1148,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         }
       });
       if (data.auctionDate) { fields.push(`auction_date = $${paramCount++}`); values.push(data.auctionDate); }
-      if (data.hasOwnProperty('endDate')) { fields.push(`end_date = $${paramCount++}`); values.push(data.endDate); } // Handle null for endDate
+      if (data.hasOwnProperty('endDate')) { fields.push(`end_date = $${paramCount++}`); values.push(data.endDate); } 
       if (data.auctionStages) { fields.push(`auction_stages = $${paramCount++}`); values.push(JSON.stringify(data.auctionStages)); }
 
 
@@ -1165,7 +1189,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
           estimated_repair_cost, seller_id_fk, auctioneer_id_fk, condition,
           created_at, updated_at
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
+          $1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
           $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38,
           $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, $55, $56,
           NOW(), NOW()
@@ -1266,7 +1290,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       (Object.keys(data) as Array<keyof LotDbData>).forEach(key => {
         if (data[key] !== undefined && key !== 'endDate' && key !== 'lotSpecificAuctionDate' && key !== 'secondAuctionDate' && key !== 'type' && key !== 'auctionName') {
             const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
-            const escapedColumn = sqlColumn === 'number' ? `"${sqlColumn}"` : sqlColumn; // Postgres uses double quotes for identifiers
+            const escapedColumn = sqlColumn === 'number' ? `"${sqlColumn}"` : sqlColumn;
             fields.push(`${escapedColumn} = $${paramCount++}`);
             const value = data[key];
             if (key === 'galleryImageUrls' || key === 'mediaItemIds') {
@@ -1398,12 +1422,11 @@ export class PostgresAdapter implements IDatabaseAdapter {
             fields.push(`name = $${paramCount++}`); values.push(data.name.trim());
             fields.push(`name_normalized = $${paramCount++}`); values.push(data.name.trim().toUpperCase());
         } else if (data.name) {
-            // Allow updating description for default roles, but not name/name_normalized
              if (data.description !== undefined) {
                 fields.push(`description = $${paramCount++}`); values.push(data.description || null);
             }
         }
-        if (data.description !== undefined && (!data.name || (currentNormalizedName === 'ADMINISTRATOR' || currentNormalizedName === 'USER'))) { // Ensure description is updated if name is not
+        if (data.description !== undefined && (!data.name || (currentNormalizedName === 'ADMINISTRATOR' || currentNormalizedName === 'USER'))) {
              fields.push(`description = $${paramCount++}`); values.push(data.description || null);
         }
         if (data.permissions) {
@@ -1463,17 +1486,267 @@ export class PostgresAdapter implements IDatabaseAdapter {
     } catch (e: any) { await client.query('ROLLBACK'); return { success: false, message: e.message }; } finally { client.release(); }
   }
 
-  // --- Media Items (Scaffold) ---
-  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> { console.warn("PostgresAdapter.createMediaItem not implemented."); return {success: false, message: "Not implemented"}; }
-  async getMediaItems(): Promise<MediaItem[]> { console.warn("PostgresAdapter.getMediaItems not implemented."); return []; }
-  async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.updateMediaItemMetadata not implemented."); return {success: false, message: "Not implemented"}; }
-  async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.deleteMediaItemFromDb not implemented."); return {success: false, message: "Not implemented"}; }
-  async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.linkMediaItemsToLot not implemented."); return {success: false, message: "Not implemented"}; }
-  async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.unlinkMediaItemFromLot not implemented."); return {success: false, message: "Not implemented"}; }
+  // --- Users ---
+  async getUserProfileData(userId: string): Promise<UserProfileData | null> {
+    const client = await getPool().connect();
+    try {
+        const res = await client.query('SELECT up.*, r.name as role_name FROM user_profiles up LEFT JOIN roles r ON up.role_id = r.id WHERE up.uid = $1', [userId]);
+        if (res.rowCount === 0) return null;
+        const userRow = mapRowToCamelCase(res.rows[0]);
+        let role: Role | null = null;
+        if (userRow.roleId) role = await this.getRole(userRow.roleId);
+        return mapToUserProfileData(userRow, role);
+    } catch (e: any) { return null; } finally { client.release(); }
+  }
+
+  async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+        const fields: string[] = [];
+        const values: any[] = [];
+        let paramCount = 1;
+        (Object.keys(data) as Array<keyof EditableUserProfileData>).forEach(key => {
+            if (data[key] !== undefined && data[key] !== null) {
+                fields.push(`${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = $${paramCount++}`);
+                values.push(data[key]);
+            }
+        });
+        if (fields.length === 0) return { success: true, message: "Nenhuma alteração no perfil."};
+        fields.push(`updated_at = NOW()`);
+        const queryText = `UPDATE user_profiles SET ${fields.join(', ')} WHERE uid = $${paramCount}`;
+        values.push(userId);
+        await client.query(queryText, values);
+        return { success: true, message: 'Perfil atualizado!'};
+    } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
+  }
+
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
+    const client = await getPool().connect();
+    try {
+        await this.ensureDefaultRolesExist(); // Garante que perfis padrão existam
+        const targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
+        if (!targetRole) return { success: false, message: 'Perfil padrão USER não encontrado.'};
+
+        await client.query('BEGIN');
+        const userRes = await client.query('SELECT * FROM user_profiles WHERE uid = $1', [userId]);
+        let finalProfileData: UserProfileData;
+
+        if (userRes.rowCount > 0) {
+            const userDataFromDB = mapToUserProfileData(mapRowToCamelCase(userRes.rows[0]));
+            const updatePayload: any = { updatedAt: new Date() };
+            let needsUpdate = false;
+            if (userDataFromDB.roleId !== targetRole.id) { updatePayload.roleId = Number(targetRole.id); needsUpdate = true; }
+            if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; }
+            if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = targetRole.permissions || []; needsUpdate = true; }
+            
+            if (needsUpdate) {
+                const updateFields: string[] = [];
+                const updateValues: any[] = [];
+                let pCount = 1;
+                Object.keys(updatePayload).forEach(key => {
+                    updateFields.push(`${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = $${pCount++}`);
+                    updateValues.push(updatePayload[key]);
+                });
+                updateValues.push(userId);
+                await client.query(`UPDATE user_profiles SET ${updateFields.join(', ')} WHERE uid = $${pCount}`, updateValues);
+            }
+             finalProfileData = { ...userDataFromDB, ...updatePayload, uid: userId } as UserProfileData;
+        } else {
+            const insertQuery = `
+                INSERT INTO user_profiles (uid, email, full_name, role_id, permissions, status, habilitation_status, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, NOW(), NOW()) RETURNING *;
+            `;
+            const insertValues = [
+                userId, email, fullName || email.split('@')[0], Number(targetRole.id), JSON.stringify(targetRole.permissions || []),
+                'ATIVO', targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS'
+            ];
+            const insertedRes = await client.query(insertQuery, insertValues);
+            finalProfileData = mapToUserProfileData(mapRowToCamelCase(insertedRes.rows[0]), targetRole);
+        }
+        await client.query('COMMIT');
+        return { success: true, message: 'Perfil de usuário assegurado/atualizado (PostgreSQL).', userProfile: finalProfileData };
+    } catch (e: any) { await client.query('ROLLBACK'); return { success: false, message: e.message }; } finally { client.release(); }
+  }
+
+  async getUsersWithRoles(): Promise<UserProfileData[]> {
+    const client = await getPool().connect();
+    try {
+      const res = await client.query(`
+        SELECT up.*, r.name as role_name, r.permissions as role_permissions 
+        FROM user_profiles up 
+        LEFT JOIN roles r ON up.role_id = r.id 
+        ORDER BY up.full_name ASC;
+      `);
+      return mapRowsToCamelCase(res.rows).map(row => {
+        const profile = mapToUserProfileData(row);
+        // Se as permissões do usuário forem nulas ou vazias, usa as do perfil (se houver)
+        if ((!profile.permissions || profile.permissions.length === 0) && row.rolePermissions) {
+            profile.permissions = row.rolePermissions;
+        }
+        return profile;
+      });
+    } catch (e: any) { return []; } finally { client.release(); }
+  }
+
+  async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      let updatePayload: any = { role_id: null, role_name: null, permissions: null, updated_at: 'NOW()' };
+      if (roleId && roleId !== "---NONE---") {
+        const role = await this.getRole(roleId);
+        if (role) {
+          updatePayload.role_id = Number(roleId);
+          updatePayload.role_name = role.name;
+          updatePayload.permissions = JSON.stringify(role.permissions || []);
+        } else {
+          return { success: false, message: 'Perfil não encontrado.' };
+        }
+      }
+      const queryText = `UPDATE user_profiles SET role_id = $1, role_name = $2, permissions = $3::jsonb, updated_at = $4 WHERE uid = $5`;
+      await client.query(queryText, [updatePayload.role_id, updatePayload.role_name, updatePayload.permissions, updatePayload.updated_at, userId]);
+      return { success: true, message: 'Perfil do usuário atualizado!' };
+    } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
+  }
+
+  async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      await client.query('DELETE FROM user_profiles WHERE uid = $1', [userId]);
+      return { success: true, message: 'Perfil de usuário excluído (PostgreSQL)!' };
+    } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
+  }
+
+  // --- Media Items ---
+  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> {
+    const client = await getPool().connect();
+    try {
+      const query = `
+        INSERT INTO media_items (
+          file_name, uploaded_by, title, alt_text, caption, description, mime_type, size_bytes,
+          dimensions_width, dimensions_height, url_original, url_thumbnail, url_medium, url_large,
+          linked_lot_ids, data_ai_hint, uploaded_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15::jsonb, $16, NOW(), NOW())
+        RETURNING *;
+      `;
+      const values = [
+        data.fileName, uploadedBy || null, data.title || null, data.altText || null, data.caption || null,
+        data.description || null, data.mimeType, data.sizeBytes, data.dimensions?.width || null,
+        data.dimensions?.height || null, filePublicUrl, filePublicUrl, filePublicUrl, filePublicUrl, // Simplified URLs
+        JSON.stringify(data.linkedLotIds || []), data.dataAiHint || null
+      ];
+      const res = await client.query(query, values);
+      return { success: true, message: "Item de mídia criado (PostgreSQL).", item: mapToMediaItem(mapRowToCamelCase(res.rows[0])) };
+    } catch (e: any) { console.error(`[PostgresAdapter - createMediaItem] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
+  }
+
+  async getMediaItems(): Promise<MediaItem[]> {
+    const client = await getPool().connect();
+    try {
+      const res = await client.query('SELECT * FROM media_items ORDER BY uploaded_at DESC;');
+      return mapRowsToCamelCase(res.rows).map(mapToMediaItem);
+    } catch (e: any) { console.error(`[PostgresAdapter - getMediaItems] Error:`, e); return []; } finally { client.release(); }
+  }
+
+  async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      const fields: string[] = [];
+      const values: any[] = [];
+      let paramCount = 1;
+      (Object.keys(metadata) as Array<keyof typeof metadata>).forEach(key => {
+        fields.push(`${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = $${paramCount++}`);
+        values.push(metadata[key]);
+      });
+      if (fields.length === 0) return { success: true, message: "Nenhuma alteração." };
+      const query = `UPDATE media_items SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $${paramCount}`;
+      values.push(Number(id));
+      await client.query(query, values);
+      return { success: true, message: 'Metadados atualizados (PostgreSQL).' };
+    } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
+  }
+
+  async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      await client.query('DELETE FROM media_items WHERE id = $1;', [Number(id)]);
+      return { success: true, message: 'Item de mídia excluído do DB (PostgreSQL).' };
+    } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
+  }
+
+  async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      await client.query('BEGIN');
+      for (const mediaId of mediaItemIds) {
+        await client.query(
+          'UPDATE media_items SET linked_lot_ids = COALESCE(linked_lot_ids, \'[]\'::jsonb) || $1::jsonb WHERE id = $2 AND NOT (linked_lot_ids @> $1::jsonb);',
+          [JSON.stringify([lotId]), Number(mediaId)]
+        );
+      }
+      await client.query(
+        'UPDATE lots SET media_item_ids = COALESCE(media_item_ids, \'[]\'::jsonb) || $1::jsonb, updated_at = NOW() WHERE id = $2;',
+        [JSON.stringify(mediaItemIds), Number(lotId)] // Assumes media_item_ids on lots is also JSONB
+      );
+      await client.query('COMMIT');
+      return { success: true, message: 'Mídias vinculadas (PostgreSQL).' };
+    } catch (e: any) { await client.query('ROLLBACK'); return { success: false, message: e.message }; } finally { client.release(); }
+  }
+
+  async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        `UPDATE media_items SET linked_lot_ids = (
+          SELECT jsonb_agg(elem) FROM jsonb_array_elements(COALESCE(linked_lot_ids, '[]'::jsonb)) AS elem WHERE elem::text <> $1
+        ) WHERE id = $2;`,
+        [`"${lotId}"`, Number(mediaItemId)] // Ensure lotId is treated as a string within JSON array
+      );
+      await client.query(
+        `UPDATE lots SET media_item_ids = (
+          SELECT jsonb_agg(elem) FROM jsonb_array_elements(COALESCE(media_item_ids, '[]'::jsonb)) AS elem WHERE elem::text <> $1
+        ), updated_at = NOW() WHERE id = $2;`,
+        [`"${mediaItemId}"`, Number(lotId)]
+      );
+      await client.query('COMMIT');
+      return { success: true, message: 'Mídia desvinculada (PostgreSQL).' };
+    } catch (e: any) { await client.query('ROLLBACK'); return { success: false, message: e.message }; } finally { client.release(); }
+  }
   
-  // Settings
-  async getPlatformSettings(): Promise<PlatformSettings> { console.warn("PostgresAdapter.getPlatformSettings not implemented."); return { id: 'global', galleryImageBasePath: '/pg/default/path/', updatedAt: new Date() };}
-  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.updatePlatformSettings not implemented."); return {success: false, message: "Not implemented"}; }
+  // --- Platform Settings ---
+  async getPlatformSettings(): Promise<PlatformSettings> {
+    const client = await getPool().connect();
+    try {
+        const res = await client.query(`SELECT gallery_image_base_path, updated_at FROM platform_settings WHERE id = 'global';`);
+        if (res.rowCount > 0) {
+            return { id: 'global', ...mapRowToCamelCase(res.rows[0]) } as PlatformSettings;
+        }
+        // Default settings if not found
+        const defaultPath = '/media/gallery/';
+        await client.query(`INSERT INTO platform_settings (id, gallery_image_base_path) VALUES ('global', $1) ON CONFLICT (id) DO NOTHING;`, [defaultPath]);
+        return { id: 'global', galleryImageBasePath: defaultPath, updatedAt: new Date() };
+    } catch (e: any) {
+        console.error("[PostgresAdapter - getPlatformSettings] Error, returning default:", e);
+        return { id: 'global', galleryImageBasePath: '/media/gallery/', updatedAt: new Date() };
+    } finally { client.release(); }
+  }
+
+  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    if (!data.galleryImageBasePath || !data.galleryImageBasePath.startsWith('/') || !data.galleryImageBasePath.endsWith('/')) {
+        return { success: false, message: 'Caminho base da galeria inválido. Deve começar e terminar com "/".' };
+    }
+    try {
+        const query = `
+            INSERT INTO platform_settings (id, gallery_image_base_path, updated_at) 
+            VALUES ('global', $1, NOW()) 
+            ON CONFLICT (id) 
+            DO UPDATE SET gallery_image_base_path = EXCLUDED.gallery_image_base_path, updated_at = NOW();
+        `;
+        await client.query(query, [data.galleryImageBasePath]);
+        return { success: true, message: 'Configurações atualizadas (PostgreSQL)!' };
+    } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
+  }
 }
     
 
@@ -1486,4 +1759,3 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
     
 
-```

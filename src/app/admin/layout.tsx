@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import AdminSidebar from '@/components/layout/admin-sidebar';
-import { hasPermission } from '@/lib/permissions'; // Importar hasPermission
+import { hasPermission } from '@/lib/permissions'; 
 
 export default function AdminLayout({
   children,
@@ -17,10 +17,12 @@ export default function AdminLayout({
   const router = useRouter();
 
   useEffect(() => {
+    console.log('[AdminLayout] Auth State Change:', { loading, user: !!user, profile: !!userProfileWithPermissions });
     if (!loading && !user) {
+      console.log('[AdminLayout] User not authenticated, redirecting to login.');
       router.push('/auth/login?redirect=/admin/dashboard');
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, userProfileWithPermissions]); // Added userProfileWithPermissions to dependency array
 
   if (loading) {
     return (
@@ -32,6 +34,7 @@ export default function AdminLayout({
   }
 
   if (!user) {
+    // This state might be brief if redirection is happening
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-muted-foreground">Redirecionando para login...</p>
@@ -39,8 +42,24 @@ export default function AdminLayout({
     );
   }
   
-  // Agora usamos as permissões reais do userProfileWithPermissions
+  // Check for userProfileWithPermissions before checking permissions
+  if (!userProfileWithPermissions) {
+    console.log('[AdminLayout] User authenticated, but profile with permissions not yet loaded. Showing loader...');
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-3 text-muted-foreground">Carregando perfil do usuário...</p>
+      </div>
+    );
+  }
+  
   const hasAdminAccess = hasPermission(userProfileWithPermissions, 'manage_all');
+  console.log('[AdminLayout] Permission Check:', { 
+    roleName: userProfileWithPermissions?.roleName, 
+    permissions: userProfileWithPermissions?.permissions, 
+    hasAdminAccess 
+  });
+
 
   if (!hasAdminAccess) {
     return (
