@@ -12,7 +12,7 @@ export function getDatabaseAdapter(): IDatabaseAdapter {
     return dbInstance;
   }
 
-  const activeSystem = process.env.ACTIVE_DATABASE_SYSTEM || 'FIRESTORE';
+  const activeSystem = process.env.ACTIVE_DATABASE_SYSTEM || 'MYSQL';
   console.log(`[DB Factory] Initializing adapter for ACTIVE_DATABASE_SYSTEM: ${activeSystem}`);
 
   switch (activeSystem.toUpperCase()) {
