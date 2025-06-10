@@ -1,11 +1,27 @@
 
 // scripts/initialize-db.ts
-import 'dotenv/config'; // Carrega variáveis de .env
+import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
 import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
 import { PostgresAdapter } from '../src/lib/database/postgres.adapter';
 import { MySqlAdapter } from '../src/lib/database/mysql.adapter';
 import type { IDatabaseAdapter } from '../src/types';
+
+// Determine the environment and load the appropriate .env file
+const envPathLocal = path.resolve(process.cwd(), '.env.local');
+const envPathGlobal = path.resolve(process.cwd(), '.env');
+
+if (fs.existsSync(envPathLocal)) {
+  console.log(`[DB Init Script] Carregando variáveis de ambiente de: ${envPathLocal}`);
+  dotenv.config({ path: envPathLocal });
+} else if (fs.existsSync(envPathGlobal)) {
+  console.log(`[DB Init Script] .env.local não encontrado. Carregando variáveis de ambiente de: ${envPathGlobal}`);
+  dotenv.config({ path: envPathGlobal });
+} else {
+  console.warn('[DB Init Script] Nenhum arquivo .env ou .env.local encontrado na raiz do projeto. As variáveis de ambiente devem ser definidas globalmente.');
+}
 
 async function main() {
   const argv = await yargs(hideBin(process.argv))
@@ -25,15 +41,22 @@ async function main() {
 
   console.log(`--- Iniciando Inicialização de Esquema para Banco de Dados: ${dbType.toUpperCase()} ---`);
 
+  const postgresConnectionString = process.env.POSTGRES_CONNECTION_STRING;
+  const mysqlConnectionString = process.env.MYSQL_CONNECTION_STRING;
+
+  console.log(`[DB Init Script] Valor lido para POSTGRES_CONNECTION_STRING: ${postgresConnectionString ? "'Presente (oculto por seguran\u00e7a)'" : "'AUSENTE'"}`);
+  console.log(`[DB Init Script] Valor lido para MYSQL_CONNECTION_STRING: ${mysqlConnectionString ? "'Presente (oculto por seguran\u00e7a)'" : "'AUSENTE'"}`);
+
+
   if (dbType === 'postgres') {
-    if (!process.env.POSTGRES_CONNECTION_STRING) {
-      console.error('Erro: A variável de ambiente POSTGRES_CONNECTION_STRING não está definida.');
+    if (!postgresConnectionString) {
+      console.error('Erro: A variável de ambiente POSTGRES_CONNECTION_STRING não está definida ou não foi carregada corretamente.');
       process.exit(1);
     }
     dbAdapter = new PostgresAdapter();
   } else if (dbType === 'mysql') {
-    if (!process.env.MYSQL_CONNECTION_STRING) {
-      console.error('Erro: A variável de ambiente MYSQL_CONNECTION_STRING não está definida.');
+    if (!mysqlConnectionString) {
+      console.error('Erro: A variável de ambiente MYSQL_CONNECTION_STRING não está definida ou não foi carregada corretamente.');
       process.exit(1);
     }
     dbAdapter = new MySqlAdapter();
@@ -44,7 +67,6 @@ async function main() {
 
   try {
     console.log(`Conectando ao banco de dados ${dbType.toUpperCase()}...`);
-    // A conexão é estabelecida dentro dos métodos do adapter
     const result = await dbAdapter.initializeSchema();
 
     if (result.success) {
@@ -64,10 +86,7 @@ async function main() {
         console.error(`Código do Erro: ${error.code}`);
     }
   } finally {
-    // Se seus adaptadores mantiverem um pool que precisa ser fechado explicitamente após o script,
-    // você adicionaria a lógica de fechamento aqui. Ex: await (dbAdapter as any).closePool?.();
     console.log(`--- Processo de Inicialização para ${dbType.toUpperCase()} Concluído ---`);
-    // Adicionado process.exit para garantir que o script termine, especialmente útil se pools não são fechados.
     process.exit(0); 
   }
 }
