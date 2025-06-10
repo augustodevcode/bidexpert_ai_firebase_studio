@@ -1,9 +1,8 @@
 
 // src/lib/database/firestore.adapter.ts
 import { 
-  ensureAdminInitialized, 
-  AdminFieldValue, 
-  ServerTimestamp 
+  AdminFieldValue, // Import from the re-export in admin.ts
+  ServerTimestamp  // Import from the re-export in admin.ts
 } from '@/lib/firebase/admin';
 import type { FirebaseFirestore } from 'firebase-admin/firestore';
 import type { 
@@ -18,31 +17,28 @@ import type {
   UserProfileData, EditableUserProfileData, UserHabilitationStatus,
   Role, RoleFormData,
   MediaItem,
-  PlatformSettings, PlatformSettingsFormData,
-  UserFormValues
+  PlatformSettings, PlatformSettingsFormData
 } from '@/types';
 import { slugify } from '@/lib/sample-data';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
-import { getLotCategoryByName } from '@/app/admin/categories/actions';
-import { getAuctioneerByName } from '@/app/admin/auctioneers/actions';
-import { getSellerByName } from '@/app/admin/sellers/actions';
-import { getAuction } from '@/app/admin/auctions/actions';
-import { getState } from '@/app/admin/states/actions';
-import { getCity } from '@/app/admin/cities/actions';
-
 
 // Helper to convert various timestamp types to JS Date
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date(); 
-  if (timestampField instanceof ServerTimestamp || timestampField instanceof (global as any).FirebaseFirestore?.Timestamp) {
+  if (timestampField instanceof AdminFieldValue || timestampField instanceof ServerTimestamp || timestampField instanceof (global as any).FirebaseFirestore?.Timestamp) {
     return timestampField.toDate();
   }
-  if (timestampField.toDate && typeof timestampField.toDate === 'function') {
+   if (timestampField.toDate && typeof timestampField.toDate === 'function') {
     return timestampField.toDate();
   }
   if (typeof timestampField === 'object' && timestampField !== null &&
       typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
-    return new ServerTimestamp(timestampField.seconds, timestampField.nanoseconds).toDate();
+    // This attempts to reconstruct a Timestamp if it's a plain object
+    // This specific line might need adjustment if ServerTimestamp isn't directly constructible this way or is not the right type from firebase-admin/firestore
+    // For Firestore admin SDK, (global as any).FirebaseFirestore.Timestamp should be preferred if available globally
+    // or simply using the toDate() method if it's already a Firestore Timestamp object.
+    // The direct import is: import { Timestamp as FirebaseAdminTimestamp } from 'firebase-admin/firestore';
+    return new FirebaseAdminTimestamp(timestampField.seconds, timestampField.nanoseconds).toDate();
   }
   if (timestampField instanceof Date) return timestampField;
   const parsedDate = new Date(timestampField);
@@ -59,22 +55,37 @@ function safeConvertOptionalDate(timestampField: any): Date | undefined | null {
 }
 
 export class FirestoreAdapter implements IDatabaseAdapter {
-  private getDbAdmin(): FirebaseFirestore.Firestore {
-    const { db, error } = ensureAdminInitialized();
-    if (error || !db) {
-      const errorMessage = `FirestoreAdapter: Failed to initialize Firestore Admin SDK - ${error?.message || 'dbAdmin not available'}`;
+  private db: FirebaseFirestore.Firestore;
+
+  constructor(firestoreInstance: FirebaseFirestore.Firestore) {
+    if (!firestoreInstance) {
+      const errorMessage = `FirestoreAdapter: Firestore instance not provided to constructor.`;
       console.error(errorMessage);
       throw new Error(errorMessage);
     }
-    return db;
+    this.db = firestoreInstance;
+    console.log("[FirestoreAdapter] Instance created with provided Firestore service.");
   }
+
+  // --- Schema Initialization ---
+  async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[] }> {
+    console.log('[FirestoreAdapter] Schema initialization is not typically required for Firestore in the same way as SQL. Collections are created on first use.');
+    // Placeholder for any Firestore-specific setup if needed in the future (e.g., creating a specific document)
+    try {
+        await this.ensureDefaultRolesExist();
+        await this.getPlatformSettings(); // This will create the default settings doc if it doesn't exist
+        return { success: true, message: 'Firestore adapter ready. Collections will be created on first document write. Default roles and settings ensured.' };
+    } catch (error: any) {
+        return { success: false, message: `Error during Firestore post-init checks: ${error.message}`, errors: [error] };
+    }
+  }
+
 
   // --- Categories ---
   async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> {
     if (!data.name || data.name.trim() === '') {
       return { success: false, message: 'O nome da categoria é obrigatório.' };
     }
-    const db = this.getDbAdmin();
     try {
       const newCategoryData = {
         name: data.name.trim(),
@@ -84,7 +95,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
         createdAt: AdminFieldValue.serverTimestamp(),
         updatedAt: AdminFieldValue.serverTimestamp(),
       };
-      const docRef = await db.collection('lotCategories').add(newCategoryData);
+      const docRef = await this.db.collection('lotCategories').add(newCategoryData);
       return { success: true, message: 'Categoria criada com sucesso!', categoryId: docRef.id };
     } catch (error: any) {
       console.error("[FirestoreAdapter - createLotCategory] Error:", error);
@@ -93,9 +104,8 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   }
 
   async getLotCategories(): Promise<LotCategory[]> {
-    const db = this.getDbAdmin();
     try {
-      const snapshot = await db.collection('lotCategories').orderBy('name', 'asc').get();
+      const snapshot = await this.db.collection('lotCategories').orderBy('name', 'asc').get();
       return snapshot.docs.map(docSnap => {
         const data = docSnap.data();
         return {
@@ -115,9 +125,8 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   }
 
   async getLotCategory(id: string): Promise<LotCategory | null> {
-    const db = this.getDbAdmin();
     try {
-      const docSnap = await db.collection('lotCategories').doc(id).get();
+      const docSnap = await this.db.collection('lotCategories').doc(id).get();
       if (docSnap.exists) {
         const data = docSnap.data()!;
         return {
@@ -141,9 +150,8 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     if (!data.name || data.name.trim() === '') {
       return { success: false, message: 'O nome da categoria é obrigatório.' };
     }
-    const db = this.getDbAdmin();
     try {
-      const categoryDocRef = db.collection('lotCategories').doc(id);
+      const categoryDocRef = this.db.collection('lotCategories').doc(id);
       const updateData: any = {
         name: data.name.trim(),
         slug: slugify(data.name.trim()),
@@ -159,9 +167,8 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   }
 
   async deleteLotCategory(id: string): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
-      await db.collection('lotCategories').doc(id).delete();
+      await this.db.collection('lotCategories').doc(id).delete();
       return { success: true, message: 'Categoria excluída com sucesso!' };
     } catch (error: any) {
       console.error("[FirestoreAdapter - deleteLotCategory] Error:", error);
@@ -170,66 +177,57 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   }
 
   async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> {
-    const db = this.getDbAdmin();
     try {
       const slug = slugify(data.name);
       const newStateData = { ...data, slug, cityCount: 0, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
-      // For Firestore, the document ID will be the slug for states
-      await db.collection('states').doc(slug).set(newStateData);
+      await this.db.collection('states').doc(slug).set(newStateData);
       return { success: true, message: 'Estado criado!', stateId: slug };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async getStates(): Promise<StateInfo[]> {
-    const db = this.getDbAdmin();
     try {
-      const snapshot = await db.collection('states').orderBy('name').get();
+      const snapshot = await this.db.collection('states').orderBy('name').get();
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToDate(doc.data().createdAt), updatedAt: safeConvertToDate(doc.data().updatedAt) } as StateInfo));
     } catch (e: any) { return []; }
   }
-  async getState(id: string): Promise<StateInfo | null> { // id is slug for Firestore
-    const db = this.getDbAdmin();
+  async getState(id: string): Promise<StateInfo | null> {
     try {
-      const docSnap = await db.collection('states').doc(id).get();
+      const docSnap = await this.db.collection('states').doc(id).get();
       if (!docSnap.exists) return null;
       const data = docSnap.data()!;
       return { id: docSnap.id, ...data, createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt) } as StateInfo;
     } catch (e: any) { return null; }
   }
   async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
       const updateData: any = {...data, updatedAt: AdminFieldValue.serverTimestamp()};
-      if(data.name) updateData.slug = slugify(data.name); // Slug should remain the ID, so this shouldn't change for existing
-      await db.collection('states').doc(id).update(updateData);
+      if(data.name) updateData.slug = slugify(data.name);
+      await this.db.collection('states').doc(id).update(updateData);
       return { success: true, message: 'Estado atualizado!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async deleteState(id: string): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
-      await db.collection('states').doc(id).delete();
-      // TODO: Also delete/update cities belonging to this state
+      await this.db.collection('states').doc(id).delete();
       return { success: true, message: 'Estado excluído!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
 
   async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> {
-    const db = this.getDbAdmin();
     try {
-      const parentStateDoc = await db.collection('states').doc(data.stateId).get();
+      const parentStateDoc = await this.db.collection('states').doc(data.stateId).get();
       if (!parentStateDoc.exists) return { success: false, message: 'Estado pai não encontrado.' };
       const parentState = parentStateDoc.data() as StateInfo;
       const citySlug = slugify(data.name);
-      const cityDocId = `${data.stateId}-${citySlug}`; // Composite ID for Firestore
+      const cityDocId = `${data.stateId}-${citySlug}`;
       const newCityData = { ...data, slug: citySlug, stateUf: parentState.uf, lotCount: 0, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
-      await db.collection('cities').doc(cityDocId).set(newCityData);
+      await this.db.collection('cities').doc(cityDocId).set(newCityData);
       return { success: true, message: 'Cidade criada!', cityId: cityDocId };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async getCities(stateIdFilter?: string): Promise<CityInfo[]> {
-    const db = this.getDbAdmin();
     try {
-      let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = db.collection('cities');
+      let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = this.db.collection('cities');
       if (stateIdFilter) {
         query = query.where('stateId', '==', stateIdFilter);
       }
@@ -238,64 +236,57 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     } catch (e: any) { return []; }
   }
   async getCity(id: string): Promise<CityInfo | null> {
-    const db = this.getDbAdmin();
     try {
-      const docSnap = await db.collection('cities').doc(id).get();
+      const docSnap = await this.db.collection('cities').doc(id).get();
       if (!docSnap.exists) return null;
       const data = docSnap.data()!;
       return { id: docSnap.id, ...data, createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt) } as CityInfo;
     } catch (e: any) { return null; }
   }
   async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
       const updateData: any = {...data, updatedAt: AdminFieldValue.serverTimestamp()};
-      if (data.name) updateData.slug = slugify(data.name); // If slug changes, ID needs to change - Firestore doc ID cannot be updated. This needs careful handling or disallow slug changes for cities if it's part of ID.
+      if (data.name) updateData.slug = slugify(data.name); 
       if (data.stateId) {
-          const parentStateDoc = await db.collection('states').doc(data.stateId).get();
+          const parentStateDoc = await this.db.collection('states').doc(data.stateId).get();
           if (!parentStateDoc.exists) return { success: false, message: 'Estado pai não encontrado.' };
           updateData.stateUf = (parentStateDoc.data() as StateInfo).uf;
       }
-      await db.collection('cities').doc(id).update(updateData);
+      await this.db.collection('cities').doc(id).update(updateData);
       return { success: true, message: 'Cidade atualizada!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async deleteCity(id: string): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
-      await db.collection('cities').doc(id).delete();
+      await this.db.collection('cities').doc(id).delete();
       return { success: true, message: 'Cidade excluída!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   
   async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
-    const db = this.getDbAdmin();
     try {
       const newAuctioneerData = { ...data, slug: slugify(data.name), memberSince: AdminFieldValue.serverTimestamp(), rating: 0, auctionsConductedCount: 0, totalValueSold: 0, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
-      const docRef = await db.collection('auctioneers').add(newAuctioneerData);
+      const docRef = await this.db.collection('auctioneers').add(newAuctioneerData);
       return { success: true, message: 'Leiloeiro criado!', auctioneerId: docRef.id };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
-    const db = this.getDbAdmin();
     try {
-      const snapshot = await db.collection('auctioneers').orderBy('name').get();
+      const snapshot = await this.db.collection('auctioneers').orderBy('name').get();
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToDate(doc.data().createdAt), updatedAt: safeConvertToDate(doc.data().updatedAt), memberSince: safeConvertOptionalDate(doc.data().memberSince) } as AuctioneerProfileInfo));
     } catch (e: any) { return []; }
   }
   async getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {
-    const db = this.getDbAdmin();
     try {
-      const docSnap = await db.collection('auctioneers').doc(id).get();
+      const docSnap = await this.db.collection('auctioneers').doc(id).get();
       if (!docSnap.exists) return null;
       const data = docSnap.data()!;
       return { id: docSnap.id, ...data, createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt), memberSince: safeConvertOptionalDate(data.memberSince) } as AuctioneerProfileInfo;
     } catch (e: any) { return null; }
   }
   async getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null> {
-    const db = this.getDbAdmin();
     try {
-      const snapshot = await db.collection('auctioneers').where('slug', '==', slug).limit(1).get();
+      const snapshot = await this.db.collection('auctioneers').where('slug', '==', slug).limit(1).get();
       if (snapshot.empty) return null;
       const docSnap = snapshot.docs[0];
       const data = docSnap.data()!;
@@ -303,50 +294,44 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     } catch (e: any) { return null; }
   }
   async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
       const updateData: any = {...data, updatedAt: AdminFieldValue.serverTimestamp()};
       if(data.name) updateData.slug = slugify(data.name);
-      await db.collection('auctioneers').doc(id).update(updateData);
+      await this.db.collection('auctioneers').doc(id).update(updateData);
       return { success: true, message: 'Leiloeiro atualizado!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
-      await db.collection('auctioneers').doc(id).delete();
+      await this.db.collection('auctioneers').doc(id).delete();
       return { success: true, message: 'Leiloeiro excluído!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
 
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
-    const db = this.getDbAdmin();
     try {
       const newSellerData = { ...data, slug: slugify(data.name), memberSince: AdminFieldValue.serverTimestamp(), rating: 0, activeLotsCount: 0, totalSalesValue: 0, auctionsFacilitatedCount: 0, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
-      const docRef = await db.collection('sellers').add(newSellerData);
+      const docRef = await this.db.collection('sellers').add(newSellerData);
       return { success: true, message: 'Comitente criado!', sellerId: docRef.id };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async getSellers(): Promise<SellerProfileInfo[]> {
-    const db = this.getDbAdmin();
     try {
-      const snapshot = await db.collection('sellers').orderBy('name').get();
+      const snapshot = await this.db.collection('sellers').orderBy('name').get();
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToDate(doc.data().createdAt), updatedAt: safeConvertToDate(doc.data().updatedAt), memberSince: safeConvertOptionalDate(doc.data().memberSince) } as SellerProfileInfo));
     } catch (e: any) { return []; }
   }
   async getSeller(id: string): Promise<SellerProfileInfo | null> {
-    const db = this.getDbAdmin();
     try {
-      const docSnap = await db.collection('sellers').doc(id).get();
+      const docSnap = await this.db.collection('sellers').doc(id).get();
       if (!docSnap.exists) return null;
       const data = docSnap.data()!;
       return { id: docSnap.id, ...data, createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt), memberSince: safeConvertOptionalDate(data.memberSince) } as SellerProfileInfo;
     } catch (e: any) { return null; }
   }
   async getSellerBySlug(slug: string): Promise<SellerProfileInfo | null> {
-    const db = this.getDbAdmin();
     try {
-      const snapshot = await db.collection('sellers').where('slug', '==', slug).limit(1).get();
+      const snapshot = await this.db.collection('sellers').where('slug', '==', slug).limit(1).get();
       if (snapshot.empty) return null;
       const docSnap = snapshot.docs[0];
       const data = docSnap.data()!;
@@ -354,24 +339,21 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     } catch (e: any) { return null; }
   }
   async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
       const updateData: any = {...data, updatedAt: AdminFieldValue.serverTimestamp()};
       if(data.name) updateData.slug = slugify(data.name);
-      await db.collection('sellers').doc(id).update(updateData);
+      await this.db.collection('sellers').doc(id).update(updateData);
       return { success: true, message: 'Comitente atualizado!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
-      await db.collection('sellers').doc(id).delete();
+      await this.db.collection('sellers').doc(id).delete();
       return { success: true, message: 'Comitente excluído!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
 
   async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; }> {
-    const db = this.getDbAdmin();
     try {
       const newAuctionData: any = { 
         ...data,
@@ -381,7 +363,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       };
       if (data.endDate === null || data.endDate === undefined) newAuctionData.endDate = null;
       
-      const docRef = await db.collection('auctions').add(newAuctionData);
+      const docRef = await this.db.collection('auctions').add(newAuctionData);
       return { success: true, message: 'Leilão criado!', auctionId: docRef.id };
     } catch (e: any) { 
       console.error("[FirestoreAdapter - createAuction] Error:", e);
@@ -390,25 +372,24 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   }
 
   async getAuctions(): Promise<Auction[]> {
-    const db = this.getDbAdmin();
     try {
-      const snapshot = await db.collection('auctions').orderBy('auctionDate', 'desc').get();
+      const snapshot = await this.db.collection('auctions').orderBy('auctionDate', 'desc').get();
       return Promise.all(snapshot.docs.map(async docSnap => {
         const data = docSnap.data();
-        let categoryName = data.category; // Fallback for older data
+        let categoryName = data.category; 
         let auctioneerName = data.auctioneer;
         let sellerName = data.seller;
 
         if (data.categoryId) {
-            const catDoc = await db.collection('lotCategories').doc(data.categoryId).get();
+            const catDoc = await this.db.collection('lotCategories').doc(data.categoryId).get();
             if(catDoc.exists) categoryName = catDoc.data()?.name || data.category;
         }
         if (data.auctioneerId) {
-            const aucDoc = await db.collection('auctioneers').doc(data.auctioneerId).get();
+            const aucDoc = await this.db.collection('auctioneers').doc(data.auctioneerId).get();
             if(aucDoc.exists) auctioneerName = aucDoc.data()?.name || data.auctioneer;
         }
         if (data.sellerId) {
-            const selDoc = await db.collection('sellers').doc(data.sellerId).get();
+            const selDoc = await this.db.collection('sellers').doc(data.sellerId).get();
             if(selDoc.exists) sellerName = selDoc.data()?.name || data.seller;
         }
 
@@ -430,9 +411,8 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   }
 
   async getAuction(id: string): Promise<Auction | null> {
-    const db = this.getDbAdmin();
     try {
-      const docSnap = await db.collection('auctions').doc(id).get();
+      const docSnap = await this.db.collection('auctions').doc(id).get();
       if (!docSnap.exists) return null;
       const data = docSnap.data()!;
       
@@ -441,15 +421,15 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       let sellerName = data.seller;
 
       if (data.categoryId) {
-          const catDoc = await db.collection('lotCategories').doc(data.categoryId).get();
+          const catDoc = await this.db.collection('lotCategories').doc(data.categoryId).get();
           if(catDoc.exists) categoryName = catDoc.data()?.name || data.category;
       }
       if (data.auctioneerId) {
-          const aucDoc = await db.collection('auctioneers').doc(data.auctioneerId).get();
+          const aucDoc = await this.db.collection('auctioneers').doc(data.auctioneerId).get();
           if(aucDoc.exists) auctioneerName = aucDoc.data()?.name || data.auctioneer;
       }
       if (data.sellerId) {
-          const selDoc = await db.collection('sellers').doc(data.sellerId).get();
+          const selDoc = await this.db.collection('sellers').doc(data.sellerId).get();
           if(selDoc.exists) sellerName = selDoc.data()?.name || data.seller;
       }
 
@@ -470,13 +450,12 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   }
 
   async getAuctionsBySellerSlug(sellerSlug: string): Promise<Auction[]> {
-    const db = this.getDbAdmin();
     try {
-        const sellerSnapshot = await db.collection('sellers').where('slug', '==', sellerSlug).limit(1).get();
+        const sellerSnapshot = await this.db.collection('sellers').where('slug', '==', sellerSlug).limit(1).get();
         if (sellerSnapshot.empty) return [];
         const sellerId = sellerSnapshot.docs[0].id;
         
-        const snapshot = await db.collection('auctions').where('sellerId', '==', sellerId).orderBy('auctionDate', 'desc').get();
+        const snapshot = await this.db.collection('auctions').where('sellerId', '==', sellerId).orderBy('auctionDate', 'desc').get();
         return Promise.all(snapshot.docs.map(async docSnap => {
             const data = docSnap.data();
             let categoryName = data.category;
@@ -484,14 +463,13 @@ export class FirestoreAdapter implements IDatabaseAdapter {
 
             if (data.categoryId) { /* ... */ }
             if (data.auctioneerId) { /* ... */ }
-            // Seller name is already known from profile or can be fetched if needed
-
+            
             return { 
                 id: docSnap.id, 
                 ...data, 
                 category: categoryName, 
                 auctioneer: auctioneerName, 
-                seller: sellerSnapshot.docs[0].data().name,
+                seller: sellerSnapshot.docs[0].data().name, // Use fetched seller name
                 auctionDate: safeConvertToDate(data.auctionDate), 
                 endDate: safeConvertOptionalDate(data.endDate), 
                 createdAt: safeConvertToDate(data.createdAt), 
@@ -503,13 +481,12 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   }
 
   async updateAuction(id: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
       const updateData: any = { ...data, updatedAt: AdminFieldValue.serverTimestamp() };
       if (data.auctionDate) updateData.auctionDate = ServerTimestamp.fromDate(new Date(data.auctionDate));
       if (data.hasOwnProperty('endDate')) updateData.endDate = data.endDate ? ServerTimestamp.fromDate(new Date(data.endDate)) : null;
 
-      await db.collection('auctions').doc(id).update(updateData);
+      await this.db.collection('auctions').doc(id).update(updateData);
       return { success: true, message: 'Leilão atualizado!' };
     } catch (e: any) { 
       console.error("[FirestoreAdapter - updateAuction] Error:", e);
@@ -517,15 +494,13 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     }
   }
   async deleteAuction(id: string): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
-      await db.collection('auctions').doc(id).delete();
+      await this.db.collection('auctions').doc(id).delete();
       return { success: true, message: 'Leilão excluído!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
 
   async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; }> {
-    const db = this.getDbAdmin();
     try {
       const newLotData: any = { 
           ...data, 
@@ -540,42 +515,41 @@ export class FirestoreAdapter implements IDatabaseAdapter {
           createdAt: AdminFieldValue.serverTimestamp(), 
           updatedAt: AdminFieldValue.serverTimestamp() 
       };
-      delete newLotData.type; // Remove 'type' (category name) as we save categoryId
+      delete newLotData.type; 
 
-      const docRef = await db.collection('lots').add(newLotData);
+      const docRef = await this.db.collection('lots').add(newLotData);
       return { success: true, message: 'Lote criado!', lotId: docRef.id };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
 
   async getLots(auctionIdParam?: string): Promise<Lot[]> {
-    const db = this.getDbAdmin();
     try {
-      let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = db.collection('lots');
+      let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = this.db.collection('lots');
       if (auctionIdParam) {
         query = query.where('auctionId', '==', auctionIdParam);
       }
-      const snapshot = await query.orderBy('title').get(); // Firestore might require index for this if auctionIdParam is used
+      const snapshot = await query.orderBy('title').get(); 
       
       return Promise.all(snapshot.docs.map(async docSnap => {
         const data = docSnap.data();
-        let typeName = data.type; // Fallback
+        let typeName = data.type; 
         if (data.categoryId) {
-            const catSnap = await db.collection('lotCategories').doc(data.categoryId).get();
+            const catSnap = await this.db.collection('lotCategories').doc(data.categoryId).get();
             if (catSnap.exists) typeName = catSnap.data()?.name || typeName;
         }
         let auctionTitle = data.auctionName;
         if (data.auctionId && !auctionTitle) {
-            const aucSnap = await db.collection('auctions').doc(data.auctionId).get();
+            const aucSnap = await this.db.collection('auctions').doc(data.auctionId).get();
             if (aucSnap.exists) auctionTitle = aucSnap.data()?.title || auctionTitle;
         }
         let stateName = data.stateUf;
         if (data.stateId && !stateName) {
-            const stateSnap = await db.collection('states').doc(data.stateId).get();
+            const stateSnap = await this.db.collection('states').doc(data.stateId).get();
             if (stateSnap.exists) stateName = stateSnap.data()?.uf || stateName;
         }
         let cityName = data.cityName;
         if (data.cityId && !cityName) {
-            const citySnap = await db.collection('cities').doc(data.cityId).get();
+            const citySnap = await this.db.collection('cities').doc(data.cityId).get();
             if (citySnap.exists) cityName = citySnap.data()?.name || cityName;
         }
 
@@ -596,30 +570,29 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   }
 
   async getLot(id: string): Promise<Lot | null> {
-    const db = this.getDbAdmin();
     try {
-      const docSnap = await db.collection('lots').doc(id).get();
+      const docSnap = await this.db.collection('lots').doc(id).get();
       if (!docSnap.exists) return null;
       const data = docSnap.data()!;
 
-        let typeName = data.type; // Fallback
+        let typeName = data.type; 
         if (data.categoryId) {
-            const catSnap = await db.collection('lotCategories').doc(data.categoryId).get();
+            const catSnap = await this.db.collection('lotCategories').doc(data.categoryId).get();
             if (catSnap.exists) typeName = catSnap.data()?.name || typeName;
         }
         let auctionTitle = data.auctionName;
         if (data.auctionId && !auctionTitle) {
-            const aucSnap = await db.collection('auctions').doc(data.auctionId).get();
+            const aucSnap = await this.db.collection('auctions').doc(data.auctionId).get();
             if (aucSnap.exists) auctionTitle = aucSnap.data()?.title || auctionTitle;
         }
         let stateName = data.stateUf;
         if (data.stateId && !stateName) {
-            const stateSnap = await db.collection('states').doc(data.stateId).get();
+            const stateSnap = await this.db.collection('states').doc(data.stateId).get();
             if (stateSnap.exists) stateName = stateSnap.data()?.uf || stateName;
         }
         let cityName = data.cityName;
         if (data.cityId && !cityName) {
-            const citySnap = await db.collection('cities').doc(data.cityId).get();
+            const citySnap = await this.db.collection('cities').doc(data.cityId).get();
             if (citySnap.exists) cityName = citySnap.data()?.name || cityName;
         }
         
@@ -639,7 +612,6 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   }
 
   async updateLot(id: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
       const updateData: any = { ...data };
       
@@ -647,39 +619,33 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       if (data.hasOwnProperty('lotSpecificAuctionDate')) updateData.lotSpecificAuctionDate = data.lotSpecificAuctionDate ? ServerTimestamp.fromDate(new Date(data.lotSpecificAuctionDate)) : null;
       if (data.hasOwnProperty('secondAuctionDate')) updateData.secondAuctionDate = data.secondAuctionDate ? ServerTimestamp.fromDate(new Date(data.secondAuctionDate)) : null;
       
-      // categoryId is already set by the action
-      // stateId, cityId are already set by the action
-
       updateData.updatedAt = AdminFieldValue.serverTimestamp();
-      await db.collection('lots').doc(id).update(updateData);
+      await this.db.collection('lots').doc(id).update(updateData);
       return { success: true, message: 'Lote atualizado!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
-      await db.collection('lots').doc(id).delete();
+      await this.db.collection('lots').doc(id).delete();
       return { success: true, message: 'Lote excluído!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async getBidsForLot(lotId: string): Promise<BidInfo[]> {
-    const db = this.getDbAdmin();
     try {
-      const snapshot = await db.collection('lots').doc(lotId).collection('bids').orderBy('timestamp', 'desc').get();
+      const snapshot = await this.db.collection('lots').doc(lotId).collection('bids').orderBy('timestamp', 'desc').get();
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), timestamp: safeConvertToDate(doc.data().timestamp) } as BidInfo));
     } catch (e: any) { return []; }
   }
   async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }> {
-    const db = this.getDbAdmin();
     try {
-      const lotRef = db.collection('lots').doc(lotId);
+      const lotRef = this.db.collection('lots').doc(lotId);
       const lotSnap = await lotRef.get();
       if (!lotSnap.exists) return { success: false, message: "Lote não encontrado."};
       const lotData = lotSnap.data() as Lot;
       if (bidAmount <= lotData.price) return { success: false, message: "Lance deve ser maior que o atual."};
       
       const newBidData = { lotId, auctionId, bidderId: userId, bidderDisplay: userDisplayName, amount: bidAmount, timestamp: AdminFieldValue.serverTimestamp()};
-      const bidRef = await db.collection('lots').doc(lotId).collection('bids').add(newBidData);
+      const bidRef = await this.db.collection('lots').doc(lotId).collection('bids').add(newBidData);
       await lotRef.update({ price: bidAmount, bidsCount: AdminFieldValue.increment(1), updatedAt: AdminFieldValue.serverTimestamp() });
       
       return { success: true, message: "Lance registrado!", updatedLot: { price: bidAmount, bidsCount: (lotData.bidsCount || 0) + 1 }, newBid: { id: bidRef.id, ...newBidData, timestamp: new Date() } as BidInfo };
@@ -687,34 +653,33 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   }
 
   async getUserProfileData(userId: string): Promise<UserProfileData | null> {
-    const db = this.getDbAdmin();
     try {
-      const docSnap = await db.collection('users').doc(userId).get();
+      const docSnap = await this.db.collection('users').doc(userId).get();
       if (!docSnap.exists) return null;
       const data = docSnap.data()!;
       return { uid: docSnap.id, ...data, createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt), dateOfBirth: safeConvertOptionalDate(data.dateOfBirth), rgIssueDate: safeConvertOptionalDate(data.rgIssueDate) } as UserProfileData;
     } catch (e: any) { return null; }
   }
   async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
       const updateData: any = {...data, updatedAt: AdminFieldValue.serverTimestamp()};
       if (data.dateOfBirth) updateData.dateOfBirth = ServerTimestamp.fromDate(new Date(data.dateOfBirth));
       if (data.rgIssueDate) updateData.rgIssueDate = ServerTimestamp.fromDate(new Date(data.rgIssueDate));
-      await db.collection('users').doc(userId).update(updateData);
+      await this.db.collection('users').doc(userId).update(updateData);
       return { success: true, message: 'Perfil atualizado!'};
     } catch (e: any) { return { success: false, message: e.message }; }
   }
-  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }> {
-    const db = this.getDbAdmin();
-    const { auth } = ensureAdminInitialized();
-    if (!auth) return { success: false, message: 'Auth Admin SDK não inicializado.'};
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password'>>): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
+     const { auth: localAuthAdmin, error: sdkError } = ensureAdminInitialized();
+    if (sdkError || !localAuthAdmin) {
+      console.warn(`[FirestoreAdapter - ensureUserRole] Admin SDK Auth não disponível ou erro de inicialização: ${sdkError?.message}. Continuando sem interação Auth se possível.`);
+    }
     try {
-        await this.ensureDefaultRolesExist();
+        await this.ensureDefaultRolesExist(); // Ensure default roles are in Firestore
         const targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
         if (!targetRole) return { success: false, message: 'Perfil padrão USER não encontrado.'};
 
-        const userDocRef = db.collection('users').doc(userId);
+        const userDocRef = this.db.collection('users').doc(userId);
         const userSnap = await userDocRef.get();
         let finalProfileData: UserProfileData;
 
@@ -728,7 +693,9 @@ export class FirestoreAdapter implements IDatabaseAdapter {
             if (needsUpdate) await userDocRef.update(updatePayload);
             finalProfileData = { ...userDataFromDB, ...updatePayload, uid: userId } as UserProfileData;
         } else {
-            const authUserRecord = await auth.getUser(userId).catch(() => null);
+            let authUserRecord;
+            if(localAuthAdmin) authUserRecord = await localAuthAdmin.getUser(userId).catch(() => null);
+
             const newUserProfile: Omit<UserProfileData, 'uid'> & { uid: string, createdAt: any, updatedAt: any } = {
                 uid: userId,
                 email: email,
@@ -738,6 +705,8 @@ export class FirestoreAdapter implements IDatabaseAdapter {
                 permissions: targetRole.permissions || [],
                 status: 'ATIVO',
                 habilitationStatus: targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS',
+                ...additionalProfileData, // Include CPF, cellPhone, dateOfBirth, and potentially password (to be hashed by a real auth system)
+                password: additionalProfileData?.password, // Store password if provided (for SQL; Firebase Auth handles it separately)
                 createdAt: AdminFieldValue.serverTimestamp(),
                 updatedAt: AdminFieldValue.serverTimestamp(),
             };
@@ -745,18 +714,19 @@ export class FirestoreAdapter implements IDatabaseAdapter {
             const createdSnap = await userDocRef.get();
             finalProfileData = { uid: createdSnap.id, ...createdSnap.data() } as UserProfileData;
         }
+        // Remove password before returning for security
+        if (finalProfileData.password) delete finalProfileData.password; 
         return { success: true, message: 'Perfil de usuário assegurado/atualizado.', userProfile: finalProfileData };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async getUsersWithRoles(): Promise<UserProfileData[]> {
-    const db = this.getDbAdmin();
     try {
-      const snapshot = await db.collection('users').orderBy('fullName').get();
+      const snapshot = await this.db.collection('users').orderBy('fullName').get();
       return Promise.all(snapshot.docs.map(async docSnap => {
         const data = docSnap.data();
         let roleName = data.roleName;
         let permissions = data.permissions || [];
-        if (data.roleId && !roleName) {
+        if (data.roleId && !roleName) { // Attempt to fetch role details if only ID is present
             const roleDoc = await this.getRole(data.roleId);
             if (roleDoc) { roleName = roleDoc.name; permissions = roleDoc.permissions || []; }
         }
@@ -765,64 +735,57 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     } catch (e: any) { return []; }
   }
   async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
       const updateData: any = { updatedAt: AdminFieldValue.serverTimestamp() };
       if (roleId && roleId !== "---NONE---") {
         const roleDoc = await this.getRole(roleId);
         if (roleDoc) { updateData.roleId = roleId; updateData.roleName = roleDoc.name; updateData.permissions = roleDoc.permissions || []; }
         else return { success: false, message: 'Perfil não encontrado.'};
-      } else {
-        updateData.roleId = AdminFieldValue.delete(); updateData.roleName = AdminFieldValue.delete(); updateData.permissions = AdminFieldValue.delete();
+      } else { // Remove role
+        updateData.roleId = AdminFieldValue.delete(); 
+        updateData.roleName = AdminFieldValue.delete();
+        updateData.permissions = AdminFieldValue.delete();
       }
-      await db.collection('users').doc(userId).update(updateData);
+      await this.db.collection('users').doc(userId).update(updateData);
       return { success: true, message: 'Perfil atualizado!'};
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
-    const { auth } = ensureAdminInitialized();
-    if (!auth) return { success: false, message: 'Auth Admin SDK não inicializado.'};
     try {
-      await auth.deleteUser(userId).catch(e => { if (e.code !== 'auth/user-not-found') throw e;});
-      await db.collection('users').doc(userId).delete();
-      return { success: true, message: 'Usuário excluído!'};
+      await this.db.collection('users').doc(userId).delete();
+      return { success: true, message: 'Perfil de usuário excluído do Firestore!'};
     } catch (e: any) { return { success: false, message: e.message }; }
   }
 
   async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> {
-    const db = this.getDbAdmin();
     try {
       const normalizedName = data.name.trim().toUpperCase();
-      const existing = await db.collection('roles').where('name_normalized', '==', normalizedName).limit(1).get();
+      const existing = await this.db.collection('roles').where('name_normalized', '==', normalizedName).limit(1).get();
       if (!existing.empty) return { success: false, message: `Perfil "${data.name}" já existe.`};
       const validPermissions = (data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
       const newRoleData = { ...data, name_normalized: normalizedName, permissions: validPermissions, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
-      const docRef = await db.collection('roles').add(newRoleData);
+      const docRef = await this.db.collection('roles').add(newRoleData);
       return { success: true, message: 'Perfil criado!', roleId: docRef.id };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async getRoles(): Promise<Role[]> {
-    const db = this.getDbAdmin();
     try {
-      const snapshot = await db.collection('roles').orderBy('name').get();
+      const snapshot = await this.db.collection('roles').orderBy('name').get();
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToDate(doc.data().createdAt), updatedAt: safeConvertToDate(doc.data().updatedAt) } as Role));
     } catch (e: any) { return []; }
   }
   async getRole(id: string): Promise<Role | null> {
-    const db = this.getDbAdmin();
     try {
-      const docSnap = await db.collection('roles').doc(id).get();
+      const docSnap = await this.db.collection('roles').doc(id).get();
       if (!docSnap.exists) return null;
       const data = docSnap.data()!;
       return { id: docSnap.id, ...data, createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt) } as Role;
     } catch (e: any) { return null; }
   }
   async getRoleByName(name: string): Promise<Role | null> {
-    const db = this.getDbAdmin();
     try {
       const normalizedName = name.trim().toUpperCase();
-      const snapshot = await db.collection('roles').where('name_normalized', '==', normalizedName).limit(1).get();
+      const snapshot = await this.db.collection('roles').where('name_normalized', '==', normalizedName).limit(1).get();
       if (snapshot.empty) return null;
       const docSnap = snapshot.docs[0];
       const data = docSnap.data()!;
@@ -830,7 +793,6 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     } catch (e: any) { return null; }
   }
   async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
       const updateData: any = { ...data, updatedAt: AdminFieldValue.serverTimestamp() };
       if (data.name) {
@@ -844,23 +806,21 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       if (data.permissions) {
         updateData.permissions = (data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
       }
-      await db.collection('roles').doc(id).update(updateData);
+      await this.db.collection('roles').doc(id).update(updateData);
       return { success: true, message: 'Perfil atualizado!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async deleteRole(id: string): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
-      const roleDoc = await db.collection('roles').doc(id).get();
+      const roleDoc = await this.db.collection('roles').doc(id).get();
       if (roleDoc.exists && ['ADMINISTRATOR', 'USER'].includes(roleDoc.data()!.name_normalized)) {
           return { success: false, message: 'Perfis de sistema não podem ser excluídos.'};
       }
-      await db.collection('roles').doc(id).delete();
+      await this.db.collection('roles').doc(id).delete();
       return { success: true, message: 'Perfil excluído!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     const defaultRolesData: RoleFormData[] = [ 
       { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
       { name: 'USER', description: 'Usuário padrão.', permissions: ['view_auctions', 'place_bids', 'view_lots'] },
@@ -869,34 +829,38 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       { name: 'AUCTION_ANALYST', description: 'Analista de Leilões.', permissions: ['categories:read', 'states:read', 'users:read', 'view_reports'] }
     ];
     try {
+      const batch = this.db.batch();
       for (const roleData of defaultRolesData) {
         const role = await this.getRoleByName(roleData.name);
         if (!role) {
-          await this.createRole(roleData);
-        } else { 
+          const newRoleRef = this.db.collection('roles').doc();
+          const validPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
+          batch.set(newRoleRef, { ...roleData, name_normalized: roleData.name.trim().toUpperCase(), permissions: validPermissions, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() });
+        } else {
           const currentPermissionsSorted = [...(role.permissions || [])].sort();
           const expectedPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p)).sort();
           if (JSON.stringify(currentPermissionsSorted) !== JSON.stringify(expectedPermissions) || role.description !== (roleData.description || '')) {
-            await this.updateRole(role.id, { description: roleData.description, permissions: expectedPermissions });
+            batch.update(this.db.collection('roles').doc(role.id), { description: roleData.description, permissions: expectedPermissions, updatedAt: AdminFieldValue.serverTimestamp() });
           }
         }
       }
-      return { success: true, message: 'Perfis padrão verificados/criados.'};
+      await batch.commit();
+      return { success: true, message: 'Perfis padrão verificados/criados (Firestore).'};
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   
+  // --- Media Items ---
   async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> {
-    const db = this.getDbAdmin();
     try {
         const newMediaItemData = { ...data, urlOriginal: filePublicUrl, urlThumbnail: filePublicUrl, urlMedium: filePublicUrl, urlLarge: filePublicUrl, uploadedBy: uploadedBy || 'system', uploadedAt: AdminFieldValue.serverTimestamp(), linkedLotIds: [] };
-        const docRef = await db.collection('mediaItems').add(newMediaItemData);
-        return { success: true, message: "Item de mídia criado.", item: { id: docRef.id, ...newMediaItemData, uploadedAt: new Date() } as MediaItem };
+        const docRef = await this.db.collection('mediaItems').add(newMediaItemData);
+        const createdDoc = await docRef.get();
+        return { success: true, message: "Item de mídia criado.", item: { id: docRef.id, ...createdDoc.data(), uploadedAt: safeConvertToDate(createdDoc.data()?.uploadedAt) } as MediaItem };
     } catch (e: any) { return { success: false, message: `Erro: ${e.message}`}; }
   }
   async getMediaItems(): Promise<MediaItem[]> {
-    const db = this.getDbAdmin();
     try {
-        const snapshot = await db.collection('mediaItems').orderBy('uploadedAt', 'desc').get();
+        const snapshot = await this.db.collection('mediaItems').orderBy('uploadedAt', 'desc').get();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), uploadedAt: safeConvertToDate(doc.data().uploadedAt) } as MediaItem));
     } catch (e: any) { 
         console.warn("[FirestoreAdapter - getMediaItems] Error (falling back to empty array):", e);
@@ -904,27 +868,24 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     }
   }
   async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
-        await db.collection('mediaItems').doc(id).update({ ...metadata, updatedAt: AdminFieldValue.serverTimestamp() });
+        await this.db.collection('mediaItems').doc(id).update({ ...metadata, updatedAt: AdminFieldValue.serverTimestamp() });
         return { success: true, message: 'Metadados atualizados.'};
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
     try {
-        await db.collection('mediaItems').doc(id).delete();
+        await this.db.collection('mediaItems').doc(id).delete();
         return { success: true, message: 'Item de mídia excluído do Firestore.'};
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
-    const batch = db.batch();
+    const batch = this.db.batch();
     try {
-        const lotRef = db.collection('lots').doc(lotId);
+        const lotRef = this.db.collection('lots').doc(lotId);
         batch.update(lotRef, { mediaItemIds: AdminFieldValue.arrayUnion(...mediaItemIds), updatedAt: AdminFieldValue.serverTimestamp() });
         mediaItemIds.forEach(mediaId => {
-            const mediaRef = db.collection('mediaItems').doc(mediaId);
+            const mediaRef = this.db.collection('mediaItems').doc(mediaId);
             batch.update(mediaRef, { linkedLotIds: AdminFieldValue.arrayUnion(lotId) });
         });
         await batch.commit();
@@ -932,40 +893,43 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
-    const batch = db.batch();
+    const batch = this.db.batch();
     try {
-        const lotRef = db.collection('lots').doc(lotId);
+        const lotRef = this.db.collection('lots').doc(lotId);
         batch.update(lotRef, { mediaItemIds: AdminFieldValue.arrayRemove(mediaItemId), updatedAt: AdminFieldValue.serverTimestamp() });
-        const mediaRef = db.collection('mediaItems').doc(mediaItemId);
+        const mediaRef = this.db.collection('mediaItems').doc(mediaItemId);
         batch.update(mediaRef, { linkedLotIds: AdminFieldValue.arrayRemove(lotId) });
         await batch.commit();
         return { success: true, message: 'Mídia desvinculada.'};
     } catch (e: any) { return { success: false, message: e.message }; }
   }
-
+  
+  // --- Platform Settings ---
   async getPlatformSettings(): Promise<PlatformSettings> {
-    const db = this.getDbAdmin();
     try {
-        const settingsDoc = await db.collection('platformSettings').doc('global').get();
+        const settingsDoc = await this.db.collection('platformSettings').doc('global').get();
         if (settingsDoc.exists) {
             const data = settingsDoc.data()!;
             return { id: 'global', galleryImageBasePath: data.galleryImageBasePath || '/media/gallery/', updatedAt: safeConvertToDate(data.updatedAt) };
         }
+        // Default settings if not found
         const defaultSettings = { galleryImageBasePath: '/media/gallery/', updatedAt: AdminFieldValue.serverTimestamp()};
-        await db.collection('platformSettings').doc('global').set(defaultSettings);
+        await this.db.collection('platformSettings').doc('global').set(defaultSettings);
         return { id: 'global', ...defaultSettings, updatedAt: new Date() } as PlatformSettings;
-    } catch (e: any) { return { id: 'global', galleryImageBasePath: '/media/gallery/', updatedAt: new Date() }; }
+    } catch (e: any) { 
+        console.error("[FirestoreAdapter - getPlatformSettings] Error, returning default:", e);
+        return { id: 'global', galleryImageBasePath: '/media/gallery/', updatedAt: new Date() }; 
+    }
   }
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
-    const db = this.getDbAdmin();
-    if (!data.galleryImageBasePath || !data.galleryImageBasePath.startsWith('/') || !data.galleryImageBasePath.endsWith('/')) return { success: false, message: 'Caminho base inválido.' };
+    if (!data.galleryImageBasePath || !data.galleryImageBasePath.startsWith('/') || !data.galleryImageBasePath.endsWith('/')) {
+        return { success: false, message: 'Caminho base da galeria inválido. Deve começar e terminar com "/".' };
+    }
     try {
         const updatePayload = { galleryImageBasePath: data.galleryImageBasePath, updatedAt: AdminFieldValue.serverTimestamp() };
-        await db.collection('platformSettings').doc('global').set(updatePayload, { merge: true });
-        return { success: true, message: 'Configurações atualizadas.' };
+        await this.db.collection('platformSettings').doc('global').set(updatePayload, { merge: true });
+        return { success: true, message: 'Configurações atualizadas (Firestore)!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
 }
-
 
