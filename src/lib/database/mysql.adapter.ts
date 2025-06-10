@@ -156,7 +156,7 @@ function mapToUserProfileData(row: RowDataPacket, role?: Role | null): UserProfi
 
 export class MySqlAdapter implements IDatabaseAdapter {
   constructor() {
-    getPool(); // Ensure pool is initialized when adapter is created
+    getPool(); 
   }
 
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[] }> {
@@ -469,11 +469,9 @@ export class MySqlAdapter implements IDatabaseAdapter {
       for (const query of queries) {
         try {
           await connection.query(query);
-          const tableNameMatch = query.match(/CREATE TABLE IF NOT EXISTS `?(\w+)`?/i);
+          const tableNameMatch = query.match(/CREATE TABLE IF NOT EXISTS \`?(\w+)\`?/i);
            if (tableNameMatch) {
             console.log(`[MySqlAdapter] Tabela '${tableNameMatch[1]}' verificada/criada com sucesso.`);
-          } else {
-            // console.log(`[MySqlAdapter] Comando DDL executado: ${query.substring(0,50)}...`);
           }
         } catch (tableError: any) {
           console.warn(`[MySqlAdapter] Aviso ao executar query: ${tableError.message}. Query: ${query.substring(0,100)}...`);
@@ -854,7 +852,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       if (roleId && roleId !== "---NONE---") {
         const role = await this.getRole(roleId); // Uses its own connection
         if (!role) return { success: false, message: "Perfil não encontrado." };
-        newRoleIdInt = Number(role.id);
+        newRoleIdInt = Number(role.id); // SQL ID is number
         newPermissions = role.permissions || [];
       }
       
@@ -1100,3 +1098,4 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> { console.warn("MySqlAdapter.updatePlatformSettings not implemented."); return {success: false, message: "Not implemented"}; }
 }
 
+    
