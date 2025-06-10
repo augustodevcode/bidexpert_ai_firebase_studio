@@ -31,6 +31,13 @@ export async function getSellerBySlug(slug: string): Promise<SellerProfileInfo |
   return db.getSellerBySlug(slug);
 }
 
+export async function getSellerByName(name: string): Promise<SellerProfileInfo | null> {
+  const sellers = await getSellers(); // Not efficient
+  const normalizedName = name.trim().toLowerCase();
+  return sellers.find(sel => sel.name.toLowerCase() === normalizedName) || null;
+}
+
+
 export async function updateSeller(
   id: string,
   data: Partial<SellerFormData>

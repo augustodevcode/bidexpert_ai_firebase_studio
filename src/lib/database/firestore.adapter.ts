@@ -19,14 +19,17 @@ import type {
   Role, RoleFormData,
   MediaItem,
   PlatformSettings, PlatformSettingsFormData,
-  UserFormValues // From user-form-schema, includes password
+  UserFormValues
 } from '@/types';
-import { slugify } from '@/lib/sample-data'; // Assuming slugify is still relevant
+import { slugify } from '@/lib/sample-data';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
+import { getLotCategoryByName } from '@/app/admin/categories/actions';
+import { getAuctioneerByName } from '@/app/admin/auctioneers/actions';
+import { getSellerByName } from '@/app/admin/sellers/actions';
 
 // Helper to convert various timestamp types to JS Date
 function safeConvertToDate(timestampField: any): Date {
-  if (!timestampField) return new Date(); // Or throw error / return null
+  if (!timestampField) return new Date(); 
   if (timestampField instanceof ServerTimestamp || timestampField instanceof (global as any).FirebaseFirestore?.Timestamp) {
     return timestampField.toDate();
   }
@@ -35,7 +38,6 @@ function safeConvertToDate(timestampField: any): Date {
   }
   if (typeof timestampField === 'object' && timestampField !== null &&
       typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
-    // Firestore-like plain object
     return new ServerTimestamp(timestampField.seconds, timestampField.nanoseconds).toDate();
   }
   if (timestampField instanceof Date) return timestampField;
@@ -362,11 +364,45 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   async createAuction(data: AuctionFormData): Promise<{ success: boolean; message: string; auctionId?: string; }> {
     const db = this.getDbAdmin();
     try {
-      const newAuctionData: any = { ...data, auctionDate: ServerTimestamp.fromDate(data.auctionDate), endDate: data.endDate ? ServerTimestamp.fromDate(data.endDate) : null, totalLots:0, visits:0, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
+      let categoryId: string | undefined;
+      let auctioneerId: string | undefined;
+      let sellerId: string | undefined;
+
+      if (data.category) {
+        const categoryDoc = await getLotCategoryByName(data.category);
+        if (!categoryDoc) return { success: false, message: `Categoria '${data.category}' não encontrada.`};
+        categoryId = categoryDoc.id;
+      }
+      if (data.auctioneer) {
+        const auctioneerDoc = await getAuctioneerByName(data.auctioneer);
+        if (!auctioneerDoc) return { success: false, message: `Leiloeiro '${data.auctioneer}' não encontrado.`};
+        auctioneerId = auctioneerDoc.id;
+      }
+      if (data.seller) {
+        const sellerDoc = await getSellerByName(data.seller);
+        if (sellerDoc) sellerId = sellerDoc.id;
+        // Seller is optional, so don't fail if not found, just leave sellerId undefined
+      }
+
+      const { category, auctioneer, seller, ...restOfData } = data;
+
+      const newAuctionData: any = { 
+        ...restOfData,
+        categoryId,
+        auctioneerId,
+        sellerId,
+        auctionDate: ServerTimestamp.fromDate(data.auctionDate as Date),
+        endDate: data.endDate ? ServerTimestamp.fromDate(data.endDate as Date) : null, 
+        totalLots:0, visits:0, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() 
+      };
       if (data.endDate === null || data.endDate === undefined) newAuctionData.endDate = null;
+      
       const docRef = await db.collection('auctions').add(newAuctionData);
       return { success: true, message: 'Leilão criado!', auctionId: docRef.id };
-    } catch (e: any) { return { success: false, message: e.message }; }
+    } catch (e: any) { 
+      console.error("[FirestoreAdapter - createAuction] Error:", e);
+      return { success: false, message: e.message }; 
+    }
   }
   async getAuctions(): Promise<Auction[]> {
     const db = this.getDbAdmin();
@@ -387,23 +423,50 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   async getAuctionsBySellerSlug(sellerSlug: string): Promise<Auction[]> {
     const db = this.getDbAdmin();
     try {
-        const sellersSnapshot = await db.collection('sellers').where('slug', '==', sellerSlug).limit(1).get();
-        if (sellersSnapshot.empty) return [];
-        const sellerId = sellersSnapshot.docs[0].id;
-
-        const snapshot = await db.collection('auctions').where('sellerId', '==', sellerId).orderBy('auctionDate', 'desc').get();
+        const sellerDoc = await getSellerBySlug(sellerSlug);
+        if (!sellerDoc) return [];
+        
+        const snapshot = await db.collection('auctions').where('sellerId', '==', sellerDoc.id).orderBy('auctionDate', 'desc').get();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), auctionDate: safeConvertToDate(doc.data().auctionDate), endDate: safeConvertOptionalDate(doc.data().endDate), createdAt: safeConvertToDate(doc.data().createdAt), updatedAt: safeConvertToDate(doc.data().updatedAt), lots: doc.data().lots || [] } as Auction));
     } catch (e: any) { return []; }
   }
   async updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; }> {
     const db = this.getDbAdmin();
     try {
-      const updateData: any = {...data, updatedAt: AdminFieldValue.serverTimestamp()};
+      const updateData: any = { ...data, updatedAt: AdminFieldValue.serverTimestamp() };
+      
+      if (data.category) {
+        const categoryDoc = await getLotCategoryByName(data.category);
+        if (!categoryDoc) return { success: false, message: `Categoria '${data.category}' não encontrada.`};
+        updateData.categoryId = categoryDoc.id;
+        delete updateData.category; 
+      }
+      if (data.auctioneer) {
+        const auctioneerDoc = await getAuctioneerByName(data.auctioneer);
+        if (!auctioneerDoc) return { success: false, message: `Leiloeiro '${data.auctioneer}' não encontrado.`};
+        updateData.auctioneerId = auctioneerDoc.id;
+        delete updateData.auctioneer;
+      }
+      if (data.seller) {
+        const sellerDoc = await getSellerByName(data.seller);
+        if (sellerDoc) updateData.sellerId = sellerDoc.id;
+        else updateData.sellerId = null; // Or handle as error if seller is mandatory
+        delete updateData.seller;
+      } else if (data.hasOwnProperty('seller') && data.seller === null) { // Explicitly setting seller to null
+         updateData.sellerId = null;
+         delete updateData.seller;
+      }
+
+
       if (data.auctionDate) updateData.auctionDate = ServerTimestamp.fromDate(new Date(data.auctionDate));
       if (data.hasOwnProperty('endDate')) updateData.endDate = data.endDate ? ServerTimestamp.fromDate(new Date(data.endDate)) : null;
+
       await db.collection('auctions').doc(id).update(updateData);
       return { success: true, message: 'Leilão atualizado!' };
-    } catch (e: any) { return { success: false, message: e.message }; }
+    } catch (e: any) { 
+      console.error("[FirestoreAdapter - updateAuction] Error:", e);
+      return { success: false, message: e.message }; 
+    }
   }
   async deleteAuction(id: string): Promise<{ success: boolean; message: string; }> {
     const db = this.getDbAdmin();
@@ -658,7 +721,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       if (data.name) {
         const normalizedName = data.name.trim().toUpperCase();
         const currentRole = await this.getRole(id);
-        if (currentRole?.name_normalized !== 'ADMINISTRATOR' && currentRole?.name_normalized !== 'USER') { // Don't change normalized name of system roles
+        if (currentRole?.name_normalized !== 'ADMINISTRATOR' && currentRole?.name_normalized !== 'USER') { 
             updateData.name_normalized = normalizedName;
         }
         updateData.name = data.name.trim();
@@ -683,7 +746,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   }
   async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; }> {
     const db = this.getDbAdmin();
-    const defaultRolesData: RoleFormData[] = [ /* from roles/actions */ 
+    const defaultRolesData: RoleFormData[] = [ 
       { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
       { name: 'USER', description: 'Usuário padrão.', permissions: ['view_auctions', 'place_bids', 'view_lots'] },
       { name: 'CONSIGNOR', description: 'Comitente.', permissions: ['auctions:manage_own', 'lots:manage_own', 'view_reports', 'media:upload'] },
@@ -695,7 +758,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
         const role = await this.getRoleByName(roleData.name);
         if (!role) {
           await this.createRole(roleData);
-        } else { // Sync permissions for existing default roles
+        } else { 
           const currentPermissionsSorted = [...(role.permissions || [])].sort();
           const expectedPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p)).sort();
           if (JSON.stringify(currentPermissionsSorted) !== JSON.stringify(expectedPermissions) || role.description !== (roleData.description || '')) {
@@ -720,7 +783,12 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     try {
         const snapshot = await db.collection('mediaItems').orderBy('uploadedAt', 'desc').get();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), uploadedAt: safeConvertToDate(doc.data().uploadedAt) } as MediaItem));
-    } catch (e: any) { return []; }
+    } catch (e: any) { 
+        console.warn("[FirestoreAdapter - getMediaItems] Error (falling back to empty array):", e);
+        // Não lançar erro aqui para permitir que o fallback para dados de exemplo funcione na UI
+        // se a permissão do Firestore for o problema.
+        return []; 
+    }
   }
   async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> {
     const db = this.getDbAdmin();
@@ -786,3 +854,4 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; }
   }
 }
+

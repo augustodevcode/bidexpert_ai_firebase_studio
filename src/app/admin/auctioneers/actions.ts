@@ -26,6 +26,17 @@ export async function getAuctioneer(id: string): Promise<AuctioneerProfileInfo |
   return db.getAuctioneer(id);
 }
 
+export async function getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null> {
+  const db = getDatabaseAdapter();
+  return db.getAuctioneerBySlug(slug);
+}
+
+export async function getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> {
+  const auctioneers = await getAuctioneers(); // Not efficient
+  const normalizedName = name.trim().toLowerCase();
+  return auctioneers.find(auc => auc.name.toLowerCase() === normalizedName) || null;
+}
+
 export async function updateAuctioneer(
   id: string,
   data: Partial<AuctioneerFormData>
