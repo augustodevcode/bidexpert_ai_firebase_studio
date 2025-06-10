@@ -361,8 +361,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
         gallery_image_urls JSON,
         media_item_ids JSON,
         status VARCHAR(50) NOT NULL,
-        state_id INT UNSIGNED,
-        city_id INT UNSIGNED,
+        state_id INT UNSIGNED, /* Can be NULL if ON DELETE SET NULL */
+        city_id INT UNSIGNED, /* Can be NULL if ON DELETE SET NULL */
         type VARCHAR(100),
         views INT DEFAULT 0,
         auction_name VARCHAR(255),
@@ -409,9 +409,9 @@ export class MySqlAdapter implements IDatabaseAdapter {
         actual_cash_value VARCHAR(50),
         estimated_repair_cost VARCHAR(50),
         seller_name VARCHAR(255),
-        seller_id_fk INT UNSIGNED,
+        seller_id_fk INT UNSIGNED, /* Can be NULL if ON DELETE SET NULL */
         auctioneer_name VARCHAR(255),
-        auctioneer_id_fk INT UNSIGNED,
+        auctioneer_id_fk INT UNSIGNED, /* Can be NULL if ON DELETE SET NULL */
         \`condition\` TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -1097,5 +1097,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async getPlatformSettings(): Promise<PlatformSettings> { console.warn("MySqlAdapter.getPlatformSettings not implemented."); return { id: 'global', galleryImageBasePath: '/mysql/default/path/', updatedAt: new Date() };}
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> { console.warn("MySqlAdapter.updatePlatformSettings not implemented."); return {success: false, message: "Not implemented"}; }
 }
+    
 
     
