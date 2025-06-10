@@ -165,6 +165,21 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.log('[MySqlAdapter] Iniciando criação/verificação de tabelas...');
     
     const queries = [
+      // Drop in reverse order of creation / dependency
+      `DROP TABLE IF EXISTS bids;`,
+      `DROP TABLE IF EXISTS media_items;`,
+      `DROP TABLE IF EXISTS lots;`,
+      `DROP TABLE IF EXISTS auctions;`,
+      `DROP TABLE IF EXISTS sellers;`,
+      `DROP TABLE IF EXISTS auctioneers;`,
+      `DROP TABLE IF EXISTS cities;`,
+      `DROP TABLE IF EXISTS states;`,
+      `DROP TABLE IF EXISTS lot_categories;`,
+      `DROP TABLE IF EXISTS user_profiles;`,
+      `DROP TABLE IF EXISTS roles;`,
+      `DROP TABLE IF EXISTS platform_settings;`,
+
+      // Create in order of dependency
       `CREATE TABLE IF NOT EXISTS roles (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(100) NOT NULL UNIQUE,
@@ -361,8 +376,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
         gallery_image_urls JSON,
         media_item_ids JSON,
         status VARCHAR(50) NOT NULL,
-        state_id INT UNSIGNED, /* Can be NULL if ON DELETE SET NULL */
-        city_id INT UNSIGNED, /* Can be NULL if ON DELETE SET NULL */
+        state_id INT UNSIGNED, 
+        city_id INT UNSIGNED, 
         type VARCHAR(100),
         views INT DEFAULT 0,
         auction_name VARCHAR(255),
@@ -409,9 +424,9 @@ export class MySqlAdapter implements IDatabaseAdapter {
         actual_cash_value VARCHAR(50),
         estimated_repair_cost VARCHAR(50),
         seller_name VARCHAR(255),
-        seller_id_fk INT UNSIGNED, /* Can be NULL if ON DELETE SET NULL */
+        seller_id_fk INT UNSIGNED, 
         auctioneer_name VARCHAR(255),
-        auctioneer_id_fk INT UNSIGNED, /* Can be NULL if ON DELETE SET NULL */
+        auctioneer_id_fk INT UNSIGNED, 
         \`condition\` TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -470,8 +485,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
         try {
           await connection.query(query);
           const tableNameMatch = query.match(/CREATE TABLE IF NOT EXISTS \`?(\w+)\`?/i);
+          const dropTableNameMatch = query.match(/DROP TABLE IF EXISTS \`?(\w+)\`?/i);
            if (tableNameMatch) {
             console.log(`[MySqlAdapter] Tabela '${tableNameMatch[1]}' verificada/criada com sucesso.`);
+          } else if (dropTableNameMatch) {
+             console.log(`[MySqlAdapter] Tentativa de excluir tabela '${dropTableNameMatch[1]}' (IF EXISTS).`);
           }
         } catch (tableError: any) {
           console.warn(`[MySqlAdapter] Aviso ao executar query: ${tableError.message}. Query: ${query.substring(0,100)}...`);
@@ -1097,6 +1115,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async getPlatformSettings(): Promise<PlatformSettings> { console.warn("MySqlAdapter.getPlatformSettings not implemented."); return { id: 'global', galleryImageBasePath: '/mysql/default/path/', updatedAt: new Date() };}
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> { console.warn("MySqlAdapter.updatePlatformSettings not implemented."); return {success: false, message: "Not implemented"}; }
 }
+    
+
     
 
     

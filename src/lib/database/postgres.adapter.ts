@@ -1,3 +1,4 @@
+
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -438,21 +439,15 @@ export class PostgresAdapter implements IDatabaseAdapter {
       for (const query of queries) {
         try {
           await client.query(query);
-          // Extrair nome da tabela para log (simplificado)
           const tableNameMatch = query.match(/CREATE TABLE IF NOT EXISTS (\w+)/i);
           const indexNameMatch = query.match(/CREATE INDEX IF NOT EXISTS (\w+)/i);
           if (tableNameMatch) {
             console.log(`[PostgresAdapter] Tabela '${tableNameMatch[1]}' verificada/criada com sucesso.`);
           } else if (indexNameMatch) {
             console.log(`[PostgresAdapter] Índice '${indexNameMatch[1]}' verificado/criado com sucesso.`);
-          } else {
-             // console.log(`[PostgresAdapter] Comando DDL executado (sem nome de tabela/índice extraído): ${query.substring(0,50)}...`);
           }
         } catch (tableError: any) {
-          console.warn(`[PostgresAdapter] Aviso ao executar query: ${tableError.message}. Query: ${query.substring(0,100)}... (Isso pode ser normal se a tabela/índice já existe com estrutura diferente ou se há dependências ainda não criadas)`);
-          // Não adicionar ao errors array se for "already exists" para tabelas/índices,
-          // mas pode ser útil logar outros tipos de warnings.
-          // Por enquanto, vamos focar em erros que quebram o BEGIN/COMMIT.
+          console.warn(`[PostgresAdapter] Aviso ao executar query: ${tableError.message}. Query: ${query.substring(0,100)}...`);
         }
       }
       await client.query('COMMIT');
@@ -689,27 +684,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `;
       const res = await client.query(query, [userId]);
       if (res.rowCount === 0) return null;
-      
       const row = mapRowToCamelCase(res.rows[0]);
-      let finalPermissions = row.permissions;
-      if (typeof row.permissions === 'string') { // PG stores JSONB as string when fetched by node-pg
-          try { finalPermissions = JSON.parse(row.permissions); } catch { finalPermissions = []; }
-      }
-      if ((!finalPermissions || finalPermissions.length === 0) && row.rolePermissionsFromJoin) {
-          finalPermissions = typeof row.rolePermissionsFromJoin === 'string' ? JSON.parse(row.rolePermissionsFromJoin) : row.rolePermissionsFromJoin || [];
-      }
-      
-      return {
-        ...row,
-        uid: row.uid,
-        roleId: row.roleId ? String(row.roleId) : undefined,
-        roleName: row.roleNameFromJoin || row.roleName,
-        permissions: finalPermissions || [],
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
-        dateOfBirth: row.dateOfBirth ? new Date(row.dateOfBirth) : undefined,
-        rgIssueDate: row.rgIssueDate ? new Date(row.rgIssueDate) : undefined,
-      } as UserProfileData;
+      return mapToUserProfileData(row, {name: row.roleNameFromJoin, permissions: row.rolePermissionsFromJoin} as Role);
     } catch (e: any) {
       console.error(`[PostgresAdapter - getUserProfileData(${userId})] Error:`, e);
       return null;
@@ -717,7 +693,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-
   async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
@@ -728,9 +703,15 @@ export class PostgresAdapter implements IDatabaseAdapter {
       (Object.keys(data) as Array<keyof EditableUserProfileData>).forEach(key => {
         if (data[key] !== undefined) {
           const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
-          const escapedColumn = sqlColumn === 'number' ? `"${sqlColumn}"` : sqlColumn; // Escape "number"
+          // Precisamos tratar "number" como um nome de coluna literal no Postgres
+          const escapedColumn = sqlColumn === 'number' ? `"${sqlColumn}"` : sqlColumn;
           fieldsToUpdate.push(`${escapedColumn} = $${paramCount++}`);
-          values.push(data[key] === '' ? null : data[key]);
+          // Para campos de data, se forem null, passar null para o DB
+          if ((key === 'dateOfBirth' || key === 'rgIssueDate') && data[key] === null) {
+            values.push(null);
+          } else {
+            values.push(data[key] === '' ? null : data[key]);
+          }
         }
       });
       
@@ -751,18 +732,17 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-
   async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }> {
     const client = await getPool().connect();
     try {
       await client.query('BEGIN');
-      const existingUserRes = await client.query('SELECT uid, email, full_name, role_id, permissions, status, habilitation_status, created_at, updated_at FROM user_profiles WHERE uid = $1', [userId]);
+      const existingUserRes = await client.query('SELECT * FROM user_profiles WHERE uid = $1', [userId]);
       let userProfileData: UserProfileData;
-      let roleToAssign = await this.getRoleByName(targetRoleName);
+      let roleToAssign = await this.getRoleByName(targetRoleName); // This makes its own connection
 
       if (!roleToAssign) {
-        await this.ensureDefaultRolesExist();
-        roleToAssign = await this.getRoleByName('USER');
+        await this.ensureDefaultRolesExist(); // This makes its own connection
+        roleToAssign = await this.getRoleByName('USER'); // This makes its own connection
         if (!roleToAssign) {
           await client.query('ROLLBACK');
           return { success: false, message: `Perfil padrão USER não encontrado e não pôde ser criado.` };
@@ -779,21 +759,18 @@ export class PostgresAdapter implements IDatabaseAdapter {
         let needsUpdate = false;
 
         if (String(dbUser.roleId) !== roleToAssign.id) { updateFields.role_id = `$${paramIdx++}`; updateValues.push(Number(roleToAssign.id)); needsUpdate = true; }
-        
-        let currentPermissions = dbUser.permissions;
-        if (typeof dbUser.permissions === 'string') { try { currentPermissions = JSON.parse(dbUser.permissions); } catch { currentPermissions = []; } }
-        if (JSON.stringify(currentPermissions || []) !== JSON.stringify(permissionsToAssign)) {
+        if (JSON.stringify(dbUser.permissions || []) !== JSON.stringify(permissionsToAssign)) {
             updateFields.permissions = `$${paramIdx++}`; updateValues.push(JSON.stringify(permissionsToAssign)); needsUpdate = true;
         }
 
         if (needsUpdate) {
             updateFields.updated_at = `NOW()`; // No placeholder needed for NOW()
-            const setClauses = Object.entries(updateFields).map(([key, val]) => `${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = ${val.startsWith('$') ? val : '$'+paramIdx++ }`).join(', ');
-            updateValues.push(userId); // For WHERE clause
-            
-            const query = `UPDATE user_profiles SET ${setClauses} WHERE uid = $${Object.keys(updateFields).filter(k => updateFields[k].startsWith('$')).length + 1}`;
-            const finalValues = Object.values(updateFields).filter(v => !String(v).startsWith('$') && v !== 'NOW()').concat([userId]);
-            await client.query(query, updateValues);
+            const setClauses = Object.entries(updateFields).map(([key, val]) => `${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = ${String(val).startsWith('$') ? val : `$${paramIdx++}` }`).join(', ');
+            // Rebuild values array to match paramIdx correctly for non-placeholder values
+            const finalUpdateValues = Object.values(updateFields).filter(v => !String(v).startsWith('$') && v !== 'NOW()');
+            finalUpdateValues.push(userId); // For WHERE clause
+            const query = `UPDATE user_profiles SET ${setClauses} WHERE uid = $${finalUpdateValues.length}`;
+            await client.query(query, finalUpdateValues);
         }
         userProfileData = mapToUserProfileData(dbUser, roleToAssign);
       } else {
@@ -815,7 +792,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-
   async getUsersWithRoles(): Promise<UserProfileData[]> {
     const client = await getPool().connect();
     try {
@@ -826,16 +802,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         ORDER BY up.full_name ASC;
       `;
       const res = await client.query(query);
-      return mapRowsToCamelCase(res.rows).map(row => {
-        let finalPermissions = row.permissions;
-        if (typeof row.permissions === 'string') {
-            try { finalPermissions = JSON.parse(row.permissions); } catch { finalPermissions = []; }
-        }
-        if ((!finalPermissions || finalPermissions.length === 0) && row.rolePermissionsFromJoin) {
-            finalPermissions = typeof row.rolePermissionsFromJoin === 'string' ? JSON.parse(row.rolePermissionsFromJoin) : row.rolePermissionsFromJoin || [];
-        }
-        return mapToUserProfileData(row, { name: row.roleNameFromJoin, permissions: finalPermissions } as Role);
-      });
+      return mapRowsToCamelCase(res.rows).map(row => mapToUserProfileData(row, { name: row.roleNameFromJoin, permissions: row.rolePermissionsFromJoin } as Role));
     } catch (e: any) {
       console.error(`[PostgresAdapter - getUsersWithRoles] Error:`, e);
       return [];
@@ -843,7 +810,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-
   async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
@@ -852,7 +818,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       if (roleId && roleId !== "---NONE---") {
         const role = await this.getRole(roleId); // This uses its own connection
         if (!role) return { success: false, message: "Perfil não encontrado." };
-        newRoleIdInt = Number(role.id); // SQL ID is number
+        newRoleIdInt = Number(role.id); // PG ID is number
         newPermissions = role.permissions || [];
       }
       
@@ -868,7 +834,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-
   async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
@@ -905,7 +870,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-
   async getRoles(): Promise<Role[]> {
     const client = await getPool().connect();
     try {
@@ -918,7 +882,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-
   async getRole(id: string): Promise<Role | null> {
     const client = await getPool().connect();
     try {
@@ -932,7 +895,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-
   async getRoleByName(name: string): Promise<Role | null> {
     const client = await getPool().connect();
     try {
@@ -947,7 +909,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-  
   async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
@@ -992,11 +953,10 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-
   async deleteRole(id: string): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
-      const role = await this.getRole(id); // Uses its own connection
+      const role = await this.getRole(id); // This uses its own connection
       if (role && (role.name_normalized === 'ADMINISTRATOR' || role.name_normalized === 'USER')) {
         return { success: false, message: 'Perfis de sistema não podem ser excluídos.' };
       }
@@ -1009,7 +969,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-  
+
   async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; }> {
     const defaultRolesData: RoleFormData[] = [
       { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
@@ -1018,7 +978,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       { name: 'AUCTIONEER', description: 'Leiloeiro.', permissions: ['auctions:manage_assigned', 'lots:read', 'lots:update', 'conduct_auctions'] },
       { name: 'AUCTION_ANALYST', description: 'Analista de Leilões.', permissions: ['categories:read', 'states:read', 'users:read', 'view_reports'] }
     ];
-     const client = await getPool().connect();
+    const client = await getPool().connect();
     try {
       await client.query('BEGIN');
       for (const roleData of defaultRolesData) {
@@ -1052,7 +1012,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-  
+
   // --- Auctioneers (Scaffold) ---
   async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> { console.warn("PostgresAdapter.createAuctioneer not implemented."); return {success: false, message: "Not implemented"}; }
   async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { console.warn("PostgresAdapter.getAuctioneers not implemented."); return []; }
@@ -1093,8 +1053,11 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.deleteMediaItemFromDb not implemented."); return {success: false, message: "Not implemented"}; }
   async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.linkMediaItemsToLot not implemented."); return {success: false, message: "Not implemented"}; }
   async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.unlinkMediaItemFromLot not implemented."); return {success: false, message: "Not implemented"}; }
-  
+
   // Settings
   async getPlatformSettings(): Promise<PlatformSettings> { console.warn("PostgresAdapter.getPlatformSettings not implemented."); return { id: 'global', galleryImageBasePath: '/pg/default/path/', updatedAt: new Date() };}
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.updatePlatformSettings not implemented."); return {success: false, message: "Not implemented"}; }
 }
+    
+
+    
