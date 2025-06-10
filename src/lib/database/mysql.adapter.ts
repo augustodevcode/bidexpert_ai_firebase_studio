@@ -99,6 +99,33 @@ function mapToCityInfo(row: RowDataPacket): CityInfo {
     };
 }
 
+function mapToAuctioneerProfileInfo(row: RowDataPacket): AuctioneerProfileInfo {
+    return {
+        id: String(row.id),
+        name: row.name,
+        slug: row.slug,
+        registrationNumber: row.registrationNumber,
+        contactName: row.contactName,
+        email: row.email,
+        phone: row.phone,
+        address: row.address,
+        city: row.city,
+        state: row.state,
+        zipCode: row.zipCode,
+        website: row.website,
+        logoUrl: row.logoUrl,
+        dataAiHintLogo: row.dataAiHintLogo,
+        description: row.description,
+        memberSince: row.memberSince ? new Date(row.memberSince) : undefined,
+        rating: row.rating !== null ? Number(row.rating) : undefined,
+        auctionsConductedCount: Number(row.auctionsConductedCount || 0),
+        totalValueSold: Number(row.totalValueSold || 0),
+        userId: row.userId,
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+    };
+}
+
 function mapToRole(row: RowDataPacket): Role {
     return {
         id: String(row.id),
@@ -712,6 +739,87 @@ export class MySqlAdapter implements IDatabaseAdapter {
     } catch (e: any) { console.error(`[MySqlAdapter - deleteCity(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
   }
 
+  // --- Auctioneers ---
+  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
+    const connection = await getPool().getConnection();
+    try {
+      const slug = slugify(data.name);
+      const query = `
+        INSERT INTO auctioneers 
+          (name, slug, registration_number, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since, rating, auctions_conducted_count, total_value_sold, user_id, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, 0, 0, ?, NOW(), NOW());
+      `;
+      const values = [
+        data.name, slug, data.registrationNumber || null, data.contactName || null, data.email || null, data.phone || null,
+        data.address || null, data.city || null, data.state || null, data.zipCode || null, data.website || null,
+        data.logoUrl || null, data.dataAiHintLogo || null, data.description || null, data.userId || null
+      ];
+      const [result] = await connection.execute(query, values);
+      return { success: true, message: 'Leiloeiro criado (MySQL)!', auctioneerId: String((result as mysql.ResultSetHeader).insertId) };
+    } catch (e: any) { console.error(`[MySqlAdapter - createAuctioneer] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
+  }
+
+  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
+    const connection = await getPool().getConnection();
+    try {
+      const [rows] = await connection.query('SELECT * FROM auctioneers ORDER BY name ASC;');
+      return (rows as RowDataPacket[]).map(row => mapToAuctioneerProfileInfo(mapMySqlRowToCamelCase(row)));
+    } catch (e: any) { console.error(`[MySqlAdapter - getAuctioneers] Error:`, e); return []; } finally { connection.release(); }
+  }
+
+  async getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {
+    const connection = await getPool().getConnection();
+    try {
+      const [rows] = await connection.query('SELECT * FROM auctioneers WHERE id = ?;', [Number(id)]);
+      if ((rows as RowDataPacket[]).length === 0) return null;
+      return mapToAuctioneerProfileInfo(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
+    } catch (e: any) { console.error(`[MySqlAdapter - getAuctioneer(${id})] Error:`, e); return null; } finally { connection.release(); }
+  }
+
+  async getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null> {
+    const connection = await getPool().getConnection();
+    try {
+      const [rows] = await connection.query('SELECT * FROM auctioneers WHERE slug = ? LIMIT 1;', [slug]);
+      if ((rows as RowDataPacket[]).length === 0) return null;
+      return mapToAuctioneerProfileInfo(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
+    } catch (e: any) { console.error(`[MySqlAdapter - getAuctioneerBySlug(${slug})] Error:`, e); return null; } finally { connection.release(); }
+  }
+
+  async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
+    const connection = await getPool().getConnection();
+    try {
+      const fields: string[] = [];
+      const values: any[] = [];
+      let query = 'UPDATE auctioneers SET ';
+
+      (Object.keys(data) as Array<keyof AuctioneerFormData>).forEach(key => {
+        if (data[key] !== undefined) {
+            const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+            fields.push(`${sqlColumn} = ?`);
+            values.push(data[key] === '' ? null : data[key]);
+        }
+      });
+      if (data.name) { fields.push(`slug = ?`); values.push(slugify(data.name)); }
+
+      if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o leiloeiro." };
+
+      fields.push(`updated_at = NOW()`);
+      query += fields.join(', ') + ` WHERE id = ?`;
+      values.push(Number(id));
+
+      await connection.execute(query, values);
+      return { success: true, message: 'Leiloeiro atualizado (MySQL)!' };
+    } catch (e: any) { console.error(`[MySqlAdapter - updateAuctioneer(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
+  }
+
+  async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> {
+    const connection = await getPool().getConnection();
+    try {
+      await connection.execute('DELETE FROM auctioneers WHERE id = ?;', [Number(id)]);
+      return { success: true, message: 'Leiloeiro excluído (MySQL)!' };
+    } catch (e: any) { console.error(`[MySqlAdapter - deleteAuctioneer(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
+  }
+
   // --- Users ---
   async getUserProfileData(userId: string): Promise<UserProfileData | null> {
     const connection = await getPool().getConnection();
@@ -775,7 +883,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       connection.release();
     }
   }
-
+  
   async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }> {
     const connection = await getPool().getConnection();
     try {
@@ -968,7 +1076,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> {
     const connection = await getPool().getConnection();
     try {
-      const currentRole = await this.getRole(id); // Uses its own connection
+      const currentRole = await this.getRole(id); // This uses its own connection
       if (!currentRole) return { success: false, message: 'Perfil não encontrado.' };
 
       const fieldsToUpdate: string[] = [];
@@ -1069,14 +1177,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
     }
   }
 
-  // --- Auctioneers (Scaffold) ---
-  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> { console.warn("MySqlAdapter.createAuctioneer not implemented."); return {success: false, message: "Not implemented"}; }
-  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { console.warn("MySqlAdapter.getAuctioneers not implemented."); return []; }
-  async getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> { console.warn("MySqlAdapter.getAuctioneer not implemented."); return null; }
-  async getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null> { console.warn("MySqlAdapter.getAuctioneerBySlug not implemented."); return null; }
-  async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { console.warn("MySqlAdapter.updateAuctioneer not implemented."); return {success: false, message: "Not implemented"}; }
-  async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> { console.warn("MySqlAdapter.deleteAuctioneer not implemented."); return {success: false, message: "Not implemented"}; }
-
   // --- Sellers (Scaffold) ---
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> { console.warn("MySqlAdapter.createSeller not implemented."); return {success: false, message: "Not implemented"}; }
   async getSellers(): Promise<SellerProfileInfo[]> { console.warn("MySqlAdapter.getSellers not implemented."); return []; }
@@ -1119,4 +1219,5 @@ export class MySqlAdapter implements IDatabaseAdapter {
     
 
     
+
 

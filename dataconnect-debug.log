@@ -917,3 +917,31 @@ E0610 02:13:37.494817   29903 load.go:23] Could not load config from "/home/user
 E0610 02:13:47.492730   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
 E0610 02:13:57.495745   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
 E0610 02:14:07.485734   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:14:17.493986   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:14:27.493992   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:14:37.483509   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:14:47.483586   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:14:57.493969   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:15:07.483523   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:15:07.483595   29903 watch.go:76] watchAllDir unable to walk dir `/home/user/studio/dataconnect`: on path "/home/user/studio/dataconnect" (DirEntry: <nil>): lstat /home/user/studio/dataconnect: no such file or directory
+E0610 02:15:17.493941   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:15:27.494063   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:15:37.484093   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:15:47.494028   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:15:57.492731   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:16:07.483951   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:16:17.494093   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:16:27.493763   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:16:37.484043   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:16:47.483509   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:16:57.483523   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:17:07.484121   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:17:07.484190   29903 watch.go:76] watchAllDir unable to walk dir `/home/user/studio/dataconnect`: on path "/home/user/studio/dataconnect" (DirEntry: <nil>): lstat /home/user/studio/dataconnect: no such file or directory
+E0610 02:17:17.494026   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:17:27.492720   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:17:37.483881   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:17:47.494016   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:17:57.495742   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:18:07.483915   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:18:17.493987   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`
+E0610 02:18:27.494023   29903 load.go:23] Could not load config from "/home/user/studio/dataconnect": could not find dataconnect.yaml in `/home/user/studio/dataconnect`

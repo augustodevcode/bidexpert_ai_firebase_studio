@@ -82,6 +82,34 @@ function mapToCityInfo(row: QueryResultRow): CityInfo {
     };
 }
 
+function mapToAuctioneerProfileInfo(row: QueryResultRow): AuctioneerProfileInfo {
+    return {
+        id: String(row.id),
+        name: row.name,
+        slug: row.slug,
+        registrationNumber: row.registrationNumber,
+        contactName: row.contactName,
+        email: row.email,
+        phone: row.phone,
+        address: row.address,
+        city: row.city,
+        state: row.state,
+        zipCode: row.zipCode,
+        website: row.website,
+        logoUrl: row.logoUrl,
+        dataAiHintLogo: row.dataAiHintLogo,
+        description: row.description,
+        memberSince: row.memberSince ? new Date(row.memberSince) : undefined,
+        rating: row.rating !== null ? Number(row.rating) : undefined,
+        auctionsConductedCount: Number(row.auctionsConductedCount || 0),
+        totalValueSold: Number(row.totalValueSold || 0),
+        userId: row.userId,
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+    };
+}
+
+
 function mapToRole(row: QueryResultRow): Role {
     return {
         id: String(row.id),
@@ -168,8 +196,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
         name_normalized VARCHAR(100) NOT NULL UNIQUE,
         description TEXT,
         permissions JSONB,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
       `CREATE INDEX IF NOT EXISTS idx_roles_name_normalized ON roles(name_normalized);`,
 
@@ -206,8 +234,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
         opt_in_marketing BOOLEAN DEFAULT FALSE,
         avatar_url TEXT,
         data_ai_hint TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
       `CREATE INDEX IF NOT EXISTS idx_user_profiles_email ON user_profiles(email);`,
       `CREATE INDEX IF NOT EXISTS idx_user_profiles_role_id ON user_profiles(role_id);`,
@@ -215,7 +243,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `CREATE TABLE IF NOT EXISTS platform_settings (
         id VARCHAR(50) PRIMARY KEY DEFAULT 'global',
         gallery_image_base_path TEXT NOT NULL,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
 
       `CREATE TABLE IF NOT EXISTS lot_categories (
@@ -224,8 +252,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
         slug VARCHAR(255) NOT NULL UNIQUE,
         description TEXT,
         item_count INTEGER DEFAULT 0,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
       `CREATE INDEX IF NOT EXISTS idx_lot_categories_slug ON lot_categories(slug);`,
 
@@ -235,8 +263,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
         uf VARCHAR(2) NOT NULL UNIQUE,
         slug VARCHAR(100) NOT NULL UNIQUE,
         city_count INTEGER DEFAULT 0,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
       `CREATE INDEX IF NOT EXISTS idx_states_slug ON states(slug);`,
       `CREATE INDEX IF NOT EXISTS idx_states_uf ON states(uf);`,
@@ -249,8 +277,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
         state_uf VARCHAR(2),
         ibge_code VARCHAR(10) UNIQUE,
         lot_count INTEGER DEFAULT 0,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         UNIQUE (slug, state_id)
       );`,
       `CREATE INDEX IF NOT EXISTS idx_cities_state_id ON cities(state_id);`,
@@ -272,13 +300,13 @@ export class PostgresAdapter implements IDatabaseAdapter {
         logo_url TEXT,
         data_ai_hint_logo TEXT,
         description TEXT,
-        member_since TIMESTAMP WITH TIME ZONE,
+        member_since TIMESTAMPTZ,
         rating NUMERIC(3,1),
         auctions_conducted_count INTEGER,
         total_value_sold NUMERIC(15,2),
         user_id VARCHAR(255),
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
       `CREATE INDEX IF NOT EXISTS idx_auctioneers_slug ON auctioneers(slug);`,
 
@@ -297,14 +325,14 @@ export class PostgresAdapter implements IDatabaseAdapter {
         logo_url TEXT,
         data_ai_hint_logo TEXT,
         description TEXT,
-        member_since TIMESTAMP WITH TIME ZONE,
+        member_since TIMESTAMPTZ,
         rating NUMERIC(3,1),
         active_lots_count INTEGER,
         total_sales_value NUMERIC(15,2),
         auctions_facilitated_count INTEGER,
         user_id VARCHAR(255),
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
       `CREATE INDEX IF NOT EXISTS idx_sellers_slug ON sellers(slug);`,
 
@@ -318,8 +346,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
         category_id INTEGER REFERENCES lot_categories(id) ON DELETE SET NULL,
         auctioneer_id INTEGER REFERENCES auctioneers(id) ON DELETE SET NULL,
         seller_id INTEGER REFERENCES sellers(id) ON DELETE SET NULL,
-        auction_date TIMESTAMP WITH TIME ZONE NOT NULL,
-        end_date TIMESTAMP WITH TIME ZONE,
+        auction_date TIMESTAMPTZ NOT NULL,
+        end_date TIMESTAMPTZ,
         auction_stages JSONB,
         city VARCHAR(100),
         state VARCHAR(2),
@@ -334,8 +362,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
         bids_count INTEGER DEFAULT 0,
         selling_branch VARCHAR(100),
         vehicle_location VARCHAR(255),
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
       `CREATE INDEX IF NOT EXISTS idx_auctions_status ON auctions(status);`,
       `CREATE INDEX IF NOT EXISTS idx_auctions_auction_date ON auctions(auction_date);`,
@@ -360,10 +388,10 @@ export class PostgresAdapter implements IDatabaseAdapter {
         auction_name VARCHAR(255),
         price NUMERIC(15,2) NOT NULL,
         initial_price NUMERIC(15,2),
-        lot_specific_auction_date TIMESTAMP WITH TIME ZONE,
-        second_auction_date TIMESTAMP WITH TIME ZONE,
+        lot_specific_auction_date TIMESTAMPTZ,
+        second_auction_date TIMESTAMPTZ,
         second_initial_price NUMERIC(15,2),
-        end_date TIMESTAMP WITH TIME ZONE NOT NULL,
+        end_date TIMESTAMPTZ NOT NULL,
         bids_count INTEGER DEFAULT 0,
         is_favorite BOOLEAN DEFAULT FALSE,
         is_featured BOOLEAN DEFAULT FALSE,
@@ -405,8 +433,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
         auctioneer_name VARCHAR(255),
         auctioneer_id_fk INTEGER REFERENCES auctioneers(id) ON DELETE SET NULL,
         condition TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
       `CREATE INDEX IF NOT EXISTS idx_lots_auction_id ON lots(auction_id);`,
       `CREATE INDEX IF NOT EXISTS idx_lots_status ON lots(status);`,
@@ -415,7 +443,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `CREATE TABLE IF NOT EXISTS media_items (
         id SERIAL PRIMARY KEY,
         file_name VARCHAR(255) NOT NULL,
-        uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        uploaded_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         uploaded_by VARCHAR(255),
         title TEXT,
         alt_text TEXT,
@@ -442,7 +470,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         bidder_id VARCHAR(255) REFERENCES user_profiles(uid) ON DELETE CASCADE NOT NULL,
         bidder_display_name VARCHAR(255),
         amount NUMERIC(15,2) NOT NULL,
-        "timestamp" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        "timestamp" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
       `CREATE INDEX IF NOT EXISTS idx_bids_lot_id ON bids(lot_id);`,
       `CREATE INDEX IF NOT EXISTS idx_bids_bidder_id ON bids(bidder_id);`,
@@ -456,12 +484,13 @@ export class PostgresAdapter implements IDatabaseAdapter {
           const tableNameMatch = query.match(/CREATE TABLE IF NOT EXISTS (\w+)/i);
           const indexNameMatch = query.match(/CREATE INDEX IF NOT EXISTS (\w+)/i);
           const dropTableNameMatch = query.match(/DROP TABLE IF EXISTS (\w+)/i);
+
           if (tableNameMatch) {
             console.log(`[PostgresAdapter] Tabela '${tableNameMatch[1]}' verificada/criada com sucesso.`);
           } else if (indexNameMatch) {
             console.log(`[PostgresAdapter] Índice '${indexNameMatch[1]}' verificado/criado com sucesso.`);
           } else if (dropTableNameMatch) {
-            console.log(`[PostgresAdapter] Tentativa de excluir tabela '${dropTableNameMatch[1]}' (IF EXISTS).`);
+             console.log(`[PostgresAdapter] Tentativa de excluir tabela '${dropTableNameMatch[1]}' (IF EXISTS).`);
           }
         } catch (tableError: any) {
           console.warn(`[PostgresAdapter] Aviso ao executar query: ${tableError.message}. Query: ${query.substring(0,100)}...`);
@@ -522,7 +551,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     const client = await getPool().connect();
     try {
         const queryText = 'SELECT id, name, slug, description, item_count, created_at, updated_at FROM lot_categories WHERE id = $1;';
-        const res = await client.query(queryText, [Number(id)]); // Assuming ID is integer
+        const res = await client.query(queryText, [Number(id)]);
         if (res.rows.length > 0) {
             return mapToLotCategory(mapRowToCamelCase(res.rows[0]));
         }
@@ -689,6 +718,89 @@ export class PostgresAdapter implements IDatabaseAdapter {
     } catch (e: any) { console.error(`[PostgresAdapter - deleteCity(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
 
+  // --- Auctioneers ---
+  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
+    const client = await getPool().connect();
+    try {
+      const slug = slugify(data.name);
+      const query = `
+        INSERT INTO auctioneers 
+          (name, slug, registration_number, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since, rating, auctions_conducted_count, total_value_sold, user_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), 0, 0, 0, $15, NOW(), NOW())
+        RETURNING id;
+      `;
+      const values = [
+        data.name, slug, data.registrationNumber || null, data.contactName || null, data.email || null, data.phone || null,
+        data.address || null, data.city || null, data.state || null, data.zipCode || null, data.website || null,
+        data.logoUrl || null, data.dataAiHintLogo || null, data.description || null, data.userId || null
+      ];
+      const res = await client.query(query, values);
+      return { success: true, message: 'Leiloeiro criado (PostgreSQL)!', auctioneerId: String(res.rows[0].id) };
+    } catch (e: any) { console.error(`[PostgresAdapter - createAuctioneer] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
+  }
+
+  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
+    const client = await getPool().connect();
+    try {
+      const res = await client.query('SELECT * FROM auctioneers ORDER BY name ASC;');
+      return mapRowsToCamelCase(res.rows).map(mapToAuctioneerProfileInfo);
+    } catch (e: any) { console.error(`[PostgresAdapter - getAuctioneers] Error:`, e); return []; } finally { client.release(); }
+  }
+
+  async getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {
+    const client = await getPool().connect();
+    try {
+      const res = await client.query('SELECT * FROM auctioneers WHERE id = $1;', [Number(id)]);
+      if (res.rowCount === 0) return null;
+      return mapToAuctioneerProfileInfo(mapRowToCamelCase(res.rows[0]));
+    } catch (e: any) { console.error(`[PostgresAdapter - getAuctioneer(${id})] Error:`, e); return null; } finally { client.release(); }
+  }
+
+  async getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null> {
+    const client = await getPool().connect();
+    try {
+      const res = await client.query('SELECT * FROM auctioneers WHERE slug = $1 LIMIT 1;', [slug]);
+      if (res.rowCount === 0) return null;
+      return mapToAuctioneerProfileInfo(mapRowToCamelCase(res.rows[0]));
+    } catch (e: any) { console.error(`[PostgresAdapter - getAuctioneerBySlug(${slug})] Error:`, e); return null; } finally { client.release(); }
+  }
+
+  async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      const fields: string[] = [];
+      const values: any[] = [];
+      let paramCount = 1;
+
+      (Object.keys(data) as Array<keyof AuctioneerFormData>).forEach(key => {
+        if (data[key] !== undefined) {
+            const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+            fields.push(`${sqlColumn} = $${paramCount++}`);
+            values.push(data[key] === '' ? null : data[key]);
+        }
+      });
+      if (data.name) { fields.push(`slug = $${paramCount++}`); values.push(slugify(data.name)); }
+
+      if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o leiloeiro." };
+
+      fields.push(`updated_at = NOW()`);
+      const queryText = `UPDATE auctioneers SET ${fields.join(', ')} WHERE id = $${paramCount}`;
+      values.push(Number(id));
+
+      await client.query(queryText, values);
+      return { success: true, message: 'Leiloeiro atualizado (PostgreSQL)!' };
+    } catch (e: any) { console.error(`[PostgresAdapter - updateAuctioneer(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
+  }
+
+  async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      await client.query('DELETE FROM auctioneers WHERE id = $1;', [Number(id)]);
+      return { success: true, message: 'Leiloeiro excluído (PostgreSQL)!' };
+    } catch (e: any) { console.error(`[PostgresAdapter - deleteAuctioneer(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
+  }
+
+
   // --- Users ---
   async getUserProfileData(userId: string): Promise<UserProfileData | null> {
     const client = await getPool().connect();
@@ -721,7 +833,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       (Object.keys(data) as Array<keyof EditableUserProfileData>).forEach(key => {
         if (data[key] !== undefined) {
             const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
-            fieldsToUpdate.push(`"${sqlColumn}" = $${paramCount++}`); // Use double quotes for "number"
+            fieldsToUpdate.push(`"${sqlColumn}" = $${paramCount++}`);
             values.push(data[key] === '' ? null : data[key]);
         }
       });
@@ -765,25 +877,21 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
       if (existingUserRes.rowCount > 0) {
         const dbUser = mapRowToCamelCase(existingUserRes.rows[0]);
-        const updateFields: any = {};
+        const updateFields: string[] = [];
         const updateValues: any[] = [];
         let paramIdx = 1;
         let needsUpdate = false;
 
-        if (String(dbUser.roleId) !== roleToAssign.id) { updateFields.role_id = `$${paramIdx++}`; updateValues.push(Number(roleToAssign.id)); needsUpdate = true; }
+        if (String(dbUser.roleId) !== roleToAssign.id) { updateFields.push(`role_id = $${paramIdx++}`); updateValues.push(Number(roleToAssign.id)); needsUpdate = true; }
         if (JSON.stringify(dbUser.permissions || []) !== JSON.stringify(permissionsToAssign)) {
-            updateFields.permissions = `$${paramIdx++}`; updateValues.push(JSON.stringify(permissionsToAssign)); needsUpdate = true;
+            updateFields.push(`permissions = $${paramIdx++}`); updateValues.push(JSON.stringify(permissionsToAssign)); needsUpdate = true;
         }
         
         if (needsUpdate) {
-            updateFields.updated_at = `NOW()`; // PostgreSQL specific
-            const setClauses = Object.entries(updateFields).map(([key, val]) => `${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = ${String(val).startsWith('$') ? val : `$${paramIdx++}` }`).join(', ');
-            // Rebuild values to match correct paramIdx if not using direct value like NOW()
-            const finalUpdateValues = Object.values(updateFields).filter(v => !String(v).startsWith('$') && v !== 'NOW()');
-            finalUpdateValues.push(userId);
-            
-            const query = `UPDATE user_profiles SET ${setClauses} WHERE uid = $${finalUpdateValues.length}`;
-            await client.query(query, finalUpdateValues);
+            updateFields.push(`updated_at = NOW()`);
+            const query = `UPDATE user_profiles SET ${updateFields.join(', ')} WHERE uid = $${paramIdx}`;
+            updateValues.push(userId);
+            await client.query(query, updateValues);
         }
         userProfileData = mapToUserProfileData(dbUser, roleToAssign);
       } else {
@@ -886,6 +994,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
+
   async getRoles(): Promise<Role[]> {
     const client = await getPool().connect();
     try {
@@ -898,6 +1007,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
+
   async getRole(id: string): Promise<Role | null> {
     const client = await getPool().connect();
     try {
@@ -911,6 +1021,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
+
   async getRoleByName(name: string): Promise<Role | null> {
     const client = await getPool().connect();
     try {
@@ -925,6 +1036,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
+  
   async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
@@ -969,6 +1081,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
+
   async deleteRole(id: string): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
@@ -985,7 +1098,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-
+  
   async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; }> {
     const defaultRolesData: RoleFormData[] = [ 
       { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
@@ -1028,14 +1141,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-  
-  // --- Auctioneers (Scaffold) ---
-  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> { console.warn("PostgresAdapter.createAuctioneer not implemented."); return {success: false, message: "Not implemented"}; }
-  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { console.warn("PostgresAdapter.getAuctioneers not implemented."); return []; }
-  async getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> { console.warn("PostgresAdapter.getAuctioneer not implemented."); return null; }
-  async getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null> { console.warn("PostgresAdapter.getAuctioneerBySlug not implemented."); return null; }
-  async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.updateAuctioneer not implemented."); return {success: false, message: "Not implemented"}; }
-  async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.deleteAuctioneer not implemented."); return {success: false, message: "Not implemented"}; }
 
   // --- Sellers (Scaffold) ---
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> { console.warn("PostgresAdapter.createSeller not implemented."); return {success: false, message: "Not implemented"}; }
@@ -1079,4 +1184,5 @@ export class PostgresAdapter implements IDatabaseAdapter {
     
 
     
+
 
