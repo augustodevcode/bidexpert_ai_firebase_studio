@@ -147,6 +147,21 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.log('[PostgresAdapter] Iniciando criação/verificação de tabelas...');
 
     const queries = [
+      // Drop in reverse order of creation / dependency
+      `DROP TABLE IF EXISTS bids;`,
+      `DROP TABLE IF EXISTS media_items;`,
+      `DROP TABLE IF EXISTS lots;`,
+      `DROP TABLE IF EXISTS auctions;`,
+      `DROP TABLE IF EXISTS cities;`,
+      `DROP TABLE IF EXISTS sellers;`,
+      `DROP TABLE IF EXISTS auctioneers;`,
+      `DROP TABLE IF EXISTS user_profiles;`,
+      `DROP TABLE IF EXISTS states;`,
+      `DROP TABLE IF EXISTS lot_categories;`,
+      `DROP TABLE IF EXISTS roles;`,
+      `DROP TABLE IF EXISTS platform_settings;`,
+
+      // Create in order of dependency
       `CREATE TABLE IF NOT EXISTS roles (
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL UNIQUE,
@@ -440,10 +455,13 @@ export class PostgresAdapter implements IDatabaseAdapter {
           await client.query(query);
           const tableNameMatch = query.match(/CREATE TABLE IF NOT EXISTS (\w+)/i);
           const indexNameMatch = query.match(/CREATE INDEX IF NOT EXISTS (\w+)/i);
+          const dropTableNameMatch = query.match(/DROP TABLE IF EXISTS (\w+)/i);
           if (tableNameMatch) {
             console.log(`[PostgresAdapter] Tabela '${tableNameMatch[1]}' verificada/criada com sucesso.`);
           } else if (indexNameMatch) {
             console.log(`[PostgresAdapter] Índice '${indexNameMatch[1]}' verificado/criado com sucesso.`);
+          } else if (dropTableNameMatch) {
+            console.log(`[PostgresAdapter] Tentativa de excluir tabela '${dropTableNameMatch[1]}' (IF EXISTS).`);
           }
         } catch (tableError: any) {
           console.warn(`[PostgresAdapter] Aviso ao executar query: ${tableError.message}. Query: ${query.substring(0,100)}...`);
@@ -684,7 +702,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       const res = await client.query(query, [userId]);
       if (res.rowCount === 0) return null;
       const row = mapRowToCamelCase(res.rows[0]);
-      return mapToUserProfileData(row, {name: row.roleNameFromJoin, permissions: row.rolePermissionsFromJoin} as Role);
+      return mapToUserProfileData(row, { name: row.roleNameFromJoin, permissions: row.rolePermissionsFromJoin } as Role);
     } catch (e: any) {
       console.error(`[PostgresAdapter - getUserProfileData(${userId})] Error:`, e);
       return null;
@@ -692,6 +710,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
+
   async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
@@ -724,6 +743,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
+  
   async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }> {
     const client = await getPool().connect();
     try {
@@ -754,13 +774,14 @@ export class PostgresAdapter implements IDatabaseAdapter {
         if (JSON.stringify(dbUser.permissions || []) !== JSON.stringify(permissionsToAssign)) {
             updateFields.permissions = `$${paramIdx++}`; updateValues.push(JSON.stringify(permissionsToAssign)); needsUpdate = true;
         }
-
+        
         if (needsUpdate) {
-            updateFields.updated_at = `NOW()`;
+            updateFields.updated_at = `NOW()`; // PostgreSQL specific
             const setClauses = Object.entries(updateFields).map(([key, val]) => `${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = ${String(val).startsWith('$') ? val : `$${paramIdx++}` }`).join(', ');
             // Rebuild values to match correct paramIdx if not using direct value like NOW()
             const finalUpdateValues = Object.values(updateFields).filter(v => !String(v).startsWith('$') && v !== 'NOW()');
             finalUpdateValues.push(userId);
+            
             const query = `UPDATE user_profiles SET ${setClauses} WHERE uid = $${finalUpdateValues.length}`;
             await client.query(query, finalUpdateValues);
         }
@@ -784,6 +805,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
+
   async getUsersWithRoles(): Promise<UserProfileData[]> {
     const client = await getPool().connect();
     try {
@@ -802,6 +824,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
+
   async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
@@ -826,6 +849,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
+
   async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
@@ -961,7 +985,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-  
+
   async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; }> {
     const defaultRolesData: RoleFormData[] = [ 
       { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
@@ -1004,7 +1028,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-
+  
   // --- Auctioneers (Scaffold) ---
   async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> { console.warn("PostgresAdapter.createAuctioneer not implemented."); return {success: false, message: "Not implemented"}; }
   async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { console.warn("PostgresAdapter.getAuctioneers not implemented."); return []; }
@@ -1053,3 +1077,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
     
 
     
+
+    
+

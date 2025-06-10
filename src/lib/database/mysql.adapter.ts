@@ -169,12 +169,12 @@ export class MySqlAdapter implements IDatabaseAdapter {
       `DROP TABLE IF EXISTS media_items;`,
       `DROP TABLE IF EXISTS lots;`,
       `DROP TABLE IF EXISTS auctions;`,
+      `DROP TABLE IF EXISTS cities;`,
       `DROP TABLE IF EXISTS sellers;`,
       `DROP TABLE IF EXISTS auctioneers;`,
-      `DROP TABLE IF EXISTS cities;`,
+      `DROP TABLE IF EXISTS user_profiles;`,
       `DROP TABLE IF EXISTS states;`,
       `DROP TABLE IF EXISTS lot_categories;`,
-      `DROP TABLE IF EXISTS user_profiles;`,
       `DROP TABLE IF EXISTS roles;`,
       `DROP TABLE IF EXISTS platform_settings;`,
 
@@ -241,7 +241,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         name VARCHAR(255) NOT NULL,
         slug VARCHAR(255) NOT NULL UNIQUE,
         description TEXT,
-        item_count INT DEFAULT 0,
+        item_count INT UNSIGNED DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_lot_categories_slug (slug)
@@ -252,7 +252,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         name VARCHAR(100) NOT NULL,
         uf VARCHAR(2) NOT NULL UNIQUE,
         slug VARCHAR(100) NOT NULL UNIQUE,
-        city_count INT DEFAULT 0,
+        city_count INT UNSIGNED DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_states_slug (slug),
@@ -266,7 +266,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         state_id INT UNSIGNED,
         state_uf VARCHAR(2),
         ibge_code VARCHAR(10) UNIQUE,
-        lot_count INT DEFAULT 0,
+        lot_count INT UNSIGNED DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (state_id) REFERENCES states(id) ON DELETE SET NULL,
@@ -291,9 +291,9 @@ export class MySqlAdapter implements IDatabaseAdapter {
         logo_url TEXT,
         data_ai_hint_logo TEXT,
         description TEXT,
-        member_since TIMESTAMP,
+        member_since TIMESTAMP NULL,
         rating DECIMAL(3,1),
-        auctions_conducted_count INT,
+        auctions_conducted_count INT UNSIGNED,
         total_value_sold DECIMAL(15,2),
         user_id VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -316,11 +316,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
         logo_url TEXT,
         data_ai_hint_logo TEXT,
         description TEXT,
-        member_since TIMESTAMP,
+        member_since TIMESTAMP NULL,
         rating DECIMAL(3,1),
-        active_lots_count INT,
+        active_lots_count INT UNSIGNED,
         total_sales_value DECIMAL(15,2),
-        auctions_facilitated_count INT,
+        auctions_facilitated_count INT UNSIGNED,
         user_id VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -345,12 +345,12 @@ export class MySqlAdapter implements IDatabaseAdapter {
         image_url TEXT,
         data_ai_hint TEXT,
         documents_url TEXT,
-        total_lots INT DEFAULT 0,
-        visits INT DEFAULT 0,
+        total_lots INT UNSIGNED DEFAULT 0,
+        visits INT UNSIGNED DEFAULT 0,
         initial_offer DECIMAL(15,2),
         is_favorite BOOLEAN DEFAULT FALSE,
         current_bid DECIMAL(15,2),
-        bids_count INT DEFAULT 0,
+        bids_count INT UNSIGNED DEFAULT 0,
         selling_branch VARCHAR(100),
         vehicle_location VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -378,7 +378,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         state_id INT UNSIGNED, 
         city_id INT UNSIGNED, 
         type VARCHAR(100),
-        views INT DEFAULT 0,
+        views INT UNSIGNED DEFAULT 0,
         auction_name VARCHAR(255),
         price DECIMAL(15,2) NOT NULL,
         initial_price DECIMAL(15,2),
@@ -386,7 +386,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         second_auction_date TIMESTAMP NULL,
         second_initial_price DECIMAL(15,2),
         end_date TIMESTAMP NOT NULL,
-        bids_count INT DEFAULT 0,
+        bids_count INT UNSIGNED DEFAULT 0,
         is_favorite BOOLEAN DEFAULT FALSE,
         is_featured BOOLEAN DEFAULT FALSE,
         description TEXT,
@@ -1012,7 +1012,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async deleteRole(id: string): Promise<{ success: boolean; message: string; }> {
     const connection = await getPool().getConnection();
     try {
-      const role = await this.getRole(id); // Uses its own connection
+      const role = await this.getRole(id); // This uses its own connection
       if (role && (role.name_normalized === 'ADMINISTRATOR' || role.name_normalized === 'USER')) {
         return { success: false, message: 'Perfis de sistema não podem ser excluídos.' };
       }
@@ -1119,3 +1119,4 @@ export class MySqlAdapter implements IDatabaseAdapter {
     
 
     
+
