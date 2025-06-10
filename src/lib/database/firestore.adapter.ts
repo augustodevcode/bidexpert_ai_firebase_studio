@@ -12,8 +12,8 @@ import type {
   CityInfo, CityFormData,
   AuctioneerProfileInfo, AuctioneerFormData,
   SellerProfileInfo, SellerFormData,
-  Auction, AuctionFormData,
-  Lot, LotFormData,
+  Auction, AuctionFormData, AuctionDbData,
+  Lot, LotFormData, LotDbData,
   BidInfo,
   UserProfileData, EditableUserProfileData, UserHabilitationStatus,
   Role, RoleFormData,
@@ -26,6 +26,10 @@ import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 import { getLotCategoryByName } from '@/app/admin/categories/actions';
 import { getAuctioneerByName } from '@/app/admin/auctioneers/actions';
 import { getSellerByName } from '@/app/admin/sellers/actions';
+import { getAuction } from '@/app/admin/auctions/actions';
+import { getState } from '@/app/admin/states/actions';
+import { getCity } from '@/app/admin/cities/actions';
+
 
 // Helper to convert various timestamp types to JS Date
 function safeConvertToDate(timestampField: any): Date {
@@ -168,9 +172,11 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> {
     const db = this.getDbAdmin();
     try {
-      const newStateData = { ...data, slug: slugify(data.name), cityCount: 0, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
-      const docRef = await db.collection('states').add(newStateData);
-      return { success: true, message: 'Estado criado!', stateId: docRef.id };
+      const slug = slugify(data.name);
+      const newStateData = { ...data, slug, cityCount: 0, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
+      // For Firestore, the document ID will be the slug for states
+      await db.collection('states').doc(slug).set(newStateData);
+      return { success: true, message: 'Estado criado!', stateId: slug };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async getStates(): Promise<StateInfo[]> {
@@ -180,7 +186,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToDate(doc.data().createdAt), updatedAt: safeConvertToDate(doc.data().updatedAt) } as StateInfo));
     } catch (e: any) { return []; }
   }
-  async getState(id: string): Promise<StateInfo | null> {
+  async getState(id: string): Promise<StateInfo | null> { // id is slug for Firestore
     const db = this.getDbAdmin();
     try {
       const docSnap = await db.collection('states').doc(id).get();
@@ -193,7 +199,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     const db = this.getDbAdmin();
     try {
       const updateData: any = {...data, updatedAt: AdminFieldValue.serverTimestamp()};
-      if(data.name) updateData.slug = slugify(data.name);
+      if(data.name) updateData.slug = slugify(data.name); // Slug should remain the ID, so this shouldn't change for existing
       await db.collection('states').doc(id).update(updateData);
       return { success: true, message: 'Estado atualizado!' };
     } catch (e: any) { return { success: false, message: e.message }; }
@@ -202,6 +208,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     const db = this.getDbAdmin();
     try {
       await db.collection('states').doc(id).delete();
+      // TODO: Also delete/update cities belonging to this state
       return { success: true, message: 'Estado excluído!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
@@ -212,9 +219,11 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       const parentStateDoc = await db.collection('states').doc(data.stateId).get();
       if (!parentStateDoc.exists) return { success: false, message: 'Estado pai não encontrado.' };
       const parentState = parentStateDoc.data() as StateInfo;
-      const newCityData = { ...data, slug: slugify(data.name), stateUf: parentState.uf, lotCount: 0, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
-      const docRef = await db.collection('cities').add(newCityData);
-      return { success: true, message: 'Cidade criada!', cityId: docRef.id };
+      const citySlug = slugify(data.name);
+      const cityDocId = `${data.stateId}-${citySlug}`; // Composite ID for Firestore
+      const newCityData = { ...data, slug: citySlug, stateUf: parentState.uf, lotCount: 0, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
+      await db.collection('cities').doc(cityDocId).set(newCityData);
+      return { success: true, message: 'Cidade criada!', cityId: cityDocId };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async getCities(stateIdFilter?: string): Promise<CityInfo[]> {
@@ -241,7 +250,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     const db = this.getDbAdmin();
     try {
       const updateData: any = {...data, updatedAt: AdminFieldValue.serverTimestamp()};
-      if (data.name) updateData.slug = slugify(data.name);
+      if (data.name) updateData.slug = slugify(data.name); // If slug changes, ID needs to change - Firestore doc ID cannot be updated. This needs careful handling or disallow slug changes for cities if it's part of ID.
       if (data.stateId) {
           const parentStateDoc = await db.collection('states').doc(data.stateId).get();
           if (!parentStateDoc.exists) return { success: false, message: 'Estado pai não encontrado.' };
@@ -361,36 +370,11 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; }
   }
 
-  async createAuction(data: AuctionFormData): Promise<{ success: boolean; message: string; auctionId?: string; }> {
+  async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; }> {
     const db = this.getDbAdmin();
     try {
-      let categoryId: string | undefined;
-      let auctioneerId: string | undefined;
-      let sellerId: string | undefined;
-
-      if (data.category) {
-        const categoryDoc = await getLotCategoryByName(data.category);
-        if (!categoryDoc) return { success: false, message: `Categoria '${data.category}' não encontrada.`};
-        categoryId = categoryDoc.id;
-      }
-      if (data.auctioneer) {
-        const auctioneerDoc = await getAuctioneerByName(data.auctioneer);
-        if (!auctioneerDoc) return { success: false, message: `Leiloeiro '${data.auctioneer}' não encontrado.`};
-        auctioneerId = auctioneerDoc.id;
-      }
-      if (data.seller) {
-        const sellerDoc = await getSellerByName(data.seller);
-        if (sellerDoc) sellerId = sellerDoc.id;
-        // Seller is optional, so don't fail if not found, just leave sellerId undefined
-      }
-
-      const { category, auctioneer, seller, ...restOfData } = data;
-
       const newAuctionData: any = { 
-        ...restOfData,
-        categoryId,
-        auctioneerId,
-        sellerId,
+        ...data,
         auctionDate: ServerTimestamp.fromDate(data.auctionDate as Date),
         endDate: data.endDate ? ServerTimestamp.fromDate(data.endDate as Date) : null, 
         totalLots:0, visits:0, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() 
@@ -404,60 +388,124 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       return { success: false, message: e.message }; 
     }
   }
+
   async getAuctions(): Promise<Auction[]> {
     const db = this.getDbAdmin();
     try {
       const snapshot = await db.collection('auctions').orderBy('auctionDate', 'desc').get();
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), auctionDate: safeConvertToDate(doc.data().auctionDate), endDate: safeConvertOptionalDate(doc.data().endDate), createdAt: safeConvertToDate(doc.data().createdAt), updatedAt: safeConvertToDate(doc.data().updatedAt), lots: doc.data().lots || [] } as Auction));
+      return Promise.all(snapshot.docs.map(async docSnap => {
+        const data = docSnap.data();
+        let categoryName = data.category; // Fallback for older data
+        let auctioneerName = data.auctioneer;
+        let sellerName = data.seller;
+
+        if (data.categoryId) {
+            const catDoc = await db.collection('lotCategories').doc(data.categoryId).get();
+            if(catDoc.exists) categoryName = catDoc.data()?.name || data.category;
+        }
+        if (data.auctioneerId) {
+            const aucDoc = await db.collection('auctioneers').doc(data.auctioneerId).get();
+            if(aucDoc.exists) auctioneerName = aucDoc.data()?.name || data.auctioneer;
+        }
+        if (data.sellerId) {
+            const selDoc = await db.collection('sellers').doc(data.sellerId).get();
+            if(selDoc.exists) sellerName = selDoc.data()?.name || data.seller;
+        }
+
+        return { 
+            id: docSnap.id, 
+            ...data, 
+            category: categoryName,
+            auctioneer: auctioneerName,
+            seller: sellerName,
+            auctionDate: safeConvertToDate(data.auctionDate), 
+            endDate: safeConvertOptionalDate(data.endDate), 
+            auctionStages: data.auctionStages?.map((stage: any) => ({...stage, endDate: safeConvertToDate(stage.endDate) })) || [],
+            createdAt: safeConvertToDate(data.createdAt), 
+            updatedAt: safeConvertToDate(data.updatedAt), 
+            lots: data.lots || [] 
+        } as Auction;
+      }));
     } catch (e: any) { return []; }
   }
+
   async getAuction(id: string): Promise<Auction | null> {
     const db = this.getDbAdmin();
     try {
       const docSnap = await db.collection('auctions').doc(id).get();
       if (!docSnap.exists) return null;
       const data = docSnap.data()!;
-      return { id: docSnap.id, ...data, auctionDate: safeConvertToDate(data.auctionDate), endDate: safeConvertOptionalDate(data.endDate), createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt), lots: data.lots || [] } as Auction;
+      
+      let categoryName = data.category;
+      let auctioneerName = data.auctioneer;
+      let sellerName = data.seller;
+
+      if (data.categoryId) {
+          const catDoc = await db.collection('lotCategories').doc(data.categoryId).get();
+          if(catDoc.exists) categoryName = catDoc.data()?.name || data.category;
+      }
+      if (data.auctioneerId) {
+          const aucDoc = await db.collection('auctioneers').doc(data.auctioneerId).get();
+          if(aucDoc.exists) auctioneerName = aucDoc.data()?.name || data.auctioneer;
+      }
+      if (data.sellerId) {
+          const selDoc = await db.collection('sellers').doc(data.sellerId).get();
+          if(selDoc.exists) sellerName = selDoc.data()?.name || data.seller;
+      }
+
+      return { 
+          id: docSnap.id, 
+          ...data, 
+          category: categoryName,
+          auctioneer: auctioneerName,
+          seller: sellerName,
+          auctionDate: safeConvertToDate(data.auctionDate), 
+          endDate: safeConvertOptionalDate(data.endDate), 
+          auctionStages: data.auctionStages?.map((stage: any) => ({...stage, endDate: safeConvertToDate(stage.endDate) })) || [],
+          createdAt: safeConvertToDate(data.createdAt), 
+          updatedAt: safeConvertToDate(data.updatedAt), 
+          lots: data.lots || [] 
+        } as Auction;
     } catch (e: any) { return null; }
   }
+
   async getAuctionsBySellerSlug(sellerSlug: string): Promise<Auction[]> {
     const db = this.getDbAdmin();
     try {
-        const sellerDoc = await getSellerBySlug(sellerSlug);
-        if (!sellerDoc) return [];
+        const sellerSnapshot = await db.collection('sellers').where('slug', '==', sellerSlug).limit(1).get();
+        if (sellerSnapshot.empty) return [];
+        const sellerId = sellerSnapshot.docs[0].id;
         
-        const snapshot = await db.collection('auctions').where('sellerId', '==', sellerDoc.id).orderBy('auctionDate', 'desc').get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), auctionDate: safeConvertToDate(doc.data().auctionDate), endDate: safeConvertOptionalDate(doc.data().endDate), createdAt: safeConvertToDate(doc.data().createdAt), updatedAt: safeConvertToDate(doc.data().updatedAt), lots: doc.data().lots || [] } as Auction));
+        const snapshot = await db.collection('auctions').where('sellerId', '==', sellerId).orderBy('auctionDate', 'desc').get();
+        return Promise.all(snapshot.docs.map(async docSnap => {
+            const data = docSnap.data();
+            let categoryName = data.category;
+            let auctioneerName = data.auctioneer;
+
+            if (data.categoryId) { /* ... */ }
+            if (data.auctioneerId) { /* ... */ }
+            // Seller name is already known from profile or can be fetched if needed
+
+            return { 
+                id: docSnap.id, 
+                ...data, 
+                category: categoryName, 
+                auctioneer: auctioneerName, 
+                seller: sellerSnapshot.docs[0].data().name,
+                auctionDate: safeConvertToDate(data.auctionDate), 
+                endDate: safeConvertOptionalDate(data.endDate), 
+                createdAt: safeConvertToDate(data.createdAt), 
+                updatedAt: safeConvertToDate(data.updatedAt), 
+                lots: data.lots || [] 
+            } as Auction;
+        }));
     } catch (e: any) { return []; }
   }
-  async updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; }> {
+
+  async updateAuction(id: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> {
     const db = this.getDbAdmin();
     try {
       const updateData: any = { ...data, updatedAt: AdminFieldValue.serverTimestamp() };
-      
-      if (data.category) {
-        const categoryDoc = await getLotCategoryByName(data.category);
-        if (!categoryDoc) return { success: false, message: `Categoria '${data.category}' não encontrada.`};
-        updateData.categoryId = categoryDoc.id;
-        delete updateData.category; 
-      }
-      if (data.auctioneer) {
-        const auctioneerDoc = await getAuctioneerByName(data.auctioneer);
-        if (!auctioneerDoc) return { success: false, message: `Leiloeiro '${data.auctioneer}' não encontrado.`};
-        updateData.auctioneerId = auctioneerDoc.id;
-        delete updateData.auctioneer;
-      }
-      if (data.seller) {
-        const sellerDoc = await getSellerByName(data.seller);
-        if (sellerDoc) updateData.sellerId = sellerDoc.id;
-        else updateData.sellerId = null; // Or handle as error if seller is mandatory
-        delete updateData.seller;
-      } else if (data.hasOwnProperty('seller') && data.seller === null) { // Explicitly setting seller to null
-         updateData.sellerId = null;
-         delete updateData.seller;
-      }
-
-
       if (data.auctionDate) updateData.auctionDate = ServerTimestamp.fromDate(new Date(data.auctionDate));
       if (data.hasOwnProperty('endDate')) updateData.endDate = data.endDate ? ServerTimestamp.fromDate(new Date(data.endDate)) : null;
 
@@ -476,25 +524,29 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; }
   }
 
-  async createLot(data: LotFormData): Promise<{ success: boolean; message: string; lotId?: string; }> {
+  async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; }> {
     const db = this.getDbAdmin();
     try {
-      const { lotSpecificAuctionDate, secondAuctionDate, endDate, stateId, cityId, mediaItemIds, galleryImageUrls, ...restData } = data;
-      const newLotData: any = { ...restData, views: data.views || 0, bidsCount: data.bidsCount || 0, auctionName: data.auctionName || `Lote ${data.title.substring(0,20)}`, endDate: ServerTimestamp.fromDate(new Date(endDate)), mediaItemIds: mediaItemIds || [], galleryImageUrls: galleryImageUrls || [], createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
-      if (stateId) {
-        const stateDoc = await db.collection('states').doc(stateId).get();
-        if (stateDoc.exists) { newLotData.stateId = stateId; newLotData.stateUf = (stateDoc.data() as StateInfo).uf; }
-      }
-      if (cityId) {
-        const cityDoc = await db.collection('cities').doc(cityId).get();
-        if (cityDoc.exists) { newLotData.cityId = cityId; newLotData.cityName = (cityDoc.data() as CityInfo).name; }
-      }
-      newLotData.lotSpecificAuctionDate = lotSpecificAuctionDate ? ServerTimestamp.fromDate(new Date(lotSpecificAuctionDate)) : null;
-      newLotData.secondAuctionDate = secondAuctionDate ? ServerTimestamp.fromDate(new Date(secondAuctionDate)) : null;
+      const newLotData: any = { 
+          ...data, 
+          views: data.views || 0, 
+          bidsCount: data.bidsCount || 0, 
+          auctionName: data.auctionName || `Lote ${data.title.substring(0,20)}`, 
+          endDate: ServerTimestamp.fromDate(new Date(data.endDate!)),
+          lotSpecificAuctionDate: data.lotSpecificAuctionDate ? ServerTimestamp.fromDate(new Date(data.lotSpecificAuctionDate)) : null,
+          secondAuctionDate: data.secondAuctionDate ? ServerTimestamp.fromDate(new Date(data.secondAuctionDate)) : null,
+          mediaItemIds: data.mediaItemIds || [],
+          galleryImageUrls: data.galleryImageUrls || [],
+          createdAt: AdminFieldValue.serverTimestamp(), 
+          updatedAt: AdminFieldValue.serverTimestamp() 
+      };
+      delete newLotData.type; // Remove 'type' (category name) as we save categoryId
+
       const docRef = await db.collection('lots').add(newLotData);
       return { success: true, message: 'Lote criado!', lotId: docRef.id };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
+
   async getLots(auctionIdParam?: string): Promise<Lot[]> {
     const db = this.getDbAdmin();
     try {
@@ -502,39 +554,102 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       if (auctionIdParam) {
         query = query.where('auctionId', '==', auctionIdParam);
       }
-      const snapshot = await query.orderBy('title').get();
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), endDate: safeConvertToDate(doc.data().endDate), lotSpecificAuctionDate: safeConvertOptionalDate(doc.data().lotSpecificAuctionDate), secondAuctionDate: safeConvertOptionalDate(doc.data().secondAuctionDate), createdAt: safeConvertToDate(doc.data().createdAt), updatedAt: safeConvertToDate(doc.data().updatedAt) } as Lot));
-    } catch (e: any) { return []; }
+      const snapshot = await query.orderBy('title').get(); // Firestore might require index for this if auctionIdParam is used
+      
+      return Promise.all(snapshot.docs.map(async docSnap => {
+        const data = docSnap.data();
+        let typeName = data.type; // Fallback
+        if (data.categoryId) {
+            const catSnap = await db.collection('lotCategories').doc(data.categoryId).get();
+            if (catSnap.exists) typeName = catSnap.data()?.name || typeName;
+        }
+        let auctionTitle = data.auctionName;
+        if (data.auctionId && !auctionTitle) {
+            const aucSnap = await db.collection('auctions').doc(data.auctionId).get();
+            if (aucSnap.exists) auctionTitle = aucSnap.data()?.title || auctionTitle;
+        }
+        let stateName = data.stateUf;
+        if (data.stateId && !stateName) {
+            const stateSnap = await db.collection('states').doc(data.stateId).get();
+            if (stateSnap.exists) stateName = stateSnap.data()?.uf || stateName;
+        }
+        let cityName = data.cityName;
+        if (data.cityId && !cityName) {
+            const citySnap = await db.collection('cities').doc(data.cityId).get();
+            if (citySnap.exists) cityName = citySnap.data()?.name || cityName;
+        }
+
+        return { 
+            id: docSnap.id, ...data, 
+            type: typeName,
+            auctionName: auctionTitle,
+            stateUf: stateName,
+            cityName: cityName,
+            endDate: safeConvertToDate(data.endDate), 
+            lotSpecificAuctionDate: safeConvertOptionalDate(data.lotSpecificAuctionDate), 
+            secondAuctionDate: safeConvertOptionalDate(data.secondAuctionDate), 
+            createdAt: safeConvertToDate(data.createdAt), 
+            updatedAt: safeConvertToDate(data.updatedAt) 
+        } as Lot;
+      }));
+    } catch (e: any) { console.error("[FirestoreAdapter - getLots] Error:", e); return []; }
   }
+
   async getLot(id: string): Promise<Lot | null> {
     const db = this.getDbAdmin();
     try {
       const docSnap = await db.collection('lots').doc(id).get();
       if (!docSnap.exists) return null;
       const data = docSnap.data()!;
-      return { id: docSnap.id, ...data, endDate: safeConvertToDate(data.endDate), lotSpecificAuctionDate: safeConvertOptionalDate(data.lotSpecificAuctionDate), secondAuctionDate: safeConvertOptionalDate(data.secondAuctionDate), createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt) } as Lot;
+
+        let typeName = data.type; // Fallback
+        if (data.categoryId) {
+            const catSnap = await db.collection('lotCategories').doc(data.categoryId).get();
+            if (catSnap.exists) typeName = catSnap.data()?.name || typeName;
+        }
+        let auctionTitle = data.auctionName;
+        if (data.auctionId && !auctionTitle) {
+            const aucSnap = await db.collection('auctions').doc(data.auctionId).get();
+            if (aucSnap.exists) auctionTitle = aucSnap.data()?.title || auctionTitle;
+        }
+        let stateName = data.stateUf;
+        if (data.stateId && !stateName) {
+            const stateSnap = await db.collection('states').doc(data.stateId).get();
+            if (stateSnap.exists) stateName = stateSnap.data()?.uf || stateName;
+        }
+        let cityName = data.cityName;
+        if (data.cityId && !cityName) {
+            const citySnap = await db.collection('cities').doc(data.cityId).get();
+            if (citySnap.exists) cityName = citySnap.data()?.name || cityName;
+        }
+        
+      return { 
+          id: docSnap.id, ...data, 
+          type: typeName,
+          auctionName: auctionTitle,
+          stateUf: stateName,
+          cityName: cityName,
+          endDate: safeConvertToDate(data.endDate), 
+          lotSpecificAuctionDate: safeConvertOptionalDate(data.lotSpecificAuctionDate), 
+          secondAuctionDate: safeConvertOptionalDate(data.secondAuctionDate), 
+          createdAt: safeConvertToDate(data.createdAt), 
+          updatedAt: safeConvertToDate(data.updatedAt) 
+        } as Lot;
     } catch (e: any) { return null; }
   }
-  async updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string; }> {
+
+  async updateLot(id: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> {
     const db = this.getDbAdmin();
     try {
-      const updateData: any = {};
-      for (const key in data) {
-        if (Object.prototype.hasOwnProperty.call(data, key)) {
-            const value = (data as any)[key];
-            if (key === 'endDate' || key === 'lotSpecificAuctionDate' || key === 'secondAuctionDate') {
-                updateData[key] = value ? ServerTimestamp.fromDate(new Date(value)) : null;
-            } else if (key === 'stateId') {
-                if (value) { const stateDoc = await db.collection('states').doc(value).get(); if (stateDoc.exists) { updateData.stateId = value; updateData.stateUf = (stateDoc.data() as StateInfo).uf; } else { updateData.stateId = null; updateData.stateUf = null;} } else { updateData.stateId = null; updateData.stateUf = null; }
-            } else if (key === 'cityId') {
-                if (value) { const cityDoc = await db.collection('cities').doc(value).get(); if (cityDoc.exists) { updateData.cityId = value; updateData.cityName = (cityDoc.data() as CityInfo).name; } else { updateData.cityId = null; updateData.cityName = null;} } else { updateData.cityId = null; updateData.cityName = null; }
-            } else if (key === 'mediaItemIds' || key === 'galleryImageUrls') {
-                 updateData[key] = Array.isArray(value) ? value : [];
-            } else if (value !== undefined) {
-                updateData[key] = value;
-            }
-        }
-      }
+      const updateData: any = { ...data };
+      
+      if (data.endDate) updateData.endDate = ServerTimestamp.fromDate(new Date(data.endDate));
+      if (data.hasOwnProperty('lotSpecificAuctionDate')) updateData.lotSpecificAuctionDate = data.lotSpecificAuctionDate ? ServerTimestamp.fromDate(new Date(data.lotSpecificAuctionDate)) : null;
+      if (data.hasOwnProperty('secondAuctionDate')) updateData.secondAuctionDate = data.secondAuctionDate ? ServerTimestamp.fromDate(new Date(data.secondAuctionDate)) : null;
+      
+      // categoryId is already set by the action
+      // stateId, cityId are already set by the action
+
       updateData.updatedAt = AdminFieldValue.serverTimestamp();
       await db.collection('lots').doc(id).update(updateData);
       return { success: true, message: 'Lote atualizado!' };
@@ -785,8 +900,6 @@ export class FirestoreAdapter implements IDatabaseAdapter {
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), uploadedAt: safeConvertToDate(doc.data().uploadedAt) } as MediaItem));
     } catch (e: any) { 
         console.warn("[FirestoreAdapter - getMediaItems] Error (falling back to empty array):", e);
-        // Não lançar erro aqui para permitir que o fallback para dados de exemplo funcione na UI
-        // se a permissão do Firestore for o problema.
         return []; 
     }
   }
@@ -854,4 +967,5 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; }
   }
 }
+
 

@@ -7,8 +7,8 @@ import type {
   CityInfo, CityFormData,
   AuctioneerProfileInfo, AuctioneerFormData,
   SellerProfileInfo, SellerFormData,
-  Auction, AuctionFormData,
-  Lot, LotFormData,
+  Auction, AuctionFormData, AuctionDbData,
+  Lot, LotFormData, LotDbData,
   BidInfo,
   UserProfileData, EditableUserProfileData, UserHabilitationStatus,
   Role, RoleFormData,
@@ -191,6 +191,126 @@ function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProf
     return profile;
 }
 
+function mapToAuction(row: QueryResultRow): Auction {
+    return {
+        id: String(row.id),
+        title: row.title,
+        fullTitle: row.fullTitle,
+        description: row.description,
+        status: row.status as AuctionStatus,
+        auctionType: row.auctionType,
+        category: row.categoryName, // From JOIN
+        categoryId: row.categoryId ? String(row.categoryId) : undefined,
+        auctioneer: row.auctioneerName, // From JOIN
+        auctioneerId: row.auctioneerId ? String(row.auctioneerId) : undefined,
+        seller: row.sellerName, // From JOIN
+        sellerId: row.sellerId ? String(row.sellerId) : undefined,
+        auctionDate: new Date(row.auctionDate),
+        endDate: row.endDate ? new Date(row.endDate) : null,
+        auctionStages: row.auctionStages || [], // Assumes it's already parsed if JSONB
+        city: row.city,
+        state: row.state,
+        imageUrl: row.imageUrl,
+        dataAiHint: row.dataAiHint,
+        documentsUrl: row.documentsUrl,
+        totalLots: Number(row.totalLots || 0),
+        visits: Number(row.visits || 0),
+        initialOffer: row.initialOffer !== null ? Number(row.initialOffer) : undefined,
+        isFavorite: row.isFavorite,
+        currentBid: row.currentBid !== null ? Number(row.currentBid) : undefined,
+        bidsCount: Number(row.bidsCount || 0),
+        sellingBranch: row.sellingBranch,
+        vehicleLocation: row.vehicleLocation,
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+        auctioneerLogoUrl: row.auctioneerLogoUrl, 
+        lots: [] // Lots are typically fetched separately or via a different relation
+    };
+}
+
+function mapToLot(row: QueryResultRow): Lot {
+  return {
+    id: String(row.id),
+    auctionId: String(row.auctionId),
+    title: row.title,
+    number: row.number,
+    imageUrl: row.imageUrl,
+    dataAiHint: row.dataAiHint,
+    galleryImageUrls: row.galleryImageUrls || [],
+    mediaItemIds: row.mediaItemIds || [],
+    status: row.status as LotStatus,
+    stateId: row.stateId ? String(row.stateId) : undefined,
+    cityId: row.cityId ? String(row.cityId) : undefined,
+    cityName: row.cityName, // From JOIN
+    stateUf: row.stateUf,   // From JOIN
+    type: row.categoryName,  // From JOIN (lot_categories.name)
+    categoryId: row.categoryId ? String(row.categoryId) : undefined,
+    views: Number(row.views || 0),
+    auctionName: row.auctionName, // From JOIN
+    price: Number(row.price),
+    initialPrice: row.initialPrice !== null ? Number(row.initialPrice) : undefined,
+    lotSpecificAuctionDate: row.lotSpecificAuctionDate ? new Date(row.lotSpecificAuctionDate) : null,
+    secondAuctionDate: row.secondAuctionDate ? new Date(row.secondAuctionDate) : null,
+    secondInitialPrice: row.secondInitialPrice !== null ? Number(row.secondInitialPrice) : undefined,
+    endDate: new Date(row.endDate),
+    bidsCount: Number(row.bidsCount || 0),
+    isFavorite: row.isFavorite,
+    isFeatured: row.isFeatured,
+    description: row.description,
+    year: row.year !== null ? Number(row.year) : undefined,
+    make: row.make,
+    model: row.model,
+    series: row.series,
+    stockNumber: row.stockNumber,
+    sellingBranch: row.sellingBranch,
+    vin: row.vin,
+    vinStatus: row.vinStatus,
+    lossType: row.lossType,
+    primaryDamage: row.primaryDamage,
+    titleInfo: row.titleInfo,
+    titleBrand: row.titleBrand,
+    startCode: row.startCode,
+    hasKey: row.hasKey,
+    odometer: row.odometer,
+    airbagsStatus: row.airbagsStatus,
+    bodyStyle: row.bodyStyle,
+    engineDetails: row.engineDetails,
+    transmissionType: row.transmissionType,
+    driveLineType: row.driveLineType,
+    fuelType: row.fuelType,
+    cylinders: row.cylinders,
+    restraintSystem: row.restraintSystem,
+    exteriorInteriorColor: row.exteriorInteriorColor,
+    options: row.options,
+    manufacturedIn: row.manufacturedIn,
+    vehicleClass: row.vehicleClass,
+    vehicleLocationInBranch: row.vehicleLocationInBranch,
+    laneRunNumber: row.laneRunNumber,
+    aisleStall: row.aisleStall,
+    actualCashValue: row.actualCashValue,
+    estimatedRepairCost: row.estimatedRepairCost,
+    sellerName: row.lotSellerName, // From JOIN with sellers
+    sellerId: row.sellerIdFk ? String(row.sellerIdFk) : undefined,
+    auctioneerName: row.lotAuctioneerName, // From JOIN with auctioneers
+    auctioneerId: row.auctioneerIdFk ? String(row.auctioneerIdFk) : undefined,
+    condition: row.condition,
+    createdAt: new Date(row.createdAt),
+    updatedAt: new Date(row.updatedAt),
+  };
+}
+
+function mapToBidInfo(row: QueryResultRow): BidInfo {
+    return {
+        id: String(row.id),
+        lotId: String(row.lotId),
+        auctionId: String(row.auctionId),
+        bidderId: row.bidderId,
+        bidderDisplay: row.bidderDisplayName,
+        amount: parseFloat(row.amount),
+        timestamp: new Date(row.timestamp),
+    };
+}
+
 
 export class PostgresAdapter implements IDatabaseAdapter {
   constructor() {
@@ -254,7 +374,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         spouse_cpf VARCHAR(20),
         zip_code VARCHAR(10),
         street VARCHAR(255),
-        "number" VARCHAR(20),
+        number VARCHAR(20),
         complement VARCHAR(100),
         neighborhood VARCHAR(100),
         city VARCHAR(100),
@@ -411,9 +531,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
         status VARCHAR(50) NOT NULL,
         state_id INTEGER REFERENCES states(id) ON DELETE SET NULL,
         city_id INTEGER REFERENCES cities(id) ON DELETE SET NULL,
-        type VARCHAR(100),
+        category_id INTEGER REFERENCES lot_categories(id) ON DELETE SET NULL,
         views INTEGER DEFAULT 0,
-        auction_name VARCHAR(255),
         price NUMERIC(15,2) NOT NULL,
         initial_price NUMERIC(15,2),
         lot_specific_auction_date TIMESTAMPTZ,
@@ -456,9 +575,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         aisle_stall VARCHAR(50),
         actual_cash_value VARCHAR(50),
         estimated_repair_cost VARCHAR(50),
-        seller_name VARCHAR(255),
         seller_id_fk INTEGER REFERENCES sellers(id) ON DELETE SET NULL,
-        auctioneer_name VARCHAR(255),
         auctioneer_id_fk INTEGER REFERENCES auctioneers(id) ON DELETE SET NULL,
         condition TEXT,
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
@@ -466,7 +583,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       );`,
       `CREATE INDEX IF NOT EXISTS idx_lots_auction_id ON lots(auction_id);`,
       `CREATE INDEX IF NOT EXISTS idx_lots_status ON lots(status);`,
-      `CREATE INDEX IF NOT EXISTS idx_lots_type ON lots(type);`,
+      `CREATE INDEX IF NOT EXISTS idx_lots_category_id ON lots(category_id);`,
 
       `CREATE TABLE IF NOT EXISTS media_items (
         id SERIAL PRIMARY KEY,
@@ -658,7 +775,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
     try {
       const fields: string[] = [];
       const values: any[] = [];
-      let query = 'UPDATE states SET ';
       let paramCount = 1;
       if (data.name) { fields.push(`name = $${paramCount++}`); values.push(data.name); fields.push(`slug = $${paramCount++}`); values.push(slugify(data.name)); }
       if (data.uf) { fields.push(`uf = $${paramCount++}`); values.push(data.uf.toUpperCase()); }
@@ -836,8 +952,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       const query = `
         INSERT INTO sellers 
           (name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since, rating, active_lots_count, total_sales_value, auctions_facilitated_count, user_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), 0, 0, 0, 0, $15, NOW(), NOW())
-        RETURNING id;
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), 0, 0, 0, 0, $15, NOW(), NOW());
       `;
       const values = [
         data.name, slug, data.contactName || null, data.email || null, data.phone || null,
@@ -910,363 +1025,311 @@ export class PostgresAdapter implements IDatabaseAdapter {
     } catch (e: any) { console.error(`[PostgresAdapter - deleteSeller(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
 
-  // --- Users ---
-  async getUserProfileData(userId: string): Promise<UserProfileData | null> {
+
+  // --- Auctions ---
+  async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; }> {
     const client = await getPool().connect();
     try {
       const query = `
-        SELECT up.*, r.name as role_name_from_join, r.permissions as role_permissions_from_join 
-        FROM user_profiles up 
-        LEFT JOIN roles r ON up.role_id = r.id 
-        WHERE up.uid = $1
+        INSERT INTO auctions 
+          (title, full_title, description, status, auction_type, category_id, auctioneer_id, seller_id, auction_date, end_date, auction_stages, city, state, image_url, data_ai_hint, documents_url, total_lots, visits, initial_offer, selling_branch, vehicle_location, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 0, 0, $17, $18, $19, NOW(), NOW());
       `;
-      const res = await client.query(query, [userId]);
-      if (res.rowCount === 0) return null;
-      const row = mapRowToCamelCase(res.rows[0]);
-      return mapToUserProfileData(row, { name: row.roleNameFromJoin, permissions: row.rolePermissionsFromJoin } as Role);
-    } catch (e: any) {
-      console.error(`[PostgresAdapter - getUserProfileData(${userId})] Error:`, e);
-      return null;
-    } finally {
-      client.release();
-    }
-  }
-
-  async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
-    const client = await getPool().connect();
-    try {
-      const fieldsToUpdate: string[] = [];
-      const values: any[] = [];
-      let paramCount = 1;
-
-      (Object.keys(data) as Array<keyof EditableUserProfileData>).forEach(key => {
-        if (data[key] !== undefined) {
-            const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
-            fieldsToUpdate.push(`"${sqlColumn}" = $${paramCount++}`); // Ensure "number" is quoted
-            values.push(data[key] === '' ? null : data[key]);
-        }
-      });
-      
-      if (fieldsToUpdate.length === 0) {
-        return { success: true, message: 'Nenhum dado para atualizar.' };
-      }
-
-      fieldsToUpdate.push(`updated_at = NOW()`);
-      values.push(userId);
-
-      const queryText = `UPDATE user_profiles SET ${fieldsToUpdate.join(', ')} WHERE uid = $${paramCount}`;
-      await client.query(queryText, values);
-      return { success: true, message: 'Perfil de usuário atualizado (PostgreSQL)!' };
-    } catch (e: any) {
-      console.error(`[PostgresAdapter - updateUserProfile(${userId})] Error:`, e);
-      return { success: false, message: e.message };
-    } finally {
-      client.release();
-    }
+      const values = [
+        data.title, data.fullTitle || null, data.description || null, data.status, data.auctionType || null,
+        data.categoryId ? Number(data.categoryId) : null, 
+        data.auctioneerId ? Number(data.auctioneerId) : null, 
+        data.sellerId ? Number(data.sellerId) : null,
+        data.auctionDate, data.endDate || null, data.auctionStages ? JSON.stringify(data.auctionStages) : null,
+        data.city || null, data.state || null, data.imageUrl || null, data.dataAiHint || null, data.documentsUrl || null,
+        data.initialOffer || null, data.sellingBranch || null, data.vehicleLocation || null
+      ];
+      const res = await client.query(query, values);
+      return { success: true, message: 'Leilão criado (PostgreSQL)!', auctionId: String(res.rows[0].id) };
+    } catch (e: any) { console.error(`[PostgresAdapter - createAuction] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
   
-  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }> {
-    const client = await getPool().connect();
-    try {
-      await client.query('BEGIN');
-      const existingUserRes = await client.query('SELECT * FROM user_profiles WHERE uid = $1', [userId]);
-      let userProfileData: UserProfileData;
-      let roleToAssign = await this.getRoleByName(targetRoleName); // This makes its own connection
-
-      if (!roleToAssign) {
-        await this.ensureDefaultRolesExist(); // This makes its own connection
-        roleToAssign = await this.getRoleByName('USER'); // This makes its own connection
-        if (!roleToAssign) {
-          await client.query('ROLLBACK');
-          return { success: false, message: `Perfil padrão USER não encontrado e não pôde ser criado.` };
-        }
-      }
-      
-      const permissionsToAssign = roleToAssign.permissions || [];
-
-      if (existingUserRes.rowCount > 0) {
-        const dbUser = mapRowToCamelCase(existingUserRes.rows[0]);
-        const updateFields: string[] = [];
-        const updateValues: any[] = [];
-        let paramIdx = 1;
-        let needsUpdate = false;
-
-        if (String(dbUser.roleId) !== roleToAssign.id) { updateFields.push(`role_id = $${paramIdx++}`); updateValues.push(Number(roleToAssign.id)); needsUpdate = true; }
-        if (JSON.stringify(dbUser.permissions || []) !== JSON.stringify(permissionsToAssign)) {
-            updateFields.push(`permissions = $${paramIdx++}`); updateValues.push(JSON.stringify(permissionsToAssign)); needsUpdate = true;
-        }
-        
-        if (needsUpdate) {
-            updateFields.push(`updated_at = NOW()`);
-            const query = `UPDATE user_profiles SET ${updateFields.join(', ')} WHERE uid = $${paramIdx}`;
-            updateValues.push(userId);
-            await client.query(query, updateValues);
-        }
-        userProfileData = mapToUserProfileData(dbUser, roleToAssign);
-      } else {
-        const habilitation = targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS';
-        const insertQuery = `
-          INSERT INTO user_profiles (uid, email, full_name, role_id, permissions, status, habilitation_status, created_at, updated_at)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW()) RETURNING *;
-        `;
-        const insertRes = await client.query(insertQuery, [userId, email.toLowerCase(), fullName, Number(roleToAssign.id), JSON.stringify(permissionsToAssign), 'ATIVO', habilitation]);
-        userProfileData = mapToUserProfileData(mapRowToCamelCase(insertRes.rows[0]), roleToAssign);
-      }
-      await client.query('COMMIT');
-      return { success: true, message: 'Perfil de usuário assegurado/atualizado (PostgreSQL).', userProfile: userProfileData };
-    } catch (e: any) {
-      await client.query('ROLLBACK');
-      console.error(`[PostgresAdapter - ensureUserRole(${userId})] Error:`, e);
-      return { success: false, message: e.message };
-    } finally {
-      client.release();
-    }
-  }
-
-  async getUsersWithRoles(): Promise<UserProfileData[]> {
+  async getAuctions(): Promise<Auction[]> {
     const client = await getPool().connect();
     try {
       const query = `
-        SELECT up.*, r.name as role_name_from_join, r.permissions as role_permissions_from_join 
-        FROM user_profiles up 
-        LEFT JOIN roles r ON up.role_id = r.id 
-        ORDER BY up.full_name ASC;
+        SELECT a.*, lc.name as category_name, act.name as auctioneer_name, s.name as seller_name, act.logo_url as auctioneer_logo_url
+        FROM auctions a
+        LEFT JOIN lot_categories lc ON a.category_id = lc.id
+        LEFT JOIN auctioneers act ON a.auctioneer_id = act.id
+        LEFT JOIN sellers s ON a.seller_id = s.id
+        ORDER BY a.auction_date DESC;
       `;
       const res = await client.query(query);
-      return mapRowsToCamelCase(res.rows).map(row => mapToUserProfileData(row, { name: row.roleNameFromJoin, permissions: row.rolePermissionsFromJoin } as Role));
-    } catch (e: any) {
-      console.error(`[PostgresAdapter - getUsersWithRoles] Error:`, e);
-      return [];
-    } finally {
-      client.release();
-    }
+      return mapRowsToCamelCase(res.rows).map(mapToAuction);
+    } catch (e: any) { console.error(`[PostgresAdapter - getAuctions] Error:`, e); return []; } finally { client.release(); }
   }
 
-  async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
+  async getAuction(id: string): Promise<Auction | null> {
     const client = await getPool().connect();
     try {
-      let newRoleIdInt: number | null = null;
-      let newPermissions: string[] = [];
-      if (roleId && roleId !== "---NONE---") {
-        const role = await this.getRole(roleId); // This uses its own connection
-        if (!role) return { success: false, message: "Perfil não encontrado." };
-        newRoleIdInt = Number(role.id); // PG ID is number
-        newPermissions = role.permissions || [];
-      }
-      
-      await client.query(
-        'UPDATE user_profiles SET role_id = $1, permissions = $2, updated_at = NOW() WHERE uid = $3',
-        [newRoleIdInt, JSON.stringify(newPermissions), userId]
-      );
-      return { success: true, message: 'Perfil do usuário atualizado (PostgreSQL)!' };
-    } catch (e: any) {
-      console.error(`[PostgresAdapter - updateUserRole(${userId})] Error:`, e);
-      return { success: false, message: e.message };
-    } finally {
-      client.release();
-    }
-  }
-
-  async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> {
-    const client = await getPool().connect();
-    try {
-      await client.query('DELETE FROM user_profiles WHERE uid = $1', [userId]);
-      return { success: true, message: 'Perfil de usuário excluído do DB (PostgreSQL)!' };
-    } catch (e: any) {
-      console.error(`[PostgresAdapter - deleteUserProfile(${userId})] Error:`, e);
-      return { success: false, message: e.message };
-    } finally {
-      client.release();
-    }
-  }
-
-  // --- Roles ---
-  async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> {
-    const client = await getPool().connect();
-    try {
-      const normalizedName = data.name.trim().toUpperCase();
-      const existingRes = await client.query('SELECT id FROM roles WHERE name_normalized = $1 LIMIT 1', [normalizedName]);
-      if (existingRes.rowCount > 0) {
-        return { success: false, message: `Perfil "${data.name}" já existe (PostgreSQL).`};
-      }
-      const validPermissions = JSON.stringify((data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p)));
       const query = `
-        INSERT INTO roles (name, name_normalized, description, permissions, created_at, updated_at) 
-        VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING id;
+        SELECT a.*, lc.name as category_name, act.name as auctioneer_name, s.name as seller_name, act.logo_url as auctioneer_logo_url
+        FROM auctions a
+        LEFT JOIN lot_categories lc ON a.category_id = lc.id
+        LEFT JOIN auctioneers act ON a.auctioneer_id = act.id
+        LEFT JOIN sellers s ON a.seller_id = s.id
+        WHERE a.id = $1;
       `;
-      const res = await client.query(query, [data.name.trim(), normalizedName, data.description || null, validPermissions]);
-      return { success: true, message: 'Perfil criado (PostgreSQL)!', roleId: String(res.rows[0].id) };
-    } catch (e: any) {
-      console.error(`[PostgresAdapter - createRole] Error:`, e);
-      return { success: false, message: e.message };
-    } finally {
-      client.release();
-    }
-  }
-
-  async getRoles(): Promise<Role[]> {
-    const client = await getPool().connect();
-    try {
-      const res = await client.query('SELECT * FROM roles ORDER BY name ASC;');
-      return mapRowsToCamelCase(res.rows).map(mapToRole);
-    } catch (e: any) {
-      console.error(`[PostgresAdapter - getRoles] Error:`, e);
-      return [];
-    } finally {
-      client.release();
-    }
-  }
-
-  async getRole(id: string): Promise<Role | null> {
-    const client = await getPool().connect();
-    try {
-      const res = await client.query('SELECT * FROM roles WHERE id = $1', [Number(id)]);
+      const res = await client.query(query, [Number(id)]);
       if (res.rowCount === 0) return null;
-      return mapToRole(mapRowToCamelCase(res.rows[0]));
-    } catch (e: any) {
-      console.error(`[PostgresAdapter - getRole(${id})] Error:`, e);
-      return null;
-    } finally {
-      client.release();
-    }
+      return mapToAuction(mapRowToCamelCase(res.rows[0]));
+    } catch (e: any) { console.error(`[PostgresAdapter - getAuction(${id})] Error:`, e); return null; } finally { client.release(); }
   }
 
-  async getRoleByName(name: string): Promise<Role | null> {
+  async getAuctionsBySellerSlug(sellerSlug: string): Promise<Auction[]> {
     const client = await getPool().connect();
     try {
-      const normalizedName = name.trim().toUpperCase();
-      const res = await client.query('SELECT * FROM roles WHERE name_normalized = $1 LIMIT 1', [normalizedName]);
-      if (res.rowCount === 0) return null;
-      return mapToRole(mapRowToCamelCase(res.rows[0]));
-    } catch (e: any) {
-      console.error(`[PostgresAdapter - getRoleByName(${name})] Error:`, e);
-      return null;
-    } finally {
-      client.release();
-    }
-  }
-  
-  async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> {
-    const client = await getPool().connect();
-    try {
-      const currentRole = await this.getRole(id); // This uses its own connection
-      if (!currentRole) return { success: false, message: 'Perfil não encontrado.' };
+        const sellerRes = await client.query('SELECT id FROM sellers WHERE slug = $1 LIMIT 1', [sellerSlug]);
+        if (sellerRes.rowCount === 0) return [];
+        const sellerId = sellerRes.rows[0].id;
 
-      const fieldsToUpdate: string[] = [];
+        const query = `
+            SELECT a.*, lc.name as category_name, act.name as auctioneer_name, s.name as seller_name, act.logo_url as auctioneer_logo_url
+            FROM auctions a
+            LEFT JOIN lot_categories lc ON a.category_id = lc.id
+            LEFT JOIN auctioneers act ON a.auctioneer_id = act.id
+            LEFT JOIN sellers s ON a.seller_id = s.id
+            WHERE a.seller_id = $1
+            ORDER BY a.auction_date DESC;
+        `;
+        const res = await client.query(query, [sellerId]);
+        return mapRowsToCamelCase(res.rows).map(mapToAuction);
+    } catch (e: any) { console.error(`[PostgresAdapter - getAuctionsBySellerSlug(${sellerSlug})] Error:`, e); return []; } finally { client.release(); }
+  }
+
+  async updateAuction(id: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      const fields: string[] = [];
       const values: any[] = [];
       let paramCount = 1;
 
-      if (data.name && data.name.trim() !== currentRole.name) {
-        const normalizedName = data.name.trim().toUpperCase();
-        if (currentRole.name_normalized !== 'ADMINISTRATOR' && currentRole.name_normalized !== 'USER') {
-            const existingRes = await client.query('SELECT id FROM roles WHERE name_normalized = $1 AND id != $2 LIMIT 1', [normalizedName, Number(id)]);
-            if (existingRes.rowCount > 0) return { success: false, message: `Perfil com nome "${data.name}" já existe.`};
-            fieldsToUpdate.push(`name_normalized = $${paramCount++}`); values.push(normalizedName);
+      (Object.keys(data) as Array<keyof AuctionDbData>).forEach(key => {
+        if (data[key] !== undefined && key !== 'auctionDate' && key !== 'endDate' && key !== 'auctionStages') {
+            const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+            fields.push(`${sqlColumn} = $${paramCount++}`);
+            values.push(data[key] === '' || data[key] === null ? null : data[key]);
         }
-        fieldsToUpdate.push(`name = $${paramCount++}`); values.push(data.name.trim());
-      }
-      if (data.description !== undefined && data.description !== currentRole.description) {
-        fieldsToUpdate.push(`description = $${paramCount++}`); values.push(data.description || null);
-      }
-      if (data.permissions !== undefined && JSON.stringify((data.permissions || []).sort()) !== JSON.stringify((currentRole.permissions || []).sort())) {
-        fieldsToUpdate.push(`permissions = $${paramCount++}`);
-        values.push(JSON.stringify((data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p))));
-      }
-      
-      if (fieldsToUpdate.length === 0) {
-        return { success: true, message: 'Nenhum dado para atualizar no perfil (PostgreSQL).' };
-      }
+      });
+      if (data.auctionDate) { fields.push(`auction_date = $${paramCount++}`); values.push(data.auctionDate); }
+      if (data.hasOwnProperty('endDate')) { fields.push(`end_date = $${paramCount++}`); values.push(data.endDate); }
+      if (data.auctionStages) { fields.push(`auction_stages = $${paramCount++}`); values.push(JSON.stringify(data.auctionStages)); }
 
-      fieldsToUpdate.push(`updated_at = NOW()`);
+
+      if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o leilão." };
+
+      fields.push(`updated_at = NOW()`);
+      const queryText = `UPDATE auctions SET ${fields.join(', ')} WHERE id = $${paramCount}`;
       values.push(Number(id));
-      const queryText = `UPDATE roles SET ${fieldsToUpdate.join(', ')} WHERE id = $${paramCount}`;
-      
+
       await client.query(queryText, values);
-      return { success: true, message: 'Perfil atualizado (PostgreSQL)!' };
-    } catch (e: any) {
-      console.error(`[PostgresAdapter - updateRole(${id})] Error:`, e);
-      return { success: false, message: e.message };
-    } finally {
-      client.release();
-    }
+      return { success: true, message: 'Leilão atualizado (PostgreSQL)!' };
+    } catch (e: any) { console.error(`[PostgresAdapter - updateAuction(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
 
-  async deleteRole(id: string): Promise<{ success: boolean; message: string; }> {
+  async deleteAuction(id: string): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
-      const role = await this.getRole(id); // This uses its own connection
-      if (role && (role.name_normalized === 'ADMINISTRATOR' || role.name_normalized === 'USER')) {
-        return { success: false, message: 'Perfis de sistema não podem ser excluídos.' };
-      }
-      await client.query('DELETE FROM roles WHERE id = $1', [Number(id)]);
-      return { success: true, message: 'Perfil excluído (PostgreSQL)!' };
-    } catch (e: any) {
-      console.error(`[PostgresAdapter - deleteRole(${id})] Error:`, e);
-      return { success: false, message: e.message };
-    } finally {
-      client.release();
-    }
+      await client.query('DELETE FROM auctions WHERE id = $1;', [Number(id)]);
+      return { success: true, message: 'Leilão excluído (PostgreSQL)!' };
+    } catch (e: any) { console.error(`[PostgresAdapter - deleteAuction(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
+  }
+
+  // --- Lots ---
+  async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; }> {
+    const client = await getPool().connect();
+    try {
+      const query = `
+        INSERT INTO lots (
+          auction_id, title, "number", image_url, data_ai_hint, gallery_image_urls, media_item_ids, status, 
+          state_id, city_id, category_id, views, price, initial_price, 
+          lot_specific_auction_date, second_auction_date, second_initial_price, end_date, 
+          bids_count, is_favorite, is_featured, description, year, make, model, series,
+          stock_number, selling_branch, vin, vin_status, loss_type, primary_damage, title_info,
+          title_brand, start_code, has_key, odometer, airbags_status, body_style, engine_details,
+          transmission_type, drive_line_type, fuel_type, cylinders, restraint_system,
+          exterior_interior_color, options, manufactured_in, vehicle_class,
+          vehicle_location_in_branch, lane_run_number, aisle_stall, actual_cash_value,
+          estimated_repair_cost, seller_id_fk, auctioneer_id_fk, condition,
+          created_at, updated_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
+          $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38,
+          $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, $55, $56,
+          NOW(), NOW()
+        ) RETURNING id;
+      `;
+      const values = [
+        Number(data.auctionId), data.title, data.number || null, data.imageUrl || null, data.dataAiHint || null,
+        JSON.stringify(data.galleryImageUrls || []), JSON.stringify(data.mediaItemIds || []), data.status,
+        data.stateId ? Number(data.stateId) : null, data.cityId ? Number(data.cityId) : null, data.categoryId ? Number(data.categoryId) : null,
+        data.views || 0, data.price, data.initialPrice || null,
+        data.lotSpecificAuctionDate || null, data.secondAuctionDate || null, data.secondInitialPrice || null, data.endDate,
+        data.bidsCount || 0, data.isFavorite || false, data.isFeatured || false, data.description || null,
+        data.year || null, data.make || null, data.model || null, data.series || null, data.stockNumber || null,
+        data.sellingBranch || null, data.vin || null, data.vinStatus || null, data.lossType || null,
+        data.primaryDamage || null, data.titleInfo || null, data.titleBrand || null, data.startCode || null,
+        data.hasKey === undefined ? null : data.hasKey, data.odometer || null, data.airbagsStatus || null,
+        data.bodyStyle || null, data.engineDetails || null, data.transmissionType || null, data.driveLineType || null,
+        data.fuelType || null, data.cylinders || null, data.restraintSystem || null, data.exteriorInteriorColor || null,
+        data.options || null, data.manufacturedIn || null, data.vehicleClass || null,
+        data.vehicleLocationInBranch || null, data.laneRunNumber || null, data.aisleStall || null,
+        data.actualCashValue || null, data.estimatedRepairCost || null,
+        data.sellerId ? Number(data.sellerId) : null,
+        data.auctioneerId ? Number(data.auctioneerId) : null,
+        data.condition || null
+      ];
+      const res = await client.query(query, values);
+      return { success: true, message: 'Lote criado (PostgreSQL)!', lotId: String(res.rows[0].id) };
+    } catch (e: any) { console.error(`[PostgresAdapter - createLot] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
   
-  async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; }> {
-    const defaultRolesData: RoleFormData[] = [ 
-      { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
-      { name: 'USER', description: 'Usuário padrão.', permissions: ['view_auctions', 'place_bids', 'view_lots'] },
-      { name: 'CONSIGNOR', description: 'Comitente.', permissions: ['auctions:manage_own', 'lots:manage_own', 'view_reports', 'media:upload'] },
-      { name: 'AUCTIONEER', description: 'Leiloeiro.', permissions: ['auctions:manage_assigned', 'lots:read', 'lots:update', 'conduct_auctions'] },
-      { name: 'AUCTION_ANALYST', description: 'Analista de Leilões.', permissions: ['categories:read', 'states:read', 'users:read', 'view_reports'] }
-    ];
+  async getLots(auctionIdParam?: string): Promise<Lot[]> {
     const client = await getPool().connect();
     try {
-      await client.query('BEGIN');
-      for (const roleData of defaultRolesData) {
-        const normalizedName = roleData.name.trim().toUpperCase();
-        const existingRes = await client.query('SELECT * FROM roles WHERE name_normalized = $1 LIMIT 1', [normalizedName]);
-        
-        if (existingRes.rowCount === 0) {
-          const validPermissions = JSON.stringify((roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p)));
-          const query = `
-            INSERT INTO roles (name, name_normalized, description, permissions, created_at, updated_at) 
-            VALUES ($1, $2, $3, $4, NOW(), NOW());
-          `;
-          await client.query(query, [roleData.name.trim(), normalizedName, roleData.description || null, validPermissions]);
-        } else {
-          const role = mapToRole(mapRowToCamelCase(existingRes.rows[0]));
-          const currentPermissionsSorted = [...(role.permissions || [])].sort();
-          const expectedPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p)).sort();
-          if (JSON.stringify(currentPermissionsSorted) !== JSON.stringify(expectedPermissions) || role.description !== (roleData.description || null)) {
-            const updateQuery = `UPDATE roles SET description = $1, permissions = $2, updated_at = NOW() WHERE id = $3`;
-            await client.query(updateQuery, [roleData.description || null, JSON.stringify(expectedPermissions), Number(role.id)]);
-          }
-        }
+      let queryText = `
+        SELECT 
+          l.*, 
+          a.title as auction_name, 
+          lc.name as category_name, 
+          s.uf as state_uf, 
+          ci.name as city_name,
+          sel.name as lot_seller_name,
+          act.name as lot_auctioneer_name
+        FROM lots l
+        LEFT JOIN auctions a ON l.auction_id = a.id
+        LEFT JOIN lot_categories lc ON l.category_id = lc.id
+        LEFT JOIN states s ON l.state_id = s.id
+        LEFT JOIN cities ci ON l.city_id = ci.id
+        LEFT JOIN sellers sel ON l.seller_id_fk = sel.id
+        LEFT JOIN auctioneers act ON l.auctioneer_id_fk = act.id
+      `;
+      const values = [];
+      if (auctionIdParam) {
+        queryText += ' WHERE l.auction_id = $1';
+        values.push(Number(auctionIdParam));
+        queryText += ' ORDER BY l.title ASC;';
+      } else {
+        queryText += ' ORDER BY l.created_at DESC;';
       }
-      await client.query('COMMIT');
-      return { success: true, message: 'Perfis padrão verificados/criados (PostgreSQL).'};
-    } catch (e: any) {
-      await client.query('ROLLBACK');
-      console.error(`[PostgresAdapter - ensureDefaultRolesExist] Error:`, e);
-      return { success: false, message: e.message };
-    } finally {
-      client.release();
-    }
+      const res = await client.query(queryText, values);
+      return mapRowsToCamelCase(res.rows).map(mapToLot);
+    } catch (e: any) { console.error(`[PostgresAdapter - getLots] Error:`, e); return []; } finally { client.release(); }
   }
 
-  // --- Auctions (Scaffold) ---
-  async createAuction(data: AuctionFormData): Promise<{ success: boolean; message: string; auctionId?: string; }> { console.warn("PostgresAdapter.createAuction not implemented."); return {success: false, message: "Not implemented"}; }
-  async getAuctions(): Promise<Auction[]> { console.warn("PostgresAdapter.getAuctions not implemented."); return []; }
-  async getAuction(id: string): Promise<Auction | null> { console.warn("PostgresAdapter.getAuction not implemented."); return null; }
-  async getAuctionsBySellerSlug(sellerSlug: string): Promise<Auction[]> { console.warn("PostgresAdapter.getAuctionsBySellerSlug not implemented."); return [];}
-  async updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.updateAuction not implemented."); return {success: false, message: "Not implemented"}; }
-  async deleteAuction(id: string): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.deleteAuction not implemented."); return {success: false, message: "Not implemented"}; }
+  async getLot(id: string): Promise<Lot | null> {
+    const client = await getPool().connect();
+    try {
+      const queryText = `
+        SELECT 
+          l.*, 
+          a.title as auction_name, 
+          lc.name as category_name, 
+          s.uf as state_uf, 
+          ci.name as city_name,
+          sel.name as lot_seller_name,
+          act.name as lot_auctioneer_name
+        FROM lots l
+        LEFT JOIN auctions a ON l.auction_id = a.id
+        LEFT JOIN lot_categories lc ON l.category_id = lc.id
+        LEFT JOIN states s ON l.state_id = s.id
+        LEFT JOIN cities ci ON l.city_id = ci.id
+        LEFT JOIN sellers sel ON l.seller_id_fk = sel.id
+        LEFT JOIN auctioneers act ON l.auctioneer_id_fk = act.id
+        WHERE l.id = $1;
+      `;
+      const res = await client.query(queryText, [Number(id)]);
+      if (res.rowCount === 0) return null;
+      return mapToLot(mapRowToCamelCase(res.rows[0]));
+    } catch (e: any) { console.error(`[PostgresAdapter - getLot(${id})] Error:`, e); return null; } finally { client.release(); }
+  }
 
-  // --- Lots (Scaffold) ---
-  async createLot(data: LotFormData): Promise<{ success: boolean; message: string; lotId?: string; }> { console.warn("PostgresAdapter.createLot not implemented."); return {success: false, message: "Not implemented"}; }
-  async getLots(auctionIdParam?: string): Promise<Lot[]> { console.warn("PostgresAdapter.getLots not implemented."); return []; }
-  async getLot(id: string): Promise<Lot | null> { console.warn("PostgresAdapter.getLot not implemented."); return null; }
-  async updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.updateLot not implemented."); return {success: false, message: "Not implemented"}; }
-  async deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string; }> { console.warn("PostgresAdapter.deleteLot not implemented."); return {success: false, message: "Not implemented"}; }
-  async getBidsForLot(lotId: string): Promise<BidInfo[]> { console.warn("PostgresAdapter.getBidsForLot not implemented."); return []; }
-  async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }> { console.warn("PostgresAdapter.placeBidOnLot not implemented."); return {success: false, message: "Not implemented"}; }
+  async updateLot(id: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      const fields: string[] = [];
+      const values: any[] = [];
+      let paramCount = 1;
+
+      (Object.keys(data) as Array<keyof LotDbData>).forEach(key => {
+        if (data[key] !== undefined && key !== 'endDate' && key !== 'lotSpecificAuctionDate' && key !== 'secondAuctionDate' && key !== 'type' && key !== 'auctionName') {
+            const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+            const escapedColumn = sqlColumn === 'number' ? `"${sqlColumn}"` : sqlColumn;
+            fields.push(`${escapedColumn} = $${paramCount++}`);
+            const value = data[key];
+            if (key === 'galleryImageUrls' || key === 'mediaItemIds') {
+                values.push(JSON.stringify(value || []));
+            } else {
+                values.push(value === '' ? null : value);
+            }
+        }
+      });
+      if (data.endDate) { fields.push(`end_date = $${paramCount++}`); values.push(data.endDate); }
+      if (data.hasOwnProperty('lotSpecificAuctionDate')) { fields.push(`lot_specific_auction_date = $${paramCount++}`); values.push(data.lotSpecificAuctionDate); }
+      if (data.hasOwnProperty('secondAuctionDate')) { fields.push(`second_auction_date = $${paramCount++}`); values.push(data.secondAuctionDate); }
+      
+      if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o lote." };
+
+      fields.push(`updated_at = NOW()`);
+      const queryText = `UPDATE lots SET ${fields.join(', ')} WHERE id = $${paramCount}`;
+      values.push(Number(id));
+      
+      await client.query(queryText, values);
+      return { success: true, message: 'Lote atualizado (PostgreSQL)!' };
+    } catch (e: any) { console.error(`[PostgresAdapter - updateLot(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
+  }
+
+  async deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      await client.query('DELETE FROM lots WHERE id = $1', [Number(id)]);
+      return { success: true, message: 'Lote excluído (PostgreSQL)!' };
+    } catch (e: any) { console.error(`[PostgresAdapter - deleteLot(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
+  }
+
+  async getBidsForLot(lotId: string): Promise<BidInfo[]> {
+    const client = await getPool().connect();
+    try {
+        const query = 'SELECT * FROM bids WHERE lot_id = $1 ORDER BY "timestamp" DESC;';
+        const res = await client.query(query, [Number(lotId)]);
+        return mapRowsToCamelCase(res.rows).map(mapToBidInfo);
+    } catch (e: any) { console.error(`[PostgresAdapter - getBidsForLot(${lotId})] Error:`, e); return []; } finally { client.release(); }
+  }
+
+  async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }> {
+    const client = await getPool().connect();
+    try {
+        await client.query('BEGIN');
+        const lotRes = await client.query('SELECT price, bids_count FROM lots WHERE id = $1 FOR UPDATE', [Number(lotId)]);
+        if (lotRes.rowCount === 0) { await client.query('ROLLBACK'); return { success: false, message: "Lote não encontrado."}; }
+        const lotData = mapRowToCamelCase(lotRes.rows[0]);
+        if (bidAmount <= Number(lotData.price)) { await client.query('ROLLBACK'); return { success: false, message: "Lance deve ser maior que o atual."}; }
+        
+        const insertBidQuery = 'INSERT INTO bids (lot_id, auction_id, bidder_id, bidder_display_name, amount, "timestamp") VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *;';
+        const bidRes = await client.query(insertBidQuery, [Number(lotId), Number(auctionId), userId, userDisplayName, bidAmount]);
+        
+        const updateLotQuery = 'UPDATE lots SET price = $1, bids_count = bids_count + 1, updated_at = NOW() WHERE id = $2;';
+        await client.query(updateLotQuery, [bidAmount, Number(lotId)]);
+        
+        await client.query('COMMIT');
+        return { 
+            success: true, 
+            message: "Lance registrado!", 
+            updatedLot: { price: bidAmount, bidsCount: Number(lotData.bidsCount || 0) + 1 }, 
+            newBid: mapToBidInfo(mapRowToCamelCase(bidRes.rows[0]))
+        };
+    } catch (e: any) { 
+        await client.query('ROLLBACK');
+        console.error(`[PostgresAdapter - placeBidOnLot(${lotId})] Error:`, e); 
+        return { success: false, message: e.message }; 
+    } finally { client.release(); }
+  }
   
   // --- Media Items (Scaffold) ---
   async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> { console.warn("PostgresAdapter.createMediaItem not implemented."); return {success: false, message: "Not implemented"}; }

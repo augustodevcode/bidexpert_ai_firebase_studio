@@ -98,7 +98,8 @@ export interface Lot {
   cityId?: string; 
   cityName?: string; 
   stateUf?: string; 
-  type: string; 
+  type: string; // Nome da Categoria
+  categoryId?: string; // ID da Categoria
   views?: number;
   auctionName?: string; 
   price: number; 
@@ -158,13 +159,35 @@ export interface Lot {
   updatedAt?: AnyTimestamp;
 }
 
-export type LotFormData = Omit<Lot, 'id' | 'createdAt' | 'updatedAt' | 'endDate' | 'lotSpecificAuctionDate' | 'secondAuctionDate' | 'isFavorite' | 'isFeatured' | 'views' | 'bidsCount' | 'galleryImageUrls' | 'dataAiHint' | 'auctionDate' | 'auctioneerName' | 'cityName' | 'stateUf' | 'auctioneerId' | 'mediaItemIds'> & {
+export type LotFormData = Omit<Lot, 
+  'id' | 
+  'createdAt' | 
+  'updatedAt' | 
+  'endDate' | 
+  'lotSpecificAuctionDate' | 
+  'secondAuctionDate' | 
+  'isFavorite' | 
+  'isFeatured' | 
+  'views' | 
+  'bidsCount' | 
+  'galleryImageUrls' | 
+  'dataAiHint' | 
+  'auctionDate' | 
+  // 'auctionName' is kept for UI, action will ignore it
+  'cityName' | 
+  'stateUf' | 
+  'auctioneerId' | 
+  'mediaItemIds' |
+  'categoryId' // categoryId será adicionado pela action
+> & {
   endDate: Date; 
   lotSpecificAuctionDate?: Date | null;
   secondAuctionDate?: Date | null;
   stateId?: string | null; 
   cityId?: string | null;  
-  sellerId?: string;
+  // 'type' (nome da categoria) continua vindo do form
+  // 'categoryId' será o ID resolvido, usado pelos adaptadores
+  categoryId?: string; 
   galleryImageUrls?: string[]; 
   mediaItemIds?: string[]; 
 };
@@ -177,11 +200,12 @@ export interface Auction {
   description?: string;
   status: AuctionStatus;
   auctionType?: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR'; 
-  category: string; 
-  auctioneer: string; 
-  auctioneerId?: string; 
-  seller?: string; 
-  sellerId?: string; 
+  category: string; // Nome da Categoria
+  categoryId?: string; // ID da Categoria
+  auctioneer: string; // Nome do Leiloeiro
+  auctioneerId?: string; // ID do Leiloeiro
+  seller?: string; // Nome do Comitente
+  sellerId?: string; // ID do Comitente
   auctionDate: AnyTimestamp;
   endDate?: AnyTimestamp | null;
   auctionStages?: AuctionStage[]; 
@@ -207,14 +231,17 @@ export interface Auction {
   auctioneerName?: string; 
 }
 
-export type AuctionFormData = Omit<Auction, 'id' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' | 'lots' | 'totalLots' | 'visits' | 'auctionStages' | 'initialOffer' | 'isFavorite' | 'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' | 'category' | 'auctioneer' | 'seller'> & {
+// Este tipo é usado pelo formulário, que envia nomes
+export type AuctionFormValues = Omit<Auction, 'id' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' | 'lots' | 'totalLots' | 'visits' | 'auctionStages' | 'initialOffer' | 'isFavorite' | 'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' | 'categoryId' | 'auctioneerId' | 'sellerId'> & {
   auctionDate: Date;
   endDate?: Date | null;
-  category: string; 
-  auctioneer: string; 
-  seller?: string;
+  // category, auctioneer, seller são nomes aqui
+};
+// Este tipo é o que a action vai preparar para o adapter, com IDs resolvidos
+export type AuctionDbData = Omit<AuctionFormValues, 'category' | 'auctioneer' | 'seller'> & {
+  categoryId?: string;
   auctioneerId?: string;
-  sellerId?: string;
+  sellerId?: string | null; // sellerId pode ser nulo
 };
 
 
@@ -385,10 +412,10 @@ export interface RecentlyViewedLotInfo {
 }
 
 export interface StateInfo {
-  id: string;
+  id: string; // No SQL é o ID numérico, no Firestore é o slug
   name: string;
   uf: string; 
-  slug: string;
+  slug: string; // Mantido para Firestore
   cityCount?: number; 
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
@@ -398,10 +425,10 @@ export type StateFormData = Omit<StateInfo, 'id' | 'slug' | 'createdAt' | 'updat
 
 
 export interface CityInfo {
-  id: string;
+  id: string; // No SQL é o ID numérico, no Firestore é o slug composto
   name: string;
-  slug: string;
-  stateId: string; 
+  slug: string; // Slug da cidade
+  stateId: string; // ID/Slug do estado pai
   stateUf: string; 
   ibgeCode?: string; 
   lotCount?: number; 
@@ -499,19 +526,19 @@ export interface IDatabaseAdapter {
   getSellerBySlug(slug: string): Promise<SellerProfileInfo | null>;
 
   // Auctions
-  createAuction(data: AuctionFormData): Promise<{ success: boolean; message: string; auctionId?: string }>;
+  createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string }>;
   getAuctions(): Promise<Auction[]>;
   getAuction(id: string): Promise<Auction | null>;
-  updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string }>;
+  updateAuction(id: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string }>;
   deleteAuction(id: string): Promise<{ success: boolean; message: string }>;
   getAuctionsBySellerSlug(sellerSlug: string): Promise<Auction[]>;
 
   // Lots
-  createLot(data: LotFormData): Promise<{ success: boolean; message: string; lotId?: string }>;
+  createLot(data: LotFormData & { categoryId?: string }): Promise<{ success: boolean; message: string; lotId?: string; }>;
   getLots(auctionIdParam?: string): Promise<Lot[]>;
   getLot(id: string): Promise<Lot | null>;
-  updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string }>;
-  deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string }>;
+  updateLot(id: string, data: Partial<LotFormData & { categoryId?: string }>): Promise<{ success: boolean; message: string; }>;
+  deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string; }>;
   getBidsForLot(lotId: string): Promise<BidInfo[]>;
   placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }>;
   
@@ -555,4 +582,15 @@ export type QueryResult<T> = {
 export type UserFormData = Omit<UserProfileData, 'uid' | 'createdAt' | 'updatedAt' | 'status' | 'habilitationStatus' | 'permissions' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'sellerProfileId'> & {
   password?: string; // Password is for Auth creation, not stored in profile
 };
+
+// Type for data passed from Lot actions to DB adapters (includes categoryId)
+export type LotDbData = Omit<LotFormData, 'type' | 'auctionName'> & {
+  categoryId?: string; // Resolved category ID
+};
+
+// Type for data returned from DB adapters for Lots (includes category name if joined)
+export type LotWithCategoryName = Lot & {
+  categoryName?: string; // Populated by JOINs in SQL, or by a separate fetch in Firestore context
+};
+
 
