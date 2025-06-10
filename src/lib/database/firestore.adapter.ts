@@ -1,10 +1,14 @@
 
 // src/lib/database/firestore.adapter.ts
-import { 
-  AdminFieldValue, // Import from the re-export in admin.ts
-  ServerTimestamp  // Import from the re-export in admin.ts
-} from '@/lib/firebase/admin';
-import type { FirebaseFirestore } from 'firebase-admin/firestore';
+// AdminFieldValue e ServerTimestamp são importados DIRETAMENTE de 'firebase-admin/firestore'
+// A instância 'db' é recebida no construtor, após ensureAdminInitialized ser chamado pelo database/index.ts
+
+import type { 
+  Firestore, 
+  FieldValue as FirebaseAdminFieldValueType, 
+  Timestamp as FirebaseAdminTimestampType 
+} from 'firebase-admin/firestore';
+
 import type { 
   IDatabaseAdapter, 
   LotCategory, StateInfo, StateFormData,
@@ -22,23 +26,26 @@ import type {
 import { slugify } from '@/lib/sample-data';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 
+// Usar os tipos importados diretamente
+const AdminFieldValue = FirebaseAdminFieldValueType;
+const ServerTimestamp = FirebaseAdminTimestampType;
+
+
 // Helper to convert various timestamp types to JS Date
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date(); 
-  if (timestampField instanceof AdminFieldValue || timestampField instanceof ServerTimestamp || timestampField instanceof (global as any).FirebaseFirestore?.Timestamp) {
+  // Verifica se é um Timestamp do Admin SDK (que tem toDate)
+  if (timestampField && typeof timestampField.toDate === 'function') {
     return timestampField.toDate();
   }
-   if (timestampField.toDate && typeof timestampField.toDate === 'function') {
-    return timestampField.toDate();
-  }
+  // Verifica se é um objeto literal com seconds e nanoseconds (estrutura de Timestamp)
   if (typeof timestampField === 'object' && timestampField !== null &&
       typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
-    // This attempts to reconstruct a Timestamp if it's a plain object
-    // This specific line might need adjustment if ServerTimestamp isn't directly constructible this way or is not the right type from firebase-admin/firestore
-    // For Firestore admin SDK, (global as any).FirebaseFirestore.Timestamp should be preferred if available globally
-    // or simply using the toDate() method if it's already a Firestore Timestamp object.
-    // The direct import is: import { Timestamp as FirebaseAdminTimestamp } from 'firebase-admin/firestore';
-    return new FirebaseAdminTimestamp(timestampField.seconds, timestampField.nanoseconds).toDate();
+    // Reconstruir como Timestamp do Admin SDK se possível, ou diretamente para Date.
+    // Para este contexto, assumimos que já é um Timestamp do Firestore e toDate() deveria ter funcionado.
+    // Se chegou aqui como objeto puro, pode ser resultado de serialização.
+    // A conversão mais segura é direto para Date.
+    return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000);
   }
   if (timestampField instanceof Date) return timestampField;
   const parsedDate = new Date(timestampField);
@@ -55,11 +62,11 @@ function safeConvertOptionalDate(timestampField: any): Date | undefined | null {
 }
 
 export class FirestoreAdapter implements IDatabaseAdapter {
-  private db: FirebaseFirestore.Firestore;
+  private db: Firestore;
 
-  constructor(firestoreInstance: FirebaseFirestore.Firestore) {
+  constructor(firestoreInstance: Firestore) {
     if (!firestoreInstance) {
-      const errorMessage = `FirestoreAdapter: Firestore instance not provided to constructor.`;
+      const errorMessage = `FirestoreAdapter: Firestore instance (dbAdmin) not provided to constructor. This should be passed from getDatabaseAdapter after ensuring Firebase Admin is initialized.`;
       console.error(errorMessage);
       throw new Error(errorMessage);
     }
@@ -70,10 +77,9 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   // --- Schema Initialization ---
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[] }> {
     console.log('[FirestoreAdapter] Schema initialization is not typically required for Firestore in the same way as SQL. Collections are created on first use.');
-    // Placeholder for any Firestore-specific setup if needed in the future (e.g., creating a specific document)
     try {
         await this.ensureDefaultRolesExist();
-        await this.getPlatformSettings(); // This will create the default settings doc if it doesn't exist
+        await this.getPlatformSettings(); 
         return { success: true, message: 'Firestore adapter ready. Collections will be created on first document write. Default roles and settings ensured.' };
     } catch (error: any) {
         return { success: false, message: `Error during Firestore post-init checks: ${error.message}`, errors: [error] };
@@ -120,6 +126,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       });
     } catch (error: any) {
       console.error("[FirestoreAdapter - getLotCategories] Error:", error);
+      // Se der erro (ex: SDK não inicializado), retorna array vazio para não quebrar a UI que espera isso.
       return [];
     }
   }
@@ -454,6 +461,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
         const sellerSnapshot = await this.db.collection('sellers').where('slug', '==', sellerSlug).limit(1).get();
         if (sellerSnapshot.empty) return [];
         const sellerId = sellerSnapshot.docs[0].id;
+        const sellerName = sellerSnapshot.docs[0].data().name;
         
         const snapshot = await this.db.collection('auctions').where('sellerId', '==', sellerId).orderBy('auctionDate', 'desc').get();
         return Promise.all(snapshot.docs.map(async docSnap => {
@@ -461,15 +469,21 @@ export class FirestoreAdapter implements IDatabaseAdapter {
             let categoryName = data.category;
             let auctioneerName = data.auctioneer;
 
-            if (data.categoryId) { /* ... */ }
-            if (data.auctioneerId) { /* ... */ }
+            if (data.categoryId) {
+                const catDoc = await this.db.collection('lotCategories').doc(data.categoryId).get();
+                if(catDoc.exists) categoryName = catDoc.data()?.name || data.category;
+            }
+            if (data.auctioneerId) {
+                 const aucDoc = await this.db.collection('auctioneers').doc(data.auctioneerId).get();
+                if(aucDoc.exists) auctioneerName = aucDoc.data()?.name || data.auctioneer;
+            }
             
             return { 
                 id: docSnap.id, 
                 ...data, 
                 category: categoryName, 
                 auctioneer: auctioneerName, 
-                seller: sellerSnapshot.docs[0].data().name, // Use fetched seller name
+                seller: sellerName, // Use fetched seller name
                 auctionDate: safeConvertToDate(data.auctionDate), 
                 endDate: safeConvertOptionalDate(data.endDate), 
                 createdAt: safeConvertToDate(data.createdAt), 
@@ -669,8 +683,9 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Perfil atualizado!'};
     } catch (e: any) { return { success: false, message: e.message }; }
   }
-  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password'>>): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
-     const { auth: localAuthAdmin, error: sdkError } = ensureAdminInitialized();
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
+     const { ensureAdminInitialized: ensureFbAdmin } = await import('@/lib/firebase/admin');
+     const { auth: localAuthAdmin, error: sdkError } = ensureFbAdmin();
     if (sdkError || !localAuthAdmin) {
       console.warn(`[FirestoreAdapter - ensureUserRole] Admin SDK Auth não disponível ou erro de inicialização: ${sdkError?.message}. Continuando sem interação Auth se possível.`);
     }
@@ -705,8 +720,6 @@ export class FirestoreAdapter implements IDatabaseAdapter {
                 permissions: targetRole.permissions || [],
                 status: 'ATIVO',
                 habilitationStatus: targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS',
-                ...additionalProfileData, // Include CPF, cellPhone, dateOfBirth, and potentially password (to be hashed by a real auth system)
-                password: additionalProfileData?.password, // Store password if provided (for SQL; Firebase Auth handles it separately)
                 createdAt: AdminFieldValue.serverTimestamp(),
                 updatedAt: AdminFieldValue.serverTimestamp(),
             };
@@ -714,8 +727,6 @@ export class FirestoreAdapter implements IDatabaseAdapter {
             const createdSnap = await userDocRef.get();
             finalProfileData = { uid: createdSnap.id, ...createdSnap.data() } as UserProfileData;
         }
-        // Remove password before returning for security
-        if (finalProfileData.password) delete finalProfileData.password; 
         return { success: true, message: 'Perfil de usuário assegurado/atualizado.', userProfile: finalProfileData };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
@@ -932,4 +943,5 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; }
   }
 }
+
 
