@@ -9,6 +9,7 @@ import { auth } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 import { ensureUserProfileInDb } from '@/app/admin/users/actions';
 import type { UserProfileData, UserProfileWithPermissions } from '@/types';
+import { useRouter } from 'next/navigation'; // Importar useRouter
 
 interface AuthContextType {
   user: User | null; // Firebase Auth user
@@ -16,6 +17,7 @@ interface AuthContextType {
   loading: boolean; 
   setUser: Dispatch<SetStateAction<User | null>>; // To set Firebase Auth user
   setUserProfileWithPermissions: Dispatch<SetStateAction<UserProfileWithPermissions | null>>; // To set our DB profile
+  logoutSqlUser: () => void; // Função para logout em modo SQL
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,9 +26,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfileWithPermissions, setUserProfileWithPermissions] = useState<UserProfileWithPermissions | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter(); // Instanciar useRouter
+
+  const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM?.toUpperCase() || 'FIRESTORE';
+  console.log(`[AuthProvider] Initializing with ACTIVE_DATABASE_SYSTEM (client-side): ${activeSystem}`);
+
 
   useEffect(() => {
-    const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM?.toUpperCase() || 'FIRESTORE';
     console.log(`[AuthProvider UseEffect] Running for system: ${activeSystem}. Current Firebase user: ${user?.email}, SQL profile: ${userProfileWithPermissions?.email}`);
     
     let unsubscribe: (() => void) | undefined;
@@ -34,10 +40,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (activeSystem === 'FIRESTORE') {
       console.log("[AuthProvider UseEffect] Firestore mode: Setting up onAuthStateChanged listener.");
       unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-        setLoading(true); 
+        // setLoading(true); // Movido para fora para cobrir o estado inicial
         console.log(`[AuthProvider onAuthStateChanged] Firebase Auth state changed. currentUser: ${currentUser?.email}`);
         setUser(currentUser);
-        setUserProfileWithPermissions(null); // Clear previous profile on auth change
+        
+        if (userProfileWithPermissions && !currentUser) {
+             console.log("[AuthProvider onAuthStateChanged] Firebase user became null, but SQL profile existed. Clearing SQL profile.");
+             setUserProfileWithPermissions(null); // Clear SQL profile if Firebase logs out
+        }
+
 
         if (currentUser && currentUser.email) {
           console.log(`[AuthProvider onAuthStateChanged] Usuário Firebase ${currentUser.email} detectado. Processando perfil DB...`);
@@ -69,26 +80,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } else {
           console.log("[AuthProvider onAuthStateChanged] Nenhum usuário Firebase logado ou sem e-mail.");
-          setUser(null); // Explicitly set Firebase user to null
-          setUserProfileWithPermissions(null); // Clear our DB profile too
+          setUser(null); 
+          setUserProfileWithPermissions(null); 
         }
-        setLoading(false);
+        setLoading(false); // Moved here to ensure it's set after all async operations.
       });
     } else {
-      // SQL Mode: Auth state is managed primarily by `userProfileWithPermissions`
-      // No onAuthStateChanged listener needed for Firebase.
-      // We only set loading to false once.
-      if (loading) { // Only run this logic once at the start for SQL mode
-        console.log("[AuthProvider UseEffect] SQL mode: Initial load. Setting loading to false.");
-        // User is initially considered not logged in for SQL until login page sets userProfileWithPermissions.
-        // If userProfileWithPermissions is somehow pre-filled (e.g. by fast refresh), it will be used.
-        // If Firebase user exists from a previous session (unlikely with this structure), clear it.
-        if (user) {
-            console.log("[AuthProvider UseEffect] SQL mode: Clearing residual Firebase user state.");
-            setUser(null);
-        }
-        setLoading(false);
-      }
+      // SQL Mode or other modes
+      console.log(`[AuthProvider UseEffect] Mode: ${activeSystem}. Setting initial state, no Firebase listener.`);
+      setUser(null); // No Firebase user in SQL mode
+      // userProfileWithPermissions is managed by login page for SQL
+      // setLoading(false) happens once at the end of this useEffect block
+      setLoading(false); // Set loading false immediately for non-Firestore modes
     }
 
     return () => {
@@ -98,19 +101,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array: run once on mount
+  }, [activeSystem]); // Depende apenas de activeSystem para decidir o setup inicial
 
-  // This effect handles clearing userProfileWithPermissions when Firebase user is null (e.g. Firebase logout)
-  // but only if we are in FIRESTORE mode or if userProfileWithPermissions was set (SQL mode logout)
-  useEffect(() => {
-    const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM?.toUpperCase() || 'FIRESTORE';
-    if (activeSystem === 'FIRESTORE' && !user && userProfileWithPermissions) {
-      console.log("[AuthProvider SecondaryEffect] Firebase user is null and profile exists (FIRESTORE mode logout). Clearing profile.");
-      setUserProfileWithPermissions(null);
-    }
-    // For SQL mode, logout is handled by explicitly setting userProfileWithPermissions to null in UserNav
-  }, [user, userProfileWithPermissions]);
-
+  const logoutSqlUser = () => {
+    console.log("[AuthProvider logoutSqlUser] Logging out SQL user.");
+    setUser(null);
+    setUserProfileWithPermissions(null);
+    router.push('/'); // Or to login page: router.push('/auth/login');
+  };
 
   if (loading) {
     return (
@@ -122,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, userProfileWithPermissions, loading, setUser, setUserProfileWithPermissions }}>
+    <AuthContext.Provider value={{ user, userProfileWithPermissions, loading, setUser, setUserProfileWithPermissions, logoutSqlUser }}>
       {children}
     </AuthContext.Provider>
   );
@@ -135,3 +133,4 @@ export function useAuth() {
   }
   return context;
 }
+
