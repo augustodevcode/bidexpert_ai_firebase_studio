@@ -7,7 +7,7 @@ import type { ReactNode, Dispatch, SetStateAction} from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { auth } from '@/lib/firebase'; 
 import { Loader2 } from 'lucide-react';
-import { ensureUserRoleInFirestore } from '@/app/admin/users/actions';
+import { ensureUserProfileInDb } from '@/app/admin/users/actions'; // NOME CORRIGIDO AQUI
 import type { UserProfileData, UserProfileWithPermissions } from '@/types';
 
 interface AuthContextType {
@@ -34,20 +34,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log(`[AuthProvider] Usuário ${currentUser.email} mudou de estado. Processando perfil...`);
         
         try {
-          // Sempre chamar ensureUserRoleInFirestore para sincronizar/criar perfil no Firestore
+          // Sempre chamar ensureUserProfileInDb para sincronizar/criar perfil no DB
           // A action determinará o perfil correto (ex: USER, ou ADMINISTRATOR se já configurado).
           // Para um novo usuário, ele será criado com o perfil USER padrão.
           const targetRoleForNewUsers = 'USER'; 
           
-          const roleSetupResult = await ensureUserRoleInFirestore(
+          // CHAMADA DA FUNÇÃO CORRIGIDA AQUI
+          const roleSetupResult = await ensureUserProfileInDb(
             currentUser.uid, 
             currentUser.email, 
             currentUser.displayName || currentUser.email.split('@')[0], 
-            targetRoleForNewUsers // Se o usuário já for admin no Firestore, ensureUserRoleInFirestore deve respeitar isso.
+            targetRoleForNewUsers 
           );
 
           if (roleSetupResult.success && roleSetupResult.userProfile) {
-            console.log(`[AuthProvider] ensureUserRoleInFirestore teve sucesso para ${currentUser.email}. Perfil:`, JSON.stringify(roleSetupResult.userProfile));
+            console.log(`[AuthProvider] ensureUserProfileInDb teve sucesso para ${currentUser.email}. Perfil:`, JSON.stringify(roleSetupResult.userProfile));
             setUserProfileWithPermissions({
               ...roleSetupResult.userProfile,
               // Certificar que as datas sejam objetos Date no cliente
@@ -55,14 +56,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               updatedAt: roleSetupResult.userProfile.updatedAt ? new Date(roleSetupResult.userProfile.updatedAt) : undefined,
               dateOfBirth: roleSetupResult.userProfile.dateOfBirth ? new Date(roleSetupResult.userProfile.dateOfBirth) : undefined,
               rgIssueDate: roleSetupResult.userProfile.rgIssueDate ? new Date(roleSetupResult.userProfile.rgIssueDate) : undefined,
-            } as UserProfileWithPermissions); // Forçar o tipo se necessário
+            } as UserProfileWithPermissions); 
           } else {
-            console.error(`[AuthProvider] Falha ao executar ensureUserRoleInFirestore para ${currentUser.email}: ${roleSetupResult?.message || 'Resultado indefinido.'}`);
-            // Em caso de falha, userProfileWithPermissions permanecerá null ou você pode definir um estado de erro
+            console.error(`[AuthProvider] Falha ao executar ensureUserProfileInDb para ${currentUser.email}: ${roleSetupResult?.message || 'Resultado indefinido.'}`);
             setUserProfileWithPermissions(null); 
           }
         } catch (error) {
-          console.error(`[AuthProvider] Erro ao chamar ensureUserRoleInFirestore para ${currentUser.email}:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
+          // MENSAGEM DE ERRO ATUALIZADA AQUI
+          console.error(`[AuthProvider] Erro ao chamar ensureUserProfileInDb para ${currentUser.email}:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
           setUserProfileWithPermissions(null); 
         }
         setLoading(false);
@@ -100,3 +101,4 @@ export function useAuth() {
   }
   return context;
 }
+
