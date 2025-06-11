@@ -15,11 +15,12 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { UserProfileData } from '@/types'; 
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation'; // IMPORTAÇÃO ADICIONADA AQUI
 
 
 export default function ProfilePage() {
   const { user: authUser, userProfileWithPermissions, loading: authContextLoading } = useAuth();
-  const router = useRouter(); // Importado na última modificação
+  const router = useRouter(); // Agora useRouter está definido
   const { toast } = useToast();
 
   const [profileToDisplay, setProfileToDisplay] = useState<UserProfileData | null>(null);
@@ -60,14 +61,16 @@ export default function ProfilePage() {
             const data = docSnap.data() as UserProfileData;
             setProfileToDisplay({
               ...data,
-              uid: authUser.uid,
-              email: authUser.email || data.email,
+              uid: authUser.uid, // Garante que o UID do Firebase Auth seja usado
+              email: authUser.email || data.email, // Prioriza email do Auth, se disponível
               fullName: data.fullName || authUser.displayName || 'Nome não informado',
               avatarUrl: authUser.photoURL || data.avatarUrl || 'https://placehold.co/128x128.png',
               dataAiHint: data.dataAiHint || 'profile photo placeholder',
+              // Converter Timestamps do Firestore para Dates, se existirem
               dateOfBirth: data.dateOfBirth?.toDate ? data.dateOfBirth.toDate() : (data.dateOfBirth || null),
               rgIssueDate: data.rgIssueDate?.toDate ? data.rgIssueDate.toDate() : (data.rgIssueDate || null),
               createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt || null),
+              // updatedAt já deve ser tratado nos adaptadores se for Timestamp
             });
             console.log(`[ProfilePage useEffect - FIRESTORE] Perfil encontrado:`, data.email);
           } else {
@@ -90,7 +93,7 @@ export default function ProfilePage() {
         console.log("[ProfilePage useEffect - SQL] Usando userProfileWithPermissions do contexto:", userProfileWithPermissions.email);
         setProfileToDisplay({
           ...userProfileWithPermissions,
-          // Garantir que as datas sejam objetos Date
+          // Garantir que as datas sejam objetos Date (já devem ser se o adapter estiver correto)
           dateOfBirth: userProfileWithPermissions.dateOfBirth ? new Date(userProfileWithPermissions.dateOfBirth) : undefined,
           rgIssueDate: userProfileWithPermissions.rgIssueDate ? new Date(userProfileWithPermissions.rgIssueDate) : undefined,
           createdAt: userProfileWithPermissions.createdAt ? new Date(userProfileWithPermissions.createdAt) : undefined,
@@ -105,9 +108,8 @@ export default function ProfilePage() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authUser, userProfileWithPermissions, authContextLoading]); 
-  // Removido router e toast das dependências para evitar re-execução desnecessária do fetch
-
+  }, [authUser, userProfileWithPermissions, authContextLoading]); // router e toast removidos para evitar loops
+  
   if (isLoadingPage) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
