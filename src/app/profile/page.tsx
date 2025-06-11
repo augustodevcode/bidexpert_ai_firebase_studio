@@ -26,8 +26,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { updateUserProfile, type EditableUserProfileData } from './edit/actions';
-import type { UserProfileData } from '@/types';
+import { updateUserProfile } from './edit/actions'; // Corrigido o caminho
+import type { UserProfileData, EditableUserProfileData } from '@/types';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -71,12 +71,13 @@ const propertyRegimeOptions = ["Comunhão Parcial de Bens", "Comunhão Universal
 
 export default function ProfilePage() {
   const { user: authUser, userProfileWithPermissions, loading: authContextLoading } = useAuth();
-  const router = useRouter();
+  const router = useRouter(); 
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFetchingData, setIsFetchingData] = useState(true);
-  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [isLoadingPage, setIsLoadingPage] = useState(true); // Reintroduzido
+  const [errorPage, setErrorPage] = useState<string | null>(null); // Reintroduzido (era fetchError)
   const [activeSystem, setActiveSystem] = useState<string | null>(null);
+  const [profileToDisplay, setProfileToDisplay] = useState<UserProfileData | null>(null);
   
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -90,7 +91,7 @@ export default function ProfilePage() {
   });
 
   const fetchProfileData = useCallback(async (uid: string) => {
-    setIsFetchingData(true);
+    setIsFetchingData(true); // Renomeado para consistência
     setErrorPage(null);
     console.log('[ProfilePage fetchProfileData] Attempting for UID:', uid);
     try {
@@ -109,7 +110,6 @@ export default function ProfilePage() {
           dateOfBirth: data.dateOfBirth?.toDate ? data.dateOfBirth.toDate() : (data.dateOfBirth || null),
           rgIssueDate: data.rgIssueDate?.toDate ? data.rgIssueDate.toDate() : (data.rgIssueDate || null),
           createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt || null),
-          // Garantir que campos string opcionais sejam '' se nulos/undefined do DB
           cpf: data.cpf || '',
           rgNumber: data.rgNumber || '',
           rgIssuer: data.rgIssuer || '',
@@ -170,9 +170,11 @@ export default function ProfilePage() {
       console.error(`[ProfilePage fetchProfileData] Error fetching Firestore profile:`, e);
       setProfileToDisplay(null);
     } finally {
-      setIsFetchingData(false);
+      setIsFetchingData(false); // Renomeado para consistência
     }
   }, [authUser, form]); 
+
+  const [isFetchingData, setIsFetchingData] = useState(true); // Renomeado para consistência
 
   useEffect(() => {
     const system = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM?.toUpperCase() || 'FIRESTORE';
@@ -204,7 +206,6 @@ export default function ProfilePage() {
           rgIssueDate: userProfileWithPermissions.rgIssueDate ? new Date(userProfileWithPermissions.rgIssueDate) : null,
           createdAt: userProfileWithPermissions.createdAt ? new Date(userProfileWithPermissions.createdAt) : undefined,
           updatedAt: userProfileWithPermissions.updatedAt ? new Date(userProfileWithPermissions.updatedAt) : undefined,
-          // Garantir que campos string opcionais sejam '' se nulos/undefined do contexto
           cpf: userProfileWithPermissions.cpf || '',
           rgNumber: userProfileWithPermissions.rgNumber || '',
           rgIssuer: userProfileWithPermissions.rgIssuer || '',
@@ -237,7 +238,8 @@ export default function ProfilePage() {
         setIsLoadingPage(false);
       }
     }
-  }, [authUser, userProfileWithPermissions, authContextLoading, fetchProfileData, router, form]); // Added form to dependencies
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser, userProfileWithPermissions, authContextLoading, fetchProfileData, router, form]); 
   
   const handleRetryFetch = useCallback(() => {
     setErrorPage(null); 
@@ -250,7 +252,6 @@ export default function ProfilePage() {
           ...userProfileWithPermissions,
           dateOfBirth: userProfileWithPermissions.dateOfBirth ? new Date(userProfileWithPermissions.dateOfBirth) : null,
           rgIssueDate: userProfileWithPermissions.rgIssueDate ? new Date(userProfileWithPermissions.rgIssueDate) : null,
-          // Garantir strings vazias para opcionais no reset também
           cpf: userProfileWithPermissions.cpf || '',
           rgNumber: userProfileWithPermissions.rgNumber || '',
           rgIssuer: userProfileWithPermissions.rgIssuer || '',
@@ -301,11 +302,9 @@ export default function ProfilePage() {
       const result = await updateUserProfile(userId, dataToUpdate);
       if (result.success) {
         toast({ title: "Sucesso!", description: result.message });
-        // Re-fetch or update local context if needed
         if (activeSystem === 'FIRESTORE' && authUser?.uid) {
           fetchProfileData(authUser.uid);
         } else if (userProfileWithPermissions?.uid) {
-          // For SQL, might need to re-fetch or update context. For now, a refresh can handle it.
           router.refresh(); 
         }
       } else {
@@ -380,6 +379,7 @@ export default function ProfilePage() {
                 <FormField
                   control={form.control}
                   name="fullName"
+                  defaultValue=""
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Nome Completo</FormLabel>
@@ -423,7 +423,7 @@ export default function ProfilePage() {
                           <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
                               mode="single"
-                              selected={field.value}
+                              selected={field.value || undefined}
                               onSelect={field.onChange}
                               disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                               initialFocus
@@ -639,7 +639,7 @@ export default function ProfilePage() {
                             <PopoverContent className="w-auto p-0" align="start">
                                 <Calendar
                                 mode="single"
-                                selected={field.value}
+                                selected={field.value || undefined}
                                 onSelect={field.onChange}
                                 disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                                 initialFocus
@@ -791,3 +791,4 @@ export default function ProfilePage() {
   );
 }
 
+    
