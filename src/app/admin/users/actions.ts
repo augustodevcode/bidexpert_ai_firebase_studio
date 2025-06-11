@@ -12,10 +12,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { 
   getRoleInternal as getRoleByIdInternal,      // Para buscar por ID
   getRoleByNameInternal                       // Para buscar por nome
-} from '@/app/admin/roles/queries'; 
+} from '../roles/queries'; // Caminho relativo corrigido
 import { 
   ensureDefaultRolesExist as ensureDefaultRolesExistAction 
-} from '@/app/admin/roles/actions';
+} from '../roles/actions'; // Caminho relativo corrigido
 
 
 export interface UserCreationData {
@@ -49,15 +49,14 @@ export async function createUser(
     if (activeSystem === 'FIRESTORE') {
       console.log('[createUser Action] Sistema é FIRESTORE. Tentando criar usuário no Firebase Auth.');
       const adminModule = await import('@/lib/firebase/admin');
-      const sdkInitResult = adminModule.ensureAdminInitialized();
+      const { auth: localAuthAdmin, error: sdkError } = adminModule.ensureAdminInitialized();
 
-      if (sdkInitResult.error || !sdkInitResult.auth || !sdkInitResult.app) {
-        const msg = `Erro de config: Admin SDK Auth não disponível. Detalhe: ${sdkInitResult.error?.message || 'SDK/App não inicializado'}`;
+      if (sdkError || !localAuthAdmin || !adminModule.app) { // Verificação adicional para app
+        const msg = `Erro de config: Admin SDK Auth não disponível. Detalhe: ${sdkError?.message || 'SDK/App não inicializado'}`;
         console.error(`[createUser Action - Admin SDK Check] ${msg}`);
         return { success: false, message: msg };
       }
-      const localAuthAdmin = sdkInitResult.auth;
-      console.log(`[createUser Action] Admin SDK Auth inicializado para Firestore. App: ${sdkInitResult.app.name}.`);
+      console.log(`[createUser Action] Admin SDK Auth inicializado para Firestore. App: ${adminModule.app.name}.`);
 
       let existingAuthUser;
       try {
@@ -94,23 +93,23 @@ export async function createUser(
     let targetRoleIdForDbSync: string | undefined = undefined;
 
     if (data.roleId && data.roleId !== "---NONE---") {
-      const roleDoc = await getRoleByIdInternal(data.roleId); // CORRIGIDO
+      const roleDoc = await getRoleByIdInternal(data.roleId); 
       if (roleDoc) {
         targetRoleNameForDbSync = roleDoc.name;
         targetRoleIdForDbSync = roleDoc.id;
       } else {
         console.warn(`[createUser Action] Perfil com ID ${data.roleId} não encontrado. Usando '${targetRoleNameForDbSync}' como padrão.`);
-        const userRole = await getRoleByNameInternal('USER'); // CORRIGIDO
+        const userRole = await getRoleByNameInternal('USER'); 
         if (userRole) targetRoleIdForDbSync = userRole.id;
       }
     } else {
-      const userRole = await getRoleByNameInternal('USER'); // CORRIGIDO
+      const userRole = await getRoleByNameInternal('USER'); 
       if (userRole) {
         targetRoleNameForDbSync = userRole.name;
         targetRoleIdForDbSync = userRole.id;
       } else {
         await ensureDefaultRolesExistAction(); 
-        const userRoleAfterEnsure = await getRoleByNameInternal('USER'); // CORRIGIDO
+        const userRoleAfterEnsure = await getRoleByNameInternal('USER'); 
         if (userRoleAfterEnsure) {
           targetRoleIdForDbSync = userRoleAfterEnsure.id;
         } else {
@@ -136,7 +135,7 @@ export async function createUser(
             dateOfBirth: data.dateOfBirth ? data.dateOfBirth : undefined,
             password: data.password 
         },
-        targetRoleIdForDbSync // Passando o ID do perfil explicitamente
+        targetRoleIdForDbSync 
     );
 
     if (!profileResult.success) {
@@ -244,7 +243,7 @@ export async function ensureUserProfileInDb(
   fullName: string | null,
   targetRoleName: string,
   additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' >>,
-  roleIdToAssign?: string // Adicionado para passar o ID do perfil se já conhecido
+  roleIdToAssign?: string 
 ): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }> {
   console.log(`[Action - ensureUserProfileInDb] ACTIVE_DATABASE_SYSTEM: ${process.env.ACTIVE_DATABASE_SYSTEM}`);
   try {
@@ -257,3 +256,5 @@ export async function ensureUserProfileInDb(
 }
 
 export type UserFormData = Omit<UserFormValues, 'password'> & { password?: string };
+
+    

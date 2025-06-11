@@ -91,6 +91,13 @@ async function main() {
     }
   } finally {
     console.log(`--- Processo de Inicialização para ${dbType.toUpperCase()} Concluído ---`);
+    // Garantir que o pool de conexão seja encerrado para que o script finalize.
+    // Isso é mais relevante para o pool 'pg' do que para o 'mysql2/promise' que gerencia conexões de forma diferente.
+    // No entanto, uma função de desconexão explícita no adaptador seria mais limpa.
+    if (typeof (dbAdapter as any).disconnect === 'function') {
+        await (dbAdapter as any).disconnect();
+        console.log(`[DB Init Script] Conexão com o banco de dados ${dbType.toUpperCase()} encerrada.`);
+    }
     process.exit(0); 
   }
 }
@@ -100,3 +107,4 @@ main().catch(error => {
   process.exit(1);
 });
 
+    

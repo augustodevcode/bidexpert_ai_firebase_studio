@@ -697,7 +697,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       }
 
       if (errors.length > 0) {
-        return { success: false, message: `Esquema PostgreSQL inicializado com ${errors.length} erros nos passos pós-tabelas.`, errors };
+        return { success: false, message: `Esquema PostgreSQL inicializado com ${errors.length} erros nos passos pós-tabelas.`, errors, rolesProcessed: rolesResult.rolesProcessed };
       }
       return { success: true, message: `Esquema PostgreSQL inicializado e perfis padrão verificados (${rolesResult.rolesProcessed || 0} processados). Configurações da plataforma verificadas.`, rolesProcessed: rolesResult.rolesProcessed };
 
@@ -1492,7 +1492,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         for (const roleData of defaultRolesData) {
             const normalizedName = roleData.name.trim().toUpperCase();
             console.log(`[PostgresAdapter] Processando perfil padrão: ${roleData.name} (Normalizado: ${normalizedName})`);
-            
+
             const roleRes = await client.query('SELECT id, permissions, description FROM roles WHERE name_normalized = $1 LIMIT 1', [normalizedName]);
             const validPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
 
@@ -1509,8 +1509,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
                 console.log(`[PostgresAdapter] Perfil '${roleData.name}' encontrado (ID: ${existingRole.id}). Verificando atualizações...`);
                 const currentPermsSorted = [...(existingRole.permissions || [])].sort();
                 const expectedPermsSorted = [...validPermissions].sort();
-                 if (JSON.stringify(currentPermsSorted) !== JSON.stringify(expectedPermsSorted) || existingRole.description !== (roleData.description || null)) {
-                     console.log(`[PostgresAdapter] Atualizando descrição/permissões para o perfil '${roleData.name}'.`);
+                if (JSON.stringify(currentPermsSorted) !== JSON.stringify(expectedPermsSorted) || existingRole.description !== (roleData.description || null)) {
+                     console.log(`[PostgresAdapter] Atualizando descrição/permissões para o perfil '${roleData.name}'. Permissões atuais: ${JSON.stringify(currentPermsSorted)}, Permissões esperadas: ${JSON.stringify(expectedPermsSorted)}, Descrição atual: ${existingRole.description}, Descrição esperada: ${roleData.description || null}`);
                      await client.query(
                         'UPDATE roles SET description = $1, permissions = $2::jsonb, updated_at = NOW() WHERE id = $3',
                         [roleData.description || null, JSON.stringify(expectedPermsSorted), existingRole.id]
@@ -1576,12 +1576,19 @@ export class PostgresAdapter implements IDatabaseAdapter {
         await this.ensureDefaultRolesExist(); 
         let targetRole: Role | null = null;
         if (roleIdToAssign) {
+            console.log(`[PostgresAdapter ensureUserRole] Tentando buscar perfil por ID fornecido: ${roleIdToAssign}`);
             targetRole = await this.getRole(roleIdToAssign);
         }
         if (!targetRole) {
+            console.log(`[PostgresAdapter ensureUserRole] Perfil por ID não encontrado ou ID não fornecido. Buscando por nome: ${targetRoleName}`);
             targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
         }
-        if (!targetRole || !targetRole.id) return { success: false, message: 'Perfil padrão USER não encontrado ou sem ID.'};
+
+        if (!targetRole || !targetRole.id) {
+            console.error(`[PostgresAdapter ensureUserRole] CRITICAL: Perfil '${targetRoleName}' ou 'USER' não encontrado ou sem ID.`);
+            return { success: false, message: `Perfil padrão '${targetRoleName}' ou 'USER' não encontrado ou sem ID.` };
+        }
+         console.log(`[PostgresAdapter ensureUserRole] Perfil alvo determinado: ${targetRole.name} (ID: ${targetRole.id})`);
 
         await client.query('BEGIN');
         const userRes = await client.query('SELECT * FROM users WHERE uid = $1', [userId]);
@@ -1589,34 +1596,40 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
         if (userRes.rowCount > 0) {
             const userDataFromDB = mapToUserProfileData(mapRowToCamelCase(userRes.rows[0]));
-            const updatePayload: any = { updatedAt: new Date() }; // Postgres uses JS Date for NOW()
+            const updatePayload: any = { updatedAt: new Date() }; 
             let needsUpdate = false;
-            if (userDataFromDB.roleId !== targetRole.id) { updatePayload.roleId = Number(targetRole.id); needsUpdate = true; }
-            if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; }
-            if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = targetRole.permissions || []; needsUpdate = true; } 
+            if (String(userDataFromDB.roleId) !== String(targetRole.id)) { updatePayload.roleId = Number(targetRole.id); needsUpdate = true; console.log(`[PostgresAdapter ensureUserRole] Atualizando roleId para ${targetRole.id}`);}
+            if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; console.log(`[PostgresAdapter ensureUserRole] Atualizando roleName para ${targetRole.name}`);}
+            if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = targetRole.permissions || []; needsUpdate = true; console.log(`[PostgresAdapter ensureUserRole] Atualizando permissions.`);} 
             if (additionalProfileData?.password) {
-                updatePayload.passwordText = additionalProfileData.password;
+                updatePayload.passwordText = additionalProfileData.password; // Assumindo texto plano
                 needsUpdate = true;
+                 console.log(`[PostgresAdapter ensureUserRole] Atualizando passwordText.`);
             }
-             // Apply other additionalProfileData if present
-            if (additionalProfileData?.cpf) { updatePayload.cpf = additionalProfileData.cpf; needsUpdate = true;}
-            if (additionalProfileData?.cellPhone) { updatePayload.cellPhone = additionalProfileData.cellPhone; needsUpdate = true;}
-            if (additionalProfileData?.dateOfBirth) { updatePayload.dateOfBirth = additionalProfileData.dateOfBirth; needsUpdate = true;}
+            // Apply other additionalProfileData if present
+            if (additionalProfileData?.cpf !== undefined && additionalProfileData.cpf !== userDataFromDB.cpf) { updatePayload.cpf = additionalProfileData.cpf; needsUpdate = true;}
+            if (additionalProfileData?.cellPhone !== undefined && additionalProfileData.cellPhone !== userDataFromDB.cellPhone) { updatePayload.cellPhone = additionalProfileData.cellPhone; needsUpdate = true;}
+            if (additionalProfileData?.dateOfBirth !== undefined && (userDataFromDB.dateOfBirth?.getTime() !== additionalProfileData.dateOfBirth?.getTime())) { updatePayload.dateOfBirth = additionalProfileData.dateOfBirth; needsUpdate = true;}
+
 
             if (needsUpdate) {
+                 console.log(`[PostgresAdapter ensureUserRole] Update necessário. Payload:`, updatePayload);
                 const updateFields: string[] = [];
                 const updateValues: any[] = [];
                 let pCount = 1;
                 Object.keys(updatePayload).forEach(key => {
                     updateFields.push(`${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = $${pCount++}`);
-                    // For permissions, which are JSONB, ensure they are stringified
-                    updateValues.push(key === 'permissions' ? JSON.stringify(updatePayload[key]) : updatePayload[key]);
+                    updateValues.push(updatePayload[key]);
                 });
                 updateValues.push(userId);
                 await client.query(`UPDATE users SET ${updateFields.join(', ')} WHERE uid = $${pCount}`, updateValues);
+                 console.log(`[PostgresAdapter ensureUserRole] Usuário UID ${userId} atualizado no DB.`);
+            } else {
+                 console.log(`[PostgresAdapter ensureUserRole] Usuário UID ${userId} não precisou de atualização no DB.`);
             }
              finalProfileData = { ...userDataFromDB, ...updatePayload, uid: userId } as UserProfileData;
         } else {
+            console.log(`[PostgresAdapter ensureUserRole] Usuário UID ${userId} não encontrado no DB. Criando...`);
             const insertQuery = `
                 INSERT INTO users (uid, email, full_name, password_text, role_id, permissions, status, habilitation_status, cpf, cell_phone, date_of_birth, created_at, updated_at)
                 VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, NOW(), NOW()) RETURNING *;
@@ -1629,10 +1642,11 @@ export class PostgresAdapter implements IDatabaseAdapter {
             ];
             const insertedRes = await client.query(insertQuery, insertValues);
             finalProfileData = mapToUserProfileData(mapRowToCamelCase(insertedRes.rows[0]), targetRole);
+            console.log(`[PostgresAdapter ensureUserRole] Usuário UID ${userId} criado no DB.`);
         }
         await client.query('COMMIT');
         return { success: true, message: 'Perfil de usuário assegurado/atualizado (PostgreSQL).', userProfile: finalProfileData };
-    } catch (e: any) { await client.query('ROLLBACK'); return { success: false, message: e.message }; } finally { client.release(); }
+    } catch (e: any) { await client.query('ROLLBACK'); console.error(`[PostgresAdapter ensureUserRole] Erro na transação:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
 
   async getUsersWithRoles(): Promise<UserProfileData[]> {
@@ -1647,7 +1661,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       return mapRowsToCamelCase(res.rows).map(row => {
         const profile = mapToUserProfileData(row);
         if ((!profile.permissions || profile.permissions.length === 0) && row.role_permissions) {
-            profile.permissions = row.role_permissions; // Already an array from JSONB
+            profile.permissions = row.role_permissions; 
         }
         return profile;
       });
@@ -1689,7 +1703,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
       if (userRow.roleId) role = await this.getRole(userRow.roleId);
       
       const profile = mapToUserProfileData(userRow, role);
-      // Ensure permissions are populated even if userRow.permissions is null but role.permissions exists
       if ((!profile.permissions || profile.permissions.length === 0) && role?.permissions?.length) {
          profile.permissions = role.permissions; 
       }
@@ -1766,8 +1779,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
       for (const mediaId of mediaItemIds) {
         await client.query(
           `UPDATE media_items 
-           SET linked_lot_ids = COALESCE(linked_lot_ids, '[]'::jsonb) || $1::jsonb 
-           WHERE id = $2 AND NOT (linked_lot_ids @> $1::jsonb);`,
+           SET linked_lot_ids = COALESCE(linked_lot_ids, '[]'::jsonb) || ($1::TEXT)::jsonb
+           WHERE id = $2 AND NOT (linked_lot_ids @> ($1::TEXT)::jsonb);`, // Ensure $1 is treated as a single value array element
           [JSON.stringify([lotId]), Number(mediaId)]
         );
       }
@@ -1835,19 +1848,5 @@ export class PostgresAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
   }
 }
-    
 
     
-
-    
-
-
-
-
-    
-
-
-
-
-
-

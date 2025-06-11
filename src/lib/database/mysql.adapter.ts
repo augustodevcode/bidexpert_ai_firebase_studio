@@ -725,7 +725,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
 
       if (errors.length > 0) {
-        return { success: false, message: `Esquema MySQL inicializado com ${errors.length} erros nos passos pós-tabelas.`, errors };
+        return { success: false, message: `Esquema MySQL inicializado com ${errors.length} erros nos passos pós-tabelas.`, errors, rolesProcessed: rolesResult.rolesProcessed };
       }
       return { success: true, message: `Esquema MySQL inicializado e perfis padrão verificados (${rolesResult.rolesProcessed || 0} processados). Configurações da plataforma verificadas.`, rolesProcessed: rolesResult.rolesProcessed };
 
@@ -1528,7 +1528,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
                 console.log(`[MySqlAdapter] Perfil '${roleData.name}' não encontrado. Criando...`);
                 await connection.query(
                     'INSERT INTO roles (name, name_normalized, description, permissions, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
-                    [roleData.name.trim(), normalizedName, roleData.description || null, JSON.stringify(validPermissions)]
+                    [roleData.name.trim(), normalizedName, data.description || null, JSON.stringify(validPermissions)]
                 );
                 console.log(`[MySqlAdapter] Perfil '${roleData.name}' criado.`);
                 rolesProcessedCount++;
@@ -1538,7 +1538,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
                 const currentPermsSorted = [...(typeof existingRole.permissions === 'string' ? JSON.parse(existingRole.permissions) : existingRole.permissions || [])].sort();
                 const expectedPermsSorted = [...validPermissions].sort();
                 if (JSON.stringify(currentPermsSorted) !== JSON.stringify(expectedPermsSorted) || existingRole.description !== (roleData.description || null)) {
-                     console.log(`[MySqlAdapter] Atualizando descrição/permissões para o perfil '${roleData.name}'.`);
+                     console.log(`[MySqlAdapter] Atualizando descrição/permissões para o perfil '${roleData.name}'. Permissões atuais: ${JSON.stringify(currentPermsSorted)}, Permissões esperadas: ${JSON.stringify(expectedPermsSorted)}, Descrição atual: ${existingRole.description}, Descrição esperada: ${roleData.description || null}`);
                      await connection.query(
                         'UPDATE roles SET description = ?, permissions = ?, updated_at = NOW() WHERE id = ?',
                         [roleData.description || null, JSON.stringify(expectedPermsSorted), existingRole.id]
@@ -1603,13 +1603,20 @@ export class MySqlAdapter implements IDatabaseAdapter {
         await this.ensureDefaultRolesExist(); 
         let targetRole: Role | null = null;
         if (roleIdToAssign) {
+            console.log(`[MySQLAdapter ensureUserRole] Tentando buscar perfil por ID fornecido: ${roleIdToAssign}`);
             targetRole = await this.getRole(roleIdToAssign);
         }
         if (!targetRole) {
+            console.log(`[MySQLAdapter ensureUserRole] Perfil por ID não encontrado ou ID não fornecido. Buscando por nome: ${targetRoleName}`);
             targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
         }
 
-        if (!targetRole || !targetRole.id) return { success: false, message: 'Perfil padrão USER não encontrado ou sem ID.'};
+        if (!targetRole || !targetRole.id) {
+            console.error(`[MySQLAdapter ensureUserRole] CRITICAL: Perfil '${targetRoleName}' ou 'USER' não encontrado ou sem ID.`);
+            return { success: false, message: `Perfil padrão '${targetRoleName}' ou 'USER' não encontrado ou sem ID.` };
+        }
+        console.log(`[MySQLAdapter ensureUserRole] Perfil alvo determinado: ${targetRole.name} (ID: ${targetRole.id})`);
+
 
         await connection.beginTransaction();
         const [userRows] = await connection.query('SELECT * FROM users WHERE uid = ?', [userId]);
@@ -1617,22 +1624,24 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
         if ((userRows as RowDataPacket[]).length > 0) {
             const userDataFromDB = mapToUserProfileData(mapMySqlRowToCamelCase((userRows as RowDataPacket[])[0]));
-            const updatePayload: any = { updatedAt: new Date() };
+            const updatePayload: any = { updatedAt: new Date() }; 
             let needsUpdate = false;
-            if (userDataFromDB.roleId !== targetRole.id) { updatePayload.roleId = Number(targetRole.id); needsUpdate = true; }
-            if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; }
-            if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = JSON.stringify(targetRole.permissions || []); needsUpdate = true; } 
+            if (String(userDataFromDB.roleId) !== String(targetRole.id)) { updatePayload.roleId = Number(targetRole.id); needsUpdate = true; console.log(`[MySQLAdapter ensureUserRole] Atualizando roleId para ${targetRole.id}`); }
+            if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; console.log(`[MySQLAdapter ensureUserRole] Atualizando roleName para ${targetRole.name}`);}
+            if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = JSON.stringify(targetRole.permissions || []); needsUpdate = true; console.log(`[MySQLAdapter ensureUserRole] Atualizando permissions.`);} 
             if (additionalProfileData?.password) {
-                updatePayload.passwordText = additionalProfileData.password;
+                updatePayload.passwordText = additionalProfileData.password; // Assumindo texto plano
                 needsUpdate = true;
+                console.log(`[MySQLAdapter ensureUserRole] Atualizando passwordText.`);
             }
             // Apply other additionalProfileData if present
-            if (additionalProfileData?.cpf) { updatePayload.cpf = additionalProfileData.cpf; needsUpdate = true;}
-            if (additionalProfileData?.cellPhone) { updatePayload.cellPhone = additionalProfileData.cellPhone; needsUpdate = true;}
-            if (additionalProfileData?.dateOfBirth) { updatePayload.dateOfBirth = additionalProfileData.dateOfBirth; needsUpdate = true;}
+            if (additionalProfileData?.cpf !== undefined && additionalProfileData.cpf !== userDataFromDB.cpf) { updatePayload.cpf = additionalProfileData.cpf; needsUpdate = true;}
+            if (additionalProfileData?.cellPhone !== undefined && additionalProfileData.cellPhone !== userDataFromDB.cellPhone) { updatePayload.cellPhone = additionalProfileData.cellPhone; needsUpdate = true;}
+            if (additionalProfileData?.dateOfBirth !== undefined && (userDataFromDB.dateOfBirth?.getTime() !== additionalProfileData.dateOfBirth?.getTime())) { updatePayload.dateOfBirth = additionalProfileData.dateOfBirth; needsUpdate = true;}
 
 
             if (needsUpdate) {
+                console.log(`[MySQLAdapter ensureUserRole] Update necessário. Payload:`, updatePayload);
                 const updateFields: string[] = [];
                 const updateValues: any[] = [];
                 Object.keys(updatePayload).forEach(key => {
@@ -1642,9 +1651,13 @@ export class MySqlAdapter implements IDatabaseAdapter {
                 });
                 updateValues.push(userId);
                 await connection.execute(`UPDATE users SET ${updateFields.join(', ')} WHERE uid = ?`, updateValues);
+                 console.log(`[MySQLAdapter ensureUserRole] Usuário UID ${userId} atualizado no DB.`);
+            } else {
+                 console.log(`[MySQLAdapter ensureUserRole] Usuário UID ${userId} não precisou de atualização no DB.`);
             }
              finalProfileData = { ...userDataFromDB, ...updatePayload, uid: userId } as UserProfileData;
         } else {
+            console.log(`[MySQLAdapter ensureUserRole] Usuário UID ${userId} não encontrado no DB. Criando...`);
             const insertQuery = `
                 INSERT INTO users (uid, email, full_name, password_text, role_id, permissions, status, habilitation_status, cpf, cell_phone, date_of_birth, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW());
@@ -1658,10 +1671,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
             await connection.execute(insertQuery, insertValues);
             const [createdRows] = await connection.query('SELECT * FROM users WHERE uid = ?', [userId]);
             finalProfileData = mapToUserProfileData(mapMySqlRowToCamelCase((createdRows as RowDataPacket[])[0]), targetRole);
+             console.log(`[MySQLAdapter ensureUserRole] Usuário UID ${userId} criado no DB.`);
         }
         await connection.commit();
         return { success: true, message: 'Perfil de usuário assegurado/atualizado (MySQL).', userProfile: finalProfileData };
-    } catch (e: any) { await connection.rollback(); return { success: false, message: e.message }; } finally { connection.release(); }
+    } catch (e: any) { await connection.rollback(); console.error(`[MySQLAdapter ensureUserRole] Erro na transação:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
   }
 
   async getUsersWithRoles(): Promise<UserProfileData[]> {
@@ -1858,19 +1872,5 @@ export class MySqlAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
 }
-    
 
     
-
-    
-
-
-
-
-    
-
-
-
-
-
-

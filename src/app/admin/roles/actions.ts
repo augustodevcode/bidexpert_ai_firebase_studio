@@ -1,11 +1,12 @@
 
+// src/app/admin/roles/actions.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { getDatabaseAdapter } from '@/lib/database';
 import type { Role, RoleFormData } from '@/types';
 import { predefinedPermissions } from './role-form-schema';
-import { getRolesInternal, getRoleInternal, getRoleByNameInternal, ensureDefaultRolesExistInternal } from './queries';
+import { getRolesInternal, getRoleInternal, getRoleByNameInternal, ensureDefaultRolesExistInternal } from './queries'; // ensureDefaultRolesExistInternal importado
 
 // Server Action para criar um Role
 export async function createRole(
@@ -61,7 +62,9 @@ export async function deleteRole(
 }
 
 // Server Action para garantir que os perfis padrão existam
-export async function ensureDefaultRolesExist(): Promise<{ success: boolean; message: string }> {
-  // A lógica de DB em si está em queries.ts, esta é apenas a action wrapper.
+export async function ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }> {
   return ensureDefaultRolesExistInternal();
 }
+
+
+    
