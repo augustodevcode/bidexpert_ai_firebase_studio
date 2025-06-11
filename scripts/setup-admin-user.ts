@@ -1,186 +1,194 @@
+
 // scripts/setup-admin-user.ts
 import * as admin from 'firebase-admin';
 import * as fs from 'fs';
 import * as path from 'path';
+import { getDatabaseAdapter } from '../src/lib/database/index'; // Para obter o nome do perfil
+import { ensureUserProfileInDb } from '../src/app/admin/users/actions'; // Action para garantir o perfil
+import type { Role } from '../src/types';
 
-// Path to your service account key file relative to the project root
-const serviceAccountPath = path.resolve(__dirname, '../bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json');
-const targetEmail = 'augusto.devcode@gmail.com';
-const targetRoleName = 'ADMINISTRATOR';
+// ============================================================================
+// CONFIGURAÇÕES DO USUÁRIO ADMINISTRADOR
+// ============================================================================
+const ADMIN_EMAIL = 'admin@bidexpert.com.br';
+const ADMIN_PASSWORD = '@dmin2025';
+const ADMIN_FULL_NAME = 'Administrador BidExpert';
+const ADMIN_TARGET_ROLE_NAME = 'ADMINISTRATOR';
+// Para sistemas SQL, você pode definir um UID fixo se desejar, ou deixar que a action o gere.
+// Se for usar Firebase Auth, o UID será o do Firebase.
+const ADMIN_UID_FOR_SQL = 'admin-bidexpert-platform-001';
+// ============================================================================
 
-// Ensure the Admin SDK is initialized
-let dbAdmin: admin.firestore.Firestore;
-let authAdmin: admin.auth.Auth;
 
-async function initializeAdminSDK() {
-    if (admin.apps.length > 0) {
-        console.log('[Admin Script] Firebase Admin SDK already initialized.');
-        const app = admin.apps[0]!;
-        dbAdmin = app.firestore();
-        authAdmin = app.auth();
-        return;
-    }
+// Path to your service account key file
+const serviceAccountKeyFileName = 'bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json';
 
-    console.log('[Admin Script] Initializing Firebase Admin SDK...');
+let dbAdminInstance: admin.firestore.Firestore | null = null;
+let authAdminInstance: admin.auth.Auth | null = null;
 
-    if (!fs.existsSync(serviceAccountPath)) {
-        console.error(`[Admin Script] CRITICAL ERROR: Service account key file NOT FOUND at: ${serviceAccountPath}`);
-        console.error('[Admin Script] Please ensure the file name is correct and it exists at the project root.');
-        process.exit(1); // Exit if key file is missing
-    }
+async function initializeFirebaseAdminSDK() {
+  if (process.env.ACTIVE_DATABASE_SYSTEM?.toUpperCase() !== 'FIRESTORE') {
+    console.log('[Admin Script] Sistema de DB não é FIRESTORE. Pulando inicialização do Firebase Admin SDK para Auth/Firestore.');
+    return { success: true, message: 'Firebase Admin SDK não necessário para o sistema de DB atual.' };
+  }
 
+  if (admin.apps.length > 0) {
+    console.log('[Admin Script] Firebase Admin SDK já inicializado.');
+    const app = admin.apps[0]!;
+    dbAdminInstance = app.firestore();
+    authAdminInstance = app.auth();
+    return { success: true, message: 'Admin SDK já estava inicializado.' };
+  }
+
+  console.log('[Admin Script] Initializing Firebase Admin SDK...');
+  let serviceAccount;
+  const currentCwd = process.cwd();
+  const manualPath = path.join(currentCwd, serviceAccountKeyFileName);
+
+  if (fs.existsSync(manualPath)) {
     try {
-        const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
-        const app = admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount),
-            // projectId: serviceAccount.project_id, // Optional, but good practice
-        });
-        console.log('[Admin Script] Firebase Admin SDK initialized successfully.');
-        dbAdmin = app.firestore();
-        authAdmin = app.auth();
-    } catch (error: any) {
-        console.error('[Admin Script] CRITICAL ERROR during Admin SDK initialization:', error);
-        process.exit(1); // Exit on initialization failure
+      serviceAccount = JSON.parse(fs.readFileSync(manualPath, 'utf8'));
+    } catch (e: any) {
+      console.error(`[Admin Script] Falha ao ler/parsear chave de serviço de ${manualPath}: ${e.message}`);
+      return { success: false, message: `Falha ao carregar chave de serviço: ${e.message}` };
     }
-}
-async function getRoleByName(roleName: string): Promise<admin.firestore.DocumentData | null> {
+  } else {
+    console.error(`[Admin Script] Arquivo de chave de serviço NÃO ENCONTRADO em: ${manualPath}`);
+    return { success: false, message: `Arquivo de chave de serviço não encontrado em ${manualPath}` };
+  }
 
-    if (!dbAdmin) {
-        console.error('[Admin Script] Firestore Admin DB not available to getRoleByName.');
-        return null;
-    }
-    console.log(`[Admin Script] Looking for role: ${roleName}`);
-    try {
-        // Assuming 'roles' collection exists and role documents have a 'name' field
-        const rolesRef = dbAdmin.collection('roles');
-        const q = rolesRef!.where('name', '==', roleName).limit(1);
-        const snapshot = await q.get();
-
-        if (!snapshot.empty) {
-            const roleDoc = snapshot.docs[0];
-            console.log(`[Admin Script] Found role '${roleName}' with ID: ${roleDoc.id}`);
-            return { id: roleDoc.id, ...roleDoc.data() };
-        } else {
-            console.warn(`[Admin Script] Role '${roleName}' not found in Firestore.`);
-            // Optional: You might want to create the default roles if they are missing
-            return null;
-        }
-    } catch (error: any) {
-        console.error(`[Admin Script] Error fetching role '${roleName}':`, error);
-        return null;
-    }
+  try {
+    const app = admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+    console.log('[Admin Script] Firebase Admin SDK inicializado com sucesso.');
+    dbAdminInstance = app.firestore();
+    authAdminInstance = app.auth();
+    return { success: true, message: 'Admin SDK inicializado.' };
+  } catch (error: any) {
+    console.error('[Admin Script] ERRO CRÍTICO durante inicialização do Admin SDK:', error);
+    return { success: false, message: `Erro ao inicializar Admin SDK: ${error.message}` };
+  }
 }
+
+async function getRoleByNameFromDb(roleName: string): Promise<Role | null> {
+  // Esta função agora usa o Database Adapter para ser agnóstica ao DB.
+  // Ela não é uma Server Action, então não pode importar de roles/actions.ts.
+  // Ela precisa da sua própria lógica de DB ou de um `roles/queries.ts` se essa lógica for complexa.
+  // Para simplificar, e como o adaptador já tem getRoleByName, vamos usá-lo.
+  // No entanto, getDatabaseAdapter é async.
+  try {
+    const dbAdapter = await getDatabaseAdapter(); // Chama o factory
+    return dbAdapter.getRoleByName(roleName);
+  } catch (error: any) {
+    console.error(`[Admin Script] Erro ao buscar perfil '${roleName}' via adapter:`, error);
+    return null;
+  }
+}
+
 
 async function setupAdminUser() {
-    await initializeAdminSDK();
+  const activeSystem = process.env.ACTIVE_DATABASE_SYSTEM?.toUpperCase() || 'MYSQL';
+  console.log(`[Admin Script] Configurando usuário ${ADMIN_EMAIL} como ${ADMIN_TARGET_ROLE_NAME} para sistema: ${activeSystem}`);
 
-    // Ensure SDK is available after initialization
-    if (!dbAdmin || !authAdmin) {
-         console.error('[Admin Script] Admin SDK not available after initialization attempt. Exiting.');
+  const sdkInitResult = await initializeFirebaseAdminSDK();
+  if (activeSystem === 'FIRESTORE' && !sdkInitResult.success) {
+    console.error(`[Admin Script] Falha ao inicializar Firebase Admin SDK necessário para o modo FIRESTORE. Mensagem: ${sdkInitResult.message}`);
+    process.exit(1);
+  }
+
+  try {
+    const adminRole = await getRoleByNameFromDb(ADMIN_TARGET_ROLE_NAME);
+    if (!adminRole || !adminRole.id) {
+      console.error(`[Admin Script] Perfil '${ADMIN_TARGET_ROLE_NAME}' não encontrado ou sem ID. Verifique se os perfis padrão existem.`);
+      process.exit(1);
+    }
+
+    let userIdToUse: string;
+    let userExistsInAuth = false;
+
+    if (activeSystem === 'FIRESTORE') {
+      if (!authAdminInstance) {
+         console.error('[Admin Script] Instância do Firebase Auth Admin não está disponível para FIRESTORE.');
          process.exit(1);
-    }
-
-    console.log(`[Admin Script] Setting up user ${targetEmail} as ${targetRoleName}...`);
-
-    try {
-        // 1. Find the target role. Use non-null assertion as we check it immediately after.
-        const adminRole = await getRoleByName(targetRoleName);
-
-        if (!adminRole) {
-            console.error(`[Admin Script] Could not find the '${targetRoleName}' role. Please ensure default roles exist in Firestore.`);
-            process.exit(1); // Cannot proceed without the role
+      }
+      let userRecord;
+      try {
+        userRecord = await authAdminInstance.getUserByEmail(ADMIN_EMAIL);
+        userExistsInAuth = true;
+        userIdToUse = userRecord.uid;
+        console.log(`[Admin Script] Usuário encontrado no Firebase Auth com UID: ${userIdToUse}`);
+        // Opcional: Atualizar senha se necessário, mas createUser lida com isso se não existir.
+        // Se precisar garantir a senha, pode-se usar updateUser.
+        if (userRecord.passwordHash !== ADMIN_PASSWORD) { // Comparação não é direta, mas para ilustrar
+            console.log(`[Admin Script] Atualizando senha para usuário Auth existente ${ADMIN_EMAIL}...`);
+            await authAdminInstance.updateUser(userIdToUse, { password: ADMIN_PASSWORD });
         }
 
-        let userRecord: admin.auth.UserRecord;
-        let userExistsInAuth = false;
-
-        // 2. Check if user exists in Auth
-        try {
-            userRecord = await authAdmin!.getUserByEmail(targetEmail);
-            userExistsInAuth = true;
-            console.log(`[Admin Script] User found in Firebase Auth with UID: ${userRecord.uid}`);
-        } catch (error: any) {
-            if (error.code === 'auth/user-not-found') {
-                console.log(`[Admin Script] User ${targetEmail} not found in Firebase Auth. Creating...`);
-                // 3. If user not found in Auth, create them
-                 try {
-                     userRecord = await authAdmin!.createUser({
-                        email: targetEmail,
-                        emailVerified: false, // You can set this based on your needs
-                        disabled: false,
-                        // Optional: Add a temporary password if needed for initial login, but be mindful of security
-                        // password: 'temporary-password',
-                     });
-                     console.log(`[Admin Script] User created in Firebase Auth with UID: ${userRecord.uid}`);
-                 } catch (createError: any) {
-                     console.error(`[Admin Script] Error creating user ${targetEmail} in Auth:`, createError);
-                     process.exit(1);
-                 }
-            } else {
-                console.error(`[Admin Script] Error checking user ${targetEmail} in Auth:`, error);
-                process.exit(1);
-            }
-        }
-
-        // 4. Update or create user document in Firestore
-        const userDocRef = dbAdmin!.collection('users').doc(userRecord.uid);
-        const userDoc = await userDocRef.get();
-
-        const userProfileData: any = {
-            uid: userRecord.uid,
-            email: userRecord.email!, // Email is guaranteed to exist if we created or found the user
-            fullName: userRecord.displayName || targetEmail.split('@')[0], // Use display name if available, otherwise part of email
-            roleId: adminRole!.id,
-            roleName: adminRole!.name,
-            permissions: adminRole.permissions || [],
-            status: 'ATIVO', // Assuming active status
-            habilitationStatus: 'HABILITADO', // Habilitado for admin
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        };
-
-        if (!userExistsInAuth || !userDoc.exists) {
-            // User document doesn't exist in Firestore, create it
-             console.log(`[Admin Script] User document for UID ${userRecord.uid} not found in Firestore. Creating...`);
-             userProfileData.createdAt = admin.firestore.FieldValue.serverTimestamp();
-             await userDocRef.set(userProfileData);
-             console.log(`[Admin Script] User document for UID ${userRecord.uid} created in Firestore.`);
-
+      } catch (error: any) {
+        if (error.code === 'auth/user-not-found') {
+          console.log(`[Admin Script] Usuário ${ADMIN_EMAIL} não encontrado no Firebase Auth. Criando...`);
+          try {
+            userRecord = await authAdminInstance.createUser({
+              email: ADMIN_EMAIL,
+              emailVerified: true,
+              password: ADMIN_PASSWORD,
+              displayName: ADMIN_FULL_NAME,
+              disabled: false,
+            });
+            userIdToUse = userRecord.uid;
+            console.log(`[Admin Script] Usuário criado no Firebase Auth com UID: ${userIdToUse}`);
+          } catch (createError: any) {
+            console.error(`[Admin Script] Erro ao criar usuário ${ADMIN_EMAIL} no Auth:`, createError);
+            process.exit(1);
+          }
         } else {
-            // User document exists, update it
-            console.log(`[Admin Script] User document for UID ${userRecord.uid} found in Firestore. Updating...`);
-
-            // Prepare update payload - only include fields we manage via this script
-            const updatePayload: any = {
-                roleId: adminRole!.id,
-                roleName: adminRole!.name,
-                permissions: adminRole.permissions || [],
-                habilitationStatus: 'HABILITADO',
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                 // Remove legacy 'role' field if it exists
-                role: admin.firestore.FieldValue.delete(),
-            };
-
-            // Keep existing fullName if it exists and is not empty, unless we just created the user in Auth
-            if (userDoc.data()?.fullName && typeof userDoc.data().fullName === 'string' && userDoc.data().fullName.trim() !== '' && userExistsInAuth) {
-                 // Don't update fullName if it existed and we just updated
-                 delete updatePayload.fullName;
-            } else {
-                 // Use the name from Auth record if we just created/synced Auth, or if Firestore name was missing/empty
-                 updatePayload.fullName = userRecord.displayName || targetEmail.split('@')[0];
-            }
-
-
-            await userDocRef.update(updatePayload);
-            console.log(`[Admin Script] User document for UID ${userRecord.uid} updated in Firestore with ADMIN role.`);
+          console.error(`[Admin Script] Erro ao verificar usuário ${ADMIN_EMAIL} no Auth:`, error);
+          process.exit(1);
         }
-
-        console.log(`[Admin Script] Setup for ${targetEmail} as ${targetRoleName} completed successfully.`);
-
-    } catch (error: any) {
-        console.error(`[Admin Script] An error occurred during admin user setup for ${targetEmail}:`, error);
-        process.exit(1);
+      }
+    } else { // Para MYSQL ou POSTGRES
+      userIdToUse = ADMIN_UID_FOR_SQL; // Usar um UID fixo ou gerado
+      console.log(`[Admin Script] Usando UID '${userIdToUse}' para sistema SQL.`);
     }
+    
+    console.log(`[Admin Script] Garantindo perfil no banco de dados para UID: ${userIdToUse}`);
+    const profileResult = await ensureUserProfileInDb(
+      userIdToUse,
+      ADMIN_EMAIL,
+      ADMIN_FULL_NAME,
+      ADMIN_TARGET_ROLE_NAME, // Passa o nome do perfil
+      { password: ADMIN_PASSWORD } // Passa a senha para ser usada pelo adapter SQL
+    );
+
+    if (profileResult.success) {
+      console.log(`[Admin Script] Perfil para ${ADMIN_EMAIL} (UID: ${userIdToUse}) configurado com sucesso no banco de dados com o perfil ${ADMIN_TARGET_ROLE_NAME}.`);
+    } else {
+      console.error(`[Admin Script] Falha ao configurar perfil no banco de dados para ${ADMIN_EMAIL}: ${profileResult.message}`);
+      // Considerar reverter a criação no Auth se a criação no DB falhar para Firestore.
+       if (activeSystem === 'FIRESTORE' && authAdminInstance && !userExistsInAuth && userIdToUse) {
+           try {
+               await authAdminInstance.deleteUser(userIdToUse);
+               console.log(`[Admin Script] Criação do usuário Auth ${userIdToUse} revertida devido a falha no DB.`);
+           } catch (deleteError) {
+               console.error(`[Admin Script] Falha ao reverter usuário Auth ${userIdToUse}. Limpeza manual pode ser necessária.`, deleteError);
+           }
+       }
+    }
+
+    console.log(`[Admin Script] Configuração para ${ADMIN_EMAIL} como ${ADMIN_TARGET_ROLE_NAME} concluída.`);
+
+  } catch (error: any) {
+    console.error(`[Admin Script] Erro durante a configuração do usuário administrador para ${ADMIN_EMAIL}:`, error);
+    process.exit(1);
+  }
 }
 
-// Execute the script
-setupAdminUser();
+// Executa o script
+setupAdminUser().then(() => {
+    console.log("[Admin Script] Processo finalizado.");
+    process.exit(0); // Sair explicitamente para terminar o script
+}).catch(err => {
+    console.error("[Admin Script] Erro não tratado no setupAdminUser:", err);
+    process.exit(1);
+});
