@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, type FormEvent, useCallback } from 'react';
-import { useRouter } from 'next/navigation'; // Importação adicionada
+import { useRouter } from 'next/navigation'; 
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -26,7 +26,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { updateUserProfile, type EditableUserProfileData } from './actions';
+import { updateUserProfile, type EditableUserProfileData } from './edit/actions'; // CORRIGIDO CAMINHO
 import type { UserProfileData } from '@/types';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
@@ -197,16 +197,29 @@ export default function ProfilePage() {
   }, [authUser, userProfileWithPermissions, authContextLoading, fetchProfileData, router]);
   
   const handleRetryFetch = useCallback(() => {
+    setErrorPage(null); 
+    setIsLoadingPage(true); 
     if (activeSystem === 'FIRESTORE' && authUser?.uid) {
       fetchProfileData(authUser.uid);
-    } else if (activeSystem !== 'FIRESTORE' && userProfileWithPermissions) {
-      // For SQL, if userProfileWithPermissions is already there, just re-render with it
-      // The useEffect will handle the logic based on userProfileWithPermissions
-      // If it's missing, the useEffect handles redirection.
-      setIsLoadingPage(false); // Ensure loader is off
-      setErrorPage(null); // Clear error to re-evaluate display
+    } else if (activeSystem !== 'FIRESTORE') {
+       // For SQL, if userProfileWithPermissions is missing, AuthProvider should redirect.
+       // If it's present, useEffect above will use it. This retry is mostly for Firestore scenarios.
+       // If userProfileWithPermissions became null unexpectedly, it might trigger a re-fetch via useEffect dependency changes.
+      if(userProfileWithPermissions) {
+        const processedProfile = {
+          ...userProfileWithPermissions,
+          dateOfBirth: userProfileWithPermissions.dateOfBirth ? new Date(userProfileWithPermissions.dateOfBirth) : null,
+          rgIssueDate: userProfileWithPermissions.rgIssueDate ? new Date(userProfileWithPermissions.rgIssueDate) : null,
+        };
+        setProfileToDisplay(processedProfile as UserProfileData);
+        form.reset(processedProfile as ProfileFormValues);
+        setIsLoadingPage(false);
+      } else {
+        router.push('/auth/login?redirect=/profile'); // Ensure redirection if no profile
+        setIsLoadingPage(false);
+      }
     }
-  }, [activeSystem, authUser, userProfileWithPermissions, fetchProfileData]);
+  }, [activeSystem, authUser, userProfileWithPermissions, fetchProfileData, router, form]);
 
   async function onSubmit(data: ProfileFormValues) {
     const userId = activeSystem === 'FIRESTORE' ? authUser?.uid : userProfileWithPermissions?.uid;
@@ -227,14 +240,19 @@ export default function ProfilePage() {
 
     if (result.success) {
       toast({ title: "Sucesso!", description: result.message });
-      router.push('/profile'); 
-      router.refresh(); // To refetch server components if needed
+      // No redirect needed here, just refresh data if necessary or rely on context update
+      // router.push('/profile'); 
+      // router.refresh(); 
+      // For SQL, we might need to re-fetch the profile from the DB and update AuthContext
+      // For Firestore, onAuthStateChanged and ensureUserProfileInDb might re-fetch.
+      // For now, let's assume a manual refresh of the page or re-login might be needed for SQL to see updates immediately.
+      // Or better: AuthContext should have a way to force-refresh its userProfileWithPermissions
     } else {
       toast({ title: "Erro ao atualizar", description: result.message, variant: "destructive" });
     }
   }
 
-  if (isLoadingPage || authContextLoading) { // Consider authContextLoading as well
+  if (isLoadingPage || authContextLoading) { 
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -686,7 +704,5 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
 
     
