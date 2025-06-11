@@ -1449,14 +1449,15 @@ export class PostgresAdapter implements IDatabaseAdapter {
         if (data.name && currentNormalizedName !== 'ADMINISTRATOR' && currentNormalizedName !== 'USER') {
             fields.push(`name = $${paramCount++}`); values.push(data.name.trim());
             fields.push(`name_normalized = $${paramCount++}`); values.push(data.name.trim().toUpperCase());
-        } else if (data.name) { 
+        } else if (data.name) {
              if (data.description !== undefined) {
                 fields.push(`description = $${paramCount++}`); values.push(data.description || null);
             }
         }
-         if (data.description !== undefined && (!data.name || (currentNormalizedName === 'ADMINISTRATOR' || currentNormalizedName === 'USER'))) {
+        if (data.description !== undefined && (!data.name || (currentNormalizedName === 'ADMINISTRATOR' || currentNormalizedName === 'USER'))) {
              fields.push(`description = $${paramCount++}`); values.push(data.description || null);
         }
+
         if (data.permissions) {
             const validPermissions = (data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
             fields.push(`permissions = $${paramCount++}::jsonb`); values.push(JSON.stringify(validPermissions));
@@ -1486,13 +1487,13 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }> {
     const client = await getPool().connect();
     let rolesProcessedCount = 0;
+    console.log('[PostgresAdapter - ensureDefaultRolesExist] Iniciando verificação/criação de perfis padrão...');
     try {
-        console.log('[PostgresAdapter - ensureDefaultRolesExist] Iniciando verificação/criação de perfis padrão...');
         await client.query('BEGIN');
         for (const roleData of defaultRolesData) {
             const normalizedName = roleData.name.trim().toUpperCase();
             console.log(`[PostgresAdapter] Processando perfil padrão: ${roleData.name} (Normalizado: ${normalizedName})`);
-
+            
             const roleRes = await client.query('SELECT id, permissions, description FROM roles WHERE name_normalized = $1 LIMIT 1', [normalizedName]);
             const validPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
 
@@ -1510,25 +1511,25 @@ export class PostgresAdapter implements IDatabaseAdapter {
                 const currentPermsSorted = [...(existingRole.permissions || [])].sort();
                 const expectedPermsSorted = [...validPermissions].sort();
                 if (JSON.stringify(currentPermsSorted) !== JSON.stringify(expectedPermsSorted) || existingRole.description !== (roleData.description || null)) {
-                     console.log(`[PostgresAdapter] Atualizando descrição/permissões para o perfil '${roleData.name}'. Permissões atuais: ${JSON.stringify(currentPermsSorted)}, Permissões esperadas: ${JSON.stringify(expectedPermsSorted)}, Descrição atual: ${existingRole.description}, Descrição esperada: ${roleData.description || null}`);
-                     await client.query(
+                    console.log(`[PostgresAdapter] Atualizando descrição/permissões para o perfil '${roleData.name}'.`);
+                    await client.query(
                         'UPDATE roles SET description = $1, permissions = $2::jsonb, updated_at = NOW() WHERE id = $3',
                         [roleData.description || null, JSON.stringify(expectedPermsSorted), existingRole.id]
                     );
                     console.log(`[PostgresAdapter] Perfil '${roleData.name}' atualizado.`);
                     rolesProcessedCount++;
                 } else {
-                    console.log(`[PostgresAdapter] Perfil '${roleData.name}' já está atualizado.`);
+                     console.log(`[PostgresAdapter] Perfil '${roleData.name}' já está atualizado.`);
                 }
             }
         }
         await client.query('COMMIT');
         console.log(`[PostgresAdapter - ensureDefaultRolesExist] Verificação/criação de perfis padrão concluída. ${rolesProcessedCount} perfis processados.`);
-        return { success: true, message: `Perfis padrão verificados/criados (PostgreSQL). ${rolesProcessedCount} processados.`, rolesProcessed: rolesProcessedCount};
+        return { success: true, message: `Perfis padrão verificados/criados (PostgreSQL). ${rolesProcessedCount} processados.`, rolesProcessed: rolesProcessedCount };
     } catch (e: any) { 
         await client.query('ROLLBACK'); 
         console.error("[PostgresAdapter - ensureDefaultRolesExist] Erro:", e);
-        return { success: false, message: e.message }; 
+        return { success: false, message: e.message, rolesProcessed: 0 }; 
     } finally { 
         client.release(); 
     }
@@ -1602,11 +1603,10 @@ export class PostgresAdapter implements IDatabaseAdapter {
             if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; console.log(`[PostgresAdapter ensureUserRole] Atualizando roleName para ${targetRole.name}`);}
             if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = targetRole.permissions || []; needsUpdate = true; console.log(`[PostgresAdapter ensureUserRole] Atualizando permissions.`);} 
             if (additionalProfileData?.password) {
-                updatePayload.passwordText = additionalProfileData.password; // Assumindo texto plano
+                updatePayload.passwordText = additionalProfileData.password; 
                 needsUpdate = true;
                  console.log(`[PostgresAdapter ensureUserRole] Atualizando passwordText.`);
             }
-            // Apply other additionalProfileData if present
             if (additionalProfileData?.cpf !== undefined && additionalProfileData.cpf !== userDataFromDB.cpf) { updatePayload.cpf = additionalProfileData.cpf; needsUpdate = true;}
             if (additionalProfileData?.cellPhone !== undefined && additionalProfileData.cellPhone !== userDataFromDB.cellPhone) { updatePayload.cellPhone = additionalProfileData.cellPhone; needsUpdate = true;}
             if (additionalProfileData?.dateOfBirth !== undefined && (userDataFromDB.dateOfBirth?.getTime() !== additionalProfileData.dateOfBirth?.getTime())) { updatePayload.dateOfBirth = additionalProfileData.dateOfBirth; needsUpdate = true;}
@@ -1618,7 +1618,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
                 const updateValues: any[] = [];
                 let pCount = 1;
                 Object.keys(updatePayload).forEach(key => {
-                    updateFields.push(`${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = $${pCount++}`);
+                    const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+                    updateFields.push(`${sqlColumn} = $${pCount++}`);
                     updateValues.push(updatePayload[key]);
                 });
                 updateValues.push(userId);
@@ -1661,7 +1662,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       return mapRowsToCamelCase(res.rows).map(row => {
         const profile = mapToUserProfileData(row);
         if ((!profile.permissions || profile.permissions.length === 0) && row.role_permissions) {
-            profile.permissions = row.role_permissions; 
+            profile.permissions = row.role_permissions; // JSONB is parsed by pg driver
         }
         return profile;
       });
@@ -1704,7 +1705,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       
       const profile = mapToUserProfileData(userRow, role);
       if ((!profile.permissions || profile.permissions.length === 0) && role?.permissions?.length) {
-         profile.permissions = role.permissions; 
+         profile.permissions = role.permissions;
       }
       return profile;
     } catch (e: any) {
@@ -1757,9 +1758,9 @@ export class PostgresAdapter implements IDatabaseAdapter {
         values.push(metadata[key]);
       });
       if (fields.length === 0) return { success: true, message: "Nenhuma alteração." };
-      const query = `UPDATE media_items SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $${paramCount}`;
+      const queryText = `UPDATE media_items SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $${paramCount}`;
       values.push(Number(id));
-      await client.query(query, values);
+      await client.query(queryText, values);
       return { success: true, message: 'Metadados atualizados (PostgreSQL).' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
   }
@@ -1780,7 +1781,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         await client.query(
           `UPDATE media_items 
            SET linked_lot_ids = COALESCE(linked_lot_ids, '[]'::jsonb) || ($1::TEXT)::jsonb
-           WHERE id = $2 AND NOT (linked_lot_ids @> ($1::TEXT)::jsonb);`, // Ensure $1 is treated as a single value array element
+           WHERE id = $2 AND NOT (linked_lot_ids @> ($1::TEXT)::jsonb);`,
           [JSON.stringify([lotId]), Number(mediaId)]
         );
       }
