@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, type FormEvent, useCallback } from 'react';
-import { useRouter } from 'next/navigation'; // Corrigido: Importação adicionada
+import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -26,7 +26,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { updateUserProfile, type EditableUserProfileData } from './edit/actions'; // Caminho corrigido
+import { updateUserProfile, type EditableUserProfileData } from './edit/actions';
 import type { UserProfileData } from '@/types';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
@@ -71,14 +71,12 @@ const propertyRegimeOptions = ["Comunhão Parcial de Bens", "Comunhão Universal
 
 export default function ProfilePage() {
   const { user: authUser, userProfileWithPermissions, loading: authContextLoading } = useAuth();
-  const router = useRouter(); 
+  const router = useRouter();
   const { toast } = useToast();
-
-  const [profileToDisplay, setProfileToDisplay] = useState<UserProfileData | null>(null);
-  const [isLoadingPage, setIsLoadingPage] = useState(true);
-  const [errorPage, setErrorPage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetchingData, setIsFetchingData] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [activeSystem, setActiveSystem] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false); // <<< CORREÇÃO: Adicionado/Descomentado
   
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -92,7 +90,7 @@ export default function ProfilePage() {
   });
 
   const fetchProfileData = useCallback(async (uid: string) => {
-    setIsLoadingPage(true);
+    setIsFetchingData(true);
     setErrorPage(null);
     console.log('[ProfilePage fetchProfileData] Attempting for UID:', uid);
     try {
@@ -111,6 +109,28 @@ export default function ProfilePage() {
           dateOfBirth: data.dateOfBirth?.toDate ? data.dateOfBirth.toDate() : (data.dateOfBirth || null),
           rgIssueDate: data.rgIssueDate?.toDate ? data.rgIssueDate.toDate() : (data.rgIssueDate || null),
           createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt || null),
+          // Garantir que campos string opcionais sejam '' se nulos/undefined do DB
+          cpf: data.cpf || '',
+          rgNumber: data.rgNumber || '',
+          rgIssuer: data.rgIssuer || '',
+          rgState: data.rgState || '',
+          cellPhone: data.cellPhone || '',
+          homePhone: data.homePhone || '',
+          gender: data.gender || '',
+          profession: data.profession || '',
+          nationality: data.nationality || '',
+          maritalStatus: data.maritalStatus || '',
+          propertyRegime: data.propertyRegime || '',
+          spouseName: data.spouseName || '',
+          spouseCpf: data.spouseCpf || '',
+          zipCode: data.zipCode || '',
+          street: data.street || '',
+          number: data.number || '',
+          complement: data.complement || '',
+          neighborhood: data.neighborhood || '',
+          city: data.city || '',
+          state: data.state || '',
+          optInMarketing: data.optInMarketing || false,
         };
         setProfileToDisplay(processedData as UserProfileData);
         form.reset({
@@ -150,7 +170,7 @@ export default function ProfilePage() {
       console.error(`[ProfilePage fetchProfileData] Error fetching Firestore profile:`, e);
       setProfileToDisplay(null);
     } finally {
-      setIsLoadingPage(false);
+      setIsFetchingData(false);
     }
   }, [authUser, form]); 
 
@@ -184,6 +204,28 @@ export default function ProfilePage() {
           rgIssueDate: userProfileWithPermissions.rgIssueDate ? new Date(userProfileWithPermissions.rgIssueDate) : null,
           createdAt: userProfileWithPermissions.createdAt ? new Date(userProfileWithPermissions.createdAt) : undefined,
           updatedAt: userProfileWithPermissions.updatedAt ? new Date(userProfileWithPermissions.updatedAt) : undefined,
+          // Garantir que campos string opcionais sejam '' se nulos/undefined do contexto
+          cpf: userProfileWithPermissions.cpf || '',
+          rgNumber: userProfileWithPermissions.rgNumber || '',
+          rgIssuer: userProfileWithPermissions.rgIssuer || '',
+          rgState: userProfileWithPermissions.rgState || '',
+          cellPhone: userProfileWithPermissions.cellPhone || '',
+          homePhone: userProfileWithPermissions.homePhone || '',
+          gender: userProfileWithPermissions.gender || '',
+          profession: userProfileWithPermissions.profession || '',
+          nationality: userProfileWithPermissions.nationality || '',
+          maritalStatus: userProfileWithPermissions.maritalStatus || '',
+          propertyRegime: userProfileWithPermissions.propertyRegime || '',
+          spouseName: userProfileWithPermissions.spouseName || '',
+          spouseCpf: userProfileWithPermissions.spouseCpf || '',
+          zipCode: userProfileWithPermissions.zipCode || '',
+          street: userProfileWithPermissions.street || '',
+          number: userProfileWithPermissions.number || '',
+          complement: userProfileWithPermissions.complement || '',
+          neighborhood: userProfileWithPermissions.neighborhood || '',
+          city: userProfileWithPermissions.city || '',
+          state: userProfileWithPermissions.state || '',
+          optInMarketing: userProfileWithPermissions.optInMarketing || false,
         };
         setProfileToDisplay(processedProfile as UserProfileData);
         form.reset(processedProfile as ProfileFormValues);
@@ -195,7 +237,7 @@ export default function ProfilePage() {
         setIsLoadingPage(false);
       }
     }
-  }, [authUser, userProfileWithPermissions, authContextLoading, fetchProfileData, router]);
+  }, [authUser, userProfileWithPermissions, authContextLoading, fetchProfileData, router, form]); // Added form to dependencies
   
   const handleRetryFetch = useCallback(() => {
     setErrorPage(null); 
@@ -208,6 +250,28 @@ export default function ProfilePage() {
           ...userProfileWithPermissions,
           dateOfBirth: userProfileWithPermissions.dateOfBirth ? new Date(userProfileWithPermissions.dateOfBirth) : null,
           rgIssueDate: userProfileWithPermissions.rgIssueDate ? new Date(userProfileWithPermissions.rgIssueDate) : null,
+          // Garantir strings vazias para opcionais no reset também
+          cpf: userProfileWithPermissions.cpf || '',
+          rgNumber: userProfileWithPermissions.rgNumber || '',
+          rgIssuer: userProfileWithPermissions.rgIssuer || '',
+          rgState: userProfileWithPermissions.rgState || '',
+          cellPhone: userProfileWithPermissions.cellPhone || '',
+          homePhone: userProfileWithPermissions.homePhone || '',
+          gender: userProfileWithPermissions.gender || '',
+          profession: userProfileWithPermissions.profession || '',
+          nationality: userProfileWithPermissions.nationality || '',
+          maritalStatus: userProfileWithPermissions.maritalStatus || '',
+          propertyRegime: userProfileWithPermissions.propertyRegime || '',
+          spouseName: userProfileWithPermissions.spouseName || '',
+          spouseCpf: userProfileWithPermissions.spouseCpf || '',
+          zipCode: userProfileWithPermissions.zipCode || '',
+          street: userProfileWithPermissions.street || '',
+          number: userProfileWithPermissions.number || '',
+          complement: userProfileWithPermissions.complement || '',
+          neighborhood: userProfileWithPermissions.neighborhood || '',
+          city: userProfileWithPermissions.city || '',
+          state: userProfileWithPermissions.state || '',
+          optInMarketing: userProfileWithPermissions.optInMarketing || false,
         };
         setProfileToDisplay(processedProfile as UserProfileData);
         form.reset(processedProfile as ProfileFormValues);
@@ -225,7 +289,7 @@ export default function ProfilePage() {
       toast({ title: "Erro", description: "ID do usuário não encontrado para atualização.", variant: "destructive" });
       return;
     }
-    setIsSubmitting(true); // <<< CORREÇÃO: Adicionado
+    setIsSubmitting(true);
     
     const dataToUpdate: EditableUserProfileData = {
       ...data,
@@ -233,20 +297,24 @@ export default function ProfilePage() {
       rgIssueDate: data.rgIssueDate instanceof Date ? data.rgIssueDate : null,
     };
 
-    try { // <<< CORREÇÃO: Adicionado try...finally
+    try {
       const result = await updateUserProfile(userId, dataToUpdate);
       if (result.success) {
         toast({ title: "Sucesso!", description: result.message });
-        // Optionally re-fetch or update local context if needed after successful save
-        // For now, assuming the backend update is enough and a page refresh would show it
-        // For SQL, might need to update AuthContext's userProfileWithPermissions
+        // Re-fetch or update local context if needed
+        if (activeSystem === 'FIRESTORE' && authUser?.uid) {
+          fetchProfileData(authUser.uid);
+        } else if (userProfileWithPermissions?.uid) {
+          // For SQL, might need to re-fetch or update context. For now, a refresh can handle it.
+          router.refresh(); 
+        }
       } else {
         toast({ title: "Erro ao atualizar", description: result.message, variant: "destructive" });
       }
     } catch (error: any) {
       toast({ title: "Erro Inesperado", description: error.message || "Ocorreu um erro ao salvar.", variant: "destructive" });
     } finally {
-      setIsSubmitting(false); // <<< CORREÇÃO: Adicionado no finally
+      setIsSubmitting(false);
     }
   }
 
@@ -268,7 +336,7 @@ export default function ProfilePage() {
         </Button>
          <Button 
             variant="outline" 
-            onClick={handleRetryFetch} // Corrigido
+            onClick={handleRetryFetch}
             className="mt-4 ml-2"
             disabled={isLoadingPage || authContextLoading}
         >
@@ -278,7 +346,7 @@ export default function ProfilePage() {
     );
   }
   
-  if (!profileToDisplay && !isLoadingPage && !authContextLoading) { // Verificação adicional
+  if (!profileToDisplay && !isLoadingPage && !authContextLoading) {
      return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold text-muted-foreground">Não foi possível carregar os dados do perfil.</h2>
@@ -290,12 +358,9 @@ export default function ProfilePage() {
     );
   }
 
-  const userInitial = profileToDisplay?.fullName ? profileToDisplay.fullName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : "U";
-  const formattedDateOfBirth = profileToDisplay?.dateOfBirth ? format(new Date(profileToDisplay.dateOfBirth), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
-  const formattedRgIssueDate = profileToDisplay?.rgIssueDate ? format(new Date(profileToDisplay.rgIssueDate), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
-  const formattedMemberSince = profileToDisplay?.createdAt ? format(new Date(profileToDisplay.createdAt), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
   const currentMaritalStatus = form.watch("maritalStatus");
   const showSpouseFields = currentMaritalStatus === "Casado(a)" || currentMaritalStatus === "União Estável";
+
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -318,7 +383,7 @@ export default function ProfilePage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Nome Completo</FormLabel>
-                      <FormControl><Input {...field} /></FormControl>
+                      <FormControl><Input {...field} value={field.value ?? ''} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -327,10 +392,11 @@ export default function ProfilePage() {
                   <FormField
                     control={form.control}
                     name="cpf"
+                    defaultValue=""
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>CPF</FormLabel>
-                        <FormControl><Input {...field} placeholder="000.000.000-00" /></FormControl>
+                        <FormControl><Input {...field} value={field.value ?? ''} placeholder="000.000.000-00" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -338,6 +404,7 @@ export default function ProfilePage() {
                   <FormField
                     control={form.control}
                     name="dateOfBirth"
+                    defaultValue={null}
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
                         <FormLabel>Data de Nascimento</FormLabel>
@@ -375,10 +442,11 @@ export default function ProfilePage() {
                   <FormField
                     control={form.control}
                     name="cellPhone"
+                    defaultValue=""
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Celular</FormLabel>
-                        <FormControl><Input {...field} placeholder="(00) 00000-0000" /></FormControl>
+                        <FormControl><Input {...field} value={field.value ?? ''} placeholder="(00) 00000-0000" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -386,10 +454,11 @@ export default function ProfilePage() {
                    <FormField
                     control={form.control}
                     name="homePhone"
+                    defaultValue=""
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Telefone Residencial (Opcional)</FormLabel>
-                        <FormControl><Input {...field} placeholder="(00) 0000-0000" /></FormControl>
+                        <FormControl><Input {...field} value={field.value ?? ''} placeholder="(00) 0000-0000" /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -399,10 +468,11 @@ export default function ProfilePage() {
                     <FormField
                         control={form.control}
                         name="gender"
+                        defaultValue=""
                         render={({ field }) => (
                         <FormItem>
                             <FormLabel>Gênero (Opcional)</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ''}>
+                            <Select onValueChange={field.onChange} value={field.value ?? ''}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Selecione seu gênero" /></SelectTrigger></FormControl>
                             <SelectContent>
                                 {genderOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
@@ -415,10 +485,11 @@ export default function ProfilePage() {
                     <FormField
                         control={form.control}
                         name="profession"
+                        defaultValue=""
                         render={({ field }) => (
                         <FormItem>
                             <FormLabel>Profissão (Opcional)</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
+                            <FormControl><Input {...field} value={field.value ?? ''} /></FormControl>
                             <FormMessage />
                         </FormItem>
                         )}
@@ -428,10 +499,11 @@ export default function ProfilePage() {
                      <FormField
                         control={form.control}
                         name="nationality"
+                        defaultValue=""
                         render={({ field }) => (
                         <FormItem>
                             <FormLabel>Nacionalidade (Opcional)</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
+                            <FormControl><Input {...field} value={field.value ?? ''} /></FormControl>
                             <FormMessage />
                         </FormItem>
                         )}
@@ -439,10 +511,11 @@ export default function ProfilePage() {
                      <FormField
                         control={form.control}
                         name="maritalStatus"
+                        defaultValue=""
                         render={({ field }) => (
                         <FormItem>
                             <FormLabel>Estado Civil (Opcional)</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ''}>
+                            <Select onValueChange={field.onChange} value={field.value ?? ''}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Selecione seu estado civil" /></SelectTrigger></FormControl>
                             <SelectContent>
                                 {maritalStatusOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
@@ -459,10 +532,11 @@ export default function ProfilePage() {
                         <FormField
                             control={form.control}
                             name="propertyRegime"
+                            defaultValue=""
                             render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Regime de Bens (Opcional)</FormLabel>
-                                 <Select onValueChange={field.onChange} value={field.value || ''}>
+                                 <Select onValueChange={field.onChange} value={field.value ?? ''}>
                                 <FormControl><SelectTrigger><SelectValue placeholder="Selecione o regime de bens" /></SelectTrigger></FormControl>
                                 <SelectContent>
                                     {propertyRegimeOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
@@ -476,10 +550,11 @@ export default function ProfilePage() {
                             <FormField
                                 control={form.control}
                                 name="spouseName"
+                                defaultValue=""
                                 render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Nome do Cônjuge (Opcional)</FormLabel>
-                                    <FormControl><Input {...field} /></FormControl>
+                                    <FormControl><Input {...field} value={field.value ?? ''} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                                 )}
@@ -487,10 +562,11 @@ export default function ProfilePage() {
                             <FormField
                                 control={form.control}
                                 name="spouseCpf"
+                                defaultValue=""
                                 render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>CPF do Cônjuge (Opcional)</FormLabel>
-                                    <FormControl><Input {...field} placeholder="000.000.000-00" /></FormControl>
+                                    <FormControl><Input {...field} value={field.value ?? ''} placeholder="000.000.000-00" /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                                 )}
@@ -506,10 +582,11 @@ export default function ProfilePage() {
                     <FormField
                         control={form.control}
                         name="rgNumber"
+                        defaultValue=""
                         render={({ field }) => (
                         <FormItem>
                             <FormLabel>Número do RG (Opcional)</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
+                            <FormControl><Input {...field} value={field.value ?? ''} /></FormControl>
                             <FormMessage />
                         </FormItem>
                         )}
@@ -517,10 +594,11 @@ export default function ProfilePage() {
                      <FormField
                         control={form.control}
                         name="rgIssuer"
+                        defaultValue=""
                         render={({ field }) => (
                         <FormItem>
                             <FormLabel>Órgão Emissor do RG (Opcional)</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
+                            <FormControl><Input {...field} value={field.value ?? ''} /></FormControl>
                             <FormMessage />
                         </FormItem>
                         )}
@@ -530,10 +608,11 @@ export default function ProfilePage() {
                     <FormField
                         control={form.control}
                         name="rgState"
+                        defaultValue=""
                         render={({ field }) => (
                         <FormItem>
                             <FormLabel>UF Emissor do RG (Opcional)</FormLabel>
-                            <FormControl><Input {...field} maxLength={2} /></FormControl>
+                            <FormControl><Input {...field} value={field.value ?? ''} maxLength={2} /></FormControl>
                             <FormMessage />
                         </FormItem>
                         )}
@@ -541,6 +620,7 @@ export default function ProfilePage() {
                      <FormField
                         control={form.control}
                         name="rgIssueDate"
+                        defaultValue={null}
                         render={({ field }) => (
                         <FormItem className="flex flex-col">
                             <FormLabel>Data de Emissão do RG (Opcional)</FormLabel>
@@ -581,10 +661,11 @@ export default function ProfilePage() {
                 <FormField
                   control={form.control}
                   name="zipCode"
+                  defaultValue=""
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>CEP</FormLabel>
-                      <FormControl><Input {...field} placeholder="00000-000" /></FormControl>
+                      <FormControl><Input {...field} value={field.value ?? ''} placeholder="00000-000" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -593,10 +674,11 @@ export default function ProfilePage() {
                    <FormField
                     control={form.control}
                     name="street"
+                    defaultValue=""
                     render={({ field }) => (
                       <FormItem className="md:col-span-2">
                         <FormLabel>Logradouro</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
+                        <FormControl><Input {...field} value={field.value ?? ''} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -604,10 +686,11 @@ export default function ProfilePage() {
                   <FormField
                     control={form.control}
                     name="number"
+                    defaultValue=""
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Número</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
+                        <FormControl><Input {...field} value={field.value ?? ''} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -616,10 +699,11 @@ export default function ProfilePage() {
                 <FormField
                   control={form.control}
                   name="complement"
+                  defaultValue=""
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Complemento</FormLabel>
-                      <FormControl><Input {...field} /></FormControl>
+                      <FormControl><Input {...field} value={field.value ?? ''} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -628,10 +712,11 @@ export default function ProfilePage() {
                   <FormField
                     control={form.control}
                     name="neighborhood"
+                    defaultValue=""
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Bairro</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
+                        <FormControl><Input {...field} value={field.value ?? ''} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -639,10 +724,11 @@ export default function ProfilePage() {
                   <FormField
                     control={form.control}
                     name="city"
+                    defaultValue=""
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Cidade</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
+                        <FormControl><Input {...field} value={field.value ?? ''} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -650,10 +736,11 @@ export default function ProfilePage() {
                    <FormField
                     control={form.control}
                     name="state"
+                    defaultValue=""
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Estado (UF)</FormLabel>
-                        <FormControl><Input {...field} maxLength={2} /></FormControl>
+                        <FormControl><Input {...field} value={field.value ?? ''} maxLength={2} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -694,9 +781,7 @@ export default function ProfilePage() {
                 </span>
               </Button>
                <Button variant="outline" asChild className="ml-auto">
-                  <Link href="/profile" legacyBehavior passHref>
-                    <a><span>Cancelar</span></a>
-                  </Link>
+                  <Link href="/profile">Cancelar</Link>
                 </Button>
             </CardFooter>
           </form>
@@ -706,4 +791,3 @@ export default function ProfilePage() {
   );
 }
 
-    
