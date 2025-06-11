@@ -189,7 +189,7 @@ export type LotFormData = Omit<Lot,
   // 'categoryId' será o ID resolvido, usado pelos adaptadores
   galleryImageUrls?: string[]; 
   mediaItemIds?: string[]; 
-  categoryId?: string; // Adicionado para consistência interna, action resolverá isso
+  categoryId?: string; 
 };
 
 
@@ -241,7 +241,7 @@ export type AuctionFormValues = Omit<Auction, 'id' | 'createdAt' | 'updatedAt' |
 export type AuctionDbData = Omit<AuctionFormValues, 'category' | 'auctioneer' | 'seller'> & {
   categoryId?: string;
   auctioneerId?: string;
-  sellerId?: string | null; // sellerId pode ser nulo
+  sellerId?: string | null; 
 };
 
 
@@ -264,7 +264,7 @@ export interface UserProfileData {
   uid: string;
   email: string;
   fullName: string;
-  password?: string; // Para uso interno dos adaptadores SQL, NÃO para o cliente
+  password?: string; 
   roleId?: string; 
   roleName?: string; 
   permissions?: string[];
@@ -413,10 +413,10 @@ export interface RecentlyViewedLotInfo {
 }
 
 export interface StateInfo {
-  id: string; // No SQL é o ID numérico, no Firestore é o slug
+  id: string; 
   name: string;
   uf: string; 
-  slug: string; // Mantido para Firestore
+  slug: string; 
   cityCount?: number; 
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
@@ -426,10 +426,10 @@ export type StateFormData = Omit<StateInfo, 'id' | 'slug' | 'createdAt' | 'updat
 
 
 export interface CityInfo {
-  id: string; // No SQL é o ID numérico, no Firestore é o slug composto
+  id: string; 
   name: string;
-  slug: string; // Slug da cidade
-  stateId: string; // ID/Slug do estado pai
+  slug: string; 
+  stateId: string; 
   stateUf: string; 
   ibgeCode?: string; 
   lotCount?: number; 
@@ -470,13 +470,13 @@ export interface DirectSaleOffer {
 }
 
 export type EditableUserProfileData = Omit<UserProfileData, 'uid' | 'email' | 'status' | 'createdAt' | 'updatedAt' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'roleId' | 'roleName' | 'sellerProfileId' | 'permissions' | 'habilitationStatus' | 'password' > & {
-  roleId?: string; // RoleId is managed via admin/users/[userId]/edit
+  roleId?: string; 
   roleName?: string;
   sellerProfileId?: string;
   permissions?: string[];
   habilitationStatus?: UserHabilitationStatus;
-  dateOfBirth?: Date | null; // Assegurar que é Date ou null, não AnyTimestamp, para o formulário
-  rgIssueDate?: Date | null; // Assegurar que é Date ou null, para o formulário
+  dateOfBirth?: Date | null; 
+  rgIssueDate?: Date | null; 
 };
 
 export interface PlatformSettings {
@@ -490,12 +490,12 @@ export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'
 export interface SqlAuthResult {
   success: boolean;
   message: string;
-  user?: UserProfileData; // User profile data on successful SQL auth
+  user?: UserProfileData; 
 }
     
 export interface IDatabaseAdapter {
   // Schema Initialization
-  initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[] }>;
+  initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[]; rolesProcessed?: number }>;
 
   // Categories
   createLotCategory(data: { name: string; description?: string }): Promise<{ success: boolean; message: string; categoryId?: string }>;
@@ -554,11 +554,18 @@ export interface IDatabaseAdapter {
   // Users (only profile data, auth is separate)
   getUserProfileData(userId: string): Promise<UserProfileData | null>;
   updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }>;
-  ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' >>): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }>;
+  ensureUserRole(
+    userId: string, 
+    email: string, 
+    fullName: string | null, 
+    targetRoleName: string, 
+    additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' >>,
+    roleIdToAssign?: string // Adicionado para otimização
+  ): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }>;
   getUsersWithRoles(): Promise<UserProfileData[]>;
   updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }>;
   deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }>;
-  getUserByEmail(email: string): Promise<UserProfileData | null>; // Nova função
+  getUserByEmail(email: string): Promise<UserProfileData | null>;
 
 
   // Roles
@@ -574,7 +581,7 @@ export interface IDatabaseAdapter {
   createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }>;
   getMediaItems(): Promise<MediaItem[]>;
   updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }>;
-  deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }>; // Deletion from DB only
+  deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }>; 
   linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }>;
   unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }>;
 
@@ -603,8 +610,9 @@ export type LotDbData = Omit<LotFormData, 'type' | 'auctionName'> & {
 
 // Type for data returned from DB adapters for Lots (includes category name if joined)
 export type LotWithCategoryName = Lot & {
-  categoryName?: string; // Populated by JOINs in SQL, or by a separate fetch in Firestore context
+  categoryName?: string; 
 };
+
 
 
 

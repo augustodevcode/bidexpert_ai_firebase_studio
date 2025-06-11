@@ -367,7 +367,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `DROP TABLE IF EXISTS lots CASCADE;`,
       `DROP TABLE IF EXISTS auctions CASCADE;`,
       `DROP TABLE IF EXISTS cities CASCADE;`,
-      `DROP TABLE IF EXISTS sellers CASCADE;`,
+      `DROP TABLE IF EXISTS sellers;`,
       `DROP TABLE IF EXISTS auctioneers CASCADE;`,
       `DROP TABLE IF EXISTS users CASCADE;`,
       `DROP TABLE IF EXISTS states CASCADE;`,
@@ -682,16 +682,18 @@ export class PostgresAdapter implements IDatabaseAdapter {
       await client.query('COMMIT');
       console.log('[PostgresAdapter] Esquema de tabelas inicializado/verificado com sucesso.');
       
-      // Após a criação das tabelas, garantir os perfis padrão
       const rolesResult = await this.ensureDefaultRolesExist();
       if (!rolesResult.success) {
         errors.push(new Error(`Falha ao garantir perfis padrão: ${rolesResult.message}`));
+      } else {
+        console.log(`[PostgresAdapter] ${rolesResult.rolesProcessed || 0} perfis padrão processados.`);
       }
 
-      // Garantir configurações padrão da plataforma
-      const settingsResult = await this.getPlatformSettings(); // Isso também cria se não existir
+      const settingsResult = await this.getPlatformSettings(); 
       if (!settingsResult.galleryImageBasePath) {
           errors.push(new Error('Falha ao garantir configurações padrão da plataforma.'));
+      } else {
+        console.log('[PostgresAdapter] Configurações padrão da plataforma verificadas/criadas.');
       }
 
       if (errors.length > 0) {
@@ -1398,8 +1400,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         
         const validPermissions = (data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
         const query = `
-            INSERT INTO roles (name, name_normalized, description, permissions, created_at, updated_at)
-            VALUES ($1, $2, $3, $4::jsonb, NOW(), NOW()) RETURNING id;
+            INSERT INTO roles (name, name_normalized, description, permissions) VALUES ($1, $2, $3, $4::jsonb) RETURNING id;
         `;
         const values = [data.name.trim(), nameNormalized, data.description || null, JSON.stringify(validPermissions)];
         const res = await client.query(query, values);
@@ -1556,6 +1557,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
             if (data[key] !== undefined && data[key] !== null) { 
                 fields.push(`${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = $${paramCount++}`);
                 values.push(data[key]);
+            } else if (data[key] === null) { 
+                 fields.push(`${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = NULL`);
             }
         });
         if (fields.length === 0) return { success: true, message: "Nenhuma alteração no perfil."};
@@ -1567,11 +1570,17 @@ export class PostgresAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
   }
 
-  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' >>): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' >>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
     const client = await getPool().connect();
     try {
         await this.ensureDefaultRolesExist(); 
-        const targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
+        let targetRole: Role | null = null;
+        if (roleIdToAssign) {
+            targetRole = await this.getRole(roleIdToAssign);
+        }
+        if (!targetRole) {
+            targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
+        }
         if (!targetRole || !targetRole.id) return { success: false, message: 'Perfil padrão USER não encontrado ou sem ID.'};
 
         await client.query('BEGIN');
@@ -1580,23 +1589,27 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
         if (userRes.rowCount > 0) {
             const userDataFromDB = mapToUserProfileData(mapRowToCamelCase(userRes.rows[0]));
-            const updatePayload: any = { updatedAt: new Date() };
+            const updatePayload: any = { updatedAt: new Date() }; // Postgres uses JS Date for NOW()
             let needsUpdate = false;
             if (userDataFromDB.roleId !== targetRole.id) { updatePayload.roleId = Number(targetRole.id); needsUpdate = true; }
             if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; }
             if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = targetRole.permissions || []; needsUpdate = true; } 
-            // Only update password_text if a new one is provided
-             if (additionalProfileData?.password) {
-                updatePayload.passwordText = additionalProfileData.password; // Store plain text
+            if (additionalProfileData?.password) {
+                updatePayload.passwordText = additionalProfileData.password;
                 needsUpdate = true;
             }
-            
+             // Apply other additionalProfileData if present
+            if (additionalProfileData?.cpf) { updatePayload.cpf = additionalProfileData.cpf; needsUpdate = true;}
+            if (additionalProfileData?.cellPhone) { updatePayload.cellPhone = additionalProfileData.cellPhone; needsUpdate = true;}
+            if (additionalProfileData?.dateOfBirth) { updatePayload.dateOfBirth = additionalProfileData.dateOfBirth; needsUpdate = true;}
+
             if (needsUpdate) {
                 const updateFields: string[] = [];
                 const updateValues: any[] = [];
                 let pCount = 1;
                 Object.keys(updatePayload).forEach(key => {
                     updateFields.push(`${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = $${pCount++}`);
+                    // For permissions, which are JSONB, ensure they are stringified
                     updateValues.push(key === 'permissions' ? JSON.stringify(updatePayload[key]) : updatePayload[key]);
                 });
                 updateValues.push(userId);
@@ -1609,7 +1622,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
                 VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, NOW(), NOW()) RETURNING *;
             `;
             const insertValues = [
-                userId, email, fullName || email.split('@')[0], additionalProfileData?.password || null, // Store plain text
+                userId, email, fullName || email.split('@')[0], additionalProfileData?.password || null,
                 Number(targetRole.id), JSON.stringify(targetRole.permissions || []),
                 'ATIVO', targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS',
                 additionalProfileData?.cpf || null, additionalProfileData?.cellPhone || null, additionalProfileData?.dateOfBirth || null
@@ -1678,7 +1691,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       const profile = mapToUserProfileData(userRow, role);
       // Ensure permissions are populated even if userRow.permissions is null but role.permissions exists
       if ((!profile.permissions || profile.permissions.length === 0) && role?.permissions?.length) {
-         profile.permissions = role.permissions; // role.permissions should already be an array
+         profile.permissions = role.permissions; 
       }
       return profile;
     } catch (e: any) {
@@ -1704,7 +1717,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       const values = [
         data.fileName, uploadedBy || null, data.title || null, data.altText || null, data.caption || null,
         data.description || null, data.mimeType, data.sizeBytes, data.dimensions?.width || null,
-        data.dimensions?.height || null, filePublicUrl, filePublicUrl, filePublicUrl, filePublicUrl, // Simplified URLs
+        data.dimensions?.height || null, filePublicUrl, filePublicUrl, filePublicUrl, filePublicUrl, 
         JSON.stringify(data.linkedLotIds || []), data.dataAiHint || null
       ];
       const res = await client.query(query, values);
@@ -1832,6 +1845,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
 
     
+
 
 
 

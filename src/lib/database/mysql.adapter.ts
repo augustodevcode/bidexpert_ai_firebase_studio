@@ -709,16 +709,18 @@ export class MySqlAdapter implements IDatabaseAdapter {
       await connection.commit();
       console.log('[MySqlAdapter] Esquema de tabelas inicializado/verificado com sucesso.');
       
-      // Após a criação das tabelas, garantir os perfis padrão
       const rolesResult = await this.ensureDefaultRolesExist();
       if (!rolesResult.success) {
         errors.push(new Error(`Falha ao garantir perfis padrão: ${rolesResult.message}`));
+      } else {
+        console.log(`[MySqlAdapter] ${rolesResult.rolesProcessed || 0} perfis padrão processados.`);
       }
 
-      // Garantir configurações padrão da plataforma
-      const settingsResult = await this.getPlatformSettings(); // Isso também cria se não existir
-      if (!settingsResult.galleryImageBasePath) { // Uma verificação simples
+      const settingsResult = await this.getPlatformSettings(); 
+      if (!settingsResult.galleryImageBasePath) {
           errors.push(new Error('Falha ao garantir configurações padrão da plataforma.'));
+      } else {
+        console.log('[MySqlAdapter] Configurações padrão da plataforma verificadas/criadas.');
       }
 
 
@@ -1579,10 +1581,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
         const fields: string[] = [];
         const values: any[] = [];
         (Object.keys(data) as Array<keyof EditableUserProfileData>).forEach(key => {
-            if (data[key] !== undefined && data[key] !== null) { // Check for null specifically
+            if (data[key] !== undefined && data[key] !== null) { 
                 fields.push(`${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = ?`);
                 values.push(data[key]);
-            } else if (data[key] === null) { // Handle explicit nulls to clear fields
+            } else if (data[key] === null) { 
                  fields.push(`${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = NULL`);
             }
         });
@@ -1595,11 +1597,18 @@ export class MySqlAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
 
-  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' >>): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' >>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
     const connection = await getPool().getConnection();
     try {
         await this.ensureDefaultRolesExist(); 
-        const targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
+        let targetRole: Role | null = null;
+        if (roleIdToAssign) {
+            targetRole = await this.getRole(roleIdToAssign);
+        }
+        if (!targetRole) {
+            targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
+        }
+
         if (!targetRole || !targetRole.id) return { success: false, message: 'Perfil padrão USER não encontrado ou sem ID.'};
 
         await connection.beginTransaction();
@@ -1613,11 +1622,15 @@ export class MySqlAdapter implements IDatabaseAdapter {
             if (userDataFromDB.roleId !== targetRole.id) { updatePayload.roleId = Number(targetRole.id); needsUpdate = true; }
             if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; }
             if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = JSON.stringify(targetRole.permissions || []); needsUpdate = true; } 
-            // Only update password_text if a new one is provided
             if (additionalProfileData?.password) {
-                updatePayload.passwordText = additionalProfileData.password; // Store plain text
+                updatePayload.passwordText = additionalProfileData.password;
                 needsUpdate = true;
             }
+            // Apply other additionalProfileData if present
+            if (additionalProfileData?.cpf) { updatePayload.cpf = additionalProfileData.cpf; needsUpdate = true;}
+            if (additionalProfileData?.cellPhone) { updatePayload.cellPhone = additionalProfileData.cellPhone; needsUpdate = true;}
+            if (additionalProfileData?.dateOfBirth) { updatePayload.dateOfBirth = additionalProfileData.dateOfBirth; needsUpdate = true;}
+
 
             if (needsUpdate) {
                 const updateFields: string[] = [];
@@ -1637,7 +1650,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW());
             `;
             const insertValues = [
-                userId, email, fullName || email.split('@')[0], additionalProfileData?.password || null, // Store plain text
+                userId, email, fullName || email.split('@')[0], additionalProfileData?.password || null,
                 Number(targetRole.id), JSON.stringify(targetRole.permissions || []),
                 'ATIVO', targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS',
                 additionalProfileData?.cpf || null, additionalProfileData?.cellPhone || null, additionalProfileData?.dateOfBirth || null
@@ -1855,6 +1868,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
 
     
+
 
 
 

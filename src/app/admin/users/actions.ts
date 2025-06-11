@@ -1,3 +1,4 @@
+
 // src/app/admin/users/actions.ts
 'use server';
 
@@ -5,8 +6,17 @@ import { revalidatePath } from 'next/cache';
 import { getDatabaseAdapter } from '@/lib/database';
 import type { UserProfileData, Role, UserHabilitationStatus } from '@/types';
 import type { UserFormValues } from './user-form-schema'; 
-import { getRole as getRoleFromActions, ensureDefaultRolesExist as ensureDefaultRolesExistAction, getRoleByName as getRoleByNameAction } from '@/app/admin/roles/actions'; 
 import { v4 as uuidv4 } from 'uuid';
+
+// CORRIGIDO: Importar funções de queries para leitura e actions para escrita/lógica de mais alto nível
+import { 
+  getRoleInternal as getRoleByIdInternal,      // Para buscar por ID
+  getRoleByNameInternal                       // Para buscar por nome
+} from '@/app/admin/roles/queries'; 
+import { 
+  ensureDefaultRolesExist as ensureDefaultRolesExistAction 
+} from '@/app/admin/roles/actions';
+
 
 export interface UserCreationData {
   fullName: string;
@@ -59,7 +69,7 @@ export async function createUser(
       if (existingAuthUser) {
         return { success: false, message: `Usuário com email ${data.email} já existe no Firebase Auth.` };
       }
-      if (!data.password || data.password.length < 6) { // Firebase Auth requires password
+      if (!data.password || data.password.length < 6) { 
          return { success: false, message: 'A senha é obrigatória e deve ter pelo menos 6 caracteres para Firebase Auth.' };
       }
 
@@ -73,10 +83,9 @@ export async function createUser(
       userIdToUse = userRecord.uid;
       console.log(`[createUser Action] Usuário criado no Firebase Auth: ${userIdToUse}`);
     } else {
-      // Para MySQL ou PostgreSQL
       console.log(`[createUser Action] Sistema é ${activeSystem}. Gerando UID local e pulando Firebase Auth.`);
       userIdToUse = uuidv4(); 
-      if (!data.password || data.password.length < 6) { // Password is required for SQL systems as well
+      if (!data.password || data.password.length < 6) { 
          return { success: false, message: 'A senha é obrigatória e deve ter pelo menos 6 caracteres.' };
       }
     }
@@ -85,23 +94,23 @@ export async function createUser(
     let targetRoleIdForDbSync: string | undefined = undefined;
 
     if (data.roleId && data.roleId !== "---NONE---") {
-      const roleDoc = await getRoleFromActions(data.roleId); // Use getRoleFromActions
+      const roleDoc = await getRoleByIdInternal(data.roleId); // CORRIGIDO
       if (roleDoc) {
         targetRoleNameForDbSync = roleDoc.name;
         targetRoleIdForDbSync = roleDoc.id;
       } else {
         console.warn(`[createUser Action] Perfil com ID ${data.roleId} não encontrado. Usando '${targetRoleNameForDbSync}' como padrão.`);
-        const userRole = await getRoleByNameAction('USER'); // Use getRoleByNameAction
+        const userRole = await getRoleByNameInternal('USER'); // CORRIGIDO
         if (userRole) targetRoleIdForDbSync = userRole.id;
       }
     } else {
-      const userRole = await getRoleByNameAction('USER'); // Use getRoleByNameAction
+      const userRole = await getRoleByNameInternal('USER'); // CORRIGIDO
       if (userRole) {
         targetRoleNameForDbSync = userRole.name;
         targetRoleIdForDbSync = userRole.id;
       } else {
-        await ensureDefaultRolesExistAction(); // Use ensureDefaultRolesExistAction
-        const userRoleAfterEnsure = await getRoleByNameAction('USER');
+        await ensureDefaultRolesExistAction(); 
+        const userRoleAfterEnsure = await getRoleByNameInternal('USER'); // CORRIGIDO
         if (userRoleAfterEnsure) {
           targetRoleIdForDbSync = userRoleAfterEnsure.id;
         } else {
@@ -125,8 +134,9 @@ export async function createUser(
             cpf: data.cpf,
             cellPhone: data.cellPhone,
             dateOfBirth: data.dateOfBirth ? data.dateOfBirth : undefined,
-            password: data.password // Passando a senha (texto plano temporariamente para SQL)
-        }
+            password: data.password 
+        },
+        targetRoleIdForDbSync // Passando o ID do perfil explicitamente
     );
 
     if (!profileResult.success) {
@@ -228,21 +238,18 @@ export async function deleteUser(userId: string): Promise<{ success: boolean; me
   }
 }
 
-// Renomeado para ser mais genérico
 export async function ensureUserProfileInDb( 
   userUid: string,
   email: string | null,
   fullName: string | null,
   targetRoleName: string,
-  additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' >>
+  additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' >>,
+  roleIdToAssign?: string // Adicionado para passar o ID do perfil se já conhecido
 ): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }> {
   console.log(`[Action - ensureUserProfileInDb] ACTIVE_DATABASE_SYSTEM: ${process.env.ACTIVE_DATABASE_SYSTEM}`);
-  const activeSystem = process.env.ACTIVE_DATABASE_SYSTEM?.toUpperCase() || 'MYSQL';
   try {
     const db = await getDatabaseAdapter();
-    // Lógica para buscar Auth display name se Firestore é movida para dentro do adaptador Firestore
-    // Aqui, passamos os dados que temos. O adaptador Firestore pode tentar buscar do Auth se necessário.
-    return db.ensureUserRole(userUid, email || '', fullName, targetRoleName, additionalProfileData);
+    return db.ensureUserRole(userUid, email || '', fullName, targetRoleName, additionalProfileData, roleIdToAssign);
   } catch (error: any) {
     console.error(`[Action - ensureUserProfileInDb for user ${userUid}] Falha:`, error);
     return { success: false, message: `Erro ao garantir perfil do usuário: ${error.message}` };
