@@ -15,55 +15,89 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks, Tv, Briefcase as ConsignorIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/lib/firebase'; // Ainda necessário para logout do Firebase
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
+import { useEffect, useState } from 'react';
 
 // Idealmente, estas constantes viriam de um local compartilhado (ex: src/lib/auth-roles.ts)
 const ALLOWED_EMAILS_FOR_ADMIN_ACCESS = ['admin@bidexpert.com', 'analyst@bidexpert.com', 'augusto.devcode@gmail.com'];
 const EXAMPLE_CONSIGNOR_EMAIL = 'consignor@bidexpert.com';
 
 export default function UserNav() {
-  const { user, loading } = useAuth();
+  const { user, userProfileWithPermissions, loading, logoutSqlUser } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const [activeSystem, setActiveSystem] = useState('FIRESTORE'); // Default
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    const system = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM?.toUpperCase() || 'FIRESTORE';
+    setActiveSystem(system);
+    console.log('[UserNav] Active DB System (client-side):', system);
+  }, []);
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      toast({ title: "Logout bem-sucedido!"});
-      router.push('/');
-    } catch (error: any) {
-      toast({ title: "Erro no Logout", description: error.message, variant: "destructive" });
+    if (activeSystem === 'FIRESTORE') {
+      try {
+        await signOut(auth);
+        toast({ title: "Logout bem-sucedido!"});
+        // O AuthProvider cuidará de limpar userProfileWithPermissions
+        router.push('/');
+      } catch (error: any) {
+        toast({ title: "Erro no Logout", description: error.message, variant: "destructive" });
+      }
+    } else {
+      // Para SQL (MYSQL, POSTGRES)
+      logoutSqlUser(); // Chama a função do AuthContext
+      toast({ title: `Logout bem-sucedido (${activeSystem})!`});
+      // O redirecionamento é tratado dentro de logoutSqlUser
     }
   };
 
-  if (loading) {
+  if (loading || !isClient) {
     return (
       <div className="flex items-center space-x-2">
-        <div className="h-10 w-20 bg-muted rounded-md animate-pulse"></div>
-        <div className="h-10 w-24 bg-muted rounded-md animate-pulse"></div>
+        <div className="h-10 w-10 bg-muted rounded-full animate-pulse"></div>
+        <div className="h-6 w-20 bg-muted rounded-md animate-pulse"></div>
       </div>
     );
   }
 
-  if (user) {
-    const userDisplayName = user.displayName || user.email?.split('@')[0] || "Usuário";
-    const userInitial = userDisplayName ? userDisplayName.charAt(0).toUpperCase() : "U";
-    
-    const userEmailLower = user.email?.toLowerCase();
-    const isAdminOrAnalyst = userEmailLower && ALLOWED_EMAILS_FOR_ADMIN_ACCESS.map(e => e.toLowerCase()).includes(userEmailLower);
-    const isTheExampleConsignor = userEmailLower === EXAMPLE_CONSIGNOR_EMAIL.toLowerCase();
-    
-    const canSeeConsignorDashboardLink = isAdminOrAnalyst || isTheExampleConsignor;
-    const showAdminSectionLinks = isAdminOrAnalyst;
+  const isLoggedIn = activeSystem === 'FIRESTORE' ? !!user : !!userProfileWithPermissions;
+  
+  let displayName = "Usuário";
+  let userEmailDisplay = "";
+  let photoURLDisplay: string | undefined = undefined;
 
+  if (activeSystem === 'FIRESTORE' && user) {
+    displayName = user.displayName || user.email?.split('@')[0] || "Usuário";
+    userEmailDisplay = user.email || "";
+    photoURLDisplay = user.photoURL || undefined;
+  } else if (activeSystem !== 'FIRESTORE' && userProfileWithPermissions) {
+    displayName = userProfileWithPermissions.fullName || userProfileWithPermissions.email?.split('@')[0] || "Usuário";
+    userEmailDisplay = userProfileWithPermissions.email || "";
+    photoURLDisplay = userProfileWithPermissions.avatarUrl || undefined; // Assumindo que avatarUrl pode estar no perfil
+  }
+  
+  const userInitial = displayName ? displayName.charAt(0).toUpperCase() : "U";
+  const userEmailLowerForRoles = activeSystem === 'FIRESTORE' ? user?.email?.toLowerCase() : userProfileWithPermissions?.email?.toLowerCase();
+
+  const isAdminOrAnalyst = userEmailLowerForRoles && ALLOWED_EMAILS_FOR_ADMIN_ACCESS.map(e => e.toLowerCase()).includes(userEmailLowerForRoles);
+  const isTheExampleConsignor = userEmailLowerForRoles === EXAMPLE_CONSIGNOR_EMAIL.toLowerCase();
+  
+  const canSeeConsignorDashboardLink = isAdminOrAnalyst || isTheExampleConsignor;
+  const showAdminSectionLinks = isAdminOrAnalyst;
+
+
+  if (isLoggedIn) {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
             <Avatar className="h-10 w-10">
-              {user.photoURL && <AvatarImage src={user.photoURL} alt={userDisplayName} data-ai-hint="profile avatar small" />}
+              {photoURLDisplay && <AvatarImage src={photoURLDisplay} alt={displayName} data-ai-hint="profile avatar small" />}
               <AvatarFallback>{userInitial}</AvatarFallback>
             </Avatar>
           </Button>
@@ -71,9 +105,9 @@ export default function UserNav() {
         <DropdownMenuContent className="w-64" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{userDisplayName}</p>
+              <p className="text-sm font-medium leading-none">{displayName}</p>
               <p className="text-xs leading-none text-muted-foreground">
-                {user.email}
+                {userEmailDisplay}
               </p>
             </div>
           </DropdownMenuLabel>
