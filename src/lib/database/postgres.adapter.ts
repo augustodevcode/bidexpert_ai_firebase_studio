@@ -1585,6 +1585,11 @@ export class PostgresAdapter implements IDatabaseAdapter {
             if (userDataFromDB.roleId !== targetRole.id) { updatePayload.roleId = Number(targetRole.id); needsUpdate = true; }
             if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; }
             if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = targetRole.permissions || []; needsUpdate = true; } 
+            // Only update password_text if a new one is provided
+             if (additionalProfileData?.password) {
+                updatePayload.passwordText = additionalProfileData.password; // Store plain text
+                needsUpdate = true;
+            }
             
             if (needsUpdate) {
                 const updateFields: string[] = [];
@@ -1604,7 +1609,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
                 VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, NOW(), NOW()) RETURNING *;
             `;
             const insertValues = [
-                userId, email, fullName || email.split('@')[0], additionalProfileData?.password || null, // Armazena password_text
+                userId, email, fullName || email.split('@')[0], additionalProfileData?.password || null, // Store plain text
                 Number(targetRole.id), JSON.stringify(targetRole.permissions || []),
                 'ATIVO', targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS',
                 additionalProfileData?.cpf || null, additionalProfileData?.cellPhone || null, additionalProfileData?.dateOfBirth || null
@@ -1660,6 +1665,30 @@ export class PostgresAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
   }
   
+  async getUserByEmail(email: string): Promise<UserProfileData | null> {
+    const client = await getPool().connect();
+    try {
+      const query = 'SELECT u.*, r.name as role_name, r.permissions as role_permissions FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.email = $1 LIMIT 1;';
+      const res = await client.query(query, [email.toLowerCase()]);
+      if (res.rowCount === 0) return null;
+      const userRow = mapRowToCamelCase(res.rows[0]);
+      let role: Role | null = null;
+      if (userRow.roleId) role = await this.getRole(userRow.roleId);
+      
+      const profile = mapToUserProfileData(userRow, role);
+      // Ensure permissions are populated even if userRow.permissions is null but role.permissions exists
+      if ((!profile.permissions || profile.permissions.length === 0) && role?.permissions?.length) {
+         profile.permissions = role.permissions; // role.permissions should already be an array
+      }
+      return profile;
+    } catch (e: any) {
+      console.error(`[PostgresAdapter - getUserByEmail(${email})] Error:`, e);
+      return null;
+    } finally {
+      client.release();
+    }
+  }
+
   // --- Media Items ---
   async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> {
     const client = await getPool().connect();
@@ -1803,6 +1832,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
 
     
+
 
 
 

@@ -1473,7 +1473,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         if (data.name && currentNormalizedName !== 'ADMINISTRATOR' && currentNormalizedName !== 'USER') {
             fields.push(`name = ?`); values.push(data.name.trim());
             fields.push(`name_normalized = ?`); values.push(data.name.trim().toUpperCase());
-        } else if (data.name) {
+        } else if (data.name) { 
              if (data.description !== undefined) { 
                 fields.push(`description = ?`); values.push(data.description || null);
             }
@@ -1481,7 +1481,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
         if (data.description !== undefined && (!data.name || (currentNormalizedName === 'ADMINISTRATOR' || currentNormalizedName === 'USER'))) {
              fields.push(`description = ?`); values.push(data.description || null);
         }
-
         if (data.permissions) {
             const validPermissions = (data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
             fields.push(`permissions = ?`); values.push(JSON.stringify(validPermissions));
@@ -1534,7 +1533,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
             } else {
                 const existingRole = mapMySqlRowToCamelCase((existingRows as RowDataPacket[])[0]);
                 console.log(`[MySqlAdapter] Perfil '${roleData.name}' encontrado (ID: ${existingRole.id}). Verificando atualizações...`);
-                const currentPermsSorted = [...(existingRole.permissions || [])].sort();
+                const currentPermsSorted = [...(typeof existingRole.permissions === 'string' ? JSON.parse(existingRole.permissions) : existingRole.permissions || [])].sort();
                 const expectedPermsSorted = [...validPermissions].sort();
                 if (JSON.stringify(currentPermsSorted) !== JSON.stringify(expectedPermsSorted) || existingRole.description !== (roleData.description || null)) {
                      console.log(`[MySqlAdapter] Atualizando descrição/permissões para o perfil '${roleData.name}'.`);
@@ -1614,7 +1613,12 @@ export class MySqlAdapter implements IDatabaseAdapter {
             if (userDataFromDB.roleId !== targetRole.id) { updatePayload.roleId = Number(targetRole.id); needsUpdate = true; }
             if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; }
             if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = JSON.stringify(targetRole.permissions || []); needsUpdate = true; } 
-            
+            // Only update password_text if a new one is provided
+            if (additionalProfileData?.password) {
+                updatePayload.passwordText = additionalProfileData.password; // Store plain text
+                needsUpdate = true;
+            }
+
             if (needsUpdate) {
                 const updateFields: string[] = [];
                 const updateValues: any[] = [];
@@ -1633,7 +1637,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW());
             `;
             const insertValues = [
-                userId, email, fullName || email.split('@')[0], additionalProfileData?.password || null, // Armazena password_text
+                userId, email, fullName || email.split('@')[0], additionalProfileData?.password || null, // Store plain text
                 Number(targetRole.id), JSON.stringify(targetRole.permissions || []),
                 'ATIVO', targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS',
                 additionalProfileData?.cpf || null, additionalProfileData?.cellPhone || null, additionalProfileData?.dateOfBirth || null
@@ -1690,6 +1694,30 @@ export class MySqlAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
   
+  async getUserByEmail(email: string): Promise<UserProfileData | null> {
+    const connection = await getPool().getConnection();
+    try {
+      const query = 'SELECT u.*, r.name as role_name, r.permissions as role_permissions FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.email = ? LIMIT 1;';
+      const [rows] = await connection.query(query, [email.toLowerCase()]);
+      if ((rows as RowDataPacket[]).length === 0) return null;
+      const userRow = mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]);
+      let role: Role | null = null;
+      if (userRow.roleId) role = await this.getRole(userRow.roleId);
+      
+      const profile = mapToUserProfileData(userRow, role);
+      // Ensure permissions are populated even if userRow.permissions is null but role.permissions exists
+      if ((!profile.permissions || profile.permissions.length === 0) && role?.permissions?.length) {
+         profile.permissions = role.permissions;
+      }
+      return profile;
+    } catch (e: any) {
+      console.error(`[MySqlAdapter - getUserByEmail(${email})] Error:`, e);
+      return null;
+    } finally {
+      connection.release();
+    }
+  }
+
   // --- Media Items ---
   async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> {
     const connection = await getPool().getConnection();
@@ -1827,6 +1855,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
 
     
+
 
 
 

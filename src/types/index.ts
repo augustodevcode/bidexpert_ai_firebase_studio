@@ -1,5 +1,4 @@
 
-
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
 
@@ -265,6 +264,7 @@ export interface UserProfileData {
   uid: string;
   email: string;
   fullName: string;
+  password?: string; // Para uso interno dos adaptadores SQL, NÃO para o cliente
   roleId?: string; 
   roleName?: string; 
   permissions?: string[];
@@ -469,7 +469,7 @@ export interface DirectSaleOffer {
   expiresAt?: AnyTimestamp;
 }
 
-export type EditableUserProfileData = Omit<UserProfileData, 'uid' | 'email' | 'status' | 'createdAt' | 'updatedAt' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'roleId' | 'roleName' | 'sellerProfileId' | 'permissions' | 'habilitationStatus' > & {
+export type EditableUserProfileData = Omit<UserProfileData, 'uid' | 'email' | 'status' | 'createdAt' | 'updatedAt' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'roleId' | 'roleName' | 'sellerProfileId' | 'permissions' | 'habilitationStatus' | 'password' > & {
   roleId?: string; // RoleId is managed via admin/users/[userId]/edit
   roleName?: string;
   sellerProfileId?: string;
@@ -486,6 +486,12 @@ export interface PlatformSettings {
 }
 
 export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'>;
+
+export interface SqlAuthResult {
+  success: boolean;
+  message: string;
+  user?: UserProfileData; // User profile data on successful SQL auth
+}
     
 export interface IDatabaseAdapter {
   // Schema Initialization
@@ -548,10 +554,12 @@ export interface IDatabaseAdapter {
   // Users (only profile data, auth is separate)
   getUserProfileData(userId: string): Promise<UserProfileData | null>;
   updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }>;
-  ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth'>>): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }>;
+  ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' >>): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }>;
   getUsersWithRoles(): Promise<UserProfileData[]>;
   updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }>;
   deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }>;
+  getUserByEmail(email: string): Promise<UserProfileData | null>; // Nova função
+
 
   // Roles
   createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string }>;
@@ -560,7 +568,7 @@ export interface IDatabaseAdapter {
   getRoleByName(name: string): Promise<Role | null>;
   updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string }>;
   deleteRole(id: string): Promise<{ success: boolean; message: string }>;
-  ensureDefaultRolesExist(): Promise<{ success: boolean; message: string }>;
+  ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }>;
 
   // Media Items
   createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }>;
@@ -597,6 +605,7 @@ export type LotDbData = Omit<LotFormData, 'type' | 'auctionName'> & {
 export type LotWithCategoryName = Lot & {
   categoryName?: string; // Populated by JOINs in SQL, or by a separate fetch in Firestore context
 };
+
 
 
 
