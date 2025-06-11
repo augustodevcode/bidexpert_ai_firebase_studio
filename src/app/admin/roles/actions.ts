@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { getDatabaseAdapter } from '@/lib/database';
 import type { Role, RoleFormData } from '@/types';
 import { predefinedPermissions } from './role-form-schema';
-import { getRolesInternal, getRoleInternal, getRoleByNameInternal, ensureDefaultRolesExistInternal } from './queries'; // ensureDefaultRolesExistInternal importado
+import { getRolesInternal, getRoleInternal, getRoleByNameInternal, ensureDefaultRolesExistInternal } from './queries';
 
 // Server Action para criar um Role
 export async function createRole(

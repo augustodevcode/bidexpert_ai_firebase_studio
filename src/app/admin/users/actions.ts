@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 // CORRIGIDO: Importar funções de queries para leitura e actions para escrita/lógica de mais alto nível
 import { 
-  getRoleInternal as getRoleByIdInternal,      // Para buscar por ID
+  getRoleInternal,      // Para buscar por ID
   getRoleByNameInternal                       // Para buscar por nome
 } from '../roles/queries'; // Caminho relativo corrigido
 import { 
@@ -93,23 +93,23 @@ export async function createUser(
     let targetRoleIdForDbSync: string | undefined = undefined;
 
     if (data.roleId && data.roleId !== "---NONE---") {
-      const roleDoc = await getRoleByIdInternal(data.roleId); 
+      const roleDoc = await getRoleInternal(data.roleId); // Usando a função de queries (interna)
       if (roleDoc) {
         targetRoleNameForDbSync = roleDoc.name;
         targetRoleIdForDbSync = roleDoc.id;
       } else {
         console.warn(`[createUser Action] Perfil com ID ${data.roleId} não encontrado. Usando '${targetRoleNameForDbSync}' como padrão.`);
-        const userRole = await getRoleByNameInternal('USER'); 
+        const userRole = await getRoleByNameInternal('USER'); // Usando a função de queries (interna)
         if (userRole) targetRoleIdForDbSync = userRole.id;
       }
     } else {
-      const userRole = await getRoleByNameInternal('USER'); 
+      const userRole = await getRoleByNameInternal('USER'); // Usando a função de queries (interna)
       if (userRole) {
         targetRoleNameForDbSync = userRole.name;
         targetRoleIdForDbSync = userRole.id;
       } else {
-        await ensureDefaultRolesExistAction(); 
-        const userRoleAfterEnsure = await getRoleByNameInternal('USER'); 
+        await ensureDefaultRolesExistAction(); // Chamando a action de roles
+        const userRoleAfterEnsure = await getRoleByNameInternal('USER'); // Usando a função de queries (interna)
         if (userRoleAfterEnsure) {
           targetRoleIdForDbSync = userRoleAfterEnsure.id;
         } else {
