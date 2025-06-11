@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, type FormEvent, useCallback } from 'react';
-import { useRouter } from 'next/navigation'; 
+import { useRouter } from 'next/navigation'; // Corrigido: Importação adicionada
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -26,7 +26,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { updateUserProfile, type EditableUserProfileData } from './edit/actions'; // CORRIGIDO CAMINHO
+import { updateUserProfile, type EditableUserProfileData } from './edit/actions'; // Caminho corrigido
 import type { UserProfileData } from '@/types';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
@@ -78,6 +78,7 @@ export default function ProfilePage() {
   const [isLoadingPage, setIsLoadingPage] = useState(true);
   const [errorPage, setErrorPage] = useState<string | null>(null);
   const [activeSystem, setActiveSystem] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false); // <<< CORREÇÃO: Adicionado/Descomentado
   
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -202,9 +203,6 @@ export default function ProfilePage() {
     if (activeSystem === 'FIRESTORE' && authUser?.uid) {
       fetchProfileData(authUser.uid);
     } else if (activeSystem !== 'FIRESTORE') {
-       // For SQL, if userProfileWithPermissions is missing, AuthProvider should redirect.
-       // If it's present, useEffect above will use it. This retry is mostly for Firestore scenarios.
-       // If userProfileWithPermissions became null unexpectedly, it might trigger a re-fetch via useEffect dependency changes.
       if(userProfileWithPermissions) {
         const processedProfile = {
           ...userProfileWithPermissions,
@@ -215,7 +213,7 @@ export default function ProfilePage() {
         form.reset(processedProfile as ProfileFormValues);
         setIsLoadingPage(false);
       } else {
-        router.push('/auth/login?redirect=/profile'); // Ensure redirection if no profile
+        router.push('/auth/login?redirect=/profile'); 
         setIsLoadingPage(false);
       }
     }
@@ -227,7 +225,7 @@ export default function ProfilePage() {
       toast({ title: "Erro", description: "ID do usuário não encontrado para atualização.", variant: "destructive" });
       return;
     }
-    setIsSubmitting(true);
+    setIsSubmitting(true); // <<< CORREÇÃO: Adicionado
     
     const dataToUpdate: EditableUserProfileData = {
       ...data,
@@ -235,20 +233,20 @@ export default function ProfilePage() {
       rgIssueDate: data.rgIssueDate instanceof Date ? data.rgIssueDate : null,
     };
 
-    const result = await updateUserProfile(userId, dataToUpdate);
-    setIsSubmitting(false);
-
-    if (result.success) {
-      toast({ title: "Sucesso!", description: result.message });
-      // No redirect needed here, just refresh data if necessary or rely on context update
-      // router.push('/profile'); 
-      // router.refresh(); 
-      // For SQL, we might need to re-fetch the profile from the DB and update AuthContext
-      // For Firestore, onAuthStateChanged and ensureUserProfileInDb might re-fetch.
-      // For now, let's assume a manual refresh of the page or re-login might be needed for SQL to see updates immediately.
-      // Or better: AuthContext should have a way to force-refresh its userProfileWithPermissions
-    } else {
-      toast({ title: "Erro ao atualizar", description: result.message, variant: "destructive" });
+    try { // <<< CORREÇÃO: Adicionado try...finally
+      const result = await updateUserProfile(userId, dataToUpdate);
+      if (result.success) {
+        toast({ title: "Sucesso!", description: result.message });
+        // Optionally re-fetch or update local context if needed after successful save
+        // For now, assuming the backend update is enough and a page refresh would show it
+        // For SQL, might need to update AuthContext's userProfileWithPermissions
+      } else {
+        toast({ title: "Erro ao atualizar", description: result.message, variant: "destructive" });
+      }
+    } catch (error: any) {
+      toast({ title: "Erro Inesperado", description: error.message || "Ocorreu um erro ao salvar.", variant: "destructive" });
+    } finally {
+      setIsSubmitting(false); // <<< CORREÇÃO: Adicionado no finally
     }
   }
 
@@ -261,7 +259,7 @@ export default function ProfilePage() {
     );
   }
 
-  if (errorPage) {
+  if (errorPage && !form.formState.isDirty) { 
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold text-destructive">{errorPage}</h2>
@@ -270,7 +268,7 @@ export default function ProfilePage() {
         </Button>
          <Button 
             variant="outline" 
-            onClick={handleRetryFetch} 
+            onClick={handleRetryFetch} // Corrigido
             className="mt-4 ml-2"
             disabled={isLoadingPage || authContextLoading}
         >
@@ -280,19 +278,22 @@ export default function ProfilePage() {
     );
   }
   
-  if (!profileToDisplay) {
+  if (!profileToDisplay && !isLoadingPage && !authContextLoading) { // Verificação adicional
      return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold text-muted-foreground">Não foi possível carregar os dados do perfil.</h2>
         <p className="text-sm text-muted-foreground">Tente novamente mais tarde ou contate o suporte.</p>
+        <Button asChild className="mt-4">
+            <Link href="/">Voltar para Home</Link>
+        </Button>
       </div>
     );
   }
 
-  const userInitial = profileToDisplay.fullName ? profileToDisplay.fullName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : "U";
-  const formattedDateOfBirth = profileToDisplay.dateOfBirth ? format(new Date(profileToDisplay.dateOfBirth), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
-  const formattedRgIssueDate = profileToDisplay.rgIssueDate ? format(new Date(profileToDisplay.rgIssueDate), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
-  const formattedMemberSince = profileToDisplay.createdAt ? format(new Date(profileToDisplay.createdAt), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
+  const userInitial = profileToDisplay?.fullName ? profileToDisplay.fullName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : "U";
+  const formattedDateOfBirth = profileToDisplay?.dateOfBirth ? format(new Date(profileToDisplay.dateOfBirth), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
+  const formattedRgIssueDate = profileToDisplay?.rgIssueDate ? format(new Date(profileToDisplay.rgIssueDate), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
+  const formattedMemberSince = profileToDisplay?.createdAt ? format(new Date(profileToDisplay.createdAt), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
   const currentMaritalStatus = form.watch("maritalStatus");
   const showSpouseFields = currentMaritalStatus === "Casado(a)" || currentMaritalStatus === "União Estável";
 
