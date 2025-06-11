@@ -71,6 +71,10 @@ async function main() {
 
     if (result.success) {
       console.log(`\n${result.message}`);
+      if (result.rolesProcessed !== undefined) {
+        console.log(`[DB Init Script] ${result.rolesProcessed} perfis padrão foram processados (criados/atualizados).`);
+      }
+      console.log(`[DB Init Script] As tabelas (exceto 'roles' e 'platform_settings') são criadas vazias. Use scripts de seed específicos para popular com dados de exemplo.`);
     } else {
       console.error(`\nFalha ao inicializar o esquema para ${dbType.toUpperCase()}: ${result.message}`);
       if (result.errors && result.errors.length > 0) {
@@ -95,3 +99,4 @@ main().catch(error => {
   console.error("Erro inesperado no script initialize-db:", error);
   process.exit(1);
 });
+

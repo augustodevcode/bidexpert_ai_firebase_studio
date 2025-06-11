@@ -155,7 +155,7 @@ function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProf
         uid: row.uid,
         email: row.email,
         fullName: row.fullName,
-        password: row.passwordText, // Senha em texto plano (para fins de prototipagem)
+        password: row.passwordText, 
         roleId: row.roleId ? String(row.roleId) : undefined,
         roleName: role?.name || row.roleName, 
         permissions: role?.permissions || row.permissions || [],
@@ -356,7 +356,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     getPool(); 
   }
 
-  async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[] }> {
+  async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[]; rolesProcessed?: number }> {
     const client = await getPool().connect();
     const errors: any[] = [];
     console.log('[PostgresAdapter] Iniciando criação/verificação de tabelas...');
@@ -369,7 +369,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `DROP TABLE IF EXISTS cities CASCADE;`,
       `DROP TABLE IF EXISTS sellers CASCADE;`,
       `DROP TABLE IF EXISTS auctioneers CASCADE;`,
-      `DROP TABLE IF EXISTS users CASCADE;`, // Alterado de user_profiles para users
+      `DROP TABLE IF EXISTS users CASCADE;`,
       `DROP TABLE IF EXISTS states CASCADE;`,
       `DROP TABLE IF EXISTS lot_categories CASCADE;`,
       `DROP TABLE IF EXISTS roles CASCADE;`,
@@ -390,7 +390,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         uid VARCHAR(255) PRIMARY KEY,
         email VARCHAR(255) UNIQUE,
         full_name VARCHAR(255),
-        password_text VARCHAR(255) NULL, -- Nova coluna para senha em texto plano
+        password_text VARCHAR(255) NULL,
         role_id INTEGER REFERENCES roles(id) ON DELETE SET NULL,
         permissions JSONB,
         status VARCHAR(50),
@@ -650,7 +650,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         id SERIAL PRIMARY KEY,
         lot_id INTEGER REFERENCES lots(id) ON DELETE CASCADE NOT NULL,
         auction_id INTEGER REFERENCES auctions(id) ON DELETE CASCADE NOT NULL,
-        bidder_id VARCHAR(255) REFERENCES users(uid) ON DELETE CASCADE NOT NULL, -- Alterado para users(uid)
+        bidder_id VARCHAR(255) REFERENCES users(uid) ON DELETE CASCADE NOT NULL,
         bidder_display_name VARCHAR(255),
         amount NUMERIC(15,2) NOT NULL,
         "timestamp" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
@@ -680,8 +680,25 @@ export class PostgresAdapter implements IDatabaseAdapter {
         }
       }
       await client.query('COMMIT');
-      console.log('[PostgresAdapter] Esquema inicializado com sucesso.');
-      return { success: true, message: 'Esquema PostgreSQL inicializado/verificado com sucesso.' };
+      console.log('[PostgresAdapter] Esquema de tabelas inicializado/verificado com sucesso.');
+      
+      // Após a criação das tabelas, garantir os perfis padrão
+      const rolesResult = await this.ensureDefaultRolesExist();
+      if (!rolesResult.success) {
+        errors.push(new Error(`Falha ao garantir perfis padrão: ${rolesResult.message}`));
+      }
+
+      // Garantir configurações padrão da plataforma
+      const settingsResult = await this.getPlatformSettings(); // Isso também cria se não existir
+      if (!settingsResult.galleryImageBasePath) {
+          errors.push(new Error('Falha ao garantir configurações padrão da plataforma.'));
+      }
+
+      if (errors.length > 0) {
+        return { success: false, message: `Esquema PostgreSQL inicializado com ${errors.length} erros nos passos pós-tabelas.`, errors };
+      }
+      return { success: true, message: `Esquema PostgreSQL inicializado e perfis padrão verificados (${rolesResult.rolesProcessed || 0} processados). Configurações da plataforma verificadas.`, rolesProcessed: rolesResult.rolesProcessed };
+
     } catch (error: any) {
       await client.query('ROLLBACK');
       console.error('[PostgresAdapter - initializeSchema] Erro transacional:', error);
@@ -1436,7 +1453,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
                 fields.push(`description = $${paramCount++}`); values.push(data.description || null);
             }
         }
-        if (data.description !== undefined && (!data.name || (currentNormalizedName === 'ADMINISTRATOR' || currentNormalizedName === 'USER'))) {
+         if (data.description !== undefined && (!data.name || (currentNormalizedName === 'ADMINISTRATOR' || currentNormalizedName === 'USER'))) {
              fields.push(`description = $${paramCount++}`); values.push(data.description || null);
         }
         if (data.permissions) {
@@ -1465,35 +1482,55 @@ export class PostgresAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
   }
 
-  async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; }> {
+  async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }> {
     const client = await getPool().connect();
+    let rolesProcessedCount = 0;
     try {
+        console.log('[PostgresAdapter - ensureDefaultRolesExist] Iniciando verificação/criação de perfis padrão...');
         await client.query('BEGIN');
         for (const roleData of defaultRolesData) {
             const normalizedName = roleData.name.trim().toUpperCase();
+            console.log(`[PostgresAdapter] Processando perfil padrão: ${roleData.name} (Normalizado: ${normalizedName})`);
+            
             const roleRes = await client.query('SELECT id, permissions, description FROM roles WHERE name_normalized = $1 LIMIT 1', [normalizedName]);
             const validPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
 
             if (roleRes.rowCount === 0) {
+                console.log(`[PostgresAdapter] Perfil '${roleData.name}' não encontrado. Criando...`);
                 await client.query(
                     'INSERT INTO roles (name, name_normalized, description, permissions) VALUES ($1, $2, $3, $4::jsonb)',
                     [roleData.name.trim(), normalizedName, roleData.description || null, JSON.stringify(validPermissions)]
                 );
+                console.log(`[PostgresAdapter] Perfil '${roleData.name}' criado.`);
+                rolesProcessedCount++;
             } else {
                 const existingRole = mapRowToCamelCase(roleRes.rows[0]);
+                console.log(`[PostgresAdapter] Perfil '${roleData.name}' encontrado (ID: ${existingRole.id}). Verificando atualizações...`);
                 const currentPermsSorted = [...(existingRole.permissions || [])].sort();
                 const expectedPermsSorted = [...validPermissions].sort();
                  if (JSON.stringify(currentPermsSorted) !== JSON.stringify(expectedPermsSorted) || existingRole.description !== (roleData.description || null)) {
+                     console.log(`[PostgresAdapter] Atualizando descrição/permissões para o perfil '${roleData.name}'.`);
                      await client.query(
                         'UPDATE roles SET description = $1, permissions = $2::jsonb, updated_at = NOW() WHERE id = $3',
                         [roleData.description || null, JSON.stringify(expectedPermsSorted), existingRole.id]
                     );
+                    console.log(`[PostgresAdapter] Perfil '${roleData.name}' atualizado.`);
+                    rolesProcessedCount++;
+                } else {
+                    console.log(`[PostgresAdapter] Perfil '${roleData.name}' já está atualizado.`);
                 }
             }
         }
         await client.query('COMMIT');
-        return { success: true, message: 'Perfis padrão verificados/criados (PostgreSQL).'};
-    } catch (e: any) { await client.query('ROLLBACK'); return { success: false, message: e.message }; } finally { client.release(); }
+        console.log(`[PostgresAdapter - ensureDefaultRolesExist] Verificação/criação de perfis padrão concluída. ${rolesProcessedCount} perfis processados.`);
+        return { success: true, message: `Perfis padrão verificados/criados (PostgreSQL). ${rolesProcessedCount} processados.`, rolesProcessed: rolesProcessedCount};
+    } catch (e: any) { 
+        await client.query('ROLLBACK'); 
+        console.error("[PostgresAdapter - ensureDefaultRolesExist] Erro:", e);
+        return { success: false, message: e.message }; 
+    } finally { 
+        client.release(); 
+    }
   }
   
   // --- Users ---
@@ -1535,7 +1572,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     try {
         await this.ensureDefaultRolesExist(); 
         const targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
-        if (!targetRole) return { success: false, message: 'Perfil padrão USER não encontrado.'};
+        if (!targetRole || !targetRole.id) return { success: false, message: 'Perfil padrão USER não encontrado ou sem ID.'};
 
         await client.query('BEGIN');
         const userRes = await client.query('SELECT * FROM users WHERE uid = $1', [userId]);
@@ -1547,7 +1584,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
             let needsUpdate = false;
             if (userDataFromDB.roleId !== targetRole.id) { updatePayload.roleId = Number(targetRole.id); needsUpdate = true; }
             if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; }
-            if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = targetRole.permissions || []; needsUpdate = true; }
+            if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = targetRole.permissions || []; needsUpdate = true; } 
             
             if (needsUpdate) {
                 const updateFields: string[] = [];
@@ -1567,7 +1604,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
                 VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, NOW(), NOW()) RETURNING *;
             `;
             const insertValues = [
-                userId, email, fullName || email.split('@')[0], additionalProfileData?.password || null,
+                userId, email, fullName || email.split('@')[0], additionalProfileData?.password || null, // Armazena password_text
                 Number(targetRole.id), JSON.stringify(targetRole.permissions || []),
                 'ATIVO', targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS',
                 additionalProfileData?.cpf || null, additionalProfileData?.cellPhone || null, additionalProfileData?.dateOfBirth || null
@@ -1730,7 +1767,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
         if (res.rowCount > 0) {
             return { id: 'global', ...mapRowToCamelCase(res.rows[0]) } as PlatformSettings;
         }
-        // Default settings if not found
         const defaultPath = '/media/gallery/';
         await client.query(`INSERT INTO platform_settings (id, gallery_image_base_path) VALUES ('global', $1) ON CONFLICT (id) DO NOTHING;`, [defaultPath]);
         return { id: 'global', galleryImageBasePath: defaultPath, updatedAt: new Date() };
@@ -1767,6 +1803,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
 
     
+
 
 
 
