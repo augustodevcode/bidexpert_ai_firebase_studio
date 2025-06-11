@@ -172,6 +172,7 @@ function mapToUserProfileData(row: RowDataPacket, role?: Role | null): UserProfi
         uid: row.uid,
         email: row.email,
         fullName: row.fullName,
+        password: row.passwordText, // Senha em texto plano (para fins de prototipagem)
         roleId: row.roleId ? String(row.roleId) : undefined,
         roleName: role?.name || row.roleName, 
         permissions: typeof row.permissions === 'string' ? JSON.parse(row.permissions) : (role?.permissions || row.permissions || []),
@@ -384,7 +385,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       `DROP TABLE IF EXISTS cities;`,
       `DROP TABLE IF EXISTS sellers;`,
       `DROP TABLE IF EXISTS auctioneers;`,
-      `DROP TABLE IF EXISTS user_profiles;`,
+      `DROP TABLE IF EXISTS users;`, // Alterado de user_profiles para users
       `DROP TABLE IF EXISTS states;`,
       `DROP TABLE IF EXISTS lot_categories;`,
       `DROP TABLE IF EXISTS roles;`,
@@ -401,10 +402,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
         INDEX idx_roles_name_normalized (name_normalized)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
 
-      `CREATE TABLE IF NOT EXISTS user_profiles (
+      `CREATE TABLE IF NOT EXISTS users (
         uid VARCHAR(255) PRIMARY KEY,
         email VARCHAR(255) UNIQUE,
         full_name VARCHAR(255),
+        password_text VARCHAR(255) NULL, -- Nova coluna para senha em texto plano
         role_id INT UNSIGNED,
         permissions JSON,
         status VARCHAR(50),
@@ -437,8 +439,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE SET NULL,
-        INDEX idx_user_profiles_email (email),
-        INDEX idx_user_profiles_role_id (role_id)
+        INDEX idx_users_email (email),
+        INDEX idx_users_role_id (role_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
       
       `CREATE TABLE IF NOT EXISTS platform_settings (
@@ -681,7 +683,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         \`timestamp\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (lot_id) REFERENCES lots(id) ON DELETE CASCADE,
         FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
-        FOREIGN KEY (bidder_id) REFERENCES user_profiles(uid) ON DELETE CASCADE,
+        FOREIGN KEY (bidder_id) REFERENCES users(uid) ON DELETE CASCADE, -- Alterado para users(uid)
         INDEX idx_bids_lot_id (lot_id),
         INDEX idx_bids_bidder_id (bidder_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
@@ -1525,7 +1527,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async getUserProfileData(userId: string): Promise<UserProfileData | null> {
     const connection = await getPool().getConnection();
     try {
-        const [rows] = await connection.query('SELECT up.*, r.name as role_name FROM user_profiles up LEFT JOIN roles r ON up.role_id = r.id WHERE up.uid = ?', [userId]);
+        const [rows] = await connection.query('SELECT u.*, r.name as role_name FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.uid = ?', [userId]);
         if ((rows as RowDataPacket[]).length === 0) return null;
         const userRow = mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]);
         let role: Role | null = null;
@@ -1549,14 +1551,14 @@ export class MySqlAdapter implements IDatabaseAdapter {
         });
         if (fields.length === 0) return { success: true, message: "Nenhuma alteração no perfil."};
         fields.push(`updated_at = NOW()`);
-        const queryText = `UPDATE user_profiles SET ${fields.join(', ')} WHERE uid = ?`;
+        const queryText = `UPDATE users SET ${fields.join(', ')} WHERE uid = ?`;
         values.push(userId);
         await connection.execute(queryText, values);
         return { success: true, message: 'Perfil atualizado!'};
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
 
-  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' >>): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
     const connection = await getPool().getConnection();
     try {
         await this.ensureDefaultRolesExist(); 
@@ -1564,7 +1566,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         if (!targetRole) return { success: false, message: 'Perfil padrão USER não encontrado.'};
 
         await connection.beginTransaction();
-        const [userRows] = await connection.query('SELECT * FROM user_profiles WHERE uid = ?', [userId]);
+        const [userRows] = await connection.query('SELECT * FROM users WHERE uid = ?', [userId]);
         let finalProfileData: UserProfileData;
 
         if ((userRows as RowDataPacket[]).length > 0) {
@@ -1573,7 +1575,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
             let needsUpdate = false;
             if (userDataFromDB.roleId !== targetRole.id) { updatePayload.roleId = Number(targetRole.id); needsUpdate = true; }
             if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; }
-            if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = targetRole.permissions || []; needsUpdate = true; }
+            if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = JSON.stringify(targetRole.permissions || []); needsUpdate = true; } // Salvar como JSON string
             
             if (needsUpdate) {
                 const updateFields: string[] = [];
@@ -1581,23 +1583,25 @@ export class MySqlAdapter implements IDatabaseAdapter {
                 Object.keys(updatePayload).forEach(key => {
                     const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
                     updateFields.push(`${sqlColumn} = ?`);
-                    updateValues.push(updatePayload[key] === 'permissions' ? JSON.stringify(updatePayload[key]) : updatePayload[key]);
+                    updateValues.push(updatePayload[key]);
                 });
                 updateValues.push(userId);
-                await connection.execute(`UPDATE user_profiles SET ${updateFields.join(', ')} WHERE uid = ?`, updateValues);
+                await connection.execute(`UPDATE users SET ${updateFields.join(', ')} WHERE uid = ?`, updateValues);
             }
              finalProfileData = { ...userDataFromDB, ...updatePayload, uid: userId } as UserProfileData;
         } else {
             const insertQuery = `
-                INSERT INTO user_profiles (uid, email, full_name, role_id, permissions, status, habilitation_status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW());
+                INSERT INTO users (uid, email, full_name, password_text, role_id, permissions, status, habilitation_status, cpf, cell_phone, date_of_birth, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW());
             `;
             const insertValues = [
-                userId, email, fullName || email.split('@')[0], Number(targetRole.id), JSON.stringify(targetRole.permissions || []),
-                'ATIVO', targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS'
+                userId, email, fullName || email.split('@')[0], additionalProfileData?.password || null,
+                Number(targetRole.id), JSON.stringify(targetRole.permissions || []),
+                'ATIVO', targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS',
+                additionalProfileData?.cpf || null, additionalProfileData?.cellPhone || null, additionalProfileData?.dateOfBirth || null
             ];
             await connection.execute(insertQuery, insertValues);
-            const [createdRows] = await connection.query('SELECT * FROM user_profiles WHERE uid = ?', [userId]);
+            const [createdRows] = await connection.query('SELECT * FROM users WHERE uid = ?', [userId]);
             finalProfileData = mapToUserProfileData(mapMySqlRowToCamelCase((createdRows as RowDataPacket[])[0]), targetRole);
         }
         await connection.commit();
@@ -1609,10 +1613,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
     const connection = await getPool().getConnection();
     try {
       const [rows] = await connection.query(`
-        SELECT up.*, r.name as role_name, r.permissions as role_permissions 
-        FROM user_profiles up 
-        LEFT JOIN roles r ON up.role_id = r.id 
-        ORDER BY up.full_name ASC;
+        SELECT u.*, r.name as role_name, r.permissions as role_permissions 
+        FROM users u 
+        LEFT JOIN roles r ON u.role_id = r.id 
+        ORDER BY u.full_name ASC;
       `);
       return (rows as RowDataPacket[]).map(row => {
         const profile = mapToUserProfileData(mapMySqlRowToCamelCase(row));
@@ -1634,7 +1638,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         if (role) { roleName = role.name; permissions = JSON.stringify(role.permissions || []); }
         else return { success: false, message: 'Perfil não encontrado.'};
       }
-      const queryText = `UPDATE user_profiles SET role_id = ?, role_name = ?, permissions = ?, updated_at = NOW() WHERE uid = ?`;
+      const queryText = `UPDATE users SET role_id = ?, role_name = ?, permissions = ?, updated_at = NOW() WHERE uid = ?`;
       await connection.execute(queryText, [roleId ? Number(roleId) : null, roleName, permissions, userId]);
       return { success: true, message: 'Perfil do usuário atualizado!' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
@@ -1643,7 +1647,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> {
     const connection = await getPool().getConnection();
     try {
-      await connection.execute('DELETE FROM user_profiles WHERE uid = ?', [userId]);
+      await connection.execute('DELETE FROM users WHERE uid = ?', [userId]);
       return { success: true, message: 'Perfil de usuário excluído (MySQL)!' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
@@ -1787,5 +1791,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
 
     
+
 
 

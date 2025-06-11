@@ -155,6 +155,7 @@ function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProf
         uid: row.uid,
         email: row.email,
         fullName: row.fullName,
+        password: row.passwordText, // Senha em texto plano (para fins de prototipagem)
         roleId: row.roleId ? String(row.roleId) : undefined,
         roleName: role?.name || row.roleName, 
         permissions: role?.permissions || row.permissions || [],
@@ -368,7 +369,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `DROP TABLE IF EXISTS cities CASCADE;`,
       `DROP TABLE IF EXISTS sellers CASCADE;`,
       `DROP TABLE IF EXISTS auctioneers CASCADE;`,
-      `DROP TABLE IF EXISTS user_profiles CASCADE;`,
+      `DROP TABLE IF EXISTS users CASCADE;`, // Alterado de user_profiles para users
       `DROP TABLE IF EXISTS states CASCADE;`,
       `DROP TABLE IF EXISTS lot_categories CASCADE;`,
       `DROP TABLE IF EXISTS roles CASCADE;`,
@@ -385,10 +386,11 @@ export class PostgresAdapter implements IDatabaseAdapter {
       );`,
       `CREATE INDEX IF NOT EXISTS idx_roles_name_normalized ON roles(name_normalized);`,
 
-      `CREATE TABLE IF NOT EXISTS user_profiles (
+      `CREATE TABLE IF NOT EXISTS users (
         uid VARCHAR(255) PRIMARY KEY,
         email VARCHAR(255) UNIQUE,
         full_name VARCHAR(255),
+        password_text VARCHAR(255) NULL, -- Nova coluna para senha em texto plano
         role_id INTEGER REFERENCES roles(id) ON DELETE SET NULL,
         permissions JSONB,
         status VARCHAR(50),
@@ -421,8 +423,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
-      `CREATE INDEX IF NOT EXISTS idx_user_profiles_email ON user_profiles(email);`,
-      `CREATE INDEX IF NOT EXISTS idx_user_profiles_role_id ON user_profiles(role_id);`,
+      `CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);`,
+      `CREATE INDEX IF NOT EXISTS idx_users_role_id ON users(role_id);`,
 
       `CREATE TABLE IF NOT EXISTS platform_settings (
         id VARCHAR(50) PRIMARY KEY DEFAULT 'global',
@@ -648,7 +650,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         id SERIAL PRIMARY KEY,
         lot_id INTEGER REFERENCES lots(id) ON DELETE CASCADE NOT NULL,
         auction_id INTEGER REFERENCES auctions(id) ON DELETE CASCADE NOT NULL,
-        bidder_id VARCHAR(255) REFERENCES user_profiles(uid) ON DELETE CASCADE NOT NULL,
+        bidder_id VARCHAR(255) REFERENCES users(uid) ON DELETE CASCADE NOT NULL, -- Alterado para users(uid)
         bidder_display_name VARCHAR(255),
         amount NUMERIC(15,2) NOT NULL,
         "timestamp" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
@@ -1298,7 +1300,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       (Object.keys(data) as Array<keyof LotDbData>).forEach(key => {
         if (data[key] !== undefined && key !== 'endDate' && key !== 'lotSpecificAuctionDate' && key !== 'secondAuctionDate' && key !== 'type' && key !== 'auctionName') {
             const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
-            const escapedColumn = sqlColumn === 'number' ? `"${sqlColumn}"` : sqlColumn; // "number" é palavra reservada
+            const escapedColumn = sqlColumn === 'number' ? `"${sqlColumn}"` : sqlColumn;
             fields.push(`${escapedColumn} = $${paramCount++}`);
             const value = data[key];
             if (key === 'galleryImageUrls' || key === 'mediaItemIds') {
@@ -1429,7 +1431,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         if (data.name && currentNormalizedName !== 'ADMINISTRATOR' && currentNormalizedName !== 'USER') {
             fields.push(`name = $${paramCount++}`); values.push(data.name.trim());
             fields.push(`name_normalized = $${paramCount++}`); values.push(data.name.trim().toUpperCase());
-        } else if (data.name) {
+        } else if (data.name) { 
              if (data.description !== undefined) {
                 fields.push(`description = $${paramCount++}`); values.push(data.description || null);
             }
@@ -1481,7 +1483,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
                 const existingRole = mapRowToCamelCase(roleRes.rows[0]);
                 const currentPermsSorted = [...(existingRole.permissions || [])].sort();
                 const expectedPermsSorted = [...validPermissions].sort();
-                if (JSON.stringify(currentPermsSorted) !== JSON.stringify(expectedPermsSorted) || existingRole.description !== (roleData.description || null)) {
+                 if (JSON.stringify(currentPermsSorted) !== JSON.stringify(expectedPermsSorted) || existingRole.description !== (roleData.description || null)) {
                      await client.query(
                         'UPDATE roles SET description = $1, permissions = $2::jsonb, updated_at = NOW() WHERE id = $3',
                         [roleData.description || null, JSON.stringify(expectedPermsSorted), existingRole.id]
@@ -1498,7 +1500,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async getUserProfileData(userId: string): Promise<UserProfileData | null> {
     const client = await getPool().connect();
     try {
-        const res = await client.query('SELECT up.*, r.name as role_name FROM user_profiles up LEFT JOIN roles r ON up.role_id = r.id WHERE up.uid = $1', [userId]);
+        const res = await client.query('SELECT u.*, r.name as role_name FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.uid = $1', [userId]);
         if (res.rowCount === 0) return null;
         const userRow = mapRowToCamelCase(res.rows[0]);
         let role: Role | null = null;
@@ -1514,21 +1516,21 @@ export class PostgresAdapter implements IDatabaseAdapter {
         const values: any[] = [];
         let paramCount = 1;
         (Object.keys(data) as Array<keyof EditableUserProfileData>).forEach(key => {
-            if (data[key] !== undefined && data[key] !== null) {
+            if (data[key] !== undefined && data[key] !== null) { 
                 fields.push(`${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = $${paramCount++}`);
                 values.push(data[key]);
             }
         });
         if (fields.length === 0) return { success: true, message: "Nenhuma alteração no perfil."};
         fields.push(`updated_at = NOW()`);
-        const queryText = `UPDATE user_profiles SET ${fields.join(', ')} WHERE uid = $${paramCount}`;
+        const queryText = `UPDATE users SET ${fields.join(', ')} WHERE uid = $${paramCount}`;
         values.push(userId);
         await client.query(queryText, values);
         return { success: true, message: 'Perfil atualizado!'};
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
   }
 
-  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' >>): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
     const client = await getPool().connect();
     try {
         await this.ensureDefaultRolesExist(); 
@@ -1536,7 +1538,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         if (!targetRole) return { success: false, message: 'Perfil padrão USER não encontrado.'};
 
         await client.query('BEGIN');
-        const userRes = await client.query('SELECT * FROM user_profiles WHERE uid = $1', [userId]);
+        const userRes = await client.query('SELECT * FROM users WHERE uid = $1', [userId]);
         let finalProfileData: UserProfileData;
 
         if (userRes.rowCount > 0) {
@@ -1556,17 +1558,19 @@ export class PostgresAdapter implements IDatabaseAdapter {
                     updateValues.push(key === 'permissions' ? JSON.stringify(updatePayload[key]) : updatePayload[key]);
                 });
                 updateValues.push(userId);
-                await client.query(`UPDATE user_profiles SET ${updateFields.join(', ')} WHERE uid = $${pCount}`, updateValues);
+                await client.query(`UPDATE users SET ${updateFields.join(', ')} WHERE uid = $${pCount}`, updateValues);
             }
              finalProfileData = { ...userDataFromDB, ...updatePayload, uid: userId } as UserProfileData;
         } else {
             const insertQuery = `
-                INSERT INTO user_profiles (uid, email, full_name, role_id, permissions, status, habilitation_status, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, NOW(), NOW()) RETURNING *;
+                INSERT INTO users (uid, email, full_name, password_text, role_id, permissions, status, habilitation_status, cpf, cell_phone, date_of_birth, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, NOW(), NOW()) RETURNING *;
             `;
             const insertValues = [
-                userId, email, fullName || email.split('@')[0], Number(targetRole.id), JSON.stringify(targetRole.permissions || []),
-                'ATIVO', targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS'
+                userId, email, fullName || email.split('@')[0], additionalProfileData?.password || null,
+                Number(targetRole.id), JSON.stringify(targetRole.permissions || []),
+                'ATIVO', targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS',
+                additionalProfileData?.cpf || null, additionalProfileData?.cellPhone || null, additionalProfileData?.dateOfBirth || null
             ];
             const insertedRes = await client.query(insertQuery, insertValues);
             finalProfileData = mapToUserProfileData(mapRowToCamelCase(insertedRes.rows[0]), targetRole);
@@ -1580,15 +1584,15 @@ export class PostgresAdapter implements IDatabaseAdapter {
     const client = await getPool().connect();
     try {
       const res = await client.query(`
-        SELECT up.*, r.name as role_name, r.permissions as role_permissions 
-        FROM user_profiles up 
-        LEFT JOIN roles r ON up.role_id = r.id 
-        ORDER BY up.full_name ASC;
+        SELECT u.*, r.name as role_name, r.permissions as role_permissions 
+        FROM users u 
+        LEFT JOIN roles r ON u.role_id = r.id 
+        ORDER BY u.full_name ASC;
       `);
       return mapRowsToCamelCase(res.rows).map(row => {
         const profile = mapToUserProfileData(row);
-        if ((!profile.permissions || profile.permissions.length === 0) && row.rolePermissions) {
-            profile.permissions = row.rolePermissions;
+        if ((!profile.permissions || profile.permissions.length === 0) && row.role_permissions) {
+            profile.permissions = row.role_permissions; // Already an array from JSONB
         }
         return profile;
       });
@@ -1605,7 +1609,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         if (role) { roleName = role.name; permissions = JSON.stringify(role.permissions || []); }
         else return { success: false, message: 'Perfil não encontrado.'};
       }
-      const queryText = `UPDATE user_profiles SET role_id = $1, role_name = $2, permissions = $3::jsonb, updated_at = NOW() WHERE uid = $4`;
+      const queryText = `UPDATE users SET role_id = $1, role_name = $2, permissions = $3::jsonb, updated_at = NOW() WHERE uid = $4`;
       await client.query(queryText, [roleId ? Number(roleId) : null, roleName, permissions, userId]);
       return { success: true, message: 'Perfil do usuário atualizado!' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
@@ -1614,7 +1618,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
-      await client.query('DELETE FROM user_profiles WHERE uid = $1', [userId]);
+      await client.query('DELETE FROM users WHERE uid = $1', [userId]);
       return { success: true, message: 'Perfil de usuário excluído (PostgreSQL)!' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
   }
@@ -1681,7 +1685,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
     try {
       await client.query('BEGIN');
       for (const mediaId of mediaItemIds) {
-        // Adiciona lotId ao array linked_lot_ids do item de mídia, evitando duplicatas
         await client.query(
           `UPDATE media_items 
            SET linked_lot_ids = COALESCE(linked_lot_ids, '[]'::jsonb) || $1::jsonb 
@@ -1689,7 +1692,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
           [JSON.stringify([lotId]), Number(mediaId)]
         );
       }
-      // Adiciona mediaItemIds ao array media_item_ids do lote
       await client.query(
         `UPDATE lots 
          SET media_item_ids = COALESCE(media_item_ids, '[]'::jsonb) || $1::jsonb, updated_at = NOW() 
@@ -1706,16 +1708,14 @@ export class PostgresAdapter implements IDatabaseAdapter {
     try {
       await client.query('BEGIN');
       await client.query(
-        `UPDATE media_items SET linked_lot_ids = (
-          SELECT jsonb_agg(elem) FROM jsonb_array_elements(COALESCE(linked_lot_ids, '[]'::jsonb)) AS elem WHERE elem::text <> $1
-        ) WHERE id = $2;`,
-        [`"${lotId}"`, Number(mediaItemId)]
+        `UPDATE media_items SET linked_lot_ids = COALESCE(linked_lot_ids, '[]'::jsonb) - $1
+         WHERE id = $2;`,
+        [lotId, Number(mediaItemId)]
       );
       await client.query(
-        `UPDATE lots SET media_item_ids = (
-          SELECT jsonb_agg(elem) FROM jsonb_array_elements(COALESCE(media_item_ids, '[]'::jsonb)) AS elem WHERE elem::text <> $1
-        ), updated_at = NOW() WHERE id = $2;`,
-        [`"${mediaItemId}"`, Number(lotId)]
+        `UPDATE lots SET media_item_ids = COALESCE(media_item_ids, '[]'::jsonb) - $1, updated_at = NOW()
+         WHERE id = $2;`,
+        [mediaItemId, Number(lotId)]
       );
       await client.query('COMMIT');
       return { success: true, message: 'Mídia desvinculada (PostgreSQL).' };
@@ -1767,5 +1767,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
 
     
+
 
 
