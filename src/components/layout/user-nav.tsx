@@ -207,7 +207,7 @@ export default function UserNav() {
     <div className="flex items-center space-x-2">
       <Tooltip delayDuration={300}>
         <TooltipTrigger asChild>
-          <Button variant="outline" size="icon" asChild>
+          <Button variant="default" size="icon" asChild>
             <Link href="/auth/login">
               <LogIn className="h-4 w-4" />
             </Link>

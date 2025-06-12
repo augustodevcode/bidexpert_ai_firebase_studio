@@ -14,9 +14,26 @@ export const userFormSchema = z.object({
     message: "A senha deve ter pelo menos 6 caracteres.",
   }).optional().or(z.literal('')),
   roleId: z.string().optional().nullable(),
-  cpf: z.string().optional(), // Adicionado
-  cellPhone: z.string().optional(), // Adicionado
-  dateOfBirth: z.date().optional().nullable(), // Adicionado
+  cpf: z.string().optional(), 
+  cellPhone: z.string().optional(), 
+  dateOfBirth: z.date().optional().nullable(), 
+  // Campos para Pessoa Jurídica / Comitente
+  accountType: z.enum(['PHYSICAL', 'LEGAL', 'DIRECT_SALE_CONSIGNOR']).optional(),
+  razaoSocial: z.string().optional(),
+  cnpj: z.string().optional(),
+  inscricaoEstadual: z.string().optional(),
+  websiteComitente: z.string().url({ message: "URL do website inválida."}).optional().or(z.literal('')),
+  // Campos de endereço (comuns)
+  zipCode: z.string().optional(),
+  street: z.string().optional(),
+  number: z.string().optional(),
+  complement: z.string().optional(),
+  neighborhood: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  optInMarketing: z.boolean().default(false).optional(),
 });
 
 export type UserFormValues = z.infer<typeof userFormSchema>;
+
+    

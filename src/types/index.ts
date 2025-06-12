@@ -1,3 +1,4 @@
+
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
 
@@ -311,10 +312,19 @@ export interface UserProfileData {
   itemsSold?: number; 
 
   sellerProfileId?: string; 
+
+  // Novos campos para PJ e Comitente
+  accountType?: 'PHYSICAL' | 'LEGAL' | 'DIRECT_SALE_CONSIGNOR';
+  razaoSocial?: string;
+  cnpj?: string;
+  inscricaoEstadual?: string;
+  websiteComitente?: string;
 }
 
 
 export type UserProfileWithPermissions = UserProfileData & {
+  // Se houver campos específicos que combinam UserProfileData e Role,
+  // eles podem ser definidos aqui, mas a herança básica já inclui permissions e roleName.
 };
 
 
@@ -354,9 +364,9 @@ export interface UserWin {
 export interface SellerProfileInfo {
   id: string; 
   publicId: string;
-  name: string;
+  name: string; // Pode ser nome fantasia para PJ ou nome do comitente pessoa física
   slug: string;
-  contactName?: string;
+  contactName?: string; // Nome do responsável, se PJ
   email?: string; 
   phone?: string;
   address?: string;
@@ -372,9 +382,13 @@ export interface SellerProfileInfo {
   activeLotsCount?: number; 
   totalSalesValue?: number; 
   auctionsFacilitatedCount?: number; 
-  userId?: string; 
+  userId?: string; // UID do usuário da plataforma associado, se houver
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
+  // Campos específicos de PJ (opcional, pode estar no UserProfile se o Seller é um User)
+  cnpj?: string;
+  razaoSocial?: string; 
+  inscricaoEstadual?: string;
 }
 
 export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'activeLotsCount' | 'totalSalesValue' | 'auctionsFacilitatedCount' | 'userId'> & {
@@ -478,12 +492,10 @@ export interface DirectSaleOffer {
   expiresAt?: AnyTimestamp;
 }
 
-export type EditableUserProfileData = Omit<UserProfileData, 'uid' | 'email' | 'status' | 'createdAt' | 'updatedAt' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'roleId' | 'roleName' | 'sellerProfileId' | 'permissions' | 'habilitationStatus' | 'password' > & {
-  roleId?: string; 
-  roleName?: string;
-  sellerProfileId?: string;
-  permissions?: string[];
-  habilitationStatus?: UserHabilitationStatus;
+export type EditableUserProfileData = Partial<Omit<UserProfileData, 'uid' | 'email' | 'status' | 'createdAt' | 'updatedAt' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'roleId' | 'roleName' | 'sellerProfileId' | 'permissions' | 'habilitationStatus' | 'password' >> & {
+  // Role fields can be updated via specific user-role actions
+  // habilitationStatus is updated via specific actions
+  // password would be handled by a separate "change password" flow
   dateOfBirth?: Date | null; 
   rgIssueDate?: Date | null; 
 };
@@ -540,7 +552,7 @@ export interface IDatabaseAdapter {
   getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null>; // id can be numeric or publicId
   updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string }>;
   deleteAuctioneer(id: string): Promise<{ success: boolean; message: string }>;
-  getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null>; // This will now search by publicId
+  getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null>;
 
   // Sellers
   createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }>;
@@ -548,7 +560,7 @@ export interface IDatabaseAdapter {
   getSeller(id: string): Promise<SellerProfileInfo | null>; // id can be numeric or publicId
   updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string }>;
   deleteSeller(id: string): Promise<{ success: boolean; message: string }>;
-  getSellerBySlug(slug: string): Promise<SellerProfileInfo | null>; // This will now search by publicId
+  getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null>;
 
   // Auctions
   createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }>;
@@ -556,18 +568,18 @@ export interface IDatabaseAdapter {
   getAuction(id: string): Promise<Auction | null>; // id can be numeric or publicId
   updateAuction(id: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string }>;
   deleteAuction(id: string): Promise<{ success: boolean; message: string }>;
-  getAuctionsBySellerSlug(sellerPublicId: string): Promise<Auction[]>; // Changed from sellerSlug
+  getAuctionsBySellerSlug(sellerPublicId: string): Promise<Auction[]>; 
 
   // Lots
   createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }>;
-  getLots(auctionIdParam?: string): Promise<Lot[]>; // auctionIdParam could be publicId of auction
+  getLots(auctionIdParam?: string): Promise<Lot[]>; 
   getLot(id: string): Promise<Lot | null>; // id can be numeric or publicId
   updateLot(id: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }>;
   deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string; }>;
-  getBidsForLot(lotId: string): Promise<BidInfo[]>; // lotId can be publicId
+  getBidsForLot(lotId: string): Promise<BidInfo[]>; 
   placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }>;
   
-  // Users (only profile data, auth is separate)
+  // Users 
   getUserProfileData(userId: string): Promise<UserProfileData | null>;
   updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }>;
   ensureUserRole(
@@ -575,7 +587,7 @@ export interface IDatabaseAdapter {
     email: string, 
     fullName: string | null, 
     targetRoleName: string, 
-    additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' >>,
+    additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>,
     roleIdToAssign?: string 
   ): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }>;
   getUsersWithRoles(): Promise<UserProfileData[]>;
@@ -613,7 +625,7 @@ export type QueryResult<T> = {
 };
 
 // Type for data from UserForm, to be processed by createUser action
-export type UserFormValues = Pick<UserProfileData, 'fullName' | 'email' | 'cpf' | 'cellPhone' | 'dateOfBirth'> & {
+export type UserFormValues = Pick<UserProfileData, 'fullName' | 'email' | 'cpf' | 'cellPhone' | 'dateOfBirth' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing'> & {
   password?: string;
   roleId?: string | null;
 };
@@ -628,3 +640,5 @@ export type LotDbData = Omit<LotFormData, 'type' | 'auctionName'> & {
 export type LotWithCategoryName = Lot & {
   categoryName?: string; 
 };
+
+    
