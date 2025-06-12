@@ -1,9 +1,11 @@
 
+'use client'; // Adicionado para permitir que DeleteAuctionButton seja um Client Component aqui
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getAuctions, deleteAuction } from './actions';
+import { deleteAuction, getAuctions } from './actions'; // getAuctions já estava, deleteAuction importado
 import type { Auction } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -20,17 +22,44 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
-import { getAuctionStatusText } from '@/lib/sample-data'; 
+import { getAuctionStatusText } from '@/lib/sample-data';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useToast } from '@/hooks/use-toast'; // Import useToast
+import { useEffect, useState, useCallback } from 'react'; // Import useEffect, useState, useCallback
+import { Loader2 } from 'lucide-react';
 
-function DeleteAuctionButton({ auctionId, auctionTitle, onDelete }: { auctionId: string; auctionTitle: string; onDelete: (id: string) => Promise<void> }) {
+
+// Movido DeleteAuctionButton para ser um Client Component
+function DeleteAuctionButtonClient({ auctionId, auctionTitle, onDeleteSuccess }: { auctionId: string; auctionTitle: string; onDeleteSuccess: () => void }) {
+  const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    const result = await deleteAuction(auctionId); // Chama a Server Action diretamente
+    if (result.success) {
+      toast({
+        title: 'Sucesso!',
+        description: result.message,
+      });
+      onDeleteSuccess(); // Callback para atualizar a lista na página pai
+    } else {
+      toast({
+        title: 'Erro ao Excluir',
+        description: result.message,
+        variant: 'destructive',
+      });
+    }
+    setIsDeleting(false);
+  };
+
   return (
     <AlertDialog>
       <Tooltip>
         <TooltipTrigger asChild>
           <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label="Excluir Leilão">
-              <Trash2 className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label="Excluir Leilão" disabled={isDeleting}>
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
             </Button>
           </AlertDialogTrigger>
         </TooltipTrigger>
@@ -44,13 +73,13 @@ function DeleteAuctionButton({ auctionId, auctionTitle, onDelete }: { auctionId:
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
-            onClick={async () => {
-                await onDelete(auctionId);
-            }}
+            onClick={handleDelete}
+            disabled={isDeleting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
+            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Excluir
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -60,15 +89,36 @@ function DeleteAuctionButton({ auctionId, auctionTitle, onDelete }: { auctionId:
 }
 
 
-export default async function AdminAuctionsPage() {
-  const auctions = await getAuctions();
+export default function AdminAuctionsPage() {
+  const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
-  async function handleDeleteAuction(id: string) {
-    'use server';
-    const result = await deleteAuction(id);
-    if (!result.success) {
-        console.error("Failed to delete auction:", result.message);
+  const fetchAuctions = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const fetchedAuctions = await getAuctions();
+      setAuctions(fetchedAuctions);
+    } catch (error) {
+        console.error("Error fetching auctions:", error);
+        toast({ title: "Erro", description: "Falha ao buscar leilões.", variant: "destructive"});
+        setAuctions([]);
+    } finally {
+        setIsLoading(false);
     }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchAuctions();
+  }, [fetchAuctions]);
+
+  if (isLoading) {
+    return (
+        <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="ml-3 text-muted-foreground">Carregando leilões...</p>
+        </div>
+    );
   }
 
   return (
@@ -148,7 +198,7 @@ export default async function AdminAuctionsPage() {
                             </TooltipTrigger>
                             <TooltipContent><p>Editar Leilão</p></TooltipContent>
                            </Tooltip>
-                          <DeleteAuctionButton auctionId={auction.id} auctionTitle={auction.title} onDelete={handleDeleteAuction} />
+                          <DeleteAuctionButtonClient auctionId={auction.id} auctionTitle={auction.title} onDeleteSuccess={fetchAuctions} />
                         </TableCell>
                       </TableRow>
                     ))}
@@ -162,3 +212,4 @@ export default async function AdminAuctionsPage() {
     </TooltipProvider>
   );
 }
+
