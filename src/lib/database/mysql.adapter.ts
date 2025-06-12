@@ -1576,25 +1576,34 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
+    console.log('[MySqlAdapter - updateUserProfile ENTER] Called for userId:', userId, 'Data:', data);
     const connection = await getPool().getConnection();
     try {
         const fields: string[] = [];
         const values: any[] = [];
         (Object.keys(data) as Array<keyof EditableUserProfileData>).forEach(key => {
             if (data[key] !== undefined && data[key] !== null) { 
-                fields.push(`${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = ?`);
+                const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+                fields.push(`${sqlColumn} = ?`);
                 values.push(data[key]);
             } else if (data[key] === null) { 
-                 fields.push(`${key.replace(/([A-Z])/g, "_$1").toLowerCase()} = NULL`);
+                 const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+                 fields.push(`${sqlColumn} = NULL`);
             }
         });
         if (fields.length === 0) return { success: true, message: "Nenhuma alteração no perfil."};
         fields.push(`updated_at = NOW()`);
         const queryText = `UPDATE users SET ${fields.join(', ')} WHERE uid = ?`;
         values.push(userId);
+        console.log('[MySqlAdapter - updateUserProfile] Executing query:', queryText, 'with values:', values);
         await connection.execute(queryText, values);
-        return { success: true, message: 'Perfil atualizado!'};
-    } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
+        return { success: true, message: 'Perfil atualizado (MySQL)!'};
+    } catch (e: any) { 
+        console.error('[MySqlAdapter - updateUserProfile] Error:', e);
+        return { success: false, message: e.message }; 
+    } finally { 
+        connection.release(); 
+    }
   }
 
   async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' >>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
@@ -1615,8 +1624,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
             console.error(`[MySQLAdapter ensureUserRole] CRITICAL: Perfil '${targetRoleName}' ou 'USER' não encontrado ou sem ID.`);
             return { success: false, message: `Perfil padrão '${targetRoleName}' ou 'USER' não encontrado ou sem ID.` };
         }
-        console.log(`[MySQLAdapter ensureUserRole] Perfil alvo determinado: ${targetRole.name} (ID: ${targetRole.id})`);
-
+         console.log(`[MySQLAdapter ensureUserRole] Perfil alvo determinado: ${targetRole.name} (ID: ${targetRole.id})`);
 
         await connection.beginTransaction();
         const [userRows] = await connection.query('SELECT * FROM users WHERE uid = ?', [userId]);
@@ -1632,15 +1640,14 @@ export class MySqlAdapter implements IDatabaseAdapter {
             if (additionalProfileData?.password) {
                 updatePayload.passwordText = additionalProfileData.password; 
                 needsUpdate = true;
-                console.log(`[MySQLAdapter ensureUserRole] Atualizando passwordText.`);
+                 console.log(`[MySQLAdapter ensureUserRole] Atualizando passwordText.`);
             }
             if (additionalProfileData?.cpf !== undefined && additionalProfileData.cpf !== userDataFromDB.cpf) { updatePayload.cpf = additionalProfileData.cpf; needsUpdate = true;}
             if (additionalProfileData?.cellPhone !== undefined && additionalProfileData.cellPhone !== userDataFromDB.cellPhone) { updatePayload.cellPhone = additionalProfileData.cellPhone; needsUpdate = true;}
             if (additionalProfileData?.dateOfBirth !== undefined && (userDataFromDB.dateOfBirth?.getTime() !== additionalProfileData.dateOfBirth?.getTime())) { updatePayload.dateOfBirth = additionalProfileData.dateOfBirth; needsUpdate = true;}
 
-
             if (needsUpdate) {
-                console.log(`[MySQLAdapter ensureUserRole] Update necessário. Payload:`, updatePayload);
+                 console.log(`[MySQLAdapter ensureUserRole] Update necessário. Payload:`, updatePayload);
                 const updateFields: string[] = [];
                 const updateValues: any[] = [];
                 Object.keys(updatePayload).forEach(key => {
@@ -1871,3 +1878,4 @@ export class MySqlAdapter implements IDatabaseAdapter {
 }
 
     
+
