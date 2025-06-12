@@ -13,15 +13,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks, Tv, Briefcase as ConsignorIcon } from 'lucide-react';
+import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks, Tv, Briefcase as ConsignorIcon, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/lib/firebase'; // Ainda necessário para logout do Firebase
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
+import { hasPermission, hasAnyPermission } from '@/lib/permissions'; // Importar as funções de permissão
 
-// Idealmente, estas constantes viriam de um local compartilhado (ex: src/lib/auth-roles.ts)
-const ALLOWED_EMAILS_FOR_ADMIN_ACCESS = ['admin@bidexpert.com', 'analyst@bidexpert.com', 'augusto.devcode@gmail.com'];
+// Email do comitente de exemplo (para simular o próprio comitente acessando)
 const EXAMPLE_CONSIGNOR_EMAIL = 'consignor@bidexpert.com';
 
 export default function UserNav() {
@@ -78,17 +78,19 @@ export default function UserNav() {
   } else if (activeSystem !== 'FIRESTORE' && userProfileWithPermissions) {
     displayName = userProfileWithPermissions.fullName || userProfileWithPermissions.email?.split('@')[0] || "Usuário";
     userEmailDisplay = userProfileWithPermissions.email || "";
-    photoURLDisplay = userProfileWithPermissions.avatarUrl || undefined; // Assumindo que avatarUrl pode estar no perfil
+    photoURLDisplay = userProfileWithPermissions.avatarUrl || undefined; 
   }
   
   const userInitial = displayName ? displayName.charAt(0).toUpperCase() : "U";
   const userEmailLowerForRoles = activeSystem === 'FIRESTORE' ? user?.email?.toLowerCase() : userProfileWithPermissions?.email?.toLowerCase();
 
-  const isAdminOrAnalyst = userEmailLowerForRoles && ALLOWED_EMAILS_FOR_ADMIN_ACCESS.map(e => e.toLowerCase()).includes(userEmailLowerForRoles);
-  const isTheExampleConsignor = userEmailLowerForRoles === EXAMPLE_CONSIGNOR_EMAIL.toLowerCase();
+  // Verifica se o usuário tem a permissão 'manage_all'
+  const showAdminSectionLinks = hasPermission(userProfileWithPermissions, 'manage_all');
   
-  const canSeeConsignorDashboardLink = isAdminOrAnalyst || isTheExampleConsignor;
-  const showAdminSectionLinks = isAdminOrAnalyst;
+  // Lógica para o painel do comitente - pode ser baseada no email de exemplo OU em uma permissão específica.
+  // Se for baseada em permissão, algo como: hasAnyPermission(userProfileWithPermissions, ['auctions:manage_own', 'lots:manage_own'])
+  const isTheExampleConsignor = userEmailLowerForRoles === EXAMPLE_CONSIGNOR_EMAIL.toLowerCase();
+  const canSeeConsignorDashboardLink = showAdminSectionLinks || isTheExampleConsignor || hasAnyPermission(userProfileWithPermissions, ['auctions:manage_own', 'lots:manage_own']);
 
 
   if (isLoggedIn) {
@@ -175,10 +177,10 @@ export default function UserNav() {
               <DropdownMenuLabel className="text-xs text-muted-foreground px-2">Administração</DropdownMenuLabel>
               <DropdownMenuItem asChild>
                 <Link href="/admin/dashboard" className="flex items-center">
-                  <LayoutDashboard className="mr-2 h-4 w-4" /> Painel Admin
+                  <ShieldCheck className="mr-2 h-4 w-4" /> Painel Admin
                 </Link>
               </DropdownMenuItem>
-               <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild>
                 <Link href="/admin/categories" className="flex items-center">
                   <ListChecks className="mr-2 h-4 w-4" /> Gerenciar Categorias
                 </Link>

@@ -1,8 +1,7 @@
 
-import CategoryForm from '../../category-form'; // Corrigido o caminho aqui
-import { getLotCategory, updateLotCategory } from '../../actions'; // Corrigido o caminho aqui
+import CategoryForm from '../../category-form';
+import { getLotCategory, updateLotCategory } from '../../actions';
 import { notFound } from 'next/navigation';
-// import { useAuth } from '@/contexts/auth-context'; // To pass userId for role check
 
 export default async function EditCategoryPage({ params }: { params: { categoryId: string } }) {
   const categoryId = params.categoryId;
