@@ -1,3 +1,4 @@
+
 // src/lib/database/mysql.adapter.ts
 import mysql, { type RowDataPacket, type Pool } from 'mysql2/promise';
 import type {
@@ -37,7 +38,7 @@ function getPool() {
         waitForConnections: true,
         connectionLimit: 10,
         queueLimit: 0,
-        dateStrings: true, 
+        dateStrings: true,
       });
       console.log('[MySqlAdapter] Pool de conexões MySQL inicializado.');
     } catch (e) {
@@ -174,9 +175,9 @@ function mapToUserProfileData(row: RowDataPacket, role?: Role | null): UserProfi
         uid: row.uid,
         email: row.email,
         fullName: row.fullName,
-        password: row.passwordText, 
+        password: row.passwordText,
         roleId: row.roleId ? String(row.roleId) : undefined,
-        roleName: role?.name || row.roleName, 
+        roleName: role?.name || row.roleName,
         permissions: typeof row.permissions === 'string' ? JSON.parse(row.permissions) : (role?.permissions || row.permissions || []),
         status: row.status,
         habilitationStatus: row.habilitationStatus as UserHabilitationStatus,
@@ -220,15 +221,15 @@ function mapToAuction(row: RowDataPacket): Auction {
         description: row.description,
         status: row.status as AuctionStatus,
         auctionType: row.auctionType,
-        category: row.categoryName, 
+        category: row.categoryName,
         categoryId: row.categoryId ? String(row.categoryId) : undefined,
-        auctioneer: row.auctioneerName, 
+        auctioneer: row.auctioneerName,
         auctioneerId: row.auctioneerId ? String(row.auctioneerId) : undefined,
-        seller: row.sellerName, 
+        seller: row.sellerName,
         sellerId: row.sellerId ? String(row.sellerId) : undefined,
         auctionDate: new Date(row.auctionDate),
         endDate: row.endDate ? new Date(row.endDate) : null,
-        auctionStages: row.auctionStages ? JSON.parse(row.auctionStages) : [], 
+        auctionStages: row.auctionStages ? JSON.parse(row.auctionStages) : [],
         city: row.city,
         state: row.state,
         imageUrl: row.imageUrl,
@@ -244,8 +245,8 @@ function mapToAuction(row: RowDataPacket): Auction {
         vehicleLocation: row.vehicleLocation,
         createdAt: new Date(row.createdAt),
         updatedAt: new Date(row.updatedAt),
-        auctioneerLogoUrl: row.auctioneerLogoUrl, 
-        lots: [] 
+        auctioneerLogoUrl: row.auctioneerLogoUrl,
+        lots: []
     };
 }
 
@@ -263,12 +264,12 @@ function mapToLot(row: RowDataPacket): Lot {
     status: row.status as LotStatus,
     stateId: row.stateId ? String(row.stateId) : undefined,
     cityId: row.cityId ? String(row.cityId) : undefined,
-    cityName: row.cityName, 
-    stateUf: row.stateUf,   
-    type: row.categoryName,  
+    cityName: row.cityName,
+    stateUf: row.stateUf,
+    type: row.categoryName,
     categoryId: row.categoryId ? String(row.categoryId) : undefined,
     views: Number(row.views || 0),
-    auctionName: row.auctionName, 
+    auctionName: row.auctionName,
     price: Number(row.price),
     initialPrice: row.initialPrice !== null ? Number(row.initialPrice) : undefined,
     lotSpecificAuctionDate: row.lotSpecificAuctionDate ? new Date(row.lotSpecificAuctionDate) : null,
@@ -311,9 +312,9 @@ function mapToLot(row: RowDataPacket): Lot {
     aisleStall: row.aisleStall,
     actualCashValue: row.actualCashValue,
     estimatedRepairCost: row.estimatedRepairCost,
-    sellerName: row.lotSellerName, 
+    sellerName: row.lotSellerName,
     sellerId: row.sellerIdFk ? String(row.sellerIdFk) : undefined,
-    auctioneerName: row.lotAuctioneerName, 
+    auctioneerName: row.lotAuctioneerName,
     auctioneerId: row.auctioneerIdFk ? String(row.auctioneerIdFk) : undefined,
     condition: row.condition,
     createdAt: new Date(row.createdAt),
@@ -366,7 +367,7 @@ function mapToPlatformSettings(row: RowDataPacket): PlatformSettings {
 }
 
 
-const defaultRolesData: RoleFormData[] = [ 
+const defaultRolesData: RoleFormData[] = [
   { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
   { name: 'USER', description: 'Usuário padrão.', permissions: ['view_auctions', 'place_bids', 'view_lots'] },
   { name: 'CONSIGNOR', description: 'Comitente.', permissions: ['auctions:manage_own', 'lots:manage_own', 'view_reports', 'media:upload'] },
@@ -376,14 +377,14 @@ const defaultRolesData: RoleFormData[] = [
 
 export class MySqlAdapter implements IDatabaseAdapter {
   constructor() {
-    getPool(); 
+    getPool();
   }
 
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[]; rolesProcessed?: number }> {
     const connection = await getPool().getConnection();
     const errors: any[] = [];
     console.log('[MySqlAdapter] Iniciando criação/verificação de tabelas...');
-    
+
     const queries = [
       `SET FOREIGN_KEY_CHECKS = 0;`,
       `DROP TABLE IF EXISTS bids;`,
@@ -450,7 +451,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         INDEX idx_users_email (email),
         INDEX idx_users_role_id (role_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
-      
+
       `CREATE TABLE IF NOT EXISTS platform_settings (
         id VARCHAR(50) PRIMARY KEY DEFAULT 'global',
         gallery_image_base_path TEXT NOT NULL,
@@ -469,7 +470,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_lot_categories_slug (slug)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
-      
+
       `CREATE TABLE IF NOT EXISTS states (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
@@ -553,7 +554,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         INDEX idx_sellers_slug (slug),
         INDEX idx_sellers_public_id (public_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
-      
+
       `CREATE TABLE IF NOT EXISTS auctions (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         public_id VARCHAR(100) NOT NULL UNIQUE,
@@ -605,8 +606,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
         gallery_image_urls JSON,
         media_item_ids JSON,
         status VARCHAR(50) NOT NULL,
-        state_id INT UNSIGNED, 
-        city_id INT UNSIGNED, 
+        state_id INT UNSIGNED,
+        city_id INT UNSIGNED,
         category_id INT UNSIGNED,
         views INT UNSIGNED DEFAULT 0,
         price DECIMAL(15,2) NOT NULL,
@@ -651,8 +652,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
         aisle_stall VARCHAR(50),
         actual_cash_value VARCHAR(50),
         estimated_repair_cost VARCHAR(50),
-        seller_id_fk INT UNSIGNED, 
-        auctioneer_id_fk INT UNSIGNED, 
+        seller_id_fk INT UNSIGNED,
+        auctioneer_id_fk INT UNSIGNED,
         \`condition\` TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -729,7 +730,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       }
       await connection.commit();
       console.log('[MySqlAdapter] Esquema de tabelas inicializado/verificado com sucesso.');
-      
+
       const rolesResult = await this.ensureDefaultRolesExist();
       if (!rolesResult.success) {
         errors.push(new Error(`Falha ao garantir perfis padrão: ${rolesResult.message}`));
@@ -737,7 +738,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         console.log(`[MySqlAdapter] ${rolesResult.rolesProcessed || 0} perfis padrão processados.`);
       }
 
-      const settingsResult = await this.getPlatformSettings(); 
+      const settingsResult = await this.getPlatformSettings();
       if (!settingsResult.galleryImageBasePath) { // Checa se a configuração padrão foi aplicada
           errors.push(new Error('Falha ao garantir configurações padrão da plataforma.'));
       } else {
@@ -753,7 +754,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
     } catch (error: any) {
       await connection.rollback();
       console.error('[MySqlAdapter - initializeSchema] Erro transacional:', error);
-      errors.push(error.message); 
+      errors.push(error.message);
       return { success: false, message: `Erro ao inicializar esquema MySQL: ${error.message}`, errors };
     } finally {
       connection.release();
@@ -796,7 +797,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       connection.release();
     }
   }
-  
+
   async getLotCategory(id: string): Promise<LotCategory | null> {
     const numericId = Number(id);
     if (isNaN(numericId)) {
@@ -808,7 +809,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         if ((rows as RowDataPacket[]).length > 0) {
             return mapToLotCategory(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
         }
-        return null; 
+        return null;
       } catch (error: any) {
           console.error(`[MySqlAdapter - getLotCategory by slug ${id}] Error:`, error);
           return null;
@@ -816,7 +817,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
           connection.release();
       }
     }
-    
+
     const connection = await getPool().getConnection();
     try {
         const queryText = 'SELECT id, name, slug, description, item_count, created_at, updated_at FROM lot_categories WHERE id = ?;';
@@ -878,7 +879,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       connection.release();
     }
   }
-  
+
   // --- States ---
   async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> {
     const connection = await getPool().getConnection();
@@ -905,7 +906,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
           const [rows] = await connection.query('SELECT id, name, uf, slug, city_count, created_at, updated_at FROM states WHERE slug = ?', [id]);
           if ((rows as RowDataPacket[]).length > 0) return mapToStateInfo(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
           return null;
-      } catch (e:any) { console.error(`[MySqlAdapter - getState by slug ${id}] Error:`, e); return null; } 
+      } catch (e:any) { console.error(`[MySqlAdapter - getState by slug ${id}] Error:`, e); return null; }
       finally { connection.release(); }
     }
     const connection = await getPool().getConnection();
@@ -1037,13 +1038,13 @@ export class MySqlAdapter implements IDatabaseAdapter {
             fields.push(`state_uf = ?`); values.push((parentStateRows as RowDataPacket[])[0].uf);
         }
         if (data.ibgeCode !== undefined) { fields.push(`ibge_code = ?`); values.push(data.ibgeCode || null); }
-        
+
         if (fields.length === 0) return { success: true, message: "Nenhuma alteração para a cidade."};
-        
+
         fields.push(`updated_at = NOW()`);
         query += fields.join(', ') + ` WHERE id = ?`;
         values.push(numericId);
-        
+
         await connection.execute(query, values);
         return { success: true, message: 'Cidade atualizada (MySQL)!' };
     } catch (e: any) { console.error(`[MySqlAdapter - updateCity(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
@@ -1068,7 +1069,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       const slug = slugify(data.name);
       const publicId = `LEIL-${slugify(data.name.substring(0,5))}-${uuidv4().substring(0,8)}`;
       const query = `
-        INSERT INTO auctioneers 
+        INSERT INTO auctioneers
           (public_id, name, slug, registration_number, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since, rating, auctions_conducted_count, total_value_sold, user_id)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, 0, 0, ?);
       `;
@@ -1104,7 +1105,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         queryText = 'SELECT * FROM auctioneers WHERE id = ? OR public_id = ? LIMIT 1;';
         queryValues = [numericId, id];
       }
-      
+
       const [rows] = await connection.query(queryText, queryValues);
       if ((rows as RowDataPacket[]).length === 0) return null;
       return mapToAuctioneerProfileInfo(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
@@ -1113,7 +1114,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
   async getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
     const connection = await getPool().getConnection();
-    try { 
+    try {
       let [rows] = await connection.query('SELECT * FROM auctioneers WHERE public_id = ? LIMIT 1;', [slugOrPublicId]);
       if ((rows as RowDataPacket[]).length === 0) {
         [rows] = await connection.query('SELECT * FROM auctioneers WHERE slug = ? LIMIT 1;', [slugOrPublicId]);
@@ -1142,12 +1143,12 @@ export class MySqlAdapter implements IDatabaseAdapter {
       if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o leiloeiro." };
 
       fields.push(`updated_at = NOW()`);
-      
+
       const numericId = Number(id);
-      if (!isNaN(numericId)) { 
+      if (!isNaN(numericId)) {
           query += fields.join(', ') + ` WHERE id = ?`;
           values.push(numericId);
-      } else { 
+      } else {
           query += fields.join(', ') + ` WHERE public_id = ?`;
           values.push(id);
       }
@@ -1168,7 +1169,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Leiloeiro excluído (MySQL)!' };
     } catch (e: any) { console.error(`[MySqlAdapter - deleteAuctioneer(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
   }
-  
+
   // --- Sellers ---
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> {
     const connection = await getPool().getConnection();
@@ -1176,8 +1177,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
       const slug = slugify(data.name);
       const publicId = `SELL-${slugify(data.name.substring(0,5))}-${uuidv4().substring(0,8)}`;
       const query = `
-        INSERT INTO sellers 
-          (public_id, name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, user_id, 
+        INSERT INTO sellers
+          (public_id, name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, user_id,
            member_since, rating, active_lots_count, total_sales_value, auctions_facilitated_count)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, 0, 0, 0);
       `;
@@ -1282,14 +1283,14 @@ export class MySqlAdapter implements IDatabaseAdapter {
     try {
       const publicId = `LEI-${slugify(data.title.substring(0,10))}-${uuidv4().substring(0,8)}`;
       const query = `
-        INSERT INTO auctions 
+        INSERT INTO auctions
           (public_id, title, full_title, description, status, auction_type, category_id, auctioneer_id, seller_id, auction_date, end_date, auction_stages, city, state, image_url, data_ai_hint, documents_url, total_lots, visits, initial_offer, selling_branch, vehicle_location)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?);
       `;
       const values = [
         publicId, data.title, data.fullTitle || null, data.description || null, data.status, data.auctionType || null,
-        data.categoryId ? Number(data.categoryId) : null, 
-        data.auctioneerId ? Number(data.auctioneerId) : null, 
+        data.categoryId ? Number(data.categoryId) : null,
+        data.auctioneerId ? Number(data.auctioneerId) : null,
         data.sellerId ? Number(data.sellerId) : null,
         data.auctionDate, data.endDate || null, data.auctionStages ? JSON.stringify(data.auctionStages) : null,
         data.city || null, data.state || null, data.imageUrl || null, data.dataAiHint || null, data.documentsUrl || null,
@@ -1299,7 +1300,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Leilão criado (MySQL)!', auctionId: String((result as mysql.ResultSetHeader).insertId), auctionPublicId: publicId };
     } catch (e: any) { console.error(`[MySqlAdapter - createAuction] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
   }
-  
+
   async getAuctions(): Promise<Auction[]> {
     const connection = await getPool().getConnection();
     try {
@@ -1345,14 +1346,14 @@ export class MySqlAdapter implements IDatabaseAdapter {
         `;
         queryValues = [numericId, id]; // Passa ambos para a query OR
       }
-      
+
       const [rows] = await connection.query(queryText, queryValues);
       if ((rows as RowDataPacket[]).length === 0) return null;
       return mapToAuction(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
     } catch (e: any) { console.error(`[MySqlAdapter - getAuction(${id})] Error:`, e); return null; } finally { connection.release(); }
   }
 
-  async getAuctionsBySellerSlug(sellerPublicId: string): Promise<Auction[]> { 
+  async getAuctionsBySellerSlug(sellerPublicId: string): Promise<Auction[]> {
     const connection = await getPool().getConnection();
     try {
         const [sellerRows] = await connection.query('SELECT id, name FROM sellers WHERE public_id = ? LIMIT 1', [sellerPublicId]);
@@ -1388,7 +1389,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         }
       });
       if (data.auctionDate) { fields.push(`auction_date = ?`); values.push(data.auctionDate); }
-      if (data.hasOwnProperty('endDate')) { fields.push(`end_date = ?`); values.push(data.endDate); } 
+      if (data.hasOwnProperty('endDate')) { fields.push(`end_date = ?`); values.push(data.endDate); }
       if (data.auctionStages) { fields.push(`auction_stages = ?`); values.push(JSON.stringify(data.auctionStages)); }
 
 
@@ -1429,60 +1430,84 @@ export class MySqlAdapter implements IDatabaseAdapter {
       return { success: false, message: 'ID do leilão inválido para criar lote.' };
     }
     const connection = await getPool().getConnection();
+    const columnNames = [
+      'public_id', 'auction_id', 'title', '`number`', 'image_url', 'data_ai_hint', 'gallery_image_urls', 'media_item_ids', 'status',
+      'state_id', 'city_id', 'category_id', 'views', 'price', 'initial_price',
+      'lot_specific_auction_date', 'second_auction_date', 'second_initial_price', 'end_date',
+      'bids_count', 'is_favorite', 'is_featured', 'description', 'year', 'make', 'model', 'series',
+      'stock_number', 'selling_branch', 'vin', 'vin_status', 'loss_type', 'primary_damage', 'title_info',
+      'title_brand', 'start_code', 'has_key', 'odometer', 'airbags_status', 'body_style', 'engine_details',
+      'transmission_type', 'drive_line_type', 'fuel_type', 'cylinders', 'restraint_system',
+      'exterior_interior_color', 'options', 'manufactured_in', 'vehicle_class',
+      'vehicle_location_in_branch', 'lane_run_number', 'aisle_stall', 'actual_cash_value',
+      'estimated_repair_cost', 'seller_id_fk', 'auctioneer_id_fk', '`condition`'
+    ];
+    const placeholders = columnNames.map(() => '?').join(', ');
+    const query = `INSERT INTO lots (${columnNames.join(', ')}) VALUES (${placeholders});`;
+
     try {
       const publicId = `LOT-${slugify(data.title.substring(0,10))}-${uuidv4().substring(0,8)}`;
-      const query = `
-        INSERT INTO lots (
-          public_id, auction_id, title, \`number\`, image_url, data_ai_hint, gallery_image_urls, media_item_ids, status, 
-          state_id, city_id, category_id, views, price, initial_price, 
-          lot_specific_auction_date, second_auction_date, second_initial_price, end_date, 
-          bids_count, is_favorite, is_featured, description, year, make, model, series,
-          stock_number, selling_branch, vin, vin_status, loss_type, primary_damage, title_info,
-          title_brand, start_code, has_key, odometer, airbags_status, body_style, engine_details,
-          transmission_type, drive_line_type, fuel_type, cylinders, restraint_system,
-          exterior_interior_color, options, manufactured_in, vehicle_class,
-          vehicle_location_in_branch, lane_run_number, aisle_stall, actual_cash_value,
-          estimated_repair_cost, seller_id_fk, auctioneer_id_fk, \`condition\`
-        ) VALUES (
-          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-        );
-      `; 
       const values = [
-        publicId, numericAuctionId, data.title, data.number || null, data.imageUrl || null, data.dataAiHint || null,
-        JSON.stringify(data.galleryImageUrls || []), JSON.stringify(data.mediaItemIds || []), data.status,
+        publicId, numericAuctionId, data.title, data.number ?? null, data.imageUrl ?? null, data.dataAiHint ?? null,
+        JSON.stringify(data.galleryImageUrls ?? []), JSON.stringify(data.mediaItemIds ?? []), data.status,
         data.stateId ? Number(data.stateId) : null, data.cityId ? Number(data.cityId) : null, data.categoryId ? Number(data.categoryId) : null,
-        data.views || 0, data.price, data.initialPrice || null,
-        data.lotSpecificAuctionDate || null, data.secondAuctionDate || null, data.secondInitialPrice || null, data.endDate,
-        data.bidsCount || 0, data.isFavorite || false, data.isFeatured || false, data.description || null,
-        data.year || null, data.make || null, data.model || null, data.series || null, data.stockNumber || null,
-        data.sellingBranch || null, data.vin || null, data.vinStatus || null, data.lossType || null,
-        data.primaryDamage || null, data.titleInfo || null, data.titleBrand || null, data.startCode || null,
-        data.hasKey === undefined ? null : data.hasKey, data.odometer || null, data.airbagsStatus || null,
-        data.bodyStyle || null, data.engineDetails || null, data.transmissionType || null, data.driveLineType || null,
-        data.fuelType || null, data.cylinders || null, data.restraintSystem || null, data.exteriorInteriorColor || null,
-        data.options || null, data.manufacturedIn || null, data.vehicleClass || null,
-        data.vehicleLocationInBranch || null, data.laneRunNumber || null, data.aisleStall || null,
-        data.actualCashValue || null, data.estimatedRepairCost || null,
+        data.views ?? 0, data.price, data.initialPrice ?? null,
+        data.lotSpecificAuctionDate instanceof Date ? data.lotSpecificAuctionDate.toISOString().slice(0, 19).replace('T', ' ') : null,
+        data.secondAuctionDate instanceof Date ? data.secondAuctionDate.toISOString().slice(0, 19).replace('T', ' ') : null,
+        data.secondInitialPrice ?? null,
+        data.endDate instanceof Date ? data.endDate.toISOString().slice(0, 19).replace('T', ' ') : new Date().toISOString().slice(0, 19).replace('T', ' '),
+        data.bidsCount ?? 0, data.isFavorite ?? false, data.isFeatured ?? false, data.description ?? null,
+        data.year ?? null, data.make ?? null, data.model ?? null, data.series ?? null, data.stockNumber ?? null,
+        data.sellingBranch ?? null, data.vin ?? null, data.vinStatus ?? null, data.lossType ?? null,
+        data.primaryDamage ?? null, data.titleInfo ?? null, data.titleBrand ?? null, data.startCode ?? null,
+        data.hasKey === undefined ? null : data.hasKey, data.odometer ?? null, data.airbagsStatus ?? null,
+        data.bodyStyle ?? null, data.engineDetails ?? null, data.transmissionType ?? null, data.driveLineType ?? null,
+        data.fuelType ?? null, data.cylinders ?? null, data.restraintSystem ?? null,
+        data.exteriorInteriorColor ?? null, data.options ?? null, data.manufacturedIn ?? null, data.vehicleClass ?? null,
+        data.vehicleLocationInBranch ?? null, data.laneRunNumber ?? null, data.aisleStall ?? null,
+        data.actualCashValue ?? null, data.estimatedRepairCost ?? null,
         data.sellerId ? Number(data.sellerId) : null,
         data.auctioneerId ? Number(data.auctioneerId) : null,
-        data.condition || null
+        data.condition ?? null
       ];
+
+      console.log(`[MySqlAdapter - createLot] Columns length: ${columnNames.length}, Values length: ${values.length}`);
+      if (columnNames.length !== values.length) {
+        console.error(`[MySqlAdapter - createLot] Mismatch! Columns: ${columnNames.length}, Values: ${values.length}`);
+        console.error("Columns:", columnNames.join(', '));
+        console.error("Values:", JSON.stringify(values));
+        throw new Error(`Internal error: Column count (${columnNames.length}) does not match value count (${values.length}) for lots insert.`);
+      }
+
       const [result] = await connection.execute(query, values);
       return { success: true, message: 'Lote criado (MySQL)!', lotId: String((result as mysql.ResultSetHeader).insertId), lotPublicId: publicId };
-    } catch (e: any) { console.error(`[MySqlAdapter - createLot] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
+    } catch (e: any) {
+      console.error(`[MySqlAdapter - createLot] Error:`, e);
+      const errorDetails = {
+        message: e.message,
+        code: e.code,
+        errno: e.errno,
+        sqlState: e.sqlState,
+        sqlMessage: e.sqlMessage,
+        query: e.sql, // This should include the actual query sent to MySQL
+      };
+      console.error(`[MySqlAdapter - createLot] Error Details:`, JSON.stringify(errorDetails));
+      return { success: false, message: `[MySqlAdapter - createLot] Error: ${e.message}` };
+    } finally {
+      connection.release();
+    }
   }
-  
+
+
   async getLots(auctionIdParam?: string): Promise<Lot[]> {
     const connection = await getPool().getConnection();
     try {
       let queryText = `
-        SELECT 
-          l.*, 
-          a.title as auction_name, 
-          lc.name as category_name, 
-          s.uf as state_uf, 
+        SELECT
+          l.*,
+          a.title as auction_name,
+          lc.name as category_name,
+          s.uf as state_uf,
           ci.name as city_name,
           sel.name as lot_seller_name,
           act.name as lot_auctioneer_name
@@ -1569,15 +1594,18 @@ export class MySqlAdapter implements IDatabaseAdapter {
             const value = data[key];
             if (key === 'galleryImageUrls' || key === 'mediaItemIds') {
                 values.push(JSON.stringify(value || []));
-            } else {
+            } else if (key === 'isFavorite' || key === 'isFeatured' || key === 'hasKey') {
+                values.push(value ? 1 : 0);
+            }
+            else {
                 values.push(value === '' ? null : value);
             }
         }
       });
-      if (data.endDate) { fields.push(`end_date = ?`); values.push(data.endDate); }
-      if (data.hasOwnProperty('lotSpecificAuctionDate')) { fields.push(`lot_specific_auction_date = ?`); values.push(data.lotSpecificAuctionDate); }
-      if (data.hasOwnProperty('secondAuctionDate')) { fields.push(`second_auction_date = ?`); values.push(data.secondAuctionDate); }
-      
+      if (data.endDate) { fields.push(`end_date = ?`); values.push(data.endDate instanceof Date ? data.endDate.toISOString().slice(0, 19).replace('T', ' ') : data.endDate); }
+      if (data.hasOwnProperty('lotSpecificAuctionDate')) { fields.push(`lot_specific_auction_date = ?`); values.push(data.lotSpecificAuctionDate instanceof Date ? data.lotSpecificAuctionDate.toISOString().slice(0, 19).replace('T', ' ') : data.lotSpecificAuctionDate); }
+      if (data.hasOwnProperty('secondAuctionDate')) { fields.push(`second_auction_date = ?`); values.push(data.secondAuctionDate instanceof Date ? data.secondAuctionDate.toISOString().slice(0, 19).replace('T', ' ') : data.secondAuctionDate); }
+
       if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o lote." };
 
       fields.push(`updated_at = NOW()`);
@@ -1589,7 +1617,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         query += fields.join(', ') + ` WHERE public_id = ?`;
         values.push(id);
       }
-      
+
       await connection.execute(query, values);
       return { success: true, message: 'Lote atualizado (MySQL)!' };
     } catch (e: any) { console.error(`[MySqlAdapter - updateLot(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
@@ -1630,7 +1658,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
     const connection = await getPool().getConnection();
     try {
         await connection.beginTransaction();
-        
+
         let lotQueryText = 'SELECT id, price, bids_count FROM lots WHERE public_id = ? LIMIT 1 FOR UPDATE';
         let lotQueryValues: (string|number)[] = [lotId];
         const numericLotId = Number(lotId);
@@ -1642,11 +1670,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
         if ((lotRows as RowDataPacket[]).length === 0) { await connection.rollback(); return { success: false, message: "Lote não encontrado."}; }
         const lotDataDB = mapMySqlRowToCamelCase((lotRows as RowDataPacket[])[0]);
-        const actualNumericLotId = lotDataDB.id; 
+        const actualNumericLotId = lotDataDB.id;
 
         if (bidAmount <= Number(lotDataDB.price)) { await connection.rollback(); return { success: false, message: "Lance deve ser maior que o atual."}; }
-        
-        const numericAuctionId = Number(auctionId); 
+
+        const numericAuctionId = Number(auctionId);
         if (isNaN(numericAuctionId)) {
             await connection.rollback();
             console.error(`[MySqlAdapter - placeBidOnLot] auctionId inválido: ${auctionId}`);
@@ -1656,26 +1684,26 @@ export class MySqlAdapter implements IDatabaseAdapter {
         const insertBidQuery = 'INSERT INTO bids (lot_id, auction_id, bidder_id, bidder_display_name, amount, `timestamp`) VALUES (?, ?, ?, ?, ?, NOW())';
         const [insertResult] = await connection.execute(insertBidQuery, [actualNumericLotId, numericAuctionId, userId, userDisplayName, bidAmount]);
         const newBidId = (insertResult as mysql.ResultSetHeader).insertId;
-        
+
         const updateLotQuery = 'UPDATE lots SET price = ?, bids_count = bids_count + 1, updated_at = NOW() WHERE id = ?;';
         await connection.execute(updateLotQuery, [bidAmount, actualNumericLotId]);
-        
+
         await connection.commit();
         const [newBidRows] = await connection.query('SELECT * FROM bids WHERE id = ?', [newBidId]);
 
-        return { 
-            success: true, 
-            message: "Lance registrado!", 
-            updatedLot: { price: bidAmount, bidsCount: Number(lotDataDB.bidsCount || 0) + 1 }, 
+        return {
+            success: true,
+            message: "Lance registrado!",
+            updatedLot: { price: bidAmount, bidsCount: Number(lotDataDB.bidsCount || 0) + 1 },
             newBid: mapToBidInfo(mapMySqlRowToCamelCase((newBidRows as RowDataPacket[])[0]))
         };
-    } catch (e: any) { 
+    } catch (e: any) {
         await connection.rollback();
-        console.error(`[MySqlAdapter - placeBidOnLot(${lotId})] Error:`, e); 
-        return { success: false, message: e.message }; 
+        console.error(`[MySqlAdapter - placeBidOnLot(${lotId})] Error:`, e);
+        return { success: false, message: e.message };
     } finally { connection.release(); }
   }
-  
+
   // --- Roles ---
   async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> {
     const connection = await getPool().getConnection();
@@ -1683,7 +1711,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         const nameNormalized = data.name.trim().toUpperCase();
         const [existingRows] = await connection.query('SELECT id FROM roles WHERE name_normalized = ? LIMIT 1', [nameNormalized]);
         if ((existingRows as RowDataPacket[]).length > 0) return { success: false, message: `Perfil "${data.name}" já existe.`};
-        
+
         const validPermissions = (data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
         const query = `
             INSERT INTO roles (name, name_normalized, description, permissions)
@@ -1694,7 +1722,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         return { success: true, message: 'Perfil criado!', roleId: String((result as mysql.ResultSetHeader).insertId) };
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
-  
+
   async getRoles(): Promise<Role[]> {
     const connection = await getPool().getConnection();
     try {
@@ -1742,25 +1770,26 @@ export class MySqlAdapter implements IDatabaseAdapter {
         const [currentRoleRows] = await connection.query('SELECT name_normalized FROM roles WHERE id = ?', [numericId]);
         if ((currentRoleRows as RowDataPacket[]).length === 0) return { success: false, message: "Perfil não encontrado."};
         const currentNormalizedName = (currentRoleRows as RowDataPacket[])[0].name_normalized;
-        
+
         if (data.name && currentNormalizedName !== 'ADMINISTRATOR' && currentNormalizedName !== 'USER') {
             fields.push(`name = ?`); values.push(data.name.trim());
             fields.push(`name_normalized = ?`); values.push(data.name.trim().toUpperCase());
-        } else if (data.name) { 
-             if (data.description !== undefined) { 
+        } else if (data.name) {
+             if (data.description !== undefined) {
                 fields.push(`description = ?`); values.push(data.description || null);
             }
         }
         if (data.description !== undefined && (!data.name || (currentNormalizedName === 'ADMINISTRATOR' || currentNormalizedName === 'USER'))) {
              fields.push(`description = ?`); values.push(data.description || null);
         }
+
         if (data.permissions) {
             const validPermissions = (data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
             fields.push(`permissions = ?`); values.push(JSON.stringify(validPermissions));
         }
-        
+
         if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o perfil."};
-        
+
         fields.push(`updated_at = NOW()`);
         query += fields.join(', ') + ` WHERE id = ?`;
         values.push(numericId);
@@ -1778,7 +1807,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
     const connection = await getPool().getConnection();
     try {
         const [roleRows] = await connection.query('SELECT name_normalized FROM roles WHERE id = ?', [numericId]);
-        if ((roleRows as RowDataPacket[]).length > 0 && 
+        if ((roleRows as RowDataPacket[]).length > 0 &&
             ['ADMINISTRATOR', 'USER'].includes((roleRows as RowDataPacket[])[0].name_normalized)) {
             return { success: false, message: 'Perfis de sistema não podem ser excluídos.'};
         }
@@ -1796,7 +1825,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         for (const roleData of defaultRolesData) {
             const normalizedName = roleData.name.trim().toUpperCase();
             console.log(`[MySqlAdapter] Processando perfil padrão: ${roleData.name} (Normalizado: ${normalizedName})`);
-            
+
             const [existingRows] = await connection.query('SELECT id, permissions, description FROM roles WHERE name_normalized = ? LIMIT 1', [normalizedName]);
             const validPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
 
@@ -1829,15 +1858,15 @@ export class MySqlAdapter implements IDatabaseAdapter {
         await connection.commit();
         console.log(`[MySqlAdapter - ensureDefaultRolesExist] Verificação/criação de perfis padrão concluída. ${rolesProcessedCount} perfis processados.`);
         return { success: true, message: `Perfis padrão verificados/criados (MySQL). ${rolesProcessedCount} processados.`, rolesProcessed: rolesProcessedCount};
-    } catch (e: any) { 
-        await connection.rollback(); 
+    } catch (e: any) {
+        await connection.rollback();
         console.error("[MySqlAdapter - ensureDefaultRolesExist] Erro:", e);
-        return { success: false, message: e.message, rolesProcessed: 0 }; 
-    } finally { 
-        connection.release(); 
+        return { success: false, message: e.message, rolesProcessed: 0 };
+    } finally {
+        connection.release();
     }
   }
-  
+
   // --- Users ---
   async getUserProfileData(userId: string): Promise<UserProfileData | null> {
     const connection = await getPool().getConnection();
@@ -1858,11 +1887,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
         const fields: string[] = [];
         const values: any[] = [];
         (Object.keys(data) as Array<keyof EditableUserProfileData>).forEach(key => {
-            if (data[key] !== undefined && data[key] !== null) { 
+            if (data[key] !== undefined && data[key] !== null) {
                 const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
                 fields.push(`${sqlColumn} = ?`);
                 values.push(data[key]);
-            } else if (data[key] === null) { 
+            } else if (data[key] === null) {
                  const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
                  fields.push(`${sqlColumn} = NULL`);
             }
@@ -1874,18 +1903,18 @@ export class MySqlAdapter implements IDatabaseAdapter {
         console.log('[MySqlAdapter - updateUserProfile] Executing query:', queryText, 'with values:', values);
         await connection.execute(queryText, values);
         return { success: true, message: 'Perfil atualizado (MySQL)!'};
-    } catch (e: any) { 
+    } catch (e: any) {
         console.error('[MySqlAdapter - updateUserProfile] Error:', e);
-        return { success: false, message: e.message }; 
-    } finally { 
-        connection.release(); 
+        return { success: false, message: e.message };
+    } finally {
+        connection.release();
     }
   }
 
   async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
     const connection = await getPool().getConnection();
     try {
-        await this.ensureDefaultRolesExist(); 
+        await this.ensureDefaultRolesExist();
         let targetRole: Role | null = null;
         if (roleIdToAssign) {
             console.log(`[MySQLAdapter ensureUserRole] Tentando buscar perfil por ID fornecido: ${roleIdToAssign}`);
@@ -1908,13 +1937,13 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
         if ((userRows as RowDataPacket[]).length > 0) {
             const userDataFromDB = mapToUserProfileData(mapMySqlRowToCamelCase((userRows as RowDataPacket[])[0]));
-            const updatePayload: any = { updatedAt: new Date() }; 
+            const updatePayload: any = { updatedAt: new Date() };
             let needsUpdate = false;
             if (String(userDataFromDB.roleId) !== String(targetRole.id)) { updatePayload.roleId = Number(targetRole.id); needsUpdate = true; console.log(`[MySQLAdapter ensureUserRole] Atualizando roleId para ${targetRole.id}`); }
             if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; console.log(`[MySQLAdapter ensureUserRole] Atualizando roleName para ${targetRole.name}`);}
-            if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = JSON.stringify(targetRole.permissions || []); needsUpdate = true; console.log(`[MySQLAdapter ensureUserRole] Atualizando permissions.`);} 
+            if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = JSON.stringify(targetRole.permissions || []); needsUpdate = true; console.log(`[MySQLAdapter ensureUserRole] Atualizando permissions.`);}
             if (additionalProfileData?.password) {
-                updatePayload.passwordText = additionalProfileData.password; 
+                updatePayload.passwordText = additionalProfileData.password;
                 needsUpdate = true;
                  console.log(`[MySQLAdapter ensureUserRole] Atualizando passwordText.`);
             }
@@ -1964,9 +1993,9 @@ export class MySqlAdapter implements IDatabaseAdapter {
     const connection = await getPool().getConnection();
     try {
       const [rows] = await connection.query(`
-        SELECT u.*, r.name as role_name, r.permissions as role_permissions 
-        FROM users u 
-        LEFT JOIN roles r ON u.role_id = r.id 
+        SELECT u.*, r.name as role_name, r.permissions as role_permissions
+        FROM users u
+        LEFT JOIN roles r ON u.role_id = r.id
         ORDER BY u.full_name ASC;
       `);
       return (rows as RowDataPacket[]).map(row => {
@@ -2007,7 +2036,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Perfil de usuário excluído (MySQL)!' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
-  
+
   async getUserByEmail(email: string): Promise<UserProfileData | null> {
     const connection = await getPool().getConnection();
     try {
@@ -2017,7 +2046,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       const userRow = mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]);
       let role: Role | null = null;
       if (userRow.roleId) role = await this.getRole(userRow.roleId);
-      
+
       const profile = mapToUserProfileData(userRow, role);
       if ((!profile.permissions || profile.permissions.length === 0) && role?.permissions?.length) {
          profile.permissions = role.permissions;
@@ -2041,11 +2070,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
           dimensions_width, dimensions_height, url_original, url_thumbnail, url_medium, url_large,
           linked_lot_ids, data_ai_hint
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-      `; 
+      `;
       const values = [
         data.fileName, uploadedBy || null, data.title || null, data.altText || null, data.caption || null,
         data.description || null, data.mimeType, data.sizeBytes, data.dimensions?.width || null,
-        data.dimensions?.height || null, filePublicUrl, filePublicUrl, filePublicUrl, filePublicUrl, 
+        data.dimensions?.height || null, filePublicUrl, filePublicUrl, filePublicUrl, filePublicUrl,
         JSON.stringify(data.linkedLotIds || []), data.dataAiHint || null
       ];
       const [result] = await connection.execute(query, values);
@@ -2060,7 +2089,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
     try {
       const [rows] = await connection.query('SELECT * FROM media_items ORDER BY uploaded_at DESC;');
       return (rows as RowDataPacket[]).map(row => mapToMediaItem(mapMySqlRowToCamelCase(row)));
-    } catch (e: any) { console.error(`[MySqlAdapter - getMediaItems] Error:`, e); return []; } finally { connection.release(); }
+    } catch (e: any) {
+        console.warn("[MySqlAdapter - getMediaItems] Error (falling back to empty array):", e);
+        return [];
+    } finally { connection.release(); }
   }
 
   async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> {
@@ -2110,25 +2142,27 @@ export class MySqlAdapter implements IDatabaseAdapter {
       for (const mediaId of mediaItemIds) {
         const numericMediaId = Number(mediaId);
         if (isNaN(numericMediaId)) throw new Error(`ID de mídia inválido: ${mediaId}`);
+        // Adiciona o lotId ao array JSON linked_lot_ids do item de mídia, se ainda não estiver lá
         await connection.execute(
-          `UPDATE media_items SET 
+          `UPDATE media_items SET
              linked_lot_ids = JSON_MERGE_PRESERVE(COALESCE(linked_lot_ids, JSON_ARRAY()), JSON_ARRAY(?))
            WHERE id = ? AND NOT JSON_CONTAINS(COALESCE(linked_lot_ids, JSON_ARRAY()), CAST(? AS JSON), '$');`,
           [String(numericLotId), numericMediaId, String(numericLotId)]
         );
       }
+      // Adiciona os mediaItemIds ao array JSON media_item_ids do lote
       await connection.execute(
-        `UPDATE lots SET 
+        `UPDATE lots SET
             media_item_ids = (
-                SELECT JSON_ARRAYAGG(DISTINCT elem) 
+                SELECT JSON_ARRAYAGG(DISTINCT elem)
                 FROM JSON_TABLE(
                     JSON_MERGE_PRESERVE(COALESCE(media_item_ids, JSON_ARRAY()), ?),
                     '$[*]' COLUMNS (elem VARCHAR(255) PATH '$')
                 ) AS jt
-            ), 
-            updated_at = NOW() 
+            ),
+            updated_at = NOW()
          WHERE id = ?`,
-        [JSON.stringify(mediaItemIds), numericLotId]
+        [JSON.stringify(mediaItemIds.map(String)), numericLotId]
       );
       await connection.commit();
       return { success: true, message: 'Mídias vinculadas (MySQL).' };
@@ -2145,10 +2179,12 @@ export class MySqlAdapter implements IDatabaseAdapter {
     const connection = await getPool().getConnection();
     try {
       await connection.beginTransaction();
+      // Remove o lotId do array linked_lot_ids do item de mídia
       await connection.execute(
         "UPDATE media_items SET linked_lot_ids = JSON_REMOVE(COALESCE(linked_lot_ids, JSON_ARRAY()), JSON_UNQUOTE(JSON_SEARCH(COALESCE(linked_lot_ids, JSON_ARRAY()), 'one', ?))) WHERE id = ?",
         [String(numericLotId), numericMediaItemId]
       );
+      // Remove o mediaItemId do array media_item_ids do lote
       await connection.execute(
         "UPDATE lots SET media_item_ids = JSON_REMOVE(COALESCE(media_item_ids, JSON_ARRAY()), JSON_UNQUOTE(JSON_SEARCH(COALESCE(media_item_ids, JSON_ARRAY()), 'one', ?))), updated_at = NOW() WHERE id = ?",
         [String(numericMediaItemId), numericLotId]
@@ -2157,7 +2193,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Mídia desvinculada (MySQL).' };
     } catch (e: any) { await connection.rollback(); return { success: false, message: e.message }; } finally { connection.release(); }
   }
-  
+
   // --- Platform Settings ---
   async getPlatformSettings(): Promise<PlatformSettings> {
     const connection = await getPool().getConnection();
@@ -2165,22 +2201,22 @@ export class MySqlAdapter implements IDatabaseAdapter {
         const [rows] = await connection.query(`SELECT gallery_image_base_path, themes, platform_public_id_masks, updated_at FROM platform_settings WHERE id = 'global';`);
         if ((rows as RowDataPacket[]).length > 0) {
             const settingsRow = mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]);
-            return { 
-                id: 'global', 
+            return {
+                id: 'global',
                 galleryImageBasePath: settingsRow.galleryImageBasePath,
                 themes: typeof settingsRow.themes === 'string' ? JSON.parse(settingsRow.themes) : (settingsRow.themes || []),
                 platformPublicIdMasks: settingsRow.platformPublicIdMasks ? JSON.parse(settingsRow.platformPublicIdMasks) : undefined,
-                updatedAt: new Date(settingsRow.updatedAt) 
+                updatedAt: new Date(settingsRow.updatedAt)
             };
         }
-        const defaultSettings: PlatformSettings = { 
-          id: 'global', 
-          galleryImageBasePath: '/media/gallery/', 
-          themes: [], 
+        const defaultSettings: PlatformSettings = {
+          id: 'global',
+          galleryImageBasePath: '/media/gallery/',
+          themes: [],
           platformPublicIdMasks: {},
-          updatedAt: new Date() 
+          updatedAt: new Date()
         };
-        await connection.execute(`INSERT INTO platform_settings (id, gallery_image_base_path, themes, platform_public_id_masks) VALUES ('global', ?, JSON_ARRAY(), JSON_OBJECT()) ON DUPLICATE KEY UPDATE id=id;`, 
+        await connection.execute(`INSERT INTO platform_settings (id, gallery_image_base_path, themes, platform_public_id_masks) VALUES ('global', ?, JSON_ARRAY(), JSON_OBJECT()) ON DUPLICATE KEY UPDATE id=id;`,
           [defaultSettings.galleryImageBasePath]
         );
         return defaultSettings;
@@ -2197,16 +2233,16 @@ export class MySqlAdapter implements IDatabaseAdapter {
     }
     try {
         const query = `
-            INSERT INTO platform_settings (id, gallery_image_base_path, themes, platform_public_id_masks, updated_at) 
-            VALUES ('global', ?, ?, ?, NOW()) 
-            ON DUPLICATE KEY UPDATE 
-                gallery_image_base_path = VALUES(gallery_image_base_path), 
+            INSERT INTO platform_settings (id, gallery_image_base_path, themes, platform_public_id_masks, updated_at)
+            VALUES ('global', ?, ?, ?, NOW())
+            ON DUPLICATE KEY UPDATE
+                gallery_image_base_path = VALUES(gallery_image_base_path),
                 themes = VALUES(themes),
                 platform_public_id_masks = VALUES(platform_public_id_masks),
                 updated_at = NOW();
         `;
         await connection.execute(query, [
-            data.galleryImageBasePath, 
+            data.galleryImageBasePath,
             JSON.stringify(data.themes || []),
             JSON.stringify(data.platformPublicIdMasks || {})
         ]);
@@ -2217,3 +2253,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
 
 
+
+
+    
