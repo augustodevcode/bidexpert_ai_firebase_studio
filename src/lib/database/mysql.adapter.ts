@@ -779,10 +779,15 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
   
   async getLotCategory(id: string): Promise<LotCategory | null> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - getLotCategory] Invalid non-numeric ID received: ${id}`);
+      return null;
+    }
     const connection = await getPool().getConnection();
     try {
         const queryText = 'SELECT id, name, slug, description, item_count, created_at, updated_at FROM lot_categories WHERE id = ?;';
-        const [rows] = await connection.query(queryText, [Number(id)]);
+        const [rows] = await connection.query(queryText, [numericId]);
         if ((rows as RowDataPacket[]).length > 0) {
             return mapToLotCategory(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
         }
@@ -796,6 +801,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async updateLotCategory(id: string, data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; }> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - updateLotCategory] Invalid non-numeric ID received: ${id}`);
+      return { success: false, message: 'ID da categoria inválido: não é um número.' };
+    }
      if (!data.name || data.name.trim() === '') {
       return { success: false, message: 'O nome da categoria é obrigatório.' };
     }
@@ -807,7 +817,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         SET name = ?, slug = ?, description = ?, updated_at = NOW()
         WHERE id = ?;
       `;
-      const values = [data.name.trim(), slug, data.description?.trim() || null, Number(id)];
+      const values = [data.name.trim(), slug, data.description?.trim() || null, numericId];
       await connection.execute(queryText, values);
       return { success: true, message: 'Categoria atualizada com sucesso (MySQL)!' };
     } catch (error: any) {
@@ -819,9 +829,14 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async deleteLotCategory(id: string): Promise<{ success: boolean; message: string; }> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - deleteLotCategory] Invalid non-numeric ID received: ${id}`);
+      return { success: false, message: 'ID da categoria inválido: não é um número.' };
+    }
     const connection = await getPool().getConnection();
     try {
-      await connection.query('DELETE FROM lot_categories WHERE id = ?;', [Number(id)]);
+      await connection.query('DELETE FROM lot_categories WHERE id = ?;', [numericId]);
       return { success: true, message: 'Categoria excluída com sucesso (MySQL)!' };
     } catch (error: any) {
       console.error("[MySqlAdapter - deleteLotCategory] Error:", error);
@@ -849,14 +864,24 @@ export class MySqlAdapter implements IDatabaseAdapter {
     } catch (e: any) { console.error(`[MySqlAdapter - getStates] Error:`, e); return []; } finally { connection.release(); }
   }
   async getState(id: string): Promise<StateInfo | null> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - getState] Invalid non-numeric ID received: ${id}`);
+      return null;
+    }
     const connection = await getPool().getConnection();
     try {
-      const [rows] = await connection.query('SELECT id, name, uf, slug, city_count, created_at, updated_at FROM states WHERE id = ?', [Number(id)]);
+      const [rows] = await connection.query('SELECT id, name, uf, slug, city_count, created_at, updated_at FROM states WHERE id = ?', [numericId]);
       if ((rows as RowDataPacket[]).length === 0) return null;
       return mapToStateInfo(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
     } catch (e: any) { console.error(`[MySqlAdapter - getState(${id})] Error:`, e); return null; } finally { connection.release(); }
   }
   async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - updateState] Invalid non-numeric ID received: ${id}`);
+      return { success: false, message: 'ID do estado inválido: não é um número.' };
+    }
     const connection = await getPool().getConnection();
     try {
       const fields: string[] = [];
@@ -868,52 +893,77 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
       fields.push(`updated_at = NOW()`);
       query += fields.join(', ') + ` WHERE id = ?`;
-      values.push(Number(id));
+      values.push(numericId);
       await connection.execute(query, values);
       return { success: true, message: 'Estado atualizado (MySQL)!' };
     } catch (e: any) { console.error(`[MySqlAdapter - updateState(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
   }
   async deleteState(id: string): Promise<{ success: boolean; message: string; }> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - deleteState] Invalid non-numeric ID received: ${id}`);
+      return { success: false, message: 'ID do estado inválido: não é um número.' };
+    }
     const connection = await getPool().getConnection();
     try {
-      await connection.execute('DELETE FROM states WHERE id = ?', [Number(id)]);
+      await connection.execute('DELETE FROM states WHERE id = ?', [numericId]);
       return { success: true, message: 'Estado excluído (MySQL)!' };
     } catch (e: any) { console.error(`[MySqlAdapter - deleteState(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
   }
 
   // --- Cities ---
   async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> {
+    const numericStateId = Number(data.stateId);
+    if (isNaN(numericStateId)) {
+      console.error(`[MySqlAdapter - createCity] Invalid non-numeric stateId received: ${data.stateId}`);
+      return { success: false, message: 'ID do estado inválido para criar cidade.' };
+    }
     const connection = await getPool().getConnection();
     try {
-        const [parentStateRows] = await connection.query('SELECT uf FROM states WHERE id = ?', [Number(data.stateId)]);
+        const [parentStateRows] = await connection.query('SELECT uf FROM states WHERE id = ?', [numericStateId]);
         if ((parentStateRows as RowDataPacket[]).length === 0) return { success: false, message: 'Estado pai não encontrado.' };
         const stateUf = (parentStateRows as RowDataPacket[])[0].uf;
         const slug = slugify(data.name);
         const query = `INSERT INTO cities (name, slug, state_id, state_uf, ibge_code, lot_count) VALUES (?, ?, ?, ?, ?, 0)`;
-        const [result] = await connection.execute(query, [data.name, slug, Number(data.stateId), stateUf, data.ibgeCode || null]);
+        const [result] = await connection.execute(query, [data.name, slug, numericStateId, stateUf, data.ibgeCode || null]);
         return { success: true, message: 'Cidade criada (MySQL)!', cityId: String((result as mysql.ResultSetHeader).insertId) };
     } catch (e: any) { console.error(`[MySqlAdapter - createCity] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
   }
   async getCities(stateIdFilter?: string): Promise<CityInfo[]> {
+    const numericStateIdFilter = stateIdFilter ? Number(stateIdFilter) : undefined;
+    if (stateIdFilter && isNaN(numericStateIdFilter as number)) {
+      console.error(`[MySqlAdapter - getCities] Invalid non-numeric stateIdFilter received: ${stateIdFilter}`);
+      return [];
+    }
     const connection = await getPool().getConnection();
     try {
         let queryText = 'SELECT id, name, slug, state_id, state_uf, ibge_code, lot_count, created_at, updated_at FROM cities';
         const values = [];
-        if (stateIdFilter) { queryText += ' WHERE state_id = ?'; values.push(Number(stateIdFilter)); }
+        if (numericStateIdFilter) { queryText += ' WHERE state_id = ?'; values.push(numericStateIdFilter); }
         queryText += ' ORDER BY name ASC';
         const [rows] = await connection.query(queryText, values);
         return (rows as RowDataPacket[]).map(row => mapToCityInfo(mapMySqlRowToCamelCase(row)));
     } catch (e: any) { console.error(`[MySqlAdapter - getCities] Error:`, e); return []; } finally { connection.release(); }
   }
   async getCity(id: string): Promise<CityInfo | null> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - getCity] Invalid non-numeric ID received: ${id}`);
+      return null;
+    }
     const connection = await getPool().getConnection();
     try {
-      const [rows] = await connection.query('SELECT id, name, slug, state_id, state_uf, ibge_code, lot_count, created_at, updated_at FROM cities WHERE id = ?', [Number(id)]);
+      const [rows] = await connection.query('SELECT id, name, slug, state_id, state_uf, ibge_code, lot_count, created_at, updated_at FROM cities WHERE id = ?', [numericId]);
       if ((rows as RowDataPacket[]).length === 0) return null;
       return mapToCityInfo(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
     } catch (e: any) { console.error(`[MySqlAdapter - getCity(${id})] Error:`, e); return null; } finally { connection.release(); }
   }
   async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - updateCity] Invalid non-numeric ID received: ${id}`);
+      return { success: false, message: 'ID da cidade inválido: não é um número.' };
+    }
      const connection = await getPool().getConnection();
     try {
         const fields: string[] = [];
@@ -921,9 +971,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
         let query = 'UPDATE cities SET ';
         if (data.name) { fields.push(`name = ?`); values.push(data.name); fields.push(`slug = ?`); values.push(slugify(data.name)); }
         if (data.stateId) {
-            const [parentStateRows] = await connection.query('SELECT uf FROM states WHERE id = ?', [Number(data.stateId)]);
+            const numericStateId = Number(data.stateId);
+            if (isNaN(numericStateId)) return { success: false, message: 'ID do estado inválido para atualizar cidade.'};
+            const [parentStateRows] = await connection.query('SELECT uf FROM states WHERE id = ?', [numericStateId]);
             if ((parentStateRows as RowDataPacket[]).length === 0) return { success: false, message: 'Estado pai não encontrado.' };
-            fields.push(`state_id = ?`); values.push(Number(data.stateId));
+            fields.push(`state_id = ?`); values.push(numericStateId);
             fields.push(`state_uf = ?`); values.push((parentStateRows as RowDataPacket[])[0].uf);
         }
         if (data.ibgeCode !== undefined) { fields.push(`ibge_code = ?`); values.push(data.ibgeCode || null); }
@@ -932,16 +984,21 @@ export class MySqlAdapter implements IDatabaseAdapter {
         
         fields.push(`updated_at = NOW()`);
         query += fields.join(', ') + ` WHERE id = ?`;
-        values.push(Number(id));
+        values.push(numericId);
         
         await connection.execute(query, values);
         return { success: true, message: 'Cidade atualizada (MySQL)!' };
     } catch (e: any) { console.error(`[MySqlAdapter - updateCity(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
   }
   async deleteCity(id: string): Promise<{ success: boolean; message: string; }> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - deleteCity] Invalid non-numeric ID received: ${id}`);
+      return { success: false, message: 'ID da cidade inválido: não é um número.' };
+    }
     const connection = await getPool().getConnection();
     try {
-      await connection.execute('DELETE FROM cities WHERE id = ?', [Number(id)]);
+      await connection.execute('DELETE FROM cities WHERE id = ?', [numericId]);
       return { success: true, message: 'Cidade excluída (MySQL)!' };
     } catch (e: any) { console.error(`[MySqlAdapter - deleteCity(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
   }
@@ -975,9 +1032,14 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - getAuctioneer] Invalid non-numeric ID received: ${id}`);
+      return null;
+    }
     const connection = await getPool().getConnection();
     try {
-      const [rows] = await connection.query('SELECT * FROM auctioneers WHERE id = ?;', [Number(id)]);
+      const [rows] = await connection.query('SELECT * FROM auctioneers WHERE id = ?;', [numericId]);
       if ((rows as RowDataPacket[]).length === 0) return null;
       return mapToAuctioneerProfileInfo(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
     } catch (e: any) { console.error(`[MySqlAdapter - getAuctioneer(${id})] Error:`, e); return null; } finally { connection.release(); }
@@ -993,6 +1055,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - updateAuctioneer] Invalid non-numeric ID received: ${id}`);
+      return { success: false, message: 'ID do leiloeiro inválido: não é um número.' };
+    }
     const connection = await getPool().getConnection();
     try {
       const fields: string[] = [];
@@ -1012,7 +1079,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
       fields.push(`updated_at = NOW()`);
       query += fields.join(', ') + ` WHERE id = ?`;
-      values.push(Number(id));
+      values.push(numericId);
 
       await connection.execute(query, values);
       return { success: true, message: 'Leiloeiro atualizado (MySQL)!' };
@@ -1020,9 +1087,14 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - deleteAuctioneer] Invalid non-numeric ID received: ${id}`);
+      return { success: false, message: 'ID do leiloeiro inválido: não é um número.' };
+    }
     const connection = await getPool().getConnection();
     try {
-      await connection.execute('DELETE FROM auctioneers WHERE id = ?;', [Number(id)]);
+      await connection.execute('DELETE FROM auctioneers WHERE id = ?;', [numericId]);
       return { success: true, message: 'Leiloeiro excluído (MySQL)!' };
     } catch (e: any) { console.error(`[MySqlAdapter - deleteAuctioneer(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
   }
@@ -1037,7 +1109,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
           (name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, user_id, 
            member_since, rating, active_lots_count, total_sales_value, auctions_facilitated_count)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, 0, 0, 0);
-      `; // created_at e updated_at são DEFAULT
+      `;
       const values = [
         data.name, slug, data.contactName || null, data.email || null, data.phone || null,
         data.address || null, data.city || null, data.state || null, data.zipCode || null, data.website || null,
@@ -1057,9 +1129,14 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async getSeller(id: string): Promise<SellerProfileInfo | null> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - getSeller] Invalid non-numeric ID received: ${id}`);
+      return null;
+    }
     const connection = await getPool().getConnection();
     try {
-      const [rows] = await connection.query('SELECT * FROM sellers WHERE id = ?;', [Number(id)]);
+      const [rows] = await connection.query('SELECT * FROM sellers WHERE id = ?;', [numericId]);
       if ((rows as RowDataPacket[]).length === 0) return null;
       return mapToSellerProfileInfo(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
     } catch (e: any) { console.error(`[MySqlAdapter - getSeller(${id})] Error:`, e); return null; } finally { connection.release(); }
@@ -1075,6 +1152,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - updateSeller] Invalid non-numeric ID received: ${id}`);
+      return { success: false, message: 'ID do comitente inválido: não é um número.' };
+    }
     const connection = await getPool().getConnection();
     try {
       const fields: string[] = [];
@@ -1094,7 +1176,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
       fields.push(`updated_at = NOW()`);
       query += fields.join(', ') + ` WHERE id = ?`;
-      values.push(Number(id));
+      values.push(numericId);
 
       await connection.execute(query, values);
       return { success: true, message: 'Comitente atualizado (MySQL)!' };
@@ -1102,9 +1184,14 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - deleteSeller] Invalid non-numeric ID received: ${id}`);
+      return { success: false, message: 'ID do comitente inválido: não é um número.' };
+    }
     const connection = await getPool().getConnection();
     try {
-      await connection.execute('DELETE FROM sellers WHERE id = ?;', [Number(id)]);
+      await connection.execute('DELETE FROM sellers WHERE id = ?;', [numericId]);
       return { success: true, message: 'Comitente excluído (MySQL)!' };
     } catch (e: any) { console.error(`[MySqlAdapter - deleteSeller(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
   }
@@ -1118,7 +1205,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         INSERT INTO auctions 
           (title, full_title, description, status, auction_type, category_id, auctioneer_id, seller_id, auction_date, end_date, auction_stages, city, state, image_url, data_ai_hint, documents_url, total_lots, visits, initial_offer, selling_branch, vehicle_location)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?);
-      `; // created_at e updated_at são DEFAULT
+      `;
       const values = [
         data.title, data.fullTitle || null, data.description || null, data.status, data.auctionType || null,
         data.categoryId ? Number(data.categoryId) : null, 
@@ -1150,6 +1237,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async getAuction(id: string): Promise<Auction | null> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - getAuction] Invalid non-numeric ID received: ${id}`);
+      return null;
+    }
     const connection = await getPool().getConnection();
     try {
       const query = `
@@ -1160,7 +1252,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         LEFT JOIN sellers s ON a.seller_id = s.id
         WHERE a.id = ?;
       `;
-      const [rows] = await connection.query(query, [Number(id)]);
+      const [rows] = await connection.query(query, [numericId]);
       if ((rows as RowDataPacket[]).length === 0) return null;
       return mapToAuction(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
     } catch (e: any) { console.error(`[MySqlAdapter - getAuction(${id})] Error:`, e); return null; } finally { connection.release(); }
@@ -1188,6 +1280,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async updateAuction(id: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - updateAuction] Invalid non-numeric ID received: ${id}`);
+      return { success: false, message: 'ID do leilão inválido: não é um número.' };
+    }
     const connection = await getPool().getConnection();
     try {
       const fields: string[] = [];
@@ -1210,7 +1307,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
       fields.push(`updated_at = NOW()`);
       query += fields.join(', ') + ` WHERE id = ?`;
-      values.push(Number(id));
+      values.push(numericId);
 
       await connection.execute(query, values);
       return { success: true, message: 'Leilão atualizado (MySQL)!' };
@@ -1218,15 +1315,25 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async deleteAuction(id: string): Promise<{ success: boolean; message: string; }> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - deleteAuction] Invalid non-numeric ID received: ${id}`);
+      return { success: false, message: 'ID do leilão inválido: não é um número.' };
+    }
     const connection = await getPool().getConnection();
     try {
-      await connection.execute('DELETE FROM auctions WHERE id = ?;', [Number(id)]);
+      await connection.execute('DELETE FROM auctions WHERE id = ?;', [numericId]);
       return { success: true, message: 'Leilão excluído (MySQL)!' };
     } catch (e: any) { console.error(`[MySqlAdapter - deleteAuction(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
   }
 
   // --- Lots ---
   async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; }> {
+    const numericAuctionId = Number(data.auctionId);
+    if (isNaN(numericAuctionId)) {
+      console.error(`[MySqlAdapter - createLot] Invalid non-numeric auctionId received: ${data.auctionId}`);
+      return { success: false, message: 'ID do leilão inválido para criar lote.' };
+    }
     const connection = await getPool().getConnection();
     try {
       const query = `
@@ -1246,9 +1353,9 @@ export class MySqlAdapter implements IDatabaseAdapter {
           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         );
-      `; // created_at e updated_at são DEFAULT
+      `; 
       const values = [
-        Number(data.auctionId), data.title, data.number || null, data.imageUrl || null, data.dataAiHint || null,
+        numericAuctionId, data.title, data.number || null, data.imageUrl || null, data.dataAiHint || null,
         JSON.stringify(data.galleryImageUrls || []), JSON.stringify(data.mediaItemIds || []), data.status,
         data.stateId ? Number(data.stateId) : null, data.cityId ? Number(data.cityId) : null, data.categoryId ? Number(data.categoryId) : null,
         data.views || 0, data.price, data.initialPrice || null,
@@ -1273,6 +1380,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
   
   async getLots(auctionIdParam?: string): Promise<Lot[]> {
+    const numericAuctionIdParam = auctionIdParam ? Number(auctionIdParam) : undefined;
+    if (auctionIdParam && isNaN(numericAuctionIdParam as number)) {
+      console.error(`[MySqlAdapter - getLots] Invalid non-numeric auctionIdParam received: ${auctionIdParam}`);
+      return [];
+    }
     const connection = await getPool().getConnection();
     try {
       let queryText = `
@@ -1293,9 +1405,9 @@ export class MySqlAdapter implements IDatabaseAdapter {
         LEFT JOIN auctioneers act ON l.auctioneer_id_fk = act.id
       `;
       const values = [];
-      if (auctionIdParam) {
+      if (numericAuctionIdParam) {
         queryText += ' WHERE l.auction_id = ?';
-        values.push(Number(auctionIdParam));
+        values.push(numericAuctionIdParam);
         queryText += ' ORDER BY l.title ASC;';
       } else {
         queryText += ' ORDER BY l.created_at DESC;';
@@ -1306,6 +1418,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async getLot(id: string): Promise<Lot | null> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - getLot] Invalid non-numeric ID received: ${id}`);
+      return null;
+    }
     const connection = await getPool().getConnection();
     try {
       const queryText = `
@@ -1326,13 +1443,18 @@ export class MySqlAdapter implements IDatabaseAdapter {
         LEFT JOIN auctioneers act ON l.auctioneer_id_fk = act.id
         WHERE l.id = ?;
       `;
-      const [rows] = await connection.query(queryText, [Number(id)]);
+      const [rows] = await connection.query(queryText, [numericId]);
       if ((rows as RowDataPacket[]).length === 0) return null;
       return mapToLot(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
     } catch (e: any) { console.error(`[MySqlAdapter - getLot(${id})] Error:`, e); return null; } finally { connection.release(); }
   }
 
   async updateLot(id: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - updateLot] Invalid non-numeric ID received: ${id}`);
+      return { success: false, message: 'ID do lote inválido: não é um número.' };
+    }
     const connection = await getPool().getConnection();
     try {
       const fields: string[] = [];
@@ -1360,7 +1482,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
       fields.push(`updated_at = NOW()`);
       query += fields.join(', ') + ` WHERE id = ?`;
-      values.push(Number(id));
+      values.push(numericId);
       
       await connection.execute(query, values);
       return { success: true, message: 'Lote atualizado (MySQL)!' };
@@ -1368,37 +1490,53 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string; }> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - deleteLot] Invalid non-numeric ID received: ${id}`);
+      return { success: false, message: 'ID do lote inválido: não é um número.' };
+    }
     const connection = await getPool().getConnection();
     try {
-      await connection.execute('DELETE FROM lots WHERE id = ?', [Number(id)]);
+      await connection.execute('DELETE FROM lots WHERE id = ?', [numericId]);
       return { success: true, message: 'Lote excluído (MySQL)!' };
     } catch (e: any) { console.error(`[MySqlAdapter - deleteLot(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
   }
 
   async getBidsForLot(lotId: string): Promise<BidInfo[]> {
+    const numericLotId = Number(lotId);
+    if (isNaN(numericLotId)) {
+      console.error(`[MySqlAdapter - getBidsForLot] Invalid non-numeric lotId received: ${lotId}`);
+      return [];
+    }
     const connection = await getPool().getConnection();
     try {
         const query = 'SELECT * FROM bids WHERE lot_id = ? ORDER BY `timestamp` DESC;';
-        const [rows] = await connection.query(query, [Number(lotId)]);
+        const [rows] = await connection.query(query, [numericLotId]);
         return (rows as RowDataPacket[]).map(row => mapToBidInfo(mapMySqlRowToCamelCase(row)));
     } catch (e: any) { console.error(`[MySqlAdapter - getBidsForLot(${lotId})] Error:`, e); return []; } finally { connection.release(); }
   }
 
   async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }> {
+    const numericLotId = Number(lotId);
+    const numericAuctionId = Number(auctionId);
+    if (isNaN(numericLotId) || isNaN(numericAuctionId)) {
+      console.error(`[MySqlAdapter - placeBidOnLot] Invalid non-numeric lotId or auctionId. LotId: ${lotId}, AuctionId: ${auctionId}`);
+      return { success: false, message: 'ID do lote ou leilão inválido.' };
+    }
     const connection = await getPool().getConnection();
     try {
         await connection.beginTransaction();
-        const [lotRows] = await connection.query('SELECT price, bids_count FROM lots WHERE id = ? FOR UPDATE', [Number(lotId)]);
+        const [lotRows] = await connection.query('SELECT price, bids_count FROM lots WHERE id = ? FOR UPDATE', [numericLotId]);
         if ((lotRows as RowDataPacket[]).length === 0) { await connection.rollback(); return { success: false, message: "Lote não encontrado."}; }
         const lotData = mapMySqlRowToCamelCase((lotRows as RowDataPacket[])[0]);
         if (bidAmount <= Number(lotData.price)) { await connection.rollback(); return { success: false, message: "Lance deve ser maior que o atual."}; }
         
         const insertBidQuery = 'INSERT INTO bids (lot_id, auction_id, bidder_id, bidder_display_name, amount, `timestamp`) VALUES (?, ?, ?, ?, ?, NOW())';
-        const [insertResult] = await connection.execute(insertBidQuery, [Number(lotId), Number(auctionId), userId, userDisplayName, bidAmount]);
+        const [insertResult] = await connection.execute(insertBidQuery, [numericLotId, numericAuctionId, userId, userDisplayName, bidAmount]);
         const newBidId = (insertResult as mysql.ResultSetHeader).insertId;
         
         const updateLotQuery = 'UPDATE lots SET price = ?, bids_count = bids_count + 1, updated_at = NOW() WHERE id = ?;';
-        await connection.execute(updateLotQuery, [bidAmount, Number(lotId)]);
+        await connection.execute(updateLotQuery, [bidAmount, numericLotId]);
         
         await connection.commit();
         const [newBidRows] = await connection.query('SELECT * FROM bids WHERE id = ?', [newBidId]);
@@ -1444,9 +1582,14 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async getRole(id: string): Promise<Role | null> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - getRole] Invalid non-numeric ID received: ${id}`);
+      return null;
+    }
     const connection = await getPool().getConnection();
     try {
-        const [rows] = await connection.query('SELECT * FROM roles WHERE id = ?;', [Number(id)]);
+        const [rows] = await connection.query('SELECT * FROM roles WHERE id = ?;', [numericId]);
         if ((rows as RowDataPacket[]).length === 0) return null;
         return mapToRole(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
     } catch (e: any) { return null; } finally { connection.release(); }
@@ -1463,13 +1606,18 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - updateRole] Invalid non-numeric ID received: ${id}`);
+      return { success: false, message: 'ID do perfil inválido: não é um número.' };
+    }
     const connection = await getPool().getConnection();
     try {
         const fields: string[] = [];
         const values: any[] = [];
         let query = 'UPDATE roles SET ';
 
-        const [currentRoleRows] = await connection.query('SELECT name_normalized FROM roles WHERE id = ?', [Number(id)]);
+        const [currentRoleRows] = await connection.query('SELECT name_normalized FROM roles WHERE id = ?', [numericId]);
         if ((currentRoleRows as RowDataPacket[]).length === 0) return { success: false, message: "Perfil não encontrado."};
         const currentNormalizedName = (currentRoleRows as RowDataPacket[])[0].name_normalized;
         
@@ -1493,21 +1641,26 @@ export class MySqlAdapter implements IDatabaseAdapter {
         
         fields.push(`updated_at = NOW()`);
         query += fields.join(', ') + ` WHERE id = ?`;
-        values.push(Number(id));
+        values.push(numericId);
         await connection.execute(query, values);
         return { success: true, message: 'Perfil atualizado!' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
 
   async deleteRole(id: string): Promise<{ success: boolean; message: string; }> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - deleteRole] Invalid non-numeric ID received: ${id}`);
+      return { success: false, message: 'ID do perfil inválido: não é um número.' };
+    }
     const connection = await getPool().getConnection();
     try {
-        const [roleRows] = await connection.query('SELECT name_normalized FROM roles WHERE id = ?', [Number(id)]);
+        const [roleRows] = await connection.query('SELECT name_normalized FROM roles WHERE id = ?', [numericId]);
         if ((roleRows as RowDataPacket[]).length > 0 && 
             ['ADMINISTRATOR', 'USER'].includes((roleRows as RowDataPacket[])[0].name_normalized)) {
             return { success: false, message: 'Perfis de sistema não podem ser excluídos.'};
         }
-        await connection.execute('DELETE FROM roles WHERE id = ?', [Number(id)]);
+        await connection.execute('DELETE FROM roles WHERE id = ?', [numericId]);
         return { success: true, message: 'Perfil excluído!' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
@@ -1705,17 +1858,22 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
+    const numericRoleId = roleId ? Number(roleId) : null;
+    if (roleId && roleId !== "---NONE---" && isNaN(numericRoleId as number)) {
+      console.error(`[MySqlAdapter - updateUserRole] Invalid non-numeric roleId received: ${roleId}`);
+      return { success: false, message: 'ID do perfil inválido: não é um número.' };
+    }
     const connection = await getPool().getConnection();
     try {
       let roleName = null;
       let permissions = null;
-      if (roleId && roleId !== "---NONE---") {
-        const role = await this.getRole(roleId);
+      if (numericRoleId) {
+        const role = await this.getRole(String(numericRoleId));
         if (role) { roleName = role.name; permissions = JSON.stringify(role.permissions || []); }
         else return { success: false, message: 'Perfil não encontrado.'};
       }
       const queryText = `UPDATE users SET role_id = ?, role_name = ?, permissions = ?, updated_at = NOW() WHERE uid = ?`;
-      await connection.execute(queryText, [roleId ? Number(roleId) : null, roleName, permissions, userId]);
+      await connection.execute(queryText, [numericRoleId, roleName, permissions, userId]);
       return { success: true, message: 'Perfil do usuário atualizado!' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
@@ -1761,11 +1919,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
           dimensions_width, dimensions_height, url_original, url_thumbnail, url_medium, url_large,
           linked_lot_ids, data_ai_hint
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-      `; // created_at e updated_at são DEFAULT
+      `; 
       const values = [
         data.fileName, uploadedBy || null, data.title || null, data.altText || null, data.caption || null,
         data.description || null, data.mimeType, data.sizeBytes, data.dimensions?.width || null,
-        data.dimensions?.height || null, filePublicUrl, filePublicUrl, filePublicUrl, filePublicUrl, // Simplified URLs
+        data.dimensions?.height || null, filePublicUrl, filePublicUrl, filePublicUrl, filePublicUrl, 
         JSON.stringify(data.linkedLotIds || []), data.dataAiHint || null
       ];
       const [result] = await connection.execute(query, values);
@@ -1784,6 +1942,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - updateMediaItemMetadata] Invalid non-numeric ID received: ${id}`);
+      return { success: false, message: 'ID do item de mídia inválido: não é um número.' };
+    }
     const connection = await getPool().getConnection();
     try {
       const fields: string[] = [];
@@ -1794,39 +1957,46 @@ export class MySqlAdapter implements IDatabaseAdapter {
       });
       if (fields.length === 0) return { success: true, message: "Nenhuma alteração." };
       const query = `UPDATE media_items SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ?`;
-      values.push(Number(id));
+      values.push(numericId);
       await connection.execute(query, values);
       return { success: true, message: 'Metadados atualizados (MySQL).' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
 
   async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      console.error(`[MySqlAdapter - deleteMediaItemFromDb] Invalid non-numeric ID received: ${id}`);
+      return { success: false, message: 'ID do item de mídia inválido: não é um número.' };
+    }
     const connection = await getPool().getConnection();
     try {
-      await connection.execute('DELETE FROM media_items WHERE id = ?;', [Number(id)]);
+      await connection.execute('DELETE FROM media_items WHERE id = ?;', [numericId]);
       return { success: true, message: 'Item de mídia excluído do DB (MySQL).' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
 
   async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> {
+    const numericLotId = Number(lotId);
+    if (isNaN(numericLotId)) {
+      console.error(`[MySqlAdapter - linkMediaItemsToLot] Invalid non-numeric lotId: ${lotId}`);
+      return { success: false, message: 'ID do lote inválido.' };
+    }
     const connection = await getPool().getConnection();
     try {
       await connection.beginTransaction();
       for (const mediaId of mediaItemIds) {
-        // Esta query é um pouco complexa para MySQL JSON, precisa de cuidado.
-        // JSON_MERGE_PRESERVE pode não existir, JSON_MERGE_PATCH é mais comum.
-        // Para array_append único, pode ser JSON_ARRAY_APPEND if not exists.
-        // Se a coluna é NULL, precisa inicializar com JSON_ARRAY().
+        const numericMediaId = Number(mediaId);
+        if (isNaN(numericMediaId)) throw new Error(`ID de mídia inválido: ${mediaId}`);
         await connection.execute(
           `UPDATE media_items SET 
              linked_lot_ids = IF(JSON_CONTAINS(COALESCE(linked_lot_ids, JSON_ARRAY()), JSON_QUOTE(?)), 
                                COALESCE(linked_lot_ids, JSON_ARRAY()), 
                                JSON_ARRAY_APPEND(COALESCE(linked_lot_ids, JSON_ARRAY()), '$', ?))
            WHERE id = ?`,
-          [lotId, lotId, Number(mediaId)]
+          [String(numericLotId), String(numericLotId), numericMediaId]
         );
       }
-      // Similar para lots, garantindo que não haja duplicatas
       await connection.execute(
         `UPDATE lots SET 
             media_item_ids = (
@@ -1838,7 +2008,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
             ), 
             updated_at = NOW() 
          WHERE id = ?`,
-        [JSON.stringify(mediaItemIds), Number(lotId)]
+        [JSON.stringify(mediaItemIds), numericLotId]
       );
       await connection.commit();
       return { success: true, message: 'Mídias vinculadas (MySQL).' };
@@ -1846,16 +2016,22 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> {
+    const numericLotId = Number(lotId);
+    const numericMediaItemId = Number(mediaItemId);
+    if (isNaN(numericLotId) || isNaN(numericMediaItemId)) {
+      console.error(`[MySqlAdapter - unlinkMediaItemFromLot] Invalid non-numeric ID. LotId: ${lotId}, MediaItemId: ${mediaItemId}`);
+      return { success: false, message: 'ID do lote ou item de mídia inválido.' };
+    }
     const connection = await getPool().getConnection();
     try {
       await connection.beginTransaction();
       await connection.execute(
         "UPDATE media_items SET linked_lot_ids = JSON_REMOVE(COALESCE(linked_lot_ids, JSON_ARRAY()), JSON_UNQUOTE(JSON_SEARCH(COALESCE(linked_lot_ids, JSON_ARRAY()), 'one', ?))) WHERE id = ?",
-        [lotId, Number(mediaItemId)]
+        [String(numericLotId), numericMediaItemId]
       );
       await connection.execute(
         "UPDATE lots SET media_item_ids = JSON_REMOVE(COALESCE(media_item_ids, JSON_ARRAY()), JSON_UNQUOTE(JSON_SEARCH(COALESCE(media_item_ids, JSON_ARRAY()), 'one', ?))), updated_at = NOW() WHERE id = ?",
-        [mediaItemId, Number(lotId)]
+        [String(numericMediaItemId), numericLotId]
       );
       await connection.commit();
       return { success: true, message: 'Mídia desvinculada (MySQL).' };
@@ -1895,3 +2071,4 @@ export class MySqlAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
 }
+
