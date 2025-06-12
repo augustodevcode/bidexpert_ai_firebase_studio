@@ -21,7 +21,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 function DeleteCityButton({ cityId, cityName, onDelete }: { cityId: string; cityName: string; onDelete: (id: string) => Promise<void> }) {
+  'use client';
   return (
+
     <AlertDialog>
       <Tooltip>
         <TooltipTrigger asChild>
@@ -58,14 +60,6 @@ function DeleteCityButton({ cityId, cityName, onDelete }: { cityId: string; city
 
 export default async function AdminCitiesPage() {
   const cities = await getCities();
-
-  async function handleDeleteCity(id: string) {
-    'use server';
-    const result = await deleteCity(id);
-    if (!result.success) {
-        console.error("Failed to delete city:", result.message);
-    }
-  }
 
   return (
     <TooltipProvider>
