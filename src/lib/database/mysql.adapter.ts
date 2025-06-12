@@ -307,8 +307,10 @@ function mapToLot(row: RowDataPacket): Lot {
     aisleStall: row.aisleStall,
     actualCashValue: row.actualCashValue,
     estimatedRepairCost: row.estimatedRepairCost,
-    sellerIdFk: row.sellerIdFk ? String(row.sellerIdFk) : undefined,
-    auctioneerIdFk: row.auctioneerIdFk ? String(row.auctioneerIdFk) : undefined,
+    sellerName: row.lotSellerName, 
+    sellerId: row.sellerIdFk ? String(row.sellerIdFk) : undefined,
+    auctioneerName: row.lotAuctioneerName, 
+    auctioneerId: row.auctioneerIdFk ? String(row.auctioneerIdFk) : undefined,
     condition: row.condition,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
@@ -506,8 +508,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
         description TEXT,
         member_since TIMESTAMP NULL,
         rating DECIMAL(3,1),
-        auctions_conducted_count INT UNSIGNED,
-        total_value_sold DECIMAL(15,2),
+        auctions_conducted_count INT UNSIGNED DEFAULT 0,
+        total_value_sold DECIMAL(15,2) DEFAULT 0.00,
         user_id VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -531,9 +533,9 @@ export class MySqlAdapter implements IDatabaseAdapter {
         description TEXT,
         member_since TIMESTAMP NULL,
         rating DECIMAL(3,1),
-        active_lots_count INT UNSIGNED,
-        total_sales_value DECIMAL(15,2),
-        auctions_facilitated_count INT UNSIGNED,
+        active_lots_count INT UNSIGNED DEFAULT 0,
+        total_sales_value DECIMAL(15,2) DEFAULT 0.00,
+        auctions_facilitated_count INT UNSIGNED DEFAULT 0,
         user_id VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -748,8 +750,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
     try {
       const slug = slugify(data.name.trim());
       const queryText = `
-        INSERT INTO lot_categories (name, slug, description, item_count, created_at, updated_at)
-        VALUES (?, ?, ?, ?, NOW(), NOW());
+        INSERT INTO lot_categories (name, slug, description, item_count)
+        VALUES (?, ?, ?, ?);
       `;
       const values = [data.name.trim(), slug, data.description?.trim() || null, 0];
       const [result] = await connection.execute(queryText, values);
@@ -834,7 +836,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
     const connection = await getPool().getConnection();
     try {
       const slug = slugify(data.name);
-      const query = `INSERT INTO states (name, uf, slug, city_count, created_at, updated_at) VALUES (?, ?, ?, 0, NOW(), NOW())`;
+      const query = `INSERT INTO states (name, uf, slug, city_count) VALUES (?, ?, ?, 0)`;
       const [result] = await connection.execute(query, [data.name, data.uf.toUpperCase(), slug]);
       return { success: true, message: 'Estado criado (MySQL)!', stateId: String((result as mysql.ResultSetHeader).insertId) };
     } catch (e: any) { console.error(`[MySqlAdapter - createState] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
@@ -887,7 +889,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         if ((parentStateRows as RowDataPacket[]).length === 0) return { success: false, message: 'Estado pai não encontrado.' };
         const stateUf = (parentStateRows as RowDataPacket[])[0].uf;
         const slug = slugify(data.name);
-        const query = `INSERT INTO cities (name, slug, state_id, state_uf, ibge_code, lot_count, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 0, NOW(), NOW())`;
+        const query = `INSERT INTO cities (name, slug, state_id, state_uf, ibge_code, lot_count) VALUES (?, ?, ?, ?, ?, 0)`;
         const [result] = await connection.execute(query, [data.name, slug, Number(data.stateId), stateUf, data.ibgeCode || null]);
         return { success: true, message: 'Cidade criada (MySQL)!', cityId: String((result as mysql.ResultSetHeader).insertId) };
     } catch (e: any) { console.error(`[MySqlAdapter - createCity] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
@@ -951,8 +953,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
       const slug = slugify(data.name);
       const query = `
         INSERT INTO auctioneers 
-          (name, slug, registration_number, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since, rating, auctions_conducted_count, total_value_sold, user_id, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, 0, 0, ?, NOW(), NOW());
+          (name, slug, registration_number, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since, rating, auctions_conducted_count, total_value_sold, user_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, 0, 0, ?);
       `;
       const values = [
         data.name, slug, data.registrationNumber || null, data.contactName || null, data.email || null, data.phone || null,
@@ -1032,9 +1034,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
       const slug = slugify(data.name);
       const query = `
         INSERT INTO sellers 
-          (name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since, rating, active_lots_count, total_sales_value, auctions_facilitated_count, user_id, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, 0, 0, 0, ?, NOW(), NOW());
-      `;
+          (name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, user_id, 
+           member_since, rating, active_lots_count, total_sales_value, auctions_facilitated_count)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, 0, 0, 0);
+      `; // created_at e updated_at são DEFAULT
       const values = [
         data.name, slug, data.contactName || null, data.email || null, data.phone || null,
         data.address || null, data.city || null, data.state || null, data.zipCode || null, data.website || null,
@@ -1113,9 +1116,9 @@ export class MySqlAdapter implements IDatabaseAdapter {
     try {
       const query = `
         INSERT INTO auctions 
-          (title, full_title, description, status, auction_type, category_id, auctioneer_id, seller_id, auction_date, end_date, auction_stages, city, state, image_url, data_ai_hint, documents_url, total_lots, visits, initial_offer, selling_branch, vehicle_location, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?, NOW(), NOW());
-      `;
+          (title, full_title, description, status, auction_type, category_id, auctioneer_id, seller_id, auction_date, end_date, auction_stages, city, state, image_url, data_ai_hint, documents_url, total_lots, visits, initial_offer, selling_branch, vehicle_location)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?);
+      `; // created_at e updated_at são DEFAULT
       const values = [
         data.title, data.fullTitle || null, data.description || null, data.status, data.auctionType || null,
         data.categoryId ? Number(data.categoryId) : null, 
@@ -1237,15 +1240,13 @@ export class MySqlAdapter implements IDatabaseAdapter {
           transmission_type, drive_line_type, fuel_type, cylinders, restraint_system,
           exterior_interior_color, options, manufactured_in, vehicle_class,
           vehicle_location_in_branch, lane_run_number, aisle_stall, actual_cash_value,
-          estimated_repair_cost, seller_id_fk, auctioneer_id_fk, \`condition\`,
-          created_at, updated_at
+          estimated_repair_cost, seller_id_fk, auctioneer_id_fk, \`condition\`
         ) VALUES (
           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-          NOW(), NOW()
+          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         );
-      `;
+      `; // created_at e updated_at são DEFAULT
       const values = [
         Number(data.auctionId), data.title, data.number || null, data.imageUrl || null, data.dataAiHint || null,
         JSON.stringify(data.galleryImageUrls || []), JSON.stringify(data.mediaItemIds || []), data.status,
@@ -1425,8 +1426,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
         
         const validPermissions = (data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
         const query = `
-            INSERT INTO roles (name, name_normalized, description, permissions, created_at, updated_at)
-            VALUES (?, ?, ?, ?, NOW(), NOW());
+            INSERT INTO roles (name, name_normalized, description, permissions)
+            VALUES (?, ?, ?, ?);
         `;
         const values = [data.name.trim(), nameNormalized, data.description || null, JSON.stringify(validPermissions)];
         const [result] = await connection.execute(query, values);
@@ -1527,7 +1528,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
             if ((existingRows as RowDataPacket[]).length === 0) {
                 console.log(`[MySqlAdapter] Perfil '${roleData.name}' não encontrado. Criando...`);
                 await connection.query(
-                    'INSERT INTO roles (name, name_normalized, description, permissions, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
+                    'INSERT INTO roles (name, name_normalized, description, permissions) VALUES (?, ?, ?, ?)',
                     [roleData.name.trim(), normalizedName, roleData.description || null, JSON.stringify(validPermissions)]
                 );
                 console.log(`[MySqlAdapter] Perfil '${roleData.name}' criado.`);
@@ -1758,9 +1759,9 @@ export class MySqlAdapter implements IDatabaseAdapter {
         INSERT INTO media_items (
           file_name, uploaded_by, title, alt_text, caption, description, mime_type, size_bytes,
           dimensions_width, dimensions_height, url_original, url_thumbnail, url_medium, url_large,
-          linked_lot_ids, data_ai_hint, uploaded_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW());
-      `;
+          linked_lot_ids, data_ai_hint
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      `; // created_at e updated_at são DEFAULT
       const values = [
         data.fileName, uploadedBy || null, data.title || null, data.altText || null, data.caption || null,
         data.description || null, data.mimeType, data.sizeBytes, data.dimensions?.width || null,
@@ -1812,13 +1813,31 @@ export class MySqlAdapter implements IDatabaseAdapter {
     try {
       await connection.beginTransaction();
       for (const mediaId of mediaItemIds) {
+        // Esta query é um pouco complexa para MySQL JSON, precisa de cuidado.
+        // JSON_MERGE_PRESERVE pode não existir, JSON_MERGE_PATCH é mais comum.
+        // Para array_append único, pode ser JSON_ARRAY_APPEND if not exists.
+        // Se a coluna é NULL, precisa inicializar com JSON_ARRAY().
         await connection.execute(
-          'UPDATE media_items SET linked_lot_ids = JSON_MERGE_PRESERVE(COALESCE(linked_lot_ids, JSON_ARRAY()), JSON_ARRAY(?)) WHERE id = ? AND (linked_lot_ids IS NULL OR NOT JSON_CONTAINS(linked_lot_ids, JSON_QUOTE(?)))',
-          [lotId, Number(mediaId), lotId]
+          `UPDATE media_items SET 
+             linked_lot_ids = IF(JSON_CONTAINS(COALESCE(linked_lot_ids, JSON_ARRAY()), JSON_QUOTE(?)), 
+                               COALESCE(linked_lot_ids, JSON_ARRAY()), 
+                               JSON_ARRAY_APPEND(COALESCE(linked_lot_ids, JSON_ARRAY()), '$', ?))
+           WHERE id = ?`,
+          [lotId, lotId, Number(mediaId)]
         );
       }
+      // Similar para lots, garantindo que não haja duplicatas
       await connection.execute(
-        'UPDATE lots SET media_item_ids = JSON_MERGE_PRESERVE(COALESCE(media_item_ids, JSON_ARRAY()), ?), updated_at = NOW() WHERE id = ?',
+        `UPDATE lots SET 
+            media_item_ids = (
+                SELECT JSON_ARRAYAGG(DISTINCT elem) 
+                FROM JSON_TABLE(
+                    JSON_MERGE_PRESERVE(COALESCE(media_item_ids, JSON_ARRAY()), ?),
+                    '$[*]' COLUMNS (elem VARCHAR(255) PATH '$')
+                ) AS jt
+            ), 
+            updated_at = NOW() 
+         WHERE id = ?`,
         [JSON.stringify(mediaItemIds), Number(lotId)]
       );
       await connection.commit();
@@ -1876,6 +1895,3 @@ export class MySqlAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
 }
-
-    
-
