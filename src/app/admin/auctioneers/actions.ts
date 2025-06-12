@@ -1,3 +1,4 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -9,8 +10,8 @@ export async function createAuctioneer(
   data: AuctioneerFormData
 ): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> {
   const db = await getDatabaseAdapter();
-  // publicId é gerado pelo adapter
-  const result = await db.createAuctioneer(data);
+  const publicId = `LEIL-${slugify(data.name.substring(0,10))}-${Date.now().toString(36)}`;
+  const result = await db.createAuctioneer({ ...data, publicId });
   if (result.success) {
     revalidatePath('/admin/auctioneers');
   }
@@ -24,42 +25,56 @@ export async function getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
 
 export async function getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {
   const db = await getDatabaseAdapter();
-  // O adapter agora lida com ID numérico ou publicId
   return db.getAuctioneer(id);
 }
 
 export async function getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
   const db = await getDatabaseAdapter();
-  // Esta função agora busca por publicId (ou slug se mantivermos essa lógica no adapter)
   return db.getAuctioneerBySlug(slugOrPublicId);
 }
 
+export async function getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> {
+  const db = await getDatabaseAdapter();
+  const auctioneers = await db.getAuctioneers();
+  const normalizedName = name.trim().toLowerCase();
+  return auctioneers.find(auc => auc.name.toLowerCase() === normalizedName) || null;
+}
+
 export async function updateAuctioneer(
-  idOrPublicId: string, // Pode ser o ID numérico ou o publicId
+  idOrPublicId: string, 
   data: Partial<AuctioneerFormData>
 ): Promise<{ success: boolean; message: string }> {
   const db = await getDatabaseAdapter();
   
   const dataToUpdate: Partial<AuctioneerFormData & { slug?: string }> = { ...data };
   if (data.name) {
-    dataToUpdate.slug = slugify(data.name);
+    // O adapter deve cuidar da geração do slug se o nome mudar e o publicId for usado para encontrar
   }
 
   const result = await db.updateAuctioneer(idOrPublicId, dataToUpdate);
   if (result.success) {
     revalidatePath('/admin/auctioneers');
-    revalidatePath(`/admin/auctioneers/${idOrPublicId}/edit`); // Idealmente, a rota usaria publicId
+    revalidatePath(`/admin/auctioneers/${idOrPublicId}/edit`);
+    const auctioneer = await db.getAuctioneer(idOrPublicId);
+    if (auctioneer?.slug) {
+      revalidatePath(`/auctioneers/${auctioneer.slug}`);
+    }
   }
   return result;
 }
 
 export async function deleteAuctioneer(
-  idOrPublicId: string // Pode ser o ID numérico ou o publicId
+  idOrPublicId: string 
 ): Promise<{ success: boolean; message: string }> {
   const db = await getDatabaseAdapter();
+  const auctioneerToDelete = await db.getAuctioneer(idOrPublicId);
   const result = await db.deleteAuctioneer(idOrPublicId);
   if (result.success) {
     revalidatePath('/admin/auctioneers');
+    if (auctioneerToDelete?.slug) {
+      revalidatePath(`/auctioneers/${auctioneerToDelete.slug}`);
+    }
   }
   return result;
 }
+
