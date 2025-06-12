@@ -166,12 +166,12 @@ export default function Header() {
               </Sheet>
             </div>
 
-            <Link href="/" className="mr-4 flex items-center space-x-2">
-              <Avatar className="h-10 w-10 bg-primary-foreground text-primary">
+            <Link href="/" className="mr-4 flex items-center space-x-2 sm:space-x-3">
+              <Avatar className="h-8 w-8 sm:h-10 sm:w-10 bg-primary-foreground text-primary">
                 <AvatarImage src="https://placehold.co/40x40.png?text=BE" alt="BidExpert Logo" data-ai-hint="logo initial" />
                 <AvatarFallback className="font-bold text-xl">BE</AvatarFallback>
               </Avatar>
-              <span className="font-bold text-3xl hidden sm:inline-block">
+              <span className="font-bold text-xl sm:text-3xl hidden sm:inline-block">
                 BidExpert
               </span>
             </Link>

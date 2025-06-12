@@ -12,4 +12,29 @@
 #     location: openapi.yaml
 # allowedOrigins:
 #   - https://your-app.web.app
+#
+# Schema Definition for platformSettings (Conceptual - for documentation)
+# This structure will be implemented directly in SQL adapter schemas.
+
+# platformSettings:
+#   fields:
+#     id:
+#       type: string
+#       primaryKey: true
+#       description: Unique identifier for platform settings (e.g., 'default')
+#     activeThemeName:
+#       type: string
+#       description: The name of the currently active theme
+#     themes:
+#       type: array
+#       items:
+#         type: object
+#         properties:
+#           name:
+#             type: string
+#             description: Name of the color theme (e.g., 'Default', 'Dark', 'Ocean Blue')
+#           colors:
+#             type: object
+#             description: Key-value pairs of color variables (e.g., primary: '#...', background: 'hsl(...)')
+#             additionalProperties: { type: string }
 #   - http://localhost:3000

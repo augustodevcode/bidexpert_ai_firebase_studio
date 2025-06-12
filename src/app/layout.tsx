@@ -5,6 +5,7 @@ import './globals.css';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import { Toaster } from "@/components/ui/toaster"
+import { TooltipProvider } from '@radix-ui/react-tooltip';
 import { AuthProvider } from '@/contexts/auth-context';
 
 export const metadata: Metadata = {
@@ -27,10 +28,12 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased flex flex-col min-h-screen bg-background dark:bg-background">
         <AuthProvider>
-          <Header />
-          <main className="flex-grow container mx-auto px-4 py-8">
-            {children}
-          </main>
+          <TooltipProvider>
+            <Header />
+            <main className="flex-grow container mx-auto px-4 py-8">
+              {children}
+            </main>
+          </TooltipProvider>
           <Footer activeDatabaseSystem={activeDatabaseSystem} />
           <Toaster />
         </AuthProvider>

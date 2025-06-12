@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks, Tv, Briefcase as ConsignorIcon, ShieldCheck } from 'lucide-react';
@@ -204,16 +205,30 @@ export default function UserNav() {
 
   return (
     <div className="flex items-center space-x-2">
-      <Button variant="outline" size="sm" asChild>
-        <Link href="/auth/login" className="flex items-center gap-1">
-          <LogIn className="h-4 w-4" /> Login
-        </Link>
-      </Button>
-      <Button size="sm" asChild>
-        <Link href="/auth/register" className="flex items-center gap-1">
-          <UserPlus className="h-4 w-4" /> Registrar
-        </Link>
-      </Button>
+      <Tooltip delayDuration={300}>
+        <TooltipTrigger asChild>
+          <Button variant="outline" size="icon" asChild>
+            <Link href="/auth/login">
+              <LogIn className="h-4 w-4" />
+            </Link>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          Login
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip delayDuration={300}>
+        <TooltipTrigger asChild>
+          <Button size="icon" asChild>
+            <Link href="/auth/register">
+              <UserPlus className="h-4 w-4" />
+            </Link>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          Registrar
+        </TooltipContent>
+      </Tooltip>
     </div>
   );
 }

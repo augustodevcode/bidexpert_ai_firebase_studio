@@ -337,7 +337,9 @@ function mapToMediaItem(row: QueryResultRow): MediaItem {
 function mapToPlatformSettings(row: QueryResultRow): PlatformSettings {
     return {
         id: String(row.id),
-        galleryImageBasePath: row.galleryImageBasePath,
+ themes: row.themes || [],
+        galleryImageBasePath: row.gallery_image_base_path,
+ themes: row.themes || [],
         updatedAt: new Date(row.updatedAt),
     };
 }
@@ -428,8 +430,9 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
       `CREATE TABLE IF NOT EXISTS platform_settings (
         id VARCHAR(50) PRIMARY KEY DEFAULT 'global',
-        gallery_image_base_path TEXT NOT NULL,
-        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        gallery_image_base_path TEXT NOT NULL DEFAULT '/media/gallery/',
+        themes JSONB NOT NULL DEFAULT '[]'::jsonb,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP 
       );`,
 
       `CREATE TABLE IF NOT EXISTS lot_categories (
@@ -1827,11 +1830,12 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async getPlatformSettings(): Promise<PlatformSettings> {
     const client = await getPool().connect();
     try {
-        const res = await client.query(`SELECT gallery_image_base_path, updated_at FROM platform_settings WHERE id = 'global';`);
+        const res = await client.query(`SELECT gallery_image_base_path, themes, updated_at FROM platform_settings WHERE id = 'global';`);
         if (res.rowCount > 0) {
             return { id: 'global', ...mapRowToCamelCase(res.rows[0]) } as PlatformSettings;
         }
         const defaultPath = '/media/gallery/';
+ const defaultThemes = []; // Add default themes if needed
         await client.query(`INSERT INTO platform_settings (id, gallery_image_base_path) VALUES ('global', $1) ON CONFLICT (id) DO NOTHING;`, [defaultPath]);
         return { id: 'global', galleryImageBasePath: defaultPath, updatedAt: new Date() };
     } catch (e: any) {
@@ -1847,12 +1851,12 @@ export class PostgresAdapter implements IDatabaseAdapter {
     }
     try {
         const query = `
-            INSERT INTO platform_settings (id, gallery_image_base_path, updated_at) 
-            VALUES ('global', $1, NOW()) 
+            INSERT INTO platform_settings (id, gallery_image_base_path, themes, updated_at) 
+            VALUES ('global', $1, $2::jsonb, NOW()) 
             ON CONFLICT (id) 
-            DO UPDATE SET gallery_image_base_path = EXCLUDED.gallery_image_base_path, updated_at = NOW();
+            DO UPDATE SET gallery_image_base_path = EXCLUDED.gallery_image_base_path, themes = EXCLUDED.themes, updated_at = NOW();
         `;
-        await client.query(query, [data.galleryImageBasePath]);
+        await client.query(query, [data.galleryImageBasePath, JSON.stringify(data.themes || [])]);
         return { success: true, message: 'Configurações atualizadas (PostgreSQL)!' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
   }
