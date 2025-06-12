@@ -2,7 +2,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Coins, Search, Menu, Heart, ChevronDown, Eye, UserCircle, LayoutList, Tag, Home as HomeIcon, Briefcase, Users2, MessageSquareText, Package, Tv, Percent, Handshake, FileText, History, Loader2, Bell, Landmark } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Coins, Search as SearchIcon, Menu, Heart, ChevronDown, UserCircle, LayoutList, Home as HomeIcon, Briefcase, Users2, MessageSquareText, Package, Tv, Percent, Handshake, FileText, History, Loader2, Bell, Landmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import MainNav from './main-nav';
@@ -29,8 +30,8 @@ import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 
 export default function Header() {
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
@@ -138,14 +139,14 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full shadow-md">
       {/* Top Bar */}
       <div className="bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4 flex h-20 items-center">
+        <div className="container mx-auto px-4 flex h-20 items-center justify-between"> {/* justify-between added */}
           <div className="flex items-center">
+            {/* Mobile Menu Trigger */}
             <div className="md:hidden mr-2">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hover:bg-primary/80 focus-visible:ring-primary-foreground">
+                  <Button variant="ghost" size="icon" className="hover:bg-primary/80 focus-visible:ring-primary-foreground" aria-label="Abrir Menu">
                     <Menu className="h-6 w-6" />
-                    <span className="sr-only">Abrir Menu</span>
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0 bg-background text-foreground">
@@ -166,6 +167,7 @@ export default function Header() {
               </Sheet>
             </div>
 
+            {/* Logo */}
             <Link href="/" className="mr-4 flex items-center space-x-2 sm:space-x-3">
               <Avatar className="h-8 w-8 sm:h-10 sm:w-10 bg-primary-foreground text-primary">
                 <AvatarImage src="https://placehold.co/40x40.png?text=BE" alt="BidExpert Logo" data-ai-hint="logo initial" />
@@ -177,26 +179,28 @@ export default function Header() {
             </Link>
           </div>
 
+          {/* Search Bar - Desktop */}
           {isClient && (
-             <form onSubmit={handleSearchSubmit} className="flex-1 flex justify-center items-center px-2 sm:px-4">
-                <div ref={searchContainerRef} className="relative flex w-full max-w-xl bg-background rounded-md shadow-sm">
+             <div className="hidden md:flex flex-1 justify-center items-center px-4">
+              <form onSubmit={handleSearchSubmit} className="w-full max-w-xl">
+                <div ref={searchContainerRef} className="relative flex w-full bg-background rounded-md shadow-sm">
                   <Select 
                     value={selectedSearchCategorySlug || 'todas'}
                     onValueChange={(value) => setSelectedSearchCategorySlug(value === 'todas' ? undefined : value)}
                   >
                     <SelectTrigger 
-                      className="w-[120px] sm:w-[150px] h-10 text-xs sm:text-sm text-muted-foreground border-r border-input rounded-l-md rounded-r-none focus:ring-0 focus:ring-offset-0 bg-secondary/20 truncate"
+                      className="w-[150px] h-10 text-sm text-muted-foreground border-r border-input rounded-l-md rounded-r-none focus:ring-0 focus:ring-offset-0 bg-secondary/20 truncate"
                       aria-label="Selecionar Categoria de Busca"
                     >
                       <SelectValue placeholder="Categorias" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="todas" className="text-xs sm:text-sm">Todas</SelectItem>
+                      <SelectItem value="todas" className="text-sm">Todas</SelectItem>
                       {searchCategories.map(cat => (
                         <SelectItem 
                           key={cat.slug} 
                           value={cat.slug} 
-                          className="text-xs sm:text-sm"
+                          className="text-sm"
                         >
                           {cat.name}
                         </SelectItem>
@@ -212,7 +216,7 @@ export default function Header() {
                     onFocus={() => searchTerm.length >= 3 && setIsSearchDropdownOpen(true)}
                   />
                   <Button type="submit" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground">
-                    <Search className="h-4 w-4" />
+                    <SearchIcon className="h-4 w-4" />
                     <span className="sr-only">Buscar</span>
                   </Button>
                   {isSearchDropdownOpen && (
@@ -257,12 +261,18 @@ export default function Header() {
                   )}
                 </div>
               </form>
+             </div>
           )}
 
-
-          <div className="ml-auto flex items-center space-x-1 sm:space-x-2">
+          {/* User Nav & Mobile Search Icon */}
+          <div className="flex items-center space-x-1 sm:space-x-2">
+            {isClient && (
+              <Button variant="ghost" size="icon" className="md:hidden hover:bg-primary/80 focus-visible:ring-primary-foreground" aria-label="Buscar">
+                <SearchIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+              </Button>
+            )}
             {user && ( 
-              <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground sm:inline-flex" asChild>
+              <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground sm:inline-flex" asChild aria-label="Notificações">
                 <Link href="/dashboard/notifications">
                   <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
                   {placeholderNotificationsCount > 0 && (
@@ -270,15 +280,13 @@ export default function Header() {
                       {placeholderNotificationsCount}
                     </Badge>
                   )}
-                  <span className="sr-only">Notificações</span>
                 </Link>
               </Button>
             )}
-            <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground sm:inline-flex" asChild>
+            <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground sm:inline-flex" asChild aria-label="Favoritos">
               <Link href="/dashboard/favorites">
                 <Heart className="h-5 w-5 sm:h-6 sm:w-6" />
                 <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-primary-foreground text-primary border-primary">0</Badge>
-                <span className="sr-only">Favoritos</span>
               </Link>
             </Button>
              <UserNav /> 
@@ -286,6 +294,7 @@ export default function Header() {
         </div>
       </div>
 
+      {/* Bottom Navigation Bar - Desktop */}
       <div className="border-b bg-background text-foreground hidden md:block">
         <div className="container mx-auto px-4 flex h-12 items-center justify-between">
           <div className="flex items-center text-sm font-medium">
@@ -345,3 +354,4 @@ export default function Header() {
     </header>
   );
 }
+
