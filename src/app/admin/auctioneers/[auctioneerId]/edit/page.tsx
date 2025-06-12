@@ -1,4 +1,3 @@
-
 import AuctioneerForm from '../../auctioneer-form';
 import { getAuctioneer, updateAuctioneer, type AuctioneerFormData } from '../../actions';
 import { notFound } from 'next/navigation';
@@ -26,5 +25,3 @@ export default async function EditAuctioneerPage({ params }: { params: { auction
     />
   );
 }
-
-    

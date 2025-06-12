@@ -1,4 +1,3 @@
-
 import AuctioneerForm from '../auctioneer-form';
 import { createAuctioneer, type AuctioneerFormData } from '../actions';
 
@@ -17,5 +16,3 @@ export default async function NewAuctioneerPage() {
     />
   );
 }
-
-    

@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -58,6 +57,7 @@ export default function AuctioneerForm({
       logoUrl: initialData?.logoUrl || '',
       dataAiHintLogo: initialData?.dataAiHintLogo || '',
       description: initialData?.description || '',
+      userId: initialData?.userId || '',
     },
   });
 
@@ -120,7 +120,7 @@ export default function AuctioneerForm({
                 <FormItem>
                   <FormLabel>Número de Registro Oficial (Opcional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: JUCESP 123, Matrícula 001/AA" {...field} />
+                    <Input placeholder="Ex: JUCESP 123, Matrícula 001/AA" {...field} value={field.value ?? ""} />
                   </FormControl>
                   <FormDescription>Número de matrícula na Junta Comercial ou órgão competente.</FormDescription>
                   <FormMessage />
@@ -135,7 +135,7 @@ export default function AuctioneerForm({
                   <FormItem>
                     <FormLabel>Nome do Contato (Opcional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nome do responsável" {...field} />
+                      <Input placeholder="Nome do responsável" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -148,7 +148,7 @@ export default function AuctioneerForm({
                   <FormItem>
                     <FormLabel>Email de Contato (Opcional)</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="contato@leiloeiro.com" {...field} />
+                      <Input type="email" placeholder="contato@leiloeiro.com" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -163,7 +163,7 @@ export default function AuctioneerForm({
                   <FormItem>
                     <FormLabel>Telefone Principal (Opcional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="(XX) XXXXX-XXXX" {...field} />
+                      <Input placeholder="(XX) XXXXX-XXXX" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -176,7 +176,7 @@ export default function AuctioneerForm({
                   <FormItem>
                     <FormLabel>Website (Opcional)</FormLabel>
                     <FormControl>
-                      <Input type="url" placeholder="https://www.leiloeiro.com" {...field} />
+                      <Input type="url" placeholder="https://www.leiloeiro.com" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -190,7 +190,7 @@ export default function AuctioneerForm({
                   <FormItem>
                     <FormLabel>Endereço do Escritório/Pátio (Opcional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Rua Exemplo, 123, Bairro" {...field} />
+                      <Input placeholder="Rua Exemplo, 123, Bairro" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -204,7 +204,7 @@ export default function AuctioneerForm({
                   <FormItem>
                     <FormLabel>Cidade (Opcional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="São Paulo" {...field} />
+                      <Input placeholder="São Paulo" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -217,7 +217,7 @@ export default function AuctioneerForm({
                   <FormItem>
                     <FormLabel>Estado/UF (Opcional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="SP" {...field} />
+                      <Input placeholder="SP" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -230,7 +230,7 @@ export default function AuctioneerForm({
                   <FormItem>
                     <FormLabel>CEP (Opcional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="00000-000" {...field} />
+                      <Input placeholder="00000-000" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -244,7 +244,7 @@ export default function AuctioneerForm({
                   <FormItem>
                     <FormLabel>URL do Logo (Opcional)</FormLabel>
                     <FormControl>
-                      <Input type="url" placeholder="https://exemplo.com/logo-leiloeiro.png" {...field} />
+                      <Input type="url" placeholder="https://exemplo.com/logo-leiloeiro.png" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -257,7 +257,7 @@ export default function AuctioneerForm({
                   <FormItem>
                     <FormLabel>Dica para IA (Logo - Opcional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ex: martelo leilao, logo escritorio" {...field} />
+                      <Input placeholder="Ex: martelo leilao, logo escritorio" {...field} value={field.value ?? ""} />
                     </FormControl>
                      <FormDescription>Duas palavras chave para ajudar a IA encontrar uma imagem de placeholder, se a URL do logo não for fornecida.</FormDescription>
                     <FormMessage />
@@ -271,7 +271,7 @@ export default function AuctioneerForm({
                 <FormItem>
                   <FormLabel>Sobre o Leiloeiro/Empresa (Opcional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Breve descrição, especialidades, áreas de atuação..." {...field} rows={4} />
+                    <Textarea placeholder="Breve descrição, especialidades, áreas de atuação..." {...field} value={field.value ?? ""} rows={4} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -292,7 +292,3 @@ export default function AuctioneerForm({
     </Card>
   );
 }
-
-    
-
-    

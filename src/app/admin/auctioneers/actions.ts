@@ -1,15 +1,19 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { getDatabaseAdapter } from '@/lib/database';
 import type { AuctioneerProfileInfo, AuctioneerFormData } from '@/types';
+import { slugify } from '@/lib/sample-data';
 
 export async function createAuctioneer(
   data: AuctioneerFormData
 ): Promise<{ success: boolean; message: string; auctioneerId?: string }> {
   const db = await getDatabaseAdapter();
-  const result = await db.createAuctioneer(data);
+  const dataWithSlug: AuctioneerFormData & { slug: string } = {
+    ...data,
+    slug: slugify(data.name),
+  };
+  const result = await db.createAuctioneer(dataWithSlug);
   if (result.success) {
     revalidatePath('/admin/auctioneers');
   }
@@ -32,7 +36,7 @@ export async function getAuctioneerBySlug(slug: string): Promise<AuctioneerProfi
 }
 
 export async function getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> {
-  const auctioneers = await getAuctioneers(); // Not efficient
+  const auctioneers = await getAuctioneers(); // Not the most efficient for a single lookup
   const normalizedName = name.trim().toLowerCase();
   return auctioneers.find(auc => auc.name.toLowerCase() === normalizedName) || null;
 }
@@ -42,7 +46,13 @@ export async function updateAuctioneer(
   data: Partial<AuctioneerFormData>
 ): Promise<{ success: boolean; message: string }> {
   const db = await getDatabaseAdapter();
-  const result = await db.updateAuctioneer(id, data);
+  
+  const dataToUpdate: Partial<AuctioneerFormData & { slug?: string }> = { ...data };
+  if (data.name) {
+    dataToUpdate.slug = slugify(data.name);
+  }
+
+  const result = await db.updateAuctioneer(id, dataToUpdate);
   if (result.success) {
     revalidatePath('/admin/auctioneers');
     revalidatePath(`/admin/auctioneers/${id}/edit`);

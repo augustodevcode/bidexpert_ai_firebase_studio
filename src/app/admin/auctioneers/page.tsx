@@ -1,5 +1,4 @@
-
-"use client";
+'use client';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -25,22 +24,29 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
-function DeleteAuctioneerButton({ auctioneerId, auctioneerName, onDelete }: { auctioneerId: string; auctioneerName: string; onDelete: () => void }) {
-
+function DeleteAuctioneerButtonClient({ auctioneerId, auctioneerName, onDeleteSuccess }: { auctioneerId: string; auctioneerName: string; onDeleteSuccess: () => void }) {
   const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    const result = await deleteAuctioneer(auctioneerId);
+    if (result.success) {
+      toast({ title: "Sucesso", description: "Leiloeiro excluído com sucesso.", variant: "default" });
+      onDeleteSuccess();
+    } else {
+      toast({ title: "Erro", description: result.message || "Falha ao excluir leiloeiro.", variant: "destructive" });
+    }
+    setIsDeleting(false);
+  };
 
   return (
     <AlertDialog>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label="Excluir Leiloeiro">
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </AlertDialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent><p>Excluir Leiloeiro</p></TooltipContent>
-      </Tooltip>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80 h-8 w-8" aria-label="Excluir Leiloeiro" disabled={isDeleting}>
+           {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+        </Button>
+      </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
@@ -49,19 +55,13 @@ function DeleteAuctioneerButton({ auctioneerId, auctioneerName, onDelete }: { au
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
           <AlertDialogAction 
-            onClick={async () => {
-                const result = await deleteAuctioneer(auctioneerId);
-                if (result.success) {
-                  toast({ title: "Sucesso", description: "Leiloeiro excluído com sucesso.", variant: "default" });
-                } else {
-                  // If deletion fails, show error toast.
-                  toast({ title: "Erro", description: result.error || "Falha ao excluir leiloeiro.", variant: "destructive" });
-                }
-            }}
+            onClick={handleDelete}
+            disabled={isDeleting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
+            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Excluir
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -70,8 +70,8 @@ function DeleteAuctioneerButton({ auctioneerId, auctioneerName, onDelete }: { au
   );
 }
 
-export default function AdminAuctioneersPage() { // Agora um Client Component
-  const [auctioneers, setAuctioneers] = useState<AuctioneerProfileInfo[]>([]); // Estado para leiloeiros
+export default function AdminAuctioneersPage() {
+  const [auctioneers, setAuctioneers] = useState<AuctioneerProfileInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -93,12 +93,7 @@ export default function AdminAuctioneersPage() { // Agora um Client Component
     fetchAuctioneers();
   }, [fetchAuctioneers]);
 
-  const handleDeleteAuctioneer = useCallback(async () => {
-    await fetchAuctioneers(); // Refetch auctioneers after deletion
-  }, [fetchAuctioneers]);
-
   if (isLoading) {
-    // Renderiza o estado de loading enquanto busca os dados
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -108,7 +103,6 @@ export default function AdminAuctioneersPage() { // Agora um Client Component
   }
 
   return (
-    // Conteúdo da página renderizado após o carregamento
     <TooltipProvider>
       <div className="space-y-6">
         <Card className="shadow-lg">
@@ -122,11 +116,9 @@ export default function AdminAuctioneersPage() { // Agora um Client Component
                 Adicione, edite ou remova leiloeiros da plataforma.
               </CardDescription>
             </div>
-            <Button asChild> {/* Botão "Novo Leiloeiro" */}
-              <Link href="/admin/auctioneers/new"> {/* Link para a página de criação */}
-                <span> {/* Wrap icon and text in a span */}
-                  <PlusCircle className="mr-2 h-4 w-4" /> Novo Leiloeiro {/* Ícone e texto */}
-                </span>
+            <Button asChild>
+              <Link href="/admin/auctioneers/new">
+                <PlusCircle className="mr-2 h-4 w-4" /> Novo Leiloeiro
               </Link>
             </Button>
           </CardHeader>
@@ -137,7 +129,7 @@ export default function AdminAuctioneersPage() { // Agora um Client Component
                 <p className="font-semibold">Nenhum leiloeiro encontrado.</p>
                 <p className="text-sm">Comece adicionando um novo leiloeiro.</p>
               </div>
-            ) : ( // Se houver leiloeiros, renderiza a tabela
+            ) : (
               <div className="border rounded-md">
                 <Table>
                   <TableHeader>
@@ -150,10 +142,10 @@ export default function AdminAuctioneersPage() { // Agora um Client Component
                       <TableHead className="text-right w-[120px]">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody> {/* Corpo da tabela com os dados dos leiloeiros */}
-                    {auctioneers.map((auctioneer) => ( // Mapeia sobre a lista de leiloeiros
+                  <TableBody>
+                    {auctioneers.map((auctioneer) => (
                       <TableRow key={auctioneer.id}>
-                        <TableCell> {/* Célula para a logo */}
+                        <TableCell>
                           <Avatar className="h-9 w-9">
                             <AvatarImage src={auctioneer.logoUrl || `https://placehold.co/40x40.png?text=${auctioneer.name.charAt(0)}`} alt={auctioneer.name} data-ai-hint={auctioneer.dataAiHintLogo || "logo leiloeiro"} />
                             <AvatarFallback>{auctioneer.name.charAt(0)}</AvatarFallback>
@@ -161,32 +153,30 @@ export default function AdminAuctioneersPage() { // Agora um Client Component
                         </TableCell>
                         <TableCell className="font-medium">{auctioneer.name}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">{auctioneer.registrationNumber || '-'}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{auctioneer.email || '-'}</TableCell> {/* Célula para o email */}
-                        <TableCell className="text-xs text-muted-foreground">{auctioneer.phone || '-'}</TableCell> {/* Célula para o telefone */}
-                        <TableCell className="text-right"> {/* Célula para as ações */}
-                          <Tooltip> {/* Tooltip para o botão "Ver Leiloeiro" */}
+                        <TableCell className="text-xs text-muted-foreground">{auctioneer.email || '-'}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{auctioneer.phone || '-'}</TableCell>
+                        <TableCell className="text-right">
+                          <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="text-sky-600 hover:text-sky-700" disabled aria-label="Ver Leiloeiro">
-                                {/* Link para a página pública do leiloeiro (a ser criada) */}
-                                {/* <Link href={`/auctioneers/${auctioneer.slug}`} target="_blank">
+                               <Button variant="ghost" size="icon" asChild className="text-sky-600 hover:text-sky-700 h-8 w-8" aria-label="Ver Leiloeiro">
+                                <Link href={`/auctioneers/${auctioneer.slug || auctioneer.id}`} target="_blank">
                                   <ExternalLink className="h-4 w-4" />
-                                </Link> */}
-                                 <ExternalLink className="h-4 w-4" />
+                                </Link>
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent><p>Ver Leiloeiro (Em breve)</p></TooltipContent>
-                          </Tooltip> {/* Fim do Tooltip "Ver Leiloeiro" */}
-                          <Tooltip> {/* Tooltip para o botão "Editar Leiloeiro" */}
-                            <TooltipTrigger asChild> {/* Trigger do tooltip */}
-                              <Button variant="ghost" size="icon" asChild className="text-blue-600 hover:text-blue-700" aria-label="Editar Leiloeiro">
+                            <TooltipContent><p>Ver Leiloeiro</p></TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" asChild className="text-blue-600 hover:text-blue-700 h-8 w-8" aria-label="Editar Leiloeiro">
                                 <Link href={`/admin/auctioneers/${auctioneer.id}/edit`}>
                                   <Edit className="h-4 w-4" />
                                 </Link>
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent><p>Editar Leiloeiro</p></TooltipContent>
-                           </Tooltip> {/* Fim do Tooltip "Editar Leiloeiro" */}
-                          <DeleteAuctioneerButton auctioneerId={auctioneer.id} auctioneerName={auctioneer.name} onDelete={handleDeleteAuctioneer} />
+                           </Tooltip>
+                          <DeleteAuctioneerButtonClient auctioneerId={auctioneer.id} auctioneerName={auctioneer.name} onDeleteSuccess={fetchAuctioneers} />
                          </TableCell>
                       </TableRow>
                     ))}
