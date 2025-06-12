@@ -1,5 +1,13 @@
-
 import * as z from 'zod';
+
+const themeColorSchema = z.record(z.string().regex(/^hsl\(\d{1,3}(deg)?(\s\d{1,3}%){2}\)$/i, {
+    message: "Cor deve estar no formato HSL, ex: hsl(25 95% 53%)"
+}));
+
+const themeSchema = z.object({
+    name: z.string().min(1, "Nome do tema é obrigatório."),
+    colors: themeColorSchema,
+});
 
 export const platformSettingsFormSchema = z.object({
   galleryImageBasePath: z.string()
@@ -8,8 +16,13 @@ export const platformSettingsFormSchema = z.object({
     .endsWith("/", { message: "O caminho deve terminar com uma barra '/'." })
     .regex(/^(\/[a-zA-Z0-9_-]+)+\/$/, { message: "Caminho inválido. Use apenas letras, números, hífens, underscores e barras. Ex: /media/gallery/" })
     .max(200, { message: "O caminho não pode exceder 200 caracteres." }),
-  // Adicione outros campos de configuração aqui conforme necessário
-  // Ex: siteName: z.string().min(3).max(50),
+  themes: z.array(themeSchema).optional().default([]), // Lista de temas
+  platformPublicIdMasks: z.object({ // Opcional e pode ter qualquer chave como string
+    auctions: z.string().optional(),
+    lots: z.string().optional(),
+    auctioneers: z.string().optional(),
+    sellers: z.string().optional(),
+  }).optional().nullable(),
 });
 
 export type PlatformSettingsFormValues = z.infer<typeof platformSettingsFormSchema>;

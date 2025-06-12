@@ -7,13 +7,10 @@ import { slugify } from '@/lib/sample-data';
 
 export async function createAuctioneer(
   data: AuctioneerFormData
-): Promise<{ success: boolean; message: string; auctioneerId?: string }> {
+): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> {
   const db = await getDatabaseAdapter();
-  const dataWithSlug: AuctioneerFormData & { slug: string } = {
-    ...data,
-    slug: slugify(data.name),
-  };
-  const result = await db.createAuctioneer(dataWithSlug);
+  // publicId é gerado pelo adapter
+  const result = await db.createAuctioneer(data);
   if (result.success) {
     revalidatePath('/admin/auctioneers');
   }
@@ -27,22 +24,18 @@ export async function getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
 
 export async function getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {
   const db = await getDatabaseAdapter();
+  // O adapter agora lida com ID numérico ou publicId
   return db.getAuctioneer(id);
 }
 
-export async function getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null> {
+export async function getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
   const db = await getDatabaseAdapter();
-  return db.getAuctioneerBySlug(slug);
-}
-
-export async function getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> {
-  const auctioneers = await getAuctioneers(); // Not the most efficient for a single lookup
-  const normalizedName = name.trim().toLowerCase();
-  return auctioneers.find(auc => auc.name.toLowerCase() === normalizedName) || null;
+  // Esta função agora busca por publicId (ou slug se mantivermos essa lógica no adapter)
+  return db.getAuctioneerBySlug(slugOrPublicId);
 }
 
 export async function updateAuctioneer(
-  id: string,
+  idOrPublicId: string, // Pode ser o ID numérico ou o publicId
   data: Partial<AuctioneerFormData>
 ): Promise<{ success: boolean; message: string }> {
   const db = await getDatabaseAdapter();
@@ -52,19 +45,19 @@ export async function updateAuctioneer(
     dataToUpdate.slug = slugify(data.name);
   }
 
-  const result = await db.updateAuctioneer(id, dataToUpdate);
+  const result = await db.updateAuctioneer(idOrPublicId, dataToUpdate);
   if (result.success) {
     revalidatePath('/admin/auctioneers');
-    revalidatePath(`/admin/auctioneers/${id}/edit`);
+    revalidatePath(`/admin/auctioneers/${idOrPublicId}/edit`); // Idealmente, a rota usaria publicId
   }
   return result;
 }
 
 export async function deleteAuctioneer(
-  id: string
+  idOrPublicId: string // Pode ser o ID numérico ou o publicId
 ): Promise<{ success: boolean; message: string }> {
   const db = await getDatabaseAdapter();
-  const result = await db.deleteAuctioneer(id);
+  const result = await db.deleteAuctioneer(idOrPublicId);
   if (result.success) {
     revalidatePath('/admin/auctioneers');
   }

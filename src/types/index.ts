@@ -1,4 +1,3 @@
-
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
 
@@ -12,6 +11,14 @@ export type ClientTimestamp = FirebaseClientTimestamp;
 // Generic type for properties that could be any of these, or a JS Date
 export type AnyTimestamp = ServerTimestamp | ClientTimestamp | Date | null | undefined;
 
+export interface ThemeColors {
+  [colorVariable: string]: string; // e.g., '--primary': 'hsl(25, 95%, 53%)'
+}
+
+export interface Theme {
+  name: string;
+  colors: ThemeColors;
+}
 
 export interface Bid {
   bidder: string;
@@ -86,6 +93,7 @@ export interface MediaItem {
 
 export interface Lot {
   id: string; 
+  publicId: string;
   auctionId: string; 
   title: string; 
   number?: string; 
@@ -162,6 +170,7 @@ export interface Lot {
 // Este tipo é usado pelo formulário, que envia nomes
 export type LotFormData = Omit<Lot, 
   'id' | 
+  'publicId' |
   'createdAt' | 
   'updatedAt' | 
   'endDate' | 
@@ -185,8 +194,6 @@ export type LotFormData = Omit<Lot,
   secondAuctionDate?: Date | null;
   stateId?: string | null; 
   cityId?: string | null;  
-  // 'type' (nome da categoria) continua vindo do form
-  // 'categoryId' será o ID resolvido, usado pelos adaptadores
   galleryImageUrls?: string[]; 
   mediaItemIds?: string[]; 
   categoryId?: string; 
@@ -195,6 +202,7 @@ export type LotFormData = Omit<Lot,
 
 export interface Auction {
   id: string; 
+  publicId: string;
   title: string; 
   fullTitle?: string; 
   description?: string;
@@ -232,11 +240,11 @@ export interface Auction {
 }
 
 // Este tipo é usado pelo formulário, que envia nomes
-export type AuctionFormValues = Omit<Auction, 'id' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' | 'lots' | 'totalLots' | 'visits' | 'auctionStages' | 'initialOffer' | 'isFavorite' | 'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' | 'categoryId' | 'auctioneerId' | 'sellerId'> & {
+export type AuctionFormValues = Omit<Auction, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' | 'lots' | 'totalLots' | 'visits' | 'auctionStages' | 'initialOffer' | 'isFavorite' | 'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' | 'categoryId' | 'auctioneerId' | 'sellerId'> & {
   auctionDate: Date;
   endDate?: Date | null;
-  // category, auctioneer, seller são nomes aqui
 };
+
 // Este tipo é o que a action vai preparar para o adapter, com IDs resolvidos
 export type AuctionDbData = Omit<AuctionFormValues, 'category' | 'auctioneer' | 'seller'> & {
   categoryId?: string;
@@ -307,7 +315,6 @@ export interface UserProfileData {
 
 
 export type UserProfileWithPermissions = UserProfileData & {
-    // permissions are already in UserProfileData as optional
 };
 
 
@@ -346,6 +353,7 @@ export interface UserWin {
 
 export interface SellerProfileInfo {
   id: string; 
+  publicId: string;
   name: string;
   slug: string;
   contactName?: string;
@@ -369,13 +377,14 @@ export interface SellerProfileInfo {
   updatedAt: AnyTimestamp;
 }
 
-export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'activeLotsCount' | 'totalSalesValue' | 'auctionsFacilitatedCount' | 'userId'> & {
+export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'activeLotsCount' | 'totalSalesValue' | 'auctionsFacilitatedCount' | 'userId'> & {
   userId?: string; 
 };
 
 
 export interface AuctioneerProfileInfo {
   id: string; 
+  publicId: string;
   name: string;
   slug: string;
   registrationNumber?: string; 
@@ -399,7 +408,7 @@ export interface AuctioneerProfileInfo {
   updatedAt: AnyTimestamp;
 }
 
-export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'auctionsConductedCount' | 'totalValueSold' | 'userId'> & {
+export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'auctionsConductedCount' | 'totalValueSold' | 'userId'> & {
   userId?: string;
 };
 
@@ -482,6 +491,13 @@ export type EditableUserProfileData = Omit<UserProfileData, 'uid' | 'email' | 's
 export interface PlatformSettings {
   id: 'global'; 
   galleryImageBasePath: string;
+  themes?: Theme[];
+  platformPublicIdMasks?: {
+    auctions?: string;
+    lots?: string;
+    auctioneers?: string;
+    sellers?: string;
+  };
   updatedAt: AnyTimestamp;
 }
 
@@ -519,36 +535,36 @@ export interface IDatabaseAdapter {
   deleteCity(id: string): Promise<{ success: boolean; message: string }>;
   
   // Auctioneers
-  createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string }>;
+  createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }>;
   getAuctioneers(): Promise<AuctioneerProfileInfo[]>;
-  getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null>;
+  getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null>; // id can be numeric or publicId
   updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string }>;
   deleteAuctioneer(id: string): Promise<{ success: boolean; message: string }>;
-  getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null>;
+  getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null>; // This will now search by publicId
 
   // Sellers
-  createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string }>;
+  createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }>;
   getSellers(): Promise<SellerProfileInfo[]>;
-  getSeller(id: string): Promise<SellerProfileInfo | null>;
+  getSeller(id: string): Promise<SellerProfileInfo | null>; // id can be numeric or publicId
   updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string }>;
   deleteSeller(id: string): Promise<{ success: boolean; message: string }>;
-  getSellerBySlug(slug: string): Promise<SellerProfileInfo | null>;
+  getSellerBySlug(slug: string): Promise<SellerProfileInfo | null>; // This will now search by publicId
 
   // Auctions
-  createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string }>;
+  createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }>;
   getAuctions(): Promise<Auction[]>;
-  getAuction(id: string): Promise<Auction | null>;
+  getAuction(id: string): Promise<Auction | null>; // id can be numeric or publicId
   updateAuction(id: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string }>;
   deleteAuction(id: string): Promise<{ success: boolean; message: string }>;
-  getAuctionsBySellerSlug(sellerSlug: string): Promise<Auction[]>;
+  getAuctionsBySellerSlug(sellerPublicId: string): Promise<Auction[]>; // Changed from sellerSlug
 
   // Lots
-  createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; }>;
-  getLots(auctionIdParam?: string): Promise<Lot[]>;
-  getLot(id: string): Promise<Lot | null>;
+  createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }>;
+  getLots(auctionIdParam?: string): Promise<Lot[]>; // auctionIdParam could be publicId of auction
+  getLot(id: string): Promise<Lot | null>; // id can be numeric or publicId
   updateLot(id: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }>;
   deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string; }>;
-  getBidsForLot(lotId: string): Promise<BidInfo[]>;
+  getBidsForLot(lotId: string): Promise<BidInfo[]>; // lotId can be publicId
   placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }>;
   
   // Users (only profile data, auth is separate)
@@ -560,7 +576,7 @@ export interface IDatabaseAdapter {
     fullName: string | null, 
     targetRoleName: string, 
     additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' >>,
-    roleIdToAssign?: string // Adicionado para otimização
+    roleIdToAssign?: string 
   ): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }>;
   getUsersWithRoles(): Promise<UserProfileData[]>;
   updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }>;
@@ -612,8 +628,3 @@ export type LotDbData = Omit<LotFormData, 'type' | 'auctionName'> & {
 export type LotWithCategoryName = Lot & {
   categoryName?: string; 
 };
-
-
-
-
-

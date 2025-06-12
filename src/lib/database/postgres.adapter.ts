@@ -1,4 +1,3 @@
-
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -13,10 +12,12 @@ import type {
   UserProfileData, EditableUserProfileData, UserHabilitationStatus,
   Role, RoleFormData,
   MediaItem,
-  PlatformSettings, PlatformSettingsFormData,
+  PlatformSettings, PlatformSettingsFormData, Theme
 } from '@/types';
 import { slugify } from '@/lib/sample-data';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
+import { v4 as uuidv4 } from 'uuid'; // For generating public IDs
+
 
 let pool: Pool;
 
@@ -86,6 +87,7 @@ function mapToCityInfo(row: QueryResultRow): CityInfo {
 function mapToAuctioneerProfileInfo(row: QueryResultRow): AuctioneerProfileInfo {
     return {
         id: String(row.id),
+        publicId: row.publicId,
         name: row.name,
         slug: row.slug,
         registrationNumber: row.registrationNumber,
@@ -113,6 +115,7 @@ function mapToAuctioneerProfileInfo(row: QueryResultRow): AuctioneerProfileInfo 
 function mapToSellerProfileInfo(row: QueryResultRow): SellerProfileInfo {
     return {
         id: String(row.id),
+        publicId: row.publicId,
         name: row.name,
         slug: row.slug,
         contactName: row.contactName,
@@ -195,6 +198,7 @@ function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProf
 function mapToAuction(row: QueryResultRow): Auction {
     return {
         id: String(row.id),
+        publicId: row.publicId,
         title: row.title,
         fullTitle: row.fullTitle,
         description: row.description,
@@ -232,6 +236,7 @@ function mapToAuction(row: QueryResultRow): Auction {
 function mapToLot(row: QueryResultRow): Lot {
   return {
     id: String(row.id),
+    publicId: row.publicId,
     auctionId: String(row.auctionId),
     title: row.title,
     number: row.number,
@@ -337,9 +342,9 @@ function mapToMediaItem(row: QueryResultRow): MediaItem {
 function mapToPlatformSettings(row: QueryResultRow): PlatformSettings {
     return {
         id: String(row.id),
- themes: row.themes || [],
-        galleryImageBasePath: row.gallery_image_base_path,
- themes: row.themes || [],
+        galleryImageBasePath: row.galleryImageBasePath,
+        themes: row.themes || [],
+        platformPublicIdMasks: row.platformPublicIdMasks || undefined,
         updatedAt: new Date(row.updatedAt),
     };
 }
@@ -432,6 +437,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         id VARCHAR(50) PRIMARY KEY DEFAULT 'global',
         gallery_image_base_path TEXT NOT NULL DEFAULT '/media/gallery/',
         themes JSONB NOT NULL DEFAULT '[]'::jsonb,
+        platform_public_id_masks JSONB,
         updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP 
       );`,
 
@@ -475,6 +481,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
       `CREATE TABLE IF NOT EXISTS auctioneers (
         id SERIAL PRIMARY KEY,
+        public_id TEXT NOT NULL UNIQUE,
         name VARCHAR(255) NOT NULL,
         slug VARCHAR(255) NOT NULL UNIQUE,
         registration_number VARCHAR(100),
@@ -498,9 +505,11 @@ export class PostgresAdapter implements IDatabaseAdapter {
         updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
       `CREATE INDEX IF NOT EXISTS idx_auctioneers_slug ON auctioneers(slug);`,
+      `CREATE INDEX IF NOT EXISTS idx_auctioneers_public_id ON auctioneers(public_id);`,
 
       `CREATE TABLE IF NOT EXISTS sellers (
         id SERIAL PRIMARY KEY,
+        public_id TEXT NOT NULL UNIQUE,
         name VARCHAR(255) NOT NULL,
         slug VARCHAR(255) NOT NULL UNIQUE,
         contact_name VARCHAR(255),
@@ -524,9 +533,11 @@ export class PostgresAdapter implements IDatabaseAdapter {
         updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
       `CREATE INDEX IF NOT EXISTS idx_sellers_slug ON sellers(slug);`,
+      `CREATE INDEX IF NOT EXISTS idx_sellers_public_id ON sellers(public_id);`,
 
       `CREATE TABLE IF NOT EXISTS auctions (
         id SERIAL PRIMARY KEY,
+        public_id TEXT NOT NULL UNIQUE,
         title VARCHAR(255) NOT NULL,
         full_title TEXT,
         description TEXT,
@@ -554,6 +565,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
+      `CREATE INDEX IF NOT EXISTS idx_auctions_public_id ON auctions(public_id);`,
       `CREATE INDEX IF NOT EXISTS idx_auctions_status ON auctions(status);`,
       `CREATE INDEX IF NOT EXISTS idx_auctions_auction_date ON auctions(auction_date);`,
       `CREATE INDEX IF NOT EXISTS idx_auctions_category_id ON auctions(category_id);`,
@@ -562,6 +574,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       
       `CREATE TABLE IF NOT EXISTS lots (
         id SERIAL PRIMARY KEY,
+        public_id TEXT NOT NULL UNIQUE,
         auction_id INTEGER REFERENCES auctions(id) ON DELETE CASCADE NOT NULL,
         title VARCHAR(255) NOT NULL,
         "number" VARCHAR(50),
@@ -622,6 +635,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
+      `CREATE INDEX IF NOT EXISTS idx_lots_public_id ON lots(public_id);`,
       `CREATE INDEX IF NOT EXISTS idx_lots_auction_id ON lots(auction_id);`,
       `CREATE INDEX IF NOT EXISTS idx_lots_status ON lots(status);`,
       `CREATE INDEX IF NOT EXISTS idx_lots_category_id ON lots(category_id);`,
@@ -755,14 +769,21 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async getLotCategory(id: string): Promise<LotCategory | null> {
     const client = await getPool().connect();
     try {
-        const queryText = 'SELECT id, name, slug, description, item_count, created_at, updated_at FROM lot_categories WHERE id = $1;';
-        const res = await client.query(queryText, [Number(id)]);
-        if (res.rows.length > 0) {
-            return mapToLotCategory(mapRowToCamelCase(res.rows[0]));
+        const numericId = parseInt(id, 10);
+        if (isNaN(numericId)) { // Try by slug if ID is not numeric
+            const resBySlug = await client.query('SELECT id, name, slug, description, item_count, created_at, updated_at FROM lot_categories WHERE slug = $1;', [id]);
+            if (resBySlug.rows.length > 0) {
+                return mapToLotCategory(mapRowToCamelCase(resBySlug.rows[0]));
+            }
+            return null;
+        }
+        const resById = await client.query('SELECT id, name, slug, description, item_count, created_at, updated_at FROM lot_categories WHERE id = $1;', [numericId]);
+        if (resById.rows.length > 0) {
+            return mapToLotCategory(mapRowToCamelCase(resById.rows[0]));
         }
         return null;
     } catch (error: any) {
-        console.error(`[PostgresAdapter - getLotCategory with ID ${id}] Error:`, error);
+        console.error(`[PostgresAdapter - getLotCategory with ID/slug ${id}] Error:`, error);
         return null;
     } finally {
         client.release();
@@ -825,7 +846,13 @@ export class PostgresAdapter implements IDatabaseAdapter {
    async getState(id: string): Promise<StateInfo | null> {
     const client = await getPool().connect();
     try {
-      const res = await client.query('SELECT id, name, uf, slug, city_count, created_at, updated_at FROM states WHERE id = $1', [Number(id)]);
+      const numericId = parseInt(id, 10);
+      let res;
+      if (isNaN(numericId)) { // Assume it's a slug
+          res = await client.query('SELECT id, name, uf, slug, city_count, created_at, updated_at FROM states WHERE slug = $1', [id]);
+      } else {
+          res = await client.query('SELECT id, name, uf, slug, city_count, created_at, updated_at FROM states WHERE id = $1', [numericId]);
+      }
       if (res.rowCount === 0) return null;
       return mapToStateInfo(mapRowToCamelCase(res.rows[0]));
     } catch (e: any) { console.error(`[PostgresAdapter - getState(${id})] Error:`, e); return null; } finally { client.release(); }
@@ -873,7 +900,16 @@ export class PostgresAdapter implements IDatabaseAdapter {
     try {
         let queryText = 'SELECT id, name, slug, state_id, state_uf, ibge_code, lot_count, created_at, updated_at FROM cities';
         const values = [];
-        if (stateIdFilter) { queryText += ' WHERE state_id = $1'; values.push(Number(stateIdFilter)); }
+        if (stateIdFilter) { 
+            const numericStateIdFilter = parseInt(stateIdFilter, 10);
+            if (!isNaN(numericStateIdFilter)) {
+                queryText += ' WHERE state_id = $1'; 
+                values.push(numericStateIdFilter); 
+            } else { // Assume it's a slug
+                queryText += ' JOIN states s ON cities.state_id = s.id WHERE s.slug = $1';
+                values.push(stateIdFilter);
+            }
+        }
         queryText += ' ORDER BY name ASC';
         const res = await client.query(queryText, values);
         return mapRowsToCamelCase(res.rows).map(mapToCityInfo);
@@ -882,7 +918,25 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async getCity(id: string): Promise<CityInfo | null> {
     const client = await getPool().connect();
     try {
-      const res = await client.query('SELECT id, name, slug, state_id, state_uf, ibge_code, lot_count, created_at, updated_at FROM cities WHERE id = $1', [Number(id)]);
+      const numericId = parseInt(id, 10);
+      let res;
+      if (isNaN(numericId)) { // Try by stateId-citySlug combination
+          const parts = id.split('-');
+          if (parts.length > 1) {
+              const citySlug = parts.pop();
+              const stateSlugOrId = parts.join('-'); 
+              const stateNumericId = parseInt(stateSlugOrId, 10);
+              if (!isNaN(stateNumericId)) {
+                 res = await client.query('SELECT * FROM cities WHERE slug = $1 AND state_id = $2', [citySlug, stateNumericId]);
+              } else {
+                 res = await client.query('SELECT ci.* FROM cities ci JOIN states s ON ci.state_id = s.id WHERE ci.slug = $1 AND s.slug = $2', [citySlug, stateSlugOrId]);
+              }
+          } else {
+            return null; // Invalid composite ID format
+          }
+      } else {
+          res = await client.query('SELECT * FROM cities WHERE id = $1', [numericId]);
+      }
       if (res.rowCount === 0) return null;
       return mapToCityInfo(mapRowToCamelCase(res.rows[0]));
     } catch (e: any) { console.error(`[PostgresAdapter - getCity(${id})] Error:`, e); return null; } finally { client.release(); }
@@ -923,23 +977,24 @@ export class PostgresAdapter implements IDatabaseAdapter {
   }
 
   // --- Auctioneers ---
-  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
+  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> {
     const client = await getPool().connect();
     try {
       const slug = slugify(data.name);
+      const publicId = `LEIL-${slugify(data.name.substring(0,5))}-${uuidv4().substring(0,8)}`;
       const query = `
         INSERT INTO auctioneers 
-          (name, slug, registration_number, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since, rating, auctions_conducted_count, total_value_sold, user_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), 0, 0, 0, $15, NOW(), NOW())
+          (public_id, name, slug, registration_number, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since, rating, auctions_conducted_count, total_value_sold, user_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), 0, 0, 0, $16, NOW(), NOW())
         RETURNING id;
       `;
       const values = [
-        data.name, slug, data.registrationNumber || null, data.contactName || null, data.email || null, data.phone || null,
+        publicId, data.name, slug, data.registrationNumber || null, data.contactName || null, data.email || null, data.phone || null,
         data.address || null, data.city || null, data.state || null, data.zipCode || null, data.website || null,
         data.logoUrl || null, data.dataAiHintLogo || null, data.description || null, data.userId || null
       ];
       const res = await client.query(query, values);
-      return { success: true, message: 'Leiloeiro criado (PostgreSQL)!', auctioneerId: String(res.rows[0].id) };
+      return { success: true, message: 'Leiloeiro criado (PostgreSQL)!', auctioneerId: String(res.rows[0].id), auctioneerPublicId: publicId };
     } catch (e: any) { console.error(`[PostgresAdapter - createAuctioneer] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
 
@@ -954,19 +1009,29 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {
     const client = await getPool().connect();
     try {
-      const res = await client.query('SELECT * FROM auctioneers WHERE id = $1;', [Number(id)]);
+      let queryText = 'SELECT * FROM auctioneers WHERE public_id = $1 LIMIT 1;';
+      let values: (string | number)[] = [id];
+      const numericId = Number(id);
+      if (!isNaN(numericId)) {
+        queryText = 'SELECT * FROM auctioneers WHERE id = $1 OR public_id = $2 LIMIT 1;';
+        values = [numericId, id];
+      }
+      const res = await client.query(queryText, values);
       if (res.rowCount === 0) return null;
       return mapToAuctioneerProfileInfo(mapRowToCamelCase(res.rows[0]));
     } catch (e: any) { console.error(`[PostgresAdapter - getAuctioneer(${id})] Error:`, e); return null; } finally { client.release(); }
   }
 
-  async getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null> {
+  async getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
     const client = await getPool().connect();
-    try {
-      const res = await client.query('SELECT * FROM auctioneers WHERE slug = $1 LIMIT 1;', [slug]);
+    try { // Prioritize public_id then slug
+      let res = await client.query('SELECT * FROM auctioneers WHERE public_id = $1 LIMIT 1;', [slugOrPublicId]);
+      if (res.rowCount === 0) {
+        res = await client.query('SELECT * FROM auctioneers WHERE slug = $1 LIMIT 1;', [slugOrPublicId]);
+      }
       if (res.rowCount === 0) return null;
       return mapToAuctioneerProfileInfo(mapRowToCamelCase(res.rows[0]));
-    } catch (e: any) { console.error(`[PostgresAdapter - getAuctioneerBySlug(${slug})] Error:`, e); return null; } finally { client.release(); }
+    } catch (e: any) { console.error(`[PostgresAdapter - getAuctioneerBySlug(${slugOrPublicId})] Error:`, e); return null; } finally { client.release(); }
   }
 
   async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
@@ -975,6 +1040,14 @@ export class PostgresAdapter implements IDatabaseAdapter {
       const fields: string[] = [];
       const values: any[] = [];
       let paramCount = 1;
+      let whereCondition = 'public_id = $';
+      let idValue: string | number = id;
+
+      const numericId = Number(id);
+      if (!isNaN(numericId)) {
+        whereCondition = 'id = $';
+        idValue = numericId;
+      }
 
       (Object.keys(data) as Array<keyof AuctioneerFormData>).forEach(key => {
         if (data[key] !== undefined) {
@@ -988,8 +1061,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
       if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o leiloeiro." };
 
       fields.push(`updated_at = NOW()`);
-      const queryText = `UPDATE auctioneers SET ${fields.join(', ')} WHERE id = $${paramCount}`;
-      values.push(Number(id));
+      const queryText = `UPDATE auctioneers SET ${fields.join(', ')} WHERE ${whereCondition}${paramCount++}`;
+      values.push(idValue);
 
       await client.query(queryText, values);
       return { success: true, message: 'Leiloeiro atualizado (PostgreSQL)!' };
@@ -999,29 +1072,36 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
-      await client.query('DELETE FROM auctioneers WHERE id = $1;', [Number(id)]);
+      const numericId = Number(id);
+      if (!isNaN(numericId)) {
+        await client.query('DELETE FROM auctioneers WHERE id = $1;', [numericId]);
+      } else {
+        await client.query('DELETE FROM auctioneers WHERE public_id = $1;', [id]);
+      }
       return { success: true, message: 'Leiloeiro excluído (PostgreSQL)!' };
     } catch (e: any) { console.error(`[PostgresAdapter - deleteAuctioneer(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
   
   // --- Sellers ---
-  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
+  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> {
     const client = await getPool().connect();
     try {
       const slug = slugify(data.name);
+      const publicId = `SELL-${slugify(data.name.substring(0,5))}-${uuidv4().substring(0,8)}`;
       const query = `
         INSERT INTO sellers 
-          (name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since, rating, active_lots_count, total_sales_value, auctions_facilitated_count, user_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), 0, 0, 0, 0, $15, NOW(), NOW())
+          (public_id, name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, user_id, 
+           member_since, rating, active_lots_count, total_sales_value, auctions_facilitated_count, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), 0, 0, 0, 0, NOW(), NOW())
         RETURNING id;
       `;
       const values = [
-        data.name, slug, data.contactName || null, data.email || null, data.phone || null,
+        publicId, data.name, slug, data.contactName || null, data.email || null, data.phone || null,
         data.address || null, data.city || null, data.state || null, data.zipCode || null, data.website || null,
         data.logoUrl || null, data.dataAiHintLogo || null, data.description || null, data.userId || null
       ];
       const res = await client.query(query, values);
-      return { success: true, message: 'Comitente criado (PostgreSQL)!', sellerId: String(res.rows[0].id) };
+      return { success: true, message: 'Comitente criado (PostgreSQL)!', sellerId: String(res.rows[0].id), sellerPublicId: publicId };
     } catch (e: any) { console.error(`[PostgresAdapter - createSeller] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
 
@@ -1036,19 +1116,29 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async getSeller(id: string): Promise<SellerProfileInfo | null> {
     const client = await getPool().connect();
     try {
-      const res = await client.query('SELECT * FROM sellers WHERE id = $1;', [Number(id)]);
+      let queryText = 'SELECT * FROM sellers WHERE public_id = $1 LIMIT 1;';
+      let values: (string | number)[] = [id];
+      const numericId = Number(id);
+      if (!isNaN(numericId)) {
+        queryText = 'SELECT * FROM sellers WHERE id = $1 OR public_id = $2 LIMIT 1;';
+        values = [numericId, id];
+      }
+      const res = await client.query(queryText, values);
       if (res.rowCount === 0) return null;
       return mapToSellerProfileInfo(mapRowToCamelCase(res.rows[0]));
     } catch (e: any) { console.error(`[PostgresAdapter - getSeller(${id})] Error:`, e); return null; } finally { client.release(); }
   }
 
-  async getSellerBySlug(slug: string): Promise<SellerProfileInfo | null> {
+  async getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null> {
     const client = await getPool().connect();
     try {
-      const res = await client.query('SELECT * FROM sellers WHERE slug = $1 LIMIT 1;', [slug]);
+      let res = await client.query('SELECT * FROM sellers WHERE public_id = $1 LIMIT 1;', [slugOrPublicId]);
+      if (res.rowCount === 0) {
+        res = await client.query('SELECT * FROM sellers WHERE slug = $1 LIMIT 1;', [slugOrPublicId]);
+      }
       if (res.rowCount === 0) return null;
       return mapToSellerProfileInfo(mapRowToCamelCase(res.rows[0]));
-    } catch (e: any) { console.error(`[PostgresAdapter - getSellerBySlug(${slug})] Error:`, e); return null; } finally { client.release(); }
+    } catch (e: any) { console.error(`[PostgresAdapter - getSellerBySlug(${slugOrPublicId})] Error:`, e); return null; } finally { client.release(); }
   }
 
   async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
@@ -1057,6 +1147,14 @@ export class PostgresAdapter implements IDatabaseAdapter {
       const fields: string[] = [];
       const values: any[] = [];
       let paramCount = 1;
+      let whereCondition = 'public_id = $';
+      let idValue: string | number = id;
+
+      const numericId = Number(id);
+      if (!isNaN(numericId)) {
+        whereCondition = 'id = $';
+        idValue = numericId;
+      }
 
       (Object.keys(data) as Array<keyof SellerFormData>).forEach(key => {
         if (data[key] !== undefined) {
@@ -1070,8 +1168,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
       if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o comitente." };
 
       fields.push(`updated_at = NOW()`);
-      const queryText = `UPDATE sellers SET ${fields.join(', ')} WHERE id = $${paramCount}`;
-      values.push(Number(id));
+      const queryText = `UPDATE sellers SET ${fields.join(', ')} WHERE ${whereCondition}${paramCount++}`;
+      values.push(idValue);
 
       await client.query(queryText, values);
       return { success: true, message: 'Comitente atualizado (PostgreSQL)!' };
@@ -1081,24 +1179,30 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
-      await client.query('DELETE FROM sellers WHERE id = $1;', [Number(id)]);
+      const numericId = Number(id);
+      if (!isNaN(numericId)) {
+        await client.query('DELETE FROM sellers WHERE id = $1;', [numericId]);
+      } else {
+        await client.query('DELETE FROM sellers WHERE public_id = $1;', [id]);
+      }
       return { success: true, message: 'Comitente excluído (PostgreSQL)!' };
     } catch (e: any) { console.error(`[PostgresAdapter - deleteSeller(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
 
 
   // --- Auctions ---
-  async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; }> {
+  async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> {
     const client = await getPool().connect();
     try {
+      const publicId = `LEI-${slugify(data.title.substring(0,10))}-${uuidv4().substring(0,8)}`;
       const query = `
         INSERT INTO auctions 
-          (title, full_title, description, status, auction_type, category_id, auctioneer_id, seller_id, auction_date, end_date, auction_stages, city, state, image_url, data_ai_hint, documents_url, total_lots, visits, initial_offer, selling_branch, vehicle_location, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12, $13, $14, $15, $16, 0, 0, $17, $18, $19, NOW(), NOW())
+          (public_id, title, full_title, description, status, auction_type, category_id, auctioneer_id, seller_id, auction_date, end_date, auction_stages, city, state, image_url, data_ai_hint, documents_url, total_lots, visits, initial_offer, selling_branch, vehicle_location, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13, $14, $15, $16, $17, 0, 0, $18, $19, $20, NOW(), NOW())
         RETURNING id;
       `;
       const values = [
-        data.title, data.fullTitle || null, data.description || null, data.status, data.auctionType || null,
+        publicId, data.title, data.fullTitle || null, data.description || null, data.status, data.auctionType || null,
         data.categoryId ? Number(data.categoryId) : null, 
         data.auctioneerId ? Number(data.auctioneerId) : null, 
         data.sellerId ? Number(data.sellerId) : null,
@@ -1107,7 +1211,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         data.initialOffer || null, data.sellingBranch || null, data.vehicleLocation || null
       ];
       const res = await client.query(query, values);
-      return { success: true, message: 'Leilão criado (PostgreSQL)!', auctionId: String(res.rows[0].id) };
+      return { success: true, message: 'Leilão criado (PostgreSQL)!', auctionId: String(res.rows[0].id), auctionPublicId: publicId };
     } catch (e: any) { console.error(`[PostgresAdapter - createAuction] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
   
@@ -1130,24 +1234,38 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async getAuction(id: string): Promise<Auction | null> {
     const client = await getPool().connect();
     try {
-      const query = `
+      let queryText = `
         SELECT a.*, lc.name as category_name, act.name as auctioneer_name, s.name as seller_name, act.logo_url as auctioneer_logo_url
         FROM auctions a
         LEFT JOIN lot_categories lc ON a.category_id = lc.id
         LEFT JOIN auctioneers act ON a.auctioneer_id = act.id
         LEFT JOIN sellers s ON a.seller_id = s.id
-        WHERE a.id = $1;
+        WHERE a.public_id = $1 LIMIT 1;
       `;
-      const res = await client.query(query, [Number(id)]);
+      let values: (string | number)[] = [id];
+      
+      const numericId = Number(id);
+      if (!isNaN(numericId)) {
+        queryText = `
+        SELECT a.*, lc.name as category_name, act.name as auctioneer_name, s.name as seller_name, act.logo_url as auctioneer_logo_url
+        FROM auctions a
+        LEFT JOIN lot_categories lc ON a.category_id = lc.id
+        LEFT JOIN auctioneers act ON a.auctioneer_id = act.id
+        LEFT JOIN sellers s ON a.seller_id = s.id
+        WHERE a.id = $1 OR a.public_id = $2 LIMIT 1;`;
+        values = [numericId, id];
+      }
+      
+      const res = await client.query(queryText, values);
       if (res.rowCount === 0) return null;
       return mapToAuction(mapRowToCamelCase(res.rows[0]));
     } catch (e: any) { console.error(`[PostgresAdapter - getAuction(${id})] Error:`, e); return null; } finally { client.release(); }
   }
 
-  async getAuctionsBySellerSlug(sellerSlug: string): Promise<Auction[]> {
+  async getAuctionsBySellerSlug(sellerPublicId: string): Promise<Auction[]> { // Changed from sellerSlug
     const client = await getPool().connect();
     try {
-        const sellerRes = await client.query('SELECT id, name FROM sellers WHERE slug = $1 LIMIT 1', [sellerSlug]);
+        const sellerRes = await client.query('SELECT id, name FROM sellers WHERE public_id = $1 LIMIT 1', [sellerPublicId]);
         if (sellerRes.rowCount === 0) return [];
         const sellerId = sellerRes.rows[0].id;
         const sellerName = sellerRes.rows[0].name;
@@ -1162,7 +1280,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         `;
         const res = await client.query(query, [sellerId, sellerName]);
         return mapRowsToCamelCase(res.rows).map(mapToAuction);
-    } catch (e: any) { console.error(`[PostgresAdapter - getAuctionsBySellerSlug(${sellerSlug})] Error:`, e); return []; } finally { client.release(); }
+    } catch (e: any) { console.error(`[PostgresAdapter - getAuctionsBySellerSlug(${sellerPublicId})] Error:`, e); return []; } finally { client.release(); }
   }
 
   async updateAuction(id: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> {
@@ -1171,6 +1289,14 @@ export class PostgresAdapter implements IDatabaseAdapter {
       const fields: string[] = [];
       const values: any[] = [];
       let paramCount = 1;
+      let whereCondition = 'public_id = $';
+      let idValue: string | number = id;
+
+      const numericId = Number(id);
+      if (!isNaN(numericId)) {
+        whereCondition = 'id = $';
+        idValue = numericId;
+      }
 
       (Object.keys(data) as Array<keyof AuctionDbData>).forEach(key => {
         if (data[key] !== undefined && key !== 'auctionDate' && key !== 'endDate' && key !== 'auctionStages') {
@@ -1187,8 +1313,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
       if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o leilão." };
 
       fields.push(`updated_at = NOW()`);
-      const queryText = `UPDATE auctions SET ${fields.join(', ')} WHERE id = $${paramCount}`;
-      values.push(Number(id));
+      const queryText = `UPDATE auctions SET ${fields.join(', ')} WHERE ${whereCondition}${paramCount++}`;
+      values.push(idValue);
 
       await client.query(queryText, values);
       return { success: true, message: 'Leilão atualizado (PostgreSQL)!' };
@@ -1198,18 +1324,24 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async deleteAuction(id: string): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
-      await client.query('DELETE FROM auctions WHERE id = $1;', [Number(id)]);
+      const numericId = Number(id);
+      if (!isNaN(numericId)) {
+        await client.query('DELETE FROM auctions WHERE id = $1;', [numericId]);
+      } else {
+        await client.query('DELETE FROM auctions WHERE public_id = $1;', [id]);
+      }
       return { success: true, message: 'Leilão excluído (PostgreSQL)!' };
     } catch (e: any) { console.error(`[PostgresAdapter - deleteAuction(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
 
   // --- Lots ---
-  async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; }> {
+  async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> {
     const client = await getPool().connect();
     try {
+      const publicId = `LOT-${slugify(data.title.substring(0,10))}-${uuidv4().substring(0,8)}`;
       const query = `
         INSERT INTO lots (
-          auction_id, title, "number", image_url, data_ai_hint, gallery_image_urls, media_item_ids, status, 
+          public_id, auction_id, title, "number", image_url, data_ai_hint, gallery_image_urls, media_item_ids, status, 
           state_id, city_id, category_id, views, price, initial_price, 
           lot_specific_auction_date, second_auction_date, second_initial_price, end_date, 
           bids_count, is_favorite, is_featured, description, year, make, model, series,
@@ -1221,14 +1353,14 @@ export class PostgresAdapter implements IDatabaseAdapter {
           estimated_repair_cost, seller_id_fk, auctioneer_id_fk, condition,
           created_at, updated_at
         ) VALUES (
-          $1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
+          $1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
           $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38,
           $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, $55, $56,
           NOW(), NOW()
         ) RETURNING id;
       `;
       const values = [
-        Number(data.auctionId), data.title, data.number || null, data.imageUrl || null, data.dataAiHint || null,
+        publicId, Number(data.auctionId), data.title, data.number || null, data.imageUrl || null, data.dataAiHint || null,
         JSON.stringify(data.galleryImageUrls || []), JSON.stringify(data.mediaItemIds || []), data.status,
         data.stateId ? Number(data.stateId) : null, data.cityId ? Number(data.cityId) : null, data.categoryId ? Number(data.categoryId) : null,
         data.views || 0, data.price, data.initialPrice || null,
@@ -1248,7 +1380,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         data.condition || null
       ];
       const res = await client.query(query, values);
-      return { success: true, message: 'Lote criado (PostgreSQL)!', lotId: String(res.rows[0].id) };
+      return { success: true, message: 'Lote criado (PostgreSQL)!', lotId: String(res.rows[0].id), lotPublicId: publicId };
     } catch (e: any) { console.error(`[PostgresAdapter - createLot] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
   
@@ -1272,10 +1404,17 @@ export class PostgresAdapter implements IDatabaseAdapter {
         LEFT JOIN sellers sel ON l.seller_id_fk = sel.id
         LEFT JOIN auctioneers act ON l.auctioneer_id_fk = act.id
       `;
-      const values = [];
+      const values: (string | number)[] = [];
       if (auctionIdParam) {
-        queryText += ' WHERE l.auction_id = $1';
-        values.push(Number(auctionIdParam));
+        const numericAuctionId = Number(auctionIdParam);
+        if (!isNaN(numericAuctionId)) {
+          queryText += ' WHERE l.auction_id = $1';
+          values.push(numericAuctionId);
+        } else {
+          // Assume auctionIdParam is public_id for auction
+          queryText += ' JOIN auctions a_filter ON l.auction_id = a_filter.id WHERE a_filter.public_id = $1';
+          values.push(auctionIdParam);
+        }
         queryText += ' ORDER BY l.title ASC;';
       } else {
         queryText += ' ORDER BY l.created_at DESC;';
@@ -1288,7 +1427,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async getLot(id: string): Promise<Lot | null> {
     const client = await getPool().connect();
     try {
-      const queryText = `
+      let queryText = `
         SELECT 
           l.*, 
           a.title as auction_name, 
@@ -1304,9 +1443,31 @@ export class PostgresAdapter implements IDatabaseAdapter {
         LEFT JOIN cities ci ON l.city_id = ci.id
         LEFT JOIN sellers sel ON l.seller_id_fk = sel.id
         LEFT JOIN auctioneers act ON l.auctioneer_id_fk = act.id
-        WHERE l.id = $1;
+        WHERE l.public_id = $1 LIMIT 1;
       `;
-      const res = await client.query(queryText, [Number(id)]);
+      let values: (string | number)[] = [id];
+      const numericId = Number(id);
+      if (!isNaN(numericId)) {
+        queryText = `
+        SELECT 
+          l.*, 
+          a.title as auction_name, 
+          lc.name as category_name, 
+          s.uf as state_uf, 
+          ci.name as city_name,
+          sel.name as lot_seller_name,
+          act.name as lot_auctioneer_name
+        FROM lots l
+        LEFT JOIN auctions a ON l.auction_id = a.id
+        LEFT JOIN lot_categories lc ON l.category_id = lc.id
+        LEFT JOIN states s ON l.state_id = s.id
+        LEFT JOIN cities ci ON l.city_id = ci.id
+        LEFT JOIN sellers sel ON l.seller_id_fk = sel.id
+        LEFT JOIN auctioneers act ON l.auctioneer_id_fk = act.id
+        WHERE l.id = $1 OR l.public_id = $2 LIMIT 1;`;
+        values = [numericId, id];
+      }
+      const res = await client.query(queryText, values);
       if (res.rowCount === 0) return null;
       return mapToLot(mapRowToCamelCase(res.rows[0]));
     } catch (e: any) { console.error(`[PostgresAdapter - getLot(${id})] Error:`, e); return null; } finally { client.release(); }
@@ -1318,11 +1479,19 @@ export class PostgresAdapter implements IDatabaseAdapter {
       const fields: string[] = [];
       const values: any[] = [];
       let paramCount = 1;
+      let whereCondition = 'public_id = $';
+      let idValue: string | number = id;
+
+      const numericId = Number(id);
+      if (!isNaN(numericId)) {
+        whereCondition = 'id = $';
+        idValue = numericId;
+      }
 
       (Object.keys(data) as Array<keyof LotDbData>).forEach(key => {
         if (data[key] !== undefined && key !== 'endDate' && key !== 'lotSpecificAuctionDate' && key !== 'secondAuctionDate' && key !== 'type' && key !== 'auctionName') {
             const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
-            const escapedColumn = sqlColumn === 'number' ? `"${sqlColumn}"` : sqlColumn;
+            const escapedColumn = sqlColumn === 'number' ? `"${sqlColumn}"` : sqlColumn; // Escape "number"
             fields.push(`${escapedColumn} = $${paramCount++}`);
             const value = data[key];
             if (key === 'galleryImageUrls' || key === 'mediaItemIds') {
@@ -1339,8 +1508,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
       if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o lote." };
 
       fields.push(`updated_at = NOW()`);
-      const queryText = `UPDATE lots SET ${fields.join(', ')} WHERE id = $${paramCount}`;
-      values.push(Number(id));
+      const queryText = `UPDATE lots SET ${fields.join(', ')} WHERE ${whereCondition}${paramCount++}`;
+      values.push(idValue);
       
       await client.query(queryText, values);
       return { success: true, message: 'Lote atualizado (PostgreSQL)!' };
@@ -1350,7 +1519,12 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
-      await client.query('DELETE FROM lots WHERE id = $1', [Number(id)]);
+      const numericId = Number(id);
+      if (!isNaN(numericId)) {
+        await client.query('DELETE FROM lots WHERE id = $1', [numericId]);
+      } else {
+        await client.query('DELETE FROM lots WHERE public_id = $1', [id]);
+      }
       return { success: true, message: 'Lote excluído (PostgreSQL)!' };
     } catch (e: any) { console.error(`[PostgresAdapter - deleteLot(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
@@ -1358,8 +1532,17 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async getBidsForLot(lotId: string): Promise<BidInfo[]> {
     const client = await getPool().connect();
     try {
-        const query = 'SELECT * FROM bids WHERE lot_id = $1 ORDER BY "timestamp" DESC;';
-        const res = await client.query(query, [Number(lotId)]);
+        let query = 'SELECT * FROM bids WHERE ';
+        const values: (string | number)[] = [lotId];
+        const numericLotId = Number(lotId);
+        if (!isNaN(numericLotId)) {
+          query += 'lot_id = $1 OR lot_id = (SELECT id FROM lots WHERE public_id = $2 LIMIT 1)';
+          values.unshift(numericLotId);
+        } else {
+          query += 'lot_id = (SELECT id FROM lots WHERE public_id = $1 LIMIT 1)';
+        }
+        query += ' ORDER BY "timestamp" DESC;';
+        const res = await client.query(query, values);
         return mapRowsToCamelCase(res.rows).map(mapToBidInfo);
     } catch (e: any) { console.error(`[PostgresAdapter - getBidsForLot(${lotId})] Error:`, e); return []; } finally { client.release(); }
   }
@@ -1368,22 +1551,40 @@ export class PostgresAdapter implements IDatabaseAdapter {
     const client = await getPool().connect();
     try {
         await client.query('BEGIN');
-        const lotRes = await client.query('SELECT price, bids_count FROM lots WHERE id = $1 FOR UPDATE', [Number(lotId)]);
-        if (lotRes.rowCount === 0) { await client.query('ROLLBACK'); return { success: false, message: "Lote não encontrado."}; }
-        const lotData = mapRowToCamelCase(lotRes.rows[0]);
-        if (bidAmount <= Number(lotData.price)) { await client.query('ROLLBACK'); return { success: false, message: "Lance deve ser maior que o atual."}; }
         
+        let lotQueryText = 'SELECT id, price, bids_count FROM lots WHERE public_id = $1 LIMIT 1 FOR UPDATE';
+        let lotQueryValues: (string|number)[] = [lotId];
+        const numericLotId = Number(lotId);
+        if(!isNaN(numericLotId)){
+            lotQueryText = 'SELECT id, price, bids_count FROM lots WHERE id = $1 OR public_id = $2 LIMIT 1 FOR UPDATE';
+            lotQueryValues = [numericLotId, lotId];
+        }
+        const lotRes = await client.query(lotQueryText, lotQueryValues);
+
+        if (lotRes.rowCount === 0) { await client.query('ROLLBACK'); return { success: false, message: "Lote não encontrado."}; }
+        const lotDataDB = mapRowToCamelCase(lotRes.rows[0]);
+        const actualNumericLotId = lotDataDB.id;
+
+        if (bidAmount <= Number(lotDataDB.price)) { await client.query('ROLLBACK'); return { success: false, message: "Lance deve ser maior que o atual."}; }
+        
+        const numericAuctionId = Number(auctionId);
+        if (isNaN(numericAuctionId)) {
+            await client.query('ROLLBACK');
+            console.error(`[PostgresAdapter - placeBidOnLot] auctionId inválido: ${auctionId}`);
+            return { success: false, message: "ID do leilão inválido."};
+        }
+
         const insertBidQuery = 'INSERT INTO bids (lot_id, auction_id, bidder_id, bidder_display_name, amount, "timestamp") VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *;';
-        const bidRes = await client.query(insertBidQuery, [Number(lotId), Number(auctionId), userId, userDisplayName, bidAmount]);
+        const bidRes = await client.query(insertBidQuery, [actualNumericLotId, numericAuctionId, userId, userDisplayName, bidAmount]);
         
         const updateLotQuery = 'UPDATE lots SET price = $1, bids_count = bids_count + 1, updated_at = NOW() WHERE id = $2;';
-        await client.query(updateLotQuery, [bidAmount, Number(lotId)]);
+        await client.query(updateLotQuery, [bidAmount, actualNumericLotId]);
         
         await client.query('COMMIT');
         return { 
             success: true, 
             message: "Lance registrado!", 
-            updatedLot: { price: bidAmount, bidsCount: Number(lotData.bidsCount || 0) + 1 }, 
+            updatedLot: { price: bidAmount, bidsCount: Number(lotDataDB.bidsCount || 0) + 1 }, 
             newBid: mapToBidInfo(mapRowToCamelCase(bidRes.rows[0]))
         };
     } catch (e: any) { 
@@ -1468,9 +1669,9 @@ export class PostgresAdapter implements IDatabaseAdapter {
         if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o perfil."};
         
         fields.push(`updated_at = NOW()`);
-        const queryText = `UPDATE roles SET ${fields.join(', ')} WHERE id = $${paramCount}`;
+        query += fields.join(', ') + ` WHERE id = $${paramCount}`;
         values.push(Number(id));
-        await client.query(queryText, values);
+        await client.query(query, values);
         return { success: true, message: 'Perfil atualizado!' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
   }
@@ -1790,15 +1991,13 @@ export class PostgresAdapter implements IDatabaseAdapter {
       await client.query('BEGIN');
       for (const mediaId of mediaItemIds) {
         await client.query(
-          `UPDATE media_items 
-           SET linked_lot_ids = COALESCE(linked_lot_ids, '[]'::jsonb) || ($1::TEXT)::jsonb
+          `UPDATE media_items SET linked_lot_ids = COALESCE(linked_lot_ids, '[]'::jsonb) || ($1::TEXT)::jsonb
            WHERE id = $2 AND NOT (linked_lot_ids @> ($1::TEXT)::jsonb);`,
           [JSON.stringify([lotId]), Number(mediaId)]
         );
       }
       await client.query(
-        `UPDATE lots 
-         SET media_item_ids = COALESCE(media_item_ids, '[]'::jsonb) || $1::jsonb, updated_at = NOW() 
+        `UPDATE lots SET media_item_ids = COALESCE(media_item_ids, '[]'::jsonb) || $1::jsonb, updated_at = NOW() 
          WHERE id = $2;`,
         [JSON.stringify(mediaItemIds), Number(lotId)] 
       );
@@ -1830,17 +2029,31 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async getPlatformSettings(): Promise<PlatformSettings> {
     const client = await getPool().connect();
     try {
-        const res = await client.query(`SELECT gallery_image_base_path, themes, updated_at FROM platform_settings WHERE id = 'global';`);
+        const res = await client.query(`SELECT gallery_image_base_path, themes, platform_public_id_masks, updated_at FROM platform_settings WHERE id = 'global';`);
         if (res.rowCount > 0) {
-            return { id: 'global', ...mapRowToCamelCase(res.rows[0]) } as PlatformSettings;
+            const settingsRow = mapRowToCamelCase(res.rows[0]);
+            return { 
+                id: 'global', 
+                galleryImageBasePath: settingsRow.galleryImageBasePath,
+                themes: settingsRow.themes || [],
+                platformPublicIdMasks: settingsRow.platformPublicIdMasks || undefined,
+                updatedAt: new Date(settingsRow.updatedAt) 
+            };
         }
-        const defaultPath = '/media/gallery/';
- const defaultThemes = []; // Add default themes if needed
-        await client.query(`INSERT INTO platform_settings (id, gallery_image_base_path) VALUES ('global', $1) ON CONFLICT (id) DO NOTHING;`, [defaultPath]);
-        return { id: 'global', galleryImageBasePath: defaultPath, updatedAt: new Date() };
+        const defaultSettings: PlatformSettings = { 
+          id: 'global', 
+          galleryImageBasePath: '/media/gallery/', 
+          themes: [], 
+          platformPublicIdMasks: {},
+          updatedAt: new Date() 
+        };
+        await client.query(`INSERT INTO platform_settings (id, gallery_image_base_path, themes, platform_public_id_masks) VALUES ('global', $1, '[]'::jsonb, '{}'::jsonb) ON CONFLICT (id) DO NOTHING;`, 
+            [defaultSettings.galleryImageBasePath]
+        );
+        return defaultSettings;
     } catch (e: any) {
         console.error("[PostgresAdapter - getPlatformSettings] Error, returning default:", e);
-        return { id: 'global', galleryImageBasePath: '/media/gallery/', updatedAt: new Date() };
+        return { id: 'global', galleryImageBasePath: '/media/gallery/', themes: [], platformPublicIdMasks: {}, updatedAt: new Date() };
     } finally { client.release(); }
   }
 
@@ -1851,16 +2064,25 @@ export class PostgresAdapter implements IDatabaseAdapter {
     }
     try {
         const query = `
-            INSERT INTO platform_settings (id, gallery_image_base_path, themes, updated_at) 
-            VALUES ('global', $1, $2::jsonb, NOW()) 
+            INSERT INTO platform_settings (id, gallery_image_base_path, themes, platform_public_id_masks, updated_at) 
+            VALUES ('global', $1, $2::jsonb, $3::jsonb, NOW()) 
             ON CONFLICT (id) 
-            DO UPDATE SET gallery_image_base_path = EXCLUDED.gallery_image_base_path, themes = EXCLUDED.themes, updated_at = NOW();
+            DO UPDATE SET 
+                gallery_image_base_path = EXCLUDED.gallery_image_base_path, 
+                themes = EXCLUDED.themes,
+                platform_public_id_masks = EXCLUDED.platform_public_id_masks,
+                updated_at = NOW();
         `;
-        await client.query(query, [data.galleryImageBasePath, JSON.stringify(data.themes || [])]);
+        await client.query(query, [
+            data.galleryImageBasePath, 
+            JSON.stringify(data.themes || []),
+            JSON.stringify(data.platformPublicIdMasks || {})
+        ]);
         return { success: true, message: 'Configurações atualizadas (PostgreSQL)!' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
   }
 }
 
     
+
 
