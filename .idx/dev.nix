@@ -8,6 +8,13 @@
     pkgs.nodejs_20
     pkgs.zulu
   ];
+
+  # See: https://nixos.wiki/wiki/Mysql
+  services.mysql = {
+    enable = true;
+    package = pkgs.mysql80;
+  };
+  
   # Sets environment variables in the workspace
   env = {};
   # This adds a file watcher to startup the firebase emulators. The emulators will only start if
@@ -21,6 +28,11 @@
     # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
     extensions = [
       # "vscodevim.vim"
+      "cweijan.vscode-mysql-client2"
+      "google.geminicodeassist"
+      "GoogleCloudTools.firebase-dataconnect-vscode"
+      "GraphQL.vscode-graphql-syntax"
+      "ms-dotnettools.vscode-dotnet-runtime"
     ];
     workspace = {
       onCreate = {
