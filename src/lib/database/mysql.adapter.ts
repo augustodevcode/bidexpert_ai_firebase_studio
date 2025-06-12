@@ -454,7 +454,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       `CREATE TABLE IF NOT EXISTS platform_settings (
         id VARCHAR(50) PRIMARY KEY DEFAULT 'global',
         gallery_image_base_path TEXT NOT NULL,
-        themes JSON DEFAULT (JSON_ARRAY()),
+        themes JSON,
         platform_public_id_masks JSON,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
@@ -722,6 +722,9 @@ export class MySqlAdapter implements IDatabaseAdapter {
           }
         } catch (tableError: any) {
           console.warn(`[MySqlAdapter] Aviso ao executar query: ${tableError.message}. Query: ${query.substring(0,100)}...`);
+           if (query.includes('platform_settings') && tableError.code === 'ER_PARSE_ERROR') {
+             errors.push(new Error(`Erro de sintaxe na criação da tabela platform_settings: ${tableError.message}`));
+          }
         }
       }
       await connection.commit();
@@ -735,7 +738,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       }
 
       const settingsResult = await this.getPlatformSettings(); 
-      if (!settingsResult.galleryImageBasePath) {
+      if (!settingsResult.galleryImageBasePath) { // Checa se a configuração padrão foi aplicada
           errors.push(new Error('Falha ao garantir configurações padrão da plataforma.'));
       } else {
         console.log('[MySqlAdapter] Configurações padrão da plataforma verificadas/criadas.');
@@ -798,7 +801,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
     const numericId = Number(id);
     if (isNaN(numericId)) {
       console.warn(`[MySqlAdapter - getLotCategory] ID não numérico recebido, tentando como string para slug: ${id}`);
-      // Tentar buscar por slug se o ID não for numérico
       const connection = await getPool().getConnection();
       try {
         const queryText = 'SELECT id, name, slug, description, item_count, created_at, updated_at FROM lot_categories WHERE slug = ?;';
@@ -806,7 +808,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         if ((rows as RowDataPacket[]).length > 0) {
             return mapToLotCategory(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
         }
-        return null; // Não encontrado nem por slug
+        return null; 
       } catch (error: any) {
           console.error(`[MySqlAdapter - getLotCategory by slug ${id}] Error:`, error);
           return null;
@@ -814,7 +816,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
           connection.release();
       }
     }
-    // Se for numérico, continua como antes
+    
     const connection = await getPool().getConnection();
     try {
         const queryText = 'SELECT id, name, slug, description, item_count, created_at, updated_at FROM lot_categories WHERE id = ?;';
@@ -1068,7 +1070,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       const query = `
         INSERT INTO auctioneers 
           (public_id, name, slug, registration_number, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since, rating, auctions_conducted_count, total_value_sold, user_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, 0, 0, ?);
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, 0, 0, ?);
       `;
       const values = [
         publicId, data.name, slug, data.registrationNumber || null, data.contactName || null, data.email || null, data.phone || null,
@@ -1089,18 +1091,21 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {
+    const numericId = Number(id);
     const connection = await getPool().getConnection();
     try {
-      let queryText = 'SELECT * FROM auctioneers WHERE public_id = ? LIMIT 1;';
-      let values: (string | number)[] = [id];
-      
-      const numericId = Number(id);
-      if (!isNaN(numericId)) {
+      let queryText: string;
+      let queryValues: (string | number)[];
+
+      if (isNaN(numericId)) {
+        queryText = 'SELECT * FROM auctioneers WHERE public_id = ? LIMIT 1;';
+        queryValues = [id];
+      } else {
         queryText = 'SELECT * FROM auctioneers WHERE id = ? OR public_id = ? LIMIT 1;';
-        values = [numericId, id];
+        queryValues = [numericId, id];
       }
       
-      const [rows] = await connection.query(queryText, values);
+      const [rows] = await connection.query(queryText, queryValues);
       if ((rows as RowDataPacket[]).length === 0) return null;
       return mapToAuctioneerProfileInfo(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
     } catch (e: any) { console.error(`[MySqlAdapter - getAuctioneer(${id})] Error:`, e); return null; } finally { connection.release(); }
@@ -1108,7 +1113,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
   async getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
     const connection = await getPool().getConnection();
-    try { // Prioritize public_id then slug
+    try { 
       let [rows] = await connection.query('SELECT * FROM auctioneers WHERE public_id = ? LIMIT 1;', [slugOrPublicId]);
       if ((rows as RowDataPacket[]).length === 0) {
         [rows] = await connection.query('SELECT * FROM auctioneers WHERE slug = ? LIMIT 1;', [slugOrPublicId]);
@@ -1139,10 +1144,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
       fields.push(`updated_at = NOW()`);
       
       const numericId = Number(id);
-      if (!isNaN(numericId)) { // Update by numeric ID if possible
+      if (!isNaN(numericId)) { 
           query += fields.join(', ') + ` WHERE id = ?`;
           values.push(numericId);
-      } else { // Otherwise assume it's public_id
+      } else { 
           query += fields.join(', ') + ` WHERE public_id = ?`;
           values.push(id);
       }
@@ -1195,16 +1200,19 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async getSeller(id: string): Promise<SellerProfileInfo | null> {
-     const connection = await getPool().getConnection();
+    const numericId = Number(id);
+    const connection = await getPool().getConnection();
     try {
-      let queryText = 'SELECT * FROM sellers WHERE public_id = ? LIMIT 1;';
-      let values: (string | number)[] = [id];
-      const numericId = Number(id);
-      if (!isNaN(numericId)) {
+      let queryText: string;
+      let queryValues: (string | number)[];
+      if (isNaN(numericId)) {
+        queryText = 'SELECT * FROM sellers WHERE public_id = ? LIMIT 1;';
+        queryValues = [id];
+      } else {
         queryText = 'SELECT * FROM sellers WHERE id = ? OR public_id = ? LIMIT 1;';
-        values = [numericId, id];
+        queryValues = [numericId, id];
       }
-      const [rows] = await connection.query(queryText, values);
+      const [rows] = await connection.query(queryText, queryValues);
       if ((rows as RowDataPacket[]).length === 0) return null;
       return mapToSellerProfileInfo(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
     } catch (e: any) { console.error(`[MySqlAdapter - getSeller(${id})] Error:`, e); return null; } finally { connection.release(); }
@@ -1309,37 +1317,42 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async getAuction(id: string): Promise<Auction | null> {
+    const numericId = Number(id);
     const connection = await getPool().getConnection();
     try {
-      let queryText = `
-        SELECT a.*, lc.name as category_name, act.name as auctioneer_name, s.name as seller_name, act.logo_url as auctioneer_logo_url
-        FROM auctions a
-        LEFT JOIN lot_categories lc ON a.category_id = lc.id
-        LEFT JOIN auctioneers act ON a.auctioneer_id = act.id
-        LEFT JOIN sellers s ON a.seller_id = s.id
-        WHERE a.public_id = ? LIMIT 1;
-      `;
-      let values: (string | number)[] = [id];
-      
-      const numericId = Number(id);
-      if (!isNaN(numericId)) {
+      let queryText: string;
+      let queryValues: (string | number)[];
+      if (isNaN(numericId)) {
+        console.log(`[MySqlAdapter - getAuction] ID não numérico recebido: ${id}, buscando por public_id.`);
         queryText = `
-        SELECT a.*, lc.name as category_name, act.name as auctioneer_name, s.name as seller_name, act.logo_url as auctioneer_logo_url
-        FROM auctions a
-        LEFT JOIN lot_categories lc ON a.category_id = lc.id
-        LEFT JOIN auctioneers act ON a.auctioneer_id = act.id
-        LEFT JOIN sellers s ON a.seller_id = s.id
-        WHERE a.id = ? OR a.public_id = ? LIMIT 1;`;
-        values = [numericId, id];
+          SELECT a.*, lc.name as category_name, act.name as auctioneer_name, s.name as seller_name, act.logo_url as auctioneer_logo_url
+          FROM auctions a
+          LEFT JOIN lot_categories lc ON a.category_id = lc.id
+          LEFT JOIN auctioneers act ON a.auctioneer_id = act.id
+          LEFT JOIN sellers s ON a.seller_id = s.id
+          WHERE a.public_id = ? LIMIT 1;
+        `;
+        queryValues = [id];
+      } else {
+        console.log(`[MySqlAdapter - getAuction] ID numérico recebido: ${numericId}, buscando por id ou public_id.`);
+        queryText = `
+          SELECT a.*, lc.name as category_name, act.name as auctioneer_name, s.name as seller_name, act.logo_url as auctioneer_logo_url
+          FROM auctions a
+          LEFT JOIN lot_categories lc ON a.category_id = lc.id
+          LEFT JOIN auctioneers act ON a.auctioneer_id = act.id
+          LEFT JOIN sellers s ON a.seller_id = s.id
+          WHERE a.id = ? OR a.public_id = ? LIMIT 1;
+        `;
+        queryValues = [numericId, id]; // Passa ambos para a query OR
       }
       
-      const [rows] = await connection.query(queryText, values);
+      const [rows] = await connection.query(queryText, queryValues);
       if ((rows as RowDataPacket[]).length === 0) return null;
       return mapToAuction(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
     } catch (e: any) { console.error(`[MySqlAdapter - getAuction(${id})] Error:`, e); return null; } finally { connection.release(); }
   }
 
-  async getAuctionsBySellerSlug(sellerPublicId: string): Promise<Auction[]> { // Changed from sellerSlug
+  async getAuctionsBySellerSlug(sellerPublicId: string): Promise<Auction[]> { 
     const connection = await getPool().getConnection();
     try {
         const [sellerRows] = await connection.query('SELECT id, name FROM sellers WHERE public_id = ? LIMIT 1', [sellerPublicId]);
@@ -1488,7 +1501,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
           queryText += ' WHERE l.auction_id = ?';
           values.push(numericAuctionId);
         } else {
-          // Assume auctionIdParam is public_id for auction
           queryText += ' JOIN auctions a_filter ON l.auction_id = a_filter.id WHERE a_filter.public_id = ?';
           values.push(auctionIdParam);
         }
@@ -1502,49 +1514,41 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async getLot(id: string): Promise<Lot | null> {
+    const numericId = Number(id);
     const connection = await getPool().getConnection();
     try {
-      let queryText = `
-        SELECT 
-          l.*, 
-          a.title as auction_name, 
-          lc.name as category_name, 
-          s.uf as state_uf, 
-          ci.name as city_name,
-          sel.name as lot_seller_name,
-          act.name as lot_auctioneer_name
-        FROM lots l
-        LEFT JOIN auctions a ON l.auction_id = a.id
-        LEFT JOIN lot_categories lc ON l.category_id = lc.id
-        LEFT JOIN states s ON l.state_id = s.id
-        LEFT JOIN cities ci ON l.city_id = ci.id
-        LEFT JOIN sellers sel ON l.seller_id_fk = sel.id
-        LEFT JOIN auctioneers act ON l.auctioneer_id_fk = act.id
-        WHERE l.public_id = ? LIMIT 1;
-      `;
-      let values: (string | number)[] = [id];
-      const numericId = Number(id);
-      if (!isNaN(numericId)) {
+      let queryText: string;
+      let queryValues: (string | number)[];
+      if (isNaN(numericId)) {
+        console.log(`[MySqlAdapter - getLot] ID não numérico recebido: ${id}, buscando por public_id.`);
         queryText = `
-        SELECT 
-          l.*, 
-          a.title as auction_name, 
-          lc.name as category_name, 
-          s.uf as state_uf, 
-          ci.name as city_name,
-          sel.name as lot_seller_name,
-          act.name as lot_auctioneer_name
-        FROM lots l
-        LEFT JOIN auctions a ON l.auction_id = a.id
-        LEFT JOIN lot_categories lc ON l.category_id = lc.id
-        LEFT JOIN states s ON l.state_id = s.id
-        LEFT JOIN cities ci ON l.city_id = ci.id
-        LEFT JOIN sellers sel ON l.seller_id_fk = sel.id
-        LEFT JOIN auctioneers act ON l.auctioneer_id_fk = act.id
-        WHERE l.id = ? OR l.public_id = ? LIMIT 1;`;
-        values = [numericId, id];
+          SELECT l.*, a.title as auction_name, lc.name as category_name, s.uf as state_uf, ci.name as city_name, sel.name as lot_seller_name, act.name as lot_auctioneer_name
+          FROM lots l
+          LEFT JOIN auctions a ON l.auction_id = a.id
+          LEFT JOIN lot_categories lc ON l.category_id = lc.id
+          LEFT JOIN states s ON l.state_id = s.id
+          LEFT JOIN cities ci ON l.city_id = ci.id
+          LEFT JOIN sellers sel ON l.seller_id_fk = sel.id
+          LEFT JOIN auctioneers act ON l.auctioneer_id_fk = act.id
+          WHERE l.public_id = ? LIMIT 1;
+        `;
+        queryValues = [id];
+      } else {
+        console.log(`[MySqlAdapter - getLot] ID numérico recebido: ${numericId}, buscando por id ou public_id.`);
+        queryText = `
+          SELECT l.*, a.title as auction_name, lc.name as category_name, s.uf as state_uf, ci.name as city_name, sel.name as lot_seller_name, act.name as lot_auctioneer_name
+          FROM lots l
+          LEFT JOIN auctions a ON l.auction_id = a.id
+          LEFT JOIN lot_categories lc ON l.category_id = lc.id
+          LEFT JOIN states s ON l.state_id = s.id
+          LEFT JOIN cities ci ON l.city_id = ci.id
+          LEFT JOIN sellers sel ON l.seller_id_fk = sel.id
+          LEFT JOIN auctioneers act ON l.auctioneer_id_fk = act.id
+          WHERE l.id = ? OR l.public_id = ? LIMIT 1;
+        `;
+        queryValues = [numericId, id];
       }
-      const [rows] = await connection.query(queryText, values);
+      const [rows] = await connection.query(queryText, queryValues);
       if ((rows as RowDataPacket[]).length === 0) return null;
       return mapToLot(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
     } catch (e: any) { console.error(`[MySqlAdapter - getLot(${id})] Error:`, e); return null; } finally { connection.release(); }
@@ -1638,11 +1642,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
         if ((lotRows as RowDataPacket[]).length === 0) { await connection.rollback(); return { success: false, message: "Lote não encontrado."}; }
         const lotDataDB = mapMySqlRowToCamelCase((lotRows as RowDataPacket[])[0]);
-        const actualNumericLotId = lotDataDB.id; // Use o ID numérico real para as FKs
+        const actualNumericLotId = lotDataDB.id; 
 
         if (bidAmount <= Number(lotDataDB.price)) { await connection.rollback(); return { success: false, message: "Lance deve ser maior que o atual."}; }
         
-        const numericAuctionId = Number(auctionId); // Assumindo que auctionId já é numérico ou pode ser convertido
+        const numericAuctionId = Number(auctionId); 
         if (isNaN(numericAuctionId)) {
             await connection.rollback();
             console.error(`[MySqlAdapter - placeBidOnLot] auctionId inválido: ${auctionId}`);
@@ -1878,7 +1882,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
     }
   }
 
-  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' >>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
     const connection = await getPool().getConnection();
     try {
         await this.ensureDefaultRolesExist(); 
@@ -2108,7 +2112,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         if (isNaN(numericMediaId)) throw new Error(`ID de mídia inválido: ${mediaId}`);
         await connection.execute(
           `UPDATE media_items SET 
-             linked_lot_ids = JSON_ARRAY_APPEND(COALESCE(linked_lot_ids, JSON_ARRAY()), '$', CAST(? AS JSON))
+             linked_lot_ids = JSON_MERGE_PRESERVE(COALESCE(linked_lot_ids, JSON_ARRAY()), JSON_ARRAY(?))
            WHERE id = ? AND NOT JSON_CONTAINS(COALESCE(linked_lot_ids, JSON_ARRAY()), CAST(? AS JSON), '$');`,
           [String(numericLotId), numericMediaId, String(numericLotId)]
         );
@@ -2210,5 +2214,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
 }
+
 
 
