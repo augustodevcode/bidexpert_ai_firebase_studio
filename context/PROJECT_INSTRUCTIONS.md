@@ -1,7 +1,7 @@
 
 # Instructions for Maintaining Project Context
 
-These files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.md`, and `PROJECT_INSTRUCTIONS.md`) are designed to help maintain context and continuity across our interactions. Please follow these instructions to ensure they are used effectively:
+These files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.md`, and `PROJECT_INSTRUCTIONS.md`, `1st.md`) are designed to help maintain context and continuity across our interactions. Please follow these instructions to ensure they are used effectively:
 
 ## 1. Initialization at the Start of a Session
 
@@ -11,12 +11,12 @@ These files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.md`, and `PROJECT_I
 
 ## 2. Updating the Context Files
 
-*   **Regular Updates:** The context files should be updated regularly, ideally after significant progress is made, new objectives are defined, or important decisions are made.
+*   **Regular Updates:** The context files should be updated regularly, ideally after significant progress is made, new objectives are defined, or important decisions are made. I (the AI) will attempt to do this when explicitly asked or when a major milestone/resolution is achieved.
 *   **`PROJECT_CONTEXT_HISTORY.md`:**
     *   Append new key information to this file.
     *   Summarize important discussions, decisions, and outcomes of tasks.
     *   Include details about challenges encountered and how they were resolved.
-    *   Maintain a chronological flow where possible, or use clear headings to organize information by topic or session.
+    *   Maintain a chronological flow where possible, or use clear headings to organize information by topic or session. If a previous summary exists from me, I should append to it, often under a new "Session" or "Interaction" heading.
 *   **`PROJECT_PROGRESS.md`:**
     *   Update the status of tasks in the "DONE", "WORKING", and "NEXT" sections.
     *   Move completed tasks from "WORKING" to "DONE".
@@ -24,14 +24,15 @@ These files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.md`, and `PROJECT_I
     *   Adjust tasks in the "WORKING" section to reflect current focus.
     *   Be concise and use bullet points for clarity.
 *   **`PROJECT_INSTRUCTIONS.md`:**
-    *   Update these instructions if the process for using or updating the context files changes.
-    *   Add any new guidelines or best practices for maintaining context.
+    *   Update these instructions if the process for using or updating the context files changes. This file is primarily for me (the AI) to remember the process.
+*   **`1st.md`:**
+    *   This file contains the prompt the user should provide at the start of a new session. It generally shouldn't change unless the core initialization process itself changes.
 
 ## 3. Using the Context Files During a Session
 
 *   Refer back to `PROJECT_CONTEXT_HISTORY.md` to recall previous discussions, decisions, or technical details.
 *   Consult `PROJECT_PROGRESS.md` to understand the current state of the project and identify the next priorities.
-*   Review `PROJECT_INSTRUCTIONS.md` if you are unsure about how to proceed with updating the context or maintaining continuity.
+*   Review `PROJECT_INSTRUCTIONS.md` (these instructions) if you are unsure about how to proceed with updating the context or maintaining continuity.
 *   Use the information in these files to inform your responses, generate code, and make suggestions that are consistent with the project's history and objectives.
 
 ## 4. Maintaining File Integrity

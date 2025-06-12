@@ -1,4 +1,6 @@
 
+"use client";
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,8 +21,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useState, useEffect, useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
-function DeleteAuctioneerButton({ auctioneerId, auctioneerName, onDelete }: { auctioneerId: string; auctioneerName: string; onDelete: (id: string) => Promise<void> }) {
+function DeleteAuctioneerButton({ auctioneerId, auctioneerName, onDelete }: { auctioneerId: string; auctioneerName: string; onDelete: () => void }) {
+
+  const { toast } = useToast();
+
   return (
     <AlertDialog>
       <Tooltip>
@@ -42,9 +50,15 @@ function DeleteAuctioneerButton({ auctioneerId, auctioneerName, onDelete }: { au
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
+          <AlertDialogAction 
             onClick={async () => {
-                await onDelete(auctioneerId);
+                const result = await deleteAuctioneer(auctioneerId);
+                if (result.success) {
+                  toast({ title: "Sucesso", description: "Leiloeiro excluído com sucesso.", variant: "default" });
+                } else {
+                  // If deletion fails, show error toast.
+                  toast({ title: "Erro", description: result.error || "Falha ao excluir leiloeiro.", variant: "destructive" });
+                }
             }}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
@@ -56,18 +70,45 @@ function DeleteAuctioneerButton({ auctioneerId, auctioneerName, onDelete }: { au
   );
 }
 
-export default async function AdminAuctioneersPage() {
-  const auctioneers = await getAuctioneers();
+export default function AdminAuctioneersPage() { // Agora um Client Component
+  const [auctioneers, setAuctioneers] = useState<AuctioneerProfileInfo[]>([]); // Estado para leiloeiros
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
-  async function handleDeleteAuctioneer(id: string) {
-    'use server';
-    const result = await deleteAuctioneer(id);
-    if (!result.success) {
-        console.error("Failed to delete auctioneer:", result.message);
+  const fetchAuctioneers = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const fetchedAuctioneers = await getAuctioneers();
+      setAuctioneers(fetchedAuctioneers);
+    } catch (error) {
+      console.error("Error fetching auctioneers:", error);
+      toast({ title: "Erro", description: "Falha ao buscar leiloeiros.", variant: "destructive" });
+      setAuctioneers([]);
+    } finally {
+      setIsLoading(false);
     }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchAuctioneers();
+  }, [fetchAuctioneers]);
+
+  const handleDeleteAuctioneer = useCallback(async () => {
+    await fetchAuctioneers(); // Refetch auctioneers after deletion
+  }, [fetchAuctioneers]);
+
+  if (isLoading) {
+    // Renderiza o estado de loading enquanto busca os dados
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-3 text-muted-foreground">Carregando leiloeiros...</p>
+      </div>
+    );
   }
 
   return (
+    // Conteúdo da página renderizado após o carregamento
     <TooltipProvider>
       <div className="space-y-6">
         <Card className="shadow-lg">
@@ -81,9 +122,11 @@ export default async function AdminAuctioneersPage() {
                 Adicione, edite ou remova leiloeiros da plataforma.
               </CardDescription>
             </div>
-            <Button asChild>
-              <Link href="/admin/auctioneers/new">
-                <PlusCircle className="mr-2 h-4 w-4" /> Novo Leiloeiro
+            <Button asChild> {/* Botão "Novo Leiloeiro" */}
+              <Link href="/admin/auctioneers/new"> {/* Link para a página de criação */}
+                <span> {/* Wrap icon and text in a span */}
+                  <PlusCircle className="mr-2 h-4 w-4" /> Novo Leiloeiro {/* Ícone e texto */}
+                </span>
               </Link>
             </Button>
           </CardHeader>
@@ -94,7 +137,7 @@ export default async function AdminAuctioneersPage() {
                 <p className="font-semibold">Nenhum leiloeiro encontrado.</p>
                 <p className="text-sm">Comece adicionando um novo leiloeiro.</p>
               </div>
-            ) : (
+            ) : ( // Se houver leiloeiros, renderiza a tabela
               <div className="border rounded-md">
                 <Table>
                   <TableHeader>
@@ -107,10 +150,10 @@ export default async function AdminAuctioneersPage() {
                       <TableHead className="text-right w-[120px]">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
-                    {auctioneers.map((auctioneer) => (
+                  <TableBody> {/* Corpo da tabela com os dados dos leiloeiros */}
+                    {auctioneers.map((auctioneer) => ( // Mapeia sobre a lista de leiloeiros
                       <TableRow key={auctioneer.id}>
-                        <TableCell>
+                        <TableCell> {/* Célula para a logo */}
                           <Avatar className="h-9 w-9">
                             <AvatarImage src={auctioneer.logoUrl || `https://placehold.co/40x40.png?text=${auctioneer.name.charAt(0)}`} alt={auctioneer.name} data-ai-hint={auctioneer.dataAiHintLogo || "logo leiloeiro"} />
                             <AvatarFallback>{auctioneer.name.charAt(0)}</AvatarFallback>
@@ -118,12 +161,12 @@ export default async function AdminAuctioneersPage() {
                         </TableCell>
                         <TableCell className="font-medium">{auctioneer.name}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">{auctioneer.registrationNumber || '-'}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{auctioneer.email || '-'}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{auctioneer.phone || '-'}</TableCell>
-                        <TableCell className="text-right">
-                          <Tooltip>
+                        <TableCell className="text-xs text-muted-foreground">{auctioneer.email || '-'}</TableCell> {/* Célula para o email */}
+                        <TableCell className="text-xs text-muted-foreground">{auctioneer.phone || '-'}</TableCell> {/* Célula para o telefone */}
+                        <TableCell className="text-right"> {/* Célula para as ações */}
+                          <Tooltip> {/* Tooltip para o botão "Ver Leiloeiro" */}
                             <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" asChild className="text-sky-600 hover:text-sky-700" disabled aria-label="Ver Leiloeiro">
+                              <Button variant="ghost" size="icon" className="text-sky-600 hover:text-sky-700" disabled aria-label="Ver Leiloeiro">
                                 {/* Link para a página pública do leiloeiro (a ser criada) */}
                                 {/* <Link href={`/auctioneers/${auctioneer.slug}`} target="_blank">
                                   <ExternalLink className="h-4 w-4" />
@@ -132,9 +175,9 @@ export default async function AdminAuctioneersPage() {
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent><p>Ver Leiloeiro (Em breve)</p></TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
+                          </Tooltip> {/* Fim do Tooltip "Ver Leiloeiro" */}
+                          <Tooltip> {/* Tooltip para o botão "Editar Leiloeiro" */}
+                            <TooltipTrigger asChild> {/* Trigger do tooltip */}
                               <Button variant="ghost" size="icon" asChild className="text-blue-600 hover:text-blue-700" aria-label="Editar Leiloeiro">
                                 <Link href={`/admin/auctioneers/${auctioneer.id}/edit`}>
                                   <Edit className="h-4 w-4" />
@@ -142,9 +185,9 @@ export default async function AdminAuctioneersPage() {
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent><p>Editar Leiloeiro</p></TooltipContent>
-                          </Tooltip>
+                           </Tooltip> {/* Fim do Tooltip "Editar Leiloeiro" */}
                           <DeleteAuctioneerButton auctioneerId={auctioneer.id} auctioneerName={auctioneer.name} onDelete={handleDeleteAuctioneer} />
-                        </TableCell>
+                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

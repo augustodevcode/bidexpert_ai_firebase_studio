@@ -7,43 +7,27 @@
 - Implemented CRUD for States (`/admin/states`) - Firestore and SQL adapters.
 - Implemented CRUD for Cities (`/admin/cities`), including filtering cities by state in the form - Firestore and SQL adapters.
 - Implemented CRUD for Auctioneers (`/admin/auctioneers`) - Firestore and SQL adapters.
+  - Resolved build-time and runtime errors related to Client/Server component interactions and event handlers on `/admin/auctioneers/page.tsx`.
+  - Corrected SQL `INSERT` query issues (`ER_WRONG_VALUE_COUNT_ON_ROW`) in `MySqlAdapter` for `createAuctioneer`.
 - Implemented CRUD for Sellers (`/admin/sellers`) - Firestore and SQL adapters.
+  - Corrected SQL `INSERT` query issues (`ER_WRONG_VALUE_COUNT_ON_ROW`) in `MySqlAdapter` for `createSeller`.
 - Implemented CRUD for Auctions (`/admin/auctions`), linking to categories, auctioneers, and sellers - Firestore and SQL adapters. Server actions for auctions refactored for ID resolution.
 - Implemented CRUD for Lots (`/admin/lots`), linking to auctions, categories, states, and cities - Firestore and SQL adapters. Server actions for lots refactored for ID resolution.
 - Implemented CRUD for Roles (`/admin/roles`) - Firestore and SQL adapters, including default roles and protection.
 - Implemented CRUD for Users (`/admin/users`) - Firestore and SQL adapters. Server actions for users refactored for role assignment.
 - Implemented CRUD for Media Items (`/admin/media`) - Firestore and SQL adapters.
 - Added a "Lots" section to the "Edit Auction" page, allowing viewing and adding lots to a specific auction.
-- Implemented basic AI flows for:
-    - `suggestListingDetails`
-    - `predictOpeningValue`
-    - `suggestSimilarListings`
+- Implemented basic AI flows for: `suggestListingDetails`, `predictOpeningValue`, `suggestSimilarListings`.
 - Created an `/auctions/create` page to input auction data and get AI suggestions.
-- Created public-facing pages for:
-    - Seller detail (`/sellers/[sellerId]`)
-    - Auctioneer detail (`/auctioneers/[auctioneerSlug]`)
-    - Static pages: About, Contact, FAQ, Terms, Privacy.
-- Implemented basic Dashboard pages: Overview, Bids, Wins, Documents, History, Reports, Notifications.
-- Implemented a Live Dashboard (`/live-dashboard`) page showing active lots.
-- Implemented a Virtual Auditorium page (`/auctions/[auctionId]/live`) with:
-    - Current Lot Display
-    - Bidding Panel (UI only)
-    - Upcoming Lots Panel
-    - Auction Chat Panel (UI only)
-    - Auction Info Panel
-- Implemented "Voltar" buttons on auctioneer and lot detail pages to navigate to their respective list/parent pages.
-- Adjusted icon-only buttons (Share, Print, Back) to display only icons and added `aria-label`.
-- Added tooltips to all icon-only buttons across multiple pages for improved UX.
-- Initial scaffolding for Media Library feature:
-    - Defined `MediaItem` type in `src/types/index.ts`.
-    - Created `/admin/media/page.tsx` as a client component.
-    - Implemented placeholder server actions in `/admin/media/actions.ts`.
-    - Added "Biblioteca de Mídia" link to admin sidebar.
-    - Added placeholder for media gallery selection in `lot-form.tsx`.
-- Changed `console.error` to `console.warn` in `getMediaItems` action to prevent Next.js error overlay for Firestore permission issues, allowing fallback to sample data.
-- Transformed `/admin/media/page.tsx` to display media items in a detailed table layout with a toolbar (filters and actions are placeholders).
+- Created public-facing pages for: Seller detail, Auctioneer detail, Static pages (About, Contact, FAQ, Terms, Privacy).
+- Implemented basic Dashboard pages (Overview, Bids, Wins, Documents, History, Reports, Notifications).
+- Implemented Live Dashboard and Virtual Auditorium pages with initial structure.
+- UI Enhancements: Icon-only buttons with tooltips.
+- Media Library: Initial scaffolding (type, admin page, placeholder actions, admin link).
+- Resolved Firestore permission error display for Media Library (using `console.warn`).
+- Transformed Media Library page to a table view with toolbar placeholders.
 - **MySQL schema initialization fixed with `DROP TABLE IF EXISTS`.**
-- **Context persistence file system setup (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.md`, `PROJECT_INSTRUCTIONS.md`, `1st.md`).**
+- **Context persistence file system setup (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.md`, `PROJECT_INSTRUCTIONS.md`, `1st.md`) - This task.**
 
 ## WORKING
 - Finalizing SQL adapter implementations (next: `platformSettings`).
@@ -55,27 +39,28 @@
 - **Media Library - Core Functionality (Post SQL Adapter Completion):**
     - Implement actual file upload functionality (client-side and server-side handling, likely using Firebase Storage) for the "Fazer Upload" button on the Media Library page.
     - Develop a modal component for editing `MediaItem` metadata (title, alt text, caption, description).
-    - Implement the "Editar" button functionality on the Media Library page to open this modal.
-    - Implement the "Excluir" button functionality fully (delete from Firestore/SQL and Firebase Storage).
+    *   Implement the "Editar" button functionality on the Media Library page to open this modal.
+    *   Implement the "Excluir" button functionality fully (delete from Firestore/SQL and Firebase Storage).
 - **Media Library - Lot Integration (Post SQL Adapter Completion):**
-    - Create a modal component to display the Media Library (`/admin/media/page.tsx` or a dedicated selection component) when "Adicionar da Biblioteca" is clicked in `lot-form.tsx`.
-    - Implement logic to select images from this modal and link their IDs (`mediaItemIds`) to the lot being edited/created.
-    - Update `lot-form.tsx` to display thumbnails of linked `MediaItem`s and manage `mediaItemIds`.
+    *   Create a modal component to display the Media Library (`/admin/media/page.tsx` or a dedicated selection component) when "Adicionar da Biblioteca" is clicked in `lot-form.tsx`.
+    *   Implement logic to select images from this modal and link their IDs (`mediaItemIds`) to the lot being edited/created.
+    *   Update `lot-form.tsx` to display thumbnails of linked `MediaItem`s and manage `mediaItemIds`.
 - **SQL Database Seeding (Post Adapter Completion):**
-    - Potentially update `scripts/seed-firestore.ts` or create new seed scripts for SQL databases if needed for sample data.
-    - Seed images using `copy-sample-images-to-public.ts` and then update `sampleLots` with correct public URLs.
+    *   Potentially update `scripts/seed-firestore.ts` or create new seed scripts for SQL databases if needed for sample data.
+    *   Seed images using `copy-sample-images-to-public.ts` and then update `sampleLots` with correct public URLs.
 - **Thorough Testing:**
-    - Test all admin CRUD functionalities with both PostgreSQL and MySQL (by switching `ACTIVE_DATABASE_SYSTEM`).
+    *   Test all admin CRUD functionalities with both PostgreSQL and MySQL (by switching `ACTIVE_DATABASE_SYSTEM`).
 - **Full Functionality for Filters & Search on Admin Pages:**
-    - Implement working filters, search, and pagination for all admin list pages (Categories, Auctions, Lots, Media, etc.) for SQL backends.
+    *   Implement working filters, search, and pagination for all admin list pages (Categories, Auctions, Lots, Media, etc.) for SQL backends.
 - **Refine AI Flow Integration:**
-    - Improve how AI suggestions are presented and applied on the `/auctions/create` page.
+    *   Improve how AI suggestions are presented and applied on the `/auctions/create` page.
 - **User Authentication & Authorization:**
-    - Solidify role-based access control, moving beyond email string matching for admin/consignor roles.
-    - Ensure `habilitationStatus` logic is fully integrated.
+    *   Solidify role-based access control, moving beyond email string matching for admin/consignor roles.
+    *   Ensure `habilitationStatus` logic is fully integrated.
+    *   **Critical:** Review and implement permission checks within individual Server Actions for robust security (defense in depth).
 - **Frontend Polish:**
-    - Continue improving UI consistency and responsiveness.
+    *   Continue improving UI consistency and responsiveness.
 - **Dashboard Pages - Functionality:**
-    - Implement backend logic for My Bids, My Wins, Notifications, etc., connecting to the database.
+    *   Implement backend logic for My Bids, My Wins, Notifications, etc., connecting to the database.
 - **Public Facing Pages - Data Integration:**
-    - Ensure all public-facing pages (category, auction detail, lot detail, seller detail, auctioneer detail) correctly fetch and display data from the active database.
+    *   Ensure all public-facing pages (category, auction detail, lot detail, seller detail, auctioneer detail) correctly fetch and display data from the active database.
