@@ -8,7 +8,7 @@ import type { AuctioneerProfileInfo, AuctioneerFormData } from '@/types';
 export async function createAuctioneer(
   data: AuctioneerFormData
 ): Promise<{ success: boolean; message: string; auctioneerId?: string }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   const result = await db.createAuctioneer(data);
   if (result.success) {
     revalidatePath('/admin/auctioneers');
@@ -17,17 +17,17 @@ export async function createAuctioneer(
 }
 
 export async function getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   return db.getAuctioneers();
 }
 
 export async function getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   return db.getAuctioneer(id);
 }
 
 export async function getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   return db.getAuctioneerBySlug(slug);
 }
 
@@ -41,7 +41,7 @@ export async function updateAuctioneer(
   id: string,
   data: Partial<AuctioneerFormData>
 ): Promise<{ success: boolean; message: string }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   const result = await db.updateAuctioneer(id, data);
   if (result.success) {
     revalidatePath('/admin/auctioneers');
@@ -53,7 +53,7 @@ export async function updateAuctioneer(
 export async function deleteAuctioneer(
   id: string
 ): Promise<{ success: boolean; message: string }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   const result = await db.deleteAuctioneer(id);
   if (result.success) {
     revalidatePath('/admin/auctioneers');

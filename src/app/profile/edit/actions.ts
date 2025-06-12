@@ -19,8 +19,10 @@ export async function updateUserProfile(
     return { success: false, message: 'ID do usuário não fornecido.' };
   }
   
-  const db = await getDatabaseAdapter(); // Aguarda a promessa
+  const db = await getDatabaseAdapter(); // Adicionado await
   console.log(`[updateUserProfile Action] DB Adapter Type: ${db?.constructor?.name}`);
+  console.log(`[updateUserProfile Action] typeof db.updateUserProfile: ${typeof (db as any)?.updateUserProfile}`);
+
 
   if (!db || typeof db.updateUserProfile !== 'function') {
     const errorMessage = `[updateUserProfile Action] CRITICAL: db.updateUserProfile is not a function. Adapter type: ${db?.constructor?.name}.`;

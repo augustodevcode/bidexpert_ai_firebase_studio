@@ -11,7 +11,7 @@ export async function handleImageUpload(
   formData: FormData
 ): Promise<{ success: boolean; message: string; items?: MediaItem[] }> {
   const { storageAdmin, error: sdkError } = ensureAdminInitialized();
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
 
   if (sdkError || !storageAdmin) {
     const msg = `Erro de configuração: Admin SDK Storage não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}`;
@@ -71,7 +71,7 @@ export async function handleImageUpload(
 }
 
 export async function getMediaItems(): Promise<MediaItem[]> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   return db.getMediaItems();
 }
 
@@ -79,7 +79,7 @@ export async function updateMediaItemMetadata(
   id: string,
   metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>
 ): Promise<{ success: boolean; message: string }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   const result = await db.updateMediaItemMetadata(id, metadata);
   if (result.success) {
     revalidatePath('/admin/media');
@@ -89,7 +89,7 @@ export async function updateMediaItemMetadata(
 
 export async function deleteMediaItem(id: string): Promise<{ success: boolean; message: string }> {
   const { storageAdmin, error: sdkError } = ensureAdminInitialized();
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
 
   if (sdkError || !storageAdmin) {
     const msg = `Erro de config: Admin SDK Storage não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}`;
@@ -100,7 +100,8 @@ export async function deleteMediaItem(id: string): Promise<{ success: boolean; m
   
   try {
     // First, get metadata from DB to find storage path
-    const mediaItemData = await db.getMediaItems().then(items => items.find(item => item.id === id)); // Simplified get by ID
+    const mediaItems = await db.getMediaItems(); // Fetch all and find, or implement getMediaItemById
+    const mediaItemData = mediaItems.find(item => item.id === id);
 
     if (mediaItemData && mediaItemData.urlOriginal) {
       try {
@@ -134,7 +135,7 @@ export async function deleteMediaItem(id: string): Promise<{ success: boolean; m
 }
 
 export async function linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   const result = await db.linkMediaItemsToLot(lotId, mediaItemIds);
   if (result.success) {
     revalidatePath(`/admin/lots/${lotId}/edit`);
@@ -144,7 +145,7 @@ export async function linkMediaItemsToLot(lotId: string, mediaItemIds: string[])
 }
 
 export async function unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   const result = await db.unlinkMediaItemFromLot(lotId, mediaItemId);
   if (result.success) {
     revalidatePath(`/admin/lots/${lotId}/edit`);

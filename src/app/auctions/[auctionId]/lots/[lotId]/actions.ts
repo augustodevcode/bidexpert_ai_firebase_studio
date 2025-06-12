@@ -77,4 +77,3 @@ export async function getBidsForLot(lotId: string): Promise<BidInfo[]> {
   
   return db.getBidsForLot(lotId);
 }
-

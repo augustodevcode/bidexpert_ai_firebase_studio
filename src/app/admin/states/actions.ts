@@ -8,7 +8,7 @@ import type { StateInfo, StateFormData } from '@/types';
 export async function createState(
   data: StateFormData
 ): Promise<{ success: boolean; message: string; stateId?: string }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   const result = await db.createState(data);
   if (result.success) {
     revalidatePath('/admin/states');
@@ -17,12 +17,12 @@ export async function createState(
 }
 
 export async function getStates(): Promise<StateInfo[]> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   return db.getStates();
 }
 
 export async function getState(id: string): Promise<StateInfo | null> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   return db.getState(id);
 }
 
@@ -30,7 +30,7 @@ export async function updateState(
   id: string,
   data: Partial<StateFormData>
 ): Promise<{ success: boolean; message: string }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   const result = await db.updateState(id, data);
   if (result.success) {
     revalidatePath('/admin/states');
@@ -42,7 +42,7 @@ export async function updateState(
 export async function deleteState(
   id: string
 ): Promise<{ success: boolean; message: string }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   const result = await db.deleteState(id);
   if (result.success) {
     revalidatePath('/admin/states');

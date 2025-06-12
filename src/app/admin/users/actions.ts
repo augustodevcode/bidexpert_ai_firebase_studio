@@ -256,5 +256,3 @@ export async function ensureUserProfileInDb(
 }
 
 export type UserFormData = Omit<UserFormValues, 'password'> & { password?: string };
-
-    

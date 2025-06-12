@@ -8,7 +8,7 @@ import type { CityInfo, CityFormData } from '@/types';
 export async function createCity(
   data: CityFormData
 ): Promise<{ success: boolean; message: string; cityId?: string }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   const result = await db.createCity(data);
   if (result.success) {
     revalidatePath('/admin/cities');
@@ -18,12 +18,12 @@ export async function createCity(
 }
 
 export async function getCities(stateIdFilter?: string): Promise<CityInfo[]> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   return db.getCities(stateIdFilter);
 }
 
 export async function getCity(id: string): Promise<CityInfo | null> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   return db.getCity(id);
 }
 
@@ -31,7 +31,7 @@ export async function updateCity(
   id: string,
   data: Partial<CityFormData>
 ): Promise<{ success: boolean; message: string }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   const result = await db.updateCity(id, data);
   if (result.success) {
     revalidatePath('/admin/cities');
@@ -43,7 +43,7 @@ export async function updateCity(
 export async function deleteCity(
   id: string
 ): Promise<{ success: boolean; message: string }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   const result = await db.deleteCity(id);
   if (result.success) {
     revalidatePath('/admin/cities');

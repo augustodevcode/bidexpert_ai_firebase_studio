@@ -3,13 +3,13 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDatabaseAdapter } from '@/lib/database';
-import type { Lot, LotFormData, LotDbData } from '@/types';
+import type { Lot, LotFormData, LotDbData, BidInfo } from '@/types';
 import { getLotCategoryByName } from '@/app/admin/categories/actions';
 
 export async function createLot(
   data: LotFormData
 ): Promise<{ success: boolean; message: string; lotId?: string }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
 
   let categoryId: string | undefined;
   if (data.type) { // data.type is category name from form
@@ -40,12 +40,12 @@ export async function createLot(
 }
 
 export async function getLots(auctionIdParam?: string): Promise<Lot[]> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   return db.getLots(auctionIdParam);
 }
 
 export async function getLot(id: string): Promise<Lot | null> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   return db.getLot(id);
 }
 
@@ -53,7 +53,7 @@ export async function updateLot(
   id: string,
   data: Partial<LotFormData>
 ): Promise<{ success: boolean; message: string }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   
   const updateDataForDb: Partial<LotDbData> = { ...data };
 
@@ -94,7 +94,7 @@ export async function deleteLot(
   id: string,
   auctionId?: string
 ): Promise<{ success: boolean; message: string }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   const result = await db.deleteLot(id, auctionId);
   if (result.success) {
     revalidatePath('/admin/lots');
@@ -110,7 +110,7 @@ export async function getBidsForLot(lotId: string): Promise<BidInfo[]> {
     console.warn("[Server Action - getBidsForLot] Lot ID is required.");
     return [];
   }
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   return db.getBidsForLot(lotId);
 }
 
@@ -121,7 +121,7 @@ export async function placeBidOnLot(
   userDisplayName: string,
   bidAmount: number
 ): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   return db.placeBidOnLot(lotId, auctionId, userId, userDisplayName, bidAmount);
 }
     

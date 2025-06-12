@@ -12,7 +12,7 @@ import { getRolesInternal, getRoleInternal, getRoleByNameInternal, ensureDefault
 export async function createRole(
   data: RoleFormData
 ): Promise<{ success: boolean; message: string; roleId?: string }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   const result = await db.createRole(data);
   if (result.success) {
     revalidatePath('/admin/roles');
@@ -22,6 +22,7 @@ export async function createRole(
 
 // Server Action para buscar todos os Roles
 export async function getRoles(): Promise<Role[]> {
+  // Esta action agora chama a função de query
   return getRolesInternal();
 }
 
@@ -40,7 +41,7 @@ export async function updateRole(
   id: string,
   data: Partial<RoleFormData>
 ): Promise<{ success: boolean; message: string }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   const result = await db.updateRole(id, data);
   if (result.success) {
     revalidatePath('/admin/roles');
@@ -53,7 +54,7 @@ export async function updateRole(
 export async function deleteRole(
   id: string
 ): Promise<{ success: boolean; message: string }> {
-  const db = getDatabaseAdapter();
+  const db = await getDatabaseAdapter();
   const result = await db.deleteRole(id);
   if (result.success) {
     revalidatePath('/admin/roles');
@@ -65,6 +66,3 @@ export async function deleteRole(
 export async function ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }> {
   return ensureDefaultRolesExistInternal();
 }
-
-
-    
