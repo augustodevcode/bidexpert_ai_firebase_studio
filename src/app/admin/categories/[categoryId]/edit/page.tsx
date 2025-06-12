@@ -1,6 +1,6 @@
 
-import CategoryForm from '../category-form';
-import { getLotCategory, updateLotCategory } from '../actions';
+import CategoryForm from '../../category-form'; // Corrigido o caminho aqui
+import { getLotCategory, updateLotCategory } from '../../actions'; // Corrigido o caminho aqui
 import { notFound } from 'next/navigation';
 // import { useAuth } from '@/contexts/auth-context'; // To pass userId for role check
 
