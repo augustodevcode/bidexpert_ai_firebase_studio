@@ -16,15 +16,28 @@ export default function AdminLayout({
   const { user, userProfileWithPermissions, loading } = useAuth();
   const router = useRouter();
 
+  console.log('[AdminLayout Render] Auth State:', { 
+    loading, 
+    user: user?.email, 
+    profileEmail: userProfileWithPermissions?.email,
+    profilePermissions: userProfileWithPermissions?.permissions
+  });
+
   useEffect(() => {
-    console.log('[AdminLayout] Auth State Change:', { loading, user: !!user, profile: !!userProfileWithPermissions });
-    if (!loading && !user) {
-      console.log('[AdminLayout] User not authenticated, redirecting to login.');
+    console.log('[AdminLayout useEffect] Auth State Change:', { 
+      loading, 
+      user: user?.email, 
+      profileEmail: userProfileWithPermissions?.email 
+    });
+
+    if (!loading && !user && !userProfileWithPermissions) { // Condição ajustada para SQL
+      console.log('[AdminLayout useEffect] User not authenticated (Firebase or SQL profile), redirecting to login.');
       router.push('/auth/login?redirect=/admin/dashboard');
     }
-  }, [user, loading, router, userProfileWithPermissions]); // Added userProfileWithPermissions to dependency array
+  }, [user, userProfileWithPermissions, loading, router]);
 
   if (loading) {
+    console.log('[AdminLayout] Rendering: Auth Loading state.');
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -33,18 +46,23 @@ export default function AdminLayout({
     );
   }
 
-  if (!user) {
-    // This state might be brief if redirection is happening
+  const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM?.toUpperCase() || 'FIRESTORE';
+  const isAuthenticated = activeSystem === 'FIRESTORE' ? !!user : !!userProfileWithPermissions;
+
+  if (!isAuthenticated) {
+    console.log('[AdminLayout] Rendering: User not authenticated, redirect state or showing loader if redirect is about to happen.');
+    // Se o useEffect já disparou o redirect, este return pode não ser visto.
+    // Se o useEffect ainda não rodou (improvável mas possível), este loader é mostrado.
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">Redirecionando para login...</p>
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-3 text-muted-foreground">Redirecionando para login...</p>
       </div>
     );
   }
   
-  // Check for userProfileWithPermissions before checking permissions
   if (!userProfileWithPermissions) {
-    console.log('[AdminLayout] User authenticated, but profile with permissions not yet loaded. Showing loader...');
+    console.log('[AdminLayout] Rendering: User authenticated (Firebase or determined via SQL flow), but profile with permissions not yet loaded. Showing loader...');
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -54,14 +72,14 @@ export default function AdminLayout({
   }
   
   const hasAdminAccess = hasPermission(userProfileWithPermissions, 'manage_all');
-  console.log('[AdminLayout] Permission Check:', { 
+  console.log('[AdminLayout] Rendering: Permission Check:', { 
     roleName: userProfileWithPermissions?.roleName, 
     permissions: userProfileWithPermissions?.permissions, 
     hasAdminAccess 
   });
 
-
   if (!hasAdminAccess) {
+    console.log('[AdminLayout] Rendering: Access Denied.');
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
         <ShieldAlert className="h-16 w-16 text-destructive mb-4" />
@@ -82,6 +100,7 @@ export default function AdminLayout({
     );
   }
 
+  console.log('[AdminLayout] Rendering: Access Granted, showing children.');
   return (
     <div className="flex min-h-screen">
       <AdminSidebar />
