@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks, Tv, Briefcase as ConsignorIcon, ShieldCheck, Coins, Search as SearchIcon, Menu, ChevronDown, Package, Home as HomeIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/lib/firebase'; // Ainda necessário para logout do Firebase
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useRef } from 'react';
@@ -29,11 +29,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Loader2 } from 'lucide-react';
-import type { RecentlyViewedLotInfo, Lot, LotCategory } from '@/types';
+import type { RecentlyViewedLotInfo, Lot, LotCategory, PlatformSettings } from '@/types';
 import { sampleLots, slugify } from '@/lib/sample-data';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getFavoriteLotIdsFromStorage } from '@/lib/favorite-store';
-import { getRecentlyViewedIds } from '@/lib/recently-viewed-store'; // Importação corrigida/garantida
+import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
+import { getPlatformSettings } from '@/app/admin/settings/actions'; // Import the action to get settings
 
 // Email do comitente de exemplo (para simular o próprio comitente acessando)
 const EXAMPLE_CONSIGNOR_EMAIL = 'consignor@bidexpert.com';
@@ -53,24 +54,37 @@ export default function Header() {
   const { user } = useAuth();
 
   const placeholderNotificationsCount = 3; 
+  const [siteTitle, setSiteTitle] = useState('BidExpert'); // Default title
 
   useEffect(() => {
     setIsClient(true);
 
-    const viewedIds = getRecentlyViewedIds();
-    const items: RecentlyViewedLotInfo[] = viewedIds.map(id => {
-      const lot = sampleLots.find(l => l.id === id);
-      return lot ? {
-        id: lot.id,
-        title: lot.title,
-        imageUrl: lot.imageUrl,
-        auctionId: lot.auctionId,
-        dataAiHint: lot.dataAiHint
-      } : null;
-    }).filter(item => item !== null) as RecentlyViewedLotInfo[];
-    setRecentlyViewedItems(items);
+    async function fetchInitialData() {
+      // Fetch platform settings for site title
+      try {
+        const settings = await getPlatformSettings();
+        if (settings && settings.siteTitle) {
+          setSiteTitle(settings.siteTitle);
+        }
+      } catch (error) {
+        console.error("Error fetching platform settings for header:", error);
+      }
 
-    async function fetchCategoriesForSearch() {
+      // Fetch recently viewed items
+      const viewedIds = getRecentlyViewedIds();
+      const items: RecentlyViewedLotInfo[] = viewedIds.map(id => {
+        const lot = sampleLots.find(l => l.id === id);
+        return lot ? {
+          id: lot.id,
+          title: lot.title,
+          imageUrl: lot.imageUrl,
+          auctionId: lot.auctionId,
+          dataAiHint: lot.dataAiHint
+        } : null;
+      }).filter(item => item !== null) as RecentlyViewedLotInfo[];
+      setRecentlyViewedItems(items);
+
+      // Fetch categories for search dropdown
       try {
         const fetchedCategories = await getLotCategories();
         setSearchCategories(fetchedCategories);
@@ -79,7 +93,7 @@ export default function Header() {
         setSearchCategories([]);
       }
     }
-    fetchCategoriesForSearch();
+    fetchInitialData();
     
   }, []);
 
@@ -157,10 +171,10 @@ export default function Header() {
                 <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0 bg-background text-foreground">
                   <Link href="/" className="flex items-center space-x-2 text-lg font-semibold mb-4 p-6 border-b">
                     <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
-                      <AvatarImage src="https://placehold.co/40x40.png?text=BE" alt="BidExpert Logo Small" data-ai-hint="logo initial" />
-                      <AvatarFallback>BE</AvatarFallback>
+                      <AvatarImage src="https://placehold.co/40x40.png?text=BE" alt={`${siteTitle} Logo Small`} data-ai-hint="logo initial" />
+                      <AvatarFallback>{siteTitle.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <span className="text-primary">BidExpert</span>
+                    <span className="text-primary">{siteTitle}</span>
                   </Link>
                   <nav className="flex flex-col gap-1 px-4">
                     <MainNav className="flex-col items-start space-x-0 space-y-0" />
@@ -175,11 +189,11 @@ export default function Header() {
             {/* Logo */}
             <Link href="/" className="mr-4 flex items-center space-x-2 sm:space-x-3">
               <Avatar className="h-8 w-8 sm:h-10 sm:w-10 bg-primary-foreground text-primary">
-                <AvatarImage src="https://placehold.co/40x40.png?text=BE" alt="BidExpert Logo" data-ai-hint="logo initial" />
-                <AvatarFallback className="font-bold text-xl">BE</AvatarFallback>
+                <AvatarImage src="https://placehold.co/40x40.png?text=BE" alt={`${siteTitle} Logo`} data-ai-hint="logo initial" />
+                <AvatarFallback className="font-bold text-xl">{siteTitle.substring(0,2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <span className="font-bold text-xl sm:text-3xl hidden sm:inline-block">
-                BidExpert
+                {siteTitle}
               </span>
             </Link>
           </div>
