@@ -785,6 +785,9 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
   // --- Categories ---
   async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> {
+    if (!data.name || data.name.trim() === '') {
+      return { success: false, message: 'O nome da categoria é obrigatório.' };
+    }
     const connection = await getPool().getConnection();
     try {
       const slug = slugify(data.name.trim());
@@ -838,6 +841,9 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async updateLotCategory(id: string, data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; }> {
+    if (!data.name || data.name.trim() === '') {
+      return { success: false, message: 'O nome da categoria é obrigatório.' };
+    }
     const connection = await getPool().getConnection();
     try {
       const slug = slugify(data.name.trim());
@@ -1348,7 +1354,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
       if (fieldsToUpdate.length === 0) return { success: true, message: "Nenhuma alteração para o leilão." };
 
-      const queryText = `UPDATE auctions SET ${fieldsToUpdate.join(', ')}, updated_at = NOW() WHERE ${whereCondition}`;
+      fieldsToUpdate.push(`updated_at = NOW()`);
+      const queryText = `UPDATE auctions SET ${fieldsToUpdate.join(', ')} WHERE ${whereCondition}`;
       values.push(idValue);
 
       await connection.execute(queryText, values);
@@ -1872,8 +1879,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
             const updatePayload: any = { updatedAt: new Date() }; // MySQL driver handles Date to TIMESTAMP
             let needsUpdate = false;
             // Só atualiza roleId se realmente mudou
-            if (String(userDataFromDB.roleId) !== String(targetRole.id)) { updatePayload.roleId = Number(targetRole.id); needsUpdate = true; console.log(`[MySqlAdapter ensureUserRole] Atualizando roleId para ${targetRole.id}`);}
-            if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; console.log(`[MySqlAdapter ensureUserRole] Atualizando roleName para ${targetRole.name}`);}
+            if (String(userDataFromDB.roleId) !== String(targetRole.id)) { updatePayload.role_id = Number(targetRole.id); needsUpdate = true; console.log(`[MySqlAdapter ensureUserRole] Atualizando roleId para ${targetRole.id}`);}
+            if (userDataFromDB.roleName !== targetRole.name) { updatePayload.role_name = targetRole.name; needsUpdate = true; console.log(`[MySqlAdapter ensureUserRole] Atualizando roleName para ${targetRole.name}`);}
 
             // Compara permissões como strings JSON ordenadas
             const dbPermissions = userDataFromDB.permissions || [];
@@ -1885,7 +1892,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
             }
 
             if (additionalProfileData?.password) { // Verifica se a senha foi fornecida para atualização
-                updatePayload.passwordText = additionalProfileData.password; // Hash da senha deve ser feito aqui
+                updatePayload.password_text = additionalProfileData.password; // Hash da senha deve ser feito aqui
                 needsUpdate = true;
                  console.log(`[MySqlAdapter ensureUserRole] Atualizando passwordText (hash pendente).`);
             }
@@ -1927,7 +1934,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
                     cpf, cell_phone, date_of_birth, account_type, razao_social, cnpj, inscricao_estadual, website_comitente,
                     zip_code, street, \`number\`, complement, neighborhood, city, state, opt_in_marketing,
                     created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()) RETURNING *;
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW());
             `;
             const insertValues = [
                 userId, email, fullName || email.split('@')[0], additionalProfileData?.password || null, // Hash da senha aqui
@@ -1938,8 +1945,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
                 additionalProfileData?.zipCode || null, additionalProfileData?.street || null, additionalProfileData?.number || null, additionalProfileData?.complement || null, additionalProfileData?.neighborhood || null, additionalProfileData?.city || null, additionalProfileData?.state || null,
                 additionalProfileData?.optInMarketing || false
             ];
-            const [insertedResult] = await connection.execute(insertQuery, insertValues);
-            // Como MySQL não tem RETURNING *, precisamos buscar o usuário recém-criado
+            await connection.execute(insertQuery, insertValues);
             const [newUserRows] = await connection.execute('SELECT * FROM users WHERE uid = ?', [userId]);
             finalProfileData = mapToUserProfileData(mapMySqlRowToCamelCase((newUserRows as RowDataPacket[])[0]), targetRole);
             console.log(`[MySqlAdapter ensureUserRole] Usuário UID ${userId} criado no DB.`);
