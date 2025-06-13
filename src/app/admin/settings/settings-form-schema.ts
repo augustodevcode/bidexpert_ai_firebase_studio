@@ -19,8 +19,9 @@ export const platformSettingsFormSchema = z.object({
     .endsWith("/", { message: "O caminho deve terminar com uma barra '/'." })
     .regex(/^(\/[a-zA-Z0-9_-]+)+\/$/, { message: "Caminho inválido. Use apenas letras, números, hífens, underscores e barras. Ex: /media/gallery/" })
     .max(200, { message: "O caminho não pode exceder 200 caracteres." }),
-  themes: z.array(themeSchema).optional().default([]), // Lista de temas
-  platformPublicIdMasks: z.object({ // Opcional e pode ter qualquer chave como string
+  activeThemeName: z.string().optional().nullable(),
+  themes: z.array(themeSchema).optional().default([]), 
+  platformPublicIdMasks: z.object({ 
     auctions: z.string().optional(),
     lots: z.string().optional(),
     auctioneers: z.string().optional(),
@@ -29,3 +30,5 @@ export const platformSettingsFormSchema = z.object({
 });
 
 export type PlatformSettingsFormValues = z.infer<typeof platformSettingsFormSchema>;
+
+    

@@ -19,18 +19,20 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { platformSettingsFormSchema, type PlatformSettingsFormValues } from './settings-form-schema';
 import type { PlatformSettings } from '@/types';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Palette } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea'; // Importar Textarea
-
-interface SettingsFormProps {
-  initialData: PlatformSettings;
-}
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea'; 
 
 // A action de submit será importada de './actions'
 import { updatePlatformSettings } from './actions';
 
-export default function SettingsForm({ initialData }: SettingsFormProps) {
+interface SettingsFormProps {
+  initialData: PlatformSettings;
+  activeSection: string;
+}
+
+export default function SettingsForm({ initialData, activeSection }: SettingsFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -41,21 +43,27 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
       siteTitle: initialData?.siteTitle || 'BidExpert',
       siteTagline: initialData?.siteTagline || 'Leilões Online Especializados',
       galleryImageBasePath: initialData?.galleryImageBasePath || '/media/gallery/',
+      activeThemeName: initialData?.activeThemeName || null,
       themes: initialData?.themes || [],
-      platformPublicIdMasks: initialData?.platformPublicIdMasks || {},
+      platformPublicIdMasks: initialData?.platformPublicIdMasks || { auctions: '', lots: '', auctioneers: '', sellers: ''},
     },
   });
 
   async function onSubmit(values: PlatformSettingsFormValues) {
     setIsSubmitting(true);
     try {
-      const result = await updatePlatformSettings(values);
+      // Ensure platformPublicIdMasks é um objeto, mesmo que vazio, se não for fornecido.
+      const dataToSubmit = {
+        ...values,
+        platformPublicIdMasks: values.platformPublicIdMasks || {},
+      };
+      const result = await updatePlatformSettings(dataToSubmit);
       if (result.success) {
         toast({
           title: 'Sucesso!',
           description: result.message,
         });
-        router.refresh(); 
+        router.refresh();
       } else {
         toast({
           title: 'Erro ao Salvar',
@@ -78,92 +86,146 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="siteTitle"
-          render={({ field }) => (
+        {activeSection === 'identity' && (
+          <section className="space-y-6">
+            <FormField
+              control={form.control}
+              name="siteTitle"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Título do Site</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex: BidExpert Leilões" {...field} value={field.value ?? ""} />
+                  </FormControl>
+                  <FormDescription>
+                    O título principal que aparecerá no cabeçalho e na aba do navegador.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="siteTagline"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tagline do Site (Slogan)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex: Seu parceiro especialista em leilões online." {...field} value={field.value ?? ""} />
+                  </FormControl>
+                  <FormDescription>
+                    Uma frase curta que descreve o seu site, exibida abaixo do título no cabeçalho.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {/* Placeholders for Logo and Favicon - to be implemented */}
             <FormItem>
-              <FormLabel>Título do Site</FormLabel>
-              <FormControl>
-                <Input placeholder="Ex: BidExpert Leilões" {...field} />
-              </FormControl>
-              <FormDescription>
-                O título principal que aparecerá no cabeçalho e na aba do navegador.
-              </FormDescription>
-              <FormMessage />
+                <FormLabel>Logo do Site (Em breve)</FormLabel>
+                <FormControl>
+                    <Input type="file" disabled />
+                </FormControl>
+                <FormDescription>Faça upload do logo principal da sua plataforma.</FormDescription>
             </FormItem>
-          )}
-        />
+            <FormItem>
+                <FormLabel>Favicon (Em breve)</FormLabel>
+                <FormControl>
+                    <Input type="file" disabled />
+                </FormControl>
+                <FormDescription>Ícone que aparece na aba do navegador (formato .ico ou .png).</FormDescription>
+            </FormItem>
+          </section>
+        )}
 
-        <FormField
-          control={form.control}
-          name="siteTagline"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tagline do Site (Slogan)</FormLabel>
-              <FormControl>
-                <Input placeholder="Ex: Seu parceiro especialista em leilões online." {...field} />
-              </FormControl>
-              <FormDescription>
-                Uma frase curta que descreve o seu site, exibida abaixo do título no cabeçalho.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {activeSection === 'general' && (
+          <section className="space-y-6">
+            <FormField
+              control={form.control}
+              name="galleryImageBasePath"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Caminho Base para Imagens da Galeria</FormLabel>
+                  <FormControl>
+                    <Input placeholder="/uploads/media_gallery/" {...field} value={field.value ?? ""} />
+                  </FormControl>
+                  <FormDescription>
+                    Caminho no servidor (relativo à pasta pública) onde as imagens da galeria serão armazenadas e acessadas. Deve começar e terminar com uma barra "/". Ex: <code>/media/gallery/</code>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Card>
+              <CardHeader>
+                  <CardTitle className="text-md">Máscaras de ID Público</CardTitle>
+                  <CardDescription>Defina prefixos para IDs públicos (ex: LEIL- para leilões). Deixe em branco para usar IDs gerados automaticamente.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                  <FormField
+                      control={form.control}
+                      name="platformPublicIdMasks.auctions"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel className="text-sm">Leilões</FormLabel>
+                              <FormControl><Input placeholder="Ex: LEIL-" {...field} value={field.value || ''} /></FormControl>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+                  <FormField
+                      control={form.control}
+                      name="platformPublicIdMasks.lots"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel className="text-sm">Lotes</FormLabel>
+                              <FormControl><Input placeholder="Ex: LOTE-" {...field} value={field.value || ''} /></FormControl>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+                  <FormField
+                      control={form.control}
+                      name="platformPublicIdMasks.auctioneers"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel className="text-sm">Leiloeiros</FormLabel>
+                              <FormControl><Input placeholder="Ex: LEILOE-" {...field} value={field.value || ''} /></FormControl>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+                  <FormField
+                      control={form.control}
+                      name="platformPublicIdMasks.sellers"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel className="text-sm">Comitentes</FormLabel>
+                              <FormControl><Input placeholder="Ex: COMI-" {...field} value={field.value || ''} /></FormControl>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+              </CardContent>
+            </Card>
+          </section>
+        )}
 
-        <FormField
-          control={form.control}
-          name="galleryImageBasePath"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Caminho Base para Imagens da Galeria</FormLabel>
-              <FormControl>
-                <Input placeholder="/uploads/media_gallery/" {...field} />
-              </FormControl>
-              <FormDescription>
-                O caminho no servidor (relativo à pasta pública ou raiz do seu servidor de arquivos estáticos) onde as imagens da galeria serão armazenadas e acessadas. Deve começar e terminar com uma barra "/".
-                Exemplo: <code>/media/gallery/</code>
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {activeSection === 'appearance' && (
+          <section className="space-y-6">
+            <div className="p-6 border rounded-lg bg-muted/20 text-center">
+              <Palette className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+              <p className="text-muted-foreground">
+                A seção de Aparência e Temas está em desenvolvimento.
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Em breve, você poderá gerenciar temas de cores, fontes e outros aspectos visuais da plataforma aqui.
+              </p>
+            </div>
+          </section>
+        )}
         
-        {/* Campos de Máscara de ID Público - Futuro */}
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-lg">Máscaras de ID Público (Avançado)</CardTitle>
-                <CardDescription>Defina prefixos para IDs públicos de diferentes entidades (ex: LEIL- para leilões). Deixe em branco para usar o padrão.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <FormField
-                    control={form.control}
-                    name="platformPublicIdMasks.auctions"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Máscara para Leilões</FormLabel>
-                            <FormControl><Input placeholder="Ex: LEIL-" {...field} value={field.value || ''} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="platformPublicIdMasks.lots"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Máscara para Lotes</FormLabel>
-                            <FormControl><Input placeholder="Ex: LOTE-" {...field} value={field.value || ''} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 {/* Adicionar mais campos de máscara aqui conforme necessário */}
-            </CardContent>
-        </Card>
-
-
+        <Separator />
         <div className="flex justify-end">
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
@@ -174,3 +236,5 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
     </Form>
   );
 }
+
+    

@@ -1,3 +1,4 @@
+
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -158,9 +159,9 @@ function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProf
         uid: row.uid,
         email: row.email,
         fullName: row.fullName,
-        password: row.passwordText, 
+        password: row.passwordText,
         roleId: row.roleId ? String(row.roleId) : undefined,
-        roleName: role?.name || row.roleName, 
+        roleName: role?.name || row.roleName,
         permissions: role?.permissions || row.permissions || [],
         status: row.status,
         habilitationStatus: row.habilitationStatus as UserHabilitationStatus,
@@ -204,15 +205,15 @@ function mapToAuction(row: QueryResultRow): Auction {
         description: row.description,
         status: row.status as AuctionStatus,
         auctionType: row.auctionType,
-        category: row.categoryName, 
+        category: row.categoryName,
         categoryId: row.categoryId ? String(row.categoryId) : undefined,
-        auctioneer: row.auctioneerName, 
+        auctioneer: row.auctioneerName,
         auctioneerId: row.auctioneerId ? String(row.auctioneerId) : undefined,
-        seller: row.sellerName, 
+        seller: row.sellerName,
         sellerId: row.sellerId ? String(row.sellerId) : undefined,
         auctionDate: new Date(row.auctionDate),
         endDate: row.endDate ? new Date(row.endDate) : null,
-        auctionStages: row.auctionStages || [], 
+        auctionStages: row.auctionStages || [],
         city: row.city,
         state: row.state,
         imageUrl: row.imageUrl,
@@ -228,8 +229,8 @@ function mapToAuction(row: QueryResultRow): Auction {
         vehicleLocation: row.vehicleLocation,
         createdAt: new Date(row.createdAt),
         updatedAt: new Date(row.updatedAt),
-        auctioneerLogoUrl: row.auctioneerLogoUrl, 
-        lots: [] 
+        auctioneerLogoUrl: row.auctioneerLogoUrl,
+        lots: []
     };
 }
 
@@ -247,12 +248,12 @@ function mapToLot(row: QueryResultRow): Lot {
     status: row.status as LotStatus,
     stateId: row.stateId ? String(row.stateId) : undefined,
     cityId: row.cityId ? String(row.cityId) : undefined,
-    cityName: row.cityName, 
-    stateUf: row.stateUf,   
-    type: row.categoryName,  
+    cityName: row.cityName,
+    stateUf: row.stateUf,
+    type: row.categoryName,
     categoryId: row.categoryId ? String(row.categoryId) : undefined,
     views: Number(row.views || 0),
-    auctionName: row.auctionName, 
+    auctionName: row.auctionName,
     price: Number(row.price),
     initialPrice: row.initialPrice !== null ? Number(row.initialPrice) : undefined,
     lotSpecificAuctionDate: row.lotSpecificAuctionDate ? new Date(row.lotSpecificAuctionDate) : null,
@@ -295,9 +296,9 @@ function mapToLot(row: QueryResultRow): Lot {
     aisleStall: row.aisleStall,
     actualCashValue: row.actualCashValue,
     estimatedRepairCost: row.estimatedRepairCost,
-    sellerName: row.lotSellerName, 
+    sellerName: row.lotSellerName,
     sellerId: row.sellerIdFk ? String(row.sellerIdFk) : undefined,
-    auctioneerName: row.lotAuctioneerName, 
+    auctioneerName: row.lotAuctioneerName,
     auctioneerId: row.auctioneerIdFk ? String(row.auctioneerIdFk) : undefined,
     condition: row.condition,
     createdAt: new Date(row.createdAt),
@@ -342,15 +343,18 @@ function mapToMediaItem(row: QueryResultRow): MediaItem {
 function mapToPlatformSettings(row: QueryResultRow): PlatformSettings {
     return {
         id: String(row.id),
-        galleryImageBasePath: row.galleryImageBasePath,
+        siteTitle: row.site_title,
+        siteTagline: row.site_tagline,
+        galleryImageBasePath: row.gallery_image_base_path,
+        activeThemeName: row.active_theme_name,
         themes: row.themes || [],
-        platformPublicIdMasks: row.platformPublicIdMasks || undefined,
-        updatedAt: new Date(row.updatedAt),
+        platformPublicIdMasks: row.platform_public_id_masks || undefined,
+        updatedAt: new Date(row.updated_at),
     };
 }
 
 
-const defaultRolesData: RoleFormData[] = [ 
+const defaultRolesData: RoleFormData[] = [
   { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
   { name: 'USER', description: 'Usuário padrão.', permissions: ['view_auctions', 'place_bids', 'view_lots'] },
   { name: 'CONSIGNOR', description: 'Comitente.', permissions: ['auctions:manage_own', 'lots:manage_own', 'view_reports', 'media:upload'] },
@@ -360,14 +364,14 @@ const defaultRolesData: RoleFormData[] = [
 
 export class PostgresAdapter implements IDatabaseAdapter {
   constructor() {
-    getPool(); 
+    getPool();
   }
 
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[]; rolesProcessed?: number }> {
     const client = await getPool().connect();
     const errors: any[] = [];
     console.log('[PostgresAdapter] Iniciando criação/verificação de tabelas...');
-    
+
     const queries = [
       `DROP TABLE IF EXISTS bids CASCADE;`,
       `DROP TABLE IF EXISTS media_items CASCADE;`,
@@ -435,10 +439,13 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
       `CREATE TABLE IF NOT EXISTS platform_settings (
         id VARCHAR(50) PRIMARY KEY DEFAULT 'global',
+        site_title VARCHAR(100) NULL,
+        site_tagline VARCHAR(255) NULL,
         gallery_image_base_path TEXT NOT NULL DEFAULT '/media/gallery/',
+        active_theme_name TEXT NULL,
         themes JSONB NOT NULL DEFAULT '[]'::jsonb,
         platform_public_id_masks JSONB,
-        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP 
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
 
       `CREATE TABLE IF NOT EXISTS lot_categories (
@@ -571,7 +578,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `CREATE INDEX IF NOT EXISTS idx_auctions_category_id ON auctions(category_id);`,
       `CREATE INDEX IF NOT EXISTS idx_auctions_auctioneer_id ON auctions(auctioneer_id);`,
       `CREATE INDEX IF NOT EXISTS idx_auctions_seller_id ON auctions(seller_id);`,
-      
+
       `CREATE TABLE IF NOT EXISTS lots (
         id SERIAL PRIMARY KEY,
         public_id TEXT NOT NULL UNIQUE,
@@ -698,7 +705,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       }
       await client.query('COMMIT');
       console.log('[PostgresAdapter] Esquema de tabelas inicializado/verificado com sucesso.');
-      
+
       const rolesResult = await this.ensureDefaultRolesExist();
       if (!rolesResult.success) {
         errors.push(new Error(`Falha ao garantir perfis padrão: ${rolesResult.message}`));
@@ -706,7 +713,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         console.log(`[PostgresAdapter] ${rolesResult.rolesProcessed || 0} perfis padrão processados.`);
       }
 
-      const settingsResult = await this.getPlatformSettings(); 
+      const settingsResult = await this.getPlatformSettings();
       if (!settingsResult.galleryImageBasePath) {
           errors.push(new Error('Falha ao garantir configurações padrão da plataforma.'));
       } else {
@@ -727,6 +734,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
+
 
   // --- Categories ---
   async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> {
@@ -765,7 +773,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-  
+
   async getLotCategory(id: string): Promise<LotCategory | null> {
     const client = await getPool().connect();
     try {
@@ -825,7 +833,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-  
+
   // --- States ---
   async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> {
     const client = await getPool().connect();
@@ -866,7 +874,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       if (data.name) { fields.push(`name = $${paramCount++}`); values.push(data.name); fields.push(`slug = $${paramCount++}`); values.push(slugify(data.name)); }
       if (data.uf) { fields.push(`uf = $${paramCount++}`); values.push(data.uf.toUpperCase()); }
       if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o estado."};
-      
+
       fields.push(`updated_at = NOW()`);
       let query = `UPDATE states SET ${fields.join(', ')} WHERE id = $${paramCount}`;
       values.push(Number(id));
@@ -900,11 +908,11 @@ export class PostgresAdapter implements IDatabaseAdapter {
     try {
         let queryText = 'SELECT id, name, slug, state_id, state_uf, ibge_code, lot_count, created_at, updated_at FROM cities';
         const values = [];
-        if (stateIdFilter) { 
+        if (stateIdFilter) {
             const numericStateIdFilter = parseInt(stateIdFilter, 10);
             if (!isNaN(numericStateIdFilter)) {
-                queryText += ' WHERE state_id = $1'; 
-                values.push(numericStateIdFilter); 
+                queryText += ' WHERE state_id = $1';
+                values.push(numericStateIdFilter);
             } else { // Assume it's a slug
                 queryText += ' JOIN states s ON cities.state_id = s.id WHERE s.slug = $1';
                 values.push(stateIdFilter);
@@ -924,7 +932,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
           const parts = id.split('-');
           if (parts.length > 1) {
               const citySlug = parts.pop();
-              const stateSlugOrId = parts.join('-'); 
+              const stateSlugOrId = parts.join('-');
               const stateNumericId = parseInt(stateSlugOrId, 10);
               if (!isNaN(stateNumericId)) {
                  res = await client.query('SELECT * FROM cities WHERE slug = $1 AND state_id = $2', [citySlug, stateNumericId]);
@@ -957,13 +965,13 @@ export class PostgresAdapter implements IDatabaseAdapter {
             fields.push(`state_uf = $${paramCount++}`); values.push(parentStateRes.rows[0].uf);
         }
         if (data.ibgeCode !== undefined) { fields.push(`ibge_code = $${paramCount++}`); values.push(data.ibgeCode || null); }
-        
+
         if (fields.length === 0) return { success: true, message: "Nenhuma alteração para a cidade."};
 
         fields.push(`updated_at = NOW()`);
         query += fields.join(', ') + ` WHERE id = $${paramCount}`;
         values.push(Number(id));
-        
+
         await client.query(query, values);
         return { success: true, message: 'Cidade atualizada (PostgreSQL)!' };
     } catch (e: any) { console.error(`[PostgresAdapter - updateCity(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
@@ -983,7 +991,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       const slug = slugify(data.name);
       const publicId = `LEIL-${slugify(data.name.substring(0,5))}-${uuidv4().substring(0,8)}`;
       const query = `
-        INSERT INTO auctioneers 
+        INSERT INTO auctioneers
           (public_id, name, slug, registration_number, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since, rating, auctions_conducted_count, total_value_sold, user_id, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), 0, 0, 0, $16, NOW(), NOW())
         RETURNING id;
@@ -1081,7 +1089,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Leiloeiro excluído (PostgreSQL)!' };
     } catch (e: any) { console.error(`[PostgresAdapter - deleteAuctioneer(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
-  
+
   // --- Sellers ---
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> {
     const client = await getPool().connect();
@@ -1089,8 +1097,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
       const slug = slugify(data.name);
       const publicId = `SELL-${slugify(data.name.substring(0,5))}-${uuidv4().substring(0,8)}`;
       const query = `
-        INSERT INTO sellers 
-          (public_id, name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, user_id, 
+        INSERT INTO sellers
+          (public_id, name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, user_id,
            member_since, rating, active_lots_count, total_sales_value, auctions_facilitated_count, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), 0, 0, 0, 0, NOW(), NOW())
         RETURNING id;
@@ -1196,15 +1204,15 @@ export class PostgresAdapter implements IDatabaseAdapter {
     try {
       const publicId = `LEI-${slugify(data.title.substring(0,10))}-${uuidv4().substring(0,8)}`;
       const query = `
-        INSERT INTO auctions 
+        INSERT INTO auctions
           (public_id, title, full_title, description, status, auction_type, category_id, auctioneer_id, seller_id, auction_date, end_date, auction_stages, city, state, image_url, data_ai_hint, documents_url, total_lots, visits, initial_offer, selling_branch, vehicle_location, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13, $14, $15, $16, $17, 0, 0, $18, $19, $20, NOW(), NOW())
         RETURNING id;
       `;
       const values = [
         publicId, data.title, data.fullTitle || null, data.description || null, data.status, data.auctionType || null,
-        data.categoryId ? Number(data.categoryId) : null, 
-        data.auctioneerId ? Number(data.auctioneerId) : null, 
+        data.categoryId ? Number(data.categoryId) : null,
+        data.auctioneerId ? Number(data.auctioneerId) : null,
         data.sellerId ? Number(data.sellerId) : null,
         data.auctionDate, data.endDate || null, data.auctionStages ? JSON.stringify(data.auctionStages) : null,
         data.city || null, data.state || null, data.imageUrl || null, data.dataAiHint || null, data.documentsUrl || null,
@@ -1214,7 +1222,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Leilão criado (PostgreSQL)!', auctionId: String(res.rows[0].id), auctionPublicId: publicId };
     } catch (e: any) { console.error(`[PostgresAdapter - createAuction] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
-  
+
   async getAuctions(): Promise<Auction[]> {
     const client = await getPool().connect();
     try {
@@ -1243,7 +1251,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         WHERE a.public_id = $1 LIMIT 1;
       `;
       let values: (string | number)[] = [id];
-      
+
       const numericId = Number(id);
       if (!isNaN(numericId)) {
         queryText = `
@@ -1255,7 +1263,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         WHERE a.id = $1 OR a.public_id = $2 LIMIT 1;`;
         values = [numericId, id];
       }
-      
+
       const res = await client.query(queryText, values);
       if (res.rowCount === 0) return null;
       return mapToAuction(mapRowToCamelCase(res.rows[0]));
@@ -1306,7 +1314,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         }
       });
       if (data.auctionDate) { fields.push(`auction_date = $${paramCount++}`); values.push(data.auctionDate); }
-      if (data.hasOwnProperty('endDate')) { fields.push(`end_date = $${paramCount++}`); values.push(data.endDate); } 
+      if (data.hasOwnProperty('endDate')) { fields.push(`end_date = $${paramCount++}`); values.push(data.endDate); }
       if (data.auctionStages) { fields.push(`auction_stages = $${paramCount++}::jsonb`); values.push(JSON.stringify(data.auctionStages)); }
 
 
@@ -1339,11 +1347,15 @@ export class PostgresAdapter implements IDatabaseAdapter {
     const client = await getPool().connect();
     try {
       const publicId = `LOT-${slugify(data.title.substring(0,10))}-${uuidv4().substring(0,8)}`;
+      const numericAuctionId = Number(data.auctionId);
+      if (isNaN(numericAuctionId)) {
+          return { success: false, message: `ID de Leilão inválido: ${data.auctionId}` };
+      }
       const query = `
         INSERT INTO lots (
-          public_id, auction_id, title, "number", image_url, data_ai_hint, gallery_image_urls, media_item_ids, status, 
-          state_id, city_id, category_id, views, price, initial_price, 
-          lot_specific_auction_date, second_auction_date, second_initial_price, end_date, 
+          public_id, auction_id, title, "number", image_url, data_ai_hint, gallery_image_urls, media_item_ids, status,
+          state_id, city_id, category_id, views, price, initial_price,
+          lot_specific_auction_date, second_auction_date, second_initial_price, end_date,
           bids_count, is_favorite, is_featured, description, year, make, model, series,
           stock_number, selling_branch, vin, vin_status, loss_type, primary_damage, title_info,
           title_brand, start_code, has_key, odometer, airbags_status, body_style, engine_details,
@@ -1360,7 +1372,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         ) RETURNING id;
       `;
       const values = [
-        publicId, Number(data.auctionId), data.title, data.number || null, data.imageUrl || null, data.dataAiHint || null,
+        publicId, numericAuctionId, data.title, data.number || null, data.imageUrl || null, data.dataAiHint || null,
         JSON.stringify(data.galleryImageUrls || []), JSON.stringify(data.mediaItemIds || []), data.status,
         data.stateId ? Number(data.stateId) : null, data.cityId ? Number(data.cityId) : null, data.categoryId ? Number(data.categoryId) : null,
         data.views || 0, data.price, data.initialPrice || null,
@@ -1378,21 +1390,21 @@ export class PostgresAdapter implements IDatabaseAdapter {
         data.sellerId ? Number(data.sellerId) : null,
         data.auctioneerId ? Number(data.auctioneerId) : null,
         data.condition || null
-      ];
+      ]; // 56 values, corresponde aos $56 placeholders
       const res = await client.query(query, values);
       return { success: true, message: 'Lote criado (PostgreSQL)!', lotId: String(res.rows[0].id), lotPublicId: publicId };
     } catch (e: any) { console.error(`[PostgresAdapter - createLot] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
-  
+
   async getLots(auctionIdParam?: string): Promise<Lot[]> {
     const client = await getPool().connect();
     try {
       let queryText = `
-        SELECT 
-          l.*, 
-          a.title as auction_name, 
-          lc.name as category_name, 
-          s.uf as state_uf, 
+        SELECT
+          l.*,
+          a.title as auction_name,
+          lc.name as category_name,
+          s.uf as state_uf,
           ci.name as city_name,
           sel.name as lot_seller_name,
           act.name as lot_auctioneer_name
@@ -1405,14 +1417,14 @@ export class PostgresAdapter implements IDatabaseAdapter {
         LEFT JOIN auctioneers act ON l.auctioneer_id_fk = act.id
       `;
       const values: (string | number)[] = [];
+      let paramIndex = 1;
       if (auctionIdParam) {
         const numericAuctionId = Number(auctionIdParam);
         if (!isNaN(numericAuctionId)) {
-          queryText += ' WHERE l.auction_id = $1';
+          queryText += ` WHERE l.auction_id = $${paramIndex++}`;
           values.push(numericAuctionId);
         } else {
-          // Assume auctionIdParam is public_id for auction
-          queryText += ' JOIN auctions a_filter ON l.auction_id = a_filter.id WHERE a_filter.public_id = $1';
+          queryText += ` JOIN auctions a_filter ON l.auction_id = a_filter.id WHERE a_filter.public_id = $${paramIndex++}`;
           values.push(auctionIdParam);
         }
         queryText += ' ORDER BY l.title ASC;';
@@ -1428,11 +1440,11 @@ export class PostgresAdapter implements IDatabaseAdapter {
     const client = await getPool().connect();
     try {
       let queryText = `
-        SELECT 
-          l.*, 
-          a.title as auction_name, 
-          lc.name as category_name, 
-          s.uf as state_uf, 
+        SELECT
+          l.*,
+          a.title as auction_name,
+          lc.name as category_name,
+          s.uf as state_uf,
           ci.name as city_name,
           sel.name as lot_seller_name,
           act.name as lot_auctioneer_name
@@ -1449,11 +1461,11 @@ export class PostgresAdapter implements IDatabaseAdapter {
       const numericId = Number(id);
       if (!isNaN(numericId)) {
         queryText = `
-        SELECT 
-          l.*, 
-          a.title as auction_name, 
-          lc.name as category_name, 
-          s.uf as state_uf, 
+        SELECT
+          l.*,
+          a.title as auction_name,
+          lc.name as category_name,
+          s.uf as state_uf,
           ci.name as city_name,
           sel.name as lot_seller_name,
           act.name as lot_auctioneer_name
@@ -1491,7 +1503,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       (Object.keys(data) as Array<keyof LotDbData>).forEach(key => {
         if (data[key] !== undefined && key !== 'endDate' && key !== 'lotSpecificAuctionDate' && key !== 'secondAuctionDate' && key !== 'type' && key !== 'auctionName') {
             const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
-            const escapedColumn = sqlColumn === 'number' ? `"${sqlColumn}"` : sqlColumn; // Escape "number"
+            const escapedColumn = sqlColumn === 'number' ? `"${sqlColumn}"` : sqlColumn; // Escape "number" for PG
             fields.push(`${escapedColumn} = $${paramCount++}`);
             const value = data[key];
             if (key === 'galleryImageUrls' || key === 'mediaItemIds') {
@@ -1504,13 +1516,14 @@ export class PostgresAdapter implements IDatabaseAdapter {
       if (data.endDate) { fields.push(`end_date = $${paramCount++}`); values.push(data.endDate); }
       if (data.hasOwnProperty('lotSpecificAuctionDate')) { fields.push(`lot_specific_auction_date = $${paramCount++}`); values.push(data.lotSpecificAuctionDate); }
       if (data.hasOwnProperty('secondAuctionDate')) { fields.push(`second_auction_date = $${paramCount++}`); values.push(data.secondAuctionDate); }
-      
+
+
       if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o lote." };
 
       fields.push(`updated_at = NOW()`);
       const queryText = `UPDATE lots SET ${fields.join(', ')} WHERE ${whereCondition}${paramCount++}`;
       values.push(idValue);
-      
+
       await client.query(queryText, values);
       return { success: true, message: 'Lote atualizado (PostgreSQL)!' };
     } catch (e: any) { console.error(`[PostgresAdapter - updateLot(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
@@ -1534,12 +1547,13 @@ export class PostgresAdapter implements IDatabaseAdapter {
     try {
         let query = 'SELECT * FROM bids WHERE ';
         const values: (string | number)[] = [lotId];
+        let paramIndex = 1;
         const numericLotId = Number(lotId);
         if (!isNaN(numericLotId)) {
-          query += 'lot_id = $1 OR lot_id = (SELECT id FROM lots WHERE public_id = $2 LIMIT 1)';
+          query += `lot_id = $${paramIndex++} OR lot_id = (SELECT id FROM lots WHERE public_id = $${paramIndex++} LIMIT 1)`;
           values.unshift(numericLotId);
         } else {
-          query += 'lot_id = (SELECT id FROM lots WHERE public_id = $1 LIMIT 1)';
+          query += `lot_id = (SELECT id FROM lots WHERE public_id = $${paramIndex++} LIMIT 1)`;
         }
         query += ' ORDER BY "timestamp" DESC;';
         const res = await client.query(query, values);
@@ -1551,7 +1565,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     const client = await getPool().connect();
     try {
         await client.query('BEGIN');
-        
+
         let lotQueryText = 'SELECT id, price, bids_count FROM lots WHERE public_id = $1 LIMIT 1 FOR UPDATE';
         let lotQueryValues: (string|number)[] = [lotId];
         const numericLotId = Number(lotId);
@@ -1566,7 +1580,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         const actualNumericLotId = lotDataDB.id;
 
         if (bidAmount <= Number(lotDataDB.price)) { await client.query('ROLLBACK'); return { success: false, message: "Lance deve ser maior que o atual."}; }
-        
+
         const numericAuctionId = Number(auctionId);
         if (isNaN(numericAuctionId)) {
             await client.query('ROLLBACK');
@@ -1576,24 +1590,24 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
         const insertBidQuery = 'INSERT INTO bids (lot_id, auction_id, bidder_id, bidder_display_name, amount, "timestamp") VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *;';
         const bidRes = await client.query(insertBidQuery, [actualNumericLotId, numericAuctionId, userId, userDisplayName, bidAmount]);
-        
+
         const updateLotQuery = 'UPDATE lots SET price = $1, bids_count = bids_count + 1, updated_at = NOW() WHERE id = $2;';
         await client.query(updateLotQuery, [bidAmount, actualNumericLotId]);
-        
+
         await client.query('COMMIT');
-        return { 
-            success: true, 
-            message: "Lance registrado!", 
-            updatedLot: { price: bidAmount, bidsCount: Number(lotDataDB.bidsCount || 0) + 1 }, 
+        return {
+            success: true,
+            message: "Lance registrado!",
+            updatedLot: { price: bidAmount, bidsCount: Number(lotDataDB.bidsCount || 0) + 1 },
             newBid: mapToBidInfo(mapRowToCamelCase(bidRes.rows[0]))
         };
-    } catch (e: any) { 
+    } catch (e: any) {
         await client.query('ROLLBACK');
-        console.error(`[PostgresAdapter - placeBidOnLot(${lotId})] Error:`, e); 
-        return { success: false, message: e.message }; 
+        console.error(`[PostgresAdapter - placeBidOnLot(${lotId})] Error:`, e);
+        return { success: false, message: e.message };
     } finally { client.release(); }
   }
-  
+
   // --- Roles ---
   async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> {
     const client = await getPool().connect();
@@ -1601,7 +1615,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         const nameNormalized = data.name.trim().toUpperCase();
         const existingRes = await client.query('SELECT id FROM roles WHERE name_normalized = $1 LIMIT 1', [nameNormalized]);
         if (existingRes.rowCount > 0) return { success: false, message: `Perfil "${data.name}" já existe.`};
-        
+
         const validPermissions = (data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
         const query = `
             INSERT INTO roles (name, name_normalized, description, permissions) VALUES ($1, $2, $3, $4::jsonb) RETURNING id;
@@ -1611,7 +1625,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         return { success: true, message: 'Perfil criado!', roleId: String(res.rows[0].id) };
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
   }
-  
+
   async getRoles(): Promise<Role[]> {
     const client = await getPool().connect();
     try {
@@ -1654,7 +1668,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
             fields.push(`name = $${paramCount++}`); values.push(data.name.trim());
             fields.push(`name_normalized = $${paramCount++}`); values.push(data.name.trim().toUpperCase());
         } else if (data.name) {
-             if (data.description !== undefined) {
+            if (data.description !== undefined) {
                 fields.push(`description = $${paramCount++}`); values.push(data.description || null);
             }
         }
@@ -1667,9 +1681,9 @@ export class PostgresAdapter implements IDatabaseAdapter {
             fields.push(`permissions = $${paramCount++}::jsonb`); values.push(JSON.stringify(validPermissions));
         }
         if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o perfil."};
-        
+
         fields.push(`updated_at = NOW()`);
-        query += fields.join(', ') + ` WHERE id = $${paramCount}`;
+        let query = `UPDATE roles SET ${fields.join(', ')} WHERE id = $${paramCount}`;
         values.push(Number(id));
         await client.query(query, values);
         return { success: true, message: 'Perfil atualizado!' };
@@ -1697,7 +1711,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         for (const roleData of defaultRolesData) {
             const normalizedName = roleData.name.trim().toUpperCase();
             console.log(`[PostgresAdapter] Processando perfil padrão: ${roleData.name} (Normalizado: ${normalizedName})`);
-            
+
             const roleRes = await client.query('SELECT id, permissions, description FROM roles WHERE name_normalized = $1 LIMIT 1', [normalizedName]);
             const validPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
 
@@ -1730,15 +1744,15 @@ export class PostgresAdapter implements IDatabaseAdapter {
         await client.query('COMMIT');
         console.log(`[PostgresAdapter - ensureDefaultRolesExist] Verificação/criação de perfis padrão concluída. ${rolesProcessedCount} perfis processados.`);
         return { success: true, message: `Perfis padrão verificados/criados (PostgreSQL). ${rolesProcessedCount} processados.`, rolesProcessed: rolesProcessedCount };
-    } catch (e: any) { 
-        await client.query('ROLLBACK'); 
+    } catch (e: any) {
+        await client.query('ROLLBACK');
         console.error("[PostgresAdapter - ensureDefaultRolesExist] Erro:", e);
-        return { success: false, message: e.message, rolesProcessed: 0 }; 
-    } finally { 
-        client.release(); 
+        return { success: false, message: e.message, rolesProcessed: 0 };
+    } finally {
+        client.release();
     }
   }
-  
+
   // --- Users ---
   async getUserProfileData(userId: string): Promise<UserProfileData | null> {
     const client = await getPool().connect();
@@ -1760,11 +1774,11 @@ export class PostgresAdapter implements IDatabaseAdapter {
         const values: any[] = [];
         let paramCount = 1;
         (Object.keys(data) as Array<keyof EditableUserProfileData>).forEach(key => {
-            if (data[key] !== undefined && data[key] !== null) { 
+            if (data[key] !== undefined && data[key] !== null) {
                 const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
                 fields.push(`${sqlColumn} = $${paramCount++}`);
                 values.push(data[key]);
-            } else if (data[key] === null) { 
+            } else if (data[key] === null) {
                  const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
                  fields.push(`${sqlColumn} = NULL`);
             }
@@ -1776,25 +1790,25 @@ export class PostgresAdapter implements IDatabaseAdapter {
         console.log('[PostgresAdapter - updateUserProfile] Executing query:', queryText, 'with values:', values);
         await client.query(queryText, values);
         return { success: true, message: 'Perfil atualizado (PostgreSQL)!'};
-    } catch (e: any) { 
+    } catch (e: any) {
         console.error('[PostgresAdapter - updateUserProfile] Error:', e);
-        return { success: false, message: e.message }; 
-    } finally { 
-        client.release(); 
+        return { success: false, message: e.message };
+    } finally {
+        client.release();
     }
   }
 
   async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' >>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
     const client = await getPool().connect();
     try {
-        await this.ensureDefaultRolesExist(); 
+        await this.ensureDefaultRolesExist();
         let targetRole: Role | null = null;
         if (roleIdToAssign) {
-            console.log(`[PostgresAdapter ensureUserRole] Tentando buscar perfil por ID fornecido: ${roleIdToAssign}`);
+             console.log(`[PostgresAdapter ensureUserRole] Tentando buscar perfil por ID fornecido: ${roleIdToAssign}`);
             targetRole = await this.getRole(roleIdToAssign);
         }
         if (!targetRole) {
-            console.log(`[PostgresAdapter ensureUserRole] Perfil por ID não encontrado ou ID não fornecido. Buscando por nome: ${targetRoleName}`);
+             console.log(`[PostgresAdapter ensureUserRole] Perfil por ID não encontrado ou ID não fornecido. Buscando por nome: ${targetRoleName}`);
             targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
         }
 
@@ -1802,7 +1816,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
             console.error(`[PostgresAdapter ensureUserRole] CRITICAL: Perfil '${targetRoleName}' ou 'USER' não encontrado ou sem ID.`);
             return { success: false, message: `Perfil padrão '${targetRoleName}' ou 'USER' não encontrado ou sem ID.` };
         }
-         console.log(`[PostgresAdapter ensureUserRole] Perfil alvo determinado: ${targetRole.name} (ID: ${targetRole.id})`);
+        console.log(`[PostgresAdapter ensureUserRole] Perfil alvo determinado: ${targetRole.name} (ID: ${targetRole.id})`);
 
         await client.query('BEGIN');
         const userRes = await client.query('SELECT * FROM users WHERE uid = $1', [userId]);
@@ -1810,39 +1824,28 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
         if (userRes.rowCount > 0) {
             const userDataFromDB = mapToUserProfileData(mapRowToCamelCase(userRes.rows[0]));
-            const updatePayload: any = { updatedAt: new Date() }; 
+            const updatePayload: any = { updatedAt: new Date() };
             let needsUpdate = false;
-            if (String(userDataFromDB.roleId) !== String(targetRole.id)) { updatePayload.roleId = Number(targetRole.id); needsUpdate = true; console.log(`[PostgresAdapter ensureUserRole] Atualizando roleId para ${targetRole.id}`);}
-            if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; console.log(`[PostgresAdapter ensureUserRole] Atualizando roleName para ${targetRole.name}`);}
-            if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = targetRole.permissions || []; needsUpdate = true; console.log(`[PostgresAdapter ensureUserRole] Atualizando permissions.`);} 
+            if (String(userDataFromDB.roleId) !== String(targetRole.id)) { updatePayload.role_id = Number(targetRole.id); needsUpdate = true; }
+            if (userDataFromDB.roleName !== targetRole.name) { updatePayload.role_name = targetRole.name; needsUpdate = true; }
+            if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = targetRole.permissions || []; needsUpdate = true; }
             if (additionalProfileData?.password) {
-                updatePayload.passwordText = additionalProfileData.password; 
+                updatePayload.password_text = additionalProfileData.password; 
                 needsUpdate = true;
-                 console.log(`[PostgresAdapter ensureUserRole] Atualizando passwordText.`);
             }
-            if (additionalProfileData?.cpf !== undefined && additionalProfileData.cpf !== userDataFromDB.cpf) { updatePayload.cpf = additionalProfileData.cpf; needsUpdate = true;}
-            if (additionalProfileData?.cellPhone !== undefined && additionalProfileData.cellPhone !== userDataFromDB.cellPhone) { updatePayload.cellPhone = additionalProfileData.cellPhone; needsUpdate = true;}
-            if (additionalProfileData?.dateOfBirth !== undefined && (userDataFromDB.dateOfBirth?.getTime() !== additionalProfileData.dateOfBirth?.getTime())) { updatePayload.dateOfBirth = additionalProfileData.dateOfBirth; needsUpdate = true;}
-
             if (needsUpdate) {
-                 console.log(`[PostgresAdapter ensureUserRole] Update necessário. Payload:`, updatePayload);
                 const updateFields: string[] = [];
                 const updateValues: any[] = [];
                 let pCount = 1;
                 Object.keys(updatePayload).forEach(key => {
-                    const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
-                    updateFields.push(`${sqlColumn} = $${pCount++}`);
+                    updateFields.push(`${key} = $${pCount++}`);
                     updateValues.push(updatePayload[key]);
                 });
                 updateValues.push(userId);
                 await client.query(`UPDATE users SET ${updateFields.join(', ')} WHERE uid = $${pCount}`, updateValues);
-                 console.log(`[PostgresAdapter ensureUserRole] Usuário UID ${userId} atualizado no DB.`);
-            } else {
-                 console.log(`[PostgresAdapter ensureUserRole] Usuário UID ${userId} não precisou de atualização no DB.`);
             }
-             finalProfileData = { ...userDataFromDB, ...updatePayload, uid: userId } as UserProfileData;
+            finalProfileData = { ...userDataFromDB, ...updatePayload, uid: userId, permissions: targetRole.permissions || [] } as UserProfileData;
         } else {
-            console.log(`[PostgresAdapter ensureUserRole] Usuário UID ${userId} não encontrado no DB. Criando...`);
             const insertQuery = `
                 INSERT INTO users (uid, email, full_name, password_text, role_id, permissions, status, habilitation_status, cpf, cell_phone, date_of_birth, created_at, updated_at)
                 VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, NOW(), NOW()) RETURNING *;
@@ -1855,7 +1858,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
             ];
             const insertedRes = await client.query(insertQuery, insertValues);
             finalProfileData = mapToUserProfileData(mapRowToCamelCase(insertedRes.rows[0]), targetRole);
-            console.log(`[PostgresAdapter ensureUserRole] Usuário UID ${userId} criado no DB.`);
         }
         await client.query('COMMIT');
         return { success: true, message: 'Perfil de usuário assegurado/atualizado (PostgreSQL).', userProfile: finalProfileData };
@@ -1866,15 +1868,15 @@ export class PostgresAdapter implements IDatabaseAdapter {
     const client = await getPool().connect();
     try {
       const res = await client.query(`
-        SELECT u.*, r.name as role_name, r.permissions as role_permissions 
-        FROM users u 
-        LEFT JOIN roles r ON u.role_id = r.id 
+        SELECT u.*, r.name as role_name, r.permissions as role_permissions
+        FROM users u
+        LEFT JOIN roles r ON u.role_id = r.id
         ORDER BY u.full_name ASC;
       `);
       return mapRowsToCamelCase(res.rows).map(row => {
         const profile = mapToUserProfileData(row);
         if ((!profile.permissions || profile.permissions.length === 0) && row.role_permissions) {
-            profile.permissions = row.role_permissions; // JSONB is parsed by pg driver
+            profile.permissions = row.role_permissions;
         }
         return profile;
       });
@@ -1904,7 +1906,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Perfil de usuário excluído (PostgreSQL)!' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
   }
-  
+
   async getUserByEmail(email: string): Promise<UserProfileData | null> {
     const client = await getPool().connect();
     try {
@@ -1914,7 +1916,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       const userRow = mapRowToCamelCase(res.rows[0]);
       let role: Role | null = null;
       if (userRow.roleId) role = await this.getRole(userRow.roleId);
-      
+
       const profile = mapToUserProfileData(userRow, role);
       if ((!profile.permissions || profile.permissions.length === 0) && role?.permissions?.length) {
          profile.permissions = role.permissions;
@@ -1943,7 +1945,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       const values = [
         data.fileName, uploadedBy || null, data.title || null, data.altText || null, data.caption || null,
         data.description || null, data.mimeType, data.sizeBytes, data.dimensions?.width || null,
-        data.dimensions?.height || null, filePublicUrl, filePublicUrl, filePublicUrl, filePublicUrl, 
+        data.dimensions?.height || null, filePublicUrl, filePublicUrl, filePublicUrl, filePublicUrl,
         JSON.stringify(data.linkedLotIds || []), data.dataAiHint || null
       ];
       const res = await client.query(query, values);
@@ -1997,9 +1999,9 @@ export class PostgresAdapter implements IDatabaseAdapter {
         );
       }
       await client.query(
-        `UPDATE lots SET media_item_ids = COALESCE(media_item_ids, '[]'::jsonb) || $1::jsonb, updated_at = NOW() 
+        `UPDATE lots SET media_item_ids = COALESCE(media_item_ids, '[]'::jsonb) || $1::jsonb, updated_at = NOW()
          WHERE id = $2;`,
-        [JSON.stringify(mediaItemIds), Number(lotId)] 
+        [JSON.stringify(mediaItemIds), Number(lotId)]
       );
       await client.query('COMMIT');
       return { success: true, message: 'Mídias vinculadas (PostgreSQL).' };
@@ -2024,36 +2026,42 @@ export class PostgresAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Mídia desvinculada (PostgreSQL).' };
     } catch (e: any) { await client.query('ROLLBACK'); return { success: false, message: e.message }; } finally { client.release(); }
   }
-  
+
   // --- Platform Settings ---
   async getPlatformSettings(): Promise<PlatformSettings> {
     const client = await getPool().connect();
     try {
-        const res = await client.query(`SELECT gallery_image_base_path, themes, platform_public_id_masks, updated_at FROM platform_settings WHERE id = 'global';`);
+        const res = await client.query(`SELECT site_title, site_tagline, gallery_image_base_path, active_theme_name, themes, platform_public_id_masks, updated_at FROM platform_settings WHERE id = 'global';`);
         if (res.rowCount > 0) {
             const settingsRow = mapRowToCamelCase(res.rows[0]);
-            return { 
-                id: 'global', 
+            return {
+                id: 'global',
+                siteTitle: settingsRow.siteTitle,
+                siteTagline: settingsRow.siteTagline,
                 galleryImageBasePath: settingsRow.galleryImageBasePath,
+                activeThemeName: settingsRow.activeThemeName,
                 themes: settingsRow.themes || [],
                 platformPublicIdMasks: settingsRow.platformPublicIdMasks || undefined,
-                updatedAt: new Date(settingsRow.updatedAt) 
+                updatedAt: new Date(settingsRow.updatedAt)
             };
         }
-        const defaultSettings: PlatformSettings = { 
-          id: 'global', 
-          galleryImageBasePath: '/media/gallery/', 
-          themes: [], 
+        const defaultSettings: PlatformSettings = {
+          id: 'global',
+          siteTitle: 'BidExpert',
+          siteTagline: 'Leilões Online Especializados',
+          galleryImageBasePath: '/media/gallery/',
+          activeThemeName: null,
+          themes: [],
           platformPublicIdMasks: {},
-          updatedAt: new Date() 
+          updatedAt: new Date()
         };
-        await client.query(`INSERT INTO platform_settings (id, gallery_image_base_path, themes, platform_public_id_masks) VALUES ('global', $1, '[]'::jsonb, '{}'::jsonb) ON CONFLICT (id) DO NOTHING;`, 
-            [defaultSettings.galleryImageBasePath]
+        await client.query(`INSERT INTO platform_settings (id, site_title, site_tagline, gallery_image_base_path, themes, platform_public_id_masks) VALUES ('global', $1, $2, $3, '[]'::jsonb, '{}'::jsonb) ON CONFLICT (id) DO NOTHING;`,
+            [defaultSettings.siteTitle, defaultSettings.siteTagline, defaultSettings.galleryImageBasePath]
         );
         return defaultSettings;
     } catch (e: any) {
         console.error("[PostgresAdapter - getPlatformSettings] Error, returning default:", e);
-        return { id: 'global', galleryImageBasePath: '/media/gallery/', themes: [], platformPublicIdMasks: {}, updatedAt: new Date() };
+        return { id: 'global', siteTitle: 'BidExpert', siteTagline: 'Leilões Online Especializados', galleryImageBasePath: '/media/gallery/', activeThemeName: null, themes: [], platformPublicIdMasks: {}, updatedAt: new Date() };
     } finally { client.release(); }
   }
 
@@ -2064,17 +2072,23 @@ export class PostgresAdapter implements IDatabaseAdapter {
     }
     try {
         const query = `
-            INSERT INTO platform_settings (id, gallery_image_base_path, themes, platform_public_id_masks, updated_at) 
-            VALUES ('global', $1, $2::jsonb, $3::jsonb, NOW()) 
-            ON CONFLICT (id) 
-            DO UPDATE SET 
-                gallery_image_base_path = EXCLUDED.gallery_image_base_path, 
+            INSERT INTO platform_settings (id, site_title, site_tagline, gallery_image_base_path, active_theme_name, themes, platform_public_id_masks, updated_at)
+            VALUES ('global', $1, $2, $3, $4, $5::jsonb, $6::jsonb, NOW())
+            ON CONFLICT (id)
+            DO UPDATE SET
+                site_title = EXCLUDED.site_title,
+                site_tagline = EXCLUDED.site_tagline,
+                gallery_image_base_path = EXCLUDED.gallery_image_base_path,
+                active_theme_name = EXCLUDED.active_theme_name,
                 themes = EXCLUDED.themes,
                 platform_public_id_masks = EXCLUDED.platform_public_id_masks,
                 updated_at = NOW();
         `;
         await client.query(query, [
-            data.galleryImageBasePath, 
+            data.siteTitle || null,
+            data.siteTagline || null,
+            data.galleryImageBasePath,
+            data.activeThemeName || null,
             JSON.stringify(data.themes || []),
             JSON.stringify(data.platformPublicIdMasks || {})
         ]);
@@ -2084,5 +2098,3 @@ export class PostgresAdapter implements IDatabaseAdapter {
 }
 
     
-
-
