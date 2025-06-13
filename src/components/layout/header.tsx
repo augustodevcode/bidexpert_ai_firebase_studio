@@ -14,25 +14,25 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks, Tv, Briefcase as ConsignorIcon, ShieldCheck, Coins, Search as SearchIcon, Menu, ChevronDown, Package, Home as HomeIcon } from 'lucide-react'; // Adicionado Home as HomeIcon
+import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks, Tv, Briefcase as ConsignorIcon, ShieldCheck, Coins, Search as SearchIcon, Menu, ChevronDown, Package, Home as HomeIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
-import { auth } from '@/lib/firebase'; // Ainda necessário para logout do Firebase
+import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useRef } from 'react';
-import { hasPermission, hasAnyPermission } from '@/lib/permissions'; 
+import { hasPermission, hasAnyPermission } from '@/lib/permissions';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import MainNav from './main-nav'; 
-import UserNav from './user-nav'; 
+import MainNav from './main-nav';
+import UserNav from './user-nav';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Loader2 } from 'lucide-react';
 import type { RecentlyViewedLotInfo, Lot, LotCategory } from '@/types';
-import { sampleLots, slugify } from '@/lib/sample-data'; 
-import { getLotCategories } from '@/app/admin/categories/actions'; 
-import { getRecentlyViewedIds, getFavoriteLotIdsFromStorage } from '@/lib/recently-viewed-store'; 
+import { sampleLots, slugify } from '@/lib/sample-data';
+import { getLotCategories } from '@/app/admin/categories/actions';
+import { getRecentlyViewedIds, getFavoriteLotIdsFromStorage } from '@/lib/recently-viewed-store'; // Importação corrigida/garantida
 
 // Email do comitente de exemplo (para simular o próprio comitente acessando)
 const EXAMPLE_CONSIGNOR_EMAIL = 'consignor@bidexpert.com';
@@ -355,3 +355,5 @@ export default function Header() {
     </header>
   );
 }
+
+    
