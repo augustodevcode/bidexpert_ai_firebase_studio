@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useCallback } from 'react'; // Added useCallback
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getPlatformSettings } from './actions';
 import SettingsForm from './settings-form';
@@ -10,6 +10,7 @@ import { Settings as SettingsIcon, Palette, Fingerprint, Wrench, Loader2 } from 
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { PlatformSettings } from '@/types';
+import { useToast } from '@/hooks/use-toast'; // Added useToast import
 
 const settingsSections = [
     { id: 'identity', label: 'Identidade do Site', icon: Fingerprint, description: 'Título, tagline, logo e favicon.' },
@@ -18,15 +19,16 @@ const settingsSections = [
 ];
 
 interface AdminSettingsPageContentProps {
-    initialSettings: PlatformSettings | null; // Pode ser nulo se houver erro
+    initialSettings: PlatformSettings | null;
     initialError?: string | null;
+    onRetry?: () => void; // Added onRetry prop
 }
 
-function AdminSettingsPageContent({ initialSettings, initialError }: AdminSettingsPageContentProps) {
+function AdminSettingsPageContent({ initialSettings, initialError, onRetry }: AdminSettingsPageContentProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [settings, setSettings] = useState<PlatformSettings | null>(initialSettings);
-    const [error, setError] = useState<string | null>(initialError || null);
+    // Settings state will be managed by the form now if needed, or directly passed.
+    // This component can become simpler if settings are only read here and form handles its own state.
     const [activeSection, setActiveSection] = useState<string>('identity');
 
     useEffect(() => {
@@ -34,11 +36,17 @@ function AdminSettingsPageContent({ initialSettings, initialError }: AdminSettin
         if (section && settingsSections.some(s => s.id === section)) {
             setActiveSection(section);
         } else if (settingsSections.length > 0) {
-            setActiveSection(settingsSections[0].id);
+            // Default to the first section if no valid section is in query params
+            // or if the router hasn't pushed the new query param yet.
+            // To prevent unnecessary redirects, only set if different or not set.
+            if (activeSection !== settingsSections[0].id && !searchParams.get('section')) {
+                 router.replace(`/admin/settings?section=${settingsSections[0].id}`, { scroll: false });
+            }
         }
-    }, [searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams, router]); // Removed activeSection to prevent loop with router.replace
 
-    if (error) {
+    if (initialError) {
         return (
              <Card className="shadow-lg">
                 <CardHeader>
@@ -48,14 +56,14 @@ function AdminSettingsPageContent({ initialSettings, initialError }: AdminSettin
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-destructive-foreground">{error}</p>
-                  <Button onClick={() => router.refresh()} className="mt-4">Tentar Novamente</Button>
+                  <p className="text-destructive-foreground">{initialError}</p>
+                  {onRetry && <Button onClick={onRetry} className="mt-4">Tentar Novamente</Button>}
                 </CardContent>
             </Card>
         );
     }
     
-    if (!settings) {
+    if (!initialSettings) { // Changed from settings to initialSettings
         return (
              <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -77,7 +85,7 @@ function AdminSettingsPageContent({ initialSettings, initialError }: AdminSettin
                     className="w-full justify-start"
                     asChild
                 >
-                    <Link href={`?section=${section.id}`}>
+                    <Link href={`/admin/settings?section=${section.id}`} scroll={false}>
                     <section.icon className="mr-2 h-5 w-5" />
                     {section.label}
                     </Link>
@@ -108,7 +116,7 @@ function AdminSettingsPageContent({ initialSettings, initialError }: AdminSettin
                 </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <SettingsForm initialData={settings} activeSection={activeSection} />
+                    <SettingsForm initialData={initialSettings} activeSection={activeSection} />
                 </CardContent>
             </Card>
         </div>
@@ -117,20 +125,31 @@ function AdminSettingsPageContent({ initialSettings, initialError }: AdminSettin
 
 
 export default function AdminSettingsPageWrapper() {
-    // Esta parte agora executa no servidor para buscar os dados iniciais
-    const [initialSettings, setInitialSettings] = React.useState<PlatformSettings | null>(null);
-    const [initialError, setInitialError] = React.useState<string | null>(null);
-    const [isLoadingInitial, setIsLoadingInitial] = React.useState(true);
+    const { toast } = useToast(); // Moved toast here
+    const [initialSettings, setInitialSettings] = useState<PlatformSettings | null>(null);
+    const [initialError, setInitialError] = useState<string | null>(null);
+    const [isLoadingInitial, setIsLoadingInitial] = useState(true);
 
-    React.useEffect(() => {
-        getPlatformSettings()
-            .then(setInitialSettings)
-            .catch(err => {
-                console.error("Failed to fetch initial settings for page:", err);
-                setInitialError(err.message || "Falha ao carregar configurações iniciais.");
-            })
-            .finally(() => setIsLoadingInitial(false));
-    }, []);
+    const fetchInitialSettings = useCallback(async () => {
+        setIsLoadingInitial(true);
+        setInitialError(null);
+        try {
+            const settings = await getPlatformSettings();
+            setInitialSettings(settings);
+        } catch (err: any) {
+            console.error("Failed to fetch initial settings for page:", err);
+            const errorMessage = err.message || "Falha ao carregar configurações iniciais.";
+            setInitialError(errorMessage);
+            toast({ title: "Erro de Carregamento", description: errorMessage, variant: "destructive" });
+        } finally {
+            setIsLoadingInitial(false);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [toast]); // toast added as dependency if used within fetchInitialSettings
+
+    useEffect(() => {
+        fetchInitialSettings();
+    }, [fetchInitialSettings]);
 
     if (isLoadingInitial) {
         return (
@@ -143,9 +162,8 @@ export default function AdminSettingsPageWrapper() {
     
     return (
         <Suspense fallback={<div className="flex items-center justify-center min-h-[calc(100vh-10rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
-            <AdminSettingsPageContent initialSettings={initialSettings} initialError={initialError} />
+            <AdminSettingsPageContent initialSettings={initialSettings} initialError={initialError} onRetry={fetchInitialSettings} />
         </Suspense>
     );
 }
 
-    
