@@ -3,35 +3,39 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Coins, Search as SearchIcon, Menu, Heart, ChevronDown, UserCircle, LayoutList, Home as HomeIcon, Briefcase, Users2, MessageSquareText, Package, Tv, Percent, Handshake, FileText, History, Loader2, Bell, Landmark } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import MainNav from './main-nav';
-import UserNav from './user-nav';
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuLabel
-} from "@/components/ui/dropdown-menu";
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { sampleLots, slugify } from '@/lib/sample-data';
-import { getLotCategories } from '@/app/admin/categories/actions';
-import type { RecentlyViewedLotInfo, Lot, LotCategory } from '@/types';
-import { useEffect, useState, useRef } from 'react';
-import Image from 'next/image';
-import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks, Tv, Briefcase as ConsignorIcon, ShieldCheck, Coins, Search as SearchIcon, Menu, ChevronDown, Package } from 'lucide-react'; // Adicionei Coins, SearchIcon, Menu, ChevronDown, Package
 import { useAuth } from '@/contexts/auth-context';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { auth } from '@/lib/firebase'; // Ainda necessário para logout do Firebase
+import { signOut } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
+import { useEffect, useState, useRef } from 'react';
+import { hasPermission, hasAnyPermission } from '@/lib/permissions'; 
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import MainNav from './main-nav'; // Presumindo que MainNav está aqui
+import UserNav from './user-nav'; // Presumindo que UserNav está aqui
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
+import { Loader2 } from 'lucide-react';
+import type { RecentlyViewedLotInfo, Lot, LotCategory } from '@/types';
+import { sampleLots, slugify } from '@/lib/sample-data'; // sampleLots e slugify
+import { getLotCategories } from '@/app/admin/categories/actions'; // getLotCategories
+import { getRecentlyViewedIds, getFavoriteLotIdsFromStorage } from '@/lib/recently-viewed-store'; // getFavoriteLotIdsFromStorage adicionado
+
+// Email do comitente de exemplo (para simular o próprio comitente acessando)
+const EXAMPLE_CONSIGNOR_EMAIL = 'consignor@bidexpert.com';
 
 export default function Header() {
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
@@ -351,4 +355,3 @@ export default function Header() {
     </header>
   );
 }
-
