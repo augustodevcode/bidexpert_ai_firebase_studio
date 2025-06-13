@@ -34,7 +34,7 @@ import { sampleLots, slugify } from '@/lib/sample-data';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getFavoriteLotIdsFromStorage } from '@/lib/favorite-store';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
-import { getPlatformSettings } from '@/app/admin/settings/actions'; // Import the action to get settings
+import { getPlatformSettings } from '@/app/admin/settings/actions';
 
 // Email do comitente de exemplo (para simular o próprio comitente acessando)
 const EXAMPLE_CONSIGNOR_EMAIL = 'consignor@bidexpert.com';
@@ -54,23 +54,22 @@ export default function Header() {
   const { user } = useAuth();
 
   const placeholderNotificationsCount = 3; 
-  const [siteTitle, setSiteTitle] = useState('BidExpert'); // Default title
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
+  const siteTitle = platformSettings?.siteTitle || 'BidExpert';
+  const siteTagline = platformSettings?.siteTagline;
+
 
   useEffect(() => {
     setIsClient(true);
 
     async function fetchInitialData() {
-      // Fetch platform settings for site title
       try {
         const settings = await getPlatformSettings();
-        if (settings && settings.siteTitle) {
-          setSiteTitle(settings.siteTitle);
-        }
+        setPlatformSettings(settings);
       } catch (error) {
         console.error("Error fetching platform settings for header:", error);
       }
 
-      // Fetch recently viewed items
       const viewedIds = getRecentlyViewedIds();
       const items: RecentlyViewedLotInfo[] = viewedIds.map(id => {
         const lot = sampleLots.find(l => l.id === id);
@@ -84,7 +83,6 @@ export default function Header() {
       }).filter(item => item !== null) as RecentlyViewedLotInfo[];
       setRecentlyViewedItems(items);
 
-      // Fetch categories for search dropdown
       try {
         const fetchedCategories = await getLotCategories();
         setSearchCategories(fetchedCategories);
@@ -186,15 +184,22 @@ export default function Header() {
               </Sheet>
             </div>
 
-            {/* Logo */}
-            <Link href="/" className="mr-4 flex items-center space-x-2 sm:space-x-3">
-              <Avatar className="h-8 w-8 sm:h-10 sm:w-10 bg-primary-foreground text-primary">
-                <AvatarImage src="https://placehold.co/40x40.png?text=BE" alt={`${siteTitle} Logo`} data-ai-hint="logo initial" />
-                <AvatarFallback className="font-bold text-xl">{siteTitle.substring(0,2).toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <span className="font-bold text-xl sm:text-3xl hidden sm:inline-block">
-                {siteTitle}
-              </span>
+            {/* Logo and Tagline */}
+            <Link href="/" className="mr-4 flex flex-col items-start sm:items-center sm:flex-row sm:space-x-3">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <Avatar className="h-8 w-8 sm:h-10 sm:w-10 bg-primary-foreground text-primary">
+                  <AvatarImage src="https://placehold.co/40x40.png?text=BE" alt={`${siteTitle} Logo`} data-ai-hint="logo initial" />
+                  <AvatarFallback className="font-bold text-xl">{siteTitle.substring(0,2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <span className="font-bold text-xl sm:text-3xl">
+                  {siteTitle}
+                </span>
+              </div>
+              {siteTagline && (
+                <span className="text-xs sm:text-sm text-primary-foreground/80 mt-0 sm:mt-1 hidden md:block">
+                  {siteTagline}
+                </span>
+              )}
             </Link>
           </div>
 
