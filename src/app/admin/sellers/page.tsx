@@ -1,3 +1,4 @@
+'use client';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getSellers, deleteSeller } from './actions';
 import type { SellerProfileInfo } from '@/types';
-import { PlusCircle, Edit, Trash2, Users, AlertTriangle, ExternalLink } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Users, AlertTriangle, ExternalLink, Loader2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,9 +22,15 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
+import { useState } from 'react';
+import { handleDeleteSeller } from './seller.actions'; // Import the Server Action
+
 function DeleteSellerButton({ sellerId, sellerName, onDelete }: { sellerId: string; sellerName: string; onDelete: (id: string) => Promise<void> }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <AlertDialog>
+    // Control the open state of the AlertDialog with the 'isOpen' state
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <Tooltip>
         <TooltipTrigger asChild>
           <AlertDialogTrigger asChild>
@@ -43,11 +50,12 @@ function DeleteSellerButton({ sellerId, sellerName, onDelete }: { sellerId: stri
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={async () => {
+          {/* The onClick handler calls the imported server action */}
+          <AlertDialogAction onClick={async () => {
+                // The delete action is handled here
                 await onDelete(sellerId);
+                setIsOpen(false); // Close the dialog after deletion
             }}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             Excluir
           </AlertDialogAction>
@@ -59,14 +67,6 @@ function DeleteSellerButton({ sellerId, sellerName, onDelete }: { sellerId: stri
 
 export default async function AdminSellersPage() {
   const sellers = await getSellers();
-
-  async function handleDeleteSeller(id: string) {
-    'use server';
-    const result = await deleteSeller(id);
-    if (!result.success) {
-        console.error("Failed to delete seller:", result.message);
-    }
-  }
 
   return (
     <TooltipProvider>

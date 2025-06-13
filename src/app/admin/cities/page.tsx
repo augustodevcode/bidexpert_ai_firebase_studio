@@ -1,3 +1,4 @@
+'use client';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -20,11 +21,20 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
+import { useState } from 'react';
+
 function DeleteCityButton({ cityId, cityName, onDelete }: { cityId: string; cityName: string; onDelete: (id: string) => Promise<void> }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    await onDelete(cityId);
+    setIsOpen(false);
+  };
+
   'use client';
   return (
 
-    <AlertDialog>
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <Tooltip>
         <TooltipTrigger asChild>
           <AlertDialogTrigger asChild>
@@ -37,17 +47,14 @@ function DeleteCityButton({ cityId, cityName, onDelete }: { cityId: string; city
       </Tooltip>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+          <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle> 
           <AlertDialogDescription>
             Tem certeza que deseja excluir a cidade "{cityName}"? Esta ação não pode ser desfeita e pode afetar lotes associados.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={async () => {
-                await onDelete(cityId);
-            }}
+          <AlertDialogAction onClick={handleConfirmDelete}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             Excluir
@@ -120,7 +127,7 @@ export default async function AdminCitiesPage() {
                             </TooltipTrigger>
                             <TooltipContent><p>Editar Cidade</p></TooltipContent>
                           </Tooltip>
-                          <DeleteCityButton cityId={city.id} cityName={city.name} onDelete={handleDeleteCity} />
+                          <DeleteCityButton cityId={city.id} cityName={city.name} onDelete={deleteCity} />
                         </TableCell>
                       </TableRow>
                     ))}

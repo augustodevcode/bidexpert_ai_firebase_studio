@@ -1,4 +1,6 @@
 
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,15 +23,15 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 function DeleteStateButton({ stateId, stateName, onDelete }: { stateId: string; stateName: string; onDelete: (id: string) => Promise<void> }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <AlertDialog>
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label="Excluir Estado">
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </AlertDialogTrigger>
+ <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label="Excluir Estado" onClick={() => setIsOpen(true)}>
+ <Trash2 className="h-4 w-4" />
+ </Button>
         </TooltipTrigger>
         <TooltipContent><p>Excluir Estado</p></TooltipContent>
       </Tooltip>
@@ -45,6 +47,7 @@ function DeleteStateButton({ stateId, stateName, onDelete }: { stateId: string; 
           <AlertDialogAction
             onClick={async () => {
                 await onDelete(stateId);
+ setIsOpen(false);
             }}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
