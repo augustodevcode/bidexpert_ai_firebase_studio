@@ -9,6 +9,7 @@
 - Implemented CRUD for Auctioneers (`/admin/auctioneers`) - Firestore and SQL adapters.
   - Resolved build-time and runtime errors related to Client/Server component interactions and event handlers on `/admin/auctioneers/page.tsx`.
   - Corrected SQL `INSERT` query issues (`ER_WRONG_VALUE_COUNT_ON_ROW`) in `MySqlAdapter` for `createAuctioneer`.
+  - Added `getAuctioneerByName` to auctioneer actions and adapter.
 - Implemented CRUD for Sellers (`/admin/sellers`) - Firestore and SQL adapters.
   - Corrected SQL `INSERT` query issues (`ER_WRONG_VALUE_COUNT_ON_ROW`) in `MySqlAdapter` for `createSeller`.
 - Implemented CRUD for Auctions (`/admin/auctions`), linking to categories, auctioneers, and sellers - Firestore and SQL adapters. Server actions for auctions refactored for ID resolution.
@@ -28,26 +29,39 @@
 - Transformed Media Library page to a table view with toolbar placeholders.
 - **MySQL schema initialization fixed with `DROP TABLE IF EXISTS`.**
 - **Context persistence file system setup (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.md`, `PROJECT_INSTRUCTIONS.md`, `1st.md`) - This task.**
+- **Fixed `HomeIcon is not defined` and `getFavoriteLotIdsFromStorage is not defined` in header.**
+- **Fixed mobile search icon visibility in header.**
+- **Converted `/admin/categories/page.tsx` to Client Component to resolve event handler error.**
+- **Corrected MySQL syntax for `platform_settings` table creation (JSON DEFAULT).**
+- **Corrected MySQL `createLot` by ensuring `undefined` values are passed as `null` where appropriate.**
+- **Updated `/auth/register` page UI for Pessoa Jurídica and Comitente Venda Direta.**
 
 ## WORKING
-- Finalizing SQL adapter implementations (next: `platformSettings`).
+- **Finalizing SQL adapter implementations (next: `platformSettings` CRUD, if not fully covered).**
 - Ensuring robustness of fallback mechanisms when server actions encounter expected configuration issues (like permissions).
 - User-side investigation of Firestore permissions for the `mediaItems` collection (ongoing if not fully resolved by schema changes).
+- **Backend processing for new fields from the updated registration form in `createUser` action and DB adapters.**
 
 ## NEXT
-- **Implement CRUD for `platformSettings` in SQL adapters.**
+- **Data Model Refinement: Remove status and date fields from `Lot` entity; these should be derived from the parent `Auction`.**
+    - Update `Lot` type in `src/types/index.ts`.
+    - Update `lot-form.tsx` and `lot-form-schema.ts` to remove these fields.
+    - Update `LotCard.tsx`, `LotListItem.tsx`, and other components displaying lot status/dates to fetch/derive this info from the auction.
+    - Update SQL adapters (schema and CRUD for `lots` table) to remove these columns.
+    - Update Firestore adapter (if still relevant for lots) for these fields.
+- **Implement CRUD for `platformSettings` in SQL adapters (if not fully covered by schema init).**
 - **Media Library - Core Functionality (Post SQL Adapter Completion):**
     - Implement actual file upload functionality (client-side and server-side handling, likely using Firebase Storage) for the "Fazer Upload" button on the Media Library page.
     - Develop a modal component for editing `MediaItem` metadata (title, alt text, caption, description).
     *   Implement the "Editar" button functionality on the Media Library page to open this modal.
-    *   Implement the "Excluir" button functionality fully (delete from Firestore/SQL and Firebase Storage).
+    *   Implement the "Excluir" button functionality fully (delete from DB and Firebase Storage).
 - **Media Library - Lot Integration (Post SQL Adapter Completion):**
     *   Create a modal component to display the Media Library (`/admin/media/page.tsx` or a dedicated selection component) when "Adicionar da Biblioteca" is clicked in `lot-form.tsx`.
     *   Implement logic to select images from this modal and link their IDs (`mediaItemIds`) to the lot being edited/created.
     *   Update `lot-form.tsx` to display thumbnails of linked `MediaItem`s and manage `mediaItemIds`.
 - **SQL Database Seeding (Post Adapter Completion):**
     *   Potentially update `scripts/seed-firestore.ts` or create new seed scripts for SQL databases if needed for sample data.
-    *   Seed images using `copy-sample-images-to-public.ts` and then update `sampleLots` with correct public URLs.
+    *   Seed images using `copy-sample-images-to-public.ts` and then update sample data with correct public URLs.
 - **Thorough Testing:**
     *   Test all admin CRUD functionalities with both PostgreSQL and MySQL (by switching `ACTIVE_DATABASE_SYSTEM`).
 - **Full Functionality for Filters & Search on Admin Pages:**
@@ -63,4 +77,6 @@
 - **Dashboard Pages - Functionality:**
     *   Implement backend logic for My Bids, My Wins, Notifications, etc., connecting to the database.
 - **Public Facing Pages - Data Integration:**
-    *   Ensure all public-facing pages (category, auction detail, lot detail, seller detail, auctioneer detail) correctly fetch and display data from the active database.
+    *   Ensure all public-facing pages (category, auction detail, lot detail, seller detail, auctioneer detail) correctly fetch and display data from the active database, using `publicId` for routing where appropriate.
+    *   Update links in admin list pages (e.g., edit auctioneer) to use `publicId` instead of numeric ID for routes.
+```
