@@ -21,6 +21,7 @@ import { platformSettingsFormSchema, type PlatformSettingsFormValues } from './s
 import type { PlatformSettings } from '@/types';
 import { Loader2, Save } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea'; // Importar Textarea
 
 interface SettingsFormProps {
   initialData: PlatformSettings;
@@ -37,8 +38,11 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
   const form = useForm<PlatformSettingsFormValues>({
     resolver: zodResolver(platformSettingsFormSchema),
     defaultValues: {
+      siteTitle: initialData?.siteTitle || 'BidExpert',
+      siteTagline: initialData?.siteTagline || 'Leilões Online Especializados',
       galleryImageBasePath: initialData?.galleryImageBasePath || '/media/gallery/',
-      // Initialize other default values from initialData here
+      themes: initialData?.themes || [],
+      platformPublicIdMasks: initialData?.platformPublicIdMasks || {},
     },
   });
 
@@ -51,7 +55,7 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
           title: 'Sucesso!',
           description: result.message,
         });
-        router.refresh(); // Re-fetch server-side data for the current page
+        router.refresh(); 
       } else {
         toast({
           title: 'Erro ao Salvar',
@@ -72,9 +76,42 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
   }
 
   return (
-    // O Card envolvente já está em page.tsx, aqui focamos no formulário em si
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <FormField
+          control={form.control}
+          name="siteTitle"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Título do Site</FormLabel>
+              <FormControl>
+                <Input placeholder="Ex: BidExpert Leilões" {...field} />
+              </FormControl>
+              <FormDescription>
+                O título principal que aparecerá no cabeçalho e na aba do navegador.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="siteTagline"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tagline do Site (Slogan)</FormLabel>
+              <FormControl>
+                <Input placeholder="Ex: Seu parceiro especialista em leilões online." {...field} />
+              </FormControl>
+              <FormDescription>
+                Uma frase curta que descreve o seu site, exibida abaixo do título no cabeçalho.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="galleryImageBasePath"
@@ -92,22 +129,40 @@ export default function SettingsForm({ initialData }: SettingsFormProps) {
             </FormItem>
           )}
         />
+        
+        {/* Campos de Máscara de ID Público - Futuro */}
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-lg">Máscaras de ID Público (Avançado)</CardTitle>
+                <CardDescription>Defina prefixos para IDs públicos de diferentes entidades (ex: LEIL- para leilões). Deixe em branco para usar o padrão.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <FormField
+                    control={form.control}
+                    name="platformPublicIdMasks.auctions"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Máscara para Leilões</FormLabel>
+                            <FormControl><Input placeholder="Ex: LEIL-" {...field} value={field.value || ''} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="platformPublicIdMasks.lots"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Máscara para Lotes</FormLabel>
+                            <FormControl><Input placeholder="Ex: LOTE-" {...field} value={field.value || ''} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 {/* Adicionar mais campos de máscara aqui conforme necessário */}
+            </CardContent>
+        </Card>
 
-        {/* Adicione outros campos de configuração aqui no futuro, por exemplo:
-        <FormField
-          control={form.control}
-          name="siteName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nome do Site</FormLabel>
-              <FormControl>
-                <Input placeholder="BidExpert Leilões" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        /> 
-        */}
 
         <div className="flex justify-end">
           <Button type="submit" disabled={isSubmitting}>
