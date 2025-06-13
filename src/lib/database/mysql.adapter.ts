@@ -38,7 +38,7 @@ function getPool() {
         waitForConnections: true,
         connectionLimit: 10,
         queueLimit: 0,
-        dateStrings: true,
+        dateStrings: true, // Importante para datas virem como string e não serem convertidas para Date pelo driver
       });
       console.log('[MySqlAdapter] Pool de conexões MySQL inicializado.');
     } catch (e) {
@@ -175,9 +175,9 @@ function mapToUserProfileData(row: RowDataPacket, role?: Role | null): UserProfi
         uid: row.uid,
         email: row.email,
         fullName: row.fullName,
-        password: row.passwordText,
+        password: row.passwordText, // Campo para armazenar a senha em texto (APENAS PARA SQL e PROTÓTIPO)
         roleId: row.roleId ? String(row.roleId) : undefined,
-        roleName: role?.name || row.roleName,
+        roleName: role?.name || row.roleName, // Usa o nome do perfil do objeto Role se disponível
         permissions: typeof row.permissions === 'string' ? JSON.parse(row.permissions || '[]') : (role?.permissions || row.permissions || []),
         status: row.status,
         habilitationStatus: row.habilitationStatus as UserHabilitationStatus,
@@ -208,6 +208,12 @@ function mapToUserProfileData(row: RowDataPacket, role?: Role | null): UserProfi
         dataAiHint: row.dataAiHint,
         createdAt: new Date(row.createdAt),
         updatedAt: new Date(row.updatedAt),
+        // Novos campos de PJ / Comitente
+        accountType: row.accountType as UserProfileData['accountType'],
+        razaoSocial: row.razaoSocial,
+        cnpj: row.cnpj,
+        inscricaoEstadual: row.inscricaoEstadual,
+        websiteComitente: row.websiteComitente,
     };
     return profile;
 }
@@ -221,15 +227,15 @@ function mapToAuction(row: RowDataPacket): Auction {
         description: row.description,
         status: row.status as AuctionStatus,
         auctionType: row.auctionType,
-        category: row.categoryName,
+        category: row.categoryName, // Nome da categoria obtido via JOIN
         categoryId: row.categoryId ? String(row.categoryId) : undefined,
-        auctioneer: row.auctioneerName,
+        auctioneer: row.auctioneerName, // Nome do leiloeiro obtido via JOIN
         auctioneerId: row.auctioneerId ? String(row.auctioneerId) : undefined,
-        seller: row.sellerName,
+        seller: row.sellerName, // Nome do comitente obtido via JOIN
         sellerId: row.sellerId ? String(row.sellerId) : undefined,
         auctionDate: new Date(row.auctionDate),
         endDate: row.endDate ? new Date(row.endDate) : null,
-        auctionStages: row.auctionStages ? JSON.parse(row.auctionStages) : [],
+        auctionStages: row.auctionStages ? JSON.parse(row.auctionStages) : [], // Assumindo que é armazenado como JSON string
         city: row.city,
         state: row.state,
         imageUrl: row.imageUrl,
@@ -245,8 +251,8 @@ function mapToAuction(row: RowDataPacket): Auction {
         vehicleLocation: row.vehicleLocation,
         createdAt: new Date(row.createdAt),
         updatedAt: new Date(row.updatedAt),
-        auctioneerLogoUrl: row.auctioneerLogoUrl,
-        lots: []
+        auctioneerLogoUrl: row.auctioneerLogoUrl, // Obtido via JOIN
+        lots: [] // Lotes serão preenchidos separadamente se necessário
     };
 }
 
@@ -259,17 +265,17 @@ function mapToLot(row: RowDataPacket): Lot {
     number: row.number,
     imageUrl: row.imageUrl,
     dataAiHint: row.dataAiHint,
-    galleryImageUrls: row.galleryImageUrls ? JSON.parse(row.galleryImageUrls) : [],
-    mediaItemIds: row.mediaItemIds ? JSON.parse(row.mediaItemIds) : [],
+    galleryImageUrls: row.galleryImageUrls && typeof row.galleryImageUrls === 'string' && row.galleryImageUrls.trim() !== '' ? JSON.parse(row.galleryImageUrls) : [],
+    mediaItemIds: row.mediaItemIds && typeof row.mediaItemIds === 'string' && row.mediaItemIds.trim() !== '' ? JSON.parse(row.mediaItemIds) : [],
     status: row.status as LotStatus,
     stateId: row.stateId ? String(row.stateId) : undefined,
     cityId: row.cityId ? String(row.cityId) : undefined,
-    cityName: row.cityName,
-    stateUf: row.stateUf,
-    type: row.categoryName,
+    cityName: row.cityName, // Veio do JOIN
+    stateUf: row.stateUf,   // Veio do JOIN
+    type: row.categoryName,  // Veio do JOIN com lot_categories
     categoryId: row.categoryId ? String(row.categoryId) : undefined,
     views: Number(row.views || 0),
-    auctionName: row.auctionName,
+    auctionName: row.auctionName, // Veio do JOIN com auctions
     price: Number(row.price),
     initialPrice: row.initialPrice !== null ? Number(row.initialPrice) : undefined,
     lotSpecificAuctionDate: row.lotSpecificAuctionDate ? new Date(row.lotSpecificAuctionDate) : null,
@@ -280,6 +286,7 @@ function mapToLot(row: RowDataPacket): Lot {
     isFavorite: Boolean(row.isFavorite),
     isFeatured: Boolean(row.isFeatured),
     description: row.description,
+    // Vehicle specific fields
     year: row.year !== null ? Number(row.year) : undefined,
     make: row.make,
     model: row.model,
@@ -312,9 +319,9 @@ function mapToLot(row: RowDataPacket): Lot {
     aisleStall: row.aisleStall,
     actualCashValue: row.actualCashValue,
     estimatedRepairCost: row.estimatedRepairCost,
-    sellerName: row.lotSellerName,
+    sellerName: row.lotSellerName, // Veio do JOIN
     sellerId: row.sellerIdFk ? String(row.sellerIdFk) : undefined,
-    auctioneerName: row.lotAuctioneerName,
+    auctioneerName: row.lotAuctioneerName, // Veio do JOIN
     auctioneerId: row.auctioneerIdFk ? String(row.auctioneerIdFk) : undefined,
     condition: row.condition,
     createdAt: new Date(row.createdAt),
@@ -357,6 +364,8 @@ function mapToMediaItem(row: RowDataPacket): MediaItem {
 }
 
 function mapToPlatformSettings(row: RowDataPacket): PlatformSettings {
+    // JSON columns are typically parsed as strings by mysql2 if not configured otherwise.
+    // We need to parse them manually.
     const themes = typeof row.themes === 'string' ? JSON.parse(row.themes || '[]') : (row.themes || []);
     const platformPublicIdMasks = typeof row.platformPublicIdMasks === 'string' ? JSON.parse(row.platformPublicIdMasks || '{}') : (row.platformPublicIdMasks || {});
     return {
@@ -379,7 +388,7 @@ const defaultRolesData: RoleFormData[] = [
 
 export class MySqlAdapter implements IDatabaseAdapter {
   constructor() {
-    getPool();
+    getPool(); // Assegura que o pool é inicializado ao instanciar o adaptador
   }
 
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[]; rolesProcessed?: number }> {
@@ -387,6 +396,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
     const errors: any[] = [];
     console.log('[MySqlAdapter] Iniciando criação/verificação de tabelas...');
 
+    // Ordem de DROP e CREATE ajustada para FKs
     const queries = [
       `SET FOREIGN_KEY_CHECKS = 0;`,
       `DROP TABLE IF EXISTS bids;`,
@@ -447,6 +457,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
         opt_in_marketing BOOLEAN DEFAULT FALSE,
         avatar_url TEXT,
         data_ai_hint TEXT,
+        account_type VARCHAR(50),
+        razao_social VARCHAR(255),
+        cnpj VARCHAR(20),
+        inscricao_estadual VARCHAR(50),
+        website_comitente TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE SET NULL,
@@ -727,8 +742,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
           }
         } catch (tableError: any) {
           console.warn(`[MySqlAdapter] Aviso ao executar query: ${tableError.message}. Query: ${query.substring(0,100)}...`);
-           if (query.includes('platform_settings') && tableError.code === 'ER_PARSE_ERROR') {
-             errors.push(new Error(`Erro de sintaxe específico nas configurações da plataforma (MySQL): ${tableError.message}`));
+           if (query.includes('platform_settings') && tableError.code === 'ER_BAD_FIELD_ERROR' && tableError.message.includes('JSON_ARRAY')) {
+             errors.push(new Error(`Erro de sintaxe específico nas configurações da plataforma (MySQL): ${tableError.message} - DEFAULT (JSON_ARRAY()) pode não ser suportado ou requerer sintaxe específica.`));
+           } else if (query.includes('platform_settings') && tableError.code === 'ER_PARSE_ERROR'){
+              errors.push(new Error(`Erro de sintaxe na criação de platform_settings (MySQL): ${tableError.message}`));
            }
         }
       }
@@ -742,8 +759,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
         console.log(`[MySqlAdapter] ${rolesResult.rolesProcessed || 0} perfis padrão processados.`);
       }
 
-      const settingsResult = await this.getPlatformSettings();
-      if (!settingsResult.galleryImageBasePath) { 
+      const settingsResult = await this.getPlatformSettings(); // Cria se não existir
+      if (!settingsResult.galleryImageBasePath) { // Uma verificação simples se as configurações foram carregadas/criadas
           errors.push(new Error('Falha ao garantir configurações padrão da plataforma.'));
       } else {
         console.log('[MySqlAdapter] Configurações padrão da plataforma verificadas/criadas.');
@@ -929,7 +946,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
             if (!isNaN(numericStateIdFilter)) {
                 queryText += ' WHERE state_id = ?';
                 values.push(numericStateIdFilter);
-            } else {
+            } else { // Assume it's a slug
                 queryText += ' JOIN states s ON cities.state_id = s.id WHERE s.slug = ?';
                 values.push(stateIdFilter);
             }
@@ -948,7 +965,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
           const parts = id.split('-');
           if (parts.length > 1) {
               const citySlug = parts.pop();
-              const stateSlugOrId = parts.join('-');
+              const stateSlugOrId = parts.join('-'); // Re-join if state slug itself has hyphens
               const stateNumericId = parseInt(stateSlugOrId, 10);
               if (!isNaN(stateNumericId)) {
                  [rows] = await connection.execute('SELECT * FROM cities WHERE slug = ? AND state_id = ?', [citySlug, stateNumericId]);
@@ -956,6 +973,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
                  [rows] = await connection.execute('SELECT ci.* FROM cities ci JOIN states s ON ci.state_id = s.id WHERE ci.slug = ? AND s.slug = ?', [citySlug, stateSlugOrId]);
               }
           } else {
+            // Not a valid composite ID if no hyphen after attempting numeric parse
             return null;
           }
       } else {
@@ -977,10 +995,12 @@ export class MySqlAdapter implements IDatabaseAdapter {
             fieldsToUpdate.push('state_id = ?', 'state_uf = ?'); values.push(Number(data.stateId), (stateRows as RowDataPacket[])[0].uf);
         }
         if (data.ibgeCode !== undefined) { fieldsToUpdate.push('ibge_code = ?'); values.push(data.ibgeCode || null); }
+        
         if (fieldsToUpdate.length === 0) return { success: true, message: "Nenhuma alteração para a cidade."};
 
         const query = `UPDATE cities SET ${fieldsToUpdate.join(', ')}, updated_at = NOW() WHERE id = ?`;
         values.push(Number(id));
+        
         await connection.execute(query, values);
         return { success: true, message: 'Cidade atualizada (MySQL)!' };
     } catch (e: any) { console.error(`[MySqlAdapter - updateCity(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
@@ -1002,7 +1022,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       const query = `
         INSERT INTO auctioneers
           (public_id, name, slug, registration_number, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, user_id, member_since, rating, auctions_conducted_count, total_value_sold)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, 0, 0);
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, 0, 0, 0);
       `;
       const values = [
         publicId, data.name, slug, data.registrationNumber || null, data.contactName || null, data.email || null, data.phone || null,
@@ -1044,6 +1064,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
     const connection = await getPool().getConnection();
     try {
+      // Prioritize public_id then slug
       let [rows] = await connection.execute('SELECT * FROM auctioneers WHERE public_id = ? LIMIT 1;', [slugOrPublicId]);
       if ((rows as RowDataPacket[]).length === 0) {
         [rows] = await connection.execute('SELECT * FROM auctioneers WHERE slug = ? LIMIT 1;', [slugOrPublicId]);
@@ -1068,10 +1089,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
       }
 
       (Object.keys(data) as Array<keyof AuctioneerFormData>).forEach(key => {
-        if (data[key] !== undefined) {
+        if (data[key] !== undefined) { // Allow empty strings but not undefined
             const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
             fieldsToUpdate.push(`${sqlColumn} = ?`);
-            values.push(data[key] === '' ? null : data[key]);
+            values.push(data[key] === '' ? null : data[key]); // Convert empty string to null for DB if needed
         }
       });
       if (data.name) { fieldsToUpdate.push(`slug = ?`); values.push(slugify(data.name)); }
@@ -1098,7 +1119,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Leiloeiro excluído (MySQL)!' };
     } catch (e: any) { console.error(`[MySqlAdapter - deleteAuctioneer(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
   }
-
+  
   // --- Sellers ---
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> {
     const connection = await getPool().getConnection();
@@ -1221,7 +1242,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         data.sellerId ? Number(data.sellerId) : null,
         data.auctionDate, data.endDate || null, data.auctionStages ? JSON.stringify(data.auctionStages) : null,
         data.city || null, data.state || null, data.imageUrl || null, data.dataAiHint || null, data.documentsUrl || null,
-        data.initialOffer === undefined ? null : data.initialOffer,
+        data.initialOffer === undefined ? null : data.initialOffer, // Handle undefined for optional number
         data.sellingBranch || null, data.vehicleLocation || null
       ];
       const [result] = await connection.execute(query, values);
@@ -1232,6 +1253,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async getAuctions(): Promise<Auction[]> {
     const connection = await getPool().getConnection();
     try {
+      // JOINs to fetch names instead of just IDs
       const query = `
         SELECT a.*, lc.name as category_name, act.name as auctioneer_name, s.name as seller_name, act.logo_url as auctioneer_logo_url
         FROM auctions a
@@ -1266,7 +1288,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         LEFT JOIN lot_categories lc ON a.category_id = lc.id
         LEFT JOIN auctioneers act ON a.auctioneer_id = act.id
         LEFT JOIN sellers s ON a.seller_id = s.id
-        WHERE a.id = ? OR a.public_id = ? LIMIT 1;`;
+        WHERE a.id = ? OR a.public_id = ? LIMIT 1;`; // Check both id and public_id
         queryValues = [numericId, id];
       }
 
@@ -1276,13 +1298,14 @@ export class MySqlAdapter implements IDatabaseAdapter {
     } catch (e: any) { console.error(`[MySqlAdapter - getAuction(${id})] Error:`, e); return null; } finally { connection.release(); }
   }
 
-  async getAuctionsBySellerSlug(sellerPublicId: string): Promise<Auction[]> {
+  async getAuctionsBySellerSlug(sellerPublicId: string): Promise<Auction[]> { // Changed from sellerSlug
     const connection = await getPool().getConnection();
     try {
+        // First, get the seller's numeric ID using their public_id (which is what slugOrPublicId refers to for sellers)
         const [sellerRows] = await connection.execute('SELECT id, name FROM sellers WHERE public_id = ? LIMIT 1', [sellerPublicId]);
-        if ((sellerRows as RowDataPacket[]).length === 0) return [];
+        if ((sellerRows as RowDataPacket[]).length === 0) return []; // No seller found
         const sellerId = (sellerRows as RowDataPacket[])[0].id;
-        const sellerName = (sellerRows as RowDataPacket[])[0].name;
+        const sellerName = (sellerRows as RowDataPacket[])[0].name; // Get seller name to pass to mapToAuction
 
         const query = `
             SELECT a.*, lc.name as category_name, act.name as auctioneer_name, ? as seller_name, act.logo_url as auctioneer_logo_url
@@ -1319,7 +1342,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         }
       });
       if (data.auctionDate) { fieldsToUpdate.push(`auction_date = ?`); values.push(data.auctionDate); }
-      if (data.hasOwnProperty('endDate')) { fieldsToUpdate.push(`end_date = ?`); values.push(data.endDate); }
+      if (data.hasOwnProperty('endDate')) { fieldsToUpdate.push(`end_date = ?`); values.push(data.endDate); } // Handles null
       if (data.auctionStages) { fieldsToUpdate.push(`auction_stages = ?`); values.push(JSON.stringify(data.auctionStages)); }
 
 
@@ -1370,11 +1393,9 @@ export class MySqlAdapter implements IDatabaseAdapter {
           vehicle_location_in_branch, lane_run_number, aisle_stall, actual_cash_value,
           estimated_repair_cost, seller_id_fk, auctioneer_id_fk, \`condition\`
         ) VALUES (
-          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? 
+          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         );
-      `; // Corrected to 58 placeholders
+      `;
       const values = [
         publicId, numericAuctionId, data.title, data.number === undefined ? null : data.number, data.imageUrl === undefined ? null : data.imageUrl, data.dataAiHint === undefined ? null : data.dataAiHint,
         JSON.stringify(data.galleryImageUrls || []), JSON.stringify(data.mediaItemIds || []), data.status,
@@ -1397,8 +1418,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       ];
       console.log('[MySqlAdapter - createLot] Number of columns in query string (placeholders):', (query.match(/\?/g) || []).length);
       console.log('[MySqlAdapter - createLot] Number of values in values array:', values.length);
-      console.log('[MySqlAdapter - createLot] Query:', query);
-      console.log('[MySqlAdapter - createLot] Values:', JSON.stringify(values, null, 2));
+      
       const [result] = await connection.execute(query, values);
       return { success: true, message: 'Lote criado (MySQL)!', lotId: String((result as mysql.ResultSetHeader).insertId), lotPublicId: publicId };
     } catch (e: any) { console.error(`[MySqlAdapter - createLot] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
@@ -1432,10 +1452,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
           values.push(numericAuctionId);
         } else {
           // Assume auctionIdParam is public_id for auction
+          // Precisa de um subselect ou join para obter o ID numérico do leilão
           queryText += ' JOIN auctions a_filter ON l.auction_id = a_filter.id WHERE a_filter.public_id = ?';
           values.push(auctionIdParam);
         }
-        queryText += ' ORDER BY l.title ASC;';
+        queryText += ' ORDER BY l.title ASC;'; // ou l.number, l.created_at etc.
       } else {
         queryText += ' ORDER BY l.created_at DESC;';
       }
@@ -1510,25 +1531,27 @@ export class MySqlAdapter implements IDatabaseAdapter {
       (Object.keys(data) as Array<keyof LotDbData>).forEach(key => {
         if (data[key] !== undefined && key !== 'endDate' && key !== 'lotSpecificAuctionDate' && key !== 'secondAuctionDate' && key !== 'type' && key !== 'auctionName') {
             const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
-            const escapedColumn = sqlColumn === 'number' ? `\`${sqlColumn}\`` : sqlColumn;
+            const escapedColumn = sqlColumn === 'number' ? `\`${sqlColumn}\`` : sqlColumn; // Escape "number"
             fieldsToUpdate.push(`${escapedColumn} = ?`);
             const value = data[key];
             if (key === 'galleryImageUrls' || key === 'mediaItemIds') {
                 values.push(JSON.stringify(value || []));
             } else {
-                values.push(value === '' || value === undefined ? null : value);
+                // Garante que undefined seja convertido para null, mas strings vazias sejam mantidas se o campo permitir
+                values.push(value === undefined ? null : value);
             }
         }
       });
       if (data.endDate) { fieldsToUpdate.push(`end_date = ?`); values.push(data.endDate); }
-      if (data.hasOwnProperty('lotSpecificAuctionDate')) { fieldsToUpdate.push(`lot_specific_auction_date = ?`); values.push(data.lotSpecificAuctionDate); }
-      if (data.hasOwnProperty('secondAuctionDate')) { fieldsToUpdate.push(`second_auction_date = ?`); values.push(data.secondAuctionDate); }
+      if (data.hasOwnProperty('lotSpecificAuctionDate')) { fieldsToUpdate.push(`lot_specific_auction_date = ?`); values.push(data.lotSpecificAuctionDate); } // Handles null
+      if (data.hasOwnProperty('secondAuctionDate')) { fieldsToUpdate.push(`second_auction_date = ?`); values.push(data.secondAuctionDate); } // Handles null
+      
 
       if (fieldsToUpdate.length === 0) return { success: true, message: "Nenhuma alteração para o lote." };
 
       const queryText = `UPDATE lots SET ${fieldsToUpdate.join(', ')}, updated_at = NOW() WHERE ${whereCondition}`;
       values.push(idValue);
-
+      
       await connection.execute(queryText, values);
       return { success: true, message: 'Lote atualizado (MySQL)!' };
     } catch (e: any) { console.error(`[MySqlAdapter - updateLot(${id})] Error:`, e); return { success: false, message: e.message }; } finally { connection.release(); }
@@ -1550,13 +1573,16 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async getBidsForLot(lotId: string): Promise<BidInfo[]> {
     const connection = await getPool().getConnection();
     try {
+        // Determina se lotId é numérico (ID interno) ou string (public_id)
         let query = 'SELECT * FROM bids WHERE ';
         const values: (string | number)[] = [lotId];
         const numericLotId = Number(lotId);
         if (!isNaN(numericLotId)) {
+          // Se for numérico, pode ser o ID interno. Buscamos por ele OU pelo public_id caso seja uma string numérica que é public_id.
           query += 'lot_id = ? OR lot_id = (SELECT id FROM lots WHERE public_id = ? LIMIT 1)';
-          values.unshift(numericLotId); // Correctly prepends numericLotId
+          values.unshift(numericLotId); // Adiciona numericLotId ao início para corresponder ao primeiro '?'
         } else {
+          // Se não for numérico, assume que é public_id e busca o ID interno correspondente.
           query += 'lot_id = (SELECT id FROM lots WHERE public_id = ? LIMIT 1)';
         }
         query += ' ORDER BY timestamp DESC;';
@@ -1570,6 +1596,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
     try {
         await connection.beginTransaction();
 
+        // Identifica o ID numérico do lote, seja por ID direto ou public_id
         let lotQueryText = 'SELECT id, price, bids_count FROM lots WHERE public_id = ? LIMIT 1 FOR UPDATE';
         let lotQueryValues: (string|number)[] = [lotId];
         const numericLotId = Number(lotId);
@@ -1581,15 +1608,18 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
         if ((lotRows as RowDataPacket[]).length === 0) { await connection.rollback(); return { success: false, message: "Lote não encontrado."}; }
         const lotDataDB = mapMySqlRowToCamelCase((lotRows as RowDataPacket[])[0]);
-        const actualNumericLotId = lotDataDB.id;
+        const actualNumericLotId = lotDataDB.id; // Este é o ID numérico interno do lote
 
         if (bidAmount <= Number(lotDataDB.price)) { await connection.rollback(); return { success: false, message: "Lance deve ser maior que o atual."}; }
-
-        const numericAuctionId = Number(auctionId);
+        
+        // Identifica o ID numérico do leilão
+        const numericAuctionId = Number(auctionId); // Assume que auctionId vindo da action é o NUMÉRICO. Se for publicId, precisa buscar.
          if (isNaN(numericAuctionId)) {
+            // Se auctionId não for numérico, precisaria de uma consulta para obter o ID numérico do leilão
+            // Esta parte não está implementada, assumindo que a action passa o ID numérico.
             await connection.rollback();
-            console.error(`[MySqlAdapter - placeBidOnLot] auctionId inválido: ${auctionId}`);
-            return { success: false, message: "ID do leilão inválido."};
+            console.error(`[MySqlAdapter - placeBidOnLot] auctionId inválido (não numérico): ${auctionId}`);
+            return { success: false, message: "ID do leilão inválido para criar lance."};
         }
 
         const insertBidQuery = 'INSERT INTO bids (lot_id, auction_id, bidder_id, bidder_display_name, amount) VALUES (?, ?, ?, ?, ?);';
@@ -1608,29 +1638,35 @@ export class MySqlAdapter implements IDatabaseAdapter {
             updatedLot: { price: bidAmount, bidsCount: Number(lotDataDB.bidsCount || 0) + 1 },
             newBid: mapToBidInfo(mapMySqlRowToCamelCase((newBidRows as RowDataPacket[])[0]))
         };
-    } catch (e: any) {
+    } catch (e: any) { 
         await connection.rollback();
-        console.error(`[MySqlAdapter - placeBidOnLot(${lotId})] Error:`, e);
-        return { success: false, message: e.message };
+        console.error(`[MySqlAdapter - placeBidOnLot(${lotId})] Error:`, e); 
+        return { success: false, message: e.message }; 
     } finally { connection.release(); }
   }
-
+  
   // --- Roles ---
   async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> {
     const connection = await getPool().getConnection();
     try {
         const nameNormalized = data.name.trim().toUpperCase();
+        // Verificar se já existe um perfil com o mesmo nome normalizado
         const [existingRows] = await connection.execute('SELECT id FROM roles WHERE name_normalized = ? LIMIT 1', [nameNormalized]);
-        if ((existingRows as RowDataPacket[]).length > 0) return { success: false, message: `Perfil "${data.name}" já existe.`};
-
+        if ((existingRows as RowDataPacket[]).length > 0) {
+            return { success: false, message: `Perfil com o nome "${data.name}" (ou variação) já existe.`};
+        }
+        
         const validPermissions = (data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
-        const query = `INSERT INTO roles (name, name_normalized, description, permissions) VALUES (?, ?, ?, ?);`;
+        const query = `
+            INSERT INTO roles (name, name_normalized, description, permissions) 
+            VALUES (?, ?, ?, ?);
+        `;
         const values = [data.name.trim(), nameNormalized, data.description || null, JSON.stringify(validPermissions)];
         const [result] = await connection.execute(query, values);
         return { success: true, message: 'Perfil criado (MySQL)!', roleId: String((result as mysql.ResultSetHeader).insertId) };
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
-
+  
   async getRoles(): Promise<Role[]> {
     const connection = await getPool().getConnection();
     try {
@@ -1663,17 +1699,25 @@ export class MySqlAdapter implements IDatabaseAdapter {
     try {
         const fieldsToUpdate: string[] = [];
         const values: any[] = [];
+
         const [currentRoleRows] = await connection.execute('SELECT name_normalized FROM roles WHERE id = ?', [Number(id)]);
-        if ((currentRoleRows as RowDataPacket[]).length === 0) return { success: false, message: "Perfil não encontrado."};
+        if ((currentRoleRows as RowDataPacket[]).length === 0) {
+            return { success: false, message: "Perfil não encontrado."};
+        }
         const currentNormalizedName = (currentRoleRows as RowDataPacket[])[0].name_normalized;
 
+        // Só permite alterar o nome e nome_normalized se não for perfil de sistema
         if (data.name && currentNormalizedName !== 'ADMINISTRATOR' && currentNormalizedName !== 'USER') {
-            fieldsToUpdate.push('name = ?', 'name_normalized = ?'); values.push(data.name.trim(), data.name.trim().toUpperCase());
+            fieldsToUpdate.push('name = ?', 'name_normalized = ?'); 
+            values.push(data.name.trim(), data.name.trim().toUpperCase());
         } else if (data.name) {
-             if (data.description !== undefined) {
+            // Se for perfil de sistema e tentou mudar o nome, não adicione name e name_normalized
+            // mas permita que description e permissions sejam atualizados se fornecidos
+            if (data.description !== undefined) {
                 fieldsToUpdate.push('description = ?'); values.push(data.description || null);
             }
         }
+
         if (data.description !== undefined && (!data.name || (currentNormalizedName === 'ADMINISTRATOR' || currentNormalizedName === 'USER'))) {
              fieldsToUpdate.push('description = ?'); values.push(data.description || null);
         }
@@ -1683,7 +1727,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
             fieldsToUpdate.push('permissions = ?'); values.push(JSON.stringify(validPermissions));
         }
         if (fieldsToUpdate.length === 0) return { success: true, message: "Nenhuma alteração para o perfil."};
-
+        
         const query = `UPDATE roles SET ${fieldsToUpdate.join(', ')}, updated_at = NOW() WHERE id = ?`;
         values.push(Number(id));
         await connection.execute(query, values);
@@ -1695,8 +1739,9 @@ export class MySqlAdapter implements IDatabaseAdapter {
     const connection = await getPool().getConnection();
     try {
         const [roleRows] = await connection.execute('SELECT name_normalized FROM roles WHERE id = ?', [Number(id)]);
-        if ((roleRows as RowDataPacket[]).length > 0 && ['ADMINISTRATOR', 'USER'].includes((roleRows as RowDataPacket[])[0].name_normalized)) {
-            return { success: false, message: 'Perfis de sistema não podem ser excluídos.'};
+        if ((roleRows as RowDataPacket[]).length > 0 && 
+            ['ADMINISTRATOR', 'USER'].includes((roleRows as RowDataPacket[])[0].name_normalized)) {
+            return { success: false, message: 'Perfis de sistema (ADMINISTRATOR, USER) não podem ser excluídos.'};
         }
         await connection.execute('DELETE FROM roles WHERE id = ?', [Number(id)]);
         return { success: true, message: 'Perfil excluído (MySQL)!' };
@@ -1726,7 +1771,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
             } else {
                 const existingRole = mapMySqlRowToCamelCase((roleRows as RowDataPacket[])[0]);
                 console.log(`[MySqlAdapter] Perfil '${roleData.name}' encontrado (ID: ${existingRole.id}). Verificando atualizações...`);
-                const currentPermsSorted = [...(existingRole.permissions || [])].sort();
+                // MySQL JSON arrays might not be ordered, so direct string comparison can be tricky.
+                // It's safer to parse and compare sets/lengths or just update if description differs.
+                const currentPerms = typeof existingRole.permissions === 'string' ? JSON.parse(existingRole.permissions || '[]') : (existingRole.permissions || []);
+                const currentPermsSorted = [...currentPerms].sort();
                 const expectedPermsSorted = [...validPermissions].sort();
                 if (JSON.stringify(currentPermsSorted) !== JSON.stringify(expectedPermsSorted) || existingRole.description !== (roleData.description || null)) {
                      console.log(`[MySqlAdapter] Atualizando descrição/permissões para o perfil '${roleData.name}'.`);
@@ -1744,15 +1792,15 @@ export class MySqlAdapter implements IDatabaseAdapter {
         await connection.commit();
         console.log(`[MySqlAdapter - ensureDefaultRolesExist] Verificação/criação de perfis padrão concluída. ${rolesProcessedCount} perfis processados.`);
         return { success: true, message: `Perfis padrão verificados/criados (MySQL). ${rolesProcessedCount} processados.`, rolesProcessed: rolesProcessedCount };
-    } catch (e: any) {
-        await connection.rollback();
+    } catch (e: any) { 
+        await connection.rollback(); 
         console.error("[MySqlAdapter - ensureDefaultRolesExist] Erro:", e);
-        return { success: false, message: e.message, rolesProcessed: 0 };
-    } finally {
-        connection.release();
+        return { success: false, message: e.message, rolesProcessed: 0 }; 
+    } finally { 
+        connection.release(); 
     }
   }
-
+  
   // --- Users ---
   async getUserProfileData(userId: string): Promise<UserProfileData | null> {
     const connection = await getPool().getConnection();
@@ -1761,46 +1809,64 @@ export class MySqlAdapter implements IDatabaseAdapter {
         if ((rows as RowDataPacket[]).length === 0) return null;
         const userRow = mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]);
         let role: Role | null = null;
-        if (userRow.roleId) role = await this.getRole(userRow.roleId);
+        if (userRow.roleId) role = await this.getRole(userRow.roleId); // Fetch full role object
         return mapToUserProfileData(userRow, role);
     } catch (e: any) { return null; } finally { connection.release(); }
   }
 
   async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
     const connection = await getPool().getConnection();
+    console.log('[MySqlAdapter - updateUserProfile] Received data for update:', data);
     try {
         const fieldsToUpdate: string[] = [];
         const values: any[] = [];
         (Object.keys(data) as Array<keyof EditableUserProfileData>).forEach(key => {
-            if (data[key] !== undefined && data[key] !== null) {
+            if (data[key] !== undefined && data[key] !== null) { // Processa null aqui
                 const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
                 fieldsToUpdate.push(`${sqlColumn} = ?`);
                 values.push(data[key]);
-            } else if (data[key] === null) {
+            } else if (data[key] === null) { // Trata explicitamente null para setar NULL no DB
                  const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
                  fieldsToUpdate.push(`${sqlColumn} = NULL`);
             }
         });
         if (fieldsToUpdate.length === 0) return { success: true, message: "Nenhuma alteração no perfil."};
-        const queryText = `UPDATE users SET ${fieldsToUpdate.join(', ')}, updated_at = NOW() WHERE uid = ?`;
+        
+        // Adiciona a atualização do timestamp
+        fieldsToUpdate.push(`updated_at = NOW()`);
+
+        const queryText = `UPDATE users SET ${fieldsToUpdate.join(', ')} WHERE uid = ?`;
         values.push(userId);
+        console.log('[MySqlAdapter - updateUserProfile] Executing query:', queryText, 'with values:', values);
         await connection.execute(queryText, values);
         return { success: true, message: 'Perfil atualizado (MySQL)!'};
-    } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
+    } catch (e: any) { 
+        console.error('[MySqlAdapter - updateUserProfile] Error:', e);
+        return { success: false, message: e.message }; 
+    } finally { 
+        connection.release(); 
+    }
   }
 
   async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
     const connection = await getPool().getConnection();
     try {
-        await this.ensureDefaultRolesExist();
+        await this.ensureDefaultRolesExist(); // Certifica que os perfis padrão existem
         let targetRole: Role | null = null;
         if (roleIdToAssign) {
+            console.log(`[MySqlAdapter ensureUserRole] Tentando buscar perfil por ID fornecido: ${roleIdToAssign}`);
             targetRole = await this.getRole(roleIdToAssign);
         }
         if (!targetRole) {
+            console.log(`[MySqlAdapter ensureUserRole] Perfil por ID não encontrado ou ID não fornecido. Buscando por nome: ${targetRoleName}`);
             targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
         }
-        if (!targetRole || !targetRole.id) return { success: false, message: `Perfil padrão '${targetRoleName}' ou 'USER' não encontrado.` };
+
+        if (!targetRole || !targetRole.id) {
+            console.error(`[MySqlAdapter ensureUserRole] CRITICAL: Perfil '${targetRoleName}' ou 'USER' não encontrado ou sem ID.`);
+            return { success: false, message: `Perfil padrão '${targetRoleName}' ou 'USER' não encontrado ou sem ID.` };
+        }
+         console.log(`[MySqlAdapter ensureUserRole] Perfil alvo determinado: ${targetRole.name} (ID: ${targetRole.id})`);
 
         await connection.beginTransaction();
         const [userRows] = await connection.execute('SELECT * FROM users WHERE uid = ?', [userId]);
@@ -1808,18 +1874,43 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
         if ((userRows as RowDataPacket[]).length > 0) {
             const userDataFromDB = mapToUserProfileData(mapMySqlRowToCamelCase((userRows as RowDataPacket[])[0]));
-            const updatePayload: any = { updatedAt: new Date() };
+            const updatePayload: any = { updatedAt: new Date() }; // MySQL driver handles Date to TIMESTAMP
             let needsUpdate = false;
-            if (String(userDataFromDB.roleId) !== String(targetRole.id)) { updatePayload.roleId = Number(targetRole.id); needsUpdate = true; }
-            if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; }
+            // Só atualiza roleId se realmente mudou
+            if (String(userDataFromDB.roleId) !== String(targetRole.id)) { updatePayload.roleId = Number(targetRole.id); needsUpdate = true; console.log(`[MySqlAdapter ensureUserRole] Atualizando roleId para ${targetRole.id}`);}
+            if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; console.log(`[MySqlAdapter ensureUserRole] Atualizando roleName para ${targetRole.name}`);}
+            
+            // Compara permissões como strings JSON ordenadas
             const dbPermissions = userDataFromDB.permissions || [];
-            if (JSON.stringify(dbPermissions.sort()) !== JSON.stringify((targetRole.permissions || []).sort())) { updatePayload.permissions = JSON.stringify(targetRole.permissions || []); needsUpdate = true; }
-            if (additionalProfileData?.password) { updatePayload.passwordText = additionalProfileData.password; needsUpdate = true; }
-            if (additionalProfileData?.cpf !== undefined && additionalProfileData.cpf !== userDataFromDB.cpf) { updatePayload.cpf = additionalProfileData.cpf; needsUpdate = true;}
-            if (additionalProfileData?.cellPhone !== undefined && additionalProfileData.cellPhone !== userDataFromDB.cellPhone) { updatePayload.cellPhone = additionalProfileData.cellPhone; needsUpdate = true;}
-            if (additionalProfileData?.dateOfBirth !== undefined && (new Date(userDataFromDB.dateOfBirth || 0)?.getTime() !== additionalProfileData.dateOfBirth?.getTime())) { updatePayload.dateOfBirth = additionalProfileData.dateOfBirth; needsUpdate = true;}
+            const targetPermissions = targetRole.permissions || [];
+            if (JSON.stringify([...dbPermissions].sort()) !== JSON.stringify([...targetPermissions].sort())) { 
+                updatePayload.permissions = JSON.stringify(targetPermissions); 
+                needsUpdate = true; 
+                console.log(`[MySqlAdapter ensureUserRole] Atualizando permissions.`);
+            }
+
+            if (additionalProfileData?.password) { // Verifica se a senha foi fornecida para atualização
+                updatePayload.passwordText = additionalProfileData.password; // Hash da senha deve ser feito aqui
+                needsUpdate = true;
+                 console.log(`[MySqlAdapter ensureUserRole] Atualizando passwordText (hash pendente).`);
+            }
+             // Atualizar outros campos do additionalProfileData
+            if (additionalProfileData) {
+                for (const key in additionalProfileData) {
+                    if (key !== 'password' && Object.prototype.hasOwnProperty.call(additionalProfileData, key)) {
+                        const dbKey = key.replace(/([A-Z])/g, "_$1").toLowerCase() as keyof UserProfileData;
+                        // @ts-ignore
+                        if (additionalProfileData[key] !== undefined && additionalProfileData[key] !== userDataFromDB[dbKey]) {
+                            // @ts-ignore
+                            updatePayload[dbKey] = additionalProfileData[key];
+                            needsUpdate = true;
+                        }
+                    }
+                }
+            }
 
             if (needsUpdate) {
+                 console.log(`[MySqlAdapter ensureUserRole] Update necessário. Payload (antes do DB):`, updatePayload);
                 const updateFields: string[] = [];
                 const updateValues: any[] = [];
                 Object.keys(updatePayload).forEach(key => {
@@ -1829,22 +1920,34 @@ export class MySqlAdapter implements IDatabaseAdapter {
                 });
                 updateValues.push(userId);
                 await connection.execute(`UPDATE users SET ${updateFields.join(', ')} WHERE uid = ?`, updateValues);
+                 console.log(`[MySqlAdapter ensureUserRole] Usuário UID ${userId} atualizado no DB.`);
+            } else {
+                 console.log(`[MySqlAdapter ensureUserRole] Usuário UID ${userId} não precisou de atualização no DB.`);
             }
              finalProfileData = { ...userDataFromDB, ...updatePayload, uid: userId, permissions: targetRole.permissions || [] } as UserProfileData;
         } else {
+            console.log(`[MySqlAdapter ensureUserRole] Usuário UID ${userId} não encontrado no DB. Criando...`);
             const insertQuery = `
-                INSERT INTO users (uid, email, full_name, password_text, role_id, permissions, status, habilitation_status, cpf, cell_phone, date_of_birth)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                INSERT INTO users (uid, email, full_name, password_text, role_id, permissions, status, habilitation_status, 
+                    cpf, cell_phone, date_of_birth, account_type, razao_social, cnpj, inscricao_estadual, website_comitente, 
+                    zip_code, street, \`number\`, complement, neighborhood, city, state, opt_in_marketing, 
+                    created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()) RETURNING *;
             `;
             const insertValues = [
-                userId, email, fullName || email.split('@')[0], additionalProfileData?.password || null,
+                userId, email, fullName || email.split('@')[0], additionalProfileData?.password || null, // Hash da senha aqui
                 Number(targetRole.id), JSON.stringify(targetRole.permissions || []),
                 'ATIVO', targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS',
-                additionalProfileData?.cpf || null, additionalProfileData?.cellPhone || null, additionalProfileData?.dateOfBirth || null
+                additionalProfileData?.cpf || null, additionalProfileData?.cellPhone || null, additionalProfileData?.dateOfBirth || null,
+                additionalProfileData?.accountType || null, additionalProfileData?.razaoSocial || null, additionalProfileData?.cnpj || null, additionalProfileData?.inscricaoEstadual || null, additionalProfileData?.websiteComitente || null,
+                additionalProfileData?.zipCode || null, additionalProfileData?.street || null, additionalProfileData?.number || null, additionalProfileData?.complement || null, additionalProfileData?.neighborhood || null, additionalProfileData?.city || null, additionalProfileData?.state || null,
+                additionalProfileData?.optInMarketing || false
             ];
-            await connection.execute(insertQuery, insertValues);
+            const [insertedResult] = await connection.execute(insertQuery, insertValues);
+            // Como MySQL não tem RETURNING *, precisamos buscar o usuário recém-criado
             const [newUserRows] = await connection.execute('SELECT * FROM users WHERE uid = ?', [userId]);
             finalProfileData = mapToUserProfileData(mapMySqlRowToCamelCase((newUserRows as RowDataPacket[])[0]), targetRole);
+            console.log(`[MySqlAdapter ensureUserRole] Usuário UID ${userId} criado no DB.`);
         }
         await connection.commit();
         return { success: true, message: 'Perfil de usuário assegurado/atualizado (MySQL).', userProfile: finalProfileData };
@@ -1855,15 +1958,19 @@ export class MySqlAdapter implements IDatabaseAdapter {
     const connection = await getPool().getConnection();
     try {
       const [rows] = await connection.execute(`
-        SELECT u.*, r.name as role_name, r.permissions as role_permissions
-        FROM users u
-        LEFT JOIN roles r ON u.role_id = r.id
+        SELECT u.*, r.name as role_name, r.permissions as role_permissions 
+        FROM users u 
+        LEFT JOIN roles r ON u.role_id = r.id 
         ORDER BY u.full_name ASC;
       `);
       return (rows as RowDataPacket[]).map(row => {
         const profile = mapToUserProfileData(mapMySqlRowToCamelCase(row));
+        // Se permissions não vieram do JOIN direto (e.g., usuário sem role_id mas com permissions na tabela users)
+        // ou se queremos explicitamente usar as permissões do perfil associado.
         if ((!profile.permissions || profile.permissions.length === 0) && row.role_permissions) {
-            profile.permissions = typeof row.role_permissions === 'string' ? JSON.parse(row.role_permissions) : (row.role_permissions || []);
+            profile.permissions = typeof row.role_permissions === 'string' 
+                ? JSON.parse(row.role_permissions) 
+                : (row.role_permissions || []);
         }
         return profile;
       });
@@ -1876,10 +1983,14 @@ export class MySqlAdapter implements IDatabaseAdapter {
       let roleName = null;
       let permissions = null;
       if (roleId && roleId !== "---NONE---") {
-        const role = await this.getRole(roleId);
-        if (role) { roleName = role.name; permissions = JSON.stringify(role.permissions || []); }
+        const role = await this.getRole(roleId); // Usa o ID numérico se for passado como string '1', '2', etc.
+        if (role) { 
+            roleName = role.name; 
+            permissions = JSON.stringify(role.permissions || []); 
+        }
         else return { success: false, message: 'Perfil não encontrado.'};
       }
+      // A query precisa usar NULL para role_id se roleId for null
       await connection.execute('UPDATE users SET role_id = ?, role_name = ?, permissions = ?, updated_at = NOW() WHERE uid = ?', [roleId ? Number(roleId) : null, roleName, permissions, userId]);
       return { success: true, message: 'Perfil do usuário atualizado (MySQL)!'};
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
@@ -1892,7 +2003,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Perfil de usuário excluído (MySQL)!'};
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
-
+  
   async getUserByEmail(email: string): Promise<UserProfileData | null> {
     const connection = await getPool().getConnection();
     try {
@@ -1902,8 +2013,9 @@ export class MySqlAdapter implements IDatabaseAdapter {
       const userRow = mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]);
       let role: Role | null = null;
       if (userRow.roleId) role = await this.getRole(userRow.roleId);
-
+      
       const profile = mapToUserProfileData(userRow, role);
+      // Garante que as permissões do perfil sejam usadas se as permissões do usuário estiverem vazias
       if ((!profile.permissions || profile.permissions.length === 0) && role?.permissions?.length) {
          profile.permissions = role.permissions;
       }
@@ -1930,7 +2042,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       const values = [
         data.fileName, uploadedBy || null, data.title || null, data.altText || null, data.caption || null,
         data.description || null, data.mimeType, data.sizeBytes, data.dimensions?.width || null,
-        data.dimensions?.height || null, filePublicUrl, filePublicUrl, filePublicUrl, filePublicUrl,
+        data.dimensions?.height || null, filePublicUrl, filePublicUrl, filePublicUrl, filePublicUrl, // Usando publicUrl para todos por simplicidade
         JSON.stringify(data.linkedLotIds || []), data.dataAiHint || null
       ];
       const [result] = await connection.execute(query, values);
@@ -1977,17 +2089,21 @@ export class MySqlAdapter implements IDatabaseAdapter {
     const connection = await getPool().getConnection();
     try {
       await connection.beginTransaction();
+      // Atualizar cada item de mídia para adicionar o lotId ao seu array JSON
       for (const mediaId of mediaItemIds) {
         await connection.execute(
-          `UPDATE media_items SET linked_lot_ids = JSON_ARRAY_APPEND(COALESCE(linked_lot_ids, JSON_ARRAY()), '$', ?)
-           WHERE id = ? AND NOT JSON_CONTAINS(COALESCE(linked_lot_ids, JSON_ARRAY()), JSON_QUOTE(?), '$');`,
-          [lotId, Number(mediaId), lotId]
+          `UPDATE media_items SET linked_lot_ids = JSON_ARRAY_APPEND(COALESCE(linked_lot_ids, '[]'), '$', ?)
+           WHERE id = ? AND NOT JSON_CONTAINS(COALESCE(linked_lot_ids, '[]'), CAST(? AS JSON), '$');`,
+          [lotId, Number(mediaId), lotId] // JSON_QUOTE(?_string) or CAST(? AS JSON)
         );
       }
+      // Atualizar o lote para adicionar todos os mediaItemIds ao seu array JSON
+      // Usando JSON_MERGE_PRESERVE para adicionar elementos sem duplicatas (se o array for simples)
+      // Ou uma abordagem mais robusta se precisar de lógica de "set" para o array de IDs no lote
       await connection.execute(
-        `UPDATE lots SET media_item_ids = JSON_ARRAY_APPEND(COALESCE(media_item_ids, JSON_ARRAY()), '$', ?)
-         WHERE id = ?;`,
-        [JSON.stringify(mediaItemIds), Number(lotId)]
+        `UPDATE lots SET media_item_ids = JSON_ARRAY_APPEND(COALESCE(media_item_ids, '[]'), '$', ?), updated_at = NOW()
+         WHERE id = ?;`, // Assumindo que mediaItemIds é um array simples de strings
+        [JSON.stringify(mediaItemIds), Number(lotId)] // Adicionando o array inteiro
       );
       await connection.commit();
       return { success: true, message: 'Mídias vinculadas (MySQL).' };
@@ -1998,13 +2114,15 @@ export class MySqlAdapter implements IDatabaseAdapter {
     const connection = await getPool().getConnection();
     try {
       await connection.beginTransaction();
+      // Remover lotId do array linked_lot_ids do item de mídia
       await connection.execute(
-        `UPDATE media_items SET linked_lot_ids = JSON_REMOVE(COALESCE(linked_lot_ids, JSON_ARRAY()), JSON_UNQUOTE(JSON_SEARCH(COALESCE(linked_lot_ids, JSON_ARRAY()), 'one', ?)))
+        `UPDATE media_items SET linked_lot_ids = JSON_REMOVE(COALESCE(linked_lot_ids, '[]'), JSON_UNQUOTE(JSON_SEARCH(COALESCE(linked_lot_ids, '[]'), 'one', ?)))
          WHERE id = ?;`,
         [lotId, Number(mediaItemId)]
       );
+      // Remover mediaItemId do array media_item_ids do lote
       await connection.execute(
-        `UPDATE lots SET media_item_ids = JSON_REMOVE(COALESCE(media_item_ids, JSON_ARRAY()), JSON_UNQUOTE(JSON_SEARCH(COALESCE(media_item_ids, JSON_ARRAY()), 'one', ?)))
+        `UPDATE lots SET media_item_ids = JSON_REMOVE(COALESCE(media_item_ids, '[]'), JSON_UNQUOTE(JSON_SEARCH(COALESCE(media_item_ids, '[]'), 'one', ?))), updated_at = NOW()
          WHERE id = ?;`,
         [mediaItemId, Number(lotId)]
       );
@@ -2012,7 +2130,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Mídia desvinculada (MySQL).' };
     } catch (e: any) { await connection.rollback(); return { success: false, message: e.message }; } finally { connection.release(); }
   }
-
+  
   // --- Platform Settings ---
   async getPlatformSettings(): Promise<PlatformSettings> {
     const connection = await getPool().getConnection();
@@ -2021,14 +2139,15 @@ export class MySqlAdapter implements IDatabaseAdapter {
         if ((rows as RowDataPacket[]).length > 0) {
             return mapToPlatformSettings(mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]));
         }
-        const defaultSettings: PlatformSettings = {
-            id: 'global',
-            galleryImageBasePath: '/media/gallery/',
-            themes: [],
-            platformPublicIdMasks: {},
-            updatedAt: new Date()
+        // Se não existir, criar com valores padrão
+        const defaultSettings: PlatformSettings = { 
+          id: 'global', 
+          galleryImageBasePath: '/media/gallery/', 
+          themes: [], 
+          platformPublicIdMasks: {}, // Garante que é um objeto vazio
+          updatedAt: new Date() 
         };
-        await connection.execute(`INSERT INTO platform_settings (id, gallery_image_base_path, themes, platform_public_id_masks) VALUES ('global', ?, '[]', '{}') ON DUPLICATE KEY UPDATE id=id;`,
+        await connection.execute(`INSERT INTO platform_settings (id, gallery_image_base_path, themes, platform_public_id_masks) VALUES ('global', ?, '[]', '{}') ON DUPLICATE KEY UPDATE id=id;`, 
             [defaultSettings.galleryImageBasePath]
         );
         return defaultSettings;
@@ -2045,18 +2164,18 @@ export class MySqlAdapter implements IDatabaseAdapter {
     }
     try {
         const query = `
-            INSERT INTO platform_settings (id, gallery_image_base_path, themes, platform_public_id_masks, updated_at)
-            VALUES ('global', ?, ?, ?, NOW())
-            ON DUPLICATE KEY UPDATE
-                gallery_image_base_path = VALUES(gallery_image_base_path),
+            INSERT INTO platform_settings (id, gallery_image_base_path, themes, platform_public_id_masks, updated_at) 
+            VALUES ('global', ?, ?, ?, NOW()) 
+            ON DUPLICATE KEY UPDATE 
+                gallery_image_base_path = VALUES(gallery_image_base_path), 
                 themes = VALUES(themes),
                 platform_public_id_masks = VALUES(platform_public_id_masks),
                 updated_at = NOW();
         `;
         await connection.execute(query, [
-            data.galleryImageBasePath,
+            data.galleryImageBasePath, 
             JSON.stringify(data.themes || []),
-            JSON.stringify(data.platformPublicIdMasks || {})
+            JSON.stringify(data.platformPublicIdMasks || {}) // Garante que seja um objeto JSON
         ]);
         return { success: true, message: 'Configurações atualizadas (MySQL)!' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
@@ -2064,3 +2183,4 @@ export class MySqlAdapter implements IDatabaseAdapter {
 }
 
     
+
