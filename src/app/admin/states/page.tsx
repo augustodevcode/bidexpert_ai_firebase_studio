@@ -21,17 +21,36 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useToast } from '@/hooks/use-toast'; // Import useToast
+import { useEffect, useState, useCallback } from 'react'; // Import useEffect, useState, useCallback
+import { Loader2 } from 'lucide-react';
 
-function DeleteStateButton({ stateId, stateName, onDelete }: { stateId: string; stateName: string; onDelete: (id: string) => Promise<void> }) {
-  const [isOpen, setIsOpen] = useState(false);
+function DeleteStateButtonClient({ stateId, stateName, onDeleteSuccess }: { stateId: string; stateName: string; onDeleteSuccess: () => void }) {
+  const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = useState(false);
 
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    // Chama a Server Action `deleteState` diretamente
+    const result = await deleteState(stateId);
+    if (result.success) {
+      toast({ title: "Sucesso", description: "Estado excluído com sucesso.", variant: "default" });
+      onDeleteSuccess(); // Atualiza a lista na página pai
+    } else {
+      toast({ title: "Erro", description: result.message || "Falha ao excluir estado.", variant: "destructive" });
+    }
+    setIsDeleting(false);
+  };
+  
   return (
-    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+    <AlertDialog>
       <Tooltip>
         <TooltipTrigger asChild>
- <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label="Excluir Estado" onClick={() => setIsOpen(true)}>
- <Trash2 className="h-4 w-4" />
- </Button>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80 h-8 w-8" aria-label="Excluir Estado" disabled={isDeleting}>
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+            </Button>
+          </AlertDialogTrigger>
         </TooltipTrigger>
         <TooltipContent><p>Excluir Estado</p></TooltipContent>
       </Tooltip>
@@ -43,14 +62,13 @@ function DeleteStateButton({ stateId, stateName, onDelete }: { stateId: string; 
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
-            onClick={async () => {
-                await onDelete(stateId);
- setIsOpen(false);
-            }}
+            onClick={handleDelete}
+            disabled={isDeleting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
+            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Excluir
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -59,15 +77,50 @@ function DeleteStateButton({ stateId, stateName, onDelete }: { stateId: string; 
   );
 }
 
-export default async function AdminStatesPage() {
-  const states = await getStates();
 
-  async function handleDeleteState(id: string) {
-    'use server';
-    const result = await deleteState(id);
-    if (!result.success) {
-        console.error("Failed to delete state:", result.message);
+export default function AdminStatesPage() {
+  const [states, setStates] = useState<StateInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  const fetchStates = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const fetchedStates = await getStates();
+      setStates(fetchedStates);
+    } catch (error) {
+        console.error("Error fetching states:", error);
+        toast({ title: "Erro", description: "Falha ao buscar estados.", variant: "destructive"});
+        setStates([]);
+    } finally {
+        setIsLoading(false);
     }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchStates();
+  }, [fetchStates]);
+
+  // Esta função agora é uma função async normal dentro do client component,
+  // que chama a Server Action `deleteState`.
+  async function handleDeleteStateCallback(id: string) {
+    // REMOVIDO: 'use server'; (esta linha estava causando o erro)
+    const result = await deleteState(id);
+    if (result.success) {
+      toast({ title: "Sucesso!", description: "Estado excluído com sucesso.", variant: "default" });
+      fetchStates(); // Re-fetch para atualizar a lista
+    } else {
+      toast({ title: "Erro", description: result.message || "Falha ao excluir estado.", variant: "destructive" });
+    }
+  }
+  
+  if (isLoading) {
+    return (
+        <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="ml-3 text-muted-foreground">Carregando estados...</p>
+        </div>
+    );
   }
 
   return (
@@ -127,7 +180,7 @@ export default async function AdminStatesPage() {
                             </TooltipTrigger>
                             <TooltipContent><p>Editar Estado</p></TooltipContent>
                           </Tooltip>
-                          <DeleteStateButton stateId={state.id} stateName={state.name} onDelete={handleDeleteState} />
+                          <DeleteStateButtonClient stateId={state.id} stateName={state.name} onDeleteSuccess={fetchStates} />
                         </TableCell>
                       </TableRow>
                     ))}
@@ -141,3 +194,4 @@ export default async function AdminStatesPage() {
     </TooltipProvider>
   );
 }
+
