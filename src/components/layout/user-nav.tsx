@@ -182,11 +182,6 @@ export default function UserNav() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/admin/categories" className="flex items-center">
-                  <ListChecks className="mr-2 h-4 w-4" /> Gerenciar Categorias
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
                 <Link href="/live-dashboard" className="flex items-center">
                   <Tv className="mr-2 h-4 w-4" /> Auditório Virtual
                 </Link>

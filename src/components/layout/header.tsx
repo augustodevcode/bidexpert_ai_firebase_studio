@@ -31,8 +31,9 @@ import Image from 'next/image';
 import { Loader2 } from 'lucide-react';
 import type { RecentlyViewedLotInfo, Lot, LotCategory } from '@/types';
 import { sampleLots, slugify } from '@/lib/sample-data';
-import { getLotCategories } from '@/app/admin/categories/actions'; // Importação corrigida/garantida
-import { getRecentlyViewedIds, getFavoriteLotIdsFromStorage } from '@/lib/recently-viewed-store'; // Importação corrigida/garantida
+import { getLotCategories } from '@/app/admin/categories/actions';
+import { getFavoriteLotIdsFromStorage } from '@/lib/favorite-store';
+import { getRecentlyViewedIds } from '@/lib/recently-viewed-store'; // Importação corrigida/garantida
 
 // Email do comitente de exemplo (para simular o próprio comitente acessando)
 const EXAMPLE_CONSIGNOR_EMAIL = 'consignor@bidexpert.com';

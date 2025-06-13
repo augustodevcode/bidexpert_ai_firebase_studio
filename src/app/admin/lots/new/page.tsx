@@ -1,10 +1,11 @@
 
+// src/app/admin/lots/new/page.tsx
 import LotForm from '../lot-form';
 import { createLot, type LotFormData } from '../actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
-import { getStates } from '@/app/admin/states/actions'; // Importar getStates
-import { getCities } from '@/app/admin/cities/actions';   // Importar getCities
+import { getStates } from '@/app/admin/states/actions'; 
+import { getCities } from '@/app/admin/cities/actions';   
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { LotCategory, Auction, StateInfo, CityInfo } from '@/types';
@@ -38,12 +39,14 @@ function NewLotPageContent({ categories, auctions, states, allCities, auctionIdF
   );
 }
 
-export default async function NewLotPage({ searchParams }: { searchParams?: { auctionId?: string } }) {
+export default async function NewLotPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
+  // Acessando searchParams de forma mais robusta no início
+  const auctionIdFromQuery = (searchParams && typeof searchParams.auctionId === 'string') ? searchParams.auctionId : undefined;
+  
   const categories = await getLotCategories();
   const auctions = await getAuctions();
   const states = await getStates();
-  const allCities = await getCities(); // Buscar todas as cidades
-  const auctionIdFromQuery = searchParams?.auctionId;
+  const allCities = await getCities();
 
   return (
     <Suspense fallback={<div className="flex justify-center items-center min-h-[calc(100vh-10rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
