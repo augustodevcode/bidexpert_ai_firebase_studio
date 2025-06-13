@@ -1,7 +1,11 @@
 
-Olá! Vamos continuar de onde paramos.
+Olá! Parece que estamos iniciando uma nova sessão ou continuando uma anterior.
 
-Para que você possa se familiarizar com o estado atual do projeto, por favor, leia os arquivos localizados na pasta `context`. Estes arquivos contêm o histórico da nossa conversa (`PROJECT_CONTEXT_HISTORY.md`), o progresso do projeto (`PROJECT_PROGRESS.md`) e as instruções para manter o contexto entre as sessões (`PROJECT_INSTRUCTIONS.md`).
+Para que eu possa me atualizar sobre o estado atual do nosso projeto BidExpert e garantir que estamos alinhados, por favor, me dê um momento para revisar os arquivos de contexto que preparamos.
 
-Depois de ler os arquivos e se sentir atualizado, por favor, confirme que está pronto para continuar trabalhando no projeto.
+Estou lendo:
+*   `context/PROJECT_CONTEXT_HISTORY.md` (para o histórico e decisões)
+*   `context/PROJECT_PROGRESS.MD` (para o progresso atual e próximos passos)
+*   `context/PROJECT_INSTRUCTIONS.md` (para me lembrar de como usar estes arquivos)
 
+Após revisar, confirmarei que estou pronto para continuarmos. Se houver alguma informação adicional ou foco específico que você gostaria de me dar para esta sessão, por favor, me avise após minha confirmação.
