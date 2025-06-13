@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -18,24 +19,35 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useState, useEffect, useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
-import { useState } from 'react';
-import { handleDeleteSeller } from './seller.actions'; // Import the Server Action
+// Renomeado para DeleteSellerButtonClient para clareza, já que é um Client Component
+function DeleteSellerButtonClient({ sellerId, sellerName, onDeleteSuccess }: { sellerId: string; sellerName: string; onDeleteSuccess: () => void }) {
+  const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = useState(false);
 
-function DeleteSellerButton({ sellerId, sellerName, onDelete }: { sellerId: string; sellerName: string; onDelete: (id: string) => Promise<void> }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    const result = await deleteSeller(sellerId); // Chama a Server Action importada
+    if (result.success) {
+      toast({ title: "Sucesso", description: "Comitente excluído com sucesso.", variant: "default" });
+      onDeleteSuccess();
+    } else {
+      toast({ title: "Erro", description: result.message || "Falha ao excluir comitente.", variant: "destructive" });
+    }
+    setIsDeleting(false);
+  };
 
   return (
-    // Control the open state of the AlertDialog with the 'isOpen' state
-    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+    <AlertDialog>
       <Tooltip>
         <TooltipTrigger asChild>
           <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label="Excluir Comitente">
-              <Trash2 className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80 h-8 w-8" aria-label="Excluir Comitente" disabled={isDeleting}>
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
             </Button>
           </AlertDialogTrigger>
         </TooltipTrigger>
@@ -49,14 +61,13 @@ function DeleteSellerButton({ sellerId, sellerName, onDelete }: { sellerId: stri
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          {/* The onClick handler calls the imported server action */}
-          <AlertDialogAction onClick={async () => {
-                // The delete action is handled here
-                await onDelete(sellerId);
-                setIsOpen(false); // Close the dialog after deletion
-            }}
+          <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
+            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Excluir
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -65,8 +76,37 @@ function DeleteSellerButton({ sellerId, sellerName, onDelete }: { sellerId: stri
   );
 }
 
-export default async function AdminSellersPage() {
-  const sellers = await getSellers();
+export default function AdminSellersPage() {
+  const [sellers, setSellers] = useState<SellerProfileInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  const fetchSellers = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const fetchedSellers = await getSellers();
+      setSellers(fetchedSellers);
+    } catch (error) {
+      console.error("Error fetching sellers:", error);
+      toast({ title: "Erro", description: "Falha ao buscar comitentes.", variant: "destructive" });
+      setSellers([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchSellers();
+  }, [fetchSellers]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-3 text-muted-foreground">Carregando comitentes...</p>
+      </div>
+    );
+  }
 
   return (
     <TooltipProvider>
@@ -146,7 +186,7 @@ export default async function AdminSellersPage() {
                             </TooltipTrigger>
                             <TooltipContent><p>Editar Comitente</p></TooltipContent>
                           </Tooltip>
-                          <DeleteSellerButton sellerId={seller.id} sellerName={seller.name} onDelete={handleDeleteSeller} />
+                          <DeleteSellerButtonClient sellerId={seller.id} sellerName={seller.name} onDeleteSuccess={fetchSellers} />
                         </TableCell>
                       </TableRow>
                     ))}
