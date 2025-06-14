@@ -36,7 +36,7 @@ export default function HomePage() {
     {
       title: 'Venda Direta',
       subtitle: 'Compre sem a disputa de lances.',
-      imageUrl: 'https://placehold.co/100x100.png',
+      imageUrl: 'https://images.unsplash.com/photo-1642543348745-03b1219733d9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxOXx8dmVuZGVyJTIwc2VtJTIwaW50ZXJtZWRpJUMzJUExcmlvc3xlbnwwfHx8fDE3NDk5NDM2NDh8MA&ixlib=rb-4.1.0&q=80&w=1080',
       imageAlt: 'Ícone Venda Direta',
       dataAiHint: 'property deal',
       link: '/search?type=direct_sale',
@@ -146,3 +146,4 @@ export default function HomePage() {
     </div>
   );
 }
+
