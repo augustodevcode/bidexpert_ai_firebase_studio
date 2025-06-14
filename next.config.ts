@@ -17,6 +17,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com', // Adicionado hostname do Unsplash
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   serverExternalPackages: ['firebase-admin'],
