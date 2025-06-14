@@ -5,13 +5,15 @@ import { sampleAuctions } from '@/lib/sample-data';
 import type { Auction } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import AuctionDetailsClient from './auction-details-client'; // Corrected import path
+import AuctionDetailsClient from './auction-details-client'; 
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { getAuction as getAuctionAction } from '@/app/admin/auctions/actions'; // Importar a server action
 
-async function getAuctionData(auctionId: string): Promise<Auction | undefined> {
-  const auction = sampleAuctions.find(auction => auction.id === auctionId);
-  return auction;
+async function getAuctionData(id: string): Promise<Auction | undefined> {
+  // Agora busca do banco de dados via Server Action
+  const auction = await getAuctionAction(id);
+  return auction || undefined; // Retorna undefined se for null
 }
 
 const estados = [
@@ -19,8 +21,10 @@ const estados = [
   'Minas Gerais', 'Pará', 'Paraná', 'Pernambuco', 'Rio de Janeiro', 
   'Santa Catarina', 'São Paulo', 'Tocantins'
 ];
+
 export default async function AuctionLotsPage({ params }: { params: { auctionId: string } }) {
-  const auction = await getAuctionData(params.auctionId);
+  const { auctionId } = params; // Desestruturar params aqui
+  const auction = await getAuctionData(auctionId);
 
   if (!auction) {
     return (
@@ -40,7 +44,14 @@ export default async function AuctionLotsPage({ params }: { params: { auctionId:
 }
 
 export async function generateStaticParams() {
-  return sampleAuctions.map((auction) => ({
-    auctionId: auction.id, // Ensure this matches the folder name [auctionId]
-  }));
+  // Se você ainda quiser usar dados de exemplo para gerar parâmetros estáticos:
+  // return sampleAuctions.map((auction) => ({
+  //   auctionId: auction.id, 
+  // }));
+  // Ou, para uma abordagem mais dinâmica (mas que pode não ser ideal para SSG puro sem DB na build):
+  // const auctions = await getAuctions(); // Precisa de uma action getAuctions se for usar dados reais
+  // return auctions.map(auction => ({ auctionId: auction.publicId || auction.id }));
+  return []; // Retornar vazio se não for usar SSG ou se os dados forem muito dinâmicos
 }
+
+
