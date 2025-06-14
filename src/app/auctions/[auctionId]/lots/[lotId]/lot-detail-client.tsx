@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react'; // Importação corrigida
+import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react'; // Ensured React is default import
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Lot, Auction, BidInfo, SellerProfileInfo, Review, LotQuestion } from '@/types';
@@ -25,10 +25,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+// Aliasing TooltipProvider
+import { Tooltip, TooltipContent, TooltipProvider as RadixTooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useAuth } from '@/contexts/auth-context';
-import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
+import { getAuctionStatusText, getLotStatusColor, sampleAuctions } from '@/lib/sample-data';
 import { placeBidOnLot, getBidsForLot, getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot } from './actions';
 import { auth } from '@/lib/firebase';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -37,7 +38,9 @@ import LotSpecificationTab from '@/components/auction/lot-specification-tab';
 import LotSellerTab from '@/components/auction/lot-seller-tab';
 import LotReviewsTab from '@/components/auction/lot-reviews-tab';
 import LotQuestionsTab from '@/components/auction/lot-questions-tab';
+import LotPreviewModal from '@/components/lot-preview-modal';
 import { hasPermission } from '@/lib/permissions';
+import { cn } from '@/lib/utils'; // For cn utility if needed inside
 
 const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'augusto.devcode@gmail.com'.toLowerCase();
 const SUPER_TEST_USER_UID_FOR_BYPASS = 'SUPER_TEST_USER_UID_PLACEHOLDER_AUG';
@@ -73,7 +76,8 @@ export default function LotDetailClientContent({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [bidAmountInput, setBidAmountInput] = useState<string>('');
   const [isPlacingBid, setIsPlacingBid] = useState(false);
-  const [isLoadingData, setIsLoadingData] = useState(true); // For bids, reviews, questions
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   const gallery = useMemo(() => {
     if (!lot) return [];
@@ -132,8 +136,8 @@ export default function LotDetailClientContent({
     ( isSuperTestUserDirectAuth || isSuperTestUserContext || (user && isHabilitado) ) &&
     lot?.status === 'ABERTO_PARA_LANCES';
 
-  const canUserReview = !!user; // Qualquer usuário logado pode avaliar
-  const canUserAskQuestion = user && isHabilitado; // Usuário logado E habilitado pode perguntar
+  const canUserReview = !!user; 
+  const canUserAskQuestion = user && isHabilitado; 
 
 
   const handleToggleFavorite = () => {
@@ -288,14 +292,13 @@ export default function LotDetailClientContent({
     }
   };
 
-
   return (
-    <TooltipProvider>
+    <RadixTooltipProvider>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
           <div className="flex-grow">
             <h1 className="text-2xl md:text-3xl font-bold font-headline text-left">{lotTitle}</h1>
-             <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-1">
                 <Badge className={`text-xs px-2 py-0.5 ${getLotStatusColor(lot.status)}`}>
                     {getAuctionStatusText(lot.status)}
                 </Badge>
@@ -321,7 +324,7 @@ export default function LotDetailClientContent({
             <div className="flex items-center gap-2">
                 <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8" asChild={!!previousLotId} disabled={!previousLotId} aria-label="Lote Anterior">{previousLotId ? <Link href={`/auctions/${auction.id}/lots/${previousLotId}`}><ChevronLeft className="h-4 w-4" /></Link> : <ChevronLeft className="h-4 w-4" />}</Button></TooltipTrigger><TooltipContent><p>Lote Anterior</p></TooltipContent></Tooltip>
                 <span className="text-sm text-muted-foreground mx-1">Lote {displayLotPosition} de {displayTotalLots}</span>
-                <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">{nextLotId ? <Link href={`/auctions/${auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" />}</Button></TooltipTrigger><TooltipContent><p>Próximo Lote</p></TooltipContent></Tooltip>
+                <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">{nextLotId ? <Link href={`/auctions/${auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>Próximo Lote</p></TooltipContent></Tooltip>
             </div>
         </div>
 
@@ -336,7 +339,7 @@ export default function LotDetailClientContent({
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground"><ImageOff className="h-16 w-16 mb-2" /><span>Imagem principal não disponível</span></div>
                   )}
-                   {gallery.length > 1 && (
+                  {gallery.length > 1 && (
                     <><Button variant="outline" size="icon" onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Imagem Anterior"><ChevronLeft className="h-5 w-5" /></Button>
                       <Button variant="outline" size="icon" onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Próxima Imagem"><ChevronRight className="h-5 w-5" /></Button></>
                   )}
@@ -346,7 +349,7 @@ export default function LotDetailClientContent({
                     {gallery.map((url, index) => (<button key={index} className={`relative aspect-square bg-muted rounded overflow-hidden border-2 transition-all ${index === currentImageIndex ? 'border-primary ring-2 ring-primary ring-offset-2' : 'border-transparent hover:border-muted-foreground/50'}`} onClick={() => setCurrentImageIndex(index)} aria-label={`Ver imagem ${index + 1}`}><Image src={url} alt={`Miniatura ${index + 1}`} fill className="object-cover" data-ai-hint={lot.dataAiHint || 'imagem galeria carro'} unoptimized={url.startsWith('https://placehold.co')} /></button>))}
                   </div>
                 )}
-                 {gallery.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">Nenhuma imagem na galeria.</p>)}
+                {gallery.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">Nenhuma imagem na galeria.</p>)}
                 <div className="flex justify-between items-center mt-4 text-sm text-muted-foreground">
                   {lot.hasKey && <span className="flex items-center"><Key className="h-4 w-4 mr-1 text-primary"/> Chave Presente</span>}
                   <span className="flex items-center"><MapPin className="h-4 w-4 mr-1 text-primary"/> Localização: {lotLocation}</span>
@@ -389,7 +392,7 @@ export default function LotDetailClientContent({
                   </div>
                 {canUserBid ? (
                   <div className="space-y-2">
-                     <div className="relative">
+                    <div className="relative">
                         <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input type="number" placeholder={`Mínimo R$ ${nextMinimumBid.toLocaleString('pt-BR')}`} value={bidAmountInput} onChange={(e) => setBidAmountInput(e.target.value)} className="pl-9 h-11 text-base" min={nextMinimumBid} step={bidIncrement} disabled={isPlacingBid} />
                     </div>
@@ -398,7 +401,7 @@ export default function LotDetailClientContent({
                     </Button>
                   </div>
                 ) : (
-                   <div className="text-sm text-muted-foreground p-3 bg-secondary/50 rounded-md">
+                  <div className="text-sm text-muted-foreground p-3 bg-secondary/50 rounded-md">
                     <p>{lot.status !== 'ABERTO_PARA_LANCES' ? `Lances para este lote estão ${getAuctionStatusText(lot.status).toLowerCase()}.` : (user ? 'Você precisa estar habilitado para dar lances.' : 'Você precisa estar logado para dar lances.')}</p>
                     {!user && <Link href={`/auth/login?redirect=/auctions/${auction.id}/lots/${lot.id}`} className="text-primary hover:underline font-medium">Faça login ou registre-se.</Link>}
                   </div>
@@ -454,7 +457,16 @@ export default function LotDetailClientContent({
           </div>
         </div>
       </div>
-    </TooltipProvider>
+      {lot && auction && (
+        <LotPreviewModal
+          lot={lot}
+          auction={auction}
+          isOpen={isPreviewModalOpen}
+          onClose={() => setIsPreviewModalOpen(false)}
+        />
+      )}
+    </RadixTooltipProvider>
   );
 }
 
+    
