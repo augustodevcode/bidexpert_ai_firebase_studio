@@ -1,8 +1,7 @@
 
 'use client';
 
-import * as React from 'react'; // Importação explícita do namespace React
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react'; // Importação corrigida
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Lot, Auction, BidInfo, SellerProfileInfo, Review, LotQuestion } from '@/types';
@@ -327,6 +326,7 @@ export default function LotDetailClientContent({
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Coluna da Galeria e Detalhes */}
           <div className="lg:col-span-2 space-y-6">
             <Card className="shadow-lg">
               <CardContent className="p-4">
@@ -354,22 +354,27 @@ export default function LotDetailClientContent({
               </CardContent>
             </Card>
             
-            <Tabs defaultValue="description" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 mb-4">
-                <TabsTrigger value="description">Descrição</TabsTrigger>
-                <TabsTrigger value="specification">Especificações</TabsTrigger>
-                <TabsTrigger value="seller">Comitente</TabsTrigger>
-                <TabsTrigger value="reviews">Avaliações</TabsTrigger>
-                <TabsTrigger value="questions">Perguntas</TabsTrigger>
-              </TabsList>
-              <TabsContent value="description"><LotDescriptionTab lot={lot} /></TabsContent>
-              <TabsContent value="specification"><LotSpecificationTab lot={lot} /></TabsContent>
-              <TabsContent value="seller"><LotSellerTab sellerName={initialSellerName || auction.seller || "Não Informado"} sellerId={lot.sellerId} auctionSellerName={auction.seller} /></TabsContent>
-              <TabsContent value="reviews"><LotReviewsTab lot={lot} reviews={lotReviews} isLoading={isLoadingData} onNewReview={handleNewReview} canUserReview={canUserReview} /></TabsContent>
-              <TabsContent value="questions"><LotQuestionsTab lot={lot} questions={lotQuestions} isLoading={isLoadingData} onNewQuestion={handleNewQuestion} canUserAskQuestion={canUserAskQuestion} /></TabsContent>
-            </Tabs>
+            <Card className="shadow-lg"> {/* Card for Tabs */}
+              <CardContent className="p-0 sm:p-2 md:p-4"> {/* Adjusted padding */}
+                <Tabs defaultValue="description" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 mb-4">
+                    <TabsTrigger value="description">Descrição</TabsTrigger>
+                    <TabsTrigger value="specification">Especificações</TabsTrigger>
+                    <TabsTrigger value="seller">Comitente</TabsTrigger>
+                    <TabsTrigger value="reviews">Avaliações</TabsTrigger>
+                    <TabsTrigger value="questions">Perguntas</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="description"><LotDescriptionTab lot={lot} /></TabsContent>
+                  <TabsContent value="specification"><LotSpecificationTab lot={lot} /></TabsContent>
+                  <TabsContent value="seller"><LotSellerTab sellerName={initialSellerName || auction.seller || "Não Informado"} sellerId={lot.sellerId} auctionSellerName={auction.seller} /></TabsContent>
+                  <TabsContent value="reviews"><LotReviewsTab lot={lot} reviews={lotReviews} isLoading={isLoadingData} onNewReview={handleNewReview} canUserReview={canUserReview} /></TabsContent>
+                  <TabsContent value="questions"><LotQuestionsTab lot={lot} questions={lotQuestions} isLoading={isLoadingData} onNewQuestion={handleNewQuestion} canUserAskQuestion={canUserAskQuestion} /></TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
           </div>
 
+          {/* Coluna de Ação e Informações */}
           <div className="space-y-6 lg:sticky lg:top-24">
             <Card className="shadow-md">
               <CardHeader>
@@ -453,4 +458,3 @@ export default function LotDetailClientContent({
   );
 }
 
-```
