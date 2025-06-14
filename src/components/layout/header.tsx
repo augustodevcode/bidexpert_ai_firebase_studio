@@ -219,20 +219,24 @@ export default function Header() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todas" className="text-sm">Todas</SelectItem>
-                    {searchCategories.map(cat => (
-                      <SelectItem
-                        key={cat.slug}
-                        value={cat.slug}
-                        className="text-sm"
-                      >
-                        {cat.name}
-                      </SelectItem>
-                    ))}
+                    {searchCategories.length > 0 ? (
+                      searchCategories.map(cat => (
+                        <SelectItem
+                          key={cat.slug}
+                          value={cat.slug}
+                          className="text-sm"
+                        >
+                          {cat.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                       <div className="p-2 text-xs text-muted-foreground">Carregando categorias...</div>
+                    )}
                   </SelectContent>
                 </Select>
                 <Input
                   type="search"
-                  placeholder="Buscar em produtos..."
+                  placeholder="Buscar em todo o site..."
                   className="h-10 pl-3 pr-10 flex-1 rounded-l-none rounded-r-md border-l-0 focus:ring-0 focus:ring-offset-0 text-foreground placeholder:text-muted-foreground"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -348,7 +352,7 @@ export default function Header() {
                   {recentlyViewedItems.slice(0, 5).map(item => (
                     <DropdownMenuItem key={item.id} asChild className="cursor-pointer">
                       <Link href={`/auctions/${item.auctionId}/lots/${item.id}`} className="flex items-center gap-2 py-1.5">
-                        <div className="relative h-12 w-12 flex-shrink-0 bg-muted rounded-sm overflow-hidden">
+                        <div className="relative h-12 w-16 flex-shrink-0 bg-muted rounded-sm overflow-hidden">
                           <Image src={item.imageUrl} alt={item.title} fill className="object-cover" data-ai-hint={item.dataAiHint || "item visto recentemente"} />
                         </div>
                         <span className="text-xs truncate flex-grow">{item.title}</span>
