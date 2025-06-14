@@ -1,7 +1,8 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import * as React from 'react'; // Importação explícita do namespace React
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Lot, Auction, BidInfo, SellerProfileInfo, Review, LotQuestion } from '@/types';
@@ -418,7 +419,7 @@ export default function LotDetailClientContent({
                   "Vendedor:": lot.sellerName || auction.seller || initialSellerName,
                   "Documento (Título/Venda):": lot.titleInfo,
                   "Marca do Documento:": lot.titleBrand,
-                }).map(([key, value]) => value ? <div key={key}><span className="font-medium text-foreground">{key}</span> <span className="text-muted-foreground">{value}</span></div> : null)}
+                }).map(([key, value]) => value ? <div key={key}><span className="font-medium text-foreground">{key}</span> <span className="text-muted-foreground">{String(value)}</span></div> : null)}
               </CardContent>
             </Card>
 
@@ -433,7 +434,7 @@ export default function LotDetailClientContent({
                               <li key={bid.id} className="flex justify-between items-center p-2 bg-secondary/40 rounded-md">
                                   <div>
                                       <span className="font-medium text-foreground">{bid.bidderDisplay}</span>
-                                      <span className="text-xs text-muted-foreground ml-2">({format(new Date(bid.timestamp), "dd/MM HH:mm:ss", { locale: ptBR })})</span>
+                                      <span className="text-xs text-muted-foreground ml-2">({bid.timestamp ? format(new Date(bid.timestamp), "dd/MM HH:mm:ss", { locale: ptBR }) : 'Data Indisponível'})</span>
                                   </div>
                                   <span className="font-semibold text-primary">R$ {bid.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                               </li>
@@ -451,3 +452,5 @@ export default function LotDetailClientContent({
     </TooltipProvider>
   );
 }
+
+```
