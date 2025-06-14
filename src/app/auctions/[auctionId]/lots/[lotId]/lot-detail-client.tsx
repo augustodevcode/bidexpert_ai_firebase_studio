@@ -25,9 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-// Importar Tooltip, TooltipContent, TooltipTrigger de @/components/ui/tooltip
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-
+// import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'; // Comentado para isolar o erro
     
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useAuth } from '@/contexts/auth-context';
@@ -295,7 +293,7 @@ export default function LotDetailClientContent({
   };
     
   return (
-    // <TooltipProvider> // Bloco comentado para isolar o erro
+    // <TooltipProvider> // Comentado para isolar o erro
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
           <div className="flex-grow">
@@ -307,10 +305,19 @@ export default function LotDetailClientContent({
             </div>
           </div>
           <div className="flex items-center space-x-2 flex-wrap justify-start sm:justify-end mt-2 sm:mt-0">
-            {/* Tooltips removidos temporariamente para simplificar */}
-            <Button variant="outline" size="icon" onClick={handlePrint} aria-label="Imprimir"><Printer className="h-4 w-4" /></Button>
+            {/* <Tooltip>
+              <TooltipTrigger asChild> */}
+                <Button variant="outline" size="icon" onClick={handlePrint} aria-label="Imprimir"><Printer className="h-4 w-4" /></Button>
+              {/* </TooltipTrigger>
+              <TooltipContent><p>Imprimir Página</p></TooltipContent>
+            </Tooltip> */}
             <DropdownMenu>
-              <DropdownMenuTrigger asChild><Button variant="outline" size="icon" aria-label="Compartilhar"><Share2 className="h-4 w-4" /></Button></DropdownMenuTrigger>
+              {/* <Tooltip>
+                <TooltipTrigger asChild> */}
+                  <DropdownMenuTrigger asChild><Button variant="outline" size="icon" aria-label="Compartilhar"><Share2 className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                {/* </TooltipTrigger>
+                <TooltipContent><p>Compartilhar</p></TooltipContent>
+              </Tooltip> */}
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild><a href={getSocialLink('x', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><X className="h-4 w-4" /> X (Twitter)</a></DropdownMenuItem>
                 <DropdownMenuItem asChild><a href={getSocialLink('facebook', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><Facebook className="h-4 w-4" /> Facebook</a></DropdownMenuItem>
@@ -318,21 +325,35 @@ export default function LotDetailClientContent({
                 <DropdownMenuItem asChild><a href={getSocialLink('email', currentUrl, lotTitle)} className="flex items-center gap-2 cursor-pointer"><Mail className="h-4 w-4" /> Email</a></DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="outline" size="icon" asChild aria-label="Voltar para o leilão"><Link href={`/auctions/${auction.id}`}><ArrowLeft className="h-4 w-4" /></Link></Button>
+             {/* <Tooltip>
+                <TooltipTrigger asChild> */}
+                    <Button variant="outline" size="icon" asChild aria-label="Voltar para o leilão"><Link href={`/auctions/${auction.id}`}><ArrowLeft className="h-4 w-4" /></Link></Button>
+                {/* </TooltipTrigger>
+                <TooltipContent><p>Voltar para o Leilão</p></TooltipContent>
+            </Tooltip> */}
           </div>
         </div>
 
         <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
             <span className="font-medium text-foreground">Lote Nº: {actualLotNumber}</span>
             <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!previousLotId} disabled={!previousLotId} aria-label="Lote Anterior">{previousLotId ? <Link href={`/auctions/${auction.id}/lots/${previousLotId}`}><ChevronLeft className="h-4 w-4" /></Link> : <ChevronLeft className="h-4 w-4" />}</Button>
+                {/* <Tooltip>
+                    <TooltipTrigger asChild> */}
+                        <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!previousLotId} disabled={!previousLotId} aria-label="Lote Anterior">{previousLotId ? <Link href={`/auctions/${auction.id}/lots/${previousLotId}`}><ChevronLeft className="h-4 w-4" /></Link> : <ChevronLeft className="h-4 w-4" />}</Button>
+                    {/* </TooltipTrigger>
+                    <TooltipContent><p>Lote Anterior</p></TooltipContent>
+                </Tooltip> */}
                 <span className="text-sm text-muted-foreground mx-1">Lote {displayLotPosition} de {displayTotalLots}</span>
-                <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">{nextLotId ? <Link href={`/auctions/${auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" /></Button>
+                {/* <Tooltip>
+                    <TooltipTrigger asChild> */}
+                        <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">{nextLotId ? <Link href={`/auctions/${auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" />}</Button>
+                    {/* </TooltipTrigger>
+                    <TooltipContent><p>Próximo Lote</p></TooltipContent>
+                </Tooltip> */}
             </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Coluna da Galeria e Detalhes */}
           <div className="lg:col-span-2 space-y-6">
             <Card className="shadow-lg">
               <CardContent className="p-4">
@@ -360,8 +381,8 @@ export default function LotDetailClientContent({
               </CardContent>
             </Card>
             
-            <Card className="shadow-lg"> {/* Card for Tabs */}
-              <CardContent className="p-0 sm:p-2 md:p-4"> {/* Adjusted padding */}
+            <Card className="shadow-lg">
+              <CardContent className="p-0 sm:p-2 md:p-4">
                 <Tabs defaultValue="description" className="w-full">
                   <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 mb-4">
                     <TabsTrigger value="description">Descrição</TabsTrigger>
@@ -380,7 +401,6 @@ export default function LotDetailClientContent({
             </Card>
           </div>
 
-          {/* Coluna de Ação e Informações */}
           <div className="space-y-6 lg:sticky lg:top-24">
             <Card className="shadow-md">
               <CardHeader>
@@ -460,12 +480,7 @@ export default function LotDetailClientContent({
           </div>
         </div>
       </div>
-    // </TooltipProvider> // Bloco comentado para isolar o erro
+    // </TooltipProvider> // Comentado para isolar o erro
   );
 }
-    
-    
 
-
-
-    
