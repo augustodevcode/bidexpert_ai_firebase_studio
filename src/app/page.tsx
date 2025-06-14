@@ -1,4 +1,5 @@
 
+
 import AuctionCard from '@/components/auction-card';
 import AuctionFilters from '@/components/auction-filters';
 import HeroCarousel from '@/components/hero-carousel';
@@ -17,7 +18,7 @@ export default function HomePage() {
     {
       title: 'Leilões Judiciais',
       subtitle: 'Oportunidades de processos judiciais.',
-      imageUrl: 'https://placehold.co/100x100.png',
+      imageUrl: 'https://images.unsplash.com/photo-1589216532372-1c2a367900d9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxMZWlsJUMzJUEzbyUyMEp1ZGljaWFsfGVufDB8fHx8MTc0OTk0MjE4Nnww&ixlib=rb-4.1.0&q=80&w=1080',
       imageAlt: 'Ícone Leilões Judiciais',
       dataAiHint: 'gavel justice',
       link: '/search?type=judicial',
@@ -145,3 +146,4 @@ export default function HomePage() {
     </div>
   );
 }
+
