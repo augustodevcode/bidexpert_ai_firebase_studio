@@ -26,9 +26,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 // Importar Tooltip, TooltipContent, TooltipTrigger de @/components/ui/tooltip
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-// Importar Provider diretamente do Radix e dar um alias
-import { Provider as TooltipPrimitiveProvider } from "@radix-ui/react-tooltip"; 
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+
     
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useAuth } from '@/contexts/auth-context';
@@ -296,7 +295,7 @@ export default function LotDetailClientContent({
   };
     
   return (
-    <TooltipPrimitiveProvider>
+    // <TooltipProvider> // Bloco comentado para isolar o erro
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
           <div className="flex-grow">
@@ -308,9 +307,10 @@ export default function LotDetailClientContent({
             </div>
           </div>
           <div className="flex items-center space-x-2 flex-wrap justify-start sm:justify-end mt-2 sm:mt-0">
-            <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" onClick={handlePrint} aria-label="Imprimir"><Printer className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>Imprimir</p></TooltipContent></Tooltip>
+            {/* Tooltips removidos temporariamente para simplificar */}
+            <Button variant="outline" size="icon" onClick={handlePrint} aria-label="Imprimir"><Printer className="h-4 w-4" /></Button>
             <DropdownMenu>
-              <Tooltip><TooltipTrigger asChild><DropdownMenuTrigger asChild><Button variant="outline" size="icon" aria-label="Compartilhar"><Share2 className="h-4 w-4" /></Button></DropdownMenuTrigger></TooltipTrigger><TooltipContent><p>Compartilhar</p></TooltipContent></DropdownMenu>
+              <DropdownMenuTrigger asChild><Button variant="outline" size="icon" aria-label="Compartilhar"><Share2 className="h-4 w-4" /></Button></DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild><a href={getSocialLink('x', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><X className="h-4 w-4" /> X (Twitter)</a></DropdownMenuItem>
                 <DropdownMenuItem asChild><a href={getSocialLink('facebook', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><Facebook className="h-4 w-4" /> Facebook</a></DropdownMenuItem>
@@ -318,16 +318,16 @@ export default function LotDetailClientContent({
                 <DropdownMenuItem asChild><a href={getSocialLink('email', currentUrl, lotTitle)} className="flex items-center gap-2 cursor-pointer"><Mail className="h-4 w-4" /> Email</a></DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" asChild aria-label="Voltar para o leilão"><Link href={`/auctions/${auction.id}`}><ArrowLeft className="h-4 w-4" /></Link></Button></TooltipTrigger><TooltipContent><p>Voltar para o Leilão</p></TooltipContent></Tooltip>
+            <Button variant="outline" size="icon" asChild aria-label="Voltar para o leilão"><Link href={`/auctions/${auction.id}`}><ArrowLeft className="h-4 w-4" /></Link></Button>
           </div>
         </div>
 
         <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
             <span className="font-medium text-foreground">Lote Nº: {actualLotNumber}</span>
             <div className="flex items-center gap-2">
-                <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8" asChild={!!previousLotId} disabled={!previousLotId} aria-label="Lote Anterior">{previousLotId ? <Link href={`/auctions/${auction.id}/lots/${previousLotId}`}><ChevronLeft className="h-4 w-4" /></Link> : <ChevronLeft className="h-4 w-4" />}</Button></TooltipTrigger><TooltipContent><p>Lote Anterior</p></TooltipContent></Tooltip>
+                <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!previousLotId} disabled={!previousLotId} aria-label="Lote Anterior">{previousLotId ? <Link href={`/auctions/${auction.id}/lots/${previousLotId}`}><ChevronLeft className="h-4 w-4" /></Link> : <ChevronLeft className="h-4 w-4" />}</Button>
                 <span className="text-sm text-muted-foreground mx-1">Lote {displayLotPosition} de {displayTotalLots}</span>
-                <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">{nextLotId ? <Link href={`/auctions/${auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" />}</Button></TooltipTrigger><TooltipContent><p>Próximo Lote</p></TooltipContent></Tooltip>
+                <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">{nextLotId ? <Link href={`/auctions/${auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" /></Button>
             </div>
         </div>
 
@@ -460,17 +460,12 @@ export default function LotDetailClientContent({
           </div>
         </div>
       </div>
-      {lot && auction && (
-        <LotPreviewModal
-          lot={lot}
-          auction={auction}
-          isOpen={isPreviewModalOpen}
-          onClose={() => setIsPreviewModalOpen(false)}
-        />
-      )}
-    </TooltipPrimitiveProvider>
+    // </TooltipProvider> // Bloco comentado para isolar o erro
   );
 }
     
     
 
+
+
+    
