@@ -1,3 +1,4 @@
+
 // src/lib/database/mysql.adapter.ts
 import mysql, { type RowDataPacket, type Pool } from 'mysql2/promise';
 import type {
@@ -422,7 +423,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async getReviewsForLot(lotId: string): Promise<Review[]> {
     const connection = await getPool().getConnection();
     try {
-      const query = 'SELECT * FROM reviews WHERE lot_id = (SELECT id FROM lots WHERE public_id = ? OR id = ? LIMIT 1) ORDER BY created_at DESC;';
+      const query = 'SELECT * FROM lot_reviews WHERE lot_id = (SELECT id FROM lots WHERE public_id = ? OR id = ? LIMIT 1) ORDER BY created_at DESC;';
       const [rows] = await connection.execute(query, [lotId, lotId]);
       return mapMySqlRowsToCamelCase(rows as RowDataPacket[]).map(mapToReview);
     } catch (e: any) { console.error(`[MySqlAdapter - getReviewsForLot(${lotId})] Error:`, e); return []; }
@@ -440,7 +441,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       const numericLotId = (lotRows as RowDataPacket[])[0].id;
 
       const query = `
-        INSERT INTO reviews (lot_id, auction_id, user_id, user_display_name, rating, comment)
+        INSERT INTO lot_reviews (lot_id, auction_id, user_id, user_display_name, rating, comment)
         VALUES (?, (SELECT auction_id FROM lots WHERE id = ?), ?, ?, ?, ?);
       `;
       const values = [
@@ -1189,7 +1190,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       const query = `
         INSERT INTO auctioneers
           (public_id, name, slug, registration_number, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, user_id, member_since, rating, auctions_conducted_count, total_value_sold)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, 0, 0, 0);
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, 0, 0);
       `;
       const values = [
         publicId, data.name, slug, data.registrationNumber || null, data.contactName || null, data.email || null, data.phone || null,
@@ -1291,7 +1292,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
     const connection = await getPool().getConnection();
     try {
       const slug = slugify(data.name);
-      const publicId = `SELL-${slugify(data.name.substring(0,5))}-${uuidv4().substring(0,8)}`;
+      const publicId = `SELL-PUB-${slugify(data.name.substring(0,5))}-${uuidv4().substring(0,8)}`;
       const query = `
         INSERT INTO sellers
           (public_id, name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, user_id,
@@ -1707,7 +1708,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       if (fieldsToUpdate.length === 0) return { success: true, message: "Nenhuma alteração para o lote." };
 
       fieldsToUpdate.push(`updated_at = NOW()`);
-      const queryText = `UPDATE lots SET ${fieldsToUpdate.join(', ')} WHERE ${whereCondition}${paramCount++}`;
+      const queryText = `UPDATE lots SET ${fieldsToUpdate.join(', ')} WHERE ${whereCondition}`;
       values.push(idValue);
 
       await connection.execute(queryText, values);
@@ -2324,3 +2325,4 @@ export class MySqlAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
 }
+
