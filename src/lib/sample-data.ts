@@ -241,7 +241,7 @@ export const sampleLots: Lot[] = [
     make: 'NEW HOLLAND',
     model: 'T7.245',
     series: 'Classic',
-    imageUrl: 'https://placehold.co/800x600.png?text=Trator+NH+T7',
+    imageUrl: 'https://images.unsplash.com/photo-1633153627433-b15010a9b2f5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0cmFjdG9yJTIwbmglMjB0N3xlbnwwfHx8fDE3NDk5MjQ1Mjd8MA&ixlib=rb-4.1.0&q=80&w=1080',
     dataAiHint: 'trator agricola campo',
     galleryImageUrls: [
         'https://placehold.co/150x100.png?text=Trator+Frente',
@@ -668,11 +668,11 @@ export const sampleUserWins: UserWin[] = [
 ];
 
 export const sampleLotBids: BidInfo[] = [
-  { id: 'LBID001', lotId: 'LOTEVEI001', bidderId: 'userABC', bidderDisplay: 'Usuário A****', amount: 68500, timestamp: createPastDate(0, 1, 30) },
-  { id: 'LBID002', lotId: 'LOTEVEI001', bidderId: 'userXYZ', bidderDisplay: 'Usuário X****', amount: 68000, timestamp: createPastDate(0, 1, 35) },
-  { id: 'LBID003', lotId: 'LOTEVEI001', bidderId: 'user123', bidderDisplay: 'Usuário 1****', amount: 67500, timestamp: createPastDate(0, 1, 40) },
-  { id: 'LBID004', lotId: 'LOTE001', bidderId: 'userDEF', bidderDisplay: 'Usuário D****', amount: 45000, timestamp: createPastDate(0, 0, 10) },
-  { id: 'LBID005', lotId: 'LOTE001', bidderId: 'userGHI', bidderDisplay: 'Usuário G****', amount: 44500, timestamp: createPastDate(0, 0, 15) },
+  { id: 'LBID001', lotId: 'LOTEVEI001', auctionId: '300724car', bidderId: 'userABC', bidderDisplay: 'Usuário A****', amount: 68500, timestamp: createPastDate(0, 1, 30) },
+  { id: 'LBID002', lotId: 'LOTEVEI001', auctionId: '300724car', bidderId: 'userXYZ', bidderDisplay: 'Usuário X****', amount: 68000, timestamp: createPastDate(0, 1, 35) },
+  { id: 'LBID003', lotId: 'LOTEVEI001', auctionId: '300724car', bidderId: 'user123', bidderDisplay: 'Usuário 1****', amount: 67500, timestamp: createPastDate(0, 1, 40) },
+  { id: 'LBID004', lotId: 'LOTE001', auctionId: '100625bra', bidderId: 'userDEF', bidderDisplay: 'Usuário D****', amount: 45000, timestamp: createPastDate(0, 0, 10) },
+  { id: 'LBID005', lotId: 'LOTE001', auctionId: '100625bra', bidderId: 'userGHI', bidderDisplay: 'Usuário G****', amount: 44500, timestamp: createPastDate(0, 0, 15) },
 ];
 
 
@@ -950,6 +950,7 @@ export const getUniqueSellers = (): SellerProfileInfo[] => {
 
     sellerMap.set(slug, {
       id: slug, 
+      publicId: `SELL-PUB-${slug.substring(0,5)}-${Math.random().toString(36).substring(2,6)}`, // Example publicId
       name,
       slug,
       memberSince,
@@ -987,6 +988,7 @@ export const getUniqueAuctioneers = (): AuctioneerProfileInfo[] => {
 
                 auctioneerMap.set(slug, {
                     id: slug, 
+                    publicId: `AUCT-PUB-${slug.substring(0,5)}-${Math.random().toString(36).substring(2,6)}`, // Example publicId
                     name: auction.auctioneer,
                     slug: slug,
                     logoUrl: auction.auctioneerLogoUrl || `https://placehold.co/100x100.png?text=${initial}`,
@@ -1160,4 +1162,5 @@ export const sampleDirectSaleOffers: DirectSaleOffer[] = [
   },
 ];
 // --- End Venda Direta Sample Data ---
+
 
