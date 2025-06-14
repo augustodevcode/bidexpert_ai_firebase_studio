@@ -27,7 +27,7 @@ export default function HomePage() {
     {
       title: 'Leilões Extrajudiciais',
       subtitle: 'Negociações diretas e mais ágeis.',
-      imageUrl: 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNnx8Y29udHJhY3QlMjBoYW5kc2hha2V8ZW58MHx8fHwxNzE4NTY3MjYxfDA&ixlib=rb-4.0.3&q=80&w=1080',
+      imageUrl: 'https://images.unsplash.com/photo-1654588834754-33346e3ee095?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxOHx8bGVpbCVDMyVBM28lMjBleHRyYSUyMGp1ZGljaWFsfGVufDB8fHx8MTc0OTk0MzI5NXww&ixlib=rb-4.1.0&q=80&w=1080',
       imageAlt: 'Ícone Leilões Extrajudiciais',
       dataAiHint: 'document agreement',
       link: '/search?type=extrajudicial',
@@ -146,4 +146,3 @@ export default function HomePage() {
     </div>
   );
 }
-
