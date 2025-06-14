@@ -1,8 +1,4 @@
-
 // src/lib/database/firestore.adapter.ts
-// AdminFieldValue e ServerTimestamp são importados DIRETAMENTE de 'firebase-admin/firestore'
-// A instância 'db' é recebida no construtor, após ensureAdminInitialized ser chamado pelo database/index.ts
-
 import type { 
   Firestore, 
   FieldValue as FirebaseAdminFieldValueType, 
@@ -17,34 +13,25 @@ import type {
   SellerProfileInfo, SellerFormData,
   Auction, AuctionFormData, AuctionDbData,
   Lot, LotFormData, LotDbData,
-  BidInfo,
+  BidInfo, Review, LotQuestion, // Adicionado Review e LotQuestion
   UserProfileData, EditableUserProfileData, UserHabilitationStatus,
   Role, RoleFormData,
   MediaItem,
-  PlatformSettings, PlatformSettingsFormData
+  PlatformSettings, PlatformSettingsFormData, Theme
 } from '@/types';
 import { slugify } from '@/lib/sample-data';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 
-// Usar os tipos importados diretamente
 const AdminFieldValue = FirebaseAdminFieldValueType;
 const ServerTimestamp = FirebaseAdminTimestampType;
 
-
-// Helper to convert various timestamp types to JS Date
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date(); 
-  // Verifica se é um Timestamp do Admin SDK (que tem toDate)
   if (timestampField && typeof timestampField.toDate === 'function') {
     return timestampField.toDate();
   }
-  // Verifica se é um objeto literal com seconds e nanoseconds (estrutura de Timestamp)
   if (typeof timestampField === 'object' && timestampField !== null &&
       typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
-    // Reconstruir como Timestamp do Admin SDK se possível, ou diretamente para Date.
-    // Para este contexto, assumimos que já é um Timestamp do Firestore e toDate() deveria ter funcionado.
-    // Se chegou aqui como objeto puro, pode ser resultado de serialização.
-    // A conversão mais segura é direto para Date.
     return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000);
   }
   if (timestampField instanceof Date) return timestampField;
@@ -74,7 +61,6 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     console.log("[FirestoreAdapter] Instance created with provided Firestore service.");
   }
 
-  // --- Schema Initialization ---
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[] }> {
     console.log('[FirestoreAdapter] Schema initialization is not typically required for Firestore in the same way as SQL. Collections are created on first use.');
     try {
@@ -86,8 +72,6 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     }
   }
 
-
-  // --- Categories ---
   async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> {
     if (!data.name || data.name.trim() === '') {
       return { success: false, message: 'O nome da categoria é obrigatório.' };
@@ -126,7 +110,6 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       });
     } catch (error: any) {
       console.error("[FirestoreAdapter - getLotCategories] Error:", error);
-      // Se der erro (ex: SDK não inicializado), retorna array vazio para não quebrar a UI que espera isso.
       return [];
     }
   }
@@ -272,7 +255,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   
   async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
     try {
-      const newAuctioneerData = { ...data, slug: slugify(data.name), memberSince: AdminFieldValue.serverTimestamp(), rating: 0, auctionsConductedCount: 0, totalValueSold: 0, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
+      const newAuctioneerData = { ...data, publicId: `AUCT-PUB-${uuidv4()}`, slug: slugify(data.name), memberSince: AdminFieldValue.serverTimestamp(), rating: 0, auctionsConductedCount: 0, totalValueSold: 0, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
       const docRef = await this.db.collection('auctioneers').add(newAuctioneerData);
       return { success: true, message: 'Leiloeiro criado!', auctioneerId: docRef.id };
     } catch (e: any) { return { success: false, message: e.message }; }
@@ -297,7 +280,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       if (snapshot.empty) return null;
       const docSnap = snapshot.docs[0];
       const data = docSnap.data()!;
-      return { id: docSnap.id, ...data, createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt), memberSince: safeConvertOptionalDate(data.memberSince) } as AuctioneerProfileInfo;
+      return { id: docSnap.id, ...docSnap.data(), createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt), memberSince: safeConvertOptionalDate(data.memberSince) } as AuctioneerProfileInfo;
     } catch (e: any) { return null; }
   }
   async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
@@ -317,7 +300,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
 
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
     try {
-      const newSellerData = { ...data, slug: slugify(data.name), memberSince: AdminFieldValue.serverTimestamp(), rating: 0, activeLotsCount: 0, totalSalesValue: 0, auctionsFacilitatedCount: 0, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
+      const newSellerData = { ...data, publicId: `SELL-PUB-${uuidv4()}`, slug: slugify(data.name), memberSince: AdminFieldValue.serverTimestamp(), rating: 0, activeLotsCount: 0, totalSalesValue: 0, auctionsFacilitatedCount: 0, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
       const docRef = await this.db.collection('sellers').add(newSellerData);
       return { success: true, message: 'Comitente criado!', sellerId: docRef.id };
     } catch (e: any) { return { success: false, message: e.message }; }
@@ -342,7 +325,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       if (snapshot.empty) return null;
       const docSnap = snapshot.docs[0];
       const data = docSnap.data()!;
-      return { id: docSnap.id, ...data, createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt), memberSince: safeConvertOptionalDate(data.memberSince) } as SellerProfileInfo;
+      return { id: docSnap.id, ...docSnap.data(), createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt), memberSince: safeConvertOptionalDate(data.memberSince) } as SellerProfileInfo;
     } catch (e: any) { return null; }
   }
   async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
@@ -364,6 +347,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     try {
       const newAuctionData: any = { 
         ...data,
+        publicId: `AUC-PUB-${uuidv4()}`,
         auctionDate: ServerTimestamp.fromDate(data.auctionDate as Date),
         endDate: data.endDate ? ServerTimestamp.fromDate(data.endDate as Date) : null, 
         totalLots:0, visits:0, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() 
@@ -518,6 +502,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     try {
       const newLotData: any = { 
           ...data, 
+          publicId: `LOT-PUB-${uuidv4()}`,
           views: data.views || 0, 
           bidsCount: data.bidsCount || 0, 
           auctionName: data.auctionName || `Lote ${data.title.substring(0,20)}`, 
@@ -666,6 +651,74 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; }
   }
 
+  // --- Reviews ---
+  async getReviewsForLot(lotId: string): Promise<Review[]> {
+    try {
+      const snapshot = await this.db.collection('lots').doc(lotId).collection('reviews').orderBy('createdAt', 'desc').get();
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToDate(doc.data().createdAt) } as Review));
+    } catch (e: any) { console.error(`[getReviewsForLot ${lotId}]`, e); return []; }
+  }
+  async createReview(reviewData: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; reviewId?: string; }> {
+    try {
+      const newReview = { ...reviewData, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
+      const docRef = await this.db.collection('lots').doc(reviewData.lotId).collection('reviews').add(newReview);
+      return { success: true, message: "Avaliação adicionada.", reviewId: docRef.id };
+    } catch (e: any) { return { success: false, message: e.message }; }
+  }
+
+  // --- Questions ---
+  async getQuestionsForLot(lotId: string): Promise<LotQuestion[]> {
+    try {
+      const snapshot = await this.db.collection('lots').doc(lotId).collection('questions').orderBy('createdAt', 'desc').get();
+      return snapshot.docs.map(doc => ({ 
+        id: doc.id, ...doc.data(), 
+        createdAt: safeConvertToDate(doc.data().createdAt),
+        answeredAt: safeConvertOptionalDate(doc.data().answeredAt)
+      } as LotQuestion));
+    } catch (e: any) { console.error(`[getQuestionsForLot ${lotId}]`, e); return []; }
+  }
+  async createQuestion(questionData: Omit<LotQuestion, 'id' | 'createdAt' | 'answeredAt' | 'answeredByUserId' | 'answeredByUserDisplayName' | 'isPublic'>): Promise<{ success: boolean; message: string; questionId?: string; }> {
+    try {
+      const newQuestion = { ...questionData, isPublic: true, createdAt: AdminFieldValue.serverTimestamp() };
+      const docRef = await this.db.collection('lots').doc(questionData.lotId).collection('questions').add(newQuestion);
+      return { success: true, message: "Pergunta enviada.", questionId: docRef.id };
+    } catch (e: any) { return { success: false, message: e.message }; }
+  }
+  async answerQuestion(questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> {
+    // Firestore does not have a single "parent" collection concept for subcollections.
+    // To update a question, we need the lotId. This should be passed to the action, or retrieved if question doc contains lotId.
+    // For now, assuming the question document structure allows finding lotId, or actions.ts handles it.
+    // This placeholder will assume the update is on a top-level 'questions' collection if lotId is not accessible here.
+    // IDEALLY: you'd pass lotId to this adapter method or the question document contains lotId.
+    // For this example, let's assume the calling action handles finding the correct path or the question doc has lotId.
+    // As a simple placeholder, we will log a warning if we cannot determine the lotId.
+    // console.warn("[FirestoreAdapter.answerQuestion] Lot ID not directly available. Update might fail if path is incorrect.");
+    try {
+      // This is a conceptual update. The actual path would be /lots/{lotId}/questions/{questionId}
+      // The action layer (actions.ts) should resolve the full path.
+      // If actions.ts calls this with a direct reference to the question doc, this is fine.
+      // Otherwise, lotId would need to be passed in.
+      const questionRef = this.db.collectionGroup('questions').where('id_placeholder_field_for_questionId', '==', questionId).limit(1); // This is not efficient.
+      // A better way would be for the action to get the full path or the LotQuestion object to update.
+      // For now, let's assume questionId is the full path segment or we can't implement this fully here.
+      // This will likely fail if questionId is just the ID and not a path.
+      
+      // Let's refine this: The action should pass the lotId to locate the question.
+      // This function signature in the interface should be:
+      // answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string)
+      // For now, we'll just log the limitation
+      console.error("[FirestoreAdapter.answerQuestion] - Placeholder: Cannot fully implement without lotId or different lookup strategy.");
+      return { success: false, message: "Placeholder: Lógica de resposta não implementada completamente no adapter Firestore sem lotId." };
+      // Actual implementation would be:
+      // await this.db.collection('lots').doc(lotId).collection('questions').doc(questionId).update({
+      //   answerText, answeredAt: AdminFieldValue.serverTimestamp(), answeredByUserId, answeredByUserDisplayName
+      // });
+      // return { success: true, message: "Pergunta respondida." };
+    } catch (e: any) { return { success: false, message: e.message }; }
+  }
+
+
+  // --- Users ---
   async getUserProfileData(userId: string): Promise<UserProfileData | null> {
     try {
       const docSnap = await this.db.collection('users').doc(userId).get();
@@ -683,7 +736,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Perfil atualizado!'};
     } catch (e: any) { return { success: false, message: e.message }; }
   }
-  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
      const { ensureAdminInitialized: ensureFbAdmin } = await import('@/lib/firebase/admin');
      const { auth: localAuthAdmin, error: sdkError } = ensureFbAdmin();
     if (sdkError || !localAuthAdmin) {
@@ -691,8 +744,21 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     }
     try {
         await this.ensureDefaultRolesExist(); // Ensure default roles are in Firestore
-        const targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
-        if (!targetRole) return { success: false, message: 'Perfil padrão USER não encontrado.'};
+        let targetRole: Role | null = null;
+        if (roleIdToAssign) {
+            console.log(`[FirestoreAdapter - ensureUserRole] Tentando buscar perfil por ID fornecido: ${roleIdToAssign}`);
+            targetRole = await this.getRole(roleIdToAssign);
+        }
+        if (!targetRole) {
+            console.log(`[FirestoreAdapter - ensureUserRole] Perfil por ID não encontrado ou ID não fornecido. Buscando por nome: ${targetRoleName}`);
+            targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
+        }
+
+        if (!targetRole || !targetRole.id) {
+            console.error(`[FirestoreAdapter - ensureUserRole] CRITICAL: Perfil '${targetRoleName}' ou 'USER' não encontrado ou sem ID.`);
+            return { success: false, message: `Perfil padrão '${targetRoleName}' ou 'USER' não encontrado ou sem ID.` };
+        }
+         console.log(`[FirestoreAdapter - ensureUserRole] Perfil alvo determinado: ${targetRole.name} (ID: ${targetRole.id})`);
 
         const userDocRef = this.db.collection('users').doc(userId);
         const userSnap = await userDocRef.get();
@@ -722,12 +788,15 @@ export class FirestoreAdapter implements IDatabaseAdapter {
                 habilitationStatus: targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS',
                 createdAt: AdminFieldValue.serverTimestamp(),
                 updatedAt: AdminFieldValue.serverTimestamp(),
+                 // Adicionar campos de additionalProfileData
+                ...(additionalProfileData || {}),
+                dateOfBirth: additionalProfileData?.dateOfBirth ? ServerTimestamp.fromDate(new Date(additionalProfileData.dateOfBirth)) : undefined,
             };
             await userDocRef.set(newUserProfile);
             const createdSnap = await userDocRef.get();
             finalProfileData = { uid: createdSnap.id, ...createdSnap.data() } as UserProfileData;
         }
-        return { success: true, message: 'Perfil de usuário assegurado/atualizado.', userProfile: finalProfileData };
+        return { success: true, message: 'Perfil de usuário assegurado/atualizado (Firestore).', userProfile: finalProfileData };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async getUsersWithRoles(): Promise<UserProfileData[]> {
@@ -749,7 +818,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     try {
       const updateData: any = { updatedAt: AdminFieldValue.serverTimestamp() };
       if (roleId && roleId !== "---NONE---") {
-        const roleDoc = await this.getRole(roleId);
+        const roleDoc = await this.getRole(roleId); 
         if (roleDoc) { updateData.roleId = roleId; updateData.roleName = roleDoc.name; updateData.permissions = roleDoc.permissions || []; }
         else return { success: false, message: 'Perfil não encontrado.'};
       } else { // Remove role
@@ -768,6 +837,29 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; }
   }
 
+  async getUserByEmail(email: string): Promise<UserProfileData | null> {
+    try {
+      const snapshot = await this.db.collection('users').where('email', '==', email.toLowerCase()).limit(1).get();
+      if (snapshot.empty) return null;
+      const userDoc = snapshot.docs[0];
+      const userData = userDoc.data();
+      let role: Role | null = null;
+      if (userData.roleId) role = await this.getRole(userData.roleId);
+      
+      const profile = { uid: userDoc.id, ...userData } as UserProfileData;
+      if (role) {
+          profile.roleName = role.name;
+          profile.permissions = role.permissions;
+      }
+      return profile;
+
+    } catch (e: any) {
+      console.error(`[FirestoreAdapter - getUserByEmail(${email})] Error:`, e);
+      return null;
+    }
+  }
+
+  // --- Roles ---
   async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> {
     try {
       const normalizedName = data.name.trim().toUpperCase();
@@ -808,8 +900,9 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       const updateData: any = { ...data, updatedAt: AdminFieldValue.serverTimestamp() };
       if (data.name) {
         const normalizedName = data.name.trim().toUpperCase();
-        const currentRole = await this.getRole(id);
-        if (currentRole?.name_normalized !== 'ADMINISTRATOR' && currentRole?.name_normalized !== 'USER') { 
+        const currentRoleDoc = await this.db.collection('roles').doc(id).get();
+        const currentNormalizedName = currentRoleDoc.data()?.name_normalized;
+        if (currentNormalizedName !== 'ADMINISTRATOR' && currentNormalizedName !== 'USER') { 
             updateData.name_normalized = normalizedName;
         }
         updateData.name = data.name.trim();
@@ -831,7 +924,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Perfil excluído!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
-  async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; }> {
+  async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }> {
     const defaultRolesData: RoleFormData[] = [ 
       { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
       { name: 'USER', description: 'Usuário padrão.', permissions: ['view_auctions', 'place_bids', 'view_lots'] },
@@ -839,6 +932,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       { name: 'AUCTIONEER', description: 'Leiloeiro.', permissions: ['auctions:manage_assigned', 'lots:read', 'lots:update', 'conduct_auctions'] },
       { name: 'AUCTION_ANALYST', description: 'Analista de Leilões.', permissions: ['categories:read', 'states:read', 'users:read', 'view_reports'] }
     ];
+    let rolesProcessedCount = 0;
     try {
       const batch = this.db.batch();
       for (const roleData of defaultRolesData) {
@@ -847,17 +941,19 @@ export class FirestoreAdapter implements IDatabaseAdapter {
           const newRoleRef = this.db.collection('roles').doc();
           const validPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
           batch.set(newRoleRef, { ...roleData, name_normalized: roleData.name.trim().toUpperCase(), permissions: validPermissions, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() });
+          rolesProcessedCount++;
         } else {
           const currentPermissionsSorted = [...(role.permissions || [])].sort();
           const expectedPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p)).sort();
           if (JSON.stringify(currentPermissionsSorted) !== JSON.stringify(expectedPermissions) || role.description !== (roleData.description || '')) {
             batch.update(this.db.collection('roles').doc(role.id), { description: roleData.description, permissions: expectedPermissions, updatedAt: AdminFieldValue.serverTimestamp() });
+            rolesProcessedCount++;
           }
         }
       }
       await batch.commit();
-      return { success: true, message: 'Perfis padrão verificados/criados (Firestore).'};
-    } catch (e: any) { return { success: false, message: e.message }; }
+      return { success: true, message: 'Perfis padrão verificados/criados (Firestore).', rolesProcessed: rolesProcessedCount };
+    } catch (e: any) { return { success: false, message: e.message, rolesProcessed }; }
   }
   
   // --- Media Items ---
@@ -921,15 +1017,14 @@ export class FirestoreAdapter implements IDatabaseAdapter {
         const settingsDoc = await this.db.collection('platformSettings').doc('global').get();
         if (settingsDoc.exists) {
             const data = settingsDoc.data()!;
-            return { id: 'global', galleryImageBasePath: data.galleryImageBasePath || '/media/gallery/', updatedAt: safeConvertToDate(data.updatedAt) };
+            return { id: 'global', siteTitle: data.siteTitle, siteTagline: data.siteTagline, galleryImageBasePath: data.galleryImageBasePath || '/media/gallery/', activeThemeName: data.activeThemeName || null, themes: data.themes || [], platformPublicIdMasks: data.platformPublicIdMasks || {}, updatedAt: safeConvertToDate(data.updatedAt) };
         }
-        // Default settings if not found
-        const defaultSettings = { galleryImageBasePath: '/media/gallery/', updatedAt: AdminFieldValue.serverTimestamp()};
+        const defaultSettings = { siteTitle: 'BidExpert', siteTagline: 'Leilões Online Especializados', galleryImageBasePath: '/media/gallery/', activeThemeName: null, themes: [], platformPublicIdMasks: {}, updatedAt: AdminFieldValue.serverTimestamp()};
         await this.db.collection('platformSettings').doc('global').set(defaultSettings);
         return { id: 'global', ...defaultSettings, updatedAt: new Date() } as PlatformSettings;
     } catch (e: any) { 
         console.error("[FirestoreAdapter - getPlatformSettings] Error, returning default:", e);
-        return { id: 'global', galleryImageBasePath: '/media/gallery/', updatedAt: new Date() }; 
+        return { id: 'global', siteTitle: 'BidExpert', siteTagline: 'Leilões Online Especializados', galleryImageBasePath: '/media/gallery/', activeThemeName: null, themes: [], platformPublicIdMasks: {}, updatedAt: new Date() }; 
     }
   }
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
@@ -937,11 +1032,100 @@ export class FirestoreAdapter implements IDatabaseAdapter {
         return { success: false, message: 'Caminho base da galeria inválido. Deve começar e terminar com "/".' };
     }
     try {
-        const updatePayload = { galleryImageBasePath: data.galleryImageBasePath, updatedAt: AdminFieldValue.serverTimestamp() };
+        const updatePayload = { ...data, platformPublicIdMasks: data.platformPublicIdMasks || {}, updatedAt: AdminFieldValue.serverTimestamp() };
         await this.db.collection('platformSettings').doc('global').set(updatePayload, { merge: true });
         return { success: true, message: 'Configurações atualizadas (Firestore)!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
+
+  // --- Reviews ---
+  async getReviewsForLot(lotId: string): Promise<Review[]> {
+    try {
+      const snapshot = await this.db.collection('lots').doc(lotId).collection('reviews').orderBy('createdAt', 'desc').get();
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: safeConvertToDate(doc.data().createdAt),
+        updatedAt: safeConvertOptionalDate(doc.data().updatedAt)
+      } as Review));
+    } catch (error: any) {
+      console.error(`[FirestoreAdapter - getReviewsForLot(${lotId})] Error:`, error);
+      return [];
+    }
+  }
+
+  async createReview(reviewData: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; reviewId?: string; }> {
+    try {
+      const newReview = {
+        ...reviewData,
+        createdAt: AdminFieldValue.serverTimestamp(),
+        updatedAt: AdminFieldValue.serverTimestamp(),
+      };
+      const docRef = await this.db.collection('lots').doc(reviewData.lotId).collection('reviews').add(newReview);
+      return { success: true, message: 'Avaliação adicionada com sucesso!', reviewId: docRef.id };
+    } catch (error: any) {
+      console.error(`[FirestoreAdapter - createReview for lot ${reviewData.lotId}] Error:`, error);
+      return { success: false, message: 'Falha ao adicionar avaliação.' };
+    }
+  }
+
+  // --- Questions ---
+  async getQuestionsForLot(lotId: string): Promise<LotQuestion[]> {
+    try {
+      const snapshot = await this.db.collection('lots').doc(lotId).collection('questions').orderBy('createdAt', 'desc').get();
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: safeConvertToDate(doc.data().createdAt),
+        answeredAt: safeConvertOptionalDate(doc.data().answeredAt)
+      } as LotQuestion));
+    } catch (error: any) {
+      console.error(`[FirestoreAdapter - getQuestionsForLot(${lotId})] Error:`, error);
+      return [];
+    }
+  }
+
+  async createQuestion(questionData: Omit<LotQuestion, 'id' | 'createdAt' | 'answeredAt' | 'answeredByUserId' | 'answeredByUserDisplayName' | 'isPublic'>): Promise<{ success: boolean; message: string; questionId?: string; }> {
+    try {
+      const newQuestion = {
+        ...questionData,
+        isPublic: true, // Default
+        createdAt: AdminFieldValue.serverTimestamp(),
+      };
+      const docRef = await this.db.collection('lots').doc(questionData.lotId).collection('questions').add(newQuestion);
+      return { success: true, message: 'Pergunta enviada com sucesso!', questionId: docRef.id };
+    } catch (error: any) {
+      console.error(`[FirestoreAdapter - createQuestion for lot ${questionData.lotId}] Error:`, error);
+      return { success: false, message: 'Falha ao enviar pergunta.' };
+    }
+  }
+
+  async answerQuestion(questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> {
+    // Esta implementação assume que você tem o lotId para construir o caminho,
+    // ou que questionId já é o caminho completo ou uma forma de buscar o documento.
+    // Se questionId é apenas o ID, precisaria de uma subcollectionGroup query ou lotId.
+    // Para simplificar, vamos assumir que a action ou camada superior resolve o lotId.
+    // const questionRef = this.db.collection('questions').doc(questionId); // Exemplo simplista
+
+    // Como o `questionId` é apenas o ID do documento na subcoleção, precisamos do `lotId`.
+    // Esta função, no nível do adapter, deveria receber `lotId`.
+    // A action que chama esta função deveria fornecer o `lotId`.
+    // Por ora, vou logar um aviso e retornar falha se o lotId não for obtido de alguma forma.
+    console.warn("[FirestoreAdapter.answerQuestion] - Implementação requer que a action resolva o lotId para construir o caminho correto para a subcoleção 'questions'.");
+    // Exemplo de como seria se lotId fosse passado:
+    // const questionRef = this.db.collection('lots').doc(lotId).collection('questions').doc(questionId);
+    // try {
+    //   await questionRef.update({
+    //     answerText,
+    //     answeredAt: AdminFieldValue.serverTimestamp(),
+    //     answeredByUserId,
+    //     answeredByUserDisplayName,
+    //   });
+    //   return { success: true, message: 'Pergunta respondida.' };
+    // } catch (e: any) {
+    //   return { success: false, message: e.message };
+    // }
+    return { success: false, message: 'Funcionalidade de responder pergunta não implementada completamente no adapter (requer lotId).' };
+  }
+
 }
-
-

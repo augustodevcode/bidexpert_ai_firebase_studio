@@ -1,8 +1,8 @@
-
 'use server';
 
 import { getDatabaseAdapter } from '@/lib/database';
-import type { Lot, BidInfo, IDatabaseAdapter } from '@/types';
+import type { Lot, BidInfo, IDatabaseAdapter, Review, LotQuestion, SellerProfileInfo } from '@/types';
+import { revalidatePath } from 'next/cache';
 
 interface PlaceBidResult {
   success: boolean;
@@ -28,52 +28,101 @@ export async function getBidsForLot(lotId: string): Promise<BidInfo[]> {
     return [];
   }
   const db = await getDatabaseAdapter();
-  
-  // Logs para diagnóstico
-  console.log('[Server Action - getBidsForLot] Received db object. Type:', typeof db);
-  if (db && typeof db === 'object') {
-    console.log('[Server Action - getBidsForLot] db constructor name:', db.constructor?.name);
-    console.log('[Server Action - getBidsForLot] typeof db.getBidsForLot:', typeof (db as any).getBidsForLot);
-    // Verifica se todos os métodos da interface estão presentes
-    const methods: (keyof IDatabaseAdapter)[] = [
-        'initializeSchema', 'createLotCategory', 'getLotCategories', 'getLotCategory', 
-        'updateLotCategory', 'deleteLotCategory', 'createState', 'getStates', 
-        'getState', 'updateState', 'deleteState', 'createCity', 'getCities', 'getCity', 
-        'updateCity', 'deleteCity', 'createAuctioneer', 'getAuctioneers', 
-        'getAuctioneer', 'updateAuctioneer', 'deleteAuctioneer', 'getAuctioneerBySlug', 
-        'createSeller', 'getSellers', 'getSeller', 'updateSeller', 'deleteSeller', 
-        'getSellerBySlug', 'createAuction', 'getAuctions', 'getAuction', 
-        'updateAuction', 'deleteAuction', 'getAuctionsBySellerSlug', 'createLot', 
-        'getLots', 'getLot', 'updateLot', 'deleteLot', 'getBidsForLot', 'placeBidOnLot', 
-        'getUserProfileData', 'updateUserProfile', 'ensureUserRole', 'getUsersWithRoles', 
-        'updateUserRole', 'deleteUserProfile', 'createRole', 'getRoles', 'getRole', 
-        'getRoleByName', 'updateRole', 'deleteRole', 'ensureDefaultRolesExist', 
-        'createMediaItem', 'getMediaItems', 'updateMediaItemMetadata', 
-        'deleteMediaItemFromDb', 'linkMediaItemsToLot', 'unlinkMediaItemFromLot',
-        'getPlatformSettings', 'updatePlatformSettings'
-    ];
-    let allMethodsPresent = true;
-    methods.forEach(method => {
-      const methodExists = typeof (db as any)[method] === 'function';
-      console.log(`[Server Action - getBidsForLot] db has method ${method}: ${methodExists}`);
-      if (!methodExists) allMethodsPresent = false;
-    });
-    if (!allMethodsPresent) {
-        console.error('[Server Action - getBidsForLot] CRITICAL: db object is missing one or more IDatabaseAdapter methods.');
-    }
-  } else {
-    console.error('[Server Action - getBidsForLot] CRITICAL: db object is null, undefined, or not an object after getDatabaseAdapter() call.');
-    // Lançar um erro aqui pode ser muito agressivo se o problema for intermitente,
-    // mas é uma opção para forçar a parada se o adaptador não estiver sendo criado.
-    // Por enquanto, vamos permitir que ele tente chamar o método e falhe, o que já está acontecendo.
-    // throw new Error("Database adapter is not available or invalid.");
-  }
-
-  if (!db || typeof db.getBidsForLot !== 'function') {
-    const adapterType = db?.constructor?.name || (typeof db === 'object' ? 'Object (unknown type)' : String(db));
-    console.error(`[Server Action - getBidsForLot] CRITICAL: db.getBidsForLot is NOT a function. DB object type: ${adapterType}. DB object keys: ${db ? Object.keys(db).join(', ') : 'N/A'}`);
-    throw new TypeError(`Internal Server Error: Database adapter method getBidsForLot is not available. Adapter type received: ${adapterType}`);
-  }
-  
   return db.getBidsForLot(lotId);
+}
+
+// --- Reviews Actions ---
+export async function getReviewsForLot(lotId: string): Promise<Review[]> {
+  if (!lotId) return [];
+  const db = await getDatabaseAdapter();
+  return db.getReviewsForLot(lotId);
+}
+
+export async function createReview(
+  lotId: string,
+  userId: string,
+  userDisplayName: string,
+  rating: number,
+  comment: string
+): Promise<{ success: boolean; message: string; reviewId?: string }> {
+  if (!lotId || !userId || rating < 1 || rating > 5 || !comment.trim()) {
+    return { success: false, message: 'Dados inválidos para avaliação.' };
+  }
+  const db = await getDatabaseAdapter();
+  // O auctionId pode ser obtido do lote dentro do adapter se necessário
+  const lot = await db.getLot(lotId);
+  if (!lot) return { success: false, message: 'Lote não encontrado.' };
+
+  const result = await db.createReview({
+    lotId,
+    auctionId: lot.auctionId,
+    userId,
+    userDisplayName,
+    rating,
+    comment,
+  });
+  if (result.success) {
+    revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.id}`);
+  }
+  return result;
+}
+
+// --- Questions Actions ---
+export async function getQuestionsForLot(lotId: string): Promise<LotQuestion[]> {
+  if (!lotId) return [];
+  const db = await getDatabaseAdapter();
+  return db.getQuestionsForLot(lotId);
+}
+
+export async function askQuestionOnLot(
+  lotId: string,
+  userId: string,
+  userDisplayName: string,
+  questionText: string
+): Promise<{ success: boolean; message: string; questionId?: string }> {
+  if (!lotId || !userId || !questionText.trim()) {
+    return { success: false, message: 'Dados inválidos para pergunta.' };
+  }
+  const db = await getDatabaseAdapter();
+  const lot = await db.getLot(lotId);
+  if (!lot) return { success: false, message: 'Lote não encontrado.' };
+  
+  const result = await db.createQuestion({
+    lotId,
+    auctionId: lot.auctionId,
+    userId,
+    userDisplayName,
+    questionText,
+  });
+  if (result.success) {
+    revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.id}`);
+  }
+  return result;
+}
+
+export async function answerQuestionOnLot(
+  questionId: string,
+  answerText: string,
+  answeredByUserId: string,
+  answeredByUserDisplayName: string,
+  lotId: string, // Para revalidação
+  auctionId: string // Para revalidação
+): Promise<{ success: boolean; message: string }> {
+  if (!questionId || !answerText.trim() || !answeredByUserId) {
+    return { success: false, message: 'Dados inválidos para resposta.' };
+  }
+  const db = await getDatabaseAdapter();
+  const result = await db.answerQuestion(questionId, answerText, answeredByUserId, answeredByUserDisplayName);
+  if (result.success) {
+    revalidatePath(`/auctions/${auctionId}/lots/${lotId}`);
+  }
+  return result;
+}
+
+export async function getSellerDetailsForLotPage(sellerIdOrPublicId?: string): Promise<SellerProfileInfo | null> {
+    if (!sellerIdOrPublicId) return null;
+    const db = await getDatabaseAdapter();
+    // getSellerBySlug pode precisar ser ajustado para também buscar por publicId numérico se for o caso.
+    // Ou podemos ter getSeller(idOrPublicId)
+    return db.getSeller(sellerIdOrPublicId);
 }

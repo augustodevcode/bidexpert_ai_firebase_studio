@@ -1,4 +1,3 @@
-
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
 
@@ -113,8 +112,8 @@ export interface Lot {
   auctionName?: string;
   price: number;
   initialPrice?: number;
-  auctionDate?: AnyTimestamp | null;
-  secondAuctionDate?: AnyTimestamp | null;
+  // auctionDate?: AnyTimestamp | null; // Removido de Lot
+  // secondAuctionDate?: AnyTimestamp | null; // Removido de Lot
   secondInitialPrice?: number;
   endDate: AnyTimestamp;
   bidsCount?: number;
@@ -183,7 +182,7 @@ export type LotFormData = Omit<Lot,
   'bidsCount' |
   'galleryImageUrls' |
   'dataAiHint' |
-  'auctionDate' |
+  // 'auctionDate' | // Removido de Lot
   'cityName' |
   'stateUf' |
   'auctioneerId' |
@@ -493,9 +492,6 @@ export interface DirectSaleOffer {
 }
 
 export type EditableUserProfileData = Partial<Omit<UserProfileData, 'uid' | 'email' | 'status' | 'createdAt' | 'updatedAt' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'roleId' | 'roleName' | 'sellerProfileId' | 'permissions' | 'habilitationStatus' | 'password' >> & {
-  // Role fields can be updated via specific user-role actions
-  // habilitationStatus is updated via specific actions
-  // password would be handled by a separate "change password" flow
   dateOfBirth?: Date | null;
   rgIssueDate?: Date | null;
 };
@@ -523,6 +519,34 @@ export interface SqlAuthResult {
   message: string;
   user?: UserProfileData;
 }
+
+export interface Review {
+  id: string;
+  lotId: string;
+  auctionId: string; // Contexto do leilão pode ser útil
+  userId: string;
+  userDisplayName: string;
+  rating: number; // e.g., 1-5
+  comment: string;
+  createdAt: AnyTimestamp;
+  updatedAt?: AnyTimestamp;
+}
+
+export interface LotQuestion {
+  id: string;
+  lotId: string;
+  auctionId: string;
+  userId: string;
+  userDisplayName: string;
+  questionText: string;
+  createdAt: AnyTimestamp;
+  answerText?: string;
+  answeredAt?: AnyTimestamp;
+  answeredByUserId?: string; // UID do admin/vendedor que respondeu
+  answeredByUserDisplayName?: string;
+  isPublic?: boolean; // Se a pergunta/resposta deve ser visível para outros
+}
+
 
 export interface IDatabaseAdapter {
   // Schema Initialization
@@ -581,6 +605,12 @@ export interface IDatabaseAdapter {
   deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string; }>;
   getBidsForLot(lotId: string): Promise<BidInfo[]>;
   placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }>;
+  getReviewsForLot(lotId: string): Promise<Review[]>;
+  createReview(review: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; reviewId?: string }>;
+  getQuestionsForLot(lotId: string): Promise<LotQuestion[]>;
+  createQuestion(question: Omit<LotQuestion, 'id' | 'createdAt' | 'answeredAt' | 'answeredByUserId' | 'answeredByUserDisplayName' | 'isPublic'>): Promise<{ success: boolean; message: string; questionId?: string }>;
+  answerQuestion(questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string }>;
+
 
   // Users
   getUserProfileData(userId: string): Promise<UserProfileData | null>;

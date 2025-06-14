@@ -1,4 +1,3 @@
-
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -9,7 +8,7 @@ import type {
   SellerProfileInfo, SellerFormData,
   Auction, AuctionFormData, AuctionDbData,
   Lot, LotFormData, LotDbData,
-  BidInfo,
+  BidInfo, Review, LotQuestion, // Adicionado Review e LotQuestion
   UserProfileData, EditableUserProfileData, UserHabilitationStatus,
   Role, RoleFormData,
   MediaItem,
@@ -148,7 +147,7 @@ function mapToRole(row: QueryResultRow): Role {
         name: row.name,
         name_normalized: row.nameNormalized,
         description: row.description,
-        permissions: row.permissions || [], // JSONB is parsed automatically by pg driver
+        permissions: row.permissions || [], 
         createdAt: new Date(row.createdAt),
         updatedAt: new Date(row.updatedAt),
     };
@@ -161,7 +160,7 @@ function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProf
         fullName: row.fullName,
         password: row.passwordText,
         roleId: row.roleId ? String(row.roleId) : undefined,
-        roleName: role?.name || row.roleName,
+        roleName: role?.name || row.roleName, 
         permissions: role?.permissions || row.permissions || [],
         status: row.status,
         habilitationStatus: row.habilitationStatus as UserHabilitationStatus,
@@ -230,7 +229,7 @@ function mapToAuction(row: QueryResultRow): Auction {
         createdAt: new Date(row.createdAt),
         updatedAt: new Date(row.updatedAt),
         auctioneerLogoUrl: row.auctioneerLogoUrl,
-        lots: []
+        lots: [] 
     };
 }
 
@@ -335,7 +334,7 @@ function mapToMediaItem(row: QueryResultRow): MediaItem {
     urlThumbnail: row.urlThumbnail,
     urlMedium: row.urlMedium,
     urlLarge: row.urlLarge,
-    linkedLotIds: row.linkedLotIds || [], // JSONB is parsed by pg driver
+    linkedLotIds: row.linkedLotIds || [], 
     dataAiHint: row.dataAiHint,
   };
 }
@@ -353,6 +352,36 @@ function mapToPlatformSettings(row: QueryResultRow): PlatformSettings {
     };
 }
 
+function mapToReview(row: QueryResultRow): Review {
+  return {
+    id: String(row.id),
+    lotId: String(row.lot_id),
+    auctionId: String(row.auction_id),
+    userId: row.user_id,
+    userDisplayName: row.user_display_name,
+    rating: Number(row.rating),
+    comment: row.comment,
+    createdAt: new Date(row.created_at),
+    updatedAt: row.updated_at ? new Date(row.updated_at) : undefined,
+  };
+}
+
+function mapToLotQuestion(row: QueryResultRow): LotQuestion {
+  return {
+    id: String(row.id),
+    lotId: String(row.lot_id),
+    auctionId: String(row.auction_id),
+    userId: row.user_id,
+    userDisplayName: row.user_display_name,
+    questionText: row.question_text,
+    createdAt: new Date(row.created_at),
+    answerText: row.answer_text,
+    answeredAt: row.answered_at ? new Date(row.answered_at) : undefined,
+    answeredByUserId: row.answered_by_user_id,
+    answeredByUserDisplayName: row.answered_by_user_display_name,
+    isPublic: row.is_public,
+  };
+}
 
 const defaultRolesData: RoleFormData[] = [
   { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },
@@ -367,6 +396,79 @@ export class PostgresAdapter implements IDatabaseAdapter {
     getPool();
   }
 
+  // --- Reviews ---
+  async getReviewsForLot(lotId: string): Promise<Review[]> {
+    const client = await getPool().connect();
+    try {
+      const query = 'SELECT * FROM lot_reviews WHERE lot_id = (SELECT id FROM lots WHERE public_id = $1 OR id = $2 LIMIT 1) ORDER BY created_at DESC;';
+      const res = await client.query(query, [lotId, lotId]);
+      return res.rows.map(mapToReview);
+    } catch (e: any) { console.error(`[PostgresAdapter - getReviewsForLot(${lotId})] Error:`, e); return []; }
+    finally { client.release(); }
+  }
+
+  async createReview(reviewData: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; reviewId?: string; }> {
+    const client = await getPool().connect();
+    try {
+      const lotRes = await client.query('SELECT id FROM lots WHERE public_id = $1 OR id = $2 LIMIT 1', [reviewData.lotId, reviewData.lotId]);
+      if (lotRes.rowCount === 0) return { success: false, message: "Lote não encontrado." };
+      const numericLotId = lotRes.rows[0].id;
+
+      const query = `
+        INSERT INTO lot_reviews (lot_id, auction_id, user_id, user_display_name, rating, comment)
+        VALUES ($1, (SELECT auction_id FROM lots WHERE id = $1), $2, $3, $4, $5) RETURNING id;
+      `;
+      const values = [numericLotId, reviewData.userId, reviewData.userDisplayName, reviewData.rating, reviewData.comment];
+      const res = await client.query(query, values);
+      return { success: true, message: 'Avaliação adicionada (PostgreSQL).', reviewId: String(res.rows[0].id) };
+    } catch (e: any) { console.error(`[PostgresAdapter - createReview] Error:`, e); return { success: false, message: e.message }; }
+    finally { client.release(); }
+  }
+
+  // --- Questions ---
+  async getQuestionsForLot(lotId: string): Promise<LotQuestion[]> {
+    const client = await getPool().connect();
+    try {
+      const query = 'SELECT * FROM lot_questions WHERE lot_id = (SELECT id FROM lots WHERE public_id = $1 OR id = $2 LIMIT 1) ORDER BY created_at DESC;';
+      const res = await client.query(query, [lotId, lotId]);
+      return res.rows.map(mapToLotQuestion);
+    } catch (e: any) { console.error(`[PostgresAdapter - getQuestionsForLot(${lotId})] Error:`, e); return []; }
+    finally { client.release(); }
+  }
+
+  async createQuestion(questionData: Omit<LotQuestion, 'id' | 'createdAt' | 'answeredAt' | 'answeredByUserId' | 'answeredByUserDisplayName' | 'isPublic'>): Promise<{ success: boolean; message: string; questionId?: string; }> {
+    const client = await getPool().connect();
+    try {
+      const lotRes = await client.query('SELECT id FROM lots WHERE public_id = $1 OR id = $2 LIMIT 1', [questionData.lotId, questionData.lotId]);
+      if (lotRes.rowCount === 0) return { success: false, message: "Lote não encontrado." };
+      const numericLotId = lotRes.rows[0].id;
+
+      const query = `
+        INSERT INTO lot_questions (lot_id, auction_id, user_id, user_display_name, question_text, is_public)
+        VALUES ($1, (SELECT auction_id FROM lots WHERE id = $1), $2, $3, $4, $5) RETURNING id;
+      `;
+      const values = [numericLotId, questionData.userId, questionData.userDisplayName, questionData.questionText, questionData.isPublic === undefined ? true : questionData.isPublic];
+      const res = await client.query(query, values);
+      return { success: true, message: 'Pergunta enviada (PostgreSQL).', questionId: String(res.rows[0].id) };
+    } catch (e: any) { console.error(`[PostgresAdapter - createQuestion] Error:`, e); return { success: false, message: e.message }; }
+    finally { client.release(); }
+  }
+
+  async answerQuestion(questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    try {
+      const query = `
+        UPDATE lot_questions
+        SET answer_text = $1, answered_at = NOW(), answered_by_user_id = $2, answered_by_user_display_name = $3
+        WHERE id = $4;
+      `;
+      await client.query(query, [answerText, answeredByUserId, answeredByUserDisplayName, Number(questionId)]);
+      return { success: true, message: 'Pergunta respondida (PostgreSQL).' };
+    } catch (e: any) { console.error(`[PostgresAdapter - answerQuestion(${questionId})] Error:`, e); return { success: false, message: e.message }; }
+    finally { client.release(); }
+  }
+
+  // --- Schema Initialization ---
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[]; rolesProcessed?: number }> {
     const client = await getPool().connect();
     const errors: any[] = [];
@@ -375,10 +477,12 @@ export class PostgresAdapter implements IDatabaseAdapter {
     const queries = [
       `DROP TABLE IF EXISTS bids CASCADE;`,
       `DROP TABLE IF EXISTS media_items CASCADE;`,
+      `DROP TABLE IF EXISTS lot_reviews CASCADE;`, // Nova
+      `DROP TABLE IF EXISTS lot_questions CASCADE;`, // Nova
       `DROP TABLE IF EXISTS lots CASCADE;`,
       `DROP TABLE IF EXISTS auctions CASCADE;`,
       `DROP TABLE IF EXISTS cities CASCADE;`,
-      `DROP TABLE IF EXISTS sellers;`,
+      `DROP TABLE IF EXISTS sellers CASCADE;`,
       `DROP TABLE IF EXISTS auctioneers CASCADE;`,
       `DROP TABLE IF EXISTS users CASCADE;`,
       `DROP TABLE IF EXISTS states CASCADE;`,
@@ -423,7 +527,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         spouse_cpf VARCHAR(20),
         zip_code VARCHAR(10),
         street VARCHAR(255),
-        number VARCHAR(20),
+        "number" VARCHAR(20),
         complement VARCHAR(100),
         neighborhood VARCHAR(100),
         city VARCHAR(100),
@@ -681,7 +785,40 @@ export class PostgresAdapter implements IDatabaseAdapter {
       );`,
       `CREATE INDEX IF NOT EXISTS idx_bids_lot_id ON bids(lot_id);`,
       `CREATE INDEX IF NOT EXISTS idx_bids_bidder_id ON bids(bidder_id);`,
+      
+      `CREATE TABLE IF NOT EXISTS lot_reviews (
+        id SERIAL PRIMARY KEY,
+        lot_id INTEGER REFERENCES lots(id) ON DELETE CASCADE NOT NULL,
+        auction_id INTEGER REFERENCES auctions(id) ON DELETE CASCADE NOT NULL,
+        user_id VARCHAR(255) REFERENCES users(uid) ON DELETE CASCADE NOT NULL,
+        user_display_name VARCHAR(255),
+        rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+        comment TEXT,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );`,
+      `CREATE INDEX IF NOT EXISTS idx_lot_reviews_lot_id ON lot_reviews(lot_id);`,
+      `CREATE INDEX IF NOT EXISTS idx_lot_reviews_user_id ON lot_reviews(user_id);`,
+
+      `CREATE TABLE IF NOT EXISTS lot_questions (
+        id SERIAL PRIMARY KEY,
+        lot_id INTEGER REFERENCES lots(id) ON DELETE CASCADE NOT NULL,
+        auction_id INTEGER REFERENCES auctions(id) ON DELETE CASCADE NOT NULL,
+        user_id VARCHAR(255) REFERENCES users(uid) ON DELETE CASCADE NOT NULL,
+        user_display_name VARCHAR(255),
+        question_text TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        answer_text TEXT,
+        answered_at TIMESTAMPTZ,
+        answered_by_user_id VARCHAR(255) REFERENCES users(uid) ON DELETE SET NULL,
+        answered_by_user_display_name VARCHAR(255),
+        is_public BOOLEAN DEFAULT TRUE
+      );`,
+      `CREATE INDEX IF NOT EXISTS idx_lot_questions_lot_id ON lot_questions(lot_id);`,
+      `CREATE INDEX IF NOT EXISTS idx_lot_questions_user_id ON lot_questions(user_id);`,
     ];
+
+    // ... (restante da função como estava, incluindo a lógica de roles e settings)
 
     try {
       await client.query('BEGIN');
@@ -856,7 +993,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     try {
       const numericId = parseInt(id, 10);
       let res;
-      if (isNaN(numericId)) { // Assume it's a slug
+      if (isNaN(numericId)) { 
           res = await client.query('SELECT id, name, uf, slug, city_count, created_at, updated_at FROM states WHERE slug = $1', [id]);
       } else {
           res = await client.query('SELECT id, name, uf, slug, city_count, created_at, updated_at FROM states WHERE id = $1', [numericId]);
@@ -913,7 +1050,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
             if (!isNaN(numericStateIdFilter)) {
                 queryText += ' WHERE state_id = $1';
                 values.push(numericStateIdFilter);
-            } else { // Assume it's a slug
+            } else { 
                 queryText += ' JOIN states s ON cities.state_id = s.id WHERE s.slug = $1';
                 values.push(stateIdFilter);
             }
@@ -928,7 +1065,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     try {
       const numericId = parseInt(id, 10);
       let res;
-      if (isNaN(numericId)) { // Try by stateId-citySlug combination
+      if (isNaN(numericId)) { 
           const parts = id.split('-');
           if (parts.length > 1) {
               const citySlug = parts.pop();
@@ -940,7 +1077,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
                  res = await client.query('SELECT ci.* FROM cities ci JOIN states s ON ci.state_id = s.id WHERE ci.slug = $1 AND s.slug = $2', [citySlug, stateSlugOrId]);
               }
           } else {
-            return null; // Invalid composite ID format
+            return null; 
           }
       } else {
           res = await client.query('SELECT * FROM cities WHERE id = $1', [numericId]);
@@ -950,7 +1087,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     } catch (e: any) { console.error(`[PostgresAdapter - getCity(${id})] Error:`, e); return null; } finally { client.release(); }
   }
   async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> {
-     const client = await getPool().connect();
+    const client = await getPool().connect();
     try {
         const fields: string[] = [];
         const values: any[] = [];
@@ -1032,7 +1169,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
   async getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
     const client = await getPool().connect();
-    try { // Prioritize public_id then slug
+    try { 
       let res = await client.query('SELECT * FROM auctioneers WHERE public_id = $1 LIMIT 1;', [slugOrPublicId]);
       if (res.rowCount === 0) {
         res = await client.query('SELECT * FROM auctioneers WHERE slug = $1 LIMIT 1;', [slugOrPublicId]);
@@ -1095,7 +1232,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     const client = await getPool().connect();
     try {
       const slug = slugify(data.name);
-      const publicId = `SELL-${slugify(data.name.substring(0,5))}-${uuidv4().substring(0,8)}`;
+      const publicId = `SELL-PUB-${slugify(data.name.substring(0,5))}-${uuidv4().substring(0,8)}`;
       const query = `
         INSERT INTO sellers
           (public_id, name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, user_id,
@@ -1184,29 +1321,15 @@ export class PostgresAdapter implements IDatabaseAdapter {
     } catch (e: any) { console.error(`[PostgresAdapter - updateSeller(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
 
-  async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
-    const client = await getPool().connect();
-    try {
-      const numericId = Number(id);
-      if (!isNaN(numericId)) {
-        await client.query('DELETE FROM sellers WHERE id = $1;', [numericId]);
-      } else {
-        await client.query('DELETE FROM sellers WHERE public_id = $1;', [id]);
-      }
-      return { success: true, message: 'Comitente excluído (PostgreSQL)!' };
-    } catch (e: any) { console.error(`[PostgresAdapter - deleteSeller(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
-  }
-
-
-  // --- Auctions ---
+  //--- Auctions ---
   async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> {
     const client = await getPool().connect();
     try {
       const publicId = `LEI-${slugify(data.title.substring(0,10))}-${uuidv4().substring(0,8)}`;
       const query = `
-        INSERT INTO auctions
-          (public_id, title, full_title, description, status, auction_type, category_id, auctioneer_id, seller_id, auction_date, end_date, auction_stages, city, state, image_url, data_ai_hint, documents_url, total_lots, visits, initial_offer, selling_branch, vehicle_location, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13, $14, $15, $16, $17, 0, 0, $18, $19, $20, NOW(), NOW())
+        INSERT INTO auctions (
+          public_id, title, full_title, description, status, auction_type, category_id, auctioneer_id, seller_id, auction_date, end_date, auction_stages, city, state, image_url, data_ai_hint, documents_url, total_lots, visits, initial_offer, selling_branch, vehicle_location, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 0, 0, $18, $19, $20, NOW(), NOW())
         RETURNING id;
       `;
       const values = [
@@ -1216,7 +1339,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
         data.sellerId ? Number(data.sellerId) : null,
         data.auctionDate, data.endDate || null, data.auctionStages ? JSON.stringify(data.auctionStages) : null,
         data.city || null, data.state || null, data.imageUrl || null, data.dataAiHint || null, data.documentsUrl || null,
-        data.initialOffer || null, data.sellingBranch || null, data.vehicleLocation || null
+        data.initialOffer === undefined ? null : data.initialOffer, 
+        data.sellingBranch || null, data.vehicleLocation || null
       ];
       const res = await client.query(query, values);
       return { success: true, message: 'Leilão criado (PostgreSQL)!', auctionId: String(res.rows[0].id), auctionPublicId: publicId };
@@ -1250,7 +1374,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         LEFT JOIN sellers s ON a.seller_id = s.id
         WHERE a.public_id = $1 LIMIT 1;
       `;
-      let values: (string | number)[] = [id];
+      let queryValues: (string | number)[] = [id];
 
       const numericId = Number(id);
       if (!isNaN(numericId)) {
@@ -1261,16 +1385,16 @@ export class PostgresAdapter implements IDatabaseAdapter {
         LEFT JOIN auctioneers act ON a.auctioneer_id = act.id
         LEFT JOIN sellers s ON a.seller_id = s.id
         WHERE a.id = $1 OR a.public_id = $2 LIMIT 1;`;
-        values = [numericId, id];
+        queryValues = [numericId, id];
       }
 
-      const res = await client.query(queryText, values);
+      const res = await client.query(queryText, queryValues);
       if (res.rowCount === 0) return null;
       return mapToAuction(mapRowToCamelCase(res.rows[0]));
     } catch (e: any) { console.error(`[PostgresAdapter - getAuction(${id})] Error:`, e); return null; } finally { client.release(); }
   }
 
-  async getAuctionsBySellerSlug(sellerPublicId: string): Promise<Auction[]> { // Changed from sellerSlug
+  async getAuctionsBySellerSlug(sellerPublicId: string): Promise<Auction[]> { 
     const client = await getPool().connect();
     try {
         const sellerRes = await client.query('SELECT id, name FROM sellers WHERE public_id = $1 LIMIT 1', [sellerPublicId]);
@@ -1342,7 +1466,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     } catch (e: any) { console.error(`[PostgresAdapter - deleteAuction(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
   }
 
-  // --- Lots ---
+  //--- Lots ---
   async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> {
     const client = await getPool().connect();
     try {
@@ -1390,7 +1514,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         data.sellerId ? Number(data.sellerId) : null,
         data.auctioneerId ? Number(data.auctioneerId) : null,
         data.condition || null
-      ]; // 56 values, corresponde aos $56 placeholders
+      ]; 
       const res = await client.query(query, values);
       return { success: true, message: 'Lote criado (PostgreSQL)!', lotId: String(res.rows[0].id), lotPublicId: publicId };
     } catch (e: any) { console.error(`[PostgresAdapter - createLot] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
@@ -1427,7 +1551,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
           queryText += ` JOIN auctions a_filter ON l.auction_id = a_filter.id WHERE a_filter.public_id = $${paramIndex++}`;
           values.push(auctionIdParam);
         }
-        queryText += ' ORDER BY l.title ASC;';
+        queryText += ' ORDER BY l.title ASC;'; 
       } else {
         queryText += ' ORDER BY l.created_at DESC;';
       }
@@ -1457,7 +1581,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         LEFT JOIN auctioneers act ON l.auctioneer_id_fk = act.id
         WHERE l.public_id = $1 LIMIT 1;
       `;
-      let values: (string | number)[] = [id];
+      let queryValues: (string | number)[] = [id];
       const numericId = Number(id);
       if (!isNaN(numericId)) {
         queryText = `
@@ -1477,9 +1601,9 @@ export class PostgresAdapter implements IDatabaseAdapter {
         LEFT JOIN sellers sel ON l.seller_id_fk = sel.id
         LEFT JOIN auctioneers act ON l.auctioneer_id_fk = act.id
         WHERE l.id = $1 OR l.public_id = $2 LIMIT 1;`;
-        values = [numericId, id];
+        queryValues = [numericId, id];
       }
-      const res = await client.query(queryText, values);
+      const res = await client.query(queryText, queryValues);
       if (res.rowCount === 0) return null;
       return mapToLot(mapRowToCamelCase(res.rows[0]));
     } catch (e: any) { console.error(`[PostgresAdapter - getLot(${id})] Error:`, e); return null; } finally { client.release(); }
@@ -1503,7 +1627,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       (Object.keys(data) as Array<keyof LotDbData>).forEach(key => {
         if (data[key] !== undefined && key !== 'endDate' && key !== 'lotSpecificAuctionDate' && key !== 'secondAuctionDate' && key !== 'type' && key !== 'auctionName') {
             const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
-            const escapedColumn = sqlColumn === 'number' ? `"${sqlColumn}"` : sqlColumn; // Escape "number" for PG
+            const escapedColumn = sqlColumn === 'number' ? `"${sqlColumn}"` : sqlColumn; 
             fields.push(`${escapedColumn} = $${paramCount++}`);
             const value = data[key];
             if (key === 'galleryImageUrls' || key === 'mediaItemIds') {
@@ -1514,8 +1638,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
         }
       });
       if (data.endDate) { fields.push(`end_date = $${paramCount++}`); values.push(data.endDate); }
-      if (data.hasOwnProperty('lotSpecificAuctionDate')) { fields.push(`lot_specific_auction_date = $${paramCount++}`); values.push(data.lotSpecificAuctionDate); }
-      if (data.hasOwnProperty('secondAuctionDate')) { fields.push(`second_auction_date = $${paramCount++}`); values.push(data.secondAuctionDate); }
+      if (data.hasOwnProperty('lotSpecificAuctionDate')) { fields.push(`lot_specific_auction_date = $${paramCount++}`); values.push(data.lotSpecificAuctionDate); } 
+      if (data.hasOwnProperty('secondAuctionDate')) { fields.push(`second_auction_date = $${paramCount++}`); values.push(data.secondAuctionDate); } 
 
 
       if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o lote." };
@@ -1551,7 +1675,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         const numericLotId = Number(lotId);
         if (!isNaN(numericLotId)) {
           query += `lot_id = $${paramIndex++} OR lot_id = (SELECT id FROM lots WHERE public_id = $${paramIndex++} LIMIT 1)`;
-          values.unshift(numericLotId);
+          values.unshift(numericLotId); 
         } else {
           query += `lot_id = (SELECT id FROM lots WHERE public_id = $${paramIndex++} LIMIT 1)`;
         }
@@ -1581,8 +1705,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
         if (bidAmount <= Number(lotDataDB.price)) { await client.query('ROLLBACK'); return { success: false, message: "Lance deve ser maior que o atual."}; }
 
-        const numericAuctionId = Number(auctionId);
-        if (isNaN(numericAuctionId)) {
+        const numericAuctionId = Number(auctionId); 
+         if (isNaN(numericAuctionId)) {
             await client.query('ROLLBACK');
             console.error(`[PostgresAdapter - placeBidOnLot] auctionId inválido: ${auctionId}`);
             return { success: false, message: "ID do leilão inválido."};
@@ -1614,7 +1738,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     try {
         const nameNormalized = data.name.trim().toUpperCase();
         const existingRes = await client.query('SELECT id FROM roles WHERE name_normalized = $1 LIMIT 1', [nameNormalized]);
-        if (existingRes.rowCount > 0) return { success: false, message: `Perfil "${data.name}" já existe.`};
+        if (existingRes.rowCount > 0) return { success: false, message: `Perfil com o nome "${data.name}" (ou variação) já existe.`};
 
         const validPermissions = (data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
         const query = `
@@ -1661,32 +1785,33 @@ export class PostgresAdapter implements IDatabaseAdapter {
         let paramCount = 1;
 
         const currentRoleRes = await client.query('SELECT name_normalized FROM roles WHERE id = $1', [Number(id)]);
-        if (currentRoleRes.rowCount === 0) return { success: false, message: "Perfil não encontrado."};
+        if (currentRoleRes.rowCount === 0) {
+            return { success: false, message: "Perfil não encontrado."};
+        }
         const currentNormalizedName = currentRoleRes.rows[0].name_normalized;
 
         if (data.name && currentNormalizedName !== 'ADMINISTRATOR' && currentNormalizedName !== 'USER') {
-            fields.push(`name = $${paramCount++}`); values.push(data.name.trim());
-            fields.push(`name_normalized = $${paramCount++}`); values.push(data.name.trim().toUpperCase());
+            fields.push('name = $1', 'name_normalized = $2');
+            values.push(data.name.trim(), data.name.trim().toUpperCase());
         } else if (data.name) {
             if (data.description !== undefined) {
-                fields.push(`description = $${paramCount++}`); values.push(data.description || null);
+                fields.push('description = $1'); values.push(data.description || null);
             }
         }
         if (data.description !== undefined && (!data.name || (currentNormalizedName === 'ADMINISTRATOR' || currentNormalizedName === 'USER'))) {
-             fields.push(`description = $${paramCount++}`); values.push(data.description || null);
+             fields.push('description = $1'); values.push(data.description || null);
         }
 
         if (data.permissions) {
             const validPermissions = (data.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
-            fields.push(`permissions = $${paramCount++}::jsonb`); values.push(JSON.stringify(validPermissions));
+            fields.push('permissions = $1::jsonb'); values.push(JSON.stringify(validPermissions));
         }
         if (fields.length === 0) return { success: true, message: "Nenhuma alteração para o perfil."};
 
-        fields.push(`updated_at = NOW()`);
-        let query = `UPDATE roles SET ${fields.join(', ')} WHERE id = $${paramCount}`;
+        const query = `UPDATE roles SET ${fields.join(', ')} WHERE id = $1`;
         values.push(Number(id));
         await client.query(query, values);
-        return { success: true, message: 'Perfil atualizado!' };
+        return { success: true, message: 'Perfil atualizado (PostgreSQL)!' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
   }
 
@@ -1698,7 +1823,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
             return { success: false, message: 'Perfis de sistema não podem ser excluídos.'};
         }
         await client.query('DELETE FROM roles WHERE id = $1', [Number(id)]);
-        return { success: true, message: 'Perfil excluído!' };
+        return { success: true, message: 'Perfil excluído (PostgreSQL)!' };
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
   }
 
@@ -1729,12 +1854,12 @@ export class PostgresAdapter implements IDatabaseAdapter {
                 const currentPermsSorted = [...(existingRole.permissions || [])].sort();
                 const expectedPermsSorted = [...validPermissions].sort();
                 if (JSON.stringify(currentPermsSorted) !== JSON.stringify(expectedPermsSorted) || existingRole.description !== (roleData.description || null)) {
-                    console.log(`[PostgresAdapter] Atualizando descrição/permissões para o perfil '${roleData.name}'.`);
+                     console.log(`[PostgresAdapter] Atualizando descrição/permissões para o perfil '${roleData.name}'.`);
                     await client.query(
                         'UPDATE roles SET description = $1, permissions = $2::jsonb, updated_at = NOW() WHERE id = $3',
                         [roleData.description || null, JSON.stringify(expectedPermsSorted), existingRole.id]
                     );
-                    console.log(`[PostgresAdapter] Perfil '${roleData.name}' atualizado.`);
+                     console.log(`[PostgresAdapter] Perfil '${roleData.name}' atualizado.`);
                     rolesProcessedCount++;
                 } else {
                      console.log(`[PostgresAdapter] Perfil '${roleData.name}' já está atualizado.`);
@@ -1774,16 +1899,17 @@ export class PostgresAdapter implements IDatabaseAdapter {
         const values: any[] = [];
         let paramCount = 1;
         (Object.keys(data) as Array<keyof EditableUserProfileData>).forEach(key => {
-            if (data[key] !== undefined && data[key] !== null) {
+            if (data[key] !== undefined && data[key] !== null) { 
                 const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
                 fields.push(`${sqlColumn} = $${paramCount++}`);
                 values.push(data[key]);
-            } else if (data[key] === null) {
+            } else if (data[key] === null) { 
                  const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
                  fields.push(`${sqlColumn} = NULL`);
             }
         });
         if (fields.length === 0) return { success: true, message: "Nenhuma alteração no perfil."};
+
         fields.push(`updated_at = NOW()`);
         const queryText = `UPDATE users SET ${fields.join(', ')} WHERE uid = $${paramCount}`;
         values.push(userId);
@@ -1826,38 +1952,61 @@ export class PostgresAdapter implements IDatabaseAdapter {
             const userDataFromDB = mapToUserProfileData(mapRowToCamelCase(userRes.rows[0]));
             const updatePayload: any = { updatedAt: new Date() };
             let needsUpdate = false;
-            if (String(userDataFromDB.roleId) !== String(targetRole.id)) { updatePayload.role_id = Number(targetRole.id); needsUpdate = true; }
-            if (userDataFromDB.roleName !== targetRole.name) { updatePayload.role_name = targetRole.name; needsUpdate = true; }
-            if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) { updatePayload.permissions = targetRole.permissions || []; needsUpdate = true; }
-            if (additionalProfileData?.password) {
+            if (String(userDataFromDB.roleId) !== String(targetRole.id)) { updatePayload.role_id = Number(targetRole.id); needsUpdate = true; console.log(`[PostgresAdapter ensureUserRole] Atualizando roleId para ${targetRole.id}`);}
+            if (userDataFromDB.roleName !== targetRole.name) { updatePayload.role_name = targetRole.name; needsUpdate = true; console.log(`[PostgresAdapter ensureUserRole] Atualizando roleName para ${targetRole.name}`);}
+
+            const dbPermissions = userDataFromDB.permissions || [];
+            const targetPermissions = targetRole.permissions || [];
+            if (JSON.stringify([...dbPermissions].sort()) !== JSON.stringify([...targetPermissions].sort())) {
+                updatePayload.permissions = JSON.stringify(targetPermissions);
+                needsUpdate = true;
+                console.log(`[PostgresAdapter ensureUserRole] Atualizando permissions.`);
+            }
+
+            if (additionalProfileData?.password) { 
                 updatePayload.password_text = additionalProfileData.password; 
                 needsUpdate = true;
+                 console.log(`[PostgresAdapter ensureUserRole] Atualizando passwordText (hash pendente).`);
             }
+
             if (needsUpdate) {
+                 console.log(`[PostgresAdapter ensureUserRole] Update necessário. Payload (antes do DB):`, updatePayload);
                 const updateFields: string[] = [];
                 const updateValues: any[] = [];
                 let pCount = 1;
                 Object.keys(updatePayload).forEach(key => {
-                    updateFields.push(`${key} = $${pCount++}`);
+                    const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+                    updateFields.push(`${sqlColumn} = $${pCount++}`);
                     updateValues.push(updatePayload[key]);
                 });
                 updateValues.push(userId);
                 await client.query(`UPDATE users SET ${updateFields.join(', ')} WHERE uid = $${pCount}`, updateValues);
+                 console.log(`[PostgresAdapter ensureUserRole] Usuário UID ${userId} atualizado no DB.`);
+            } else {
+                 console.log(`[PostgresAdapter ensureUserRole] Usuário UID ${userId} não precisou de atualização no DB.`);
             }
-            finalProfileData = { ...userDataFromDB, ...updatePayload, uid: userId, permissions: targetRole.permissions || [] } as UserProfileData;
+             finalProfileData = { ...userDataFromDB, ...updatePayload, uid: userId, permissions: targetRole.permissions || [] } as UserProfileData;
         } else {
+            console.log(`[PostgresAdapter ensureUserRole] Usuário UID ${userId} não encontrado no DB. Criando...`);
             const insertQuery = `
                 INSERT INTO users (uid, email, full_name, password_text, role_id, permissions, status, habilitation_status, cpf, cell_phone, date_of_birth, created_at, updated_at)
                 VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, NOW(), NOW()) RETURNING *;
             `;
             const insertValues = [
-                userId, email, fullName || email.split('@')[0], additionalProfileData?.password || null,
+                userId, email, fullName || email.split('@')[0], additionalProfileData?.password || null, 
                 Number(targetRole.id), JSON.stringify(targetRole.permissions || []),
                 'ATIVO', targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS',
                 additionalProfileData?.cpf || null, additionalProfileData?.cellPhone || null, additionalProfileData?.dateOfBirth || null
             ];
-            const insertedRes = await client.query(insertQuery, insertValues);
-            finalProfileData = mapToUserProfileData(mapRowToCamelCase(insertedRes.rows[0]), targetRole);
+            // Não há RETURNING * aqui, então precisamos buscar depois se necessário
+            await client.query(insertQuery, insertValues);
+            const [newUserRows] = await client.query('SELECT * FROM users WHERE uid = ?', [userId]);
+             if ((newUserRows as RowDataPacket[]).length === 0) {
+                await client.query('ROLLBACK');
+                throw new Error(`Falha ao criar e recuperar usuário UID ${userId} no DB.`);
+            }
+            finalProfileData = mapToUserProfileData(mapRowToCamelCase((newUserRows as RowDataPacket[])[0]), targetRole);
+            console.log(`[PostgresAdapter ensureUserRole] Usuário UID ${userId} criado no DB.`);
         }
         await client.query('COMMIT');
         return { success: true, message: 'Perfil de usuário assegurado/atualizado (PostgreSQL).', userProfile: finalProfileData };
@@ -1889,13 +2038,16 @@ export class PostgresAdapter implements IDatabaseAdapter {
       let roleName = null;
       let permissions = null;
       if (roleId && roleId !== "---NONE---") {
-        const role = await this.getRole(roleId);
-        if (role) { roleName = role.name; permissions = JSON.stringify(role.permissions || []); }
+        const role = await this.getRole(roleId); 
+        if (role) {
+            roleName = role.name;
+            permissions = JSON.stringify(role.permissions || []);
+        }
         else return { success: false, message: 'Perfil não encontrado.'};
       }
       const queryText = `UPDATE users SET role_id = $1, role_name = $2, permissions = $3::jsonb, updated_at = NOW() WHERE uid = $4`;
       await client.query(queryText, [roleId ? Number(roleId) : null, roleName, permissions, userId]);
-      return { success: true, message: 'Perfil do usuário atualizado!' };
+      return { success: true, message: 'Perfil do usuário atualizado (PostgreSQL)!'};
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
   }
 
@@ -1922,6 +2074,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
          profile.permissions = role.permissions;
       }
       return profile;
+
     } catch (e: any) {
       console.error(`[PostgresAdapter - getUserByEmail(${email})] Error:`, e);
       return null;
@@ -1945,7 +2098,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       const values = [
         data.fileName, uploadedBy || null, data.title || null, data.altText || null, data.caption || null,
         data.description || null, data.mimeType, data.sizeBytes, data.dimensions?.width || null,
-        data.dimensions?.height || null, filePublicUrl, filePublicUrl, filePublicUrl, filePublicUrl,
+        data.dimensions?.height || null, filePublicUrl, filePublicUrl, filePublicUrl, filePublicUrl, 
         JSON.stringify(data.linkedLotIds || []), data.dataAiHint || null
       ];
       const res = await client.query(query, values);
@@ -2026,7 +2179,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Mídia desvinculada (PostgreSQL).' };
     } catch (e: any) { await client.query('ROLLBACK'); return { success: false, message: e.message }; } finally { client.release(); }
   }
-
+  
   // --- Platform Settings ---
   async getPlatformSettings(): Promise<PlatformSettings> {
     const client = await getPool().connect();
@@ -2038,10 +2191,10 @@ export class PostgresAdapter implements IDatabaseAdapter {
                 id: 'global',
                 siteTitle: settingsRow.siteTitle,
                 siteTagline: settingsRow.siteTagline,
-                galleryImageBasePath: settingsRow.galleryImageBasePath,
-                activeThemeName: settingsRow.activeThemeName,
+                galleryImageBasePath: settingsRow.gallery_image_base_path,
+                activeThemeName: settingsRow.active_theme_name,
                 themes: settingsRow.themes || [],
-                platformPublicIdMasks: settingsRow.platformPublicIdMasks || undefined,
+                platformPublicIdMasks: settingsRow.platform_public_id_masks || undefined,
                 updatedAt: new Date(settingsRow.updatedAt)
             };
         }
@@ -2096,5 +2249,3 @@ export class PostgresAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
   }
 }
-
-    
