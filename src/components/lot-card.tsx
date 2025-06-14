@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Lot } from '@/types';
@@ -17,10 +18,10 @@ import {
   Clock,
   Users,
   Gavel,
-  Building, // Added Building
-  Car,      // Added Car
-  Truck,    // Added Truck
-  Info,     // Added Info
+  Building, 
+  Car,      
+  Truck,    
+  Info,     
   X,
   Facebook,
   Mail,
@@ -29,7 +30,7 @@ import {
 import { format, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
-import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
+import { getAuctionStatusText, getLotStatusColor, sampleAuctions } from '@/lib/sample-data'; // Importado sampleAuctions
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,8 +39,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
-import LotPreviewModal from './lot-preview-modal'; // Import the new modal
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'; // Import Tooltip components
+import LotPreviewModal from './lot-preview-modal'; 
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'; 
 
 interface LotCardProps {
   lot: Lot;
@@ -50,7 +51,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const [isPast, setIsPast]   = useState<boolean>(false);
   const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`);
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false); // State for the modal
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false); 
   const { toast } = useToast();
 
 
@@ -110,7 +111,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
   }, [lot.endDate, lot.status]);
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
-    e.preventDefault();
+    e.preventDefault(); 
     e.stopPropagation();
     const newFavoriteState = !isFavorite;
     setIsFavorite(newFavoriteState); 
@@ -147,7 +148,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
         return `mailto:?subject=${encodedTitle}&body=${encodedUrl}`;
     }
   }
-
+  
   const getTypeIcon = (type: string) => {
     const upperType = type.toUpperCase();
     if (upperType.includes('CASA') || upperType.includes('IMÓVEL') || upperType.includes('APARTAMENTO')) {
@@ -200,14 +201,14 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
               </Tooltip>
               <DropdownMenu>
                 <Tooltip>
-                  <TooltipTrigger asChild>
+                    <TooltipTrigger asChild>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" aria-label="Compartilhar">
+                        <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" aria-label="Compartilhar">
                         <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
-                      </Button>
+                        </Button>
                     </DropdownMenuTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent><p>Compartilhar</p></TooltipContent>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Compartilhar</p></TooltipContent>
                 </Tooltip>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>

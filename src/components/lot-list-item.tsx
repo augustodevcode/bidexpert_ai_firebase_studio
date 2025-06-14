@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Auction, Lot } from '@/types'; // Lot importada
@@ -10,7 +11,7 @@ import { Heart, MapPin, CalendarDays, Clock, Eye, DollarSign, Gavel, Info, Car, 
 import { format, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
-import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
+import { getAuctionStatusText, getLotStatusColor, sampleAuctions } from '@/lib/sample-data'; // Importado sampleAuctions
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,8 +20,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
-import LotPreviewModal from './lot-preview-modal'; // Import the new modal
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'; // Import Tooltip
+import LotPreviewModal from './lot-preview-modal'; 
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'; 
 
 interface LotListItemProps {
   lot: Lot; 
@@ -30,7 +31,7 @@ export default function LotListItem({ lot }: LotListItemProps) {
   const [isFavorite, setIsFavorite] = useState(lot.isFavorite || false);
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const [isPast, setIsPast] = useState<boolean>(false);
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false); // State for the modal
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false); 
   const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`);
   const { toast } = useToast();
 
@@ -278,3 +279,4 @@ export default function LotListItem({ lot }: LotListItemProps) {
     </>
   );
 }
+
