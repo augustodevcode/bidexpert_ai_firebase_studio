@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Lot } from '@/types';
@@ -11,7 +10,6 @@ import {
   Heart,
   Share2,
   MapPin,
-  Building,
   Eye,
   ListChecks,
   DollarSign,
@@ -19,10 +17,10 @@ import {
   Clock,
   Users,
   Gavel,
-  LandPlot,
-  Car,
-  Truck,
-  Info,
+  Building, // Added Building
+  Car,      // Added Car
+  Truck,    // Added Truck
+  Info,     // Added Info
   X,
   Facebook,
   Mail,
@@ -40,6 +38,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
+import LotPreviewModal from './lot-preview-modal'; // Import the new modal
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'; // Import Tooltip components
 
 interface LotCardProps {
   lot: Lot;
@@ -50,6 +50,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const [isPast, setIsPast]   = useState<boolean>(false);
   const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false); // State for the modal
   const { toast } = useToast();
 
 
@@ -70,7 +71,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
   useEffect(() => {
     const calculateTimeRemaining = () => {
       const now = new Date();
-      const endDate = new Date(lot.endDate);
+      const endDate = lot.endDate instanceof Date ? lot.endDate : new Date(lot.endDate);
       
       setIsPast(now > endDate);
 
@@ -87,7 +88,6 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
         setTimeRemaining(`Inicia em ${format(endDate, "dd/MM HH:mm", { locale: ptBR })}`);
         return;
       }
-
 
       const days = differenceInDays(endDate, now);
       const hours = differenceInHours(endDate, now) % 24;
@@ -127,6 +127,12 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
     });
   };
   
+  const handlePreviewOpen = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsPreviewModalOpen(true);
+  };
+
   const getSocialLink = (platform: 'x' | 'facebook' | 'whatsapp' | 'email', url: string, title: string) => {
     const encodedUrl = encodeURIComponent(url);
     const encodedTitle = encodeURIComponent(title);
@@ -159,9 +165,10 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
 
   return (
+    <>
     <Card className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group">
       <div className="relative">
-        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
+        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block">
           <div className="aspect-[16/10] relative bg-muted">
             <Image
               src={lot.imageUrl}
@@ -175,38 +182,56 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
               {getAuctionStatusText(lot.status)}
             </Badge>
             <div className="absolute top-2 right-2 flex space-x-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle}>
-                <Heart className={`h-3.5 w-3.5 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}>
+                    <Heart className={`h-3.5 w-3.5 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handlePreviewOpen} aria-label="Pré-visualizar Lote">
+                    <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Pré-visualizar Lote</p></TooltipContent>
+              </Tooltip>
               <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background">
-                  <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <a href={getSocialLink('x', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
-                    <X className="h-3.5 w-3.5" /> X (Twitter)
-                  </a>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <a href={getSocialLink('facebook', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
-                    <Facebook className="h-3.5 w-3.5" /> Facebook
-                  </a>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <a href={getSocialLink('whatsapp', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
-                    <MessageSquareText className="h-3.5 w-3.5" /> WhatsApp
-                  </a>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <a href={getSocialLink('email', lotDetailUrl, lot.title)} className="flex items-center gap-2 text-xs">
-                    <Mail className="h-3.5 w-3.5" /> Email
-                  </a>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" aria-label="Compartilhar">
+                        <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent><p>Compartilhar</p></TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <a href={getSocialLink('x', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
+                      <X className="h-3.5 w-3.5" /> X (Twitter)
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href={getSocialLink('facebook', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
+                      <Facebook className="h-3.5 w-3.5" /> Facebook
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href={getSocialLink('whatsapp', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
+                      <MessageSquareText className="h-3.5 w-3.5" /> WhatsApp
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href={getSocialLink('email', lotDetailUrl, lot.title)} className="flex items-center gap-2 text-xs">
+                      <Mail className="h-3.5 w-3.5" /> Email
+                    </a>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </Link>
@@ -270,6 +295,13 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
         </Button>
       </CardFooter>
     </Card>
+    <LotPreviewModal
+        lot={lot}
+        auction={sampleAuctions.find(a => a.id === lot.auctionId)} // Pass the parent auction if available
+        isOpen={isPreviewModalOpen}
+        onClose={() => setIsPreviewModalOpen(false)}
+      />
+    </>
   );
 }
 
