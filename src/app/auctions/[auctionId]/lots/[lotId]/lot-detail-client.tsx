@@ -1,8 +1,10 @@
+
 'use client';
 
-import type { Lot, Auction, BidInfo, SellerProfileInfo, Review, LotQuestion } from '@/types';
+import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import type { Lot, Auction, BidInfo, SellerProfileInfo, Review, LotQuestion } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -15,7 +17,6 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useEffect, useState, useMemo } from 'react';
 import { addRecentlyViewedId } from '@/lib/recently-viewed-store';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -329,7 +330,7 @@ export default function LotDetailClientContent({
             <Card className="shadow-lg">
               <CardContent className="p-4">
                 <div className="relative aspect-[16/9] w-full bg-muted rounded-md overflow-hidden mb-4">
-                  {gallery.length > 0 ? (
+                  {gallery.length > 0 && gallery[currentImageIndex] ? (
                     <Image src={gallery[currentImageIndex]} alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`} fill className="object-contain" data-ai-hint={lot.dataAiHint || "imagem principal lote"} priority={currentImageIndex === 0} unoptimized={gallery[currentImageIndex]?.startsWith('https://placehold.co')}/>
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground"><ImageOff className="h-16 w-16 mb-2" /><span>Imagem principal não disponível</span></div>
