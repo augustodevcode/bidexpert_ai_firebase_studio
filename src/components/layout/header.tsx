@@ -21,7 +21,7 @@ import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useRef } from 'react';
 import { hasPermission, hasAnyPermission } from '@/lib/permissions';
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"; // Adicionado SheetHeader, SheetTitle, SheetDescription
 import MainNav from './main-nav';
 import UserNav from './user-nav';
 import { Input } from '@/components/ui/input';
@@ -167,14 +167,17 @@ export default function Header() {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0 bg-background text-foreground">
-                  <Link href="/" className="flex items-center space-x-2 text-lg font-semibold mb-4 p-6 border-b">
-                    <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
-                      <AvatarImage src="https://placehold.co/40x40.png?text=BE" alt={`${siteTitle} Logo Small`} data-ai-hint="logo initial" />
-                      <AvatarFallback>{siteTitle.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-primary">{siteTitle}</span>
-                  </Link>
-                  <nav className="flex flex-col gap-1 px-4">
+                  <SheetHeader className="p-4 border-b">
+                    <SheetTitle className="flex items-center space-x-2 text-lg font-semibold">
+                      <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
+                        <AvatarImage src="https://placehold.co/40x40.png?text=BE" alt={`${siteTitle} Logo Small`} data-ai-hint="logo initial" />
+                        <AvatarFallback>{siteTitle.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-primary">{siteTitle}</span>
+                    </SheetTitle>
+                    {/* <SheetDescription>Navegue pelo site.</SheetDescription> */}
+                  </SheetHeader>
+                  <nav className="flex flex-col gap-1 p-4">
                     <MainNav className="flex-col items-start space-x-0 space-y-0" />
                     <div className="mt-auto pt-4 border-t">
                       <UserNav />
@@ -329,10 +332,7 @@ export default function Header() {
           </div>
 
           <nav className="flex items-center space-x-3 lg:space-x-4 text-xs sm:text-sm">
-              <Link href="/" className="text-muted-foreground hover:text-primary transition-colors font-medium">Home</Link>
-              <Link href="/sell-with-us" className="text-muted-foreground hover:text-primary transition-colors font-medium">Venda Conosco</Link>
-              <Link href="/sellers" className="text-muted-foreground hover:text-primary transition-colors font-medium">Comitentes</Link>
-              <Link href="/auctioneers" className="text-muted-foreground hover:text-primary transition-colors font-medium">Nossos Leiloeiros</Link>
+              <MainNav />
           </nav>
 
           <div className="flex items-center">
@@ -379,5 +379,3 @@ export default function Header() {
     </header>
   );
 }
-
-    
