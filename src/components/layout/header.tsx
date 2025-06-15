@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation'; // Adicionado usePathname
+import { useRouter, usePathname } from 'next/navigation'; 
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,10 +14,10 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Coins, Search as SearchIcon, Menu, ChevronDown, Package, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History } from 'lucide-react'; // Removido ShoppingCart de Lucide
+import { Coins, Search as SearchIcon, Menu, ChevronDown, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History } from 'lucide-react'; 
 import { useAuth } from '@/contexts/auth-context';
 import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/lib/firebase'; 
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useRef } from 'react';
 import MainNav from './main-nav';
@@ -342,14 +342,13 @@ export default function Header() {
       {/* Main Navigation Bar - Desktop */}
       <div className="border-b bg-background text-foreground hidden md:block">
         <div className="container mx-auto px-4 flex h-12 items-center justify-between">
-          {/* Placeholder para Shop By Department (se necessário) */}
-          <div className="flex-1"> {/* Este div pode ficar vazio para empurrar MainNav e Histórico para posições corretas */} </div>
-          
-          <nav className="flex items-center space-x-3 lg:space-x-4 text-xs sm:text-sm mx-auto">
+          {/* MainNav agora ocupa o espaço à esquerda */}
+          <nav className="flex flex-1 items-center space-x-3 lg:space-x-4 text-xs sm:text-sm">
               <MainNav />
           </nav>
 
-          <div className="flex flex-1 items-center justify-end"> {/* Este div força o Histórico para a direita */}
+          {/* Histórico Dropdown agora é empurrado para a direita pelo flex-1 do nav */}
+          <div className="flex items-center justify-end"> 
             {isClient && recentlyViewedItems.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -402,3 +401,4 @@ export default function Header() {
     </header>
   );
 }
+

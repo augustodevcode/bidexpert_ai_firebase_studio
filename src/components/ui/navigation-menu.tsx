@@ -15,7 +15,7 @@ const NavigationMenu = React.forwardRef<
   <NavigationMenuPrimitive.Root
     ref={ref}
     className={cn(
-      "relative z-10 flex max-w-max flex-1 items-center justify-center",
+      "relative z-10 flex w-full flex-1 items-center justify-start", // Changed to justify-start, w-full
       className
     )}
     {...props}
@@ -33,7 +33,7 @@ const NavigationMenuList = React.forwardRef<
   <NavigationMenuPrimitive.List
     ref={ref}
     className={cn(
-      "group flex flex-1 list-none items-center justify-center space-x-1",
+      "group flex flex-1 list-none items-center justify-start space-x-1", // justify-start
       className
     )}
     {...props}
@@ -54,32 +54,10 @@ const NavigationMenuTrigger = React.forwardRef<
   <NavigationMenuPrimitive.Trigger
     ref={ref}
     className={cn(navigationMenuTriggerStyle(), "group", className)}
-    {...props} // Pass all props, including asChild if present
+    {...props} 
   >
-    {/* 
-      If props.asChild is true, NavigationMenuPrimitive.Trigger expects 'children' 
-      to be a single React element that will replace its default button. 
-      In this case, that child element is responsible for its entire content,
-      including any chevron if needed.
-      
-      If props.asChild is false (or undefined), NavigationMenuPrimitive.Trigger 
-      renders its default button, and 'children' is the content *inside* that button.
-      The primitive itself will add its own chevron.
-      Our custom component also adds a chevron, which might be redundant or conflict
-      if the primitive already adds one when asChild is false.
-
-      Let's follow shadcn's original pattern more closely for this part:
-      The custom Trigger *always* appends its own Chevron.
-      The error likely stems from how `asChild` is used in `main-nav.tsx`
-      making the `Link` the child, and then our custom trigger adding another chevron
-      as a *sibling* to that Link from the perspective of `NavigationMenuPrimitive.Trigger`.
-
-      Correction: If asChild is true, the children prop is the actual component that replaces the button.
-      The primitive will NOT add its own chevron. So, we should not add our chevron either.
-      The component passed via asChild must provide its own chevron.
-    */}
     {props.asChild ? (
-      children
+      children 
     ) : (
       <>
         {children}
@@ -114,7 +92,7 @@ const NavigationMenuViewport = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Viewport>,
   React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Viewport>
 >(({ className, ...props }, ref) => (
-  <div className={cn("absolute left-0 top-full flex justify-center")}>
+  <div className={cn("absolute left-0 top-full flex")}> {/* Removed justify-center */}
     <NavigationMenuPrimitive.Viewport
       className={cn(
         "origin-top-center relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 md:w-[var(--radix-navigation-menu-viewport-width)]",
@@ -157,3 +135,4 @@ export {
   NavigationMenuIndicator,
   NavigationMenuViewport,
 }
+
