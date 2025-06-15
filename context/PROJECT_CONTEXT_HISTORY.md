@@ -1,67 +1,129 @@
 
-# Project Context History
+# Project Context History - BidExpert
 
-Este arquivo contém um resumo do contexto do projeto BidExpert, incluindo seu propósito, funcionalidades chave, e decisões importantes tomadas durante o desenvolvimento.
+This document summarizes the BidExpert project, including its purpose, core features, technological stack, style guidelines, key development milestones, decisions, and errors encountered and resolved.
 
-## Sessão Inicial (Junho 2024) - Foco em Configuração, Correções de Build e Início da Customização
+## Project Overview
 
-**Objetivo Principal do Projeto BidExpert (Conforme PRD):**
+**App Name**: BidExpert
 
-Criar uma plataforma de leilões online chamada "BidExpert" com as seguintes funcionalidades principais:
-*   **Catálogo de Leilões:** Exibição filtrável e ordenável de leilões na home page.
-*   **Detalhes do Lote:** Página amigável para detalhes do lote, destacando informações chave, mídia e especificidades do leilão.
-*   **Autenticação de Usuário:** Páginas para criação de conta, login e gerenciamento de perfil.
-*   **Busca de Leilões:** Funcionalidade para localizar leilões por critérios como categoria e localização.
-*   **Navegação do Site:** Estruturas de menu claras e um rodapé abrangente.
-*   **Conteúdo Estático:** Entrega eficiente de páginas de marketing e informativas.
-*   **Orientação de Leilão com IA:** Geração de recomendações sobre detalhes ótimos de listagem e previsão de valores de abertura baseados em dados históricos e tendências.
+**Core Purpose**: To create a comprehensive online auction platform enabling users to participate in and manage auctions efficiently.
 
-**Tecnologias Definidas:**
-NextJS, React, ShadCN UI, Tailwind CSS, Genkit (para IA), TypeScript. Suporte para bancos de dados SQL (PostgreSQL e MySQL) com um adaptador selecionável.
+**Core Features (from PRD):**
+*   Auction Catalog: Filterable, sortable catalog on the home page.
+*   Lot Detail Presentation: User-friendly lot details page.
+*   User Authentication: Account creation, login, profile management.
+*   Auction Search: Browse and search auctions by various criteria.
+*   Site Navigation: Clear menu structures and a comprehensive footer.
+*   Static Content Delivery: Efficient serving of marketing/informational pages.
+*   AI-Powered Auction Guidance: Recommendations for listing details, optimal opening values, and similar listing suggestions.
 
-**Diretrizes de Estilo:**
-*   Ícones line-based, transições sutis.
-*   Esquema de cores: Predominantemente branco (#FFFFFF) e cinza claro (#F2F2F2) para fundos. Azul primário (#3498db) para elementos interativos. Verde suave (#2ecc71) como cor de acento secundária.
-*   Fonte: 'Open Sans' para títulos e corpo de texto.
-*   Layout: Baseado em cards com cantos arredondados (8px) e sombras sutis.
-*   Amplo espaço em branco e preenchimento consistente.
+**Technology Stack:**
+*   Frontend: NextJS, React, ShadCN UI components, Tailwind CSS
+*   Backend/API: NextJS API Routes / Server Actions
+*   AI: Genkit (for AI flows)
+*   Database: Firestore (initial), with ongoing work to support SQL (MySQL, PostgreSQL) via an adapter pattern.
+*   Language: TypeScript
 
-**Progresso e Decisões Chave nesta Sessão:**
+**Style Guidelines (from PRD):**
+*   Icons: Clean, line-based.
+*   Animations: Subtle transitions and hover effects.
+*   Color Scheme:
+    *   Backgrounds: White (#FFFFFF), Light Gray (#F2F2F2).
+    *   Primary Interactive: Blue (#3498db).
+    *   Secondary Accent: Soft Green (#2ecc71).
+*   Font: 'Open Sans' (sans-serif) for headings and body.
+*   Layout: Card-based, rounded corners (8px), subtle shadows, ample white space.
 
-1.  **Correções de Erros de Build e Runtime:**
-    *   Resolvido erro `Expected unicode escape` em `src/lib/database/mysql.adapter.ts` (linha ~507) removendo uma barra invertida (`\`) extra.
-    *   Adicionada a origem `https://6000-...cloudworkstations.dev` ao `allowedDevOrigins` em `next.config.ts` para corrigir erro de cross-origin.
-    *   Resolvido erro `Cannot read properties of undefined (reading 'call')` relacionado a `getFavoriteLotIdsFromStorage` em `src/components/layout/header.tsx`. Foi garantido que a função está corretamente exportada em `src/lib/recently-viewed-store.ts` e importada no header. O problema persistiu como um aviso de build ("Attempted import error"), mas o erro de runtime foi o foco da correção.
-    *   Resolvido erro `searchParams should be awaited` em `/admin/lots/new/page.tsx` ajustando a forma como `searchParams.auctionId` é acessado em um Server Component.
-    *   Resolvido erro `SyntaxError: Unexpected end of JSON input` em `mysql.adapter.ts` (função `mapToLot`) ao fazer `JSON.parse()` em strings que poderiam ser vazias ou nulas para `galleryImageUrls` e `mediaItemIds`. A lógica foi ajustada para verificar se a string é não vazia antes do parse.
-    *   Resolvido erro `<AdminSellersPage> is an async Client Component` movendo a busca de dados em `/admin/sellers/page.tsx` para `useEffect` e `useState`, removendo `async` da declaração da função do componente.
-    *   Resolvido erro `ER_WRONG_VALUE_COUNT_ON_ROW` no MySQL ao criar um lote, corrigindo o número de placeholders na query SQL em `mysql.adapter.ts` (de 56 para 58).
+## Development Summary (Current & Recent Interactions)
 
-2.  **Início da Implementação da Customização do Site (Admin):**
-    *   **Objetivo:** Permitir que administradores customizem aspectos do site, como Título e Tagline, persistindo essas configurações no banco de dados (`platform_settings` table).
-    *   **Tipos e Schemas:**
-        *   Atualizado `src/types/index.ts`: Adicionados `siteTitle` e `siteTagline` à interface `PlatformSettings` e `PlatformSettingsFormData`.
-        *   Atualizado `src/app/admin/settings/settings-form-schema.ts`: Adicionados `siteTitle` e `siteTagline` ao `platformSettingsFormSchema` com validações Zod.
-    *   **Formulário de Configurações (`/admin/settings/settings-form.tsx`):**
-        *   Adicionados campos `Input` para "Título do Site" e "Tagline do Site".
-        *   Atualizados os `defaultValues` no `useForm` para incluir os novos campos.
-        *   Adicionados campos para `platformPublicIdMasks` (embora a lógica completa de máscaras ainda não esteja implementada, os campos foram adicionados para evitar erros de formulário não controlado).
-    *   **Adaptadores de Banco de Dados (MySQL e PostgreSQL):**
-        *   Modificadas as instruções `CREATE TABLE IF NOT EXISTS platform_settings` em `mysql.adapter.ts` e `postgres.adapter.ts` para incluir as colunas `site_title` (VARCHAR(100)) e `site_tagline` (VARCHAR(255)).
-        *   Atualizada a função `getPlatformSettings` em ambos os adaptadores para buscar os novos campos, retornando valores padrão ("BidExpert", "Leilões Online Especializados") se não encontrados.
-        *   Atualizada a função `updatePlatformSettings` em ambos os adaptadores para salvar os novos campos.
-    *   **Exibição no Header (`src/components/layout/header.tsx`):**
-        *   O componente foi modificado para ser um Client Component.
-        *   Utiliza `useEffect` e `useState` para buscar `platformSettings` através da server action `getPlatformSettings`.
-        *   Exibe dinamicamente o `siteTitle` e `siteTagline` buscados. Se não definidos, usa "BidExpert" e "Seu parceiro especialista em leilões online." como fallback respectivamente.
+### Key Features & Functionalities Implemented/Worked On:
 
-**Próximos Passos Imediatos Discutidos:**
-*   Continuar a implementação da customização do site, potencialmente adicionando opções para logo, favicon e cores do tema.
-*   Implementar as funcionalidades principais do PRD (Catálogo de Leilões, Detalhes do Lote, Autenticação, etc.).
+1.  **Admin Panel Foundation:**
+    *   CRUD operations for core entities (Lot Categories, States, Cities, Auctioneers, Sellers, Auctions, Lots, Roles, Users, Media Items) were established, initially with Firestore and then with ongoing SQL adapter implementation.
+    *   Server Actions are used for data mutations.
 
-**Decisões de Arquitetura:**
-*   Uso de Server Actions para mutações de dados.
-*   Componentes de Cliente (`'use client';`) para páginas que necessitam de interatividade e hooks do React (ex: `useState`, `useEffect`).
-*   Busca de dados em Componentes de Cliente geralmente é feita dentro de `useEffect`.
-*   Manter arquivos de `actions.ts` separados para cada entidade/módulo no admin.
-*   Utilizar um sistema de adaptadores de banco de dados para alternar entre Firestore, MySQL e PostgreSQL.
+2.  **Database System:**
+    *   The project started with Firestore.
+    *   Work has been done to implement a database adapter system to support MySQL and PostgreSQL.
+    *   Scripts for SQL schema initialization (`initialize-db.ts`) and admin user setup (`setup-admin-user.ts`) have been created and refined.
+    *   Focus on ensuring `getDatabaseAdapter` correctly returns instances for MySQL and PostgreSQL.
+
+3.  **Header & Navigation:**
+    *   Dynamic display of site title and tagline from platform settings.
+    *   Implementation of a multi-level **MegaMenu** for:
+        *   **Categorias de Lotes:** Dynamically populated from the database. Features a two-column layout (categories list on left, selected category details/sub-items on right).
+        *   **Modalidades de Leilão:** Static links (Judicial, Extrajudicial, Venda Direta).
+        *   **Comitentes:** Dynamically populated, categorized (Financeiras, Seguradoras, etc. - *initial structure was static, now dynamic*), with a "Ver Todos" link.
+        *   **Nossos Leiloeiros:** Dynamically populated, showing leiloeiro name, photo (placeholder), and basic info.
+    *   Mobile-responsive navigation using a Sheet component.
+    *   Search functionality within the header with category filtering and a dropdown for results.
+    *   Recently Viewed and Favorite Lots dropdowns (using localStorage).
+
+4.  **Platform Customization (Admin Settings):**
+    *   Admin page (`/admin/settings`) to manage:
+        *   Site Title and Tagline.
+        *   Gallery Image Base Path.
+        *   (Placeholders for Logo, Favicon, Theme Management).
+        *   Platform Public ID Masks.
+    *   Settings are persisted in the `platform_settings` table (SQL) or a 'global' document (Firestore).
+
+5.  **Data Seeding & Management:**
+    *   Scripts for seeding sample data (`seed-firestore.ts`, `seed-lotes-data.ts`, `seed-lotes-with-images.ts`).
+    *   Script for copying sample images to the `public` directory.
+
+6.  **User Authentication & Authorization:**
+    *   User registration form updated to include fields for Pessoa Jurídica and Comitente Venda Direta.
+    *   Basic Admin/Consignor dashboard layouts and access control using `hasPermission` / `hasAnyPermission`.
+    *   SQL authentication flow implemented for non-Firestore setups.
+    *   `AuthContext` manages user state for both Firebase Auth and SQL-based auth.
+
+7.  **Public Facing Pages:**
+    *   Initial setup for various public pages (Home, About, Contact, FAQ, Terms, Privacy, Auction/Lot details, Seller/Auctioneer profiles, Search, Direct Sales).
+    *   **Crucial Decision:** For testing purposes, auction detail and lot detail pages were recently switched back to using `sample-data.ts` instead of fetching live from the database. This is temporary.
+
+### Errors Encountered & Resolved (Recent):
+
+*   **Module Not Found Errors (Megamenu):**
+    *   `Can't resolve '@/components/ui/navigation-menu'`: Resolved by creating/adding the `navigation-menu.tsx` file.
+    *   `Can't resolve '@radix-ui/react-navigation-menu'`: Resolved by adding the package to `package.json`.
+*   **Runtime Errors (Megamenu & Header):**
+    *   `React is not defined` in `main-nav.tsx`: Resolved by adding `import * as React from 'react';`.
+    *   `DialogContent requires a DialogTitle` (accessibility error from Radix/ShadCN `Sheet`): Resolved by adding `SheetHeader` and `SheetTitle` to the mobile menu sheet in `Header.tsx`.
+    *   `ShoppingCart is not defined` in `main-nav.tsx`: Resolved by importing the `ShoppingCart` icon.
+*   **Data Fetching/Display Errors:**
+    *   `getLotCategoryByName is not a function` on lot detail page: Corrected to use `getCategoryNameFromSlug` from `sample-data.ts` as intended when using sample data.
+    *   "Comitente com slug 'banco-xyz' não encontrado": Addressed by ensuring 'Banco XYZ' was present in `sampleAuctions` to generate the correct slug for `sample-data` fetching.
+    *   "Leilão Não Encontrado" on `/auctions/[auctionId]`: Clarified that this page was (temporarily) reverted to use `sample-data.ts`, and adjusted param access.
+
+### Key Decisions & Patterns:
+
+*   **Database Abstraction:** Use of `getDatabaseAdapter()` to switch between Firestore, MySQL, and PostgreSQL. Adapters implement `IDatabaseAdapter`.
+*   **Server Actions:** Primary mechanism for data mutations.
+*   **Client vs. Server Components:** Strategic use based on interactivity and data fetching needs.
+*   **Context API (`AuthContext`):** For managing global authentication state.
+*   **Sample Data:** `sample-data.ts` used extensively for UI development and testing, especially for public-facing pages during initial phases.
+*   **Slugification:** Using `slugify` function for creating user-friendly URLs.
+*   **Public IDs:** Generation of `publicId` for entities to allow for more stable and potentially SEO-friendly URLs than numeric IDs.
+*   **Megamenus:** Implemented for "Categorias", "Modalidades", "Comitentes", "Leiloeiros" in the main navigation, with dynamic data fetching for categories, comitentes, and leiloeiros.
+*   **Permissions System:** `hasPermission` and `hasAnyPermission` helpers for role-based access control.
+
+## Future Work & Next Steps (Consolidated):
+
+*   **Revert to Database Data:** Switch auction and lot detail pages back to fetching data from the live database (MySQL/PostgreSQL/Firestore) instead of `sample-data.ts`.
+*   **Complete SQL Adapter Functionality:** Ensure all methods in `IDatabaseAdapter` are fully and correctly implemented for MySQL and PostgreSQL, particularly for entities not yet thoroughly tested with SQL (e.g., User Bids, Wins, Reviews, Questions, advanced Platform Settings).
+*   **Full Filter & Search Implementation:** Make filters on admin and public search pages fully functional with database queries.
+*   **Media Library:** Implement file uploads (Firebase Storage), metadata editing, and linking to lots.
+*   **User Authentication & Authorization:**
+    *   Robust role-based access control for all actions.
+    *   Complete `habilitationStatus` logic.
+*   **AI Flows:** Integrate AI suggestions more deeply into the auction/lot creation process.
+*   **Dashboard Functionality:** Implement backend logic for "My Bids", "My Wins", etc.
+*   **Subcategories for Megamenu:** Implement actual subcategory data model and display in the "Categorias" megamenu.
+*   **Refine UI/UX:** Continue polishing based on the PRD and user experience best practices.
+*   **Testing:** Comprehensive testing across all features and database systems.
+*   **Address PRD Core Features:** Systematically implement all remaining core features outlined in the PRD.
+*   **Debugging/Hot-Reload Process:** (User request) Consider adding more console logs or simple UI indicators during development to understand component re-renders or data re-fetches, if persistent issues arise.
+```
+    
+    

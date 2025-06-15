@@ -1,50 +1,83 @@
 
-# Project Progress
+# Project Progress - BidExpert
 
 ## DONE
-- Criação do diretório `context` e arquivos iniciais de contexto.
-- Correção de diversos erros de build e runtime:
-    - `Expected unicode escape` em `mysql.adapter.ts`.
-    - `Blocked cross-origin request` (porta 6000) em `next.config.ts`.
-    - `getFavoriteLotIdsFromStorage not a function` (runtime) em `header.tsx`.
-    - Aviso de `searchParams.auctionId` em Server Component (`/admin/lots/new/page.tsx`).
-    - `SyntaxError: Unexpected end of JSON input` em `mysql.adapter.ts` (função `mapToLot`).
-    - `<AdminSellersPage> is an async Client Component` em `/admin/sellers/page.tsx`.
-    - `ER_WRONG_VALUE_COUNT_ON_ROW` (MySQL) ao criar lote, corrigindo placeholders.
-- **Início da Funcionalidade de Customização do Site (Admin):**
-    - **Configurações da Plataforma (`platform_settings`):**
-        - Adicionados campos `siteTitle` e `siteTagline` aos tipos (`PlatformSettings`, `PlatformSettingsFormData`).
-        - Atualizado schema Zod (`settings-form-schema.ts`) para incluir `siteTitle` e `siteTagline`.
-        - Adicionados inputs para Título e Tagline no formulário de configurações (`/admin/settings/settings-form.tsx`).
-        - Campos para `platformPublicIdMasks` adicionados ao formulário (lógica de máscaras pendente).
-        - Schema dos bancos de dados SQL (MySQL e PostgreSQL) atualizados para incluir colunas `site_title` e `site_tagline` na tabela `platform_settings`.
-        - Métodos `getPlatformSettings` e `updatePlatformSettings` nos adaptadores SQL atualizados para ler/gravar os novos campos.
-    - **Exibição no Header:**
-        - Componente `Header` (`src/components/layout/header.tsx`) agora busca e exibe dinamicamente `siteTitle` e `siteTagline` das configurações da plataforma.
+- **Admin Panel Foundation:** CRUD for Categories, States, Cities, Auctioneers, Sellers, Auctions, Lots, Roles, Users, Media Items.
+- **Database System:**
+    - Implemented adapter pattern for Firestore, MySQL, PostgreSQL.
+    - SQL schema initialization and admin user setup scripts.
+- **Header & Navigation:**
+    - Dynamic site title/tagline.
+    - **Megamenus Implemented:**
+        - "Categorias de Lotes" (dynamic data, 2-column layout).
+        - "Modalidades de Leilão" (static links).
+        - "Comitentes" (dynamic data, categorized view).
+        - "Nossos Leiloeiros" (dynamic data, profile previews).
+    - Mobile responsive navigation (Sheet component).
+    - Header search bar with category filter and results dropdown.
+    - Recently Viewed & Favorite Lots dropdowns (localStorage).
+- **Platform Customization (Admin Settings):**
+    - Management of Site Title, Tagline, Gallery Image Base Path, Public ID Masks.
+- **Data Seeding & Management:**
+    - Scripts for sample data and image copying.
+- **User Authentication & Authorization:**
+    - Updated registration form (Pessoa Jurídica, Comitente Venda Direta).
+    - Basic Admin/Consignor dashboard layouts.
+    - SQL authentication flow and `AuthContext` for user state.
+    - `hasPermission` / `hasAnyPermission` helpers.
+- **Public Facing Pages:**
+    - Initial setup for various informational and detail pages.
+    - **Decision:** Temporarily reverted auction/lot detail pages to use `sample-data.ts` for testing.
+- **Error Fixes (Recent Session):**
+    - Resolved `Module not found` for `navigation-menu` (created file & added package).
+    - Fixed `React is not defined` in `main-nav.tsx`.
+    - Fixed `DialogContent requires a DialogTitle` in `header.tsx`.
+    - Corrected `getLotCategoryByName` usage in lot detail page (for sample data).
+    - Addressed "Comitente não encontrado" by updating `sampleAuctions`.
 
 ## WORKING
-- **Continuar implementação da customização do site:**
-    - **Próximo:** Permitir upload e configuração de Logo do Site e Favicon.
-    - **Depois:** Implementar gerenciamento de Temas de Cores (seleção de tema ativo, criação/edição de temas).
+- **Refining Megamenu Functionality:**
+    - Ensuring dynamic data (Categories, Comitentes, Leiloeiros) is correctly fetched and displayed.
+    - Verifying hover behavior for megamenu triggers.
+- **Data Source Management:**
+    - Ensuring pages correctly use `sample-data.ts` for the current testing phase as requested.
+- **Addressing Minor UI/UX issues** as they arise from new implementations.
 
 ## NEXT
-- **Customização do Site (Continuação):**
-    - Adicionar campos para upload/URL de Logo do Site e Favicon no formulário de configurações.
-    - Atualizar `platform_settings` (tipos, schema, adaptadores) para armazenar estas URLs.
-    - Modificar o layout (provavelmente `src/app/layout.tsx` para favicon e `src/components/layout/header.tsx` para logo) para exibir o logo e favicon dinamicamente.
-    - Implementar a interface para gerenciar Temas de Cores (CRUD para temas, seleção de tema ativo).
-    - Aplicar o tema de cores ativo dinamicamente (atualizando variáveis CSS HSL em `globals.css` ou via `<style>` tag no layout).
-- **Implementar as funcionalidades centrais do PRD:**
-    - Catálogo de Leilões (Home Page).
-    - Página de Detalhes do Lote.
-    - Autenticação de Usuário (Login, Registro, Perfil).
-    - Busca de Leilões.
-    - Navegação do Site (Menus, Rodapé completo).
-    - Páginas de Conteúdo Estático.
-    - Funcionalidades de Orientação de Leilão com IA (Genkit).
-- **Refinamentos e Melhorias:**
-    - Concluir a lógica de `platformPublicIdMasks`.
-    - Revisar e completar todos os TODOs nos adaptadores de banco de dados.
-    - Implementação completa da Biblioteca de Mídia.
-    - Testes abrangentes em todas as funcionalidades e com todos os sistemas de banco de dados suportados.
-    - Melhorar a segurança com verificações de permissão robustas em Server Actions.
+- **Switch back to Database Data:** Revert auction and lot detail pages to use live database data after the current testing phase with sample data is complete.
+- **Subcategories (Megamenu):**
+    - Define data model for subcategories.
+    - Implement fetching and display of actual subcategories in the "Categorias" megamenu (replacing placeholders).
+- **Search/Filter Page Functionality:**
+    - Ensure search pages (`/search`) correctly interpret and apply filter parameters passed from megamenu links (e.g., `?auctionType=JUDICIAL`, `?consignorType=FINANCIAL`).
+- **Complete SQL Adapter Implementation:**
+    - Thoroughly test and complete all `IDatabaseAdapter` methods for MySQL and PostgreSQL for all entities.
+- **Media Library (Core Functionality):**
+    - Implement file upload (Firebase Storage).
+    *   Modal for metadata editing.
+    *   Deletion functionality (DB & Storage).
+- **Lot Form Media Integration:**
+    *   Modal to select from Media Library for lot images.
+    *   Display/manage linked media in lot form.
+- **User Authentication & Authorization (Enhancements):**
+    *   Implement robust, granular permission checks in all Server Actions.
+    *   Complete `habilitationStatus` workflow.
+- **AI Flow Integration:**
+    *   Deepen integration of AI suggestions in auction/lot creation and editing processes.
+- **Dashboard Pages (User & Consignor):**
+    *   Implement backend logic and data display for "My Bids", "My Wins", "My Lots" (Consignor), Financials (Consignor), etc.
+- **Implement Core PRD Features:**
+    *   Full Auction Catalog functionality on Home Page (with filters, sorting).
+    *   Bidding system (real-time updates, bid history).
+    *   User Profile management (public view, editing beyond current).
+    *   AI-powered guidance tools.
+    *   Complete static pages (About, Contact, etc.) with final content.
+- **Testing & Refinement:**
+    *   End-to-end testing of all user flows.
+    *   Performance optimization.
+    *   Security audit.
+- **Debugging Tools (Developer Request):**
+    *   Investigate adding more verbose logging or simple UI indicators for build/refresh cycles if hot-reloading issues persist or are hard to diagnose.
+```
+  
+    

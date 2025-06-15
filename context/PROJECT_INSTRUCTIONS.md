@@ -1,44 +1,62 @@
 
-# Instruções para Manutenção do Contexto do Projeto
+# Project Context System - Instructions for AI (BidExpert)
 
-Estes arquivos (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.MD`, e `PROJECT_INSTRUCTIONS.md`, `1st.md`) são projetados para ajudar a manter o contexto e a continuidade em nossas interações. Por favor, siga estas instruções para garantir que sejam usados de forma eficaz:
+These files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.MD`, `PROJECT_INSTRUCTIONS.md`, `1st.md`) are designed to help you, the AI, maintain context and continuity across our development sessions for the BidExpert project. Please follow these instructions to ensure they are used effectively.
 
-## 1. Inicialização no Início de uma Sessão
+## 1. Initialization at the Start of a Session
 
-*   No início de cada nova sessão, antes de começar qualquer trabalho significativo, você receberá um prompt de inicialização (provavelmente em um arquivo como `1st.md` ou similar).
-*   Sua primeira tarefa deve ser ler e processar as informações contidas em `PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.MD` e `PROJECT_INSTRUCTIONS.md`.
-*   Confirme que leu e entendeu o conteúdo desses arquivos antes de prosseguir com outras tarefas.
+*   At the beginning of each new session (or after a context reset), I (the user) will provide you with an initialization prompt, typically the content of `1st.md`.
+*   Your **first task** upon receiving this prompt is to **read and process the information** contained in:
+    *   `PROJECT_CONTEXT_HISTORY.md` (for project background, decisions, and past work)
+    *   `PROJECT_PROGRESS.MD` (for current status and next steps)
+    *   `PROJECT_INSTRUCTIONS.md` (these instructions, as a reminder)
+*   After processing these files, you should **confirm** that you have read and understood their content before we proceed with other tasks.
+*   You can then ask if I have any specific focus or updates for the current session.
 
-## 2. Atualizando os Arquivos de Contexto
+## 2. Updating the Context Files
 
-*   **Atualizações Regulares:** Os arquivos de contexto devem ser atualizados regularmente, idealmente após um progresso significativo ser feito, novos objetivos serem definidos ou decisões importantes serem tomadas. Eu (a IA) tentarei fazer isso quando explicitamente solicitado ou quando um marco/resolução importante for alcançado.
+*   **Regular Updates:** You should aim to update these context files regularly, especially:
+    *   After significant progress is made on a feature.
+    *   When new objectives or features are defined.
+    *   When important technical or design decisions are made.
+    *   When major errors are resolved.
+    *   At the end of a development block or before an anticipated session break.
+*   **How to Update:** You will propose changes to these files using the standard XML `<changes>` format, providing the full intended content for each file being updated.
+
 *   **`PROJECT_CONTEXT_HISTORY.md`:**
-    *   Anexe novas informações chave a este arquivo.
-    *   Resuma discussões importantes, decisões e resultados de tarefas.
-    *   Inclua detalhes sobre desafios encontrados e como foram resolvidos.
-    *   Mantenha um fluxo cronológico sempre que possível, ou use títulos claros para organizar as informações por tópico ou sessão. Se um resumo anterior meu existir, devo anexar a ele, frequentemente sob um novo título de "Sessão" ou "Interação".
+    *   **Append new information.** Do not overwrite the entire file unless explicitly creating a new summary after a full context reset (like this current one).
+    *   Summarize key discussions, decisions made, features implemented, and the outcome of tasks from the current session.
+    *   Include details about challenges encountered and how they were resolved (e.g., specific errors and their fixes).
+    *   Maintain a generally chronological flow. If a previous summary exists, append to it, often under a new heading like "Session [Date/Number] - Focus: [Brief Description]".
+    *   Be comprehensive but concise.
+
 *   **`PROJECT_PROGRESS.MD`:**
-    *   Atualize o status das tarefas nas seções "DONE", "WORKING" e "NEXT".
-    *   Mova tarefas concluídas de "WORKING" para "DONE".
-    *   Adicione tarefas ou funcionalidades recém-identificadas à seção "NEXT".
-    *   Ajuste as tarefas na seção "WORKING" para refletir o foco atual.
-    *   Seja conciso e use marcadores para clareza.
-*   **`PROJECT_INSTRUCTIONS.md`:**
-    *   Atualize estas instruções se o processo de uso ou atualização dos arquivos de contexto mudar. Este arquivo é principalmente para mim (a IA) lembrar do processo.
+    *   Update the status of tasks by moving items between "DONE", "WORKING", and "NEXT".
+    *   Add newly identified tasks or features to the "NEXT" section.
+    *   Reflect the current development focus in the "WORKING" section.
+    *   Use clear, actionable bullet points.
+
+*   **`PROJECT_INSTRUCTIONS.md` (This File):**
+    *   Update these instructions if our process for using or updating the context files changes. This file is primarily for your reference.
+
 *   **`1st.md`:**
-    *   Este arquivo contém o prompt que o usuário deve fornecer no início de uma nova sessão. Geralmente, não deve mudar, a menos que o próprio processo de inicialização principal mude.
+    *   This file contains the prompt I will give you. It should generally not change unless our core initialization process changes.
 
-## 3. Usando os Arquivos de Contexto Durante uma Sessão
+## 3. Using the Context Files During a Session
 
-*   Consulte `PROJECT_CONTEXT_HISTORY.md` para relembrar discussões anteriores, decisões ou detalhes técnicos.
-*   Consulte `PROJECT_PROGRESS.MD` para entender o estado atual do projeto e identificar as próximas prioridades.
-*   Revise `PROJECT_INSTRUCTIONS.md` (estas instruções) se não tiver certeza sobre como proceder com a atualização do contexto ou a manutenção da continuidade.
-*   Use as informações nesses arquivos para informar suas respostas, gerar código e fazer sugestões consistentes com o histórico e os objetivos do projeto.
+*   **Consult Regularly:** Refer to `PROJECT_CONTEXT_HISTORY.md` to recall past discussions, decisions, or technical details.
+*   **Track Progress:** Use `PROJECT_PROGRESS.MD` to understand the current project state and identify priorities.
+*   **Inform Responses:** Use the information from these files to:
+    *   Provide consistent and contextually aware responses.
+    *   Generate code that aligns with previous decisions and the overall architecture.
+    *   Make suggestions that are relevant to the project's goals and current state.
 
-## 4. Mantendo a Integridade dos Arquivos
+## 4. Maintaining File Integrity
 
-*   Garanta que a formatação dos arquivos markdown permaneça consistente e legível.
-*   Evite introduzir informações desnecessárias ou irrelevantes nos arquivos de contexto.
-*   Se fizer alterações significativas, considere revisar os arquivos atualizados para garantir precisão e clareza.
+*   Ensure the markdown formatting remains consistent and readable.
+*   If you are unsure about how to update a file or what to include, please ask for clarification.
 
-Seguindo diligentemente estas instruções, podemos criar um contexto persistente que melhorará significativamente a eficiência e eficácia de nossa colaboração em múltiplas sessões.
+By diligently following these instructions, we can build and maintain a persistent context that will greatly enhance the efficiency and effectiveness of our collaboration on the BidExpert project.
+```
+  
+    
