@@ -456,6 +456,7 @@ export const sampleLots: Lot[] = [
 export const sampleAuctions: Auction[] = [
   {
     id: '100625bra',
+    publicId: 'LEI-LEILOUNI-E9F3G7H2',
     title: 'Leilão Único Bradesco',
     fullTitle: 'Grande Leilão de Imóveis Bradesco - Oportunidades Imperdíveis',
     auctionDate: createFutureDate(0, 1),
@@ -482,6 +483,7 @@ export const sampleAuctions: Auction[] = [
   },
   {
     id: '20301vei',
+    publicId: 'LEI-LEILOMAQ-A1B2C3D4',
     title: 'Leilão Maquinário Pesado',
     fullTitle: 'Leilão de Tratores e Colheitadeiras Usadas',
     auctionDate: createFutureDate(0, 2),
@@ -507,6 +509,7 @@ export const sampleAuctions: Auction[] = [
   },
    {
     id: '300724car',
+    publicId: 'LEI-LEILOVEI-X5Y6Z7W8',
     title: 'Leilão Veículos Premium',
     fullTitle: 'Leilão de Veículos Seminovos e de Luxo',
     auctionDate: createFutureDate(0, 3),
@@ -532,6 +535,7 @@ export const sampleAuctions: Auction[] = [
   },
   {
     id: '15926',
+    publicId: 'LEI-LEILAOJU-R9T0U1V2',
     fullTitle: 'Leilão Tribunal de Justiça SP',
     title: 'Leilão Judicial Imóveis Ribeirão Preto',
     auctionDate: createPastDate(2),
@@ -556,6 +560,7 @@ export const sampleAuctions: Auction[] = [
   },
   {
     id: 'ART001ANTIQ',
+    publicId: 'LEI-LEILAOAR-P3Q4R5S6',
     title: 'Leilão Arte & Antiguidades',
     fullTitle: 'Leilão Especial de Obras de Arte e Peças de Antiguidade',
     auctionDate: createFutureDate(1, 0),
@@ -582,6 +587,7 @@ export const sampleAuctions: Auction[] = [
   },
   {
     id: 'CLASSICVEH24',
+    publicId: 'LEI-CLASSICO-K1L2M3N4',
     title: 'Clássicos de Garagem',
     fullTitle: 'Leilão Anual de Veículos Clássicos e Colecionáveis',
     auctionDate: createFutureDate(2, 0),
@@ -708,60 +714,109 @@ export const sampleUserWins: UserWin[] = [
     }
 ];
 
-export const sampleLotBids: BidInfo[] = [
-  { id: 'LBID001', lotId: 'LOTEVEI001', auctionId: '300724car', bidderId: 'userABC', bidderDisplay: 'Usuário A****', amount: 68500, timestamp: createPastDate(0, 1, 30) },
-  { id: 'LBID002', lotId: 'LOTEVEI001', auctionId: '300724car', bidderId: 'userXYZ', bidderDisplay: 'Usuário X****', amount: 68000, timestamp: createPastDate(0, 1, 35) },
-  { id: 'LBID003', lotId: 'LOTEVEI001', auctionId: '300724car', bidderId: 'user123', bidderDisplay: 'Usuário 1****', amount: 67500, timestamp: createPastDate(0, 1, 40) },
-  { id: 'LBID004', lotId: 'LOTE001', auctionId: '100625bra', bidderId: 'userDEF', bidderDisplay: 'Usuário D****', amount: 45000, timestamp: createPastDate(0, 0, 10) },
-  { id: 'LBID005', lotId: 'LOTE001', auctionId: '100625bra', bidderId: 'userGHI', bidderDisplay: 'Usuário G****', amount: 44500, timestamp: createPastDate(0, 0, 15) },
-];
+export const sampleLotBids: BidInfo[] = sampleLots.flatMap(lot => {
+    const numberOfBids = Math.floor(Math.random() * 6); // 0 a 5 lances por lote
+    const bids: BidInfo[] = [];
+    let currentPrice = lot.price;
+    if (numberOfBids === 0 && lot.bidsCount && lot.bidsCount > 0) { // Ensure bidsCount matches
+        lot.price = lot.initialPrice || lot.price; // Reset price if no bids generated but bidsCount > 0
+    }
 
-export const sampleLotReviews: Review[] = [
-    { id: 'REV001', lotId: 'LOTEVEI001', auctionId: '300724car', userId: 'userABC', userDisplayName: 'Comprador Satisfeito', rating: 5, comment: 'Carro excelente, exatamente como descrito. Recomendo!', createdAt: createPastDate(1) },
-    { id: 'REV002', lotId: 'LOTEVEI001', auctionId: '300724car', userId: 'userXYZ', userDisplayName: 'Avaliador Detalhista', rating: 4, comment: 'Bom veículo, alguns pequenos detalhes não mencionados, mas nada grave. No geral, uma boa compra.', createdAt: createPastDate(0, 10) },
-    { id: 'REV003', lotId: 'LOTE001', auctionId: '100625bra', userId: 'userDEF', userDisplayName: 'Investidor Imobiliário', rating: 5, comment: 'Ótima oportunidade de investimento, documentação em ordem e localização privilegiada.', createdAt: createPastDate(3) },
-];
+    for (let i = 0; i < numberOfBids; i++) {
+        const increment = currentPrice > 50000 ? 1000 : (currentPrice > 5000 ? 500 : 100);
+        currentPrice += increment * (Math.random() * 0.5 + 0.8); // Small random variation
+        currentPrice = Math.round(currentPrice / 10) * 10; // Round to nearest 10
+        bids.push({
+            id: `BID-${lot.id}-${i + 1}`,
+            lotId: lot.id,
+            auctionId: lot.auctionId,
+            bidderId: `user${String.fromCharCode(65 + Math.floor(Math.random() * 5))}${Math.floor(Math.random() * 99)}`, // UserA0-UserE99
+            bidderDisplay: `Usuário ${String.fromCharCode(65 + Math.floor(Math.random() * 5))}****`,
+            amount: currentPrice,
+            timestamp: createPastDate(Math.floor(Math.random() * 3), Math.floor(Math.random() * 24), Math.floor(Math.random() * 60)),
+        });
+    }
+    if (bids.length > 0) {
+      lot.price = bids[bids.length -1].amount; // Update lot price to the last bid
+      lot.bidsCount = bids.length;
+    } else if (lot.bidsCount && lot.bidsCount > 0) {
+        // If lot.bidsCount > 0 but we didn't generate bids, set price to initial or keep current
+        lot.price = lot.initialPrice || lot.price;
+    }
 
-export const sampleLotQuestions: LotQuestion[] = [
-    { 
-        id: 'Q001', 
-        lotId: 'LOTEVEI001', 
-        auctionId: '300724car', 
-        userId: 'userQ1', 
-        userDisplayName: 'Interessado123', 
-        questionText: 'O veículo possui alguma restrição judicial ou administrativa? É possível financiamento?', 
-        createdAt: createPastDate(0, 5), 
-        isPublic: true,
-        answerText: 'Prezado Interessado123, o veículo não possui restrições. Quanto ao financiamento, sugerimos consultar seu banco, mas geralmente é possível para veículos deste ano/valor.',
-        answeredAt: createPastDate(0, 3),
-        answeredByUserId: 'admin-bidexpert',
-        answeredByUserDisplayName: 'Suporte BidExpert'
-    },
-    { 
-        id: 'Q002', 
-        lotId: 'LOTEVEI001', 
-        auctionId: '300724car', 
-        userId: 'userQ2', 
-        userDisplayName: 'MecânicoCurioso', 
-        questionText: 'O motor apresenta algum vazamento de óleo? A correia dentada foi trocada recentemente?', 
-        createdAt: createPastDate(0, 2),
-        isPublic: true,
-    },
-    { 
-        id: 'Q003', 
-        lotId: 'LOTE001', 
-        auctionId: '100625bra', 
-        userId: 'userQ3', 
-        userDisplayName: 'PossívelMorador', 
-        questionText: 'A documentação do imóvel está totalmente regularizada para transferência imediata?', 
-        createdAt: createPastDate(1, 8),
-        isPublic: true,
-        answerText: 'Sim, documentação 100% regularizada, pronta para escritura e registro.',
-        answeredAt: createPastDate(1, 2),
-        answeredByUserId: 'seller-bradesco',
-        answeredByUserDisplayName: 'Banco Bradesco S.A.'
-    },
-];
+    return bids;
+}).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+
+export const sampleLotReviews: Review[] = sampleLots.map(lot => {
+    const numReviews = Math.floor(Math.random() * 4); // 0 a 3 reviews por lote
+    const reviews: Review[] = [];
+    const reviewUsers = ['Carlos S.', 'Maria P.', 'João L.', 'Ana R.', 'Fernanda C.'];
+    const reviewTexts = [
+        'Excelente produto, chegou rápido e conforme o anúncio. Recomendo!',
+        'Bom estado, algumas marcas de uso não descritas, mas funcional.',
+        'Ótima aquisição, superou minhas expectativas. Atendimento nota 10.',
+        'Processo de compra tranquilo. O item é exatamente como imaginei.',
+        'Recomendo o vendedor, produto de qualidade.',
+        'Poderia ser melhor descrito, mas estou satisfeito com a compra.',
+        'Entrega demorou um pouco, mas o produto é bom.',
+    ];
+    for (let i = 0; i < numReviews; i++) {
+        reviews.push({
+            id: `REV-${lot.id}-${i + 1}`,
+            lotId: lot.id,
+            auctionId: lot.auctionId,
+            userId: `user${Math.floor(Math.random() * 1000)}`,
+            userDisplayName: reviewUsers[Math.floor(Math.random() * reviewUsers.length)],
+            rating: Math.floor(Math.random() * 2) + 4, // 4 ou 5 estrelas
+            comment: reviewTexts[Math.floor(Math.random() * reviewTexts.length)],
+            createdAt: createPastDate(Math.floor(Math.random() * 10) + 1, Math.floor(Math.random() * 24)),
+        });
+    }
+    return reviews;
+}).flat();
+
+
+export const sampleLotQuestions: LotQuestion[] = sampleLots.map(lot => {
+    const numQuestions = Math.floor(Math.random() * 3); // 0 a 2 perguntas por lote
+    const questions: LotQuestion[] = [];
+    const questionUsers = ['Interessado A', 'Comprador B', 'Usuário C', 'Investidor D'];
+    const questionSamples = [
+        'O item acompanha manual e caixa original?',
+        'É possível agendar uma visita para inspeção antes de dar o lance?',
+        'Quais as formas de pagamento aceitas para este lote?',
+        'O frete para o CEP 00000-000 fica quanto?',
+        'Há alguma garantia ou possibilidade de devolução?',
+        'O produto apresenta algum defeito não listado na descrição?',
+    ];
+    const answerSamples = [
+        'Sim, acompanha todos os manuais e a embalagem original.',
+        'Visitas podem ser agendadas diretamente com nosso atendimento. Contate-nos.',
+        'Aceitamos PIX e transferência bancária. Detalhes no edital.',
+        'O frete pode ser calculado na página do lote ou retirado em nosso pátio.',
+        'Por se tratar de um leilão, os itens são vendidos no estado em que se encontram, sem garantia.',
+        'Não foram identificados outros defeitos além dos mencionados.',
+    ];
+
+    for (let i = 0; i < numQuestions; i++) {
+        const hasAnswer = Math.random() > 0.4; // 60% de chance de ter resposta
+        questions.push({
+            id: `QST-${lot.id}-${i + 1}`,
+            lotId: lot.id,
+            auctionId: lot.auctionId,
+            userId: `userQ${Math.floor(Math.random() * 1000)}`,
+            userDisplayName: questionUsers[Math.floor(Math.random() * questionUsers.length)],
+            questionText: questionSamples[Math.floor(Math.random() * questionSamples.length)],
+            createdAt: createPastDate(Math.floor(Math.random() * 5) + 1, Math.floor(Math.random() * 12)),
+            isPublic: true,
+            answerText: hasAnswer ? answerSamples[Math.floor(Math.random() * answerSamples.length)] : undefined,
+            answeredAt: hasAnswer ? createPastDate(Math.floor(Math.random() * 2), Math.floor(Math.random() * 8)) : undefined,
+            answeredByUserId: hasAnswer ? (lot.sellerId || 'admin-bidexpert') : undefined,
+            answeredByUserDisplayName: hasAnswer ? (lot.sellerName || 'Suporte BidExpert') : undefined,
+        });
+    }
+    return questions;
+}).flat();
 
 
 export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDocumentStatus | UserHabilitationStatus | DirectSaleOfferStatus ): string => {
@@ -956,14 +1011,22 @@ export const slugify = (text: string): string => {
 };
 
 export function getCategoryNameFromSlug(slug: string): string | undefined {
+  // Primeiro, tenta encontrar em sampleLots
   for (const lot of sampleLots) {
     if (lot.type && slugify(lot.type) === slug) {
       return lot.type;
     }
   }
+  // Se não encontrar, tenta em sampleAuctions
   for (const auction of sampleAuctions) {
       if (auction.category && slugify(auction.category) === slug) {
           return auction.category;
+      }
+  }
+  // Se não encontrar em directSales
+  for (const offer of sampleDirectSaleOffers) {
+      if (offer.category && slugify(offer.category) === slug) {
+          return offer.category;
       }
   }
   console.warn(`[sample-data] Nenhum nome de categoria encontrado para o slug: ${slug}`);
