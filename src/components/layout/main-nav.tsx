@@ -70,8 +70,7 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
         ]);
         setSearchCategories(fetchedCategories);
         setAuctioneers(fetchedAuctioneers);
-        setSellers(fetchedSellers);
-
+        
         const MAX_SELLERS_IN_MEGAMENU = 5;
         const visibleSellers = fetchedSellers.slice(0, MAX_SELLERS_IN_MEGAMENU);
         const hasMoreSellers = fetchedSellers.length > MAX_SELLERS_IN_MEGAMENU;
@@ -95,7 +94,6 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
             });
         }
         setConsignorMegaMenuGroups(formattedSellersForMenu.filter(group => group.items.length > 0));
-
 
       } catch (error) {
         console.error("Error fetching data for main navigation:", error);
@@ -163,6 +161,8 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
               <span>{item.label}</span>
             </Link>
           ) : (
+             // Para itens de megamenu no mobile, podemos decidir não renderizar ou renderizar um link para uma página de visão geral se houver
+             // Por enquanto, vamos omiti-los no mobile se não tiverem um href direto (ou tratar com accordion como exemplo)
             <div key={item.label} className="text-md font-medium text-muted-foreground/50 flex items-center gap-2 py-2.5 px-3 rounded-md cursor-not-allowed">
                  {item.icon}<span>{item.label} (Desktop)</span>
             </div>
@@ -179,10 +179,18 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
       <NavigationMenuList>
         {navItems.map((item) => {
           if (item.isMegaMenu) {
+            let iconToShow: React.ReactNode = null;
+            if (item.icon && React.isValidElement(item.icon)) {
+              const iconElement = item.icon as React.ReactElement<any>;
+              iconToShow = React.cloneElement(iconElement, {
+                className: cn(iconElement.props.className, "mr-1.5") 
+              });
+            }
+
             return (
               <NavigationMenuItem key={item.label} value={item.label}>
                 <NavigationMenuTrigger className="text-sm font-medium text-muted-foreground hover:text-primary data-[active]:text-primary data-[state=open]:text-primary bg-transparent hover:bg-accent focus:bg-accent h-10 px-3 py-2">
-                  {item.icon && React.cloneElement(item.icon as React.ReactElement, { className: "mr-1.5 h-4 w-4" })}
+                  {iconToShow}
                   {item.label}
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
@@ -215,3 +223,4 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
     </NavigationMenu>
   );
 }
+
