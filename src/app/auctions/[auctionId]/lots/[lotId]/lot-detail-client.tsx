@@ -15,6 +15,14 @@ import {
     Tag, CalendarDays, Clock, Users, DollarSign, MapPin, Car, Settings, ThumbsUp,
     ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { addRecentlyViewedId } from '@/lib/recently-viewed-store';
@@ -267,11 +275,11 @@ export default function LotDetailClientContent({
       toast({ title: "Erro ao Enviar Pergunta", description: result.message, variant: "destructive" });
       return false;
     }
-  }; // Ensure this is correctly terminated
+  };
     
  return (
     <>
-        <div className="space-y-6"> {/* This is the start of the first div in the return */}
+        <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
             <div className="flex-grow">
                 <h1 className="text-2xl md:text-3xl font-bold font-headline text-left">{lotTitle}</h1>
@@ -442,4 +450,3 @@ export default function LotDetailClientContent({
     </>
  );
 }
-
