@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { sampleAuctions, sampleLots, slugify, getUniqueSellers } from '@/lib/sample-data';
+import { sampleAuctions, sampleLots, slugify, sampleSellers } from '@/lib/sample-data'; // Modificado para usar sampleSellers
 import type { Auction, Lot, SellerProfileInfo } from '@/types';
 import AuctionCard from '@/components/auction-card';
 import LotCard from '@/components/lot-card';
@@ -31,7 +31,7 @@ export default function SellerDetailsPage() {
       setError(null);
 
       try {
-        const allSellers = getUniqueSellers();
+        const allSellers = sampleSellers; // Alterado para usar o array diretamente
         const foundSeller = allSellers.find(s => s.slug === sellerIdSlug);
 
         if (!foundSeller) {
@@ -55,10 +55,7 @@ export default function SellerDetailsPage() {
         let lotsByThisSeller = sampleLots.filter(lot => lot.sellerName && slugify(lot.sellerName) === sellerIdSlug);
         
         auctionsByThisSeller.forEach(auction => {
-          auction.lots.forEach(auctionLot => {
-            // Add lot if it's from an auction by this seller AND
-            // (it doesn't have a specific sellerName OR its sellerName also matches this seller)
-            // AND it's not already in lotsByThisSeller
+          (auction.lots || []).forEach(auctionLot => { // Adicionado (auction.lots || []) para segurança
             if ((!auctionLot.sellerName || slugify(auctionLot.sellerName) === sellerIdSlug) && 
                 !lotsByThisSeller.find(l => l.id === auctionLot.id)) {
               lotsByThisSeller.push(auctionLot);
@@ -66,7 +63,6 @@ export default function SellerDetailsPage() {
           });
         });
         
-        // Ensure unique lots if there was any overlap from direct lot.sellerName and auction.seller filtering
         const uniqueLots = lotsByThisSeller.filter((lot, index, self) =>
           index === self.findIndex((l) => (l.id === lot.id))
         );
@@ -134,7 +130,7 @@ export default function SellerDetailsPage() {
                 <div className="text-sm text-muted-foreground mt-1 space-y-0.5">
                   <div className="flex items-center gap-1.5">
                     <CalendarDays className="h-4 w-4" />
-                    <span>Conosco desde: {format(new Date(sellerProfile.memberSince), 'MM/yyyy', { locale: ptBR })}</span>
+                    <span>Conosco desde: {sellerProfile.memberSince ? format(new Date(sellerProfile.memberSince), 'MM/yyyy', { locale: ptBR }) : 'N/A'}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <PackageOpen className="h-4 w-4" />
@@ -142,7 +138,7 @@ export default function SellerDetailsPage() {
                   </div>
                    <div className="flex items-center gap-1.5">
                     <Star className="h-4 w-4 text-amber-500" />
-                    <span>Avaliação: {sellerProfile.rating.toFixed(1)} / 5.0</span>
+                    <span>Avaliação: {sellerProfile.rating ? sellerProfile.rating.toFixed(1) : 'N/A'} / 5.0</span>
                   </div>
                 </div>
               </div>
@@ -191,4 +187,3 @@ export default function SellerDetailsPage() {
     </div>
   );
 }
-
