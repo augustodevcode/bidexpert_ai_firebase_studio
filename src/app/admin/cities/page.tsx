@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 import { useState } from 'react';
-
+import { useEffect } from 'react';
 function DeleteCityButton({ cityId, cityName, onDelete }: { cityId: string; cityName: string; onDelete: (id: string) => Promise<void> }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -31,7 +31,6 @@ function DeleteCityButton({ cityId, cityName, onDelete }: { cityId: string; city
     setIsOpen(false);
   };
 
-  'use client';
   return (
 
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
@@ -65,8 +64,19 @@ function DeleteCityButton({ cityId, cityName, onDelete }: { cityId: string; city
   );
 }
 
-export default async function AdminCitiesPage() {
-  const cities = await getCities();
+export default function AdminCitiesPage() {
+  const [cities, setCities] = useState<CityInfo[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      const data = await getCities();
+      setCities(data);
+      setLoading(false);
+    };
+
+    fetchCities();
+  }, []);
 
   return (
     <TooltipProvider>
@@ -89,7 +99,11 @@ export default async function AdminCitiesPage() {
             </Button>
           </CardHeader>
           <CardContent>
-            {cities.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-10 text-muted-foreground bg-secondary/30 rounded-md">
+                <p className="font-semibold">Carregando cidades...</p>
+              </div>
+            ) : cities.length === 0 ? (
               <div className="text-center py-10 text-muted-foreground bg-secondary/30 rounded-md">
                 <AlertTriangle className="mx-auto h-10 w-10 mb-3" />
                 <p className="font-semibold">Nenhuma cidade encontrada.</p>

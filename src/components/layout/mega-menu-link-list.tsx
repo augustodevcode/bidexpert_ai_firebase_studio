@@ -3,18 +3,18 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { NavigationMenuLink } from '@/components/ui/navigation-menu';
+import { NavigationMenuLink } from '@/components/ui/navigation-menu'; // Ajustado para o caminho correto
 import { cn } from '@/lib/utils';
 import { ChevronRight } from 'lucide-react';
 
-interface MegaMenuLinkItem {
+export interface MegaMenuLinkItem {
   href: string;
   label: string;
   description?: string;
   icon?: React.ReactNode;
 }
 
-interface MegaMenuGroup {
+export interface MegaMenuGroup {
   title?: string;
   items: MegaMenuLinkItem[];
 }
@@ -27,7 +27,7 @@ interface MegaMenuLinkListProps {
 
 const ListItem = React.forwardRef<
   React.ElementRef<'a'>,
-  React.ComponentPropsWithoutRef<'a'> & { icon?: React.ReactNode }
+  React.ComponentPropsWithoutRef<'a'> & { icon?: React.ReactNode; title: string } // title é obrigatório
 >(({ className, title, children, icon, ...props }, ref) => {
   return (
     <li>
@@ -40,16 +40,16 @@ const ListItem = React.forwardRef<
           )}
           {...props}
         >
-          {icon && <div className="text-primary">{icon}</div>}
-          <div className="flex-grow">
-            <div className="text-sm font-medium leading-none">{title}</div>
+          {icon && <div className="text-primary flex-shrink-0">{icon}</div>}
+          <div className="flex-grow min-w-0"> {/* Adicionado min-w-0 para truncamento funcionar */}
+            <div className="text-sm font-medium leading-none truncate" title={title}>{title}</div>
             {children && (
               <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
                 {children}
               </p>
             )}
           </div>
-          {!children && <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary" />}
+          {!children && <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary flex-shrink-0" />}
         </a>
       </NavigationMenuLink>
     </li>
@@ -58,31 +58,33 @@ const ListItem = React.forwardRef<
 ListItem.displayName = 'ListItem';
 
 export default function MegaMenuLinkList({ groups, onLinkClick, gridCols = "md:grid-cols-1" }: MegaMenuLinkListProps) {
-  if (!groups || groups.length === 0) {
+  if (!groups || groups.length === 0 || groups.every(g => g.items.length === 0)) {
     return <p className="p-4 text-sm text-muted-foreground">Nenhuma opção disponível.</p>;
   }
 
   return (
     <div className="p-2">
       {groups.map((group, groupIndex) => (
-        <div key={group.title || `group-${groupIndex}`} className={groupIndex > 0 ? "mt-3 pt-3 border-t border-border/50" : ""}>
-          {group.title && (
-            <h4 className="px-3 py-2 text-sm font-semibold text-foreground">{group.title}</h4>
-          )}
-          <ul className={cn("grid w-[300px] gap-1 p-2 md:w-[350px] lg:w-[400px]", gridCols)}>
-            {group.items.map((item) => (
-              <ListItem
-                key={item.href}
-                title={item.label}
-                href={item.href}
-                icon={item.icon}
-                onClick={onLinkClick}
-              >
-                {item.description}
-              </ListItem>
-            ))}
-          </ul>
-        </div>
+        (group.items && group.items.length > 0) ? ( // Renderiza grupo apenas se tiver itens
+          <div key={group.title || `group-${groupIndex}`} className={groupIndex > 0 ? "mt-3 pt-3 border-t border-border/50" : ""}>
+            {group.title && (
+              <h4 className="px-3 py-2 text-sm font-semibold text-foreground">{group.title}</h4>
+            )}
+            <ul className={cn("grid w-[300px] gap-1 p-2 md:w-[350px] lg:w-[400px]", gridCols)}>
+              {group.items.map((item) => (
+                <ListItem
+                  key={item.href}
+                  title={item.label}
+                  href={item.href}
+                  icon={item.icon}
+                  onClick={onLinkClick}
+                >
+                  {item.description}
+                </ListItem>
+              ))}
+            </ul>
+          </div>
+        ) : null
       ))}
     </div>
   );
