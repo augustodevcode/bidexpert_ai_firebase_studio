@@ -1,4 +1,3 @@
-
 'use client';
     
 import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
@@ -27,12 +26,12 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { addRecentlyViewedId } from '@/lib/recently-viewed-store';
 import { useToast } from '@/hooks/use-toast';
-
     
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useAuth } from '@/contexts/auth-context';
 import { getAuctionStatusText, getLotStatusColor, sampleAuctions } from '@/lib/sample-data';
-import { placeBidOnLot, getBidsForLot, getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot } from './actions';
+// Using sample data for bids, reviews, questions as per request
+import { getBidsForLot, getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, placeBidOnLot } from './actions'; 
 import { auth } from '@/lib/firebase';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LotDescriptionTab from '@/components/auction/lot-description-tab';
@@ -44,9 +43,9 @@ import LotPreviewModal from '@/components/lot-preview-modal';
 import { hasPermission } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
     
-const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'augusto.devcode@gmail.com'.toLowerCase();
+const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'admin@bidexpert.com.br'.toLowerCase();
 const SUPER_TEST_USER_UID_FOR_BYPASS = 'SUPER_TEST_USER_UID_PLACEHOLDER_AUG';
-const SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS = 'Augusto Dev (Super Test)';
+const SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS = 'Administrador BidExpert (Super Test)';
     
 interface LotDetailClientContentProps {
   lot: Lot;
@@ -102,16 +101,18 @@ export default function LotDetailClientContent({
       const fetchDataForTabs = async () => {
         setIsLoadingData(true);
         try {
+          console.log(`[LotDetailClient] Fetching tab data for lot ID: ${lot.id}`);
           const [bids, reviews, questions] = await Promise.all([
             getBidsForLot(lot.id),
             getReviewsForLot(lot.id),
             getQuestionsForLot(lot.id)
           ]);
+          console.log(`[LotDetailClient] Bids fetched: ${bids.length}, Reviews: ${reviews.length}, Questions: ${questions.length}`);
           setLotBids(bids);
           setLotReviews(reviews);
           setLotQuestions(questions);
         } catch (error: any) {
-          console.error("Error fetching data for tabs:", error);
+          console.error("[LotDetailClient] Error fetching data for tabs:", error);
           toast({ title: "Erro", description: "Não foi possível carregar todos os dados do lote.", variant: "destructive" });
         } finally {
           setIsLoadingData(false);
@@ -119,7 +120,7 @@ export default function LotDetailClientContent({
       };
       fetchDataForTabs();
     }
-  }, [lot, toast]);
+  }, [lot, toast]); // Removed fetchDataForTabs from dependency array as it's defined inside
     
     
   const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || lot?.title}`.trim();
@@ -205,7 +206,10 @@ export default function LotDetailClientContent({
     }
     
     try {
+      console.log(`[LotDetailClient] Placing bid for lot ${lot.id} by user ${userIdForBid} with amount ${amountToBid}`);
       const result = await placeBidOnLot(lot.id, lot.auctionId, userIdForBid!, displayNameForBid!, amountToBid);
+      console.log(`[LotDetailClient] placeBidOnLot result:`, result);
+
       if (result.success && result.updatedLot && result.newBid) {
         setLot(prevLot => ({ ...prevLot!, ...result.updatedLot }));
         setLotBids(prevBids => [result.newBid!, ...prevBids].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
@@ -240,11 +244,24 @@ export default function LotDetailClientContent({
   const displayTotalLots = totalLotsInAuction || auction.totalLots || 'N/A';
     
   const handleNewReview = async (rating: number, comment: string) => {
-    if (!userProfileWithPermissions || !userProfileWithPermissions.uid) {
+    let userIdForReview: string | undefined = userProfileWithPermissions?.uid;
+    let displayNameForReview: string | undefined = userProfileWithPermissions?.fullName || userProfileWithPermissions?.email?.split('@')[0];
+
+    if (isEffectivelySuperTestUser && !userIdForReview) {
+        userIdForReview = userProfileWithPermissions?.uid || SUPER_TEST_USER_UID_FOR_BYPASS; 
+        displayNameForReview = userProfileWithPermissions?.fullName || SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
+    }
+
+    if (!userIdForReview) {
       toast({ title: "Login Necessário", description: "Você precisa estar logado para enviar uma avaliação.", variant: "destructive" });
       return false;
     }
-    const result = await createReview(lot.id, userProfileWithPermissions.uid, userProfileWithPermissions.fullName || userProfileWithPermissions.email || "Usuário Anônimo", rating, comment);
+    if (!displayNameForReview) displayNameForReview = 'Usuário Anônimo';
+    
+    console.log(`[LotDetailClient] Submitting review for lot ${lot.id} by user ${userIdForReview}`);
+    const result = await createReview(lot.id, userIdForReview, displayNameForReview, rating, comment);
+    console.log(`[LotDetailClient] createReview result:`, result);
+
     if (result.success) {
       toast({ title: "Avaliação Enviada", description: result.message });
       const updatedReviews = await getReviewsForLot(lot.id);
@@ -257,7 +274,15 @@ export default function LotDetailClientContent({
   };
     
   const handleNewQuestion = async (questionText: string) => {
-    if (!userProfileWithPermissions || !userProfileWithPermissions.uid) {
+    let userIdForQuestion: string | undefined = userProfileWithPermissions?.uid;
+    let displayNameForQuestion: string | undefined = userProfileWithPermissions?.fullName || userProfileWithPermissions?.email?.split('@')[0];
+
+    if (isEffectivelySuperTestUser && !userIdForQuestion) {
+        userIdForQuestion = userProfileWithPermissions?.uid || SUPER_TEST_USER_UID_FOR_BYPASS; 
+        displayNameForQuestion = userProfileWithPermissions?.fullName || SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
+    }
+
+    if (!userIdForQuestion) {
       toast({ title: "Login Necessário", description: "Você precisa estar logado para enviar uma pergunta.", variant: "destructive" });
       return false;
     }
@@ -265,7 +290,12 @@ export default function LotDetailClientContent({
       toast({ title: "Habilitação Necessária", description: "Você precisa estar habilitado para fazer perguntas.", variant: "destructive" });
       return false;
     }
-    const result = await askQuestionOnLot(lot.id, userProfileWithPermissions.uid, userProfileWithPermissions.fullName || userProfileWithPermissions.email || "Usuário Anônimo", questionText);
+    if (!displayNameForQuestion) displayNameForQuestion = 'Usuário Anônimo';
+    
+    console.log(`[LotDetailClient] Submitting question for lot ${lot.id} by user ${userIdForQuestion}`);
+    const result = await askQuestionOnLot(lot.id, userIdForQuestion, displayNameForQuestion, questionText);
+    console.log(`[LotDetailClient] askQuestionOnLot result:`, result);
+
     if (result.success) {
       toast({ title: "Pergunta Enviada", description: result.message });
       const updatedQuestions = await getQuestionsForLot(lot.id);

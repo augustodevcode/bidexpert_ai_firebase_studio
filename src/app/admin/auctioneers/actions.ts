@@ -2,79 +2,73 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDatabaseAdapter } from '@/lib/database';
+import { sampleAuctioneers, slugify } from '@/lib/sample-data';
 import type { AuctioneerProfileInfo, AuctioneerFormData } from '@/types';
-import { slugify } from '@/lib/sample-data';
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function createAuctioneer(
   data: AuctioneerFormData
 ): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> {
-  const db = await getDatabaseAdapter();
-  const publicId = `LEIL-${slugify(data.name.substring(0,10))}-${Date.now().toString(36)}`;
-  const result = await db.createAuctioneer({ ...data, publicId });
-  if (result.success) {
-    revalidatePath('/admin/auctioneers');
-  }
-  return result;
+  console.log(`[Action - createAuctioneer - SampleData Mode] Simulating creation for: ${data.name}`);
+  await delay(100);
+  revalidatePath('/admin/auctioneers');
+  return { success: true, message: `Leiloeiro "${data.name}" (simulado) criado!`, auctioneerId: `sample-auct-${Date.now()}`, auctioneerPublicId: `AUCT-PUB-SAMP-${Date.now()}` };
 }
 
 export async function getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
-  const db = await getDatabaseAdapter();
-  return db.getAuctioneers();
+  console.log('[Action - getAuctioneers - SampleData Mode] Fetching from sample-data.ts');
+  await delay(50);
+  return Promise.resolve(JSON.parse(JSON.stringify(sampleAuctioneers)));
 }
 
 export async function getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {
-  const db = await getDatabaseAdapter();
-  return db.getAuctioneer(id);
+  console.log(`[Action - getAuctioneer - SampleData Mode] Fetching ID/slug/publicId: ${id}`);
+  await delay(50);
+  const auctioneer = sampleAuctioneers.find(auc => auc.id === id || auc.slug === id || auc.publicId === id);
+  return Promise.resolve(auctioneer ? JSON.parse(JSON.stringify(auctioneer)) : null);
 }
 
 export async function getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
-  const db = await getDatabaseAdapter();
-  return db.getAuctioneerBySlug(slugOrPublicId);
+  console.log(`[Action - getAuctioneerBySlug - SampleData Mode] Fetching slug/publicId: ${slugOrPublicId}`);
+  await delay(50);
+  const auctioneer = sampleAuctioneers.find(auc => auc.slug === slugOrPublicId || auc.publicId === slugOrPublicId);
+  return Promise.resolve(auctioneer ? JSON.parse(JSON.stringify(auctioneer)) : null);
 }
 
 export async function getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> {
-  const db = await getDatabaseAdapter();
-  const auctioneers = await db.getAuctioneers();
+  console.log(`[Action - getAuctioneerByName - SampleData Mode] Fetching name: ${name}`);
+  await delay(50);
   const normalizedName = name.trim().toLowerCase();
-  return auctioneers.find(auc => auc.name.toLowerCase() === normalizedName) || null;
+  const auctioneer = sampleAuctioneers.find(auc => auc.name.toLowerCase() === normalizedName);
+  return Promise.resolve(auctioneer ? JSON.parse(JSON.stringify(auctioneer)) : null);
 }
 
 export async function updateAuctioneer(
   idOrPublicId: string, 
   data: Partial<AuctioneerFormData>
 ): Promise<{ success: boolean; message: string }> {
-  const db = await getDatabaseAdapter();
-  
-  const dataToUpdate: Partial<AuctioneerFormData & { slug?: string }> = { ...data };
-  if (data.name) {
-    // O adapter deve cuidar da geração do slug se o nome mudar e o publicId for usado para encontrar
+  console.log(`[Action - updateAuctioneer - SampleData Mode] Simulating update for ID/publicId: ${idOrPublicId} with data:`, data);
+  await delay(100);
+  revalidatePath('/admin/auctioneers');
+  revalidatePath(`/admin/auctioneers/${idOrPublicId}/edit`);
+  const auctioneer = await getAuctioneer(idOrPublicId); // Uses the sample data version
+  if (auctioneer?.slug) {
+    revalidatePath(`/auctioneers/${auctioneer.slug}`);
   }
-
-  const result = await db.updateAuctioneer(idOrPublicId, dataToUpdate);
-  if (result.success) {
-    revalidatePath('/admin/auctioneers');
-    revalidatePath(`/admin/auctioneers/${idOrPublicId}/edit`);
-    const auctioneer = await db.getAuctioneer(idOrPublicId);
-    if (auctioneer?.slug) {
-      revalidatePath(`/auctioneers/${auctioneer.slug}`);
-    }
-  }
-  return result;
+  return { success: true, message: `Leiloeiro (simulado) atualizado!` };
 }
 
 export async function deleteAuctioneer(
   idOrPublicId: string 
 ): Promise<{ success: boolean; message: string }> {
-  const db = await getDatabaseAdapter();
-  const auctioneerToDelete = await db.getAuctioneer(idOrPublicId);
-  const result = await db.deleteAuctioneer(idOrPublicId);
-  if (result.success) {
-    revalidatePath('/admin/auctioneers');
-    if (auctioneerToDelete?.slug) {
-      revalidatePath(`/auctioneers/${auctioneerToDelete.slug}`);
-    }
+  console.log(`[Action - deleteAuctioneer - SampleData Mode] Simulating deletion for ID/publicId: ${idOrPublicId}`);
+  await delay(100);
+  const auctioneerToDelete = await getAuctioneer(idOrPublicId); // Uses the sample data version
+  revalidatePath('/admin/auctioneers');
+  if (auctioneerToDelete?.slug) {
+    revalidatePath(`/auctioneers/${auctioneerToDelete.slug}`);
   }
-  return result;
+  return { success: true, message: `Leiloeiro (simulado) excluído!` };
 }
-
+    

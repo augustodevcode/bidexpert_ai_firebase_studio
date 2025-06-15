@@ -1,75 +1,67 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDatabaseAdapter } from '@/lib/database';
+import { sampleSellers, slugify } from '@/lib/sample-data';
 import type { SellerProfileInfo, SellerFormData } from '@/types';
-import { slugify } from '@/lib/sample-data'; // slugify é usado no adapter agora
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function createSeller(
   data: SellerFormData
 ): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> {
-  const db = await getDatabaseAdapter();
-  // publicId é gerado pelo adapter
-  const result = await db.createSeller(data);
-  if (result.success) {
-    revalidatePath('/admin/sellers');
-  }
-  return result;
+  console.log(`[Action - createSeller - SampleData Mode] Simulating creation for: ${data.name}`);
+  await delay(100);
+  revalidatePath('/admin/sellers');
+  return { success: true, message: `Comitente "${data.name}" (simulado) criado!`, sellerId: `sample-seller-${Date.now()}`, sellerPublicId: `SELL-PUB-SAMP-${Date.now()}` };
 }
 
 export async function getSellers(): Promise<SellerProfileInfo[]> {
-  const db = await getDatabaseAdapter();
-  return db.getSellers();
+  console.log('[Action - getSellers - SampleData Mode] Fetching from sample-data.ts');
+  await delay(50);
+  return Promise.resolve(JSON.parse(JSON.stringify(sampleSellers)));
 }
 
-export async function getSeller(id: string): Promise<SellerProfileInfo | null> {
-  const db = await getDatabaseAdapter();
-  // O adapter agora lida com ID numérico ou publicId
-  return db.getSeller(id);
+export async function getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> {
+  console.log(`[Action - getSeller - SampleData Mode] Fetching ID/slug/publicId: ${idOrPublicId}`);
+  await delay(50);
+  const seller = sampleSellers.find(s => s.id === idOrPublicId || s.slug === idOrPublicId || s.publicId === idOrPublicId);
+  return Promise.resolve(seller ? JSON.parse(JSON.stringify(seller)) : null);
 }
 
 export async function getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null> {
-  const db = await getDatabaseAdapter();
-  // Esta função agora busca por publicId (ou slug se mantivermos essa lógica no adapter)
-  return db.getSellerBySlug(slugOrPublicId);
+  console.log(`[Action - getSellerBySlug - SampleData Mode] Fetching slug/publicId: ${slugOrPublicId}`);
+  await delay(50);
+  const seller = sampleSellers.find(s => s.slug === slugOrPublicId || s.publicId === slugOrPublicId);
+  return Promise.resolve(seller ? JSON.parse(JSON.stringify(seller)) : null);
 }
 
 export async function getSellerByName(name: string): Promise<SellerProfileInfo | null> {
-  // Esta função pode precisar ser otimizada se a coleção for grande
-  // Por enquanto, busca todos e filtra. O adapter pode ter um getSellerByName otimizado.
-  const sellers = await getSellers(); 
+  console.log(`[Action - getSellerByName - SampleData Mode] Fetching name: ${name}`);
+  await delay(50);
   const normalizedName = name.trim().toLowerCase();
-  return sellers.find(sel => sel.name.toLowerCase() === normalizedName) || null;
+  const seller = sampleSellers.find(sel => sel.name.toLowerCase() === normalizedName);
+  return Promise.resolve(seller ? JSON.parse(JSON.stringify(seller)) : null);
 }
 
-
 export async function updateSeller(
-  idOrPublicId: string, // Pode ser o ID numérico ou o publicId
+  idOrPublicId: string,
   data: Partial<SellerFormData>
 ): Promise<{ success: boolean; message: string }> {
-  const db = await getDatabaseAdapter();
-  
-  const dataToUpdate: Partial<SellerFormData & { slug?: string }> = { ...data };
-  if (data.name) {
-    dataToUpdate.slug = slugify(data.name); // O adapter também fará isso se o nome mudar
-  }
-
-  const result = await db.updateSeller(idOrPublicId, dataToUpdate);
-  if (result.success) {
-    revalidatePath('/admin/sellers');
-    revalidatePath(`/admin/sellers/${idOrPublicId}/edit`); // Idealmente, a rota usaria publicId
-    revalidatePath(`/consignor-dashboard/overview`); 
-  }
-  return result;
+  console.log(`[Action - updateSeller - SampleData Mode] Simulating update for ID/publicId: ${idOrPublicId} with data:`, data);
+  await delay(100);
+  revalidatePath('/admin/sellers');
+  revalidatePath(`/admin/sellers/${idOrPublicId}/edit`);
+  revalidatePath(`/consignor-dashboard/overview`); 
+  return { success: true, message: `Comitente (simulado) atualizado!` };
 }
 
 export async function deleteSeller(
-  idOrPublicId: string // Pode ser o ID numérico ou o publicId
+  idOrPublicId: string
 ): Promise<{ success: boolean; message: string }> {
-  const db = await getDatabaseAdapter();
-  const result = await db.deleteSeller(idOrPublicId);
-  if (result.success) {
-    revalidatePath('/admin/sellers');
-  }
-  return result;
+  console.log(`[Action - deleteSeller - SampleData Mode] Simulating deletion for ID/publicId: ${idOrPublicId}`);
+  await delay(100);
+  revalidatePath('/admin/sellers');
+  return { success: true, message: `Comitente (simulado) excluído!` };
 }
+    
