@@ -4,9 +4,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building, ArrowRight, CalendarDays, Star, PackageOpen } from 'lucide-react';
+import { Building, ArrowRight, CalendarDays, Star, PackageOpen, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { getUniqueSellers } from '@/lib/sample-data';
+import { sampleSellers } from '@/lib/sample-data'; // Modificado para usar sampleSellers
 import type { SellerProfileInfo } from '@/types';
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
@@ -17,7 +17,8 @@ export default function SellersListPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setSellers(getUniqueSellers());
+    // Usa o array diretamente, já que getUniqueSellers() não é mais exportado/necessário aqui
+    setSellers(sampleSellers); 
     setIsLoading(false);
   }, []);
 
@@ -80,7 +81,7 @@ export default function SellersListPage() {
           <Card key={seller.slug} className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
             <CardHeader className="items-center text-center">
               <Avatar className="h-20 w-20 mb-3 border-2 border-primary/30">
-                <AvatarImage src={seller.logoUrl} alt={seller.name} data-ai-hint={seller.dataAiHint} />
+                <AvatarImage src={seller.logoUrl} alt={seller.name} data-ai-hint={seller.dataAiHintLogo || 'logo comitente'} />
                 <AvatarFallback>{getSellerInitial(seller.name)}</AvatarFallback>
               </Avatar>
               <CardTitle className="text-xl font-semibold">{seller.name}</CardTitle>
@@ -89,7 +90,7 @@ export default function SellersListPage() {
             <CardContent className="flex-grow space-y-2 text-sm text-muted-foreground text-center">
               <div className="flex items-center justify-center gap-1">
                 <CalendarDays className="h-3.5 w-3.5" />
-                <span>Conosco desde: {format(new Date(seller.memberSince), 'MM/yyyy', { locale: ptBR })}</span>
+                <span>Conosco desde: {seller.memberSince ? format(new Date(seller.memberSince), 'MM/yyyy', { locale: ptBR }) : 'N/A'}</span>
               </div>
               <div className="flex items-center justify-center gap-1">
                 <PackageOpen className="h-3.5 w-3.5" />
@@ -97,7 +98,7 @@ export default function SellersListPage() {
               </div>
               <div className="flex items-center justify-center gap-1">
                  <Star className="h-3.5 w-3.5 text-amber-500" />
-                <span>Avaliação: {seller.rating.toFixed(1)} / 5.0</span>
+                <span>Avaliação: {seller.rating ? seller.rating.toFixed(1) : 'N/A'} / 5.0</span>
               </div>
             </CardContent>
             <CardContent className="text-center mt-auto pt-0 pb-4 px-4">
