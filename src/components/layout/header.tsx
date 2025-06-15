@@ -14,7 +14,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Coins, Search as SearchIcon, Menu, ChevronDown, Package, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone } from 'lucide-react';
+import { Coins, Search as SearchIcon, Menu, ChevronDown, Package, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History } from 'lucide-react'; // Removido ShoppingCart de Lucide
 import { useAuth } from '@/contexts/auth-context';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -34,7 +34,7 @@ import { getFavoriteLotIdsFromStorage } from '@/lib/favorite-store';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import DynamicBreadcrumbs from './dynamic-breadcrumbs'; // Novo componente
+import DynamicBreadcrumbs from './dynamic-breadcrumbs';
 
 export default function Header() {
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
@@ -48,7 +48,7 @@ export default function Header() {
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const pathname = usePathname(); // Para controlar visibilidade dos breadcrumbs
+  const pathname = usePathname(); 
   const { user } = useAuth();
 
   const placeholderNotificationsCount = 3; 
@@ -177,9 +177,6 @@ export default function Header() {
             <Link href="/contact" className="hover:text-primary transition-colors flex items-center gap-1">
               <Phone className="h-3.5 w-3.5" /> Contato
             </Link>
-            {/* Placeholders for language/currency */}
-            {/* <span className="cursor-pointer hover:text-primary">Português</span> */}
-            {/* <span className="cursor-pointer hover:text-primary">BRL</span> */}
           </nav>
         </div>
       </div>
@@ -345,13 +342,14 @@ export default function Header() {
       {/* Main Navigation Bar - Desktop */}
       <div className="border-b bg-background text-foreground hidden md:block">
         <div className="container mx-auto px-4 flex h-12 items-center justify-between">
-          <div className="flex items-center text-sm font-medium">
-             {/* Placeholder para Shop By Department se necessário no futuro */}
-          </div>
+          {/* Placeholder para Shop By Department (se necessário) */}
+          <div className="flex-1"> {/* Este div pode ficar vazio para empurrar MainNav e Histórico para posições corretas */} </div>
+          
           <nav className="flex items-center space-x-3 lg:space-x-4 text-xs sm:text-sm mx-auto">
               <MainNav />
           </nav>
-          <div className="flex items-center">
+
+          <div className="flex flex-1 items-center justify-end"> {/* Este div força o Histórico para a direita */}
             {isClient && recentlyViewedItems.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -393,7 +391,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Breadcrumbs Bar - Nova */}
+      {/* Breadcrumbs Bar */}
       {isClient && pathname !== '/' && (
         <nav className="border-b bg-secondary/50 text-secondary-foreground text-xs">
             <div className="container mx-auto px-4 h-10 flex items-center">
@@ -404,4 +402,3 @@ export default function Header() {
     </header>
   );
 }
-
