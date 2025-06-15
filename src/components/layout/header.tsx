@@ -2,15 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation'; 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { useRouter, usePathname } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,7 +11,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase'; 
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, forwardRef } from 'react';
 import MainNav from './main-nav';
 import UserNav from './user-nav';
 import { Input } from '@/components/ui/input';
@@ -63,6 +55,33 @@ const modalityGroups: MegaMenuGroup[] = [
   }
 ];
 
+const HistoryListItem = forwardRef<
+  React.ElementRef<"a">,
+  React.ComponentPropsWithoutRef<"a"> & { item: RecentlyViewedLotInfo }
+>(({ className, item, ...props }, ref) => {
+  return (
+    <li>
+      <NavigationMenuLink asChild>
+        <Link
+          href={`/auctions/${item.auctionId}/lots/${item.id}`}
+          ref={ref}
+          className={cn(
+            "flex items-center gap-2 py-1.5 px-3 rounded-md hover:bg-accent transition-colors text-xs leading-snug text-muted-foreground",
+            className
+          )}
+          {...props}
+        >
+          <div className="relative h-10 w-12 flex-shrink-0 bg-muted rounded-sm overflow-hidden">
+            <Image src={item.imageUrl} alt={item.title} fill className="object-cover" data-ai-hint={item.dataAiHint || "item visto recentemente"} />
+          </div>
+          <span className="truncate flex-grow text-foreground/90">{item.title}</span>
+        </Link>
+      </NavigationMenuLink>
+    </li>
+  );
+});
+HistoryListItem.displayName = "HistoryListItem";
+
 export default function Header() {
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
   const [searchCategories, setSearchCategories] = useState<LotCategory[]>([]);
@@ -84,7 +103,7 @@ export default function Header() {
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const siteTitle = platformSettings?.siteTitle || 'BidExpert';
   const siteTagline = platformSettings?.siteTagline;
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // For mobile sheet
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
 
   useEffect(() => {
     setIsClient(true);
@@ -206,20 +225,14 @@ export default function Header() {
     }
   };
   
-  const allNavItems: {
-      label: string;
-      href?: string;
-      isMegaMenu?: boolean;
-      contentKey?: 'categories' | 'modalities' | 'consignors' | 'auctioneers';
-      icon?: React.ElementType;
-  }[] = [
-    { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories' },
-    { href: '/', label: 'Início' },
-    { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities' },
-    { label: 'Comitentes', isMegaMenu: true, contentKey: 'consignors', href: '/sellers' },
-    { label: 'Leiloeiros', isMegaMenu: true, contentKey: 'auctioneers', href: '/auctioneers' },
-    { href: '/sell-with-us', label: 'Venda Conosco' },
-    { href: '/contact', label: 'Fale Conosco' },
+  const allNavItems: NavItem[] = [
+    { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag },
+    { href: '/', label: 'Início', icon: HomeIcon },
+    { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities', icon: ListChecks },
+    { label: 'Comitentes', isMegaMenu: true, contentKey: 'consignors', href: '/sellers', icon: Landmark },
+    { label: 'Leiloeiros', isMegaMenu: true, contentKey: 'auctioneers', href: '/auctioneers', icon: Gavel },
+    { href: '/sell-with-us', label: 'Venda Conosco', icon: Percent },
+    { href: '/contact', label: 'Fale Conosco', icon: Phone },
   ];
 
   const firstNavItem = allNavItems[0];
@@ -368,7 +381,7 @@ export default function Header() {
                               className="flex items-center p-3 hover:bg-accent transition-colors"
                               onClick={() => setIsSearchDropdownOpen(false)}
                             >
-                              <div className="relative h-12 w-16 flex-shrink-0 bg-muted rounded overflow-hidden mr-3">
+                              <div className="relative h-12 w-16 flex-shrink-0 bg-muted rounded-sm overflow-hidden mr-3">
                                 <Image src={lot.imageUrl} alt={lot.title} fill className="object-cover" data-ai-hint={lot.dataAiHint || "resultado busca"} />
                               </div>
                               <div className="flex-grow overflow-hidden">
@@ -424,11 +437,11 @@ export default function Header() {
       <div className="border-b bg-background text-foreground hidden md:block">
         <div className="container mx-auto px-4 flex h-12 items-center justify-between">
           {/* Navegue por Categorias (Esquerda) */}
-          <NavigationMenu className="justify-start">
+          <NavigationMenu className="justify-start"> 
             <NavigationMenuList>
               {firstNavItem.isMegaMenu && firstNavItem.contentKey && (
                 <NavigationMenuItem value={firstNavItem.label}>
-                  <NavigationMenuTrigger asChild>
+                   <NavigationMenuTrigger asChild>
                     <Link 
                         href={firstNavItem.href || '#'}
                         className={cn(navigationMenuTriggerStyle(), "group", pathname === firstNavItem.href && "text-primary bg-accent")}
@@ -446,54 +459,46 @@ export default function Header() {
           </NavigationMenu>
           
           {/* Links Centrais */}
-          <nav className="flex-1 flex justify-center items-center">
-            <MainNav items={centralNavItems} className="justify-center" />
-          </nav>
+          <div className="flex-1 flex justify-center">
+            <MainNav items={centralNavItems} />
+          </div>
 
           {/* Histórico Dropdown (Direita) */}
           <div className="flex items-center justify-end"> 
-            {isClient && recentlyViewedItems.length > 0 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    className={cn(navigationMenuTriggerStyle(), "text-muted-foreground hover:text-accent-foreground data-[state=open]:bg-accent/50 px-3 h-10")}>
-                    Histórico <ChevronDown className="ml-1 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-80 bg-card text-card-foreground">
-                  <DropdownMenuLabel className="flex justify-between items-center">
-                    Itens Vistos Recentemente
-                    <History className="h-4 w-4 text-muted-foreground" />
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {recentlyViewedItems.slice(0, 5).map(item => (
-                    <DropdownMenuItem key={item.id} asChild className="cursor-pointer">
-                      <Link href={`/auctions/${item.auctionId}/lots/${item.id}`} className="flex items-center gap-2 py-1.5">
-                        <div className="relative h-12 w-16 flex-shrink-0 bg-muted rounded-sm overflow-hidden">
-                          <Image src={item.imageUrl} alt={item.title} fill className="object-cover" data-ai-hint={item.dataAiHint || "item visto recentemente"} />
+            {isClient && (
+              <NavigationMenu className="justify-end">
+                <NavigationMenuList>
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "text-muted-foreground hover:text-accent-foreground data-[state=open]:bg-accent/50 px-3 h-10")}>
+                      Histórico <ChevronDown className="ml-1 h-4 w-4" />
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                      <div className="w-80 p-2 space-y-1 bg-card text-card-foreground">
+                        <div className="flex justify-between items-center p-2 border-b mb-1">
+                            <p className="text-sm font-medium">Itens Vistos Recentemente</p>
+                            <History className="h-4 w-4 text-muted-foreground" />
                         </div>
-                        <span className="text-xs truncate flex-grow">{item.title}</span>
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild className="cursor-pointer">
-                    <Link href="/dashboard/history" className="flex items-center justify-center text-primary hover:underline text-xs py-1">
-                      Ver Histórico Completo
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-             {isClient && recentlyViewedItems.length === 0 && (
-                <Button 
-                  variant="ghost" 
-                  asChild 
-                  className={cn(navigationMenuTriggerStyle(), "text-muted-foreground hover:text-accent-foreground px-3 h-10")}
-                >
-                  <Link href="/dashboard/history">Histórico</Link>
-                </Button>
+                        {recentlyViewedItems.length === 0 ? (
+                            <p className="text-xs text-muted-foreground text-center py-3">Nenhum item visto recentemente.</p>
+                        ) : (
+                          <ul className="max-h-80 overflow-y-auto">
+                            {recentlyViewedItems.slice(0, 5).map(item => (
+                              <HistoryListItem key={item.id} item={item} onClick={() => {/* close logic if needed */}} />
+                            ))}
+                          </ul>
+                        )}
+                        <div className="border-t mt-1 pt-1">
+                          <NavigationMenuLink asChild>
+                            <Link href="/dashboard/history" className={cn(navigationMenuTriggerStyle(), "w-full justify-center text-primary hover:underline text-xs py-1 h-auto")}>
+                              Ver Histórico Completo
+                            </Link>
+                          </NavigationMenuLink>
+                        </div>
+                      </div>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
+                </NavigationMenuList>
+              </NavigationMenu>
             )}
           </div>
         </div>
@@ -510,4 +515,3 @@ export default function Header() {
     </header>
   );
 }
-
