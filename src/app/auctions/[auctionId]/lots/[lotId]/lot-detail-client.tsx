@@ -1,3 +1,4 @@
+
 'use client';
     
 import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
@@ -10,9 +11,9 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
-    Printer, Share2, ArrowLeft, ChevronLeft, ChevronRight, RotateCcw, Search, Key, Info,
-    Tag, CalendarDays, Clock, Users, DollarSign, MapPin, Car, Settings, ThumbsUp,
-    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send
+    Printer, Share2, ArrowLeft, ChevronLeft, ChevronRight, Key, Info,
+    Tag, CalendarDays, Clock, Users, DollarSign, MapPin, Car, ThumbsUp,
+    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -30,9 +31,9 @@ import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useAuth } from '@/contexts/auth-context';
 import { getAuctionStatusText, getLotStatusColor, sampleAuctions } from '@/lib/sample-data';
-// Using sample data for bids, reviews, questions as per request
+
 import { getBidsForLot, getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, placeBidOnLot } from './actions'; 
-import { auth } from '@/lib/firebase';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LotDescriptionTab from '@/components/auction/lot-description-tab';
 import LotSpecificationTab from '@/components/auction/lot-specification-tab';
@@ -120,7 +121,7 @@ export default function LotDetailClientContent({
       };
       fetchDataForTabs();
     }
-  }, [lot, toast]); // Removed fetchDataForTabs from dependency array as it's defined inside
+  }, [lot, toast]); 
     
     
   const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || lot?.title}`.trim();
@@ -307,9 +308,9 @@ export default function LotDetailClientContent({
     }
   };
     
- return (
-    <>
-        <div className="space-y-6">
+ return ( // Line 278
+    <> 
+        <div className="space-y-6"> 
             <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
             <div className="flex-grow">
                 <h1 className="text-2xl md:text-3xl font-bold font-headline text-left">{lotTitle}</h1>
@@ -320,27 +321,29 @@ export default function LotDetailClientContent({
                 </div>
             </div>
             <div className="flex items-center space-x-2 flex-wrap justify-start sm:justify-end mt-2 sm:mt-0">
-                    <Button variant="outline" size="icon" onClick={handlePrint} aria-label="Imprimir"><Printer className="h-4 w-4" /></Button>
+                <Button variant="outline" size="icon" onClick={handlePrint} aria-label="Imprimir"><Printer className="h-4 w-4" /></Button>
+                {/* Share DropdownMenu Temporarily Commented Out for Debugging */}
+                {/*
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild><Button variant="outline" size="icon" aria-label="Compartilhar"><Share2 className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild><a href={getSocialLink('x', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><X className="h-4 w-4" /> X (Twitter)</a></DropdownMenuItem>
-                    <DropdownMenuItem asChild><a href={getSocialLink('facebook', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><Facebook className="h-4 w-4" /> Facebook</a></DropdownMenuItem>
-                    <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><MessageSquareText className="h-4 w-4" /> WhatsApp</a></DropdownMenuItem>
-                    <DropdownMenuItem asChild><a href={getSocialLink('email', currentUrl, lotTitle)} className="flex items-center gap-2 cursor-pointer"><Mail className="h-4 w-4" /> Email</a></DropdownMenuItem>
-                </DropdownMenuContent>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild><a href={getSocialLink('x', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><X className="h-4 w-4" /> X (Twitter)</a></DropdownMenuItem>
+                        <DropdownMenuItem asChild><a href={getSocialLink('facebook', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><Facebook className="h-4 w-4" /> Facebook</a></DropdownMenuItem>
+                        <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><MessageSquareText className="h-4 w-4" /> WhatsApp</a></DropdownMenuItem>
+                        <DropdownMenuItem asChild><a href={getSocialLink('email', currentUrl, lotTitle)} className="flex items-center gap-2 cursor-pointer"><Mail className="h-4 w-4" /> Email</a></DropdownMenuItem>
+                    </DropdownMenuContent>
                 </DropdownMenu>
-                
-                        <Button variant="outline" size="icon" asChild aria-label="Voltar para o leilão"><Link href={`/auctions/${auction.id}`}><ArrowLeft className="h-4 w-4" /></Link></Button>
+                */}
+                <Button variant="outline" size="icon" asChild aria-label="Voltar para o leilão"><Link href={`/auctions/${auction.publicId || auction.id}`}><ArrowLeft className="h-4 w-4" /></Link></Button>
             </div>
             </div>
 
             <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
                 <span className="font-medium text-foreground">Lote Nº: {actualLotNumber}</span>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!previousLotId} disabled={!previousLotId} aria-label="Lote Anterior">{previousLotId ? <Link href={`/auctions/${auction.id}/lots/${previousLotId}`}><ChevronLeft className="h-4 w-4" /></Link> : <ChevronLeft className="h-4 w-4"/>}</Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!previousLotId} disabled={!previousLotId} aria-label="Lote Anterior">{previousLotId ? <Link href={`/auctions/${auction.publicId || auction.id}/lots/${previousLotId}`}><ChevronLeft className="h-4 w-4" /></Link> : <ChevronLeft className="h-4 w-4"/>}</Button>
                     <span className="text-sm text-muted-foreground mx-1">Lote {displayLotPosition} de {displayTotalLots}</span>
-                    <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">{nextLotId ? <Link href={`/auctions/${auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" />}</Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">{nextLotId ? <Link href={`/auctions/${auction.publicId || auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" />}</Button>
                 </div>
             </div>
 
@@ -417,7 +420,7 @@ export default function LotDetailClientContent({
                     ) : (
                     <div className="text-sm text-muted-foreground p-3 bg-secondary/50 rounded-md">
                         <p>{lot.status !== 'ABERTO_PARA_LANCES' ? `Lances para este lote estão ${getAuctionStatusText(lot.status).toLowerCase()}.` : (userProfileWithPermissions ? 'Você precisa estar habilitado para dar lances.' : 'Você precisa estar logado para dar lances.')}</p>
-                        {!userProfileWithPermissions && <Link href={`/auth/login?redirect=/auctions/${auction.id}/lots/${lot.id}`} className="text-primary hover:underline font-medium">Faça login ou registre-se.</Link>}
+                        {!userProfileWithPermissions && <Link href={`/auth/login?redirect=/auctions/${auction.publicId || auction.id}/lots/${lot.publicId || lot.id}`} className="text-primary hover:underline font-medium">Faça login ou registre-se.</Link>}
                     </div>
                     )}
                     <Button variant="outline" className="w-full" onClick={handleToggleFavorite}>
@@ -480,3 +483,4 @@ export default function LotDetailClientContent({
     </>
  );
 }
+    
