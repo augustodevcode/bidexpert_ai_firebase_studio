@@ -14,7 +14,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Coins, Search as SearchIcon, Menu, ChevronDown, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History } from 'lucide-react'; 
+import { Coins, Search as SearchIcon, Menu, ChevronDown, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks } from 'lucide-react'; 
 import { useAuth } from '@/contexts/auth-context';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase'; 
@@ -35,10 +35,39 @@ import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import DynamicBreadcrumbs from './dynamic-breadcrumbs';
+import MegaMenuCategories from './mega-menu-categories';
+import MegaMenuLinkList, { type MegaMenuGroup } from './mega-menu-link-list';
+import MegaMenuAuctioneers from './mega-menu-auctioneers';
+import { getAuctioneers } from '@/app/admin/auctioneers/actions';
+import { getSellers } from '@/app/admin/sellers/actions';
+import type { AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuList,
+  NavigationMenuLink,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
+import { cn } from '@/lib/utils';
+
+const modalityGroups: MegaMenuGroup[] = [
+  {
+    items: [
+      { href: '/search?type=auctions&auctionType=JUDICIAL', label: 'Leilões Judiciais', description: 'Oportunidades de processos judiciais.' },
+      { href: '/search?type=auctions&auctionType=EXTRAJUDICIAL', label: 'Leilões Extrajudiciais', description: 'Negociações diretas e mais ágeis.' },
+      { href: '/direct-sales', label: 'Venda Direta', description: 'Compre itens com preço fixo.' },
+      { href: '/search?type=auctions&auctionType=TOMADA_DE_PRECOS', label: 'Tomada de Preços', description: 'Processo de seleção para contratação.' },
+    ]
+  }
+];
 
 export default function Header() {
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
   const [searchCategories, setSearchCategories] = useState<LotCategory[]>([]);
+  const [auctioneers, setAuctioneers] = useState<AuctioneerProfileInfo[]>([]);
+  const [consignorMegaMenuGroups, setConsignorMegaMenuGroups] = useState<MegaMenuGroup[]>([]);
   const [isClient, setIsClient] = useState(false);
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,6 +84,7 @@ export default function Header() {
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const siteTitle = platformSettings?.siteTitle || 'BidExpert';
   const siteTagline = platformSettings?.siteTagline;
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // For mobile sheet
 
   useEffect(() => {
     setIsClient(true);
@@ -81,11 +111,38 @@ export default function Header() {
       setRecentlyViewedItems(items);
 
       try {
-        const fetchedCategories = await getLotCategories();
+        const [fetchedCategories, fetchedAuctioneers, fetchedSellers] = await Promise.all([
+          getLotCategories(),
+          getAuctioneers(),
+          getSellers()
+        ]);
         setSearchCategories(fetchedCategories);
+        setAuctioneers(fetchedAuctioneers);
+        
+        const MAX_SELLERS_IN_MEGAMENU = 5;
+        const visibleSellers = fetchedSellers.slice(0, MAX_SELLERS_IN_MEGAMENU);
+        const hasMoreSellers = fetchedSellers.length > MAX_SELLERS_IN_MEGAMENU;
+        const formattedSellersForMenu: MegaMenuGroup[] = [{
+            title: "Principais Comitentes",
+            items: visibleSellers.map(seller => ({
+              href: `/sellers/${seller.slug || seller.publicId || seller.id}`,
+              label: seller.name,
+              description: seller.city && seller.state ? `${seller.city} - ${seller.state}` : (seller.description ? seller.description.substring(0,40)+'...' : 'Ver perfil'),
+            })),
+          }];
+        if (hasMoreSellers) {
+            formattedSellersForMenu[0].items.push({ 
+                href: '/sellers', 
+                label: 'Ver Todos Comitentes', 
+                description: "Navegue por todos os nossos comitentes."
+            });
+        }
+        setConsignorMegaMenuGroups(formattedSellersForMenu.filter(group => group.items.length > 0));
       } catch (error) {
-        console.error("Error fetching categories for search dropdown:", error);
+        console.error("Error fetching data for main navigation:", error);
         setSearchCategories([]);
+        setAuctioneers([]);
+        setConsignorMegaMenuGroups([]);
       }
     }
     fetchInitialData();
@@ -148,6 +205,25 @@ export default function Header() {
       setIsSearchDropdownOpen(false);
     }
   };
+  
+  const allNavItems: {
+      label: string;
+      href?: string;
+      isMegaMenu?: boolean;
+      contentKey?: 'categories' | 'modalities' | 'consignors' | 'auctioneers';
+      icon?: React.ElementType;
+  }[] = [
+    { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories' },
+    { href: '/', label: 'Início' },
+    { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities' },
+    { label: 'Comitentes', isMegaMenu: true, contentKey: 'consignors', href: '/sellers' },
+    { label: 'Leiloeiros', isMegaMenu: true, contentKey: 'auctioneers', href: '/auctioneers' },
+    { href: '/sell-with-us', label: 'Venda Conosco' },
+    { href: '/contact', label: 'Fale Conosco' },
+  ];
+
+  const firstNavItem = allNavItems[0];
+  const centralNavItems = allNavItems.slice(1);
 
   return (
     <header className="sticky top-0 z-50 w-full shadow-md">
@@ -186,7 +262,7 @@ export default function Header() {
         <div className="container mx-auto px-4 flex h-20 items-center justify-between">
           <div className="flex items-center">
             <div className="md:hidden mr-2">
-              <Sheet>
+               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon" className="hover:bg-accent focus-visible:ring-accent-foreground" aria-label="Abrir Menu">
                     <Menu className="h-6 w-6" />
@@ -203,7 +279,12 @@ export default function Header() {
                     </SheetTitle>
                   </SheetHeader>
                   <nav className="flex flex-col gap-1 p-4">
-                    <MainNav className="flex-col items-start space-x-0 space-y-0" />
+                    <MainNav 
+                        items={allNavItems} 
+                        className="flex-col items-start space-x-0 space-y-0" 
+                        onLinkClick={() => setIsMobileMenuOpen(false)}
+                        isMobile={true}
+                    />
                     <div className="mt-auto pt-4 border-t">
                       <UserNav />
                     </div>
@@ -342,17 +423,41 @@ export default function Header() {
       {/* Main Navigation Bar - Desktop */}
       <div className="border-b bg-background text-foreground hidden md:block">
         <div className="container mx-auto px-4 flex h-12 items-center justify-between">
-          {/* MainNav agora ocupa o espaço à esquerda */}
-          <nav className="flex flex-1 items-center space-x-3 lg:space-x-4 text-xs sm:text-sm">
-              <MainNav />
+          {/* Navegue por Categorias (Esquerda) */}
+          <NavigationMenu className="justify-start">
+            <NavigationMenuList>
+              {firstNavItem.isMegaMenu && firstNavItem.contentKey && (
+                <NavigationMenuItem value={firstNavItem.label}>
+                  <NavigationMenuTrigger asChild>
+                    <Link 
+                        href={firstNavItem.href || '#'}
+                        className={cn(navigationMenuTriggerStyle(), "group", pathname === firstNavItem.href && "text-primary bg-accent")}
+                    >
+                        {firstNavItem.label}
+                        <ChevronDown className="relative top-[1px] ml-1.5 h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180" aria-hidden="true"/>
+                    </Link>
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                     {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} />}
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              )}
+            </NavigationMenuList>
+          </NavigationMenu>
+          
+          {/* Links Centrais */}
+          <nav className="flex-1 flex justify-center items-center">
+            <MainNav items={centralNavItems} className="justify-center" />
           </nav>
 
-          {/* Histórico Dropdown agora é empurrado para a direita pelo flex-1 do nav */}
+          {/* Histórico Dropdown (Direita) */}
           <div className="flex items-center justify-end"> 
             {isClient && recentlyViewedItems.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-sm font-medium hover:bg-accent hover:text-accent-foreground text-muted-foreground">
+                  <Button 
+                    variant="ghost" 
+                    className={cn(navigationMenuTriggerStyle(), "text-muted-foreground hover:text-accent-foreground data-[state=open]:bg-accent/50 px-3 h-10")}>
                     Histórico <ChevronDown className="ml-1 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -382,9 +487,13 @@ export default function Header() {
               </DropdownMenu>
             )}
              {isClient && recentlyViewedItems.length === 0 && (
-                <Link href="/dashboard/history" className="text-sm text-muted-foreground hover:text-primary font-medium">
-                    Histórico
-                </Link>
+                <Button 
+                  variant="ghost" 
+                  asChild 
+                  className={cn(navigationMenuTriggerStyle(), "text-muted-foreground hover:text-accent-foreground px-3 h-10")}
+                >
+                  <Link href="/dashboard/history">Histórico</Link>
+                </Button>
             )}
           </div>
         </div>

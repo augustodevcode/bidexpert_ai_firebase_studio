@@ -15,7 +15,7 @@ const NavigationMenu = React.forwardRef<
   <NavigationMenuPrimitive.Root
     ref={ref}
     className={cn(
-      "relative z-10 flex w-full flex-1 items-center justify-start", // Changed to justify-start, w-full
+      "relative z-10 flex max-w-max flex-1 items-center justify-center", // Default to justify-center
       className
     )}
     {...props}
@@ -33,7 +33,7 @@ const NavigationMenuList = React.forwardRef<
   <NavigationMenuPrimitive.List
     ref={ref}
     className={cn(
-      "group flex flex-1 list-none items-center justify-start space-x-1", // justify-start
+      "group flex flex-1 list-none items-center justify-center space-x-1", // Default to justify-center
       className
     )}
     {...props}
@@ -56,6 +56,9 @@ const NavigationMenuTrigger = React.forwardRef<
     className={cn(navigationMenuTriggerStyle(), "group", className)}
     {...props} 
   >
+    {/* Se asChild for true, children (o Link) já deve conter o ícone. 
+        Caso contrário, renderiza children e o ícone padrão.
+    */}
     {props.asChild ? (
       children 
     ) : (
@@ -92,7 +95,7 @@ const NavigationMenuViewport = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Viewport>,
   React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Viewport>
 >(({ className, ...props }, ref) => (
-  <div className={cn("absolute left-0 top-full flex")}> {/* Removed justify-center */}
+  <div className={cn("absolute left-0 top-full flex")}> {/* Removido justify-center */}
     <NavigationMenuPrimitive.Viewport
       className={cn(
         "origin-top-center relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 md:w-[var(--radix-navigation-menu-viewport-width)]",
