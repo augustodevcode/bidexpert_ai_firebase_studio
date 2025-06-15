@@ -25,7 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-// import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+// import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'; // Temporariamente removido
     
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useAuth } from '@/contexts/auth-context';
@@ -43,7 +43,7 @@ import { hasPermission } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
     
 const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'augusto.devcode@gmail.com'.toLowerCase();
-const SUPER_TEST_USER_UID_FOR_BYPASS = 'SUPER_TEST_USER_UID_PLACEHOLDER_AUG'; // Unused if relying on profile
+const SUPER_TEST_USER_UID_FOR_BYPASS = 'SUPER_TEST_USER_UID_PLACEHOLDER_AUG';
 const SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS = 'Augusto Dev (Super Test)';
     
 interface LotDetailClientContentProps {
@@ -69,7 +69,7 @@ export default function LotDetailClientContent({
   const [isLotFavorite, setIsLotFavorite] = useState(false);
   const { toast } = useToast();
   const [currentUrl, setCurrentUrl] = useState('');
-  const { userProfileWithPermissions, loading: authLoading } = useAuth(); // user (Firebase) e userProfileWithPermissions (nosso DB)
+  const { userProfileWithPermissions, loading: authLoading } = useAuth(); 
   const [lotBids, setLotBids] = useState<BidInfo[]>([]);
   const [lotReviews, setLotReviews] = useState<Review[]>([]);
   const [lotQuestions, setLotQuestions] = useState<LotQuestion[]>([]);
@@ -123,7 +123,6 @@ export default function LotDetailClientContent({
   const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || lot?.title}`.trim();
   const lotLocation = lot?.cityName && lot?.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot?.stateUf || lot?.cityName || 'Não informado';
     
-  // Simplified permission checks using userProfileWithPermissions
   const isEffectivelySuperTestUser = userProfileWithPermissions?.email?.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS;
   const hasAdminRights = userProfileWithPermissions && hasPermission(userProfileWithPermissions, 'manage_all');
   const isUserHabilitado = userProfileWithPermissions?.habilitationStatus === 'HABILITADO';
@@ -132,7 +131,7 @@ export default function LotDetailClientContent({
     (isEffectivelySuperTestUser || hasAdminRights || (userProfileWithPermissions && isUserHabilitado)) && 
     lot?.status === 'ABERTO_PARA_LANCES';
     
-  const canUserReview = !!userProfileWithPermissions; // Any logged-in user with a profile can review.
+  const canUserReview = !!userProfileWithPermissions;
     
   const canUserAskQuestion = 
     isEffectivelySuperTestUser || hasAdminRights || (userProfileWithPermissions && isUserHabilitado);
@@ -184,8 +183,8 @@ export default function LotDetailClientContent({
     let userIdForBid: string | undefined = userProfileWithPermissions?.uid;
     let displayNameForBid: string | undefined = userProfileWithPermissions?.fullName || userProfileWithPermissions?.email?.split('@')[0];
 
-    if (isEffectivelySuperTestUser && !userIdForBid) { // Super user might not have a full DB profile yet in some flows
-        userIdForBid = userProfileWithPermissions?.uid || SUPER_TEST_USER_UID_FOR_BYPASS; // Fallback UID for super test user
+    if (isEffectivelySuperTestUser && !userIdForBid) {
+        userIdForBid = userProfileWithPermissions?.uid || SUPER_TEST_USER_UID_FOR_BYPASS; 
         displayNameForBid = userProfileWithPermissions?.fullName || SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
     }
     
@@ -277,6 +276,7 @@ export default function LotDetailClientContent({
   };
     
   return (
+    <>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
           <div className="flex-grow">
@@ -329,7 +329,7 @@ export default function LotDetailClientContent({
                 </div>
                 {gallery.length > 1 && (
                   <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2">
-                    {gallery.map((url, index) => (<button key={index} className={`relative aspect-square bg-muted rounded overflow-hidden border-2 transition-all ${index === currentImageIndex ? 'border-primary ring-2 ring-primary ring-offset-2' : 'border-transparent hover:border-muted-foreground/50'}`} onClick={() => setCurrentImageIndex(index)} aria-label={`Ver imagem ${index + 1}`}><Image src={url} alt={`Miniatura ${index + 1}`} fill className="object-cover" data-ai-hint={lot.dataAiHint || 'imagem galeria carro'} unoptimized={url.startsWith('https://placehold.co')} /></button>))}
+                    {gallery.map((url, index) => (<button key={index} className={`relative aspect-square bg-muted rounded overflow-hidden border-2 transition-all ${index === currentImageIndex ? 'border-primary ring-2 ring-primary ring-offset-2' : 'border-transparent hover:border-muted-foreground/50'}`} onClick={() => setCurrentImageIndex(index)} aria-label={`Ver imagem ${index + 1}`}><Image src={url} alt={`Miniatura ${index + 1}`} fill className="object-cover" data-ai-hint={lot.dataAiHint || 'imagem galeria carro'} unoptimized={url.startsWith('https://placehold.co')}/></button>))}
                   </div>
                 )}
                 {gallery.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">Nenhuma imagem na galeria.</p>)}
@@ -439,5 +439,15 @@ export default function LotDetailClientContent({
           </div>
         </div>
       </div>
+      
+      <LotPreviewModal
+        lot={lot}
+        auction={auction}
+        isOpen={isPreviewModalOpen}
+        onClose={() => setIsPreviewModalOpen(false)}
+      />
+    </>
   );
 }
+
+    
