@@ -49,6 +49,7 @@ export default function Header() {
   const [searchResults, setSearchResults] = useState<Lot[]>([]);
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const [isSearchLoading, setIsSearchLoading] = useState(false);
+ const auctioneersDropdownTriggerRef = useRef<HTMLButtonElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { user } = useAuth();
@@ -58,6 +59,7 @@ export default function Header() {
   const siteTitle = platformSettings?.siteTitle || 'BidExpert';
   const siteTagline = platformSettings?.siteTagline;
 
+ const [auctioneersDropdownAlign, setAuctioneersDropdownAlign] = useState<'start' | 'center' | 'end'>('start');
 
   useEffect(() => {
     setIsClient(true);
@@ -94,6 +96,25 @@ export default function Header() {
     fetchInitialData();
     
   }, []);
+
+  useEffect(() => {
+    const calculateDropdownAlignment = () => {
+      if (auctioneersDropdownTriggerRef.current) {
+        const triggerRect = auctioneersDropdownTriggerRef.current.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        // Check if there's enough space to the right for a standard dropdown width (e.g., 200px)
+        // You might need to adjust the 200px based on your dropdown's actual width
+        if (viewportWidth - triggerRect.right < 200) {
+          setAuctioneersDropdownAlign('end');
+        } else {
+          setAuctioneersDropdownAlign('start');
+        }
+      }
+    };
+    calculateDropdownAlignment(); // Calculate on mount
+    window.addEventListener('resize', calculateDropdownAlignment); // Recalculate on resize
+    return () => window.removeEventListener('resize', calculateDropdownAlignment); // Clean up
+  }, [isClient]); // Recalculate if isClient changes (though it won't after initial mount)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -344,7 +365,7 @@ export default function Header() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-80 bg-card text-card-foreground">
-                  <DropdownMenuLabel className="flex justify-between items-center">
+ <DropdownMenuLabel className="flex justify-between items-center">
                     Itens Vistos Recentemente
                     <History className="h-4 w-4 text-muted-foreground" />
                   </DropdownMenuLabel>

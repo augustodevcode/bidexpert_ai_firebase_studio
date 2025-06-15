@@ -1,14 +1,15 @@
 
 // src/app/auctions/[auctionId]/lots/[lotId]/page.tsx
 import type { Lot, Auction } from '@/types';
-import { sampleAuctions, getLotCategoryByName } from '@/lib/sample-data'; 
+import { sampleAuctions, sampleLots, getLotCategoryByName as getCategoryByNameFromSampleData } from '@/lib/sample-data'; // Usar sampleData
 import LotDetailClientContent from './lot-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Breadcrumbs, { type BreadcrumbItem } from '@/components/ui/breadcrumbs';
-import { getAuction as getAuctionAction } from '@/app/admin/auctions/actions';
-import { getLot as getLotAction, getLots as getLotsAction } from '@/app/admin/lots/actions'; // Importar getLotsAction
-import { getSellerBySlug as getSellerBySlugAction } from '@/app/admin/sellers/actions'; 
+// Removidas importações de actions do DB
+// import { getAuction as getAuctionAction } from '@/app/admin/auctions/actions';
+// import { getLot as getLotAction, getLots as getLotsAction } from '@/app/admin/lots/actions'; 
+// import { getSellerBySlug as getSellerBySlugAction } from '@/app/admin/sellers/actions'; 
 
 async function getLotPageData(currentAuctionId: string, currentLotId: string): Promise<{
   lot: Lot | undefined,
@@ -20,8 +21,11 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   totalLotsInAuction?: number,
   breadcrumbs: BreadcrumbItem[]
 }> {
-  const auction = await getAuctionAction(currentAuctionId); 
-  const lot = await getLotAction(currentLotId); 
+  console.log(`[getLotPageData - SampleData Mode] Buscando leilão: ${currentAuctionId}, lote: ${currentLotId}`);
+
+  // Encontrar leilão e lote em sampleData
+  const auction = sampleAuctions.find(a => a.id === currentAuctionId);
+  const lot = sampleLots.find(l => l.id === currentLotId && l.auctionId === currentAuctionId);
 
   const breadcrumbs: BreadcrumbItem[] = [
     { label: 'Home', href: '/' },
@@ -30,20 +34,23 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
 
   if (auction) {
     // Popular auction.lots para navegação e contagem precisa
-    const lotsForThisAuction = await getLotsAction(currentAuctionId);
-    auction.lots = lotsForThisAuction;
+    const lotsForThisAuction = sampleLots.filter(l => l.auctionId === auction.id);
+    auction.lots = lotsForThisAuction; // Modificando o objeto de sampleAuctions diretamente (cuidado em outros contextos)
+    auction.totalLots = lotsForThisAuction.length;
+    console.log(`[getLotPageData - SampleData Mode] Leilão ${auction.id} encontrado. Lotes associados: ${lotsForThisAuction.length}`);
   }
 
-
-  if (!auction || !lot || lot.auctionId !== auction.id) { 
+  if (!auction || !lot) {
     if (auction) {
       breadcrumbs.push({ label: auction.title || `Leilão ${auction.id}`, href: `/auctions/${auction.id}` });
     }
     breadcrumbs.push({ label: 'Lote Não Encontrado' });
+    console.warn(`[getLotPageData - SampleData Mode] Lote ${currentLotId} ou leilão ${currentAuctionId} não encontrado em sampleData.`);
     return { lot: undefined, auction, breadcrumbs };
   }
   
-  const lotCategory = getLotCategoryByName(lot.type); 
+  // Usar getCategoryByNameFromSampleData se necessário para o nome da categoria
+  const lotCategory = getCategoryByNameFromSampleData(lot.type); 
   
   breadcrumbs.push({ label: auction.title || `Leilão ${auction.id}`, href: `/auctions/${auction.id}` });
   if (lotCategory) {
@@ -51,23 +58,15 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   }
   breadcrumbs.push({ label: lot.title || `Lote ${lot.id}` });
 
-  // A lógica de lotIndex, previous/nextLotId e totalLotsInAuction agora usará auction.lots populado do DB.
+  // Lógica de lotIndex, previous/nextLotId e totalLotsInAuction usando auction.lots (que agora vem de sampleLots)
   const lotIndex = auction.lots?.findIndex(l => l.id === currentLotId) ?? -1;
   const totalLotsInAuction = auction.lots?.length ?? 0;
   const previousLotId = (auction.lots && lotIndex > 0) ? auction.lots[lotIndex - 1].id : undefined;
   const nextLotId = (auction.lots && lotIndex < totalLotsInAuction - 1) ? auction.lots[lotIndex + 1].id : undefined;
 
-  let sellerName = lot.sellerName; 
-  if (!sellerName && lot.sellerId) { 
-    const sellerProfile = await getSellerBySlugAction(lot.sellerId); 
-    if (sellerProfile) {
-      sellerName = sellerProfile.name;
-    }
-  }
-  if (!sellerName && auction.seller) { 
-      sellerName = auction.seller;
-  }
-
+  // Obter sellerName do lote, ou do leilão se não estiver no lote
+  let sellerName = lot.sellerName || auction.seller;
+  // Não há busca de seller por slug do DB agora
 
   return { lot, auction, sellerName, lotIndex, previousLotId, nextLotId, totalLotsInAuction, breadcrumbs };
 }
@@ -81,8 +80,8 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
       <div className="container mx-auto px-4 py-8">
         <Breadcrumbs items={breadcrumbs} />
         <div className="text-center py-12">
-          <h1 className="text-2xl font-bold">Lote ou Leilão Não Encontrado</h1>
-          <p className="text-muted-foreground">O item que você está procurando não existe ou não pôde ser carregado.</p>
+          <h1 className="text-2xl font-bold">Lote ou Leilão Não Encontrado (Sample Data)</h1>
+          <p className="text-muted-foreground">O item que você está procurando não existe ou não pôde ser carregado dos dados de exemplo.</p>
           <Button asChild className="mt-4">
             <Link href={auction ? `/auctions/${auction.id}` : '/'}>
               {auction ? 'Voltar para o Leilão' : 'Voltar para Home'}
@@ -110,14 +109,13 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
 }
 
 export async function generateStaticParams() {
-  // const paths = sampleAuctions.flatMap(auction =>
-  //   (auction.lots || []).map(lot => ({
-  //     auctionId: auction.id,
-  //     lotId: lot.id,
-  //   }))
-  // );
-  // return paths;
-  return []; // Manter vazio para evitar build com sample data se DB for dinâmico
+  const paths = sampleAuctions.flatMap(auction =>
+    (auction.lots || []).map(lot => ({
+      auctionId: auction.id,
+      lotId: lot.id,
+    }))
+  );
+  return paths;
+  // return []; // Manter vazio para evitar build com sample data se DB for dinâmico
 }
-
 
