@@ -20,52 +20,74 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
 }> {
   console.log(`[getLotPageData - SampleData Mode] Buscando leilão: ${currentAuctionId}, lote: ${currentLotId}`);
 
-  const auction = sampleAuctions.find(a => a.id === currentAuctionId);
-  const lot = sampleLots.find(l => l.id === currentLotId && l.auctionId === currentAuctionId);
+  // Acessar os IDs diretamente
+  const auctionIdToFind = currentAuctionId;
+  const lotIdToFind = currentLotId;
+
+  const auctionFromSample = sampleAuctions.find(a => a.id === auctionIdToFind);
+  const lot = sampleLots.find(l => l.id === lotIdToFind && l.auctionId === auctionIdToFind);
 
   const breadcrumbs: BreadcrumbItem[] = [
     { label: 'Home', href: '/' },
     { label: 'Leilões', href: '/search?type=auctions' }
   ];
 
-  if (auction) {
-    const lotsForThisAuction = sampleLots.filter(l => l.auctionId === auction.id);
-    auction.lots = lotsForThisAuction;
-    auction.totalLots = lotsForThisAuction.length;
-    console.log(`[getLotPageData - SampleData Mode] Leilão ${auction.id} encontrado. Lotes associados: ${lotsForThisAuction.length}`);
-  }
+  let auctionToReturn: Auction | undefined = undefined;
 
-  if (!auction || !lot) {
-    if (auction) {
-      breadcrumbs.push({ label: auction.title || `Leilão ${auction.id}`, href: `/auctions/${auction.id}` });
+  if (auctionFromSample) {
+    const lotsForThisAuction = sampleLots.filter(l => l.auctionId === auctionFromSample.id);
+    // É importante não modificar o objeto original de sampleAuctions diretamente
+    // se ele for usado em outros lugares. Criamos uma cópia superficial para adicionar/modificar 'lots'.
+    auctionToReturn = { ...auctionFromSample, lots: lotsForThisAuction, totalLots: lotsForThisAuction.length };
+    console.log(`[getLotPageData - SampleData Mode] Leilão ${auctionToReturn.id} encontrado. Lotes associados: ${lotsForThisAuction.length}`);
+    
+    if (!lot) {
+      breadcrumbs.push({ label: auctionToReturn.title || `Leilão ${auctionToReturn.id}`, href: `/auctions/${auctionToReturn.id}` });
+      breadcrumbs.push({ label: 'Lote Não Encontrado' });
+      console.warn(`[getLotPageData - SampleData Mode] Lote ${lotIdToFind} não encontrado no leilão ${auctionIdToFind} em sampleData.`);
+      return { lot: undefined, auction: auctionToReturn, breadcrumbs };
     }
-    breadcrumbs.push({ label: 'Lote Não Encontrado' });
-    console.warn(`[getLotPageData - SampleData Mode] Lote ${currentLotId} ou leilão ${currentAuctionId} não encontrado em sampleData.`);
-    return { lot: undefined, auction, breadcrumbs };
-  }
+
+    // Corrigido para usar a função e o alias corretos, e slugify lot.type
+    const lotCategoryName = getCategoryNameFromSampleDataSlug(slugify(lot.type)); 
   
-  // Corrigido para usar a função e o alias corretos, e slugify lot.type
-  const lotCategoryName = getCategoryNameFromSampleDataSlug(slugify(lot.type)); 
-  
-  breadcrumbs.push({ label: auction.title || `Leilão ${auction.id}`, href: `/auctions/${auction.id}` });
-  if (lotCategoryName) { // Verifica se o nome da categoria foi encontrado
-    breadcrumbs.push({ label: lotCategoryName, href: `/category/${slugify(lot.type)}` }); // Usa slugify(lot.type) para o link
+    breadcrumbs.push({ label: auctionToReturn.title || `Leilão ${auctionToReturn.id}`, href: `/auctions/${auctionToReturn.id}` });
+    if (lotCategoryName) { // Verifica se o nome da categoria foi encontrado
+      breadcrumbs.push({ label: lotCategoryName, href: `/category/${slugify(lot.type)}` }); // Usa slugify(lot.type) para o link
+    }
+    breadcrumbs.push({ label: lot.title || `Lote ${lot.id}` });
+
+    const lotIndex = auctionToReturn.lots?.findIndex(l => l.id === lotIdToFind) ?? -1;
+    const totalLotsInAuction = auctionToReturn.lots?.length ?? 0;
+    const previousLotId = (auctionToReturn.lots && lotIndex > 0) ? auctionToReturn.lots[lotIndex - 1].id : undefined;
+    const nextLotId = (auctionToReturn.lots && lotIndex < totalLotsInAuction - 1) ? auctionToReturn.lots[lotIndex + 1].id : undefined;
+    
+    let sellerName = lot.sellerName || auctionToReturn.seller;
+
+    return { lot, auction: auctionToReturn, sellerName, lotIndex, previousLotId, nextLotId, totalLotsInAuction, breadcrumbs };
+
+  } else {
+    breadcrumbs.push({ label: 'Leilão Não Encontrado' });
+    console.warn(`[getLotPageData - SampleData Mode] Leilão ${auctionIdToFind} não encontrado em sampleData.`);
+    return { lot: undefined, auction: undefined, breadcrumbs };
   }
-  breadcrumbs.push({ label: lot.title || `Lote ${lot.id}` });
-
-  const lotIndex = auction.lots?.findIndex(l => l.id === currentLotId) ?? -1;
-  const totalLotsInAuction = auction.lots?.length ?? 0;
-  const previousLotId = (auction.lots && lotIndex > 0) ? auction.lots[lotIndex - 1].id : undefined;
-  const nextLotId = (auction.lots && lotIndex < totalLotsInAuction - 1) ? auction.lots[lotIndex + 1].id : undefined;
-
-  let sellerName = lot.sellerName || auction.seller;
-
-  return { lot, auction, sellerName, lotIndex, previousLotId, nextLotId, totalLotsInAuction, breadcrumbs };
 }
 
 export default async function LotDetailPage({ params }: { params: { auctionId: string, lotId: string } }) {
-  const { auctionId, lotId } = params; 
-  const { lot, auction, sellerName, lotIndex, previousLotId, nextLotId, totalLotsInAuction, breadcrumbs } = await getLotPageData(auctionId, lotId);
+  // Passar os params diretamente para a função de busca de dados
+  const auctionIdParam = params.auctionId;
+  const lotIdParam = params.lotId; 
+  
+  const { 
+    lot, 
+    auction, 
+    sellerName, 
+    lotIndex, 
+    previousLotId, 
+    nextLotId, 
+    totalLotsInAuction, 
+    breadcrumbs 
+  } = await getLotPageData(auctionIdParam, lotIdParam);
 
   if (!lot || !auction) {
     return (

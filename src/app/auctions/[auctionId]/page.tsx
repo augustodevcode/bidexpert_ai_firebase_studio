@@ -8,9 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AuctionDetailsClient from './auction-details-client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-// Removidas importações de actions do DB
-// import { getAuction as getAuctionAction } from '@/app/admin/auctions/actions'; 
-// import { getLots as getLotsAction } from '@/app/admin/lots/actions'; 
 
 async function getAuctionData(id: string): Promise<Auction | undefined> {
   console.log(`[getAuctionData - SampleData Mode] Chamada com ID: ${id}`);
@@ -19,17 +16,19 @@ async function getAuctionData(id: string): Promise<Auction | undefined> {
     return undefined;
   }
   
-  // Buscar o leilão de sampleAuctions
-  const auction = sampleAuctions.find(a => a.id === id);
-  if (!auction) {
+  const auctionFromSample = sampleAuctions.find(a => a.id === id);
+  if (!auctionFromSample) {
     console.warn(`[getAuctionData - SampleData Mode] Nenhum leilão encontrado para o ID: ${id} em sampleAuctions.`);
     return undefined;
   }
 
+  // Criar uma cópia para evitar mutação direta dos dados de exemplo
+  const auction = { ...auctionFromSample };
+
   // Popular os lotes do leilão a partir de sampleLots
   const lotsForAuction = sampleLots.filter(lot => lot.auctionId === auction.id);
-  auction.lots = lotsForAuction; // Garante que auction.lots está populado
-  auction.totalLots = lotsForAuction.length; // Atualiza contagem de lotes
+  auction.lots = lotsForAuction; 
+  auction.totalLots = lotsForAuction.length; 
 
   console.log(`[getAuctionData - SampleData Mode] Leilão ID ${id} encontrado em sampleAuctions. Total de lotes: ${lotsForAuction.length}`);
   
@@ -42,11 +41,10 @@ const estados = [
   'Santa Catarina', 'São Paulo', 'Tocantins'
 ];
 
-export default async function AuctionLotsPage({ params: paramsProp }: { params: { auctionId: string } }) {
-  const params = paramsProp; 
-  const { auctionId } = params; 
+export default async function AuctionLotsPage({ params }: { params: { auctionId: string } }) {
+  const auctionIdParam = params.auctionId; 
 
-  if (!auctionId) {
+  if (!auctionIdParam) {
     console.error("[AuctionLotsPage] auctionId está undefined nos params.");
     return (
       <div className="text-center py-12">
@@ -59,13 +57,13 @@ export default async function AuctionLotsPage({ params: paramsProp }: { params: 
     );
   }
   
-  const auction = await getAuctionData(auctionId);
+  const auction = await getAuctionData(auctionIdParam);
 
   if (!auction) {
     return (
       <div className="text-center py-12">
         <h1 className="text-2xl font-bold">Leilão Não Encontrado</h1>
-        <p className="text-muted-foreground">O leilão que você está procurando (ID: {auctionId}) não existe ou não pôde ser carregado (usando sampleData).</p>
+        <p className="text-muted-foreground">O leilão que você está procurando (ID: {auctionIdParam}) não existe ou não pôde ser carregado (usando sampleData).</p>
         <Button asChild className="mt-4">
           <Link href="/">Voltar para Início</Link>
         </Button>
