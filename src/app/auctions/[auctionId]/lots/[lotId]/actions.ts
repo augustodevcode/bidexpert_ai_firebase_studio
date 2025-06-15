@@ -4,7 +4,7 @@
 import { getDatabaseAdapter } from '@/lib/database';
 import type { Lot, BidInfo, IDatabaseAdapter, Review, LotQuestion, SellerProfileInfo } from '@/types';
 import { revalidatePath } from 'next/cache';
-import { sampleLotQuestions, sampleLotReviews } from '@/lib/sample-data'; // Import sample data
+import { sampleLotQuestions, sampleLotReviews, sampleLots } from '@/lib/sample-data'; // Import sampleLots
 
 interface PlaceBidResult {
   success: boolean;
@@ -21,6 +21,8 @@ export async function placeBidOnLot(
   bidAmount: number
 ): Promise<PlaceBidResult> {
   const db = await getDatabaseAdapter();
+  // Esta action ainda falhará se o lotId for de sample-data e não existir no DB,
+  // pois precisa encontrar e atualizar o lote no DB.
   return db.placeBidOnLot(lotId, auctionId, userId, userDisplayName, bidAmount);
 }
 
@@ -36,9 +38,7 @@ export async function getBidsForLot(lotId: string): Promise<BidInfo[]> {
 // --- Reviews Actions ---
 export async function getReviewsForLot(lotId: string): Promise<Review[]> {
   if (!lotId) return [];
-  // TODO: Replace with DB call when ready
-  // const db = await getDatabaseAdapter();
-  // return db.getReviewsForLot(lotId);
+  // Usando sampleLotReviews para fins de teste, conforme solicitado.
   return sampleLotReviews.filter(review => review.lotId === lotId);
 }
 
@@ -53,19 +53,37 @@ export async function createReview(
     return { success: false, message: 'Dados inválidos para avaliação.' };
   }
   const db = await getDatabaseAdapter();
-  const lot = await db.getLot(lotId);
-  if (!lot) return { success: false, message: 'Lote não encontrado.' };
+  let lotAuctionId: string | undefined;
 
+  // Tenta buscar do banco de dados primeiro
+  const dbLot = await db.getLot(lotId);
+  if (dbLot) {
+    lotAuctionId = dbLot.auctionId;
+  } else {
+    // Fallback para sampleLots se não encontrar no DB (para fins de teste)
+    const sampleLot = sampleLots.find(l => l.id === lotId);
+    if (sampleLot) {
+      lotAuctionId = sampleLot.auctionId;
+      console.warn(`[createReview] Lote ${lotId} não encontrado no DB, usando auctionId de sample-data: ${lotAuctionId}`);
+    } else {
+      return { success: false, message: 'Lote não encontrado nem no banco de dados nem nos dados de exemplo.' };
+    }
+  }
+  
+  // A escrita da review ainda vai para o banco de dados.
+  // Em um cenário de teste puro com sample-data, isso seria simulado ou não persistido.
   const result = await db.createReview({
     lotId,
-    auctionId: lot.auctionId,
+    auctionId: lotAuctionId, // Usa o auctionId obtido
     userId,
     userDisplayName,
     rating,
     comment,
   });
+
   if (result.success) {
-    revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.id}`);
+    // Revalidação pode não ter efeito visual imediato se a leitura de reviews também for de sample-data
+    revalidatePath(`/auctions/${lotAuctionId}/lots/${lotId}`);
   }
   return result;
 }
@@ -73,9 +91,7 @@ export async function createReview(
 // --- Questions Actions ---
 export async function getQuestionsForLot(lotId: string): Promise<LotQuestion[]> {
   if (!lotId) return [];
-  // TODO: Replace with DB call when ready
-  // const db = await getDatabaseAdapter();
-  // return db.getQuestionsForLot(lotId);
+  // Usando sampleLotQuestions para fins de teste, conforme solicitado.
   return sampleLotQuestions.filter(question => question.lotId === lotId);
 }
 
@@ -89,18 +105,31 @@ export async function askQuestionOnLot(
     return { success: false, message: 'Dados inválidos para pergunta.' };
   }
   const db = await getDatabaseAdapter();
-  const lot = await db.getLot(lotId);
-  if (!lot) return { success: false, message: 'Lote não encontrado.' };
+  let lotAuctionId: string | undefined;
+
+  const dbLot = await db.getLot(lotId);
+  if (dbLot) {
+    lotAuctionId = dbLot.auctionId;
+  } else {
+    const sampleLot = sampleLots.find(l => l.id === lotId);
+    if (sampleLot) {
+      lotAuctionId = sampleLot.auctionId;
+      console.warn(`[askQuestionOnLot] Lote ${lotId} não encontrado no DB, usando auctionId de sample-data: ${lotAuctionId}`);
+    } else {
+      return { success: false, message: 'Lote não encontrado nem no banco de dados nem nos dados de exemplo.' };
+    }
+  }
   
   const result = await db.createQuestion({
     lotId,
-    auctionId: lot.auctionId,
+    auctionId: lotAuctionId, // Usa o auctionId obtido
     userId,
     userDisplayName,
     questionText,
   });
+
   if (result.success) {
-    revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.id}`);
+    revalidatePath(`/auctions/${lotAuctionId}/lots/${lotId}`);
   }
   return result;
 }
@@ -117,6 +146,8 @@ export async function answerQuestionOnLot(
     return { success: false, message: 'Dados inválidos para resposta.' };
   }
   const db = await getDatabaseAdapter();
+  // A implementação de db.answerQuestion nos adapters SQL/Firestore precisará do lotId para formar o caminho correto.
+  // Se o adapter já está esperando isso, ótimo.
   const result = await db.answerQuestion(questionId, answerText, answeredByUserId, answeredByUserDisplayName);
   if (result.success) {
     revalidatePath(`/auctions/${auctionId}/lots/${lotId}`);
@@ -129,3 +160,4 @@ export async function getSellerDetailsForLotPage(sellerIdOrPublicId?: string): P
     const db = await getDatabaseAdapter();
     return db.getSeller(sellerIdOrPublicId);
 }
+

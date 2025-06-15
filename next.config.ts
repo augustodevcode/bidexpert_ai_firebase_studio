@@ -36,6 +36,7 @@ const nextConfig: NextConfig = {
     'http://127.0.0.1:9002', // Adicionado para cobrir a origem encaminhada
     'http://0.0.0.0:9000',  // Adicionado para cobrir a origem reportada
   ],
+  optimizeFonts: false,
 };
 
 export default nextConfig;
