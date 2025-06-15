@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -11,8 +10,8 @@ import { useAuth } from '@/contexts/auth-context';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase'; 
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState, useRef, forwardRef } from 'react';
-import MainNav, { type NavItem } from './main-nav'; // Importação de NavItem
+import { useEffect, useState, useRef, useCallback, forwardRef } from 'react'; // Adicionado useCallback
+import MainNav, { type NavItem } from './main-nav';
 import UserNav from './user-nav';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -57,8 +56,8 @@ const modalityGroups: MegaMenuGroup[] = [
 
 const HistoryListItem = forwardRef<
   React.ElementRef<"a">,
-  React.ComponentPropsWithoutRef<"a"> & { item: RecentlyViewedLotInfo }
->(({ className, item, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<"a"> & { item: RecentlyViewedLotInfo; onClick?: () => void }
+>(({ className, item, onClick, ...props }, ref) => {
   return (
     <li>
       <NavigationMenuLink asChild>
@@ -69,6 +68,7 @@ const HistoryListItem = forwardRef<
             "flex items-center gap-2 py-1.5 px-3 rounded-md hover:bg-accent transition-colors text-xs leading-snug text-muted-foreground",
             className
           )}
+          onClick={onClick}
           {...props}
         >
           <div className="relative h-10 w-12 flex-shrink-0 bg-muted rounded-sm overflow-hidden">
@@ -104,6 +104,13 @@ export default function Header() {
   const siteTitle = platformSettings?.siteTitle || 'BidExpert';
   const siteTagline = platformSettings?.siteTagline;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
+
+  const handleLinkOrMobileMenuCloseClick = useCallback(() => {
+    if (isMobileMenuOpen) {
+      setIsMobileMenuOpen(false);
+    }
+  }, [isMobileMenuOpen, setIsMobileMenuOpen]);
+
 
   useEffect(() => {
     setIsClient(true);
@@ -295,7 +302,7 @@ export default function Header() {
                     <MainNav 
                         items={allNavItems} 
                         className="flex-col items-start space-x-0 space-y-0" 
-                        onLinkClick={() => setIsMobileMenuOpen(false)}
+                        onLinkClick={handleLinkOrMobileMenuCloseClick}
                         isMobile={true}
                     />
                     <div className="mt-auto pt-4 border-t">
@@ -437,9 +444,9 @@ export default function Header() {
       <div className="border-b bg-background text-foreground hidden md:block">
         <div className="container mx-auto px-4 flex h-12 items-center justify-between">
           {/* Navegue por Categorias (Esquerda) */}
-          <NavigationMenu className="justify-start"> 
+          <NavigationMenu className="justify-start">
             <NavigationMenuList>
-              {firstNavItem.isMegaMenu && firstNavItem.contentKey && (
+              {firstNavItem && firstNavItem.isMegaMenu && firstNavItem.contentKey && (
                 <NavigationMenuItem value={firstNavItem.label}>
                   <NavigationMenuTrigger asChild={!!firstNavItem.href}>
                     {firstNavItem.href ? (
@@ -447,7 +454,7 @@ export default function Header() {
                             href={firstNavItem.href}
                             className={cn(navigationMenuTriggerStyle(), "group", pathname === firstNavItem.href && "text-primary bg-accent")}
                             onPointerDown={(e) => { if (e.metaKey || e.ctrlKey) return; e.stopPropagation(); }}
-                            onClick={(e) => { if (e.metaKey || e.ctrlKey) return; onLinkClick && onLinkClick(); }}
+                            onClick={(e) => { if (e.metaKey || e.ctrlKey) return; handleLinkOrMobileMenuCloseClick(); }}
                          >
                             {firstNavItem.label}
                             <ChevronDown className="relative top-[1px] ml-1.5 h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180" aria-hidden="true"/>
@@ -460,7 +467,7 @@ export default function Header() {
                     )}
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                     {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={onLinkClick} />}
+                     {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={handleLinkOrMobileMenuCloseClick} />}
                   </NavigationMenuContent>
                 </NavigationMenuItem>
               )}
@@ -469,7 +476,7 @@ export default function Header() {
           
           {/* Links Centrais */}
           <div className="flex-1 flex justify-center">
-            <MainNav items={centralNavItems} onLinkClick={onLinkClick} />
+            <MainNav items={centralNavItems} onLinkClick={handleLinkOrMobileMenuCloseClick} className="justify-center" />
           </div>
 
           {/* Histórico Dropdown (Direita) */}
@@ -480,7 +487,6 @@ export default function Header() {
                   <NavigationMenuItem>
                     <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "text-muted-foreground hover:text-accent-foreground data-[state=open]:bg-accent/50 px-3 h-10 group")}>
                       Histórico
-                      <ChevronDown className="relative top-[1px] ml-1.5 h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180" aria-hidden="true"/>
                     </NavigationMenuTrigger>
                     <NavigationMenuContent>
                       <div className="w-80 p-2 space-y-1 bg-card text-card-foreground">
@@ -493,13 +499,13 @@ export default function Header() {
                         ) : (
                           <ul className="max-h-80 overflow-y-auto">
                             {recentlyViewedItems.slice(0, 5).map(item => (
-                              <HistoryListItem key={item.id} item={item} onClick={onLinkClick} />
+                              <HistoryListItem key={item.id} item={item} onClick={handleLinkOrMobileMenuCloseClick} />
                             ))}
                           </ul>
                         )}
                         <div className="border-t mt-1 pt-1">
                           <NavigationMenuLink asChild>
-                            <Link href="/dashboard/history" className={cn(navigationMenuTriggerStyle(), "w-full justify-center text-primary hover:underline text-xs py-1 h-auto")} onClick={onLinkClick}>
+                            <Link href="/dashboard/history" className={cn(navigationMenuTriggerStyle(), "w-full justify-center text-primary hover:underline text-xs py-1 h-auto")} onClick={handleLinkOrMobileMenuCloseClick}>
                               Ver Histórico Completo
                             </Link>
                           </NavigationMenuLink>
