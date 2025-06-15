@@ -1,15 +1,12 @@
 
 // src/app/auctions/[auctionId]/lots/[lotId]/page.tsx
 import type { Lot, Auction } from '@/types';
-import { sampleAuctions, sampleLots, getLotCategoryByName as getCategoryByNameFromSampleData } from '@/lib/sample-data'; // Usar sampleData
+// Corrigida a importação para usar getCategoryNameFromSlug e seu alias
+import { sampleAuctions, sampleLots, getCategoryNameFromSlug as getCategoryNameFromSampleDataSlug, slugify } from '@/lib/sample-data'; 
 import LotDetailClientContent from './lot-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Breadcrumbs, { type BreadcrumbItem } from '@/components/ui/breadcrumbs';
-// Removidas importações de actions do DB
-// import { getAuction as getAuctionAction } from '@/app/admin/auctions/actions';
-// import { getLot as getLotAction, getLots as getLotsAction } from '@/app/admin/lots/actions'; 
-// import { getSellerBySlug as getSellerBySlugAction } from '@/app/admin/sellers/actions'; 
 
 async function getLotPageData(currentAuctionId: string, currentLotId: string): Promise<{
   lot: Lot | undefined,
@@ -23,7 +20,6 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
 }> {
   console.log(`[getLotPageData - SampleData Mode] Buscando leilão: ${currentAuctionId}, lote: ${currentLotId}`);
 
-  // Encontrar leilão e lote em sampleData
   const auction = sampleAuctions.find(a => a.id === currentAuctionId);
   const lot = sampleLots.find(l => l.id === currentLotId && l.auctionId === currentAuctionId);
 
@@ -33,9 +29,8 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   ];
 
   if (auction) {
-    // Popular auction.lots para navegação e contagem precisa
     const lotsForThisAuction = sampleLots.filter(l => l.auctionId === auction.id);
-    auction.lots = lotsForThisAuction; // Modificando o objeto de sampleAuctions diretamente (cuidado em outros contextos)
+    auction.lots = lotsForThisAuction;
     auction.totalLots = lotsForThisAuction.length;
     console.log(`[getLotPageData - SampleData Mode] Leilão ${auction.id} encontrado. Lotes associados: ${lotsForThisAuction.length}`);
   }
@@ -49,24 +44,21 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
     return { lot: undefined, auction, breadcrumbs };
   }
   
-  // Usar getCategoryByNameFromSampleData se necessário para o nome da categoria
-  const lotCategory = getCategoryByNameFromSampleData(lot.type); 
+  // Corrigido para usar a função e o alias corretos, e slugify lot.type
+  const lotCategoryName = getCategoryNameFromSampleDataSlug(slugify(lot.type)); 
   
   breadcrumbs.push({ label: auction.title || `Leilão ${auction.id}`, href: `/auctions/${auction.id}` });
-  if (lotCategory) {
-    breadcrumbs.push({ label: lotCategory.name, href: `/category/${lotCategory.slug}` });
+  if (lotCategoryName) { // Verifica se o nome da categoria foi encontrado
+    breadcrumbs.push({ label: lotCategoryName, href: `/category/${slugify(lot.type)}` }); // Usa slugify(lot.type) para o link
   }
   breadcrumbs.push({ label: lot.title || `Lote ${lot.id}` });
 
-  // Lógica de lotIndex, previous/nextLotId e totalLotsInAuction usando auction.lots (que agora vem de sampleLots)
   const lotIndex = auction.lots?.findIndex(l => l.id === currentLotId) ?? -1;
   const totalLotsInAuction = auction.lots?.length ?? 0;
   const previousLotId = (auction.lots && lotIndex > 0) ? auction.lots[lotIndex - 1].id : undefined;
   const nextLotId = (auction.lots && lotIndex < totalLotsInAuction - 1) ? auction.lots[lotIndex + 1].id : undefined;
 
-  // Obter sellerName do lote, ou do leilão se não estiver no lote
   let sellerName = lot.sellerName || auction.seller;
-  // Não há busca de seller por slug do DB agora
 
   return { lot, auction, sellerName, lotIndex, previousLotId, nextLotId, totalLotsInAuction, breadcrumbs };
 }
@@ -116,6 +108,4 @@ export async function generateStaticParams() {
     }))
   );
   return paths;
-  // return []; // Manter vazio para evitar build com sample data se DB for dinâmico
 }
-
