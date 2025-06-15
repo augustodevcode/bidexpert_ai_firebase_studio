@@ -273,11 +273,10 @@ export default function LotDetailClientContent({
       toast({ title: "Erro ao Enviar Pergunta", description: result.message, variant: "destructive" });
       return false;
     }
-  };
+  }; // <--- SEMICOLON ADICIONADO AQUI
     
-  return (
+ return (
     <>
-      <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
           <div className="flex-grow">
             <h1 className="text-2xl md:text-3xl font-bold font-headline text-left">{lotTitle}</h1>
@@ -306,9 +305,9 @@ export default function LotDetailClientContent({
         <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
             <span className="font-medium text-foreground">Lote Nº: {actualLotNumber}</span>
             <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!previousLotId} disabled={!previousLotId} aria-label="Lote Anterior">{previousLotId ? <Link href={`/auctions/${auction.id}/lots/${previousLotId}`}><ChevronLeft className="h-4 w-4" /></Link> : <ChevronLeft className="h-4 w-4" />}</Button>
+                <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!previousLotId} disabled={!previousLotId} aria-label="Lote Anterior">{previousLotId ? <Link href={`/auctions/${auction.id}/lots/${previousLotId}`}><ChevronLeft className="h-4 w-4" /></Link> : <ChevronLeft className="h-4 w-4"/>}</Button>
                 <span className="text-sm text-muted-foreground mx-1">Lote {displayLotPosition} de {displayTotalLots}</span>
-                        <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">{nextLotId ? <Link href={`/auctions/${auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" /></Button>
+                <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">{nextLotId ? <Link href={`/auctions/${auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" />}</Button>
             </div>
         </div>
 
@@ -438,8 +437,6 @@ export default function LotDetailClientContent({
             </Card>
           </div>
         </div>
-      </div>
-      
       <LotPreviewModal
         lot={lot}
         auction={auction}
@@ -447,7 +444,7 @@ export default function LotDetailClientContent({
         onClose={() => setIsPreviewModalOpen(false)}
       />
     </>
-  );
+ );
 }
 
     
