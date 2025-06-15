@@ -6,13 +6,13 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Coins, Search as SearchIcon, Menu, ChevronDown, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks } from 'lucide-react'; 
+import { Coins, Search as SearchIcon, Menu, ChevronDown, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel } from 'lucide-react'; 
 import { useAuth } from '@/contexts/auth-context';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase'; 
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useRef, forwardRef } from 'react';
-import MainNav from './main-nav';
+import MainNav, { type NavItem } from './main-nav'; // Importação de NavItem
 import UserNav from './user-nav';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -226,13 +226,13 @@ export default function Header() {
   };
   
   const allNavItems: NavItem[] = [
-    { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag },
-    { href: '/', label: 'Início', icon: HomeIcon },
-    { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities', icon: ListChecks },
-    { label: 'Comitentes', isMegaMenu: true, contentKey: 'consignors', href: '/sellers', icon: Landmark },
-    { label: 'Leiloeiros', isMegaMenu: true, contentKey: 'auctioneers', href: '/auctioneers', icon: Gavel },
-    { href: '/sell-with-us', label: 'Venda Conosco', icon: Percent },
-    { href: '/contact', label: 'Fale Conosco', icon: Phone },
+    { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories' },
+    { href: '/', label: 'Início' },
+    { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities' },
+    { label: 'Comitentes', isMegaMenu: true, contentKey: 'consignors', href: '/sellers' },
+    { label: 'Leiloeiros', isMegaMenu: true, contentKey: 'auctioneers', href: '/auctioneers' },
+    { href: '/sell-with-us', label: 'Venda Conosco' },
+    { href: '/contact', label: 'Fale Conosco' },
   ];
 
   const firstNavItem = allNavItems[0];
@@ -441,17 +441,26 @@ export default function Header() {
             <NavigationMenuList>
               {firstNavItem.isMegaMenu && firstNavItem.contentKey && (
                 <NavigationMenuItem value={firstNavItem.label}>
-                   <NavigationMenuTrigger asChild>
-                    <Link 
-                        href={firstNavItem.href || '#'}
-                        className={cn(navigationMenuTriggerStyle(), "group", pathname === firstNavItem.href && "text-primary bg-accent")}
-                    >
-                        {firstNavItem.label}
-                        <ChevronDown className="relative top-[1px] ml-1.5 h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180" aria-hidden="true"/>
-                    </Link>
+                  <NavigationMenuTrigger asChild={!!firstNavItem.href}>
+                    {firstNavItem.href ? (
+                        <Link 
+                            href={firstNavItem.href}
+                            className={cn(navigationMenuTriggerStyle(), "group", pathname === firstNavItem.href && "text-primary bg-accent")}
+                            onPointerDown={(e) => { if (e.metaKey || e.ctrlKey) return; e.stopPropagation(); }}
+                            onClick={(e) => { if (e.metaKey || e.ctrlKey) return; onLinkClick && onLinkClick(); }}
+                         >
+                            {firstNavItem.label}
+                            <ChevronDown className="relative top-[1px] ml-1.5 h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180" aria-hidden="true"/>
+                        </Link>
+                    ) : (
+                        <span className={cn(navigationMenuTriggerStyle(), "group", pathname === firstNavItem.href && "text-primary bg-accent")}>
+                            {firstNavItem.label}
+                            <ChevronDown className="relative top-[1px] ml-1.5 h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180" aria-hidden="true"/>
+                        </span>
+                    )}
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                     {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} />}
+                     {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={onLinkClick} />}
                   </NavigationMenuContent>
                 </NavigationMenuItem>
               )}
@@ -460,7 +469,7 @@ export default function Header() {
           
           {/* Links Centrais */}
           <div className="flex-1 flex justify-center">
-            <MainNav items={centralNavItems} />
+            <MainNav items={centralNavItems} onLinkClick={onLinkClick} />
           </div>
 
           {/* Histórico Dropdown (Direita) */}
@@ -469,8 +478,9 @@ export default function Header() {
               <NavigationMenu className="justify-end">
                 <NavigationMenuList>
                   <NavigationMenuItem>
-                    <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "text-muted-foreground hover:text-accent-foreground data-[state=open]:bg-accent/50 px-3 h-10")}>
-                      Histórico <ChevronDown className="ml-1 h-4 w-4" />
+                    <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "text-muted-foreground hover:text-accent-foreground data-[state=open]:bg-accent/50 px-3 h-10 group")}>
+                      Histórico
+                      <ChevronDown className="relative top-[1px] ml-1.5 h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180" aria-hidden="true"/>
                     </NavigationMenuTrigger>
                     <NavigationMenuContent>
                       <div className="w-80 p-2 space-y-1 bg-card text-card-foreground">
@@ -483,13 +493,13 @@ export default function Header() {
                         ) : (
                           <ul className="max-h-80 overflow-y-auto">
                             {recentlyViewedItems.slice(0, 5).map(item => (
-                              <HistoryListItem key={item.id} item={item} onClick={() => {/* close logic if needed */}} />
+                              <HistoryListItem key={item.id} item={item} onClick={onLinkClick} />
                             ))}
                           </ul>
                         )}
                         <div className="border-t mt-1 pt-1">
                           <NavigationMenuLink asChild>
-                            <Link href="/dashboard/history" className={cn(navigationMenuTriggerStyle(), "w-full justify-center text-primary hover:underline text-xs py-1 h-auto")}>
+                            <Link href="/dashboard/history" className={cn(navigationMenuTriggerStyle(), "w-full justify-center text-primary hover:underline text-xs py-1 h-auto")} onClick={onLinkClick}>
                               Ver Histórico Completo
                             </Link>
                           </NavigationMenuLink>
