@@ -433,6 +433,24 @@ export const sampleLots: Lot[] = [
     description: 'Fiat Fiorino 2019, modelo Endurance 1.4 Flex, com baú. Ideal para trabalho, baixa quilometragem. Único dono.',
     sellerName: 'Empresa de Logística RS'
   },
+  {
+    id: 'LOTEFIN001',
+    auctionId: 'XYZBANK001',
+    title: 'Apartamento 3 Quartos - Cobertura - Barra da Tijuca',
+    imageUrl: 'https://placehold.co/800x600.png?text=Cobertura+Barra',
+    dataAiHint: 'cobertura vista mar',
+    status: 'ABERTO_PARA_LANCES',
+    cityName: 'Rio de Janeiro',
+    stateUf: 'RJ',
+    type: 'Imóvel de Luxo',
+    views: 500,
+    auctionName: 'Leilão Especial Banco XYZ',
+    price: 1200000,
+    endDate: createFutureDate(15, 0),
+    bidsCount: 2,
+    description: 'Cobertura duplex com vista para o mar na Barra da Tijuca. 3 suítes, piscina privativa, área gourmet.',
+    sellerName: 'Banco XYZ'
+  },
 ];
 
 export const sampleAuctions: Auction[] = [
@@ -452,7 +470,6 @@ export const sampleAuctions: Auction[] = [
     dataAiHint: 'logo banco leilao',
     seller: 'Banco Bradesco S.A.',
     sellingBranch: 'Bradesco Matriz',
-    // vehicleLocation: 'Diversos Locais (ver lote)',
     city: 'São Paulo',
     state: 'SP',
     auctionStages: [
@@ -479,7 +496,6 @@ export const sampleAuctions: Auction[] = [
     dataAiHint: 'logo leilao agro',
     seller: 'Diversos Comitentes Agro',
     sellingBranch: 'AgroLeilões Central',
-    // vehicleLocation: 'Pátio Central AgroLeilões',
     city: 'Rio Verde',
     state: 'GO',
      auctionStages: [
@@ -505,7 +521,6 @@ export const sampleAuctions: Auction[] = [
     dataAiHint: 'logo leilao carros',
     seller: 'Diversos Proprietários e Financeiras',
     sellingBranch: 'Pátio SuperBid SP',
-    // vehicleLocation: 'Pátio SuperBid SP',
     city: 'São Paulo',
     state: 'SP',
     auctionStages: [
@@ -555,7 +570,6 @@ export const sampleAuctions: Auction[] = [
     dataAiHint: 'logo galeria arte',
     seller: 'Colecionadores Particulares',
     sellingBranch: 'Galeria Antika - Sede SP',
-    // vehicleLocation: 'N/A',
     city: 'São Paulo',
     state: 'SP',
     auctionStages: [
@@ -582,7 +596,6 @@ export const sampleAuctions: Auction[] = [
     dataAiHint: 'logo leilao classicos',
     seller: 'Proprietários Diversos Clássicos',
     sellingBranch: 'Pátio Clássicos BR - Curitiba',
-    // vehicleLocation: 'Pátio do Leiloeiro',
     city: 'Curitiba',
     state: 'PR',
     auctionStages: [
@@ -591,6 +604,34 @@ export const sampleAuctions: Auction[] = [
     initialOffer: Math.min(...sampleLots.filter(l => l.auctionId === 'CLASSICVEH24' && l.price > 0).map(l => l.price)),
     createdAt: createPastDate(50),
     updatedAt: createPastDate(5),
+  },
+  {
+    id: 'XYZBANK001',
+    publicId: 'LEI-BANCOXYZ-XYZ001',
+    title: 'Leilão Banco XYZ - Imóveis RJ',
+    fullTitle: 'Grande Oportunidade de Imóveis Residenciais - Banco XYZ',
+    auctionDate: createFutureDate(3, 14), // Inicia em 3 dias
+    endDate: createFutureDate(18, 14), // Termina em 18 dias
+    totalLots: sampleLots.filter(l => l.auctionId === 'XYZBANK001').length,
+    status: 'EM_BREVE',
+    auctioneer: 'Leiloeiro XYZ Oficial',
+    category: 'Imóvel de Luxo', // Mantendo consistência com o lote exemplo
+    auctioneerLogoUrl: 'https://placehold.co/150x50.png?text=Banco+XYZ&font=lato',
+    visits: 120,
+    lots: sampleLots.filter(l => l.auctionId === 'XYZBANK001'),
+    imageUrl: 'https://placehold.co/150x75.png?text=Leilao+XYZ&font=lato',
+    dataAiHint: 'logo banco moderno',
+    seller: 'Banco XYZ', // Para garantir que getUniqueSellers o encontre
+    sellingBranch: 'XYZ Imóveis RJ',
+    city: 'Rio de Janeiro',
+    state: 'RJ',
+     auctionStages: [
+        { name: "1ª Praça", endDate: createFutureDate(10, 14), statusText: "Encerramento 1ª Praça" },
+        { name: "2ª Praça", endDate: createFutureDate(18, 14), statusText: "Encerramento 2ª Praça" },
+    ],
+    initialOffer: sampleLots.find(l => l.auctionId === 'XYZBANK001')?.price || 0,
+    createdAt: createPastDate(5),
+    updatedAt: createPastDate(0),
   },
 ];
 
@@ -871,9 +912,21 @@ export const slugify = (text: string): string => {
 };
 
 export function getCategoryNameFromSlug(slug: string): string | undefined {
-  const allCategoriesFromLots = getUniqueLotCategories(); 
-  const foundCategoryName = allCategoriesFromLots.find(catName => slugify(catName) === slug);
-  return foundCategoryName;
+  // Esta função agora vai iterar sobre `sampleLots` para encontrar um nome de categoria que corresponda ao slug.
+  // Isso é menos eficiente do que ter uma lista separada de categorias com slugs pré-calculados.
+  for (const lot of sampleLots) {
+    if (lot.type && slugify(lot.type) === slug) {
+      return lot.type;
+    }
+  }
+  // Se não encontrarmos em lot.type, tentamos em auction.category (menos provável, mas para cobrir)
+  for (const auction of sampleAuctions) {
+      if (auction.category && slugify(auction.category) === slug) {
+          return auction.category;
+      }
+  }
+  console.warn(`[sample-data] Nenhum nome de categoria encontrado para o slug: ${slug}`);
+  return undefined;
 }
 
 interface CategoryAssets {
@@ -1164,3 +1217,6 @@ export const sampleDirectSaleOffers: DirectSaleOffer[] = [
 // --- End Venda Direta Sample Data ---
 
 
+
+
+  
