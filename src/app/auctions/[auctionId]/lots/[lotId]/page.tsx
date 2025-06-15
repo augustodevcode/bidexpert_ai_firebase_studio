@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Breadcrumbs, { type BreadcrumbItem } from '@/components/ui/breadcrumbs';
 import { getAuction as getAuctionAction } from '@/app/admin/auctions/actions';
-import { getLot as getLotAction } from '@/app/admin/lots/actions';
+import { getLot as getLotAction, getLots as getLotsAction } from '@/app/admin/lots/actions'; // Importar getLotsAction
 import { getSellerBySlug as getSellerBySlugAction } from '@/app/admin/sellers/actions'; 
 
 async function getLotPageData(currentAuctionId: string, currentLotId: string): Promise<{
@@ -28,6 +28,13 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
     { label: 'Leilões', href: '/search?type=auctions' }
   ];
 
+  if (auction) {
+    // Popular auction.lots para navegação e contagem precisa
+    const lotsForThisAuction = await getLotsAction(currentAuctionId);
+    auction.lots = lotsForThisAuction;
+  }
+
+
   if (!auction || !lot || lot.auctionId !== auction.id) { 
     if (auction) {
       breadcrumbs.push({ label: auction.title || `Leilão ${auction.id}`, href: `/auctions/${auction.id}` });
@@ -44,6 +51,7 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   }
   breadcrumbs.push({ label: lot.title || `Lote ${lot.id}` });
 
+  // A lógica de lotIndex, previous/nextLotId e totalLotsInAuction agora usará auction.lots populado do DB.
   const lotIndex = auction.lots?.findIndex(l => l.id === currentLotId) ?? -1;
   const totalLotsInAuction = auction.lots?.length ?? 0;
   const previousLotId = (auction.lots && lotIndex > 0) ? auction.lots[lotIndex - 1].id : undefined;
@@ -65,7 +73,7 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
 }
 
 export default async function LotDetailPage({ params }: { params: { auctionId: string, lotId: string } }) {
-  const { auctionId, lotId } = params; // Desestruturar params aqui
+  const { auctionId, lotId } = params; 
   const { lot, auction, sellerName, lotIndex, previousLotId, nextLotId, totalLotsInAuction, breadcrumbs } = await getLotPageData(auctionId, lotId);
 
   if (!lot || !auction) {
@@ -102,12 +110,14 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
 }
 
 export async function generateStaticParams() {
-  const paths = sampleAuctions.flatMap(auction =>
-    (auction.lots || []).map(lot => ({
-      auctionId: auction.id,
-      lotId: lot.id,
-    }))
-  );
-  return paths;
+  // const paths = sampleAuctions.flatMap(auction =>
+  //   (auction.lots || []).map(lot => ({
+  //     auctionId: auction.id,
+  //     lotId: lot.id,
+  //   }))
+  // );
+  // return paths;
+  return []; // Manter vazio para evitar build com sample data se DB for dinâmico
 }
+
 

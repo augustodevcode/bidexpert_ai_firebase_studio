@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AuctionDetailsClient from './auction-details-client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuction as getAuctionAction } from '@/app/admin/auctions/actions'; // Importar a server action
+import { getAuction as getAuctionAction } from '@/app/admin/auctions/actions'; 
+import { getLots as getLotsAction } from '@/app/admin/lots/actions'; // Importar getLots
 
 async function getAuctionData(id: string): Promise<Auction | undefined> {
   console.log(`[getAuctionData] Chamada com ID: ${id}`);
@@ -16,12 +17,19 @@ async function getAuctionData(id: string): Promise<Auction | undefined> {
     console.warn('[getAuctionData] ID do leilão não fornecido ou undefined.');
     return undefined;
   }
-  // Agora busca do banco de dados via Server Action
-  const auction = await getAuctionAction(id);
+  
+  const auction = await getAuctionAction(id); // Busca o leilão do DB
   if (!auction) {
     console.warn(`[getAuctionData] Nenhum leilão encontrado para o ID: ${id}`);
+    return undefined;
   }
-  return auction || undefined; // Retorna undefined se for null
+
+  // Buscar os lotes para este leilão e atribuí-los
+  const lotsForAuction = await getLotsAction(id); // Passa o ID do leilão (pode ser publicId ou numérico)
+  auction.lots = lotsForAuction;
+  console.log(`[getAuctionData] Leilão ID ${id} encontrado. Total de lotes buscados do DB: ${lotsForAuction.length}`);
+  
+  return auction; 
 }
 
 const estados = [
@@ -30,17 +38,12 @@ const estados = [
   'Santa Catarina', 'São Paulo', 'Tocantins'
 ];
 
-// Modificado para usar 'paramsProp' e depois desestruturar, como em LotDetailPage
 export default async function AuctionLotsPage({ params: paramsProp }: { params: { auctionId: string } }) {
-  // Tentativa de satisfazer a mensagem de erro do Next.js sobre `await params`
-  // No contexto de um Server Component de página `async`, `params` já deve estar resolvido.
-  // Esta é uma forma de garantir que estamos usando o valor após qualquer resolução implícita.
   const params = paramsProp; 
   const { auctionId } = params; 
 
   if (!auctionId) {
     console.error("[AuctionLotsPage] auctionId está undefined nos params.");
-    // Renderizar uma mensagem de erro ou redirecionar
     return (
       <div className="text-center py-12">
         <h1 className="text-2xl font-bold">Erro ao Carregar Leilão</h1>
@@ -72,12 +75,9 @@ export default async function AuctionLotsPage({ params: paramsProp }: { params: 
 }
 
 export async function generateStaticParams() {
-  // Se você ainda quiser usar dados de exemplo para gerar parâmetros estáticos:
   // return sampleAuctions.map((auction) => ({
   //   auctionId: auction.id,
   // }));
-  // Ou, para uma abordagem mais dinâmica (mas que pode não ser ideal para SSG puro sem DB na build):
-  // const auctions = await getAuctions(); // Precisa de uma action getAuctions se for usar dados reais
-  // return auctions.map(auction => ({ auctionId: auction.publicId || auction.id }));
-  return []; // Retornar vazio se não for usar SSG ou se os dados forem muito dinâmicos
+  return []; 
 }
+
