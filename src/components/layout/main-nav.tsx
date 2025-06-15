@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react'; // Importação adicionada
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -8,7 +9,7 @@ import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
-import { Home as HomeIcon, Tag, Gavel, Library, Landmark, Briefcase, MessageSquareText, ShoppingCart, Users2, ChevronRight, ListChecks } from 'lucide-react'; // Adicionado ListChecks
+import { Home as HomeIcon, Tag, Gavel, Library, Landmark, Briefcase, MessageSquareText, ShoppingCart, Users2, ChevronRight, ListChecks } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   NavigationMenu,
@@ -52,10 +53,8 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLinkClick = () => {
-    if (className?.includes('flex-col')) { // Assume que 'flex-col' indica menu mobile
-      // Idealmente, aqui você teria acesso ao estado do Sheet (se ele está aberto) para fechá-lo.
-      // Por enquanto, vamos logar ou você pode passar uma função de fechamento como prop.
-      setIsMobileMenuOpen(false); // Supondo que você adicione este estado ao MainNav se ele controlar o Sheet
+    if (className?.includes('flex-col')) { 
+      setIsMobileMenuOpen(false); 
     }
   };
 
@@ -116,45 +115,43 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
       icon: <Tag className="h-4 w-4" />,
       isMegaMenu: true,
       contentKey: 'categories',
-      href: '/search?tab=categories' // Fallback para mobile ou no-JS
+      href: '/search?tab=categories' 
     },
     {
       label: 'Modalidades',
       icon: <Gavel className="h-4 w-4" />,
       isMegaMenu: true,
       contentKey: 'modalities',
-      href: '/search?filter=modalities' // Fallback para mobile ou no-JS
+      href: '/search?filter=modalities' 
     },
     {
       label: 'Comitentes',
       icon: <Briefcase className="h-4 w-4" />,
       isMegaMenu: true,
       contentKey: 'consignors',
-      href: '/sellers' // Fallback para mobile ou no-JS
+      href: '/sellers' 
     },
     {
       label: 'Leiloeiros',
       icon: <Landmark className="h-4 w-4" />,
       isMegaMenu: true,
       contentKey: 'auctioneers',
-      href: '/auctioneers' // Fallback para mobile ou no-JS
+      href: '/auctioneers' 
     },
     { href: '/direct-sales', label: 'Venda Direta', icon: <ShoppingCart className="h-4 w-4" /> },
-    { href: '/sell-with-us', label: 'Venda Conosco', icon: <Library className="h-4 w-4" /> }, // Library como ícone genérico
+    { href: '/sell-with-us', label: 'Venda Conosco', icon: <Library className="h-4 w-4" /> },
     { href: '/contact', label: 'Fale Conosco', icon: <MessageSquareText className="h-4 w-4" /> },
   ];
   
   // Para o menu mobile, que é uma lista simples de links
   if (className?.includes('flex-col')) {
-      if (!isClient) return null; // Evita renderização no servidor para o menu mobile se ele depende de client-side state/hooks
+      if (!isClient) return null; 
     return (
       <nav className={cn('flex flex-col gap-1 px-4', className)} {...props}>
         {navItems.map((item) => (
-           // Renderiza um link direto para todos os itens no mobile.
-           // O href principal (item.href) será usado.
           item.href ? (
             <Link
-              key={item.label} // Usar label como chave se href pode não ser único em casos de submenus transformados
+              key={item.label} 
               href={item.href}
               onClick={handleLinkClick}
               className={cn(
@@ -166,7 +163,6 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
               <span>{item.label}</span>
             </Link>
           ) : (
-            // Caso de item que SÓ existe como megamenu e não tem href de fallback (raro)
             <div key={item.label} className="text-md font-medium text-muted-foreground/50 flex items-center gap-2 py-2.5 px-3 rounded-md cursor-not-allowed">
                  {item.icon}<span>{item.label} (Desktop)</span>
             </div>
