@@ -4,6 +4,8 @@ import { sampleLotCategories } from '@/lib/sample-data';
 
 // This page component is a Server Component
 export default function CategoryPage({ params }: { params: { categorySlug: string } }) {
+  // O componente DynamicBreadcrumbs no Header cuidará de mostrar os breadcrumbs.
+  // Não precisamos mais passar breadcrumbItems daqui.
   return <CategoryDisplay params={params} />;
 }
 

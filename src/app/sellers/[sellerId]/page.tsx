@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { sampleAuctions, sampleLots, slugify, sampleSellers } from '@/lib/sample-data'; // Modificado para usar sampleSellers
+import { sampleAuctions, sampleLots, slugify, sampleSellers } from '@/lib/sample-data'; 
 import type { Auction, Lot, SellerProfileInfo } from '@/types';
 import AuctionCard from '@/components/auction-card';
 import LotCard from '@/components/lot-card';
@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChevronLeft, Building, CalendarDays, PackageOpen, Star, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+// Removido: import Breadcrumbs from '@/components/ui/breadcrumbs';
 
 export default function SellerDetailsPage() {
   const params = useParams();
@@ -31,11 +32,11 @@ export default function SellerDetailsPage() {
       setError(null);
 
       try {
-        const allSellers = sampleSellers; // Alterado para usar o array diretamente
-        const foundSeller = allSellers.find(s => s.slug === sellerIdSlug);
+        const allSellers = sampleSellers; 
+        const foundSeller = allSellers.find(s => s.slug === sellerIdSlug || s.publicId === sellerIdSlug || s.id === sellerIdSlug);
 
         if (!foundSeller) {
-          setError(`Comitente com slug "${sellerIdSlug}" não encontrado.`);
+          setError(`Comitente com slug/ID "${sellerIdSlug}" não encontrado.`);
           setSellerProfile(null);
           setIsLoading(false);
           return;
@@ -43,20 +44,20 @@ export default function SellerDetailsPage() {
         
         setSellerProfile(foundSeller);
 
-        // Filter auctions where this seller is the 'seller'
         const auctionsByThisSeller = sampleAuctions.filter(auction => 
-          auction.seller && slugify(auction.seller) === sellerIdSlug
+          (auction.sellerId && auction.sellerId === foundSeller.id) || // Check by ID first
+          (auction.seller && slugify(auction.seller) === sellerIdSlug) 
         );
         setRelatedAuctions(auctionsByThisSeller);
 
-        // Filter lots where this seller is the 'sellerName'
-        // Also, include lots from the auctions where this seller is the 'seller',
-        // but ensure we don't duplicate lots if they also have a direct sellerName match.
-        let lotsByThisSeller = sampleLots.filter(lot => lot.sellerName && slugify(lot.sellerName) === sellerIdSlug);
+        let lotsByThisSeller = sampleLots.filter(lot => 
+          (lot.sellerId && lot.sellerId === foundSeller.id) ||
+          (lot.sellerName && slugify(lot.sellerName) === sellerIdSlug)
+        );
         
         auctionsByThisSeller.forEach(auction => {
-          (auction.lots || []).forEach(auctionLot => { // Adicionado (auction.lots || []) para segurança
-            if ((!auctionLot.sellerName || slugify(auctionLot.sellerName) === sellerIdSlug) && 
+          (auction.lots || []).forEach(auctionLot => { 
+            if (((!auctionLot.sellerName && auction.sellerId === foundSeller.id) || (auctionLot.sellerName && slugify(auctionLot.sellerName) === sellerIdSlug)) && 
                 !lotsByThisSeller.find(l => l.id === auctionLot.id)) {
               lotsByThisSeller.push(auctionLot);
             }
@@ -75,7 +76,7 @@ export default function SellerDetailsPage() {
         setIsLoading(false);
       }
     } else {
-      setError("Slug do comitente não fornecido.");
+      setError("Slug/ID do comitente não fornecido.");
       setIsLoading(false);
     }
   }, [sellerIdSlug]);
@@ -116,12 +117,13 @@ export default function SellerDetailsPage() {
 
   return (
     <div className="space-y-8">
+      {/* Breadcrumbs removidos daqui */}
       <Card className="shadow-lg mb-8">
         <CardHeader>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-start gap-4">
               <Avatar className="h-20 w-20 border-2 border-primary/30">
-                <AvatarImage src={sellerProfile.logoUrl} alt={sellerProfile.name} data-ai-hint={sellerProfile.dataAiHintLogo} />
+                <AvatarImage src={sellerProfile.logoUrl || `https://placehold.co/80x80.png?text=${sellerInitial}`} alt={sellerProfile.name} data-ai-hint={sellerProfile.dataAiHintLogo || "logo comitente grande"} />
                 <AvatarFallback>{sellerInitial}</AvatarFallback>
               </Avatar>
               <div>
@@ -187,3 +189,4 @@ export default function SellerDetailsPage() {
     </div>
   );
 }
+

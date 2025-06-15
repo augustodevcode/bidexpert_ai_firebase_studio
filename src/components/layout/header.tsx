@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation'; // Adicionado usePathname
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,30 +14,27 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks, Tv, Briefcase as ConsignorIcon, ShieldCheck, Coins, Search as SearchIcon, Menu, ChevronDown, Package, Home as HomeIcon } from 'lucide-react';
+import { Coins, Search as SearchIcon, Menu, ChevronDown, Package, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
-import { auth } from '@/lib/firebase'; // Ainda necessário para logout do Firebase
 import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useRef } from 'react';
-import { hasPermission, hasAnyPermission } from '@/lib/permissions';
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"; // Adicionado SheetHeader, SheetTitle, SheetDescription
 import MainNav from './main-nav';
 import UserNav from './user-nav';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Heart, Bell } from 'lucide-react';
 import type { RecentlyViewedLotInfo, Lot, LotCategory, PlatformSettings } from '@/types';
 import { sampleLots, slugify } from '@/lib/sample-data';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getFavoriteLotIdsFromStorage } from '@/lib/favorite-store';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-
-// Email do comitente de exemplo (para simular o próprio comitente acessando)
-const EXAMPLE_CONSIGNOR_EMAIL = 'consignor@bidexpert.com';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import DynamicBreadcrumbs from './dynamic-breadcrumbs'; // Novo componente
 
 export default function Header() {
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
@@ -49,17 +46,15 @@ export default function Header() {
   const [searchResults, setSearchResults] = useState<Lot[]>([]);
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const [isSearchLoading, setIsSearchLoading] = useState(false);
- const auctioneersDropdownTriggerRef = useRef<HTMLButtonElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname(); // Para controlar visibilidade dos breadcrumbs
   const { user } = useAuth();
 
   const placeholderNotificationsCount = 3; 
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const siteTitle = platformSettings?.siteTitle || 'BidExpert';
   const siteTagline = platformSettings?.siteTagline;
-
- const [auctioneersDropdownAlign, setAuctioneersDropdownAlign] = useState<'start' | 'center' | 'end'>('start');
 
   useEffect(() => {
     setIsClient(true);
@@ -96,25 +91,6 @@ export default function Header() {
     fetchInitialData();
     
   }, []);
-
-  useEffect(() => {
-    const calculateDropdownAlignment = () => {
-      if (auctioneersDropdownTriggerRef.current) {
-        const triggerRect = auctioneersDropdownTriggerRef.current.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        // Check if there's enough space to the right for a standard dropdown width (e.g., 200px)
-        // You might need to adjust the 200px based on your dropdown's actual width
-        if (viewportWidth - triggerRect.right < 200) {
-          setAuctioneersDropdownAlign('end');
-        } else {
-          setAuctioneersDropdownAlign('start');
-        }
-      }
-    };
-    calculateDropdownAlignment(); // Calculate on mount
-    window.addEventListener('resize', calculateDropdownAlignment); // Recalculate on resize
-    return () => window.removeEventListener('resize', calculateDropdownAlignment); // Clean up
-  }, [isClient]); // Recalculate if isClient changes (though it won't after initial mount)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -175,19 +151,51 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full shadow-md">
-      {/* Top Bar */}
-      <div className="bg-primary text-primary-foreground">
+      {/* Promotion Bar */}
+      <div className="bg-primary/80 text-primary-foreground text-xs sm:text-sm">
+        <div className="container mx-auto px-4 h-10 flex items-center justify-center sm:justify-between">
+          <p className="text-center sm:text-left">
+            <Percent className="inline h-4 w-4 mr-1.5" />
+            <strong>Leilão Especial de Veículos Clássicos!</strong> Lances a partir de R$1.000!
+          </p>
+          <Button size="sm" variant="link" asChild className="text-primary-foreground hover:text-primary-foreground/80 hidden sm:inline-flex h-auto py-1 px-2">
+            <Link href="/search?category=veiculos&status=EM_BREVE">Ver Agora</Link>
+          </Button>
+        </div>
+      </div>
+
+      {/* Top Bar (Informational) */}
+      <div className="bg-secondary text-secondary-foreground text-xs border-b">
+        <div className="container mx-auto px-4 h-10 flex items-center justify-between">
+          <div className="hidden sm:block">
+            Bem-vindo ao {siteTitle}! Sua plataforma de leilões online.
+          </div>
+          <nav className="flex items-center space-x-3 sm:space-x-4">
+            <Link href="/faq" className="hover:text-primary transition-colors flex items-center gap-1">
+              <HelpCircle className="h-3.5 w-3.5" /> Ajuda/FAQ
+            </Link>
+            <Link href="/contact" className="hover:text-primary transition-colors flex items-center gap-1">
+              <Phone className="h-3.5 w-3.5" /> Contato
+            </Link>
+            {/* Placeholders for language/currency */}
+            {/* <span className="cursor-pointer hover:text-primary">Português</span> */}
+            {/* <span className="cursor-pointer hover:text-primary">BRL</span> */}
+          </nav>
+        </div>
+      </div>
+
+      {/* Logo and Search Area */}
+      <div className="bg-background text-foreground border-b">
         <div className="container mx-auto px-4 flex h-20 items-center justify-between">
           <div className="flex items-center">
-            {/* Mobile Menu Trigger */}
             <div className="md:hidden mr-2">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hover:bg-primary/80 focus-visible:ring-primary-foreground" aria-label="Abrir Menu">
+                  <Button variant="ghost" size="icon" className="hover:bg-accent focus-visible:ring-accent-foreground" aria-label="Abrir Menu">
                     <Menu className="h-6 w-6" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0 bg-background text-foreground">
+                <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0 bg-card text-card-foreground">
                   <SheetHeader className="p-4 border-b">
                     <SheetTitle className="flex items-center space-x-2 text-lg font-semibold">
                       <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
@@ -196,7 +204,6 @@ export default function Header() {
                       </Avatar>
                       <span className="text-primary">{siteTitle}</span>
                     </SheetTitle>
-                    {/* <SheetDescription>Navegue pelo site.</SheetDescription> */}
                   </SheetHeader>
                   <nav className="flex flex-col gap-1 p-4">
                     <MainNav className="flex-col items-start space-x-0 space-y-0" />
@@ -207,30 +214,24 @@ export default function Header() {
                 </SheetContent>
               </Sheet>
             </div>
-
-            {/* Logo and Tagline */}
             <Link href="/" className="mr-4 flex flex-col items-start sm:items-center sm:flex-row sm:space-x-3">
               <div className="flex items-center space-x-2 sm:space-x-3">
-                <Avatar className="h-8 w-8 sm:h-10 sm:w-10 bg-primary-foreground text-primary">
-                  <AvatarImage src="https://placehold.co/40x40.png?text=BE" alt={`${siteTitle} Logo`} data-ai-hint="logo initial" />
-                  <AvatarFallback className="font-bold text-xl">{siteTitle.substring(0,2).toUpperCase()}</AvatarFallback>
-                </Avatar>
+                <Coins className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
                 <span className="font-bold text-xl sm:text-3xl">
                   {siteTitle}
                 </span>
               </div>
               {siteTagline && (
-                <span className="text-xs sm:text-sm text-primary-foreground/80 mt-0 sm:mt-1 hidden md:block">
+                <span className="text-xs sm:text-sm text-muted-foreground mt-0 sm:mt-1 hidden md:block">
                   {siteTagline}
                 </span>
               )}
             </Link>
           </div>
 
-          {/* Search Bar - Desktop */}
           <div className="hidden md:flex flex-1 justify-center items-center px-4">
             <form onSubmit={handleSearchSubmit} className="w-full max-w-xl">
-              <div ref={searchContainerRef} className="relative flex w-full bg-background rounded-md shadow-sm">
+              <div ref={searchContainerRef} className="relative flex w-full bg-background rounded-md shadow-sm border border-input">
                 <Select
                   value={selectedSearchCategorySlug || 'todas'}
                   onValueChange={(value) => setSelectedSearchCategorySlug(value === 'todas' ? undefined : value)}
@@ -261,7 +262,7 @@ export default function Header() {
                 <Input
                   type="search"
                   placeholder="Buscar em todo o site..."
-                  className="h-10 pl-3 pr-10 flex-1 rounded-l-none rounded-r-md border-l-0 focus:ring-0 focus:ring-offset-0 text-foreground placeholder:text-muted-foreground"
+                  className="h-10 pl-3 pr-10 flex-1 rounded-l-none rounded-r-md border-0 focus:ring-0 focus:ring-offset-0 text-foreground placeholder:text-muted-foreground"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onFocus={() => searchTerm.length >= 3 && setIsSearchDropdownOpen(true)}
@@ -314,28 +315,26 @@ export default function Header() {
             </form>
            </div>
 
-          {/* User Nav & Mobile Search Icon */}
           <div className="flex items-center space-x-1 sm:space-x-2">
-            {/* Mobile Search Icon - md:hidden to hide on medium and up */}
-            <Button variant="ghost" size="icon" className="md:hidden hover:bg-primary/80 focus-visible:ring-primary-foreground" aria-label="Buscar">
+            <Button variant="ghost" size="icon" className="md:hidden hover:bg-accent focus-visible:ring-accent-foreground" aria-label="Buscar">
               <SearchIcon className="h-5 w-5 sm:h-6 sm:w-6" />
             </Button>
             {user && (
-              <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground sm:inline-flex" asChild aria-label="Notificações">
+              <Button variant="ghost" size="icon" className="relative hover:bg-accent focus-visible:ring-accent-foreground sm:inline-flex" asChild aria-label="Notificações">
                 <Link href="/dashboard/notifications">
                   <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
                   {placeholderNotificationsCount > 0 && (
-                    <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-primary-foreground text-primary border-primary">
+                    <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-accent-foreground text-accent border-accent">
                       {placeholderNotificationsCount}
                     </Badge>
                   )}
                 </Link>
               </Button>
             )}
-            <Button variant="ghost" size="icon" className="relative hover:bg-primary/80 focus-visible:ring-primary-foreground sm:inline-flex" asChild aria-label="Favoritos">
+            <Button variant="ghost" size="icon" className="relative hover:bg-accent focus-visible:ring-accent-foreground sm:inline-flex" asChild aria-label="Favoritos">
               <Link href="/dashboard/favorites">
                 <Heart className="h-5 w-5 sm:h-6 sm:w-6" />
-                {isClient && <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-primary-foreground text-primary border-primary">{getFavoriteLotIdsFromStorage().length > 0 ? getFavoriteLotIdsFromStorage().length : 0}</Badge>}
+                {isClient && <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-accent-foreground text-accent border-accent">{getFavoriteLotIdsFromStorage().length > 0 ? getFavoriteLotIdsFromStorage().length : 0}</Badge>}
               </Link>
             </Button>
              <UserNav />
@@ -343,29 +342,25 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Bottom Navigation Bar - Desktop */}
+      {/* Main Navigation Bar - Desktop */}
       <div className="border-b bg-background text-foreground hidden md:block">
         <div className="container mx-auto px-4 flex h-12 items-center justify-between">
           <div className="flex items-center text-sm font-medium">
-            <Link href="/" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1" aria-label="Início">
-              <HomeIcon className="h-4 w-4" />
-            </Link>
+             {/* Placeholder para Shop By Department se necessário no futuro */}
           </div>
-
-          <nav className="flex items-center space-x-3 lg:space-x-4 text-xs sm:text-sm">
+          <nav className="flex items-center space-x-3 lg:space-x-4 text-xs sm:text-sm mx-auto">
               <MainNav />
           </nav>
-
           <div className="flex items-center">
             {isClient && recentlyViewedItems.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="text-sm font-medium hover:bg-accent hover:text-accent-foreground text-muted-foreground">
-                    Histórico de Navegação <ChevronDown className="ml-1 h-4 w-4" />
+                    Histórico <ChevronDown className="ml-1 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-80 bg-card text-card-foreground">
- <DropdownMenuLabel className="flex justify-between items-center">
+                  <DropdownMenuLabel className="flex justify-between items-center">
                     Itens Vistos Recentemente
                     <History className="h-4 w-4 text-muted-foreground" />
                   </DropdownMenuLabel>
@@ -391,12 +386,22 @@ export default function Header() {
             )}
              {isClient && recentlyViewedItems.length === 0 && (
                 <Link href="/dashboard/history" className="text-sm text-muted-foreground hover:text-primary font-medium">
-                    Histórico de Navegação
+                    Histórico
                 </Link>
             )}
           </div>
         </div>
       </div>
+
+      {/* Breadcrumbs Bar - Nova */}
+      {isClient && pathname !== '/' && (
+        <nav className="border-b bg-secondary/50 text-secondary-foreground text-xs">
+            <div className="container mx-auto px-4 h-10 flex items-center">
+                <DynamicBreadcrumbs />
+            </div>
+        </nav>
+      )}
     </header>
   );
 }
+

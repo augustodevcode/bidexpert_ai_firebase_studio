@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+// Removido: import Breadcrumbs from '@/components/ui/breadcrumbs';
 
 function RecentAuctionCarouselItem({ auction }: { auction: Auction }) {
   const auctionEndDate = auction.endDate || (auction.auctionStages && auction.auctionStages.length > 0 ? auction.auctionStages[auction.auctionStages.length - 1].endDate : auction.auctionDate);
@@ -79,17 +80,18 @@ export default function AuctioneerDetailsPage() {
         setError(null);
         try {
           const allAuctioneers = await getAuctioneers();
-          const foundAuctioneer = allAuctioneers.find(s => s.slug === auctioneerSlug);
+          const foundAuctioneer = allAuctioneers.find(s => s.slug === auctioneerSlug || s.publicId === auctioneerSlug);
 
           if (!foundAuctioneer) {
-            setError(`Leiloeiro com slug "${auctioneerSlug}" não encontrado.`);
+            setError(`Leiloeiro com slug/publicId "${auctioneerSlug}" não encontrado.`);
             setAuctioneerProfile(null);
             setIsLoading(false);
             return;
           }
           setAuctioneerProfile(foundAuctioneer);
           const auctions = sampleAuctions.filter(auction =>
-            auction.auctioneer && slugify(auction.auctioneer) === auctioneerSlug
+            (auction.auctioneerId && auction.auctioneerId === foundAuctioneer.id) ||
+            (auction.auctioneer && slugify(auction.auctioneer) === auctioneerSlug)
           );
           setRelatedAuctions(auctions);
         } catch (e) {
@@ -99,7 +101,7 @@ export default function AuctioneerDetailsPage() {
           setIsLoading(false);
         }
       } else {
-        setError("Slug do leiloeiro não fornecido.");
+        setError("Slug/PublicID do leiloeiro não fornecido.");
         setIsLoading(false);
       }
     }
@@ -144,21 +146,10 @@ export default function AuctioneerDetailsPage() {
   const placeholderAveragePrice = ((Math.random() * 500 + 100) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '');
   const placeholderPriceRange = `${((Math.random() * 50 + 10) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '')} - ${((Math.random() * 2000 + 500) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '')}`;
 
-
   return (
     <TooltipProvider>
       <div className="space-y-10 py-6">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="outline" size="icon" asChild className="mb-4 print:hidden" aria-label="Voltar para Leiloeiros">
-              <Link href="/auctioneers">
-                <ChevronLeft className="h-4 w-4" />
-              </Link>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent><p>Voltar para Leiloeiros</p></TooltipContent>
-        </Tooltip>
-        
+        {/* Breadcrumbs removidos daqui, serão tratados pelo Header */}
 
         {/* Top Section: Auctioneer Info & Recent Auctions */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start border-b pb-10">
@@ -213,9 +204,9 @@ export default function AuctioneerDetailsPage() {
             </div>
             {recentAuctionsForCarousel.length > 0 ? (
               <div className="overflow-hidden relative" ref={emblaRef}>
-                <div className="flex -ml-4"> {/* Negative margin to counteract padding on items */}
+                <div className="flex -ml-4"> 
                   {recentAuctionsForCarousel.map((auction, index) => (
-                    <div key={auction.id || index} className="flex-[0_0_100%] sm:flex-[0_0_50%] lg:flex-[0_0_calc(100%/2.5_-_1rem)] min-w-0 pl-4"> {/* Padding on items, adjust flex-basis for gap */}
+                    <div key={auction.id || index} className="flex-[0_0_100%] sm:flex-[0_0_50%] lg:flex-[0_0_calc(100%/2.5_-_1rem)] min-w-0 pl-4"> 
                       <RecentAuctionCarouselItem auction={auction} />
                     </div>
                   ))}
@@ -231,7 +222,6 @@ export default function AuctioneerDetailsPage() {
           </div>
         </section>
 
-        {/* Stats Bar */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center py-6">
           <div>
             <p className="text-3xl font-bold text-primary">{auctioneerProfile.auctionsConductedCount || 0}</p>
@@ -253,7 +243,6 @@ export default function AuctioneerDetailsPage() {
 
         <Separator className="print:hidden"/>
 
-        {/* Middle Section: About & Contact Form */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-6">
           <div className="md:col-span-2">
             <Card className="shadow-md">
@@ -340,7 +329,6 @@ export default function AuctioneerDetailsPage() {
 
         <Separator className="print:hidden"/>
 
-        {/* Bottom Section: All Auctions by this Auctioneer */}
         {relatedAuctions.length > 0 && (
           <section className="pt-6">
             <h2 className="text-2xl font-bold mb-6 font-headline flex items-center">
@@ -365,3 +353,4 @@ export default function AuctioneerDetailsPage() {
     </TooltipProvider>
   );
 }
+
