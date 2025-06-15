@@ -1,16 +1,15 @@
-
 'use client';
 
 import * as React from 'react'; // Importação adicionada
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation'; // Adicionado useRouter
 import { cn } from '@/lib/utils';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
 import { Home as HomeIcon, Tag, Gavel, Library, Landmark, Briefcase, MessageSquareText, ShoppingCart, Users2, ChevronRight, ListChecks } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -38,26 +37,26 @@ const modalityGroups: MegaMenuGroup[] = [
       { href: '/search?auctionType=JUDICIAL', label: 'Leilões Judiciais', description: 'Oportunidades de processos judiciais.', icon: <Gavel className="h-4 w-4" /> },
       { href: '/search?auctionType=EXTRAJUDICIAL', label: 'Leilões Extrajudiciais', description: 'Negociações diretas e mais ágeis.', icon: <Gavel className="h-4 w-4" /> },
       { href: '/direct-sales', label: 'Venda Direta', description: 'Compre itens com preço fixo.', icon: <ShoppingCart className="h-4 w-4" /> },
-      // { href: '/search?auctionType=PRICE_TAKING', label: 'Tomada de Preços', description: 'Processos de cotação e seleção.' }, // Descomentar se necessário
     ]
   }
 ];
 
 export default function MainNav({ className, ...props }: React.HTMLAttributes<HTMLElement>) {
   const pathname = usePathname();
+  const router = useRouter(); // Adicionado router
   const [searchCategories, setSearchCategories] = useState<LotCategory[]>([]);
   const [auctioneers, setAuctioneers] = useState<AuctioneerProfileInfo[]>([]);
-  const [sellers, setSellers] = useState<SellerProfileInfo[]>([]);
+  // const [sellers, setSellers] = useState<SellerProfileInfo[]>([]); // sellers não é usado diretamente no nav
   const [consignorMegaMenuGroups, setConsignorMegaMenuGroups] = useState<MegaMenuGroup[]>([]);
   const [isClient, setIsClient] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const auctioneersDropdownTriggerRef = useRef<HTMLButtonElement>(null);
 
   const handleLinkClick = () => {
     if (className?.includes('flex-col')) { 
       setIsMobileMenuOpen(false); 
     }
   };
-
 
   useEffect(() => {
     setIsClient(true);
@@ -161,11 +160,33 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
               <span>{item.label}</span>
             </Link>
           ) : (
-             // Para itens de megamenu no mobile, podemos decidir não renderizar ou renderizar um link para uma página de visão geral se houver
-             // Por enquanto, vamos omiti-los no mobile se não tiverem um href direto (ou tratar com accordion como exemplo)
-            <div key={item.label} className="text-md font-medium text-muted-foreground/50 flex items-center gap-2 py-2.5 px-3 rounded-md cursor-not-allowed">
-                 {item.icon}<span>{item.label} (Desktop)</span>
-            </div>
+            item.isMegaMenu && item.contentKey ? ( // Renderiza megamenu como accordion no mobile
+                <div key={item.label} className="py-1">
+                    <span className="text-md font-medium text-muted-foreground flex items-center gap-2 px-3 rounded-md">
+                        {item.icon}
+                        <span>{item.label}</span>
+                    </span>
+                    <div className="pl-6 mt-1 space-y-0.5">
+                        {item.contentKey === 'categories' && searchCategories.slice(0,3).map(cat => (
+                            <Link key={cat.slug} href={`/category/${cat.slug}`} onClick={handleLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{cat.name}</Link>
+                        ))}
+                        {item.contentKey === 'categories' && <Link href="/search?tab=categories" onClick={handleLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todas categorias</Link>}
+                        
+                        {item.contentKey === 'modalities' && modalityGroups[0].items.map(mod => (
+                             <Link key={mod.href} href={mod.href} onClick={handleLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{mod.label}</Link>
+                        ))}
+                         {item.contentKey === 'consignors' && consignorMegaMenuGroups[0]?.items.slice(0,4).map(con => (
+                             <Link key={con.href} href={con.href} onClick={handleLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{con.label}</Link>
+                        ))}
+                        {item.contentKey === 'consignors' && consignorMegaMenuGroups[0]?.items.length > 4 && <Link href="/sellers" onClick={handleLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todos comitentes</Link>}
+                        
+                        {item.contentKey === 'auctioneers' && auctioneers.slice(0,3).map(auc => (
+                            <Link key={auc.id} href={`/auctioneers/${auc.slug || auc.publicId || auc.id}`} onClick={handleLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{auc.name}</Link>
+                        ))}
+                         {item.contentKey === 'auctioneers' && auctioneers.length > 3 && <Link href="/auctioneers" onClick={handleLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todos leiloeiros</Link>}
+                    </div>
+                </div>
+            ) : null
           )
         ))}
       </nav>
@@ -178,7 +199,6 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
     <NavigationMenu className={cn('hidden md:flex', className)} {...props} delayDuration={0}>
       <NavigationMenuList>
         {navItems.map((item) => {
-          if (item.isMegaMenu) {
             let iconToShow: React.ReactNode = null;
             if (item.icon && React.isValidElement(item.icon)) {
               const iconElement = item.icon as React.ReactElement<any>;
@@ -187,11 +207,51 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
               });
             }
 
+          if (item.isMegaMenu) {
+            const triggerContent = (
+                <span className="flex items-center gap-1.5">
+                    {iconToShow}
+                    {item.label}
+                </span>
+            );
+            
             return (
               <NavigationMenuItem key={item.label} value={item.label}>
-                <NavigationMenuTrigger className="text-sm font-medium text-muted-foreground hover:text-primary data-[active]:text-primary data-[state=open]:text-primary bg-transparent hover:bg-accent focus:bg-accent h-10 px-3 py-2">
-                  {iconToShow}
-                  {item.label}
+                <NavigationMenuTrigger
+                  ref={item.contentKey === 'auctioneers' ? auctioneersDropdownTriggerRef : undefined}
+                  className="text-sm font-medium text-muted-foreground hover:text-primary data-[active]:text-primary data-[state=open]:text-primary bg-transparent hover:bg-accent focus:bg-accent h-10 px-3 py-2"
+                  asChild={!!item.href} // Only use asChild if there's a link
+                >
+                  {item.href ? (
+                     <Link 
+                        href={item.href} 
+                        className="flex items-center justify-center w-full h-full"
+                        onClick={(e) => {
+                            // Permitir que o NavigationMenuTrigger abra o dropdown
+                            // A navegação ocorrerá se o usuário clicar diretamente no texto/ícone do link
+                            // Se for preciso forçar a navegação ao clicar em qualquer lugar do Trigger,
+                            // precisaria de router.push e e.preventDefault(), mas isso anularia
+                            // a abertura do megamenu.
+                            // A solução ideal é o Link tratar seu próprio clique para navegação,
+                            // e o Trigger tratar o clique para abrir o menu.
+                           if (e.target === e.currentTarget || (e.target as HTMLElement).closest('a[href]') === e.currentTarget) {
+                                // Apenas navega se o clique foi diretamente no Link e não na Chevron
+                                // Esta lógica pode ser complexa. O `onPointerDown` no Link é mais simples.
+                           }
+                           handleLinkClick(); // Para fechar menu mobile, se lógica for compartilhada
+                        }}
+                     >
+                        <span 
+                           className="flex items-center gap-1.5"
+                           onPointerDown={(e) => { e.stopPropagation(); /* Impede que o Trigger intercepte o clique no Link */ }}
+                        >
+                           {iconToShow}
+                           {item.label}
+                        </span>
+                     </Link>
+                  ) : (
+                    triggerContent 
+                  )}
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   {item.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={handleLinkClick} />}
@@ -211,7 +271,7 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
                     pathname === item.href ? 'text-primary bg-accent' : 'text-muted-foreground hover:bg-accent/50 focus:bg-accent/50 focus:text-primary',
                     "data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
                   )} onClick={handleLinkClick}>
-                    {item.icon}
+                    {iconToShow} {/* Reutiliza iconToShow que já tem a classe mr-1.5 */}
                     {item.label}
                   </NavigationMenuLink>
                 </Link>
@@ -223,4 +283,3 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
     </NavigationMenu>
   );
 }
-
