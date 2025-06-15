@@ -54,13 +54,41 @@ const NavigationMenuTrigger = React.forwardRef<
   <NavigationMenuPrimitive.Trigger
     ref={ref}
     className={cn(navigationMenuTriggerStyle(), "group", className)}
-    {...props}
+    {...props} // Pass all props, including asChild if present
   >
-    {children}{" "}
-    <ChevronDown
-      className="relative top-[1px] ml-1 h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180"
-      aria-hidden="true"
-    />
+    {/* 
+      If props.asChild is true, NavigationMenuPrimitive.Trigger expects 'children' 
+      to be a single React element that will replace its default button. 
+      In this case, that child element is responsible for its entire content,
+      including any chevron if needed.
+      
+      If props.asChild is false (or undefined), NavigationMenuPrimitive.Trigger 
+      renders its default button, and 'children' is the content *inside* that button.
+      The primitive itself will add its own chevron.
+      Our custom component also adds a chevron, which might be redundant or conflict
+      if the primitive already adds one when asChild is false.
+
+      Let's follow shadcn's original pattern more closely for this part:
+      The custom Trigger *always* appends its own Chevron.
+      The error likely stems from how `asChild` is used in `main-nav.tsx`
+      making the `Link` the child, and then our custom trigger adding another chevron
+      as a *sibling* to that Link from the perspective of `NavigationMenuPrimitive.Trigger`.
+
+      Correction: If asChild is true, the children prop is the actual component that replaces the button.
+      The primitive will NOT add its own chevron. So, we should not add our chevron either.
+      The component passed via asChild must provide its own chevron.
+    */}
+    {props.asChild ? (
+      children
+    ) : (
+      <>
+        {children}
+        <ChevronDown
+          className="relative top-[1px] ml-1 h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180"
+          aria-hidden="true"
+        />
+      </>
+    )}
   </NavigationMenuPrimitive.Trigger>
 ))
 NavigationMenuTrigger.displayName = NavigationMenuPrimitive.Trigger.displayName
