@@ -25,7 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-// import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'; // Comentado para isolar o erro
+// import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
     
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useAuth } from '@/contexts/auth-context';
@@ -43,7 +43,7 @@ import { hasPermission } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
     
 const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'augusto.devcode@gmail.com'.toLowerCase();
-const SUPER_TEST_USER_UID_FOR_BYPASS = 'SUPER_TEST_USER_UID_PLACEHOLDER_AUG';
+const SUPER_TEST_USER_UID_FOR_BYPASS = 'SUPER_TEST_USER_UID_PLACEHOLDER_AUG'; // Unused if relying on profile
 const SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS = 'Augusto Dev (Super Test)';
     
 interface LotDetailClientContentProps {
@@ -69,7 +69,7 @@ export default function LotDetailClientContent({
   const [isLotFavorite, setIsLotFavorite] = useState(false);
   const { toast } = useToast();
   const [currentUrl, setCurrentUrl] = useState('');
-  const { user, userProfileWithPermissions, loading: authLoading } = useAuth();
+  const { userProfileWithPermissions, loading: authLoading } = useAuth(); // user (Firebase) e userProfileWithPermissions (nosso DB)
   const [lotBids, setLotBids] = useState<BidInfo[]>([]);
   const [lotReviews, setLotReviews] = useState<Review[]>([]);
   const [lotQuestions, setLotQuestions] = useState<LotQuestion[]>([]);
@@ -123,22 +123,19 @@ export default function LotDetailClientContent({
   const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || lot?.title}`.trim();
   const lotLocation = lot?.cityName && lot?.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot?.stateUf || lot?.cityName || 'Não informado';
     
-  const firebaseAuthCurrentUser = auth.currentUser;
-  const firebaseAuthEmailLower = firebaseAuthCurrentUser?.email?.toLowerCase();
-  const isSuperTestUserDirectAuth = firebaseAuthEmailLower === SUPER_TEST_USER_EMAIL_FOR_BYPASS;
+  // Simplified permission checks using userProfileWithPermissions
+  const isEffectivelySuperTestUser = userProfileWithPermissions?.email?.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS;
+  const hasAdminRights = userProfileWithPermissions && hasPermission(userProfileWithPermissions, 'manage_all');
+  const isUserHabilitado = userProfileWithPermissions?.habilitationStatus === 'HABILITADO';
     
-  const contextUserEmailLower = user?.email?.toLowerCase();
-  const isSuperTestUserContext = contextUserEmailLower === SUPER_TEST_USER_EMAIL_FOR_BYPASS;
-    
-  const isHabilitado = userProfileWithPermissions?.habilitationStatus === 'HABILITADO';
-    
-  const canUserBid =
-    ( isSuperTestUserDirectAuth || isSuperTestUserContext || (user && isHabilitado) ) &&
+  const canUserBid = 
+    (isEffectivelySuperTestUser || hasAdminRights || (userProfileWithPermissions && isUserHabilitado)) && 
     lot?.status === 'ABERTO_PARA_LANCES';
     
-  const canUserReview = !!user; 
-  const canUserAskQuestion = user && isHabilitado; 
+  const canUserReview = !!userProfileWithPermissions; // Any logged-in user with a profile can review.
     
+  const canUserAskQuestion = 
+    isEffectivelySuperTestUser || hasAdminRights || (userProfileWithPermissions && isUserHabilitado);
     
   const handleToggleFavorite = () => {
     if (!lot || !lot.id) return;
@@ -184,28 +181,16 @@ export default function LotDetailClientContent({
   const handlePlaceBid = async () => {
     setIsPlacingBid(true);
     
-    let userIdForBid: string | undefined = undefined;
-    let displayNameForBid: string | undefined = undefined;
-    
-    const currentAuthUser = auth.currentUser;
-    const currentAuthUserEmailLower = currentAuthUser?.email?.toLowerCase();
-    
-    if (currentAuthUser && currentAuthUserEmailLower === SUPER_TEST_USER_EMAIL_FOR_BYPASS) {
-      userIdForBid = currentAuthUser.uid;
-      displayNameForBid = currentAuthUser.displayName || currentAuthUser.email || SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
-    } else if (user && user.email?.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS) {
-      userIdForBid = user.uid;
-      displayNameForBid = user.displayName || user.email || SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
-    } else if (!currentAuthUser && !user && SUPER_TEST_USER_EMAIL_FOR_BYPASS) {
-      userIdForBid = SUPER_TEST_USER_UID_FOR_BYPASS;
-      displayNameForBid = SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
-    } else if (user && user.uid) {
-      userIdForBid = user.uid;
-      displayNameForBid = user.displayName || user.email?.split('@')[0] || 'Usuário Anônimo';
+    let userIdForBid: string | undefined = userProfileWithPermissions?.uid;
+    let displayNameForBid: string | undefined = userProfileWithPermissions?.fullName || userProfileWithPermissions?.email?.split('@')[0];
+
+    if (isEffectivelySuperTestUser && !userIdForBid) { // Super user might not have a full DB profile yet in some flows
+        userIdForBid = userProfileWithPermissions?.uid || SUPER_TEST_USER_UID_FOR_BYPASS; // Fallback UID for super test user
+        displayNameForBid = userProfileWithPermissions?.fullName || SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
     }
     
-    if (!userIdForBid && !(currentAuthUserEmailLower === SUPER_TEST_USER_EMAIL_FOR_BYPASS || (user && user.email?.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS))) {
-      toast({ title: "Ação Requerida", description: "Você precisa estar logado para dar um lance.", variant: "destructive" });
+    if (!userIdForBid) {
+      toast({ title: "Ação Requerida", description: "Você precisa estar logado e com perfil carregado para dar um lance.", variant: "destructive" });
       setIsPlacingBid(false);
       return;
     }
@@ -254,14 +239,13 @@ export default function LotDetailClientContent({
   const displayTotalLots = totalLotsInAuction || auction.totalLots || 'N/A';
     
   const handleNewReview = async (rating: number, comment: string) => {
-    if (!user || !user.uid) {
+    if (!userProfileWithPermissions || !userProfileWithPermissions.uid) {
       toast({ title: "Login Necessário", description: "Você precisa estar logado para enviar uma avaliação.", variant: "destructive" });
       return false;
     }
-    const result = await createReview(lot.id, user.uid, user.displayName || user.email || "Usuário Anônimo", rating, comment);
+    const result = await createReview(lot.id, userProfileWithPermissions.uid, userProfileWithPermissions.fullName || userProfileWithPermissions.email || "Usuário Anônimo", rating, comment);
     if (result.success) {
       toast({ title: "Avaliação Enviada", description: result.message });
-      // Refetch reviews
       const updatedReviews = await getReviewsForLot(lot.id);
       setLotReviews(updatedReviews);
       return true;
@@ -272,15 +256,15 @@ export default function LotDetailClientContent({
   };
     
   const handleNewQuestion = async (questionText: string) => {
-    if (!user || !user.uid) {
+    if (!userProfileWithPermissions || !userProfileWithPermissions.uid) {
       toast({ title: "Login Necessário", description: "Você precisa estar logado para enviar uma pergunta.", variant: "destructive" });
       return false;
     }
-     if (!isHabilitado && !isSuperTestUserContext && !isSuperTestUserDirectAuth) {
+     if (!isUserHabilitado && !hasAdminRights && !isEffectivelySuperTestUser) {
       toast({ title: "Habilitação Necessária", description: "Você precisa estar habilitado para fazer perguntas.", variant: "destructive" });
       return false;
     }
-    const result = await askQuestionOnLot(lot.id, user.uid, user.displayName || user.email || "Usuário Anônimo", questionText);
+    const result = await askQuestionOnLot(lot.id, userProfileWithPermissions.uid, userProfileWithPermissions.fullName || userProfileWithPermissions.email || "Usuário Anônimo", questionText);
     if (result.success) {
       toast({ title: "Pergunta Enviada", description: result.message });
       const updatedQuestions = await getQuestionsForLot(lot.id);
@@ -293,7 +277,6 @@ export default function LotDetailClientContent({
   };
     
   return (
-    // <TooltipProvider> // Comentado para isolar o erro
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
           <div className="flex-grow">
@@ -305,19 +288,9 @@ export default function LotDetailClientContent({
             </div>
           </div>
           <div className="flex items-center space-x-2 flex-wrap justify-start sm:justify-end mt-2 sm:mt-0">
-            {/* <Tooltip>
-              <TooltipTrigger asChild> */}
                 <Button variant="outline" size="icon" onClick={handlePrint} aria-label="Imprimir"><Printer className="h-4 w-4" /></Button>
-              {/* </TooltipTrigger>
-              <TooltipContent><p>Imprimir Página</p></TooltipContent>
-            </Tooltip> */}
             <DropdownMenu>
-              {/* <Tooltip>
-                <TooltipTrigger asChild> */}
                   <DropdownMenuTrigger asChild><Button variant="outline" size="icon" aria-label="Compartilhar"><Share2 className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                {/* </TooltipTrigger>
-                <TooltipContent><p>Compartilhar</p></TooltipContent>
-              </Tooltip> */}
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild><a href={getSocialLink('x', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><X className="h-4 w-4" /> X (Twitter)</a></DropdownMenuItem>
                 <DropdownMenuItem asChild><a href={getSocialLink('facebook', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><Facebook className="h-4 w-4" /> Facebook</a></DropdownMenuItem>
@@ -325,31 +298,17 @@ export default function LotDetailClientContent({
                 <DropdownMenuItem asChild><a href={getSocialLink('email', currentUrl, lotTitle)} className="flex items-center gap-2 cursor-pointer"><Mail className="h-4 w-4" /> Email</a></DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-             {/* <Tooltip>
-                <TooltipTrigger asChild> */}
+             
                     <Button variant="outline" size="icon" asChild aria-label="Voltar para o leilão"><Link href={`/auctions/${auction.id}`}><ArrowLeft className="h-4 w-4" /></Link></Button>
-                {/* </TooltipTrigger>
-                <TooltipContent><p>Voltar para o Leilão</p></TooltipContent>
-            </Tooltip> */}
           </div>
         </div>
 
         <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
             <span className="font-medium text-foreground">Lote Nº: {actualLotNumber}</span>
             <div className="flex items-center gap-2">
-                {/* <Tooltip>
-                    <TooltipTrigger asChild> */}
                         <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!previousLotId} disabled={!previousLotId} aria-label="Lote Anterior">{previousLotId ? <Link href={`/auctions/${auction.id}/lots/${previousLotId}`}><ChevronLeft className="h-4 w-4" /></Link> : <ChevronLeft className="h-4 w-4" />}</Button>
-                    {/* </TooltipTrigger>
-                    <TooltipContent><p>Lote Anterior</p></TooltipContent>
-                </Tooltip> */}
                 <span className="text-sm text-muted-foreground mx-1">Lote {displayLotPosition} de {displayTotalLots}</span>
-                {/* <Tooltip>
-                    <TooltipTrigger asChild> */}
-                        <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">{nextLotId ? <Link href={`/auctions/${auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" />}</Button>
-                    {/* </TooltipTrigger>
-                    <TooltipContent><p>Próximo Lote</p></TooltipContent>
-                </Tooltip> */}
+                        <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">{nextLotId ? <Link href={`/auctions/${auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" /></Button>
             </div>
         </div>
 
@@ -425,8 +384,8 @@ export default function LotDetailClientContent({
                   </div>
                 ) : (
                   <div className="text-sm text-muted-foreground p-3 bg-secondary/50 rounded-md">
-                    <p>{lot.status !== 'ABERTO_PARA_LANCES' ? `Lances para este lote estão ${getAuctionStatusText(lot.status).toLowerCase()}.` : (user ? 'Você precisa estar habilitado para dar lances.' : 'Você precisa estar logado para dar lances.')}</p>
-                    {!user && <Link href={`/auth/login?redirect=/auctions/${auction.id}/lots/${lot.id}`} className="text-primary hover:underline font-medium">Faça login ou registre-se.</Link>}
+                    <p>{lot.status !== 'ABERTO_PARA_LANCES' ? `Lances para este lote estão ${getAuctionStatusText(lot.status).toLowerCase()}.` : (userProfileWithPermissions ? 'Você precisa estar habilitado para dar lances.' : 'Você precisa estar logado para dar lances.')}</p>
+                    {!userProfileWithPermissions && <Link href={`/auth/login?redirect=/auctions/${auction.id}/lots/${lot.id}`} className="text-primary hover:underline font-medium">Faça login ou registre-se.</Link>}
                   </div>
                 )}
                 <Button variant="outline" className="w-full" onClick={handleToggleFavorite}>
@@ -480,7 +439,5 @@ export default function LotDetailClientContent({
           </div>
         </div>
       </div>
-    // </TooltipProvider> // Comentado para isolar o erro
   );
 }
-

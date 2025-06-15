@@ -1,5 +1,5 @@
 
-import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo } from '@/types';
+import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion } from '@/types';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays, addDays as dateFnsAddDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle } from 'lucide-react';
@@ -20,8 +20,8 @@ const createPastDate = (days: number, hours: number = 0, minutes: number = 0) =>
     date.setDate(now.getDate() - days);
     date.setHours(now.getHours() - hours);
     date.setMinutes(now.getMinutes() - minutes);
-    return date; // Added return statement
-  };
+    return date; 
+};
 
 export const sampleDocumentTypes: DocumentType[] = [
   { id: 'DT001', name: 'Documento de Identidade (Frente)', description: 'Foto nítida da frente do seu RG ou CNH.', isRequired: true, allowedFormats: ['JPG', 'PNG', 'PDF'], displayOrder: 1 },
@@ -456,8 +456,8 @@ export const sampleLots: Lot[] = [
 export const sampleAuctions: Auction[] = [
   {
     id: '100625bra',
-    title: 'Leilão 100625bra',
-    fullTitle: 'Grande Leilão de Imóveis Bradesco',
+    title: 'Leilão Único Bradesco',
+    fullTitle: 'Grande Leilão de Imóveis Bradesco - Oportunidades Imperdíveis',
     auctionDate: createFutureDate(0, 1),
     totalLots: sampleLots.filter(l => l.auctionId === '100625bra').length,
     status: 'ABERTO',
@@ -610,18 +610,18 @@ export const sampleAuctions: Auction[] = [
     publicId: 'LEI-BANCOXYZ-XYZ001',
     title: 'Leilão Banco XYZ - Imóveis RJ',
     fullTitle: 'Grande Oportunidade de Imóveis Residenciais - Banco XYZ',
-    auctionDate: createFutureDate(3, 14), // Inicia em 3 dias
-    endDate: createFutureDate(18, 14), // Termina em 18 dias
+    auctionDate: createFutureDate(3, 14), 
+    endDate: createFutureDate(18, 14), 
     totalLots: sampleLots.filter(l => l.auctionId === 'XYZBANK001').length,
     status: 'EM_BREVE',
     auctioneer: 'Leiloeiro XYZ Oficial',
-    category: 'Imóvel de Luxo', // Mantendo consistência com o lote exemplo
+    category: 'Imóvel de Luxo', 
     auctioneerLogoUrl: 'https://placehold.co/150x50.png?text=Banco+XYZ&font=lato',
     visits: 120,
     lots: sampleLots.filter(l => l.auctionId === 'XYZBANK001'),
     imageUrl: 'https://placehold.co/150x75.png?text=Leilao+XYZ&font=lato',
     dataAiHint: 'logo banco moderno',
-    seller: 'Banco XYZ', // Para garantir que getUniqueSellers o encontre
+    seller: 'Banco XYZ', 
     sellingBranch: 'XYZ Imóveis RJ',
     city: 'Rio de Janeiro',
     state: 'RJ',
@@ -716,6 +716,53 @@ export const sampleLotBids: BidInfo[] = [
   { id: 'LBID005', lotId: 'LOTE001', auctionId: '100625bra', bidderId: 'userGHI', bidderDisplay: 'Usuário G****', amount: 44500, timestamp: createPastDate(0, 0, 15) },
 ];
 
+export const sampleLotReviews: Review[] = [
+    { id: 'REV001', lotId: 'LOTEVEI001', auctionId: '300724car', userId: 'userABC', userDisplayName: 'Comprador Satisfeito', rating: 5, comment: 'Carro excelente, exatamente como descrito. Recomendo!', createdAt: createPastDate(1) },
+    { id: 'REV002', lotId: 'LOTEVEI001', auctionId: '300724car', userId: 'userXYZ', userDisplayName: 'Avaliador Detalhista', rating: 4, comment: 'Bom veículo, alguns pequenos detalhes não mencionados, mas nada grave. No geral, uma boa compra.', createdAt: createPastDate(0, 10) },
+    { id: 'REV003', lotId: 'LOTE001', auctionId: '100625bra', userId: 'userDEF', userDisplayName: 'Investidor Imobiliário', rating: 5, comment: 'Ótima oportunidade de investimento, documentação em ordem e localização privilegiada.', createdAt: createPastDate(3) },
+];
+
+export const sampleLotQuestions: LotQuestion[] = [
+    { 
+        id: 'Q001', 
+        lotId: 'LOTEVEI001', 
+        auctionId: '300724car', 
+        userId: 'userQ1', 
+        userDisplayName: 'Interessado123', 
+        questionText: 'O veículo possui alguma restrição judicial ou administrativa? É possível financiamento?', 
+        createdAt: createPastDate(0, 5), 
+        isPublic: true,
+        answerText: 'Prezado Interessado123, o veículo não possui restrições. Quanto ao financiamento, sugerimos consultar seu banco, mas geralmente é possível para veículos deste ano/valor.',
+        answeredAt: createPastDate(0, 3),
+        answeredByUserId: 'admin-bidexpert',
+        answeredByUserDisplayName: 'Suporte BidExpert'
+    },
+    { 
+        id: 'Q002', 
+        lotId: 'LOTEVEI001', 
+        auctionId: '300724car', 
+        userId: 'userQ2', 
+        userDisplayName: 'MecânicoCurioso', 
+        questionText: 'O motor apresenta algum vazamento de óleo? A correia dentada foi trocada recentemente?', 
+        createdAt: createPastDate(0, 2),
+        isPublic: true,
+    },
+    { 
+        id: 'Q003', 
+        lotId: 'LOTE001', 
+        auctionId: '100625bra', 
+        userId: 'userQ3', 
+        userDisplayName: 'PossívelMorador', 
+        questionText: 'A documentação do imóvel está totalmente regularizada para transferência imediata?', 
+        createdAt: createPastDate(1, 8),
+        isPublic: true,
+        answerText: 'Sim, documentação 100% regularizada, pronta para escritura e registro.',
+        answeredAt: createPastDate(1, 2),
+        answeredByUserId: 'seller-bradesco',
+        answeredByUserDisplayName: 'Banco Bradesco S.A.'
+    },
+];
+
 
 export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDocumentStatus | UserHabilitationStatus | DirectSaleOfferStatus ): string => {
   switch (status) {
@@ -737,14 +784,11 @@ export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDoc
     case 'HABILITATED': return 'Habilitado';
     case 'REJECTED_DOCUMENTS': return 'Documentos Rejeitados';
     case 'BLOCKED': return 'Bloqueado';
-    case 'ACTIVE': return 'Ativa'; // DirectSaleOfferStatus
-    // case 'SOLD': return 'Vendido'; // DirectSaleOfferStatus - Already covered by LotStatus
-    case 'EXPIRED': return 'Expirada'; // DirectSaleOfferStatus
-    case 'PENDING_APPROVAL': return 'Pendente Aprovação'; // DirectSaleOfferStatus
+    case 'ACTIVE': return 'Ativa'; 
+    case 'SOLD': return 'Vendido'; 
+    case 'EXPIRED': return 'Expirada'; 
+    case 'PENDING_APPROVAL': return 'Pendente Aprovação'; 
     default: {
-      // const exhaustiveCheck: never = status; // This will cause a type error if any status is missed, which is good.
-      // For now, to avoid breaking during dev if a new status is added without updating this, return a generic string.
-      // console.warn(`Unknown status found in getAuctionStatusText: ${status}`);
       return String(status).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
       }
   }
@@ -782,16 +826,16 @@ export const getPaymentStatusText = (status: PaymentStatus): string => {
 export const getLotStatusColor = (status: LotStatus | DirectSaleOfferStatus): string => {
     switch (status) {
       case 'ABERTO_PARA_LANCES':
-      case 'ACTIVE': // DirectSaleOfferStatus
+      case 'ACTIVE': 
         return 'bg-green-600 text-white';
       case 'EM_BREVE':
-      case 'PENDING_APPROVAL': // DirectSaleOfferStatus
+      case 'PENDING_APPROVAL': 
         return 'bg-blue-500 text-white';
       case 'ENCERRADO':
       case 'VENDIDO':
       case 'NAO_VENDIDO':
-      case 'SOLD': // DirectSaleOfferStatus
-      case 'EXPIRED': // DirectSaleOfferStatus
+      case 'SOLD': 
+      case 'EXPIRED': 
         return 'bg-gray-500 text-white';
       default:
         return 'bg-gray-300 text-gray-800';
@@ -904,22 +948,19 @@ export const slugify = (text: string): string => {
     .toString()
     .toLowerCase()
     .trim()
-    .normalize("NFD") // Normalize to decompose combined graphemes
-    .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+    .normalize("NFD") 
+    .replace(/[\u0300-\u036f]/g, "") 
     .replace(/\s+/g, '-')
     .replace(/[^\w-]+/g, '')
     .replace(/--+/g, '-');
 };
 
 export function getCategoryNameFromSlug(slug: string): string | undefined {
-  // Esta função agora vai iterar sobre `sampleLots` para encontrar um nome de categoria que corresponda ao slug.
-  // Isso é menos eficiente do que ter uma lista separada de categorias com slugs pré-calculados.
   for (const lot of sampleLots) {
     if (lot.type && slugify(lot.type) === slug) {
       return lot.type;
     }
   }
-  // Se não encontrarmos em lot.type, tentamos em auction.category (menos provável, mas para cobrir)
   for (const auction of sampleAuctions) {
       if (auction.category && slugify(auction.category) === slug) {
           return auction.category;
@@ -996,14 +1037,14 @@ export const getUniqueSellers = (): SellerProfileInfo[] => {
     memberSince = subMonths(memberSince, randomMonthsAgo);
     memberSince = subDays(memberSince, randomDaysAgo);
 
-    const rating = Math.round((Math.random() * 1.5 + 3.5) * 10) / 10; // Rating between 3.5 and 5.0
-    const activeLotsCount = Math.floor(Math.random() * 46) + 5; // 5 to 50 lots
+    const rating = Math.round((Math.random() * 1.5 + 3.5) * 10) / 10; 
+    const activeLotsCount = Math.floor(Math.random() * 46) + 5; 
     const initial = name ? name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase() : 'S';
 
 
     sellerMap.set(slug, {
       id: slug, 
-      publicId: `SELL-PUB-${slug.substring(0,5)}-${Math.random().toString(36).substring(2,6)}`, // Example publicId
+      publicId: `SELL-PUB-${slug.substring(0,5)}-${Math.random().toString(36).substring(2,6)}`, 
       name,
       slug,
       memberSince,
@@ -1012,7 +1053,7 @@ export const getUniqueSellers = (): SellerProfileInfo[] => {
       logoUrl: `https://placehold.co/100x100.png?text=${initial}`,
       dataAiHintLogo: isAuctioneer ? 'logo leiloeiro placeholder' : 'logo comitente placeholder',
       createdAt: memberSince, 
-      updatedAt: memberSince, 
+      updatedAt: new Date(), 
     });
   };
 
@@ -1021,6 +1062,9 @@ export const getUniqueSellers = (): SellerProfileInfo[] => {
   });
   sampleLots.forEach(lot => {
     addSeller(lot.sellerName, false); 
+  });
+  sampleDirectSaleOffers.forEach(offer => {
+    addSeller(offer.sellerName, false);
   });
 
   return Array.from(sellerMap.values()).sort((a, b) => a.name.localeCompare(b.name));
@@ -1041,7 +1085,7 @@ export const getUniqueAuctioneers = (): AuctioneerProfileInfo[] => {
 
                 auctioneerMap.set(slug, {
                     id: slug, 
-                    publicId: `AUCT-PUB-${slug.substring(0,5)}-${Math.random().toString(36).substring(2,6)}`, // Example publicId
+                    publicId: `AUCT-PUB-${slug.substring(0,5)}-${Math.random().toString(36).substring(2,6)}`, 
                     name: auction.auctioneer,
                     slug: slug,
                     logoUrl: auction.auctioneerLogoUrl || `https://placehold.co/100x100.png?text=${initial}`,
@@ -1064,7 +1108,7 @@ export const getUniqueAuctioneers = (): AuctioneerProfileInfo[] => {
     return Array.from(auctioneerMap.values()).sort((a, b) => a.name.localeCompare(b.name));
 };
 
-// --- Venda Direta Sample Data ---
+
 export const sampleDirectSaleOffers: DirectSaleOffer[] = [
   {
     id: 'DSO001',
@@ -1189,7 +1233,7 @@ export const sampleDirectSaleOffers: DirectSaleOffer[] = [
     tags: ['Academia', 'Fitness', 'Equipamentos', 'Musculação', 'Cardio'],
     views: 620,
     createdAt: createPastDate(60),
-    updatedAt: createPastDate(35), // Data da venda
+    updatedAt: createPastDate(35), 
   },
    {
     id: 'DSO006',
@@ -1204,19 +1248,14 @@ export const sampleDirectSaleOffers: DirectSaleOffer[] = [
     locationState: 'RS',
     sellerName: 'Galeria Pampa Arte',
     sellerId: slugify('Galeria Pampa Arte'),
-    status: 'EXPIRED', // Expirou
+    status: 'EXPIRED', 
     itemsIncluded: ['Pintura "Abstração Urbana"', 'Certificado de Autenticidade do Artista'],
     tags: ['Arte Contemporânea', 'Pintura', 'Abstrato', 'Silva Jr', 'Coleção'],
     views: 210,
     proposalsCount: 0,
     createdAt: createPastDate(90),
     updatedAt: createPastDate(30),
-    expiresAt: createPastDate(30), // Expirou 30 dias atrás
+    expiresAt: createPastDate(30), 
   },
 ];
-// --- End Venda Direta Sample Data ---
-
-
-
-
   

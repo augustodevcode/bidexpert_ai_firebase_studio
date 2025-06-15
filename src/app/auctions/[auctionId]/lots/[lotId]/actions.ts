@@ -1,8 +1,10 @@
+
 'use server';
 
 import { getDatabaseAdapter } from '@/lib/database';
 import type { Lot, BidInfo, IDatabaseAdapter, Review, LotQuestion, SellerProfileInfo } from '@/types';
 import { revalidatePath } from 'next/cache';
+import { sampleLotQuestions, sampleLotReviews } from '@/lib/sample-data'; // Import sample data
 
 interface PlaceBidResult {
   success: boolean;
@@ -34,8 +36,10 @@ export async function getBidsForLot(lotId: string): Promise<BidInfo[]> {
 // --- Reviews Actions ---
 export async function getReviewsForLot(lotId: string): Promise<Review[]> {
   if (!lotId) return [];
-  const db = await getDatabaseAdapter();
-  return db.getReviewsForLot(lotId);
+  // TODO: Replace with DB call when ready
+  // const db = await getDatabaseAdapter();
+  // return db.getReviewsForLot(lotId);
+  return sampleLotReviews.filter(review => review.lotId === lotId);
 }
 
 export async function createReview(
@@ -49,7 +53,6 @@ export async function createReview(
     return { success: false, message: 'Dados inválidos para avaliação.' };
   }
   const db = await getDatabaseAdapter();
-  // O auctionId pode ser obtido do lote dentro do adapter se necessário
   const lot = await db.getLot(lotId);
   if (!lot) return { success: false, message: 'Lote não encontrado.' };
 
@@ -70,8 +73,10 @@ export async function createReview(
 // --- Questions Actions ---
 export async function getQuestionsForLot(lotId: string): Promise<LotQuestion[]> {
   if (!lotId) return [];
-  const db = await getDatabaseAdapter();
-  return db.getQuestionsForLot(lotId);
+  // TODO: Replace with DB call when ready
+  // const db = await getDatabaseAdapter();
+  // return db.getQuestionsForLot(lotId);
+  return sampleLotQuestions.filter(question => question.lotId === lotId);
 }
 
 export async function askQuestionOnLot(
@@ -105,8 +110,8 @@ export async function answerQuestionOnLot(
   answerText: string,
   answeredByUserId: string,
   answeredByUserDisplayName: string,
-  lotId: string, // Para revalidação
-  auctionId: string // Para revalidação
+  lotId: string, 
+  auctionId: string 
 ): Promise<{ success: boolean; message: string }> {
   if (!questionId || !answerText.trim() || !answeredByUserId) {
     return { success: false, message: 'Dados inválidos para resposta.' };
@@ -122,7 +127,5 @@ export async function answerQuestionOnLot(
 export async function getSellerDetailsForLotPage(sellerIdOrPublicId?: string): Promise<SellerProfileInfo | null> {
     if (!sellerIdOrPublicId) return null;
     const db = await getDatabaseAdapter();
-    // getSellerBySlug pode precisar ser ajustado para também buscar por publicId numérico se for o caso.
-    // Ou podemos ter getSeller(idOrPublicId)
     return db.getSeller(sellerIdOrPublicId);
 }
