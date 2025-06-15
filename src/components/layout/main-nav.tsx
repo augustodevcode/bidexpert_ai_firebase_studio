@@ -8,7 +8,7 @@ import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
-import { Home as HomeIcon, Tag, Gavel, Library, Landmark, Briefcase, MessageSquareText, ShoppingBag, Users2, ChevronRight } from 'lucide-react'; // Adicionados Briefcase e Users2
+import { Home as HomeIcon, Tag, Gavel, Library, Landmark, Briefcase, MessageSquareText, ShoppingCart, Users2, ChevronRight, ListChecks } from 'lucide-react'; // Adicionado ListChecks
 import { useEffect, useState } from 'react';
 import {
   NavigationMenu,
@@ -52,10 +52,13 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLinkClick = () => {
-    if (className?.includes('flex-col')) {
-      setIsMobileMenuOpen(false);
+    if (className?.includes('flex-col')) { // Assume que 'flex-col' indica menu mobile
+      // Idealmente, aqui você teria acesso ao estado do Sheet (se ele está aberto) para fechá-lo.
+      // Por enquanto, vamos logar ou você pode passar uma função de fechamento como prop.
+      setIsMobileMenuOpen(false); // Supondo que você adicione este estado ao MainNav se ele controlar o Sheet
     }
   };
+
 
   useEffect(() => {
     setIsClient(true);
@@ -94,6 +97,7 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
         }
         setConsignorMegaMenuGroups(formattedSellersForMenu.filter(group => group.items.length > 0));
 
+
       } catch (error) {
         console.error("Error fetching data for main navigation:", error);
         setSearchCategories([]);
@@ -112,45 +116,45 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
       icon: <Tag className="h-4 w-4" />,
       isMegaMenu: true,
       contentKey: 'categories',
-      href: '/search?tab=categories'
+      href: '/search?tab=categories' // Fallback para mobile ou no-JS
     },
     {
       label: 'Modalidades',
       icon: <Gavel className="h-4 w-4" />,
       isMegaMenu: true,
       contentKey: 'modalities',
-      href: '/search?filter=modalities'
+      href: '/search?filter=modalities' // Fallback para mobile ou no-JS
     },
     {
       label: 'Comitentes',
       icon: <Briefcase className="h-4 w-4" />,
       isMegaMenu: true,
       contentKey: 'consignors',
-      href: '/sellers'
+      href: '/sellers' // Fallback para mobile ou no-JS
     },
     {
       label: 'Leiloeiros',
       icon: <Landmark className="h-4 w-4" />,
       isMegaMenu: true,
       contentKey: 'auctioneers',
-      href: '/auctioneers'
+      href: '/auctioneers' // Fallback para mobile ou no-JS
     },
-    { href: '/direct-sales', label: 'Venda Direta', icon: <ShoppingBag className="h-4 w-4" /> },
-    { href: '/sell-with-us', label: 'Venda Conosco', icon: <Library className="h-4 w-4" /> },
+    { href: '/direct-sales', label: 'Venda Direta', icon: <ShoppingCart className="h-4 w-4" /> },
+    { href: '/sell-with-us', label: 'Venda Conosco', icon: <Library className="h-4 w-4" /> }, // Library como ícone genérico
     { href: '/contact', label: 'Fale Conosco', icon: <MessageSquareText className="h-4 w-4" /> },
   ];
   
-  if (!isClient && className?.includes('flex-col')) {
-      return null;
-  }
-
+  // Para o menu mobile, que é uma lista simples de links
   if (className?.includes('flex-col')) {
+      if (!isClient) return null; // Evita renderização no servidor para o menu mobile se ele depende de client-side state/hooks
     return (
       <nav className={cn('flex flex-col gap-1 px-4', className)} {...props}>
         {navItems.map((item) => (
+           // Renderiza um link direto para todos os itens no mobile.
+           // O href principal (item.href) será usado.
           item.href ? (
             <Link
-              key={item.href}
+              key={item.label} // Usar label como chave se href pode não ser único em casos de submenus transformados
               href={item.href}
               onClick={handleLinkClick}
               className={cn(
@@ -161,8 +165,11 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
               {item.icon}
               <span>{item.label}</span>
             </Link>
-          ) : ( // Itens sem href (apenas triggers de megamenu no mobile, se necessário, mas geralmente terão um href de fallback)
-             <AccordionMenu item={item} categories={searchCategories} auctioneers={auctioneers} consignorGroups={consignorMegaMenuGroups} onLinkClick={handleLinkClick} />
+          ) : (
+            // Caso de item que SÓ existe como megamenu e não tem href de fallback (raro)
+            <div key={item.label} className="text-md font-medium text-muted-foreground/50 flex items-center gap-2 py-2.5 px-3 rounded-md cursor-not-allowed">
+                 {item.icon}<span>{item.label} (Desktop)</span>
+            </div>
           )
         ))}
       </nav>
@@ -170,6 +177,7 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
   }
   
 
+  // Para o menu desktop com megamenus
   return (
     <NavigationMenu className={cn('hidden md:flex', className)} {...props} delayDuration={0}>
       <NavigationMenuList>
@@ -211,31 +219,3 @@ export default function MainNav({ className, ...props }: React.HTMLAttributes<HT
     </NavigationMenu>
   );
 }
-
-// Componente auxiliar para o menu mobile, se quisermos dropdowns nele
-const AccordionMenu = ({ item, categories, auctioneers, consignorGroups, onLinkClick }: { item: NavItem, categories: LotCategory[], auctioneers: AuctioneerProfileInfo[], consignorGroups: MegaMenuGroup[], onLinkClick: () => void }) => {
-    const [isOpen, setIsOpen] = useState(false);
-
-    // No mobile, em vez de megamenu, podemos ter links diretos ou simples listas
-    if (item.contentKey === 'categories' && item.href) {
-        return (
-            <Link href={item.href} onClick={onLinkClick} className="text-md font-medium text-muted-foreground hover:text-primary flex items-center gap-2 py-2.5 px-3 rounded-md">
-                {item.icon}<span>{item.label}</span>
-            </Link>
-        );
-    }
-    // Para outros megamenus, pode-se criar uma navegação mais simples para mobile ou apenas linkar para a página principal deles.
-    if (item.href) {
-        return (
-             <Link href={item.href} onClick={onLinkClick} className="text-md font-medium text-muted-foreground hover:text-primary flex items-center gap-2 py-2.5 px-3 rounded-md">
-                {item.icon}<span>{item.label}</span>
-            </Link>
-        );
-    }
-
-    return (
-        <div className="text-md font-medium text-muted-foreground flex items-center gap-2 py-2.5 px-3 rounded-md cursor-not-allowed opacity-50">
-            {item.icon}<span>{item.label} (Desktop)</span>
-        </div>
-    );
-};
