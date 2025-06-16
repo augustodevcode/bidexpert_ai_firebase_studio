@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react'; 
@@ -6,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation'; 
 import { cn } from '@/lib/utils';
 import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, RecentlyViewedLotInfo } from '@/types';
-import { ChevronDown, History } from 'lucide-react'; 
+import { ChevronDown, History, Home, Landmark, Gavel, Percent, Phone, ListChecks, Tag } from 'lucide-react'; 
 import { useEffect, useState } from 'react';
 import {
   NavigationMenu,
@@ -20,6 +19,7 @@ import {
 import MegaMenuCategories from './mega-menu-categories';
 import MegaMenuLinkList, { type MegaMenuGroup } from './mega-menu-link-list';
 import MegaMenuAuctioneers from './mega-menu-auctioneers';
+import TwoColumnMegaMenu from './two-column-mega-menu'; // Novo componente
 import { type HistoryListItem } from './header'; 
 
 export interface NavItem {
@@ -28,15 +28,42 @@ export interface NavItem {
   isMegaMenu?: boolean;
   contentKey?: 'categories' | 'modalities' | 'consignors' | 'auctioneers' | 'history';
   icon?: React.ElementType; 
+  megaMenuAlign?: "start" | "center" | "end"; // Adicionado para controle de alinhamento
+  twoColumnMegaMenuProps?: TwoColumnMegaMenuProps; // Props para o novo componente
 }
 
-const modalityGroups: MegaMenuGroup[] = [
+// Definindo as props para TwoColumnMegaMenu dentro de NavItem
+interface TwoColumnMegaMenuProps {
+  sidebarTitle?: string;
+  sidebarItems: MegaMenuLinkItem[];
+  mainContent: {
+    imageUrl: string;
+    imageAlt: string;
+    dataAiHint: string;
+    title: string;
+    description: string;
+    buttonLink: string;
+    buttonText: string;
+  };
+  viewAllLink?: { href: string; label: string; icon?: React.ElementType };
+  containerWidthClasses?: string;
+}
+
+interface MegaMenuLinkItem { // Duplicado de MegaMenuLinkList para evitar import circular se necessário
+  href: string;
+  label: string;
+  description?: string;
+  icon?: React.ReactNode;
+}
+
+
+const modalityMegaMenuGroups: MegaMenuGroup[] = [
   {
     items: [
       { href: '/search?type=auctions&auctionType=JUDICIAL', label: 'Leilões Judiciais', description: 'Oportunidades de processos judiciais.' },
       { href: '/search?type=auctions&auctionType=EXTRAJUDICIAL', label: 'Leilões Extrajudiciais', description: 'Negociações diretas e mais ágeis.' },
       { href: '/direct-sales', label: 'Venda Direta', description: 'Compre itens com preço fixo.' },
-      { href: '/search?type=auctions&auctionType=TOMADA_DE_PRECOS', label: 'Tomada de Preços', description: 'Processo de seleção para contratação.' },
+      { href: '/search?type=auctions&auctionType=PARTICULAR', label: 'Leilões Particulares', description: 'Leilões privados ou com acesso restrito.' },
     ]
   }
 ];
@@ -97,10 +124,8 @@ export default function MainNav({
                     href={item.href || '#'} 
                     onClick={(e) => {
                         if (!item.href && onLinkClick) { 
-                           // If it's a megamenu trigger without its own link, onLinkClick might toggle a mobile submenu
-                           // but we won't prevent default. For mobile, these become section headers.
                         } else if (onLinkClick) {
-                            onLinkClick(); // For actual links or to close the mobile main menu
+                            onLinkClick(); 
                         }
                     }}
                     className={cn(
@@ -120,7 +145,7 @@ export default function MainNav({
                     ))}
                     {item.contentKey === 'categories' && <Link href="/search?type=lots&tab=categories" onClick={onLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todas categorias</Link>}
                     
-                    {item.contentKey === 'modalities' && modalityGroups[0].items.map(mod => (
+                    {item.contentKey === 'modalities' && modalityMegaMenuGroups[0].items.map(mod => (
                           <Link key={mod.href} href={mod.href} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{mod.label}</Link>
                     ))}
                       {item.contentKey === 'consignors' && consignorMegaMenuGroups[0]?.items.slice(0,4).map(con => (
@@ -156,7 +181,7 @@ export default function MainNav({
 
   return (
     <NavigationMenu className={cn("relative z-10 flex items-center justify-start", className)} {...props} delayDuration={0}>
-      <NavigationMenuList className={cn("group flex list-none items-center justify-start space-x-1")}> {/* justify-start aqui também */}
+      <NavigationMenuList className={cn("group flex list-none items-center justify-start space-x-1")}>
         {items.map((item) => {
           if (item.isMegaMenu && item.contentKey) {
             return (
@@ -170,11 +195,43 @@ export default function MainNav({
                   {item.icon && item.contentKey !== 'history' && <item.icon className="mr-1.5 h-4 w-4" /> } 
                   {item.label}
                 </NavigationMenuTrigger>
-                <NavigationMenuContent align={item.contentKey === 'history' ? 'end' : 'center'}>
+                <NavigationMenuContent align={item.megaMenuAlign || "center"}>
                   {item.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={onLinkClick} />}
-                  {item.contentKey === 'modalities' && <MegaMenuLinkList groups={modalityGroups} onLinkClick={onLinkClick} gridCols="md:grid-cols-1" />}
-                  {item.contentKey === 'consignors' && <MegaMenuLinkList groups={consignorMegaMenuGroups} onLinkClick={onLinkClick} gridCols="md:grid-cols-1 lg:grid-cols-2" />}
-                  {item.contentKey === 'auctioneers' && <MegaMenuAuctioneers auctioneers={auctioneers} onLinkClick={onLinkClick} />}
+                  
+                  {item.contentKey === 'modalities' && item.twoColumnMegaMenuProps && (
+                    <TwoColumnMegaMenu 
+                        sidebarTitle={item.twoColumnMegaMenuProps.sidebarTitle}
+                        sidebarItems={item.twoColumnMegaMenuProps.sidebarItems}
+                        mainContent={item.twoColumnMegaMenuProps.mainContent}
+                        viewAllLink={item.twoColumnMegaMenuProps.viewAllLink}
+                        containerWidthClasses={item.twoColumnMegaMenuProps.containerWidthClasses || "md:w-[600px] lg:w-[700px]"}
+                        gridClasses={item.twoColumnMegaMenuProps.gridClasses || "grid-cols-[220px_1fr]"}
+                        onLinkClick={onLinkClick}
+                    />
+                  )}
+                  {item.contentKey === 'consignors' && item.twoColumnMegaMenuProps && (
+                     <TwoColumnMegaMenu 
+                        sidebarTitle={item.twoColumnMegaMenuProps.sidebarTitle}
+                        sidebarItems={item.twoColumnMegaMenuProps.sidebarItems}
+                        mainContent={item.twoColumnMegaMenuProps.mainContent}
+                        viewAllLink={item.twoColumnMegaMenuProps.viewAllLink}
+                        containerWidthClasses={item.twoColumnMegaMenuProps.containerWidthClasses || "md:w-[600px] lg:w-[700px]"}
+                        gridClasses={item.twoColumnMegaMenuProps.gridClasses || "grid-cols-[220px_1fr]"}
+                        onLinkClick={onLinkClick}
+                    />
+                  )}
+                  {item.contentKey === 'auctioneers' && item.twoColumnMegaMenuProps && (
+                     <TwoColumnMegaMenu 
+                        sidebarTitle={item.twoColumnMegaMenuProps.sidebarTitle}
+                        sidebarItems={item.twoColumnMegaMenuProps.sidebarItems}
+                        mainContent={item.twoColumnMegaMenuProps.mainContent}
+                        viewAllLink={item.twoColumnMegaMenuProps.viewAllLink}
+                        containerWidthClasses={item.twoColumnMegaMenuProps.containerWidthClasses || "md:w-[600px] lg:w-[700px]"}
+                        gridClasses={item.twoColumnMegaMenuProps.gridClasses || "grid-cols-[220px_1fr]"}
+                        onLinkClick={onLinkClick}
+                    />
+                  )}
+                  
                   {item.contentKey === 'history' && HistoryListItemComponent && (
                      <div className="w-80 p-2">
                         <div className="flex justify-between items-center p-2 border-b mb-1">
@@ -233,4 +290,3 @@ export default function MainNav({
     </NavigationMenu>
   );
 }
-
