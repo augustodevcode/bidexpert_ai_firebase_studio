@@ -149,6 +149,7 @@ export default function Header() {
         const MAX_SELLERS_IN_MEGAMENU = 5;
         const visibleSellers = fetchedSellers.slice(0, MAX_SELLERS_IN_MEGAMENU);
         const hasMoreSellers = fetchedSellers.length > MAX_SELLERS_IN_MEGAMENU;
+
         const formattedSellersForMenu: MegaMenuGroup[] = [{
             title: "Principais Comitentes",
             items: visibleSellers.map(seller => ({
@@ -157,6 +158,7 @@ export default function Header() {
               description: seller.city && seller.state ? `${seller.city} - ${seller.state}` : (seller.description ? seller.description.substring(0,40)+'...' : 'Ver perfil'),
             })),
           }];
+
         if (hasMoreSellers) {
             formattedSellersForMenu[0].items.push({ 
                 href: '/sellers', 
@@ -165,6 +167,7 @@ export default function Header() {
             });
         }
         setConsignorMegaMenuGroups(formattedSellersForMenu.filter(group => group.items.length > 0));
+
       } catch (error) {
         console.error("Error fetching data for main navigation:", error);
         setSearchCategories([]);
@@ -233,7 +236,7 @@ export default function Header() {
     }
   };
   
-  const allNavItems: NavItem[] = [
+  const allNavItemsForMobile: NavItem[] = [
     { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag },
     { href: '/', label: 'Início', icon: HomeIcon },
     { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities', icon: ListChecks },
@@ -243,8 +246,16 @@ export default function Header() {
     { href: '/contact', label: 'Fale Conosco', icon: Phone },
   ];
 
-  const firstNavItem = allNavItems[0]; // Navegue por Categorias
-  const centralNavItems = allNavItems.slice(1); // O restante para o MainNav centralizado
+  const firstNavItem: NavItem = { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories' };
+  const centralNavItems: NavItem[] = [
+    { href: '/', label: 'Início' },
+    { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities' },
+    { label: 'Comitentes', isMegaMenu: true, contentKey: 'consignors', href: '/sellers' },
+    { label: 'Leiloeiros', isMegaMenu: true, contentKey: 'auctioneers', href: '/auctioneers' },
+    { href: '/sell-with-us', label: 'Venda Conosco' },
+    { href: '/contact', label: 'Fale Conosco' },
+  ];
+
 
   return (
     <header className="sticky top-0 z-50 w-full shadow-md">
@@ -301,7 +312,7 @@ export default function Header() {
                   </SheetHeader>
                   <nav className="flex flex-col gap-1 p-4">
                     <MainNav 
-                        items={allNavItems} 
+                        items={allNavItemsForMobile} 
                         className="flex-col items-start space-x-0 space-y-0" 
                         onLinkClick={handleLinkOrMobileMenuCloseClick}
                         isMobile={true}
@@ -445,7 +456,7 @@ export default function Header() {
       <div className="border-b bg-background text-foreground hidden md:block">
         <div className="container mx-auto px-4 flex h-12 items-center justify-between">
           {/* "Navegue por Categorias" à esquerda */}
-          <NavigationMenu className="justify-start">
+          <NavigationMenu className="justify-start"> 
             <NavigationMenuList>
               {firstNavItem && firstNavItem.isMegaMenu && firstNavItem.contentKey && (
                 <NavigationMenuItem value={firstNavItem.label}>
@@ -458,7 +469,7 @@ export default function Header() {
                             onClick={(e) => { if (e.metaKey || e.ctrlKey) return; handleLinkOrMobileMenuCloseClick(); }}
                          >
                             {firstNavItem.label}
-                            <ChevronDown className="relative top-[1px] ml-1.5 h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180" aria-hidden="true"/>
+                            {/* ChevronDown é removido do Trigger quando asChild=true */}
                         </Link>
                     ) : (
                         <span className={cn(navigationMenuTriggerStyle(), "group", pathname === firstNavItem.href && "text-primary bg-accent")}>
@@ -483,13 +494,19 @@ export default function Header() {
           {/* Histórico Dropdown (Direita) */}
           <div className="flex items-center justify-end"> 
             {isClient && (
-              <NavigationMenu className="justify-end">
+              <NavigationMenu>
                 <NavigationMenuList>
                   <NavigationMenuItem>
-                    <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "text-muted-foreground hover:text-accent-foreground data-[state=open]:bg-accent/50 px-3 h-10 group")}>
+                    <NavigationMenuTrigger 
+                      className={cn(
+                        navigationMenuTriggerStyle(), 
+                        "text-muted-foreground hover:text-accent-foreground data-[state=open]:bg-accent/50 px-3 h-10 group"
+                      )}
+                    >
                       Histórico
+                      {/* ChevronDown é adicionado automaticamente por NavigationMenuTrigger se não for asChild */}
                     </NavigationMenuTrigger>
-                    <NavigationMenuContent align="end"> {/* Adicionado align="end" aqui */}
+                    <NavigationMenuContent align="end" className="md:right-0"> {/* Força alinhamento à direita */}
                       <div className="w-80 p-2 space-y-1 bg-card text-card-foreground">
                         <div className="flex justify-between items-center p-2 border-b mb-1">
                             <p className="text-sm font-medium">Itens Vistos Recentemente</p>
@@ -532,3 +549,4 @@ export default function Header() {
     </header>
   );
 }
+
