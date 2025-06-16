@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -18,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Loader2, Heart, Bell, X, Facebook, MessageSquareText, Mail, ChevronDown } from 'lucide-react';
+import { Loader2, Heart, Bell, X, Facebook, MessageSquareText, Mail } from 'lucide-react';
 import type { RecentlyViewedLotInfo, Lot, LotCategory, PlatformSettings, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
 import { sampleLots, slugify } from '@/lib/sample-data';
 import { getLotCategories } from '@/app/admin/categories/actions';
@@ -37,6 +36,10 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { cn } from '@/lib/utils';
+import MegaMenuCategories from './mega-menu-categories';
+import { getAuctioneers } from '@/app/admin/auctioneers/actions';
+import { getSellers } from '@/app/admin/sellers/actions';
+import type { MegaMenuGroup } from './mega-menu-link-list';
 
 // HistoryListItem é usado por MainNav quando renderiza o conteúdo do Histórico
 export const HistoryListItem = forwardRef<
@@ -96,6 +99,7 @@ export default function Header() {
     setIsClient(true);
 
     async function fetchInitialData() {
+      console.log('[Header fetchInitialData] Iniciando busca de dados...');
       try {
         const settings = await getPlatformSettings();
         setPlatformSettings(settings);
@@ -123,6 +127,7 @@ export default function Header() {
           getSellers()
         ]);
         setSearchCategories(fetchedCategories);
+        console.log('[Header fetchInitialData] Fetched Categories:', fetchedCategories.length);
         setAuctioneers(fetchedAuctioneers);
         
         const MAX_SELLERS_IN_MEGAMENU = 5;
@@ -146,6 +151,7 @@ export default function Header() {
             });
         }
         setConsignorMegaMenuGroups(formattedSellersForMenu.filter(group => group.items.length > 0));
+        console.log('[Header fetchInitialData] Formatted Consignors Groups:', consignorMegaMenuGroups.length, 'Items in first group:', consignorMegaMenuGroups[0]?.items.length);
 
       } catch (error) {
         console.error("Error fetching data for main navigation:", error);
@@ -155,7 +161,7 @@ export default function Header() {
       }
     }
     fetchInitialData();
-    
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -210,7 +216,7 @@ export default function Header() {
       if (selectedSearchCategorySlug && selectedSearchCategorySlug !== 'todas') {
         query += `&category=${selectedSearchCategorySlug}`;
       }
-      router.push(`/search?${query}`);
+      router.push(`/search?type=lots&${query}`); // Default search to lots
       setIsSearchDropdownOpen(false);
     }
   };
@@ -221,7 +227,7 @@ export default function Header() {
     { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities', icon: ListChecks },
     { label: 'Comitentes', isMegaMenu: true, contentKey: 'consignors', href: '/sellers', icon: Landmark },
     { label: 'Leiloeiros', isMegaMenu: true, contentKey: 'auctioneers', href: '/auctioneers', icon: Gavel },
-    { label: 'Histórico', isMegaMenu: true, contentKey: 'history', icon: History },
+    { label: 'Histórico', isMegaMenu: true, contentKey: 'history', icon: History, href: '/dashboard/history' },
     { href: '/sell-with-us', label: 'Venda Conosco', icon: Percent },
     { href: '/contact', label: 'Fale Conosco', icon: Phone },
   ];
@@ -232,7 +238,7 @@ export default function Header() {
     { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities' },
     { label: 'Comitentes', isMegaMenu: true, contentKey: 'consignors', href: '/sellers' },
     { label: 'Leiloeiros', isMegaMenu: true, contentKey: 'auctioneers', href: '/auctioneers' },
-    { label: 'Histórico', isMegaMenu: true, contentKey: 'history' },
+    { label: 'Histórico', isMegaMenu: true, contentKey: 'history', href: '/dashboard/history' },
     { href: '/sell-with-us', label: 'Venda Conosco' },
     { href: '/contact', label: 'Fale Conosco' },
   ];
@@ -297,12 +303,11 @@ export default function Header() {
                         className="flex-col items-start space-x-0 space-y-0" 
                         onLinkClick={handleLinkOrMobileMenuCloseClick}
                         isMobile={true}
-                        // Passando dados para o Histórico no mobile:
-                        recentlyViewedItems={recentlyViewedItems}
-                        HistoryListItemComponent={HistoryListItem} 
                         searchCategories={searchCategories}
                         auctioneers={auctioneers}
                         consignorMegaMenuGroups={consignorMegaMenuGroups}
+                        recentlyViewedItems={recentlyViewedItems}
+                        HistoryListItemComponent={HistoryListItem} 
                     />
                     <div className="mt-auto pt-4 border-t">
                       <UserNav />
@@ -441,18 +446,48 @@ export default function Header() {
 
       {/* Main Navigation Bar - Desktop */}
       <div className="border-b bg-background text-foreground hidden md:block">
-        <div className="container mx-auto px-4 flex h-12 items-center justify-center"> {/* Alterado para justify-center */}
-          <MainNav 
-            items={[firstNavItem, ...centralNavItems]} 
-            onLinkClick={handleLinkOrMobileMenuCloseClick}
-            className="justify-center" // Garante que os itens de MainNav fiquem centralizados
-            // Passando dados para os megamenus:
-            searchCategories={searchCategories}
-            auctioneers={auctioneers}
-            consignorMegaMenuGroups={consignorMegaMenuGroups}
-            recentlyViewedItems={recentlyViewedItems}
-            HistoryListItemComponent={HistoryListItem}
-          />
+        <div className="container mx-auto px-4 flex h-12 items-center justify-between">
+            {/* Categorias Megamenu (sempre à esquerda) */}
+            {isClient && firstNavItem && firstNavItem.isMegaMenu && (
+            <NavigationMenu>
+                <NavigationMenuList>
+                <NavigationMenuItem value={firstNavItem.label}>
+                    <NavigationMenuTrigger
+                    className={cn(
+                        navigationMenuTriggerStyle(),
+                        (pathname?.startsWith('/category') || (pathname === '/search' && (searchParamsHook.get('type') === 'lots' || searchParamsHook.get('tab') === 'categories'))) && 'bg-accent text-primary font-semibold',
+                        'font-semibold'
+                    )}
+                    >
+                    {firstNavItem.label}
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                    {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={handleLinkOrMobileMenuCloseClick} />}
+                    </NavigationMenuContent>
+                </NavigationMenuItem>
+                </NavigationMenuList>
+            </NavigationMenu>
+            )}
+
+            {/* Itens Centrais de Navegação */}
+            <div className="flex-grow flex justify-center">
+                <MainNav 
+                    items={centralNavItems} 
+                    onLinkClick={handleLinkOrMobileMenuCloseClick}
+                    className="hidden md:flex" 
+                    searchCategories={searchCategories} 
+                    auctioneers={auctioneers}
+                    consignorMegaMenuGroups={consignorMegaMenuGroups}
+                    recentlyViewedItems={recentlyViewedItems}
+                    HistoryListItemComponent={HistoryListItem}
+                />
+            </div>
+            
+            {/* Placeholder Direita para manter o balanceamento do justify-between se necessário */}
+            {/* A largura deste div pode precisar ser ajustada para equilibrar o item da esquerda, ou removido se não necessário */}
+            <div className="w-auto min-w-[180px]"> {/* Ajustar min-w conforme necessário para balancear "Navegue por Categorias" */}
+                 {/* Se houver outros itens fixos à direita do header, eles iriam aqui */}
+            </div>
         </div>
       </div>
 
@@ -467,4 +502,3 @@ export default function Header() {
     </header>
   );
 }
-

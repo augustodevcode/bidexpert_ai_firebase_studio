@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -36,7 +35,6 @@ export default function UserNav() {
     setIsClient(true);
     const system = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM?.toUpperCase() || 'FIRESTORE';
     setActiveSystem(system);
-    console.log('[UserNav] Active DB System (client-side):', system);
   }, []);
 
   const handleLogout = async () => {
@@ -44,16 +42,13 @@ export default function UserNav() {
       try {
         await signOut(auth);
         toast({ title: "Logout bem-sucedido!"});
-        // O AuthProvider cuidará de limpar userProfileWithPermissions
         router.push('/');
       } catch (error: any) {
         toast({ title: "Erro no Logout", description: error.message, variant: "destructive" });
       }
     } else {
-      // Para SQL (MYSQL, POSTGRES)
-      logoutSqlUser(); // Chama a função do AuthContext
+      logoutSqlUser();
       toast({ title: `Logout bem-sucedido (${activeSystem})!`});
-      // O redirecionamento é tratado dentro de logoutSqlUser
     }
   };
 
@@ -85,11 +80,7 @@ export default function UserNav() {
   const userInitial = displayName ? displayName.charAt(0).toUpperCase() : "U";
   const userEmailLowerForRoles = activeSystem === 'FIRESTORE' ? user?.email?.toLowerCase() : userProfileWithPermissions?.email?.toLowerCase();
 
-  // Verifica se o usuário tem a permissão 'manage_all'
   const showAdminSectionLinks = hasPermission(userProfileWithPermissions, 'manage_all');
-  
-  // Lógica para o painel do comitente - pode ser baseada no email de exemplo OU em uma permissão específica.
-  // Se for baseada em permissão, algo como: hasAnyPermission(userProfileWithPermissions, ['auctions:manage_own', 'lots:manage_own'])
   const isTheExampleConsignor = userEmailLowerForRoles === EXAMPLE_CONSIGNOR_EMAIL.toLowerCase();
   const canSeeConsignorDashboardLink = showAdminSectionLinks || isTheExampleConsignor || hasAnyPermission(userProfileWithPermissions, ['auctions:manage_own', 'lots:manage_own']);
 
