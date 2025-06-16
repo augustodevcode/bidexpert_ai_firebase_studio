@@ -15,7 +15,7 @@ const NavigationMenu = React.forwardRef<
   <NavigationMenuPrimitive.Root
     ref={ref}
     className={cn(
-      "relative z-10 flex max-w-max flex-1 items-center justify-center", // Default to justify-center
+      "relative z-10 flex max-w-max items-center justify-center", // Removed flex-1
       className
     )}
     {...props}
@@ -33,7 +33,7 @@ const NavigationMenuList = React.forwardRef<
   <NavigationMenuPrimitive.List
     ref={ref}
     className={cn(
-      "group flex flex-1 list-none items-center justify-center space-x-1", 
+      "group flex flex-1 list-none items-center justify-center space-x-1",
       className
     )}
     {...props}
@@ -92,7 +92,7 @@ const NavigationMenuViewport = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Viewport>,
   React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Viewport>
 >(({ className, ...props }, ref) => (
-  <div className={cn("absolute top-full")}> {/* Removido flex e w-full daqui */}
+  <div className={cn("absolute top-full flex w-full")}> {/* Removed justify-center */}
     <NavigationMenuPrimitive.Viewport
       className={cn(
         "origin-top relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 md:w-[var(--radix-navigation-menu-viewport-width)]",
@@ -135,6 +135,3 @@ export {
   NavigationMenuIndicator,
   NavigationMenuViewport,
 }
-
-    
-    
