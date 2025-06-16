@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -10,7 +11,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase'; 
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState, useRef, useCallback, forwardRef } from 'react'; // Adicionado useCallback
+import { useEffect, useState, useRef, useCallback, forwardRef } from 'react'; 
 import MainNav, { type NavItem } from './main-nav';
 import UserNav from './user-nav';
 import { Input } from '@/components/ui/input';
@@ -233,17 +234,17 @@ export default function Header() {
   };
   
   const allNavItems: NavItem[] = [
-    { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories' },
-    { href: '/', label: 'Início' },
-    { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities' },
-    { label: 'Comitentes', isMegaMenu: true, contentKey: 'consignors', href: '/sellers' },
-    { label: 'Leiloeiros', isMegaMenu: true, contentKey: 'auctioneers', href: '/auctioneers' },
-    { href: '/sell-with-us', label: 'Venda Conosco' },
-    { href: '/contact', label: 'Fale Conosco' },
+    { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag },
+    { href: '/', label: 'Início', icon: HomeIcon },
+    { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities', icon: ListChecks },
+    { label: 'Comitentes', isMegaMenu: true, contentKey: 'consignors', href: '/sellers', icon: Landmark },
+    { label: 'Leiloeiros', isMegaMenu: true, contentKey: 'auctioneers', href: '/auctioneers', icon: Gavel },
+    { href: '/sell-with-us', label: 'Venda Conosco', icon: Percent },
+    { href: '/contact', label: 'Fale Conosco', icon: Phone },
   ];
 
-  const firstNavItem = allNavItems[0];
-  const centralNavItems = allNavItems.slice(1);
+  const firstNavItem = allNavItems[0]; // Navegue por Categorias
+  const centralNavItems = allNavItems.slice(1); // O restante para o MainNav centralizado
 
   return (
     <header className="sticky top-0 z-50 w-full shadow-md">
@@ -443,7 +444,7 @@ export default function Header() {
       {/* Main Navigation Bar - Desktop */}
       <div className="border-b bg-background text-foreground hidden md:block">
         <div className="container mx-auto px-4 flex h-12 items-center justify-between">
-          {/* Navegue por Categorias (Esquerda) */}
+          {/* "Navegue por Categorias" à esquerda */}
           <NavigationMenu className="justify-start">
             <NavigationMenuList>
               {firstNavItem && firstNavItem.isMegaMenu && firstNavItem.contentKey && (
@@ -488,7 +489,7 @@ export default function Header() {
                     <NavigationMenuTrigger className={cn(navigationMenuTriggerStyle(), "text-muted-foreground hover:text-accent-foreground data-[state=open]:bg-accent/50 px-3 h-10 group")}>
                       Histórico
                     </NavigationMenuTrigger>
-                    <NavigationMenuContent>
+                    <NavigationMenuContent align="end"> {/* Adicionado align="end" aqui */}
                       <div className="w-80 p-2 space-y-1 bg-card text-card-foreground">
                         <div className="flex justify-between items-center p-2 border-b mb-1">
                             <p className="text-sm font-medium">Itens Vistos Recentemente</p>
