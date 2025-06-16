@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation'; 
 import { cn } from '@/lib/utils';
 import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, RecentlyViewedLotInfo } from '@/types';
-import { ChevronDown, History, Home, Landmark, Gavel, Percent, Phone, ListChecks, Tag, Users } from 'lucide-react'; // Added Users
+import { ChevronDown, History, Home, Landmark, Gavel, Percent, Phone, ListChecks, Tag, Users } from 'lucide-react'; 
 import { useEffect, useState } from 'react';
 import {
   NavigationMenu,
@@ -22,7 +22,8 @@ import MegaMenuLinkList, { type MegaMenuGroup } from './mega-menu-link-list';
 import MegaMenuAuctioneers from './mega-menu-auctioneers';
 import TwoColumnMegaMenu from './two-column-mega-menu';
 import { type HistoryListItem } from './header'; 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Import Avatar components
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; 
+import type { MegaMenuLinkItem } from './mega-menu-link-list'; 
 
 export interface NavItem {
   href?: string;
@@ -42,18 +43,10 @@ export interface NavItem {
       buttonLink: string;
       buttonText: string;
     };
-    // sidebarItems e viewAllLink serão construídos dinamicamente no MainNav
+    // sidebarItems e viewAllLink são construídos dinamicamente abaixo
   };
-  hrefPrefix?: string; // Para determinar o estado ativo com base no início do path
+  hrefPrefix?: string; 
 }
-
-interface MegaMenuLinkItem { 
-  href: string;
-  label: string;
-  description?: string;
-  icon?: React.ReactNode;
-}
-
 
 const modalityMegaMenuGroups: MegaMenuGroup[] = [
   {
@@ -183,17 +176,17 @@ export default function MainNav({
     <NavigationMenu className={cn("relative z-10 flex items-center justify-start", className)} {...props} delayDuration={0}>
       <NavigationMenuList className={cn("group flex list-none items-center justify-start space-x-1")}>
         {items.map((item) => {
-          let megaMenuPropsForTwoColumn: any = null; // Reset for each item
+          let megaMenuPropsForTwoColumn: any = null; 
 
           if (item.isMegaMenu && item.contentKey && item.twoColumnMegaMenuProps) {
             let finalSidebarItems: MegaMenuLinkItem[] = [];
-            let finalViewAllLink = item.twoColumnMegaMenuProps.viewAllLink; // Use what's passed initially
+            let finalViewAllLink = undefined;
             let finalSidebarTitle = item.twoColumnMegaMenuProps.sidebarTitle;
 
             if (item.contentKey === 'modalities') {
               finalSidebarItems = modalityMegaMenuGroups[0]?.items || [];
-              finalSidebarTitle = item.twoColumnMegaMenuProps.sidebarTitle || 'Modalidades';
-              finalViewAllLink = { href: '/search?type=auctions', label: 'Ver Todos os Tipos de Leilão', icon: ListChecks };
+              finalSidebarTitle = item.twoColumnMegaMenuProps.sidebarTitle || 'Modalidades de Leilão';
+              finalViewAllLink = { href: '/search?type=auctions', label: 'Ver Todos os Leilões', icon: ListChecks };
             } else if (item.contentKey === 'consignors') {
               const consignorItems = (consignorMegaMenuGroups[0]?.items || []);
               finalSidebarItems = consignorItems.slice(0, MAX_ITEMS_IN_TW_COL_SIDEBAR);
@@ -202,11 +195,11 @@ export default function MainNav({
               }
               finalSidebarTitle = item.twoColumnMegaMenuProps.sidebarTitle || 'Principais Comitentes';
             } else if (item.contentKey === 'auctioneers') {
-              const mappedAuctioneerItems = auctioneers.map(auc => ({
+              const mappedAuctioneerItems: MegaMenuLinkItem[] = auctioneers.map(auc => ({
                 href: `/auctioneers/${auc.slug || auc.publicId || auc.id}`,
                 label: auc.name,
                 description: `${auc.city || ''}${auc.city && auc.state ? ' - ' : ''}${auc.state || ''}` || 'Leiloeiro Verificado',
-                icon: auc.logoUrl ? () => <Avatar className="h-5 w-5 border"><AvatarImage src={auc.logoUrl!} alt={auc.name} data-ai-hint={auc.dataAiHintLogo || 'logo leiloeiro'} /><AvatarFallback>{auc.name.charAt(0)}</AvatarFallback></Avatar> : undefined
+                icon: auc.logoUrl ? <Avatar className="h-5 w-5 border"><AvatarImage src={auc.logoUrl!} alt={auc.name} data-ai-hint={auc.dataAiHintLogo || 'logo leiloeiro'} /><AvatarFallback>{auc.name.charAt(0)}</AvatarFallback></Avatar> : undefined
               }));
               finalSidebarItems = mappedAuctioneerItems.slice(0, MAX_ITEMS_IN_TW_COL_SIDEBAR);
               if (auctioneers.length > MAX_ITEMS_IN_TW_COL_SIDEBAR) {
@@ -236,7 +229,7 @@ export default function MainNav({
                   {item.icon && item.contentKey !== 'history' && <item.icon className="mr-1.5 h-4 w-4" /> } 
                   {item.label}
                 </NavigationMenuTrigger>
-                <NavigationMenuContent align={item.megaMenuAlign || "start"}> {/* Default to start for these */}
+                <NavigationMenuContent align={item.megaMenuAlign || "start"}>
                   {item.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={onLinkClick} />}
                   
                   {megaMenuPropsForTwoColumn && (item.contentKey === 'modalities' || item.contentKey === 'consignors' || item.contentKey === 'auctioneers') && (
@@ -301,4 +294,5 @@ export default function MainNav({
     </NavigationMenu>
   );
 }
+
 
