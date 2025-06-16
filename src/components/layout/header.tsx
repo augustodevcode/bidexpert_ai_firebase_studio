@@ -6,10 +6,10 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Coins, Search as SearchIcon, Menu, ChevronDown, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel } from 'lucide-react'; 
+import { Coins, Search as SearchIcon, Menu, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel } from 'lucide-react'; 
 import { useAuth } from '@/contexts/auth-context';
-import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase'; 
+import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useRef, useCallback, forwardRef } from 'react'; 
 import MainNav, { type NavItem } from './main-nav';
@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Loader2, Heart, Bell, X, Facebook, MessageSquareText, Mail } from 'lucide-react';
+import { Loader2, Heart, Bell, X, Facebook, MessageSquareText, Mail, ChevronDown } from 'lucide-react';
 import type { RecentlyViewedLotInfo, Lot, LotCategory, PlatformSettings, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
 import { sampleLots, slugify } from '@/lib/sample-data';
 import { getLotCategories } from '@/app/admin/categories/actions';
@@ -27,42 +27,19 @@ import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import DynamicBreadcrumbs from './dynamic-breadcrumbs';
-import MegaMenuCategories from './mega-menu-categories';
-import MegaMenuLinkList, { type MegaMenuGroup } from './mega-menu-link-list';
-import MegaMenuAuctioneers from './mega-menu-auctioneers';
-import { getAuctioneers } from '@/app/admin/auctioneers/actions';
-import { getSellers } from '@/app/admin/sellers/actions';
 import {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuList,
   NavigationMenuLink,
   NavigationMenuTrigger,
-  NavigationMenuContent, // Adicionada importação faltante
+  NavigationMenuContent,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
 
-const modalityGroups: MegaMenuGroup[] = [
-  {
-    items: [
-      { href: '/search?type=auctions&auctionType=JUDICIAL', label: 'Leilões Judiciais', description: 'Oportunidades de processos judiciais.' },
-      { href: '/search?type=auctions&auctionType=EXTRAJUDICIAL', label: 'Leilões Extrajudiciais', description: 'Negociações diretas e mais ágeis.' },
-      { href: '/direct-sales', label: 'Venda Direta', description: 'Compre itens com preço fixo.' },
-      { href: '/search?type=auctions&auctionType=TOMADA_DE_PRECOS', label: 'Tomada de Preços', description: 'Processo de seleção para contratação.' },
-    ]
-  }
-];
-
-const HistoryListItem = forwardRef<
+// HistoryListItem é usado por MainNav quando renderiza o conteúdo do Histórico
+export const HistoryListItem = forwardRef<
   HTMLAnchorElement,
   React.ComponentPropsWithoutRef<"a"> & { item: RecentlyViewedLotInfo; onClick?: () => void }
 >(({ className, item, onClick, ...props }, ref) => {
@@ -108,32 +85,12 @@ export default function Header() {
   const siteTitle = platformSettings?.siteTitle || 'BidExpert';
   const siteTagline = platformSettings?.siteTagline;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const historyTriggerRef = useRef<HTMLButtonElement>(null);
-  const historyContentRef = useRef<HTMLDivElement>(null);
-  const historyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
 
   const handleLinkOrMobileMenuCloseClick = useCallback(() => {
     if (isMobileMenuOpen) {
       setIsMobileMenuOpen(false);
     }
-    setIsHistoryOpen(false); // Garante que o menu de histórico feche também
-  }, [isMobileMenuOpen, setIsMobileMenuOpen, setIsHistoryOpen]);
-
-  const handleHistoryMouseEnter = () => {
-    if (historyTimeoutRef.current) {
-      clearTimeout(historyTimeoutRef.current);
-    }
-    setIsHistoryOpen(true);
-  };
-
-  const handleHistoryMouseLeave = () => {
-    historyTimeoutRef.current = setTimeout(() => {
-      setIsHistoryOpen(false);
-    }, 200); 
-  };
-
+  }, [isMobileMenuOpen, setIsMobileMenuOpen]);
 
   useEffect(() => {
     setIsClient(true);
@@ -206,20 +163,11 @@ export default function Header() {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
         setIsSearchDropdownOpen(false);
       }
-      // Para o menu de histórico
-      if (historyTriggerRef.current && historyContentRef.current &&
-          !historyTriggerRef.current.contains(event.target as Node) &&
-          !historyContentRef.current.contains(event.target as Node)) {
-        setIsHistoryOpen(false);
-      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      if (historyTimeoutRef.current) {
-        clearTimeout(historyTimeoutRef.current);
-      }
     };
   }, []);
 
@@ -273,17 +221,18 @@ export default function Header() {
     { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities', icon: ListChecks },
     { label: 'Comitentes', isMegaMenu: true, contentKey: 'consignors', href: '/sellers', icon: Landmark },
     { label: 'Leiloeiros', isMegaMenu: true, contentKey: 'auctioneers', href: '/auctioneers', icon: Gavel },
+    { label: 'Histórico', isMegaMenu: true, contentKey: 'history', icon: History },
     { href: '/sell-with-us', label: 'Venda Conosco', icon: Percent },
     { href: '/contact', label: 'Fale Conosco', icon: Phone },
   ];
 
-  // Itens para a navegação principal (Desktop)
   const firstNavItem: NavItem = { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories' };
   const centralNavItems: NavItem[] = [
     { href: '/', label: 'Início' },
     { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities' },
     { label: 'Comitentes', isMegaMenu: true, contentKey: 'consignors', href: '/sellers' },
     { label: 'Leiloeiros', isMegaMenu: true, contentKey: 'auctioneers', href: '/auctioneers' },
+    { label: 'Histórico', isMegaMenu: true, contentKey: 'history' },
     { href: '/sell-with-us', label: 'Venda Conosco' },
     { href: '/contact', label: 'Fale Conosco' },
   ];
@@ -348,6 +297,12 @@ export default function Header() {
                         className="flex-col items-start space-x-0 space-y-0" 
                         onLinkClick={handleLinkOrMobileMenuCloseClick}
                         isMobile={true}
+                        // Passando dados para o Histórico no mobile:
+                        recentlyViewedItems={recentlyViewedItems}
+                        HistoryListItemComponent={HistoryListItem} 
+                        searchCategories={searchCategories}
+                        auctioneers={auctioneers}
+                        consignorMegaMenuGroups={consignorMegaMenuGroups}
                     />
                     <div className="mt-auto pt-4 border-t">
                       <UserNav />
@@ -486,93 +441,18 @@ export default function Header() {
 
       {/* Main Navigation Bar - Desktop */}
       <div className="border-b bg-background text-foreground hidden md:block">
-        <div className="container mx-auto px-4 flex h-12 items-center justify-between">
-          {/* "Navegue por Categorias" à esquerda */}
-          <div className="flex justify-start">
-            <NavigationMenu className="justify-start"> 
-              <NavigationMenuList>
-                {firstNavItem && firstNavItem.isMegaMenu && firstNavItem.contentKey && (
-                  <NavigationMenuItem value={firstNavItem.label}>
-                    <NavigationMenuTrigger 
-                       className={cn(
-                        navigationMenuTriggerStyle(),
-                        "text-muted-foreground hover:text-accent-foreground data-[state=open]:bg-accent/50",
-                        pathname === firstNavItem.href && "text-primary bg-accent"
-                      )}
-                    >
-                      {firstNavItem.label}
-                    </NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                       {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={handleLinkOrMobileMenuCloseClick} />}
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-                )}
-              </NavigationMenuList>
-            </NavigationMenu>
-          </div>
-          
-          {/* Links Centrais */}
-          <div className="flex-1 flex justify-center">
-            <MainNav items={centralNavItems} onLinkClick={handleLinkOrMobileMenuCloseClick} className="justify-center" />
-          </div>
-
-          {/* Histórico Dropdown (Direita) */}
-          <div 
-            className="flex items-center justify-end"
-            onMouseEnter={handleHistoryMouseEnter}
-            onMouseLeave={handleHistoryMouseLeave}
-          > 
-            {isClient && (
-              <NavigationMenu>
-                <NavigationMenuList>
-                  <NavigationMenuItem>
-                    <NavigationMenuTrigger
-                      ref={historyTriggerRef}
-                      className={cn(navigationMenuTriggerStyle(), "px-3 h-10 group text-muted-foreground hover:text-accent-foreground focus:bg-accent/50 focus:text-accent-foreground data-[state=open]:bg-accent/50")}
-                    >
-                      Histórico
-                    </NavigationMenuTrigger>
-                    {isHistoryOpen && (
-                    <NavigationMenuContent 
-                        ref={historyContentRef} 
-                        align="end" 
-                        className="w-80 p-2"
-                        onMouseLeave={handleHistoryMouseLeave} // Adicionado para manter aberto se o mouse entrar
-                        onMouseEnter={handleHistoryMouseEnter} // Adicionado para manter aberto se o mouse entrar
-                    >
-                        <div className="flex justify-between items-center p-2 border-b mb-1">
-                        <span className="text-sm font-medium">Itens Vistos Recentemente</span>
-                        <History className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        {recentlyViewedItems.length === 0 ? (
-                        <p className="text-xs text-muted-foreground text-center py-3">Nenhum item visto recentemente.</p>
-                        ) : (
-                        <ul className="max-h-80 overflow-y-auto space-y-1">
-                            {recentlyViewedItems.slice(0, 5).map(item => (
-                            <li key={item.id}>
-                                <HistoryListItem item={item} onClick={handleLinkOrMobileMenuCloseClick} />
-                            </li>
-                            ))}
-                        </ul>
-                        )}
-                        <div className="border-t mt-1 pt-1">
-                        <NavigationMenuLink asChild>
-                            <Link 
-                                href="/dashboard/history" 
-                                className={cn(navigationMenuTriggerStyle(), "w-full justify-center text-primary hover:underline text-xs py-1 h-auto")} 
-                                onClick={handleLinkOrMobileMenuCloseClick}
-                            >
-                            Ver Histórico Completo
-                            </Link>
-                        </NavigationMenuLink>
-                        </div>
-                    </NavigationMenuContent>
-                    )}
-                  </NavigationMenuItem>
-                </NavigationMenuList>
-              </NavigationMenu>
-            )}
-          </div>
+        <div className="container mx-auto px-4 flex h-12 items-center justify-center"> {/* Alterado para justify-center */}
+          <MainNav 
+            items={[firstNavItem, ...centralNavItems]} 
+            onLinkClick={handleLinkOrMobileMenuCloseClick}
+            className="justify-center" // Garante que os itens de MainNav fiquem centralizados
+            // Passando dados para os megamenus:
+            searchCategories={searchCategories}
+            auctioneers={auctioneers}
+            consignorMegaMenuGroups={consignorMegaMenuGroups}
+            recentlyViewedItems={recentlyViewedItems}
+            HistoryListItemComponent={HistoryListItem}
+          />
         </div>
       </div>
 
@@ -587,8 +467,4 @@ export default function Header() {
     </header>
   );
 }
-
-
-    
-    
 
