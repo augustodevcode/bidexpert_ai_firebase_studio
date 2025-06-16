@@ -38,6 +38,7 @@ import {
   NavigationMenuList,
   NavigationMenuLink,
   NavigationMenuTrigger,
+  NavigationMenuContent, // Adicionada importação faltante
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import {
@@ -62,7 +63,7 @@ const modalityGroups: MegaMenuGroup[] = [
 ];
 
 const HistoryListItem = forwardRef<
-  HTMLAnchorElement, // Changed to HTMLAnchorElement for DropdownMenuItem asChild
+  HTMLAnchorElement,
   React.ComponentPropsWithoutRef<"a"> & { item: RecentlyViewedLotInfo; onClick?: () => void }
 >(({ className, item, onClick, ...props }, ref) => {
   return (
@@ -108,6 +109,8 @@ export default function Header() {
   const siteTagline = platformSettings?.siteTagline;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const historyTriggerRef = useRef<HTMLButtonElement>(null);
+  const historyContentRef = useRef<HTMLDivElement>(null);
   const historyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 
@@ -115,7 +118,8 @@ export default function Header() {
     if (isMobileMenuOpen) {
       setIsMobileMenuOpen(false);
     }
-  }, [isMobileMenuOpen, setIsMobileMenuOpen]);
+    setIsHistoryOpen(false); // Garante que o menu de histórico feche também
+  }, [isMobileMenuOpen, setIsMobileMenuOpen, setIsHistoryOpen]);
 
   const handleHistoryMouseEnter = () => {
     if (historyTimeoutRef.current) {
@@ -127,7 +131,7 @@ export default function Header() {
   const handleHistoryMouseLeave = () => {
     historyTimeoutRef.current = setTimeout(() => {
       setIsHistoryOpen(false);
-    }, 200); // Small delay to allow mouse to enter content
+    }, 200); 
   };
 
 
@@ -202,11 +206,20 @@ export default function Header() {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
         setIsSearchDropdownOpen(false);
       }
+      // Para o menu de histórico
+      if (historyTriggerRef.current && historyContentRef.current &&
+          !historyTriggerRef.current.contains(event.target as Node) &&
+          !historyContentRef.current.contains(event.target as Node)) {
+        setIsHistoryOpen(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      if (historyTimeoutRef.current) {
+        clearTimeout(historyTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -475,26 +488,28 @@ export default function Header() {
       <div className="border-b bg-background text-foreground hidden md:block">
         <div className="container mx-auto px-4 flex h-12 items-center justify-between">
           {/* "Navegue por Categorias" à esquerda */}
-          <NavigationMenu className="justify-start"> 
-            <NavigationMenuList>
-              {firstNavItem && firstNavItem.isMegaMenu && firstNavItem.contentKey && (
-                <NavigationMenuItem value={firstNavItem.label}>
-                  <NavigationMenuTrigger 
-                     className={cn(
-                      navigationMenuTriggerStyle(),
-                      "text-muted-foreground hover:text-accent-foreground data-[state=open]:bg-accent/50",
-                      pathname === firstNavItem.href && "text-primary bg-accent"
-                    )}
-                  >
-                    {firstNavItem.label}
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                     {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={handleLinkOrMobileMenuCloseClick} />}
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-              )}
-            </NavigationMenuList>
-          </NavigationMenu>
+          <div className="flex justify-start">
+            <NavigationMenu className="justify-start"> 
+              <NavigationMenuList>
+                {firstNavItem && firstNavItem.isMegaMenu && firstNavItem.contentKey && (
+                  <NavigationMenuItem value={firstNavItem.label}>
+                    <NavigationMenuTrigger 
+                       className={cn(
+                        navigationMenuTriggerStyle(),
+                        "text-muted-foreground hover:text-accent-foreground data-[state=open]:bg-accent/50",
+                        pathname === firstNavItem.href && "text-primary bg-accent"
+                      )}
+                    >
+                      {firstNavItem.label}
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                       {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={handleLinkOrMobileMenuCloseClick} />}
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
+                )}
+              </NavigationMenuList>
+            </NavigationMenu>
+          </div>
           
           {/* Links Centrais */}
           <div className="flex-1 flex justify-center">
@@ -502,49 +517,60 @@ export default function Header() {
           </div>
 
           {/* Histórico Dropdown (Direita) */}
-          <div className="flex items-center justify-end"> 
+          <div 
+            className="flex items-center justify-end"
+            onMouseEnter={handleHistoryMouseEnter}
+            onMouseLeave={handleHistoryMouseLeave}
+          > 
             {isClient && (
-               <DropdownMenu open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className={cn(navigationMenuTriggerStyle(), "px-3 h-10 group text-muted-foreground hover:text-accent-foreground focus:bg-accent/50 focus:text-accent-foreground data-[state=open]:bg-accent/50")}
-                    onMouseEnter={handleHistoryMouseEnter}
-                    onMouseLeave={handleHistoryMouseLeave}
-                  >
-                    Histórico
-                    <ChevronDown className="relative top-[1px] ml-1.5 h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180" aria-hidden="true" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="w-80 p-2"
-                  onMouseEnter={handleHistoryMouseEnter} 
-                  onMouseLeave={handleHistoryMouseLeave}
-                >
-                  <DropdownMenuLabel className="flex justify-between items-center p-2 border-b mb-1">
-                    Itens Vistos Recentemente
-                    <History className="h-4 w-4 text-muted-foreground" />
-                  </DropdownMenuLabel>
-                  {recentlyViewedItems.length === 0 ? (
-                    <p className="text-xs text-muted-foreground text-center py-3">Nenhum item visto recentemente.</p>
-                  ) : (
-                    <ul className="max-h-80 overflow-y-auto space-y-1">
-                      {recentlyViewedItems.slice(0, 5).map(item => (
-                        <DropdownMenuItem key={item.id} asChild className="p-0">
-                           <HistoryListItem item={item} onClick={handleLinkOrMobileMenuCloseClick} />
-                        </DropdownMenuItem>
-                      ))}
-                    </ul>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild className="p-0">
-                     <Link href="/dashboard/history" className={cn(navigationMenuTriggerStyle(), "w-full justify-center text-primary hover:underline text-xs py-1 h-auto")} onClick={handleLinkOrMobileMenuCloseClick}>
-                        Ver Histórico Completo
-                      </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <NavigationMenu>
+                <NavigationMenuList>
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger
+                      ref={historyTriggerRef}
+                      className={cn(navigationMenuTriggerStyle(), "px-3 h-10 group text-muted-foreground hover:text-accent-foreground focus:bg-accent/50 focus:text-accent-foreground data-[state=open]:bg-accent/50")}
+                    >
+                      Histórico
+                    </NavigationMenuTrigger>
+                    {isHistoryOpen && (
+                    <NavigationMenuContent 
+                        ref={historyContentRef} 
+                        align="end" 
+                        className="w-80 p-2"
+                        onMouseLeave={handleHistoryMouseLeave} // Adicionado para manter aberto se o mouse entrar
+                        onMouseEnter={handleHistoryMouseEnter} // Adicionado para manter aberto se o mouse entrar
+                    >
+                        <div className="flex justify-between items-center p-2 border-b mb-1">
+                        <span className="text-sm font-medium">Itens Vistos Recentemente</span>
+                        <History className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        {recentlyViewedItems.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-3">Nenhum item visto recentemente.</p>
+                        ) : (
+                        <ul className="max-h-80 overflow-y-auto space-y-1">
+                            {recentlyViewedItems.slice(0, 5).map(item => (
+                            <li key={item.id}>
+                                <HistoryListItem item={item} onClick={handleLinkOrMobileMenuCloseClick} />
+                            </li>
+                            ))}
+                        </ul>
+                        )}
+                        <div className="border-t mt-1 pt-1">
+                        <NavigationMenuLink asChild>
+                            <Link 
+                                href="/dashboard/history" 
+                                className={cn(navigationMenuTriggerStyle(), "w-full justify-center text-primary hover:underline text-xs py-1 h-auto")} 
+                                onClick={handleLinkOrMobileMenuCloseClick}
+                            >
+                            Ver Histórico Completo
+                            </Link>
+                        </NavigationMenuLink>
+                        </div>
+                    </NavigationMenuContent>
+                    )}
+                  </NavigationMenuItem>
+                </NavigationMenuList>
+              </NavigationMenu>
             )}
           </div>
         </div>
@@ -565,3 +591,4 @@ export default function Header() {
 
     
     
+
