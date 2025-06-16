@@ -20,13 +20,13 @@ import {
 import MegaMenuCategories from './mega-menu-categories';
 import MegaMenuLinkList, { type MegaMenuGroup } from './mega-menu-link-list';
 import MegaMenuAuctioneers from './mega-menu-auctioneers';
-import { type HistoryListItem } from './header'; // Importando HistoryListItem do header
+import { type HistoryListItem } from './header'; 
 
 export interface NavItem {
   href?: string;
   label: string;
   isMegaMenu?: boolean;
-  contentKey?: 'categories' | 'modalities' | 'consignors' | 'auctioneers' | 'history'; // Adicionado 'history'
+  contentKey?: 'categories' | 'modalities' | 'consignors' | 'auctioneers' | 'history';
   icon?: React.ElementType; 
 }
 
@@ -45,12 +45,11 @@ interface MainNavProps extends React.HTMLAttributes<HTMLElement> {
     items: NavItem[];
     onLinkClick?: () => void;
     isMobile?: boolean;
-    // Props para dados dos megamenus
     searchCategories?: LotCategory[];
     auctioneers?: AuctioneerProfileInfo[];
     consignorMegaMenuGroups?: MegaMenuGroup[];
     recentlyViewedItems?: RecentlyViewedLotInfo[];
-    HistoryListItemComponent?: typeof HistoryListItem; // Tipo do componente
+    HistoryListItemComponent?: typeof HistoryListItem;
 }
 
 
@@ -73,14 +72,13 @@ export default function MainNav({
     setIsClient(true);
   }, []);
   
-  if (!isClient && isMobile) return null; // Evita renderizar no servidor para mobile se os dados não estiverem prontos
+  if (!isClient && isMobile) return null;
 
   if (isMobile) {
-    // Renderização para menu mobile (Sheet)
     return (
       <nav className={cn('flex flex-col gap-1', className)} {...props}>
         {items.map((item) => (
-          item.href && !item.isMegaMenu ? ( // Link simples
+          item.href && !item.isMegaMenu ? (
             <Link
               key={item.label} 
               href={item.href}
@@ -93,30 +91,30 @@ export default function MainNav({
               {item.icon && <item.icon className="h-4 w-4" />}
               <span>{item.label}</span>
             </Link>
-          ) : item.isMegaMenu && item.contentKey ? ( // Item que abre um "megamenu" simulado no mobile
+          ) : item.isMegaMenu && item.contentKey ? ( 
             <div key={item.label} className="py-1">
                 <Link
-                    href={item.href || '#'} // Adiciona href se existir (ex: para 'Navegue por Categorias')
+                    href={item.href || '#'} 
                     onClick={(e) => {
-                        if (!item.href && onLinkClick) { // Previne default se não for um link real, mas chama onLinkClick para fechar
-                           // Não faz nada de especial aqui se não tiver href, o onLinkClick global fecha
+                        if (!item.href && onLinkClick) { 
+                           // If it's a megamenu trigger without its own link, onLinkClick might toggle a mobile submenu
+                           // but we won't prevent default. For mobile, these become section headers.
                         } else if (onLinkClick) {
-                            onLinkClick();
+                            onLinkClick(); // For actual links or to close the mobile main menu
                         }
-                        // Se não tiver href, o comportamento de dropdown não é aplicável, é mais um título de seção.
-                        // Para o caso do Histórico, o link principal é para a página do histórico.
                     }}
                     className={cn(
-                        'text-md font-medium transition-colors hover:text-primary flex items-center gap-2 py-2.5 px-3 rounded-md',
+                        'text-md font-medium transition-colors hover:text-primary flex items-center justify-between gap-2 py-2.5 px-3 rounded-md',
                         pathname === item.href ? 'bg-accent text-primary' : 'text-muted-foreground hover:bg-accent/50'
                     )}
                 >
-                    {item.icon && <item.icon className="h-4 w-4" />}
-                    <span>{item.label}</span>
-                    {/* Ícone de dropdown pode ser condicional ou removido se for apenas um link */}
-                    {item.contentKey !== 'history' && <ChevronDown className="h-4 w-4 ml-auto"/>}
+                    <div className="flex items-center gap-2">
+                        {item.icon && <item.icon className="h-4 w-4" />}
+                        <span>{item.label}</span>
+                    </div>
+                    {/* Only show ChevronDown for non-history megamenus that act as accordions */}
+                    {item.contentKey !== 'history' && <ChevronDown className="h-4 w-4"/>}
                 </Link>
-                {/* Dropdown simulado para mobile - pode ser simplificado ou melhorado */}
                 <div className="pl-6 mt-1 space-y-0.5">
                     {item.contentKey === 'categories' && searchCategories.slice(0,3).map(cat => (
                         <Link key={cat.slug} href={`/category/${cat.slug}`} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{cat.name}</Link>
@@ -135,11 +133,8 @@ export default function MainNav({
                         <Link key={auc.id} href={`/auctioneers/${auc.slug || auc.publicId || auc.id}`} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{auc.name}</Link>
                     ))}
                       {item.contentKey === 'auctioneers' && auctioneers.length > 3 && <Link href="/auctioneers" onClick={onLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todos leiloeiros</Link>}
-
-                    {/* Histórico no mobile: será um link direto para a página */}
-                    {item.contentKey === 'history' && (
-                        <Link href="/dashboard/history" onClick={onLinkClick} className="block text-sm text-primary hover:underline py-1">Ver Histórico Completo</Link>
-                    )}
+                    
+                    {/* Histórico no mobile: o link principal do NavItem já leva para /dashboard/history */}
                 </div>
             </div>
           ) : null
@@ -149,7 +144,6 @@ export default function MainNav({
   }
   
 
-  // Renderização para Desktop
   return (
     <NavigationMenu className={cn(className)} {...props} delayDuration={0}>
       <NavigationMenuList className={cn(className?.includes('justify-center') ? 'justify-center' : 'justify-start')}>
@@ -158,37 +152,33 @@ export default function MainNav({
             return (
               <NavigationMenuItem key={item.label} value={item.label}>
                  <NavigationMenuTrigger
-                  asChild={!!item.href} 
-                  className={cn(pathname === item.href && "text-primary bg-accent")}
-                  onClick={item.href && onLinkClick ? () => onLinkClick() : undefined} 
-                >
-                   {item.href ? (
-                    <Link href={item.href} className={navigationMenuTriggerStyle()}>
-                      {item.label}
-                      <ChevronDown className="relative top-[1px] ml-1.5 h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180" aria-hidden="true" />
-                    </Link>
-                  ) : (
-                    <>
-                      {item.label}
-                      <ChevronDown className="relative top-[1px] ml-1.5 h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180" aria-hidden="true" />
-                    </>
+                  className={cn(
+                    navigationMenuTriggerStyle(), // Aplica o estilo base do trigger
+                    // Lógica para estado "aberto" ou ativo. O próprio Radix UI adiciona data-state=open
+                    // Se item.href existir e for o pathname atual, também estaria ativo.
+                    pathname === item.href && 'bg-accent text-primary font-semibold',
+                    // Para itens que SÃO triggers de megamenu (como Histórico), o Radix aplica `data-[state=open]:bg-accent/50` via o estilo base
                   )}
+                >
+                  {item.icon && item.contentKey !== 'history' && <item.icon className="mr-1.5 h-4 w-4" /> } 
+                  {item.label}
+                  {/* ChevronDown é adicionado automaticamente pelo NavigationMenuTrigger (de ui/navigation-menu.tsx)
+                      quando asChild é falso (ou seja, quando item.href não existe) */}
                 </NavigationMenuTrigger>
-                <NavigationMenuContent className={item.contentKey === 'history' ? 'w-80 p-2' : ''}>
+                <NavigationMenuContent align={item.contentKey === 'history' ? 'end' : 'center'}>
                   {item.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={onLinkClick} />}
                   {item.contentKey === 'modalities' && <MegaMenuLinkList groups={modalityGroups} onLinkClick={onLinkClick} gridCols="md:grid-cols-1" />}
                   {item.contentKey === 'consignors' && <MegaMenuLinkList groups={consignorMegaMenuGroups} onLinkClick={onLinkClick} gridCols="md:grid-cols-1 lg:grid-cols-2" />}
                   {item.contentKey === 'auctioneers' && <MegaMenuAuctioneers auctioneers={auctioneers} onLinkClick={onLinkClick} />}
                   {item.contentKey === 'history' && HistoryListItemComponent && (
-                     <div className="p-2"> {/* Adicionando padding ao redor do conteúdo do histórico */}
+                     <div className="w-80 p-2">
                         <div className="flex justify-between items-center p-2 border-b mb-1">
-                            <span className="text-sm font-medium">Itens Vistos Recentemente</span>
-                            <History className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-medium text-foreground flex items-center"><History className="mr-1.5 h-4 w-4"/> Histórico</span>
                         </div>
                         {recentlyViewedItems.length === 0 ? (
                             <p className="text-xs text-muted-foreground text-center py-3">Nenhum item visto recentemente.</p>
                         ) : (
-                            <ul className="max-h-80 overflow-y-auto space-y-1">
+                            <ul className="max-h-80 overflow-y-auto space-y-0.5">
                                 {recentlyViewedItems.slice(0, 5).map(rvItem => (
                                 <li key={rvItem.id}>
                                     <HistoryListItemComponent item={rvItem} onClick={onLinkClick} />
@@ -200,7 +190,7 @@ export default function MainNav({
                             <NavigationMenuLink asChild>
                                 <Link 
                                     href="/dashboard/history" 
-                                    className={cn(navigationMenuTriggerStyle(), "w-full justify-center text-primary hover:underline text-xs py-1 h-auto")} 
+                                    className={cn(navigationMenuTriggerStyle(), "w-full justify-center text-primary hover:underline text-xs py-1 h-auto bg-transparent hover:bg-accent")} 
                                     onClick={onLinkClick}
                                 >
                                 Ver Histórico Completo
@@ -217,10 +207,16 @@ export default function MainNav({
             item.href ? (
               <NavigationMenuItem key={item.href}>
                 <Link href={item.href} legacyBehavior passHref>
-                  <NavigationMenuLink className={cn(
-                    navigationMenuTriggerStyle(),
-                    pathname === item.href ? 'text-primary bg-accent' : 'text-muted-foreground hover:bg-accent/50 focus:bg-accent/50 focus:text-primary'
-                  )} onClick={onLinkClick}>
+                  <NavigationMenuLink
+                    className={cn(
+                      navigationMenuTriggerStyle(), 
+                      pathname === item.href
+                        ? 'bg-accent text-primary font-semibold' // Estado Ativo
+                        : 'text-muted-foreground hover:bg-accent/70 focus:bg-accent/70' // Estado Inativo
+                    )}
+                    onClick={onLinkClick}
+                  >
+                    {item.icon && <item.icon className="mr-1.5 h-4 w-4 flex-shrink-0" />}
                     {item.label}
                   </NavigationMenuLink>
                 </Link>
