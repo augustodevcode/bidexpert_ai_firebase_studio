@@ -17,14 +17,14 @@ interface MegaMenuCategoriesProps {
 }
 
 const CategoryListItem = React.forwardRef<
-  HTMLAnchorElement, // Mudado para HTMLAnchorElement pois será usado dentro de NavigationMenuLink que espera <a>
-  React.ComponentPropsWithoutRef<'a'> & { category: LotCategory; onHover: () => void; isActive: boolean; onClick?: () => void; }
+  HTMLAnchorElement,
+  React.ComponentPropsWithoutRef<'a'> & { category: LotCategory; onHover: () => void; isActive: boolean; onClick?: () => void; href: string; }
 >(({ className, category, onHover, isActive, onClick, href, ...props }, ref) => {
   return (
     <li>
       <NavigationMenuLink asChild>
         <Link
-          href={href || `/category/${category.slug}`} // Prioriza href passado, senão usa o slug
+          href={href}
           ref={ref}
           className={cn(
             'flex select-none items-center justify-between rounded-md p-3 text-sm leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
@@ -48,6 +48,28 @@ const CategoryListItem = React.forwardRef<
 });
 CategoryListItem.displayName = 'CategoryListItem';
 
+// Mapa de subcategorias (slug da categoria principal => lista de nomes de subcategorias)
+const subcategoryMap: Record<string, string[]> = {
+  'imoveis': ['Apartamentos', 'Casas', 'Terrenos', 'Salas Comerciais', 'Galpões e Prédios', 'Imóveis Rurais', 'Vagas de Garagem', 'Glebas'],
+  'veiculos': ['Carros', 'Motos', 'Caminhões e Ônibus', 'Veículos Pesados', 'Embarcações', 'Aeronaves'],
+  'maquinas-e-equipamentos': ['Máquinas Agrícolas', 'Máquinas Industriais', 'Equipamentos de Construção', 'Equipamentos de Mineração', 'Empilhadeiras e Transpaleteiras'],
+  'eletronicos-e-tecnologia': ['Celulares e Tablets', 'Computadores e Notebooks', 'Televisores e Áudio', 'Componentes e Peças'],
+  'casa-e-decoracao': ['Móveis Residenciais', 'Eletrodomésticos', 'Utensílios de Cozinha', 'Decoração e Iluminação', 'Cama, Mesa e Banho'],
+  'arte-e-antiguidades': ['Obras de Arte', 'Antiguidades', 'Itens Colecionáveis', 'Numismática'],
+  'joias-e-acessorios-de-luxo': ['Joias (Ouro, Prata, Pedras)', 'Relógios de Luxo', 'Bolsas de Grife', 'Canetas Finas'],
+  'semoventes': ['Bovinos', 'Equinos', 'Ovinos e Caprinos', 'Aves', 'Outros Animais'],
+  'materiais-e-sucatas': ['Materiais de Construção', 'Sucatas Metálicas (Ferrosas e Não Ferrosas)', 'Resíduos Industriais', 'Papel e Plástico Reciclável'],
+  'industrial-geral': ['Estoques Industriais', 'Matéria-prima', 'Equipamentos de Escritório (Empresarial)', 'Mobiliário Corporativo'],
+  'embarcacoes-e-aeronaves': ['Lanchas e Barcos', 'Jet Skis', 'Veleiros', 'Aeronaves Leves', 'Drones Profissionais'],
+  'outros-itens-e-oportunidades': ['Consórcios (Contemplados ou Não)', 'Direitos Creditórios', 'Títulos e Valores Mobiliários', 'Energia Solar (Equipamentos)', 'Vinhos e Bebidas Raras', 'Instrumentos Musicais'],
+};
+
+function getSubcategoriesFor(categorySlug: string | undefined): string[] {
+  if (!categorySlug) return [];
+  return subcategoryMap[categorySlug] || [];
+}
+
+
 export default function MegaMenuCategories({ categories, onLinkClick }: MegaMenuCategoriesProps) {
   const [hoveredCategory, setHoveredCategory] = React.useState<LotCategory | null>(
     categories && categories.length > 0 ? categories[0] : null
@@ -65,18 +87,7 @@ export default function MegaMenuCategories({ categories, onLinkClick }: MegaMenu
 
   const MAX_CATEGORIES_IN_SIDEBAR = 8;
   const sidebarCategories = categories.slice(0, MAX_CATEGORIES_IN_SIDEBAR);
-
-  const getPlaceholderSubcategories = (category: LotCategory | null) => {
-    if (!category) return [];
-    return [
-      `Sub-item 1 de ${category.name}`,
-      `Sub-item 2 de ${category.name}`,
-      `Outro sub-item`,
-      `Mais opções em ${category.name}`,
-    ].slice(0, 4);
-  };
-
-  const subcategoriesToShow = getPlaceholderSubcategories(hoveredCategory);
+  const subcategoriesToShow = getSubcategoriesFor(hoveredCategory?.slug);
 
   return (
     <div className="grid grid-cols-[260px_1fr] md:w-[700px] lg:w-[800px] xl:w-[900px] gap-0 p-0 max-h-[calc(80vh-100px)] min-h-[350px]">
@@ -101,7 +112,7 @@ export default function MegaMenuCategories({ categories, onLinkClick }: MegaMenu
           <div className="mt-auto pt-2 border-t border-border">
             <NavigationMenuLink asChild>
               <Link
-                href="/search?tab=categories"
+                href="/search?tab=categories" // ou uma página dedicada de todas as categorias
                 onClick={onLinkClick}
                 className={cn(
                   'flex select-none items-center justify-center rounded-md p-3 text-sm font-semibold text-primary hover:bg-accent hover:text-primary/90 leading-none no-underline outline-none transition-colors focus:bg-accent focus:text-primary/90'
@@ -120,27 +131,29 @@ export default function MegaMenuCategories({ categories, onLinkClick }: MegaMenu
         {hoveredCategory ? (
           <div className="flex flex-col h-full">
             <div>
-              <h3 className="text-xl font-bold text-primary mb-2 font-headline">{hoveredCategory.name}</h3>
-              <p className="text-xs text-muted-foreground mb-4 h-10 overflow-hidden line-clamp-2">
+              <h3 className="text-xl font-bold text-primary mb-1 font-headline">{hoveredCategory.name}</h3>
+              <p className="text-xs text-muted-foreground mb-3 h-10 overflow-hidden line-clamp-2">
                 {hoveredCategory.description || `Explore os melhores itens na categoria ${hoveredCategory.name}.`}
               </p>
             
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm mb-4">
-                {subcategoriesToShow.map((sub, index) => (
-                  <li key={index}>
-                    <Link 
-                      href={`/category/${hoveredCategory.slug}?sub=${slugify(sub)}`}
-                      className="block py-1.5 rounded hover:text-primary text-muted-foreground hover:font-medium text-xs"
-                      onClick={onLinkClick}
-                    >
-                      {sub}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              {subcategoriesToShow.length > 0 && (
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm mb-4">
+                  {subcategoriesToShow.slice(0, 6).map((sub, index) => ( // Limitar a 6 para não ficar muito extenso
+                    <li key={index}>
+                      <Link 
+                        href={`/category/${hoveredCategory.slug}?subcategory=${slugify(sub)}`}
+                        className="block py-1.5 rounded hover:text-primary text-muted-foreground hover:font-medium text-xs"
+                        onClick={onLinkClick}
+                      >
+                        {sub}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
             
-            <div className="mt-auto pt-4"> {/* Push image and button to bottom */}
+            <div className="mt-auto pt-4">
               <Link href={`/category/${hoveredCategory.slug}`} onClick={onLinkClick} className="block group">
                 <div className="relative aspect-[16/9] bg-muted rounded-md overflow-hidden mb-3">
                   <Image 
