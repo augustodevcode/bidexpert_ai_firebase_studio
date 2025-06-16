@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react'; 
@@ -154,8 +155,8 @@ export default function MainNav({
   
 
   return (
-    <NavigationMenu className={cn("relative z-10 flex items-center", className)} {...props} delayDuration={0}>
-      <NavigationMenuList className={cn("group flex list-none items-center justify-center space-x-1")}>
+    <NavigationMenu className={cn("relative z-10 flex items-center justify-start", className)} {...props} delayDuration={0}>
+      <NavigationMenuList className={cn("group flex list-none items-center justify-start space-x-1")}> {/* justify-start aqui também */}
         {items.map((item) => {
           if (item.isMegaMenu && item.contentKey) {
             return (
@@ -216,7 +217,7 @@ export default function MainNav({
                       navigationMenuTriggerStyle(), 
                       pathname === item.href
                         ? 'bg-accent text-primary font-semibold' 
-                        : 'text-foreground/80 hover:text-primary hover:bg-accent focus:bg-accent' 
+                        : 'text-foreground/80 hover:text-primary hover:bg-accent/70 focus:bg-accent/70' 
                     )}
                     onClick={onLinkClick}
                   >
@@ -232,3 +233,4 @@ export default function MainNav({
     </NavigationMenu>
   );
 }
+

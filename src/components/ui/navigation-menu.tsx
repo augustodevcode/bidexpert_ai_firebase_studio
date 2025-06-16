@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -14,7 +15,7 @@ const NavigationMenu = React.forwardRef<
   <NavigationMenuPrimitive.Root
     ref={ref}
     className={cn(
-      "relative z-10 flex items-center", // Removido justify-center e flex-1
+      "relative z-10 flex items-center", // Removido flex-1 e justify-center daqui
       className
     )}
     {...props}
@@ -32,7 +33,7 @@ const NavigationMenuList = React.forwardRef<
   <NavigationMenuPrimitive.List
     ref={ref}
     className={cn(
-      "group flex list-none items-center justify-center space-x-1", // Mantém justify-center aqui para os itens dentro da lista
+      "group flex list-none items-center justify-start space-x-1", // Alterado de justify-center para justify-start
       className
     )}
     {...props}
@@ -85,7 +86,7 @@ const NavigationMenuViewport = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Viewport>,
   React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Viewport>
 >(({ className, ...props }, ref) => (
-  <div className={cn("absolute top-full")}> {/* Removido flex e w-full */}
+  <div className={cn("absolute top-full")}> {/* Simplificado */}
     <NavigationMenuPrimitive.Viewport
       className={cn(
         "origin-top relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 md:w-[var(--radix-navigation-menu-viewport-width)]",

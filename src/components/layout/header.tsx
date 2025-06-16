@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -119,6 +120,8 @@ export default function Header() {
         } : null;
       }).filter(item => item !== null) as RecentlyViewedLotInfo[];
       setRecentlyViewedItems(items);
+      console.log('[Header fetchInitialData] Recently viewed items:', items.length);
+
 
       try {
         const [fetchedCategories, fetchedAuctioneers, fetchedSellers] = await Promise.all([
@@ -127,8 +130,9 @@ export default function Header() {
           getSellers()
         ]);
         setSearchCategories(fetchedCategories);
-        console.log('[Header fetchInitialData] Fetched Categories:', fetchedCategories.length);
+        console.log('[Header fetchInitialData] Fetched Categories for search/nav:', fetchedCategories.length);
         setAuctioneers(fetchedAuctioneers);
+        console.log('[Header fetchInitialData] Fetched Auctioneers for nav:', fetchedAuctioneers.length);
         
         const MAX_SELLERS_IN_MEGAMENU = 5;
         const visibleSellers = fetchedSellers.slice(0, MAX_SELLERS_IN_MEGAMENU);
@@ -151,7 +155,7 @@ export default function Header() {
             });
         }
         setConsignorMegaMenuGroups(formattedSellersForMenu.filter(group => group.items.length > 0));
-        console.log('[Header fetchInitialData] Formatted Consignors Groups:', consignorMegaMenuGroups.length, 'Items in first group:', consignorMegaMenuGroups[0]?.items.length);
+        console.log('[Header fetchInitialData] Formatted Consignors Groups for nav:', consignorMegaMenuGroups.length > 0 ? consignorMegaMenuGroups[0].items.length : 0);
 
       } catch (error) {
         console.error("Error fetching data for main navigation:", error);
@@ -447,22 +451,22 @@ export default function Header() {
       {/* Main Navigation Bar - Desktop */}
       <div className="border-b bg-background text-foreground hidden md:block">
         <div className="container mx-auto px-4 flex h-12 items-center justify-between">
-            {/* Categorias Megamenu (sempre à esquerda) */}
+            {/* Categorias Megamenu (à esquerda) */}
             {isClient && firstNavItem && firstNavItem.isMegaMenu && (
-            <NavigationMenu>
+            <NavigationMenu className="relative z-10 flex items-center">
                 <NavigationMenuList>
                 <NavigationMenuItem value={firstNavItem.label}>
                     <NavigationMenuTrigger
                     className={cn(
                         navigationMenuTriggerStyle(),
                         (pathname?.startsWith('/category') || (pathname === '/search' && (searchParamsHook.get('type') === 'lots' || searchParamsHook.get('tab') === 'categories'))) && 'bg-accent text-primary font-semibold',
-                        'font-semibold'
+                        'font-semibold' 
                     )}
                     >
                     {firstNavItem.label}
                     </NavigationMenuTrigger>
                     <NavigationMenuContent>
-                    {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={handleLinkOrMobileMenuCloseClick} />}
+                       {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={handleLinkOrMobileMenuCloseClick} />}
                     </NavigationMenuContent>
                 </NavigationMenuItem>
                 </NavigationMenuList>
@@ -470,11 +474,11 @@ export default function Header() {
             )}
 
             {/* Itens Centrais de Navegação */}
-            <div className="flex-grow flex justify-center">
+            <div className="flex-grow flex justify-start pl-4"> 
                 <MainNav 
                     items={centralNavItems} 
                     onLinkClick={handleLinkOrMobileMenuCloseClick}
-                    className="hidden md:flex" 
+                    className="hidden md:flex justify-start" 
                     searchCategories={searchCategories} 
                     auctioneers={auctioneers}
                     consignorMegaMenuGroups={consignorMegaMenuGroups}
@@ -483,11 +487,7 @@ export default function Header() {
                 />
             </div>
             
-            {/* Placeholder Direita para manter o balanceamento do justify-between se necessário */}
-            {/* A largura deste div pode precisar ser ajustada para equilibrar o item da esquerda, ou removido se não necessário */}
-            <div className="w-auto min-w-[180px]"> {/* Ajustar min-w conforme necessário para balancear "Navegue por Categorias" */}
-                 {/* Se houver outros itens fixos à direita do header, eles iriam aqui */}
-            </div>
+            {/* Placeholder Direita: Removido para o MainNav poder se expandir ou se alinhar à esquerda. Se outros itens forem adicionados aqui, o justify-start no MainNav pode precisar ser reavaliado. */}
         </div>
       </div>
 
@@ -502,3 +502,4 @@ export default function Header() {
     </header>
   );
 }
+
