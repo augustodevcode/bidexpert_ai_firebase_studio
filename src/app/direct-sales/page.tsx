@@ -3,20 +3,26 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon } from 'lucide-react'; // Adicionado SearchIcon
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
-import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters';
+import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters'; 
 import DirectSaleOfferCard from '@/components/direct-sale-offer-card';
 import type { DirectSaleOffer, LotCategory, DirectSaleOfferType } from '@/types';
-import { sampleDirectSaleOffers, getUniqueSellerNames, slugify } from '@/lib/sample-data'; // Assuming getUniqueSellerNames can be reused
-import { getLotCategories } from '@/app/admin/categories/actions'; // Reusing from lot categories for now
-import { useRouter } from 'next/navigation';
+import { 
+    sampleDirectSaleOffers,
+    getUniqueLotLocations, 
+    getUniqueSellerNames, 
+    slugify,
+    sampleLotCategories 
+} from '@/lib/sample-data';
+import { getLotCategories } from '@/app/admin/categories/actions';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-const sortOptions = [
+const sortOptionsDirectSales = [
   { value: 'relevance', label: 'Relevância' },
   { value: 'createdAt_desc', label: 'Mais Recentes' },
   { value: 'createdAt_asc', label: 'Mais Antigos' },
@@ -25,38 +31,46 @@ const sortOptions = [
   { value: 'views_desc', label: 'Mais Visitados' },
 ];
 
-const initialFiltersState: ActiveFilters = {
-  modality: 'TODAS', // Not directly used for direct sales, but part of ActiveFilters
-  category: 'TODAS',
+const initialFiltersState: ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; searchType?: 'auctions' | 'lots' | 'direct_sale' } = {
+  modality: 'TODAS', 
+  category: 'TODAS', 
   priceRange: [0, 1000000],
   locations: [],
   sellers: [],
   startDate: undefined,
   endDate: undefined,
-  status: ['ACTIVE'], // Default to active offers
-  // --- New filter specific to direct sales ---
-  offerType: 'ALL', // 'ALL', 'BUY_NOW', 'ACCEPTS_PROPOSALS'
+  status: ['ACTIVE'], 
+  offerType: 'ALL',
+  searchType: 'direct_sale', // Default for this page
 };
 
-export default function DirectSalesPage() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid'); // 'grid' or 'list'
-  const [sortBy, setSortBy] = useState<string>('relevance');
-  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
+export default function DirectSalesPage() {
+  const router = useRouter();
+  const searchParamsHook = useSearchParams();
+
+  const [searchTerm, setSearchTerm] = useState(searchParamsHook.get('term') || '');
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<string>('relevance');
+  
   const [allCategoriesForFilter, setAllCategoriesForFilter] = useState<LotCategory[]>([]);
   const [uniqueLocationsForFilter, setUniqueLocationsForFilter] = useState<string[]>([]);
   const [uniqueSellersForFilter, setUniqueSellersForFilter] = useState<string[]>([]);
-  const [activeFilters, setActiveFilters] = useState<ActiveFilters & { offerType?: string }>(initialFiltersState);
+  const [activeFilters, setActiveFilters] = useState<ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; searchType?: 'auctions' | 'lots' | 'direct_sale' }>(() => {
+    const initial: typeof initialFiltersState = {...initialFiltersState, searchType: 'direct_sale'};
+    if (searchParamsHook.get('category')) initial.category = searchParamsHook.get('category')!;
+    if (searchParamsHook.get('offerType')) initial.offerType = searchParamsHook.get('offerType') as any;
+    if (searchParamsHook.get('status')) initial.status = [searchParamsHook.get('status')!.toUpperCase()]; else initial.status = ['ACTIVE'];
+    return initial;
+  });
+  
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
-
 
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
       try {
-        const categories = await getLotCategories();
+        const categories = await getLotCategories(); // Using admin categories for now
         setAllCategoriesForFilter(categories);
 
         const locations = new Set<string>();
@@ -66,7 +80,13 @@ export default function DirectSalesPage() {
           else if (offer.locationState) locations.add(offer.locationState);
         });
         setUniqueLocationsForFilter(Array.from(locations).sort());
-        setUniqueSellersForFilter(getUniqueSellerNames()); // Can reuse or adapt for offer sellers
+        
+        // Using a simplified version for sellers for direct sales, assuming sellerName is primary
+        const sellers = new Set<string>();
+        sampleDirectSaleOffers.forEach(offer => {
+            if (offer.sellerName) sellers.add(offer.sellerName);
+        });
+        setUniqueSellersForFilter(Array.from(sellers).sort());
 
       } catch (error) {
         console.error("Error fetching filter data for direct sales:", error);
@@ -77,23 +97,39 @@ export default function DirectSalesPage() {
     fetchData();
   }, []);
   
-  const handleFilterSubmit = (filters: ActiveFilters & { offerType?: string }) => {
-    setActiveFilters(filters);
+  const handleFilterSubmit = (filters: ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; }) => {
+    setActiveFilters(prev => ({...prev, ...filters, searchType: 'direct_sale'}));
     setIsFilterSheetOpen(false);
+    const currentParams = new URLSearchParams(Array.from(searchParamsHook.entries()));
+    currentParams.set('type', 'direct_sale'); // Ensure type is set
+    currentParams.set('category', filters.category);
+    if (filters.offerType) currentParams.set('offerType', filters.offerType); else currentParams.delete('offerType');
+    if (filters.status && filters.status.length > 0) currentParams.set('status', filters.status.join(',')); else currentParams.delete('status');
+    router.push(`/direct-sales?${currentParams.toString()}`);
   };
 
   const handleFilterReset = () => {
-    setActiveFilters(initialFiltersState);
+    const resetFilters: typeof initialFiltersState = {...initialFiltersState, searchType: 'direct_sale'};
+    setActiveFilters(resetFilters);
+    const currentParams = new URLSearchParams(Array.from(searchParamsHook.entries()));
+    currentParams.set('type', 'direct_sale');
+    currentParams.delete('category');
+    currentParams.delete('offerType');
+    currentParams.set('status', 'ACTIVE'); // Default status
+    router.push(`/direct-sales?${currentParams.toString()}`);
     setIsFilterSheetOpen(false);
   };
 
   const filteredAndSortedOffers = useMemo(() => {
     let offers = sampleDirectSaleOffers.filter(offer => {
       // Search Term
-      if (searchTerm && !offer.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          !(offer.description && offer.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
-          !offer.sellerName.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return false;
+      if (searchTerm) {
+          const term = searchTerm.toLowerCase();
+          let searchableText = offer.title.toLowerCase();
+          if (offer.description) searchableText += ` ${offer.description.toLowerCase()}`;
+          if (offer.sellerName) searchableText += ` ${offer.sellerName.toLowerCase()}`;
+          if (offer.id) searchableText += ` ${offer.id.toLowerCase()}`;
+          if (!searchableText.includes(term)) return false;
       }
       // Category
       if (activeFilters.category !== 'TODAS' && slugify(offer.category) !== activeFilters.category) {
@@ -113,8 +149,8 @@ export default function DirectSalesPage() {
         return false;
       }
       // Status
-      if (activeFilters.status.length > 0 && !activeFilters.status.includes(offer.status)) {
-          return false;
+      if (activeFilters.status && activeFilters.status.length > 0) {
+          if (!offer.status || !activeFilters.status.includes(offer.status as string)) return false;
       }
       // Offer Type
       if (activeFilters.offerType && activeFilters.offerType !== 'ALL' && offer.offerType !== activeFilters.offerType) {
@@ -149,8 +185,14 @@ export default function DirectSalesPage() {
 
   const handleSearchFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // A lógica de filtragem já está no useMemo, então apenas garantir que o estado de searchTerm seja atualizado
-    // Nenhuma navegação explícita é necessária aqui se o componente se re-renderiza com o novo searchTerm
+    const currentParams = new URLSearchParams(Array.from(searchParamsHook.entries()));
+    currentParams.set('type', 'direct_sale');
+    if (searchTerm.trim()) {
+        currentParams.set('term', searchTerm.trim());
+    } else {
+        currentParams.delete('term');
+    }
+    router.push(`/direct-sales?${currentParams.toString()}`);
   };
 
   if (isLoading) {
@@ -201,16 +243,16 @@ export default function DirectSalesPage() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-[85vw] max-w-sm">
-                <div className="p-4 h-full overflow-y-auto">
-                  <SidebarFilters
-                    categories={allCategoriesForFilter}
-                    locations={uniqueLocationsForFilter}
-                    sellers={uniqueSellersForFilter}
-                    onFilterSubmit={handleFilterSubmit as any}
-                    onFilterReset={handleFilterReset}
-                    initialFilters={activeFilters as ActiveFilters}
-                    filterContext="directSales"
-                  />
+                 <div className="p-4 h-full overflow-y-auto">
+                    <SidebarFilters
+                        categories={allCategoriesForFilter}
+                        locations={uniqueLocationsForFilter}
+                        sellers={uniqueSellersForFilter}
+                        onFilterSubmit={handleFilterSubmit as any}
+                        onFilterReset={handleFilterReset}
+                        initialFilters={activeFilters as ActiveFilters}
+                        filterContext="directSales"
+                    />
                 </div>
             </SheetContent>
           </Sheet>
@@ -219,7 +261,7 @@ export default function DirectSalesPage() {
       
       <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
         <div className="hidden md:block">
-            <SidebarFilters
+             <SidebarFilters
                 categories={allCategoriesForFilter}
                 locations={uniqueLocationsForFilter}
                 sellers={uniqueSellersForFilter}
@@ -234,6 +276,7 @@ export default function DirectSalesPage() {
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-card border rounded-lg shadow-sm">
                 <p className="text-sm text-muted-foreground">
                     {filteredAndSortedOffers.length} oferta(s) encontrada(s)
+                    {searchTerm && ` contendo "${searchTerm}"`}
                 </p>
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                     <Select value={sortBy} onValueChange={setSortBy}>
@@ -241,7 +284,7 @@ export default function DirectSalesPage() {
                             <SelectValue placeholder="Ordenar por" />
                         </SelectTrigger>
                         <SelectContent>
-                        {sortOptions.map(option => (
+                        {sortOptionsDirectSales.map(option => (
                             <SelectItem key={option.value} value={option.value}>
                             {option.label}
                             </SelectItem>
@@ -261,8 +304,8 @@ export default function DirectSalesPage() {
             ) : (
             <Card>
                 <CardContent className="text-center py-12">
-                <h2 className="text-xl font-semibold mb-2">Nenhuma Oferta Encontrada</h2>
-                <p className="text-muted-foreground">Tente ajustar seus termos de busca ou filtros.</p>
+                <h2 className="text-xl font-semibold mb-2">Nenhuma Oferta de Venda Direta Encontrada</h2>
+                <p className="text-muted-foreground mb-4">Tente ajustar seus termos de busca ou filtros.</p>
                 </CardContent>
             </Card>
             )}
@@ -275,3 +318,4 @@ export default function DirectSalesPage() {
     </div>
   );
 }
+
