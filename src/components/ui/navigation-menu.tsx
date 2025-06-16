@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -33,7 +32,7 @@ const NavigationMenuList = React.forwardRef<
   <NavigationMenuPrimitive.List
     ref={ref}
     className={cn(
-      "group flex flex-1 list-none items-center justify-center space-x-1", // Default to justify-center
+      "group flex flex-1 list-none items-center justify-center space-x-1", 
       className
     )}
     {...props}
@@ -54,13 +53,10 @@ const NavigationMenuTrigger = React.forwardRef<
   <NavigationMenuPrimitive.Trigger
     ref={ref}
     className={cn(navigationMenuTriggerStyle(), "group", className)}
-    {...props} 
+    {...props}
   >
-    {/* Se asChild for true, children (o Link) já deve conter o ícone. 
-        Caso contrário, renderiza children e o ícone padrão.
-    */}
     {props.asChild ? (
-      children 
+      children
     ) : (
       <>
         {children}
@@ -95,9 +91,13 @@ const NavigationMenuViewport = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Viewport>,
   React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Viewport>
 >(({ className, ...props }, ref) => (
-  <div className={cn("absolute left-0 top-full flex")}> {/* Removido justify-center */}
+  // Alteração aqui: removido 'left-0' e adicionado 'w-full'
+  // Isso permite que o Viewport se posicione de acordo com o 'align' do NavigationMenuContent,
+  // pois o wrapper agora pode ocupar a largura do NavigationMenu principal.
+  <div className={cn("absolute top-full flex w-full justify-center")}>
     <NavigationMenuPrimitive.Viewport
       className={cn(
+        // Mantido origin-top-center, Radix UI ajusta para "end" se necessário.
         "origin-top-center relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 md:w-[var(--radix-navigation-menu-viewport-width)]",
         className
       )}
@@ -138,4 +138,3 @@ export {
   NavigationMenuIndicator,
   NavigationMenuViewport,
 }
-
