@@ -18,8 +18,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Loader2, Heart, Bell } from 'lucide-react';
-import type { RecentlyViewedLotInfo, Lot, LotCategory, PlatformSettings } from '@/types';
+import { Loader2, Heart, Bell, X, Facebook, MessageSquareText, Mail } from 'lucide-react';
+import type { RecentlyViewedLotInfo, Lot, LotCategory, PlatformSettings, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
 import { sampleLots, slugify } from '@/lib/sample-data';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getFavoriteLotIdsFromStorage } from '@/lib/favorite-store';
@@ -32,16 +32,22 @@ import MegaMenuLinkList, { type MegaMenuGroup } from './mega-menu-link-list';
 import MegaMenuAuctioneers from './mega-menu-auctioneers';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
-import type { AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuList,
   NavigationMenuLink,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
 
 const modalityGroups: MegaMenuGroup[] = [
@@ -56,29 +62,25 @@ const modalityGroups: MegaMenuGroup[] = [
 ];
 
 const HistoryListItem = forwardRef<
-  React.ElementRef<"a">,
+  HTMLAnchorElement, // Changed to HTMLAnchorElement for DropdownMenuItem asChild
   React.ComponentPropsWithoutRef<"a"> & { item: RecentlyViewedLotInfo; onClick?: () => void }
 >(({ className, item, onClick, ...props }, ref) => {
   return (
-    <li>
-      <NavigationMenuLink asChild>
-        <Link
-          href={`/auctions/${item.auctionId}/lots/${item.id}`}
-          ref={ref}
-          className={cn(
-            "flex items-center gap-2 py-1.5 px-3 rounded-md hover:bg-accent transition-colors text-xs leading-snug text-muted-foreground",
-            className
-          )}
-          onClick={onClick}
-          {...props}
-        >
-          <div className="relative h-10 w-12 flex-shrink-0 bg-muted rounded-sm overflow-hidden">
-            <Image src={item.imageUrl} alt={item.title} fill className="object-cover" data-ai-hint={item.dataAiHint || "item visto recentemente"} />
-          </div>
-          <span className="truncate flex-grow text-foreground/90">{item.title}</span>
-        </Link>
-      </NavigationMenuLink>
-    </li>
+    <Link
+      href={`/auctions/${item.auctionId}/lots/${item.id}`}
+      ref={ref}
+      className={cn(
+        "flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-accent transition-colors text-xs leading-snug text-muted-foreground",
+        className
+      )}
+      onClick={onClick}
+      {...props}
+    >
+      <div className="relative h-10 w-12 flex-shrink-0 bg-muted rounded-sm overflow-hidden">
+        <Image src={item.imageUrl} alt={item.title} fill className="object-cover" data-ai-hint={item.dataAiHint || "item visto recentemente"} />
+      </div>
+      <span className="truncate flex-grow text-foreground/90">{item.title}</span>
+    </Link>
   );
 });
 HistoryListItem.displayName = "HistoryListItem";
@@ -105,12 +107,28 @@ export default function Header() {
   const siteTitle = platformSettings?.siteTitle || 'BidExpert';
   const siteTagline = platformSettings?.siteTagline;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const historyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
 
   const handleLinkOrMobileMenuCloseClick = useCallback(() => {
     if (isMobileMenuOpen) {
       setIsMobileMenuOpen(false);
     }
   }, [isMobileMenuOpen, setIsMobileMenuOpen]);
+
+  const handleHistoryMouseEnter = () => {
+    if (historyTimeoutRef.current) {
+      clearTimeout(historyTimeoutRef.current);
+    }
+    setIsHistoryOpen(true);
+  };
+
+  const handleHistoryMouseLeave = () => {
+    historyTimeoutRef.current = setTimeout(() => {
+      setIsHistoryOpen(false);
+    }, 200); // Small delay to allow mouse to enter content
+  };
 
 
   useEffect(() => {
@@ -486,44 +504,47 @@ export default function Header() {
           {/* Histórico Dropdown (Direita) */}
           <div className="flex items-center justify-end"> 
             {isClient && (
-              <NavigationMenu>
-                <NavigationMenuList>
-                  <NavigationMenuItem>
-                    <NavigationMenuTrigger 
-                      className={cn(
-                        navigationMenuTriggerStyle(), 
-                        "text-muted-foreground hover:text-accent-foreground data-[state=open]:bg-accent/50 px-3 h-10 group"
-                      )}
-                    >
-                      Histórico
-                    </NavigationMenuTrigger>
-                    <NavigationMenuContent align="end"> 
-                      <div className="w-80 p-2 space-y-1 bg-card text-card-foreground">
-                        <div className="flex justify-between items-center p-2 border-b mb-1">
-                            <p className="text-sm font-medium">Itens Vistos Recentemente</p>
-                            <History className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        {recentlyViewedItems.length === 0 ? (
-                            <p className="text-xs text-muted-foreground text-center py-3">Nenhum item visto recentemente.</p>
-                        ) : (
-                          <ul className="max-h-80 overflow-y-auto">
-                            {recentlyViewedItems.slice(0, 5).map(item => (
-                              <HistoryListItem key={item.id} item={item} onClick={handleLinkOrMobileMenuCloseClick} />
-                            ))}
-                          </ul>
-                        )}
-                        <div className="border-t mt-1 pt-1">
-                          <NavigationMenuLink asChild>
-                            <Link href="/dashboard/history" className={cn(navigationMenuTriggerStyle(), "w-full justify-center text-primary hover:underline text-xs py-1 h-auto")} onClick={handleLinkOrMobileMenuCloseClick}>
-                              Ver Histórico Completo
-                            </Link>
-                          </NavigationMenuLink>
-                        </div>
-                      </div>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-                </NavigationMenuList>
-              </NavigationMenu>
+               <DropdownMenu open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={cn(navigationMenuTriggerStyle(), "px-3 h-10 group text-muted-foreground hover:text-accent-foreground focus:bg-accent/50 focus:text-accent-foreground data-[state=open]:bg-accent/50")}
+                    onMouseEnter={handleHistoryMouseEnter}
+                    onMouseLeave={handleHistoryMouseLeave}
+                  >
+                    Histórico
+                    <ChevronDown className="relative top-[1px] ml-1.5 h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180" aria-hidden="true" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-80 p-2"
+                  onMouseEnter={handleHistoryMouseEnter} 
+                  onMouseLeave={handleHistoryMouseLeave}
+                >
+                  <DropdownMenuLabel className="flex justify-between items-center p-2 border-b mb-1">
+                    Itens Vistos Recentemente
+                    <History className="h-4 w-4 text-muted-foreground" />
+                  </DropdownMenuLabel>
+                  {recentlyViewedItems.length === 0 ? (
+                    <p className="text-xs text-muted-foreground text-center py-3">Nenhum item visto recentemente.</p>
+                  ) : (
+                    <ul className="max-h-80 overflow-y-auto space-y-1">
+                      {recentlyViewedItems.slice(0, 5).map(item => (
+                        <DropdownMenuItem key={item.id} asChild className="p-0">
+                           <HistoryListItem item={item} onClick={handleLinkOrMobileMenuCloseClick} />
+                        </DropdownMenuItem>
+                      ))}
+                    </ul>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild className="p-0">
+                     <Link href="/dashboard/history" className={cn(navigationMenuTriggerStyle(), "w-full justify-center text-primary hover:underline text-xs py-1 h-auto")} onClick={handleLinkOrMobileMenuCloseClick}>
+                        Ver Histórico Completo
+                      </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>
