@@ -1,3 +1,4 @@
+
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
 
@@ -496,6 +497,27 @@ export type EditableUserProfileData = Partial<Omit<UserProfileData, 'uid' | 'ema
   rgIssueDate?: Date | null;
 };
 
+export type HomepageSectionType = 'hero_carousel' | 'filter_links' | 'featured_lots' | 'active_auctions' | 'promo_banner_1' | 'categories_grid';
+
+export interface HomepageSectionConfig {
+  id: string;
+  type: HomepageSectionType;
+  title?: string;
+  visible: boolean;
+  order: number;
+  itemCount?: number; // For sections like featured_lots, active_auctions
+  categorySlug?: string; // For a specific category grid, for example
+  promoContent?: { // For promo_banner type
+    title: string;
+    subtitle?: string;
+    link: string;
+    imageUrl?: string; // Optional image for the promo banner
+    imageAlt?: string;
+    dataAiHint?: string;
+    bgColorClass?: string;
+  };
+}
+
 export interface PlatformSettings {
   id: 'global';
   siteTitle?: string;
@@ -509,10 +531,13 @@ export interface PlatformSettings {
     auctioneers?: string;
     sellers?: string;
   };
+  homepageSections?: HomepageSectionConfig[];
   updatedAt: AnyTimestamp;
 }
 
-export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'>;
+export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'> & {
+    homepageSections?: HomepageSectionConfig[];
+};
 
 export interface SqlAuthResult {
   success: boolean;
@@ -676,3 +701,4 @@ export type LotWithCategoryName = Lot & {
     
 
     
+

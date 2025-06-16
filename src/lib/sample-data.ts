@@ -1,5 +1,5 @@
 
-import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, CityInfo, MediaItem, PlatformSettings } from '@/types';
+import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, CityInfo, MediaItem, PlatformSettings, HomepageSectionConfig } from '@/types';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays, addDays as dateFnsAddDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle } from 'lucide-react';
@@ -161,7 +161,7 @@ export const sampleDirectSaleOffersRaw: Omit<DirectSaleOffer, 'createdAt' | 'upd
 
 export const sampleMediaItemsRaw: Omit<MediaItem, 'uploadedAt' | 'linkedLotIds'>[] = [
     { id: 'media001', fileName: 'casa_centro_frente.jpg', title: 'Frente da Casa no Centro', mimeType: 'image/jpeg', sizeBytes: 102400, urlOriginal: 'https://placehold.co/800x600.png?text=Casa+Centro', urlThumbnail: 'https://placehold.co/150x100.png?text=Casa+Frente', urlMedium: 'https://placehold.co/400x300.png?text=Casa+Frente', urlLarge: 'https://placehold.co/800x600.png?text=Casa+Frente', dataAiHint: 'fachada casa cidade' },
-    { id: 'media002', fileName: 'audi_a4_2013_perfil.png', title: 'Audi A4 2013 Perfil', mimeType: 'image/png', sizeBytes: 204800, urlOriginal: 'https://placehold.co/800x600.png?text=Audi+A4+2013', urlThumbnail: 'https://placehold.co/150x100.png?text=Audi+A4+Frente', urlMedium: 'https://placehold.co/400x300.png?text=Audi+A4+Frente', urlLarge: 'https://placehold.co/800x600.png?text=Audi+A4+Frente', dataAiHint: 'carro audi perfil' },
+    { id: 'media002', fileName: 'audi_a4_2013_perfil.png', title: 'Audi A4 2013 Perfil', mimeType: 'image/png', sizeBytes: 204800, urlOriginal: 'https://placehold.co/800x600.png?text=Audi+A4+2013', urlThumbnail: 'https://placehold.co/150x100.png?text=Audi+A4+Frente', urlMedium: 'https://placehold.co/400x300.png?text=Audi+A4+Frente', urlLarge: 'https://placehold.co/800x600.png?text=Audi+A4+2013', dataAiHint: 'carro audi perfil' },
     { id: 'media003', fileName: 'edital_leilao_bradesco.pdf', title: 'Edital Leilão Bradesco 100625bra', mimeType: 'application/pdf', sizeBytes: 512000, urlOriginal: '#', urlThumbnail: 'https://placehold.co/150x100.png?text=PDF', urlMedium: '#', urlLarge: '#', dataAiHint: 'documento edital' },
     { id: 'media-casa-frente', fileName: 'casa_frente_detalhe.jpg', title: 'Detalhe Fachada Casa Centro', mimeType: 'image/jpeg', sizeBytes: 120000, urlOriginal: 'https://placehold.co/800x600.png?text=Casa+Detalhe', urlThumbnail: 'https://placehold.co/150x100.png?text=Casa+Detalhe', urlMedium: 'https://placehold.co/400x300.png?text=Casa+Detalhe', urlLarge: 'https://placehold.co/800x600.png?text=Casa+Detalhe', dataAiHint: 'detalhe fachada' },
     { id: 'media-audi-frente', fileName: 'audi_a4_frente_total.jpg', title: 'Audi A4 2013 Vista Frontal', mimeType: 'image/jpeg', sizeBytes: 180000, urlOriginal: 'https://placehold.co/800x600.png?text=Audi+Frente+Total', urlThumbnail: 'https://placehold.co/150x100.png?text=Audi+Frente+T', urlMedium: 'https://placehold.co/400x300.png?text=Audi+Frente+T', urlLarge: 'https://placehold.co/800x600.png?text=Audi+Frente+Total', dataAiHint: 'audi carro frente' },
@@ -808,6 +808,13 @@ export const samplePlatformSettings: PlatformSettings = {
     auctioneers: "LEILOE-",
     sellers: "COMIT-"
   },
+  homepageSections: [
+    { id: 'hero', type: 'hero_carousel', title: 'Destaques Principais', visible: true, order: 1 },
+    { id: 'filter_links', type: 'filter_links', title: 'Explore por Tipo', visible: true, order: 2 },
+    { id: 'featured_lots', type: 'featured_lots', title: 'Lotes em Destaque', visible: true, order: 3, itemCount: 10 },
+    { id: 'promo_banner_1', type: 'promo_banner_1', title: 'Promoção Especial', visible: true, order: 4, promoContent: { title: 'Até 50% de Desconto', subtitle: 'Em Moda e Vestuário de Verão.', link: '/search?category=fashion'} },
+    { id: 'active_auctions', type: 'active_auctions', title: 'Leilões Ativos', visible: true, order: 5, itemCount: 10 },
+  ],
   updatedAt: new Date()
 };
 
@@ -817,4 +824,5 @@ export function getPlaceholderIfEmpty(value: string | number | null | undefined,
     }
     return String(value);
 }
+
 

@@ -11,8 +11,8 @@ import Link from 'next/link';
 import { Landmark, Scale, FileText, Tags, CalendarX, CheckSquare, Star } from 'lucide-react';
 
 export default function HomePage() {
-  const auctions: Auction[] = sampleAuctions; // Em um aplicativo real, busque esses dados
-  const featuredLots: Lot[] = sampleLots.filter(lot => lot.isFeatured).slice(0, 3); // Pegar até 3 lotes em destaque
+  const auctions: Auction[] = sampleAuctions.slice(0, 10); // Pegar até 10 leilões ativos
+  const featuredLots: Lot[] = sampleLots.filter(lot => lot.isFeatured).slice(0, 10); // Pegar até 10 lotes em destaque
 
   const filterLinksData = [
     {
@@ -77,7 +77,7 @@ export default function HomePage() {
 
       <section>
         <h2 className="text-2xl font-bold text-center mb-6 font-headline">Explorar</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-5">
           {filterLinksData.map((card) => (
             <FilterLinkCard
               key={card.title}
@@ -98,7 +98,7 @@ export default function HomePage() {
            <h2 className="text-2xl font-bold text-center mb-6 font-headline flex items-center justify-center">
             <Star className="h-7 w-7 mr-2 text-amber-500" /> Lotes em Destaque
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {featuredLots.map((lot) => (
               <PromoCard
                 key={lot.id}
@@ -131,7 +131,7 @@ export default function HomePage() {
         <AuctionFilters />
 
         {auctions.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {auctions.map((auction) => (
               <AuctionCard key={auction.id} auction={auction} />
             ))}
