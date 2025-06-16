@@ -246,6 +246,7 @@ export default function Header() {
     { href: '/contact', label: 'Fale Conosco', icon: Phone },
   ];
 
+  // Itens para a navegação principal (Desktop)
   const firstNavItem: NavItem = { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories' };
   const centralNavItems: NavItem[] = [
     { href: '/', label: 'Início' },
@@ -460,23 +461,14 @@ export default function Header() {
             <NavigationMenuList>
               {firstNavItem && firstNavItem.isMegaMenu && firstNavItem.contentKey && (
                 <NavigationMenuItem value={firstNavItem.label}>
-                  <NavigationMenuTrigger asChild={!!firstNavItem.href}>
-                    {firstNavItem.href ? (
-                        <Link 
-                            href={firstNavItem.href}
-                            className={cn(navigationMenuTriggerStyle(), "group", pathname === firstNavItem.href && "text-primary bg-accent")}
-                            onPointerDown={(e) => { if (e.metaKey || e.ctrlKey) return; e.stopPropagation(); }}
-                            onClick={(e) => { if (e.metaKey || e.ctrlKey) return; handleLinkOrMobileMenuCloseClick(); }}
-                         >
-                            {firstNavItem.label}
-                            {/* ChevronDown é removido do Trigger quando asChild=true */}
-                        </Link>
-                    ) : (
-                        <span className={cn(navigationMenuTriggerStyle(), "group", pathname === firstNavItem.href && "text-primary bg-accent")}>
-                            {firstNavItem.label}
-                            <ChevronDown className="relative top-[1px] ml-1.5 h-4 w-4 transition duration-200 group-data-[state=open]:rotate-180" aria-hidden="true"/>
-                        </span>
+                  <NavigationMenuTrigger 
+                     className={cn(
+                      navigationMenuTriggerStyle(),
+                      "text-muted-foreground hover:text-accent-foreground data-[state=open]:bg-accent/50",
+                      pathname === firstNavItem.href && "text-primary bg-accent"
                     )}
+                  >
+                    {firstNavItem.label}
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
                      {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={handleLinkOrMobileMenuCloseClick} />}
@@ -504,9 +496,8 @@ export default function Header() {
                       )}
                     >
                       Histórico
-                      {/* ChevronDown é adicionado automaticamente por NavigationMenuTrigger se não for asChild */}
                     </NavigationMenuTrigger>
-                    <NavigationMenuContent align="end" className="md:right-0"> {/* Força alinhamento à direita */}
+                    <NavigationMenuContent align="end"> 
                       <div className="w-80 p-2 space-y-1 bg-card text-card-foreground">
                         <div className="flex justify-between items-center p-2 border-b mb-1">
                             <p className="text-sm font-medium">Itens Vistos Recentemente</p>
@@ -550,3 +541,6 @@ export default function Header() {
   );
 }
 
+
+    
+    

@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -91,13 +92,9 @@ const NavigationMenuViewport = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Viewport>,
   React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Viewport>
 >(({ className, ...props }, ref) => (
-  // Alteração aqui: removido 'left-0' e adicionado 'w-full'
-  // Isso permite que o Viewport se posicione de acordo com o 'align' do NavigationMenuContent,
-  // pois o wrapper agora pode ocupar a largura do NavigationMenu principal.
-  <div className={cn("absolute top-full flex w-full justify-center")}>
+  <div className={cn("absolute top-full flex w-full")}> {/* Removido justify-center e left-0 */}
     <NavigationMenuPrimitive.Viewport
       className={cn(
-        // Mantido origin-top-center, Radix UI ajusta para "end" se necessário.
         "origin-top-center relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 md:w-[var(--radix-navigation-menu-viewport-width)]",
         className
       )}
@@ -138,3 +135,6 @@ export {
   NavigationMenuIndicator,
   NavigationMenuViewport,
 }
+
+    
+    
