@@ -1,17 +1,17 @@
 
-'use client';
+      'use client';
 
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'; // Importado useSearchParams
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Coins, Search as SearchIcon, Menu, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel, Users, Briefcase, UserCog, ShieldCheck, Tv } from 'lucide-react'; 
+import { Coins, Search as SearchIcon, Menu, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel, Users, Briefcase as ConsignorIcon, UserCog, ShieldCheck, Tv } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
-import { auth } from '@/lib/firebase'; 
+import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState, useRef, useCallback, forwardRef } from 'react'; 
+import { useEffect, useState, useRef, useCallback, forwardRef } from 'react';
 import MainNav, { type NavItem } from './main-nav';
 import UserNav from './user-nav';
 import { Input } from '@/components/ui/input';
@@ -41,7 +41,9 @@ import MegaMenuCategories from './mega-menu-categories';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import type { MegaMenuGroup } from './mega-menu-link-list';
-import type { MegaMenuLinkItem } from './mega-menu-link-list'; // Importação adicionada
+import type { MegaMenuLinkItem } from './mega-menu-link-list';
+import TwoColumnMegaMenu from './two-column-mega-menu';
+
 
 // HistoryListItem é usado por MainNav quando renderiza o conteúdo do Histórico
 export const HistoryListItem = forwardRef<
@@ -74,7 +76,7 @@ export default function Header() {
   const [auctioneers, setAuctioneers] = useState<AuctioneerProfileInfo[]>([]);
   const [consignorMegaMenuGroups, setConsignorMegaMenuGroups] = useState<MegaMenuGroup[]>([]);
   const [isClient, setIsClient] = useState(false);
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSearchCategorySlug, setSelectedSearchCategorySlug] = useState<string | undefined>(undefined);
   const [searchResults, setSearchResults] = useState<Lot[]>([]);
@@ -82,14 +84,15 @@ export default function Header() {
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const pathname = usePathname(); 
+  const pathname = usePathname();
+  const searchParamsHook = useSearchParams();
   const { user } = useAuth();
 
-  const placeholderNotificationsCount = 3; 
+  const placeholderNotificationsCount = 3;
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const siteTitle = platformSettings?.siteTitle || 'BidExpert';
   const siteTagline = platformSettings?.siteTagline;
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLinkOrMobileMenuCloseClick = useCallback(() => {
     if (isMobileMenuOpen) {
@@ -134,7 +137,7 @@ export default function Header() {
         console.log('[Header fetchInitialData] Fetched Categories for search/nav:', fetchedCategories.length);
         setAuctioneers(fetchedAuctioneers);
         console.log('[Header fetchInitialData] Fetched Auctioneers for nav:', fetchedAuctioneers.length);
-        
+
         const consignorItemsForMenu: MegaMenuLinkItem[] = fetchedSellers.map(seller => ({
             href: `/sellers/${seller.slug || seller.publicId || seller.id}`,
             label: seller.name,
@@ -144,7 +147,7 @@ export default function Header() {
 
         const formattedSellersForMenu: MegaMenuGroup[] = [{
             title: "Principais Comitentes",
-            items: consignorItemsForMenu, 
+            items: consignorItemsForMenu,
         }];
         setConsignorMegaMenuGroups(formattedSellersForMenu.filter(group => group.items.length > 0));
         console.log('[Header fetchInitialData] Formatted Consignors Groups for nav (total items):', consignorItemsForMenu.length);
@@ -200,11 +203,11 @@ export default function Header() {
       setSearchResults(filtered.slice(0, 7));
       setIsSearchDropdownOpen(true);
       setIsSearchLoading(false);
-    }, 500); 
+    }, 500);
 
     return () => clearTimeout(debounceTimer);
   }, [searchTerm, selectedSearchCategorySlug]);
-  
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
@@ -216,7 +219,7 @@ export default function Header() {
       setIsSearchDropdownOpen(false);
     }
   };
-  
+
   const allNavItemsForMobile: NavItem[] = [
     { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag },
     { href: '/', label: 'Início', icon: HomeIcon },
@@ -231,13 +234,13 @@ export default function Header() {
   const firstNavItem: NavItem = { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag, megaMenuAlign: 'start' };
   const centralNavItems: NavItem[] = [
     { href: '/', label: 'Início', icon: HomeIcon },
-    { 
-        label: 'Modalidades', 
-        isMegaMenu: true, 
-        contentKey: 'modalities', 
-        href: '/search?filter=modalities', 
+    {
+        label: 'Modalidades',
+        isMegaMenu: true,
+        contentKey: 'modalities',
+        href: '/search?filter=modalities',
         icon: ListChecks,
-        megaMenuAlign: 'start', 
+        megaMenuAlign: 'start',
         twoColumnMegaMenuProps: {
             sidebarTitle: 'Tipos de Leilão',
             mainContent: {
@@ -251,13 +254,13 @@ export default function Header() {
             }
         }
     },
-    { 
-        label: 'Comitentes', 
-        isMegaMenu: true, 
-        contentKey: 'consignors', 
-        href: '/sellers', 
+    {
+        label: 'Comitentes',
+        isMegaMenu: true,
+        contentKey: 'consignors',
+        href: '/sellers',
         icon: Landmark,
-        megaMenuAlign: 'start', 
+        megaMenuAlign: 'start',
         twoColumnMegaMenuProps: {
             sidebarTitle: 'Nossos Comitentes',
             mainContent: {
@@ -271,11 +274,11 @@ export default function Header() {
             }
         }
     },
-    { 
-        label: 'Leiloeiros', 
-        isMegaMenu: true, 
-        contentKey: 'auctioneers', 
-        href: '/auctioneers', 
+    {
+        label: 'Leiloeiros',
+        isMegaMenu: true,
+        contentKey: 'auctioneers',
+        href: '/auctioneers',
         icon: Gavel,
         megaMenuAlign: 'start',
         twoColumnMegaMenuProps: {
@@ -291,13 +294,13 @@ export default function Header() {
             }
         }
     },
-    { 
-        label: 'Histórico', 
-        isMegaMenu: true, 
-        contentKey: 'history', 
-        icon: History, 
+    {
+        label: 'Histórico',
+        isMegaMenu: true,
+        contentKey: 'history',
+        icon: History,
         href: '/dashboard/history',
-        megaMenuAlign: 'end' 
+        megaMenuAlign: 'end'
     },
     { href: '/sell-with-us', label: 'Venda Conosco', icon: Percent },
     { href: '/contact', label: 'Fale Conosco', icon: Phone },
@@ -358,16 +361,16 @@ export default function Header() {
                     </SheetTitle>
                   </SheetHeader>
                   <nav className="flex flex-col gap-1 p-4">
-                    <MainNav 
-                        items={allNavItemsForMobile} 
-                        className="flex-col items-start space-x-0 space-y-0" 
+                    <MainNav
+                        items={allNavItemsForMobile}
+                        className="flex-col items-start space-x-0 space-y-0"
                         onLinkClick={handleLinkOrMobileMenuCloseClick}
                         isMobile={true}
                         searchCategories={searchCategories}
                         auctioneers={auctioneers}
                         consignorMegaMenuGroups={consignorMegaMenuGroups}
                         recentlyViewedItems={recentlyViewedItems}
-                        HistoryListItemComponent={HistoryListItem} 
+                        HistoryListItemComponent={HistoryListItem}
                     />
                     <div className="mt-auto pt-4 border-t">
                       <UserNav />
@@ -516,27 +519,27 @@ export default function Header() {
                         className={cn(
                             navigationMenuTriggerStyle(),
                             (pathname?.startsWith('/category') || (pathname === '/search' && (searchParamsHook.get('type') === 'lots' || searchParamsHook.get('tab') === 'categories'))) && 'bg-accent text-primary font-semibold',
-                            'font-semibold' 
+                            'font-semibold'
                         )}
                     >
-                    {firstNavItem.icon && <firstNavItem.icon className="mr-1.5 h-4 w-4" />}
+                    {firstNavItem.icon && <firstNavItem.icon className="mr-1.5 h-4 w-4" /> }
                     {firstNavItem.label}
-                    </NavigationMenuTrigger>
-                    <NavigationMenuContent align="start">
-                       {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={handleLinkOrMobileMenuCloseClick} />}
-                    </NavigationMenuContent>
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                     {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={handleLinkOrMobileMenuCloseClick} />}
+                  </NavigationMenuContent>
                 </NavigationMenuItem>
                 </NavigationMenuList>
             </NavigationMenu>
             )}
 
             {/* Itens Centrais de Navegação */}
-            <div className="flex-grow flex justify-start pl-4"> 
-                <MainNav 
-                    items={centralNavItems} 
+            <div className="flex-grow flex justify-start pl-4">
+                <MainNav
+                    items={centralNavItems}
                     onLinkClick={handleLinkOrMobileMenuCloseClick}
-                    className="hidden md:flex justify-start" 
-                    searchCategories={searchCategories} 
+                    className="hidden md:flex"
+                    searchCategories={searchCategories}
                     auctioneers={auctioneers}
                     consignorMegaMenuGroups={consignorMegaMenuGroups}
                     recentlyViewedItems={recentlyViewedItems}
@@ -558,4 +561,4 @@ export default function Header() {
   );
 }
 
-
+    
