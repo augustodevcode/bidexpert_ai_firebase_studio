@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Coins, Search as SearchIcon, Menu, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel } from 'lucide-react'; 
+import { Coins, Search as SearchIcon, Menu, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel, Users, Briefcase, UserCog, ShieldCheck, Tv } from 'lucide-react'; 
 import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/lib/firebase'; 
 import { signOut } from 'firebase/auth';
@@ -134,28 +134,21 @@ export default function Header() {
         setAuctioneers(fetchedAuctioneers);
         console.log('[Header fetchInitialData] Fetched Auctioneers for nav:', fetchedAuctioneers.length);
         
-        const MAX_SELLERS_IN_MEGAMENU = 5;
-        const visibleSellers = fetchedSellers.slice(0, MAX_SELLERS_IN_MEGAMENU);
-        const hasMoreSellers = fetchedSellers.length > MAX_SELLERS_IN_MEGAMENU;
+        // Preparar consignorMegaMenuGroups
+        const MAX_SELLERS_IN_MEGAMENU_SIDEBAR = 5; // Limite para a sidebar do megamenu
+        const consignorItemsForMenu: MegaMenuLinkItem[] = fetchedSellers.map(seller => ({
+            href: `/sellers/${seller.slug || seller.publicId || seller.id}`,
+            label: seller.name,
+            description: seller.city && seller.state ? `${seller.city} - ${seller.state}` : (seller.description ? seller.description.substring(0,40)+'...' : 'Ver perfil'),
+            icon: seller.logoUrl ? () => <Avatar className="h-5 w-5 border"><AvatarImage src={seller.logoUrl!} alt={seller.name} data-ai-hint={seller.dataAiHintLogo || 'logo comitente'} /><AvatarFallback>{seller.name.charAt(0)}</AvatarFallback></Avatar> : undefined
+        }));
 
         const formattedSellersForMenu: MegaMenuGroup[] = [{
-            title: "Principais Comitentes",
-            items: visibleSellers.map(seller => ({
-              href: `/sellers/${seller.slug || seller.publicId || seller.id}`,
-              label: seller.name,
-              description: seller.city && seller.state ? `${seller.city} - ${seller.state}` : (seller.description ? seller.description.substring(0,40)+'...' : 'Ver perfil'),
-            })),
-          }];
-
-        if (hasMoreSellers) {
-            formattedSellersForMenu[0].items.push({ 
-                href: '/sellers', 
-                label: 'Ver Todos Comitentes', 
-                description: "Navegue por todos os nossos comitentes."
-            });
-        }
+            title: "Principais Comitentes", // Este título pode ser usado no TwoColumnMegaMenu
+            items: consignorItemsForMenu, // Passa todos, o fatiamento ocorre no MainNav/TwoColumn
+        }];
         setConsignorMegaMenuGroups(formattedSellersForMenu.filter(group => group.items.length > 0));
-        console.log('[Header fetchInitialData] Formatted Consignors Groups for nav:', consignorMegaMenuGroups.length > 0 ? consignorMegaMenuGroups[0].items.length : 0);
+        console.log('[Header fetchInitialData] Formatted Consignors Groups for nav (total items):', consignorItemsForMenu.length);
 
       } catch (error) {
         console.error("Error fetching data for main navigation:", error);
@@ -236,15 +229,79 @@ export default function Header() {
     { href: '/contact', label: 'Fale Conosco', icon: Phone },
   ];
 
-  const firstNavItem: NavItem = { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories' };
+  const firstNavItem: NavItem = { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag, megaMenuAlign: 'start' };
   const centralNavItems: NavItem[] = [
-    { href: '/', label: 'Início' },
-    { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities' },
-    { label: 'Comitentes', isMegaMenu: true, contentKey: 'consignors', href: '/sellers' },
-    { label: 'Leiloeiros', isMegaMenu: true, contentKey: 'auctioneers', href: '/auctioneers' },
-    { label: 'Histórico', isMegaMenu: true, contentKey: 'history', href: '/dashboard/history' },
-    { href: '/sell-with-us', label: 'Venda Conosco' },
-    { href: '/contact', label: 'Fale Conosco' },
+    { href: '/', label: 'Início', icon: HomeIcon },
+    { 
+        label: 'Modalidades', 
+        isMegaMenu: true, 
+        contentKey: 'modalities', 
+        href: '/search?filter=modalities', 
+        icon: ListChecks,
+        megaMenuAlign: 'start', // Modificado
+        twoColumnMegaMenuProps: {
+            sidebarTitle: 'Tipos de Leilão',
+            mainContent: {
+                imageUrl: 'https://placehold.co/400x225.png?text=Leiloes+Judiciais',
+                imageAlt: 'Imagem Leilões Judiciais',
+                dataAiHint: 'martelo tribunal',
+                title: 'Oportunidades Únicas',
+                description: 'Explore diversas modalidades de leilão, desde judiciais a extrajudiciais, e encontre o que procura.',
+                buttonLink: '/search?type=auctions',
+                buttonText: 'Ver Todos os Leilões'
+            }
+        }
+    },
+    { 
+        label: 'Comitentes', 
+        isMegaMenu: true, 
+        contentKey: 'consignors', 
+        href: '/sellers', 
+        icon: Landmark,
+        megaMenuAlign: 'start', // Modificado
+        twoColumnMegaMenuProps: {
+            sidebarTitle: 'Nossos Comitentes',
+            mainContent: {
+                imageUrl: 'https://placehold.co/400x225.png?text=Venda+Seus+Bens',
+                imageAlt: 'Imagem Venda Seus Bens',
+                dataAiHint: 'acordo negocios',
+                title: 'Venda Seus Ativos Conosco',
+                description: 'Transforme seus bens em liquidez de forma rápida, segura e transparente através da nossa plataforma especializada.',
+                buttonLink: '/sell-with-us',
+                buttonText: 'Saiba Como Vender'
+            }
+        }
+    },
+    { 
+        label: 'Leiloeiros', 
+        isMegaMenu: true, 
+        contentKey: 'auctioneers', 
+        href: '/auctioneers', 
+        icon: Gavel,
+        megaMenuAlign: 'start', // Modificado
+        twoColumnMegaMenuProps: {
+            sidebarTitle: 'Leiloeiros Parceiros',
+            mainContent: {
+                imageUrl: 'https://placehold.co/400x225.png?text=Leiloeiros+Parceiros',
+                imageAlt: 'Imagem Leiloeiros Parceiros',
+                dataAiHint: 'leiloeiro publico',
+                title: 'Profissionais Qualificados',
+                description: 'Conheça os leiloeiros que garantem a transparência e o sucesso dos nossos leilões.',
+                buttonLink: '/auctioneers',
+                buttonText: 'Conheça Nossos Leiloeiros'
+            }
+        }
+    },
+    { 
+        label: 'Histórico', 
+        isMegaMenu: true, 
+        contentKey: 'history', 
+        icon: History, 
+        href: '/dashboard/history',
+        megaMenuAlign: 'end' // Mantido
+    },
+    { href: '/sell-with-us', label: 'Venda Conosco', icon: Percent },
+    { href: '/contact', label: 'Fale Conosco', icon: Phone },
   ];
 
 
@@ -451,21 +508,22 @@ export default function Header() {
       {/* Main Navigation Bar - Desktop */}
       <div className="border-b bg-background text-foreground hidden md:block">
         <div className="container mx-auto px-4 flex h-12 items-center justify-between">
-            {/* Categorias Megamenu (à esquerda) */}
+             {/* Categorias Megamenu (à esquerda) */}
             {isClient && firstNavItem && firstNavItem.isMegaMenu && (
-            <NavigationMenu className="relative z-10 flex items-center">
+            <NavigationMenu className="relative z-10 flex items-center justify-start"> {/* Alterado para justify-start */}
                 <NavigationMenuList>
                 <NavigationMenuItem value={firstNavItem.label}>
                     <NavigationMenuTrigger
-                    className={cn(
-                        navigationMenuTriggerStyle(),
-                        (pathname?.startsWith('/category') || (pathname === '/search' && (searchParamsHook.get('type') === 'lots' || searchParamsHook.get('tab') === 'categories'))) && 'bg-accent text-primary font-semibold',
-                        'font-semibold' 
-                    )}
+                        className={cn(
+                            navigationMenuTriggerStyle(),
+                            (pathname?.startsWith('/category') || (pathname === '/search' && (searchParamsHook.get('type') === 'lots' || searchParamsHook.get('tab') === 'categories'))) && 'bg-accent text-primary font-semibold',
+                            'font-semibold' 
+                        )}
                     >
+                    {firstNavItem.icon && <firstNavItem.icon className="mr-1.5 h-4 w-4" />}
                     {firstNavItem.label}
                     </NavigationMenuTrigger>
-                    <NavigationMenuContent>
+                    <NavigationMenuContent align="start"> {/* Garantir que o conteúdo se alinhe com o início do trigger */}
                        {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={handleLinkOrMobileMenuCloseClick} />}
                     </NavigationMenuContent>
                 </NavigationMenuItem>
@@ -474,11 +532,11 @@ export default function Header() {
             )}
 
             {/* Itens Centrais de Navegação */}
-            <div className="flex-grow flex justify-start pl-4"> 
+            <div className="flex-grow flex justify-start pl-4"> {/* justify-start e pl-4 para espaçar */}
                 <MainNav 
                     items={centralNavItems} 
                     onLinkClick={handleLinkOrMobileMenuCloseClick}
-                    className="hidden md:flex justify-start" 
+                    className="hidden md:flex justify-start" // justify-start para os itens internos
                     searchCategories={searchCategories} 
                     auctioneers={auctioneers}
                     consignorMegaMenuGroups={consignorMegaMenuGroups}
@@ -486,8 +544,6 @@ export default function Header() {
                     HistoryListItemComponent={HistoryListItem}
                 />
             </div>
-            
-            {/* Placeholder Direita: Removido para o MainNav poder se expandir ou se alinhar à esquerda. Se outros itens forem adicionados aqui, o justify-start no MainNav pode precisar ser reavaliado. */}
         </div>
       </div>
 

@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react'; 
@@ -5,7 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation'; 
 import { cn } from '@/lib/utils';
 import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, RecentlyViewedLotInfo } from '@/types';
-import { ChevronDown, History, Home, Landmark, Gavel, Percent, Phone, ListChecks, Tag } from 'lucide-react'; 
+import { ChevronDown, History, Home, Landmark, Gavel, Percent, Phone, ListChecks, Tag, Users } from 'lucide-react'; // Added Users
 import { useEffect, useState } from 'react';
 import {
   NavigationMenu,
@@ -19,8 +20,9 @@ import {
 import MegaMenuCategories from './mega-menu-categories';
 import MegaMenuLinkList, { type MegaMenuGroup } from './mega-menu-link-list';
 import MegaMenuAuctioneers from './mega-menu-auctioneers';
-import TwoColumnMegaMenu from './two-column-mega-menu'; // Novo componente
+import TwoColumnMegaMenu from './two-column-mega-menu';
 import { type HistoryListItem } from './header'; 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Import Avatar components
 
 export interface NavItem {
   href?: string;
@@ -28,28 +30,24 @@ export interface NavItem {
   isMegaMenu?: boolean;
   contentKey?: 'categories' | 'modalities' | 'consignors' | 'auctioneers' | 'history';
   icon?: React.ElementType; 
-  megaMenuAlign?: "start" | "center" | "end"; // Adicionado para controle de alinhamento
-  twoColumnMegaMenuProps?: TwoColumnMegaMenuProps; // Props para o novo componente
-}
-
-// Definindo as props para TwoColumnMegaMenu dentro de NavItem
-interface TwoColumnMegaMenuProps {
-  sidebarTitle?: string;
-  sidebarItems: MegaMenuLinkItem[];
-  mainContent: {
-    imageUrl: string;
-    imageAlt: string;
-    dataAiHint: string;
-    title: string;
-    description: string;
-    buttonLink: string;
-    buttonText: string;
+  megaMenuAlign?: "start" | "center" | "end";
+  twoColumnMegaMenuProps?: {
+    sidebarTitle?: string;
+    mainContent: {
+      imageUrl: string;
+      imageAlt: string;
+      dataAiHint: string;
+      title: string;
+      description: string;
+      buttonLink: string;
+      buttonText: string;
+    };
+    // sidebarItems e viewAllLink serão construídos dinamicamente no MainNav
   };
-  viewAllLink?: { href: string; label: string; icon?: React.ElementType };
-  containerWidthClasses?: string;
+  hrefPrefix?: string; // Para determinar o estado ativo com base no início do path
 }
 
-interface MegaMenuLinkItem { // Duplicado de MegaMenuLinkList para evitar import circular se necessário
+interface MegaMenuLinkItem { 
   href: string;
   label: string;
   description?: string;
@@ -60,10 +58,10 @@ interface MegaMenuLinkItem { // Duplicado de MegaMenuLinkList para evitar import
 const modalityMegaMenuGroups: MegaMenuGroup[] = [
   {
     items: [
-      { href: '/search?type=auctions&auctionType=JUDICIAL', label: 'Leilões Judiciais', description: 'Oportunidades de processos judiciais.' },
-      { href: '/search?type=auctions&auctionType=EXTRAJUDICIAL', label: 'Leilões Extrajudiciais', description: 'Negociações diretas e mais ágeis.' },
-      { href: '/direct-sales', label: 'Venda Direta', description: 'Compre itens com preço fixo.' },
-      { href: '/search?type=auctions&auctionType=PARTICULAR', label: 'Leilões Particulares', description: 'Leilões privados ou com acesso restrito.' },
+      { href: '/search?type=auctions&auctionType=JUDICIAL', label: 'Leilões Judiciais', description: 'Oportunidades de processos judiciais.', icon: <Gavel className="h-4 w-4" /> },
+      { href: '/search?type=auctions&auctionType=EXTRAJUDICIAL', label: 'Leilões Extrajudiciais', description: 'Negociações diretas e mais ágeis.', icon: <Landmark className="h-4 w-4" /> },
+      { href: '/direct-sales', label: 'Venda Direta', description: 'Compre itens com preço fixo.', icon: <Tag className="h-4 w-4" /> },
+      { href: '/search?type=auctions&auctionType=PARTICULAR', label: 'Leilões Particulares', description: 'Leilões privados ou com acesso restrito.', icon: <Users className="h-4 w-4" /> },
     ]
   }
 ];
@@ -78,6 +76,8 @@ interface MainNavProps extends React.HTMLAttributes<HTMLElement> {
     recentlyViewedItems?: RecentlyViewedLotInfo[];
     HistoryListItemComponent?: typeof HistoryListItem;
 }
+
+const MAX_ITEMS_IN_TW_COL_SIDEBAR = 5;
 
 
 export default function MainNav({ 
@@ -148,10 +148,10 @@ export default function MainNav({
                     {item.contentKey === 'modalities' && modalityMegaMenuGroups[0].items.map(mod => (
                           <Link key={mod.href} href={mod.href} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{mod.label}</Link>
                     ))}
-                      {item.contentKey === 'consignors' && consignorMegaMenuGroups[0]?.items.slice(0,4).map(con => (
+                      {item.contentKey === 'consignors' && (consignorMegaMenuGroups[0]?.items || []).slice(0,4).map(con => (
                           <Link key={con.href} href={con.href} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{con.label}</Link>
                     ))}
-                    {item.contentKey === 'consignors' && consignorMegaMenuGroups[0]?.items.length > 4 && <Link href="/sellers" onClick={onLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todos comitentes</Link>}
+                    {item.contentKey === 'consignors' && (consignorMegaMenuGroups[0]?.items || []).length > 4 && <Link href="/sellers" onClick={onLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todos comitentes</Link>}
                     
                     {item.contentKey === 'auctioneers' && auctioneers.slice(0,3).map(auc => (
                         <Link key={auc.id} href={`/auctioneers/${auc.slug || auc.publicId || auc.id}`} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{auc.name}</Link>
@@ -183,53 +183,64 @@ export default function MainNav({
     <NavigationMenu className={cn("relative z-10 flex items-center justify-start", className)} {...props} delayDuration={0}>
       <NavigationMenuList className={cn("group flex list-none items-center justify-start space-x-1")}>
         {items.map((item) => {
+          let megaMenuPropsForTwoColumn: any = null; // Reset for each item
+
+          if (item.isMegaMenu && item.contentKey && item.twoColumnMegaMenuProps) {
+            let finalSidebarItems: MegaMenuLinkItem[] = [];
+            let finalViewAllLink = item.twoColumnMegaMenuProps.viewAllLink; // Use what's passed initially
+            let finalSidebarTitle = item.twoColumnMegaMenuProps.sidebarTitle;
+
+            if (item.contentKey === 'modalities') {
+              finalSidebarItems = modalityMegaMenuGroups[0]?.items || [];
+              finalSidebarTitle = item.twoColumnMegaMenuProps.sidebarTitle || 'Modalidades';
+              finalViewAllLink = { href: '/search?type=auctions', label: 'Ver Todos os Tipos de Leilão', icon: ListChecks };
+            } else if (item.contentKey === 'consignors') {
+              const consignorItems = (consignorMegaMenuGroups[0]?.items || []);
+              finalSidebarItems = consignorItems.slice(0, MAX_ITEMS_IN_TW_COL_SIDEBAR);
+              if (consignorItems.length > MAX_ITEMS_IN_TW_COL_SIDEBAR) {
+                finalViewAllLink = { href: '/sellers', label: 'Ver Todos Comitentes', icon: Users };
+              }
+              finalSidebarTitle = item.twoColumnMegaMenuProps.sidebarTitle || 'Principais Comitentes';
+            } else if (item.contentKey === 'auctioneers') {
+              const mappedAuctioneerItems = auctioneers.map(auc => ({
+                href: `/auctioneers/${auc.slug || auc.publicId || auc.id}`,
+                label: auc.name,
+                description: `${auc.city || ''}${auc.city && auc.state ? ' - ' : ''}${auc.state || ''}` || 'Leiloeiro Verificado',
+                icon: auc.logoUrl ? () => <Avatar className="h-5 w-5 border"><AvatarImage src={auc.logoUrl!} alt={auc.name} data-ai-hint={auc.dataAiHintLogo || 'logo leiloeiro'} /><AvatarFallback>{auc.name.charAt(0)}</AvatarFallback></Avatar> : undefined
+              }));
+              finalSidebarItems = mappedAuctioneerItems.slice(0, MAX_ITEMS_IN_TW_COL_SIDEBAR);
+              if (auctioneers.length > MAX_ITEMS_IN_TW_COL_SIDEBAR) {
+                finalViewAllLink = { href: '/auctioneers', label: 'Ver Todos Leiloeiros', icon: Landmark };
+              }
+              finalSidebarTitle = item.twoColumnMegaMenuProps.sidebarTitle || 'Leiloeiros em Destaque';
+            }
+            
+            megaMenuPropsForTwoColumn = {
+              ...item.twoColumnMegaMenuProps,
+              sidebarTitle: finalSidebarTitle,
+              sidebarItems: finalSidebarItems,
+              viewAllLink: finalViewAllLink,
+            };
+          }
+
+
           if (item.isMegaMenu && item.contentKey) {
             return (
               <NavigationMenuItem key={item.label} value={item.label}>
                  <NavigationMenuTrigger
                   className={cn(
                     navigationMenuTriggerStyle(),
-                    pathname === item.href && 'bg-accent text-primary font-semibold',
+                    (pathname === item.href || (item.hrefPrefix && pathname?.startsWith(item.hrefPrefix))) && 'bg-accent text-primary font-semibold'
                   )}
                 >
                   {item.icon && item.contentKey !== 'history' && <item.icon className="mr-1.5 h-4 w-4" /> } 
                   {item.label}
                 </NavigationMenuTrigger>
-                <NavigationMenuContent align={item.megaMenuAlign || "center"}>
+                <NavigationMenuContent align={item.megaMenuAlign || "start"}> {/* Default to start for these */}
                   {item.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={onLinkClick} />}
                   
-                  {item.contentKey === 'modalities' && item.twoColumnMegaMenuProps && (
-                    <TwoColumnMegaMenu 
-                        sidebarTitle={item.twoColumnMegaMenuProps.sidebarTitle}
-                        sidebarItems={item.twoColumnMegaMenuProps.sidebarItems}
-                        mainContent={item.twoColumnMegaMenuProps.mainContent}
-                        viewAllLink={item.twoColumnMegaMenuProps.viewAllLink}
-                        containerWidthClasses={item.twoColumnMegaMenuProps.containerWidthClasses || "md:w-[600px] lg:w-[700px]"}
-                        gridClasses={item.twoColumnMegaMenuProps.gridClasses || "grid-cols-[220px_1fr]"}
-                        onLinkClick={onLinkClick}
-                    />
-                  )}
-                  {item.contentKey === 'consignors' && item.twoColumnMegaMenuProps && (
-                     <TwoColumnMegaMenu 
-                        sidebarTitle={item.twoColumnMegaMenuProps.sidebarTitle}
-                        sidebarItems={item.twoColumnMegaMenuProps.sidebarItems}
-                        mainContent={item.twoColumnMegaMenuProps.mainContent}
-                        viewAllLink={item.twoColumnMegaMenuProps.viewAllLink}
-                        containerWidthClasses={item.twoColumnMegaMenuProps.containerWidthClasses || "md:w-[600px] lg:w-[700px]"}
-                        gridClasses={item.twoColumnMegaMenuProps.gridClasses || "grid-cols-[220px_1fr]"}
-                        onLinkClick={onLinkClick}
-                    />
-                  )}
-                  {item.contentKey === 'auctioneers' && item.twoColumnMegaMenuProps && (
-                     <TwoColumnMegaMenu 
-                        sidebarTitle={item.twoColumnMegaMenuProps.sidebarTitle}
-                        sidebarItems={item.twoColumnMegaMenuProps.sidebarItems}
-                        mainContent={item.twoColumnMegaMenuProps.mainContent}
-                        viewAllLink={item.twoColumnMegaMenuProps.viewAllLink}
-                        containerWidthClasses={item.twoColumnMegaMenuProps.containerWidthClasses || "md:w-[600px] lg:w-[700px]"}
-                        gridClasses={item.twoColumnMegaMenuProps.gridClasses || "grid-cols-[220px_1fr]"}
-                        onLinkClick={onLinkClick}
-                    />
+                  {megaMenuPropsForTwoColumn && (item.contentKey === 'modalities' || item.contentKey === 'consignors' || item.contentKey === 'auctioneers') && (
+                    <TwoColumnMegaMenu {...megaMenuPropsForTwoColumn} onLinkClick={onLinkClick} />
                   )}
                   
                   {item.contentKey === 'history' && HistoryListItemComponent && (
@@ -290,3 +301,4 @@ export default function MainNav({
     </NavigationMenu>
   );
 }
+
