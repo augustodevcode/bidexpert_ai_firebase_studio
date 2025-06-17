@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown } from 'lucide-react';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react'; // Adicionado useMemo aqui
 import { getAuctionStatusText, getLotStatusColor, sampleAuctions } from '@/lib/sample-data';
 import {
   DropdownMenu,
@@ -155,6 +155,12 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
   };
 
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
+  const displayAuctionDate = lot.auctionDate && !isNaN(new Date(lot.auctionDate).getTime())
+    ? format(new Date(lot.auctionDate), "dd/MM - HH:mm", { locale: ptBR })
+    : 'N/D';
+  const displaySecondAuctionDate = lot.secondAuctionDate && !isNaN(new Date(lot.secondAuctionDate).getTime())
+    ? format(new Date(lot.secondAuctionDate), "dd/MM - HH:mm", { locale: ptBR })
+    : 'N/D';
 
   const discountPercentage = useMemo(() => {
     if (lot.initialPrice && lot.secondInitialPrice && lot.secondInitialPrice < lot.initialPrice && (lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE')) { // Considerar status para desconto
