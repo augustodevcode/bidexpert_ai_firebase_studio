@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Lot } from '@/types';
@@ -7,30 +6,11 @@ import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Heart,
-  Share2,
-  MapPin,
-  Eye,
-  ListChecks,
-  DollarSign,
-  CalendarDays,
-  Clock,
-  Users,
-  Gavel,
-  Building, 
-  Car,      
-  Truck,    
-  Info,     
-  X,
-  Facebook,
-  Mail,
-  MessageSquareText,
-} from 'lucide-react';
-import { format, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
+import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown } from 'lucide-react';
+import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
-import { getAuctionStatusText, getLotStatusColor, sampleAuctions } from '@/lib/sample-data'; // Importado sampleAuctions
+import { getAuctionStatusText, getLotStatusColor, sampleAuctions } from '@/lib/sample-data';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,18 +22,70 @@ import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdF
 import LotPreviewModal from './lot-preview-modal'; 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'; 
 
+interface TimeRemainingBadgeProps {
+  endDate: Date | string;
+  status: Lot['status'];
+}
+
+const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({ endDate, status }) => {
+  const [timeRemaining, setTimeRemaining] = useState<string>('');
+  const [isEndingSoon, setIsEndingSoon] = useState(false);
+
+  useEffect(() => {
+    const calculateTime = () => {
+      const now = new Date();
+      const end = endDate instanceof Date ? endDate : new Date(endDate);
+
+      if (isPast(end) || status !== 'ABERTO_PARA_LANCES') {
+        setTimeRemaining(getAuctionStatusText(status === 'ABERTO_PARA_LANCES' && isPast(end) ? 'ENCERRADO' : status));
+        setIsEndingSoon(false);
+        return;
+      }
+
+      const totalSeconds = differenceInSeconds(end, now);
+      if (totalSeconds <= 0) {
+        setTimeRemaining('Encerrado');
+        setIsEndingSoon(false);
+        return;
+      }
+
+      const days = Math.floor(totalSeconds / (3600 * 24));
+      const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      
+      setIsEndingSoon(days === 0 && hours < 2); // Considera "em breve" se menos de 2 horas
+
+      if (days > 0) setTimeRemaining(`${days}d ${hours}h`);
+      else if (hours > 0) setTimeRemaining(`${hours}h ${minutes}m`);
+      else if (minutes > 0) setTimeRemaining(`${minutes}m ${seconds}s`);
+      else if (seconds > 0) setTimeRemaining(`${seconds}s`);
+      else setTimeRemaining('Encerrando!');
+    };
+
+    calculateTime();
+    const interval = setInterval(calculateTime, 1000);
+    return () => clearInterval(interval);
+  }, [endDate, status]);
+
+  return (
+    <Badge variant={isEndingSoon ? "destructive" : "outline"} className="text-xs font-medium">
+      <Clock className="h-3 w-3 mr-1" />
+      {timeRemaining}
+    </Badge>
+  );
+};
+
+
 interface LotCardProps {
   lot: Lot;
 }
 
 const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
   const [isFavorite, setIsFavorite] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState<string>('');
-  const [isPast, setIsPast]   = useState<boolean>(false);
   const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false); 
   const { toast } = useToast();
-
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -68,47 +100,6 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
     }
   }, [lot?.id]);
 
-
-  useEffect(() => {
-    const calculateTimeRemaining = () => {
-      const now = new Date();
-      const endDate = lot.endDate instanceof Date ? lot.endDate : new Date(lot.endDate);
-      
-      setIsPast(now > endDate);
-
-      if (now > endDate) {
-        if (lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE') {
-          setTimeRemaining(getAuctionStatusText('ENCERRADO'));
-        } else {
-          setTimeRemaining(getAuctionStatusText(lot.status));
-        }
-        return;
-      }
-      
-      if (lot.status === 'EM_BREVE') {
-        setTimeRemaining(`Inicia em ${format(endDate, "dd/MM HH:mm", { locale: ptBR })}`);
-        return;
-      }
-
-      const days = differenceInDays(endDate, now);
-      const hours = differenceInHours(endDate, now) % 24;
-      const minutes = differenceInMinutes(endDate, now) % 60;
-
-      if (days > 0) {
-        setTimeRemaining(`em: ${days} dia(s)`);
-      } else if (hours > 0) {
-        setTimeRemaining(`em: ${hours}h ${minutes}m`);
-      } else if (minutes > 0) {
-        setTimeRemaining(`em: ${minutes}m`);
-      } else {
-        setTimeRemaining('Encerrando');
-      }
-    };
-
-    calculateTimeRemaining();
-    const interval = setInterval(calculateTimeRemaining, 60000); 
-    return () => clearInterval(interval);
-  }, [lot.endDate, lot.status]);
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
     e.preventDefault(); 
@@ -165,9 +156,35 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
 
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
 
+  const discountPercentage = useMemo(() => {
+    if (lot.initialPrice && lot.secondInitialPrice && lot.secondInitialPrice < lot.initialPrice && (lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE')) { // Considerar status para desconto
+      return Math.round(((lot.initialPrice - lot.secondInitialPrice) / lot.initialPrice) * 100);
+    }
+    return lot.discountPercentage || 0;
+  }, [lot.initialPrice, lot.secondInitialPrice, lot.status, lot.discountPercentage]);
+
+
+  const mentalTriggers = useMemo(() => {
+    const triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
+    // Simulação de configurações da plataforma para popularidade e lances quentes
+    const platformSettings = { mentalTriggerSettings: { popularityViewThreshold: 500, hotBidThreshold: 10, showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true, showDiscountBadge: true, showUrgencyTimer: true }};
+
+    if (platformSettings.mentalTriggerSettings?.showPopularityBadge && (lot.views || 0) > (platformSettings.mentalTriggerSettings.popularityViewThreshold || 500)) {
+      triggers.push('MAIS VISITADO');
+    }
+    if (platformSettings.mentalTriggerSettings?.showHotBidBadge && (lot.bidsCount || 0) > (platformSettings.mentalTriggerSettings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') {
+      triggers.push('LANCE QUENTE');
+    }
+    if (platformSettings.mentalTriggerSettings?.showExclusiveBadge && lot.isExclusive) {
+        triggers.push('EXCLUSIVO');
+    }
+    return triggers;
+  }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive]);
+
+
   return (
     <>
-    <Card className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group">
+    <Card className="flex flex-col overflow-hidden h-full shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg group">
       <div className="relative">
         <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block">
           <div className="aspect-[16/10] relative bg-muted">
@@ -179,10 +196,29 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
               className="object-cover"
               data-ai-hint={lot.dataAiHint || 'imagem lote'}
             />
-            <Badge className={`absolute top-2 left-2 text-xs px-2 py-1 ${getLotStatusColor(lot.status)}`}>
+            {/* Main Status Badge */}
+            <Badge className={`absolute top-2 left-2 text-xs px-2 py-1 z-10 ${getLotStatusColor(lot.status)}`}>
               {getAuctionStatusText(lot.status)}
             </Badge>
-            <div className="absolute top-2 right-2 flex space-x-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            
+            {/* Mental Trigger Badges - stack below main status or to the right */}
+            <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
+              {discountPercentage > 0 && (
+                <Badge variant="destructive" className="text-xs px-1.5 py-0.5 animate-pulse">
+                  <Percent className="h-3 w-3 mr-1" /> {discountPercentage}% OFF
+                </Badge>
+              )}
+              {mentalTriggers.map(trigger => (
+                <Badge key={trigger} variant="secondary" className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
+                  {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3 mr-1" />}
+                  {trigger === 'LANCE QUENTE' && <Zap className="h-3 w-3 mr-1 text-red-500 fill-red-500" />}
+                  {trigger === 'EXCLUSIVO' && <Crown className="h-3 w-3 mr-1 text-purple-600" />}
+                  {trigger}
+                </Badge>
+              ))}
+            </div>
+
+            <div className="absolute top-10 right-2 flex flex-col space-y-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}>
@@ -271,25 +307,22 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
       <CardFooter className="p-3 border-t flex-col items-start space-y-1.5">
         <div className="w-full">
           <p className="text-xs text-muted-foreground">Lance Mínimo</p>
-          <p className={`text-xl font-bold ${isPast ? 'text-muted-foreground line-through' : 'text-primary'}`}>
+          <p className={`text-xl font-bold ${isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
             R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
-        <div className={`flex items-center text-xs ${isPast ? 'text-muted-foreground line-through' : 'text-muted-foreground'}`}>
+        <div className={`flex items-center text-xs text-muted-foreground ${isPast(new Date(lot.endDate)) ? 'line-through' : ''}`}>
           <CalendarDays className="h-3 w-3 mr-1" />
           <span>{format(new Date(lot.endDate), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
         </div>
         
         <div className="w-full flex justify-between items-center text-xs">
-            <div className={`flex items-center gap-1 ${isPast ? 'text-muted-foreground line-through' : ''}`}>
-                <Clock className="h-3 w-3" />
-                <span>{timeRemaining}</span>
-            </div>
-            <div className={`flex items-center gap-1 ${isPast ? 'text-muted-foreground line-through' : ''}`}>
+            <TimeRemainingBadge endDate={lot.endDate} status={lot.status} />
+            <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : ''}`}>
                 <Gavel className="h-3 w-3" />
-                <span>{lot.bidsCount} Lances</span>
+                <span>{lot.bidsCount || 0} Lances</span>
             </div>
-            <span className={`font-semibold ${isPast ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.number || lot.id.replace('LOTE', '')}</span>
+            <span className={`font-semibold ${isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.number || lot.id.replace('LOTE', '')}</span>
         </div>
          <Button asChild className="w-full mt-2" size="sm">
             <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>Ver Detalhes do Lote</Link>
@@ -334,5 +367,3 @@ export default function LotCard({ lot }: LotCardProps) {
   
     return <LotCardClientContent lot={lot} />;
   }
-
-    

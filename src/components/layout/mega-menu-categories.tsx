@@ -52,16 +52,15 @@ CategoryListItem.displayName = 'CategoryListItem';
 const subcategoryMap: Record<string, string[]> = {
   'imoveis': ['Apartamentos', 'Casas', 'Terrenos', 'Salas Comerciais', 'Galpões e Prédios', 'Imóveis Rurais', 'Vagas de Garagem', 'Glebas'],
   'veiculos': ['Carros', 'Motos', 'Caminhões e Ônibus', 'Veículos Pesados', 'Embarcações', 'Aeronaves'],
-  'maquinas-e-equipamentos': ['Máquinas Agrícolas', 'Máquinas Industriais', 'Equipamentos de Construção', 'Equipamentos de Mineração', 'Empilhadeiras e Transpaleteiras'],
+  'maquinas-e-equipamentos': ['Máquinas Agrícolas', 'Máquinas Industriais', 'Equipamentos de Construção', 'Equipamentos de Mineração', 'Empilhadeiras e Transpaleteiras', 'Movimentação e Transporte'],
   'eletronicos-e-tecnologia': ['Celulares e Tablets', 'Computadores e Notebooks', 'Televisores e Áudio', 'Componentes e Peças'],
   'casa-e-decoracao': ['Móveis Residenciais', 'Eletrodomésticos', 'Utensílios de Cozinha', 'Decoração e Iluminação', 'Cama, Mesa e Banho'],
-  'arte-e-antiguidades': ['Obras de Arte', 'Antiguidades', 'Itens Colecionáveis', 'Numismática'],
-  'joias-e-acessorios-de-luxo': ['Joias (Ouro, Prata, Pedras)', 'Relógios de Luxo', 'Bolsas de Grife', 'Canetas Finas'],
-  'semoventes': ['Bovinos', 'Equinos', 'Ovinos e Caprinos', 'Aves', 'Outros Animais'],
-  'materiais-e-sucatas': ['Materiais de Construção', 'Sucatas Metálicas (Ferrosas e Não Ferrosas)', 'Resíduos Industriais', 'Papel e Plástico Reciclável'],
+  'arte-e-antiguidades': ['Obras de Arte (Pinturas, Esculturas)', 'Antiguidades', 'Itens Colecionáveis', 'Numismática'],
+  'joias-e-acessorios-de-luxo': ['Joias', 'Relógios de Luxo', 'Bolsas de Grife', 'Canetas Finas'],
+  'semoventes': ['Bovinos', 'Equinos', 'Ovinos e Caprinos', 'Aves', 'Outros Animais de Produção ou Estimação'],
+  'materiais-e-sucatas': ['Materiais de Construção Civil', 'Sucatas Metálicas (Ferrosas e Não Ferrosas)', 'Resíduos Industriais', 'Papel e Plástico Reciclável'],
   'industrial-geral': ['Estoques Industriais', 'Matéria-prima', 'Equipamentos de Escritório (Empresarial)', 'Mobiliário Corporativo'],
-  'embarcacoes-e-aeronaves': ['Lanchas e Barcos', 'Jet Skis', 'Veleiros', 'Aeronaves Leves', 'Drones Profissionais'],
-  'outros-itens-e-oportunidades': ['Consórcios (Contemplados ou Não)', 'Direitos Creditórios', 'Títulos e Valores Mobiliários', 'Energia Solar (Equipamentos)', 'Vinhos e Bebidas Raras', 'Instrumentos Musicais'],
+  'outros-itens-e-oportunidades': ['Consórcios', 'Energia Solar (Equipamentos)', 'Direitos Creditórios', 'Títulos e Valores Mobiliários', 'Vinhos e Bebidas Raras', 'Instrumentos Musicais', 'Bens Diversos'],
 };
 
 function getSubcategoriesFor(categorySlug: string | undefined): string[] {
@@ -93,7 +92,7 @@ export default function MegaMenuCategories({ categories, onLinkClick }: MegaMenu
     <div className="grid grid-cols-[260px_1fr] md:w-[700px] lg:w-[800px] xl:w-[900px] gap-0 p-0 max-h-[calc(80vh-100px)] min-h-[350px]">
       {/* Left Panel: Category List */}
       <div className="bg-background border-r border-border p-3 flex flex-col h-full">
-        <h4 className="px-3 py-2 text-md font-semibold text-foreground mb-1 font-headline">Compre por Categoria</h4>
+        <h4 className="px-3 py-2 text-md font-semibold text-foreground mb-1 font-headline">Categorias de Oportunidades</h4>
         <div className="overflow-y-auto flex-grow pr-1">
           <ul className="space-y-0.5">
             {sidebarCategories.map((category) => (

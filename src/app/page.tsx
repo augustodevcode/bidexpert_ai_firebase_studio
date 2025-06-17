@@ -100,35 +100,17 @@ export default function HomePage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {featuredLots.map((lot) => (
-              <PromoCard
-                key={lot.id}
-                title={lot.title}
-                description={`A partir de R$ ${lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} - ${lot.location}`}
-                imageUrl={lot.imageUrl}
-                imageAlt={lot.title}
-                dataAiHint={lot.dataAiHint || 'imagem lote destaque'}
-                link={`/auctions/${lot.auctionId}/lots/${lot.id}`}
-                bgColorClass="bg-gradient-to-br from-primary/10 via-background to-accent/10"
-              />
+              <LotCard key={lot.id} lot={lot} />
             ))}
           </div>
         </section>
       )}
-
-      <section className="text-center py-6 bg-accent/10 rounded-lg">
-        <p className="text-lg font-semibold text-accent-foreground">
-          Até 50% de Desconto em Moda e Vestuário de Verão.{' '}
-          <Link href="/search?category=fashion" className="font-bold underline hover:text-primary">
-            Compre Agora
-          </Link>
-        </p>
-      </section>
       
       <div>
         <h1 className="text-3xl font-bold mb-2 text-center font-headline">Leilões Ativos</h1>
         <p className="text-muted-foreground text-center mb-8">Descubra itens únicos e faça seus lances.</p>
         
-        <AuctionFilters />
+        {/* <AuctionFilters /> Componente de filtros removido da home page */}
 
         {auctions.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
@@ -139,11 +121,4 @@ export default function HomePage() {
         ) : (
           <div className="text-center py-12">
             <h2 className="text-xl font-semibold mb-2">Nenhum leilão encontrado</h2>
-            <p className="text-muted-foreground">Por favor, verifique mais tarde ou ajuste seus filtros.</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
+            <p className="text-muted-foreground">Por favor, verifique mais tarde ou ajuste

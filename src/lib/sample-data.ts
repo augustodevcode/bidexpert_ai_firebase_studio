@@ -1,5 +1,5 @@
 
-import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, CityInfo, MediaItem, PlatformSettings, HomepageSectionConfig } from '@/types';
+import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, CityInfo, MediaItem, PlatformSettings, MentalTriggerSettings, HomepageSectionConfig } from '@/types';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays, addDays as dateFnsAddDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle } from 'lucide-react';
@@ -41,19 +41,18 @@ export const slugify = (text: string): string => {
 // 1. STATIC & RAW SAMPLE DATA DEFINITIONS
 // ============================================================================
 
-export const sampleLotCategoriesStatic: Omit<LotCategory, 'createdAt' | 'updatedAt' | 'itemCount'>[] = [
-  { id: 'cat-imoveis', name: 'Imóveis', slug: 'imoveis', description: 'Casas, apartamentos, terrenos, salas comerciais, galpões, fazendas, sítios e chácaras.' },
-  { id: 'cat-veiculos', name: 'Veículos', slug: 'veiculos', description: 'Carros, motos, caminhões, ônibus, utilitários e outros veículos terrestres.' },
-  { id: 'cat-maquinas-equipamentos', name: 'Máquinas e Equipamentos', slug: 'maquinas-e-equipamentos', description: 'Máquinas pesadas, agrícolas, industriais, equipamentos de construção e diversos.' },
-  { id: 'cat-eletronicos-tecnologia', name: 'Eletrônicos e Tecnologia', slug: 'eletronicos-e-tecnologia', description: 'Celulares, computadores, notebooks, televisores, áudio, componentes e peças.' },
-  { id: 'cat-casa-decoracao', name: 'Casa e Decoração', slug: 'casa-e-decoracao', description: 'Móveis, eletrodomésticos, utensílios de cozinha, itens de decoração e iluminação.' },
-  { id: 'cat-arte-antiguidades', name: 'Arte e Antiguidades', slug: 'arte-e-antiguidades', description: 'Obras de arte como pinturas e esculturas, móveis antigos e itens colecionáveis.' },
-  { id: 'cat-joias-acessorios', name: 'Joias e Acessórios de Luxo', slug: 'joias-e-acessorios-de-luxo', description: 'Joias, relógios de pulso e bolso, bolsas de grife, canetas e artigos de luxo.' },
-  { id: 'cat-semoventes', name: 'Semoventes', slug: 'semoventes', description: 'Animais como bovinos, equinos, ovinos, caprinos e outros animais de produção ou estimação.' },
-  { id: 'cat-materiais-sucatas', name: 'Materiais e Sucatas', slug: 'materiais-e-sucatas', description: 'Materiais de construção civil, sucatas metálicas, resíduos industriais e recicláveis.' },
-  { id: 'cat-industrial-geral', name: 'Industrial (Geral)', slug: 'industrial-geral', description: 'Estoques industriais, matéria-prima, equipamentos de escritório (de empresas), e outros bens industriais.' },
-  { id: 'cat-embarcacoes-aeronaves', name: 'Embarcações e Aeronaves', slug: 'embarcacoes-e-aeronaves', description: 'Barcos, lanchas, navios, aviões, helicópteros e drones.' },
-  { id: 'cat-outros-itens', name: 'Outros Itens e Oportunidades', slug: 'outros-itens-e-oportunidades', description: 'Consórcios, energia solar, direitos creditórios, itens diversos e oportunidades únicas.' },
+export const sampleLotCategoriesStatic: Omit<LotCategory, 'id' | 'createdAt' | 'updatedAt' | 'itemCount' | 'subcategories'>[] = [
+  { name: 'Imóveis', slug: 'imoveis', description: 'Casas, apartamentos, terrenos, salas comerciais, galpões, fazendas, sítios e chácaras.' },
+  { name: 'Veículos', slug: 'veiculos', description: 'Carros, motos, caminhões, ônibus, utilitários e outros veículos terrestres.' },
+  { name: 'Máquinas e Equipamentos', slug: 'maquinas-e-equipamentos', description: 'Máquinas pesadas, agrícolas, industriais, equipamentos de construção e diversos.' },
+  { name: 'Eletrônicos e Informática', slug: 'eletronicos-e-informatica', description: 'Celulares, computadores, notebooks, televisores, áudio, componentes e peças.' },
+  { name: 'Casa e Decoração', slug: 'casa-e-decoracao', description: 'Móveis, eletrodomésticos, utensílios de cozinha, itens de decoração e iluminação.' },
+  { name: 'Arte e Antiguidades', slug: 'arte-e-antiguidades', description: 'Obras de arte como pinturas e esculturas, móveis antigos e itens colecionáveis.' },
+  { name: 'Joias e Acessórios de Luxo', slug: 'joias-e-acessorios-de-luxo', description: 'Joias, relógios de pulso e bolso, bolsas de grife, canetas e artigos de luxo.' },
+  { name: 'Semoventes', slug: 'semoventes', description: 'Animais como bovinos, equinos, ovinos, caprinos e outros animais de produção ou estimação.' },
+  { name: 'Materiais e Sucatas', slug: 'materiais-e-sucatas', description: 'Materiais de construção civil, sucatas metálicas, resíduos industriais e recicláveis.' },
+  { name: 'Industrial (Geral)', slug: 'industrial-geral', description: 'Estoques industriais, matéria-prima, equipamentos de escritório (de empresas), e outros bens industriais.' },
+  { name: 'Outros Itens', slug: 'outros-itens', description: 'Consórcios, energia solar, direitos creditórios, itens diversos e oportunidades únicas.' },
 ];
 
 
@@ -123,37 +122,28 @@ export const sampleAuctioneersStatic: Omit<AuctioneerProfileInfo, 'id'|'publicId
 ];
 
 export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' | 'sellerName' | 'cityName' | 'stateUf' | 'type' | 'bids' | 'reviews' | 'questions'>[] = [
-  { id: 'LOTE001', auctionId: '100625bra', publicId: 'LOT-CASACENT-ABC123X1', title: 'CASA COM 129,30 M² - CENTRO', imageUrl: 'https://placehold.co/800x600.png?text=Casa+Centro', dataAiHint: 'casa residencial', galleryImageUrls: ['https://placehold.co/150x100.png?text=Casa+Frente'], mediaItemIds: ['media-casa-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-teotonio-vilela-al', stateId: 'state-al', categoryId: 'cat-imoveis', views: 1018, price: 45000, endDate: createFutureDate(10, 2), bidsCount: 0, description: 'Casa residencial bem localizada no centro da cidade.', sellerId: 'Banco Bradesco S.A.', lotSpecificAuctionDate: createFutureDate(10, 2) },
-  { id: 'LOTEVEI001', auctionId: '300724car', publicId: 'LOT-2013AUDI-DEF456Y2', title: '2013 AUDI A4 PREMIUM PLUS', year: 2013, make: 'AUDI', model: 'A4', imageUrl: 'https://placehold.co/800x600.png?text=Audi+A4+2013', dataAiHint: 'carro sedan preto', galleryImageUrls: ['https://placehold.co/150x100.png?text=Audi+A4+Frente'], mediaItemIds: ['media-audi-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-veiculos', views: 1560, price: 68500, endDate: createFutureDate(5, 10), bidsCount: 0, description: 'Audi A4 Premium Plus 2013, completo.', sellerId: 'Proprietário Particular 1', lotSpecificAuctionDate: createFutureDate(5,10) },
-  { id: 'LOTE003', auctionId: '100625bra', publicId: 'LOT-APTOCABU-GHI789Z3', title: 'APARTAMENTO COM 54,25 M² - CABULA', imageUrl: 'https://placehold.co/800x600.png?text=Apto+Cabula', dataAiHint: 'apartamento predio residencial', status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'cat-imoveis', views: 754, price: 105000, endDate: createPastDate(2), bidsCount: 0, description: 'Apartamento funcional no Cabula.', sellerId: 'Banco Bradesco S.A.' },
-  { id: 'LOTEART001', auctionId: 'ART001ANTIQ', publicId: 'LOT-PINTURAO-JKL012A4', title: 'Pintura a Óleo "Paisagem Toscana" - Séc. XIX', imageUrl: 'https://placehold.co/800x600.png?text=Paisagem+Toscana', dataAiHint: 'pintura oleo paisagem', status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-de-janeiro-rj', stateId: 'state-rj', categoryId: 'cat-arte-antiguidades', views: 320, price: 7500, endDate: createFutureDate(8, 0), bidsCount: 0, description: 'Belíssima pintura a óleo.', sellerId: 'Colecionadores RJ' },
-  { id: 'LOTEVCLASS001', auctionId: 'CLASSICVEH24', publicId: 'LOT-1967FORD-MNO345B5', title: '1967 FORD MUSTANG FASTBACK', year: 1967, make: 'FORD', model: 'MUSTANG', imageUrl: 'https://placehold.co/800x600.png?text=Mustang+1967', dataAiHint: 'carro classico vermelho', status: 'ABERTO_PARA_LANCES', cityId: 'city-curitiba-pr', stateId: 'state-pr', categoryId: 'cat-veiculos', views: 1850, price: 250000, endDate: createFutureDate(12, 0), bidsCount: 0, description: 'Icônico Ford Mustang Fastback 1967.', sellerId: 'Colecionadores Clássicos PR' },
-  { id: 'LOTE005', auctionId: '20301vei', publicId: 'LOT-TRATORAG-PQR678C6', title: 'TRATOR AGRÍCOLA NEW HOLLAND T7', year: 2018, make: 'NEW HOLLAND', model: 'T7.245', imageUrl: 'https://images.unsplash.com/photo-1633153627433-b15010a9b2f5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0cmFjdG9yJTIwbmglMjB0N3xlbnwwfHx8fDE3NDk5MjQ1Mjd8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'trator agricola campo', galleryImageUrls: ['https://placehold.co/150x100.png?text=Trator+Frente'], mediaItemIds: ['media-trator-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-verde-go', stateId: 'state-go', categoryId: 'cat-maquinas-e-equipamentos', views: 305, price: 180000, endDate: createFutureDate(7, 1), bidsCount: 0, isFeatured: true, description: 'Trator New Holland T7.245, ano 2018.', sellerId: 'Fazenda Boa Esperança' },
-  { id: 'LOTE002', auctionId: '100625bra', publicId: 'LOT-CASAPORT-STU901D7', title: 'CASA COM 234,50 M² - PORTÃO', imageUrl: 'https://placehold.co/800x600.png?text=Casa+Portao', dataAiHint: 'casa moderna suburbio', status: 'ABERTO_PARA_LANCES', cityId: 'city-lauro-de-freitas-ba', stateId: 'state-ba', categoryId: 'cat-imoveis', views: 681, price: 664000, endDate: createFutureDate(10, 5), bidsCount: 0, description: 'Espaçosa casa em Lauro de Freitas.', sellerId: 'Banco Bradesco S.A.' },
-  { id: 'LOTE004', auctionId: '100625bra', publicId: 'LOT-CASAVILA-VWX234E8', title: 'CASA COM 133,04 M² - VILA PERI', imageUrl: 'https://placehold.co/800x600.png?text=Casa+Vila+Peri', dataAiHint: 'casa terrea simples', status: 'EM_BREVE', cityId: 'city-fortaleza-ce', stateId: 'state-ce', categoryId: 'cat-imoveis', views: 527, price: 238000, endDate: createFutureDate(3, 0), bidsCount: 0, description: 'Casa em Fortaleza, boa localização.', sellerId: 'Banco Bradesco S.A.' },
-  { id: 'LOTE006', auctionId: '20301vei', publicId: 'LOT-COLHEITA-YZA567F9', title: 'COLHEITADEIRA JOHN DEERE S680', imageUrl: 'https://placehold.co/800x600.png?text=Colheitadeira+JD', dataAiHint: 'colheitadeira graos campo', status: 'ENCERRADO', cityId: 'city-campo-grande-ms', stateId: 'state-ms', categoryId: 'cat-maquinas-e-equipamentos', views: 450, price: 365000, endDate: createPastDate(5), bidsCount: 0, description: 'Colheitadeira John Deere S680, usada.', sellerId: 'Produtores Rurais MS' },
-  { id: 'LOTEART002', auctionId: 'ART001ANTIQ', publicId: 'LOT-ESCULTUR-BCD890G0', title: 'Escultura em Bronze "O Pensador" - Réplica Assinada', imageUrl: 'https://placehold.co/800x600.png?text=Escultura+Pensador', dataAiHint: 'escultura bronze pensador', status: 'EM_BREVE', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-arte-antiguidades', views: 150, price: 3200, endDate: createFutureDate(15, 0), bidsCount: 0, description: 'Réplica em bronze da famosa escultura.', sellerId: 'Galeria de Arte SP' },
-  { id: 'LOTEVCLASS002', auctionId: 'CLASSICVEH24', publicId: 'LOT-1955PORS-EFG123H1', title: '1955 PORSCHE 356 SPEEDSTER - RÉPLICA', year: 1955, make: 'PORSCHE', model: '356 SPEEDSTER (RÉPLICA)', imageUrl: 'https://placehold.co/800x600.png?text=Porsche+356+Replica', dataAiHint: 'carro conversivel prata antigo', status: 'ABERTO_PARA_LANCES', cityId: 'city-belo-horizonte-mg', stateId: 'state-mg', categoryId: 'cat-veiculos', views: 990, price: 180000, endDate: createFutureDate(10, 0), bidsCount: 0, description: 'Excelente réplica do Porsche 356 Speedster.', sellerId: 'Restauradores Clássicos MG' },
-  { id: 'LOTEUTIL001', auctionId: '300724car', publicId: 'LOT-2019FIAT-HIJ456I2', title: '2019 FIAT FIORINO 1.4 FLEX', year: 2019, make: 'FIAT', model: 'FIORINO', imageUrl: 'https://placehold.co/800x600.png?text=Fiat+Fiorino+2019', dataAiHint: 'furgoneta branca cidade', status: 'ABERTO_PARA_LANCES', cityId: 'city-porto-alegre-rs', stateId: 'state-rs', categoryId: 'cat-veiculos', views: 720, price: 55000, endDate: createFutureDate(3, 5), bidsCount: 0, description: 'Fiat Fiorino 2019, ideal para trabalho.', sellerId: 'Logística RS Ltda' },
-  { id: 'LOTEFIN001', auctionId: 'XYZBANK001', publicId: 'LOT-APTOCABE-KLM789J3', title: 'Apartamento 3 Quartos - Cobertura - Barra da Tijuca', imageUrl: 'https://placehold.co/800x600.png?text=Cobertura+Barra', dataAiHint: 'cobertura vista mar', status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-de-janeiro-rj', stateId: 'state-rj', categoryId: 'cat-imoveis', views: 500, price: 1200000, endDate: createFutureDate(15, 0), bidsCount: 0, description: 'Cobertura duplex com vista para o mar.', sellerId: 'Banco XYZ' },
-  { id: 'LOTE007', auctionId: 'XYZBANK001', publicId: 'LOT-CASATEST-TST123A0', title: 'Casa Teste Leilão XYZ', imageUrl: 'https://placehold.co/800x600.png?text=Casa+Teste', dataAiHint: 'casa simples teste', status: 'EM_BREVE', cityId: 'city-niteroi-rj', stateId: 'state-rj', categoryId: 'cat-imoveis', views: 10, price: 150000, endDate: createFutureDate(16,0), bidsCount: 0, description: 'Casa para teste no leilão do Banco XYZ.', sellerId: 'Banco XYZ' }
-];
-
-export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots' | 'totalLots'>[] = [
-  { id: '100625bra', publicId: 'LEI-LEILOUNI-E9F3G7H2', title: 'Leilão Único Bradesco', fullTitle: 'Grande Leilão de Imóveis Bradesco - Oportunidades Imperdíveis', auctionDate: createFutureDate(0, 1), status: 'ABERTO', auctioneer: 'VICENTE PAULO - JUCEMA N° 12/96', category: 'Imóveis', categoryId: 'cat-imoveis', auctioneerId: 'auct-vicente-paulo-jucema-n-1296', auctioneerLogoUrl: 'https://placehold.co/150x50.png?text=VP&font=roboto', visits: 16913, imageUrl: 'https://placehold.co/150x75.png?text=Leilao+Bradesco&font=roboto', dataAiHint: 'logo banco leilao', seller: 'Banco Bradesco S.A.', sellerId: 'seller-banco-bradesco-s.a.', sellingBranch: 'Bradesco Matriz', city: 'São Paulo', state: 'SP', auctionStages: [{ name: "1ª Praça", endDate: createFutureDate(10, 5), statusText: "Encerramento 1ª Praça" }, { name: "2ª Praça", endDate: createFutureDate(20, 5), statusText: "Encerramento 2ª Praça" }], initialOffer: 45000 },
-  { id: '20301vei', publicId: 'LEI-LEILOMAQ-A1B2C3D4', title: 'Leilão Maquinário Pesado', fullTitle: 'Leilão de Tratores e Colheitadeiras Usadas', auctionDate: createFutureDate(0, 2), status: 'ABERTO_PARA_LANCES', auctioneer: 'AGROLEILÕES LTDA - MATRICULA XYZ/00', category: 'Máquinas e Equipamentos', categoryId: 'cat-maquinas-e-equipamentos', auctioneerId: 'auct-agroleiloes-ltda-matricula-xyz00', auctioneerLogoUrl: 'https://placehold.co/150x75.png?text=AgroLeiloes&font=roboto', visits: 8750, imageUrl: 'https://placehold.co/150x75.png?text=Leilao+Agro&font=roboto', dataAiHint: 'logo leilao agro', seller: 'Diversos Comitentes Agro', sellerId: 'seller-diversos-comitentes-agro', sellingBranch: 'AgroLeilões Central', city: 'Rio Verde', state: 'GO', auctionStages: [{ name: "Leilão Online", endDate: createFutureDate(7, 1), statusText: "Encerramento Lances" }], initialOffer: 180000 },
-  { id: '300724car', publicId: 'LEI-LEILOVEI-X5Y6Z7W8', title: 'Leilão Veículos Premium', fullTitle: 'Leilão de Veículos Seminovos e de Luxo', auctionDate: createFutureDate(0, 3), status: 'ABERTO', auctioneer: 'SUPERBID Leilões - JUCESP Nº 123', category: 'Veículos', categoryId: 'cat-veiculos', auctioneerId: 'auct-superbid-leiloes-jucesp-n-123', auctioneerLogoUrl: 'https://placehold.co/150x75.png?text=SuperBid&font=roboto', visits: 12345, imageUrl: 'https://placehold.co/150x75.png?text=Leilao+Veiculos&font=roboto', dataAiHint: 'logo leilao carros', seller: 'Diversos Proprietários e Financeiras', sellerId: 'seller-diversos-proprietarios-e-financeiras', sellingBranch: 'Pátio SuperBid SP', city: 'São Paulo', state: 'SP', auctionStages: [{ name: "Fase de Lances Online", endDate: createFutureDate(5, 10), statusText: "Encerramento Online" }], initialOffer: 55000 },
-  { id: '15926', publicId: 'LEI-LEILAOJU-R9T0U1V2', fullTitle: 'Leilão Tribunal de Justiça SP', title: 'Leilão Judicial Imóveis Ribeirão Preto', auctionDate: createPastDate(2), status: 'ENCERRADO', auctioneer: 'Bomvalor Judicial', category: 'Imóveis', categoryId: 'cat-imoveis', auctioneerId: 'auct-bomvalor-judicial', auctioneerLogoUrl: 'https://placehold.co/150x75.png?text=Logo+TJSP&font=roboto', seller: 'Tribunal de Justiça SP', sellerId: 'seller-tribunal-de-justica-sp', visits: 5000, imageUrl: 'https://placehold.co/150x75.png?text=Leilao+TJSP&font=roboto', dataAiHint: 'logo justica leilao', city: 'Ribeirão Preto', state: 'SP', auctionStages: [{ name: "Praça Única", endDate: createPastDate(2), statusText: "Encerrado" }], initialOffer: 0 },
-  { id: 'ART001ANTIQ', publicId: 'LEI-LEILAOAR-P3Q4R5S6', title: 'Leilão Arte & Antiguidades', fullTitle: 'Leilão Especial de Obras de Arte e Peças de Antiguidade', auctionDate: createFutureDate(1, 0), status: 'EM_BREVE', auctioneer: 'Galeria Antika - Leiloeiro Oficial A.Silva', category: 'Arte e Antiguidades', categoryId: 'cat-arte-antiguidades', auctioneerId: 'auct-galeria-antika-leiloeiro-oficial-asilva', auctioneerLogoUrl: 'https://placehold.co/150x75.png?text=Galeria+Antika&font=merriweather', visits: 1500, imageUrl: 'https://placehold.co/150x75.png?text=Leilao+Arte&font=merriweather', dataAiHint: 'logo galeria arte', seller: 'Colecionadores Particulares', sellerId: 'seller-colecionadores-particulares', sellingBranch: 'Galeria Antika - Sede SP', city: 'São Paulo', state: 'SP', auctionStages: [{ name: "Exposição Online", endDate: createFutureDate(7, 0), statusText: "Fim da Exposição" }, { name: "Leilão ao Vivo", endDate: createFutureDate(8, 0), statusText: "Encerramento Leilão" }], initialOffer: 3200 },
-  { id: 'CLASSICVEH24', publicId: 'LEI-CLASSICO-K1L2M3N4', title: 'Clássicos de Garagem', fullTitle: 'Leilão Anual de Veículos Clássicos e Colecionáveis', auctionDate: createFutureDate(2, 0), status: 'ABERTO_PARA_LANCES', auctioneer: 'Clássicos Leilões BR - Leiloeiro J.Pimenta', category: 'Veículos', categoryId: 'cat-veiculos', auctioneerId: 'auct-classicos-leiloes-br-leiloeiro-jpimenta', auctioneerLogoUrl: 'https://placehold.co/150x75.png?text=Classicos+BR&font=playfair+display', visits: 7600, imageUrl: 'https://placehold.co/150x75.png?text=Leilao+Classicos&font=playfair+display', dataAiHint: 'logo leilao classicos', seller: 'Proprietários Diversos Clássicos', sellerId: 'seller-proprietarios-diversos-classicos', sellingBranch: 'Pátio Clássicos BR - Curitiba', city: 'Curitiba', state: 'PR', auctionStages: [{ name: "Lances Online", endDate: createFutureDate(12, 0), statusText: "Encerramento Online" }], initialOffer: 180000 },
-  { id: 'XYZBANK001', publicId: 'LEI-BANCOXYZ-XYZ001', title: 'Leilão Banco XYZ - Imóveis RJ', fullTitle: 'Grande Oportunidade de Imóveis Residenciais e Comerciais - Banco XYZ', auctionDate: createFutureDate(3, 14), endDate: createFutureDate(18, 14), status: 'EM_BREVE', auctioneer: 'Leiloeiro XYZ Oficial', category: 'Imóveis', categoryId: 'cat-imoveis', auctioneerId: 'auct-leiloeiro-xyz-oficial', auctioneerLogoUrl: 'https://placehold.co/150x50.png?text=Banco+XYZ&font=lato', visits: 120, imageUrl: 'https://placehold.co/150x75.png?text=Leilao+XYZ&font=lato', dataAiHint: 'logo banco moderno', seller: 'Banco XYZ', sellerId: 'seller-banco-xyz', sellingBranch: 'XYZ Imóveis RJ', city: 'Rio de Janeiro', state: 'RJ', auctionStages: [{ name: "1ª Praça", endDate: createFutureDate(10, 14), statusText: "Encerramento 1ª Praça" }, { name: "2ª Praça", endDate: createFutureDate(18, 14), statusText: "Encerramento 2ª Praça" }], initialOffer: 150000 },
-  { id: 'BRADESCO-IMV-2024-07-A', publicId: 'LEI-BRADESCO-JUL24A', title: 'Leilão de Imóveis Bradesco (Julho)', fullTitle: 'Leilão Nacional de Imóveis Residenciais e Comerciais - Bradesco', auctionDate: createFutureDate(20, 0), endDate: createFutureDate(30, 0), status: 'EM_BREVE', auctioneer: 'Leiloeiro Oficial Bradesco', category: 'Imóveis', categoryId: 'cat-imoveis', auctioneerId: 'auct-leiloeiro-oficial-bradesco', auctioneerLogoUrl: 'https://placehold.co/150x50.png?text=Bradesco&font=roboto', visits: 0, imageUrl: 'https://placehold.co/150x75.png?text=Bradesco+Julho&font=roboto', dataAiHint: 'predios modernos banco', seller: 'Banco XYZ', sellerId: 'seller-banco-xyz', sellingBranch: 'Diversas', city: 'Nacional', state: 'BR', auctionStages: [{ name: "Praça Única Online", endDate: createFutureDate(30,0), statusText: "Encerramento Leilão" }], initialOffer: 50000, }
+  { id: 'LOTE001', auctionId: '100625bra', publicId: 'LOT-CASACENT-ABC123X1', title: 'CASA COM 129,30 M² - CENTRO', imageUrl: 'https://placehold.co/800x600.png?text=Casa+Centro', dataAiHint: 'casa residencial', galleryImageUrls: ['https://placehold.co/150x100.png?text=Casa+Frente'], mediaItemIds: ['media-casa-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-teotonio-vilela-al', stateId: 'state-al', categoryId: 'imoveis', views: 1018, price: 45000, endDate: createFutureDate(10, 2), bidsCount: 0, description: 'Casa residencial bem localizada no centro da cidade.', sellerId: 'Banco Bradesco S.A.', lotSpecificAuctionDate: createFutureDate(10, 2) },
+  { id: 'LOTEVEI001', auctionId: '300724car', publicId: 'LOT-2013AUDI-DEF456Y2', title: '2013 AUDI A4 PREMIUM PLUS', year: 2013, make: 'AUDI', model: 'A4', imageUrl: 'https://placehold.co/800x600.png?text=Audi+A4+2013', dataAiHint: 'carro sedan preto', galleryImageUrls: ['https://placehold.co/150x100.png?text=Audi+A4+Frente'], mediaItemIds: ['media-audi-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'veiculos', views: 1560, price: 68500, endDate: createFutureDate(5, 10), bidsCount: 25, description: 'Audi A4 Premium Plus 2013, completo.', sellerId: 'Proprietário Particular 1', lotSpecificAuctionDate: createFutureDate(5,10), isExclusive: true },
+  { id: 'LOTE003', auctionId: '100625bra', publicId: 'LOT-APTOCABU-GHI789Z3', title: 'APARTAMENTO COM 54,25 M² - CABULA', imageUrl: 'https://placehold.co/800x600.png?text=Apto+Cabula', dataAiHint: 'apartamento predio residencial', status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'imoveis', views: 754, price: 105000, endDate: createPastDate(2), bidsCount: 12, description: 'Apartamento funcional no Cabula.', sellerId: 'Banco Bradesco S.A.' },
+  { id: 'LOTEART001', auctionId: 'ART001ANTIQ', publicId: 'LOT-PINTURAO-JKL012A4', title: 'Pintura a Óleo "Paisagem Toscana" - Séc. XIX', imageUrl: 'https://placehold.co/800x600.png?text=Paisagem+Toscana', dataAiHint: 'pintura oleo paisagem', status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-de-janeiro-rj', stateId: 'state-rj', categoryId: 'arte-e-antiguidades', views: 320, price: 7500, endDate: createFutureDate(8, 0), bidsCount: 3, description: 'Belíssima pintura a óleo.', sellerId: 'Colecionadores RJ' },
+  { id: 'LOTEVCLASS001', auctionId: 'CLASSICVEH24', publicId: 'LOT-1967FORD-MNO345B5', title: '1967 FORD MUSTANG FASTBACK', year: 1967, make: 'FORD', model: 'MUSTANG', imageUrl: 'https://placehold.co/800x600.png?text=Mustang+1967', dataAiHint: 'carro classico vermelho', status: 'ABERTO_PARA_LANCES', cityId: 'city-curitiba-pr', stateId: 'state-pr', categoryId: 'veiculos', views: 1850, price: 250000, endDate: createFutureDate(12, 0), bidsCount: 18, description: 'Icônico Ford Mustang Fastback 1967.', sellerId: 'Colecionadores Clássicos PR', initialPrice: 280000, secondInitialPrice: 250000 },
+  { id: 'LOTE005', auctionId: '20301vei', publicId: 'LOT-TRATORAG-PQR678C6', title: 'TRATOR AGRÍCOLA NEW HOLLAND T7', year: 2018, make: 'NEW HOLLAND', model: 'T7.245', imageUrl: 'https://images.unsplash.com/photo-1633153627433-b15010a9b2f5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0cmFjdG9yJTIwbmglMjB0N3xlbnwwfHx8fDE3NDk5MjQ1Mjd8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'trator agricola campo', galleryImageUrls: ['https://placehold.co/150x100.png?text=Trator+Frente'], mediaItemIds: ['media-trator-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-verde-go', stateId: 'state-go', categoryId: 'maquinas-e-equipamentos', views: 650, price: 180000, endDate: createFutureDate(7, 1), bidsCount: 7, isFeatured: true, description: 'Trator New Holland T7.245, ano 2018.', sellerId: 'Fazenda Boa Esperança' },
+  { id: 'LOTE002', auctionId: '100625bra', publicId: 'LOT-CASAPORT-STU901D7', title: 'CASA COM 234,50 M² - PORTÃO', imageUrl: 'https://placehold.co/800x600.png?text=Casa+Portao', dataAiHint: 'casa moderna suburbio', status: 'ABERTO_PARA_LANCES', cityId: 'city-lauro-de-freitas-ba', stateId: 'state-ba', categoryId: 'imoveis', views: 681, price: 664000, endDate: createFutureDate(10, 5), bidsCount: 1, description: 'Espaçosa casa em Lauro de Freitas.', sellerId: 'Banco Bradesco S.A.' },
+  { id: 'LOTE004', auctionId: '100625bra', publicId: 'LOT-CASAVILA-VWX234E8', title: 'CASA COM 133,04 M² - VILA PERI', imageUrl: 'https://placehold.co/800x600.png?text=Casa+Vila+Peri', dataAiHint: 'casa terrea simples', status: 'EM_BREVE', cityId: 'city-fortaleza-ce', stateId: 'state-ce', categoryId: 'imoveis', views: 527, price: 238000, endDate: createFutureDate(3, 0), bidsCount: 0, description: 'Casa em Fortaleza, boa localização.', sellerId: 'Banco Bradesco S.A.' },
+  { id: 'LOTE006', auctionId: '20301vei', publicId: 'LOT-COLHEITA-YZA567F9', title: 'COLHEITADEIRA JOHN DEERE S680', imageUrl: 'https://placehold.co/800x600.png?text=Colheitadeira+JD', dataAiHint: 'colheitadeira graos campo', status: 'ENCERRADO', cityId: 'city-campo-grande-ms', stateId: 'state-ms', categoryId: 'maquinas-e-equipamentos', views: 450, price: 365000, endDate: createPastDate(5), bidsCount: 22, description: 'Colheitadeira John Deere S680, usada.', sellerId: 'Produtores Rurais MS' },
+  { id: 'LOTEART002', auctionId: 'ART001ANTIQ', publicId: 'LOT-ESCULTUR-BCD890G0', title: 'Escultura em Bronze "O Pensador" - Réplica Assinada', imageUrl: 'https://placehold.co/800x600.png?text=Escultura+Pensador', dataAiHint: 'escultura bronze pensador', status: 'EM_BREVE', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'arte-e-antiguidades', views: 150, price: 3200, endDate: createFutureDate(15, 0), bidsCount: 0, description: 'Réplica em bronze da famosa escultura.', sellerId: 'Galeria de Arte SP' },
+  { id: 'LOTEVCLASS002', auctionId: 'CLASSICVEH24', publicId: 'LOT-1955PORS-EFG123H1', title: '1955 PORSCHE 356 SPEEDSTER - RÉPLICA', year: 1955, make: 'PORSCHE', model: '356 SPEEDSTER (RÉPLICA)', imageUrl: 'https://placehold.co/800x600.png?text=Porsche+356+Replica', dataAiHint: 'carro conversivel prata antigo', status: 'ABERTO_PARA_LANCES', cityId: 'city-belo-horizonte-mg', stateId: 'state-mg', categoryId: 'veiculos', views: 990, price: 180000, endDate: createFutureDate(10, 0), bidsCount: 0, description: 'Excelente réplica do Porsche 356 Speedster.', sellerId: 'Restauradores Clássicos MG', isFeatured: true },
+  { id: 'LOTEUTIL001', auctionId: '300724car', publicId: 'LOT-2019FIAT-HIJ456I2', title: '2019 FIAT FIORINO 1.4 FLEX', year: 2019, make: 'FIAT', model: 'FIORINO', imageUrl: 'https://placehold.co/800x600.png?text=Fiat+Fiorino+2019', dataAiHint: 'furgoneta branca cidade', status: 'ABERTO_PARA_LANCES', cityId: 'city-porto-alegre-rs', stateId: 'state-rs', categoryId: 'veiculos', views: 720, price: 55000, endDate: createFutureDate(3, 5), bidsCount: 0, description: 'Fiat Fiorino 2019, ideal para trabalho.', sellerId: 'Logística RS Ltda' },
+  { id: 'LOTEFIN001', auctionId: 'XYZBANK001', publicId: 'LOT-APTOCABE-KLM789J3', title: 'Apartamento 3 Quartos - Cobertura - Barra da Tijuca', imageUrl: 'https://placehold.co/800x600.png?text=Cobertura+Barra', dataAiHint: 'cobertura vista mar', status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-de-janeiro-rj', stateId: 'state-rj', categoryId: 'imoveis', views: 500, price: 1200000, endDate: createFutureDate(15, 0), bidsCount: 0, description: 'Cobertura duplex com vista para o mar.', sellerId: 'Banco XYZ', isFeatured: true },
+  { id: 'LOTE007', auctionId: 'XYZBANK001', publicId: 'LOT-CASATEST-TST123A0', title: 'Casa Teste Leilão XYZ', imageUrl: 'https://placehold.co/800x600.png?text=Casa+Teste', dataAiHint: 'casa simples teste', status: 'EM_BREVE', cityId: 'city-niteroi-rj', stateId: 'state-rj', categoryId: 'imoveis', views: 10, price: 150000, endDate: createFutureDate(16,0), bidsCount: 0, description: 'Casa para teste no leilão do Banco XYZ.', sellerId: 'Banco XYZ', isExclusive: true },
+  { id: 'LOTE008', auctionId: 'BRADESCO-IMV-2024-07-A', publicId: 'LOT-TERRENOBH-BH001', title: 'Terreno Comercial em Contagem', imageUrl: 'https://placehold.co/800x600.png?text=Terreno+BH', dataAiHint: 'terreno comercial urbano', status: 'ABERTO_PARA_LANCES', cityId: 'city-belo-horizonte-mg', stateId: 'state-mg', categoryId: 'imoveis', views: 850, price: 750000, endDate: createFutureDate(25,0), bidsCount: 2, description: 'Terreno comercial de esquina, 1000m², Contagem/MG.', sellerId: 'Banco XYZ', isFeatured: true, initialPrice: 800000, secondInitialPrice: 750000 },
+  { id: 'LOTE009', auctionId: 'BRADESCO-IMV-2024-07-A', publicId: 'LOT-APTOSP-SP002', title: 'Apartamento 2 Quartos Pinheiros', imageUrl: 'https://placehold.co/800x600.png?text=Apto+Pinheiros', dataAiHint: 'apartamento moderno interno', status: 'ABERTO_PARA_LANCES', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'imoveis', views: 1200, price: 650000, endDate: createFutureDate(28,0), bidsCount: 5, description: 'Apto 2q, 70m², Pinheiros, São Paulo. Próximo ao metrô.', sellerId: 'Banco XYZ' },
 ];
 
 export const sampleDirectSaleOffersRaw: Omit<DirectSaleOffer, 'createdAt' | 'updatedAt' | 'expiresAt'>[] = [
   { id: 'DSO001', title: 'Coleção Completa de Selos Raros do Brasil Império', description: 'Uma oportunidade única para colecionadores...', imageUrl: 'https://placehold.co/800x600.png?text=Selos+Raros', dataAiHint: 'selos antigos colecao', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 25000, category: 'Arte e Antiguidades', locationCity: 'Rio de Janeiro', locationState: 'RJ', sellerName: 'Antiguidades Imperial', status: 'ACTIVE' },
-  { id: 'DSO002', title: 'MacBook Pro 16" M1 Max - Seminovo', description: 'MacBook Pro de 16 polegadas com chip M1 Max...', imageUrl: 'https://placehold.co/800x600.png?text=MacBook+Pro+16', dataAiHint: 'macbook pro aberto', offerType: 'BUY_NOW', price: 18500, category: 'Eletrônicos', locationCity: 'São Paulo', locationState: 'SP', sellerName: 'Tech Revenda SP', status: 'ACTIVE' },
-  { id: 'DSO003', title: 'Serviço de Consultoria em Marketing Digital', description: 'Pacote de consultoria completo para startups...', imageUrl: 'https://placehold.co/800x600.png?text=Consultoria+Marketing', dataAiHint: 'marketing digital reuniao', offerType: 'BUY_NOW', price: 4500, category: 'Outros Itens e Oportunidades', locationCity: 'Remoto', locationState: 'BR', sellerName: 'Digital Boost Consultoria', status: 'ACTIVE' },
+  { id: 'DSO002', title: 'MacBook Pro 16" M1 Max - Seminovo', description: 'MacBook Pro de 16 polegadas com chip M1 Max...', imageUrl: 'https://placehold.co/800x600.png?text=MacBook+Pro+16', dataAiHint: 'macbook pro aberto', offerType: 'BUY_NOW', price: 18500, category: 'Eletrônicos e Informática', locationCity: 'São Paulo', locationState: 'SP', sellerName: 'Tech Revenda SP', status: 'ACTIVE' },
+  { id: 'DSO003', title: 'Serviço de Consultoria em Marketing Digital', description: 'Pacote de consultoria completo para startups...', imageUrl: 'https://placehold.co/800x600.png?text=Consultoria+Marketing', dataAiHint: 'marketing digital reuniao', offerType: 'BUY_NOW', price: 4500, category: 'Outros Itens', locationCity: 'Remoto', locationState: 'BR', sellerName: 'Digital Boost Consultoria', status: 'ACTIVE' },
   { id: 'DSO004', title: 'Ford Mustang 1968 Conversível', description: 'Raro Ford Mustang conversível de 1968...', imageUrl: 'https://placehold.co/800x600.png?text=Mustang+68+Conv', dataAiHint: 'mustang conversivel vermelho', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 320000, category: 'Veículos', locationCity: 'Curitiba', locationState: 'PR', sellerName: 'Garagem Clássicos PR', status: 'PENDING_APPROVAL' },
   { id: 'DSO005', title: 'Lote de Equipamentos de Academia Profissional', description: 'Lote completo de equipamentos de academia profissional...', imageUrl: 'https://placehold.co/800x600.png?text=Equip+Academia', dataAiHint: 'academia equipamentos profissional', offerType: 'BUY_NOW', price: 75000, category: 'Máquinas e Equipamentos', locationCity: 'Belo Horizonte', locationState: 'MG', sellerName: 'Fitness Total Equipamentos', status: 'SOLD' },
   { id: 'DSO006', title: 'Obra de Arte Contemporânea - "Abstração Urbana"', description: 'Pintura acrílica sobre tela de grandes dimensões...', imageUrl: 'https://placehold.co/800x600.png?text=Arte+Abstrata', dataAiHint: 'pintura abstrata colorida', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 12000, category: 'Arte e Antiguidades', locationCity: 'Porto Alegre', locationState: 'RS', sellerName: 'Galeria Pampa Arte', status: 'EXPIRED' },
@@ -324,7 +314,7 @@ export const getUserHabilitationStatusInfo = (status: UserHabilitationStatus): {
 export function getUniqueLotCategoriesFromSampleData(): LotCategory[] {
   const categoriesMap = new Map<string, LotCategory>();
   // Primeiramente, adiciona as categorias estáticas com datas
-  sampleLotCategoriesStatic.forEach(cat => categoriesMap.set(cat.slug, { ...cat, itemCount: 0, createdAt: createPastDate(30), updatedAt: createPastDate(1) }));
+  sampleLotCategoriesStatic.forEach(cat => categoriesMap.set(cat.slug, { ...cat, id: `cat-${cat.slug}`, itemCount: 0, createdAt: createPastDate(30), updatedAt: createPastDate(1) }));
 
   // Então, itera sobre os lotes, leilões e ofertas para contar itens e adicionar categorias faltantes
   [...sampleLotsRaw, ...sampleAuctionsRaw, ...sampleDirectSaleOffersRaw].forEach(item => {
@@ -333,7 +323,7 @@ export function getUniqueLotCategoriesFromSampleData(): LotCategory[] {
     let categoryNameToUse: string | undefined;
 
     if (categoryNameOrId) {
-      const staticCatById = sampleLotCategoriesStatic.find(c => c.id === categoryNameOrId);
+      const staticCatById = sampleLotCategoriesStatic.find(c => `cat-${c.slug}` === categoryNameOrId);
       const staticCatBySlug = sampleLotCategoriesStatic.find(c => c.slug === categoryNameOrId);
       const staticCatByName = sampleLotCategoriesStatic.find(c => c.name === categoryNameOrId);
 
@@ -356,7 +346,7 @@ export function getUniqueLotCategoriesFromSampleData(): LotCategory[] {
     if (categorySlugToUse && categoryNameToUse) {
       if (!categoriesMap.has(categorySlugToUse)) {
         categoriesMap.set(categorySlugToUse, {
-          id: `sample-cat-${categorySlugToUse}`,
+          id: `cat-${categorySlugToUse}`,
           name: categoryNameToUse,
           slug: categorySlugToUse,
           description: `Categoria de ${categoryNameToUse}`,
@@ -531,7 +521,7 @@ export function getCategoryAssets(categoryNameOrSlug: string): CategoryAssets {
   if (slug.includes('maquinas') || slug.includes('equipamentos') || slug.includes('agricola')) {
     return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=Trator', logoAiHint: 'icone trator', bannerUrl: 'https://placehold.co/1200x300.png?text=Maquinario+Agro', bannerAiHint: 'campo trator', bannerText: `Equipamentos Agrícolas e Maquinário Pesado - ${categoryName}` };
   }
-   if (slug.includes('eletronico') || slug.includes('tecnologia')) {
+   if (slug.includes('eletronico') || slug.includes('informatica')) {
     return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=Chip', logoAiHint: 'icone chip placa', bannerUrl: 'https://placehold.co/1200x300.png?text=Tecnologia+e+Eletronicos', bannerAiHint: 'computador smartphone', bannerText: `Os Melhores Gadgets e Eletrônicos - ${categoryName}` };
   }
   if (slug.includes('semovente')) {
@@ -549,7 +539,7 @@ export const sampleStates: StateInfo[] = sampleStatesStatic.map(s => ({ ...s, ci
 export const sampleCities: CityInfo[] = sampleCitiesStatic.map(c => ({ ...c, lotCount: sampleLotsRaw.filter(l => l.cityId === c.id).length, createdAt: createPastDate(Math.floor(Math.random() * 30) + 1), updatedAt: createPastDate(Math.floor(Math.random() * 30)) }));
 
 export const sampleLots: Lot[] = sampleLotsRaw.map(lot => {
-    const categoryInfo = sampleLotCategories.find(c => c.id === lot.categoryId);
+    const categoryInfo = sampleLotCategories.find(c => c.id === lot.categoryId || c.slug === lot.categoryId);
     const auctionInfo = sampleAuctionsRaw.find(a => a.id === lot.auctionId);
     const stateInfo = sampleStates.find(s => s.id === lot.stateId);
     const cityInfo = sampleCities.find(c => c.id === lot.cityId);
@@ -783,6 +773,25 @@ sampleAuctions.forEach(auction => {
     }
 });
 
+const defaultMentalTriggerSettings: MentalTriggerSettings = {
+    showDiscountBadge: true,
+    showUrgencyTimer: true,
+    showPopularityBadge: true,
+    popularityViewThreshold: 500,
+    showHotBidBadge: true,
+    hotBidThreshold: 10,
+    showExclusiveBadge: true,
+};
+
+const defaultHomepageSections: HomepageSectionConfig[] = [
+    { id: 'hero', type: 'hero_carousel', title: 'Destaques Principais', visible: true, order: 1 },
+    { id: 'filter_links', type: 'filter_links', title: 'Explorar por Tipo', visible: true, order: 2 },
+    { id: 'featured_lots', type: 'featured_lots', title: 'Lotes em Destaque', visible: true, order: 3, itemCount: 10 },
+    // Removida promo_banner_1
+    { id: 'active_auctions', type: 'active_auctions', title: 'Leilões Ativos', visible: true, order: 4, itemCount: 10 }, // Ordem ajustada
+];
+
+
 export const samplePlatformSettings: PlatformSettings = {
   id: 'global',
   siteTitle: 'BidExpert Leilões',
@@ -808,13 +817,8 @@ export const samplePlatformSettings: PlatformSettings = {
     auctioneers: "LEILOE-",
     sellers: "COMIT-"
   },
-  homepageSections: [
-    { id: 'hero', type: 'hero_carousel', title: 'Destaques Principais', visible: true, order: 1 },
-    { id: 'filter_links', type: 'filter_links', title: 'Explore por Tipo', visible: true, order: 2 },
-    { id: 'featured_lots', type: 'featured_lots', title: 'Lotes em Destaque', visible: true, order: 3, itemCount: 10 },
-    { id: 'promo_banner_1', type: 'promo_banner_1', title: 'Promoção Especial', visible: true, order: 4, promoContent: { title: 'Até 50% de Desconto', subtitle: 'Em Moda e Vestuário de Verão.', link: '/search?category=fashion'} },
-    { id: 'active_auctions', type: 'active_auctions', title: 'Leilões Ativos', visible: true, order: 5, itemCount: 10 },
-  ],
+  mentalTriggerSettings: defaultMentalTriggerSettings,
+  homepageSections: defaultHomepageSections,
   updatedAt: new Date()
 };
 
@@ -825,4 +829,379 @@ export function getPlaceholderIfEmpty(value: string | number | null | undefined,
     return String(value);
 }
 
+```
+  </change>
+  <change>
+    <file>/home/user/studio/src/components/lot-card.tsx</file>
+    <content><![CDATA[
+'use client';
 
+import type { Lot } from '@/types';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown } from 'lucide-react';
+import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { useState, useEffect } from 'react';
+import { getAuctionStatusText, getLotStatusColor, sampleAuctions } from '@/lib/sample-data';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from '@/hooks/use-toast';
+import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
+import LotPreviewModal from './lot-preview-modal'; 
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'; 
+
+interface TimeRemainingBadgeProps {
+  endDate: Date | string;
+  status: Lot['status'];
+}
+
+const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({ endDate, status }) => {
+  const [timeRemaining, setTimeRemaining] = useState<string>('');
+  const [isEndingSoon, setIsEndingSoon] = useState(false);
+
+  useEffect(() => {
+    const calculateTime = () => {
+      const now = new Date();
+      const end = endDate instanceof Date ? endDate : new Date(endDate);
+
+      if (isPast(end) || status !== 'ABERTO_PARA_LANCES') {
+        setTimeRemaining(getAuctionStatusText(status === 'ABERTO_PARA_LANCES' && isPast(end) ? 'ENCERRADO' : status));
+        setIsEndingSoon(false);
+        return;
+      }
+
+      const totalSeconds = differenceInSeconds(end, now);
+      if (totalSeconds <= 0) {
+        setTimeRemaining('Encerrado');
+        setIsEndingSoon(false);
+        return;
+      }
+
+      const days = Math.floor(totalSeconds / (3600 * 24));
+      const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      
+      setIsEndingSoon(days === 0 && hours < 2); // Considera "em breve" se menos de 2 horas
+
+      if (days > 0) setTimeRemaining(`${days}d ${hours}h`);
+      else if (hours > 0) setTimeRemaining(`${hours}h ${minutes}m`);
+      else if (minutes > 0) setTimeRemaining(`${minutes}m ${seconds}s`);
+      else if (seconds > 0) setTimeRemaining(`${seconds}s`);
+      else setTimeRemaining('Encerrando!');
+    };
+
+    calculateTime();
+    const interval = setInterval(calculateTime, 1000);
+    return () => clearInterval(interval);
+  }, [endDate, status]);
+
+  return (
+    <Badge variant={isEndingSoon ? "destructive" : "outline"} className="text-xs font-medium">
+      <Clock className="h-3 w-3 mr-1" />
+      {timeRemaining}
+    </Badge>
+  );
+};
+
+
+interface LotCardProps {
+  lot: Lot;
+}
+
+const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false); 
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setLotDetailUrl(`${window.location.origin}/auctions/${lot.auctionId}/lots/${lot.id}`);
+      setIsFavorite(isLotFavoriteInStorage(lot.id));
+    }
+  }, [lot.id, lot.auctionId]);
+
+  useEffect(() => {
+    if (lot && lot.id) {
+        setIsFavorite(isLotFavoriteInStorage(lot.id));
+    }
+  }, [lot?.id]);
+
+
+  const handleFavoriteToggle = (e: React.MouseEvent) => {
+    e.preventDefault(); 
+    e.stopPropagation();
+    const newFavoriteState = !isFavorite;
+    setIsFavorite(newFavoriteState); 
+
+    if (newFavoriteState) {
+      addFavoriteLotIdToStorage(lot.id);
+    } else {
+      removeFavoriteLotIdFromStorage(lot.id);
+    }
+    
+    toast({
+      title: newFavoriteState ? "Adicionado aos Favoritos" : "Removido dos Favoritos",
+      description: `O lote "${lot.title}" foi ${newFavoriteState ? 'adicionado à' : 'removido da'} sua lista.`,
+    });
+  };
+  
+  const handlePreviewOpen = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsPreviewModalOpen(true);
+  };
+
+  const getSocialLink = (platform: 'x' | 'facebook' | 'whatsapp' | 'email', url: string, title: string) => {
+    const encodedUrl = encodeURIComponent(url);
+    const encodedTitle = encodeURIComponent(title);
+    switch(platform) {
+      case 'x':
+        return `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
+      case 'facebook':
+        return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+      case 'whatsapp':
+        return `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`;
+      case 'email':
+        return `mailto:?subject=${encodedTitle}&body=${encodedUrl}`;
+    }
+  }
+  
+  const getTypeIcon = (type: string) => {
+    const upperType = type.toUpperCase();
+    if (upperType.includes('CASA') || upperType.includes('IMÓVEL') || upperType.includes('APARTAMENTO')) {
+        return <Building className="h-3 w-3 text-muted-foreground" />;
+    }
+    if (upperType.includes('VEÍCULO') || upperType.includes('AUTOMÓVEL') || upperType.includes('CARRO')) {
+        return <Car className="h-3 w-3 text-muted-foreground" />;
+    }
+    if (upperType.includes('MAQUINÁRIO') || upperType.includes('TRATOR')) {
+        return <Truck className="h-3 w-3 text-muted-foreground" />;
+    }
+    return <Info className="h-3 w-3 text-muted-foreground" />;
+  };
+
+  const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
+
+  const discountPercentage = useMemo(() => {
+    if (lot.initialPrice && lot.secondInitialPrice && lot.secondInitialPrice < lot.initialPrice && (lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE')) { // Considerar status para desconto
+      return Math.round(((lot.initialPrice - lot.secondInitialPrice) / lot.initialPrice) * 100);
+    }
+    return lot.discountPercentage || 0;
+  }, [lot.initialPrice, lot.secondInitialPrice, lot.status, lot.discountPercentage]);
+
+
+  const mentalTriggers = useMemo(() => {
+    const triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
+    // Simulação de configurações da plataforma para popularidade e lances quentes
+    const platformSettings = { mentalTriggerSettings: { popularityViewThreshold: 500, hotBidThreshold: 10, showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true, showDiscountBadge: true, showUrgencyTimer: true }};
+
+    if (platformSettings.mentalTriggerSettings?.showPopularityBadge && (lot.views || 0) > (platformSettings.mentalTriggerSettings.popularityViewThreshold || 500)) {
+      triggers.push('MAIS VISITADO');
+    }
+    if (platformSettings.mentalTriggerSettings?.showHotBidBadge && (lot.bidsCount || 0) > (platformSettings.mentalTriggerSettings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') {
+      triggers.push('LANCE QUENTE');
+    }
+    if (platformSettings.mentalTriggerSettings?.showExclusiveBadge && lot.isExclusive) {
+        triggers.push('EXCLUSIVO');
+    }
+    return triggers;
+  }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive]);
+
+
+  return (
+    <>
+    <Card className="flex flex-col overflow-hidden h-full shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg group">
+      <div className="relative">
+        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block">
+          <div className="aspect-[16/10] relative bg-muted">
+            <Image
+              src={lot.imageUrl}
+              alt={lot.title}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-cover"
+              data-ai-hint={lot.dataAiHint || 'imagem lote'}
+            />
+            {/* Main Status Badge */}
+            <Badge className={`absolute top-2 left-2 text-xs px-2 py-1 z-10 ${getLotStatusColor(lot.status)}`}>
+              {getAuctionStatusText(lot.status)}
+            </Badge>
+            
+            {/* Mental Trigger Badges - stack below main status or to the right */}
+            <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
+              {discountPercentage > 0 && (
+                <Badge variant="destructive" className="text-xs px-1.5 py-0.5 animate-pulse">
+                  <Percent className="h-3 w-3 mr-1" /> {discountPercentage}% OFF
+                </Badge>
+              )}
+              {mentalTriggers.map(trigger => (
+                <Badge key={trigger} variant="secondary" className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
+                  {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3 mr-1" />}
+                  {trigger === 'LANCE QUENTE' && <Zap className="h-3 w-3 mr-1 text-red-500 fill-red-500" />}
+                  {trigger === 'EXCLUSIVO' && <Crown className="h-3 w-3 mr-1 text-purple-600" />}
+                  {trigger}
+                </Badge>
+              ))}
+            </div>
+
+            <div className="absolute top-10 right-2 flex flex-col space-y-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}>
+                    <Heart className={`h-3.5 w-3.5 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handlePreviewOpen} aria-label="Pré-visualizar Lote">
+                    <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Pré-visualizar Lote</p></TooltipContent>
+              </Tooltip>
+              <DropdownMenu>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" aria-label="Compartilhar">
+                        <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Compartilhar</p></TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <a href={getSocialLink('x', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
+                      <X className="h-3.5 w-3.5" /> X (Twitter)
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href={getSocialLink('facebook', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
+                      <Facebook className="h-3.5 w-3.5" /> Facebook
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href={getSocialLink('whatsapp', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
+                      <MessageSquareText className="h-3.5 w-3.5" /> WhatsApp
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href={getSocialLink('email', lotDetailUrl, lot.title)} className="flex items-center gap-2 text-xs">
+                      <Mail className="h-3.5 w-3.5" /> Email
+                    </a>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </Link>
+      </div>
+
+      <CardContent className="p-3 flex-grow space-y-1.5">
+        <div className="flex justify-between items-center text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <MapPin className="h-3 w-3" />
+            <span>{displayLocation}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            {getTypeIcon(lot.type)}
+            <span>{lot.type}</span>
+          </div>
+        </div>
+
+        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
+          <h3 className="text-sm font-semibold hover:text-primary transition-colors leading-tight min-h-[2.2em] line-clamp-2">
+            {lot.title}
+          </h3>
+        </Link>
+        
+        <div className="flex justify-between items-center text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+                <ListChecks className="h-3 w-3" />
+                <span>{lot.auctionName}</span>
+            </div>
+            <div className="flex items-center gap-1">
+                <Eye className="h-3 w-3" />
+                <span>{lot.views}</span>
+            </div>
+        </div>
+      </CardContent>
+
+      <CardFooter className="p-3 border-t flex-col items-start space-y-1.5">
+        <div className="w-full">
+          <p className="text-xs text-muted-foreground">Lance Mínimo</p>
+          <p className={`text-xl font-bold ${isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
+            R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+        </div>
+        <div className={`flex items-center text-xs text-muted-foreground ${isPast(new Date(lot.endDate)) ? 'line-through' : ''}`}>
+          <CalendarDays className="h-3 w-3 mr-1" />
+          <span>{format(new Date(lot.endDate), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+        </div>
+        
+        <div className="w-full flex justify-between items-center text-xs">
+            <TimeRemainingBadge endDate={lot.endDate} status={lot.status} />
+            <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : ''}`}>
+                <Gavel className="h-3 w-3" />
+                <span>{lot.bidsCount || 0} Lances</span>
+            </div>
+            <span className={`font-semibold ${isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.number || lot.id.replace('LOTE', '')}</span>
+        </div>
+         <Button asChild className="w-full mt-2" size="sm">
+            <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>Ver Detalhes do Lote</Link>
+        </Button>
+      </CardFooter>
+    </Card>
+    <LotPreviewModal
+        lot={lot}
+        auction={sampleAuctions.find(a => a.id === lot.auctionId)} // Pass the parent auction if available
+        isOpen={isPreviewModalOpen}
+        onClose={() => setIsPreviewModalOpen(false)}
+      />
+    </>
+  );
+}
+
+
+export default function LotCard({ lot }: LotCardProps) {
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => {
+      setIsClient(true);
+    }, []);
+  
+    if (!isClient) {
+      return (
+        <Card className="flex flex-col overflow-hidden h-full shadow-md rounded-lg group">
+             <div className="relative aspect-[16/10] bg-muted animate-pulse"></div>
+             <CardContent className="p-3 flex-grow space-y-1.5">
+                <div className="h-4 bg-muted rounded w-3/4 animate-pulse"></div>
+                <div className="h-8 bg-muted rounded w-full animate-pulse mt-1"></div>
+                <div className="h-4 bg-muted rounded w-1/2 animate-pulse mt-1"></div>
+             </CardContent>
+             <CardFooter className="p-3 border-t flex-col items-start space-y-1.5">
+                <div className="h-6 bg-muted rounded w-1/3 animate-pulse"></div>
+                <div className="h-4 bg-muted rounded w-1/2 animate-pulse mt-1"></div>
+                <div className="h-4 bg-muted rounded w-full animate-pulse mt-1"></div>
+                 <div className="h-8 bg-muted rounded w-full animate-pulse mt-2"></div>
+             </CardFooter>
+        </Card>
+      );
+    }
+  
+    return <LotCardClientContent lot={lot} />;
+  }
+
+    

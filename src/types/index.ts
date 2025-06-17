@@ -1,4 +1,5 @@
 
+
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
 
@@ -70,6 +71,7 @@ export interface LotCategory {
     itemCount?: number;
     createdAt: AnyTimestamp;
     updatedAt: AnyTimestamp;
+    subcategories?: string[]; 
 }
 
 export interface MediaItem {
@@ -113,8 +115,6 @@ export interface Lot {
   auctionName?: string;
   price: number;
   initialPrice?: number;
-  // auctionDate?: AnyTimestamp | null; // Removido de Lot
-  // secondAuctionDate?: AnyTimestamp | null; // Removido de Lot
   secondInitialPrice?: number;
   endDate: AnyTimestamp;
   bidsCount?: number;
@@ -153,6 +153,7 @@ export interface Lot {
   vehicleClass?: string;
 
   lotSpecificAuctionDate?: AnyTimestamp | null;
+  secondAuctionDate?: AnyTimestamp | null;
   vehicleLocationInBranch?: string;
   laneRunNumber?: string;
   aisleStall?: string;
@@ -166,6 +167,11 @@ export interface Lot {
   condition?: string;
   createdAt?: AnyTimestamp;
   updatedAt?: AnyTimestamp;
+
+  // Novos campos para gatilhos mentais
+  discountPercentage?: number;
+  additionalTriggers?: string[]; // e.g., ['MAIS_VISITADO', 'LANCE_QUENTE']
+  isExclusive?: boolean;
 }
 
 // Este tipo é usado pelo formulário, que envia nomes
@@ -183,12 +189,14 @@ export type LotFormData = Omit<Lot,
   'bidsCount' |
   'galleryImageUrls' |
   'dataAiHint' |
-  // 'auctionDate' | // Removido de Lot
   'cityName' |
   'stateUf' |
   'auctioneerId' |
   'mediaItemIds' |
-  'categoryId'
+  'categoryId' |
+  'discountPercentage' |
+  'additionalTriggers' |
+  'isExclusive'
 > & {
   endDate: Date;
   lotSpecificAuctionDate?: Date | null;
@@ -198,6 +206,7 @@ export type LotFormData = Omit<Lot,
   galleryImageUrls?: string[];
   mediaItemIds?: string[];
   categoryId?: string;
+  isExclusive?: boolean;
 };
 
 
@@ -505,17 +514,27 @@ export interface HomepageSectionConfig {
   title?: string;
   visible: boolean;
   order: number;
-  itemCount?: number; // For sections like featured_lots, active_auctions
-  categorySlug?: string; // For a specific category grid, for example
-  promoContent?: { // For promo_banner type
+  itemCount?: number; 
+  categorySlug?: string; 
+  promoContent?: { 
     title: string;
     subtitle?: string;
     link: string;
-    imageUrl?: string; // Optional image for the promo banner
+    imageUrl?: string; 
     imageAlt?: string;
     dataAiHint?: string;
     bgColorClass?: string;
   };
+}
+
+export interface MentalTriggerSettings {
+  showDiscountBadge?: boolean;
+  showUrgencyTimer?: boolean;
+  showPopularityBadge?: boolean;
+  popularityViewThreshold?: number;
+  showHotBidBadge?: boolean;
+  hotBidThreshold?: number;
+  showExclusiveBadge?: boolean;
 }
 
 export interface PlatformSettings {
@@ -532,11 +551,13 @@ export interface PlatformSettings {
     sellers?: string;
   };
   homepageSections?: HomepageSectionConfig[];
+  mentalTriggerSettings?: MentalTriggerSettings;
   updatedAt: AnyTimestamp;
 }
 
 export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'> & {
     homepageSections?: HomepageSectionConfig[];
+    mentalTriggerSettings?: MentalTriggerSettings;
 };
 
 export interface SqlAuthResult {
@@ -701,4 +722,5 @@ export type LotWithCategoryName = Lot & {
     
 
     
+
 
