@@ -1,6 +1,5 @@
-
 import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, CityInfo, MediaItem, PlatformSettings, MentalTriggerSettings, HomepageSectionConfig } from '@/types';
-import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays, addDays as dateFnsAddDays } from 'date-fns';
+import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays, addDays as dateFnsAddDays, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
@@ -191,7 +190,7 @@ export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDoc
     case 'REJECTED': return 'Rejeitado';
     case 'PENDING_ANALYSIS': return 'Em Análise';
     case 'PENDING_DOCUMENTS': return 'Documentação Pendente';
-    case 'HABILITADO': return 'Habilitado'; // Mudado para "HABILITADO"
+    case 'HABILITADO': return 'Habilitado para Dar Lances'; // Mudado para "HABILITADO"
     case 'REJECTED_DOCUMENTS': return 'Documentos Rejeitados';
     case 'BLOCKED': return 'Bloqueado';
     case 'ACTIVE': return 'Ativa'; // Para DirectSaleOffer
@@ -308,8 +307,8 @@ export const getUserHabilitationStatusInfo = (status: UserHabilitationStatus): {
       return { text: 'Documentos em Análise', color: 'text-yellow-600 dark:text-yellow-400', progress: 50, icon: Clock };
     case 'REJECTED_DOCUMENTS':
       return { text: 'Documentos Rejeitados', color: 'text-red-600 dark:text-red-400', progress: 75, icon: FileWarning };
-    case 'HABILITADO': // Mudado para "HABILITADO"
-      return { text: 'Habilitado para Dar Lances', color: 'text-green-600 dark:text-green-400', progress: 100, icon: CheckCircle2 };
+    case 'HABILITADO':
+      return { text: 'Habilitado para Dar Lances', color: 'text-green-600 dark:text-green-400', progress: 100, icon: CheckCircle2 }; // Mudado para "HABILITADO"
     case 'BLOCKED':
       return { text: 'Conta Bloqueada', color: 'text-destructive', progress: 0, icon: ShieldAlert };
     default:
@@ -386,8 +385,8 @@ export function getCategoryNameFromSlug(slug: string): string | undefined {
   const foundByName = allSampleCategories.find(cat => cat.name === slug || slugify(cat.name) === slug);
   if (foundByName) return foundByName.name;
 
-  console.warn(`[sample-data] Nenhum nome de categoria encontrado para o slug/nome: ${slug} nos dados de exemplo.`);
-  return slug; // Retorna o próprio slug/nome como fallback se não encontrado
+  // Removido o console.warn daqui, a função getCategoryAssets lidará com fallbacks
+  return undefined; // Retorna undefined se não encontrado para que getCategoryAssets use um fallback
 }
 
 export const getUniqueLotLocations = (): string[] => {
@@ -510,37 +509,72 @@ interface CategoryAssets {
 }
 
 export function getCategoryAssets(categoryNameOrSlug: string): CategoryAssets {
-  const categoryName = getCategoryNameFromSlug(categoryNameOrSlug) || categoryNameOrSlug;
-  const slug = slugify(categoryName);
+  const initialSlug = slugify(categoryNameOrSlug);
+  const category = sampleLotCategories.find(cat => cat.slug === initialSlug || slugify(cat.name) === initialSlug);
+  
+  let resolvedName = categoryNameOrSlug;
+  let resolvedSlug = initialSlug;
+
+  if (category) {
+    resolvedName = category.name;
+    resolvedSlug = category.slug;
+  } else {
+    // Fallback logic if no exact category match, use name as is for placeholders
+    // console.warn(`[getCategoryAssets] Categoria/Slug "${categoryNameOrSlug}" não encontrado diretamente. Usando nome para placeholders.`);
+  }
 
   const defaultAssets: CategoryAssets = {
-    logoUrl: `https://placehold.co/100x100.png?text=${encodeURIComponent(categoryName.charAt(0).toUpperCase())}`,
-    logoAiHint: `logo ${slug}`,
-    bannerUrl: `https://placehold.co/1200x300.png?text=Banner+${encodeURIComponent(categoryName)}`,
-    bannerAiHint: `banner ${slug}`,
-    bannerText: `Descubra os melhores lotes em ${categoryName}`,
+    logoUrl: `https://placehold.co/100x100.png?text=${encodeURIComponent(resolvedName.charAt(0).toUpperCase())}`,
+    logoAiHint: `logo ${resolvedSlug}`,
+    bannerUrl: `https://placehold.co/1200x300.png?text=Banner+${encodeURIComponent(resolvedName)}`,
+    bannerAiHint: `banner ${resolvedSlug}`,
+    bannerText: `Descubra os melhores lotes em ${resolvedName}`,
   };
+  
+  // Specific overrides based on keywords in the resolvedSlug (which is more reliable)
+  if (resolvedSlug.includes('veiculo')) {
+    return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=Carro', logoAiHint: 'icone carro', bannerUrl: 'https://placehold.co/1200x300.png?text=Veiculos+em+Destaque', bannerAiHint: 'carros estrada', bannerText: `Excelentes Ofertas em Veículos - ${resolvedName}` };
+  }
+  if (resolvedSlug.includes('imove')) {
+    return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=Casa', logoAiHint: 'icone casa', bannerUrl: 'https://placehold.co/1200x300.png?text=Oportunidades+Imobiliarias', bannerAiHint: 'imoveis cidade', bannerText: `Seu Novo Lar ou Investimento está aqui - ${resolvedName}` };
+  }
+  if (resolvedSlug.includes('arte') || resolvedSlug.includes('antiguidade')) {
+    return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=Arte', logoAiHint: 'icone arte', bannerUrl: 'https://placehold.co/1200x300.png?text=Leilao+de+Arte', bannerAiHint: 'galeria arte', bannerText: `Obras Raras e Antiguidades - ${resolvedName}` };
+  }
+  if (resolvedSlug.includes('maquinas') || resolvedSlug.includes('equipamentos') || resolvedSlug.includes('agricola')) {
+    return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=Trator', logoAiHint: 'icone trator', bannerUrl: 'https://placehold.co/1200x300.png?text=Maquinario+Agro', bannerAiHint: 'campo trator', bannerText: `Equipamentos Agrícolas e Maquinário Pesado - ${resolvedName}` };
+  }
+  if (resolvedSlug.includes('eletronico') || resolvedSlug.includes('informatica') || resolvedSlug.includes('tecnologia')) {
+    return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=Chip', logoAiHint: 'icone chip placa', bannerUrl: 'https://placehold.co/1200x300.png?text=Tecnologia+e+Eletronicos', bannerAiHint: 'computador smartphone', bannerText: `Os Melhores Gadgets e Eletrônicos - ${resolvedName}` };
+  }
+  if (resolvedSlug.includes('semovente')) {
+    return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=Boi', logoAiHint: 'icone boi cavalo', bannerUrl: 'https://placehold.co/1200x300.png?text=Leilao+Semoventes', bannerAiHint: 'gado pasto', bannerText: `Animais de Qualidade e Procedência - ${resolvedName}` };
+  }
 
-  if (slug.includes('veiculo')) {
-    return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=Carro', logoAiHint: 'icone carro', bannerUrl: 'https://placehold.co/1200x300.png?text=Veiculos+em+Destaque', bannerAiHint: 'carros estrada', bannerText: `Excelentes Ofertas em Veículos - ${categoryName}` };
+  // Fallback for descriptive titles from FilterLinkCards
+  const lowerCaseName = categoryNameOrSlug.toLowerCase();
+  if (lowerCaseName.includes('judicial')) {
+      return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=TJ', logoAiHint: 'justica balanca', bannerUrl: 'https://placehold.co/1200x300.png?text=Leiloes+Judiciais', bannerAiHint: 'martelo tribunal', bannerText: 'Oportunidades Únicas em Leilões Judiciais' };
   }
-  if (slug.includes('imove')) {
-    return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=Casa', logoAiHint: 'icone casa', bannerUrl: 'https://placehold.co/1200x300.png?text=Oportunidades+Imobiliarias', bannerAiHint: 'imoveis cidade', bannerText: `Seu Novo Lar ou Investimento está aqui - ${categoryName}` };
+  if (lowerCaseName.includes('extrajudicial')) {
+      return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=LX', logoAiHint: 'acordo negocios', bannerUrl: 'https://placehold.co/1200x300.png?text=Leiloes+Extrajudiciais', bannerAiHint: 'documentos acordo', bannerText: 'Negociações Diretas e Ágeis em Leilões Extrajudiciais' };
   }
-  if (slug.includes('arte') || slug.includes('antiguidade')) {
-    return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=Arte', logoAiHint: 'icone arte', bannerUrl: 'https://placehold.co/1200x300.png?text=Leilao+de+Arte', bannerAiHint: 'galeria arte', bannerText: `Obras Raras e Antiguidades - ${categoryName}` };
+  if (lowerCaseName.includes('venda direta')) {
+      return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=VD', logoAiHint: 'etiqueta preco', bannerUrl: 'https://placehold.co/1200x300.png?text=Venda+Direta', bannerAiHint: 'loja vitrine', bannerText: 'Compre Itens com Preço Fixo, Sem Disputa de Lances' };
   }
-  if (slug.includes('maquinas') || slug.includes('equipamentos') || slug.includes('agricola')) {
-    return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=Trator', logoAiHint: 'icone trator', bannerUrl: 'https://placehold.co/1200x300.png?text=Maquinario+Agro', bannerAiHint: 'campo trator', bannerText: `Equipamentos Agrícolas e Maquinário Pesado - ${categoryName}` };
+  if (lowerCaseName.includes('segunda praça')) {
+      return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=2P', logoAiHint: 'numero dois leilao', bannerUrl: 'https://placehold.co/1200x300.png?text=Segunda+Praca', bannerAiHint: 'oportunidade desconto', bannerText: 'Novas Chances com Valores Atrativos em Segunda Praça' };
   }
-   if (slug.includes('eletronico') || slug.includes('informatica') || slug.includes('tecnologia')) {
-    return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=Chip', logoAiHint: 'icone chip placa', bannerUrl: 'https://placehold.co/1200x300.png?text=Tecnologia+e+Eletronicos', bannerAiHint: 'computador smartphone', bannerText: `Os Melhores Gadgets e Eletrônicos - ${categoryName}` };
+  if (lowerCaseName.includes('encerrado')) {
+      return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=Fim', logoAiHint: 'calendario finalizado', bannerUrl: 'https://placehold.co/1200x300.png?text=Leiloes+Encerrados', bannerAiHint: 'arquivo historico', bannerText: 'Consulte o Histórico de Resultados de Leilões Encerrados' };
   }
-  if (slug.includes('semovente')) {
-    return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=Boi', logoAiHint: 'icone boi cavalo', bannerUrl: 'https://placehold.co/1200x300.png?text=Leilao+Semoventes', bannerAiHint: 'gado pasto', bannerText: `Animais de Qualidade e Procedência - ${categoryName}` };
+  if (lowerCaseName.includes('cancelado')) {
+      return { ...defaultAssets, logoUrl: 'https://placehold.co/100x100.png?text=X', logoAiHint: 'simbolo cancelado', bannerUrl: 'https://placehold.co/1200x300.png?text=Leiloes+Cancelados', bannerAiHint: 'documento cancelado', bannerText: 'Veja os Leilões que Foram Cancelados' };
   }
+  
   return defaultAssets;
 }
+
 
 // ============================================================================
 // 4. EXPORTED SAMPLE DATA ARRAYS (Processed)
@@ -601,7 +635,7 @@ export const sampleBids: BidInfo[] = sampleLots.flatMap(lot => {
         currentBidPrice += increment;
         const bidTime = createPastDate(Math.floor(Math.random() * 5), Math.floor(Math.random() * 24), Math.floor(Math.random() * 60), lot.endDate ? new Date(lot.endDate) : undefined);
         if (bidTime > now && lot.status === 'ABERTO_PARA_LANCES') continue; // Don't create future bids for open lots
-        if (bidTime > (lot.endDate || now)) continue; // Don't create bids after lot ended
+        if (lot.endDate && bidTime > new Date(lot.endDate)) continue; // Don't create bids after lot ended
 
         bids.push({
             id: `BID-${lot.id}-${uuidv4().substring(0,8)}`,
