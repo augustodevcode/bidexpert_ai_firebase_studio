@@ -3,29 +3,30 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon } from 'lucide-react';
+import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon } from 'lucide-react'; // Adicionado SearchIcon
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
-import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters';
+import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters'; 
 import AuctionCard from '@/components/auction-card';
 import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
 import DirectSaleOfferCard from '@/components/direct-sale-offer-card';
 import type { Auction, Lot, LotCategory, DirectSaleOffer, DirectSaleOfferType } from '@/types';
-import {
+import { 
     sampleAuctions,
     sampleLots,
     sampleDirectSaleOffers,
-    getUniqueLotLocations,
-    getUniqueSellerNames,
+    getUniqueLotLocations, 
+    getUniqueSellerNames, 
     slugify,
-    sampleLotCategories
+    sampleLotCategories 
 } from '@/lib/sample-data';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Importação adicionada
 
 const sortOptionsAuctions = [
   { value: 'relevance', label: 'Relevância' },
@@ -377,7 +378,7 @@ export default function SearchPage() {
           </Sheet>
         </div>
       </form>
-
+      
       <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
         <div className="hidden md:block">
              <SidebarFilters
@@ -390,7 +391,7 @@ export default function SearchPage() {
                 filterContext={currentSearchType as 'auctions' | 'directSales'}
             />
         </div>
-
+        
         <main className="space-y-6">
             <Tabs value={currentSearchType} onValueChange={(value) => handleSearchTypeChange(value as 'auctions' | 'lots' | 'direct_sale')} className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-6">
