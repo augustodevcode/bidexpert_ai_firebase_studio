@@ -29,13 +29,17 @@ export const platformSettingsFormSchema = z.object({
     sellers: z.string().optional(),
   }).optional().nullable(),
   mapSettings: z.object({
-    defaultProvider: z.enum(['google', 'openstreetmap', 'staticImage']).optional().default('openstreetmap'),
-    googleMapsApiKey: z.string().optional().nullable(),
-    staticImageMapZoom: z.coerce.number().min(1).max(20).optional().default(15),
-    staticImageMapMarkerColor: z.string().optional().default('blue'),
+    defaultProvider: z.enum(['google', 'openstreetmap', 'staticImage'], {
+        errorMap: () => ({ message: "Selecione um provedor de mapa válido."})
+    }).optional().default('openstreetmap'),
+    googleMapsApiKey: z.string().max(100, { message: "Chave API do Google Maps não pode exceder 100 caracteres."}).optional().nullable().or(z.literal('')),
+    staticImageMapZoom: z.coerce.number().min(1, {message: "Zoom deve ser entre 1 e 20."}).max(20, {message: "Zoom deve ser entre 1 e 20."}).optional().default(15),
+    staticImageMapMarkerColor: z.string().max(50, {message: "Cor do marcador não pode exceder 50 caracteres."}).optional().default('blue'),
   }).optional(),
 });
 
 export type PlatformSettingsFormValues = z.infer<typeof platformSettingsFormSchema>;
+
+    
 
     

@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { platformSettingsFormSchema, type PlatformSettingsFormValues } from './settings-form-schema';
 import type { PlatformSettings, MapSettings } from '@/types';
-import { Loader2, Save, Palette, Fingerprint, Wrench, Map as MapIcon } from 'lucide-react';
+import { Loader2, Save, Palette, Fingerprint, Wrench, MapPin as MapIcon } from 'lucide-react'; // Renomeado Map para MapIcon para evitar conflito
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea'; 
@@ -234,77 +234,6 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
                   />
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-md flex items-center"><MapIcon className="h-5 w-5 mr-2" /> Configurações de Mapa</CardTitle>
-                <CardDescription>Defina o provedor de mapa padrão e suas configurações.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="mapSettings.defaultProvider"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Provedor de Mapa Padrão</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || 'openstreetmap'}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o provedor" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="staticImage">Imagem Estática (Placeholder)</SelectItem>
-                          <SelectItem value="google">Google Maps (Embed)</SelectItem>
-                          <SelectItem value="openstreetmap">OpenStreetMap (Embed)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>Escolha como os mapas serão exibidos por padrão.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="mapSettings.googleMapsApiKey"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Chave API Google Maps (Opcional)</FormLabel>
-                        <FormControl><Input placeholder="Sua chave API do Google Maps" {...field} value={field.value ?? ''} /></FormControl>
-                        <FormDescription>Necessária se usar "Google Maps (Embed)" ou imagens estáticas do Google.</FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <div className="grid md:grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="mapSettings.staticImageMapZoom"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Zoom Imagem Estática Padrão</FormLabel>
-                            <FormControl><Input type="number" min="1" max="20" {...field} value={field.value ?? 15} 
-                                onChange={e => field.onChange(parseInt(e.target.value, 10))}
-                            /></FormControl>
-                            <FormDescription>Nível de zoom para mapas estáticos (1-20).</FormDescription>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="mapSettings.staticImageMapMarkerColor"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Cor do Marcador (Estático)</FormLabel>
-                            <FormControl><Input placeholder="Ex: red, blue, 0xFF0000" {...field} value={field.value ?? 'blue'} /></FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-              </CardContent>
-            </Card>
           </section>
         )}
 
@@ -319,6 +248,74 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
                 Em breve, você poderá gerenciar temas de cores, fontes e outros aspectos visuais da plataforma aqui.
               </p>
             </div>
+          </section>
+        )}
+
+        {activeSection === 'maps' && (
+          <section className="space-y-6">
+             <FormField
+                  control={form.control}
+                  name="mapSettings.defaultProvider"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Provedor de Mapa Padrão</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || 'openstreetmap'}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o provedor de mapa padrão" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="google">Google Maps (Embed API)</SelectItem>
+                          <SelectItem value="openstreetmap">OpenStreetMap (Embed)</SelectItem>
+                          <SelectItem value="staticImage">Imagem Estática (Configurada no Lote)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>Escolha o serviço de mapa que será usado por padrão no site.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="mapSettings.googleMapsApiKey"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Chave API do Google Maps (Opcional)</FormLabel>
+                        <FormControl><Input placeholder="Sua chave API do Google Maps (se usar Google Maps)" {...field} value={field.value ?? ''} /></FormControl>
+                        <FormDescription>Necessária se "Google Maps" for o provedor padrão ou para imagens estáticas do Google.</FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <div className="grid md:grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="mapSettings.staticImageMapZoom"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Zoom Padrão (Imagem Estática)</FormLabel>
+                            <FormControl><Input type="number" min="1" max="20" {...field} value={field.value ?? 15}
+                                 onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))}
+                             /></FormControl>
+                            <FormDescription>Nível de zoom (1-20) para mapas estáticos (se usados).</FormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="mapSettings.staticImageMapMarkerColor"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Cor do Marcador (Imagem Estática)</FormLabel>
+                            <FormControl><Input placeholder="Ex: red, blue, 0xFF0000" {...field} value={field.value ?? 'blue'} /></FormControl>
+                            <FormDescription>Cor do marcador para mapas estáticos (se usados).</FormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
           </section>
         )}
         
@@ -337,3 +334,4 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
     
 
     
+

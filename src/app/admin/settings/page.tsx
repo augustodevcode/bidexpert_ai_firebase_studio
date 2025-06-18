@@ -6,45 +6,41 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { getPlatformSettings } from './actions';
 import SettingsForm from './settings-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings as SettingsIcon, Palette, Fingerprint, Wrench, Loader2 } from 'lucide-react';
+import { Settings as SettingsIcon, Palette, Fingerprint, Wrench, Loader2, MapPin } from 'lucide-react'; // Adicionado MapPin
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { PlatformSettings } from '@/types';
-import { useToast } from '@/hooks/use-toast'; // Added useToast import
+import { useToast } from '@/hooks/use-toast'; 
 
 const settingsSections = [
     { id: 'identity', label: 'Identidade do Site', icon: Fingerprint, description: 'Título, tagline, logo e favicon.' },
     { id: 'general', label: 'Configurações Gerais', icon: Wrench, description: 'Caminhos de mídia, máscaras de ID, etc.' },
     { id: 'appearance', label: 'Aparência e Temas', icon: Palette, description: 'Gerencie temas de cores e estilos visuais.' },
+    { id: 'maps', label: 'Configurações de Mapa', icon: MapPin, description: 'Provedor de mapa padrão e chaves API.' },
 ];
 
 interface AdminSettingsPageContentProps {
     initialSettings: PlatformSettings | null;
     initialError?: string | null;
-    onRetry?: () => void; // Added onRetry prop
+    onRetry?: () => void; 
 }
 
 function AdminSettingsPageContent({ initialSettings, initialError, onRetry }: AdminSettingsPageContentProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
-    // Settings state will be managed by the form now if needed, or directly passed.
-    // This component can become simpler if settings are only read here and form handles its own state.
-    const [activeSection, setActiveSection] = useState<string>('identity');
+    const [activeSection, setActiveSection] = useState<string>(settingsSections[0]?.id || 'identity'); // Default to first or identity
 
     useEffect(() => {
         const section = searchParams.get('section');
         if (section && settingsSections.some(s => s.id === section)) {
             setActiveSection(section);
-        } else if (settingsSections.length > 0) {
-            // Default to the first section if no valid section is in query params
-            // or if the router hasn't pushed the new query param yet.
-            // To prevent unnecessary redirects, only set if different or not set.
-            if (activeSection !== settingsSections[0].id && !searchParams.get('section')) {
+        } else if (!searchParams.get('section') && settingsSections.length > 0) {
+            // Only set if 'section' is not in URL and activeSection is not already the default
+             if (activeSection !== settingsSections[0].id) {
                  router.replace(`/admin/settings?section=${settingsSections[0].id}`, { scroll: false });
-            }
+             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchParams, router]); // Removed activeSection to prevent loop with router.replace
+    }, [searchParams, router, activeSection]); // activeSection added to prevent unnecessary replace
 
     if (initialError) {
         return (
@@ -63,7 +59,7 @@ function AdminSettingsPageContent({ initialSettings, initialError, onRetry }: Ad
         );
     }
     
-    if (!initialSettings) { // Changed from settings to initialSettings
+    if (!initialSettings) { 
         return (
              <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -125,7 +121,7 @@ function AdminSettingsPageContent({ initialSettings, initialError, onRetry }: Ad
 
 
 export default function AdminSettingsPageWrapper() {
-    const { toast } = useToast(); // Moved toast here
+    const { toast } = useToast(); 
     const [initialSettings, setInitialSettings] = useState<PlatformSettings | null>(null);
     const [initialError, setInitialError] = useState<string | null>(null);
     const [isLoadingInitial, setIsLoadingInitial] = useState(true);
@@ -144,8 +140,7 @@ export default function AdminSettingsPageWrapper() {
         } finally {
             setIsLoadingInitial(false);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [toast]); // toast added as dependency if used within fetchInitialSettings
+    }, [toast]); 
 
     useEffect(() => {
         fetchInitialSettings();
