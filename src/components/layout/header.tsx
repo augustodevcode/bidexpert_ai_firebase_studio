@@ -478,24 +478,25 @@ export default function Header() {
             </form>
            </div>
            {/* Search and MapPin icons */}
-          <div className="flex items-center space-x-1 sm:space-x-2">
-            <Button variant="ghost" size="icon" className="md:hidden hover:bg-accent focus-visible:ring-accent-foreground" aria-label="Buscar">
-              <SearchIcon className="h-5 w-5 sm:h-6 sm:w-6" />
-            </Button>
+          <div className="flex items-center space-x-0.5 sm:space-x-1"> {/* Reduzido o space-x */}
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" asChild className="hover:bg-accent focus-visible:ring-accent-foreground" aria-label="Buscar por Localização">
+                    <Button variant="ghost" size="icon" className="hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" aria-label="Buscar por Localização">
                         <Link href="/map-search">
-                            <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />
+                            <MapPin className="h-4 w-4 sm:h-5 sm:w-5" />
                         </Link>
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent><p>Buscar por Localização (Em Breve)</p></TooltipContent>
+                <TooltipContent><p>Busca por Localização</p></TooltipContent>
             </Tooltip>
+            {/* Mobile search icon - shown only on mobile, removed md:hidden */}
+            <Button variant="ghost" size="icon" className="md:hidden hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" aria-label="Buscar">
+              <SearchIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+            </Button>
             {user && (
-              <Button variant="ghost" size="icon" className="relative hover:bg-accent focus-visible:ring-accent-foreground sm:inline-flex" asChild aria-label="Notificações">
+              <Button variant="ghost" size="icon" className="relative hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" asChild aria-label="Notificações">
                 <Link href="/dashboard/notifications">
-                  <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
+                  <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
                   {placeholderNotificationsCount > 0 && (
                     <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-accent-foreground text-accent border-accent">
                       {placeholderNotificationsCount}
@@ -504,9 +505,9 @@ export default function Header() {
                 </Link>
               </Button>
             )}
-            <Button variant="ghost" size="icon" className="relative hover:bg-accent focus-visible:ring-accent-foreground sm:inline-flex" asChild aria-label="Favoritos">
+            <Button variant="ghost" size="icon" className="relative hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" asChild aria-label="Favoritos">
               <Link href="/dashboard/favorites">
-                <Heart className="h-5 w-5 sm:h-6 sm:w-6" />
+                <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
                 {isClient && <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-accent-foreground text-accent border-accent">{getFavoriteLotIdsFromStorage().length > 0 ? getFavoriteLotIdsFromStorage().length : 0}</Badge>}
               </Link>
             </Button>
@@ -559,8 +560,8 @@ export default function Header() {
 
       {/* Breadcrumbs Bar */}
       {isClient && pathname !== '/' && (
-        <nav className="bg-secondary text-secondary-foreground text-xs py-2 border-b">
-            <div className="container mx-auto px-4 h-auto flex items-center">
+        <nav aria-label="Breadcrumb" className="bg-secondary text-secondary-foreground text-xs py-2 border-b">
+            <div className="container mx-auto px-4">
                 <DynamicBreadcrumbs />
             </div>
         </nav>
@@ -569,4 +570,7 @@ export default function Header() {
   );
 }
 
+    
+
+      
     

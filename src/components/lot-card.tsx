@@ -21,7 +21,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import LotPreviewModal from './lot-preview-modal';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import LotMapPreviewModal from './lot-map-preview-modal'; // Importar o novo modal de mapa
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TimeRemainingBadgeProps {
   endDate: Date | string;
@@ -101,15 +102,17 @@ const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({
 interface LotCardProps {
   lot: Lot;
   badgeVisibilityConfig?: BadgeVisibilitySettings;
+  platformSettingsProp?: PlatformSettings; // Para evitar dependência direta de samplePlatformSettings se passado de cima
 }
 
-const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConfig }) => {
+const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConfig, platformSettingsProp }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false); // Estado para o modal do mapa
   const { toast } = useToast();
   
-  const platformSettings = samplePlatformSettings; // Use as configurações globais
+  const platformSettings = platformSettingsProp || samplePlatformSettings; 
   const mentalTriggersGlobalSettings = platformSettings.mentalTriggerSettings || {};
   const sectionBadges = badgeVisibilityConfig || platformSettings.sectionBadgeVisibility?.searchGrid || {}; 
 
@@ -151,6 +154,12 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
     setIsPreviewModalOpen(true);
   };
 
+  const handleMapPreviewOpen = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsMapModalOpen(true);
+  };
+  
   const getSocialLink = (platform: 'x' | 'facebook' | 'whatsapp' | 'email', url: string, title: string) => {
     const encodedUrl = encodeURIComponent(url);
     const encodedTitle = encodeURIComponent(title);
@@ -275,6 +284,16 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
                 </TooltipTrigger>
                 <TooltipContent><p>Pré-visualizar Lote</p></TooltipContent>
               </Tooltip>
+              {(lot.latitude || lot.longitude || lot.mapAddress || lot.mapEmbedUrl) && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handleMapPreviewOpen} aria-label="Ver no Mapa">
+                      <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent><p>Ver no Mapa</p></TooltipContent>
+                </Tooltip>
+              )}
               <DropdownMenu>
                 <Tooltip>
                     <TooltipTrigger asChild>
@@ -377,16 +396,22 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
     </Card>
     <LotPreviewModal
         lot={lot}
-        auction={sampleAuctions.find(a => a.id === lot.auctionId)} // Pass the parent auction if available
+        auction={sampleAuctions.find(a => a.id === lot.auctionId)}
         isOpen={isPreviewModalOpen}
         onClose={() => setIsPreviewModalOpen(false)}
+      />
+    <LotMapPreviewModal
+        lot={lot}
+        platformSettings={platformSettings}
+        isOpen={isMapModalOpen}
+        onClose={() => setIsMapModalOpen(false)}
       />
     </>
   );
 }
 
 
-export default function LotCard({ lot, badgeVisibilityConfig }: LotCardProps) {
+export default function LotCard({ lot, badgeVisibilityConfig, platformSettingsProp }: LotCardProps) {
     const [isClient, setIsClient] = useState(false);
     useEffect(() => {
       setIsClient(true);
@@ -412,8 +437,8 @@ export default function LotCard({ lot, badgeVisibilityConfig }: LotCardProps) {
       );
     }
   
-    return <LotCardClientContent lot={lot} badgeVisibilityConfig={badgeVisibilityConfig} />;
+    return <LotCardClientContent lot={lot} badgeVisibilityConfig={badgeVisibilityConfig} platformSettingsProp={platformSettingsProp} />;
   }
 
 
-
+    

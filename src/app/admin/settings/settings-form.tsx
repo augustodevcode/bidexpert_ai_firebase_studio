@@ -254,11 +254,12 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="staticImage">Imagem Estática (Google/Placehold)</SelectItem>
-                          <SelectItem value="google">Google Maps (Embed)</SelectItem>
+                          <SelectItem value="staticImage">Imagem Estática (Padrão)</SelectItem>
+                          <SelectItem value="google">Google Maps (Embed API)</SelectItem>
                           <SelectItem value="openstreetmap">OpenStreetMap (Embed)</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormDescription>Escolha como os mapas serão exibidos por padrão.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -270,7 +271,7 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
                         <FormItem>
                         <FormLabel>Chave API Google Maps (Opcional)</FormLabel>
                         <FormControl><Input placeholder="Sua chave API do Google Maps" {...field} value={field.value ?? ''} /></FormControl>
-                        <FormDescription>Necessária se usar "Google Maps (Embed)" ou "Imagem Estática (Google)".</FormDescription>
+                        <FormDescription>Necessária se usar "Google Maps (Embed)" ou imagens estáticas do Google.</FormDescription>
                         <FormMessage />
                         </FormItem>
                     )}
@@ -281,8 +282,10 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
                         name="mapSettings.staticImageMapZoom"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Zoom Imagem Estática</FormLabel>
-                            <FormControl><Input type="number" min="1" max="20" {...field} value={field.value ?? 15} /></FormControl>
+                            <FormLabel>Zoom Imagem Estática Padrão</FormLabel>
+                            <FormControl><Input type="number" min="1" max="20" {...field} value={field.value ?? 15} 
+                                onChange={e => field.onChange(parseInt(e.target.value, 10))}
+                            /></FormControl>
                             <FormDescription>Nível de zoom para mapas estáticos (1-20).</FormDescription>
                             <FormMessage />
                             </FormItem>
@@ -330,5 +333,7 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
     </Form>
   );
 }
+
+    
 
     

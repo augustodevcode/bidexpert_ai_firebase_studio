@@ -11,57 +11,8 @@ export type AdminFieldValue = FirebaseAdminFieldValue;
 export type ClientTimestamp = FirebaseClientTimestamp;
 
 // Generic type for properties that could be any of these, or a JS Date
-export type AnyTimestamp = ServerTimestamp | ClientTimestamp | Date | null | undefined;
+export type AnyTimestamp = ServerTimestamp | ClientTimestamp | Date | string | null | undefined;
 
-export interface ThemeColors {
-  [colorVariable: string]: string; // e.g., '--primary': 'hsl(25, 95%, 53%)'
-}
-
-export interface Theme {
-  name: string;
-  colors: ThemeColors;
-}
-
-export interface Bid {
-  bidder: string;
-  amount: number;
-  timestamp: AnyTimestamp;
-}
-
-export interface AuctionStage {
-  name: string; // ex: "1ª Praça"
-  endDate: AnyTimestamp;
-  statusText?: string; // ex: "Encerramento"
-}
-
-export type AuctionStatus = 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'ABERTO' | 'CANCELADO' | 'SUSPENSO';
-export type LotStatus = 'ABERTO_PARA_LANCES' | 'EM_BREVE' | 'ENCERRADO' | 'VENDIDO' | 'NAO_VENDIDO';
-export type UserDocumentStatus = 'NOT_SENT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'PENDING_ANALYSIS';
-export type UserHabilitationStatus = 'PENDING_DOCUMENTS' | 'PENDING_ANALYSIS' | 'HABILITADO' | 'REJECTED_DOCUMENTS' | 'BLOCKED';
-export type UserBidStatus = 'GANHANDO' | 'PERDENDO' | 'SUPERADO' | 'ARREMATADO' | 'NAO_ARREMATADO';
-export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO';
-
-export interface DocumentType {
-  id: string;
-  name: string;
-  description?: string;
-  isRequired: boolean;
-  allowedFormats?: string[];
-  displayOrder?: number;
-}
-
-export interface UserDocument {
-  id: string;
-  documentTypeId: string;
-  userId: string;
-  fileUrl?: string;
-  status: UserDocumentStatus;
-  uploadDate?: AnyTimestamp;
-  analysisDate?: AnyTimestamp;
-  analystId?: string;
-  rejectionReason?: string;
-  documentType: DocumentType;
-}
 
 export interface LotCategory {
     id: string;
@@ -74,156 +25,104 @@ export interface LotCategory {
     subcategories?: string[];
 }
 
-export interface MediaItem {
+export interface StateInfo {
   id: string;
-  fileName: string;
-  uploadedAt: AnyTimestamp;
-  uploadedBy?: string;
-  title?: string;
-  altText?: string;
-  caption?: string;
-  description?: string;
-  mimeType: string;
-  sizeBytes: number;
-  dimensions?: { width: number; height: number };
-  urlOriginal: string;
-  urlThumbnail: string;
-  urlMedium: string;
-  urlLarge: string;
-  linkedLotIds?: string[];
-  dataAiHint?: string;
+  name: string;
+  uf: string;
+  slug: string;
+  cityCount?: number;
+  createdAt: AnyTimestamp;
+  updatedAt: AnyTimestamp;
 }
+export type StateFormData = Omit<StateInfo, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'cityCount'>;
 
-export interface Lot {
+export interface CityInfo {
+  id: string; // Pode ser `stateSlug-citySlug` ou um ID numérico do DB
+  name: string;
+  slug: string;
+  stateId: string; // ID/Slug do estado pai
+  stateUf: string;
+  ibgeCode?: string;
+  lotCount?: number;
+  createdAt: AnyTimestamp;
+  updatedAt: AnyTimestamp;
+}
+export type CityFormData = Omit<CityInfo, 'id' | 'slug' | 'stateUf' | 'createdAt' | 'updatedAt' | 'lotCount'>;
+
+
+export interface AuctioneerProfileInfo {
   id: string;
   publicId: string;
-  auctionId: string;
-  title: string;
-  number?: string;
-  imageUrl: string;
-  dataAiHint?: string;
-  galleryImageUrls?: string[];
-  mediaItemIds?: string[];
-  status: LotStatus;
-  stateId?: string;
-  cityId?: string;
-  cityName?: string;
-  stateUf?: string;
-  type: string; // Nome da Categoria
-  categoryId?: string; // ID da Categoria
-  views?: number;
-  auctionName?: string;
-  price: number;
-  initialPrice?: number;
-  secondInitialPrice?: number;
-  endDate: AnyTimestamp;
-  bidsCount?: number;
-  isFavorite?: boolean;
-  isFeatured?: boolean;
-  description?: string;
-
-  year?: number;
-  make?: string;
-  model?: string;
-  series?: string;
-
-  stockNumber?: string;
-  sellingBranch?: string;
-  vin?: string;
-  vinStatus?: string;
-  lossType?: string;
-  primaryDamage?: string;
-  titleInfo?: string;
-  titleBrand?: string;
-  startCode?: string;
-  hasKey?: boolean;
-  odometer?: string;
-  airbagsStatus?: string;
-
-  bodyStyle?: string;
-  engineDetails?: string;
-  transmissionType?: string;
-  driveLineType?: string;
-  fuelType?: string;
-  cylinders?: string;
-  restraintSystem?: string;
-  exteriorInteriorColor?: string;
-  options?: string;
-  manufacturedIn?: string;
-  vehicleClass?: string;
-
-  lotSpecificAuctionDate?: AnyTimestamp | null;
-  secondAuctionDate?: AnyTimestamp | null;
-  vehicleLocationInBranch?: string;
-  laneRunNumber?: string;
-  aisleStall?: string;
-  actualCashValue?: string;
-  estimatedRepairCost?: string;
-  sellerName?: string;
-  sellerId?: string;
-  auctioneerName?: string;
-  auctioneerId?: string;
-
-  condition?: string;
-  createdAt?: AnyTimestamp;
-  updatedAt?: AnyTimestamp;
-
-  // Campos de gatilhos mentais
-  discountPercentage?: number;
-  additionalTriggers?: string[]; // e.g., ['MAIS_VISITADO', 'LANCE_QUENTE']
-  isExclusive?: boolean;
-
-  // Campos de localização
-  latitude?: number | null;
-  longitude?: number | null;
-  mapAddress?: string | null; 
-  mapEmbedUrl?: string | null; 
-  mapStaticImageUrl?: string | null;
+  name: string;
+  slug: string;
+  registrationNumber?: string | null;
+  contactName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
+  website?: string | null;
+  logoUrl?: string | null;
+  dataAiHintLogo?: string | null;
+  description?: string | null;
+  memberSince?: AnyTimestamp;
+  rating?: number | null;
+  auctionsConductedCount?: number;
+  totalValueSold?: number;
+  userId?: string | null; // Link to User model if the auctioneer is a platform user
+  createdAt: AnyTimestamp;
+  updatedAt: AnyTimestamp;
 }
 
-// Este tipo é usado pelo formulário, que envia nomes
-export type LotFormData = Omit<Lot,
-  'id' |
-  'publicId' |
-  'createdAt' |
-  'updatedAt' |
-  'endDate' |
-  'lotSpecificAuctionDate' |
-  'secondAuctionDate' |
-  'isFavorite' |
-  'isFeatured' |
-  'views' |
-  'bidsCount' |
-  'galleryImageUrls' |
-  'dataAiHint' |
-  'cityName' |
-  'stateUf' |
-  'auctioneerId' |
-  'mediaItemIds' |
-  'categoryId' |
-  'discountPercentage' |
-  'additionalTriggers' |
-  'isExclusive' |
-  'auctionName' | // auctionName is derived, not directly submitted
-  'sellerName' | // sellerName is derived, not directly submitted
-  'auctioneerName' // auctioneerName is derived, not directly submitted
-> & {
-  endDate: Date;
-  lotSpecificAuctionDate?: Date | null;
-  secondAuctionDate?: Date | null;
-  stateId?: string | null;
-  cityId?: string | null;
-  galleryImageUrls?: string[];
-  mediaItemIds?: string[];
-  categoryId?: string;
-  isExclusive?: boolean;
-  latitude?: number | null;
-  longitude?: number | null;
-  mapAddress?: string | null;
-  mapEmbedUrl?: string | null;
-  mapStaticImageUrl?: string | null;
+export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'auctionsConductedCount' | 'totalValueSold'>;
+
+
+export interface SellerProfileInfo {
+  id: string;
+  publicId: string;
+  name: string; 
+  slug: string;
+  contactName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
+  website?: string | null;
+  logoUrl?: string | null;
+  dataAiHintLogo?: string | null;
+  description?: string | null;
+  memberSince?: AnyTimestamp;
+  rating?: number | null;
+  activeLotsCount?: number;
+  totalSalesValue?: number;
+  auctionsFacilitatedCount?: number;
+  userId?: string | null; 
+  createdAt: AnyTimestamp;
+  updatedAt: AnyTimestamp;
+  
+  cnpj?: string;
+  razaoSocial?: string;
+  inscricaoEstadual?: string;
+}
+
+export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'activeLotsCount' | 'totalSalesValue' | 'auctionsFacilitatedCount' | 'userId'> & {
+  userId?: string;
 };
 
+export interface AuctionStage {
+  name: string; // ex: "1ª Praça"
+  endDate: AnyTimestamp; // Timestamp ou string ISO
+  statusText?: string; // ex: "Encerramento", "Abre em"
+  // Outros campos específicos da praça, se necessário
+  initialPrice?: number; // Lance inicial para esta praça
+}
+
+export type AuctionStatus = 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO';
+export type LotStatus = 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'VENDIDO' | 'NAO_VENDIDO';
 
 export interface Auction {
   id: string;
@@ -239,8 +138,8 @@ export interface Auction {
   auctioneerId?: string; // ID do Leiloeiro
   seller?: string; // Nome do Comitente
   sellerId?: string; // ID do Comitente
-  auctionDate: AnyTimestamp;
-  endDate?: AnyTimestamp | null;
+  auctionDate: AnyTimestamp; // Data principal do leilão (e.g., 1ª praça)
+  endDate?: AnyTimestamp | null; // Encerramento geral do leilão (e.g. fim 2ª praça)
   auctionStages?: AuctionStage[];
   city?: string;
   state?: string;
@@ -249,108 +148,244 @@ export interface Auction {
   documentsUrl?: string;
   totalLots?: number;
   visits?: number;
-
-  lots?: Lot[];
+  lots?: Lot[]; // Agora é opcional no tipo principal para evitar redundância se já buscado
   initialOffer?: number;
   isFavorite?: boolean;
   currentBid?: number;
   bidsCount?: number;
   sellingBranch?: string;
-  vehicleLocation?: string;
-
+  vehicleLocation?: string; // Para leilões de veículos, local principal
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
   auctioneerLogoUrl?: string;
-  auctioneerName?: string;
+  auctioneerName?: string; // Redundante se auctioneerId está presente e resolvido
 }
 
-// Este tipo é usado pelo formulário, que envia nomes
-export type AuctionFormValues = Omit<Auction, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' | 'lots' | 'totalLots' | 'visits' | 'auctionStages' | 'initialOffer' | 'isFavorite' | 'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' | 'categoryId' | 'auctioneerId' | 'sellerId'> & {
-  auctionDate: Date;
-  endDate?: Date | null;
+// Usado para forms, onde IDs podem ser nomes/slugs inicialmente
+export type AuctionFormData = Omit<Auction, 
+  'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' | 
+  'lots' | 'totalLots' | 'visits' | 'auctionStages' | 'isFavorite' | 
+  'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' |
+  'categoryId' | 'auctioneerId' | 'sellerId' 
+> & {
+  auctionDate: Date; // Para o form, esperamos um objeto Date
+  endDate?: Date | null; // Para o form, esperamos um objeto Date ou null
+  auctionStages?: Array<Omit<AuctionStage, 'endDate'> & {endDate: Date}>;
+  // category, auctioneer, seller são strings que serão resolvidas para IDs
 };
 
-// Este tipo é o que a action vai preparar para o adapter, com IDs resolvidos
-export type AuctionDbData = Omit<AuctionFormValues, 'category' | 'auctioneer' | 'seller'> & {
+// Usado para o DB Adapter, onde IDs já devem estar resolvidos
+export type AuctionDbData = Omit<AuctionFormData, 'category' | 'auctioneer' | 'seller'> & {
   categoryId?: string;
   auctioneerId?: string;
-  sellerId?: string | null;
+  sellerId?: string | null; // pode ser opcional
 };
 
 
-export type UserRoleType = 'ADMINISTRATOR' | 'AUCTION_ANALYST' | 'USER' | 'CONSIGNOR' | 'AUCTIONEER';
-
-export interface Role {
+export interface Lot {
   id: string;
-  name: string;
-  name_normalized?: string;
+  publicId: string;
+  auctionId: string;
+  title: string;
+  number?: string; // Número do lote dentro do leilão
+  imageUrl: string;
+  dataAiHint?: string;
+  galleryImageUrls?: string[];
+  mediaItemIds?: string[]; // IDs de MediaItem da galeria
+  status: LotStatus;
+  stateId?: string; 
+  cityId?: string;  
+  cityName?: string;
+  stateUf?: string;
+  type: string; // Nome da Categoria
+  categoryId?: string; // ID da Categoria
+  views?: number;
+  auctionName?: string; // Nome do leilão pai (para display)
+  
+  // Preços e Lances
+  price: number; // Lance atual ou inicial se não houver lances
+  initialPrice?: number; // Lance inicial da 1ª praça / valor base
+  secondInitialPrice?: number | null; // Lance inicial da 2ª praça
+
+  // Datas
+  endDate: AnyTimestamp; // Data de encerramento deste lote específico
+  auctionDate?: AnyTimestamp; // Data principal do leilão (pode vir do Auction)
+  lotSpecificAuctionDate?: AnyTimestamp | null; // Se o lote tem data/hora de início específica
+  secondAuctionDate?: AnyTimestamp | null; // Data da segunda praça, se aplicável
+  
+  bidsCount?: number;
+  isFavorite?: boolean;
+  isFeatured?: boolean;
   description?: string;
-  permissions: string[];
-  createdAt: AnyTimestamp;
-  updatedAt: AnyTimestamp;
-}
+  
+  // Campos específicos de veículos
+  year?: number;
+  make?: string; // Marca
+  model?: string;
+  series?: string;
 
-export type RoleFormData = Omit<Role, 'id' | 'createdAt' | 'updatedAt' | 'name_normalized'>;
+  // Outros campos comuns
+  stockNumber?: string;
+  sellingBranch?: string; // Filial de venda
 
+  // Detalhes do veículo (extraídos do HTML de exemplo da Land.com)
+  vin?: string; // Chassi
+  vinStatus?: string; // Status do Chassi (ex: Remarcado)
+  lossType?: string; // Tipo de Sinistro (ex: Colisão, Roubo/Furto)
+  primaryDamage?: string; // Dano Principal (ex: Dianteiro, Traseiro)
+  titleInfo?: string; // Informação do Título/Documento (ex: Aguardando Documento, Em Branco)
+  titleBrand?: string; // Marca do Título (ex: Salvado, Recuperado de Financiamento)
+  startCode?: string; // Código de Partida (ex: Funciona e Anda, Não Liga)
+  hasKey?: boolean; // Possui Chave? (Sim/Não)
+  odometer?: string; // Hodômetro (ex: 120545 MILHAS)
+  airbagsStatus?: string; // Status dos Airbags (ex: Intactos, Deflagrados)
 
-export interface UserProfileData {
-  uid: string;
-  email: string;
-  fullName: string;
-  password?: string;
-  roleId?: string;
-  roleName?: string;
-  permissions?: string[];
-  habilitationStatus?: UserHabilitationStatus;
-  cpf?: string;
-  rgNumber?: string;
-  rgIssuer?: string;
-  rgIssueDate?: AnyTimestamp;
-  rgState?: string;
-  dateOfBirth?: AnyTimestamp;
-  cellPhone?: string;
-  homePhone?: string;
-  gender?: string;
-  profession?: string;
-  nationality?: string;
-  maritalStatus?: string;
-  propertyRegime?: string;
-  spouseName?: string;
-  spouseCpf?: string;
-  zipCode?: string;
-  street?: string;
-  number?: string;
-  complement?: string;
-  neighborhood?: string;
-  city?: string;
-  state?: string;
-  status?: string;
-  optInMarketing?: boolean;
+  // Detalhes da propriedade/item
+  bodyStyle?: string; // Estilo da Carroceria (ex: SEDAN 4 PORTAS)
+  engineDetails?: string; // Motor (ex: 2.0L 4)
+  transmissionType?: string; // Transmissão (ex: AUTOMÁTICA)
+  driveLineType?: string; // Tração (ex: DIANTEIRA)
+  fuelType?: string; // Combustível (ex: GASOLINA)
+  cylinders?: string; // Cilindros (ex: 4 CILINDROS)
+  restraintSystem?: string; // Sistema de Retenção (ex: Airbags Duplos Frontais/Laterais)
+  exteriorInteriorColor?: string; // Cor Externa/Interna (ex: AZUL/PRETO)
+  options?: string; // Opcionais (ex: AR CONDICIONADO,TETO SOLAR)
+  manufacturedIn?: string; // Fabricado Em (ex: ESTADOS UNIDOS)
+  vehicleClass?: string; // Classe do Veículo
+
+  // Informações logísticas específicas do lote/local
+  vehicleLocationInBranch?: string; // Localização do Veículo na Filial (ex: Pátio A, Setor 3)
+  laneRunNumber?: string; // Pista / Número de Corrida
+  aisleStall?: string; // Corredor / Vaga
+
+  // Valores adicionais
+  actualCashValue?: string; // Valor Real em Dinheiro (VCV)
+  estimatedRepairCost?: string; // Custo Estimado de Reparo
+
+  // Informações de Vendedor e Leiloeiro diretamente no lote, se necessário
+  sellerName?: string;
+  sellerId?: string; // ID do Comitente/Vendedor associado
+  auctioneerName?: string;
+  auctioneerId?: string; // ID do Leiloeiro associado
+
+  condition?: string;
   createdAt?: AnyTimestamp;
   updatedAt?: AnyTimestamp;
-  avatarUrl?: string;
-  dataAiHint?: string;
 
-  activeBids?: number;
-  auctionsWon?: number;
-  itemsSold?: number;
+  discountPercentage?: number;
+  additionalTriggers?: string[];
+  isExclusive?: boolean;
 
-  sellerProfileId?: string;
-
-  // Novos campos para PJ e Comitente
-  accountType?: 'PHYSICAL' | 'LEGAL' | 'DIRECT_SALE_CONSIGNOR';
-  razaoSocial?: string;
-  cnpj?: string;
-  inscricaoEstadual?: string;
-  websiteComitente?: string;
+  // Campos de localização para mapa
+  latitude?: number | null;
+  longitude?: number | null;
+  mapAddress?: string | null; 
+  mapEmbedUrl?: string | null; 
+  mapStaticImageUrl?: string | null; 
 }
 
-
-export type UserProfileWithPermissions = UserProfileData & {
-  // Se houver campos específicos que combinam UserProfileData e Role,
-  // eles podem ser definidos aqui, mas a herança básica já inclui permissions e roleName.
+export type LotFormData = Omit<Lot, 
+  'id' | 
+  'publicId' | 
+  'createdAt' | 
+  'updatedAt' | 
+  'endDate' | 
+  'lotSpecificAuctionDate' | 
+  'secondAuctionDate' |
+  'isFavorite' | 
+  'isFeatured' |
+  'views' |           // Gerenciado pelo sistema
+  'bidsCount' |       // Gerenciado pelo sistema
+  'galleryImageUrls' | // Será gerenciado por mediaItemIds
+  'dataAiHint' |      // Será gerenciado por mediaItems
+  'cityName' |        // Derivado de cityId
+  'stateUf' |         // Derivado de stateId
+  'auctioneerName' |
+  'sellerName' |
+  'type' |
+  'auctionName'       // auctionName virá de auctionId selecionado
+> & {
+  endDate: Date;
+  lotSpecificAuctionDate?: Date | null;
+  secondAuctionDate?: Date | null;
+  type: string; // No form, usamos o nome da categoria para popular o select, que será o categoryId.
+  views?: number;
+  bidsCount?: number;
+  mediaItemIds?: string[];
+  galleryImageUrls?: string[]; // Mantemos para conveniência, mas a fonte da verdade será mediaItemIds
 };
 
+// Tipo para inserir/atualizar no banco, onde nomes de categoria/leiloeiro são IDs
+export type LotDbData = Omit<LotFormData, 'type' | 'auctionName' | 'sellerName' | 'auctioneerName' > & {
+  categoryId?: string;
+  auctioneerId?: string;
+  sellerId?: string;
+};
+
+export type BidInfo = {
+  id: string;
+  lotId: string;
+  auctionId: string;
+  bidderId: string; // UID do usuário
+  bidderDisplay: string; // Nome para exibição (pode ser anônimo ou nome real)
+  amount: number;
+  timestamp: AnyTimestamp;
+};
+
+export type Review = {
+  id: string;
+  lotId: string;
+  auctionId: string; // Contexto do leilão pode ser útil
+  userId: string;
+  userDisplayName: string;
+  rating: number; // e.g., 1-5
+  comment: string;
+  createdAt: AnyTimestamp;
+  updatedAt?: AnyTimestamp;
+};
+
+export type LotQuestion = {
+  id: string;
+  lotId: string;
+  auctionId: string;
+  userId: string;
+  userDisplayName: string;
+  questionText: string;
+  createdAt: AnyTimestamp;
+  answerText?: string;
+  answeredAt?: AnyTimestamp;
+  answeredByUserId?: string; // UID do admin/vendedor que respondeu
+  answeredByUserDisplayName?: string;
+  isPublic?: boolean; // Se a pergunta/resposta deve ser visível para outros
+};
+
+export type UserDocumentStatus = 'NOT_SENT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'PENDING_ANALYSIS';
+export type UserHabilitationStatus = 'PENDING_DOCUMENTS' | 'PENDING_ANALYSIS' | 'HABILITADO' | 'REJECTED_DOCUMENTS' | 'BLOCKED';
+
+export interface DocumentType {
+  id: string;
+  name: string;
+  description?: string;
+  isRequired: boolean;
+  allowedFormats?: string[]; // e.g., ['PDF', 'JPG', 'PNG']
+  displayOrder?: number;
+}
+
+export interface UserDocument {
+  id: string;
+  documentTypeId: string;
+  userId: string;
+  fileUrl?: string; // URL para o arquivo no storage
+  status: UserDocumentStatus;
+  uploadDate?: AnyTimestamp;
+  analysisDate?: AnyTimestamp;
+  analystId?: string; // Quem analisou
+  rejectionReason?: string;
+  documentType: DocumentType; // Dados do tipo de documento para facilitar a exibição
+}
+
+export type UserBidStatus = 'GANHANDO' | 'PERDENDO' | 'SUPERADO' | 'ARREMATADO' | 'NAO_ARREMATADO';
+export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO';
 
 export interface UserBid {
   id: string;
@@ -366,180 +401,136 @@ export interface UserBid {
   lotEndDate: AnyTimestamp;
 }
 
-export interface BidInfo {
-  id: string;
-  lotId: string;
-  auctionId: string;
-  bidderId: string;
-  bidderDisplay: string;
-  amount: number;
-  timestamp: AnyTimestamp;
-}
-
 export interface UserWin {
   id: string;
-  lot: Lot;
+  lot: Lot; // Dados completos do lote arrematado
   winningBidAmount: number;
   winDate: AnyTimestamp;
   paymentStatus: PaymentStatus;
-  invoiceUrl?: string;
+  invoiceUrl?: string; // Link para a nota de arremate/fatura
+  // Outros detalhes como taxas, comissões podem ser adicionados aqui
 }
 
-export interface SellerProfileInfo {
-  id: string;
-  publicId: string;
-  name: string; // Pode ser nome fantasia para PJ ou nome do comitente pessoa física
-  slug: string;
-  contactName?: string; // Nome do responsável, se PJ
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  website?: string;
-  logoUrl?: string;
-  dataAiHintLogo?: string;
-  description?: string;
-  memberSince?: AnyTimestamp;
-  rating?: number;
-  activeLotsCount?: number;
-  totalSalesValue?: number;
-  auctionsFacilitatedCount?: number;
-  userId?: string; // UID do usuário da plataforma associado, se houver
-  createdAt: AnyTimestamp;
-  updatedAt: AnyTimestamp;
-  // Campos específicos de PJ (opcional, pode estar no UserProfile se o Seller é um User)
-  cnpj?: string;
-  razaoSocial?: string;
-  inscricaoEstadual?: string;
+
+export interface UserProfileData {
+  uid: string;
+  email: string;
+  fullName: string | null;
+  password?: string; // Campo para uso interno do adapter SQL, NUNCA RETORNADO AO CLIENTE
+  roleId?: string | null;
+  roleName?: string; // Nome do perfil para exibição
+  permissions?: string[]; // Permissões herdadas do perfil
+  habilitationStatus?: UserHabilitationStatus;
+  
+  // Dados Pessoais Adicionais
+  cpf?: string | null;
+  rgNumber?: string | null;
+  rgIssuer?: string | null;
+  rgIssueDate?: AnyTimestamp | null;
+  rgState?: string | null;
+  dateOfBirth?: AnyTimestamp | null;
+  cellPhone?: string | null;
+  homePhone?: string | null;
+  gender?: string | null;
+  profession?: string | null;
+  nationality?: string | null;
+  maritalStatus?: string | null;
+  propertyRegime?: string | null; // Regime de bens (para casados)
+  spouseName?: string | null;
+  spouseCpf?: string | null;
+
+  // Endereço
+  zipCode?: string | null;
+  street?: string | null;
+  number?: string | null;
+  complement?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+  
+  status?: string; // Ex: ATIVO, INATIVO, SUSPENSO, PENDENTE_VALIDACAO
+  optInMarketing?: boolean;
+  createdAt?: AnyTimestamp;
+  updatedAt?: AnyTimestamp;
+  avatarUrl?: string | null;
+  dataAiHint?: string | null;
+
+  // Estatísticas e Relações (podem ser calculadas ou referências)
+  activeBids?: number;
+  auctionsWon?: number;
+  itemsSold?: number; // Se o usuário também for um comitente
+
+  sellerProfileId?: string; // Se este usuário também é um Seller
+
+  // Campos para PJ e Comitente Venda Direta
+  accountType?: 'PHYSICAL' | 'LEGAL' | 'DIRECT_SALE_CONSIGNOR';
+  razaoSocial?: string | null;
+  cnpj?: string | null;
+  inscricaoEstadual?: string | null;
+  websiteComitente?: string | null;
 }
 
-export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'activeLotsCount' | 'totalSalesValue' | 'auctionsFacilitatedCount' | 'userId'> & {
-  userId?: string;
+export type UserProfileWithPermissions = UserProfileData & {
+  // permissions já está em UserProfileData, mas podemos reforçar aqui
+  permissions: string[]; 
 };
 
-
-export interface AuctioneerProfileInfo {
-  id: string;
-  publicId: string;
-  name: string;
-  slug: string;
-  registrationNumber?: string;
-  contactName?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  website?: string;
-  logoUrl?: string;
-  dataAiHintLogo?: string;
-  description?: string;
-  memberSince?: AnyTimestamp;
-  rating?: number;
-  auctionsConductedCount?: number;
-  totalValueSold?: number;
-  userId?: string;
-  createdAt: AnyTimestamp;
-  updatedAt: AnyTimestamp;
-}
-
-export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'auctionsConductedCount' | 'totalValueSold' | 'userId'> & {
-  userId?: string;
+export type EditableUserProfileData = Partial<Omit<UserProfileData, 'uid' | 'email' | 'status' | 'createdAt' | 'updatedAt' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'roleId' | 'roleName' | 'sellerProfileId' | 'permissions' | 'habilitationStatus' | 'password' >> & {
+  dateOfBirth?: Date | null; // Formulário usará Date
+  rgIssueDate?: Date | null; // Formulário usará Date
 };
 
+// Type for data from UserForm, to be processed by createUser action
+export type UserFormValues = Pick<UserProfileData, 'fullName' | 'email' | 'cpf' | 'cellPhone' | 'dateOfBirth' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing'> & {
+  password?: string;
+  roleId?: string | null; // ID do perfil
+};
 
-export interface RecentlyViewedLotInfo {
-  id: string;
-  title: string;
-  imageUrl: string;
-  auctionId: string;
-  dataAiHint?: string;
+export interface SqlAuthResult {
+  success: boolean;
+  message: string;
+  user?: UserProfileData; // Ou UserProfileWithPermissions se já vier com permissões
 }
-
-export interface StateInfo {
-  id: string;
-  name: string;
-  uf: string;
-  slug: string;
-  cityCount?: number;
-  createdAt: AnyTimestamp;
-  updatedAt: AnyTimestamp;
-}
-
-export type StateFormData = Omit<StateInfo, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'cityCount'>;
-
-
-export interface CityInfo {
-  id: string;
-  name: string;
-  slug: string;
-  stateId: string;
-  stateUf: string;
-  ibgeCode?: string;
-  lotCount?: number;
-  createdAt: AnyTimestamp;
-  updatedAt: AnyTimestamp;
-}
-
-export type CityFormData = Omit<CityInfo, 'id' | 'slug' | 'stateUf' | 'createdAt' | 'updatedAt' | 'lotCount'>;
 
 export type DirectSaleOfferType = 'BUY_NOW' | 'ACCEPTS_PROPOSALS';
 export type DirectSaleOfferStatus = 'ACTIVE' | 'SOLD' | 'EXPIRED' | 'PENDING_APPROVAL';
 
+
 export interface DirectSaleOffer {
-  id: string;
-  title: string;
-  description: string;
-  imageUrl: string;
-  dataAiHint?: string;
-  galleryImageUrls?: string[];
-  offerType: DirectSaleOfferType;
-  price?: number;
-  minimumOfferPrice?: number;
-  category: string;
-  locationCity?: string;
-  locationState?: string;
-  sellerName: string;
-  sellerId?: string;
-  sellerLogoUrl?: string;
-  dataAiHintSellerLogo?: string;
-  status: DirectSaleOfferStatus;
-  itemsIncluded?: string[];
-  tags?: string[];
-  views?: number;
-  proposalsCount?: number;
-  createdAt: AnyTimestamp;
-  updatedAt: AnyTimestamp;
-  expiresAt?: AnyTimestamp;
+    id: string;
+    title: string;
+    description: string;
+    imageUrl: string;
+    dataAiHint?: string;
+    galleryImageUrls?: string[];
+    offerType: DirectSaleOfferType;
+    price?: number; // Obrigatório se offerType for BUY_NOW
+    minimumOfferPrice?: number; // Opcional, relevante para ACCEPTS_PROPOSALS
+    category: string; // Slug da categoria
+    locationCity?: string;
+    locationState?: string; // UF
+    sellerName: string;
+    sellerId?: string; // ID do comitente/vendedor
+    sellerLogoUrl?: string;
+    dataAiHintSellerLogo?: string;
+    status: DirectSaleOfferStatus;
+    itemsIncluded?: string[]; // Para descrever o que vem no "pacote"
+    tags?: string[]; // Palavras-chave para busca
+    views?: number;
+    proposalsCount?: number; // Se aceita propostas
+    createdAt: AnyTimestamp;
+    updatedAt: AnyTimestamp;
+    expiresAt?: AnyTimestamp; // Data de expiração da oferta
 }
 
-export type EditableUserProfileData = Partial<Omit<UserProfileData, 'uid' | 'email' | 'status' | 'createdAt' | 'updatedAt' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'roleId' | 'roleName' | 'sellerProfileId' | 'permissions' | 'habilitationStatus' | 'password' >> & {
-  dateOfBirth?: Date | null;
-  rgIssueDate?: Date | null;
-};
+// --- Settings Types ---
+export interface ThemeColors {
+  [colorVariable: string]: string; // e.g., '--primary': 'hsl(25, 95%, 53%)'
+}
 
-export type HomepageSectionType = 'hero_carousel' | 'filter_links' | 'featured_lots' | 'active_auctions' | 'promo_banner_1' | 'categories_grid';
-
-export interface HomepageSectionConfig {
-  id: string;
-  type: HomepageSectionType;
-  title?: string;
-  visible: boolean;
-  order: number;
-  itemCount?: number;
-  categorySlug?: string;
-  promoContent?: {
-    title: string;
-    subtitle?: string;
-    link: string;
-    imageUrl?: string;
-    imageAlt?: string;
-    dataAiHint?: string;
-    bgColorClass?: string;
-  };
+export interface Theme {
+  name: string;
+  colors: ThemeColors;
 }
 
 export interface MentalTriggerSettings {
@@ -571,6 +562,29 @@ export interface SectionBadgeConfig {
   // Outras seções podem ser adicionadas aqui
 }
 
+export type HomepageSectionType = 'hero_carousel' | 'filter_links' | 'featured_lots' | 'active_auctions' | 'promo_banner_1' | 'categories_grid';
+
+export interface PromoCardContent {
+    title: string;
+    subtitle?: string;
+    link: string;
+    imageUrl?: string;
+    imageAlt?: string;
+    dataAiHint?: string;
+    bgColorClass?: string;
+}
+
+export interface HomepageSectionConfig {
+  id: string;
+  type: HomepageSectionType;
+  title?: string;
+  visible: boolean;
+  order: number;
+  itemCount?: number; // Para seções de lista, como lotes em destaque
+  categorySlug?: string; // Para seções baseadas em categoria
+  promoContent?: PromoCardContent;
+}
+
 export interface MapSettings {
   defaultProvider?: 'google' | 'openstreetmap' | 'staticImage';
   googleMapsApiKey?: string | null;
@@ -578,150 +592,111 @@ export interface MapSettings {
   staticImageMapMarkerColor?: string;
 }
 
-
 export interface PlatformSettings {
-  id: 'global';
+  id: 'global'; // Sempre 'global' para o documento único de configurações
   siteTitle?: string;
   siteTagline?: string;
-  galleryImageBasePath: string;
+  galleryImageBasePath: string; // Ex: /uploads/lotes/
   activeThemeName?: string | null;
   themes?: Theme[];
   platformPublicIdMasks?: {
-    auctions?: string;
-    lots?: string;
+    auctions?: string; // Ex: "LEIL-"
+    lots?: string;     // Ex: "LOTE-"
     auctioneers?: string;
     sellers?: string;
   };
   homepageSections?: HomepageSectionConfig[];
   mentalTriggerSettings?: MentalTriggerSettings;
   sectionBadgeVisibility?: SectionBadgeConfig; 
-  mapSettings?: MapSettings;
+  mapSettings?: MapSettings; // Adicionado para configurações de mapa
   updatedAt: AnyTimestamp;
 }
 
 export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'> & {
-    homepageSections?: HomepageSectionConfig[];
+    homepageSections?: HomepageSectionConfig[]; // Garantir que seja parte do form
     mentalTriggerSettings?: MentalTriggerSettings;
-    sectionBadgeVisibility?: SectionBadgeConfig; 
-    mapSettings?: PlatformSettings['mapSettings'];
+    sectionBadgeVisibility?: SectionBadgeConfig;
+    mapSettings?: MapSettings;
 };
-
-export interface SqlAuthResult {
-  success: boolean;
-  message: string;
-  user?: UserProfileData;
-}
-
-export interface Review {
-  id: string;
-  lotId: string;
-  auctionId: string; // Contexto do leilão pode ser útil
-  userId: string;
-  userDisplayName: string;
-  rating: number; // e.g., 1-5
-  comment: string;
-  createdAt: AnyTimestamp;
-  updatedAt?: AnyTimestamp;
-}
-
-export interface LotQuestion {
-  id: string;
-  lotId: string;
-  auctionId: string;
-  userId: string;
-  userDisplayName: string;
-  questionText: string;
-  createdAt: AnyTimestamp;
-  answerText?: string;
-  answeredAt?: AnyTimestamp;
-  answeredByUserId?: string; // UID do admin/vendedor que respondeu
-  answeredByUserDisplayName?: string;
-  isPublic?: boolean; // Se a pergunta/resposta deve ser visível para outros
-}
 
 
 export interface IDatabaseAdapter {
-  // Schema Initialization
-  initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[]; rolesProcessed?: number }>;
+  initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[], rolesProcessed?: number }>;
 
-  // Categories
   createLotCategory(data: { name: string; description?: string }): Promise<{ success: boolean; message: string; categoryId?: string }>;
   getLotCategories(): Promise<LotCategory[]>;
-  getLotCategory(id: string): Promise<LotCategory | null>;
+  getLotCategory(idOrSlug: string): Promise<LotCategory | null>; // Pode buscar por ID ou Slug
+  getLotCategoryByName(name: string): Promise<LotCategory | null>;
   updateLotCategory(id: string, data: { name: string; description?: string }): Promise<{ success: boolean; message: string }>;
   deleteLotCategory(id: string): Promise<{ success: boolean; message: string }>;
 
-  // States
   createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string }>;
   getStates(): Promise<StateInfo[]>;
-  getState(id: string): Promise<StateInfo | null>;
+  getState(idOrSlugOrUf: string): Promise<StateInfo | null>;
   updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string }>;
   deleteState(id: string): Promise<{ success: boolean; message: string }>;
 
-  // Cities
   createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string }>;
-  getCities(stateIdFilter?: string): Promise<CityInfo[]>;
-  getCity(id: string): Promise<CityInfo | null>;
+  getCities(stateIdOrSlugFilter?: string): Promise<CityInfo[]>;
+  getCity(idOrCompositeSlug: string): Promise<CityInfo | null>; // id pode ser "stateSlug-citySlug" ou ID numérico
   updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string }>;
   deleteCity(id: string): Promise<{ success: boolean; message: string }>;
 
-  // Auctioneers
-  createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }>;
+  createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string }>;
   getAuctioneers(): Promise<AuctioneerProfileInfo[]>;
-  getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null>; // id can be numeric or publicId
-  updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string }>;
-  deleteAuctioneer(id: string): Promise<{ success: boolean; message: string }>;
+  getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null>;
+  updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string }>;
+  deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string }>;
   getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null>;
+  getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null>;
 
-  // Sellers
+
   createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }>;
   getSellers(): Promise<SellerProfileInfo[]>;
-  getSeller(id: string): Promise<SellerProfileInfo | null>; // id can be numeric or publicId
-  updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string }>;
-  deleteSeller(id: string): Promise<{ success: boolean; message: string }>;
+  getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null>;
+  updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string }>;
+  deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string }>;
   getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null>;
+  getSellerByName(name: string): Promise<SellerProfileInfo | null>;
 
-  // Auctions
-  createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }>;
+  createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string }>;
   getAuctions(): Promise<Auction[]>;
-  getAuction(id: string): Promise<Auction | null>; // id can be numeric or publicId
-  updateAuction(id: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string }>;
-  deleteAuction(id: string): Promise<{ success: boolean; message: string }>;
-  getAuctionsBySellerSlug(sellerPublicId: string): Promise<Auction[]>;
+  getAuction(idOrPublicId: string): Promise<Auction | null>;
+  updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string }>;
+  deleteAuction(idOrPublicId: string): Promise<{ success: boolean; message: string }>;
+  getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]>;
 
-  // Lots
+
   createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }>;
-  getLots(auctionIdParam?: string): Promise<Lot[]>;
-  getLot(id: string): Promise<Lot | null>; // id can be numeric or publicId
-  updateLot(id: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }>;
-  deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string; }>;
-  getBidsForLot(lotId: string): Promise<BidInfo[]>;
-  placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }>;
-  getReviewsForLot(lotId: string): Promise<Review[]>;
+  getLots(auctionIdParam?: string): Promise<Lot[]>; // auctionIdParam pode ser ID numérico ou publicId
+  getLot(idOrPublicId: string): Promise<Lot | null>;
+  updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string }>;
+  deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string }>;
+  getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]>;
+  placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }>;
+  getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]>;
   createReview(review: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; reviewId?: string }>;
-  getQuestionsForLot(lotId: string): Promise<LotQuestion[]>;
+  getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]>;
   createQuestion(question: Omit<LotQuestion, 'id' | 'createdAt' | 'answeredAt' | 'answeredByUserId' | 'answeredByUserDisplayName' | 'isPublic'>): Promise<{ success: boolean; message: string; questionId?: string }>;
   answerQuestion(questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string }>;
 
 
-  // Users
+  // User and Role Management
   getUserProfileData(userId: string): Promise<UserProfileData | null>;
   updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }>;
   ensureUserRole(
-    userId: string,
-    email: string,
-    fullName: string | null,
-    targetRoleName: string,
+    userId: string, 
+    email: string, 
+    fullName: string | null, 
+    targetRoleName: string, 
     additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>,
-    roleIdToAssign?: string
-  ): Promise<{ success: boolean; message: string; userProfile?: UserProfileData }>;
+    roleIdToAssign?: string 
+  ): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }>;
   getUsersWithRoles(): Promise<UserProfileData[]>;
   updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }>;
   deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }>;
   getUserByEmail(email: string): Promise<UserProfileData | null>;
-
-
-  // Roles
+  
   createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string }>;
   getRoles(): Promise<Role[]>;
   getRole(id: string): Promise<Role | null>;
@@ -737,2770 +712,39 @@ export interface IDatabaseAdapter {
   deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }>;
   linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }>;
   unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }>;
-  
-  // Settings
+
+  // Platform Settings
   getPlatformSettings(): Promise<PlatformSettings>;
   updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }>;
 }
 
-// Helper types for SQL adapters (can be expanded)
-export type QueryResult<T> = {
-  rows: T[];
-  rowCount: number;
-};
 
-// Type for data from UserForm, to be processed by createUser action
-export type UserFormValues = Pick<UserProfileData, 'fullName' | 'email' | 'cpf' | 'cellPhone' | 'dateOfBirth' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing'> & {
+// Type for data from UserForm, to be processed by createUser action in users/actions.ts
+export type UserCreationData = Pick<UserProfileData, 'fullName' | 'email' | 'cpf' | 'cellPhone' | 'dateOfBirth' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing'> & {
   password?: string;
-  roleId?: string | null;
+  roleId?: string | null; // ID do perfil, opcional
+};
+
+export type MegaMenuLinkItem = {
+  href: string;
+  label: string;
+  description?: string;
+  icon?: React.ReactNode;
+};
+
+export type MegaMenuGroup = {
+  title?: string;
+  items: MegaMenuLinkItem[];
 };
 
 
-// Type for data passed from Lot actions to DB adapters (includes categoryId)
-export type LotDbData = Omit<LotFormData, 'type' | 'auctionName'> & {
-  categoryId?: string; // Resolved category ID
-};
-
-// Type for data returned from DB adapters for Lots (includes category name if joined)
-export type LotWithCategoryName = Lot & {
-  categoryName?: string;
-};
-    
-
-    
-
-
-
-
-
+export interface RecentlyViewedLotInfo {
+  id: string;
+  title: string;
+  imageUrl: string;
+  auctionId: string;
+  dataAiHint?: string;
+}
 
 
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-      
-      
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-      
-      
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-      
-      
-      
-      
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-        
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-  
-  
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-        
-          
-          
-            
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-      
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-        
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-        
-        <p>
-          
-  
-    
-  
-
-  
-    
-        Sure.
-        
-        I's here to assist with the Firebase Studio app. I can make changes to one or more files using the XML format. I cannot make changes to the Firebase config files.
-        ```
-        <changes>
-          <description>This is an example of a multi-file change proposal.
-    In the description, provide a short summary of the changes.
-    Then, include one or more changes in the <change> block.
-    Do not wrap the XML in triple backticks.
-    The file path is absolute from the project root.
-    The content is the entire file content, not a diff or partial.
-    </description>
-          <change>
-            <file>/src/app/example.ts</file>
-            <content><![CDATA[// Your code here
