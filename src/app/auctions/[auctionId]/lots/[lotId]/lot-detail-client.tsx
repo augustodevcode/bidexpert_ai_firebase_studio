@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import {
     Printer, Share2, ArrowLeft, ChevronLeft, ChevronRight, Key, Info,
     Tag, CalendarDays, Clock, Users, DollarSign, MapPin, Car, ThumbsUp,
-    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye
+    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye, ExternalLink
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -40,7 +40,7 @@ import LotSpecificationTab from '@/components/auction/lot-specification-tab';
 import LotSellerTab from '@/components/auction/lot-seller-tab';
 import LotReviewsTab from '@/components/auction/lot-reviews-tab';
 import LotQuestionsTab from '@/components/auction/lot-questions-tab';
-import LotMapDisplay from '@/components/auction/lot-map-display'; // Importado
+import LotMapDisplay from '@/components/auction/lot-map-display';
 import LotPreviewModal from '@/components/lot-preview-modal';
 import { hasPermission } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
@@ -52,7 +52,7 @@ const SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS = 'Administrador BidExpert (Super T
 interface LotDetailClientContentProps {
   lot: Lot;
   auction: Auction;
-  platformSettings: PlatformSettings; // Adicionado
+  platformSettings: PlatformSettings;
   sellerName?: string | null;
   lotIndex?: number;
   previousLotId?: string;
@@ -311,14 +311,7 @@ export default function LotDetailClientContent({
     }
   };
   
-  const mapLink = useMemo(() => {
-    if (lot.mapEmbedUrl) return lot.mapEmbedUrl;
-    if (lot.latitude && lot.longitude) return `https://www.google.com/maps?q=${lot.latitude},${lot.longitude}&z=15`;
-    if (lot.mapAddress) return `https://www.google.com/maps?q=${encodeURIComponent(lot.mapAddress)}`;
-    return null;
-  }, [lot.mapEmbedUrl, lot.latitude, lot.longitude, lot.mapAddress]);
-    
- return ( // Line 278
+ return ( 
     <> 
         <div className="space-y-6"> 
             <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
@@ -332,8 +325,6 @@ export default function LotDetailClientContent({
             </div>
             <div className="flex items-center space-x-2 flex-wrap justify-start sm:justify-end mt-2 sm:mt-0">
                 <Button variant="outline" size="icon" onClick={handlePrint} aria-label="Imprimir"><Printer className="h-4 w-4" /></Button>
-                {/* Share DropdownMenu Temporarily Commented Out for Debugging */}
-                {/*
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild><Button variant="outline" size="icon" aria-label="Compartilhar"><Share2 className="h-4 w-4" /></Button></DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -343,7 +334,6 @@ export default function LotDetailClientContent({
                         <DropdownMenuItem asChild><a href={getSocialLink('email', currentUrl, lotTitle)} className="flex items-center gap-2 cursor-pointer"><Mail className="h-4 w-4" /> Email</a></DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
-                */}
                 <Button variant="outline" size="icon" asChild aria-label="Voltar para o leilão"><Link href={`/auctions/${auction.publicId || auction.id}`}><ArrowLeft className="h-4 w-4" /></Link></Button>
             </div>
             </div>
@@ -386,9 +376,7 @@ export default function LotDetailClientContent({
                 </Card>
 
                 {/* Seção do Mapa */}
-                {(lot.latitude && lot.longitude) || lot.mapEmbedUrl || lot.mapStaticImageUrl || lot.mapAddress ? (
-                    <LotMapDisplay lot={lot} platformSettings={platformSettings} />
-                ) : null}
+                <LotMapDisplay lot={lot} platformSettings={platformSettings} />
                 
                 <Card className="shadow-lg">
                 <CardContent className="p-0 sm:p-2 md:p-4">
@@ -442,13 +430,7 @@ export default function LotDetailClientContent({
                     <Heart className={`mr-2 h-4 w-4 ${isLotFavorite ? 'fill-red-500 text-red-500' : ''}`} />
                     {isLotFavorite ? 'Remover da Minha Lista' : 'Adicionar à Minha Lista'}
                     </Button>
-                    {mapLink && (
-                      <Button variant="outline" className="w-full" asChild>
-                        <a href={mapLink} target="_blank" rel="noopener noreferrer">
-                          <MapPin className="mr-2 h-4 w-4" /> Ver no Mapa
-                        </a>
-                      </Button>
-                    )}
+                   
                 </CardContent>
                 </Card>
 

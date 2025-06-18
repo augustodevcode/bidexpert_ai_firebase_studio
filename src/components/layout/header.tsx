@@ -6,9 +6,9 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'; // Im
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Coins, Search as SearchIcon, Menu, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel, Users, Briefcase as ConsignorIcon, UserCog, ShieldCheck, Tv, MapPin } from 'lucide-react'; // Adicionado MapPin
+import { Coins, Search as SearchIcon, Menu, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel, Users, Briefcase as ConsignorIcon, UserCog, ShieldCheck, Tv, MapPin } from 'lucide-react'; 
 import { useAuth } from '@/contexts/auth-context';
-import { auth } from '@/lib/firebase'; // Ainda necessário para logout do Firebase
+import { auth } from '@/lib/firebase'; 
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useRef, useCallback, forwardRef } from 'react';
@@ -559,7 +559,7 @@ export default function Header() {
 
       {/* Breadcrumbs Bar */}
       {isClient && pathname !== '/' && (
-        <nav className="border-b bg-secondary text-secondary-foreground text-xs pb-2 pt-2">
+        <nav className="bg-secondary text-secondary-foreground text-xs py-2 border-b">
             <div className="container mx-auto px-4 h-auto flex items-center">
                 <DynamicBreadcrumbs />
             </div>

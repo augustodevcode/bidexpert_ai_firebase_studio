@@ -59,6 +59,22 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
     },
   });
 
+  React.useEffect(() => {
+    // Reset form with initialData when it changes (e.g., after a save and re-fetch)
+    // This ensures the form reflects the latest persisted state.
+    form.reset({
+        siteTitle: initialData?.siteTitle || 'BidExpert',
+        siteTagline: initialData?.siteTagline || 'Leilões Online Especializados',
+        galleryImageBasePath: initialData?.galleryImageBasePath || '/media/gallery/',
+        activeThemeName: initialData?.activeThemeName || null,
+        themes: initialData?.themes || [],
+        platformPublicIdMasks: initialData?.platformPublicIdMasks || { auctions: '', lots: '', auctioneers: '', sellers: ''},
+        mapSettings: initialData?.mapSettings || defaultMapSettings,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData, form.reset]);
+
+
   async function onSubmit(values: PlatformSettingsFormValues) {
     setIsSubmitting(true);
     try {
