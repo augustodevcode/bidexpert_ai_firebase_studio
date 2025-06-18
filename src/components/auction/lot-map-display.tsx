@@ -3,7 +3,7 @@
 
 import type { Lot, PlatformSettings } from '@/types';
 import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'; // CardDescription adicionado aqui
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'; 
 import { Button } from '@/components/ui/button';
 import { MapPin, Info, ExternalLink } from 'lucide-react';
 
@@ -13,16 +13,16 @@ interface LotMapDisplayProps {
 }
 
 export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayProps) {
-  const { mapSettings } = platformSettings;
+  const { mapSettings } = platformSettings || { mapSettings: {} }; // Garante que mapSettings exista
   const { latitude, longitude, mapEmbedUrl, mapStaticImageUrl, mapAddress, title } = lot;
 
-  const displayTitle = mapAddress || (latitude && longitude ? `${latitude.toFixed(4)}, ${longitude.toFixed(4)}` : "Localização do Lote");
+  const displayAddress = mapAddress || (latitude && longitude ? `${latitude.toFixed(4)}, ${longitude.toFixed(4)}` : "Localização do Lote");
 
   let mapContent = null;
   let externalMapLink: string | null = null;
-  let mapProviderUsed: string = 'Nenhum';
+  let mapProviderUsed: string = 'Configuração Pendente';
 
-  // 1. Priorizar mapEmbedUrl se existir
+  // 1. Priorizar mapEmbedUrl se fornecido pelo admin no lote
   if (mapEmbedUrl) {
     mapContent = (
       <iframe
@@ -36,10 +36,10 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
         title={`Mapa para ${title}`}
       ></iframe>
     );
-    externalMapLink = mapEmbedUrl; 
-    mapProviderUsed = mapEmbedUrl.includes("google.com/maps/embed") ? 'Google Maps (Embed)' : 'Embed Personalizado';
+    externalMapLink = mapEmbedUrl; // Assumindo que o embed URL pode ser um link clicável também, ou gerar um específico.
+    mapProviderUsed = mapEmbedUrl.includes("google.com/maps/embed") ? 'Google Maps (Embed do Lote)' : 'Embed Personalizado (Lote)';
   } 
-  // 2. Se não tiver embed, usar o defaultProvider e API Key
+  // 2. Se não tiver embed no lote, usar o defaultProvider e API Key das configurações da plataforma
   else if (mapSettings?.defaultProvider === 'google' && mapSettings?.googleMapsApiKey && (latitude && longitude || mapAddress)) {
     const query = latitude && longitude ? `${latitude},${longitude}` : encodeURIComponent(mapAddress || '');
     const embedUrl = `https://www.google.com/maps/embed/v1/place?key=${mapSettings.googleMapsApiKey}&q=${query}&zoom=${mapSettings.staticImageMapZoom || 15}`;
@@ -56,22 +56,24 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
       ></iframe>
     );
     externalMapLink = `https://www.google.com/maps/search/?api=1&query=${query}`;
-    mapProviderUsed = 'Google Maps API (Embed)';
+    mapProviderUsed = 'Google Maps API (Plataforma)';
   } 
   else if (mapSettings?.defaultProvider === 'openstreetmap' && (latitude && longitude || mapAddress)) {
-    const bboxDelta = 0.01; 
+    const bboxDelta = 0.005; // Menor delta para zoom mais próximo
     let embedUrl = '';
     if (latitude && longitude) {
         embedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${longitude - bboxDelta},${latitude - bboxDelta},${longitude + bboxDelta},${latitude + bboxDelta}&layer=mapnik&marker=${latitude},${longitude}`;
-        externalMapLink = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=15/${latitude}/${longitude}`;
+        externalMapLink = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=${mapSettings.staticImageMapZoom || 16}/${latitude}/${longitude}`;
     } else if (mapAddress) {
+        // Embed direto por endereço não é trivial no OpenStreetMap sem geocoding prévio
+        // Mostrar link para busca se apenas endereço está disponível
         externalMapLink = `https://www.openstreetmap.org/search?query=${encodeURIComponent(mapAddress)}`;
         mapContent = (
              <div className="flex flex-col items-center justify-center h-full bg-muted text-muted-foreground p-4">
                 <MapPin className="h-12 w-12 mb-2" />
-                <p>Pré-visualização de mapa por endereço via OpenStreetMap não disponível diretamente.</p>
-                <a href={externalMapLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline mt-2">
-                    Buscar no OpenStreetMap
+                <p>Visualização de mapa para endereço via OpenStreetMap não disponível.</p>
+                <a href={externalMapLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline mt-2 flex items-center">
+                    Buscar no OpenStreetMap <ExternalLink className="h-3 w-3 ml-1" />
                 </a>
             </div>
         );
@@ -88,10 +90,10 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
         ></iframe>
         );
     }
-    mapProviderUsed = 'OpenStreetMap';
+    mapProviderUsed = 'OpenStreetMap (Plataforma)';
   }
-  // 3. Fallback para imagem estática se configurada
-  else if (mapSettings?.defaultProvider === 'staticImage' && mapStaticImageUrl) {
+  // 3. Fallback para imagem estática do lote se configurada
+  else if (mapStaticImageUrl) {
     mapContent = (
         <Image
           src={mapStaticImageUrl}
@@ -103,7 +105,7 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
     );
      if (latitude && longitude) externalMapLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
      else if (mapAddress) externalMapLink = `https://www.google.com/maps?q=${encodeURIComponent(mapAddress)}`;
-     mapProviderUsed = 'Imagem Estática (Configurada)';
+     mapProviderUsed = 'Imagem Estática (Lote)';
   }
   // 4. Fallback para placeholder com coordenadas se nenhuma outra opção
   else if (latitude && longitude) {
@@ -149,30 +151,33 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
   }
 
   return (
-    <Card className="shadow-md">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-lg font-semibold flex items-center">
-            <MapPin className="h-5 w-5 mr-2 text-primary" /> {displayTitle}
+    <Card className="shadow-md w-full">
+      <CardHeader className="p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <CardTitle className="text-base sm:text-lg font-semibold flex items-center">
+            <MapPin className="h-4 w-4 mr-2 text-primary" /> Localização
           </CardTitle>
           {externalMapLink && (
-            <Button variant="outline" size="sm" asChild>
-                <a href={externalMapLink} target="_blank" rel="noopener noreferrer" className="flex items-center text-xs px-2.5 py-1.5 h-auto">
-                    <span className="hidden sm:inline mr-1">Ver no Mapa</span>
-                    <span className="sm:hidden">Mapa</span>
-                    <ExternalLink className="h-3.5 w-3.5 ml-1" />
-                    <span className="sr-only">(Abre em nova aba)</span>
-                </a>
-            </Button>
+            <a 
+              href={externalMapLink} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-xs text-primary hover:underline flex items-center"
+            >
+              <span className="truncate max-w-[180px] sm:max-w-xs">{displayAddress}</span>
+              <ExternalLink className="h-3 w-3 ml-1.5 flex-shrink-0" />
+              <span className="sr-only">(Abre em nova aba)</span>
+            </a>
           )}
         </div>
-         <CardDescription className="text-xs">Provedor: {mapProviderUsed}</CardDescription>
+         <CardDescription className="text-xs mt-0.5">Provedor: {mapProviderUsed}</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="aspect-video w-full rounded-md overflow-hidden border relative">
+      <CardContent className="p-0"> {/* Remover padding para o mapa ocupar todo o content */}
+        <div className="aspect-square w-full rounded-b-md overflow-hidden border-t relative">
           {mapContent}
         </div>
       </CardContent>
     </Card>
   );
 }
+
