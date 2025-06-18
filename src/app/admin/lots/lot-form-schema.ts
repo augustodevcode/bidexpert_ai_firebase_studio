@@ -43,6 +43,12 @@ export const lotFormSchema = z.object({
   secondInitialPrice: z.coerce.number().positive().optional().nullable(),
   views: z.coerce.number().int().nonnegative().optional(),
   bidsCount: z.coerce.number().int().nonnegative().optional(),
+  
+  // Campos de localização
+  latitude: z.coerce.number().min(-90).max(90).optional().nullable(),
+  longitude: z.coerce.number().min(-180).max(180).optional().nullable(),
+  mapAddress: z.string().max(255, { message: "Endereço do mapa não pode exceder 255 caracteres." }).optional().nullable(),
+  mapEmbedUrl: z.string().url({ message: "URL de embed do mapa inválida." }).optional().nullable().or(z.literal('')),
 });
 
 export type LotFormValues = z.infer<typeof lotFormSchema>;

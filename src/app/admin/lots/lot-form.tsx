@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
 import type { Lot, LotStatus, LotCategory, Auction, StateInfo, CityInfo, MediaItem } from '@/types';
-import { Loader2, Save, CalendarIcon, Package, ImagePlus, UploadCloud, Trash2 } from 'lucide-react';
+import { Loader2, Save, CalendarIcon, Package, ImagePlus, UploadCloud, Trash2, MapPin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -31,6 +31,7 @@ import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
+import { Separator } from '@/components/ui/separator';
 
 interface LotFormProps {
   initialData?: Lot | null;
@@ -114,6 +115,10 @@ export default function LotForm({
       secondInitialPrice: initialData?.secondInitialPrice || null,
       views: initialData?.views || 0,
       bidsCount: initialData?.bidsCount || 0,
+      latitude: initialData?.latitude ?? undefined,
+      longitude: initialData?.longitude ?? undefined,
+      mapAddress: initialData?.mapAddress ?? '',
+      mapEmbedUrl: initialData?.mapEmbedUrl ?? '',
     },
   });
 
@@ -539,6 +544,59 @@ export default function LotForm({
                 )} />
               </div>
 
+              <Separator />
+              <h3 className="text-md font-semibold text-muted-foreground pt-2 flex items-center gap-2"><MapPin className="h-5 w-5" /> Localização e Mapa</h3>
+               <div className="grid md:grid-cols-2 gap-6">
+                <FormField
+                    control={form.control}
+                    name="latitude"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Latitude (Opcional)</FormLabel>
+                        <FormControl><Input type="number" step="any" placeholder="Ex: -23.550520" {...field} value={field.value ?? ''} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="longitude"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Longitude (Opcional)</FormLabel>
+                        <FormControl><Input type="number" step="any" placeholder="Ex: -46.633308" {...field} value={field.value ?? ''} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+              </div>
+               <FormField
+                    control={form.control}
+                    name="mapAddress"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Endereço para Mapa (Opcional)</FormLabel>
+                        <FormControl><Input placeholder="Ex: Av. Paulista, 1578, São Paulo, SP" {...field} value={field.value ?? ''} /></FormControl>
+                        <FormDescription>Se diferente do endereço principal do lote, ou para maior precisão no mapa.</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="mapEmbedUrl"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>URL de Incorporação do Mapa (Opcional)</FormLabel>
+                        <FormControl><Input type="url" placeholder="Ex: https://www.google.com/maps/embed?pb=..." {...field} value={field.value ?? ''} /></FormControl>
+                        <FormDescription>URL para embutir um mapa interativo (iframe).</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+              <Separator />
+
+
               <FormField
                 control={form.control}
                 name="endDate"
@@ -712,9 +770,11 @@ export default function LotForm({
         isOpen={isGalleryDialogOpen}
         onOpenChange={setIsGalleryDialogOpen}
         onMediaSelect={handleSelectMediaForGallery}
+        allowMultiple={true} // Permite múltiplas seleções para a galeria
       />
     </>
   );
 }
 
     
+

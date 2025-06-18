@@ -1,4 +1,5 @@
 
+
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
 
@@ -171,6 +172,13 @@ export interface Lot {
   discountPercentage?: number;
   additionalTriggers?: string[]; // e.g., ['MAIS_VISITADO', 'LANCE_QUENTE']
   isExclusive?: boolean;
+
+  // Campos de localização
+  latitude?: number;
+  longitude?: number;
+  mapAddress?: string; 
+  mapEmbedUrl?: string; 
+  mapStaticImageUrl?: string; 
 }
 
 // Este tipo é usado pelo formulário, que envia nomes
@@ -195,7 +203,8 @@ export type LotFormData = Omit<Lot,
   'categoryId' |
   'discountPercentage' |
   'additionalTriggers' |
-  'isExclusive'
+  'isExclusive' |
+  'mapStaticImageUrl' 
 > & {
   endDate: Date;
   lotSpecificAuctionDate?: Date | null;
@@ -206,6 +215,10 @@ export type LotFormData = Omit<Lot,
   mediaItemIds?: string[];
   categoryId?: string;
   isExclusive?: boolean;
+  latitude?: number;
+  longitude?: number;
+  mapAddress?: string;
+  mapEmbedUrl?: string;
 };
 
 
@@ -527,13 +540,13 @@ export interface HomepageSectionConfig {
 }
 
 export interface MentalTriggerSettings {
-  showDiscountBadge?: boolean;
-  showUrgencyTimer?: boolean;
-  showPopularityBadge?: boolean;
-  popularityViewThreshold?: number;
-  showHotBidBadge?: boolean;
-  hotBidThreshold?: number;
-  showExclusiveBadge?: boolean;
+    showDiscountBadge?: boolean;
+    showUrgencyTimer?: boolean;
+    showPopularityBadge?: boolean;
+    popularityViewThreshold?: number;
+    showHotBidBadge?: boolean;
+    hotBidThreshold?: number;
+    showExclusiveBadge?: boolean;
 }
 
 export interface BadgeVisibilitySettings {
@@ -568,14 +581,21 @@ export interface PlatformSettings {
   };
   homepageSections?: HomepageSectionConfig[];
   mentalTriggerSettings?: MentalTriggerSettings;
-  sectionBadgeVisibility?: SectionBadgeConfig; // Novo
+  sectionBadgeVisibility?: SectionBadgeConfig; 
+  mapSettings?: {
+    defaultProvider?: 'google' | 'openstreetmap' | 'staticImage';
+    googleMapsApiKey?: string;
+    staticImageMapZoom?: number;
+    staticImageMapMarkerColor?: string;
+  };
   updatedAt: AnyTimestamp;
 }
 
 export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'> & {
     homepageSections?: HomepageSectionConfig[];
     mentalTriggerSettings?: MentalTriggerSettings;
-    sectionBadgeVisibility?: SectionBadgeConfig; // Novo
+    sectionBadgeVisibility?: SectionBadgeConfig; 
+    mapSettings?: PlatformSettings['mapSettings'];
 };
 
 export interface SqlAuthResult {
@@ -740,6 +760,7 @@ export type LotWithCategoryName = Lot & {
     
 
     
+
 
 
 

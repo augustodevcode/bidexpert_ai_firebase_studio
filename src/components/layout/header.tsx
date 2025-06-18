@@ -6,9 +6,9 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'; // Im
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Coins, Search as SearchIcon, Menu, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel, Users, Briefcase as ConsignorIcon, UserCog, ShieldCheck, Tv } from 'lucide-react';
+import { Coins, Search as SearchIcon, Menu, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel, Users, Briefcase as ConsignorIcon, UserCog, ShieldCheck, Tv, MapPin } from 'lucide-react'; // Adicionado MapPin
 import { useAuth } from '@/contexts/auth-context';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/lib/firebase'; // Ainda necessário para logout do Firebase
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useRef, useCallback, forwardRef } from 'react';
@@ -231,7 +231,7 @@ export default function Header() {
     { href: '/contact', label: 'Fale Conosco', icon: Phone },
   ];
 
-  const firstNavItem: NavItem = { label: 'Navegue por Categorias', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag, megaMenuAlign: 'start' };
+  const firstNavItem: NavItem = { label: 'Categorias de Oportunidades', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag, megaMenuAlign: 'start' };
   const centralNavItems: NavItem[] = [
     { href: '/', label: 'Início', icon: HomeIcon },
     {
@@ -363,7 +363,6 @@ export default function Header() {
                   <nav className="flex flex-col gap-1 p-4">
                     <MainNav
                         items={allNavItemsForMobile}
-                        className="flex-col items-start space-x-0 space-y-0"
                         onLinkClick={handleLinkOrMobileMenuCloseClick}
                         isMobile={true}
                         searchCategories={searchCategories}
@@ -432,9 +431,8 @@ export default function Header() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onFocus={() => searchTerm.length >= 3 && setIsSearchDropdownOpen(true)}
                 />
-                <Button type="submit" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Button type="submit" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground" aria-label="Buscar">
                   <SearchIcon className="h-4 w-4" />
-                  <span className="sr-only">Buscar</span>
                 </Button>
                 {isSearchDropdownOpen && (
                   <div className="absolute top-full left-0 right-0 mt-1.5 bg-card border border-border shadow-lg rounded-md z-50 max-h-96 overflow-y-auto">
@@ -479,11 +477,21 @@ export default function Header() {
               </div>
             </form>
            </div>
-
+           {/* Search and MapPin icons */}
           <div className="flex items-center space-x-1 sm:space-x-2">
             <Button variant="ghost" size="icon" className="md:hidden hover:bg-accent focus-visible:ring-accent-foreground" aria-label="Buscar">
               <SearchIcon className="h-5 w-5 sm:h-6 sm:w-6" />
             </Button>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" asChild className="hover:bg-accent focus-visible:ring-accent-foreground" aria-label="Buscar por Localização">
+                        <Link href="/map-search">
+                            <MapPin className="h-5 w-5 sm:h-6 sm:w-6" />
+                        </Link>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Buscar por Localização (Em Breve)</p></TooltipContent>
+            </Tooltip>
             {user && (
               <Button variant="ghost" size="icon" className="relative hover:bg-accent focus-visible:ring-accent-foreground sm:inline-flex" asChild aria-label="Notificações">
                 <Link href="/dashboard/notifications">
@@ -551,8 +559,8 @@ export default function Header() {
 
       {/* Breadcrumbs Bar */}
       {isClient && pathname !== '/' && (
-        <nav className="border-b bg-secondary/50 text-secondary-foreground text-xs">
-            <div className="container mx-auto px-4 h-10 flex items-center">
+        <nav className="border-b bg-secondary text-secondary-foreground text-xs pb-2 pt-2">
+            <div className="container mx-auto px-4 h-auto flex items-center">
                 <DynamicBreadcrumbs />
             </div>
         </nav>

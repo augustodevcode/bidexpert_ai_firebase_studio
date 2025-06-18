@@ -1,3 +1,4 @@
+
 import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, CityInfo, MediaItem, PlatformSettings, MentalTriggerSettings, HomepageSectionConfig, BadgeVisibilitySettings, SectionBadgeConfig } from '@/types';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays, addDays as dateFnsAddDays, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -121,12 +122,12 @@ export const sampleAuctioneersStatic: Omit<AuctioneerProfileInfo, 'id'|'publicId
 ];
 
 export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' | 'sellerName' | 'cityName' | 'stateUf' | 'type' | 'bids' | 'reviews' | 'questions'>[] = [
-  { id: 'LOTE001', auctionId: '100625bra', publicId: 'LOT-CASACENT-ABC123X1', title: 'CASA COM 129,30 M² - CENTRO', imageUrl: 'https://placehold.co/800x600.png?text=Casa+Centro', dataAiHint: 'casa residencial', galleryImageUrls: ['https://placehold.co/150x100.png?text=Casa+Frente'], mediaItemIds: ['media-casa-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-teotonio-vilela-al', stateId: 'state-al', categoryId: 'imoveis', views: 1018, price: 45000, endDate: createFutureDate(0, 1, 30), bidsCount: 12, description: 'Casa residencial bem localizada no centro da cidade.', sellerId: 'seller-banco-bradesco-sa', lotSpecificAuctionDate: createFutureDate(0, 1, 30), initialPrice: 50000, secondInitialPrice: 42000, additionalTriggers: ['DESCONTO PROGRESSIVO'], isFeatured: true }, // Desconto
-  { id: 'LOTEVEI001', auctionId: '300724car', publicId: 'LOT-2013AUDI-DEF456Y2', title: '2013 AUDI A4 PREMIUM PLUS', year: 2013, make: 'AUDI', model: 'A4', imageUrl: 'https://placehold.co/800x600.png?text=Audi+A4+2013', dataAiHint: 'carro sedan preto', galleryImageUrls: ['https://placehold.co/150x100.png?text=Audi+A4+Frente'], mediaItemIds: ['media-audi-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'veiculos', views: 1560, price: 68500, endDate: createFutureDate(0, 0, 45), bidsCount: 25, description: 'Audi A4 Premium Plus 2013, completo.', sellerId: 'seller-proprietario-particular-1', lotSpecificAuctionDate: createFutureDate(0, 0, 45), isExclusive: true, additionalTriggers: ['ALTA DEMANDA', 'LANCE QUENTE'], isFeatured: true }, // Urgência (menos de 2h), exclusividade, popularidade, lance quente
-  { id: 'LOTE003', auctionId: '100625bra', publicId: 'LOT-APTOCABU-GHI789Z3', title: 'APARTAMENTO COM 54,25 M² - CABULA', imageUrl: 'https://placehold.co/800x600.png?text=Apto+Cabula', dataAiHint: 'apartamento predio residencial', status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'imoveis', views: 754, price: 105000, endDate: createPastDate(2), bidsCount: 12, description: 'Apartamento funcional no Cabula.', sellerId: 'seller-banco-bradesco-sa' },
+  { id: 'LOTE001', auctionId: '100625bra', publicId: 'LOT-CASACENT-ABC123X1', title: 'CASA COM 129,30 M² - CENTRO', imageUrl: 'https://placehold.co/800x600.png?text=Casa+Centro', dataAiHint: 'casa residencial', galleryImageUrls: ['https://placehold.co/150x100.png?text=Casa+Frente'], mediaItemIds: ['media-casa-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-teotonio-vilela-al', stateId: 'state-al', categoryId: 'imoveis', views: 1018, price: 45000, endDate: createFutureDate(0, 1, 30), bidsCount: 12, description: 'Casa residencial bem localizada no centro da cidade.', sellerId: 'seller-banco-bradesco-sa', lotSpecificAuctionDate: createFutureDate(0, 1, 30), initialPrice: 50000, secondInitialPrice: 42000, additionalTriggers: ['DESCONTO PROGRESSIVO'], isFeatured: true, latitude: -9.56096, longitude: -36.3516, mapAddress: 'Rua Centro, Teotônio Vilela - AL' }, 
+  { id: 'LOTEVEI001', auctionId: '300724car', publicId: 'LOT-2013AUDI-DEF456Y2', title: '2013 AUDI A4 PREMIUM PLUS', year: 2013, make: 'AUDI', model: 'A4', imageUrl: 'https://placehold.co/800x600.png?text=Audi+A4+2013', dataAiHint: 'carro sedan preto', galleryImageUrls: ['https://placehold.co/150x100.png?text=Audi+A4+Frente'], mediaItemIds: ['media-audi-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'veiculos', views: 1560, price: 68500, endDate: createFutureDate(0, 0, 45), bidsCount: 25, description: 'Audi A4 Premium Plus 2013, completo.', sellerId: 'seller-proprietario-particular-1', lotSpecificAuctionDate: createFutureDate(0, 0, 45), isExclusive: true, additionalTriggers: ['ALTA DEMANDA', 'LANCE QUENTE'], isFeatured: true, latitude: -23.550520, longitude: -46.633308, mapAddress: 'Av. Paulista, São Paulo - SP' }, 
+  { id: 'LOTE003', auctionId: '100625bra', publicId: 'LOT-APTOCABU-GHI789Z3', title: 'APARTAMENTO COM 54,25 M² - CABULA', imageUrl: 'https://placehold.co/800x600.png?text=Apto+Cabula', dataAiHint: 'apartamento predio residencial', status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'imoveis', views: 754, price: 105000, endDate: createPastDate(2), bidsCount: 12, description: 'Apartamento funcional no Cabula.', sellerId: 'seller-banco-bradesco-sa', latitude: -12.960980, longitude: -38.467789, mapAddress: 'Rua do Cabula, Salvador - BA' },
   { id: 'LOTEART001', auctionId: 'ART001ANTIQ', publicId: 'LOT-PINTURAO-JKL012A4', title: 'Pintura a Óleo "Paisagem Toscana" - Séc. XIX', imageUrl: 'https://placehold.co/800x600.png?text=Paisagem+Toscana', dataAiHint: 'pintura oleo paisagem', status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-de-janeiro-rj', stateId: 'state-rj', categoryId: 'arte-e-antiguidades', views: 320, price: 7500, endDate: createFutureDate(8, 0), bidsCount: 3, description: 'Belíssima pintura a óleo.', sellerId: 'seller-colecionadores-rj' },
   { id: 'LOTEVCLASS001', auctionId: 'CLASSICVEH24', publicId: 'LOT-1967FORD-MNO345B5', title: '1967 FORD MUSTANG FASTBACK', year: 1967, make: 'FORD', model: 'MUSTANG', imageUrl: 'https://placehold.co/800x600.png?text=Mustang+1967', dataAiHint: 'carro classico vermelho', status: 'ABERTO_PARA_LANCES', cityId: 'city-curitiba-pr', stateId: 'state-pr', categoryId: 'veiculos', views: 1850, price: 250000, endDate: createFutureDate(12, 0), bidsCount: 18, description: 'Icônico Ford Mustang Fastback 1967.', sellerId: 'seller-colecionadores-classicos-pr', initialPrice: 280000, secondInitialPrice: 250000, isFeatured: true },
-  { id: 'LOTE005', auctionId: '20301vei', publicId: 'LOT-TRATORAG-PQR678C6', title: 'TRATOR AGRÍCOLA NEW HOLLAND T7', year: 2018, make: 'NEW HOLLAND', model: 'T7.245', imageUrl: 'https://images.unsplash.com/photo-1633153627433-b15010a9b2f5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0cmFjdG9yJTIwbmglMjB0N3xlbnwwfHx8fDE3NDk5MjQ1Mjd8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'trator agricola campo', galleryImageUrls: ['https://placehold.co/150x100.png?text=Trator+Frente'], mediaItemIds: ['media-trator-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-verde-go', stateId: 'state-go', categoryId: 'maquinas-e-equipamentos', views: 650, price: 180000, endDate: createFutureDate(0, 1, 15), bidsCount: 7, isFeatured: true, description: 'Trator New Holland T7.245, ano 2018.', sellerId: 'seller-fazenda-boa-esperanca' }, // Urgência
+  { id: 'LOTE005', auctionId: '20301vei', publicId: 'LOT-TRATORAG-PQR678C6', title: 'TRATOR AGRÍCOLA NEW HOLLAND T7', year: 2018, make: 'NEW HOLLAND', model: 'T7.245', imageUrl: 'https://images.unsplash.com/photo-1633153627433-b15010a9b2f5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0cmFjdG9yJTIwbmglMjB0N3xlbnwwfHx8fDE3NDk5MjQ1Mjd8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'trator agricola campo', galleryImageUrls: ['https://placehold.co/150x100.png?text=Trator+Frente'], mediaItemIds: ['media-trator-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-verde-go', stateId: 'state-go', categoryId: 'maquinas-e-equipamentos', views: 650, price: 180000, endDate: createFutureDate(0, 1, 15), bidsCount: 7, isFeatured: true, description: 'Trator New Holland T7.245, ano 2018.', sellerId: 'seller-fazenda-boa-esperanca', latitude: -17.7999, longitude: -50.9253, mapAddress: 'Zona Rural, Rio Verde - GO' }, // Urgência
   { id: 'LOTE002', auctionId: '100625bra', publicId: 'LOT-CASAPORT-STU901D7', title: 'CASA COM 234,50 M² - PORTÃO', imageUrl: 'https://placehold.co/800x600.png?text=Casa+Portao', dataAiHint: 'casa moderna suburbio', status: 'ABERTO_PARA_LANCES', cityId: 'city-lauro-de-freitas-ba', stateId: 'state-ba', categoryId: 'imoveis', views: 681, price: 664000, endDate: createFutureDate(10, 5), bidsCount: 1, description: 'Espaçosa casa em Lauro de Freitas.', sellerId: 'seller-banco-bradesco-sa', isFeatured: true },
   { id: 'LOTE004', auctionId: '100625bra', publicId: 'LOT-CASAVILA-VWX234E8', title: 'CASA COM 133,04 M² - VILA PERI', imageUrl: 'https://placehold.co/800x600.png?text=Casa+Vila+Peri', dataAiHint: 'casa terrea simples', status: 'EM_BREVE', cityId: 'city-fortaleza-ce', stateId: 'state-ce', categoryId: 'imoveis', views: 527, price: 238000, endDate: createFutureDate(3, 0), bidsCount: 0, description: 'Casa em Fortaleza, boa localização.', sellerId: 'seller-banco-bradesco-sa' },
   { id: 'LOTE006', auctionId: '20301vei', publicId: 'LOT-COLHEITA-YZA567F9', title: 'COLHEITADEIRA JOHN DEERE S680', imageUrl: 'https://placehold.co/800x600.png?text=Colheitadeira+JD', dataAiHint: 'colheitadeira graos campo', status: 'ENCERRADO', cityId: 'city-campo-grande-ms', stateId: 'state-ms', categoryId: 'maquinas-e-equipamentos', views: 450, price: 365000, endDate: createPastDate(5), bidsCount: 22, description: 'Colheitadeira John Deere S680, usada.', sellerId: 'seller-produtores-rurais-ms' },
@@ -385,7 +386,9 @@ export function getCategoryNameFromSlug(slug: string): string | undefined {
   const foundByName = allSampleCategories.find(cat => cat.name === slug || slugify(cat.name) === slug);
   if (foundByName) return foundByName.name;
 
-  console.warn(`[sample-data] Nenhum nome de categoria encontrado para o slug/nome: ${slug} nos dados de exemplo.`);
+  // Se ainda não encontrou, retorna undefined silenciosamente.
+  // O erro será tratado pelo componente que chama, se necessário.
+  // console.warn(`[sample-data] Nenhum nome de categoria encontrado para o slug/nome: ${slug} nos dados de exemplo.`);
   return undefined; 
 }
 
@@ -519,7 +522,7 @@ export function getCategoryAssets(categoryNameOrSlug: string): CategoryAssets {
     resolvedName = category.name;
     resolvedSlug = category.slug;
   } else {
-    // Não loga erro, apenas usa o nome fornecido para placeholders
+    // Não loga mais o erro aqui, pois pode ser um título descritivo
   }
 
   const defaultAssets: CategoryAssets = {
@@ -530,22 +533,36 @@ export function getCategoryAssets(categoryNameOrSlug: string): CategoryAssets {
     bannerText: `Descubra os melhores lotes em ${resolvedName}`,
   };
 
-  const assetOverrides: Record<string, Partial<CategoryAssets>> = {
-    'veiculos': { logoUrl: 'https://placehold.co/100x100.png?text=Carro', logoAiHint: 'icone carro', bannerUrl: 'https://placehold.co/1200x300.png?text=Veiculos+Destaque', bannerAiHint: 'carros estrada', bannerText: `Excelentes Ofertas em Veículos - ${resolvedName}` },
-    'imoveis': { logoUrl: 'https://placehold.co/100x100.png?text=Casa', logoAiHint: 'icone casa', bannerUrl: 'https://placehold.co/1200x300.png?text=Oportunidades+Imobiliarias', bannerAiHint: 'imoveis cidade', bannerText: `Seu Novo Lar ou Investimento está aqui - ${resolvedName}` },
-    'arte-e-antiguidades': { logoUrl: 'https://placehold.co/100x100.png?text=Arte', logoAiHint: 'icone arte', bannerUrl: 'https://placehold.co/1200x300.png?text=Leilao+Arte', bannerAiHint: 'galeria arte', bannerText: `Obras Raras e Antiguidades - ${resolvedName}` },
-    'maquinas-e-equipamentos': { logoUrl: 'https://placehold.co/100x100.png?text=Trator', logoAiHint: 'icone trator', bannerUrl: 'https://placehold.co/1200x300.png?text=Maquinario+Agro', bannerAiHint: 'campo trator', bannerText: `Equipamentos Agrícolas e Maquinário Pesado - ${resolvedName}` },
-    'eletronicos-e-tecnologia': { logoUrl: 'https://placehold.co/100x100.png?text=Chip', logoAiHint: 'icone chip placa', bannerUrl: 'https://placehold.co/1200x300.png?text=Tecnologia+Eletronicos', bannerAiHint: 'computador smartphone', bannerText: `Os Melhores Gadgets e Eletrônicos - ${resolvedName}` },
-    'semoventes': { logoUrl: 'https://placehold.co/100x100.png?text=Boi', logoAiHint: 'icone boi cavalo', bannerUrl: 'https://placehold.co/1200x300.png?text=Leilao+Semoventes', bannerAiHint: 'gado pasto', bannerText: `Animais de Qualidade e Procedência - ${resolvedName}` },
-    'leiloes-judiciais': { logoUrl: 'https://placehold.co/100x100.png?text=TJ', logoAiHint: 'justica balanca', bannerUrl: 'https://placehold.co/1200x300.png?text=Leiloes+Judiciais', bannerAiHint: 'martelo tribunal', bannerText: 'Oportunidades Únicas em Leilões Judiciais' },
-    'leiloes-extrajudiciais': { logoUrl: 'https://placehold.co/100x100.png?text=LX', logoAiHint: 'acordo negocios', bannerUrl: 'https://placehold.co/1200x300.png?text=Leiloes+Extrajudiciais', bannerAiHint: 'documentos acordo', bannerText: 'Negociações Diretas e Ágeis em Leilões Extrajudiciais' },
-    'venda-direta': { logoUrl: 'https://placehold.co/100x100.png?text=VD', logoAiHint: 'etiqueta preco', bannerUrl: 'https://placehold.co/1200x300.png?text=Venda+Direta', bannerAiHint: 'loja vitrine', bannerText: 'Compre Itens com Preço Fixo, Sem Disputa de Lances' },
-    'segunda-praca': { logoUrl: 'https://placehold.co/100x100.png?text=2P', logoAiHint: 'numero dois leilao', bannerUrl: 'https://placehold.co/1200x300.png?text=Segunda+Praca', bannerAiHint: 'oportunidade desconto', bannerText: 'Novas Chances com Valores Atrativos em Segunda Praça' },
-    'leiloes-encerrados': { logoUrl: 'https://placehold.co/100x100.png?text=Fim', logoAiHint: 'calendario finalizado', bannerUrl: 'https://placehold.co/1200x300.png?text=Leiloes+Encerrados', bannerAiHint: 'arquivo historico', bannerText: 'Consulte o Histórico de Resultados de Leilões Encerrados' },
-    'leiloes-cancelados': { logoUrl: 'https://placehold.co/100x100.png?text=X', logoAiHint: 'simbolo cancelado', bannerUrl: 'https://placehold.co/1200x300.png?text=Leiloes+Cancelados', bannerAiHint: 'documento cancelado', bannerText: 'Veja os Leilões que Foram Cancelados' },
+  // Tenta encontrar um override mais genérico se o slug exato não for encontrado
+  const getOverride = (slug: string) => {
+      const assetOverrides: Record<string, Partial<CategoryAssets>> = {
+        'veiculos': { logoUrl: 'https://placehold.co/100x100.png?text=Carro', logoAiHint: 'icone carro', bannerUrl: 'https://placehold.co/1200x300.png?text=Veiculos+Destaque', bannerAiHint: 'carros estrada', bannerText: `Excelentes Ofertas em Veículos - ${resolvedName}` },
+        'imoveis': { logoUrl: 'https://placehold.co/100x100.png?text=Casa', logoAiHint: 'icone casa', bannerUrl: 'https://placehold.co/1200x300.png?text=Oportunidades+Imobiliarias', bannerAiHint: 'imoveis cidade', bannerText: `Seu Novo Lar ou Investimento está aqui - ${resolvedName}` },
+        'arte-e-antiguidades': { logoUrl: 'https://placehold.co/100x100.png?text=Arte', logoAiHint: 'icone arte', bannerUrl: 'https://placehold.co/1200x300.png?text=Leilao+Arte', bannerAiHint: 'galeria arte', bannerText: `Obras Raras e Antiguidades - ${resolvedName}` },
+        'maquinas-e-equipamentos': { logoUrl: 'https://placehold.co/100x100.png?text=Trator', logoAiHint: 'icone trator', bannerUrl: 'https://placehold.co/1200x300.png?text=Maquinario+Agro', bannerAiHint: 'campo trator', bannerText: `Equipamentos Agrícolas e Maquinário Pesado - ${resolvedName}` },
+        'eletronicos-e-tecnologia': { logoUrl: 'https://placehold.co/100x100.png?text=Chip', logoAiHint: 'icone chip placa', bannerUrl: 'https://placehold.co/1200x300.png?text=Tecnologia+Eletronicos', bannerAiHint: 'computador smartphone', bannerText: `Os Melhores Gadgets e Eletrônicos - ${resolvedName}` },
+        'semoventes': { logoUrl: 'https://placehold.co/100x100.png?text=Boi', logoAiHint: 'icone boi cavalo', bannerUrl: 'https://placehold.co/1200x300.png?text=Leilao+Semoventes', bannerAiHint: 'gado pasto', bannerText: `Animais de Qualidade e Procedência - ${resolvedName}` },
+        'leiloes-judiciais': { logoUrl: 'https://placehold.co/100x100.png?text=TJ', logoAiHint: 'justica balanca', bannerUrl: 'https://placehold.co/1200x300.png?text=Leiloes+Judiciais', bannerAiHint: 'martelo tribunal', bannerText: 'Oportunidades Únicas em Leilões Judiciais' },
+        'leiloes-extrajudiciais': { logoUrl: 'https://placehold.co/100x100.png?text=LX', logoAiHint: 'acordo negocios', bannerUrl: 'https://placehold.co/1200x300.png?text=Leiloes+Extrajudiciais', bannerAiHint: 'documentos acordo', bannerText: 'Negociações Diretas e Ágeis em Leilões Extrajudiciais' },
+        'venda-direta': { logoUrl: 'https://placehold.co/100x100.png?text=VD', logoAiHint: 'etiqueta preco', bannerUrl: 'https://placehold.co/1200x300.png?text=Venda+Direta', bannerAiHint: 'loja vitrine', bannerText: 'Compre Itens com Preço Fixo, Sem Disputa de Lances' },
+        'segunda-praca': { logoUrl: 'https://placehold.co/100x100.png?text=2P', logoAiHint: 'numero dois leilao', bannerUrl: 'https://placehold.co/1200x300.png?text=Segunda+Praca', bannerAiHint: 'oportunidade desconto', bannerText: 'Novas Chances com Valores Atrativos em Segunda Praça' },
+        'leiloes-encerrados': { logoUrl: 'https://placehold.co/100x100.png?text=Fim', logoAiHint: 'calendario finalizado', bannerUrl: 'https://placehold.co/1200x300.png?text=Leiloes+Encerrados', bannerAiHint: 'arquivo historico', bannerText: 'Consulte o Histórico de Resultados de Leilões Encerrados' },
+        'leiloes-cancelados': { logoUrl: 'https://placehold.co/100x100.png?text=X', logoAiHint: 'simbolo cancelado', bannerUrl: 'https://placehold.co/1200x300.png?text=Leiloes+Cancelados', bannerAiHint: 'documento cancelado', bannerText: 'Veja os Leilões que Foram Cancelados' },
+      };
+      if (assetOverrides[slug]) return assetOverrides[slug];
+
+      // Fallback para palavras-chave se nenhum slug exato for encontrado
+      if (slug.includes('judicial') || slug.includes('justica')) return assetOverrides['leiloes-judiciais'];
+      if (slug.includes('extrajudicial')) return assetOverrides['leiloes-extrajudiciais'];
+      if (slug.includes('direta')) return assetOverrides['venda-direta'];
+      if (slug.includes('segunda') && slug.includes('praca')) return assetOverrides['segunda-praca'];
+      if (slug.includes('veiculo')) return assetOverrides['veiculos'];
+      if (slug.includes('imovel') || slug.includes('casa') || slug.includes('terreno')) return assetOverrides['imoveis'];
+
+      return {}; // Nenhum override específico ou por palavra-chave
   };
 
-  return { ...defaultAssets, ...(assetOverrides[resolvedSlug] || {}) };
+  return { ...defaultAssets, ...getOverride(resolvedSlug) };
 }
 
 
@@ -861,6 +878,12 @@ export const samplePlatformSettings: PlatformSettings = {
   mentalTriggerSettings: defaultMentalTriggerSettings,
   homepageSections: defaultHomepageSections,
   sectionBadgeVisibility: defaultSectionBadgeVisibility,
+  mapSettings: {
+    defaultProvider: 'staticImage', // ou 'google', 'openstreetmap'
+    googleMapsApiKey: '', // DEIXAR VAZIO PARA USAR PLACEHOLDERS
+    staticImageMapZoom: 15,
+    staticImageMapMarkerColor: 'red',
+  },
   updatedAt: new Date()
 };
 
@@ -870,3 +893,4 @@ export function getPlaceholderIfEmpty(value: string | number | null | undefined,
     }
     return String(value);
 }
+
