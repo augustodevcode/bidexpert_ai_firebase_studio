@@ -376,20 +376,24 @@ export default function LotDetailClientContent({
                     </CardContent>
                     </Card>
                     
-                    <Tabs defaultValue="description" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 mb-4">
-                            <TabsTrigger value="description">Descrição</TabsTrigger>
-                            <TabsTrigger value="specification">Especificações</TabsTrigger>
-                            <TabsTrigger value="seller">Comitente</TabsTrigger>
-                            <TabsTrigger value="reviews">Avaliações</TabsTrigger>
-                            <TabsTrigger value="questions">Perguntas</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="description"><LotDescriptionTab lot={lot} /></TabsContent>
-                        <TabsContent value="specification"><LotSpecificationTab lot={lot} /></TabsContent>
-                        <TabsContent value="seller"><LotSellerTab sellerName={initialSellerName || auction.seller || "Não Informado"} sellerId={lot.sellerId} auctionSellerName={auction.seller} /></TabsContent>
-                        <TabsContent value="reviews"><LotReviewsTab lot={lot} reviews={lotReviews} isLoading={isLoadingData} onNewReview={handleNewReview} canUserReview={canUserReview} /></TabsContent>
-                        <TabsContent value="questions"><LotQuestionsTab lot={lot} questions={lotQuestions} isLoading={isLoadingData} onNewQuestion={handleNewQuestion} canUserAskQuestion={canUserAskQuestion} /></TabsContent>
-                    </Tabs>
+                    <Card className="shadow-lg">
+                        <CardContent className="p-4 md:p-6">
+                            <Tabs defaultValue="description" className="w-full">
+                                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 mb-4">
+                                    <TabsTrigger value="description">Descrição</TabsTrigger>
+                                    <TabsTrigger value="specification">Especificações</TabsTrigger>
+                                    <TabsTrigger value="seller">Comitente</TabsTrigger>
+                                    <TabsTrigger value="reviews">Avaliações</TabsTrigger>
+                                    <TabsTrigger value="questions">Perguntas</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="description"><LotDescriptionTab lot={lot} /></TabsContent>
+                                <TabsContent value="specification"><LotSpecificationTab lot={lot} /></TabsContent>
+                                <TabsContent value="seller"><LotSellerTab sellerName={initialSellerName || auction.seller || "Não Informado"} sellerId={lot.sellerId} auctionSellerName={auction.seller} /></TabsContent>
+                                <TabsContent value="reviews"><LotReviewsTab lot={lot} reviews={lotReviews} isLoading={isLoadingData} onNewReview={handleNewReview} canUserReview={canUserReview} /></TabsContent>
+                                <TabsContent value="questions"><LotQuestionsTab lot={lot} questions={lotQuestions} isLoading={isLoadingData} onNewQuestion={handleNewQuestion} canUserAskQuestion={canUserAskQuestion} /></TabsContent>
+                            </Tabs>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 {/* Coluna Direita: Informações de Lance, Venda, Histórico e Mapa */}
@@ -450,7 +454,7 @@ export default function LotDetailClientContent({
                         <CardHeader className="flex flex-row items-center justify-between p-4">
                             <CardTitle className="text-lg flex items-center">Histórico de Lances</CardTitle>
                             {lotBids.length > 2 && (
-                                <Button variant="outline" size="sm" onClick={() => setIsAllBidsModalOpen(true)}>Ver Todos ({lotBids.length})</Button>
+                                <Button variant="outline" size="sm" onClick={()={() => setIsAllBidsModalOpen(true)}}>Ver Todos ({lotBids.length})</Button>
                             )}
                         </CardHeader>
                         <CardContent className="p-4 pt-0">
@@ -474,7 +478,7 @@ export default function LotDetailClientContent({
                         </CardContent>
                     </Card>
                    
-                    <div className="w-full aspect-square"> {/* Changed from aspect-video to aspect-square */}
+                    <div className="w-full aspect-square">
                         <LotMapDisplay lot={lot} platformSettings={platformSettings} />
                     </div>
                 </div>
