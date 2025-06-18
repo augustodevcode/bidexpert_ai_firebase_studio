@@ -1,25 +1,27 @@
 
+
 import AuctionCard from '@/components/auction-card';
-// import AuctionFilters from '@/components/auction-filters'; // Removido conforme solicitado
 import HeroCarousel from '@/components/hero-carousel';
-// import PromoCard from '@/components/promo-card'; // Não utilizado, substituído por LotCard para destaques
 import FilterLinkCard from '@/components/filter-link-card';
-import LotCard from '@/components/lot-card'; // Usado para Lotes em Destaque
-import { sampleAuctions, sampleLots, getCategoryAssets } from '@/lib/sample-data';
-import type { Auction, Lot } from '@/types';
+import LotCard from '@/components/lot-card'; 
+import { sampleAuctions, sampleLots, getCategoryAssets, samplePlatformSettings } from '@/lib/sample-data';
+import type { Auction, Lot, PlatformSettings } from '@/types';
 import Link from 'next/link';
 import { Landmark, Scale, FileText, Tags, CalendarX, CheckSquare, Star } from 'lucide-react';
 
 export default function HomePage() {
   try {
+    const platformSettings: PlatformSettings = samplePlatformSettings; // Usar as configurações de exemplo
     const auctions: Auction[] = sampleAuctions.slice(0, 10); 
-    const featuredLots: Lot[] = sampleLots.filter(lot => lot.isFeatured).slice(0, 10); 
+    
+    // Filtrar lotes em destaque para mostrar apenas os que estão ABERTO_PARA_LANCES
+    const featuredLots: Lot[] = sampleLots.filter(lot => lot.isFeatured && lot.status === 'ABERTO_PARA_LANCES').slice(0, 10); 
 
     const filterLinksData = [
       {
         title: 'Leilões Judiciais',
         subtitle: 'Oportunidades de processos judiciais.',
-        imageUrl: getCategoryAssets('Leilões Judiciais').bannerUrl, // Usando getCategoryAssets para consistência
+        imageUrl: getCategoryAssets('Leilões Judiciais').bannerUrl,
         imageAlt: 'Ícone Leilões Judiciais',
         dataAiHint: getCategoryAssets('Leilões Judiciais').bannerAiHint,
         link: '/search?type=auctions&auctionType=JUDICIAL',
@@ -44,7 +46,7 @@ export default function HomePage() {
         bgColorClass: 'bg-amber-50 dark:bg-amber-900/40 hover:border-amber-300',
       },
       {
-        title: 'Em Segunda Praça',
+        title: 'Segunda Praça',
         subtitle: 'Novas chances com valores atrativos.',
         imageUrl: getCategoryAssets('Segunda Praça').bannerUrl,
         imageAlt: 'Ícone Segunda Praça',
@@ -101,7 +103,11 @@ export default function HomePage() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {featuredLots.map((lot) => (
-                <LotCard key={lot.id} lot={lot} />
+                <LotCard 
+                  key={lot.id} 
+                  lot={lot} 
+                  badgeVisibilityConfig={platformSettings.sectionBadgeVisibility?.featuredLots}
+                />
               ))}
             </div>
           </section>
@@ -128,7 +134,6 @@ export default function HomePage() {
     );
   } catch (error: any) {
     console.error("[HomePage Server-Side Error Catcher]", error);
-    // Retornar um fallback de erro simples para o cliente, o log do servidor terá mais detalhes.
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
         <h1 className="text-2xl font-bold text-destructive">Erro ao Renderizar a Página Inicial</h1>
@@ -145,3 +150,4 @@ export default function HomePage() {
     );
   }
 }
+

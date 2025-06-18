@@ -1,6 +1,7 @@
+
 'use client';
 
-import type { Lot } from '@/types';
+import type { Lot, PlatformSettings, BadgeVisibilitySettings } from '@/types'; // Adicionado PlatformSettings e BadgeVisibilitySettings
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -9,8 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown } from 'lucide-react';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useState, useEffect, useMemo } from 'react'; // Adicionado useMemo aqui
-import { getAuctionStatusText, getLotStatusColor, sampleAuctions } from '@/lib/sample-data';
+import { useState, useEffect, useMemo } from 'react';
+import { getAuctionStatusText, getLotStatusColor, sampleAuctions, samplePlatformSettings } from '@/lib/sample-data'; // Importado samplePlatformSettings
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,19 +20,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
-import LotPreviewModal from './lot-preview-modal'; 
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'; 
+import LotPreviewModal from './lot-preview-modal';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TimeRemainingBadgeProps {
   endDate: Date | string;
   status: Lot['status'];
+  showUrgencyTimer?: boolean; // Adicionado para controle
 }
 
-const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({ endDate, status }) => {
+const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({ endDate, status, showUrgencyTimer }) => {
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const [isEndingSoon, setIsEndingSoon] = useState(false);
 
   useEffect(() => {
+    if (showUrgencyTimer === false) { // Se o timer de urgência estiver desabilitado, não calcula
+        setTimeRemaining(getAuctionStatusText(status)); // Mostra apenas o status
+        setIsEndingSoon(false);
+        return;
+    }
+
     const calculateTime = () => {
       const now = new Date();
       const end = endDate instanceof Date ? endDate : new Date(endDate);
@@ -54,7 +62,7 @@ const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({ endDate, status
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       const seconds = totalSeconds % 60;
       
-      setIsEndingSoon(days === 0 && hours < 2); // Considera "em breve" se menos de 2 horas
+      setIsEndingSoon(days === 0 && hours < 2); 
 
       if (days > 0) setTimeRemaining(`${days}d ${hours}h`);
       else if (hours > 0) setTimeRemaining(`${hours}h ${minutes}m`);
@@ -66,7 +74,11 @@ const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({ endDate, status
     calculateTime();
     const interval = setInterval(calculateTime, 1000);
     return () => clearInterval(interval);
-  }, [endDate, status]);
+  }, [endDate, status, showUrgencyTimer]);
+
+  if (showUrgencyTimer === false) { // Se desabilitado, mostra apenas o status (já definido no useEffect)
+    return <Badge variant="outline" className="text-xs font-medium">{timeRemaining}</Badge>;
+  }
 
   return (
     <Badge variant={isEndingSoon ? "destructive" : "outline"} className="text-xs font-medium">
@@ -79,13 +91,19 @@ const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({ endDate, status
 
 interface LotCardProps {
   lot: Lot;
+  badgeVisibilityConfig?: BadgeVisibilitySettings; // Nova prop
 }
 
-const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
+// Renomeado para LotCardClientContent para melhor clareza, já que o wrapper exportado ainda é LotCard
+const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConfig }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`);
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false); 
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const { toast } = useToast();
+  
+  // Usar as configurações globais como fallback se badgeVisibilityConfig não for passado
+  const platformMentalTriggers = samplePlatformSettings.mentalTriggerSettings || {};
+  const sectionBadges = badgeVisibilityConfig || samplePlatformSettings.sectionBadgeVisibility?.searchGrid || {}; // Fallback para config de searchGrid se não especificado
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -94,7 +112,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
     }
   }, [lot.id, lot.auctionId]);
 
-  useEffect(() => {
+   useEffect(() => {
     if (lot && lot.id) {
         setIsFavorite(isLotFavoriteInStorage(lot.id));
     }
@@ -102,10 +120,10 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
 
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
-    e.preventDefault(); 
+    e.preventDefault();
     e.stopPropagation();
     const newFavoriteState = !isFavorite;
-    setIsFavorite(newFavoriteState); 
+    setIsFavorite(newFavoriteState);
 
     if (newFavoriteState) {
       addFavoriteLotIdToStorage(lot.id);
@@ -163,7 +181,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
     : 'N/D';
 
   const discountPercentage = useMemo(() => {
-    if (lot.initialPrice && lot.secondInitialPrice && lot.secondInitialPrice < lot.initialPrice && (lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE')) { // Considerar status para desconto
+    if (lot.initialPrice && lot.secondInitialPrice && lot.secondInitialPrice < lot.initialPrice && (lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE')) {
       return Math.round(((lot.initialPrice - lot.secondInitialPrice) / lot.initialPrice) * 100);
     }
     return lot.discountPercentage || 0;
@@ -172,25 +190,24 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
 
   const mentalTriggers = useMemo(() => {
     const triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
-    // Simulação de configurações da plataforma para popularidade e lances quentes
-    const platformSettings = { mentalTriggerSettings: { popularityViewThreshold: 500, hotBidThreshold: 10, showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true, showDiscountBadge: true, showUrgencyTimer: true }};
+    const settings = platformMentalTriggers; // Use as configurações globais
 
-    if (platformSettings.mentalTriggerSettings?.showPopularityBadge && (lot.views || 0) > (platformSettings.mentalTriggerSettings.popularityViewThreshold || 500)) {
+    if (sectionBadges.showPopularityBadge !== false && settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) {
       triggers.push('MAIS VISITADO');
     }
-    if (platformSettings.mentalTriggerSettings?.showHotBidBadge && (lot.bidsCount || 0) > (platformSettings.mentalTriggerSettings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') {
+    if (sectionBadges.showHotBidBadge !== false && settings.showHotBidBadge && (lot.bidsCount || 0) > (settings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') {
       triggers.push('LANCE QUENTE');
     }
-    if (platformSettings.mentalTriggerSettings?.showExclusiveBadge && lot.isExclusive) {
+    if (sectionBadges.showExclusiveBadge !== false && settings.showExclusiveBadge && lot.isExclusive) {
         triggers.push('EXCLUSIVO');
     }
     return triggers;
-  }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive]);
+  }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, platformMentalTriggers, sectionBadges]);
 
 
   return (
     <>
-    <Card className="flex flex-col overflow-hidden h-full shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg group">
+    <Card className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-xl transition-shadow duration-300 rounded-lg group">
       <div className="relative">
         <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block">
           <div className="aspect-[16/10] relative bg-muted">
@@ -202,26 +219,37 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
               className="object-cover"
               data-ai-hint={lot.dataAiHint || 'imagem lote'}
             />
-            {/* Main Status Badge */}
-            <Badge className={`absolute top-2 left-2 text-xs px-2 py-1 z-10 ${getLotStatusColor(lot.status)}`}>
-              {getAuctionStatusText(lot.status)}
-            </Badge>
+            {/* Main Status Badge - Condicional */}
+            {sectionBadges.showStatusBadge !== false && (
+              <Badge className={`absolute top-2 left-2 text-xs px-2 py-1 z-10 ${getLotStatusColor(lot.status)}`}>
+                {getAuctionStatusText(lot.status)}
+              </Badge>
+            )}
             
             {/* Mental Trigger Badges - stack below main status or to the right */}
-            <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
-              {discountPercentage > 0 && (
+            <div className={`absolute top-2 ${sectionBadges.showStatusBadge !== false ? 'mt-7 sm:mt-0 sm:top-2' : 'top-2'} right-2 flex flex-col items-end gap-1 z-10`}>
+              {sectionBadges.showDiscountBadge !== false && platformMentalTriggers.showDiscountBadge && discountPercentage > 0 && (
                 <Badge variant="destructive" className="text-xs px-1.5 py-0.5 animate-pulse">
                   <Percent className="h-3 w-3 mr-1" /> {discountPercentage}% OFF
                 </Badge>
               )}
-              {mentalTriggers.map(trigger => (
-                <Badge key={trigger} variant="secondary" className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
-                  {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3 mr-1" />}
-                  {trigger === 'LANCE QUENTE' && <Zap className="h-3 w-3 mr-1 text-red-500 fill-red-500" />}
-                  {trigger === 'EXCLUSIVO' && <Crown className="h-3 w-3 mr-1 text-purple-600" />}
-                  {trigger}
-                </Badge>
-              ))}
+              {mentalTriggers.map(trigger => {
+                let showThisTrigger = false;
+                if (trigger === 'MAIS VISITADO' && sectionBadges.showPopularityBadge !== false && platformMentalTriggers.showPopularityBadge) showThisTrigger = true;
+                if (trigger === 'LANCE QUENTE' && sectionBadges.showHotBidBadge !== false && platformMentalTriggers.showHotBidBadge) showThisTrigger = true;
+                if (trigger === 'EXCLUSIVO' && sectionBadges.showExclusiveBadge !== false && platformMentalTriggers.showExclusiveBadge) showThisTrigger = true;
+
+                if (!showThisTrigger) return null;
+
+                return (
+                    <Badge key={trigger} variant="secondary" className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
+                    {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3 mr-1" />}
+                    {trigger === 'LANCE QUENTE' && <Zap className="h-3 w-3 mr-1 text-red-500 fill-red-500" />}
+                    {trigger === 'EXCLUSIVO' && <Crown className="h-3 w-3 mr-1 text-purple-600" />}
+                    {trigger}
+                    </Badge>
+                );
+              })}
             </div>
 
             <div className="absolute top-10 right-2 flex flex-col space-y-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
@@ -323,7 +351,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
         </div>
         
         <div className="w-full flex justify-between items-center text-xs">
-            <TimeRemainingBadge endDate={lot.endDate} status={lot.status} />
+            <TimeRemainingBadge endDate={lot.endDate} status={lot.status} showUrgencyTimer={sectionBadges.showUrgencyTimer !== false && platformMentalTriggers.showUrgencyTimer} />
             <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : ''}`}>
                 <Gavel className="h-3 w-3" />
                 <span>{lot.bidsCount || 0} Lances</span>
@@ -346,13 +374,14 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot }) => {
 }
 
 
-export default function LotCard({ lot }: LotCardProps) {
+export default function LotCard({ lot, badgeVisibilityConfig }: LotCardProps) {
     const [isClient, setIsClient] = useState(false);
     useEffect(() => {
       setIsClient(true);
     }, []);
   
     if (!isClient) {
+      // Skeleton para SSR ou enquanto JS não carregou
       return (
         <Card className="flex flex-col overflow-hidden h-full shadow-md rounded-lg group">
              <div className="relative aspect-[16/10] bg-muted animate-pulse"></div>
@@ -371,5 +400,6 @@ export default function LotCard({ lot }: LotCardProps) {
       );
     }
   
-    return <LotCardClientContent lot={lot} />;
+    return <LotCardClientContent lot={lot} badgeVisibilityConfig={badgeVisibilityConfig} />;
   }
+

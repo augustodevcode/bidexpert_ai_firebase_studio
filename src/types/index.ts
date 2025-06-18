@@ -1,5 +1,4 @@
 
-
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
 
@@ -71,7 +70,7 @@ export interface LotCategory {
     itemCount?: number;
     createdAt: AnyTimestamp;
     updatedAt: AnyTimestamp;
-    subcategories?: string[]; 
+    subcategories?: string[];
 }
 
 export interface MediaItem {
@@ -514,13 +513,13 @@ export interface HomepageSectionConfig {
   title?: string;
   visible: boolean;
   order: number;
-  itemCount?: number; 
-  categorySlug?: string; 
-  promoContent?: { 
+  itemCount?: number;
+  categorySlug?: string;
+  promoContent?: {
     title: string;
     subtitle?: string;
     link: string;
-    imageUrl?: string; 
+    imageUrl?: string;
     imageAlt?: string;
     dataAiHint?: string;
     bgColorClass?: string;
@@ -535,6 +534,23 @@ export interface MentalTriggerSettings {
   showHotBidBadge?: boolean;
   hotBidThreshold?: number;
   showExclusiveBadge?: boolean;
+}
+
+export interface BadgeVisibilitySettings {
+  showStatusBadge?: boolean;
+  showDiscountBadge?: boolean;
+  showUrgencyTimer?: boolean;
+  showPopularityBadge?: boolean;
+  showHotBidBadge?: boolean;
+  showExclusiveBadge?: boolean;
+}
+
+export interface SectionBadgeConfig {
+  featuredLots?: BadgeVisibilitySettings;
+  searchGrid?: BadgeVisibilitySettings;
+  searchList?: BadgeVisibilitySettings;
+  lotDetail?: BadgeVisibilitySettings;
+  // Outras seções podem ser adicionadas aqui
 }
 
 export interface PlatformSettings {
@@ -552,12 +568,14 @@ export interface PlatformSettings {
   };
   homepageSections?: HomepageSectionConfig[];
   mentalTriggerSettings?: MentalTriggerSettings;
+  sectionBadgeVisibility?: SectionBadgeConfig; // Novo
   updatedAt: AnyTimestamp;
 }
 
 export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'> & {
     homepageSections?: HomepageSectionConfig[];
     mentalTriggerSettings?: MentalTriggerSettings;
+    sectionBadgeVisibility?: SectionBadgeConfig; // Novo
 };
 
 export interface SqlAuthResult {
@@ -722,5 +740,6 @@ export type LotWithCategoryName = Lot & {
     
 
     
+
 
 
