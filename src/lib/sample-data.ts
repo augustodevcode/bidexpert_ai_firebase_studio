@@ -127,12 +127,12 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
   { id: 'LOTE003', auctionId: '100625bra', publicId: 'LOT-APTOCABU-GHI789Z3', title: 'APARTAMENTO COM 54,25 M² - CABULA', imageUrl: 'https://placehold.co/800x600.png?text=Apto+Cabula', dataAiHint: 'apartamento predio residencial', status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'imoveis', views: 754, price: 105000, endDate: createPastDate(2), bidsCount: 12, description: 'Apartamento funcional no Cabula.', sellerId: 'seller-banco-bradesco-sa', latitude: -12.960980, longitude: -38.467789, mapAddress: 'Rua do Cabula, Salvador - BA' },
   { id: 'LOTEART001', auctionId: 'ART001ANTIQ', publicId: 'LOT-PINTURAO-JKL012A4', title: 'Pintura a Óleo "Paisagem Toscana" - Séc. XIX', imageUrl: 'https://placehold.co/800x600.png?text=Paisagem+Toscana', dataAiHint: 'pintura oleo paisagem', status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-de-janeiro-rj', stateId: 'state-rj', categoryId: 'arte-e-antiguidades', views: 320, price: 7500, endDate: createFutureDate(8, 0), bidsCount: 3, description: 'Belíssima pintura a óleo.', sellerId: 'seller-colecionadores-rj' },
   { id: 'LOTEVCLASS001', auctionId: 'CLASSICVEH24', publicId: 'LOT-1967FORD-MNO345B5', title: '1967 FORD MUSTANG FASTBACK', year: 1967, make: 'FORD', model: 'MUSTANG', imageUrl: 'https://placehold.co/800x600.png?text=Mustang+1967', dataAiHint: 'carro classico vermelho', status: 'ABERTO_PARA_LANCES', cityId: 'city-curitiba-pr', stateId: 'state-pr', categoryId: 'veiculos', views: 1850, price: 250000, endDate: createFutureDate(12, 0), bidsCount: 18, description: 'Icônico Ford Mustang Fastback 1967.', sellerId: 'seller-colecionadores-classicos-pr', initialPrice: 280000, secondInitialPrice: 250000, isFeatured: true },
-  { id: 'LOTE005', auctionId: '20301vei', publicId: 'LOT-TRATORAG-PQR678C6', title: 'TRATOR AGRÍCOLA NEW HOLLAND T7', year: 2018, make: 'NEW HOLLAND', model: 'T7.245', imageUrl: 'https://images.unsplash.com/photo-1633153627433-b15010a9b2f5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0cmFjdG9yJTIwbmglMjB0N3xlbnwwfHx8fDE3NDk5MjQ1Mjd8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'trator agricola campo', galleryImageUrls: ['https://placehold.co/150x100.png?text=Trator+Frente'], mediaItemIds: ['media-trator-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-verde-go', stateId: 'state-go', categoryId: 'maquinas-e-equipamentos', views: 650, price: 180000, endDate: createFutureDate(0, 1, 15), bidsCount: 7, isFeatured: true, description: 'Trator New Holland T7.245, ano 2018.', sellerId: 'seller-fazenda-boa-esperanca', latitude: -17.7999, longitude: -50.9253, mapAddress: 'Zona Rural, Rio Verde - GO' }, // Urgência
+  { id: 'LOTE005', auctionId: '20301vei', publicId: 'LOT-TRATORAG-PQR678C6', title: 'TRATOR AGRÍCOLA NEW HOLLAND T7', year: 2018, make: 'NEW HOLLAND', model: 'T7.245', imageUrl: 'https://images.unsplash.com/photo-1633153627433-b15010a9b2f5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx0cmFjdG9yJTIwbmglMjB0N3xlbnwwfHx8fDE3NDk5MjQ1Mjd8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'trator agricola campo', galleryImageUrls: ['https://placehold.co/150x100.png?text=Trator+Frente'], mediaItemIds: ['media-trator-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-verde-go', stateId: 'state-go', categoryId: 'maquinas-e-equipamentos', views: 650, price: 180000, endDate: createFutureDate(0, 1, 15), bidsCount: 7, isFeatured: true, description: 'Trator New Holland T7.245, ano 2018.', sellerId: 'seller-fazenda-boa-esperanca', latitude: -17.7999, longitude: -50.9253, mapAddress: 'Zona Rural, Rio Verde - GO' }, 
   { id: 'LOTE002', auctionId: '100625bra', publicId: 'LOT-CASAPORT-STU901D7', title: 'CASA COM 234,50 M² - PORTÃO', imageUrl: 'https://placehold.co/800x600.png?text=Casa+Portao', dataAiHint: 'casa moderna suburbio', status: 'ABERTO_PARA_LANCES', cityId: 'city-lauro-de-freitas-ba', stateId: 'state-ba', categoryId: 'imoveis', views: 681, price: 664000, endDate: createFutureDate(10, 5), bidsCount: 1, description: 'Espaçosa casa em Lauro de Freitas.', sellerId: 'seller-banco-bradesco-sa', isFeatured: true },
   { id: 'LOTE004', auctionId: '100625bra', publicId: 'LOT-CASAVILA-VWX234E8', title: 'CASA COM 133,04 M² - VILA PERI', imageUrl: 'https://placehold.co/800x600.png?text=Casa+Vila+Peri', dataAiHint: 'casa terrea simples', status: 'EM_BREVE', cityId: 'city-fortaleza-ce', stateId: 'state-ce', categoryId: 'imoveis', views: 527, price: 238000, endDate: createFutureDate(3, 0), bidsCount: 0, description: 'Casa em Fortaleza, boa localização.', sellerId: 'seller-banco-bradesco-sa' },
   { id: 'LOTE006', auctionId: '20301vei', publicId: 'LOT-COLHEITA-YZA567F9', title: 'COLHEITADEIRA JOHN DEERE S680', imageUrl: 'https://placehold.co/800x600.png?text=Colheitadeira+JD', dataAiHint: 'colheitadeira graos campo', status: 'ENCERRADO', cityId: 'city-campo-grande-ms', stateId: 'state-ms', categoryId: 'maquinas-e-equipamentos', views: 450, price: 365000, endDate: createPastDate(5), bidsCount: 22, description: 'Colheitadeira John Deere S680, usada.', sellerId: 'seller-produtores-rurais-ms' },
   { id: 'LOTEART002', auctionId: 'ART001ANTIQ', publicId: 'LOT-ESCULTUR-BCD890G0', title: 'Escultura em Bronze "O Pensador" - Réplica Assinada', imageUrl: 'https://placehold.co/800x600.png?text=Escultura+Pensador', dataAiHint: 'escultura bronze pensador', status: 'EM_BREVE', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'arte-e-antiguidades', views: 150, price: 3200, endDate: createFutureDate(15, 0), bidsCount: 0, description: 'Réplica em bronze da famosa escultura.', sellerId: 'seller-galeria-de-arte-sp' },
-  { id: 'LOTEVCLASS002', auctionId: 'CLASSICVEH24', publicId: 'LOT-1955PORS-EFG123H1', title: '1955 PORSCHE 356 SPEEDSTER - RÉPLICA', year: 1955, make: 'PORSCHE', model: '356 SPEEDSTER (RÉPLICA)', imageUrl: 'https://placehold.co/800x600.png?text=Porsche+356+Replica', dataAiHint: 'carro conversivel prata antigo', status: 'ABERTO_PARA_LANCES', cityId: 'city-belo-horizonte-mg', stateId: 'state-mg', categoryId: 'veiculos', views: 990, price: 180000, endDate: createFutureDate(0, 0, 55), bidsCount: 5, description: 'Excelente réplica do Porsche 356 Speedster.', sellerId: 'seller-restauradores-classicos-mg', isFeatured: true }, // Urgência
+  { id: 'LOTEVCLASS002', auctionId: 'CLASSICVEH24', publicId: 'LOT-1955PORS-EFG123H1', title: '1955 PORSCHE 356 SPEEDSTER - RÉPLICA', year: 1955, make: 'PORSCHE', model: '356 SPEEDSTER (RÉPLICA)', imageUrl: 'https://placehold.co/800x600.png?text=Porsche+356+Replica', dataAiHint: 'carro conversivel prata antigo', status: 'ABERTO_PARA_LANCES', cityId: 'city-belo-horizonte-mg', stateId: 'state-mg', categoryId: 'veiculos', views: 990, price: 180000, endDate: createFutureDate(0, 0, 55), bidsCount: 5, description: 'Excelente réplica do Porsche 356 Speedster.', sellerId: 'seller-restauradores-classicos-mg', isFeatured: true }, 
   { id: 'LOTEUTIL001', auctionId: '300724car', publicId: 'LOT-2019FIAT-HIJ456I2', title: '2019 FIAT FIORINO 1.4 FLEX', year: 2019, make: 'FIAT', model: 'FIORINO', imageUrl: 'https://placehold.co/800x600.png?text=Fiat+Fiorino+2019', dataAiHint: 'furgoneta branca cidade', status: 'ABERTO_PARA_LANCES', cityId: 'city-porto-alegre-rs', stateId: 'state-rs', categoryId: 'veiculos', views: 720, price: 55000, endDate: createFutureDate(3, 5), bidsCount: 3, description: 'Fiat Fiorino 2019, ideal para trabalho.', sellerId: 'seller-logistica-rs-ltda' },
   { id: 'LOTEFIN001', auctionId: 'XYZBANK001', publicId: 'LOT-APTOCABE-KLM789J3', title: 'Apartamento 3 Quartos - Cobertura - Barra da Tijuca', imageUrl: 'https://placehold.co/800x600.png?text=Cobertura+Barra', dataAiHint: 'cobertura vista mar', status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-de-janeiro-rj', stateId: 'state-rj', categoryId: 'imoveis', views: 650, price: 1200000, endDate: createFutureDate(15, 0), bidsCount: 15, description: 'Cobertura duplex com vista para o mar.', sellerId: 'seller-banco-xyz', isFeatured: true, additionalTriggers: ['LANCE QUENTE'] },
   { id: 'LOTE007', auctionId: 'XYZBANK001', publicId: 'LOT-CASATEST-TST123A0', title: 'Casa Teste Leilão XYZ', imageUrl: 'https://placehold.co/800x600.png?text=Casa+Teste', dataAiHint: 'casa simples teste', status: 'EM_BREVE', cityId: 'city-niteroi-rj', stateId: 'state-rj', categoryId: 'imoveis', views: 10, price: 150000, endDate: createFutureDate(16,0), bidsCount: 0, description: 'Casa para teste no leilão do Banco XYZ.', sellerId: 'seller-banco-xyz', isExclusive: true },
@@ -377,18 +377,15 @@ export function getUniqueLotCategoriesFromSampleData(): LotCategory[] {
 };
 
 export function getCategoryNameFromSlug(slug: string): string | undefined {
-  const allSampleCategories = getUniqueLotCategoriesFromSampleData(); // Usa a função que já processa
+  const allSampleCategories = getUniqueLotCategoriesFromSampleData(); 
   const foundCategory = allSampleCategories.find(cat => cat.slug === slug);
   if (foundCategory) {
     return foundCategory.name;
   }
-  // Se não encontrar pelo slug, tenta pelo nome (caso o "slug" seja na verdade o nome)
+  
   const foundByName = allSampleCategories.find(cat => cat.name === slug || slugify(cat.name) === slug);
   if (foundByName) return foundByName.name;
 
-  // Se ainda não encontrou, retorna undefined silenciosamente.
-  // O erro será tratado pelo componente que chama, se necessário.
-  // console.warn(`[sample-data] Nenhum nome de categoria encontrado para o slug/nome: ${slug} nos dados de exemplo.`);
   return undefined; 
 }
 
@@ -414,7 +411,7 @@ export const getUniqueSellerNames = (): string[] => {
   });
   sampleLotsRaw.forEach(lot => {
     if (lot.sellerId) {
-        const sellerProf = sampleSellersStatic.find(s => s.name === lot.sellerId); // Comparar pelo nome
+        const sellerProf = sampleSellersStatic.find(s => s.name === lot.sellerId); 
         if(sellerProf) sellerNames.add(sellerProf.name);
         else if (typeof lot.sellerId === 'string') sellerNames.add(lot.sellerId);
     }
@@ -521,8 +518,6 @@ export function getCategoryAssets(categoryNameOrSlug: string): CategoryAssets {
   if (category) {
     resolvedName = category.name;
     resolvedSlug = category.slug;
-  } else {
-    // Não loga mais o erro aqui, pois pode ser um título descritivo
   }
 
   const defaultAssets: CategoryAssets = {
@@ -533,7 +528,6 @@ export function getCategoryAssets(categoryNameOrSlug: string): CategoryAssets {
     bannerText: `Descubra os melhores lotes em ${resolvedName}`,
   };
 
-  // Tenta encontrar um override mais genérico se o slug exato não for encontrado
   const getOverride = (slug: string) => {
       const assetOverrides: Record<string, Partial<CategoryAssets>> = {
         'veiculos': { logoUrl: 'https://placehold.co/100x100.png?text=Carro', logoAiHint: 'icone carro', bannerUrl: 'https://placehold.co/1200x300.png?text=Veiculos+Destaque', bannerAiHint: 'carros estrada', bannerText: `Excelentes Ofertas em Veículos - ${resolvedName}` },
@@ -559,7 +553,7 @@ export function getCategoryAssets(categoryNameOrSlug: string): CategoryAssets {
       if (slug.includes('veiculo')) return assetOverrides['veiculos'];
       if (slug.includes('imovel') || slug.includes('casa') || slug.includes('terreno')) return assetOverrides['imoveis'];
 
-      return {}; // Nenhum override específico ou por palavra-chave
+      return {}; 
   };
 
   return { ...defaultAssets, ...getOverride(resolvedSlug) };
@@ -812,6 +806,8 @@ sampleAuctions.forEach(auction => {
 const defaultMentalTriggerSettings: MentalTriggerSettings = {
     showDiscountBadge: true,
     showUrgencyTimer: true,
+    urgencyTimerThresholdDays: 1, // Lotes com menos de 1 dia para acabar mostrarão timer especial
+    urgencyTimerThresholdHours: 0, // (1 dia e 0 horas)
     showPopularityBadge: true,
     popularityViewThreshold: 500,
     showHotBidBadge: true,
@@ -836,17 +832,17 @@ const defaultHomepageSections: HomepageSectionConfig[] = [
 ];
 
 export const defaultSectionBadgeVisibility: SectionBadgeConfig = {
-  featuredLots: { // Lotes em destaque na home
-    showStatusBadge: false, // Conforme solicitado, não mostrar o status principal
+  featuredLots: { 
+    showStatusBadge: false, 
     showDiscountBadge: true,
     showUrgencyTimer: true,
     showPopularityBadge: true,
     showHotBidBadge: true,
     showExclusiveBadge: true,
   },
-  searchGrid: { ...defaultBadgeVisibility }, // Padrão para grid de busca
-  searchList: { ...defaultBadgeVisibility }, // Padrão para lista de busca
-  lotDetail: { ...defaultBadgeVisibility, showStatusBadge: true }, // Página de detalhe mostra tudo
+  searchGrid: { ...defaultBadgeVisibility, showUrgencyTimer: true }, 
+  searchList: { ...defaultBadgeVisibility, showUrgencyTimer: true }, 
+  lotDetail: { ...defaultBadgeVisibility, showUrgencyTimer: true, showStatusBadge: true },
 };
 
 
@@ -877,10 +873,10 @@ export const samplePlatformSettings: PlatformSettings = {
   },
   mentalTriggerSettings: defaultMentalTriggerSettings,
   homepageSections: defaultHomepageSections,
-  sectionBadgeVisibility: defaultSectionBadgeVisibility,
+  sectionBadgeVisibility: defaultSectionBadgeVisibility, 
   mapSettings: {
-    defaultProvider: 'staticImage', // ou 'google', 'openstreetmap'
-    googleMapsApiKey: '', // DEIXAR VAZIO PARA USAR PLACEHOLDERS
+    defaultProvider: 'staticImage', 
+    googleMapsApiKey: '', 
     staticImageMapZoom: 15,
     staticImageMapMarkerColor: 'red',
   },
@@ -893,4 +889,3 @@ export function getPlaceholderIfEmpty(value: string | number | null | undefined,
     }
     return String(value);
 }
-

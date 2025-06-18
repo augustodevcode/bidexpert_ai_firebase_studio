@@ -1,17 +1,17 @@
 
 'use client';
 
-import type { Auction, Lot } from '@/types'; // Lot importada
+import type { Auction, Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown } from 'lucide-react'; // Adicionado Share2 e ícones sociais
+import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown } from 'lucide-react';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
-import { getAuctionStatusText, getLotStatusColor, sampleAuctions } from '@/lib/sample-data'; // Importado sampleAuctions
+import { getAuctionStatusText, getLotStatusColor, sampleAuctions, samplePlatformSettings } from '@/lib/sample-data';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,11 +26,20 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 interface TimeRemainingBadgeProps {
   endDate: Date | string;
   status: Lot['status'];
+  showUrgencyTimer?: boolean;
+  urgencyThresholdDays?: number;
+  urgencyThresholdHours?: number;
 }
 
-const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({ endDate, status }) => {
+const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({ 
+  endDate, 
+  status, 
+  showUrgencyTimer = true, 
+  urgencyThresholdDays = 1, 
+  urgencyThresholdHours = 0 
+}) => {
   const [timeRemaining, setTimeRemaining] = useState<string>('');
-  const [isEndingSoon, setIsEndingSoon] = useState(false);
+  const [isUrgent, setIsUrgent] = useState(false);
 
   useEffect(() => {
     const calculateTime = () => {
@@ -39,38 +48,49 @@ const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({ endDate, status
 
       if (isPast(end) || status !== 'ABERTO_PARA_LANCES') {
         setTimeRemaining(getAuctionStatusText(status === 'ABERTO_PARA_LANCES' && isPast(end) ? 'ENCERRADO' : status));
-        setIsEndingSoon(false);
+        setIsUrgent(false);
         return;
       }
 
-      const totalSeconds = differenceInSeconds(end, now);
-      if (totalSeconds <= 0) {
+      const totalSecondsLeft = differenceInSeconds(end, now);
+      if (totalSecondsLeft <= 0) {
         setTimeRemaining('Encerrado');
-        setIsEndingSoon(false);
+        setIsUrgent(false);
         return;
       }
+      
+      const thresholdInSeconds = (urgencyThresholdDays * 24 * 60 * 60) + (urgencyThresholdHours * 60 * 60);
+      const currentlyUrgent = totalSecondsLeft <= thresholdInSeconds;
+      setIsUrgent(currentlyUrgent && showUrgencyTimer);
 
-      const days = Math.floor(totalSeconds / (3600 * 24));
-      const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
+      if (currentlyUrgent && showUrgencyTimer) {
+        const hours = Math.floor(totalSecondsLeft / 3600);
+        const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
+        const seconds = totalSecondsLeft % 60;
+        if (hours > 0) {
+          setTimeRemaining(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
+        } else {
+          setTimeRemaining(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
+        }
+      } else {
+        const days = Math.floor(totalSecondsLeft / (3600 * 24));
+        const hours = Math.floor((totalSecondsLeft % (3600 * 24)) / 3600);
+        const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
 
-      setIsEndingSoon(days === 0 && hours < 2);
-
-      if (days > 0) setTimeRemaining(`${days}d ${hours}h`);
-      else if (hours > 0) setTimeRemaining(`${hours}h ${minutes}m`);
-      else if (minutes > 0) setTimeRemaining(`${minutes}m ${seconds}s`);
-      else if (seconds > 0) setTimeRemaining(`${seconds}s`);
-      else setTimeRemaining('Encerrando!');
+        if (days > 0) setTimeRemaining(`${days}d ${hours}h`);
+        else if (hours > 0) setTimeRemaining(`${hours}h ${minutes}m`);
+        else if (minutes > 0) setTimeRemaining(`${minutes}m`);
+        else setTimeRemaining('Encerrando!');
+      }
     };
 
     calculateTime();
     const interval = setInterval(calculateTime, 1000);
     return () => clearInterval(interval);
-  }, [endDate, status]);
+  }, [endDate, status, showUrgencyTimer, urgencyThresholdDays, urgencyThresholdHours]);
 
   return (
-    <Badge variant={isEndingSoon ? "destructive" : "outline"} className="text-xs font-medium">
+    <Badge variant={isUrgent ? "destructive" : "outline"} className="text-xs font-medium">
       <Clock className="h-3 w-3 mr-1" />
       {timeRemaining}
     </Badge>
@@ -80,13 +100,18 @@ const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({ endDate, status
 
 interface LotListItemProps {
   lot: Lot;
+  badgeVisibilityConfig?: BadgeVisibilitySettings; 
 }
 
-function LotListItemClientContent({ lot }: LotListItemProps) {
+function LotListItemClientContent({ lot, badgeVisibilityConfig }: LotListItemProps) {
   const [isFavorite, setIsFavorite] = useState(lot.isFavorite || false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`);
   const { toast } = useToast();
+
+  const platformSettings = samplePlatformSettings; 
+  const mentalTriggersGlobalSettings = platformSettings.mentalTriggerSettings || {};
+  const sectionBadges = badgeVisibilityConfig || platformSettings.sectionBadgeVisibility?.searchList || {}; 
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -158,19 +183,19 @@ function LotListItemClientContent({ lot }: LotListItemProps) {
 
   const mentalTriggers = useMemo(() => {
     const triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
-    const platformSettings = { mentalTriggerSettings: { popularityViewThreshold: 500, hotBidThreshold: 10, showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true, showDiscountBadge: true, showUrgencyTimer: true }}; // Simulado
+    const settings = mentalTriggersGlobalSettings; 
 
-    if (platformSettings.mentalTriggerSettings?.showPopularityBadge && (lot.views || 0) > (platformSettings.mentalTriggerSettings.popularityViewThreshold || 500)) {
+    if (sectionBadges.showPopularityBadge !== false && settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) {
       triggers.push('MAIS VISITADO');
     }
-    if (platformSettings.mentalTriggerSettings?.showHotBidBadge && (lot.bidsCount || 0) > (platformSettings.mentalTriggerSettings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') {
+    if (sectionBadges.showHotBidBadge !== false && settings.showHotBidBadge && (lot.bidsCount || 0) > (settings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') {
       triggers.push('LANCE QUENTE');
     }
-    if (platformSettings.mentalTriggerSettings?.showExclusiveBadge && lot.isExclusive) {
+    if (sectionBadges.showExclusiveBadge !== false && settings.showExclusiveBadge && lot.isExclusive) {
         triggers.push('EXCLUSIVO');
     }
     return triggers;
-  }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive]);
+  }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
 
 
   const getTypeIcon = (type: string) => {
@@ -200,23 +225,32 @@ function LotListItemClientContent({ lot }: LotListItemProps) {
                 className="object-cover"
                 data-ai-hint={lot.dataAiHint || 'imagem lote lista'}
               />
-              <Badge className={`absolute top-2 left-2 text-xs px-2 py-1 z-10 ${getLotStatusColor(lot.status)}`}>
-                {getAuctionStatusText(lot.status)}
-              </Badge>
-               <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
-                  {discountPercentage > 0 && (
+              {sectionBadges.showStatusBadge !== false && (
+                  <Badge className={`absolute top-2 left-2 text-xs px-2 py-1 z-10 ${getLotStatusColor(lot.status)}`}>
+                    {getAuctionStatusText(lot.status)}
+                  </Badge>
+              )}
+               <div className={`absolute top-2 ${sectionBadges.showStatusBadge !== false ? 'mt-7 sm:mt-0 sm:top-2' : 'top-2'} right-2 flex flex-col items-end gap-1 z-10`}>
+                  {sectionBadges.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentage > 0 && (
                     <Badge variant="destructive" className="text-xs px-1.5 py-0.5">
                       <Percent className="h-3 w-3 mr-1" /> {discountPercentage}% OFF
                     </Badge>
                   )}
-                  {mentalTriggers.map(trigger => (
-                    <Badge key={trigger} variant="secondary" className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
-                      {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3 mr-1" />}
-                      {trigger === 'LANCE QUENTE' && <Zap className="h-3 w-3 mr-1 text-red-500 fill-red-500" />}
-                      {trigger === 'EXCLUSIVO' && <Crown className="h-3 w-3 mr-1 text-purple-600" />}
-                      {trigger}
-                    </Badge>
-                  ))}
+                  {mentalTriggers.map(trigger => {
+                      let showThisTrigger = false;
+                      if (trigger === 'MAIS VISITADO' && sectionBadges.showPopularityBadge !== false && mentalTriggersGlobalSettings.showPopularityBadge) showThisTrigger = true;
+                      if (trigger === 'LANCE QUENTE' && sectionBadges.showHotBidBadge !== false && mentalTriggersGlobalSettings.showHotBidBadge) showThisTrigger = true;
+                      if (trigger === 'EXCLUSIVO' && sectionBadges.showExclusiveBadge !== false && mentalTriggersGlobalSettings.showExclusiveBadge) showThisTrigger = true;
+                      if (!showThisTrigger) return null;
+                      return (
+                          <Badge key={trigger} variant="secondary" className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
+                          {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3 mr-1" />}
+                          {trigger === 'LANCE QUENTE' && <Zap className="h-3 w-3 mr-1 text-red-500 fill-red-500" />}
+                          {trigger === 'EXCLUSIVO' && <Crown className="h-3 w-3 mr-1 text-purple-600" />}
+                          {trigger}
+                          </Badge>
+                      );
+                  })}
                 </div>
             </div>
           </Link>
@@ -318,7 +352,13 @@ function LotListItemClientContent({ lot }: LotListItemProps) {
                   R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
                 <div className="flex items-center text-xs text-muted-foreground mt-0.5 gap-2">
-                  <TimeRemainingBadge endDate={lot.endDate} status={lot.status} />
+                   <TimeRemainingBadge 
+                        endDate={lot.endDate} 
+                        status={lot.status} 
+                        showUrgencyTimer={sectionBadges.showUrgencyTimer !== false && mentalTriggersGlobalSettings.showUrgencyTimer}
+                        urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays}
+                        urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
+                    />
                   <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate)) ? 'line-through' : ''}`}>
                     <Gavel className="h-3 w-3" />
                     <span>{lot.bidsCount || 0} Lances</span>
@@ -343,17 +383,13 @@ function LotListItemClientContent({ lot }: LotListItemProps) {
   );
 }
 
-// Exporta um wrapper para manter a lógica do 'use client' separada.
-// A lógica 'isClient' aqui é para o caso de precisarmos de renderização condicional que dependa do client
-// para coisas como localStorage, mas o componente principal já é client-side.
-export default function LotListItemWrapper({ lot }: LotListItemProps) {
+export default function LotListItemWrapper({ lot, badgeVisibilityConfig }: LotListItemProps) {
     const [isClient, setIsClient] = useState(false);
     useEffect(() => {
       setIsClient(true);
     }, []);
 
     if (!isClient) {
-      // Poderia retornar um Skeleton aqui se necessário
       return (
         <Card className="flex flex-row overflow-hidden h-full shadow-md rounded-lg group">
              <div className="relative aspect-square h-full bg-muted animate-pulse w-1/3 md:w-1/4 flex-shrink-0"></div>
@@ -376,7 +412,7 @@ export default function LotListItemWrapper({ lot }: LotListItemProps) {
       );
     }
 
-    return <LotListItemClientContent lot={lot} />;
+    return <LotListItemClientContent lot={lot} badgeVisibilityConfig={badgeVisibilityConfig} />;
   }
 
     

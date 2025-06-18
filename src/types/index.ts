@@ -1,5 +1,4 @@
 
-
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
 
@@ -168,7 +167,7 @@ export interface Lot {
   createdAt?: AnyTimestamp;
   updatedAt?: AnyTimestamp;
 
-  // Novos campos para gatilhos mentais
+  // Campos de gatilhos mentais
   discountPercentage?: number;
   additionalTriggers?: string[]; // e.g., ['MAIS_VISITADO', 'LANCE_QUENTE']
   isExclusive?: boolean;
@@ -542,6 +541,8 @@ export interface HomepageSectionConfig {
 export interface MentalTriggerSettings {
     showDiscountBadge?: boolean;
     showUrgencyTimer?: boolean;
+    urgencyTimerThresholdDays?: number; 
+    urgencyTimerThresholdHours?: number; 
     showPopularityBadge?: boolean;
     popularityViewThreshold?: number;
     showHotBidBadge?: boolean;
@@ -729,7 +730,7 @@ export interface IDatabaseAdapter {
   deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }>;
   linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }>;
   unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }>;
-
+  
   // Settings
   getPlatformSettings(): Promise<PlatformSettings>;
   updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }>;
@@ -760,6 +761,7 @@ export type LotWithCategoryName = Lot & {
     
 
     
+
 
 
 
