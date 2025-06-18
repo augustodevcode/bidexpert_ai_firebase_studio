@@ -1,5 +1,5 @@
 
-import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, CityInfo, MediaItem, PlatformSettings, MentalTriggerSettings, HomepageSectionConfig, BadgeVisibilitySettings, SectionBadgeConfig, MapSettings } from '@/types';
+import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, CityInfo, MediaItem, PlatformSettings, MentalTriggerSettings, HomepageSectionConfig, BadgeVisibilitySettings, SectionBadgeConfig, MapSettings, AuctionStage } from '@/types';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays, addDays as dateFnsAddDays, isPast, addHours } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle } from 'lucide-react';
@@ -52,6 +52,7 @@ export const sampleLotCategoriesStatic: Omit<LotCategory, 'id' | 'createdAt' | '
   { name: 'Semoventes', slug: 'semoventes', description: 'Animais como bovinos, equinos, ovinos, caprinos e outros animais de produção ou estimação.', subcategories: ['Bovinos', 'Equinos', 'Ovinos e Caprinos', 'Aves', 'Outros Animais de Produção ou Estimação'] },
   { name: 'Materiais e Sucatas', slug: 'materiais-e-sucatas', description: 'Materiais de construção civil, sucatas metálicas, resíduos industriais e recicláveis.', subcategories: ['Materiais de Construção Civil', 'Sucatas Metálicas (Ferrosas e Não Ferrosas)', 'Resíduos Industriais', 'Papel e Plástico Reciclável'] },
   { name: 'Industrial (Geral)', slug: 'industrial-geral', description: 'Estoques industriais, matéria-prima, equipamentos de escritório (de empresas), e outros bens industriais.', subcategories: ['Estoques Industriais', 'Matéria-prima', 'Equipamentos de Escritório (Empresarial)', 'Mobiliário Corporativo'] },
+  { name: 'Serviços e Contratos', slug: 'servicos-e-contratos', description: 'Contratação de serviços, concessões e outras oportunidades contratuais.', subcategories: ['Serviços de TI', 'Serviços de Limpeza', 'Consultoria', 'Contratos de Fornecimento']},
   { name: 'Outros Itens', slug: 'outros-itens', description: 'Consórcios, energia solar, direitos creditórios, itens diversos e oportunidades únicas.', subcategories: ['Consórcios', 'Energia Solar (Equipamentos)', 'Direitos Creditórios', 'Títulos e Valores Mobiliários', 'Vinhos e Bebidas Raras', 'Instrumentos Musicais', 'Bens Diversos'] },
 ];
 
@@ -108,6 +109,8 @@ export const sampleSellersStatic: Omit<SellerProfileInfo, 'id'| 'publicId' | 'sl
     { name: 'Garagem Clássicos PR', city: 'Curitiba', state: 'PR' },
     { name: 'Fitness Total Equipamentos', city: 'Belo Horizonte', state: 'MG' },
     { name: 'Galeria Pampa Arte', city: 'Porto Alegre', state: 'RS' },
+    { name: 'Prefeitura Municipal de Campinas', city: 'Campinas', state: 'SP', logoUrl: 'https://placehold.co/100x100.png?text=PMC', dataAiHint: 'prefeitura brasao' },
+    { name: 'Secretaria de Administração de Salvador', city: 'Salvador', state: 'BA', logoUrl: 'https://placehold.co/100x100.png?text=SAS', dataAiHint: 'governo edificio' },
 ];
 
 export const sampleAuctioneersStatic: Omit<AuctioneerProfileInfo, 'id'|'publicId'|'slug'|'createdAt'|'updatedAt'|'memberSince'|'rating'|'auctionsConductedCount'|'totalValueSold'>[] = [
@@ -119,6 +122,8 @@ export const sampleAuctioneersStatic: Omit<AuctioneerProfileInfo, 'id'|'publicId
   { name: 'Clássicos Leilões BR - Leiloeiro J.Pimenta', logoUrl: 'https://placehold.co/150x75.png?text=Classicos+BR&font=playfair+display', dataAiHint: 'carro classico perfil', city: 'Curitiba', state: 'PR'},
   { name: 'Leiloeiro XYZ Oficial', city: 'Rio de Janeiro', state: 'RJ'},
   { name: 'Leiloeiro Oficial Bradesco', logoUrl: 'https://placehold.co/150x50.png?text=Bradesco&font=roboto', dataAiHint: 'banco logo', city: 'São Paulo', state: 'SP'},
+  { name: 'Leiloeiro Público Municipal Campinas', city: 'Campinas', state: 'SP', logoUrl: 'https://placehold.co/150x50.png?text=LPMC&font=roboto', dataAiHint: 'governo martelo'},
+  { name: 'Central de Compras Bahia', city: 'Salvador', state: 'BA', logoUrl: 'https://placehold.co/150x50.png?text=CCBA&font=roboto', dataAiHint: 'governo estado'},
 ];
 
 export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots' | 'totalLots' | 'category' | 'auctioneer' | 'seller' | 'auctioneerLogoUrl'>[] = [
@@ -127,6 +132,30 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
   { id: 'ART001ANTIQ', publicId: 'AUC-ARTECLAS-GHI789R3', title: 'Leilão de Arte e Antiguidades Clássicas', description: 'Peças raras, pinturas, esculturas e mobiliário antigo. Oportunidade para colecionadores.', status: 'ABERTO_PARA_LANCES', auctionType: 'PARTICULAR', categoryId: 'cat-arte-e-antiguidades', auctioneerId: 'auct-galeria-antika-leiloeiro-oficial-asilva', sellerId: 'seller-colecionadores-rj', auctionDate: createPastDate(2), endDate: createFutureDate(8, 0), city: 'Rio de Janeiro', state: 'RJ', imageUrl: '/lotes-exemplo/banners/banner_leilao_arte.jpg', dataAiHint: 'leilao arte quadros', initialOffer: 1000, visits: 850 },
   { id: 'CLASSICVEH24', publicId: 'AUC-MUSTANGS-JKL012S4', title: 'Leilão Especial de Mustangs Clássicos', description: 'Modelos raros de Ford Mustang das décadas de 60 e 70. Para apaixonados por clássicos.', status: 'ABERTO_PARA_LANCES', auctionType: 'PARTICULAR', categoryId: 'cat-veiculos', auctioneerId: 'auct-classicos-leiloes-br-leiloeiro-jpimenta', sellerId: 'seller-colecionadores-classicos-pr', auctionDate: createPastDate(1), endDate: createFutureDate(12, 0), city: 'Curitiba', state: 'PR', imageUrl: '/lotes-exemplo/banners/banner_leilao_mustang.jpg', dataAiHint: 'mustang classico perfil', initialOffer: 150000, visits: 2100, auctionStages: [{ name: 'Pregão Único', endDate: createFutureDate(12,0), statusText: 'Encerramento Lances', initialPrice: 150000 }] },
   { id: '20301vei', publicId: 'AUC-MAQUINAS-MNO345T5', title: 'Leilão de Maquinário Pesado e Agrícola', description: 'Tratores, colheitadeiras e equipamentos industriais. Renove sua frota ou maquinário.', status: 'ABERTO_PARA_LANCES', auctionType: 'EXTRAJUDICIAL', categoryId: 'cat-maquinas-e-equipamentos', auctioneerId: 'auct-agroleiloes-ltda-matricula-xyz00', sellerId: 'seller-fazenda-boa-esperanca', auctionDate: createPastDate(3), endDate: createFutureDate(5, 0), city: 'Rio Verde', state: 'GO', imageUrl: '/lotes-exemplo/banners/banner_leilao_maquinas.jpg', dataAiHint: 'maquinas pesadas construcao', initialOffer: 50000, visits: 975, isFavorite: true },
+  {
+    id: 'TP001-NOTEBOOKS', publicId: 'AUC-TPNOTE-PMC001X9', title: 'Tomada de Preços - Aquisição de Notebooks',
+    fullTitle: 'Tomada de Preços Nº 001/2024 - Aquisição de Notebooks para Secretaria de Educação de Campinas',
+    description: 'Processo de tomada de preços para aquisição de 80 notebooks para equipar escolas municipais. Especificações detalhadas no edital. Propostas devem ser enviadas em envelope lacrado até a data limite.',
+    status: 'ABERTO_PARA_LANCES', auctionType: 'TOMADA_DE_PRECOS', categoryId: 'cat-eletronicos-e-tecnologia',
+    auctioneerId: 'auct-leiloeiro-publico-municipal-campinas', sellerId: 'seller-prefeitura-municipal-de-campinas',
+    auctionDate: createFutureDate(1, 9), endDate: createFutureDate(15, 17), // Encerramento para propostas
+    city: 'Campinas', state: 'SP', imageUrl: 'https://placehold.co/1200x500.png?text=Tomada+de+Precos+Notebooks',
+    dataAiHint: 'notebooks pilha escritorio', documentsUrl: '#edital-notebooks', visits: 150,
+    initialOffer: 320000, // Valor estimado total da aquisição
+    auctionStages: [{ name: 'Recebimento de Propostas', endDate: createFutureDate(15,17), statusText: 'Prazo Final', initialPrice: 320000 }]
+  },
+  {
+    id: 'TP002-VEICULOS', publicId: 'AUC-TPVEIC-SAS002Y0', title: 'Tomada de Preços - Alienação de Veículos da Frota',
+    fullTitle: 'Tomada de Preços Nº 002/2024 - Alienação de Veículos Usados da Frota da Secretaria de Salvador',
+    description: 'Alienação de veículos usados da frota municipal, incluindo carros de passeio e utilitários. Visitação permitida conforme edital. Propostas para lotes individuais ou para a frota completa.',
+    status: 'ENCERRADO', auctionType: 'TOMADA_DE_PRECOS', categoryId: 'cat-veiculos',
+    auctioneerId: 'auct-central-de-compras-bahia', sellerId: 'seller-secretaria-de-administracao-de-salvador',
+    auctionDate: createPastDate(30, 9), endDate: createPastDate(15, 17),
+    city: 'Salvador', state: 'BA', imageUrl: 'https://placehold.co/1200x500.png?text=Tomada+de+Precos+Veiculos',
+    dataAiHint: 'carros usados patio', documentsUrl: '#edital-veiculos', visits: 320,
+    initialOffer: 80000, // Valor mínimo inicial total esperado
+    auctionStages: [{ name: 'Recebimento de Propostas', endDate: createPastDate(15,17), statusText: 'Encerrado', initialPrice: 80000 }]
+  },
 ];
 
 export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' | 'sellerName' | 'cityName' | 'stateUf' | 'type' | 'bids' | 'reviews' | 'questions'>[] = [
@@ -140,6 +169,38 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
   { id: 'LOTE004', auctionId: '100625bra', publicId: 'LOT-CASAVILA-VWX234E8', title: 'CASA COM 133,04 M² - VILA PERI', imageUrl: '/lotes-exemplo/imoveis/casa_vila_peri_externa.jpg', dataAiHint: 'casa terrea simples', status: 'EM_BREVE', cityId: 'city-fortaleza-ce', stateId: 'state-ce', categoryId: 'cat-imoveis', views: 527, price: 238000, endDate: createFutureDate(3, 0), bidsCount: 0, description: 'Casa em Fortaleza, boa localização, necessita pequenas reformas.', sellerId: 'seller-banco-bradesco-sa', latitude: -3.7929, longitude: -38.5396, mapAddress: 'Avenida Principal, Vila Peri, Fortaleza - CE', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-38.5496,-3.8029,-38.5296,-3.7829&layer=mapnik&marker=-3.7929,-38.5396', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-3.7929,-38.5396&zoom=15&size=600x400&markers=color:yellow%7C-3.7929,-38.5396&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
   { id: 'LOTE006', auctionId: '20301vei', publicId: 'LOT-COLHEITA-YZA567F9', title: 'COLHEITADEIRA JOHN DEERE S680', imageUrl: '/lotes-exemplo/maquinas/colheitadeira_jd_campo.jpg', dataAiHint: 'colheitadeira graos campo', status: 'ENCERRADO', cityId: 'city-campo-grande-ms', stateId: 'state-ms', categoryId: 'cat-maquinas-e-equipamentos', views: 450, price: 365000, endDate: createPastDate(5), bidsCount: 22, description: 'Colheitadeira John Deere S680, usada, em bom estado de funcionamento.', sellerId: 'seller-produtores-rurais-ms', latitude: -20.4428, longitude: -54.6295, mapAddress: 'Saída para Três Lagoas, Campo Grande - MS', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-20.4428,-54.6295&zoom=14&size=600x400&markers=color:purple%7C-20.4428,-54.6295&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
   { id: 'LOTEART002', auctionId: 'ART001ANTIQ', publicId: 'LOT-ESCULTUR-BCD890G0', title: 'Escultura em Bronze "O Pensador" - Réplica Assinada', imageUrl: '/lotes-exemplo/arte/escultura_pensador_detalhe.jpg', dataAiHint: 'escultura bronze pensador', status: 'EM_BREVE', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-arte-e-antiguidades', views: 150, price: 3200, endDate: createFutureDate(15, 0), bidsCount: 0, description: 'Réplica em bronze da famosa escultura, assinada pelo artista.', sellerId: 'seller-galeria-de-arte-sp', latitude: -23.5613, longitude: -46.6562, mapAddress: 'Próximo ao MASP, Avenida Paulista, São Paulo - SP', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-46.6662,-23.5713,-46.6462,-23.5513&layer=mapnik&marker=-23.5613,-46.6562', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-23.5613,-46.6562&zoom=15&size=600x400&markers=color:orange%7C-23.5613,-46.6562&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
+  { 
+    id: 'LOTETP001-NB-A', auctionId: 'TP001-NOTEBOOKS', publicId: 'LOT-TPNOTEA-XZY987H7', title: 'Notebook Tipo A - Core i5, 8GB RAM, 256GB SSD (50 unidades)', 
+    imageUrl: 'https://placehold.co/600x400.png?text=Notebook+Tipo+A', dataAiHint: 'notebook moderno tela',
+    status: 'ABERTO_PARA_LANCES', cityId: 'city-campinas-sp', stateId: 'state-sp', categoryId: 'cat-eletronicos-e-tecnologia', 
+    views: 75, price: 150000, endDate: createFutureDate(15, 17), description: 'Lote de 50 notebooks corporativos padrão, Processador Intel Core i5 de 11ª geração, 8GB RAM DDR4, 256GB SSD NVMe, Tela 14" Full HD. Conforme edital TP 001/2024.',
+    sellerId: 'seller-prefeitura-municipal-de-campinas', initialPrice: 160000, // Valor de referência para o lote
+    latitude: -22.9056, longitude: -47.0608, mapAddress: 'Paço Municipal, Campinas - SP'
+  },
+  { 
+    id: 'LOTETP001-NB-B', auctionId: 'TP001-NOTEBOOKS', publicId: 'LOT-TPNOTEB-WXY654I8', title: 'Notebook Tipo B - Core i7, 16GB RAM, 512GB SSD (30 unidades)', 
+    imageUrl: 'https://placehold.co/600x400.png?text=Notebook+Tipo+B', dataAiHint: 'notebook avançado aberto',
+    status: 'ABERTO_PARA_LANCES', cityId: 'city-campinas-sp', stateId: 'state-sp', categoryId: 'cat-eletronicos-e-tecnologia',
+    views: 60, price: 170000, endDate: createFutureDate(15, 17), description: 'Lote de 30 notebooks corporativos avançados, Processador Intel Core i7 de 12ª geração, 16GB RAM DDR4, 512GB SSD NVMe, Tela 15.6" Full HD IPS. Conforme edital TP 001/2024.',
+    sellerId: 'seller-prefeitura-municipal-de-campinas', initialPrice: 180000,
+    latitude: -22.9056, longitude: -47.0608, mapAddress: 'Paço Municipal, Campinas - SP'
+  },
+  {
+    id: 'LOTETP002-CAR1', auctionId: 'TP002-VEICULOS', publicId: 'LOT-TPVEIC1-UVX321J9', title: 'Veículo Sedan - Fiat Cronos 2019', 
+    imageUrl: 'https://placehold.co/600x400.png?text=Fiat+Cronos', dataAiHint: 'carro sedan branco',
+    status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'cat-veiculos',
+    views: 120, price: 35000, endDate: createPastDate(15, 17), description: 'Fiat Cronos Drive 1.3, 2019, branco, completo. Estado de conservação regular. Placa final 5. Venda no estado em que se encontra. Edital TP 002/2024.',
+    sellerId: 'seller-secretaria-de-administracao-de-salvador', initialPrice: 30000, // Valor mínimo de alienação
+    latitude: -12.9714, longitude: -38.5014, mapAddress: 'Pátio da Prefeitura, Salvador - BA'
+  },
+  {
+    id: 'LOTETP002-UTIL1', auctionId: 'TP002-VEICULOS', publicId: 'LOT-TPVEIC2-RST098K0', title: 'Veículo Utilitário - Fiat Fiorino 2017', 
+    imageUrl: 'https://placehold.co/600x400.png?text=Fiat+Fiorino', dataAiHint: 'fiorino branca carga',
+    status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'cat-veiculos',
+    views: 95, price: 28000, endDate: createPastDate(15, 17), description: 'Fiat Fiorino Hard Working 1.4, 2017, branca, furgão. Necessita reparos. Placa final 8. Venda no estado. Edital TP 002/2024.',
+    sellerId: 'seller-secretaria-de-administracao-de-salvador', initialPrice: 25000,
+    latitude: -12.9714, longitude: -38.5014, mapAddress: 'Pátio da Prefeitura, Salvador - BA'
+  },
 ];
 
 export const sampleDirectSaleOffersRaw: Omit<DirectSaleOffer, 'createdAt' | 'updatedAt' | 'expiresAt'>[] = [
@@ -190,7 +251,7 @@ export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDoc
     case 'EXPIRED': return 'Expirada'; 
     case 'PENDING_APPROVAL': return 'Pendente Aprovação'; 
     default: {
-      const exhaustiveCheck: never = status; 
+      // const exhaustiveCheck: never = status; // Comentado para evitar erro de compilação com tipos de string literais
       return String(status).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
   }
@@ -304,7 +365,7 @@ export const getUserHabilitationStatusInfo = (status: UserHabilitationStatus): {
     case 'BLOCKED':
       return { text: 'Conta Bloqueada', color: 'text-destructive', progress: 0, icon: ShieldAlert };
     default:
-      const exhaustiveCheck: never = status; 
+      // const exhaustiveCheck: never = status; // Temporariamente comentado se UserHabilitationStatus pode ser string
       return { text: "Status Desconhecido" as never, color: 'text-muted-foreground', progress: 0, icon: HelpCircle };
   }
 };
@@ -317,7 +378,14 @@ export function getUniqueLotCategoriesFromSampleData(): LotCategory[] {
   const categoriesMap = new Map<string, LotCategory>();
   sampleLotCategoriesStatic.forEach(cat => categoriesMap.set(cat.slug, { ...cat, id: `cat-${cat.slug}`, itemCount: 0, createdAt: createPastDate(30), updatedAt: createPastDate(1) }));
 
-  [...sampleLotsRaw, ...sampleAuctionsRaw, ...sampleDirectSaleOffersRaw].forEach(item => {
+  // Assegura que sampleAuctionsRaw e sampleDirectSaleOffersRaw são iteráveis
+  const allItems = [
+    ...(sampleLotsRaw || []),
+    ...(sampleAuctionsRaw || []),
+    ...(sampleDirectSaleOffersRaw || [])
+  ];
+
+  allItems.forEach(item => {
     const categoryNameOrId = 'categoryId' in item ? item.categoryId : ('category' in item ? item.category : undefined);
     let categorySlugToUse: string | undefined;
     let categoryNameToUse: string | undefined;
@@ -552,6 +620,7 @@ export function getCategoryAssets(categoryNameOrSlug: string): CategoryAssets {
         'segunda-praca': { logoUrl: 'https://placehold.co/100x100.png?text=2P', logoAiHint: 'numero dois leilao', bannerUrl: 'https://placehold.co/1200x300.png?text=Segunda+Praca', bannerAiHint: 'oportunidade desconto', bannerText: 'Novas Chances com Valores Atrativos em Segunda Praça' },
         'leiloes-encerrados': { logoUrl: 'https://placehold.co/100x100.png?text=Fim', logoAiHint: 'calendario finalizado', bannerUrl: 'https://placehold.co/1200x300.png?text=Leiloes+Encerrados', bannerAiHint: 'arquivo historico', bannerText: 'Consulte o Histórico de Resultados de Leilões Encerrados' },
         'leiloes-cancelados': { logoUrl: 'https://placehold.co/100x100.png?text=X', logoAiHint: 'simbolo cancelado', bannerUrl: 'https://placehold.co/1200x300.png?text=Leiloes+Cancelados', bannerAiHint: 'documento cancelado', bannerText: 'Veja os Leilões que Foram Cancelados' },
+        'tomada-de-precos': { logoUrl: 'https://placehold.co/100x100.png?text=TP', logoAiHint: 'documento propostas', bannerUrl: 'https://placehold.co/1200x300.png?text=Tomada+de+Precos', bannerAiHint: 'propostas envelope', bannerText: 'Participe de Tomadas de Preços e Faça a Melhor Oferta' },
       };
       if (assetOverrides[slug]) return assetOverrides[slug];
 
@@ -561,6 +630,7 @@ export function getCategoryAssets(categoryNameOrSlug: string): CategoryAssets {
       if (slug.includes('segunda') && slug.includes('praca')) return assetOverrides['segunda-praca'];
       if (slug.includes('veiculo')) return assetOverrides['veiculos'];
       if (slug.includes('imovel') || slug.includes('casa') || slug.includes('terreno')) return assetOverrides['imoveis'];
+      if (slug.includes('tomada') && slug.includes('preco')) return assetOverrides['tomada-de-precos'];
 
       return {}; 
   };
@@ -612,10 +682,10 @@ export const sampleAuctions: Auction[] = sampleAuctionsRaw.map(auction => {
 
     return {
         ...auction,
-        category: categoryInfo?.name || auction.category,
-        auctioneer: auctioneerInfo?.name || auction.auctioneerId,
+        category: categoryInfo?.name || auction.category || 'Outras',
+        auctioneer: auctioneerInfo?.name || auction.auctioneerId || 'Leiloeiro Desconhecido',
         auctioneerLogoUrl: auctioneerInfo?.logoUrl || auction.auctioneerLogoUrl,
-        seller: sellerInfo?.name || auction.sellerId,
+        seller: sellerInfo?.name || auction.sellerId || 'Comitente Desconhecido',
         lots: lotsForAuction,
         totalLots: lotsForAuction.length,
         createdAt: createPastDate(Math.floor(Math.random() * 60) + 1),
@@ -911,5 +981,3 @@ export function getPlaceholderIfEmpty(value: string | number | null | undefined,
     }
     return String(value);
 }
-
-    

@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Auction, AuctionStage as AuctionStageType } from '@/types';
-import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail } from 'lucide-react';
+import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
@@ -103,13 +103,13 @@ interface AuctionCardProps {
 export default function AuctionCard({ auction }: AuctionCardProps) {
   const [isFavorite, setIsFavorite] = useState(auction.isFavorite || false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [auctionFullUrl, setAuctionFullUrl] = useState<string>(`/auctions/${auction.id}`);
+  const [auctionFullUrl, setAuctionFullUrl] = useState<string>(`/auctions/${auction.publicId || auction.id}`);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setAuctionFullUrl(`${window.location.origin}/auctions/${auction.id}`);
+      setAuctionFullUrl(`${window.location.origin}/auctions/${auction.publicId || auction.id}`);
     }
-  }, [auction.id]);
+  }, [auction.id, auction.publicId]);
 
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
@@ -143,6 +143,19 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
   const mainImageAlt = auction.title || 'Imagem do Leilão';
   const mainImageDataAiHint = auction.dataAiHint || 'auction image';
 
+  const getAuctionTypeDisplay = (type?: Auction['auctionType']) => {
+    if (!type) return null;
+    switch(type) {
+      case 'JUDICIAL': return { label: 'Judicial', icon: <AuctionTypeIcon className="h-3 w-3"/> };
+      case 'EXTRAJUDICIAL': return { label: 'Extrajudicial', icon: <AuctionTypeIcon className="h-3 w-3"/> };
+      case 'PARTICULAR': return { label: 'Particular', icon: <AuctionTypeIcon className="h-3 w-3"/> };
+      case 'TOMADA_DE_PRECOS': return { label: 'Tomada de Preços', icon: <TomadaPrecosIcon className="h-3 w-3"/> };
+      default: return null;
+    }
+  };
+
+  const auctionTypeDisplay = getAuctionTypeDisplay(auction.auctionType);
+
   return (
     <TooltipProvider>
       <>
@@ -153,7 +166,7 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
             </CardHeader>
           )}
           <div className="relative">
-            <Link href={`/auctions/${auction.id}`} className="block">
+            <Link href={`/auctions/${auction.publicId || auction.id}`} className="block">
               <div className="aspect-[16/10] relative bg-muted">
                 <Image
                   src={mainImageUrl}
@@ -207,23 +220,23 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
                 </Tooltip>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
-                    <a href={getSocialLink('x', auctionFullUrl, auction.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                      <X className="h-4 w-4" /> X (Twitter)
+                    <a href={getSocialLink('x', auctionFullUrl, auction.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
+                      <X className="h-3.5 w-3.5" /> X (Twitter)
                     </a>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <a href={getSocialLink('facebook', auctionFullUrl, auction.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                      <Facebook className="h-4 w-4" /> Facebook
+                    <a href={getSocialLink('facebook', auctionFullUrl, auction.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
+                      <Facebook className="h-3.5 w-3.5" /> Facebook
                     </a>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <a href={getSocialLink('whatsapp', auctionFullUrl, auction.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                      <MessageSquareText className="h-4 w-4" /> WhatsApp
+                    <a href={getSocialLink('whatsapp', auctionFullUrl, auction.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
+                      <MessageSquareText className="h-3.5 w-3.5" /> WhatsApp
                     </a>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <a href={getSocialLink('email', auctionFullUrl, auction.title)} className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" /> Email
+                    <a href={getSocialLink('email', auctionFullUrl, auction.title)} className="flex items-center gap-2 text-xs">
+                      <Mail className="h-3.5 w-3.5" /> Email
                     </a>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -233,10 +246,15 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
 
           <CardContent className="p-4 flex-grow">
             <div className="flex justify-between items-start text-xs text-muted-foreground mb-1">
-              <span>ID: {auction.id}</span>
-              {auction.auctioneer && <span className="font-semibold text-primary">{auction.auctioneer}</span>}
+              <span>ID: {auction.publicId || auction.id}</span>
+              {auctionTypeDisplay && (
+                <div className="flex items-center gap-1">
+                    {auctionTypeDisplay.icon}
+                    <span>{auctionTypeDisplay.label}</span>
+                </div>
+                )}
             </div>
-            <Link href={`/auctions/${auction.id}`}>
+            <Link href={`/auctions/${auction.publicId || auction.id}`}>
               <h3 className="text-md font-semibold hover:text-primary transition-colors mb-2 leading-tight min-h-[2.5em] line-clamp-2">
                 {auction.title}
               </h3>
@@ -267,14 +285,16 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
             </Badge>
             {auction.initialOffer && (
               <div className="w-full">
-                <p className="text-xs text-muted-foreground">A partir de</p>
+                <p className="text-xs text-muted-foreground">
+                  {auction.auctionType === 'TOMADA_DE_PRECOS' ? 'Valor de Referência' : 'A partir de'}
+                </p>
                 <p className="text-2xl font-bold text-primary">
                   R$ {auction.initialOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
             )}
             <Button asChild className="w-full mt-2">
-              <Link href={`/auctions/${auction.id}`}>Ver Lotes ({auction.totalLots})</Link>
+              <Link href={`/auctions/${auction.publicId || auction.id}`}>Ver Lotes ({auction.totalLots})</Link>
             </Button>
           </CardFooter>
         </Card>
