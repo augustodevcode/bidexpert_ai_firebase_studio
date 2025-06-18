@@ -24,7 +24,7 @@ export const lotFormSchema = z.object({
   price: z.coerce.number().positive({
     message: "O preço (lance inicial) deve ser um número positivo.",
   }),
-  initialPrice: z.coerce.number().positive().optional(),
+  initialPrice: z.coerce.number().positive().optional().nullable(),
   status: z.enum(lotStatusValues, {
     required_error: "O status do lote é obrigatório.",
   }),
@@ -49,6 +49,7 @@ export const lotFormSchema = z.object({
   longitude: z.coerce.number().min(-180).max(180).optional().nullable(),
   mapAddress: z.string().max(255, { message: "Endereço do mapa não pode exceder 255 caracteres." }).optional().nullable(),
   mapEmbedUrl: z.string().url({ message: "URL de embed do mapa inválida." }).optional().nullable().or(z.literal('')),
+  mapStaticImageUrl: z.string().url({ message: "URL da imagem estática do mapa inválida."}).optional().nullable().or(z.literal('')),
 });
 
 export type LotFormValues = z.infer<typeof lotFormSchema>;

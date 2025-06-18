@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Lot, Auction, BidInfo, SellerProfileInfo, Review, LotQuestion } from '@/types';
+import type { Lot, Auction, BidInfo, SellerProfileInfo, Review, LotQuestion, PlatformSettings } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -30,7 +30,7 @@ import { useToast } from '@/hooks/use-toast';
     
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useAuth } from '@/contexts/auth-context';
-import { getAuctionStatusText, getLotStatusColor, sampleAuctions } from '@/lib/sample-data';
+import { getAuctionStatusText, getLotStatusColor, sampleAuctions, samplePlatformSettings } from '@/lib/sample-data';
 
 import { getBidsForLot, getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, placeBidOnLot } from './actions'; 
 
@@ -40,6 +40,7 @@ import LotSpecificationTab from '@/components/auction/lot-specification-tab';
 import LotSellerTab from '@/components/auction/lot-seller-tab';
 import LotReviewsTab from '@/components/auction/lot-reviews-tab';
 import LotQuestionsTab from '@/components/auction/lot-questions-tab';
+import LotMapDisplay from '@/components/auction/lot-map-display'; // Importado
 import LotPreviewModal from '@/components/lot-preview-modal';
 import { hasPermission } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
@@ -51,6 +52,7 @@ const SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS = 'Administrador BidExpert (Super T
 interface LotDetailClientContentProps {
   lot: Lot;
   auction: Auction;
+  platformSettings: PlatformSettings; // Adicionado
   sellerName?: string | null;
   lotIndex?: number;
   previousLotId?: string;
@@ -61,6 +63,7 @@ interface LotDetailClientContentProps {
 export default function LotDetailClientContent({
   lot: initialLot,
   auction,
+  platformSettings,
   sellerName: initialSellerName,
   lotIndex,
   previousLotId,
@@ -307,6 +310,13 @@ export default function LotDetailClientContent({
       return false;
     }
   };
+  
+  const mapLink = useMemo(() => {
+    if (lot.mapEmbedUrl) return lot.mapEmbedUrl;
+    if (lot.latitude && lot.longitude) return `https://www.google.com/maps?q=${lot.latitude},${lot.longitude}&z=15`;
+    if (lot.mapAddress) return `https://www.google.com/maps?q=${encodeURIComponent(lot.mapAddress)}`;
+    return null;
+  }, [lot.mapEmbedUrl, lot.latitude, lot.longitude, lot.mapAddress]);
     
  return ( // Line 278
     <> 
@@ -374,6 +384,11 @@ export default function LotDetailClientContent({
                     </div>
                 </CardContent>
                 </Card>
+
+                {/* Seção do Mapa */}
+                {(lot.latitude && lot.longitude) || lot.mapEmbedUrl || lot.mapStaticImageUrl || lot.mapAddress ? (
+                    <LotMapDisplay lot={lot} platformSettings={platformSettings} />
+                ) : null}
                 
                 <Card className="shadow-lg">
                 <CardContent className="p-0 sm:p-2 md:p-4">
@@ -427,6 +442,13 @@ export default function LotDetailClientContent({
                     <Heart className={`mr-2 h-4 w-4 ${isLotFavorite ? 'fill-red-500 text-red-500' : ''}`} />
                     {isLotFavorite ? 'Remover da Minha Lista' : 'Adicionar à Minha Lista'}
                     </Button>
+                    {mapLink && (
+                      <Button variant="outline" className="w-full" asChild>
+                        <a href={mapLink} target="_blank" rel="noopener noreferrer">
+                          <MapPin className="mr-2 h-4 w-4" /> Ver no Mapa
+                        </a>
+                      </Button>
+                    )}
                 </CardContent>
                 </Card>
 

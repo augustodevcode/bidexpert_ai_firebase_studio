@@ -18,11 +18,12 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { platformSettingsFormSchema, type PlatformSettingsFormValues } from './settings-form-schema';
-import type { PlatformSettings } from '@/types';
-import { Loader2, Save, Palette } from 'lucide-react';
+import type { PlatformSettings, MapSettings } from '@/types';
+import { Loader2, Save, Palette, Fingerprint, Wrench, Map as MapIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea'; 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // A action de submit será importada de './actions'
 import { updatePlatformSettings } from './actions';
@@ -31,6 +32,14 @@ interface SettingsFormProps {
   initialData: PlatformSettings;
   activeSection: string;
 }
+
+const defaultMapSettings: MapSettings = {
+    defaultProvider: 'staticImage',
+    googleMapsApiKey: '',
+    staticImageMapZoom: 15,
+    staticImageMapMarkerColor: 'red',
+};
+
 
 export default function SettingsForm({ initialData, activeSection }: SettingsFormProps) {
   const { toast } = useToast();
@@ -46,16 +55,17 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
       activeThemeName: initialData?.activeThemeName || null,
       themes: initialData?.themes || [],
       platformPublicIdMasks: initialData?.platformPublicIdMasks || { auctions: '', lots: '', auctioneers: '', sellers: ''},
+      mapSettings: initialData?.mapSettings || defaultMapSettings,
     },
   });
 
   async function onSubmit(values: PlatformSettingsFormValues) {
     setIsSubmitting(true);
     try {
-      // Ensure platformPublicIdMasks é um objeto, mesmo que vazio, se não for fornecido.
       const dataToSubmit = {
         ...values,
         platformPublicIdMasks: values.platformPublicIdMasks || {},
+        mapSettings: values.mapSettings || defaultMapSettings,
       };
       const result = await updatePlatformSettings(dataToSubmit);
       if (result.success) {
@@ -206,6 +216,74 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
                           </FormItem>
                       )}
                   />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-md flex items-center"><MapIcon className="h-5 w-5 mr-2" /> Configurações de Mapa</CardTitle>
+                <CardDescription>Defina o provedor de mapa padrão e suas configurações.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="mapSettings.defaultProvider"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Provedor de Mapa Padrão</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || 'staticImage'}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o provedor" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="staticImage">Imagem Estática (Google/Placehold)</SelectItem>
+                          <SelectItem value="google">Google Maps (Embed)</SelectItem>
+                          <SelectItem value="openstreetmap">OpenStreetMap (Embed)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="mapSettings.googleMapsApiKey"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Chave API Google Maps (Opcional)</FormLabel>
+                        <FormControl><Input placeholder="Sua chave API do Google Maps" {...field} value={field.value ?? ''} /></FormControl>
+                        <FormDescription>Necessária se usar "Google Maps (Embed)" ou "Imagem Estática (Google)".</FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <div className="grid md:grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="mapSettings.staticImageMapZoom"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Zoom Imagem Estática</FormLabel>
+                            <FormControl><Input type="number" min="1" max="20" {...field} value={field.value ?? 15} /></FormControl>
+                            <FormDescription>Nível de zoom para mapas estáticos (1-20).</FormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="mapSettings.staticImageMapMarkerColor"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Cor do Marcador (Estático)</FormLabel>
+                            <FormControl><Input placeholder="Ex: red, blue, 0xFF0000" {...field} value={field.value ?? 'red'} /></FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
               </CardContent>
             </Card>
           </section>

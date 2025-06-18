@@ -173,11 +173,11 @@ export interface Lot {
   isExclusive?: boolean;
 
   // Campos de localização
-  latitude?: number;
-  longitude?: number;
-  mapAddress?: string; 
-  mapEmbedUrl?: string; 
-  mapStaticImageUrl?: string; 
+  latitude?: number | null;
+  longitude?: number | null;
+  mapAddress?: string | null; 
+  mapEmbedUrl?: string | null; 
+  mapStaticImageUrl?: string | null;
 }
 
 // Este tipo é usado pelo formulário, que envia nomes
@@ -203,7 +203,9 @@ export type LotFormData = Omit<Lot,
   'discountPercentage' |
   'additionalTriggers' |
   'isExclusive' |
-  'mapStaticImageUrl' 
+  'auctionName' | // auctionName is derived, not directly submitted
+  'sellerName' | // sellerName is derived, not directly submitted
+  'auctioneerName' // auctioneerName is derived, not directly submitted
 > & {
   endDate: Date;
   lotSpecificAuctionDate?: Date | null;
@@ -214,10 +216,11 @@ export type LotFormData = Omit<Lot,
   mediaItemIds?: string[];
   categoryId?: string;
   isExclusive?: boolean;
-  latitude?: number;
-  longitude?: number;
-  mapAddress?: string;
-  mapEmbedUrl?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  mapAddress?: string | null;
+  mapEmbedUrl?: string | null;
+  mapStaticImageUrl?: string | null;
 };
 
 
@@ -567,6 +570,14 @@ export interface SectionBadgeConfig {
   // Outras seções podem ser adicionadas aqui
 }
 
+export interface MapSettings {
+  defaultProvider?: 'google' | 'openstreetmap' | 'staticImage';
+  googleMapsApiKey?: string | null;
+  staticImageMapZoom?: number;
+  staticImageMapMarkerColor?: string;
+}
+
+
 export interface PlatformSettings {
   id: 'global';
   siteTitle?: string;
@@ -583,12 +594,7 @@ export interface PlatformSettings {
   homepageSections?: HomepageSectionConfig[];
   mentalTriggerSettings?: MentalTriggerSettings;
   sectionBadgeVisibility?: SectionBadgeConfig; 
-  mapSettings?: {
-    defaultProvider?: 'google' | 'openstreetmap' | 'staticImage';
-    googleMapsApiKey?: string;
-    staticImageMapZoom?: number;
-    staticImageMapMarkerColor?: string;
-  };
+  mapSettings?: MapSettings;
   updatedAt: AnyTimestamp;
 }
 
@@ -761,6 +767,7 @@ export type LotWithCategoryName = Lot & {
     
 
     
+
 
 
 
