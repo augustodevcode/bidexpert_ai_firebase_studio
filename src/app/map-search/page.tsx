@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { MapPin, Loader2, AlertCircle, ListFilter, Layers, Search as SearchIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import type { Lot, Auction, PlatformSettings } from '@/types';
 import LotCard from '@/components/lot-card';
 import AuctionCard from '@/components/auction-card';
 import Image from 'next/image';
+import { useRouter, useSearchParams } from 'next/navigation'; // Adicionado useRouter, useSearchParams
 
 // Placeholder for a future, more robust map component
 const MapComponentPlaceholder = ({ items, itemType }: { items: (Lot | Auction)[], itemType: 'lot' | 'auction' }) => {
@@ -31,24 +32,21 @@ const MapComponentPlaceholder = ({ items, itemType }: { items: (Lot | Auction)[]
   );
 };
 
-
 export default function MapSearchPage() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchType, setSearchType] = useState<'lots' | 'auctions'>('lots');
+  const router = useRouter();
+  const searchParamsHook = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParamsHook.get('term') || '');
+  const [searchType, setSearchType] = useState<'lots' | 'auctions'>( (searchParamsHook.get('type') as 'lots' | 'auctions') || 'lots');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mapItems, setMapItems] = useState<(Lot | Auction)[]>([]);
-  const [platformSettings, setPlatformSettings] = useState<PlatformSettings>(samplePlatformSettings); // Usando sample
-
+  // const [platformSettings, setPlatformSettings] = useState<PlatformSettings>(samplePlatformSettings); // Removido pois não usado aqui diretamente
 
   useEffect(() => {
-    // Simular busca inicial ou baseada em geolocalização (placeholder)
     setIsLoading(true);
-    // Aqui você faria a lógica de busca inicial, talvez por geolocalização do usuário
-    // ou mostrando todos os itens com localização
-    const initialItems = searchType === 'lots' 
+    const initialItems = searchType === 'lots'
         ? sampleLots.filter(lot => lot.latitude && lot.longitude)
-        : sampleAuctions.filter(auc => auc.city && auc.state); // auctions might not have lat/lng directly yet
+        : sampleAuctions.filter(auc => auc.city && auc.state); 
     
     setMapItems(initialItems);
     setIsLoading(false);
@@ -58,7 +56,6 @@ export default function MapSearchPage() {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-    // Simulação de busca
     setTimeout(() => {
       let results: (Lot | Auction)[] = [];
       const term = searchTerm.toLowerCase();
@@ -87,7 +84,9 @@ export default function MapSearchPage() {
     }, 700);
   };
   
-  const displayedItems = mapItems.slice(0, 6); // Limitar para não sobrecarregar a UI na demo
+  const displayedItems = mapItems.slice(0, 6);
+
+  const platformSettings: PlatformSettings = samplePlatformSettings; // Definindo para usar no LotCard
 
 
   return (
@@ -155,7 +154,7 @@ export default function MapSearchPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {displayedItems.map(item => 
               searchType === 'lots' 
-                ? <LotCard key={`lot-${item.id}`} lot={item as Lot} badgeVisibilityConfig={platformSettings.sectionBadgeVisibility?.searchGrid} /> 
+                ? <LotCard key={`lot-${item.id}`} lot={item as Lot} platformSettingsProp={platformSettings} badgeVisibilityConfig={platformSettings.sectionBadgeVisibility?.searchGrid} /> 
                 : <AuctionCard key={`auction-${item.id}`} auction={item as Auction} />
             )}
           </div>
@@ -177,55 +176,3 @@ export default function MapSearchPage() {
     </div>
   );
 }
-
-```
-  </content>
-  </change>
-  <change>
-    <file>/src/components/lot-map-preview-modal.tsx</file>
-    <content><![CDATA[
-'use client';
-
-import type { Lot, PlatformSettings } from '@/types';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { MapPin, X } from 'lucide-react';
-import LotMapDisplay from '@/components/auction/lot-map-display'; 
-
-interface LotMapPreviewModalProps {
-  lot: Lot | null;
-  platformSettings: PlatformSettings;
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export default function LotMapPreviewModal({ lot, platformSettings, isOpen, onClose }: LotMapPreviewModalProps) {
-  if (!isOpen || !lot) return null;
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-xl md:max-w-2xl lg:max-w-3xl p-0">
-        <DialogHeader className="p-4 border-b">
-          <DialogTitle className="text-lg font-semibold flex items-center">
-            <MapPin className="h-5 w-5 mr-2 text-primary" /> Localização do Lote: {lot.title}
-          </DialogTitle>
-          <DialogDescription>
-            {lot.mapAddress || (lot.latitude && lot.longitude ? `Coordenadas: ${lot.latitude}, ${lot.longitude}` : 'Detalhes da localização.')}
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="p-4 max-h-[60vh] overflow-y-auto">
-          <LotMapDisplay lot={lot} platformSettings={platformSettings} />
-        </div>
-
-        <DialogFooter className="p-4 border-t sm:justify-end">
-          <Button type="button" variant="outline" onClick={onClose}>
-            <X className="mr-2 h-4 w-4" /> Fechar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-    
