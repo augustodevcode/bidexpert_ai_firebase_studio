@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -130,7 +131,7 @@ export interface Auction {
   fullTitle?: string;
   description?: string;
   status: AuctionStatus;
-  auctionType?: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR';
+  auctionType?: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS'; // Adicionado TOMADA_DE_PRECOS
   category: string; // Nome da Categoria
   categoryId?: string; // ID da Categoria
   auctioneer: string; // Nome do Leiloeiro
@@ -711,7 +712,7 @@ export interface IDatabaseAdapter {
   deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }>;
   linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }>;
   unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }>;
-
+  
   // Platform Settings
   getPlatformSettings(): Promise<PlatformSettings>;
   updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }>;
@@ -724,17 +725,17 @@ export type UserCreationData = Pick<UserProfileData, 'fullName' | 'email' | 'cpf
   roleId?: string | null; // ID do perfil, opcional
 };
 
-export type MegaMenuLinkItem = {
-  href: string;
-  label: string;
-  description?: string;
-  icon?: React.ReactNode;
-};
+// export type MegaMenuLinkItem = {
+//   href: string;
+//   label: string;
+//   description?: string;
+//   icon?: React.ReactNode;
+// };
 
-export type MegaMenuGroup = {
-  title?: string;
-  items: MegaMenuLinkItem[];
-};
+// export type MegaMenuGroup = {
+//   title?: string;
+//   items: MegaMenuLinkItem[];
+// };
 
 
 export interface RecentlyViewedLotInfo {

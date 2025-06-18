@@ -7,7 +7,7 @@ import LotCard from '@/components/lot-card';
 import { sampleAuctions, sampleLots, getCategoryAssets, samplePlatformSettings } from '@/lib/sample-data';
 import type { Auction, Lot, PlatformSettings } from '@/types';
 import Link from 'next/link';
-import { Landmark, Scale, FileText, Tags, CalendarX, CheckSquare, Star } from 'lucide-react';
+import { Landmark, Scale, FileText, Tags, CalendarX, CheckSquare, Star, FileText as FileTextIcon } from 'lucide-react';
 
 export default function HomePage() {
   try {
@@ -35,6 +35,15 @@ export default function HomePage() {
         dataAiHint: getCategoryAssets('Leilões Extrajudiciais').bannerAiHint,
         link: '/search?type=auctions&auctionType=EXTRAJUDICIAL',
         bgColorClass: 'bg-teal-50 dark:bg-teal-900/40 hover:border-teal-300',
+      },
+      {
+        title: 'Tomada de Preços',
+        subtitle: 'Processo de seleção e cotação.',
+        imageUrl: getCategoryAssets('Tomada de Preços').bannerUrl, 
+        imageAlt: 'Ícone Tomada de Preços',
+        dataAiHint: getCategoryAssets('Tomada de Preços').bannerAiHint,
+        link: '/search?type=auctions&auctionType=TOMADA_DE_PRECOS',
+        bgColorClass: 'bg-indigo-50 dark:bg-indigo-900/40 hover:border-indigo-300',
       },
       {
         title: 'Venda Direta',
@@ -80,7 +89,7 @@ export default function HomePage() {
 
         <section>
           <h2 className="text-2xl font-bold text-center mb-6 font-headline">Explorar</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4 md:gap-5"> 
             {filterLinksData.map((card) => (
               <FilterLinkCard
                 key={card.title}

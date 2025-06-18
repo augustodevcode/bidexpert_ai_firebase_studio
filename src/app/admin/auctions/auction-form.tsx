@@ -55,6 +55,7 @@ const auctionTypeOptions = [
   { value: 'JUDICIAL', label: 'Judicial' },
   { value: 'EXTRAJUDICIAL', label: 'Extrajudicial' },
   { value: 'PARTICULAR', label: 'Particular' },
+  { value: 'TOMADA_DE_PRECOS', label: 'Tomada de Preços' },
 ];
 
 export default function AuctionForm({
@@ -151,7 +152,7 @@ export default function AuctionForm({
                 <FormItem>
                   <FormLabel>Título Completo (Opcional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Título mais descritivo para SEO e clareza" {...field} />
+                    <Input placeholder="Título mais descritivo para SEO e clareza" {...field} value={field.value ?? ""} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -164,7 +165,7 @@ export default function AuctionForm({
                 <FormItem>
                   <FormLabel>Descrição (Opcional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Detalhes sobre o leilão, informações importantes, etc." {...field} rows={4} />
+                    <Textarea placeholder="Detalhes sobre o leilão, informações importantes, etc." {...field} value={field.value ?? ""} rows={4} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -377,7 +378,7 @@ export default function AuctionForm({
                     render={({ field }) => (
                     <FormItem>
                         <FormLabel>Cidade Principal do Leilão (Opcional)</FormLabel>
-                        <FormControl><Input placeholder="Ex: São Paulo" {...field} /></FormControl>
+                        <FormControl><Input placeholder="Ex: São Paulo" {...field} value={field.value ?? ""} /></FormControl>
                         <FormMessage />
                     </FormItem>
                     )}
@@ -388,7 +389,7 @@ export default function AuctionForm({
                     render={({ field }) => (
                     <FormItem>
                         <FormLabel>UF (Opcional)</FormLabel>
-                        <FormControl><Input placeholder="Ex: SP" {...field} maxLength={2} /></FormControl>
+                        <FormControl><Input placeholder="Ex: SP" {...field} value={field.value ?? ""} maxLength={2} /></FormControl>
                         <FormMessage />
                     </FormItem>
                     )}
@@ -400,7 +401,7 @@ export default function AuctionForm({
                 render={({ field }) => (
                 <FormItem>
                     <FormLabel>URL da Imagem de Capa (Opcional)</FormLabel>
-                    <FormControl><Input type="url" placeholder="https://exemplo.com/imagem-leilao.jpg" {...field} /></FormControl>
+                    <FormControl><Input type="url" placeholder="https://exemplo.com/imagem-leilao.jpg" {...field} value={field.value ?? ""} /></FormControl>
                     <FormMessage />
                 </FormItem>
                 )}
@@ -411,7 +412,7 @@ export default function AuctionForm({
                 render={({ field }) => (
                 <FormItem>
                     <FormLabel>URL do Edital/Documentos (Opcional)</FormLabel>
-                    <FormControl><Input type="url" placeholder="https://exemplo.com/edital.pdf" {...field} /></FormControl>
+                    <FormControl><Input type="url" placeholder="https://exemplo.com/edital.pdf" {...field} value={field.value ?? ""} /></FormControl>
                     <FormMessage />
                 </FormItem>
                 )}
@@ -422,7 +423,7 @@ export default function AuctionForm({
                 render={({ field }) => (
                 <FormItem>
                     <FormLabel>Filial de Venda (Opcional)</FormLabel>
-                    <FormControl><Input placeholder="Ex: Matriz SP, Filial RJ" {...field} /></FormControl>
+                    <FormControl><Input placeholder="Ex: Matriz SP, Filial RJ" {...field} value={field.value ?? ""} /></FormControl>
                     <FormMessage />
                 </FormItem>
                 )}

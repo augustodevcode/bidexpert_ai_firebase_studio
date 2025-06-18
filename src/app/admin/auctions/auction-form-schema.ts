@@ -12,10 +12,11 @@ const auctionStatusValues: [AuctionStatus, ...AuctionStatus[]] = [
   'SUSPENSO'
 ];
 
-const auctionTypeValues: [Auction['auctionType'], ...(Auction['auctionType'])[]] = [
+const auctionTypeValues: [Auction['auctionType'], ...(Exclude<Auction['auctionType'], undefined>)[]] = [
   'JUDICIAL',
   'EXTRAJUDICIAL',
   'PARTICULAR',
+  'TOMADA_DE_PRECOS', // Adicionado
 ];
 
 

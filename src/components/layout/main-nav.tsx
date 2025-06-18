@@ -3,11 +3,11 @@
 
 import * as React from 'react'; 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation'; 
+import { usePathname, useSearchParams } from 'next/navigation'; // Importado useSearchParams
 import { cn } from '@/lib/utils';
 import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, RecentlyViewedLotInfo } from '@/types';
-import { ChevronDown, History, Home, Landmark, Gavel, Percent, Phone, ListChecks, Tag, Users } from 'lucide-react'; 
-import { useEffect, useState } from 'react';
+import { ChevronDown, History, Home, Landmark, Gavel, Percent, Phone, ListChecks, Tag, Users, FileText as FileTextIcon } from 'lucide-react'; 
+import { useEffect, useState, useCallback } from 'react'; // Adicionado useCallback
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -53,6 +53,7 @@ const modalityMegaMenuGroups: MegaMenuGroup[] = [
     items: [
       { href: '/search?type=auctions&auctionType=JUDICIAL', label: 'Leilões Judiciais', description: 'Oportunidades de processos judiciais.', icon: <Gavel className="h-4 w-4" /> },
       { href: '/search?type=auctions&auctionType=EXTRAJUDICIAL', label: 'Leilões Extrajudiciais', description: 'Negociações diretas e mais ágeis.', icon: <Landmark className="h-4 w-4" /> },
+      { href: '/search?type=auctions&auctionType=TOMADA_DE_PRECOS', label: 'Tomada de Preços', description: 'Processo de seleção e cotação.', icon: <FileTextIcon className="h-4 w-4" /> },
       { href: '/direct-sales', label: 'Venda Direta', description: 'Compre itens com preço fixo.', icon: <Tag className="h-4 w-4" /> },
       { href: '/search?type=auctions&auctionType=PARTICULAR', label: 'Leilões Particulares', description: 'Leilões privados ou com acesso restrito.', icon: <Users className="h-4 w-4" /> },
     ]
@@ -86,6 +87,7 @@ export default function MainNav({
     ...props 
 }: MainNavProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams(); // Adicionado para verificar o tipo de pesquisa
   const [isClient, setIsClient] = useState(false);
   
   useEffect(() => {
@@ -177,6 +179,9 @@ export default function MainNav({
       <NavigationMenuList className={cn("group flex list-none items-center justify-start space-x-1")}>
         {items.map((item) => {
           let megaMenuPropsForTwoColumn: any = null; 
+          const currentParamsType = searchParams.get('type');
+          const currentCategoryParam = searchParams.get('category');
+          const currentAuctionTypeParam = searchParams.get('auctionType');
 
           if (item.isMegaMenu && item.contentKey && item.twoColumnMegaMenuProps) {
             let finalSidebarItems: MegaMenuLinkItem[] = [];
@@ -218,12 +223,26 @@ export default function MainNav({
 
 
           if (item.isMegaMenu && item.contentKey) {
+            let isActiveTrigger = false;
+            if (item.contentKey === 'categories' && (pathname?.startsWith('/category') || (pathname === '/search' && (currentParamsType === 'lots' || currentCategoryParam)))) {
+              isActiveTrigger = true;
+            } else if (item.contentKey === 'modalities' && pathname === '/search' && currentParamsType === 'auctions' && currentAuctionTypeParam) {
+              isActiveTrigger = true;
+            } else if (item.contentKey === 'consignors' && pathname?.startsWith('/sellers')) {
+              isActiveTrigger = true;
+            } else if (item.contentKey === 'auctioneers' && pathname?.startsWith('/auctioneers')) {
+              isActiveTrigger = true;
+            } else if (item.contentKey === 'history' && pathname === '/dashboard/history') {
+              isActiveTrigger = true;
+            }
+
+
             return (
               <NavigationMenuItem key={item.label} value={item.label}>
                  <NavigationMenuTrigger
                   className={cn(
                     navigationMenuTriggerStyle(),
-                    (pathname === item.href || (item.hrefPrefix && pathname?.startsWith(item.hrefPrefix))) && 'bg-accent text-primary font-semibold'
+                    isActiveTrigger && 'bg-accent text-primary font-semibold'
                   )}
                 >
                   {item.icon && item.contentKey !== 'history' && <item.icon className="mr-1.5 h-4 w-4" /> } 
@@ -294,5 +313,4 @@ export default function MainNav({
     </NavigationMenu>
   );
 }
-
 
