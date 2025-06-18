@@ -20,8 +20,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuLabel,
-  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -350,135 +348,136 @@ export default function LotDetailClientContent({
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-                <Card className="shadow-lg">
-                <CardContent className="p-4">
-                    <div className="relative aspect-[16/9] w-full bg-muted rounded-md overflow-hidden mb-4">
-                    {gallery.length > 0 && gallery[currentImageIndex] ? (
-                        <Image src={gallery[currentImageIndex]} alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`} fill className="object-contain" data-ai-hint={lot.dataAiHint || "imagem principal lote"} priority={currentImageIndex === 0} unoptimized={gallery[currentImageIndex]?.startsWith('https://placehold.co')}/>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground"><ImageOff className="h-16 w-16 mb-2" /><span>Imagem principal não disponível</span></div>
-                    )}
-                    {gallery.length > 1 && (
-                        <><Button variant="outline" size="icon" onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Imagem Anterior"><ChevronLeft className="h-5 w-5" /></Button>
-                        <Button variant="outline" size="icon" onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Próxima Imagem"><ChevronRight className="h-5 w-5" /></Button></>
-                    )}
-                    </div>
-                    {gallery.length > 1 && (
-                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2">
-                        {gallery.map((url, index) => (<button key={index} className={`relative aspect-square bg-muted rounded overflow-hidden border-2 transition-all ${index === currentImageIndex ? 'border-primary ring-2 ring-primary ring-offset-2' : 'border-transparent hover:border-muted-foreground/50'}`} onClick={() => setCurrentImageIndex(index)} aria-label={`Ver imagem ${index + 1}`}><Image src={url} alt={`Miniatura ${index + 1}`} fill className="object-cover" data-ai-hint={lot.dataAiHint || 'imagem galeria carro'} unoptimized={url.startsWith('https://placehold.co')}/></button>))}
-                    </div>
-                    )}
-                    {gallery.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">Nenhuma imagem na galeria.</p>)}
-                    <div className="flex justify-between items-center mt-4 text-sm text-muted-foreground">
-                    {lot.hasKey && <span className="flex items-center"><Key className="h-4 w-4 mr-1 text-primary"/> Chave Presente</span>}
-                    <span className="flex items-center"><MapPin className="h-4 w-4 mr-1 text-primary"/> Localização: {lotLocation}</span>
-                    </div>
-                </CardContent>
-                </Card>
-                
-                <Tabs defaultValue="description" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 mb-4">
-                        <TabsTrigger value="description">Descrição</TabsTrigger>
-                        <TabsTrigger value="specification">Especificações</TabsTrigger>
-                        <TabsTrigger value="seller">Comitente</TabsTrigger>
-                        <TabsTrigger value="reviews">Avaliações</TabsTrigger>
-                        <TabsTrigger value="questions">Perguntas</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="description"><LotDescriptionTab lot={lot} /></TabsContent>
-                    <TabsContent value="specification"><LotSpecificationTab lot={lot} /></TabsContent>
-                    <TabsContent value="seller"><LotSellerTab sellerName={initialSellerName || auction.seller || "Não Informado"} sellerId={lot.sellerId} auctionSellerName={auction.seller} /></TabsContent>
-                    <TabsContent value="reviews"><LotReviewsTab lot={lot} reviews={lotReviews} isLoading={isLoadingData} onNewReview={handleNewReview} canUserReview={canUserReview} /></TabsContent>
-                    <TabsContent value="questions"><LotQuestionsTab lot={lot} questions={lotQuestions} isLoading={isLoadingData} onNewQuestion={handleNewQuestion} canUserAskQuestion={canUserAskQuestion} /></TabsContent>
-                </Tabs>
-                
-                 <Card className="shadow-md">
-                    <CardHeader className="flex flex-row items-center justify-between p-4">
-                        <CardTitle className="text-lg flex items-center">Histórico de Lances</CardTitle>
-                        {lotBids.length > 2 && (
-                             <Button variant="outline" size="sm" onClick={() => setIsAllBidsModalOpen(true)}>Ver Todos ({lotBids.length})</Button>
-                        )}
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                        {isLoadingData ? (
-                            <div className="flex items-center justify-center h-20"> <Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-                        ) : lotBids.length > 0 ? (
-                            <ul className="space-y-1.5 text-xs">
-                                {lotBids.slice(0, 2).map(bid => (
-                                    <li key={bid.id} className="flex justify-between items-center p-1.5 bg-secondary/40 rounded-md">
-                                        <div>
-                                            <span className="font-medium text-foreground text-xs">{bid.bidderDisplay}</span>
-                                            <span className="text-[0.65rem] text-muted-foreground ml-1.5">({bid.timestamp ? format(new Date(bid.timestamp), "dd/MM HH:mm:ss", { locale: ptBR }) : 'Data Indisponível'})</span>
-                                        </div>
-                                        <span className="font-semibold text-primary text-xs">R$ {bid.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                                    </li>
-                                ))}
-                            </ul>
+                {/* Coluna Esquerda: Imagens e Abas de Informação */}
+                <div className="lg:col-span-2 space-y-6">
+                    <Card className="shadow-lg">
+                    <CardContent className="p-4">
+                        <div className="relative aspect-[16/9] w-full bg-muted rounded-md overflow-hidden mb-4">
+                        {gallery.length > 0 && gallery[currentImageIndex] ? (
+                            <Image src={gallery[currentImageIndex]} alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`} fill className="object-contain" data-ai-hint={lot.dataAiHint || "imagem principal lote"} priority={currentImageIndex === 0} unoptimized={gallery[currentImageIndex]?.startsWith('https://placehold.co')}/>
                         ) : (
-                            <p className="text-xs text-muted-foreground text-center py-3">Nenhum lance registrado para este lote ainda.</p>
+                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground"><ImageOff className="h-16 w-16 mb-2" /><span>Imagem principal não disponível</span></div>
                         )}
-                    </CardContent>
-                </Card>
-                {/* Mapa movido para baixo do histórico de lances */}
-                <div className="w-full aspect-square">
-                    <LotMapDisplay lot={lot} platformSettings={platformSettings} />
-                </div>
-            </div>
-
-            <div className="space-y-6 lg:sticky lg:top-24">
-                <Card className="shadow-md">
-                <CardHeader>
-                    <CardTitle className="text-xl">Informações do Lance</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                    <div className="text-sm">
-                        <p className="text-muted-foreground">{currentBidLabel}:</p>
-                        <p className="text-2xl font-bold text-primary">
-                            R$ {currentBidValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </p>
-                    </div>
-                    {canUserBid ? (
-                    <div className="space-y-2">
-                        <div className="relative">
-                            <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input type="number" placeholder={`Mínimo R$ ${nextMinimumBid.toLocaleString('pt-BR')}`} value={bidAmountInput} onChange={(e) => setBidAmountInput(e.target.value)} className="pl-9 h-11 text-base" min={nextMinimumBid} step={bidIncrement} disabled={isPlacingBid} />
+                        {gallery.length > 1 && (
+                            <><Button variant="outline" size="icon" onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Imagem Anterior"><ChevronLeft className="h-5 w-5" /></Button>
+                            <Button variant="outline" size="icon" onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Próxima Imagem"><ChevronRight className="h-5 w-5" /></Button></>
+                        )}
                         </div>
-                        <Button onClick={handlePlaceBid} disabled={isPlacingBid || !bidAmountInput} className="w-full h-11 text-base">
-                        {isPlacingBid ? <Loader2 className="animate-spin" /> : `Dar Lance (R$ ${parseFloat(bidAmountInput || '0').toLocaleString('pt-BR') || nextMinimumBid.toLocaleString('pt-BR') })`}
-                        </Button>
-                    </div>
-                    ) : (
-                    <div className="text-sm text-muted-foreground p-3 bg-secondary/50 rounded-md">
-                        <p>{lot.status !== 'ABERTO_PARA_LANCES' ? `Lances para este lote estão ${getAuctionStatusText(lot.status).toLowerCase()}.` : (userProfileWithPermissions ? 'Você precisa estar habilitado para dar lances.' : 'Você precisa estar logado para dar lances.')}</p>
-                        {!userProfileWithPermissions && <Link href={`/auth/login?redirect=/auctions/${auction.publicId || auction.id}/lots/${lot.publicId || lot.id}`} className="text-primary hover:underline font-medium">Faça login ou registre-se.</Link>}
-                    </div>
-                    )}
-                    <Button variant="outline" className="w-full" onClick={handleToggleFavorite}>
-                    <Heart className={`mr-2 h-4 w-4 ${isLotFavorite ? 'fill-red-500 text-red-500' : ''}`} />
-                    {isLotFavorite ? 'Remover da Minha Lista' : 'Adicionar à Minha Lista'}
-                    </Button>
-                   
-                </CardContent>
-                </Card>
+                        {gallery.length > 1 && (
+                        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2">
+                            {gallery.map((url, index) => (<button key={index} className={`relative aspect-square bg-muted rounded overflow-hidden border-2 transition-all ${index === currentImageIndex ? 'border-primary ring-2 ring-primary ring-offset-2' : 'border-transparent hover:border-muted-foreground/50'}`} onClick={() => setCurrentImageIndex(index)} aria-label={`Ver imagem ${index + 1}`}><Image src={url} alt={`Miniatura ${index + 1}`} fill className="object-cover" data-ai-hint={lot.dataAiHint || 'imagem galeria carro'} unoptimized={url.startsWith('https://placehold.co')}/></button>))}
+                        </div>
+                        )}
+                        {gallery.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">Nenhuma imagem na galeria.</p>)}
+                        <div className="flex justify-between items-center mt-4 text-sm text-muted-foreground">
+                        {lot.hasKey && <span className="flex items-center"><Key className="h-4 w-4 mr-1 text-primary"/> Chave Presente</span>}
+                        <span className="flex items-center"><MapPin className="h-4 w-4 mr-1 text-primary"/> Localização: {lotLocation}</span>
+                        </div>
+                    </CardContent>
+                    </Card>
+                    
+                    <Tabs defaultValue="description" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 mb-4">
+                            <TabsTrigger value="description">Descrição</TabsTrigger>
+                            <TabsTrigger value="specification">Especificações</TabsTrigger>
+                            <TabsTrigger value="seller">Comitente</TabsTrigger>
+                            <TabsTrigger value="reviews">Avaliações</TabsTrigger>
+                            <TabsTrigger value="questions">Perguntas</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="description"><LotDescriptionTab lot={lot} /></TabsContent>
+                        <TabsContent value="specification"><LotSpecificationTab lot={lot} /></TabsContent>
+                        <TabsContent value="seller"><LotSellerTab sellerName={initialSellerName || auction.seller || "Não Informado"} sellerId={lot.sellerId} auctionSellerName={auction.seller} /></TabsContent>
+                        <TabsContent value="reviews"><LotReviewsTab lot={lot} reviews={lotReviews} isLoading={isLoadingData} onNewReview={handleNewReview} canUserReview={canUserReview} /></TabsContent>
+                        <TabsContent value="questions"><LotQuestionsTab lot={lot} questions={lotQuestions} isLoading={isLoadingData} onNewQuestion={handleNewQuestion} canUserAskQuestion={canUserAskQuestion} /></TabsContent>
+                    </Tabs>
+                </div>
 
-                <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-xl flex items-center">Informações da Venda <Info className="h-4 w-4 ml-2 text-muted-foreground" /></CardTitle></CardHeader>
-                <CardContent className="space-y-1 text-sm">
-                    {Object.entries({
-                    "Filial de Venda:": lot.sellingBranch || auction.sellingBranch,
-                    "Localização do Veículo:": lot.vehicleLocationInBranch || lotLocation,
-                    "Data e Hora do Leilão (Lote):": lot.lotSpecificAuctionDate ? format(new Date(lot.lotSpecificAuctionDate), "dd/MM/yyyy HH:mm'h'", { locale: ptBR }) : 'N/A',
-                    "Pista/Corrida #:": lot.laneRunNumber,
-                    "Corredor/Vaga:": lot.aisleStall,
-                    "Valor Real em Dinheiro (VCV):": lot.actualCashValue,
-                    "Custo Estimado de Reparo:": lot.estimatedRepairCost,
-                    "Vendedor:": lot.sellerName || auction.seller || initialSellerName,
-                    "Documento (Título/Venda):": lot.titleInfo,
-                    "Marca do Documento:": lot.titleBrand,
-                    }).map(([key, value]) => value ? <div key={key}><span className="font-medium text-foreground">{key}</span> <span className="text-muted-foreground">{String(value)}</span></div> : null)}
-                </CardContent>
-                </Card>
-            </div>
+                {/* Coluna Direita: Informações de Lance, Venda, Histórico e Mapa */}
+                <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
+                    <Card className="shadow-md">
+                        <CardHeader>
+                            <CardTitle className="text-xl">Informações do Lance</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <div className="text-sm">
+                                <p className="text-muted-foreground">{currentBidLabel}:</p>
+                                <p className="text-2xl font-bold text-primary">
+                                    R$ {currentBidValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </p>
+                            </div>
+                            {canUserBid ? (
+                            <div className="space-y-2">
+                                <div className="relative">
+                                    <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Input type="number" placeholder={`Mínimo R$ ${nextMinimumBid.toLocaleString('pt-BR')}`} value={bidAmountInput} onChange={(e) => setBidAmountInput(e.target.value)} className="pl-9 h-11 text-base" min={nextMinimumBid} step={bidIncrement} disabled={isPlacingBid} />
+                                </div>
+                                <Button onClick={handlePlaceBid} disabled={isPlacingBid || !bidAmountInput} className="w-full h-11 text-base">
+                                {isPlacingBid ? <Loader2 className="animate-spin" /> : `Dar Lance (R$ ${parseFloat(bidAmountInput || '0').toLocaleString('pt-BR') || nextMinimumBid.toLocaleString('pt-BR') })`}
+                                </Button>
+                            </div>
+                            ) : (
+                            <div className="text-sm text-muted-foreground p-3 bg-secondary/50 rounded-md">
+                                <p>{lot.status !== 'ABERTO_PARA_LANCES' ? `Lances para este lote estão ${getAuctionStatusText(lot.status).toLowerCase()}.` : (userProfileWithPermissions ? 'Você precisa estar habilitado para dar lances.' : 'Você precisa estar logado para dar lances.')}</p>
+                                {!userProfileWithPermissions && <Link href={`/auth/login?redirect=/auctions/${auction.publicId || auction.id}/lots/${lot.publicId || lot.id}`} className="text-primary hover:underline font-medium">Faça login ou registre-se.</Link>}
+                            </div>
+                            )}
+                            <Button variant="outline" className="w-full" onClick={handleToggleFavorite}>
+                            <Heart className={`mr-2 h-4 w-4 ${isLotFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+                            {isLotFavorite ? 'Remover da Minha Lista' : 'Adicionar à Minha Lista'}
+                            </Button>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="shadow-md">
+                        <CardHeader><CardTitle className="text-xl flex items-center">Informações da Venda <Info className="h-4 w-4 ml-2 text-muted-foreground" /></CardTitle></CardHeader>
+                        <CardContent className="space-y-1 text-sm">
+                            {Object.entries({
+                            "Filial de Venda:": lot.sellingBranch || auction.sellingBranch,
+                            "Localização do Veículo:": lot.vehicleLocationInBranch || lotLocation,
+                            "Data e Hora do Leilão (Lote):": lot.lotSpecificAuctionDate ? format(new Date(lot.lotSpecificAuctionDate), "dd/MM/yyyy HH:mm'h'", { locale: ptBR }) : 'N/A',
+                            "Pista/Corrida #:": lot.laneRunNumber,
+                            "Corredor/Vaga:": lot.aisleStall,
+                            "Valor Real em Dinheiro (VCV):": lot.actualCashValue,
+                            "Custo Estimado de Reparo:": lot.estimatedRepairCost,
+                            "Vendedor:": lot.sellerName || auction.seller || initialSellerName,
+                            "Documento (Título/Venda):": lot.titleInfo,
+                            "Marca do Documento:": lot.titleBrand,
+                            }).map(([key, value]) => value ? <div key={key}><span className="font-medium text-foreground">{key}</span> <span className="text-muted-foreground">{String(value)}</span></div> : null)}
+                        </CardContent>
+                    </Card>
+                    
+                    <Card className="shadow-md">
+                        <CardHeader className="flex flex-row items-center justify-between p-4">
+                            <CardTitle className="text-lg flex items-center">Histórico de Lances</CardTitle>
+                            {lotBids.length > 2 && (
+                                <Button variant="outline" size="sm" onClick={() => setIsAllBidsModalOpen(true)}>Ver Todos ({lotBids.length})</Button>
+                            )}
+                        </CardHeader>
+                        <CardContent className="p-4 pt-0">
+                            {isLoadingData ? (
+                                <div className="flex items-center justify-center h-20"> <Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                            ) : lotBids.length > 0 ? (
+                                <ul className="space-y-1.5 text-xs">
+                                    {lotBids.slice(0, 2).map(bid => (
+                                        <li key={bid.id} className="flex justify-between items-center p-1.5 bg-secondary/40 rounded-md">
+                                            <div>
+                                                <span className="font-medium text-foreground text-xs">{bid.bidderDisplay}</span>
+                                                <span className="text-[0.65rem] text-muted-foreground ml-1.5">({bid.timestamp ? format(new Date(bid.timestamp), "dd/MM HH:mm:ss", { locale: ptBR }) : 'Data Indisponível'})</span>
+                                            </div>
+                                            <span className="font-semibold text-primary text-xs">R$ {bid.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-xs text-muted-foreground text-center py-3">Nenhum lance registrado para este lote ainda.</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                   
+                    <div className="w-full aspect-square"> {/* Changed from aspect-video to aspect-square */}
+                        <LotMapDisplay lot={lot} platformSettings={platformSettings} />
+                    </div>
+                </div>
             </div>
         </div>
       <LotPreviewModal
@@ -496,5 +495,3 @@ export default function LotDetailClientContent({
     </>
   );
 }
-
-
