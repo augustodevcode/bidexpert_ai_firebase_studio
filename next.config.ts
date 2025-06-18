@@ -19,12 +19,14 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'images.unsplash.com', 
+        hostname: 'images.unsplash.com',
         port: '',
         pathname: '/**',
       },
     ],
   },
+  // `serverExternalPackages` is used to tell Next.js not to bundle certain packages
+  // that are intended to be run on the server, like 'firebase-admin'.
   serverExternalPackages: ['firebase-admin'],
   experimental: {
   },
@@ -39,4 +41,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-

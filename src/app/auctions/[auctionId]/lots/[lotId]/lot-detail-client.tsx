@@ -374,13 +374,8 @@ export default function LotDetailClientContent({
                     </div>
                 </CardContent>
                 </Card>
-
-                {/* Seção do Mapa */}
-                <LotMapDisplay lot={lot} platformSettings={platformSettings} />
                 
-                <Card className="shadow-lg">
-                <CardContent className="p-0 sm:p-2 md:p-4">
-                    <Tabs defaultValue="description" className="w-full">
+                <Tabs defaultValue="description" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 mb-4">
                         <TabsTrigger value="description">Descrição</TabsTrigger>
                         <TabsTrigger value="specification">Especificações</TabsTrigger>
@@ -393,9 +388,42 @@ export default function LotDetailClientContent({
                     <TabsContent value="seller"><LotSellerTab sellerName={initialSellerName || auction.seller || "Não Informado"} sellerId={lot.sellerId} auctionSellerName={auction.seller} /></TabsContent>
                     <TabsContent value="reviews"><LotReviewsTab lot={lot} reviews={lotReviews} isLoading={isLoadingData} onNewReview={handleNewReview} canUserReview={canUserReview} /></TabsContent>
                     <TabsContent value="questions"><LotQuestionsTab lot={lot} questions={lotQuestions} isLoading={isLoadingData} onNewQuestion={handleNewQuestion} canUserAskQuestion={canUserAskQuestion} /></TabsContent>
-                    </Tabs>
-                </CardContent>
+                </Tabs>
+                
+                {/* Seção de Histórico de Lances (Movida e ajustada) */}
+                 <Card className="shadow-md">
+                    <CardHeader>
+                        <CardTitle className="text-xl flex items-center">Histórico de Lances</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {isLoadingData ? (
+                            <div className="flex items-center justify-center h-20"> <Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                        ) : lotBids.length > 0 ? (
+                            <>
+                                <ul className="space-y-2 text-sm pr-2">
+                                    {lotBids.slice(0, 2).map(bid => (
+                                        <li key={bid.id} className="flex justify-between items-center p-2 bg-secondary/40 rounded-md">
+                                            <div>
+                                                <span className="font-medium text-foreground">{bid.bidderDisplay}</span>
+                                                <span className="text-xs text-muted-foreground ml-2">({bid.timestamp ? format(new Date(bid.timestamp), "dd/MM HH:mm:ss", { locale: ptBR }) : 'Data Indisponível'})</span>
+                                            </div>
+                                            <span className="font-semibold text-primary">R$ {bid.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                                {lotBids.length > 2 && (
+                                    <div className="text-center mt-3">
+                                        <Button variant="outline" size="sm" disabled>Ver Todos os Lances (Em Breve)</Button>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <p className="text-sm text-muted-foreground text-center py-3">Nenhum lance registrado para este lote ainda.</p>
+                        )}
+                    </CardContent>
                 </Card>
+                 {/* Seção do Mapa (Movida para baixo) */}
+                <LotMapDisplay lot={lot} platformSettings={platformSettings} />
             </div>
 
             <div className="space-y-6 lg:sticky lg:top-24">
@@ -451,30 +479,6 @@ export default function LotDetailClientContent({
                     }).map(([key, value]) => value ? <div key={key}><span className="font-medium text-foreground">{key}</span> <span className="text-muted-foreground">{String(value)}</span></div> : null)}
                 </CardContent>
                 </Card>
-
-                <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-xl flex items-center">Histórico de Lances</CardTitle></CardHeader>
-                <CardContent>
-                    {isLoadingData ? (
-                        <div className="flex items-center justify-center h-20"> <Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-                    ) : lotBids.length > 0 ? (
-                        <ul className="space-y-2 text-sm max-h-60 overflow-y-auto pr-2">
-                            {lotBids.slice(0, 5).map(bid => (
-                                <li key={bid.id} className="flex justify-between items-center p-2 bg-secondary/40 rounded-md">
-                                    <div>
-                                        <span className="font-medium text-foreground">{bid.bidderDisplay}</span>
-                                        <span className="text-xs text-muted-foreground ml-2">({bid.timestamp ? format(new Date(bid.timestamp), "dd/MM HH:mm:ss", { locale: ptBR }) : 'Data Indisponível'})</span>
-                                    </div>
-                                    <span className="font-semibold text-primary">R$ {bid.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                                </li>
-                            ))}
-                            {lotBids.length > 5 && <p className="text-xs text-center mt-2 text-muted-foreground">...</p>}
-                        </ul>
-                    ) : (
-                        <p className="text-sm text-muted-foreground text-center py-3">Nenhum lance registrado para este lote ainda.</p>
-                    )}
-                </CardContent>
-                </Card>
             </div>
             </div>
         </div>
@@ -485,6 +489,8 @@ export default function LotDetailClientContent({
         onClose={() => setIsPreviewModalOpen(false)}
       />
     </>
- );
+  );
 }
     
+    
+

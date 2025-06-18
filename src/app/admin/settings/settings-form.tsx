@@ -34,10 +34,10 @@ interface SettingsFormProps {
 }
 
 const defaultMapSettings: MapSettings = {
-    defaultProvider: 'staticImage',
+    defaultProvider: 'openstreetmap',
     googleMapsApiKey: '',
     staticImageMapZoom: 15,
-    staticImageMapMarkerColor: 'red',
+    staticImageMapMarkerColor: 'blue',
 };
 
 
@@ -247,15 +247,15 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Provedor de Mapa Padrão</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || 'staticImage'}>
+                      <Select onValueChange={field.onChange} value={field.value || 'openstreetmap'}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione o provedor" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="staticImage">Imagem Estática (Padrão)</SelectItem>
-                          <SelectItem value="google">Google Maps (Embed API)</SelectItem>
+                          <SelectItem value="staticImage">Imagem Estática (Placeholder)</SelectItem>
+                          <SelectItem value="google">Google Maps (Embed)</SelectItem>
                           <SelectItem value="openstreetmap">OpenStreetMap (Embed)</SelectItem>
                         </SelectContent>
                       </Select>
@@ -297,7 +297,7 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Cor do Marcador (Estático)</FormLabel>
-                            <FormControl><Input placeholder="Ex: red, blue, 0xFF0000" {...field} value={field.value ?? 'red'} /></FormControl>
+                            <FormControl><Input placeholder="Ex: red, blue, 0xFF0000" {...field} value={field.value ?? 'blue'} /></FormControl>
                             <FormMessage />
                             </FormItem>
                         )}

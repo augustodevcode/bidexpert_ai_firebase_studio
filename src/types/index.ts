@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -480,10 +479,10 @@ export type EditableUserProfileData = Partial<Omit<UserProfileData, 'uid' | 'ema
   rgIssueDate?: Date | null; // Formulário usará Date
 };
 
-// Type for data from UserForm, to be processed by createUser action
+// Type for data from UserForm, to be processed by createUser action in users/actions.ts
 export type UserFormValues = Pick<UserProfileData, 'fullName' | 'email' | 'cpf' | 'cellPhone' | 'dateOfBirth' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing'> & {
   password?: string;
-  roleId?: string | null; // ID do perfil
+  roleId?: string | null; // ID do perfil, opcional
 };
 
 export interface SqlAuthResult {
@@ -745,6 +744,3 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
-
-
-    

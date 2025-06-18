@@ -1,5 +1,6 @@
 
 import * as z from 'zod';
+import type { MapSettings } from '@/types'; // Import MapSettings
 
 const themeColorSchema = z.record(z.string().regex(/^hsl\(\d{1,3}(deg)?(\s\d{1,3}%){2}\)$/i, {
     message: "Cor deve estar no formato HSL, ex: hsl(25 95% 53%)"
@@ -27,6 +28,12 @@ export const platformSettingsFormSchema = z.object({
     auctioneers: z.string().optional(),
     sellers: z.string().optional(),
   }).optional().nullable(),
+  mapSettings: z.object({
+    defaultProvider: z.enum(['google', 'openstreetmap', 'staticImage']).optional().default('openstreetmap'),
+    googleMapsApiKey: z.string().optional().nullable(),
+    staticImageMapZoom: z.coerce.number().min(1).max(20).optional().default(15),
+    staticImageMapMarkerColor: z.string().optional().default('blue'),
+  }).optional(),
 });
 
 export type PlatformSettingsFormValues = z.infer<typeof platformSettingsFormSchema>;

@@ -33,7 +33,6 @@ import {
   NavigationMenuList,
   NavigationMenuLink,
   NavigationMenuTrigger,
-  NavigationMenuContent,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { cn } from '@/lib/utils';
@@ -477,9 +476,8 @@ export default function Header() {
               </div>
             </form>
            </div>
-           {/* Search and MapPin icons */}
-          <div className="flex items-center space-x-0.5 sm:space-x-1"> {/* Reduzido o space-x */}
-            <Tooltip>
+          <div className="flex items-center space-x-0.5 sm:space-x-1">
+             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button variant="ghost" size="icon" className="hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" aria-label="Buscar por Localização">
                         <Link href="/map-search">
@@ -489,7 +487,6 @@ export default function Header() {
                 </TooltipTrigger>
                 <TooltipContent><p>Busca por Localização</p></TooltipContent>
             </Tooltip>
-            {/* Mobile search icon - shown only on mobile, removed md:hidden */}
             <Button variant="ghost" size="icon" className="md:hidden hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" aria-label="Buscar">
               <SearchIcon className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
@@ -572,5 +569,3 @@ export default function Header() {
 
     
 
-      
-    
