@@ -128,11 +128,11 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
 
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
-    e.preventDefault();
+    e.preventDefault(); 
     e.stopPropagation();
     const newFavoriteState = !isFavorite;
     setIsFavorite(newFavoriteState);
-
+    
     if (newFavoriteState) {
       addFavoriteLotIdToStorage(lot.id);
     } else {
@@ -197,7 +197,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
 
 
   const mentalTriggers = useMemo(() => {
-    const triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
+    let triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
     const settings = mentalTriggersGlobalSettings;
 
     if (sectionBadges.showPopularityBadge !== false && settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) {
@@ -209,7 +209,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
     if (sectionBadges.showExclusiveBadge !== false && settings.showExclusiveBadge && lot.isExclusive) {
         triggers.push('EXCLUSIVO');
     }
-    return triggers;
+    return Array.from(new Set(triggers)); // Garante valores únicos
   }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
 
 
@@ -358,12 +358,12 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
         
         <div className="w-full flex justify-between items-center text-xs">
             <TimeRemainingBadge 
-              endDate={lot.endDate} 
-              status={lot.status} 
-              showUrgencyTimer={sectionBadges.showUrgencyTimer !== false && mentalTriggersGlobalSettings.showUrgencyTimer}
-              urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays}
-              urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
-            />
+                        endDate={lot.endDate} 
+                        status={lot.status} 
+                        showUrgencyTimer={sectionBadges.showUrgencyTimer !== false && mentalTriggersGlobalSettings.showUrgencyTimer}
+                        urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays}
+                        urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
+                    />
             <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : ''}`}>
                 <Gavel className="h-3 w-3" />
                 <span>{lot.bidsCount || 0} Lances</span>
@@ -414,5 +414,6 @@ export default function LotCard({ lot, badgeVisibilityConfig }: LotCardProps) {
   
     return <LotCardClientContent lot={lot} badgeVisibilityConfig={badgeVisibilityConfig} />;
   }
+
 
 
