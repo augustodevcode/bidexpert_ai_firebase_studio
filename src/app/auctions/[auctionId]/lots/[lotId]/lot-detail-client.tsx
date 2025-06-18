@@ -454,8 +454,8 @@ export default function LotDetailClientContent({
                     </div>
                     )}
                     <Button variant="outline" className="w-full" onClick={handleToggleFavorite}>
-                    <Heart className={`mr-2 h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
-                    {isFavorite ? 'Remover da Minha Lista' : 'Adicionar à Minha Lista'}
+                    <Heart className={`mr-2 h-4 w-4 ${isLotFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+                    {isLotFavorite ? 'Remover da Minha Lista' : 'Adicionar à Minha Lista'}
                     </Button>
                    
                 </CardContent>
@@ -496,4 +496,5 @@ export default function LotDetailClientContent({
     </>
   );
 }
+
 
