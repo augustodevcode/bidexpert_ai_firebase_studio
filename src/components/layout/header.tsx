@@ -29,7 +29,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/co
 import DynamicBreadcrumbs from './dynamic-breadcrumbs';
 import {
   NavigationMenu,
-  NavigationMenuContent, // Adicionado aqui
+  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuList,
   NavigationMenuLink,
@@ -488,7 +488,7 @@ export default function Header() {
                 </TooltipTrigger>
                 <TooltipContent><p>Busca por Localização</p></TooltipContent>
             </Tooltip>
-            <Button variant="ghost" size="icon" className="md:hidden hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" aria-label="Buscar">
+            <Button variant="ghost" size="icon" className="md:hidden hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" aria-label="Buscar" onClick={handleSearchSubmit}>
               <SearchIcon className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
             {user && (
@@ -558,7 +558,7 @@ export default function Header() {
 
       {/* Breadcrumbs Bar */}
       {isClient && pathname !== '/' && (
-        <nav aria-label="Breadcrumb" className="bg-secondary text-secondary-foreground text-xs py-2 border-b">
+        <nav aria-label="Breadcrumb" className="bg-secondary text-secondary-foreground text-xs py-2.5 border-b"> 
             <div className="container mx-auto px-4">
                 <DynamicBreadcrumbs />
             </div>
@@ -567,5 +567,6 @@ export default function Header() {
     </header>
   );
 }
-
+    
+      
     
