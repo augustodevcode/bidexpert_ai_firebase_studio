@@ -121,6 +121,14 @@ export const sampleAuctioneersStatic: Omit<AuctioneerProfileInfo, 'id'|'publicId
   { name: 'Leiloeiro Oficial Bradesco', logoUrl: 'https://placehold.co/150x50.png?text=Bradesco&font=roboto', dataAiHint: 'banco logo', city: 'São Paulo', state: 'SP'},
 ];
 
+export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots' | 'totalLots' | 'category' | 'auctioneer' | 'seller' | 'auctioneerLogoUrl'>[] = [
+  { id: '100625bra', publicId: 'AUC-IMOVEIS-XYZ123P1', title: 'Leilão de Imóveis Residenciais e Comerciais', fullTitle: 'Grande Leilão de Imóveis do Banco Bradesco - Oportunidades em SP, BA e AL', description: 'Leilão online de casas, apartamentos e terrenos. Excelentes oportunidades de investimento e moradia. Lances a partir de R$ 45.000. Não perca!', status: 'ABERTO_PARA_LANCES', auctionType: 'EXTRAJUDICIAL', categoryId: 'cat-imoveis', auctioneerId: 'auct-leiloeiro-oficial-bradesco', sellerId: 'seller-banco-bradesco-s-a', auctionDate: createFutureDate(0, 0, 15), endDate: createFutureDate(10, 5), city: 'Nacional', state: 'BR', imageUrl: '/lotes-exemplo/banners/banner_leilao_imoveis.jpg', dataAiHint: 'leilao imoveis cidade', documentsUrl: '#', visits: 2580, initialOffer: 45000, isFavorite: false, auctionStages: [{ name: '1ª Praça', endDate: createFutureDate(5,0), statusText: 'Encerramento', initialPrice: 45000 }, { name: '2ª Praça', endDate: createFutureDate(10, 5), statusText: 'Encerramento', initialPrice: 30000 }] },
+  { id: '300724car', publicId: 'AUC-VEICULOS-ABC456Q2', title: 'Leilão de Veículos Usados e Seminovos', description: 'Diversos modelos e marcas. Carros de passeio, utilitários e motos com preços especiais.', status: 'EM_BREVE', auctionType: 'EXTRAJUDICIAL', categoryId: 'cat-veiculos', auctioneerId: 'auct-superbid-leiloes', sellerId: 'seller-proprietario-particular-1', auctionDate: createFutureDate(7, 0), endDate: createFutureDate(14, 0), city: 'São Paulo', state: 'SP', imageUrl: '/lotes-exemplo/banners/banner_leilao_carros.jpg', dataAiHint: 'leilao carros patio', initialOffer: 15000, visits: 1230, auctionStages: [{ name: 'Abertura', endDate: createFutureDate(7,0), statusText: 'Início dos Lances', initialPrice: 15000 }] },
+  { id: 'ART001ANTIQ', publicId: 'AUC-ARTECLAS-GHI789R3', title: 'Leilão de Arte e Antiguidades Clássicas', description: 'Peças raras, pinturas, esculturas e mobiliário antigo. Oportunidade para colecionadores.', status: 'ABERTO_PARA_LANCES', auctionType: 'PARTICULAR', categoryId: 'cat-arte-e-antiguidades', auctioneerId: 'auct-galeria-antika-leiloeiro-oficial-asilva', sellerId: 'seller-colecionadores-rj', auctionDate: createPastDate(2), endDate: createFutureDate(8, 0), city: 'Rio de Janeiro', state: 'RJ', imageUrl: '/lotes-exemplo/banners/banner_leilao_arte.jpg', dataAiHint: 'leilao arte quadros', initialOffer: 1000, visits: 850 },
+  { id: 'CLASSICVEH24', publicId: 'AUC-MUSTANGS-JKL012S4', title: 'Leilão Especial de Mustangs Clássicos', description: 'Modelos raros de Ford Mustang das décadas de 60 e 70. Para apaixonados por clássicos.', status: 'ABERTO_PARA_LANCES', auctionType: 'PARTICULAR', categoryId: 'cat-veiculos', auctioneerId: 'auct-classicos-leiloes-br-leiloeiro-jpimenta', sellerId: 'seller-colecionadores-classicos-pr', auctionDate: createPastDate(1), endDate: createFutureDate(12, 0), city: 'Curitiba', state: 'PR', imageUrl: '/lotes-exemplo/banners/banner_leilao_mustang.jpg', dataAiHint: 'mustang classico perfil', initialOffer: 150000, visits: 2100, auctionStages: [{ name: 'Pregão Único', endDate: createFutureDate(12,0), statusText: 'Encerramento Lances', initialPrice: 150000 }] },
+  { id: '20301vei', publicId: 'AUC-MAQUINAS-MNO345T5', title: 'Leilão de Maquinário Pesado e Agrícola', description: 'Tratores, colheitadeiras e equipamentos industriais. Renove sua frota ou maquinário.', status: 'ABERTO_PARA_LANCES', auctionType: 'EXTRAJUDICIAL', categoryId: 'cat-maquinas-e-equipamentos', auctioneerId: 'auct-agroleiloes-ltda-matricula-xyz00', sellerId: 'seller-fazenda-boa-esperanca', auctionDate: createPastDate(3), endDate: createFutureDate(5, 0), city: 'Rio Verde', state: 'GO', imageUrl: '/lotes-exemplo/banners/banner_leilao_maquinas.jpg', dataAiHint: 'maquinas pesadas construcao', initialOffer: 50000, visits: 975, isFavorite: true },
+];
+
 export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' | 'sellerName' | 'cityName' | 'stateUf' | 'type' | 'bids' | 'reviews' | 'questions'>[] = [
   { id: 'LOTE001', auctionId: '100625bra', publicId: 'LOT-CASACENT-ABC123X1', title: 'CASA COM 129,30 M² - CENTRO', imageUrl: '/lotes-exemplo/imoveis/casa_centro_principal.jpg', dataAiHint: 'casa residencial', galleryImageUrls: ['/lotes-exemplo/imoveis/casa_centro_detalhe1.jpg', '/lotes-exemplo/imoveis/casa_centro_detalhe2.jpg'], mediaItemIds: ['media-casa-frente', 'media001'], status: 'ABERTO_PARA_LANCES', cityId: 'city-teotonio-vilela-al', stateId: 'state-al', categoryId: 'cat-imoveis', views: 1018, price: 45000, endDate: createFutureDate(0, 1, 30), bidsCount: 12, description: 'Casa residencial bem localizada no centro da cidade.', sellerId: 'seller-banco-bradesco-s-a', lotSpecificAuctionDate: createFutureDate(0, 1, 30), initialPrice: 50000, secondInitialPrice: 42000, additionalTriggers: ['DESCONTO PROGRESSIVO'], isFeatured: true, latitude: -9.56096, longitude: -36.3516, mapAddress: 'Rua Central, Teotônio Vilela, Alagoas', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-36.3566,-9.5659,-36.3466,-9.5559&layer=mapnik&marker=-9.56096,-36.3516', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-9.56096,-36.3516&zoom=16&size=600x400&markers=color:blue%7C-9.56096,-36.3516&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
   { id: 'LOTEVEI001', auctionId: '300724car', publicId: 'LOT-2013AUDI-DEF456Y2', title: '2013 AUDI A4 PREMIUM PLUS', year: 2013, make: 'AUDI', model: 'A4', imageUrl: '/lotes-exemplo/veiculos/audi_a4_principal.jpg', dataAiHint: 'carro sedan preto', galleryImageUrls: ['/lotes-exemplo/veiculos/audi_a4_interior.jpg', '/lotes-exemplo/veiculos/audi_a4_lateral.jpg'], mediaItemIds: ['media-audi-frente', 'media002'], status: 'ABERTO_PARA_LANCES', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-veiculos', views: 1560, price: 68500, endDate: createFutureDate(0, 0, 45), bidsCount: 25, description: 'Audi A4 Premium Plus 2013, completo, com baixa quilometragem.', sellerId: 'seller-proprietario-particular-1', lotSpecificAuctionDate: createFutureDate(0, 0, 45), isExclusive: true, additionalTriggers: ['ALTA DEMANDA', 'LANCE QUENTE'], isFeatured: true, latitude: -23.550520, longitude: -46.633308, mapAddress: 'Av. Paulista, 1578, Bela Vista, São Paulo - SP', mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3657.1489015339396!2d-46.65879078502246!3d-23.56318168468204!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce59c8da0aa315%3A0x168c9d0b70928d9a!2sAv.%20Paulista%2C%201578%20-%20Bela%20Vista%2C%20S%C3%A3o%20Paulo%20-%20SP%2C%2001310-200!5e0!3m2!1spt-BR!2sbr!4v1678886512345!5m2!1spt-BR!2sbr', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-23.550520,-46.633308&zoom=15&size=600x400&markers=color:red%7C-23.550520,-46.633308&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
@@ -128,7 +136,6 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
   { id: 'LOTEART001', auctionId: 'ART001ANTIQ', publicId: 'LOT-PINTURAO-JKL012A4', title: 'Pintura a Óleo "Paisagem Toscana" - Séc. XIX', imageUrl: '/lotes-exemplo/arte/paisagem_toscana.jpg', dataAiHint: 'pintura oleo paisagem', status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-de-janeiro-rj', stateId: 'state-rj', categoryId: 'cat-arte-e-antiguidades', views: 320, price: 7500, endDate: createFutureDate(8, 0), bidsCount: 3, description: 'Belíssima pintura a óleo sobre tela, representando paisagem da Toscana. Assinatura ilegível. Moldura original.', sellerId: 'seller-colecionadores-rj', latitude: -22.9068, longitude: -43.1729, mapAddress: 'Copacabana, Rio de Janeiro - RJ', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-22.9068,-43.1729&zoom=14&size=600x400&markers=color:green%7C-22.9068,-43.1729&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
   { id: 'LOTEVCLASS001', auctionId: 'CLASSICVEH24', publicId: 'LOT-1967FORD-MNO345B5', title: '1967 FORD MUSTANG FASTBACK', year: 1967, make: 'FORD', model: 'MUSTANG', imageUrl: '/lotes-exemplo/veiculos/mustang_67_frente.jpg', dataAiHint: 'carro classico vermelho', status: 'ABERTO_PARA_LANCES', cityId: 'city-curitiba-pr', stateId: 'state-pr', categoryId: 'cat-veiculos', views: 1850, price: 250000, endDate: createFutureDate(12, 0), bidsCount: 18, description: 'Icônico Ford Mustang Fastback 1967, motor V8, câmbio manual. Restaurado.', sellerId: 'seller-colecionadores-classicos-pr', initialPrice: 280000, secondInitialPrice: 250000, isFeatured: true, latitude: -25.4284, longitude: -49.2733, mapAddress: 'Batel, Curitiba - PR', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-25.4284,-49.2733&zoom=15&size=600x400&markers=color:red%7C-25.4284,-49.2733&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
   { id: 'LOTE005', auctionId: '20301vei', publicId: 'LOT-TRATORAG-PQR678C6', title: 'TRATOR AGRÍCOLA NEW HOLLAND T7', year: 2018, make: 'NEW HOLLAND', model: 'T7.245', imageUrl: '/lotes-exemplo/maquinas/trator_nh_t7.jpg', dataAiHint: 'trator agricola campo', galleryImageUrls: ['/lotes-exemplo/maquinas/trator_nh_t7_detalhe.jpg'], mediaItemIds: ['media-trator-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-verde-go', stateId: 'state-go', categoryId: 'cat-maquinas-e-equipamentos', views: 650, price: 180000, endDate: createFutureDate(0, 1, 15), bidsCount: 7, isFeatured: true, description: 'Trator New Holland T7.245, ano 2018, com apenas 1200 horas de uso. Excelente estado.', sellerId: 'seller-fazenda-boa-esperanca', latitude: -17.7999, longitude: -50.9253, mapAddress: 'Zona Rural, Rio Verde - GO', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-50.9353,-17.8099,-50.9153,-17.7899&layer=mapnik&marker=-17.7999,-50.9253', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-17.7999,-50.9253&zoom=13&size=600x400&markers=color:blue%7C-17.7999,-50.9253&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
-  // Adicionando mais alguns lotes com dados de localização para variedade
   { id: 'LOTE002', auctionId: '100625bra', publicId: 'LOT-CASAPORT-STU901D7', title: 'CASA COM 234,50 M² - PORTÃO', imageUrl: '/lotes-exemplo/imoveis/casa_portao_vista_aerea.jpg', dataAiHint: 'casa moderna suburbio', status: 'ABERTO_PARA_LANCES', cityId: 'city-lauro-de-freitas-ba', stateId: 'state-ba', categoryId: 'cat-imoveis', views: 681, price: 664000, endDate: createFutureDate(10, 5), bidsCount: 1, description: 'Espaçosa casa em Lauro de Freitas, Bahia. Perto da praia.', sellerId: 'seller-banco-bradesco-sa', isFeatured: true, latitude: -12.8868, longitude: -38.3275, mapAddress: 'Rua Principal, Portão, Lauro de Freitas - BA', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-38.3375,-12.8968,-38.3175,-12.8768&layer=mapnik&marker=-12.8868,-38.3275', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-12.8868,-38.3275&zoom=16&size=600x400&markers=color:green%7C-12.8868,-38.3275&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
   { id: 'LOTE004', auctionId: '100625bra', publicId: 'LOT-CASAVILA-VWX234E8', title: 'CASA COM 133,04 M² - VILA PERI', imageUrl: '/lotes-exemplo/imoveis/casa_vila_peri_externa.jpg', dataAiHint: 'casa terrea simples', status: 'EM_BREVE', cityId: 'city-fortaleza-ce', stateId: 'state-ce', categoryId: 'cat-imoveis', views: 527, price: 238000, endDate: createFutureDate(3, 0), bidsCount: 0, description: 'Casa em Fortaleza, boa localização, necessita pequenas reformas.', sellerId: 'seller-banco-bradesco-sa', latitude: -3.7929, longitude: -38.5396, mapAddress: 'Avenida Principal, Vila Peri, Fortaleza - CE', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-38.5496,-3.8029,-38.5296,-3.7829&layer=mapnik&marker=-3.7929,-38.5396', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-3.7929,-38.5396&zoom=15&size=600x400&markers=color:yellow%7C-3.7929,-38.5396&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
   { id: 'LOTE006', auctionId: '20301vei', publicId: 'LOT-COLHEITA-YZA567F9', title: 'COLHEITADEIRA JOHN DEERE S680', imageUrl: '/lotes-exemplo/maquinas/colheitadeira_jd_campo.jpg', dataAiHint: 'colheitadeira graos campo', status: 'ENCERRADO', cityId: 'city-campo-grande-ms', stateId: 'state-ms', categoryId: 'cat-maquinas-e-equipamentos', views: 450, price: 365000, endDate: createPastDate(5), bidsCount: 22, description: 'Colheitadeira John Deere S680, usada, em bom estado de funcionamento.', sellerId: 'seller-produtores-rurais-ms', latitude: -20.4428, longitude: -54.6295, mapAddress: 'Saída para Três Lagoas, Campo Grande - MS', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-20.4428,-54.6295&zoom=14&size=600x400&markers=color:purple%7C-20.4428,-54.6295&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
@@ -136,12 +143,12 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
 ];
 
 export const sampleDirectSaleOffersRaw: Omit<DirectSaleOffer, 'createdAt' | 'updatedAt' | 'expiresAt'>[] = [
-  { id: 'DSO001', title: 'Coleção Completa de Selos Raros do Brasil Império', description: 'Uma oportunidade única para colecionadores...', imageUrl: 'https://placehold.co/800x600.png?text=Selos+Raros', dataAiHint: 'selos antigos colecao', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 25000, category: 'Arte e Antiguidades', locationCity: 'Rio de Janeiro', locationState: 'RJ', sellerName: 'Antiguidades Imperial', status: 'ACTIVE', latitude: -22.9068, longitude: -43.1729, mapAddress: "Centro, Rio de Janeiro" },
-  { id: 'DSO002', title: 'MacBook Pro 16" M1 Max - Seminovo', description: 'MacBook Pro de 16 polegadas com chip M1 Max...', imageUrl: 'https://placehold.co/800x600.png?text=MacBook+Pro+16', dataAiHint: 'macbook pro aberto', offerType: 'BUY_NOW', price: 18500, category: 'Eletrônicos e Tecnologia', locationCity: 'São Paulo', locationState: 'SP', sellerName: 'Tech Revenda SP', status: 'ACTIVE', latitude: -23.5505, longitude: -46.6333, mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1dTEST' },
-  { id: 'DSO003', title: 'Serviço de Consultoria em Marketing Digital', description: 'Pacote de consultoria completo para startups...', imageUrl: 'https://placehold.co/800x600.png?text=Consultoria+Marketing', dataAiHint: 'marketing digital reuniao', offerType: 'BUY_NOW', price: 4500, category: 'Outros Itens', locationCity: 'Remoto', locationState: 'BR', sellerName: 'Digital Boost Consultoria', status: 'ACTIVE', mapStaticImageUrl: 'https://placehold.co/600x400.png?text=Servico+Online' },
-  { id: 'DSO004', title: 'Ford Mustang 1968 Conversível', description: 'Raro Ford Mustang conversível de 1968...', imageUrl: 'https://placehold.co/800x600.png?text=Mustang+68+Conv', dataAiHint: 'mustang conversivel vermelho', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 320000, category: 'Veículos', locationCity: 'Curitiba', locationState: 'PR', sellerName: 'Garagem Clássicos PR', status: 'PENDING_APPROVAL', latitude: -25.4284, longitude: -49.2733, mapAddress: "Bairro Batel, Curitiba" },
-  { id: 'DSO005', title: 'Lote de Equipamentos de Academia Profissional', description: 'Lote completo de equipamentos de academia profissional...', imageUrl: 'https://placehold.co/800x600.png?text=Equip+Academia', dataAiHint: 'academia equipamentos profissional', offerType: 'BUY_NOW', price: 75000, category: 'Máquinas e Equipamentos', locationCity: 'Belo Horizonte', locationState: 'MG', sellerName: 'Fitness Total Equipamentos', status: 'SOLD', latitude: -19.9167, longitude: -43.9345, mapAddress: "Pampulha, Belo Horizonte" },
-  { id: 'DSO006', title: 'Obra de Arte Contemporânea - "Abstração Urbana"', description: 'Pintura acrílica sobre tela de grandes dimensões...', imageUrl: 'https://placehold.co/800x600.png?text=Arte+Abstrata', dataAiHint: 'pintura abstrata colorida', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 12000, category: 'Arte e Antiguidades', locationCity: 'Porto Alegre', locationState: 'RS', sellerName: 'Galeria Pampa Arte', status: 'EXPIRED', latitude: -30.0346, longitude: -51.2177, mapAddress: "Moinhos de Vento, Porto Alegre" },
+  { id: 'DSO001', title: 'Coleção Completa de Selos Raros do Brasil Império', description: 'Uma oportunidade única para colecionadores de selos do período imperial brasileiro. Inclui peças raras e bem conservadas, catalogadas e com histórico. Ideal para investidores e amantes da filatelia.', imageUrl: 'https://placehold.co/800x600.png?text=Selos+Raros', dataAiHint: 'selos antigos colecao', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 25000, category: 'Arte e Antiguidades', locationCity: 'Rio de Janeiro', locationState: 'RJ', sellerName: 'Antiguidades Imperial', status: 'ACTIVE', latitude: -22.9068, longitude: -43.1729, mapAddress: "Centro, Rio de Janeiro" },
+  { id: 'DSO002', title: 'MacBook Pro 16" M1 Max - Seminovo', description: 'MacBook Pro de 16 polegadas com chip M1 Max, 32GB RAM, 1TB SSD. Em excelente estado, pouco uso, com caixa e acessórios originais. Perfeito para profissionais de criação e desenvolvimento.', imageUrl: 'https://placehold.co/800x600.png?text=MacBook+Pro+16', dataAiHint: 'macbook pro aberto', offerType: 'BUY_NOW', price: 18500, category: 'Eletrônicos e Tecnologia', locationCity: 'São Paulo', locationState: 'SP', sellerName: 'Tech Revenda SP', status: 'ACTIVE', latitude: -23.5505, longitude: -46.6333, mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1dTEST' },
+  { id: 'DSO003', title: 'Serviço de Consultoria em Marketing Digital', description: 'Pacote de consultoria completo para startups, incluindo análise de mercado, SEO, gestão de redes sociais e campanhas de tráfego pago. Ideal para alavancar seu negócio online.', imageUrl: 'https://placehold.co/800x600.png?text=Consultoria+Marketing', dataAiHint: 'marketing digital reuniao', offerType: 'BUY_NOW', price: 4500, category: 'Outros Itens', locationCity: 'Remoto', locationState: 'BR', sellerName: 'Digital Boost Consultoria', status: 'ACTIVE', mapStaticImageUrl: 'https://placehold.co/600x400.png?text=Servico+Online' },
+  { id: 'DSO004', title: 'Ford Mustang 1968 Conversível', description: 'Raro Ford Mustang conversível de 1968, motor V8 289, câmbio automático. Placa preta. Veículo de coleção em excelente estado de conservação e originalidade. Para verdadeiros apreciadores.', imageUrl: 'https://placehold.co/800x600.png?text=Mustang+68+Conv', dataAiHint: 'mustang conversivel vermelho', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 320000, category: 'Veículos', locationCity: 'Curitiba', locationState: 'PR', sellerName: 'Garagem Clássicos PR', status: 'PENDING_APPROVAL', latitude: -25.4284, longitude: -49.2733, mapAddress: "Bairro Batel, Curitiba" },
+  { id: 'DSO005', title: 'Lote de Equipamentos de Academia Profissional', description: 'Lote completo de equipamentos de academia profissional, incluindo esteiras, bicicletas ergométricas, estações de musculação e pesos livres. Ideal para montar ou renovar sua academia.', imageUrl: 'https://placehold.co/800x600.png?text=Equip+Academia', dataAiHint: 'academia equipamentos profissional', offerType: 'BUY_NOW', price: 75000, category: 'Máquinas e Equipamentos', locationCity: 'Belo Horizonte', locationState: 'MG', sellerName: 'Fitness Total Equipamentos', status: 'SOLD', latitude: -19.9167, longitude: -43.9345, mapAddress: "Pampulha, Belo Horizonte" },
+  { id: 'DSO006', title: 'Obra de Arte Contemporânea - "Abstração Urbana"', description: 'Pintura acrílica sobre tela de grandes dimensões (150x200cm) do renomado artista plástico local. Cores vibrantes e técnica mista. Acompanha certificado de autenticidade.', imageUrl: 'https://placehold.co/800x600.png?text=Arte+Abstrata', dataAiHint: 'pintura abstrata colorida', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 12000, category: 'Arte e Antiguidades', locationCity: 'Porto Alegre', locationState: 'RS', sellerName: 'Galeria Pampa Arte', status: 'EXPIRED', latitude: -30.0346, longitude: -51.2177, mapAddress: "Moinhos de Vento, Porto Alegre" },
 ];
 
 export const sampleMediaItemsRaw: Omit<MediaItem, 'uploadedAt' | 'linkedLotIds'>[] = [
@@ -153,12 +160,9 @@ export const sampleMediaItemsRaw: Omit<MediaItem, 'uploadedAt' | 'linkedLotIds'>
     { id: 'media-trator-frente', fileName: 'trator_nh_vista_frontal.jpg', title: 'Trator New Holland T7 Frontal', mimeType: 'image/jpeg', sizeBytes: 220000, urlOriginal: 'https://images.unsplash.com/photo-1633153627433-b15010a9b2f5?w=800', urlThumbnail: 'https://images.unsplash.com/photo-1633153627433-b15010a9b2f5?w=150', urlMedium: 'https://images.unsplash.com/photo-1633153627433-b15010a9b2f5?w=400', urlLarge: 'https://images.unsplash.com/photo-1633153627433-b15010a9b2f5?w=800', dataAiHint: 'trator campo frente' },
 ];
 
-// (Resto do arquivo sample-data.ts permanece o mesmo a partir daqui, incluindo as funções de processamento e exportações)
-// ... (código existente de getAuctionStatusText, getLotStatusColor, etc.)
-// ... (código existente para processar sampleLotCategories, sampleStates, sampleCities, sampleLots, sampleAuctions, etc.)
 
 // ============================================================================
-// 2. UTILITY FUNCTIONS (Continuam aqui, pois são puras e usadas para processar os dados acima)
+// 2. UTILITY FUNCTIONS 
 // ============================================================================
 
 export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDocumentStatus | UserHabilitationStatus | DirectSaleOfferStatus ): string => {
@@ -178,15 +182,15 @@ export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDoc
     case 'REJECTED': return 'Rejeitado';
     case 'PENDING_ANALYSIS': return 'Em Análise';
     case 'PENDING_DOCUMENTS': return 'Documentação Pendente';
-    case 'HABILITADO': return 'Habilitado para Dar Lances'; // Mudado para "HABILITADO"
+    case 'HABILITADO': return 'Habilitado para Dar Lances'; 
     case 'REJECTED_DOCUMENTS': return 'Documentos Rejeitados';
     case 'BLOCKED': return 'Bloqueado';
-    case 'ACTIVE': return 'Ativa'; // Para DirectSaleOffer
-    case 'SOLD': return 'Vendido'; // Para DirectSaleOffer
-    case 'EXPIRED': return 'Expirada'; // Para DirectSaleOffer
-    case 'PENDING_APPROVAL': return 'Pendente Aprovação'; // Para DirectSaleOffer
+    case 'ACTIVE': return 'Ativa'; 
+    case 'SOLD': return 'Vendido'; 
+    case 'EXPIRED': return 'Expirada'; 
+    case 'PENDING_APPROVAL': return 'Pendente Aprovação'; 
     default: {
-      const exhaustiveCheck: never = status; // This will error if a case is missed
+      const exhaustiveCheck: never = status; 
       return String(status).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
   }
@@ -223,16 +227,16 @@ export const getPaymentStatusText = (status: PaymentStatus): string => {
 export const getLotStatusColor = (status: LotStatus | DirectSaleOfferStatus): string => {
     switch (status) {
       case 'ABERTO_PARA_LANCES':
-      case 'ACTIVE': // Para DirectSaleOffer
+      case 'ACTIVE': 
         return 'bg-green-600 text-white';
       case 'EM_BREVE':
-      case 'PENDING_APPROVAL': // Para DirectSaleOffer
+      case 'PENDING_APPROVAL': 
         return 'bg-blue-500 text-white';
       case 'ENCERRADO':
       case 'VENDIDO':
       case 'NAO_VENDIDO':
-      case 'SOLD': // Para DirectSaleOffer
-      case 'EXPIRED': // Para DirectSaleOffer
+      case 'SOLD': 
+      case 'EXPIRED': 
         return 'bg-gray-500 text-white';
       default:
         return 'bg-gray-300 text-gray-800';
@@ -296,26 +300,23 @@ export const getUserHabilitationStatusInfo = (status: UserHabilitationStatus): {
     case 'REJECTED_DOCUMENTS':
       return { text: 'Documentos Rejeitados', color: 'text-red-600 dark:text-red-400', progress: 75, icon: FileWarning };
     case 'HABILITADO':
-      return { text: 'Habilitado para Dar Lances', color: 'text-green-600 dark:text-green-400', progress: 100, icon: CheckCircle2 }; // Mudado para "HABILITADO"
+      return { text: 'Habilitado para Dar Lances', color: 'text-green-600 dark:text-green-400', progress: 100, icon: CheckCircle2 }; 
     case 'BLOCKED':
       return { text: 'Conta Bloqueada', color: 'text-destructive', progress: 0, icon: ShieldAlert };
     default:
-      const exhaustiveCheck: never = status; // This will error if a case is missed
+      const exhaustiveCheck: never = status; 
       return { text: "Status Desconhecido" as never, color: 'text-muted-foreground', progress: 0, icon: HelpCircle };
   }
 };
 
 // ============================================================================
-// 3. DERIVED/PROCESSED DATA FUNCTIONS (Continuam aqui, pois são puras)
+// 3. DERIVED/PROCESSED DATA FUNCTIONS 
 // ============================================================================
 
-// Função para obter categorias únicas baseadas nos dados de exemplo
 export function getUniqueLotCategoriesFromSampleData(): LotCategory[] {
   const categoriesMap = new Map<string, LotCategory>();
-  // Primeiramente, adiciona as categorias estáticas com datas
   sampleLotCategoriesStatic.forEach(cat => categoriesMap.set(cat.slug, { ...cat, id: `cat-${cat.slug}`, itemCount: 0, createdAt: createPastDate(30), updatedAt: createPastDate(1) }));
 
-  // Então, itera sobre os lotes, leilões e ofertas para contar itens e adicionar categorias faltantes
   [...sampleLotsRaw, ...sampleAuctionsRaw, ...sampleDirectSaleOffersRaw].forEach(item => {
     const categoryNameOrId = 'categoryId' in item ? item.categoryId : ('category' in item ? item.category : undefined);
     let categorySlugToUse: string | undefined;
@@ -335,12 +336,11 @@ export function getUniqueLotCategoriesFromSampleData(): LotCategory[] {
       } else if (staticCatByName) {
          categorySlugToUse = staticCatByName.slug;
          categoryNameToUse = staticCatByName.name;
-      } else if (typeof categoryNameOrId === 'string') { // Se não é um ID/slug conhecido, trata como um nome novo
+      } else if (typeof categoryNameOrId === 'string') { 
         categorySlugToUse = slugify(categoryNameOrId);
         categoryNameToUse = categoryNameOrId;
       }
     }
-
 
     if (categorySlugToUse && categoryNameToUse) {
       if (!categoriesMap.has(categorySlugToUse)) {
@@ -370,11 +370,9 @@ export function getCategoryNameFromSlug(slug: string): string | undefined {
     return foundCategory.name;
   }
   
-  // Fallback para buscar por nome se o slug não for encontrado (pode ser um nome descritivo)
   const foundByName = allSampleCategories.find(cat => cat.name === slug || slugify(cat.name) === slug);
   if (foundByName) return foundByName.name;
 
-  // console.warn(`[sample-data] Nenhum nome de categoria encontrado para o slug/nome: ${slug} nos dados de exemplo.`);
   return undefined; 
 }
 
@@ -396,11 +394,16 @@ export const getUniqueLotLocations = (): string[] => {
 export const getUniqueSellerNames = (): string[] => {
   const sellerNames = new Set<string>();
   sampleAuctionsRaw.forEach(auction => {
-    if (auction.seller) sellerNames.add(auction.seller);
+    if (auction.sellerId) {
+       const sellerProf = sampleSellersStatic.find(s => `seller-${slugify(s.name)}` === auction.sellerId);
+       if(sellerProf) sellerNames.add(sellerProf.name);
+    } else if (auction.seller) {
+       sellerNames.add(auction.seller);
+    }
   });
   sampleLotsRaw.forEach(lot => {
-    if (lot.sellerId) { // sellerId no Lot pode ser o nome do vendedor para fins de exemplo
-        const sellerProf = sampleSellersStatic.find(s => s.name === lot.sellerId); // Tenta encontrar pelo nome nos estáticos
+    if (lot.sellerId) { 
+        const sellerProf = sampleSellersStatic.find(s => `seller-${slugify(s.name)}` === lot.sellerId);
         if(sellerProf) sellerNames.add(sellerProf.name);
         else if (typeof lot.sellerId === 'string') sellerNames.add(lot.sellerId);
     }
@@ -436,7 +439,27 @@ export const getUniqueAuctioneersInternal = (): AuctioneerProfileInfo[] => {
         }
     });
      sampleAuctionsRaw.forEach(auction => {
-        if (auction.auctioneer && !auctioneerMap.has(slugify(auction.auctioneer))) {
+        if (auction.auctioneerId) {
+            const aucStatic = sampleAuctioneersStatic.find(a => `auct-${slugify(a.name)}` === auction.auctioneerId);
+            if (aucStatic && !auctioneerMap.has(slugify(aucStatic.name))) {
+                 const slug = slugify(aucStatic.name);
+                 const randomYearsAgo = Math.floor(Math.random() * 5) + 1;
+                 let memberSince = subYears(now, randomYearsAgo);
+                 memberSince = subMonths(memberSince, Math.floor(Math.random() * 12));
+                 const initial = aucStatic.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+                 auctioneerMap.set(slug, {
+                    ...aucStatic,
+                    id: `auct-${slug}`,
+                    publicId: `AUCT-PUB-${slug.substring(0,5)}-${uuidv4().substring(0,6)}`,
+                    slug,
+                    memberSince, rating: parseFloat((Math.random() * 1.5 + 3.5).toFixed(1)),
+                    auctionsConductedCount: Math.floor(Math.random() * 200) + 50,
+                    totalValueSold: (Math.random() * 5000000) + 1000000,
+                    logoUrl: aucStatic.logoUrl || `https://placehold.co/100x100.png?text=${initial}`,
+                    createdAt: memberSince, updatedAt: new Date(),
+                 });
+            }
+        } else if (auction.auctioneer && !auctioneerMap.has(slugify(auction.auctioneer))) {
              const slug = slugify(auction.auctioneer);
              const randomYearsAgo = Math.floor(Math.random() * 5) + 1;
              let memberSince = subYears(now, randomYearsAgo);
@@ -462,7 +485,6 @@ export const getUniqueAuctioneersInternal = (): AuctioneerProfileInfo[] => {
 
 export const getUniqueSellersInternal = (): SellerProfileInfo[] => {
   const sellerMap = new Map<string, SellerProfileInfo>();
-
   sampleSellersStatic.forEach(sellStatic => {
     const slug = slugify(sellStatic.name);
     if (!sellerMap.has(slug)) {
@@ -485,7 +507,6 @@ export const getUniqueSellersInternal = (): SellerProfileInfo[] => {
         });
     }
   });
-
   return Array.from(sellerMap.values()).sort((a, b) => a.name.localeCompare(b.name));
 };
 
@@ -534,7 +555,6 @@ export function getCategoryAssets(categoryNameOrSlug: string): CategoryAssets {
       };
       if (assetOverrides[slug]) return assetOverrides[slug];
 
-      // Fallback para palavras-chave se nenhum slug exato for encontrado
       if (slug.includes('judicial') || slug.includes('justica')) return assetOverrides['leiloes-judiciais'];
       if (slug.includes('extrajudicial')) return assetOverrides['leiloes-extrajudiciais'];
       if (slug.includes('direta')) return assetOverrides['venda-direta'];
@@ -562,7 +582,15 @@ export const sampleLots: Lot[] = sampleLotsRaw.map(lot => {
     const auctionInfo = sampleAuctionsRaw.find(a => a.id === lot.auctionId);
     const stateInfo = sampleStates.find(s => s.id === lot.stateId);
     const cityInfo = sampleCities.find(c => c.id === lot.cityId);
-    const sellerInfo = sampleSellersStatic.find(s => s.name === lot.sellerId || (auctionInfo?.seller && s.name === auctionInfo.seller));
+    
+    let resolvedSellerId = lot.sellerId;
+    if (!resolvedSellerId && auctionInfo?.sellerId) {
+        resolvedSellerId = auctionInfo.sellerId;
+    } else if (!resolvedSellerId && auctionInfo?.seller) {
+        const foundSeller = sampleSellersStatic.find(s => s.name === auctionInfo.seller);
+        if (foundSeller) resolvedSellerId = `seller-${slugify(foundSeller.name)}`;
+    }
+    const sellerInfo = sampleSellersStatic.find(s => `seller-${slugify(s.name)}` === resolvedSellerId);
 
     return {
         ...lot,
@@ -579,14 +607,15 @@ export const sampleLots: Lot[] = sampleLotsRaw.map(lot => {
 export const sampleAuctions: Auction[] = sampleAuctionsRaw.map(auction => {
     const lotsForAuction = sampleLots.filter(l => l.auctionId === auction.id);
     const categoryInfo = sampleLotCategories.find(c => c.id === auction.categoryId || c.name === auction.category || c.slug === auction.category);
-    const auctioneerInfo = sampleAuctioneersStatic.find(auc => auc.name === auction.auctioneer);
-    const sellerInfo = sampleSellersStatic.find(s => s.name === auction.seller);
+    const auctioneerInfo = sampleAuctioneersStatic.find(auc => auc.name === auction.auctioneerId || `auct-${slugify(auc.name)}` === auction.auctioneerId);
+    const sellerInfo = sampleSellersStatic.find(s => s.name === auction.sellerId || `seller-${slugify(s.name)}` === auction.sellerId);
 
     return {
         ...auction,
         category: categoryInfo?.name || auction.category,
-        auctioneer: auctioneerInfo?.name || auction.auctioneer,
-        seller: sellerInfo?.name || auction.seller,
+        auctioneer: auctioneerInfo?.name || auction.auctioneerId,
+        auctioneerLogoUrl: auctioneerInfo?.logoUrl || auction.auctioneerLogoUrl,
+        seller: sellerInfo?.name || auction.sellerId,
         lots: lotsForAuction,
         totalLots: lotsForAuction.length,
         createdAt: createPastDate(Math.floor(Math.random() * 60) + 1),
@@ -598,7 +627,7 @@ export const sampleAuctioneers: AuctioneerProfileInfo[] = getUniqueAuctioneersIn
 export const sampleSellers: SellerProfileInfo[] = getUniqueSellersInternal();
 
 export const sampleBids: BidInfo[] = sampleLots.flatMap(lot => {
-    const numberOfBids = Math.floor(Math.random() * 8); // Increased max bids
+    const numberOfBids = Math.floor(Math.random() * 8); 
     const bids: BidInfo[] = [];
     let currentBidPrice = lot.initialPrice || lot.price;
     const baseBidIncrement = currentBidPrice > 50000 ? 500 : (currentBidPrice > 5000 ? 100 : 20);
@@ -607,8 +636,8 @@ export const sampleBids: BidInfo[] = sampleLots.flatMap(lot => {
         const increment = baseBidIncrement + Math.floor(Math.random() * baseBidIncrement);
         currentBidPrice += increment;
         const bidTime = createPastDate(Math.floor(Math.random() * 5), Math.floor(Math.random() * 24), Math.floor(Math.random() * 60), lot.endDate ? new Date(lot.endDate) : undefined);
-        if (bidTime > now && lot.status === 'ABERTO_PARA_LANCES') continue; // Don't create future bids for open lots
-        if (lot.endDate && bidTime > new Date(lot.endDate)) continue; // Don't create bids after lot ended
+        if (bidTime > now && lot.status === 'ABERTO_PARA_LANCES') continue; 
+        if (lot.endDate && bidTime > new Date(lot.endDate)) continue; 
 
         bids.push({
             id: `BID-${lot.id}-${uuidv4().substring(0,8)}`,
@@ -679,7 +708,7 @@ export const sampleLotQuestions: LotQuestion[] = sampleLots.flatMap(lot => {
         'Visitação mediante agendamento. Contate-nos para mais informações.',
     ];
     for (let i = 0; i < numQuestions; i++) {
-        const hasAnswer = Math.random() > 0.25; // 75% de chance de ter resposta
+        const hasAnswer = Math.random() > 0.25; 
         const questionDate = createPastDate(Math.floor(Math.random() * 10) + 2, undefined, undefined, lot.endDate ? new Date(lot.endDate) : undefined);
         const answerDate = hasAnswer ? createPastDate(Math.floor(Math.random() * 2) + 1, undefined, undefined, questionDate) : undefined;
 
@@ -744,7 +773,6 @@ export const sampleUserDocuments: UserDocument[] = [
 
 export const sampleUserHabilitationStatus: UserHabilitationStatus = 'PENDING_DOCUMENTS';
 
-// Atualiza sampleLots para incluir auctionName e sellerName se não existirem
 sampleLots.forEach(lot => {
   if (!lot.auctionName) {
     const parentAuction = sampleAuctions.find(a => a.id === lot.auctionId);
@@ -776,7 +804,10 @@ sampleAuctions.forEach(auction => {
     if(categoryInfo) auction.category = categoryInfo.name;
 
     const auctioneerInfo = sampleAuctioneers.find(auc => auc.id === auction.auctioneerId || auc.name === auction.auctioneer || auc.slug === auction.auctioneer);
-    if(auctioneerInfo) auction.auctioneer = auctioneerInfo.name;
+    if(auctioneerInfo) {
+        auction.auctioneer = auctioneerInfo.name;
+        auction.auctioneerLogoUrl = auctioneerInfo.logoUrl || auction.auctioneerLogoUrl;
+    }
 
     const sellerInfo = sampleSellers.find(s => s.id === auction.sellerId || s.name === auction.seller || s.slug === auction.seller);
     if(sellerInfo) auction.seller = sellerInfo.name;
@@ -795,8 +826,8 @@ sampleAuctions.forEach(auction => {
 const defaultMentalTriggerSettings: MentalTriggerSettings = {
     showDiscountBadge: true,
     showUrgencyTimer: true,
-    urgencyTimerThresholdDays: 1, // Lotes com menos de 1 dia para acabar mostrarão timer especial
-    urgencyTimerThresholdHours: 12, // (1 dia e 12 horas)
+    urgencyTimerThresholdDays: 1, 
+    urgencyTimerThresholdHours: 12, 
     showPopularityBadge: true,
     popularityViewThreshold: 500,
     showHotBidBadge: true,
@@ -835,10 +866,10 @@ export const defaultSectionBadgeVisibility: SectionBadgeConfig = {
 };
 
 const defaultMapSettings: MapSettings = {
-    defaultProvider: 'openstreetmap', // Alterado para OpenStreetMap
+    defaultProvider: 'openstreetmap', 
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
     staticImageMapZoom: 15,
-    staticImageMapMarkerColor: 'blue', // Cor alterada para OpenStreetMap
+    staticImageMapMarkerColor: 'blue', 
 };
 
 
@@ -846,7 +877,7 @@ export const samplePlatformSettings: PlatformSettings = {
   id: 'global',
   siteTitle: 'BidExpert Leilões',
   siteTagline: 'Sua plataforma definitiva para leilões online.',
-  galleryImageBasePath: '/lotes-exemplo/', // Atualizado para o novo caminho
+  galleryImageBasePath: '/lotes-exemplo/', 
   activeThemeName: 'Padrão BidExpert',
   themes: [
     {
@@ -870,7 +901,7 @@ export const samplePlatformSettings: PlatformSettings = {
   mentalTriggerSettings: defaultMentalTriggerSettings,
   homepageSections: defaultHomepageSections,
   sectionBadgeVisibility: defaultSectionBadgeVisibility, 
-  mapSettings: defaultMapSettings, // Adicionadas as configurações de mapa
+  mapSettings: defaultMapSettings, 
   updatedAt: new Date()
 };
 
@@ -880,3 +911,5 @@ export function getPlaceholderIfEmpty(value: string | number | null | undefined,
     }
     return String(value);
 }
+
+    
