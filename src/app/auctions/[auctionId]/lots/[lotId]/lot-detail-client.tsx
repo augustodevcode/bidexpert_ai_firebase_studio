@@ -454,7 +454,7 @@ export default function LotDetailClientContent({
                         <CardHeader className="flex flex-row items-center justify-between p-4">
                             <CardTitle className="text-lg flex items-center">Histórico de Lances</CardTitle>
                             {lotBids.length > 2 && (
-                                <Button variant="outline" size="sm" onClick={()={() => setIsAllBidsModalOpen(true)}}>Ver Todos ({lotBids.length})</Button>
+                                <Button variant="outline" size="sm" onClick={() => setIsAllBidsModalOpen(true)}>Ver Todos ({lotBids.length})</Button>
                             )}
                         </CardHeader>
                         <CardContent className="p-4 pt-0">
@@ -499,3 +499,5 @@ export default function LotDetailClientContent({
     </>
   );
 }
+
+    
