@@ -33,8 +33,8 @@ export default function RootLayout({
             <main className="flex-grow container mx-auto px-4 py-8">
               {children}
             </main>
+            <Footer activeDatabaseSystem={activeDatabaseSystem} />
           </TooltipProvider>
-          <Footer activeDatabaseSystem={activeDatabaseSystem} />
           <Toaster />
         </AuthProvider>
       </body>
