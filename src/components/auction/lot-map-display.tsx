@@ -3,7 +3,7 @@
 
 import type { Lot, PlatformSettings } from '@/types';
 import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'; // CardDescription adicionado aqui
 import { Button } from '@/components/ui/button';
 import { MapPin, Info, ExternalLink } from 'lucide-react';
 
@@ -36,7 +36,7 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
         title={`Mapa para ${title}`}
       ></iframe>
     );
-    externalMapLink = mapEmbedUrl; // Assumindo que o embed URL também é um link visualizável
+    externalMapLink = mapEmbedUrl; 
     mapProviderUsed = mapEmbedUrl.includes("google.com/maps/embed") ? 'Google Maps (Embed)' : 'Embed Personalizado';
   } 
   // 2. Se não tiver embed, usar o defaultProvider e API Key
@@ -59,14 +59,12 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
     mapProviderUsed = 'Google Maps API (Embed)';
   } 
   else if (mapSettings?.defaultProvider === 'openstreetmap' && (latitude && longitude || mapAddress)) {
-    const bboxDelta = 0.01; // Ajuste para o zoom do bbox
+    const bboxDelta = 0.01; 
     let embedUrl = '';
     if (latitude && longitude) {
         embedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${longitude - bboxDelta},${latitude - bboxDelta},${longitude + bboxDelta},${latitude + bboxDelta}&layer=mapnik&marker=${latitude},${longitude}`;
         externalMapLink = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=15/${latitude}/${longitude}`;
     } else if (mapAddress) {
-        // OpenStreetMap embed por endereço é mais complexo, geralmente requer geocoding antes.
-        // Para simplificar, vamos apenas mostrar um link de busca.
         externalMapLink = `https://www.openstreetmap.org/search?query=${encodeURIComponent(mapAddress)}`;
         mapContent = (
              <div className="flex flex-col items-center justify-center h-full bg-muted text-muted-foreground p-4">
@@ -78,7 +76,7 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
             </div>
         );
     }
-    if (embedUrl && !mapContent) { // Apenas se tivermos lat/lon para embed
+    if (embedUrl && !mapContent) { 
         mapContent = (
         <iframe
             src={embedUrl}
@@ -159,11 +157,10 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
           </CardTitle>
           {externalMapLink && (
             <Button variant="outline" size="sm" asChild>
-                <a href={externalMapLink} target="_blank" rel="noopener noreferrer" className="flex items-center">
-                    <span className="hidden sm:inline mr-1.5">—</span> {/* Visível apenas em telas maiores */}
-                    <span className="sm:hidden">Ver</span> {/* Visível apenas em telas menores */}
-                    <span className="hidden sm:inline mr-1.5">Ver no Mapa</span>
-                    <ExternalLink className="h-4 w-4" />
+                <a href={externalMapLink} target="_blank" rel="noopener noreferrer" className="flex items-center text-xs px-2.5 py-1.5 h-auto">
+                    <span className="hidden sm:inline mr-1">Ver no Mapa</span>
+                    <span className="sm:hidden">Mapa</span>
+                    <ExternalLink className="h-3.5 w-3.5 ml-1" />
                     <span className="sr-only">(Abre em nova aba)</span>
                 </a>
             </Button>
@@ -179,4 +176,3 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
     </Card>
   );
 }
-
