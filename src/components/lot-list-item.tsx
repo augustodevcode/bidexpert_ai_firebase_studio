@@ -4,7 +4,7 @@
 import type { Auction, Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Card, CardContent, CardFooter } from '@/components/ui/card'; // Removido CardHeader, CardDescription, CardTitle
+import { Card, CardContent, CardFooter } from '@/components/ui/card'; 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown } from 'lucide-react';
@@ -21,7 +21,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import LotPreviewModal from './lot-preview-modal';
-import LotMapPreviewModal from './lot-map-preview-modal'; // Importar o novo modal de mapa
+import LotMapPreviewModal from './lot-map-preview-modal'; 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TimeRemainingBadgeProps {
@@ -108,7 +108,7 @@ interface LotListItemProps {
 function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettingsProp }: LotListItemProps) {
   const [isFavorite, setIsFavorite] = useState(lot.isFavorite || false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [isMapModalOpen, setIsMapModalOpen] = useState(false); // Estado para o modal do mapa
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false); 
   const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`);
   const { toast } = useToast();
 
@@ -247,7 +247,7 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
                     );
                 })}
             </div>
-            <div className="absolute top-10 right-2 flex-col space-y-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 hidden md:flex">
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-row space-x-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}>
@@ -404,4 +404,3 @@ export default function LotListItem({ lot, badgeVisibilityConfig, platformSettin
     return <LotListItemClientContent lot={lot} badgeVisibilityConfig={badgeVisibilityConfig} platformSettingsProp={platformSettingsProp} />;
   }
 
-    
