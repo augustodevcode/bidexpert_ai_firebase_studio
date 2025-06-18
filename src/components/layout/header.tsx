@@ -29,6 +29,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/co
 import DynamicBreadcrumbs from './dynamic-breadcrumbs';
 import {
   NavigationMenu,
+  NavigationMenuContent, // Adicionado aqui
   NavigationMenuItem,
   NavigationMenuList,
   NavigationMenuLink,
@@ -568,4 +569,3 @@ export default function Header() {
 }
 
     
-
