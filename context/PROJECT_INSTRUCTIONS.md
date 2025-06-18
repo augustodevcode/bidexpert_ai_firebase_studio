@@ -24,17 +24,17 @@ These files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.MD`, `PROJECT_INSTR
 *   **How to Update:** You will propose changes to these files using the standard XML `<changes>` format, providing the full intended content for each file being updated.
 
 *   **`PROJECT_CONTEXT_HISTORY.md`:**
-    *   **Append new information.** Do not overwrite the entire file unless explicitly creating a new summary after a full context reset (like this current one).
+    *   **Append new information.** Do not overwrite the entire file unless explicitly creating a new summary after a full context reset.
     *   Summarize key discussions, decisions made, features implemented, and the outcome of tasks from the current session.
     *   Include details about challenges encountered and how they were resolved (e.g., specific errors and their fixes).
-    *   Maintain a generally chronological flow. If a previous summary exists, append to it, often under a new heading like "Session [Date/Number] - Focus: [Brief Description]".
-    *   Be comprehensive but concise.
+    *   Maintain a generally chronological flow. If a previous summary exists, append to it, often under a new heading like "### Development Summary (Current & Recent Interactions)" or "### Session [Date/Number] - Focus: [Brief Description]".
+    *   Be comprehensive but concise. Ensure the history covers the Project Overview, Key Features, Major Decisions, and a log of significant errors/fixes.
 
 *   **`PROJECT_PROGRESS.MD`:**
     *   Update the status of tasks by moving items between "DONE", "WORKING", and "NEXT".
     *   Add newly identified tasks or features to the "NEXT" section.
     *   Reflect the current development focus in the "WORKING" section.
-    *   Use clear, actionable bullet points.
+    *   Use clear, actionable bullet points. Ensure "DONE" items are moved from "WORKING" or "NEXT".
 
 *   **`PROJECT_INSTRUCTIONS.md` (This File):**
     *   Update these instructions if our process for using or updating the context files changes. This file is primarily for your reference.
@@ -55,8 +55,8 @@ These files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.MD`, `PROJECT_INSTR
 
 *   Ensure the markdown formatting remains consistent and readable.
 *   If you are unsure about how to update a file or what to include, please ask for clarification.
+*   When providing file content for these context files, always provide the *entire* intended content within the `<![CDATA[...` block.
 
 By diligently following these instructions, we can build and maintain a persistent context that will greatly enhance the efficiency and effectiveness of our collaboration on the BidExpert project.
-```
+]]>
   
-    

@@ -9,6 +9,5 @@ Estou lendo:
 *   `context/PROJECT_INSTRUCTIONS.md` (para me lembrar de como usar estes arquivos)
 
 Após revisar, confirmarei que estou pronto para continuarmos. Se houver alguma informação adicional ou foco específico que você gostaria de me dar para esta sessão, por favor, me avise após minha confirmação.
-```
+
   
-    
