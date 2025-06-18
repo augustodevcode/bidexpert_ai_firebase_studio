@@ -6,9 +6,9 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'; // Im
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Coins, Search as SearchIcon, Menu, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel, Users, Briefcase as ConsignorIcon, UserCog, ShieldCheck, Tv, MapPin } from 'lucide-react'; 
+import { Coins, Search as SearchIcon, Menu, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel, Users, Briefcase as ConsignorIcon, UserCog, ShieldCheck, Tv, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
-import { auth } from '@/lib/firebase'; 
+import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useRef, useCallback, forwardRef } from 'react';
@@ -215,7 +215,8 @@ export default function Header() {
       if (selectedSearchCategorySlug && selectedSearchCategorySlug !== 'todas') {
         query += `&category=${selectedSearchCategorySlug}`;
       }
-      router.push(`/search?type=lots&${query}`); // Default search to lots
+      query += `&type=lots`; // Default search submit to lots
+      router.push(`/search?${query}`);
       setIsSearchDropdownOpen(false);
     }
   };
@@ -488,9 +489,16 @@ export default function Header() {
               </TooltipTrigger>
               <TooltipContent><p>Busca por Mapa</p></TooltipContent>
             </Tooltip>
-            <Button variant="ghost" size="icon" className="md:hidden hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" aria-label="Buscar" onClick={handleSearchSubmit}>
-              <SearchIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                     <Button variant="ghost" size="icon" className="md:hidden hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" aria-label="Buscar em todo o site" asChild>
+                        <Link href="/search">
+                            <SearchIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                        </Link>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Buscar em todo o site</p></TooltipContent>
+            </Tooltip>
             {user && (
               <Button variant="ghost" size="icon" className="relative hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" asChild aria-label="Notificações">
                 <Link href="/dashboard/notifications">
@@ -532,7 +540,7 @@ export default function Header() {
                     {firstNavItem.icon && <firstNavItem.icon className="mr-1.5 h-4 w-4" /> }
                     {firstNavItem.label}
                   </NavigationMenuTrigger>
-                  <NavigationMenuContent>
+                  <NavigationMenuContent align={firstNavItem.megaMenuAlign || "start"}>
                      {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={handleLinkOrMobileMenuCloseClick} />}
                   </NavigationMenuContent>
                 </NavigationMenuItem>
@@ -558,7 +566,7 @@ export default function Header() {
 
       {/* Breadcrumbs Bar */}
       {isClient && pathname !== '/' && (
-        <nav aria-label="Breadcrumb" className="bg-secondary text-secondary-foreground text-xs py-2.5 border-b"> 
+        <nav aria-label="Breadcrumb" className="bg-secondary text-secondary-foreground text-xs py-2.5 border-b">
             <div className="container mx-auto px-4">
                 <DynamicBreadcrumbs />
             </div>
