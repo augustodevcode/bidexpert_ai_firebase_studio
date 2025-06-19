@@ -27,6 +27,7 @@ import {
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AuctionListItem from '@/components/auction-list-item'; // Importar AuctionListItem
 
 const sortOptionsAuctions = [
   { value: 'relevance', label: 'Relevância' },
@@ -108,21 +109,26 @@ export default function SearchPage() {
   }, []);
   
   const [activeFilters, setActiveFilters] = useState<ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; searchType?: 'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos' }>(() => {
-    const initial: typeof initialFiltersState = {...initialFiltersState, searchType: 'auctions'}; // Default to auctions
+    const initial: typeof initialFiltersState = {...initialFiltersState, searchType: 'auctions'}; 
     const typeParam = searchParamsHook.get('type') as typeof currentSearchType | null;
-    if (typeParam) initial.searchType = typeParam;
+    const auctionTypeFromQuery = searchParamsHook.get('auctionType');
+
+    if (typeParam) {
+        if (typeParam === 'auctions' && auctionTypeFromQuery === 'TOMADA_DE_PRECOS') {
+            initial.searchType = 'tomada_de_precos';
+            initial.modality = 'TOMADA_DE_PRECOS';
+        } else {
+            initial.searchType = typeParam;
+        }
+    } else if (auctionTypeFromQuery === 'TOMADA_DE_PRECOS') { 
+        initial.searchType = 'tomada_de_precos';
+        initial.modality = 'TOMADA_DE_PRECOS';
+    }
     
     if (searchParamsHook.get('category')) initial.category = searchParamsHook.get('category')!;
     
-    const auctionTypeParam = searchParamsHook.get('auctionType');
-    if (auctionTypeParam) {
-        initial.modality = auctionTypeParam.toUpperCase();
-        // If auctionType is TOMADA_DE_PRECOS, ensure searchType reflects this for tab selection
-        if (auctionTypeParam.toUpperCase() === 'TOMADA_DE_PRECOS' && initial.searchType === 'auctions') {
-            initial.searchType = 'tomada_de_precos';
-        }
-    } else if (initial.searchType === 'tomada_de_precos') {
-        initial.modality = 'TOMADA_DE_PRECOS'; // Ensure modality is set if tab is active
+    if (auctionTypeFromQuery && initial.searchType !== 'tomada_de_precos') { 
+        initial.modality = auctionTypeFromQuery.toUpperCase();
     }
 
     if (searchParamsHook.get('status')) initial.status = [searchParamsHook.get('status')!.toUpperCase()];
@@ -135,36 +141,39 @@ export default function SearchPage() {
 
 
   useEffect(() => {
-    // Sync currentSearchType with searchParams on initial load or when params change
     const typeFromParams = searchParamsHook.get('type') as typeof currentSearchType | null;
     const auctionTypeFromParams = searchParamsHook.get('auctionType');
 
+    let newSearchType: typeof currentSearchType = 'auctions'; // Default
     if (typeFromParams) {
         if (typeFromParams === 'auctions' && auctionTypeFromParams === 'TOMADA_DE_PRECOS') {
-            setCurrentSearchType('tomada_de_precos');
+            newSearchType = 'tomada_de_precos';
         } else {
-            setCurrentSearchType(typeFromParams);
+            newSearchType = typeFromParams;
         }
-    } else {
-        setCurrentSearchType('auctions'); // Default if no type param
+    } else if (auctionTypeFromParams === 'TOMADA_DE_PRECOS') {
+        newSearchType = 'tomada_de_precos';
     }
+    setCurrentSearchType(newSearchType);
+
   }, [searchParamsHook]);
 
 
   const handleSearchTypeChange = (type: 'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos') => {
     setCurrentSearchType(type);
-    setSortByState('relevance'); // Reset sort for new type
+    setSortByState('relevance'); 
 
     const currentParams = new URLSearchParams(Array.from(searchParamsHook.entries()));
+    const categoryParam = currentParams.get('category') || 'TODAS';
     
     if (type === 'tomada_de_precos') {
         currentParams.set('type', 'auctions'); 
         currentParams.set('auctionType', 'TOMADA_DE_PRECOS');
-        setActiveFilters(prev => ({ ...initialFiltersState, searchType: 'tomada_de_precos', modality: 'TOMADA_DE_PRECOS', category: prev.category === 'TODAS' ? 'TODAS' : prev.category, status: ['ACTIVE'] }));
+        setActiveFilters(prev => ({ ...initialFiltersState, searchType: 'tomada_de_precos', modality: 'TOMADA_DE_PRECOS', category: categoryParam, status: ['ACTIVE'] }));
     } else {
         currentParams.set('type', type);
         currentParams.delete('auctionType'); 
-        setActiveFilters(prev => ({ ...initialFiltersState, searchType: type, category: prev.category === 'TODAS' ? 'TODAS' : prev.category, status: type === 'direct_sale' ? ['ACTIVE'] : []}));
+        setActiveFilters(prev => ({ ...initialFiltersState, searchType: type, category: categoryParam, status: type === 'direct_sale' ? ['ACTIVE'] : []}));
     }
     router.push(`/search?${currentParams.toString()}`);
   };
@@ -211,6 +220,7 @@ export default function SearchPage() {
     if (currentSearchType !== 'tomada_de_precos') currentParams.delete('auctionType');
     currentParams.delete('offerType');
     currentParams.delete('status');
+    currentParams.set('type', currentSearchType === 'tomada_de_precos' ? 'auctions' : currentSearchType);
     if (currentSearchType === 'tomada_de_precos') currentParams.set('auctionType','TOMADA_DE_PRECOS');
     if (currentSearchType === 'direct_sale' || currentSearchType === 'tomada_de_precos') currentParams.set('status', 'ACTIVE');
 
@@ -279,7 +289,7 @@ export default function SearchPage() {
         }
 
         // Modality (for auctions and tomada_de_precos)
-        if ((itemTypeContext === 'auction') && filters.modality !== 'TODAS') {
+        if (itemTypeContext === 'auction' && filters.modality !== 'TODAS') {
           const auctionItem = item as Auction;
           if (!auctionItem.auctionType || auctionItem.auctionType.toUpperCase() !== filters.modality) return false;
         }
@@ -516,9 +526,9 @@ export default function SearchPage() {
                 {filteredAndSortedItems.length > 0 && currentSearchType === 'auctions' ? (
                     <div className={viewMode === 'grid' ? "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>
                         {(filteredAndSortedItems as Auction[]).map((auction) => (
-                           viewMode === 'grid' || (currentSearchType !== 'lots' && currentSearchType !== 'direct_sale')
+                           viewMode === 'grid'
                             ? <AuctionCard key={auction.id} auction={auction} />
-                            : <AuctionCard key={auction.id} auction={auction} /> // TODO: Create AuctionListItem if needed
+                            : <AuctionListItem key={auction.id} auction={auction} /> 
                         ))}
                     </div>
                 ) : currentSearchType === 'auctions' && (
@@ -567,9 +577,9 @@ export default function SearchPage() {
                 {filteredAndSortedItems.length > 0 && currentSearchType === 'tomada_de_precos' ? (
                     <div className={viewMode === 'grid' ? "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>
                         {(filteredAndSortedItems as Auction[]).map((auction) => (
-                            viewMode === 'grid' || (currentSearchType !== 'lots' && currentSearchType !== 'direct_sale')
+                             viewMode === 'grid'
                              ? <AuctionCard key={auction.id} auction={auction} />
-                             : <AuctionCard key={auction.id} auction={auction} /> // TODO: Create AuctionListItem if needed for list view
+                             : <AuctionListItem key={auction.id} auction={auction} />
                         ))}
                     </div>
                 ) : currentSearchType === 'tomada_de_precos' && (

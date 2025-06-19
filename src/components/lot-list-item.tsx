@@ -111,10 +111,11 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
   const [isMapModalOpen, setIsMapModalOpen] = useState(false); 
   const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`);
   const { toast } = useToast();
-
-  const platformSettings = platformSettingsProp || samplePlatformSettings;
+  
+  const platformSettings = platformSettingsProp || samplePlatformSettings; 
   const mentalTriggersGlobalSettings = platformSettings.mentalTriggerSettings || {};
   const sectionBadges = badgeVisibilityConfig || platformSettings.sectionBadgeVisibility?.searchList || {}; 
+
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -174,6 +175,20 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
         return `mailto:?subject=${encodedTitle}&body=${encodedUrl}`;
     }
   }
+  
+  const getTypeIcon = (type: string) => {
+    const upperType = type.toUpperCase();
+    if (upperType.includes('CASA') || upperType.includes('IMÓVEL') || upperType.includes('APARTAMENTO')) {
+        return <Building className="h-3 w-3 text-muted-foreground" />;
+    }
+    if (upperType.includes('VEÍCULO') || upperType.includes('AUTOMÓVEL') || upperType.includes('CARRO')) {
+        return <Car className="h-3 w-3 text-muted-foreground" />;
+    }
+    if (upperType.includes('MAQUINÁRIO') || upperType.includes('TRATOR')) {
+        return <Truck className="h-3 w-3 text-muted-foreground" />;
+    }
+    return <Info className="h-3 w-3 text-muted-foreground" />;
+  };
 
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
   const displayAuctionDate = lot.auctionDate && !isNaN(new Date(lot.auctionDate).getTime())
@@ -190,27 +205,30 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
     return lot.discountPercentage || 0;
   }, [lot.initialPrice, lot.secondInitialPrice, lot.status, lot.discountPercentage]);
 
+
   const mentalTriggers = useMemo(() => {
-    const triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
+    let triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
     const settings = mentalTriggersGlobalSettings;
 
-    if (sectionBadges.showPopularityBadge !== false && settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) {
+    if (settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) {
       triggers.push('MAIS VISITADO');
     }
-    if (sectionBadges.showHotBidBadge !== false && settings.showHotBidBadge && (lot.bidsCount || 0) > (settings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') {
+    if (settings.showHotBidBadge && (lot.bidsCount || 0) > (settings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') {
       triggers.push('LANCE QUENTE');
     }
-    if (sectionBadges.showExclusiveBadge !== false && settings.showExclusiveBadge && lot.isExclusive) {
+    if (settings.showExclusiveBadge && lot.isExclusive) {
         triggers.push('EXCLUSIVO');
     }
-    return triggers;
-  }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
+    return Array.from(new Set(triggers));
+  }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings]);
+
 
   return (
     <>
       <Card className="w-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group overflow-hidden">
         <div className="flex flex-col md:flex-row">
-          <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-square">
+          {/* Image Column */}
+          <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted">
             <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block h-full w-full">
               <Image
                 src={lot.imageUrl}
@@ -220,16 +238,59 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
                 data-ai-hint={lot.dataAiHint || 'imagem lote lista'}
               />
             </Link>
-            {sectionBadges.showStatusBadge !== false && (
-                <Badge className={`absolute top-2 left-2 text-xs px-2 py-1 z-10 ${getLotStatusColor(lot.status)}`}>
-                  {getAuctionStatusText(lot.status)}
-                </Badge>
-            )}
-            <div className={`absolute top-2 ${sectionBadges.showStatusBadge !== false ? 'mt-7 sm:mt-0 sm:top-2' : 'top-2'} right-2 flex flex-col items-end gap-1 z-10`}>
+            {/* Botões de ação sobre a imagem para desktop, invisíveis até hover */}
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex-row space-x-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 hidden md:flex">
+              <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}><Heart className={`h-3.5 w-3.5 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handlePreviewOpen} aria-label="Pré-visualizar Lote"><Eye className="h-3.5 w-3.5 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Pré-visualizar</p></TooltipContent></Tooltip>
+              {(lot.latitude || lot.longitude || lot.mapAddress || lot.mapEmbedUrl) && (
+                <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handleMapPreviewOpen} aria-label="Ver no Mapa"><MapPin className="h-3.5 w-3.5 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Ver no Mapa</p></TooltipContent></Tooltip>
+              )}
+            </div>
+          </div>
+
+          {/* Content Column */}
+          <div className="flex flex-col flex-grow p-4">
+            <div className="flex justify-between items-start mb-1.5">
+              <div className="flex-grow min-w-0">
+                 <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
+                  <h3 className="text-base font-semibold hover:text-primary transition-colors leading-tight line-clamp-2 mr-2" title={lot.title}>
+                    {lot.title}
+                  </h3>
+                </Link>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate" title={`Lote ${lot.number || lot.id.replace('LOTE','')} | Leilão: ${lot.auctionName}`}>
+                  Lote {lot.number || lot.id.replace('LOTE','')} | Leilão: {lot.auctionName}
+                </p>
+              </div>
+              {/* Mobile Actions / Badges Row */}
+              <div className="flex-shrink-0 flex flex-col items-end gap-1">
+                {sectionBadges.showStatusBadge !== false && (
+                  <Badge className={`text-xs px-1.5 py-0.5 ${getLotStatusColor(lot.status)} self-end`}>
+                    {getAuctionStatusText(lot.status)}
+                  </Badge>
+                )}
+                 <div className="md:hidden flex items-center space-x-0.5">
+                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleFavoriteToggle}><Heart className={`h-3 w-3 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
+                    {(lot.latitude || lot.longitude || lot.mapAddress || lot.mapEmbedUrl) && (
+                       <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleMapPreviewOpen}><MapPin className="h-3 w-3 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Ver Mapa</p></TooltipContent></Tooltip>
+                    )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center text-xs text-muted-foreground mb-1">
+                <MapPin className="h-3 w-3 mr-1 text-primary/80 flex-shrink-0" />
+                <span className="truncate" title={displayLocation}>{displayLocation}</span>
+                <span className="mx-1.5 text-muted-foreground/50">|</span>
+                <Tag className="h-3 w-3 mr-1 text-primary/80 flex-shrink-0" />
+                <span className="truncate" title={lot.type}>{lot.type}</span>
+            </div>
+
+            {/* Mental Triggers & Discount for List View */}
+            <div className="flex flex-wrap gap-1.5 mb-2">
                 {sectionBadges.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentage > 0 && (
-                <Badge variant="destructive" className="text-xs px-1.5 py-0.5 animate-pulse">
-                    <Percent className="h-3 w-3 mr-1" /> {discountPercentage}% OFF
-                </Badge>
+                    <Badge variant="destructive" className="text-xs px-1.5 py-0.5">
+                        <Percent className="h-3 w-3 mr-0.5" /> {discountPercentage}% OFF
+                    </Badge>
                 )}
                 {mentalTriggers.map(trigger => {
                     let showThisTrigger = false;
@@ -239,94 +300,33 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
                     if (!showThisTrigger) return null;
                     return (
                         <Badge key={trigger} variant="secondary" className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
-                        {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3 mr-1" />}
-                        {trigger === 'LANCE QUENTE' && <Zap className="h-3 w-3 mr-1 text-red-500 fill-red-500" />}
-                        {trigger === 'EXCLUSIVO' && <Crown className="h-3 w-3 mr-1 text-purple-600" />}
+                        {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3 mr-0.5" />}
+                        {trigger === 'LANCE QUENTE' && <Zap className="h-3 w-3 mr-0.5 text-red-500 fill-red-500" />}
+                        {trigger === 'EXCLUSIVO' && <Crown className="h-3 w-3 mr-0.5 text-purple-600" />}
                         {trigger}
                         </Badge>
                     );
                 })}
             </div>
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-row space-x-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}>
-                    <Heart className={`h-3.5 w-3.5 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handlePreviewOpen} aria-label="Pré-visualizar Lote">
-                    <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Pré-visualizar Lote</p></TooltipContent>
-              </Tooltip>
-              {(lot.latitude || lot.longitude || lot.mapAddress || lot.mapEmbedUrl) && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handleMapPreviewOpen} aria-label="Ver no Mapa">
-                      <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent><p>Ver no Mapa</p></TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col flex-grow p-4">
-            <div className="flex justify-between items-start mb-1">
-                <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
-                    <h3 className="text-lg font-semibold hover:text-primary transition-colors leading-tight line-clamp-2 mr-2">
-                        {lot.title}
-                    </h3>
-                </Link>
-                <div className="md:hidden flex items-center space-x-1 flex-shrink-0">
-                 <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}>
-                        <Heart className={`h-3.5 w-3.5 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent>
-                  </Tooltip>
-                   {(lot.latitude || lot.longitude || lot.mapAddress || lot.mapEmbedUrl) && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleMapPreviewOpen} aria-label="Ver no Mapa">
-                          <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent><p>Ver no Mapa</p></TooltipContent>
-                    </Tooltip>
-                  )}
-                </div>
-            </div>
-            <p className="text-xs text-muted-foreground mb-0.5">Lote {lot.number || lot.id.replace('LOTE','')} | {lot.type}</p>
-            <p className="text-xs text-muted-foreground mb-2 flex items-center">
-              <MapPin className="h-3 w-3 mr-1" /> {displayLocation}
-            </p>
+            
             <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{lot.description}</p>
             
             <div className="flex flex-col sm:flex-row justify-between text-xs text-muted-foreground mb-3 pt-2 border-t border-dashed">
-                <div className="mb-2 sm:mb-0">
-                  <p className="font-medium">1ª Praça/Leilão:</p>
+                <div className="mb-1 sm:mb-0">
+                  <p className="font-medium">1ª Praça:</p>
                   <p>Data: {lot.lotSpecificAuctionDate ? format(new Date(lot.lotSpecificAuctionDate), "dd/MM HH:mm", { locale: ptBR }) : displayAuctionDate}</p>
                   <p>Lance Inicial: R$ {lot.initialPrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 'N/D'}</p>
                 </div>
                 {lot.secondAuctionDate && (
                   <div className="sm:pl-2 sm:border-l sm:border-dashed">
-                    <p className="font-medium">2ª Praça/Leilão:</p>
+                    <p className="font-medium">2ª Praça:</p>
                     <p>Data: {displaySecondAuctionDate}</p>
                     <p>Lance Inicial: R$ {lot.secondInitialPrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 'N/D'}</p>
                   </div>
                 )}
             </div>
 
-            <div className="mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3">
+            <div className="mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2">
               <div>
                 <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
                 <p className={`text-2xl font-bold ${isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
@@ -346,7 +346,7 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
                     </div>
                 </div>
               </div>
-              <Button asChild size="sm" className="w-full md:w-auto">
+              <Button asChild size="sm" className="w-full md:w-auto mt-2 md:mt-0">
                 <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
                     <Eye className="mr-2 h-4 w-4" /> Ver Detalhes
                 </Link>
@@ -361,7 +361,7 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
         isOpen={isPreviewModalOpen}
         onClose={() => setIsPreviewModalOpen(false)}
       />
-      <LotMapPreviewModal
+       <LotMapPreviewModal
         lot={lot}
         platformSettings={platformSettings}
         isOpen={isMapModalOpen}
@@ -378,7 +378,6 @@ export default function LotListItem({ lot, badgeVisibilityConfig, platformSettin
     }, []);
   
     if (!isClient) {
-      // Skeleton para SSR ou enquanto JS não carregou
       return (
         <Card className="flex flex-row overflow-hidden h-full shadow-md rounded-lg group">
              <div className="relative aspect-square h-full bg-muted animate-pulse w-1/3 md:w-1/4 flex-shrink-0"></div>
