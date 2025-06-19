@@ -1,6 +1,5 @@
-
 import * as z from 'zod';
-import type { MapSettings } from '@/types'; // Import MapSettings
+import type { MapSettings, SearchPaginationType } from '@/types'; // Import MapSettings
 
 const themeColorSchema = z.record(z.string().regex(/^hsl\(\d{1,3}(deg)?(\s\d{1,3}%){2}\)$/i, {
     message: "Cor deve estar no formato HSL, ex: hsl(25 95% 53%)"
@@ -36,6 +35,16 @@ export const platformSettingsFormSchema = z.object({
     staticImageMapZoom: z.coerce.number().min(1, {message: "Zoom deve ser entre 1 e 20."}).max(20, {message: "Zoom deve ser entre 1 e 20."}).optional().default(15),
     staticImageMapMarkerColor: z.string().max(50, {message: "Cor do marcador não pode exceder 50 caracteres."}).optional().default('blue'),
   }).optional(),
+  // Novas configurações
+  searchPaginationType: z.enum(['loadMore', 'numberedPages'], {
+    errorMap: () => ({ message: "Selecione um tipo de paginação válido."})
+  }).optional().default('loadMore'),
+  searchItemsPerPage: z.coerce.number().min(1, {message: "Deve ser pelo menos 1."}).max(100, {message: "Não pode exceder 100."}).optional().default(12),
+  searchLoadMoreCount: z.coerce.number().min(1, {message: "Deve ser pelo menos 1."}).max(100, {message: "Não pode exceder 100."}).optional().default(12),
+  showCountdownOnLotDetail: z.boolean().optional().default(true),
+  showCountdownOnCards: z.boolean().optional().default(true),
+  showRelatedLotsOnLotDetail: z.boolean().optional().default(true),
+  relatedLotsCount: z.coerce.number().min(1, {message: "Deve ser pelo menos 1."}).max(20, {message: "Não pode exceder 20."}).optional().default(5),
 });
 
 export type PlatformSettingsFormValues = z.infer<typeof platformSettingsFormSchema>;

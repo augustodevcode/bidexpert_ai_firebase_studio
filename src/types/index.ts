@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -211,7 +210,7 @@ export interface Lot {
   price: number; 
   initialPrice?: number; 
   secondInitialPrice?: number | null; 
-  bidIncrementStep?: number; // Novo campo
+  bidIncrementStep?: number; 
   endDate: AnyTimestamp; 
   auctionDate?: AnyTimestamp; 
   lotSpecificAuctionDate?: AnyTimestamp | null; 
@@ -576,6 +575,8 @@ export interface MapSettings {
   staticImageMapMarkerColor?: string;
 }
 
+export type SearchPaginationType = 'loadMore' | 'numberedPages';
+
 export interface PlatformSettings {
   id: 'global'; 
   siteTitle?: string;
@@ -592,7 +593,17 @@ export interface PlatformSettings {
   homepageSections?: HomepageSectionConfig[];
   mentalTriggerSettings?: MentalTriggerSettings;
   sectionBadgeVisibility?: SectionBadgeConfig;
-  mapSettings?: MapSettings; 
+  mapSettings?: MapSettings;
+  
+  // Novas Configurações de Paginação e Exibição
+  searchPaginationType?: SearchPaginationType;
+  searchItemsPerPage?: number;
+  searchLoadMoreCount?: number;
+  showCountdownOnLotDetail?: boolean;
+  showCountdownOnCards?: boolean;
+  showRelatedLotsOnLotDetail?: boolean;
+  relatedLotsCount?: number;
+
   updatedAt: AnyTimestamp;
 }
 
@@ -601,6 +612,14 @@ export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'
     mentalTriggerSettings?: MentalTriggerSettings;
     sectionBadgeVisibility?: SectionBadgeConfig;
     mapSettings?: MapSettings;
+    // Novas Configurações de Paginação e Exibição (repetidas para o tipo do formulário)
+    searchPaginationType?: SearchPaginationType;
+    searchItemsPerPage?: number;
+    searchLoadMoreCount?: number;
+    showCountdownOnLotDetail?: boolean;
+    showCountdownOnCards?: boolean;
+    showRelatedLotsOnLotDetail?: boolean;
+    relatedLotsCount?: number;
 };
 
 
@@ -747,4 +766,5 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
+
 

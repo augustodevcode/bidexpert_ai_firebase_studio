@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -18,12 +17,13 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { platformSettingsFormSchema, type PlatformSettingsFormValues } from './settings-form-schema';
-import type { PlatformSettings, MapSettings } from '@/types';
-import { Loader2, Save, Palette, Fingerprint, Wrench, MapPin as MapIcon } from 'lucide-react'; // Renomeado Map para MapIcon para evitar conflito
+import type { PlatformSettings, MapSettings, SearchPaginationType } from '@/types';
+import { Loader2, Save, Palette, Fingerprint, Wrench, MapPin as MapIcon, Search as SearchIconLucide, Clock as ClockIcon, Link2 } from 'lucide-react'; // Renomeado Map para MapIcon para evitar conflito
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea'; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 
 // A action de submit será importada de './actions'
 import { updatePlatformSettings } from './actions';
@@ -56,12 +56,17 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
       themes: initialData?.themes || [],
       platformPublicIdMasks: initialData?.platformPublicIdMasks || { auctions: '', lots: '', auctioneers: '', sellers: ''},
       mapSettings: initialData?.mapSettings || defaultMapSettings,
+      searchPaginationType: initialData?.searchPaginationType || 'loadMore',
+      searchItemsPerPage: initialData?.searchItemsPerPage || 12,
+      searchLoadMoreCount: initialData?.searchLoadMoreCount || 12,
+      showCountdownOnLotDetail: initialData?.showCountdownOnLotDetail === undefined ? true : initialData.showCountdownOnLotDetail,
+      showCountdownOnCards: initialData?.showCountdownOnCards === undefined ? true : initialData.showCountdownOnCards,
+      showRelatedLotsOnLotDetail: initialData?.showRelatedLotsOnLotDetail === undefined ? true : initialData.showRelatedLotsOnLotDetail,
+      relatedLotsCount: initialData?.relatedLotsCount || 5,
     },
   });
 
   React.useEffect(() => {
-    // Reset form with initialData when it changes (e.g., after a save and re-fetch)
-    // This ensures the form reflects the latest persisted state.
     form.reset({
         siteTitle: initialData?.siteTitle || 'BidExpert',
         siteTagline: initialData?.siteTagline || 'Leilões Online Especializados',
@@ -70,6 +75,13 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
         themes: initialData?.themes || [],
         platformPublicIdMasks: initialData?.platformPublicIdMasks || { auctions: '', lots: '', auctioneers: '', sellers: ''},
         mapSettings: initialData?.mapSettings || defaultMapSettings,
+        searchPaginationType: initialData?.searchPaginationType || 'loadMore',
+        searchItemsPerPage: initialData?.searchItemsPerPage || 12,
+        searchLoadMoreCount: initialData?.searchLoadMoreCount || 12,
+        showCountdownOnLotDetail: initialData?.showCountdownOnLotDetail === undefined ? true : initialData.showCountdownOnLotDetail,
+        showCountdownOnCards: initialData?.showCountdownOnCards === undefined ? true : initialData.showCountdownOnCards,
+        showRelatedLotsOnLotDetail: initialData?.showRelatedLotsOnLotDetail === undefined ? true : initialData.showRelatedLotsOnLotDetail,
+        relatedLotsCount: initialData?.relatedLotsCount || 5,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData, form.reset]);
@@ -146,7 +158,6 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
                 </FormItem>
               )}
             />
-            {/* Placeholders for Logo and Favicon - to be implemented */}
             <FormItem>
                 <FormLabel>Logo do Site (Em breve)</FormLabel>
                 <FormControl>
@@ -239,13 +250,113 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
 
         {activeSection === 'appearance' && (
           <section className="space-y-6">
-            <div className="p-6 border rounded-lg bg-muted/20 text-center">
+            <FormField
+              control={form.control}
+              name="searchPaginationType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo de Paginação na Busca</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || 'loadMore'}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo de paginação" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="loadMore">Botão "Carregar Mais"</SelectItem>
+                      <SelectItem value="numberedPages">Páginas Numeradas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>Como os resultados de busca serão paginados.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {form.watch('searchPaginationType') === 'numberedPages' && (
+              <FormField
+                control={form.control}
+                name="searchItemsPerPage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Itens por Página (Busca)</FormLabel>
+                    <FormControl><Input type="number" min="1" max="100" {...field} value={field.value ?? 12} onChange={e => field.onChange(parseInt(e.target.value,10))} /></FormControl>
+                    <FormDescription>Número de itens por página para paginação numerada (1-100).</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+            {form.watch('searchPaginationType') === 'loadMore' && (
+              <FormField
+                control={form.control}
+                name="searchLoadMoreCount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contagem "Carregar Mais" (Busca)</FormLabel>
+                    <FormControl><Input type="number" min="1" max="100" {...field} value={field.value ?? 12} onChange={e => field.onChange(parseInt(e.target.value,10))} /></FormControl>
+                    <FormDescription>Número de itens a carregar ao clicar em "Carregar Mais" (1-100).</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+            <FormField
+                control={form.control}
+                name="showCountdownOnCards"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                        <FormLabel>Exibir Cronômetro nos Cards</FormLabel>
+                        <FormDescription>Mostrar contagem regressiva nos cards de lote (grade/lista).</FormDescription>
+                    </div>
+                    <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="showCountdownOnLotDetail"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                        <FormLabel>Exibir Cronômetro Detalhado no Lote</FormLabel>
+                        <FormDescription>Mostrar contagem regressiva na página de detalhes do lote.</FormDescription>
+                    </div>
+                    <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="showRelatedLotsOnLotDetail"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                        <FormLabel>Exibir Lotes Relacionados</FormLabel>
+                        <FormDescription>Mostrar seção "Outros lotes do mesmo leilão" na página do lote.</FormDescription>
+                    </div>
+                    <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                    </FormItem>
+                )}
+            />
+            {form.watch('showRelatedLotsOnLotDetail') && (
+                <FormField
+                    control={form.control}
+                    name="relatedLotsCount"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Quantidade de Lotes Relacionados</FormLabel>
+                        <FormControl><Input type="number" min="1" max="20" {...field} value={field.value ?? 5} onChange={e => field.onChange(parseInt(e.target.value,10))} /></FormControl>
+                        <FormDescription>Número de lotes relacionados a exibir (1-20).</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            )}
+             <div className="p-6 border rounded-lg bg-muted/20 text-center">
               <Palette className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
               <p className="text-muted-foreground">
-                A seção de Aparência e Temas está em desenvolvimento.
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Em breve, você poderá gerenciar temas de cores, fontes e outros aspectos visuais da plataforma aqui.
+                A seção de Temas de Cores está em desenvolvimento.
               </p>
             </div>
           </section>
@@ -334,3 +445,4 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
     
 
     
+
