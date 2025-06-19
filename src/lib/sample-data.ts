@@ -212,7 +212,7 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
   { id: 'LOTEART002', auctionId: 'ART001ANTIQ', publicId: 'LOT-ESCULTUR-BCD890G0', title: 'Escultura em Bronze "O Pensador" - Réplica Assinada', imageUrl: '/lotes-exemplo/arte/escultura_pensador_detalhe.jpg', dataAiHint: 'escultura bronze pensador', status: 'EM_BREVE', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-arte-e-antiguidades', views: 150, price: 3200, endDate: createFutureDate(15, 0), bidsCount: 0, description: 'Réplica em bronze da famosa escultura, assinada pelo artista.', sellerId: 'seller-galeria-de-arte-sp', latitude: -23.5613, longitude: -46.6562, mapAddress: 'Próximo ao MASP, Avenida Paulista, São Paulo - SP', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-46.6662,-23.5713,-46.6462,-23.5513&layer=mapnik&marker=-23.5613,-46.6562', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-23.5613,-46.6562&zoom=15&size=600x400&markers=color:orange%7C-23.5613,-46.6562&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
   { 
     id: 'LOTETP001-NB-A', auctionId: 'TP001-NOTEBOOKS', publicId: 'LOT-TPNOTEA-XZY987H7', title: 'Notebook Tipo A - Core i5, 8GB RAM, 256GB SSD (50 unidades)', 
-    imageUrl: 'https://placehold.co/600x400.png?text=Notebook+Tipo+A', dataAiHint: 'notebook moderno tela',
+    imageUrl: 'https://images.unsplash.com/photo-1744051518421-1eaf2fbde680?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxub3RlYm9va3MlMjBwaWxoYSUyMGVzY3JpdG9yaW98ZW58MHx8fHwxNzUwMzU2MDY1fDA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'notebook moderno tela',
     status: 'ABERTO_PARA_LANCES', cityId: 'city-campinas-sp', stateId: 'state-sp', categoryId: 'cat-eletronicos-e-tecnologia', 
     views: 75, price: 150000, endDate: createFutureDate(15, 17), description: 'Lote de 50 notebooks corporativos padrão, Processador Intel Core i5 de 11ª geração, 8GB RAM DDR4, 256GB SSD NVMe, Tela 14" Full HD. Conforme edital TP 001/2024.',
     sellerId: 'seller-prefeitura-municipal-de-campinas', initialPrice: 160000,
@@ -220,7 +220,7 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
   },
   { 
     id: 'LOTETP001-NB-B', auctionId: 'TP001-NOTEBOOKS', publicId: 'LOT-TPNOTEB-WXY654I8', title: 'Notebook Tipo B - Core i7, 16GB RAM, 512GB SSD (30 unidades)', 
-    imageUrl: 'https://placehold.co/600x400.png?text=Notebook+Tipo+B', dataAiHint: 'notebook avançado aberto',
+    imageUrl: 'https://images.unsplash.com/photo-1744051518421-1eaf2fbde680?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxub3RlYm9va3MlMjBwaWxoYSUyMGVzY3JpdG9yaW98ZW58MHx8fHwxNzUwMzU2MDY1fDA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'notebook avançado aberto',
     status: 'ABERTO_PARA_LANCES', cityId: 'city-campinas-sp', stateId: 'state-sp', categoryId: 'cat-eletronicos-e-tecnologia',
     views: 60, price: 170000, endDate: createFutureDate(15, 17), description: 'Lote de 30 notebooks corporativos avançados, Processador Intel Core i7 de 12ª geração, 16GB RAM DDR4, 512GB SSD NVMe, Tela 15.6" Full HD IPS. Conforme edital TP 001/2024.',
     sellerId: 'seller-prefeitura-municipal-de-campinas', initialPrice: 180000,
@@ -228,7 +228,7 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
   },
   {
     id: 'LOTETP002-CAR1', auctionId: 'TP002-VEICULOS', publicId: 'LOT-TPVEIC1-UVX321J9', title: 'Veículo Sedan - Fiat Cronos 2019', 
-    imageUrl: 'https://placehold.co/600x400.png?text=Fiat+Cronos', dataAiHint: 'carro sedan branco',
+    imageUrl: 'https://images.unsplash.com/photo-1658241213593-b7904e271aa8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYXJyb3MlMjB1c2Fkb3MlMjBwYXRpb3xlbnwwfHx8fDE3NTAzNTYwNjV8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'carro sedan branco',
     status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'cat-veiculos',
     views: 120, price: 35000, endDate: createPastDate(15, 17), description: 'Fiat Cronos Drive 1.3, 2019, branco, completo. Estado de conservação regular. Placa final 5. Venda no estado em que se encontra. Edital TP 002/2024.',
     sellerId: 'seller-secretaria-de-administracao-de-salvador', initialPrice: 30000,
@@ -236,7 +236,7 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
   },
   {
     id: 'LOTETP002-UTIL1', auctionId: 'TP002-VEICULOS', publicId: 'LOT-TPVEIC2-RST098K0', title: 'Veículo Utilitário - Fiat Fiorino 2017', 
-    imageUrl: 'https://placehold.co/600x400.png?text=Fiat+Fiorino', dataAiHint: 'fiorino branca carga',
+    imageUrl: 'https://images.unsplash.com/photo-1658241213593-b7904e271aa8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYXJyb3MlMjB1c2Fkb3MlMjBwYXRpb3xlbnwwfHx8fDE3NTAzNTYwNjV8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'fiorino branca carga',
     status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'cat-veiculos',
     views: 95, price: 28000, endDate: createPastDate(15, 17), description: 'Fiat Fiorino Hard Working 1.4, 2017, branca, furgão. Necessita reparos. Placa final 8. Venda no estado. Edital TP 002/2024.',
     sellerId: 'seller-secretaria-de-administracao-de-salvador', initialPrice: 25000,
@@ -1067,3 +1067,4 @@ sampleLotsRaw.forEach(lot => {
         lot.sellerId = `seller-${slugify(seller.name)}`;
     }
 });
+
