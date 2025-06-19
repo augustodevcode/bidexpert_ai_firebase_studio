@@ -5,16 +5,16 @@ import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, type AuctionFormData, deleteAuction } from '../../actions'; 
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
-import type { Auction, Lot } from '@/types';
-import { notFound, useRouter } from 'next/navigation'; // useRouter importado
+import type { Auction, Lot, PlatformSettings } from '@/types';
+import { notFound, useRouter, useParams } from 'next/navigation'; // useParams importado, useRouter já estava
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot } from 'lucide-react';
 import { format, differenceInDays, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
+import { getAuctionStatusText, getLotStatusColor, samplePlatformSettings } from '@/lib/sample-data';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { Separator } from '@/components/ui/separator';
-import React, { useEffect } from 'react'; 
+import React, { useEffect, useCallback } from 'react'; 
 import { useToast } from '@/hooks/use-toast';
 
 function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotId: string; lotTitle: string; auctionId: string; onDeleteSuccess: () => void }) {
@@ -39,14 +39,13 @@ function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotI
 
   const handleDelete = async () => {
     setIsDeleting(true);
-    // Call the server action directly
     const result = await deleteLot(lotId, auctionId); 
     if (!result.success) {
         console.error("Failed to delete lot:", result.message);
         toast({ title: "Erro ao Excluir Lote", description: result.message, variant: "destructive" });
     } else {
         toast({ title: "Sucesso", description: "Lote excluído com sucesso." });
-        onDeleteSuccess(); // Callback to refresh data
+        onDeleteSuccess(); 
     }
     setIsDeleting(false);
   };
@@ -157,12 +156,43 @@ function AuctionInfoDisplay({ auction }: { auction: Auction }) {
                     </CardContent>
                 </Card>
             )}
+             <Card className="shadow-md">
+                <CardHeader><CardTitle className="text-lg flex items-center"><ListChecks className="mr-2 h-5 w-5 text-blue-500"/>Últimos Lances Registrados</CardTitle></CardHeader>
+                <CardContent className="text-sm text-muted-foreground">
+                   <p>Funcionalidade de exibição dos últimos lances em desenvolvimento.</p>
+                   <p className="text-xs mt-1">(Exibirá aqui uma lista dos lances mais recentes no leilão.)</p>
+                </CardContent>
+            </Card>
+             <Card className="shadow-md">
+                <CardHeader><CardTitle className="text-lg flex items-center"><AlertTriangle className="mr-2 h-5 w-5 text-amber-500"/>Requer Atenção</CardTitle></CardHeader>
+                <CardContent className="text-sm text-muted-foreground">
+                   <p>Nenhum alerta crítico para este leilão no momento.</p>
+                   <p className="text-xs mt-1">(Ex: Lotes sem lance inicial, datas próximas do fim, etc.)</p>
+                </CardContent>
+            </Card>
+             <Card className="shadow-md">
+                <CardHeader><CardTitle className="text-lg flex items-center"><PackageIcon className="mr-2 h-5 w-5 text-green-500"/>Estatísticas de Lotes</CardTitle></CardHeader>
+                <CardContent className="text-sm text-muted-foreground">
+                   <p>Total de Lotes: {auction?.totalLots || 0}</p>
+                   <p>Lotes Vendidos: (Em breve)</p>
+                   <p>Taxa de Venda: (Em breve)</p>
+                   <p className="text-xs mt-1">(Mais estatísticas sobre o desempenho dos lotes serão exibidas aqui.)</p>
+                </CardContent>
+            </Card>
+            <Card className="shadow-md">
+                <CardHeader><CardTitle className="text-lg">Ações Rápidas</CardTitle></CardHeader>
+                <CardContent className="space-y-2">
+                    <Button variant="outline" className="w-full justify-start" disabled><Users className="mr-2 h-4 w-4"/> Gerenciar Habilitações (Em breve)</Button>
+                    <Button variant="outline" className="w-full justify-start" disabled><BarChart2 className="mr-2 h-4 w-4"/> Ver Relatórios Detalhados (Em breve)</Button>
+                </CardContent>
+            </Card>
         </div>
     );
 }
 
 
-export default function EditAuctionPage({ params }: { params: { auctionId: string } }) {
+export default function EditAuctionPage() {
+  const params = useParams<{ auctionId: string }>();
   const auctionId = params.auctionId;
   const [auction, setAuction] = React.useState<Auction | null>(null);
   const [categories, setCategories] = React.useState<any[]>([]);
@@ -173,7 +203,8 @@ export default function EditAuctionPage({ params }: { params: { auctionId: strin
   const router = useRouter();
   const { toast } = useToast();
 
-  const fetchPageData = React.useCallback(async () => {
+  const fetchPageData = useCallback(async () => {
+    if (!auctionId) return; // Garante que auctionId existe
     setIsLoading(true);
     try {
         const [fetchedAuction, fetchedCategories, fetchedLots, fetchedAuctioneers, fetchedSellers] = await Promise.all([
@@ -199,30 +230,25 @@ export default function EditAuctionPage({ params }: { params: { auctionId: strin
     } finally {
         setIsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auctionId, toast]);
+  }, [auctionId, toast]); // Dependência `toast` é estável
 
 
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData]);
 
-  // Function to pass to the form submit action
   async function handleUpdateAuction(data: Partial<AuctionFormData>) {
-    // 'use server'; // REMOVED - Server Action is in actions.ts
     return updateAuction(auctionId, data);
   }
 
-  // Action for deleting a lot (called by DeleteLotButton)
   async function handleDeleteLotAction(lotId: string, currentAuctionId: string) {
-    // 'use server'; // REMOVED - Server Action is in actions.ts
     const result = await deleteLot(lotId, currentAuctionId); 
     if (!result.success) {
         console.error("Failed to delete lot:", result.message);
         toast({ title: "Erro ao Excluir Lote", description: result.message, variant: "destructive" });
     } else {
         toast({ title: "Sucesso", description: "Lote excluído com sucesso." });
-        fetchPageData(); // Re-fetch data to update the list
+        fetchPageData(); 
     }
   }
 
@@ -248,36 +274,6 @@ export default function EditAuctionPage({ params }: { params: { auctionId: strin
         </div>
         <div className="lg:col-span-1 space-y-6 sticky top-24">
             <AuctionInfoDisplay auction={auction} />
-            <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-lg">Ações Rápidas</CardTitle></CardHeader>
-                <CardContent className="space-y-2">
-                    <Button variant="outline" className="w-full justify-start" disabled><Users className="mr-2 h-4 w-4"/> Gerenciar Habilitações (Em breve)</Button>
-                    <Button variant="outline" className="w-full justify-start" disabled><BarChart2 className="mr-2 h-4 w-4"/> Ver Relatórios Detalhados (Em breve)</Button>
-                </CardContent>
-            </Card>
-            <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-lg flex items-center"><ListChecks className="mr-2 h-5 w-5 text-blue-500"/>Últimos Lances Registrados</CardTitle></CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                   <p>Funcionalidade de exibição dos últimos lances em desenvolvimento.</p>
-                   <p className="text-xs mt-1">(Exibirá aqui uma lista dos lances mais recentes no leilão.)</p>
-                </CardContent>
-            </Card>
-             <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-lg flex items-center"><AlertTriangle className="mr-2 h-5 w-5 text-amber-500"/>Requer Atenção</CardTitle></CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                   <p>Nenhum alerta crítico para este leilão no momento.</p>
-                   <p className="text-xs mt-1">(Ex: Lotes sem lance inicial, datas próximas do fim, etc.)</p>
-                </CardContent>
-            </Card>
-             <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-lg flex items-center"><PackageIcon className="mr-2 h-5 w-5 text-green-500"/>Estatísticas de Lotes</CardTitle></CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                   <p>Total de Lotes: {auction?.totalLots || 0}</p>
-                   <p>Lotes Vendidos: (Em breve)</p>
-                   <p>Taxa de Venda: (Em breve)</p>
-                   <p className="text-xs mt-1">(Mais estatísticas sobre o desempenho dos lotes serão exibidas aqui.)</p>
-                </CardContent>
-            </Card>
         </div>
       </div>
 
