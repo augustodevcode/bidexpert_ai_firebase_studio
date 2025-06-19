@@ -1,6 +1,6 @@
 
 'use client';
-    
+
 import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import {
     Printer, Share2, ArrowLeft, ChevronLeft, ChevronRight, Key, Info,
     Tag, CalendarDays, Clock, Users, DollarSign, MapPin, Car, ThumbsUp,
-    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye, ExternalLink, ListFilter, FileQuestion, Banknote, Building, Link2 as LinkIcon
+    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye, ExternalLink, ListFilter, FileQuestion, Banknote, Building, Link2 as LinkIcon, AlertCircle
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -25,12 +25,12 @@ import { format, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { addRecentlyViewedId } from '@/lib/recently-viewed-store';
 import { useToast } from '@/hooks/use-toast';
-    
+
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useAuth } from '@/contexts/auth-context';
 import { getAuctionStatusText, getLotStatusColor, sampleAuctions, samplePlatformSettings } from '@/lib/sample-data';
 
-import { getBidsForLot, getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, placeBidOnLot } from './actions'; 
+import { getBidsForLot, getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, placeBidOnLot } from './actions';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LotDescriptionTab from '@/components/auction/lot-description-tab';
@@ -44,33 +44,33 @@ import { hasPermission } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
 import LotAllBidsModal from '@/components/auction/lot-all-bids-modal';
 import LotCard from '@/components/lot-card'; // Importar LotCard
-    
+
 const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'admin@bidexpert.com.br'.toLowerCase();
 const SUPER_TEST_USER_UID_FOR_BYPASS = 'SUPER_TEST_USER_UID_PLACEHOLDER_AUG';
 const SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS = 'Administrador BidExpert (Super Test)';
 
-// Re-using TimeRemainingBadge logic adapted for this page
+
 interface DetailTimeRemainingProps {
   endDate: Date | string;
+  startDate?: Date | string | null; // Adicionado
   status: Lot['status'];
   showUrgencyTimer?: boolean;
   urgencyThresholdDays?: number;
   urgencyThresholdHours?: number;
   className?: string;
-  textClassName?: string;
 }
 
 const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
   endDate,
+  startDate,
   status,
   showUrgencyTimer = true,
   urgencyThresholdDays = 1,
   urgencyThresholdHours = 0,
   className,
-  textClassName = "text-3xl font-bold text-destructive",
 }) => {
-  const [timeRemaining, setTimeRemaining] = useState<string>('');
-  const [isUrgentVisual, setIsUrgentVisual] = useState(false);
+  const [timeSegments, setTimeSegments] = useState<{days: string; hours: string; minutes: string; seconds: string} | null>(null);
+  const [displayMessage, setDisplayMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const calculateTime = () => {
@@ -78,77 +78,91 @@ const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
       const end = endDate instanceof Date ? endDate : new Date(endDate);
 
       if (isPast(end) || status !== 'ABERTO_PARA_LANCES') {
-        setTimeRemaining(getAuctionStatusText(status === 'ABERTO_PARA_LANCES' && isPast(end) ? 'ENCERRADO' : status));
-        setIsUrgentVisual(false);
+        setDisplayMessage(getAuctionStatusText(status === 'ABERTO_PARA_LANCES' && isPast(end) ? 'ENCERRADO' : status));
+        setTimeSegments(null);
         return;
       }
 
       const totalSecondsLeft = differenceInSeconds(end, now);
       if (totalSecondsLeft <= 0) {
-        setTimeRemaining('Encerrado');
-        setIsUrgentVisual(false);
+        setDisplayMessage('Encerrado');
+        setTimeSegments(null);
         return;
       }
       
-      const thresholdInSeconds = (urgencyThresholdDays * 24 * 60 * 60) + (urgencyThresholdHours * 60 * 60);
-      const currentlyUrgent = totalSecondsLeft <= thresholdInSeconds;
-      setIsUrgentVisual(currentlyUrgent && showUrgencyTimer);
+      setDisplayMessage(null); // Clear message if countdown is active
 
-      if (currentlyUrgent && showUrgencyTimer) {
-        const hours = Math.floor(totalSecondsLeft / 3600);
-        const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
-        const seconds = totalSecondsLeft % 60;
-        if (hours > 0) {
-          setTimeRemaining(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
-        } else {
-          setTimeRemaining(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
-        }
-      } else {
-        const days = Math.floor(totalSecondsLeft / (3600 * 24));
-        const hours = Math.floor((totalSecondsLeft % (3600 * 24)) / 3600);
-        const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
+      const days = Math.floor(totalSecondsLeft / (3600 * 24));
+      const hours = Math.floor((totalSecondsLeft % (3600 * 24)) / 3600);
+      const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
+      const seconds = totalSecondsLeft % 60;
 
-        if (days > 1) setTimeRemaining(`${days} dias`);
-        else if (days === 1) setTimeRemaining(`${days} dia ${hours}h`);
-        else if (hours > 0) setTimeRemaining(`${hours}h ${minutes}m`);
-        else if (minutes > 0) setTimeRemaining(`${minutes}m`);
-        else setTimeRemaining('Encerrando!');
-      }
+      setTimeSegments({
+        days: String(days).padStart(2, '0'),
+        hours: String(hours).padStart(2, '0'),
+        minutes: String(minutes).padStart(2, '0'),
+        seconds: String(seconds).padStart(2, '0'),
+      });
     };
 
     calculateTime();
     const interval = setInterval(calculateTime, 1000);
     return () => clearInterval(interval);
-  }, [endDate, status, showUrgencyTimer, urgencyThresholdDays, urgencyThresholdHours]);
-
-  const finalClassName = cn(
-    "text-center",
-    isUrgentVisual ? "text-destructive" : "text-muted-foreground",
-    className
-  );
-  const finalTextClassName = cn(
-    isUrgentVisual ? "text-3xl font-bold text-destructive" : "text-2xl font-semibold",
-    textClassName
-  );
+  }, [endDate, status]);
 
 
   return (
-    <div className={finalClassName}>
-      <p className="text-sm font-medium mb-1">
-        {status === 'ABERTO_PARA_LANCES' ? 'Tempo Restante:' : 'Status:'}
-      </p>
-      <div className={finalTextClassName}>
-        {timeRemaining}
-      </div>
-      {status === 'EM_BREVE' && lot.endDate && (
-        <p className="text-xs text-center text-muted-foreground">
-          Inicia em: {format(new Date(lot.endDate), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-        </p>
+    <div className={cn("text-center py-3 bg-secondary/30 rounded-md shadow-inner", className)}>
+      {timeSegments && status === 'ABERTO_PARA_LANCES' && !isPast(new Date(endDate)) ? (
+        <>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Encerra em:</p>
+          <div className="flex justify-center items-baseline space-x-2 text-destructive">
+            {parseInt(timeSegments.days, 10) > 0 && (
+              <div className="flex flex-col items-center">
+                <span className="text-3xl font-bold">{timeSegments.days}</span>
+                <span className="text-xs uppercase">dias</span>
+              </div>
+            )}
+            {parseInt(timeSegments.days, 10) > 0 && <span className="text-2xl font-light self-center pb-1">|</span>}
+            <div className="flex flex-col items-center">
+              <span className="text-3xl font-bold">{timeSegments.hours}</span>
+              <span className="text-xs uppercase">horas</span>
+            </div>
+            <span className="text-2xl font-light self-center pb-1">|</span>
+            <div className="flex flex-col items-center">
+              <span className="text-3xl font-bold">{timeSegments.minutes}</span>
+              <span className="text-xs uppercase">minutos</span>
+            </div>
+            {parseInt(timeSegments.days, 10) === 0 && ( // Show seconds only if less than a day left
+              <>
+                <span className="text-2xl font-light self-center pb-1">|</span>
+                <div className="flex flex-col items-center">
+                  <span className="text-3xl font-bold">{timeSegments.seconds}</span>
+                  <span className="text-xs uppercase">segs</span>
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      ) : (
+        <div className="text-lg font-semibold text-muted-foreground">{displayMessage}</div>
       )}
+       <div className="text-xs text-muted-foreground mt-2 grid grid-cols-2 gap-x-2 px-2">
+        {startDate && (
+           <div className="text-right">
+             <span className="font-medium">Abertura:</span> {format(new Date(startDate), 'dd/MM/yy HH:mm', {locale: ptBR})}
+           </div>
+        )}
+        {endDate && (
+           <div className="text-left">
+             <span className="font-medium">Encerramento:</span> {format(new Date(endDate), 'dd/MM/yy HH:mm', {locale: ptBR})}
+           </div>
+        )}
+      </div>
     </div>
   );
 };
-    
+
 interface LotDetailClientContentProps {
   lot: Lot;
   auction: Auction;
@@ -159,7 +173,7 @@ interface LotDetailClientContentProps {
   nextLotId?: string;
   totalLotsInAuction?: number;
 }
-    
+
 export default function LotDetailClientContent({
   lot: initialLot,
   auction,
@@ -174,7 +188,7 @@ export default function LotDetailClientContent({
   const [isLotFavorite, setIsLotFavorite] = useState(false);
   const { toast } = useToast();
   const [currentUrl, setCurrentUrl] = useState('');
-  const { userProfileWithPermissions, loading: authLoading } = useAuth(); 
+  const { userProfileWithPermissions, loading: authLoading } = useAuth();
   const [lotBids, setLotBids] = useState<BidInfo[]>([]);
   const [lotReviews, setLotReviews] = useState<Review[]>([]);
   const [lotQuestions, setLotQuestions] = useState<LotQuestion[]>([]);
@@ -184,7 +198,7 @@ export default function LotDetailClientContent({
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isAllBidsModalOpen, setIsAllBidsModalOpen] = useState(false);
-    
+
   const gallery = useMemo(() => {
     if (!lot) return [];
     const mainImage = typeof lot.imageUrl === 'string' && lot.imageUrl.trim() !== '' ? [lot.imageUrl] : [];
@@ -193,7 +207,7 @@ export default function LotDetailClientContent({
     const uniqueUrls = Array.from(new Set(combined.filter(Boolean)));
     return uniqueUrls.length > 0 ? uniqueUrls : ['https://placehold.co/800x600.png?text=Imagem+Indisponivel'];
   }, [lot]);
-    
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setCurrentUrl(window.location.href);
@@ -202,7 +216,7 @@ export default function LotDetailClientContent({
       addRecentlyViewedId(lot.id);
       setIsLotFavorite(isLotFavoriteInStorage(lot.id));
       setCurrentImageIndex(0);
-    
+
       const fetchDataForTabs = async () => {
         setIsLoadingData(true);
         try {
@@ -213,7 +227,7 @@ export default function LotDetailClientContent({
             getQuestionsForLot(lot.id)
           ]);
           console.log(`[LotDetailClient] Bids fetched: ${bids.length}, Reviews: ${reviews.length}, Questions: ${questions.length}`);
-          setLotBids(bids);
+          setLotBids(bids.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
           setLotReviews(reviews);
           setLotQuestions(questions);
         } catch (error: any) {
@@ -225,48 +239,48 @@ export default function LotDetailClientContent({
       };
       fetchDataForTabs();
     }
-  }, [lot, toast]); 
-    
-    
+  }, [lot, toast]);
+
+
   const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || lot?.title}`.trim();
   const lotLocation = lot?.cityName && lot?.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot?.stateUf || lot?.cityName || 'Não informado';
-    
+
   const isEffectivelySuperTestUser = userProfileWithPermissions?.email?.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS;
   const hasAdminRights = userProfileWithPermissions && hasPermission(userProfileWithPermissions, 'manage_all');
   const isUserHabilitado = userProfileWithPermissions?.habilitationStatus === 'HABILITADO';
-    
-  const canUserBid = 
-    (isEffectivelySuperTestUser || hasAdminRights || (userProfileWithPermissions && isUserHabilitado)) && 
+
+  const canUserBid =
+    (isEffectivelySuperTestUser || hasAdminRights || (userProfileWithPermissions && isUserHabilitado)) &&
     lot?.status === 'ABERTO_PARA_LANCES';
-    
+
   const canUserReview = !!userProfileWithPermissions;
-    
-  const canUserAskQuestion = 
+
+  const canUserAskQuestion =
     isEffectivelySuperTestUser || hasAdminRights || (userProfileWithPermissions && isUserHabilitado);
-    
+
   const handleToggleFavorite = () => {
     if (!lot || !lot.id) return;
     const newFavoriteState = !isLotFavorite;
     setIsLotFavorite(newFavoriteState);
-    
+
     if (newFavoriteState) {
       addFavoriteLotIdToStorage(lot.id);
     } else {
       removeFavoriteLotIdFromStorage(lot.id);
     }
-    
+
     toast({
       title: newFavoriteState ? "Adicionado aos Favoritos" : "Removido dos Favoritos",
       description: `O lote "${lotTitle}" foi ${newFavoriteState ? 'adicionado à' : 'removido da'} sua lista.`,
     });
   };
-    
+
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
       window.print();
     }
   };
-    
+
   const getSocialLink = (platform: 'x' | 'facebook' | 'whatsapp' | 'email', url: string, title: string) => {
     const encodedUrl = encodeURIComponent(url);
     const encodedTitle = encodeURIComponent(title);
@@ -281,35 +295,40 @@ export default function LotDetailClientContent({
         return `mailto:?subject=${encodedTitle}&body=${encodedUrl}`;
     }
   };
-    
+
   const bidIncrement = lot?.bidIncrementStep || ((lot?.price || 0) > 10000 ? 500 : ((lot?.price || 0) > 1000 ? 100 : 50));
   const nextMinimumBid = (lot?.price || 0) + bidIncrement;
-    
+
   const handlePlaceBid = async () => {
     setIsPlacingBid(true);
-    
+
     let userIdForBid: string | undefined = userProfileWithPermissions?.uid;
     let displayNameForBid: string | undefined = userProfileWithPermissions?.fullName || userProfileWithPermissions?.email?.split('@')[0];
 
     if (isEffectivelySuperTestUser && !userIdForBid) {
-        userIdForBid = userProfileWithPermissions?.uid || SUPER_TEST_USER_UID_FOR_BYPASS; 
+        userIdForBid = userProfileWithPermissions?.uid || SUPER_TEST_USER_UID_FOR_BYPASS;
         displayNameForBid = userProfileWithPermissions?.fullName || SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
     }
-    
+
     if (!userIdForBid) {
       toast({ title: "Ação Requerida", description: "Você precisa estar logado e com perfil carregado para dar um lance.", variant: "destructive" });
       setIsPlacingBid(false);
       return;
     }
     if (!displayNameForBid) displayNameForBid = 'Usuário Anônimo';
-    
+
     const amountToBid = parseFloat(bidAmountInput);
     if (isNaN(amountToBid) || amountToBid <= 0) {
       toast({ title: "Erro no Lance", description: "Por favor, insira um valor de lance válido.", variant: "destructive" });
       setIsPlacingBid(false);
       return;
     }
-    
+    if (amountToBid < nextMinimumBid) {
+        toast({ title: "Erro no Lance", description: `Seu lance deve ser de pelo menos R$ ${nextMinimumBid.toLocaleString('pt-BR')}.`, variant: "destructive" });
+        setIsPlacingBid(false);
+        return;
+    }
+
     try {
       console.log(`[LotDetailClient] Placing bid for lot ${lot.id} by user ${userIdForBid} with amount ${amountToBid}`);
       const result = await placeBidOnLot(lot.id, lot.auctionId, userIdForBid!, displayNameForBid!, amountToBid);
@@ -329,31 +348,32 @@ export default function LotDetailClientContent({
       setIsPlacingBid(false);
     }
   };
-    
-  const currentBidLabel = lot?.bidsCount && lot.bidsCount > 0 ? "Lance Atual" : "Lance Inicial";
+
+  const currentBidLabel = lot?.bidsCount && lot.bidsCount > 0 ? "Último lance:" : "Lance Inicial:";
   const currentBidValue = lot?.price || 0;
-    
+
   if (!lot || !auction) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
-        <p className="text-muted-foreground">Carregando detalhes do lote...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-primary"/>
+        <p className="ml-2 text-muted-foreground">Carregando detalhes do lote...</p>
       </div>
     );
   }
-    
+
   const nextImage = () => setCurrentImageIndex((prev) => (gallery.length > 0 ? (prev + 1) % gallery.length : 0));
   const prevImage = () => setCurrentImageIndex((prev) => (gallery.length > 0 ? (prev - 1 + gallery.length) % gallery.length : 0));
-    
+
   const actualLotNumber = lot.number || lot.id;
   const displayLotPosition = lotIndex !== undefined && lotIndex !== -1 ? lotIndex + 1 : 'N/A';
   const displayTotalLots = totalLotsInAuction || auction.totalLots || 'N/A';
-    
+
   const handleNewReview = async (rating: number, comment: string) => {
     let userIdForReview: string | undefined = userProfileWithPermissions?.uid;
     let displayNameForReview: string | undefined = userProfileWithPermissions?.fullName || userProfileWithPermissions?.email?.split('@')[0];
 
     if (isEffectivelySuperTestUser && !userIdForReview) {
-        userIdForReview = userProfileWithPermissions?.uid || SUPER_TEST_USER_UID_FOR_BYPASS; 
+        userIdForReview = userProfileWithPermissions?.uid || SUPER_TEST_USER_UID_FOR_BYPASS;
         displayNameForReview = userProfileWithPermissions?.fullName || SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
     }
 
@@ -362,7 +382,7 @@ export default function LotDetailClientContent({
       return false;
     }
     if (!displayNameForReview) displayNameForReview = 'Usuário Anônimo';
-    
+
     console.log(`[LotDetailClient] Submitting review for lot ${lot.id} by user ${userIdForReview}`);
     const result = await createReview(lot.id, userIdForReview, displayNameForReview, rating, comment);
     console.log(`[LotDetailClient] createReview result:`, result);
@@ -377,13 +397,13 @@ export default function LotDetailClientContent({
       return false;
     }
   };
-    
+
   const handleNewQuestion = async (questionText: string) => {
     let userIdForQuestion: string | undefined = userProfileWithPermissions?.uid;
     let displayNameForQuestion: string | undefined = userProfileWithPermissions?.fullName || userProfileWithPermissions?.email?.split('@')[0];
 
     if (isEffectivelySuperTestUser && !userIdForQuestion) {
-        userIdForQuestion = userProfileWithPermissions?.uid || SUPER_TEST_USER_UID_FOR_BYPASS; 
+        userIdForQuestion = userProfileWithPermissions?.uid || SUPER_TEST_USER_UID_FOR_BYPASS;
         displayNameForQuestion = userProfileWithPermissions?.fullName || SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
     }
 
@@ -396,7 +416,7 @@ export default function LotDetailClientContent({
       return false;
     }
     if (!displayNameForQuestion) displayNameForQuestion = 'Usuário Anônimo';
-    
+
     console.log(`[LotDetailClient] Submitting question for lot ${lot.id} by user ${userIdForQuestion}`);
     const result = await askQuestionOnLot(lot.id, userIdForQuestion, displayNameForQuestion, questionText);
     console.log(`[LotDetailClient] askQuestionOnLot result:`, result);
@@ -418,10 +438,10 @@ export default function LotDetailClientContent({
       .filter(relatedLot => relatedLot.id !== lot.id)
       .slice(0, platformSettings.relatedLotsCount || 5);
   }, [auction, lot, platformSettings.relatedLotsCount]);
-  
- return ( 
-    <> 
-        <div className="space-y-6"> 
+
+ return (
+    <>
+        <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
             <div className="flex-grow">
                 <h1 className="text-2xl md:text-3xl font-bold font-headline text-left">{lotTitle}</h1>
@@ -483,11 +503,11 @@ export default function LotDetailClientContent({
                         </div>
                     </CardContent>
                     </Card>
-                    
-                    <Card className="shadow-lg"> {/* Card para envolver as abas */}
+
+                    <Card className="shadow-lg">
                         <CardContent className="p-4 md:p-6">
                             <Tabs defaultValue="description" className="w-full">
-                                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 mb-4">
+                                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-1 mb-4">
                                     <TabsTrigger value="description">Descrição</TabsTrigger>
                                     <TabsTrigger value="specification">Especificações</TabsTrigger>
                                     <TabsTrigger value="legal">Documentos</TabsTrigger>
@@ -521,47 +541,59 @@ export default function LotDetailClientContent({
                                 <TabsContent value="questions"><LotQuestionsTab lot={lot} questions={lotQuestions} isLoading={isLoadingData} onNewQuestion={handleNewQuestion} canUserAskQuestion={canUserAskQuestion} /></TabsContent>
                             </Tabs>
                         </CardContent>
-                    </Card> {/* Fim do Card das abas */}
+                    </Card>
                 </div>
 
                 {/* Coluna Direita: Informações de Lance, Venda, Histórico e Mapa */}
                 <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
                     <Card className="shadow-md">
-                        <CardHeader>
-                            <CardTitle className="text-xl">Informações do Lance</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
+                        <CardContent className="p-4 space-y-3">
+                            {platformSettings.showCountdownOnLotDetail !== false && (
+                                <DetailTimeRemaining
+                                    endDate={lot.endDate}
+                                    startDate={lot.auctionDate || auction.auctionDate}
+                                    status={lot.status}
+                                    showUrgencyTimer={platformSettings.mentalTriggerSettings?.showUrgencyTimer}
+                                    urgencyThresholdDays={platformSettings.mentalTriggerSettings?.urgencyTimerThresholdDays}
+                                    urgencyThresholdHours={platformSettings.mentalTriggerSettings?.urgencyTimerThresholdHours}
+                                />
+                            )}
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-muted-foreground">Visitas: {lot.views}</span>
+                                <span className="text-muted-foreground">Participantes: {auction.totalHabilitatedUsers || 0}</span>
+                                <span className="text-muted-foreground">Lances: {lot.bidsCount || 0}</span>
+                            </div>
+                            <Separator />
                             <div className="text-sm">
-                                <p className="text-muted-foreground">{currentBidLabel}:</p>
-                                <p className="text-2xl font-bold text-primary">
+                                <p className="text-muted-foreground">{currentBidLabel}</p>
+                                <p className="text-3xl font-bold text-primary">
                                     R$ {currentBidValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </p>
+                                <p className="text-xs text-muted-foreground">(BRL)</p>
                             </div>
-                            {platformSettings.showCountdownOnLotDetail !== false && (
-                              <div className="pt-2">
-                                <DetailTimeRemaining 
-                                  endDate={lot.endDate} 
-                                  status={lot.status} 
-                                  showUrgencyTimer={platformSettings.mentalTriggerSettings?.showUrgencyTimer}
-                                  urgencyThresholdDays={platformSettings.mentalTriggerSettings?.urgencyTimerThresholdDays}
-                                  urgencyThresholdHours={platformSettings.mentalTriggerSettings?.urgencyTimerThresholdHours}
-                                />
-                              </div>
-                            )}
                             {canUserBid ? (
                             <div className="space-y-2 pt-2">
                                 <div className="relative">
                                     <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input type="number" placeholder={`Mínimo R$ ${nextMinimumBid.toLocaleString('pt-BR')}`} value={bidAmountInput} onChange={(e) => setBidAmountInput(e.target.value)} className="pl-9 h-11 text-base" min={nextMinimumBid} step={bidIncrement} disabled={isPlacingBid} />
+                                    <Input type="number" placeholder={`Próximo lance R$ ${nextMinimumBid.toLocaleString('pt-BR')}`} value={bidAmountInput} onChange={(e) => setBidAmountInput(e.target.value)} className="pl-9 h-11 text-base" min={nextMinimumBid} step={bidIncrement} disabled={isPlacingBid} />
+                                    <Button size="sm" variant="ghost" className="absolute right-2 top-1/2 -translate-y-1/2 h-7 text-primary" onClick={() => setBidAmountInput(String(nextMinimumBid))}>+</Button>
                                 </div>
-                                <Button onClick={handlePlaceBid} disabled={isPlacingBid || !bidAmountInput} className="w-full h-11 text-base">
+                                 <p className="text-xs text-muted-foreground text-center">Incremento: R$ {bidIncrement.toLocaleString('pt-BR')}</p>
+                                <Button onClick={handlePlaceBid} disabled={isPlacingBid || !bidAmountInput} className="w-full h-11 text-base bg-accent text-accent-foreground hover:bg-accent/90">
                                 {isPlacingBid ? <Loader2 className="animate-spin" /> : `Dar Lance (R$ ${parseFloat(bidAmountInput || '0').toLocaleString('pt-BR') || nextMinimumBid.toLocaleString('pt-BR') })`}
                                 </Button>
+                                {/* Placeholder for "Estimar comissões" and "Habilitar lance rápido" */}
+                                <Button variant="link" size="sm" className="w-full text-primary text-xs">Estimar comissões e demais valores</Button>
+                                <div className="flex items-center space-x-2 justify-center pt-2">
+                                    <Switch id="quick-bid" disabled />
+                                    <Label htmlFor="quick-bid" className="text-xs text-muted-foreground">Habilitar lance rápido</Label>
+                                </div>
                             </div>
                             ) : (
-                            <div className="text-sm text-muted-foreground p-3 bg-secondary/50 rounded-md">
-                                <p>{lot.status !== 'ABERTO_PARA_LANCES' ? `Lances para este lote estão ${getAuctionStatusText(lot.status).toLowerCase()}.` : (userProfileWithPermissions ? 'Você precisa estar habilitado para dar lances.' : 'Você precisa estar logado para dar lances.')}</p>
+                            <div className="text-sm text-center p-3 bg-destructive/10 text-destructive rounded-md">
+                                <p>{lot.status !== 'ABERTO_PARA_LANCES' ? `Lances para este lote estão ${getAuctionStatusText(lot.status).toLowerCase()}.` : (userProfileWithPermissions ? 'Para ver sua posição na disputa ou dar lances, habilite-se.' : 'Para ver sua posição na disputa, efetue o login.')}</p>
                                 {!userProfileWithPermissions && <Link href={`/auth/login?redirect=/auctions/${auction.publicId || auction.id}/lots/${lot.publicId || lot.id}`} className="text-primary hover:underline font-medium">Faça login ou registre-se.</Link>}
+                                {userProfileWithPermissions && (!isUserHabilitado && !hasAdminRights && !isEffectivelySuperTestUser) && <Button size="lg" className="w-full mt-3 bg-purple-600 hover:bg-purple-700 text-white">HABILITE-SE</Button>}
                             </div>
                             )}
                             <Button variant="outline" className="w-full" onClick={handleToggleFavorite}>
@@ -571,24 +603,6 @@ export default function LotDetailClientContent({
                         </CardContent>
                     </Card>
 
-                    <Card className="shadow-md">
-                        <CardHeader><CardTitle className="text-xl flex items-center">Informações da Venda <Info className="h-4 w-4 ml-2 text-muted-foreground" /></CardTitle></CardHeader>
-                        <CardContent className="space-y-1 text-sm">
-                            {Object.entries({
-                            "Filial de Venda:": lot.sellingBranch || auction.sellingBranch,
-                            "Localização do Veículo:": lot.vehicleLocationInBranch || lotLocation,
-                            "Data e Hora do Leilão (Lote):": lot.lotSpecificAuctionDate ? format(new Date(lot.lotSpecificAuctionDate), "dd/MM/yyyy HH:mm'h'", { locale: ptBR }) : 'N/A',
-                            "Pista/Corrida #:": lot.laneRunNumber,
-                            "Corredor/Vaga:": lot.aisleStall,
-                            "Valor Real em Dinheiro (VCV):": lot.actualCashValue,
-                            "Custo Estimado de Reparo:": lot.estimatedRepairCost,
-                            "Vendedor:": lot.sellerName || auction.seller || initialSellerName,
-                            "Documento (Título/Venda):": lot.titleInfo,
-                            "Marca do Documento:": lot.titleBrand,
-                            }).map(([key, value]) => value ? <div key={key}><span className="font-medium text-foreground">{key}</span> <span className="text-muted-foreground">{String(value)}</span></div> : null)}
-                        </CardContent>
-                    </Card>
-                   
                     <Card className="shadow-md">
                         <CardHeader className="flex flex-row items-center justify-between p-4">
                             <CardTitle className="text-lg flex items-center">Histórico de Lances</CardTitle>
@@ -616,7 +630,7 @@ export default function LotDetailClientContent({
                             )}
                         </CardContent>
                     </Card>
-                   
+
                     <div className="w-full aspect-square">
                         <LotMapDisplay lot={lot} platformSettings={platformSettings} />
                     </div>
@@ -629,11 +643,11 @@ export default function LotDetailClientContent({
                     <h2 className="text-2xl font-bold mb-6 font-headline">Outros Lotes Deste Leilão</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {relatedLots.map(relatedLot => (
-                            <LotCard 
-                                key={relatedLot.id} 
-                                lot={relatedLot} 
+                            <LotCard
+                                key={relatedLot.id}
+                                lot={relatedLot}
                                 platformSettingsProp={platformSettings}
-                                badgeVisibilityConfig={platformSettings.sectionBadgeVisibility?.searchGrid} 
+                                badgeVisibilityConfig={platformSettings.sectionBadgeVisibility?.searchGrid}
                             />
                         ))}
                     </div>
@@ -655,4 +669,3 @@ export default function LotDetailClientContent({
     </>
   );
 }
-    

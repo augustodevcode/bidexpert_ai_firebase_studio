@@ -3,7 +3,7 @@
 import AuctionCard from '@/components/auction-card';
 import HeroCarousel from '@/components/hero-carousel';
 import FilterLinkCard from '@/components/filter-link-card';
-import LotCard from '@/components/lot-card'; 
+import LotCard from '@/components/lot-card';
 import { sampleAuctions, sampleLots, getCategoryAssets, samplePlatformSettings } from '@/lib/sample-data';
 import type { Auction, Lot, PlatformSettings } from '@/types';
 import Link from 'next/link';
@@ -12,10 +12,10 @@ import { Landmark, Scale, FileText, Tags, CalendarX, CheckSquare, Star, FileText
 export default function HomePage() {
   try {
     const platformSettings: PlatformSettings = samplePlatformSettings; // Usar as configurações de exemplo
-    const auctions: Auction[] = sampleAuctions.slice(0, 10); 
-    
+    const auctions: Auction[] = sampleAuctions.slice(0, 10);
+
     // Filtrar lotes em destaque para mostrar apenas os que estão ABERTO_PARA_LANCES
-    const featuredLots: Lot[] = sampleLots.filter(lot => lot.isFeatured && lot.status === 'ABERTO_PARA_LANCES').slice(0, 10); 
+    const featuredLots: Lot[] = sampleLots.filter(lot => lot.isFeatured && lot.status === 'ABERTO_PARA_LANCES').slice(0, 10);
 
     const filterLinksData = [
       {
@@ -39,7 +39,7 @@ export default function HomePage() {
       {
         title: 'Tomada de Preços',
         subtitle: 'Processo de seleção e cotação.',
-        imageUrl: getCategoryAssets('Tomada de Preços').bannerUrl, 
+        imageUrl: getCategoryAssets('Tomada de Preços').bannerUrl,
         imageAlt: 'Ícone Tomada de Preços',
         dataAiHint: getCategoryAssets('Tomada de Preços').bannerAiHint,
         link: '/search?type=auctions&auctionType=TOMADA_DE_PRECOS',
@@ -51,7 +51,7 @@ export default function HomePage() {
         imageUrl: getCategoryAssets('Venda Direta').bannerUrl,
         imageAlt: 'Ícone Venda Direta',
         dataAiHint: getCategoryAssets('Venda Direta').bannerAiHint,
-        link: '/direct-sales', 
+        link: '/direct-sales',
         bgColorClass: 'bg-amber-50 dark:bg-amber-900/40 hover:border-amber-300',
       },
       {
@@ -60,7 +60,7 @@ export default function HomePage() {
         imageUrl: getCategoryAssets('Segunda Praça').bannerUrl,
         imageAlt: 'Ícone Segunda Praça',
         dataAiHint: getCategoryAssets('Segunda Praça').bannerAiHint,
-        link: '/search?type=auctions&stage=second_praça', 
+        link: '/search?type=auctions&stage=second_praça',
         bgColorClass: 'bg-violet-50 dark:bg-violet-900/40 hover:border-violet-300',
       },
       {
@@ -89,7 +89,7 @@ export default function HomePage() {
 
         <section>
           <h2 className="text-2xl font-bold text-center mb-6 font-headline">Explorar</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4 md:gap-5"> 
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4 md:gap-5">
             {filterLinksData.map((card) => (
               <FilterLinkCard
                 key={card.title}
@@ -112,20 +112,21 @@ export default function HomePage() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {featuredLots.map((lot) => (
-                <LotCard 
-                  key={lot.id} 
-                  lot={lot} 
+                <LotCard
+                  key={lot.id}
+                  lot={lot}
+                  platformSettingsProp={platformSettings}
                   badgeVisibilityConfig={platformSettings.sectionBadgeVisibility?.featuredLots}
                 />
               ))}
             </div>
           </section>
         )}
-        
+
         <section>
-          <h1 className="text-3xl font-bold mb-2 text-center font-headline">Leilões Ativos</h1>
+          <h1 className="text-3xl font-bold mb-2 text-center font-headline">Leilões em Destaque</h1>
           <p className="text-muted-foreground text-center mb-8">Descubra itens únicos e faça seus lances.</p>
-          
+
           {auctions.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {auctions.map((auction) => (
@@ -159,4 +160,3 @@ export default function HomePage() {
     );
   }
 }
-

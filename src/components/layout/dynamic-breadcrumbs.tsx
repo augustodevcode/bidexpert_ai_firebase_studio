@@ -5,11 +5,11 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { 
-    sampleAuctions, 
-    sampleLots, 
-    sampleLotCategories, 
-    getCategoryNameFromSlug, 
+import {
+    sampleAuctions,
+    sampleLots,
+    sampleLotCategories,
+    getCategoryNameFromSlug,
     slugify,
     sampleSellers,
     sampleAuctioneers,
@@ -24,7 +24,7 @@ let breadcrumbCache: { [path: string]: BreadcrumbItem[] } = {};
 
 export default function DynamicBreadcrumbs() {
   const pathname = usePathname();
-  
+
   const items = useMemo(() => {
     if (breadcrumbCache[pathname]) {
       return breadcrumbCache[pathname];
@@ -34,11 +34,11 @@ export default function DynamicBreadcrumbs() {
     const breadcrumbItems: BreadcrumbItem[] = [{ label: 'Início', href: '/' }];
 
     if (pathSegments.length === 0) {
-      return []; 
+      return [];
     }
 
     let currentPath = '';
-    
+
     for (let i = 0; i < pathSegments.length; i++) {
       const segment = pathSegments[i];
       currentPath += `/${segment}`;
@@ -62,7 +62,7 @@ export default function DynamicBreadcrumbs() {
           else if (segment === 'media') label = 'Mídia';
           else if (i + 1 < pathSegments.length && (pathSegments[i+1] === 'new' || pathSegments[i+2] === 'edit')) {
               const prevLabel = breadcrumbItems[breadcrumbItems.length - 1].label;
-              const entityName = prevLabel.endsWith('s') ? prevLabel.slice(0, -1) : prevLabel; 
+              const entityName = prevLabel.endsWith('s') ? prevLabel.slice(0, -1) : prevLabel;
               if (pathSegments[i+1] === 'new') {
                   label = `Novo ${entityName}`;
               } else if (pathSegments[i+1] && pathSegments[i+2] === 'edit') {
@@ -76,12 +76,12 @@ export default function DynamicBreadcrumbs() {
         const auction = sampleAuctions.find(a => a.id === auctionIdOrPublicId || a.publicId === auctionIdOrPublicId);
         label = auction?.title || `Leilão ${auctionIdOrPublicId}`;
         href = `/auctions/${auctionIdOrPublicId}`;
-        
+
         if (i + 2 < pathSegments.length && pathSegments[i+2] === 'lots' && i + 3 < pathSegments.length) {
           breadcrumbItems.push({ label, href });
           const lotIdOrPublicId = pathSegments[i+3];
           const lot = sampleLots.find(l => (l.id === lotIdOrPublicId || l.publicId === lotIdOrPublicId) && (l.auctionId === auction?.id || l.auctionId === auction?.publicId));
-          currentPath += `/lots/${lotIdOrPublicId}`; 
+          currentPath += `/lots/${lotIdOrPublicId}`;
           label = lot?.title || `Lote ${lotIdOrPublicId}`;
           href = currentPath;
           i = i + 3; // Ajustado para pular 'auctions', 'auctionId', 'lots', e 'lotId'
@@ -89,14 +89,16 @@ export default function DynamicBreadcrumbs() {
            breadcrumbItems.push({ label, href });
            label = "Auditório Ao Vivo";
            href = `${currentPath}/live`;
-           i = i + 1; 
+           i = i + 2; // Ajustado para pular 'auctions', 'auctionId', 'live'
+        } else {
+           i = i + 1; // Avança apenas para o ID do leilão
         }
       } else if (segment === 'category' && i + 1 < pathSegments.length) {
         const categorySlug = pathSegments[i+1];
         const categoryName = getCategoryNameFromSlug(categorySlug);
         label = categoryName || label;
         href = `/category/${categorySlug}`;
-        i++; 
+        i++;
       } else if (segment === 'sellers' && i + 1 < pathSegments.length) {
           const sellerIdOrSlug = pathSegments[i+1];
           const seller = sampleSellers.find(s => s.slug === sellerIdOrSlug || s.publicId === sellerIdOrSlug || s.id === sellerIdOrSlug);
@@ -122,7 +124,7 @@ export default function DynamicBreadcrumbs() {
           }
       } else if (segment === 'search') {
         label = "Resultados da Busca";
-        href = undefined; 
+        href = undefined;
       } else if (segment === 'profile' && i + 1 < pathSegments.length && pathSegments[i+1] === 'edit') {
           breadcrumbItems.push({label: 'Meu Perfil', href: '/profile'});
           label = 'Editar Perfil';
@@ -159,29 +161,27 @@ export default function DynamicBreadcrumbs() {
           else label = pathSegments[i+1].charAt(0).toUpperCase() + pathSegments[i+1].slice(1);
           href = `/auth/${pathSegments[i+1]}`;
           i++;
-      } else if (i === pathSegments.length - 1) { 
+      } else if (i === pathSegments.length - 1) {
           href = undefined;
       }
 
       breadcrumbItems.push({ label, href });
     }
-    
+
     breadcrumbCache[pathname] = breadcrumbItems;
     return breadcrumbItems;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]); 
+  }, [pathname]);
 
-  if (pathname === '/' || items.length <= 1) { 
+  if (pathname === '/' || items.length <= 1) {
     return null;
   }
 
-  // Adicionado bg-secondary e py-2 para a barra de breadcrumbs
   return (
-    <nav aria-label="Breadcrumb" className="bg-secondary text-secondary-foreground text-xs py-2 border-b">
+    <nav aria-label="Breadcrumb" className="bg-secondary text-secondary-foreground text-xs h-10 flex items-center border-b">
       <div className="container mx-auto px-4">
         <Breadcrumbs items={items} />
       </div>
     </nav>
   );
 }
-
