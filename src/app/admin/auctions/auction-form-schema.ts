@@ -3,6 +3,8 @@ import * as z from 'zod';
 import type { AuctionStatus, Auction } from '@/types'; // Auction importado para auctionTypeValues
 
 const auctionStatusValues: [AuctionStatus, ...AuctionStatus[]] = [
+  'RASCUNHO', // Novo
+  'EM_PREPARACAO', // Novo
   'EM_BREVE',
   'ABERTO', 
   'ABERTO_PARA_LANCES',
@@ -16,7 +18,7 @@ const auctionTypeValues: [Auction['auctionType'], ...(Exclude<Auction['auctionTy
   'JUDICIAL',
   'EXTRAJUDICIAL',
   'PARTICULAR',
-  'TOMADA_DE_PRECOS', // Adicionado
+  'TOMADA_DE_PRECOS',
 ];
 
 
@@ -35,7 +37,9 @@ export const auctionFormSchema = z.object({
   status: z.enum(auctionStatusValues, {
     required_error: "O status do leilão é obrigatório.",
   }),
-  auctionType: z.enum(auctionTypeValues).optional(),
+  auctionType: z.enum(auctionTypeValues, {
+    errorMap: () => ({ message: "Por favor, selecione uma modalidade válida."}),
+  }).optional(),
   category: z.string().min(1, { message: "A categoria é obrigatória."}).max(100),
   auctioneer: z.string().min(1, { message: "O nome do leiloeiro é obrigatório."}).max(150),
   seller: z.string().max(150).optional(),
@@ -49,6 +53,19 @@ export const auctionFormSchema = z.object({
   imageUrl: z.string().url({ message: "URL da imagem inválida." }).optional().or(z.literal('')),
   documentsUrl: z.string().url({ message: "URL dos documentos inválida."}).optional().or(z.literal('')),
   sellingBranch: z.string().max(100).optional(),
+  automaticBiddingEnabled: z.boolean().optional().default(false),
+  allowInstallmentBids: z.boolean().optional().default(false),
+  estimatedRevenue: z.coerce.number().positive({message: "Estimativa deve ser positiva."}).optional().nullable(),
+  isFeaturedOnMarketplace: z.boolean().optional().default(false),
+  marketplaceAnnouncementTitle: z.string().max(150, {message: "Título do anúncio muito longo."}).optional().nullable(),
+  auctionStages: z.array(
+    z.object({
+      name: z.string().min(1, "Nome da praça é obrigatório"),
+      endDate: z.date({ required_error: "Data de encerramento da praça é obrigatória" }),
+      statusText: z.string().optional(),
+      initialPrice: z.coerce.number().positive("Lance inicial da praça deve ser positivo").optional(),
+    })
+  ).optional().default([]),
 });
 
 export type AuctionFormValues = z.infer<typeof auctionFormSchema>;
@@ -56,3 +73,4 @@ export type AuctionFormValues = z.infer<typeof auctionFormSchema>;
     
 
     
+

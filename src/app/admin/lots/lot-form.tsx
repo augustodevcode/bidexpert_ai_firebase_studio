@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
 import type { Lot, LotStatus, LotCategory, Auction, StateInfo, CityInfo, MediaItem } from '@/types';
-import { Loader2, Save, CalendarIcon, Package, ImagePlus, UploadCloud, Trash2, MapPin, FileText, Shield, Banknote, Link as LinkIcon } from 'lucide-react';
+import { Loader2, Save, CalendarIcon, Package, ImagePlus, UploadCloud, Trash2, MapPin, FileText, Shield, Banknote, Link as LinkIcon, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -102,6 +102,7 @@ export default function LotForm({
       description: initialData?.description || '',
       price: initialData?.price || 0,
       initialPrice: initialData?.initialPrice || undefined,
+      bidIncrementStep: initialData?.bidIncrementStep || undefined,
       status: initialData?.status || 'EM_BREVE',
       stateId: initialData?.stateId || undefined,
       cityId: initialData?.cityId || undefined,
@@ -109,9 +110,9 @@ export default function LotForm({
       imageUrl: initialData?.imageUrl || '',
       galleryImageUrls: initialData?.galleryImageUrls || [],
       mediaItemIds: initialData?.mediaItemIds || [],
-      endDate: initialData?.endDate ? new Date(initialData.endDate) : new Date(),
-      lotSpecificAuctionDate: initialData?.lotSpecificAuctionDate ? new Date(initialData.lotSpecificAuctionDate) : null,
-      secondAuctionDate: initialData?.secondAuctionDate ? new Date(initialData.secondAuctionDate) : null,
+      endDate: initialData?.endDate ? new Date(initialData.endDate as Date) : new Date(),
+      lotSpecificAuctionDate: initialData?.lotSpecificAuctionDate ? new Date(initialData.lotSpecificAuctionDate as Date) : null,
+      secondAuctionDate: initialData?.secondAuctionDate ? new Date(initialData.secondAuctionDate as Date) : null,
       secondInitialPrice: initialData?.secondInitialPrice || null,
       views: initialData?.views || 0,
       bidsCount: initialData?.bidsCount || 0,
@@ -252,6 +253,7 @@ export default function LotForm({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-6">
+              {/* ... (campos existentes) ... */}
               <FormField
                 control={form.control}
                 name="title"
@@ -325,7 +327,7 @@ export default function LotForm({
                   </FormItem>
                 )}
               />
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-3 gap-6">
                 <FormField
                   control={form.control}
                   name="price"
@@ -352,8 +354,23 @@ export default function LotForm({
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="bidIncrementStep"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Incremento Mín. Lance (R$)</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="Ex: 100.00" {...field} value={field.value ?? ''}/>
+                      </FormControl>
+                       <FormDescription className="text-xs">Valor que cada lance deve superar o anterior.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-              <div className="grid md:grid-cols-2 gap-6">
+               {/* ... (resto dos campos existentes) ... */}
+                 <div className="grid md:grid-cols-2 gap-6">
                   <FormField
                   control={form.control}
                   name="status"
@@ -821,4 +838,3 @@ export default function LotForm({
   );
 }
     
-```

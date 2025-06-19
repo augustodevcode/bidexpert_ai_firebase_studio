@@ -120,7 +120,7 @@ export interface AuctionStage {
   initialPrice?: number; // Lance inicial para esta praça
 }
 
-export type AuctionStatus = 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO';
+export type AuctionStatus = 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO' | 'RASCUNHO' | 'EM_PREPARACAO';
 export type LotStatus = 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'VENDIDO' | 'NAO_VENDIDO';
 
 export interface Auction {
@@ -147,7 +147,6 @@ export interface Auction {
   documentsUrl?: string;
   totalLots?: number;
   visits?: number;
-  lots?: Lot[]; 
   initialOffer?: number;
   isFavorite?: boolean;
   currentBid?: number;
@@ -157,14 +156,22 @@ export interface Auction {
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
   auctioneerLogoUrl?: string;
-  auctioneerName?: string; 
+  auctioneerName?: string;
+  automaticBiddingEnabled?: boolean;
+  allowInstallmentBids?: boolean;
+  estimatedRevenue?: number;
+  achievedRevenue?: number;
+  totalHabilitatedUsers?: number;
+  isFeaturedOnMarketplace?: boolean;
+  marketplaceAnnouncementTitle?: string;
+  lots?: Lot[]; 
 }
 
 export type AuctionFormData = Omit<Auction,
   'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' |
-  'lots' | 'totalLots' | 'visits' | 'auctionStages' | 'isFavorite' |
+  'lots' | 'totalLots' | 'visits' | 'isFavorite' |
   'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' |
-  'categoryId' | 'auctioneerId' | 'sellerId'
+  'categoryId' | 'auctioneerId' | 'sellerId' | 'achievedRevenue' | 'totalHabilitatedUsers'
 > & {
   auctionDate: Date; 
   endDate?: Date | null; 
@@ -175,6 +182,10 @@ export type AuctionDbData = Omit<AuctionFormData, 'category' | 'auctioneer' | 's
   categoryId?: string;
   auctioneerId?: string;
   sellerId?: string | null; 
+  achievedRevenue?: number;
+  totalHabilitatedUsers?: number;
+  auctionType?: Auction['auctionType'];
+  auctionStages?: AuctionStage[];
 };
 
 
@@ -200,6 +211,7 @@ export interface Lot {
   price: number; 
   initialPrice?: number; 
   secondInitialPrice?: number | null; 
+  bidIncrementStep?: number; // Novo campo
   endDate: AnyTimestamp; 
   auctionDate?: AnyTimestamp; 
   lotSpecificAuctionDate?: AnyTimestamp | null; 
@@ -736,4 +748,3 @@ export interface RecentlyViewedLotInfo {
   dataAiHint?: string;
 }
 
-```

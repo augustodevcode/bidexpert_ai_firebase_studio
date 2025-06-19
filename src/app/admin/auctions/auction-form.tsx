@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -19,22 +19,25 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
-import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
-import { Loader2, Save, CalendarIcon, Gavel } from 'lucide-react';
+import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage } from '@/types';
+import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText } from '@/lib/sample-data';
+import { Separator } from '@/components/ui/separator';
+
 
 interface AuctionFormProps {
   initialData?: Auction | null;
   categories: LotCategory[];
   auctioneers: AuctioneerProfileInfo[]; 
-  sellers: SellerProfileInfo[]; 
+  sellers: SellerProfileInfo[];    
   onSubmitAction: (data: AuctionFormValues) => Promise<{ success: boolean; message: string; auctionId?: string }>;
   formTitle: string;
   formDescription: string;
@@ -42,6 +45,8 @@ interface AuctionFormProps {
 }
 
 const auctionStatusOptions: { value: AuctionStatus; label: string }[] = [
+  { value: 'RASCUNHO', label: getAuctionStatusText('RASCUNHO') },
+  { value: 'EM_PREPARACAO', label: getAuctionStatusText('EM_PREPARACAO') },
   { value: 'EM_BREVE', label: getAuctionStatusText('EM_BREVE') },
   { value: 'ABERTO', label: getAuctionStatusText('ABERTO') },
   { value: 'ABERTO_PARA_LANCES', label: getAuctionStatusText('ABERTO_PARA_LANCES') },
@@ -78,19 +83,30 @@ export default function AuctionForm({
       title: initialData?.title || '',
       fullTitle: initialData?.fullTitle || '',
       description: initialData?.description || '',
-      status: initialData?.status || 'EM_BREVE',
+      status: initialData?.status || 'RASCUNHO',
       auctionType: initialData?.auctionType || undefined,
       category: initialData?.category || '',
       auctioneer: initialData?.auctioneer || '', 
       seller: initialData?.seller || '',       
-      auctionDate: initialData?.auctionDate ? new Date(initialData.auctionDate) : new Date(),
-      endDate: initialData?.endDate ? new Date(initialData.endDate) : null,
+      auctionDate: initialData?.auctionDate ? new Date(initialData.auctionDate as Date) : new Date(),
+      endDate: initialData?.endDate ? new Date(initialData.endDate as Date) : null,
       city: initialData?.city || '',
       state: initialData?.state || '',
       imageUrl: initialData?.imageUrl || '',
       documentsUrl: initialData?.documentsUrl || '',
       sellingBranch: initialData?.sellingBranch || '',
+      automaticBiddingEnabled: initialData?.automaticBiddingEnabled || false,
+      allowInstallmentBids: initialData?.allowInstallmentBids || false,
+      estimatedRevenue: initialData?.estimatedRevenue || undefined,
+      isFeaturedOnMarketplace: initialData?.isFeaturedOnMarketplace || false,
+      marketplaceAnnouncementTitle: initialData?.marketplaceAnnouncementTitle || '',
+      auctionStages: initialData?.auctionStages?.map(stage => ({ ...stage, endDate: new Date(stage.endDate as Date)})) || [{ name: '1ª Praça', endDate: new Date(), initialPrice: undefined }],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "auctionStages",
   });
 
   async function onSubmit(values: AuctionFormValues) {
@@ -132,6 +148,7 @@ export default function AuctionForm({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-6">
+            {/* ... campos existentes ... */}
             <FormField
               control={form.control}
               name="title"
@@ -199,11 +216,11 @@ export default function AuctionForm({
                 name="auctionType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tipo de Leilão (Opcional)</FormLabel>
+                    <FormLabel>Modalidade de Leilão</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || ''}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione o tipo" />
+                          <SelectValue placeholder="Selecione o tipo/modalidade" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -217,7 +234,7 @@ export default function AuctionForm({
                 )}
               />
             </div>
-             <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-6">
                 <FormField
                 control={form.control}
                 name="category"
@@ -297,6 +314,82 @@ export default function AuctionForm({
                 </FormItem>
                 )}
             />
+            <Separator />
+            <h3 className="text-md font-semibold text-muted-foreground flex items-center"><FileText className="h-4 w-4 mr-2"/>Praças / Etapas do Leilão</h3>
+            {fields.map((field, index) => (
+              <Card key={field.id} className="p-4 space-y-3 bg-secondary/30">
+                <div className="flex justify-between items-center">
+                  <h4 className="font-medium">Praça / Etapa {index + 1}</h4>
+                  {fields.length > 1 && (
+                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:text-destructive/80 h-7 w-7">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name={`auctionStages.${index}.name`}
+                    render={({ field: stageField }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Nome da Praça/Etapa</FormLabel>
+                        <FormControl><Input {...stageField} placeholder={`Ex: ${index+1}ª Praça`} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name={`auctionStages.${index}.endDate`}
+                    render={({ field: stageField }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel className="text-xs">Data de Encerramento</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button variant="outline" className={cn("w-full pl-3 text-left font-normal", !stageField.value && "text-muted-foreground")}>
+                                {stageField.value ? format(stageField.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha data</span>}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar mode="single" selected={stageField.value} onSelect={stageField.onChange} initialFocus />
+                            <div className="p-2 border-t">
+                                <Input type="time" defaultValue={stageField.value ? format(stageField.value, "HH:mm") : "10:00"}
+                                onChange={(e) => {
+                                    const [hours, minutes] = e.target.value.split(':').map(Number);
+                                    const newDate = stageField.value ? new Date(stageField.value) : new Date();
+                                    newDate.setHours(hours, minutes);
+                                    stageField.onChange(newDate);
+                                }} />
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={form.control}
+                  name={`auctionStages.${index}.initialPrice`}
+                  render={({ field: stageField }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Lance Inicial da Praça (Opcional)</FormLabel>
+                      <FormControl><Input type="number" {...stageField} placeholder="Ex: 50000.00" value={stageField.value ?? ''} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </Card>
+            ))}
+            <Button type="button" variant="outline" size="sm" onClick={() => append({ name: `${fields.length + 1}ª Praça`, endDate: new Date(), initialPrice: undefined })} className="text-xs">
+              <PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa
+            </Button>
+
+            <Separator />
+            <h3 className="text-md font-semibold text-muted-foreground flex items-center"><Landmark className="h-4 w-4 mr-2"/>Localização e Detalhes Adicionais</h3>
             <div className="grid md:grid-cols-2 gap-6">
                 <FormField
                 control={form.control}
@@ -329,7 +422,7 @@ export default function AuctionForm({
                         </div>
                         </PopoverContent>
                     </Popover>
-                    <FormDescription>Data e hora de início do evento principal do leilão (ex: 1ª praça).</FormDescription>
+                    <FormDescription>Data e hora de início do evento principal do leilão.</FormDescription>
                     <FormMessage />
                     </FormItem>
                 )}
@@ -365,7 +458,7 @@ export default function AuctionForm({
                         </div>
                         </PopoverContent>
                     </Popover>
-                    <FormDescription>Data final para todos os lances, se aplicável (ex: fim da 2ª praça).</FormDescription>
+                    <FormDescription>Data final para todos os lances, se não definida por praças.</FormDescription>
                     <FormMessage />
                     </FormItem>
                 )}
@@ -428,6 +521,75 @@ export default function AuctionForm({
                 </FormItem>
                 )}
             />
+            <Separator />
+            <h3 className="text-md font-semibold text-muted-foreground flex items-center"><Bot className="h-4 w-4 mr-2"/> Configurações de Automação</h3>
+            <FormField
+                control={form.control}
+                name="automaticBiddingEnabled"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                        <FormLabel>Robô de Lances (Global)</FormLabel>
+                        <FormDescription>Permitir lances automáticos (robô) para este leilão?</FormDescription>
+                    </div>
+                    <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="allowInstallmentBids"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                        <FormLabel>Permitir Lance Parcelado</FormLabel>
+                        <FormDescription>Habilitar opção de lances parcelados para este leilão?</FormDescription>
+                    </div>
+                    <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="estimatedRevenue"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Faturamento Estimado (R$ - Opcional)</FormLabel>
+                    <FormControl><Input type="number" placeholder="Ex: 100000.00" {...field} value={field.value ?? ""} /></FormControl>
+                    <FormDescription>Estimativa de valor total a ser arrecadado.</FormDescription>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+            <Separator />
+            <h3 className="text-md font-semibold text-muted-foreground flex items-center"><Percent className="h-4 w-4 mr-2"/> Configurações de Marketplace</h3>
+             <FormField
+                control={form.control}
+                name="isFeaturedOnMarketplace"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                        <FormLabel>Destaque no Marketplace</FormLabel>
+                        <FormDescription>Marcar este leilão como destaque na plataforma?</FormDescription>
+                    </div>
+                    <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="marketplaceAnnouncementTitle"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Título do Anúncio no Marketplace (Opcional)</FormLabel>
+                    <FormControl><Input placeholder="Ex: Grande Oportunidade! Leilão Imperdível!" {...field} value={field.value ?? ""} /></FormControl>
+                    <FormDescription>Título curto para exibição em áreas de destaque.</FormDescription>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+
+
           </CardContent>
           <CardFooter className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => router.push('/admin/auctions')} disabled={isSubmitting}>
@@ -447,3 +609,4 @@ export default function AuctionForm({
     
 
     
+

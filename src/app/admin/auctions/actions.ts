@@ -14,9 +14,16 @@ export async function createAuction(
   data: AuctionFormData
 ): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> {
   console.log(`[Action - createAuction - SampleData Mode] Simulating creation for: ${data.title}`);
+  console.log(`[Action - createAuction - SampleData Mode] Data received:`, {
+    ...data,
+    automaticBiddingEnabled: data.automaticBiddingEnabled,
+    allowInstallmentBids: data.allowInstallmentBids,
+    estimatedRevenue: data.estimatedRevenue,
+    isFeaturedOnMarketplace: data.isFeaturedOnMarketplace,
+    marketplaceAnnouncementTitle: data.marketplaceAnnouncementTitle,
+    auctionType: data.auctionType
+  });
   await delay(100);
-  // Simulate resolving category, auctioneer, seller names to IDs for the sample data structure if needed
-  // For now, we'll just acknowledge it.
   revalidatePath('/admin/auctions');
   revalidatePath('/consignor-dashboard/overview');
   return { success: true, message: `Leilão "${data.title}" (simulado) criado!`, auctionId: `sample-auc-${Date.now()}`, auctionPublicId: `AUC-PUB-SAMP-${Date.now()}` };
@@ -25,7 +32,6 @@ export async function createAuction(
 export async function getAuctions(): Promise<Auction[]> {
   console.log('[Action - getAuctions - SampleData Mode] Fetching from sample-data.ts');
   await delay(50);
-  // Ensure lots are populated correctly for each auction
   const auctionsWithLots = sampleAuctions.map(auction => ({
     ...auction,
     lots: sampleLots.filter(lot => lot.auctionId === auction.id),
@@ -66,7 +72,16 @@ export async function updateAuction(
   idOrPublicId: string,
   data: Partial<AuctionFormData>
 ): Promise<{ success: boolean; message: string }> {
-  console.log(`[Action - updateAuction - SampleData Mode] Simulating update for ID/publicId: ${idOrPublicId} with data:`, data);
+  console.log(`[Action - updateAuction - SampleData Mode] Simulating update for ID/publicId: ${idOrPublicId}`);
+   console.log(`[Action - updateAuction - SampleData Mode] Data received for update:`, {
+    ...data,
+    automaticBiddingEnabled: data.automaticBiddingEnabled,
+    allowInstallmentBids: data.allowInstallmentBids,
+    estimatedRevenue: data.estimatedRevenue,
+    isFeaturedOnMarketplace: data.isFeaturedOnMarketplace,
+    marketplaceAnnouncementTitle: data.marketplaceAnnouncementTitle,
+    auctionType: data.auctionType
+  });
   await delay(100);
   revalidatePath('/admin/auctions');
   revalidatePath(`/admin/auctions/${idOrPublicId}/edit`);

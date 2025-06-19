@@ -17,6 +17,10 @@ export async function createLot(
   data: LotFormData
 ): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> {
   console.log(`[Action - createLot - SampleData Mode] Simulating creation for: ${data.title}`);
+  console.log(`[Action - createLot - SampleData Mode] Data received:`, {
+    ...data,
+    bidIncrementStep: data.bidIncrementStep,
+  });
   await delay(100);
   revalidatePath('/admin/lots');
   if (data.auctionId) {
@@ -91,7 +95,11 @@ export async function updateLot(
   idOrPublicId: string,
   data: Partial<LotFormData>
 ): Promise<{ success: boolean; message: string }> {
-  console.log(`[Action - updateLot - SampleData Mode] Simulating update for ID/publicId: ${idOrPublicId} with data:`, data);
+  console.log(`[Action - updateLot - SampleData Mode] Simulating update for ID/publicId: ${idOrPublicId}`);
+  console.log(`[Action - updateLot - SampleData Mode] Data received for update:`, {
+    ...data,
+    bidIncrementStep: data.bidIncrementStep,
+  });
   await delay(100);
   revalidatePath('/admin/lots');
   revalidatePath(`/admin/lots/${idOrPublicId}/edit`);
@@ -202,8 +210,7 @@ export async function askQuestionOnLot(
   questionText: string
 ): Promise<{ success: boolean; message: string; questionId?: string }> {
   console.log(`[Action - askQuestionOnLot - SampleData Mode] Simulating question for lot: ${lotIdOrPublicId}`);
-  await delay(100);
-  const lot = sampleLots.find(l => l.id === lotIdOrPublicId || l.publicId === lotIdOrPublicId);
+   const lot = sampleLots.find(l => l.id === lotIdOrPublicId || l.publicId === lotIdOrPublicId);
    if (!lot) {
     return { success: false, message: `Lote com ID/PublicID "${lotIdOrPublicId}" (simulado) não encontrado para pergunta.` };
   }
