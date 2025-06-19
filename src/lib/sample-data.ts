@@ -111,6 +111,9 @@ export const sampleSellersStatic: Omit<SellerProfileInfo, 'id'| 'publicId' | 'sl
     { name: 'Galeria Pampa Arte', city: 'Porto Alegre', state: 'RS' },
     { name: 'Prefeitura Municipal de Campinas', city: 'Campinas', state: 'SP', logoUrl: 'https://placehold.co/100x100.png?text=PMC', dataAiHint: 'prefeitura brasao' },
     { name: 'Secretaria de Administração de Salvador', city: 'Salvador', state: 'BA', logoUrl: 'https://placehold.co/100x100.png?text=SAS', dataAiHint: 'governo edificio' },
+    { name: 'Vara Cível de São Paulo - TJSP', city: 'São Paulo', state: 'SP', logoUrl: 'https://placehold.co/100x100.png?text=TJSP', dataAiHint: 'tribunal justica predio' },
+    { name: 'Vara de Falências do Rio de Janeiro - TJRJ', city: 'Rio de Janeiro', state: 'RJ', logoUrl: 'https://placehold.co/100x100.png?text=TJRJ', dataAiHint: 'tribunal justica martelo' },
+    { name: 'Vara do Trabalho de Curitiba - TRT9', city: 'Curitiba', state: 'PR', logoUrl: 'https://placehold.co/100x100.png?text=TRT9', dataAiHint: 'justica trabalho predio' },
 ];
 
 export const sampleAuctioneersStatic: Omit<AuctioneerProfileInfo, 'id'|'publicId'|'slug'|'createdAt'|'updatedAt'|'memberSince'|'rating'|'auctionsConductedCount'|'totalValueSold'>[] = [
@@ -136,25 +139,63 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
     id: 'TP001-NOTEBOOKS', publicId: 'AUC-TPNOTE-PMC001X9', title: 'Tomada de Preços - Aquisição de Notebooks',
     fullTitle: 'Tomada de Preços Nº 001/2024 - Aquisição de Notebooks para Secretaria de Educação de Campinas',
     description: 'Processo de tomada de preços para aquisição de 80 notebooks para equipar escolas municipais. Especificações detalhadas no edital. Propostas devem ser enviadas em envelope lacrado até a data limite.',
-    status: 'ACTIVE', auctionType: 'TOMADA_DE_PRECOS', categoryId: 'cat-eletronicos-e-tecnologia', // Ajustado categoryId
+    status: 'ACTIVE', auctionType: 'TOMADA_DE_PRECOS', categoryId: 'cat-eletronicos-e-tecnologia',
     auctioneerId: 'auct-leiloeiro-publico-municipal-campinas', sellerId: 'seller-prefeitura-municipal-de-campinas',
-    auctionDate: createFutureDate(1, 9), endDate: createFutureDate(15, 17), // Encerramento para propostas
+    auctionDate: createFutureDate(1, 9), endDate: createFutureDate(15, 17),
     city: 'Campinas', state: 'SP', imageUrl: 'https://images.unsplash.com/photo-1744051518421-1eaf2fbde680?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxub3RlYm9va3MlMjBwaWxoYSUyMGVzY3JpdG9yaW98ZW58MHx8fHwxNzUwMzU2MDY1fDA&ixlib=rb-4.1.0&q=80&w=1080',
     dataAiHint: 'notebooks pilha escritorio', documentsUrl: '#edital-notebooks', visits: 150,
-    initialOffer: 320000, // Valor estimado total da aquisição
+    initialOffer: 320000,
     auctionStages: [{ name: 'Recebimento de Propostas', endDate: createFutureDate(15,17), statusText: 'Prazo Final', initialPrice: 320000 }]
   },
   {
     id: 'TP002-VEICULOS', publicId: 'AUC-TPVEIC-SAS002Y0', title: 'Tomada de Preços - Alienação de Veículos da Frota',
     fullTitle: 'Tomada de Preços Nº 002/2024 - Alienação de Veículos Usados da Frota da Secretaria de Salvador',
     description: 'Alienação de veículos usados da frota municipal, incluindo carros de passeio e utilitários. Visitação permitida conforme edital. Propostas para lotes individuais ou para a frota completa.',
-    status: 'ENCERRADO', auctionType: 'TOMADA_DE_PRECOS', categoryId: 'cat-veiculos', // Ajustado categoryId
+    status: 'ENCERRADO', auctionType: 'TOMADA_DE_PRECOS', categoryId: 'cat-veiculos',
     auctioneerId: 'auct-central-de-compras-bahia', sellerId: 'seller-secretaria-de-administracao-de-salvador',
     auctionDate: createPastDate(30, 9), endDate: createPastDate(15, 17),
     city: 'Salvador', state: 'BA', imageUrl: 'https://images.unsplash.com/photo-1658241213593-b7904e271aa8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYXJyb3MlMjB1c2Fkb3MlMjBwYXRpb3xlbnwwfHx8fDE3NTAzNTYwNjV8MA&ixlib=rb-4.1.0&q=80&w=1080',
     dataAiHint: 'carros usados patio', documentsUrl: '#edital-veiculos', visits: 320,
-    initialOffer: 80000, // Valor mínimo inicial total esperado
+    initialOffer: 80000,
     auctionStages: [{ name: 'Recebimento de Propostas', endDate: createPastDate(15,17), statusText: 'Encerrado', initialPrice: 80000 }]
+  },
+  {
+    id: 'JUD001IMV', publicId: 'AUC-JUDIMV-SP001A1', title: 'Leilão Judicial - Apartamento em Moema',
+    fullTitle: 'Leilão Judicial do TJSP - Apartamento 2 Dormitórios em Moema, São Paulo',
+    description: 'Apartamento de 2 dormitórios, localizado em Moema, São Paulo. Leilão determinado pelo Processo nº 12345-67.2023.8.26.0001 da 1ª Vara Cível de São Paulo. Consulte o edital para mais informações.',
+    status: 'ABERTO_PARA_LANCES', auctionType: 'JUDICIAL', categoryId: 'cat-imoveis',
+    auctioneerId: 'auct-superbid-leiloes', sellerId: 'seller-vara-civel-de-sao-paulo-tjsp',
+    auctionDate: createFutureDate(2, 0), endDate: createFutureDate(12, 0), city: 'São Paulo', state: 'SP',
+    imageUrl: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhcGFydG1lbnQlMjBleHRlcmlvcnxlbnwwfHx8fDE3NTA5NTg5MDZ8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    dataAiHint: 'apartamento predio moderno', documentsUrl: '#edital-jud001', visits: 1850,
+    initialOffer: 250000,
+    auctionStages: [
+      { name: '1ª Praça', endDate: createFutureDate(7,0), statusText: 'Encerramento 1ª Praça', initialPrice: 300000 },
+      { name: '2ª Praça', endDate: createFutureDate(12,0), statusText: 'Encerramento 2ª Praça', initialPrice: 250000 }
+    ]
+  },
+  {
+    id: 'JUD002VEI', publicId: 'AUC-JUDVEI-RJ002B2', title: 'Leilão Judicial - Veículo Fiat Toro',
+    fullTitle: 'Leilão Judicial TJRJ - Veículo Fiat Toro Freedom 2018 - Processo Falimentar',
+    description: 'Veículo Fiat Toro Freedom 1.8 AT, ano/modelo 2018/2018, cor branca. Leilão oriundo do Processo nº 98765-43.2022.8.19.0001 da Vara de Falências do Rio de Janeiro. Veículo vendido no estado em que se encontra.',
+    status: 'EM_BREVE', auctionType: 'JUDICIAL', categoryId: 'cat-veiculos',
+    auctioneerId: 'auct-leiloeiro-xyz-oficial', sellerId: 'seller-vara-de-falencias-do-rio-de-janeiro-tjrj',
+    auctionDate: createFutureDate(10, 0), endDate: createFutureDate(20, 0), city: 'Rio de Janeiro', state: 'RJ',
+    imageUrl: 'https://images.unsplash.com/photo-1617093583090-67685879968e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmaWF0JTIwdG9yb3xlbnwwfHx8fDE3NTA5NTg5MDZ8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    dataAiHint: 'fiat toro branca', documentsUrl: '#edital-jud002', visits: 950,
+    initialOffer: 40000,
+    auctionStages: [{ name: 'Leilão Único', endDate: createFutureDate(20,0), statusText: 'Data do Leilão', initialPrice: 40000 }]
+  },
+  {
+    id: 'JUD003MAQ', publicId: 'AUC-JUDMAQ-PR003C3', title: 'Leilão Judicial - Trator Massey Ferguson',
+    fullTitle: 'Leilão Judicial TRT9 - Trator Massey Ferguson 275 - Processo Trabalhista',
+    description: 'Trator Massey Ferguson modelo 275, ano 1998, em funcionamento. Leilão do Processo Trabalhista nº 00123-2021-005-09-00-0 da Vara do Trabalho de Curitiba.',
+    status: 'ABERTO_PARA_LANCES', auctionType: 'JUDICIAL', categoryId: 'cat-maquinas-e-equipamentos',
+    auctioneerId: 'auct-classicos-leiloes-br-leiloeiro-jpimenta', sellerId: 'seller-vara-do-trabalho-de-curitiba-trt9',
+    auctionDate: createPastDate(1,0), endDate: createFutureDate(5, 0), city: 'Curitiba', state: 'PR',
+    imageUrl: 'https://placehold.co/600x400.png?text=Trator+Judicial', dataAiHint: 'trator antigo vermelho',
+    initialOffer: 22000, visits: 680,
+    auctionStages: [{ name: 'Leilão Único', endDate: createFutureDate(5,0), statusText: 'Encerramento', initialPrice: 22000 }]
   },
 ];
 
@@ -174,7 +215,7 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
     imageUrl: 'https://placehold.co/600x400.png?text=Notebook+Tipo+A', dataAiHint: 'notebook moderno tela',
     status: 'ABERTO_PARA_LANCES', cityId: 'city-campinas-sp', stateId: 'state-sp', categoryId: 'cat-eletronicos-e-tecnologia', 
     views: 75, price: 150000, endDate: createFutureDate(15, 17), description: 'Lote de 50 notebooks corporativos padrão, Processador Intel Core i5 de 11ª geração, 8GB RAM DDR4, 256GB SSD NVMe, Tela 14" Full HD. Conforme edital TP 001/2024.',
-    sellerId: 'seller-prefeitura-municipal-de-campinas', initialPrice: 160000, // Valor de referência para o lote
+    sellerId: 'seller-prefeitura-municipal-de-campinas', initialPrice: 160000,
     latitude: -22.9056, longitude: -47.0608, mapAddress: 'Paço Municipal, Campinas - SP'
   },
   { 
@@ -190,7 +231,7 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
     imageUrl: 'https://placehold.co/600x400.png?text=Fiat+Cronos', dataAiHint: 'carro sedan branco',
     status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'cat-veiculos',
     views: 120, price: 35000, endDate: createPastDate(15, 17), description: 'Fiat Cronos Drive 1.3, 2019, branco, completo. Estado de conservação regular. Placa final 5. Venda no estado em que se encontra. Edital TP 002/2024.',
-    sellerId: 'seller-secretaria-de-administracao-de-salvador', initialPrice: 30000, // Valor mínimo de alienação
+    sellerId: 'seller-secretaria-de-administracao-de-salvador', initialPrice: 30000,
     latitude: -12.9714, longitude: -38.5014, mapAddress: 'Pátio da Prefeitura, Salvador - BA'
   },
   {
@@ -200,6 +241,33 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
     views: 95, price: 28000, endDate: createPastDate(15, 17), description: 'Fiat Fiorino Hard Working 1.4, 2017, branca, furgão. Necessita reparos. Placa final 8. Venda no estado. Edital TP 002/2024.',
     sellerId: 'seller-secretaria-de-administracao-de-salvador', initialPrice: 25000,
     latitude: -12.9714, longitude: -38.5014, mapAddress: 'Pátio da Prefeitura, Salvador - BA'
+  },
+  {
+    id: 'LOTJUDIMV001', auctionId: 'JUD001IMV', publicId: 'LOT-APTMOEMA-SP01A1', title: 'Apartamento 2 Dorms Moema - Leilão Judicial',
+    imageUrl: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhcGFydG1lbnQlMjBpbnRlcmlvcnxlbnwwfHx8fDE3NTA5NTg5MDZ8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'apartamento interior moderno',
+    status: 'ABERTO_PARA_LANCES', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-imoveis',
+    price: 250000, initialPrice: 300000, secondInitialPrice: 250000, endDate: createFutureDate(12, 0),
+    judicialProcessNumber: '12345-67.2023.8.26.0001', courtDistrict: 'São Paulo', courtName: '1ª Vara Cível',
+    sellerId: 'seller-vara-civel-de-sao-paulo-tjsp', description: 'Lindo apartamento em Moema, parte de leilão judicial. 2 dormitórios, sala ampla, cozinha e área de serviço. Próximo ao Parque Ibirapuera.',
+    views: 1250, bidsCount: 8
+  },
+  {
+    id: 'LOTJUDVEI001', auctionId: 'JUD002VEI', publicId: 'LOT-TORORJ-RJ02B2', title: 'Fiat Toro Freedom 2018 - Leilão Judicial',
+    imageUrl: 'https://images.unsplash.com/photo-1617093583090-67685879968e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmaWF0JTIwdG9yb3xlbnwwfHx8fDE3NTA5NTg5MDZ8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'fiat toro branca frente',
+    status: 'EM_BREVE', cityId: 'city-rio-de-janeiro-rj', stateId: 'state-rj', categoryId: 'cat-veiculos',
+    price: 40000, initialPrice: 40000, endDate: createFutureDate(20, 0),
+    judicialProcessNumber: '98765-43.2022.8.19.0001', courtDistrict: 'Rio de Janeiro', courtName: 'Vara de Falências',
+    sellerId: 'seller-vara-de-falencias-do-rio-de-janeiro-tjrj', description: 'Fiat Toro Freedom 1.8 AT, 2018, cor branca. Venda judicial. Veículo em bom estado geral. Consulte o edital para condições.',
+    views: 780, bidsCount: 0
+  },
+  {
+    id: 'LOTJUDMAQ001', auctionId: 'JUD003MAQ', publicId: 'LOT-TRATORMF-PR03C3', title: 'Trator Massey Ferguson 275 - Judicial',
+    imageUrl: 'https://placehold.co/600x400.png?text=Trator+MF+275', dataAiHint: 'trator vermelho antigo',
+    status: 'ABERTO_PARA_LANCES', cityId: 'city-curitiba-pr', stateId: 'state-pr', categoryId: 'cat-maquinas-e-equipamentos',
+    price: 22000, initialPrice: 22000, endDate: createFutureDate(5, 0),
+    judicialProcessNumber: '00123-2021-005-09-00-0', courtDistrict: 'Curitiba', courtName: 'Vara do Trabalho',
+    sellerId: 'seller-vara-do-trabalho-de-curitiba-trt9', description: 'Trator Massey Ferguson 275, ano 1998. Funcionando. Leilão judicial trabalhista.',
+    views: 510, bidsCount: 5
   },
 ];
 
@@ -976,3 +1044,26 @@ export function getPlaceholderIfEmpty(value: string | number | null | undefined,
     return String(value);
 }
 
+// Garantir que os IDs únicos de auctioneerId e sellerId sejam usados nos leilões
+sampleAuctionsRaw.forEach(auc => {
+    const auctioneer = sampleAuctioneersStatic.find(a => a.name === auc.auctioneerId);
+    if (auctioneer) {
+        auc.auctioneerId = `auct-${slugify(auctioneer.name)}`;
+    }
+    const seller = sampleSellersStatic.find(s => s.name === auc.sellerId);
+    if (seller) {
+        auc.sellerId = `seller-${slugify(seller.name)}`;
+    }
+});
+
+// Garantir que os IDs únicos de auctionId e sellerId sejam usados nos lotes
+sampleLotsRaw.forEach(lot => {
+    const auction = sampleAuctionsRaw.find(a => a.id === lot.auctionId);
+    if (auction) {
+        lot.auctionId = auction.id; // Mantém o ID original do leilão, não o publicId aqui
+    }
+    const seller = sampleSellersStatic.find(s => s.name === lot.sellerId);
+    if (seller) {
+        lot.sellerId = `seller-${slugify(seller.name)}`;
+    }
+});
