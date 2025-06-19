@@ -13,11 +13,11 @@ const slides = [
     title: 'Velocidade e Estilo em Leilão',
     subtitle: 'Seu Próximo Esportivo Está Aqui',
     description: 'Descubra carros esportivos incríveis com preços imperdíveis. Dê seu lance!',
-    imageUrl: 'https://placehold.co/1200x500.png?text=Carro+Esportivo',
+    imageUrl: 'https://images.unsplash.com/photo-1625231334168-35067f8853ed?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjYXJybyUyMGVzcG9ydGl2b3xlbnwwfHx8fDE3NTAzNjc4NTZ8MA&ixlib=rb-4.1.0&q=80&w=1080',
     imageAlt: 'Carro Esportivo Vermelho',
     dataAiHint: 'carro esportivo vermelho',
     buttonText: 'Ver Esportivos',
-    buttonLink: '/search?category=veiculos', 
+    buttonLink: '/search?category=veiculos',
   },
   {
     title: 'Oportunidades Únicas em Leilão',
