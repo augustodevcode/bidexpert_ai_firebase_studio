@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -8,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
-import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters';
+import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters'; 
 import AuctionCard from '@/components/auction-card';
 import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
@@ -18,10 +19,10 @@ import {
     sampleAuctions,
     sampleLots,
     sampleDirectSaleOffers,
-    getUniqueLotLocations,
-    getUniqueSellerNames,
+    getUniqueLotLocations, 
+    getUniqueSellerNames, 
     slugify,
-    sampleLotCategories
+    sampleLotCategories 
 } from '@/lib/sample-data';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -77,7 +78,8 @@ export default function SearchPage() {
   const [searchTerm, setSearchTerm] = useState(searchParamsHook.get('term') || '');
   const [currentSearchType, setCurrentSearchType] = useState<'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos'>( (searchParamsHook.get('type') as any) || 'auctions');
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
-  const [sortByState, setSortByState] = useState<string>('relevance'); // Unified sort state
+  const [sortByState, setSortByState] = useState<string>('relevance'); 
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid'); // Corrigido aqui
 
   const [allCategoriesForFilter, setAllCategoriesForFilter] = useState<LotCategory[]>([]);
   const [uniqueLocationsForFilter, setUniqueLocationsForFilter] = useState<string[]>([]);
@@ -156,12 +158,12 @@ export default function SearchPage() {
     const currentParams = new URLSearchParams(Array.from(searchParamsHook.entries()));
     
     if (type === 'tomada_de_precos') {
-        currentParams.set('type', 'auctions'); // Keep base type as auctions for backend filtering
+        currentParams.set('type', 'auctions'); 
         currentParams.set('auctionType', 'TOMADA_DE_PRECOS');
         setActiveFilters(prev => ({ ...initialFiltersState, searchType: 'tomada_de_precos', modality: 'TOMADA_DE_PRECOS', category: prev.category === 'TODAS' ? 'TODAS' : prev.category, status: ['ACTIVE'] }));
     } else {
         currentParams.set('type', type);
-        currentParams.delete('auctionType'); // Clear auctionType if not "Tomada de Preços" tab
+        currentParams.delete('auctionType'); 
         setActiveFilters(prev => ({ ...initialFiltersState, searchType: type, category: prev.category === 'TODAS' ? 'TODAS' : prev.category, status: type === 'direct_sale' ? ['ACTIVE'] : []}));
     }
     router.push(`/search?${currentParams.toString()}`);
@@ -294,11 +296,11 @@ export default function SearchPage() {
 
   const filteredAndSortedItems = useMemo(() => {
     let items: any[] = [];
-    let itemTypeForFiltering: 'auction' | 'lot' | 'direct_sale' = 'auctions';
+    let itemTypeForFiltering: 'auction' | 'lot' | 'direct_sale' = 'auction'; // Corrected from 'auctions'
     let currentSortByVal = sortByState;
 
     if (currentSearchType === 'auctions') {
-      items = sampleAuctions;
+      items = sampleAuctions.filter(auc => auc.auctionType !== 'TOMADA_DE_PRECOS'); // Exclude Tomada de Preços
       itemTypeForFiltering = 'auction';
     } else if (currentSearchType === 'lots') {
       items = allLotsWithAuctionData;
@@ -308,12 +310,11 @@ export default function SearchPage() {
       itemTypeForFiltering = 'direct_sale';
     } else if (currentSearchType === 'tomada_de_precos') {
       items = sampleAuctions.filter(auc => auc.auctionType === 'TOMADA_DE_PRECOS');
-      itemTypeForFiltering = 'auction'; // Filters like an auction but pre-filtered by type
+      itemTypeForFiltering = 'auction'; 
     }
 
     let filtered = applySharedFilters(items, activeFilters, itemTypeForFiltering);
 
-    // Sorting logic adapted for the unified sortByState
     switch (currentSortByVal) {
         case 'id_asc':
             filtered.sort((a,b) => (parseInt(String(a.id).replace(/\D/g,'')) || 0) - (parseInt(String(b.id).replace(/\D/g,'')) || 0));
