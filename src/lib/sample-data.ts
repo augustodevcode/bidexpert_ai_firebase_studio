@@ -136,7 +136,7 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
     id: 'TP001-NOTEBOOKS', publicId: 'AUC-TPNOTE-PMC001X9', title: 'Tomada de Preços - Aquisição de Notebooks',
     fullTitle: 'Tomada de Preços Nº 001/2024 - Aquisição de Notebooks para Secretaria de Educação de Campinas',
     description: 'Processo de tomada de preços para aquisição de 80 notebooks para equipar escolas municipais. Especificações detalhadas no edital. Propostas devem ser enviadas em envelope lacrado até a data limite.',
-    status: 'ABERTO_PARA_LANCES', auctionType: 'TOMADA_DE_PRECOS', categoryId: 'cat-eletronicos-e-tecnologia',
+    status: 'ACTIVE', auctionType: 'TOMADA_DE_PRECOS', categoryId: 'cat-eletronicos-e-tecnologia', // Ajustado categoryId
     auctioneerId: 'auct-leiloeiro-publico-municipal-campinas', sellerId: 'seller-prefeitura-municipal-de-campinas',
     auctionDate: createFutureDate(1, 9), endDate: createFutureDate(15, 17), // Encerramento para propostas
     city: 'Campinas', state: 'SP', imageUrl: 'https://images.unsplash.com/photo-1744051518421-1eaf2fbde680?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxub3RlYm9va3MlMjBwaWxoYSUyMGVzY3JpdG9yaW98ZW58MHx8fHwxNzUwMzU2MDY1fDA&ixlib=rb-4.1.0&q=80&w=1080',
@@ -148,7 +148,7 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
     id: 'TP002-VEICULOS', publicId: 'AUC-TPVEIC-SAS002Y0', title: 'Tomada de Preços - Alienação de Veículos da Frota',
     fullTitle: 'Tomada de Preços Nº 002/2024 - Alienação de Veículos Usados da Frota da Secretaria de Salvador',
     description: 'Alienação de veículos usados da frota municipal, incluindo carros de passeio e utilitários. Visitação permitida conforme edital. Propostas para lotes individuais ou para a frota completa.',
-    status: 'ENCERRADO', auctionType: 'TOMADA_DE_PRECOS', categoryId: 'cat-veiculos',
+    status: 'ENCERRADO', auctionType: 'TOMADA_DE_PRECOS', categoryId: 'cat-veiculos', // Ajustado categoryId
     auctioneerId: 'auct-central-de-compras-bahia', sellerId: 'seller-secretaria-de-administracao-de-salvador',
     auctionDate: createPastDate(30, 9), endDate: createPastDate(15, 17),
     city: 'Salvador', state: 'BA', imageUrl: 'https://images.unsplash.com/photo-1658241213593-b7904e271aa8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYXJyb3MlMjB1c2Fkb3MlMjBwYXRpb3xlbnwwfHx8fDE3NTAzNTYwNjV8MA&ixlib=rb-4.1.0&q=80&w=1080',
