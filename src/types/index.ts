@@ -82,7 +82,7 @@ export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id' | 'publicId' |
 export interface SellerProfileInfo {
   id: string;
   publicId: string;
-  name: string; 
+  name: string;
   slug: string;
   contactName?: string | null;
   email?: string | null;
@@ -100,7 +100,7 @@ export interface SellerProfileInfo {
   activeLotsCount?: number;
   totalSalesValue?: number;
   auctionsFacilitatedCount?: number;
-  userId?: string | null; 
+  userId?: string | null;
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
   
@@ -117,7 +117,6 @@ export interface AuctionStage {
   name: string; // ex: "1ª Praça"
   endDate: AnyTimestamp; // Timestamp ou string ISO
   statusText?: string; // ex: "Encerramento", "Abre em"
-  // Outros campos específicos da praça, se necessário
   initialPrice?: number; // Lance inicial para esta praça
 }
 
@@ -131,15 +130,15 @@ export interface Auction {
   fullTitle?: string;
   description?: string;
   status: AuctionStatus;
-  auctionType?: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS'; // Adicionado TOMADA_DE_PRECOS
-  category: string; // Nome da Categoria
-  categoryId?: string; // ID da Categoria
-  auctioneer: string; // Nome do Leiloeiro
-  auctioneerId?: string; // ID do Leiloeiro
-  seller?: string; // Nome do Comitente
-  sellerId?: string; // ID do Comitente
-  auctionDate: AnyTimestamp; // Data principal do leilão (e.g., 1ª praça)
-  endDate?: AnyTimestamp | null; // Encerramento geral do leilão (e.g. fim 2ª praça)
+  auctionType?: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS';
+  category: string; 
+  categoryId?: string; 
+  auctioneer: string; 
+  auctioneerId?: string; 
+  seller?: string; 
+  sellerId?: string; 
+  auctionDate: AnyTimestamp; 
+  endDate?: AnyTimestamp | null; 
   auctionStages?: AuctionStage[];
   city?: string;
   state?: string;
@@ -148,37 +147,34 @@ export interface Auction {
   documentsUrl?: string;
   totalLots?: number;
   visits?: number;
-  lots?: Lot[]; // Agora é opcional no tipo principal para evitar redundância se já buscado
+  lots?: Lot[]; 
   initialOffer?: number;
   isFavorite?: boolean;
   currentBid?: number;
   bidsCount?: number;
   sellingBranch?: string;
-  vehicleLocation?: string; // Para leilões de veículos, local principal
+  vehicleLocation?: string; 
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
   auctioneerLogoUrl?: string;
-  auctioneerName?: string; // Redundante se auctioneerId está presente e resolvido
+  auctioneerName?: string; 
 }
 
-// Usado para forms, onde IDs podem ser nomes/slugs inicialmente
-export type AuctionFormData = Omit<Auction, 
-  'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' | 
-  'lots' | 'totalLots' | 'visits' | 'auctionStages' | 'isFavorite' | 
+export type AuctionFormData = Omit<Auction,
+  'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' |
+  'lots' | 'totalLots' | 'visits' | 'auctionStages' | 'isFavorite' |
   'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' |
-  'categoryId' | 'auctioneerId' | 'sellerId' 
+  'categoryId' | 'auctioneerId' | 'sellerId'
 > & {
-  auctionDate: Date; // Para o form, esperamos um objeto Date
-  endDate?: Date | null; // Para o form, esperamos um objeto Date ou null
+  auctionDate: Date; 
+  endDate?: Date | null; 
   auctionStages?: Array<Omit<AuctionStage, 'endDate'> & {endDate: Date}>;
-  // category, auctioneer, seller são strings que serão resolvidas para IDs
 };
 
-// Usado para o DB Adapter, onde IDs já devem estar resolvidos
 export type AuctionDbData = Omit<AuctionFormData, 'category' | 'auctioneer' | 'seller'> & {
   categoryId?: string;
   auctioneerId?: string;
-  sellerId?: string | null; // pode ser opcional
+  sellerId?: string | null; 
 };
 
 
@@ -187,135 +183,121 @@ export interface Lot {
   publicId: string;
   auctionId: string;
   title: string;
-  number?: string; // Número do lote dentro do leilão
+  number?: string; 
   imageUrl: string;
   dataAiHint?: string;
   galleryImageUrls?: string[];
-  mediaItemIds?: string[]; // IDs de MediaItem da galeria
+  mediaItemIds?: string[]; 
   status: LotStatus;
-  stateId?: string; 
-  cityId?: string;  
+  stateId?: string;
+  cityId?: string;
   cityName?: string;
   stateUf?: string;
-  type: string; // Nome da Categoria
-  categoryId?: string; // ID da Categoria
+  type: string; 
+  categoryId?: string; 
   views?: number;
-  auctionName?: string; // Nome do leilão pai (para display)
-  
-  // Preços e Lances
-  price: number; // Lance atual ou inicial se não houver lances
-  initialPrice?: number; // Lance inicial da 1ª praça / valor base
-  secondInitialPrice?: number | null; // Lance inicial da 2ª praça
-
-  // Datas
-  endDate: AnyTimestamp; // Data de encerramento deste lote específico
-  auctionDate?: AnyTimestamp; // Data principal do leilão (pode vir do Auction)
-  lotSpecificAuctionDate?: AnyTimestamp | null; // Se o lote tem data/hora de início específica
-  secondAuctionDate?: AnyTimestamp | null; // Data da segunda praça, se aplicável
-  
+  auctionName?: string; 
+  price: number; 
+  initialPrice?: number; 
+  secondInitialPrice?: number | null; 
+  endDate: AnyTimestamp; 
+  auctionDate?: AnyTimestamp; 
+  lotSpecificAuctionDate?: AnyTimestamp | null; 
+  secondAuctionDate?: AnyTimestamp | null; 
   bidsCount?: number;
   isFavorite?: boolean;
   isFeatured?: boolean;
   description?: string;
-  
-  // Campos específicos de veículos
   year?: number;
-  make?: string; // Marca
+  make?: string; 
   model?: string;
   series?: string;
-
-  // Outros campos comuns
   stockNumber?: string;
-  sellingBranch?: string; // Filial de venda
-
-  // Detalhes do veículo (extraídos do HTML de exemplo da Land.com)
-  vin?: string; // Chassi
-  vinStatus?: string; // Status do Chassi (ex: Remarcado)
-  lossType?: string; // Tipo de Sinistro (ex: Colisão, Roubo/Furto)
-  primaryDamage?: string; // Dano Principal (ex: Dianteiro, Traseiro)
-  titleInfo?: string; // Informação do Título/Documento (ex: Aguardando Documento, Em Branco)
-  titleBrand?: string; // Marca do Título (ex: Salvado, Recuperado de Financiamento)
-  startCode?: string; // Código de Partida (ex: Funciona e Anda, Não Liga)
-  hasKey?: boolean; // Possui Chave? (Sim/Não)
-  odometer?: string; // Hodômetro (ex: 120545 MILHAS)
-  airbagsStatus?: string; // Status dos Airbags (ex: Intactos, Deflagrados)
-
-  // Detalhes da propriedade/item
-  bodyStyle?: string; // Estilo da Carroceria (ex: SEDAN 4 PORTAS)
-  engineDetails?: string; // Motor (ex: 2.0L 4)
-  transmissionType?: string; // Transmissão (ex: AUTOMÁTICA)
-  driveLineType?: string; // Tração (ex: DIANTEIRA)
-  fuelType?: string; // Combustível (ex: GASOLINA)
-  cylinders?: string; // Cilindros (ex: 4 CILINDROS)
-  restraintSystem?: string; // Sistema de Retenção (ex: Airbags Duplos Frontais/Laterais)
-  exteriorInteriorColor?: string; // Cor Externa/Interna (ex: AZUL/PRETO)
-  options?: string; // Opcionais (ex: AR CONDICIONADO,TETO SOLAR)
-  manufacturedIn?: string; // Fabricado Em (ex: ESTADOS UNIDOS)
-  vehicleClass?: string; // Classe do Veículo
-
-  // Informações logísticas específicas do lote/local
-  vehicleLocationInBranch?: string; // Localização do Veículo na Filial (ex: Pátio A, Setor 3)
-  laneRunNumber?: string; // Pista / Número de Corrida
-  aisleStall?: string; // Corredor / Vaga
-
-  // Valores adicionais
-  actualCashValue?: string; // Valor Real em Dinheiro (VCV)
-  estimatedRepairCost?: string; // Custo Estimado de Reparo
-
-  // Informações de Vendedor e Leiloeiro diretamente no lote, se necessário
+  sellingBranch?: string; 
+  vin?: string; 
+  vinStatus?: string; 
+  lossType?: string; 
+  primaryDamage?: string; 
+  titleInfo?: string; 
+  titleBrand?: string; 
+  startCode?: string; 
+  hasKey?: boolean; 
+  odometer?: string; 
+  airbagsStatus?: string; 
+  bodyStyle?: string; 
+  engineDetails?: string; 
+  transmissionType?: string; 
+  driveLineType?: string; 
+  fuelType?: string; 
+  cylinders?: string; 
+  restraintSystem?: string; 
+  exteriorInteriorColor?: string; 
+  options?: string; 
+  manufacturedIn?: string; 
+  vehicleClass?: string; 
+  vehicleLocationInBranch?: string; 
+  laneRunNumber?: string; 
+  aisleStall?: string; 
+  actualCashValue?: string; 
+  estimatedRepairCost?: string; 
   sellerName?: string;
-  sellerId?: string; // ID do Comitente/Vendedor associado
+  sellerId?: string; 
   auctioneerName?: string;
-  auctioneerId?: string; // ID do Leiloeiro associado
-
+  auctioneerId?: string; 
   condition?: string;
   createdAt?: AnyTimestamp;
   updatedAt?: AnyTimestamp;
-
   discountPercentage?: number;
   additionalTriggers?: string[];
   isExclusive?: boolean;
-
-  // Campos de localização para mapa
   latitude?: number | null;
   longitude?: number | null;
-  mapAddress?: string | null; 
-  mapEmbedUrl?: string | null; 
-  mapStaticImageUrl?: string | null; 
+  mapAddress?: string | null;
+  mapEmbedUrl?: string | null;
+  mapStaticImageUrl?: string | null;
+
+  // Campos de segurança e due diligence
+  judicialProcessNumber?: string | null;
+  courtDistrict?: string | null; // Comarca
+  courtName?: string | null; // Vara
+  publicProcessUrl?: string | null;
+  propertyRegistrationNumber?: string | null; // Matrícula do Imóvel
+  propertyLiens?: string | null; // Ônus (descrição ou link)
+  knownDebts?: string | null; // Dívidas conhecidas (IPTU, Condomínio)
+  additionalDocumentsInfo?: string | null; // Campo de texto para outras infos/links de docs
 }
 
-export type LotFormData = Omit<Lot, 
-  'id' | 
-  'publicId' | 
-  'createdAt' | 
-  'updatedAt' | 
-  'endDate' | 
-  'lotSpecificAuctionDate' | 
+export type LotFormData = Omit<Lot,
+  'id' |
+  'publicId' |
+  'createdAt' |
+  'updatedAt' |
+  'endDate' |
+  'lotSpecificAuctionDate' |
   'secondAuctionDate' |
-  'isFavorite' | 
+  'isFavorite' |
   'isFeatured' |
-  'views' |           // Gerenciado pelo sistema
-  'bidsCount' |       // Gerenciado pelo sistema
-  'galleryImageUrls' | // Será gerenciado por mediaItemIds
-  'dataAiHint' |      // Será gerenciado por mediaItems
-  'cityName' |        // Derivado de cityId
-  'stateUf' |         // Derivado de stateId
+  'views' |           
+  'bidsCount' |       
+  'galleryImageUrls' | 
+  'dataAiHint' |      
+  'cityName' |        
+  'stateUf' |         
   'auctioneerName' |
   'sellerName' |
   'type' |
-  'auctionName'       // auctionName virá de auctionId selecionado
+  'auctionName'       
 > & {
   endDate: Date;
   lotSpecificAuctionDate?: Date | null;
   secondAuctionDate?: Date | null;
-  type: string; // No form, usamos o nome da categoria para popular o select, que será o categoryId.
+  type: string; 
   views?: number;
   bidsCount?: number;
   mediaItemIds?: string[];
-  galleryImageUrls?: string[]; // Mantemos para conveniência, mas a fonte da verdade será mediaItemIds
+  galleryImageUrls?: string[]; 
 };
 
-// Tipo para inserir/atualizar no banco, onde nomes de categoria/leiloeiro são IDs
 export type LotDbData = Omit<LotFormData, 'type' | 'auctionName' | 'sellerName' | 'auctioneerName' > & {
   categoryId?: string;
   auctioneerId?: string;
@@ -326,8 +308,8 @@ export type BidInfo = {
   id: string;
   lotId: string;
   auctionId: string;
-  bidderId: string; // UID do usuário
-  bidderDisplay: string; // Nome para exibição (pode ser anônimo ou nome real)
+  bidderId: string; 
+  bidderDisplay: string; 
   amount: number;
   timestamp: AnyTimestamp;
 };
@@ -335,10 +317,10 @@ export type BidInfo = {
 export type Review = {
   id: string;
   lotId: string;
-  auctionId: string; // Contexto do leilão pode ser útil
+  auctionId: string; 
   userId: string;
   userDisplayName: string;
-  rating: number; // e.g., 1-5
+  rating: number; 
   comment: string;
   createdAt: AnyTimestamp;
   updatedAt?: AnyTimestamp;
@@ -354,9 +336,9 @@ export type LotQuestion = {
   createdAt: AnyTimestamp;
   answerText?: string;
   answeredAt?: AnyTimestamp;
-  answeredByUserId?: string; // UID do admin/vendedor que respondeu
+  answeredByUserId?: string; 
   answeredByUserDisplayName?: string;
-  isPublic?: boolean; // Se a pergunta/resposta deve ser visível para outros
+  isPublic?: boolean; 
 };
 
 export type UserDocumentStatus = 'NOT_SENT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'PENDING_ANALYSIS';
@@ -367,7 +349,7 @@ export interface DocumentType {
   name: string;
   description?: string;
   isRequired: boolean;
-  allowedFormats?: string[]; // e.g., ['PDF', 'JPG', 'PNG']
+  allowedFormats?: string[]; 
   displayOrder?: number;
 }
 
@@ -375,13 +357,13 @@ export interface UserDocument {
   id: string;
   documentTypeId: string;
   userId: string;
-  fileUrl?: string; // URL para o arquivo no storage
+  fileUrl?: string; 
   status: UserDocumentStatus;
   uploadDate?: AnyTimestamp;
   analysisDate?: AnyTimestamp;
-  analystId?: string; // Quem analisou
+  analystId?: string; 
   rejectionReason?: string;
-  documentType: DocumentType; // Dados do tipo de documento para facilitar a exibição
+  documentType: DocumentType; 
 }
 
 export type UserBidStatus = 'GANHANDO' | 'PERDENDO' | 'SUPERADO' | 'ARREMATADO' | 'NAO_ARREMATADO';
@@ -403,12 +385,11 @@ export interface UserBid {
 
 export interface UserWin {
   id: string;
-  lot: Lot; // Dados completos do lote arrematado
+  lot: Lot; 
   winningBidAmount: number;
   winDate: AnyTimestamp;
   paymentStatus: PaymentStatus;
-  invoiceUrl?: string; // Link para a nota de arremate/fatura
-  // Outros detalhes como taxas, comissões podem ser adicionados aqui
+  invoiceUrl?: string; 
 }
 
 
@@ -416,13 +397,11 @@ export interface UserProfileData {
   uid: string;
   email: string;
   fullName: string | null;
-  password?: string; // Campo para uso interno do adapter SQL, NUNCA RETORNADO AO CLIENTE
+  password?: string; 
   roleId?: string | null;
-  roleName?: string; // Nome do perfil para exibição
-  permissions?: string[]; // Permissões herdadas do perfil
+  roleName?: string; 
+  permissions?: string[]; 
   habilitationStatus?: UserHabilitationStatus;
-  
-  // Dados Pessoais Adicionais
   cpf?: string | null;
   rgNumber?: string | null;
   rgIssuer?: string | null;
@@ -435,11 +414,9 @@ export interface UserProfileData {
   profession?: string | null;
   nationality?: string | null;
   maritalStatus?: string | null;
-  propertyRegime?: string | null; // Regime de bens (para casados)
+  propertyRegime?: string | null; 
   spouseName?: string | null;
   spouseCpf?: string | null;
-
-  // Endereço
   zipCode?: string | null;
   street?: string | null;
   number?: string | null;
@@ -447,22 +424,16 @@ export interface UserProfileData {
   neighborhood?: string | null;
   city?: string | null;
   state?: string | null;
-  
-  status?: string; // Ex: ATIVO, INATIVO, SUSPENSO, PENDENTE_VALIDACAO
+  status?: string; 
   optInMarketing?: boolean;
   createdAt?: AnyTimestamp;
   updatedAt?: AnyTimestamp;
   avatarUrl?: string | null;
   dataAiHint?: string | null;
-
-  // Estatísticas e Relações (podem ser calculadas ou referências)
   activeBids?: number;
   auctionsWon?: number;
-  itemsSold?: number; // Se o usuário também for um comitente
-
-  sellerProfileId?: string; // Se este usuário também é um Seller
-
-  // Campos para PJ e Comitente Venda Direta
+  itemsSold?: number; 
+  sellerProfileId?: string; 
   accountType?: 'PHYSICAL' | 'LEGAL' | 'DIRECT_SALE_CONSIGNOR';
   razaoSocial?: string | null;
   cnpj?: string | null;
@@ -471,25 +442,23 @@ export interface UserProfileData {
 }
 
 export type UserProfileWithPermissions = UserProfileData & {
-  // permissions já está em UserProfileData, mas podemos reforçar aqui
-  permissions: string[]; 
+  permissions: string[];
 };
 
 export type EditableUserProfileData = Partial<Omit<UserProfileData, 'uid' | 'email' | 'status' | 'createdAt' | 'updatedAt' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'roleId' | 'roleName' | 'sellerProfileId' | 'permissions' | 'habilitationStatus' | 'password' >> & {
-  dateOfBirth?: Date | null; // Formulário usará Date
-  rgIssueDate?: Date | null; // Formulário usará Date
+  dateOfBirth?: Date | null; 
+  rgIssueDate?: Date | null; 
 };
 
-// Type for data from UserForm, to be processed by createUser action in users/actions.ts
 export type UserFormValues = Pick<UserProfileData, 'fullName' | 'email' | 'cpf' | 'cellPhone' | 'dateOfBirth' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing'> & {
   password?: string;
-  roleId?: string | null; // ID do perfil, opcional
+  roleId?: string | null; 
 };
 
 export interface SqlAuthResult {
   success: boolean;
   message: string;
-  user?: UserProfileData; // Ou UserProfileWithPermissions se já vier com permissões
+  user?: UserProfileData; 
 }
 
 export type DirectSaleOfferType = 'BUY_NOW' | 'ACCEPTS_PROPOSALS';
@@ -504,28 +473,32 @@ export interface DirectSaleOffer {
     dataAiHint?: string;
     galleryImageUrls?: string[];
     offerType: DirectSaleOfferType;
-    price?: number; // Obrigatório se offerType for BUY_NOW
-    minimumOfferPrice?: number; // Opcional, relevante para ACCEPTS_PROPOSALS
-    category: string; // Slug da categoria
+    price?: number; 
+    minimumOfferPrice?: number; 
+    category: string; 
     locationCity?: string;
-    locationState?: string; // UF
+    locationState?: string; 
     sellerName: string;
-    sellerId?: string; // ID do comitente/vendedor
+    sellerId?: string; 
     sellerLogoUrl?: string;
     dataAiHintSellerLogo?: string;
     status: DirectSaleOfferStatus;
-    itemsIncluded?: string[]; // Para descrever o que vem no "pacote"
-    tags?: string[]; // Palavras-chave para busca
+    itemsIncluded?: string[]; 
+    tags?: string[]; 
     views?: number;
-    proposalsCount?: number; // Se aceita propostas
+    proposalsCount?: number; 
     createdAt: AnyTimestamp;
     updatedAt: AnyTimestamp;
-    expiresAt?: AnyTimestamp; // Data de expiração da oferta
+    expiresAt?: AnyTimestamp; 
+    latitude?: number | null;
+    longitude?: number | null;
+    mapAddress?: string | null; 
+    mapEmbedUrl?: string | null; 
+    mapStaticImageUrl?: string | null; 
 }
 
-// --- Settings Types ---
 export interface ThemeColors {
-  [colorVariable: string]: string; // e.g., '--primary': 'hsl(25, 95%, 53%)'
+  [colorVariable: string]: string; 
 }
 
 export interface Theme {
@@ -536,8 +509,8 @@ export interface Theme {
 export interface MentalTriggerSettings {
     showDiscountBadge?: boolean;
     showUrgencyTimer?: boolean;
-    urgencyTimerThresholdDays?: number; 
-    urgencyTimerThresholdHours?: number; 
+    urgencyTimerThresholdDays?: number;
+    urgencyTimerThresholdHours?: number;
     showPopularityBadge?: boolean;
     popularityViewThreshold?: number;
     showHotBidBadge?: boolean;
@@ -559,7 +532,6 @@ export interface SectionBadgeConfig {
   searchGrid?: BadgeVisibilitySettings;
   searchList?: BadgeVisibilitySettings;
   lotDetail?: BadgeVisibilitySettings;
-  // Outras seções podem ser adicionadas aqui
 }
 
 export type HomepageSectionType = 'hero_carousel' | 'filter_links' | 'featured_lots' | 'active_auctions' | 'promo_banner_1' | 'categories_grid';
@@ -580,8 +552,8 @@ export interface HomepageSectionConfig {
   title?: string;
   visible: boolean;
   order: number;
-  itemCount?: number; // Para seções de lista, como lotes em destaque
-  categorySlug?: string; // Para seções baseadas em categoria
+  itemCount?: number; 
+  categorySlug?: string; 
   promoContent?: PromoCardContent;
 }
 
@@ -593,31 +565,64 @@ export interface MapSettings {
 }
 
 export interface PlatformSettings {
-  id: 'global'; // Sempre 'global' para o documento único de configurações
+  id: 'global'; 
   siteTitle?: string;
   siteTagline?: string;
-  galleryImageBasePath: string; // Ex: /uploads/lotes/
+  galleryImageBasePath: string; 
   activeThemeName?: string | null;
   themes?: Theme[];
   platformPublicIdMasks?: {
-    auctions?: string; // Ex: "LEIL-"
-    lots?: string;     // Ex: "LOTE-"
+    auctions?: string; 
+    lots?: string;     
     auctioneers?: string;
     sellers?: string;
   };
   homepageSections?: HomepageSectionConfig[];
   mentalTriggerSettings?: MentalTriggerSettings;
-  sectionBadgeVisibility?: SectionBadgeConfig; 
-  mapSettings?: MapSettings; // Adicionado para configurações de mapa
+  sectionBadgeVisibility?: SectionBadgeConfig;
+  mapSettings?: MapSettings; 
   updatedAt: AnyTimestamp;
 }
 
 export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'> & {
-    homepageSections?: HomepageSectionConfig[]; // Garantir que seja parte do form
+    homepageSections?: HomepageSectionConfig[]; 
     mentalTriggerSettings?: MentalTriggerSettings;
     sectionBadgeVisibility?: SectionBadgeConfig;
     mapSettings?: MapSettings;
 };
+
+
+export interface MediaItem {
+  id: string;
+  fileName: string;
+  uploadedAt: AnyTimestamp;
+  uploadedBy?: string; // UID do usuário que fez o upload
+  title?: string | null;
+  altText?: string | null;
+  caption?: string | null;
+  description?: string | null;
+  mimeType: string; // e.g., 'image/jpeg', 'application/pdf'
+  sizeBytes: number;
+  dimensions?: { width: number; height: number }; // Para imagens
+  urlOriginal: string; // URL pública principal
+  urlThumbnail?: string | null;
+  urlMedium?: string | null;
+  urlLarge?: string | null;
+  linkedLotIds?: string[]; // IDs dos lotes aos quais esta mídia está anexada
+  dataAiHint?: string | null; // Dica para IA buscar imagens placeholder
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  name_normalized: string; // Para buscas case-insensitive e garantir unicidade
+  description?: string;
+  permissions: string[];
+  createdAt: AnyTimestamp;
+  updatedAt: AnyTimestamp;
+}
+
+export type RoleFormData = Omit<Role, 'id' | 'name_normalized' | 'createdAt' | 'updatedAt'>;
 
 
 export interface IDatabaseAdapter {
@@ -625,7 +630,7 @@ export interface IDatabaseAdapter {
 
   createLotCategory(data: { name: string; description?: string }): Promise<{ success: boolean; message: string; categoryId?: string }>;
   getLotCategories(): Promise<LotCategory[]>;
-  getLotCategory(idOrSlug: string): Promise<LotCategory | null>; // Pode buscar por ID ou Slug
+  getLotCategory(idOrSlug: string): Promise<LotCategory | null>; 
   getLotCategoryByName(name: string): Promise<LotCategory | null>;
   updateLotCategory(id: string, data: { name: string; description?: string }): Promise<{ success: boolean; message: string }>;
   deleteLotCategory(id: string): Promise<{ success: boolean; message: string }>;
@@ -638,7 +643,7 @@ export interface IDatabaseAdapter {
 
   createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string }>;
   getCities(stateIdOrSlugFilter?: string): Promise<CityInfo[]>;
-  getCity(idOrCompositeSlug: string): Promise<CityInfo | null>; // id pode ser "stateSlug-citySlug" ou ID numérico
+  getCity(idOrCompositeSlug: string): Promise<CityInfo | null>; 
   updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string }>;
   deleteCity(id: string): Promise<{ success: boolean; message: string }>;
 
@@ -668,7 +673,7 @@ export interface IDatabaseAdapter {
 
 
   createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }>;
-  getLots(auctionIdParam?: string): Promise<Lot[]>; // auctionIdParam pode ser ID numérico ou publicId
+  getLots(auctionIdParam?: string): Promise<Lot[]>; 
   getLot(idOrPublicId: string): Promise<Lot | null>;
   updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string }>;
   deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string }>;
@@ -685,12 +690,12 @@ export interface IDatabaseAdapter {
   getUserProfileData(userId: string): Promise<UserProfileData | null>;
   updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }>;
   ensureUserRole(
-    userId: string, 
-    email: string, 
-    fullName: string | null, 
-    targetRoleName: string, 
+    userId: string,
+    email: string,
+    fullName: string | null,
+    targetRoleName: string,
     additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>,
-    roleIdToAssign?: string 
+    roleIdToAssign?: string
   ): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }>;
   getUsersWithRoles(): Promise<UserProfileData[]>;
   updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }>;
@@ -718,25 +723,10 @@ export interface IDatabaseAdapter {
   updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }>;
 }
 
-
-// Type for data from UserForm, to be processed by createUser action in users/actions.ts
 export type UserCreationData = Pick<UserProfileData, 'fullName' | 'email' | 'cpf' | 'cellPhone' | 'dateOfBirth' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing'> & {
   password?: string;
-  roleId?: string | null; // ID do perfil, opcional
+  roleId?: string | null; 
 };
-
-// export type MegaMenuLinkItem = {
-//   href: string;
-//   label: string;
-//   description?: string;
-//   icon?: React.ReactNode;
-// };
-
-// export type MegaMenuGroup = {
-//   title?: string;
-//   items: MegaMenuLinkItem[];
-// };
-
 
 export interface RecentlyViewedLotInfo {
   id: string;
@@ -745,3 +735,5 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
+
+```

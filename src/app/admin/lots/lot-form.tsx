@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
 import type { Lot, LotStatus, LotCategory, Auction, StateInfo, CityInfo, MediaItem } from '@/types';
-import { Loader2, Save, CalendarIcon, Package, ImagePlus, UploadCloud, Trash2, MapPin } from 'lucide-react';
+import { Loader2, Save, CalendarIcon, Package, ImagePlus, UploadCloud, Trash2, MapPin, FileText, Shield, Banknote, Link as LinkIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -120,6 +120,15 @@ export default function LotForm({
       mapAddress: initialData?.mapAddress ?? '',
       mapEmbedUrl: initialData?.mapEmbedUrl ?? '',
       mapStaticImageUrl: initialData?.mapStaticImageUrl ?? '',
+      // Campos de segurança
+      judicialProcessNumber: initialData?.judicialProcessNumber || '',
+      courtDistrict: initialData?.courtDistrict || '',
+      courtName: initialData?.courtName || '',
+      publicProcessUrl: initialData?.publicProcessUrl || '',
+      propertyRegistrationNumber: initialData?.propertyRegistrationNumber || '',
+      propertyLiens: initialData?.propertyLiens || '',
+      knownDebts: initialData?.knownDebts || '',
+      additionalDocumentsInfo: initialData?.additionalDocumentsInfo || '',
     },
   });
 
@@ -155,7 +164,6 @@ export default function LotForm({
   }, [initialData?.stateId, allCities]);
   
   React.useEffect(() => {
-    // Sync selectedMediaForGallery with form fields for gallery
     form.setValue('galleryImageUrls', selectedMediaForGallery.map(item => item.urlOriginal || '').filter(Boolean));
     form.setValue('mediaItemIds', selectedMediaForGallery.map(item => item.id || '').filter(Boolean));
   }, [selectedMediaForGallery, form]);
@@ -166,7 +174,7 @@ export default function LotForm({
       const selectedMediaItem = selectedItems[0];
       if (selectedMediaItem.urlOriginal) {
         setMainImagePreviewUrl(selectedMediaItem.urlOriginal);
-        form.setValue('imageUrl', selectedMediaItem.urlOriginal); // Update the hidden form field
+        form.setValue('imageUrl', selectedMediaItem.urlOriginal); 
       } else {
           toast({ title: "Seleção Inválida", description: "O item de mídia selecionado não possui uma URL válida.", variant: "destructive"});
       }
@@ -195,10 +203,9 @@ export default function LotForm({
   async function onSubmit(values: LotFormValues) {
     setIsSubmitting(true);
     try {
-      // Ensure values from state are up-to-date in the form values before submission
       const dataToSubmit: LotFormValues = {
         ...values,
-        imageUrl: mainImagePreviewUrl || values.imageUrl, // Prefer preview URL if set
+        imageUrl: mainImagePreviewUrl || values.imageUrl, 
         galleryImageUrls: selectedMediaForGallery.map(item => item.urlOriginal || '').filter(Boolean),
         mediaItemIds: selectedMediaForGallery.map(item => item.id || '').filter(Boolean),
       };
@@ -312,7 +319,7 @@ export default function LotForm({
                   <FormItem>
                     <FormLabel>Descrição (Opcional)</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Detalhes sobre o lote..." {...field} rows={4} />
+                      <Textarea placeholder="Detalhes sobre o lote..." {...field} value={field.value ?? ""} rows={4} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -371,28 +378,28 @@ export default function LotForm({
                 />
                 <FormField
                   control={form.control}
-                  name="type" 
+                  name="type"
                   render={({ field }) => (
                       <FormItem>
                       <FormLabel>Tipo/Categoria do Lote</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                              <SelectTrigger>
-                              <SelectValue placeholder="Selecione o tipo/categoria" />
-                              </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                              {categories.length === 0 ? (
-                                <p className="p-2 text-sm text-muted-foreground">Nenhuma categoria cadastrada</p>
-                              ) : (
-                                categories.map(cat => (
-                                  <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                                ))
-                              )}
-                          </SelectContent>
-                      </Select>
-                      <FormMessage />
-                      </FormItem>
+                     <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo/categoria" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                           {categories.length === 0 ? (
+                             <p className="p-2 text-sm text-muted-foreground">Nenhuma categoria cadastrada</p>
+                           ) : (
+                             categories.map(cat => (
+                               <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                             ))
+                           )}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
                   )}
                   />
               </div>
@@ -404,12 +411,12 @@ export default function LotForm({
                       render={({ field }) => (
                       <FormItem>
                           <FormLabel>Estado (Opcional)</FormLabel>
-                          <Select 
+                          <Select
                               onValueChange={(value) => {
                                   const actualValue = value === "---NONE---" ? undefined : value;
                                   field.onChange(actualValue);
-                                  form.setValue('cityId', undefined); 
-                              }} 
+                                  form.setValue('cityId', undefined);
+                              }}
                               value={field.value || undefined}
                           >
                           <FormControl>
@@ -434,12 +441,12 @@ export default function LotForm({
                       render={({ field }) => (
                       <FormItem>
                           <FormLabel>Cidade (Opcional)</FormLabel>
-                          <Select 
+                          <Select
                               onValueChange={(value) => {
                                   const actualValue = value === "---NONE---" ? undefined : value;
                                   field.onChange(actualValue);
-                              }} 
-                              value={field.value || undefined} 
+                              }}
+                              value={field.value || undefined}
                               disabled={!selectedStateId || filteredCities.length === 0}
                           >
                           <FormControl>
@@ -461,8 +468,7 @@ export default function LotForm({
                       )}
                   />
               </div>
-              
-              {/* Main Image Selection - NO VISIBLE TEXT INPUT */}
+
               <FormItem>
                 <FormLabel>Imagem Principal do Lote</FormLabel>
                 <Card className="mt-2">
@@ -489,16 +495,15 @@ export default function LotForm({
                     </Button>
                   </CardContent>
                 </Card>
-                {/* Hidden input to store the actual imageUrl for the form, managed by react-hook-form */}
                 <FormField
                   control={form.control}
                   name="imageUrl"
                   render={({ field }) => (
-                    <FormItem className="hidden"> 
+                    <FormItem className="hidden">
                       <FormControl>
                         <Input type="text" {...field} />
                       </FormControl>
-                      <FormMessage /> 
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -511,11 +516,11 @@ export default function LotForm({
                   {selectedMediaForGallery.map((item, index) => (
                     <div key={item.id || `gallery-preview-${index}`} className="relative aspect-square bg-muted rounded overflow-hidden">
                       <Image src={item.urlOriginal || 'https://placehold.co/100x100.png'} alt={item.title || `Imagem ${index + 1}`} fill className="object-cover" data-ai-hint={item.dataAiHint || "miniatura galeria lote"} />
-                      <Button 
-                        type="button" 
-                        size="icon" 
-                        variant="destructive" 
-                        className="absolute top-1 right-1 h-6 w-6 opacity-80 hover:opacity-100 p-0" 
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="destructive"
+                        className="absolute top-1 right-1 h-6 w-6 opacity-80 hover:opacity-100 p-0"
                         onClick={() => handleRemoveFromGallery(item.id)}
                         title="Remover da galeria do lote"
                       >
@@ -536,7 +541,6 @@ export default function LotForm({
                   )}
                 </div>
                 <FormDescription>Adicione mais imagens para este lote clicando em "Adicionar". Máximo de 10 imagens.</FormDescription>
-                {/* Hidden inputs for gallery URLs and mediaItemIds, managed by react-hook-form */}
                 <FormField control={form.control} name="galleryImageUrls" render={({ field }) => (
                     <FormItem className="hidden"><FormControl><Input type="text" {...field} value={Array.isArray(field.value) ? field.value.join(',') : ''} /></FormControl></FormItem>
                 )} />
@@ -608,8 +612,36 @@ export default function LotForm({
                     )}
                 />
               <Separator />
+              <h3 className="text-md font-semibold text-muted-foreground pt-2 flex items-center gap-2"><Shield className="h-5 w-5" /> Informações de Segurança e Due Diligence (Opcional)</h3>
+              <FormField control={form.control} name="judicialProcessNumber" render={({ field }) => (
+                <FormItem><FormLabel>Nº Processo Judicial</FormLabel><FormControl><Input placeholder="0000000-00.0000.0.00.0000" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <div className="grid md:grid-cols-2 gap-6">
+                <FormField control={form.control} name="courtDistrict" render={({ field }) => (
+                    <FormItem><FormLabel>Comarca</FormLabel><FormControl><Input placeholder="Ex: Comarca de São Paulo" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="courtName" render={({ field }) => (
+                    <FormItem><FormLabel>Vara Judicial</FormLabel><FormControl><Input placeholder="Ex: 1ª Vara Cível" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+              <FormField control={form.control} name="publicProcessUrl" render={({ field }) => (
+                <FormItem><FormLabel>Link Consulta Pública do Processo</FormLabel><FormControl><Input type="url" placeholder="https://esaj.tjsp.jus.br/..." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="propertyRegistrationNumber" render={({ field }) => (
+                <FormItem><FormLabel>Nº Matrícula do Imóvel</FormLabel><FormControl><Input placeholder="Ex: 123.456 do 1º CRI" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="propertyLiens" render={({ field }) => (
+                <FormItem><FormLabel>Ônus/Gravames Conhecidos</FormLabel><FormControl><Textarea placeholder="Descrever brevemente ou link para certidão de ônus." {...field} value={field.value ?? ""} rows={2} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="knownDebts" render={({ field }) => (
+                <FormItem><FormLabel>Dívidas Conhecidas (IPTU, Condomínio, etc.)</FormLabel><FormControl><Textarea placeholder="Listar dívidas conhecidas sobre o bem." {...field} value={field.value ?? ""} rows={2} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="additionalDocumentsInfo" render={({ field }) => (
+                <FormItem><FormLabel>Outras Informações/Links de Documentos</FormLabel><FormControl><Textarea placeholder="Espaço para links adicionais de documentos ou observações importantes." {...field} value={field.value ?? ""} rows={3} /></FormControl><FormMessage /></FormItem>
+              )} />
 
-
+              <Separator />
+              <h3 className="text-md font-semibold text-muted-foreground pt-2 flex items-center gap-2"><CalendarIcon className="h-5 w-5" /> Datas e Prazos</h3>
               <FormField
                 control={form.control}
                 name="endDate"
@@ -783,10 +815,10 @@ export default function LotForm({
         isOpen={isGalleryDialogOpen}
         onOpenChange={setIsGalleryDialogOpen}
         onMediaSelect={handleSelectMediaForGallery}
-        allowMultiple={true} // Permite múltiplas seleções para a galeria
+        allowMultiple={true} 
       />
     </>
   );
 }
-
     
+```

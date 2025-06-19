@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import {
     Printer, Share2, ArrowLeft, ChevronLeft, ChevronRight, Key, Info,
     Tag, CalendarDays, Clock, Users, DollarSign, MapPin, Car, ThumbsUp,
-    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye, ExternalLink, ListFilter
+    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye, ExternalLink, ListFilter, FileQuestion, Banknote, Building, Link as LinkIcon
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -352,7 +352,7 @@ export default function LotDetailClientContent({
                 <div className="lg:col-span-2 space-y-6">
                     <Card className="shadow-lg">
                     <CardContent className="p-4">
-                        <div className="relative aspect-[16/9] w-full bg-muted rounded-md overflow-hidden mb-4">
+                        <div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden mb-4">
                         {gallery.length > 0 && gallery[currentImageIndex] ? (
                             <Image src={gallery[currentImageIndex]} alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`} fill className="object-contain" data-ai-hint={lot.dataAiHint || "imagem principal lote"} priority={currentImageIndex === 0} unoptimized={gallery[currentImageIndex]?.startsWith('https://placehold.co')}/>
                         ) : (
@@ -376,24 +376,44 @@ export default function LotDetailClientContent({
                     </CardContent>
                     </Card>
                     
-                    <Card className="shadow-lg">
+                    <Card className="shadow-lg"> {/* Card para envolver as abas */}
                         <CardContent className="p-4 md:p-6">
                             <Tabs defaultValue="description" className="w-full">
                                 <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 mb-4">
                                     <TabsTrigger value="description">Descrição</TabsTrigger>
                                     <TabsTrigger value="specification">Especificações</TabsTrigger>
+                                    <TabsTrigger value="legal">Documentos</TabsTrigger>
                                     <TabsTrigger value="seller">Comitente</TabsTrigger>
                                     <TabsTrigger value="reviews">Avaliações</TabsTrigger>
                                     <TabsTrigger value="questions">Perguntas</TabsTrigger>
                                 </TabsList>
                                 <TabsContent value="description"><LotDescriptionTab lot={lot} /></TabsContent>
                                 <TabsContent value="specification"><LotSpecificationTab lot={lot} /></TabsContent>
+                                <TabsContent value="legal">
+                                    <Card className="shadow-none border-0">
+                                        <CardHeader className="px-1 pt-0">
+                                            <CardTitle className="text-xl font-semibold flex items-center"><FileText className="h-5 w-5 mr-2 text-muted-foreground" /> Informações Legais e Documentos</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="px-1 space-y-2 text-sm">
+                                            {lot.judicialProcessNumber && <p><strong className="text-foreground">Nº Processo Judicial:</strong> <span className="text-muted-foreground">{lot.judicialProcessNumber}</span></p>}
+                                            {lot.courtDistrict && <p><strong className="text-foreground">Comarca:</strong> <span className="text-muted-foreground">{lot.courtDistrict}</span></p>}
+                                            {lot.courtName && <p><strong className="text-foreground">Vara:</strong> <span className="text-muted-foreground">{lot.courtName}</span></p>}
+                                            {lot.publicProcessUrl && <p><strong className="text-foreground">Consulta Pública:</strong> <a href={lot.publicProcessUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Acessar Processo <LinkIcon className="h-3 w-3"/></a></p>}
+                                            {lot.propertyRegistrationNumber && <p><strong className="text-foreground">Matrícula do Imóvel:</strong> <span className="text-muted-foreground">{lot.propertyRegistrationNumber}</span></p>}
+                                            {lot.propertyLiens && <p><strong className="text-foreground">Ônus/Gravames:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.propertyLiens}</span></p>}
+                                            {lot.knownDebts && <p><strong className="text-foreground">Dívidas Conhecidas:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.knownDebts}</span></p>}
+                                            {lot.additionalDocumentsInfo && <p><strong className="text-foreground">Outros Documentos/Obs:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.additionalDocumentsInfo}</span></p>}
+                                            {auction.documentsUrl && <p className="mt-2"><strong className="text-foreground">Edital do Leilão:</strong> <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Ver Edital Completo <FileText className="h-3 w-3"/></a></p>}
+                                            {(!lot.judicialProcessNumber && !auction.documentsUrl && !lot.additionalDocumentsInfo) && <p className="text-muted-foreground">Nenhuma informação legal ou documental adicional fornecida para este lote.</p>}
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
                                 <TabsContent value="seller"><LotSellerTab sellerName={initialSellerName || auction.seller || "Não Informado"} sellerId={lot.sellerId} auctionSellerName={auction.seller} /></TabsContent>
                                 <TabsContent value="reviews"><LotReviewsTab lot={lot} reviews={lotReviews} isLoading={isLoadingData} onNewReview={handleNewReview} canUserReview={canUserReview} /></TabsContent>
                                 <TabsContent value="questions"><LotQuestionsTab lot={lot} questions={lotQuestions} isLoading={isLoadingData} onNewQuestion={handleNewQuestion} canUserAskQuestion={canUserAskQuestion} /></TabsContent>
                             </Tabs>
                         </CardContent>
-                    </Card>
+                    </Card> {/* Fim do Card das abas */}
                 </div>
 
                 {/* Coluna Direita: Informações de Lance, Venda, Histórico e Mapa */}
@@ -449,7 +469,7 @@ export default function LotDetailClientContent({
                             }).map(([key, value]) => value ? <div key={key}><span className="font-medium text-foreground">{key}</span> <span className="text-muted-foreground">{String(value)}</span></div> : null)}
                         </CardContent>
                     </Card>
-                    
+                   
                     <Card className="shadow-md">
                         <CardHeader className="flex flex-row items-center justify-between p-4">
                             <CardTitle className="text-lg flex items-center">Histórico de Lances</CardTitle>
@@ -499,5 +519,5 @@ export default function LotDetailClientContent({
     </>
   );
 }
-
     
+```

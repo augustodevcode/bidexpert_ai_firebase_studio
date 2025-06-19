@@ -50,8 +50,18 @@ export const lotFormSchema = z.object({
   mapAddress: z.string().max(255, { message: "Endereço do mapa não pode exceder 255 caracteres." }).optional().nullable(),
   mapEmbedUrl: z.string().url({ message: "URL de embed do mapa inválida." }).optional().nullable().or(z.literal('')),
   mapStaticImageUrl: z.string().url({ message: "URL da imagem estática do mapa inválida."}).optional().nullable().or(z.literal('')),
+
+  // Campos de segurança e due diligence
+  judicialProcessNumber: z.string().max(100).optional().nullable(),
+  courtDistrict: z.string().max(100).optional().nullable(), // Comarca
+  courtName: z.string().max(100).optional().nullable(), // Vara
+  publicProcessUrl: z.string().url({ message: "URL do processo público inválida."}).optional().nullable().or(z.literal('')),
+  propertyRegistrationNumber: z.string().max(100).optional().nullable(), // Matrícula
+  propertyLiens: z.string().max(1000).optional().nullable(), // Ônus
+  knownDebts: z.string().max(1000).optional().nullable(), // Dívidas
+  additionalDocumentsInfo: z.string().max(2000).optional().nullable(), // Observações/links para docs
 });
 
 export type LotFormValues = z.infer<typeof lotFormSchema>;
-
     
+```

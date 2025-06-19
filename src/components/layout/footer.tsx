@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { Coins, Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { Coins, Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck } from 'lucide-react';
 
 interface FooterProps {
   activeDatabaseSystem?: string;
@@ -19,6 +19,7 @@ export default function Footer({ activeDatabaseSystem }: FooterProps) {
   const legalLinks = [
     { href: '/terms', label: 'Termos de Serviço' },
     { href: '/privacy', label: 'Política de Privacidade' },
+    { href: '/auction-safety-tips', label: 'Dicas de Segurança em Leilões', icon: <ShieldCheck className="inline-block h-3.5 w-3.5 mr-1 relative -top-px" /> },
   ];
 
   const socialLinks = [
@@ -64,7 +65,8 @@ export default function Footer({ activeDatabaseSystem }: FooterProps) {
             <ul className="space-y-2">
               {legalLinks.map(link => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  <Link href={link.href} className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center">
+                    {link.icon && <span className="mr-1.5">{link.icon}</span>}
                     {link.label}
                   </Link>
                 </li>
@@ -99,3 +101,5 @@ export default function Footer({ activeDatabaseSystem }: FooterProps) {
     </footer>
   );
 }
+
+```
