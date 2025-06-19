@@ -2,7 +2,7 @@
 'use client'; 
 
 import AuctionForm from '../../auction-form';
-import { getAuction, updateAuction, type AuctionFormData } from '../../actions'; 
+import { getAuction, updateAuction, type AuctionFormData, deleteAuction } from '../../actions'; 
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
 import type { Auction, Lot } from '@/types';
@@ -107,7 +107,7 @@ function AuctionInfoDisplay({ auction }: { auction: Auction }) {
                 <CardContent className="space-y-2 text-sm">
                     <p><strong>ID do Leilão:</strong> {auction.id}</p>
                     <p><strong>ID Público:</strong> {auction.publicId}</p>
-                    <p><strong>Status:</strong> <Badge variant="outline" className={auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'border-green-500 text-green-600' : 'border-gray-400'}>{getAuctionStatusText(auction.status)}</Badge></p>
+                    <div className="flex items-center"><strong>Status:</strong><Badge variant="outline" className={`ml-2 ${auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'border-green-500 text-green-600' : 'border-gray-400'}`}>{getAuctionStatusText(auction.status)}</Badge></div>
                     <p><strong>Data Início:</strong> {auction.auctionDate ? format(new Date(auction.auctionDate), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'N/A'}</p>
                     <p><strong>Data Fim (Estimada):</strong> {auction.endDate ? format(new Date(auction.endDate), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'Não definida'}</p>
                     {auction.endDate && !isPast(new Date(auction.endDate)) && <p><strong>Tempo Restante:</strong> {getDaysRemaining(auction.endDate)}</p>}
@@ -237,17 +237,17 @@ export default function EditAuctionPage({ params }: { params: { auctionId: strin
                 </CardContent>
             </Card>
             <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-lg flex items-center"><AlertTriangle className="mr-2 h-5 w-5 text-amber-500"/>Requer Atenção</CardTitle></CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                   <p>Nenhum alerta crítico para este leilão no momento.</p>
-                   <p className="text-xs mt-1">(Ex: Lotes sem lance inicial, datas próximas do fim, etc.)</p>
-                </CardContent>
-            </Card>
-             <Card className="shadow-md">
                 <CardHeader><CardTitle className="text-lg flex items-center"><ListChecks className="mr-2 h-5 w-5 text-blue-500"/>Últimos Lances Registrados</CardTitle></CardHeader>
                 <CardContent className="text-sm text-muted-foreground">
                    <p>Funcionalidade de exibição dos últimos lances em desenvolvimento.</p>
                    <p className="text-xs mt-1">(Exibirá aqui uma lista dos lances mais recentes no leilão.)</p>
+                </CardContent>
+            </Card>
+             <Card className="shadow-md">
+                <CardHeader><CardTitle className="text-lg flex items-center"><AlertTriangle className="mr-2 h-5 w-5 text-amber-500"/>Requer Atenção</CardTitle></CardHeader>
+                <CardContent className="text-sm text-muted-foreground">
+                   <p>Nenhum alerta crítico para este leilão no momento.</p>
+                   <p className="text-xs mt-1">(Ex: Lotes sem lance inicial, datas próximas do fim, etc.)</p>
                 </CardContent>
             </Card>
              <Card className="shadow-md">
