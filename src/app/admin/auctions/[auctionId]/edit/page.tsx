@@ -1,4 +1,6 @@
 
+'use client'; // Adicionado para permitir handleDeleteLotAction como client function
+
 import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, type AuctionFormData } from '../../actions'; 
 import { getLotCategories } from '@/app/admin/categories/actions';
@@ -9,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock4 } from 'lucide-react'; // Adicionado Clock4
 import { format, differenceInDays, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
@@ -28,6 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { Separator } from '@/components/ui/separator';
+import React from 'react'; // Adicionado import React
 
 function DeleteLotButton({ lotId, lotTitle, auctionId, onDelete }: { lotId: string; lotTitle: string; auctionId: string; onDelete: (id: string, auctionId: string) => Promise<void> }) {
   const [isDeleting, setIsDeleting] = React.useState(false);
@@ -94,8 +97,8 @@ function AuctionInfoDisplay({ auction }: { auction: Auction }) {
                 <CardContent className="space-y-2 text-sm">
                     <p><strong>ID do Leilão:</strong> {auction.id}</p>
                     <p><strong>ID Público:</strong> {auction.publicId}</p>
-                    <p><strong>Status:</strong> <Badge variant="outline" className={auction.status === 'ABERTO_PARA_LANCES' ? 'border-green-500 text-green-600' : 'border-gray-400'}>{getAuctionStatusText(auction.status)}</Badge></p>
-                    <p><strong>Data Início:</strong> {format(new Date(auction.auctionDate), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>
+                    <p><strong>Status:</strong> <Badge variant="outline" className={auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'border-green-500 text-green-600' : 'border-gray-400'}>{getAuctionStatusText(auction.status)}</Badge></p>
+                    <p><strong>Data Início:</strong> {auction.auctionDate ? format(new Date(auction.auctionDate), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'N/A'}</p>
                     <p><strong>Data Fim (Estimada):</strong> {auction.endDate ? format(new Date(auction.endDate), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'Não definida'}</p>
                     {auction.endDate && !isPast(new Date(auction.endDate)) && <p><strong>Tempo Restante:</strong> {getDaysRemaining(auction.endDate)}</p>}
                     <p><strong>Categoria:</strong> {auction.category}</p>
@@ -178,7 +181,7 @@ export default async function EditAuctionPage({ params }: { params: { auctionId:
 
   return (
     <div className="space-y-8">
-      <AuctionInfoDisplay auction={auction} />
+      {auction && <AuctionInfoDisplay auction={auction} />}
       
       <Separator className="my-8" />
 
@@ -205,10 +208,26 @@ export default async function EditAuctionPage({ params }: { params: { auctionId:
                 </CardContent>
             </Card>
              <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-lg">Lembretes e Alertas</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-lg flex items-center"><AlertTriangle className="mr-2 h-5 w-5 text-amber-500"/>Requer Atenção</CardTitle></CardHeader>
                 <CardContent className="text-sm text-muted-foreground">
-                   <p>Nenhum alerta ativo para este leilão no momento.</p>
+                   <p>Nenhum alerta crítico para este leilão no momento.</p>
                    <p className="text-xs mt-1">(Ex: Lotes sem lance inicial, datas próximas do fim, etc.)</p>
+                </CardContent>
+            </Card>
+            <Card className="shadow-md">
+                <CardHeader><CardTitle className="text-lg flex items-center"><ListChecks className="mr-2 h-5 w-5 text-blue-500"/>Últimos Lances Registrados</CardTitle></CardHeader>
+                <CardContent className="text-sm text-muted-foreground">
+                   <p>Funcionalidade de exibição dos últimos lances em desenvolvimento.</p>
+                   <p className="text-xs mt-1">(Exibirá aqui uma lista dos lances mais recentes no leilão como um todo ou nos lotes principais.)</p>
+                </CardContent>
+            </Card>
+            <Card className="shadow-md">
+                <CardHeader><CardTitle className="text-lg flex items-center"><PackageIcon className="mr-2 h-5 w-5 text-green-500"/>Estatísticas de Lotes</CardTitle></CardHeader>
+                <CardContent className="text-sm text-muted-foreground">
+                   <p>Total de Lotes: {auction?.totalLots || 0}</p>
+                   <p>Lotes Vendidos: (Em breve)</p>
+                   <p>Taxa de Venda: (Em breve)</p>
+                   <p className="text-xs mt-1">(Mais estatísticas sobre o desempenho dos lotes serão exibidas aqui.)</p>
                 </CardContent>
             </Card>
         </div>
@@ -285,3 +304,4 @@ export default async function EditAuctionPage({ params }: { params: { auctionId:
   );
 }
     
+
