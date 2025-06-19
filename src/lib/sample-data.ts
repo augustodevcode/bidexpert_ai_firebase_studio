@@ -1,3 +1,4 @@
+
 import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, CityInfo, MediaItem, PlatformSettings, MentalTriggerSettings, HomepageSectionConfig, BadgeVisibilitySettings, SectionBadgeConfig, MapSettings, AuctionStage, SearchPaginationType } from '@/types';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays, addDays as dateFnsAddDays, isPast, addHours } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -99,7 +100,9 @@ export const sampleSellersStatic: Omit<SellerProfileInfo, 'id'| 'publicId' | 'sl
     { name: 'Banco XYZ', city: 'Rio de Janeiro', state: 'RJ', logoUrl: 'https://placehold.co/100x100.png?text=XYZ', dataAiHint: 'banco moderno' },
     { name: 'Diversos Comitentes Agro', city: 'Nacional', state: 'BR' },
     { name: 'Diversos Proprietários e Financeiras', city: 'Nacional', state: 'BR' },
-    { name: 'Tribunal de Justiça SP', city: 'São Paulo', state: 'SP', logoUrl: 'https://placehold.co/100x100.png?text=TJ', dataAiHint: 'justica balanca' },
+    { name: 'Vara Cível de São Paulo - TJSP', city: 'São Paulo', state: 'SP', logoUrl: 'https://placehold.co/100x100.png?text=TJSP', dataAiHint: 'justica balanca' },
+    { name: 'Vara de Falências do Rio de Janeiro - TJRJ', city: 'Rio de Janeiro', state: 'RJ', logoUrl: 'https://placehold.co/100x100.png?text=TJRJ', dataAiHint: 'tribunal justica martelo' },
+    { name: 'Vara do Trabalho de Curitiba - TRT9', city: 'Curitiba', state: 'PR', logoUrl: 'https://placehold.co/100x100.png?text=TRT9', dataAiHint: 'justica trabalho predio' },
     { name: 'Colecionadores Particulares', city: 'Nacional', state: 'BR' },
     { name: 'Proprietários Diversos Clássicos', city: 'Nacional', state: 'BR' },
     { name: 'Antiguidades Imperial', city: 'Rio de Janeiro', state: 'RJ', logoUrl: 'https://placehold.co/100x100.png?text=AI', dataAiHint: 'antigo imperial' },
@@ -110,9 +113,6 @@ export const sampleSellersStatic: Omit<SellerProfileInfo, 'id'| 'publicId' | 'sl
     { name: 'Galeria Pampa Arte', city: 'Porto Alegre', state: 'RS' },
     { name: 'Prefeitura Municipal de Campinas', city: 'Campinas', state: 'SP', logoUrl: 'https://placehold.co/100x100.png?text=PMC', dataAiHint: 'prefeitura brasao' },
     { name: 'Secretaria de Administração de Salvador', city: 'Salvador', state: 'BA', logoUrl: 'https://placehold.co/100x100.png?text=SAS', dataAiHint: 'governo edificio' },
-    { name: 'Vara Cível de São Paulo - TJSP', city: 'São Paulo', state: 'SP', logoUrl: 'https://placehold.co/100x100.png?text=TJSP', dataAiHint: 'tribunal justica predio' },
-    { name: 'Vara de Falências do Rio de Janeiro - TJRJ', city: 'Rio de Janeiro', state: 'RJ', logoUrl: 'https://placehold.co/100x100.png?text=TJRJ', dataAiHint: 'tribunal justica martelo' },
-    { name: 'Vara do Trabalho de Curitiba - TRT9', city: 'Curitiba', state: 'PR', logoUrl: 'https://placehold.co/100x100.png?text=TRT9', dataAiHint: 'justica trabalho predio' },
 ];
 
 export const sampleAuctioneersStatic: Omit<AuctioneerProfileInfo, 'id'|'publicId'|'slug'|'createdAt'|'updatedAt'|'memberSince'|'rating'|'auctionsConductedCount'|'totalValueSold'>[] = [
@@ -192,7 +192,7 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
   {
     id: 'JUD003MAQ', publicId: 'AUC-JUDMAQ-PR003C3', title: 'Leilão Judicial - Trator Massey Ferguson',
     fullTitle: 'Leilão Judicial TRT9 - Trator Massey Ferguson 275 - Processo Trabalhista',
-    description: 'Trator Massey Ferguson modelo 275, ano 1998, em funcionamento. Leilão do Processo Trabalhista nº 00123-2021-005-09-00-0 da Vara do Trabalho de Curitiba.',
+    description: 'Trator Massey Ferguson 275, ano 1998, em funcionamento. Leilão do Processo Trabalhista nº 00123-2021-005-09-00-0 da Vara do Trabalho de Curitiba.',
     status: 'ABERTO_PARA_LANCES', auctionType: 'JUDICIAL', categoryId: 'cat-maquinas-e-equipamentos',
     auctioneerId: 'auct-classicos-leiloes-br-leiloeiro-jpimenta', sellerId: 'seller-vara-do-trabalho-de-curitiba-trt9',
     auctionDate: createPastDate(1,0), endDate: createFutureDate(5, 0), city: 'Curitiba', state: 'PR',
@@ -654,20 +654,27 @@ interface CategoryAssets {
   bannerText?: string;
 }
 
-export function getCategoryAssets(categoryNameOrSlug: string): CategoryAssets {
-  const initialSlug = slugify(categoryNameOrSlug);
+export function getCategoryAssets(categoryNameOrSlug?: string): CategoryAssets {
+  const inputName = typeof categoryNameOrSlug === 'string' && categoryNameOrSlug.trim() !== '' ? categoryNameOrSlug : "Diversos";
+  const initialSlug = slugify(inputName);
+
   const category = sampleLotCategories.find(cat => cat.slug === initialSlug || slugify(cat.name) === initialSlug);
 
-  let resolvedName = categoryNameOrSlug;
-  let resolvedSlug = initialSlug;
+  let resolvedName: string;
+  let resolvedSlug: string;
 
   if (category) {
     resolvedName = category.name;
     resolvedSlug = category.slug;
+  } else {
+    resolvedName = inputName;
+    resolvedSlug = initialSlug;
   }
+  
+  const logoChar = (resolvedName.charAt(0) || 'X').toUpperCase();
 
   const defaultAssets: CategoryAssets = {
-    logoUrl: `https://placehold.co/100x100.png?text=${encodeURIComponent(resolvedName.charAt(0).toUpperCase())}`,
+    logoUrl: `https://placehold.co/100x100.png?text=${encodeURIComponent(logoChar)}`,
     logoAiHint: `logo ${resolvedSlug}`,
     bannerUrl: `https://placehold.co/1200x300.png?text=Banner+${encodeURIComponent(resolvedName)}`,
     bannerAiHint: `banner ${resolvedSlug}`,
@@ -1088,6 +1095,7 @@ sampleLotsRaw.forEach(lot => {
         lot.sellerId = `seller-${slugify(seller.name)}`;
     }
 });
+
 
 
 
