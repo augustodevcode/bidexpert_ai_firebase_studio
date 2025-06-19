@@ -14,6 +14,7 @@ import AuctionCard from '@/components/auction-card';
 import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
 import DirectSaleOfferCard from '@/components/direct-sale-offer-card';
+import DirectSaleOfferListItem from '@/components/direct-sale-offer-list-item'; // Novo import
 import type { Auction, Lot, LotCategory, DirectSaleOffer, DirectSaleOfferType } from '@/types';
 import { 
     sampleAuctions,
@@ -27,7 +28,7 @@ import {
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AuctionListItem from '@/components/auction-list-item'; // Importar AuctionListItem
+import AuctionListItem from '@/components/auction-list-item'; 
 
 const sortOptionsAuctions = [
   { value: 'relevance', label: 'Relevância' },
@@ -562,7 +563,7 @@ export default function SearchPage() {
                     {(filteredAndSortedItems as DirectSaleOffer[]).map((offer) => (
                          viewMode === 'grid'
                          ? <DirectSaleOfferCard key={offer.id} offer={offer} />
-                         : <DirectSaleOfferCard key={offer.id} offer={offer} /> // Usando o Card para modo lista também, pode ser ajustado
+                         : <DirectSaleOfferListItem key={offer.id} offer={offer} /> 
                     ))}
                 </div>
                 ) : currentSearchType === 'direct_sale' && (
@@ -600,4 +601,5 @@ export default function SearchPage() {
     </div>
   );
 }
+
 
