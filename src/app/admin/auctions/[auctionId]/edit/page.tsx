@@ -39,7 +39,7 @@ function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotI
 
   const handleDelete = async () => {
     setIsDeleting(true);
-    // Directly call the imported server action
+    // Call the server action directly
     const result = await deleteLot(lotId, auctionId); 
     if (!result.success) {
         console.error("Failed to delete lot:", result.message);
@@ -207,6 +207,25 @@ export default function EditAuctionPage({ params }: { params: { auctionId: strin
     fetchPageData();
   }, [fetchPageData]);
 
+  // Function to pass to the form submit action
+  async function handleUpdateAuction(data: Partial<AuctionFormData>) {
+    // 'use server'; // REMOVED - Server Action is in actions.ts
+    return updateAuction(auctionId, data);
+  }
+
+  // Action for deleting a lot (called by DeleteLotButton)
+  async function handleDeleteLotAction(lotId: string, currentAuctionId: string) {
+    // 'use server'; // REMOVED - Server Action is in actions.ts
+    const result = await deleteLot(lotId, currentAuctionId); 
+    if (!result.success) {
+        console.error("Failed to delete lot:", result.message);
+        toast({ title: "Erro ao Excluir Lote", description: result.message, variant: "destructive" });
+    } else {
+        toast({ title: "Sucesso", description: "Lote excluído com sucesso." });
+        fetchPageData(); // Re-fetch data to update the list
+    }
+  }
+
 
   if (isLoading || !auction) {
     return <div className="flex justify-center items-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
@@ -221,7 +240,7 @@ export default function EditAuctionPage({ params }: { params: { auctionId: strin
             categories={categories}
             auctioneers={auctioneers}
             sellers={sellers}
-            onSubmitAction={async (data) => updateAuction(auctionId, data)}
+            onSubmitAction={handleUpdateAuction}
             formTitle="Editar Detalhes do Leilão"
             formDescription="Modifique as informações principais, datas e configurações do leilão."
             submitButtonText="Salvar Alterações do Leilão"
