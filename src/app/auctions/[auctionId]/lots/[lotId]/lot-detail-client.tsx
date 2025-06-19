@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { format } from 'date-fns';
+import { format, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { addRecentlyViewedId } from '@/lib/recently-viewed-store';
 import { useToast } from '@/hooks/use-toast';
@@ -47,6 +47,106 @@ import LotAllBidsModal from '@/components/auction/lot-all-bids-modal';
 const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'admin@bidexpert.com.br'.toLowerCase();
 const SUPER_TEST_USER_UID_FOR_BYPASS = 'SUPER_TEST_USER_UID_PLACEHOLDER_AUG';
 const SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS = 'Administrador BidExpert (Super Test)';
+
+// Re-using TimeRemainingBadge logic adapted for this page
+interface DetailTimeRemainingProps {
+  endDate: Date | string;
+  status: Lot['status'];
+  showUrgencyTimer?: boolean;
+  urgencyThresholdDays?: number;
+  urgencyThresholdHours?: number;
+  className?: string;
+  textClassName?: string;
+}
+
+const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
+  endDate,
+  status,
+  showUrgencyTimer = true,
+  urgencyThresholdDays = 1,
+  urgencyThresholdHours = 0,
+  className,
+  textClassName = "text-3xl font-bold text-destructive",
+}) => {
+  const [timeRemaining, setTimeRemaining] = useState<string>('');
+  const [isUrgentVisual, setIsUrgentVisual] = useState(false);
+
+  useEffect(() => {
+    const calculateTime = () => {
+      const now = new Date();
+      const end = endDate instanceof Date ? endDate : new Date(endDate);
+
+      if (isPast(end) || status !== 'ABERTO_PARA_LANCES') {
+        setTimeRemaining(getAuctionStatusText(status === 'ABERTO_PARA_LANCES' && isPast(end) ? 'ENCERRADO' : status));
+        setIsUrgentVisual(false);
+        return;
+      }
+
+      const totalSecondsLeft = differenceInSeconds(end, now);
+      if (totalSecondsLeft <= 0) {
+        setTimeRemaining('Encerrado');
+        setIsUrgentVisual(false);
+        return;
+      }
+      
+      const thresholdInSeconds = (urgencyThresholdDays * 24 * 60 * 60) + (urgencyThresholdHours * 60 * 60);
+      const currentlyUrgent = totalSecondsLeft <= thresholdInSeconds;
+      setIsUrgentVisual(currentlyUrgent && showUrgencyTimer);
+
+      if (currentlyUrgent && showUrgencyTimer) {
+        const hours = Math.floor(totalSecondsLeft / 3600);
+        const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
+        const seconds = totalSecondsLeft % 60;
+        if (hours > 0) {
+          setTimeRemaining(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
+        } else {
+          setTimeRemaining(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
+        }
+      } else {
+        const days = Math.floor(totalSecondsLeft / (3600 * 24));
+        const hours = Math.floor((totalSecondsLeft % (3600 * 24)) / 3600);
+        const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
+
+        if (days > 1) setTimeRemaining(`${days} dias`);
+        else if (days === 1) setTimeRemaining(`${days} dia ${hours}h`);
+        else if (hours > 0) setTimeRemaining(`${hours}h ${minutes}m`);
+        else if (minutes > 0) setTimeRemaining(`${minutes}m`);
+        else setTimeRemaining('Encerrando!');
+      }
+    };
+
+    calculateTime();
+    const interval = setInterval(calculateTime, 1000);
+    return () => clearInterval(interval);
+  }, [endDate, status, showUrgencyTimer, urgencyThresholdDays, urgencyThresholdHours]);
+
+  const finalClassName = cn(
+    "text-center",
+    isUrgentVisual ? "text-destructive" : "text-muted-foreground",
+    className
+  );
+  const finalTextClassName = cn(
+    isUrgentVisual ? "text-3xl font-bold text-destructive" : "text-2xl font-semibold",
+    textClassName
+  );
+
+
+  return (
+    <div className={finalClassName}>
+      <p className="text-sm font-medium mb-1">
+        {status === 'ABERTO_PARA_LANCES' ? 'Tempo Restante:' : 'Status:'}
+      </p>
+      <div className={finalTextClassName}>
+        {timeRemaining}
+      </div>
+      {status === 'EM_BREVE' && lot.endDate && (
+        <p className="text-xs text-center text-muted-foreground">
+          Inicia em: {format(new Date(lot.endDate), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+        </p>
+      )}
+    </div>
+  );
+};
     
 interface LotDetailClientContentProps {
   lot: Lot;
@@ -181,7 +281,7 @@ export default function LotDetailClientContent({
     }
   };
     
-  const bidIncrement = (lot?.price || 0) > 10000 ? 500 : ((lot?.price || 0) > 1000 ? 100 : 50);
+  const bidIncrement = lot?.bidIncrementStep || ((lot?.price || 0) > 10000 ? 500 : ((lot?.price || 0) > 1000 ? 100 : 50));
   const nextMinimumBid = (lot?.price || 0) + bidIncrement;
     
   const handlePlaceBid = async () => {
@@ -429,8 +529,19 @@ export default function LotDetailClientContent({
                                     R$ {currentBidValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </p>
                             </div>
+                            {platformSettings.showCountdownOnLotDetail !== false && (
+                              <div className="pt-2">
+                                <DetailTimeRemaining 
+                                  endDate={lot.endDate} 
+                                  status={lot.status} 
+                                  showUrgencyTimer={platformSettings.mentalTriggerSettings?.showUrgencyTimer}
+                                  urgencyThresholdDays={platformSettings.mentalTriggerSettings?.urgencyTimerThresholdDays}
+                                  urgencyThresholdHours={platformSettings.mentalTriggerSettings?.urgencyTimerThresholdHours}
+                                />
+                              </div>
+                            )}
                             {canUserBid ? (
-                            <div className="space-y-2">
+                            <div className="space-y-2 pt-2">
                                 <div className="relative">
                                     <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                     <Input type="number" placeholder={`Mínimo R$ ${nextMinimumBid.toLocaleString('pt-BR')}`} value={bidAmountInput} onChange={(e) => setBidAmountInput(e.target.value)} className="pl-9 h-11 text-base" min={nextMinimumBid} step={bidIncrement} disabled={isPlacingBid} />

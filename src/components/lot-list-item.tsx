@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown, Tag } from 'lucide-react'; // Adicionado Tag
+import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown, Tag } from 'lucide-react';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
@@ -116,6 +116,7 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
   const mentalTriggersGlobalSettings = platformSettings.mentalTriggerSettings || {};
   const sectionBadges = badgeVisibilityConfig || platformSettings.sectionBadgeVisibility?.searchList || {};
 
+  const showCountdownOnThisCard = platformSettings.showCountdownOnCards !== false;
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -238,7 +239,6 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
                 data-ai-hint={lot.dataAiHint || 'imagem lote lista'}
               />
             </Link>
-            {/* Botões de ação sobre a imagem para desktop, ANTES estavam aqui, agora movidos para área de conteúdo ou não exibidos no modo lista para evitar sobreposição */}
           </div>
 
           {/* Content Column */}
@@ -254,14 +254,12 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
                   Lote {lot.number || lot.id.replace('LOTE','')} | Leilão: {lot.auctionName}
                 </p>
               </div>
-              {/* Badges e Mobile Actions Row */}
               <div className="flex-shrink-0 flex flex-col items-end gap-1">
                 {sectionBadges.showStatusBadge !== false && (
                   <Badge className={`text-xs px-1.5 py-0.5 ${getLotStatusColor(lot.status)} self-end`}>
                     {getAuctionStatusText(lot.status)}
                   </Badge>
                 )}
-                {/* Mental Triggers & Discount moved below for better flow in list item */}
                 <div className="flex flex-wrap gap-1.5 justify-end mt-1">
                     {sectionBadges.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentage > 0 && (
                         <Badge variant="destructive" className="text-xs px-1.5 py-0.5">
@@ -283,32 +281,6 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
                             </Badge>
                         );
                     })}
-                </div>
-
-                 <div className="flex items-center space-x-0.5 mt-1">
-                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleFavoriteToggle}><Heart className={`h-3 w-3 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
-                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6" onClick={handlePreviewOpen}><Eye className="h-3 w-3 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Pré-visualizar</p></TooltipContent></Tooltip>
-                    {(lot.latitude || lot.longitude || lot.mapAddress || lot.mapEmbedUrl) && (
-                       <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleMapPreviewOpen}><MapPin className="h-3 w-3 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Ver Mapa</p></TooltipContent></Tooltip>
-                    )}
-                     <DropdownMenu>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Compartilhar">
-                                <Share2 className="h-3 w-3 text-muted-foreground" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            </TooltipTrigger>
-                            <TooltipContent><p>Compartilhar</p></TooltipContent>
-                        </Tooltip>
-                        <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild><a href={getSocialLink('x', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><X className="h-3.5 w-3.5" /> X (Twitter)</a></DropdownMenuItem>
-                        <DropdownMenuItem asChild><a href={getSocialLink('facebook', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><Facebook className="h-3.5 w-3.5" /> Facebook</a></DropdownMenuItem>
-                        <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><MessageSquareText className="h-3.5 w-3.5" /> WhatsApp</a></DropdownMenuItem>
-                        <DropdownMenuItem asChild><a href={getSocialLink('email', lotDetailUrl, lot.title)} className="flex items-center gap-2 text-xs"><Mail className="h-3.5 w-3.5" /> Email</a></DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                 </div>
               </div>
             </div>
@@ -345,24 +317,59 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
                   R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
                  <div className="flex items-center text-xs text-muted-foreground mt-0.5 gap-2">
-                   <TimeRemainingBadge
+                   {showCountdownOnThisCard && (
+                     <TimeRemainingBadge
                         endDate={lot.endDate}
                         status={lot.status}
                         showUrgencyTimer={sectionBadges.showUrgencyTimer !== false && mentalTriggersGlobalSettings.showUrgencyTimer}
                         urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays}
                         urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
                     />
+                   )}
+                   {!showCountdownOnThisCard && (
+                    <Badge variant="outline" className="text-xs font-medium">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {getAuctionStatusText(lot.status)}
+                    </Badge>
+                   )}
                     <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate)) ? 'line-through' : ''}`}>
                         <Gavel className="h-3 w-3" />
                         <span>{lot.bidsCount || 0} Lances</span>
                     </div>
                 </div>
               </div>
-              <Button asChild size="sm" className="w-full md:w-auto mt-2 md:mt-0">
-                <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
-                    <Eye className="mr-2 h-4 w-4" /> Ver Detalhes
-                </Link>
-              </Button>
+               <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto items-stretch">
+                <Button asChild size="sm" className="flex-1 md:flex-initial">
+                    <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
+                        <Eye className="mr-2 h-4 w-4" /> Ver Detalhes
+                    </Link>
+                </Button>
+                <div className="flex items-center space-x-0.5 justify-center">
+                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleFavoriteToggle}><Heart className={`h-4 w-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={handlePreviewOpen}><Eye className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Pré-visualizar</p></TooltipContent></Tooltip>
+                    {(lot.latitude || lot.longitude || lot.mapAddress || lot.mapEmbedUrl) && (
+                       <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleMapPreviewOpen}><MapPin className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Ver Mapa</p></TooltipContent></Tooltip>
+                    )}
+                     <DropdownMenu>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Compartilhar">
+                                <Share2 className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Compartilhar</p></TooltipContent>
+                        </Tooltip>
+                        <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild><a href={getSocialLink('x', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><X className="h-3.5 w-3.5" /> X (Twitter)</a></DropdownMenuItem>
+                        <DropdownMenuItem asChild><a href={getSocialLink('facebook', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><Facebook className="h-3.5 w-3.5" /> Facebook</a></DropdownMenuItem>
+                        <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><MessageSquareText className="h-3.5 w-3.5" /> WhatsApp</a></DropdownMenuItem>
+                        <DropdownMenuItem asChild><a href={getSocialLink('email', lotDetailUrl, lot.title)} className="flex items-center gap-2 text-xs"><Mail className="h-3.5 w-3.5" /> Email</a></DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+               </div>
             </div>
           </div>
         </div>

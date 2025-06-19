@@ -27,7 +27,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 interface TimeRemainingBadgeProps {
   endDate: Date | string;
   status: Lot['status'];
-  showUrgencyTimer?: boolean;
+  showUrgencyTimer?: boolean; // Este é o showUrgencyTimer da mentalTriggerSettings
   urgencyThresholdDays?: number;
   urgencyThresholdHours?: number;
 }
@@ -35,7 +35,7 @@ interface TimeRemainingBadgeProps {
 const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({ 
   endDate, 
   status, 
-  showUrgencyTimer = true, 
+  showUrgencyTimer = true, // Default to true if not overridden by platform settings
   urgencyThresholdDays = 1, 
   urgencyThresholdHours = 0 
 }) => {
@@ -62,7 +62,7 @@ const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({
       
       const thresholdInSeconds = (urgencyThresholdDays * 24 * 60 * 60) + (urgencyThresholdHours * 60 * 60);
       const currentlyUrgent = totalSecondsLeft <= thresholdInSeconds;
-      setIsUrgent(currentlyUrgent && showUrgencyTimer);
+      setIsUrgent(currentlyUrgent && showUrgencyTimer); // Only urgent if showUrgencyTimer (from mentalTriggers) is true
 
       if (currentlyUrgent && showUrgencyTimer) {
         const hours = Math.floor(totalSecondsLeft / 3600);
@@ -115,6 +115,8 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
   const platformSettings = platformSettingsProp || samplePlatformSettings; 
   const mentalTriggersGlobalSettings = platformSettings.mentalTriggerSettings || {};
   const sectionBadges = badgeVisibilityConfig || platformSettings.sectionBadgeVisibility?.searchGrid || {}; 
+
+  const showCountdownOnThisCard = platformSettings.showCountdownOnCards !== false; // Default to true if undefined
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -376,13 +378,21 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
         </div>
         
         <div className="w-full flex justify-between items-center text-xs">
-            <TimeRemainingBadge 
-                        endDate={lot.endDate} 
-                        status={lot.status} 
-                        showUrgencyTimer={sectionBadges.showUrgencyTimer !== false && mentalTriggersGlobalSettings.showUrgencyTimer}
-                        urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays}
-                        urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
-                    />
+            {showCountdownOnThisCard && (
+              <TimeRemainingBadge 
+                endDate={lot.endDate} 
+                status={lot.status} 
+                showUrgencyTimer={sectionBadges.showUrgencyTimer !== false && mentalTriggersGlobalSettings.showUrgencyTimer}
+                urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays}
+                urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
+              />
+            )}
+            {!showCountdownOnThisCard && (
+              <Badge variant="outline" className="text-xs font-medium">
+                  <Clock className="h-3 w-3 mr-1" />
+                  {getAuctionStatusText(lot.status)}
+              </Badge>
+            )}
             <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : ''}`}>
                 <Gavel className="h-3 w-3" />
                 <span>{lot.bidsCount || 0} Lances</span>
