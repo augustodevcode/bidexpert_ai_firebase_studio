@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon, FileText as TomadaPrecosIcon } from 'lucide-react';
+import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon, FileText as TomadaPrecosIcon } from 'lucide-react'; // Adicionado SearchIcon
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,7 +15,7 @@ import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
 import DirectSaleOfferCard from '@/components/direct-sale-offer-card';
 import type { Auction, Lot, LotCategory, DirectSaleOffer, DirectSaleOfferType } from '@/types';
-import {
+import { 
     sampleAuctions,
     sampleLots,
     sampleDirectSaleOffers,
@@ -79,7 +79,7 @@ export default function SearchPage() {
   const [currentSearchType, setCurrentSearchType] = useState<'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos'>( (searchParamsHook.get('type') as any) || 'auctions');
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [sortByState, setSortByState] = useState<string>('relevance'); 
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid'); // Corrigido aqui
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid'); 
 
   const [allCategoriesForFilter, setAllCategoriesForFilter] = useState<LotCategory[]>([]);
   const [uniqueLocationsForFilter, setUniqueLocationsForFilter] = useState<string[]>([]);
@@ -296,11 +296,11 @@ export default function SearchPage() {
 
   const filteredAndSortedItems = useMemo(() => {
     let items: any[] = [];
-    let itemTypeForFiltering: 'auction' | 'lot' | 'direct_sale' = 'auction'; // Corrected from 'auctions'
+    let itemTypeForFiltering: 'auction' | 'lot' | 'direct_sale' = 'auction'; 
     let currentSortByVal = sortByState;
 
     if (currentSearchType === 'auctions') {
-      items = sampleAuctions.filter(auc => auc.auctionType !== 'TOMADA_DE_PRECOS'); // Exclude Tomada de Preços
+      items = sampleAuctions.filter(auc => auc.auctionType !== 'TOMADA_DE_PRECOS'); 
       itemTypeForFiltering = 'auction';
     } else if (currentSearchType === 'lots') {
       items = allLotsWithAuctionData;
@@ -490,7 +490,7 @@ export default function SearchPage() {
                         ))}
                         </SelectContent>
                     </Select>
-                    {(currentSearchType === 'lots' || currentSearchType === 'direct_sale') && (
+                    {(currentSearchType === 'lots' || currentSearchType === 'direct_sale' || currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos') && (
                          <div className="flex items-center gap-1">
                             <span className="text-xs text-muted-foreground">Ver:</span>
                             <Button
@@ -514,9 +514,11 @@ export default function SearchPage() {
 
             <TabsContent value="auctions">
                 {filteredAndSortedItems.length > 0 && currentSearchType === 'auctions' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <div className={viewMode === 'grid' ? "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>
                         {(filteredAndSortedItems as Auction[]).map((auction) => (
-                            <AuctionCard key={auction.id} auction={auction} />
+                           viewMode === 'grid' || (currentSearchType !== 'lots' && currentSearchType !== 'direct_sale')
+                            ? <AuctionCard key={auction.id} auction={auction} />
+                            : <AuctionCard key={auction.id} auction={auction} /> // TODO: Create AuctionListItem if needed
                         ))}
                     </div>
                 ) : currentSearchType === 'auctions' && (
@@ -550,8 +552,7 @@ export default function SearchPage() {
                     {(filteredAndSortedItems as DirectSaleOffer[]).map((offer) => (
                          viewMode === 'grid'
                          ? <DirectSaleOfferCard key={offer.id} offer={offer} />
-                         // Adicionar DirectSaleOfferListItem se necessário
-                         : <DirectSaleOfferCard key={offer.id} offer={offer} /> 
+                         : <DirectSaleOfferCard key={offer.id} offer={offer} /> // Usando o Card para modo lista também, pode ser ajustado
                     ))}
                 </div>
                 ) : currentSearchType === 'direct_sale' && (
@@ -564,9 +565,11 @@ export default function SearchPage() {
             
             <TabsContent value="tomada_de_precos">
                 {filteredAndSortedItems.length > 0 && currentSearchType === 'tomada_de_precos' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <div className={viewMode === 'grid' ? "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>
                         {(filteredAndSortedItems as Auction[]).map((auction) => (
-                            <AuctionCard key={auction.id} auction={auction} />
+                            viewMode === 'grid' || (currentSearchType !== 'lots' && currentSearchType !== 'direct_sale')
+                             ? <AuctionCard key={auction.id} auction={auction} />
+                             : <AuctionCard key={auction.id} auction={auction} /> // TODO: Create AuctionListItem if needed for list view
                         ))}
                     </div>
                 ) : currentSearchType === 'tomada_de_precos' && (
