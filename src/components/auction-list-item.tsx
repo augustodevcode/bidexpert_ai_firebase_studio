@@ -1,63 +1,29 @@
 
 'use client';
 
+import * as React from 'react'; // Adicionado import do React
 import type { Auction } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, ListChecks, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon } from 'lucide-react';
+import { Eye, CalendarDays, Tag, MapPin, ListChecks, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useState, useEffect } from 'react';
-import AuctionPreviewModal from './auction-preview-modal';
 import { getAuctionStatusText } from '@/lib/sample-data';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useToast } from '@/hooks/use-toast';
-// A lógica de favoritos para Leilões não foi implementada ainda, será omitida por enquanto.
 
 interface AuctionListItemProps {
   auction: Auction;
 }
 
 export default function AuctionListItem({ auction }: AuctionListItemProps) {
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [auctionFullUrl, setAuctionFullUrl] = useState<string>(`/auctions/${auction.publicId || auction.id}`);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setAuctionFullUrl(`${window.location.origin}/auctions/${auction.publicId || auction.id}`);
-    }
-  }, [auction.id, auction.publicId]);
-
-  const openPreviewModal = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsPreviewModalOpen(true);
-  };
-
-  const getSocialLink = (platform: 'x' | 'facebook' | 'whatsapp' | 'email', url: string, title: string) => {
-    const encodedUrl = encodeURIComponent(url);
-    const encodedTitle = encodeURIComponent(title);
-    switch(platform) {
-      case 'x': return `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
-      case 'facebook': return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
-      case 'whatsapp': return `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`;
-      case 'email': return `mailto:?subject=${encodedTitle}&body=${encodedUrl}`;
-    }
-  };
-  
   const auctionTypeDisplay = auction.auctionType === 'TOMADA_DE_PRECOS' 
     ? { label: 'Tomada de Preços', icon: <TomadaPrecosIcon className="h-3.5 w-3.5" /> }
     : { label: auction.auctionType || 'Leilão', icon: <AuctionTypeIcon className="h-3.5 w-3.5" /> };
 
+  const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'N/A';
 
   return (
     <TooltipProvider>
@@ -74,7 +40,18 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
                 data-ai-hint={auction.dataAiHint || 'imagem leilao lista'}
               />
             </Link>
-             {/* Badges (Status, Tipo) - Posicionados para não cobrir a imagem principal */}
+            {auction.auctioneerLogoUrl && (
+              <div className="absolute bottom-1 right-1 bg-background/80 p-1 rounded-sm shadow max-w-[80px] max-h-[40px] overflow-hidden">
+                <Image
+                  src={auction.auctioneerLogoUrl}
+                  alt={auction.auctioneer || 'Logo Leiloeiro'}
+                  width={80}
+                  height={40}
+                  className="object-contain h-full w-full"
+                  data-ai-hint="auctioneer logo small"
+                />
+              </div>
+            )}
           </div>
 
           {/* Content Column */}
@@ -83,20 +60,13 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
               <div className="flex-grow min-w-0">
                 <Badge variant="outline" className="text-xs mb-1 py-0.5 px-1.5">{getAuctionStatusText(auction.status)}</Badge>
                 <Link href={`/auctions/${auction.publicId || auction.id}`}>
-                  <h3 className="text-base font-semibold hover:text-primary transition-colors leading-tight line-clamp-2" title={auction.title}>
+                  <h3 className="text-base font-semibold hover:text-primary transition-colors leading-tight line-clamp-2 mr-2" title={auction.title}>
                     {auction.title}
                   </h3>
                 </Link>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate" title={auction.fullTitle || undefined}>
                   {auction.fullTitle || auction.description?.substring(0, 70) + '...'}
                 </p>
-              </div>
-              <div className="flex-shrink-0 flex items-center gap-1 md:hidden">
-                {/* Mobile Actions - Simplified */}
-                <Tooltip>
-                    <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={openPreviewModal}><Eye className="h-4 w-4" /></Button></TooltipTrigger>
-                    <TooltipContent><p>Pré-visualizar</p></TooltipContent>
-                </Tooltip>
               </div>
             </div>
             
@@ -115,7 +85,7 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
               </div>
               <div className="flex items-center">
                 <MapPin className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
-                <span className="truncate">{auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'N/A'}</span>
+                <span className="truncate">{displayLocation}</span>
               </div>
             </div>
 
@@ -147,31 +117,15 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
                   R$ {(auction.initialOffer || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center w-full sm:w-auto">
-                 <Button asChild size="sm" className="flex-1 sm:flex-auto">
-                    <Link href={`/auctions/${auction.publicId || auction.id}`}>
-                        <Eye className="mr-2 h-4 w-4" /> Ver Leilão ({auction.totalLots || 0} Lotes)
-                    </Link>
-                </Button>
-                <div className="hidden md:flex items-center space-x-1">
-                    <Tooltip>
-                        <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={openPreviewModal}><Eye className="h-4 w-4" /></Button></TooltipTrigger>
-                        <TooltipContent><p>Pré-visualizar</p></TooltipContent>
-                    </Tooltip>
-                </div>
-              </div>
+              <Button asChild size="sm" className="w-full sm:w-auto mt-2 sm:mt-0">
+                <Link href={`/auctions/${auction.publicId || auction.id}`}>
+                    <Eye className="mr-2 h-4 w-4" /> Ver Leilão ({auction.totalLots || 0} Lotes)
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
       </Card>
-      {isPreviewModalOpen && auction.auctionStages && (
-        <AuctionPreviewModal
-            auction={auction}
-            isOpen={isPreviewModalOpen}
-            onClose={() => setIsPreviewModalOpen(false)}
-        />
-      )}
     </TooltipProvider>
   );
 }
-
