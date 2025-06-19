@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import {
     Printer, Share2, ArrowLeft, ChevronLeft, ChevronRight, Key, Info,
     Tag, CalendarDays, Clock, Users, DollarSign, MapPin, Car, ThumbsUp,
-    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye, ExternalLink, ListFilter, FileQuestion, Banknote, Building, Link as LinkIcon
+    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye, ExternalLink, ListFilter, FileQuestion, Banknote, Building, Link2 as LinkIcon
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -43,6 +43,7 @@ import LotPreviewModal from '@/components/lot-preview-modal';
 import { hasPermission } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
 import LotAllBidsModal from '@/components/auction/lot-all-bids-modal';
+import LotCard from '@/components/lot-card'; // Importar LotCard
     
 const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'admin@bidexpert.com.br'.toLowerCase();
 const SUPER_TEST_USER_UID_FOR_BYPASS = 'SUPER_TEST_USER_UID_PLACEHOLDER_AUG';
@@ -410,6 +411,13 @@ export default function LotDetailClientContent({
       return false;
     }
   };
+
+  const relatedLots = useMemo(() => {
+    if (!auction || !auction.lots || !lot) return [];
+    return auction.lots
+      .filter(relatedLot => relatedLot.id !== lot.id)
+      .slice(0, platformSettings.relatedLotsCount || 5);
+  }, [auction, lot, platformSettings.relatedLotsCount]);
   
  return ( 
     <> 
@@ -614,6 +622,23 @@ export default function LotDetailClientContent({
                     </div>
                 </div>
             </div>
+
+            {platformSettings.showRelatedLotsOnLotDetail !== false && relatedLots.length > 0 && (
+                <section className="mt-12">
+                    <Separator className="my-8" />
+                    <h2 className="text-2xl font-bold mb-6 font-headline">Outros Lotes Deste Leilão</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {relatedLots.map(relatedLot => (
+                            <LotCard 
+                                key={relatedLot.id} 
+                                lot={relatedLot} 
+                                platformSettingsProp={platformSettings}
+                                badgeVisibilityConfig={platformSettings.sectionBadgeVisibility?.searchGrid} 
+                            />
+                        ))}
+                    </div>
+                </section>
+            )}
         </div>
       <LotPreviewModal
         lot={lot}
