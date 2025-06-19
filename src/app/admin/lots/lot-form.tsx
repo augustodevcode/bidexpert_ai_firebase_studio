@@ -28,10 +28,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
+import { getAuctionStatusText, getLotStatusColor, sampleMediaItems } from '@/lib/sample-data'; // Import sampleMediaItems
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { Separator } from '@/components/ui/separator';
+import { v4 as uuidv4 } from 'uuid';
 
 interface LotFormProps {
   initialData?: Lot | null;
@@ -75,23 +76,45 @@ export default function LotForm({
   const [isMainImageDialogOpen, setIsMainImageDialogOpen] = React.useState(false);
   const [isGalleryDialogOpen, setIsGalleryDialogOpen] = React.useState(false);
 
-  const [selectedMediaForGallery, setSelectedMediaForGallery] = React.useState<Partial<MediaItem>[]>(
-    (initialData?.galleryImageUrls || [])
-    .map((url, index) => ({ 
-        id: initialData?.mediaItemIds?.[index] || `initial-gallery-${index}`, 
-        urlOriginal: url, 
-        title: `Imagem da Galeria ${index + 1}` 
-    }))
-    .concat(
-        (initialData?.mediaItemIds || [])
-        .filter(id => !(initialData?.galleryImageUrls || []).includes(initialData?.mediaItemIds?.find(mId => mId ===id) as string)) 
-        .map((id, index) => ({
-            id: id,
-            urlOriginal: initialData?.galleryImageUrls?.find((_, i) => initialData?.mediaItemIds?.[i] === id) || `https://placehold.co/100x100.png?text=ID:${id.substring(0,4)}`,
-            title: `Item de Mídia ${id.substring(0,4)}`
-        }))
-    )
-  );
+  const [selectedMediaForGallery, setSelectedMediaForGallery] = React.useState<Partial<MediaItem>[]>(() => {
+    const itemsMap = new Map<string, Partial<MediaItem>>();
+    
+    // Process mediaItemIds first
+    (initialData?.mediaItemIds || []).forEach(mediaId => {
+        const existingMediaItem = sampleMediaItems.find(mi => mi.id === mediaId); // Find full item from sample data
+        if (existingMediaItem) {
+            itemsMap.set(mediaId, { // Use mediaId as key
+                id: existingMediaItem.id,
+                urlOriginal: existingMediaItem.urlOriginal,
+                title: existingMediaItem.title || existingMediaItem.fileName,
+                dataAiHint: existingMediaItem.dataAiHint
+            });
+        } else {
+            // If mediaId not in sampleMediaItems, create a placeholder
+            itemsMap.set(mediaId, {
+                id: mediaId,
+                urlOriginal: `https://placehold.co/100x100.png?text=ID:${mediaId.substring(0,4)}`,
+                title: `Item de Mídia ${mediaId.substring(0,4)}`
+            });
+        }
+    });
+
+    // Process galleryImageUrls, adding only those not already covered by mediaItemIds
+    (initialData?.galleryImageUrls || []).forEach((url, index) => {
+        // Check if this URL is already represented by an item in itemsMap
+        const urlExistsInMap = Array.from(itemsMap.values()).some(item => item.urlOriginal === url);
+        if (!urlExistsInMap) {
+            const uniqueUrlId = `gallery-url-${uuidv4()}`; // Ensure unique ID for URL-only items
+            itemsMap.set(uniqueUrlId, {
+                id: uniqueUrlId,
+                urlOriginal: url,
+                title: `Imagem da Galeria (URL) ${index + 1}`
+            });
+        }
+    });
+    return Array.from(itemsMap.values());
+  });
+
 
   const form = useForm<LotFormValues>({
     resolver: zodResolver(lotFormSchema),
@@ -121,7 +144,6 @@ export default function LotForm({
       mapAddress: initialData?.mapAddress ?? '',
       mapEmbedUrl: initialData?.mapEmbedUrl ?? '',
       mapStaticImageUrl: initialData?.mapStaticImageUrl ?? '',
-      // Campos de segurança
       judicialProcessNumber: initialData?.judicialProcessNumber || '',
       courtDistrict: initialData?.courtDistrict || '',
       courtName: initialData?.courtName || '',
@@ -138,7 +160,7 @@ export default function LotForm({
   React.useEffect(() => {
     if (defaultAuctionId) {
       form.setValue('auctionId', defaultAuctionId);
-      const selectedAuction = auctions.find(a => a.id === defaultAuctionId);
+      const selectedAuction = auctions.find(a => a.id === defaultAuctionId || a.publicId === defaultAuctionId);
       if (selectedAuction) {
         form.setValue('auctionName', selectedAuction.title);
       }
@@ -166,7 +188,7 @@ export default function LotForm({
   
   React.useEffect(() => {
     form.setValue('galleryImageUrls', selectedMediaForGallery.map(item => item.urlOriginal || '').filter(Boolean));
-    form.setValue('mediaItemIds', selectedMediaForGallery.map(item => item.id || '').filter(Boolean));
+    form.setValue('mediaItemIds', selectedMediaForGallery.map(item => item.id || '').filter(itemid => !itemid.startsWith('gallery-url-')).filter(Boolean));
   }, [selectedMediaForGallery, form]);
 
 
@@ -183,13 +205,15 @@ export default function LotForm({
   };
 
   const handleSelectMediaForGallery = (newlySelectedItems: Partial<MediaItem>[]) => {
-    const currentMediaMap = new Map(selectedMediaForGallery.map(item => [item.id, item]));
-    newlySelectedItems.forEach(newItem => {
-      if (newItem.id) {
-        currentMediaMap.set(newItem.id, newItem);
-      }
+    setSelectedMediaForGallery(prev => {
+        const currentMediaMap = new Map(prev.map(item => [item.id || item.urlOriginal, item])); // Use URL as fallback key if ID is missing
+        newlySelectedItems.forEach(newItem => {
+          if (newItem.id || newItem.urlOriginal) { // Ensure there's some identifier
+            currentMediaMap.set(newItem.id || newItem.urlOriginal!, newItem);
+          }
+        });
+        return Array.from(currentMediaMap.values());
     });
-    setSelectedMediaForGallery(Array.from(currentMediaMap.values()));
     toast({
         title: "Mídia Adicionada à Galeria",
         description: `${newlySelectedItems.length} item(ns) adicionado(s) à galeria do lote.`
@@ -208,7 +232,7 @@ export default function LotForm({
         ...values,
         imageUrl: mainImagePreviewUrl || values.imageUrl, 
         galleryImageUrls: selectedMediaForGallery.map(item => item.urlOriginal || '').filter(Boolean),
-        mediaItemIds: selectedMediaForGallery.map(item => item.id || '').filter(Boolean),
+        mediaItemIds: selectedMediaForGallery.map(item => item.id || '').filter(itemid => !itemid.startsWith('gallery-url-')).filter(Boolean),
       };
       
       const result = await onSubmitAction(dataToSubmit);
@@ -218,7 +242,8 @@ export default function LotForm({
           description: result.message,
         });
         if (defaultAuctionId) {
-          router.push(`/admin/auctions/${defaultAuctionId}/edit`);
+          const auctionForRedirect = auctions.find(a => a.id === defaultAuctionId || a.publicId === defaultAuctionId);
+          router.push(`/admin/auctions/${auctionForRedirect?.publicId || defaultAuctionId}/edit`);
         } else {
           router.push('/admin/lots');
         }
@@ -253,7 +278,6 @@ export default function LotForm({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-6">
-              {/* ... (campos existentes) ... */}
               <FormField
                 control={form.control}
                 name="title"
@@ -276,11 +300,11 @@ export default function LotForm({
                     <Select
                       onValueChange={(value) => {
                         field.onChange(value);
-                        const selectedAuction = auctions.find(a => a.id === value);
+                        const selectedAuction = auctions.find(a => a.id === value || a.publicId === value);
                         form.setValue('auctionName', selectedAuction?.title || '');
                       }}
                       value={field.value}
-                      disabled={!!defaultAuctionId && initialData?.auctionId === defaultAuctionId}
+                      disabled={!!defaultAuctionId && (initialData?.auctionId === defaultAuctionId || initialData?.auctionId === auctions.find(a=>a.publicId === defaultAuctionId)?.id) }
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -292,7 +316,7 @@ export default function LotForm({
                           <p className="p-2 text-sm text-muted-foreground">Nenhum leilão cadastrado</p>
                         ) : (
                           auctions.map(auction => (
-                            <SelectItem key={auction.id} value={auction.id}>{auction.title} (ID: ...{auction.id.slice(-6)})</SelectItem>
+                            <SelectItem key={auction.id} value={auction.publicId || auction.id}>{auction.title} (ID: ...{(auction.publicId || auction.id).slice(-6)})</SelectItem>
                           ))
                         )}
                       </SelectContent>
@@ -369,7 +393,6 @@ export default function LotForm({
                   )}
                 />
               </div>
-               {/* ... (resto dos campos existentes) ... */}
                  <div className="grid md:grid-cols-2 gap-6">
                   <FormField
                   control={form.control}
@@ -531,7 +554,7 @@ export default function LotForm({
                 <FormLabel>Galeria de Imagens do Lote</FormLabel>
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2 border rounded-md min-h-[80px]">
                   {selectedMediaForGallery.map((item, index) => (
-                    <div key={item.id || `gallery-preview-${index}`} className="relative aspect-square bg-muted rounded overflow-hidden">
+                    <div key={item.id || `gallery-item-${index}-${uuidv4()}`} className="relative aspect-square bg-muted rounded overflow-hidden">
                       <Image src={item.urlOriginal || 'https://placehold.co/100x100.png'} alt={item.title || `Imagem ${index + 1}`} fill className="object-cover" data-ai-hint={item.dataAiHint || "miniatura galeria lote"} />
                       <Button
                         type="button"
@@ -789,7 +812,7 @@ export default function LotForm({
                       <FormItem>
                           <FormLabel>Visualizações (Opcional)</FormLabel>
                           <FormControl>
-                          <Input type="number" placeholder="0" {...field} />
+                          <Input type="number" placeholder="0" {...field} value={field.value ?? 0} onChange={e => field.onChange(parseInt(e.target.value,10))} />
                           </FormControl>
                           <FormMessage />
                       </FormItem>
@@ -802,7 +825,7 @@ export default function LotForm({
                       <FormItem>
                           <FormLabel>Contagem de Lances (Opcional)</FormLabel>
                           <FormControl>
-                          <Input type="number" placeholder="0" {...field} />
+                          <Input type="number" placeholder="0" {...field} value={field.value ?? 0} onChange={e => field.onChange(parseInt(e.target.value,10))} />
                           </FormControl>
                           <FormMessage />
                       </FormItem>
