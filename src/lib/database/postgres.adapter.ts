@@ -463,7 +463,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.log('[PostgresAdapter] Iniciando criação/verificação de tabelas...');
 
     const queries = [
-      `DROP TABLE IF EXISTS bids, media_items, lot_reviews, lot_questions, lots, subcategories, auctions, cities, sellers, auctioneers, users, states, lot_categories, roles, platform_settings CASCADE;`,
+      `DROP TABLE IF EXISTS bids, lot_reviews, lot_questions, lots, media_items, subcategories, auctions, cities, sellers, auctioneers, users, states, lot_categories, roles, platform_settings CASCADE;`,
 
       `CREATE TABLE IF NOT EXISTS roles (
         id SERIAL PRIMARY KEY,
@@ -1007,10 +1007,14 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async getUsersWithRoles(): Promise<UserProfileData[]> { console.warn("getUsersWithRoles not implemented in PostgresAdapter"); return []; }
   async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { console.warn("updateUserRole not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteUserProfile not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async getUserByEmail(email: string): Promise<UserProfileWithPermissions | null> { console.warn("getUserByEmail not implemented in PostgresAdapter"); return null; }
   async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> { console.warn("createRole not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async getRoles(): Promise<Role[]> { console.warn("getRoles not implemented in PostgresAdapter"); return []; }
+  async getRole(id: string): Promise<Role | null> { console.warn("getRole not implemented in PostgresAdapter"); return null; }
+  async getRoleByName(name: string): Promise<Role | null> { console.warn("getRoleByName not implemented in PostgresAdapter"); return null; }
   async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateRole not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteRole(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteRole not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }> { console.warn("ensureDefaultRolesExist not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> { console.warn("createMediaItem not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async getMediaItems(): Promise<MediaItem[]> { console.warn("getMediaItems not implemented in PostgresAdapter"); return []; }
   async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> { console.warn("updateMediaItemMetadata not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
