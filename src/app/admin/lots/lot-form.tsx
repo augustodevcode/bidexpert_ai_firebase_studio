@@ -347,7 +347,6 @@ export default function LotForm({
                         form.setValue('auctionName', selectedAuction?.title || '');
                       }}
                       value={field.value}
-                      disabled={!!defaultAuctionId && (initialData?.auctionId === defaultAuctionId)}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -821,4 +820,3 @@ export default function LotForm({
     </>
   );
 }
-    
