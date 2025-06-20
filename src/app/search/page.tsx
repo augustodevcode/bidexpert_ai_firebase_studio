@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon, FileText as TomadaPrecosIcon } from 'lucide-react'; // Adicionado SearchIcon
+import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon, FileText as TomadaPrecosIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,6 +30,7 @@ import { getLotCategories } from '@/app/admin/categories/actions';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AuctionListItem from '@/components/auction-list-item';
+import SearchResultsFrame from '@/components/search-results-frame'; // Novo componente
 
 const sortOptionsAuctions = [
   { value: 'relevance', label: 'Relevância' },
@@ -82,7 +83,7 @@ export default function SearchPage() {
   const [currentSearchType, setCurrentSearchType] = useState<'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos'>( (searchParamsHook.get('type') as any) || 'auctions');
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [sortByState, setSortByState] = useState<string>('relevance');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  // viewMode será gerenciado pelo SearchResultsFrame
 
   const [allCategoriesForFilter, setAllCategoriesForFilter] = useState<LotCategory[]>([]);
   const [uniqueLocationsForFilter, setUniqueLocationsForFilter] = useState<string[]>([]);
@@ -157,7 +158,7 @@ export default function SearchPage() {
     const typeFromParams = searchParamsHook.get('type') as typeof currentSearchType | null;
     const auctionTypeFromParams = searchParamsHook.get('auctionType');
 
-    let newSearchType: typeof currentSearchType = 'auctions'; // Default
+    let newSearchType: typeof currentSearchType = 'auctions'; 
     if (typeFromParams) {
         if (typeFromParams === 'auctions' && auctionTypeFromParams === 'TOMADA_DE_PRECOS') {
             newSearchType = 'tomada_de_precos';
@@ -168,7 +169,6 @@ export default function SearchPage() {
         newSearchType = 'tomada_de_precos';
     }
     setCurrentSearchType(newSearchType);
-    // Reset pagination when search type changes
     setCurrentPage(1);
     setVisibleItemCount(searchLoadMoreCount);
   }, [searchParamsHook, searchLoadMoreCount]);
@@ -219,7 +219,7 @@ export default function SearchPage() {
         currentParams.delete('status');
     }
     router.push(`/search?${currentParams.toString()}`);
-    setCurrentPage(1); // Reset to first page on filter change
+    setCurrentPage(1); 
     setVisibleItemCount(searchLoadMoreCount);
   };
 
@@ -244,7 +244,7 @@ export default function SearchPage() {
 
     router.push(`/search?${currentParams.toString()}`);
     setIsFilterSheetOpen(false);
-    setCurrentPage(1); // Reset to first page on filter reset
+    setCurrentPage(1); 
     setVisibleItemCount(searchLoadMoreCount);
   };
 
@@ -390,20 +390,20 @@ export default function SearchPage() {
       const startIndex = (currentPage - 1) * searchItemsPerPage;
       const endIndex = startIndex + searchItemsPerPage;
       return filteredAndSortedItems.slice(startIndex, endIndex);
-    } else { // 'loadMore'
+    } else { 
       return filteredAndSortedItems.slice(0, visibleItemCount);
     }
   }, [filteredAndSortedItems, searchPaginationType, currentPage, searchItemsPerPage, visibleItemCount]);
 
-  const totalPages = searchPaginationType === 'numberedPages'
-    ? Math.ceil(filteredAndSortedItems.length / searchItemsPerPage)
-    : 1;
 
   const handleLoadMore = () => {
     setVisibleItemCount(prev => Math.min(prev + searchLoadMoreCount, filteredAndSortedItems.length));
   };
 
   const handlePageChange = (newPage: number) => {
+    const totalPages = searchPaginationType === 'numberedPages' && searchItemsPerPage > 0
+      ? Math.ceil(filteredAndSortedItems.length / searchItemsPerPage)
+      : 1;
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
        window.scrollTo(0, 0);
@@ -427,9 +427,33 @@ export default function SearchPage() {
         currentParams.delete('term');
     }
     router.push(`/search?${currentParams.toString()}`);
-    setCurrentPage(1); // Reset to first page on new search
+    setCurrentPage(1); 
     setVisibleItemCount(searchLoadMoreCount);
   };
+
+  const renderGridItem = (item: any, index: number): React.ReactNode => {
+    if (currentSearchType === 'lots') return <LotCard key={`${(item as Lot).auctionId}-${item.id}-${index}`} lot={item as Lot} platformSettingsProp={platformSettings}/>;
+    if (currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos') return <AuctionCard key={`${item.id}-${index}`} auction={item as Auction} />;
+    if (currentSearchType === 'direct_sale') return <DirectSaleOfferCard key={`${item.id}-${index}`} offer={item as DirectSaleOffer} />;
+    return null;
+  };
+
+  const renderListItem = (item: any, index: number): React.ReactNode => {
+    if (currentSearchType === 'lots') return <LotListItem key={`${(item as Lot).auctionId}-${item.id}-${index}`} lot={item as Lot} platformSettingsProp={platformSettings}/>;
+    if (currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos') return <AuctionListItem key={`${item.id}-${index}`} auction={item as Auction} />;
+    if (currentSearchType === 'direct_sale') return <DirectSaleOfferListItem key={`${item.id}-${index}`} offer={item as DirectSaleOffer} />;
+    return null;
+  };
+
+  const getSearchTypeLabel = () => {
+    switch(currentSearchType) {
+        case 'auctions': return 'leilões';
+        case 'lots': return 'lotes';
+        case 'direct_sale': return 'ofertas';
+        case 'tomada_de_precos': return 'tomadas de preços';
+        default: return 'itens';
+    }
+  }
 
   if (isLoading) {
     return (
@@ -518,156 +542,26 @@ export default function SearchPage() {
                 <TabsTrigger value="tomada_de_precos">Tomada de Preços ({currentSearchType === 'tomada_de_precos' ? filteredAndSortedItems.length : sampleAuctions.filter(auc => auc.auctionType === 'TOMADA_DE_PRECOS').length})</TabsTrigger>
             </TabsList>
 
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4 p-4 bg-card border rounded-lg shadow-sm">
-                <p className="text-sm text-muted-foreground">
-                    Mostrando {paginatedItems.length} de {filteredAndSortedItems.length} item(ns)
-                    {searchTerm && ` contendo "${searchTerm}"`}
-                </p>
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                    <Select value={sortByState} onValueChange={setSortByState}>
-                        <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs">
-                            <SelectValue placeholder="Ordenar por" />
-                        </SelectTrigger>
-                        <SelectContent>
-                        {currentSortOptions.map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                            </SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    {(currentSearchType === 'lots' || currentSearchType === 'direct_sale' || currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos') && (
-                         <div className="flex items-center gap-1">
-                            <span className="text-xs text-muted-foreground">Ver:</span>
-                            <Button
-                            variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-                            size="icon" className="h-8 w-8" onClick={() => setViewMode('grid')}
-                            aria-label="Visualização em Grade"
-                            >
-                            <LayoutGrid className="h-4 w-4" />
-                            </Button>
-                            <Button
-                            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                            size="icon" className="h-8 w-8" onClick={() => setViewMode('list')}
-                            aria-label="Visualização em Lista"
-                            >
-                            <List className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <TabsContent value="auctions">
-                {paginatedItems.length > 0 && currentSearchType === 'auctions' ? (
-                    <div className={viewMode === 'grid' ? "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>
-                        {(paginatedItems as Auction[]).map((auction) => (
-                           viewMode === 'grid'
-                            ? <AuctionCard key={auction.id} auction={auction} />
-                            : <AuctionListItem key={auction.id} auction={auction} />
-                        ))}
-                    </div>
-                ) : currentSearchType === 'auctions' && (
-                    <div className="text-center py-12 bg-secondary/30 rounded-lg">
-                    <h2 className="text-xl font-semibold mb-2">Nenhum Leilão Encontrado</h2>
-                    <p className="text-muted-foreground mb-4">Tente ajustar seus termos de busca ou filtros.</p>
-                    </div>
-                )}
-            </TabsContent>
-
-            <TabsContent value="lots">
-                {paginatedItems.length > 0 && currentSearchType === 'lots' ? (
-                <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4' : 'grid-cols-1'}`}>
-                    {(paginatedItems as Lot[]).map((lot) => (
-                        viewMode === 'grid'
-                        ? <LotCard key={`${lot.auctionId}-${lot.id}`} lot={lot} platformSettingsProp={platformSettings}/>
-                        : <LotListItem key={`${lot.auctionId}-${lot.id}`} lot={lot} platformSettingsProp={platformSettings}/>
-                    ))}
-                </div>
-                ) : currentSearchType === 'lots' && (
-                 <div className="text-center py-12 bg-secondary/30 rounded-lg">
-                    <h2 className="text-xl font-semibold mb-2">Nenhum Lote Encontrado</h2>
-                    <p className="text-muted-foreground mb-4">Tente ajustar seus termos de busca ou filtros.</p>
-                    </div>
-                )}
-            </TabsContent>
-
-            <TabsContent value="direct_sale">
-                {paginatedItems.length > 0 && currentSearchType === 'direct_sale' ? (
-                <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4' : 'grid-cols-1'}`}>
-                    {(paginatedItems as DirectSaleOffer[]).map((offer) => (
-                         viewMode === 'grid'
-                         ? <DirectSaleOfferCard key={offer.id} offer={offer} />
-                         : <DirectSaleOfferListItem key={offer.id} offer={offer} />
-                    ))}
-                </div>
-                ) : currentSearchType === 'direct_sale' && (
-                 <div className="text-center py-12 bg-secondary/30 rounded-lg">
-                    <h2 className="text-xl font-semibold mb-2">Nenhuma Oferta de Venda Direta Encontrada</h2>
-                    <p className="text-muted-foreground mb-4">Tente ajustar seus termos de busca ou filtros.</p>
-                    </div>
-                )}
-            </TabsContent>
-
-            <TabsContent value="tomada_de_precos">
-                {paginatedItems.length > 0 && currentSearchType === 'tomada_de_precos' ? (
-                    <div className={viewMode === 'grid' ? "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>
-                        {(paginatedItems as Auction[]).map((auction) => (
-                             viewMode === 'grid'
-                             ? <AuctionCard key={auction.id} auction={auction} />
-                             : <AuctionListItem key={auction.id} auction={auction} />
-                        ))}
-                    </div>
-                ) : currentSearchType === 'tomada_de_precos' && (
-                    <div className="text-center py-12 bg-secondary/30 rounded-lg">
-                    <h2 className="text-xl font-semibold mb-2">Nenhuma Tomada de Preços Encontrada</h2>
-                    <p className="text-muted-foreground mb-4">Tente ajustar seus termos de busca ou filtros.</p>
-                    </div>
-                )}
-            </TabsContent>
-
+            <SearchResultsFrame
+              items={paginatedItems}
+              totalItemsCount={filteredAndSortedItems.length}
+              renderGridItem={renderGridItem}
+              renderListItem={renderListItem}
+              sortOptions={currentSortOptions}
+              initialSortBy={sortByState}
+              onSortChange={setSortByState}
+              platformSettings={platformSettings}
+              isLoading={isLoading}
+              searchTypeLabel={getSearchTypeLabel()}
+              currentPage={currentPage}
+              visibleItemCount={visibleItemCount}
+              onPageChange={handlePageChange}
+              onLoadMore={handleLoadMore}
+            />
             </Tabs>
-            {/* Pagination Controls */}
-            <div className="mt-8 flex justify-center items-center gap-2">
-              {searchPaginationType === 'loadMore' && visibleItemCount < filteredAndSortedItems.length && (
-                <Button variant="outline" onClick={handleLoadMore} disabled={isLoading}>
-                  Carregar Mais ({filteredAndSortedItems.length - visibleItemCount} restantes)
-                </Button>
-              )}
-              {searchPaginationType === 'numberedPages' && totalPages > 1 && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1 || isLoading}
-                  >
-                    Anterior
-                  </Button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
-                    <Button
-                      key={pageNumber}
-                      variant={currentPage === pageNumber ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handlePageChange(pageNumber)}
-                      disabled={isLoading}
-                    >
-                      {pageNumber}
-                    </Button>
-                  ))}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages || isLoading}
-                  >
-                    Próxima
-                  </Button>
-                </>
-              )}
-            </div>
         </main>
       </div>
     </div>
   );
 }
+
