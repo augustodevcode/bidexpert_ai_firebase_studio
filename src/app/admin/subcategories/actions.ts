@@ -50,3 +50,5 @@ export async function deleteSubcategoryAction(
     revalidatePath('/admin/subcategories');
     revalidatePath(`/admin/categories`); // Parent category might be affected
   }
+  return result;
+}
