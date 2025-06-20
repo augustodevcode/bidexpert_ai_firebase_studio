@@ -55,11 +55,14 @@
     *   `LotDetailClientContent` (and its `DetailTimeRemaining` component) uses derived effective start/end dates.
     *   `LotCard` and `LotListItem` reflect these derived dates/status via the updated `sampleLots`.
     *   Reviewed all display components to ensure consistency.
-
-## WORKING
 - **Item 19:** Implement visual timeline for auction stages in the auction CRUD form (`/admin/auctions/[auctionId]/edit`).
   - **Sub-task 1 (DONE):** Create `AuctionStagesTimeline.tsx` component.
   - **Sub-task 2 (DONE):** Integrate `AuctionStagesTimeline` into `AuctionForm.tsx`.
+
+## WORKING
+- **Admin User Permissions (`admin@bidexpert.com.br`)**: Ensure `admin@bidexpert.com.br` has 'manage_all' permission and sees admin menu items.
+    - **Sub-task 1 (DONE):** Updated `scripts/setup-admin-user.ts` to use `admin@bidexpert.com.br`.
+    - **Sub-task 2 (DONE):** Updated `src/app/admin/users/actions.ts` to prioritize 'ADMINISTRATOR' role for `admin@bidexpert.com.br`.
 
 ## NEXT
 - **Item 20:** Develop Virtual Auditorium (`/auctions/[auctionId]/live`) with current lot display, bidding panel, upcoming lots, and chat.
@@ -87,3 +90,5 @@
 - **Refine UI/UX & Mobile Responsiveness.**
 - **Comprehensive Testing & Performance Optimization.**
 - **Error Handling & Logging (User-friendly messages, server-side logging).**
+
+```

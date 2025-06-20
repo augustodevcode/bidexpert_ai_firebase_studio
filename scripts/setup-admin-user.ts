@@ -3,22 +3,20 @@
 import * as admin from 'firebase-admin';
 import * as fs from 'fs';
 import * as path from 'path';
-import { getDatabaseAdapter } from '../src/lib/database/index'; // Para obter o nome do perfil
-import { ensureUserProfileInDb } from '../src/app/admin/users/actions'; // Action para garantir o perfil
+import { getDatabaseAdapter } from '../src/lib/database/index';
+import { ensureUserProfileInDb } from '../src/app/admin/users/actions';
 import type { Role } from '../src/types';
 
 // ============================================================================
 // CONFIGURAÇÕES DO USUÁRIO ADMINISTRADOR
 // ============================================================================
-const ADMIN_EMAIL = 'admin@bidexpert.com.br';
-const ADMIN_PASSWORD = '@dmin2025';
+const ADMIN_EMAIL = 'admin@bidexpert.com.br'; // ATUALIZADO
+const ADMIN_PASSWORD = '@dmin2025'; // Mantenha uma senha forte
 const ADMIN_FULL_NAME = 'Administrador BidExpert';
 const ADMIN_TARGET_ROLE_NAME = 'ADMINISTRATOR';
-// Para sistemas SQL, você pode definir um UID fixo se desejar, ou deixar que a action o gere.
-// Se for usar Firebase Auth, o UID será o do Firebase.
+// Para sistemas SQL, UID fixo para o admin principal
 const ADMIN_UID_FOR_SQL = 'admin-bidexpert-platform-001';
 // ============================================================================
-
 
 // Path to your service account key file
 const serviceAccountKeyFileName = 'bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json';
@@ -72,13 +70,8 @@ async function initializeFirebaseAdminSDK() {
 }
 
 async function getRoleByNameFromDb(roleName: string): Promise<Role | null> {
-  // Esta função agora usa o Database Adapter para ser agnóstica ao DB.
-  // Ela não é uma Server Action, então não pode importar de roles/actions.ts.
-  // Ela precisa da sua própria lógica de DB ou de um `roles/queries.ts` se essa lógica for complexa.
-  // Para simplificar, e como o adaptador já tem getRoleByName, vamos usá-lo.
-  // No entanto, getDatabaseAdapter é async.
   try {
-    const dbAdapter = await getDatabaseAdapter(); // Chama o factory
+    const dbAdapter = await getDatabaseAdapter();
     return dbAdapter.getRoleByName(roleName);
   } catch (error: any) {
     console.error(`[Admin Script] Erro ao buscar perfil '${roleName}' via adapter:`, error);
@@ -100,8 +93,16 @@ async function setupAdminUser() {
   try {
     const adminRole = await getRoleByNameFromDb(ADMIN_TARGET_ROLE_NAME);
     if (!adminRole || !adminRole.id) {
-      console.error(`[Admin Script] Perfil '${ADMIN_TARGET_ROLE_NAME}' não encontrado ou sem ID. Verifique se os perfis padrão existem.`);
-      process.exit(1);
+      console.error(`[Admin Script] Perfil '${ADMIN_TARGET_ROLE_NAME}' não encontrado ou sem ID. Execute db:init ou seed de perfis primeiro.`);
+      // Tentar garantir que os perfis padrão existam
+      const dbAdapter = await getDatabaseAdapter();
+      await dbAdapter.ensureDefaultRolesExist();
+      const adminRoleAfterEnsure = await getRoleByNameFromDb(ADMIN_TARGET_ROLE_NAME);
+      if(!adminRoleAfterEnsure || !adminRoleAfterEnsure.id){
+        console.error(`[Admin Script] CRÍTICO: Perfil '${ADMIN_TARGET_ROLE_NAME}' ainda não encontrado após ensure. Saindo.`);
+        process.exit(1);
+      }
+      console.log(`[Admin Script] Perfil '${ADMIN_TARGET_ROLE_NAME}' encontrado/criado após ensure.`);
     }
 
     let userIdToUse: string;
@@ -118,13 +119,8 @@ async function setupAdminUser() {
         userExistsInAuth = true;
         userIdToUse = userRecord.uid;
         console.log(`[Admin Script] Usuário encontrado no Firebase Auth com UID: ${userIdToUse}`);
-        // Opcional: Atualizar senha se necessário, mas createUser lida com isso se não existir.
-        // Se precisar garantir a senha, pode-se usar updateUser.
-        if (userRecord.passwordHash !== ADMIN_PASSWORD) { // Comparação não é direta, mas para ilustrar
-            console.log(`[Admin Script] Atualizando senha para usuário Auth existente ${ADMIN_EMAIL}...`);
-            await authAdminInstance.updateUser(userIdToUse, { password: ADMIN_PASSWORD });
-        }
-
+        await authAdminInstance.updateUser(userIdToUse, { password: ADMIN_PASSWORD, displayName: ADMIN_FULL_NAME });
+        console.log(`[Admin Script] Senha e nome do usuário Auth ${ADMIN_EMAIL} atualizados (se necessário).`);
       } catch (error: any) {
         if (error.code === 'auth/user-not-found') {
           console.log(`[Admin Script] Usuário ${ADMIN_EMAIL} não encontrado no Firebase Auth. Criando...`);
@@ -147,25 +143,24 @@ async function setupAdminUser() {
           process.exit(1);
         }
       }
-    } else { // Para MYSQL ou POSTGRES
-      userIdToUse = ADMIN_UID_FOR_SQL; // Usar um UID fixo ou gerado
+    } else { 
+      userIdToUse = ADMIN_UID_FOR_SQL; 
       console.log(`[Admin Script] Usando UID '${userIdToUse}' para sistema SQL.`);
     }
     
-    console.log(`[Admin Script] Garantindo perfil no banco de dados para UID: ${userIdToUse}`);
+    console.log(`[Admin Script] Garantindo perfil no banco de dados para UID: ${userIdToUse}, Email: ${ADMIN_EMAIL}, Role: ${ADMIN_TARGET_ROLE_NAME}`);
     const profileResult = await ensureUserProfileInDb(
       userIdToUse,
       ADMIN_EMAIL,
       ADMIN_FULL_NAME,
-      ADMIN_TARGET_ROLE_NAME, // Passa o nome do perfil
-      { password: ADMIN_PASSWORD } // Passa a senha para ser usada pelo adapter SQL
+      ADMIN_TARGET_ROLE_NAME, 
+      { password: ADMIN_PASSWORD } 
     );
 
     if (profileResult.success) {
       console.log(`[Admin Script] Perfil para ${ADMIN_EMAIL} (UID: ${userIdToUse}) configurado com sucesso no banco de dados com o perfil ${ADMIN_TARGET_ROLE_NAME}.`);
     } else {
       console.error(`[Admin Script] Falha ao configurar perfil no banco de dados para ${ADMIN_EMAIL}: ${profileResult.message}`);
-      // Considerar reverter a criação no Auth se a criação no DB falhar para Firestore.
        if (activeSystem === 'FIRESTORE' && authAdminInstance && !userExistsInAuth && userIdToUse) {
            try {
                await authAdminInstance.deleteUser(userIdToUse);
@@ -175,20 +170,19 @@ async function setupAdminUser() {
            }
        }
     }
-
     console.log(`[Admin Script] Configuração para ${ADMIN_EMAIL} como ${ADMIN_TARGET_ROLE_NAME} concluída.`);
-
   } catch (error: any) {
     console.error(`[Admin Script] Erro durante a configuração do usuário administrador para ${ADMIN_EMAIL}:`, error);
     process.exit(1);
   }
 }
 
-// Executa o script
 setupAdminUser().then(() => {
     console.log("[Admin Script] Processo finalizado.");
-    process.exit(0); // Sair explicitamente para terminar o script
+    process.exit(0);
 }).catch(err => {
     console.error("[Admin Script] Erro não tratado no setupAdminUser:", err);
     process.exit(1);
 });
+
+    
