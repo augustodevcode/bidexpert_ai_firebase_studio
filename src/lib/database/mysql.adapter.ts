@@ -20,7 +20,8 @@ import type {
   MentalTriggerSettings,
   BadgeVisibilitySettings,
   SectionBadgeConfig,
-  HomepageSectionConfig
+  HomepageSectionConfig,
+  AuctionStage
 } from '@/types';
 import { slugify, samplePlatformSettings } from '@/lib/sample-data'; // Import samplePlatformSettings for defaults
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
@@ -212,9 +213,9 @@ function mapToUserProfileData(row: any, role?: Role | null): UserProfileData {
         uid: row.uid,
         email: row.email,
         fullName: row.fullName,
-        password: row.passwordText,
+        password: row.passwordText, // Incluindo password aqui para ser usado na autenticação
         roleId: row.roleId ? String(row.roleId) : undefined,
-        roleName: role?.name || row.roleName,
+        roleName: role?.name || row.roleName || undefined,
         permissions: parseJsonColumn<string[]>(row.permissions, role?.permissions || []),
         status: row.status,
         habilitationStatus: row.habilitationStatus as UserHabilitationStatus,
@@ -548,7 +549,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
         related_lots_count INT, mental_trigger_settings JSON, section_badge_visibility JSON, homepage_sections JSON,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
-      // ... (rest of table creation queries from previous implementation, including lots, auctions, categories, etc.)
        `CREATE TABLE IF NOT EXISTS lot_categories (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, slug VARCHAR(255) NOT NULL UNIQUE,
         description TEXT, item_count INT UNSIGNED DEFAULT 0, has_subcategories BOOLEAN DEFAULT FALSE,
@@ -565,7 +565,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
         UNIQUE KEY \`unique_subcategory_in_parent\` (\`slug\`, \`parent_category_id\`),
         INDEX idx_subcategories_parent_id (parent_category_id), INDEX idx_subcategories_slug_parent_id (slug, parent_category_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
-      // ... (States, Cities, Auctioneers, Sellers, Auctions, Lots, MediaItems, Bids, Reviews, Questions tables as before)
       `CREATE TABLE IF NOT EXISTS states (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100) NOT NULL, uf VARCHAR(2) NOT NULL UNIQUE,
         slug VARCHAR(100) NOT NULL UNIQUE, city_count INT UNSIGNED DEFAULT 0,
@@ -714,8 +713,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
         console.log(`[MySqlAdapter] ${rolesResult.rolesProcessed || 0} perfis padrão processados.`);
       }
 
-      const settingsResult = await this.getPlatformSettings(); // This will create defaults if not exists
-      if (!settingsResult.galleryImageBasePath) { // Check if settings were successfully fetched/created
+      const settingsResult = await this.getPlatformSettings();
+      if (!settingsResult.galleryImageBasePath) {
           errors.push(new Error('Falha ao garantir configurações padrão da plataforma.'));
       } else {
         console.log('[MySqlAdapter] Configurações padrão da plataforma verificadas/criadas.');
@@ -809,8 +808,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
     }
   }
 
-
-  // Basic implementations for other methods to pass the check
   async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> {
     const connection = await getPool().getConnection(); try { const slug = slugify(data.name.trim()); const [result] = await connection.execute('INSERT INTO lot_categories (name, slug, description) VALUES (?, ?, ?)', [data.name.trim(), slug, data.description?.trim() || null]); return { success: true, message: 'OK', categoryId: String((result as mysql.ResultSetHeader).insertId) }; } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
@@ -849,73 +846,39 @@ export class MySqlAdapter implements IDatabaseAdapter {
     const connection = await getPool().getConnection(); try { await connection.execute('DELETE FROM subcategories WHERE id = ?', [Number(id)]); return { success: true, message: 'OK' }; } catch (e: any) { return { success: false, message: e.message }; } finally { connection.release(); }
   }
 
-  // Placeholder for remaining IDatabaseAdapter methods
-  // States
-  async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> { console.warn("createState not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async getStates(): Promise<StateInfo[]> { console.warn("getStates not implemented in MySqlAdapter"); return []; }
-  async getState(idOrSlugOrUf: string): Promise<StateInfo | null> { console.warn("getState not implemented in MySqlAdapter"); return null; }
-  async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateState not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async deleteState(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteState not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  // Cities
-  async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> { console.warn("createCity not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async getCities(stateIdOrSlugFilter?: string): Promise<CityInfo[]> { console.warn("getCities not implemented in MySqlAdapter"); return []; }
-  async getCity(idOrCompositeSlug: string): Promise<CityInfo | null> { console.warn("getCity not implemented in MySqlAdapter"); return null; }
-  async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateCity not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async deleteCity(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteCity not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  // Auctioneers
-  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> { console.warn("createAuctioneer not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { console.warn("getAuctioneers not implemented in MySqlAdapter"); return []; }
-  async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> { console.warn("getAuctioneer not implemented in MySqlAdapter"); return null; }
-  async updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateAuctioneer not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteAuctioneer not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null> { console.warn("getAuctioneerBySlug not implemented in MySqlAdapter"); return null; }
-  async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> { console.warn("getAuctioneerByName not implemented in MySqlAdapter"); return null; }
-  // Sellers
-  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> { console.warn("createSeller not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async getSellers(): Promise<SellerProfileInfo[]> { console.warn("getSellers not implemented in MySqlAdapter"); return []; }
-  async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> { console.warn("getSeller not implemented in MySqlAdapter"); return null; }
-  async updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateSeller not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteSeller not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null> { console.warn("getSellerBySlug not implemented in MySqlAdapter"); return null; }
-  async getSellerByName(name: string): Promise<SellerProfileInfo | null> { console.warn("getSellerByName not implemented in MySqlAdapter"); return null; }
-  // Auctions
-  async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> { console.warn("createAuction not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async getAuctions(): Promise<Auction[]> { console.warn("getAuctions not implemented in MySqlAdapter"); return []; }
-  async getAuction(idOrPublicId: string): Promise<Auction | null> { console.warn("getAuction not implemented in MySqlAdapter"); return null; }
-  async updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> { console.warn("updateAuction not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async deleteAuction(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteAuction not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> { console.warn("getAuctionsBySellerSlug not implemented in MySqlAdapter"); return []; }
-  // Lots
-  async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> { console.warn("createLot not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async getLots(auctionIdParam?: string): Promise<Lot[]> { console.warn("getLots not implemented in MySqlAdapter"); return []; }
-  async getLot(idOrPublicId: string): Promise<Lot | null> { console.warn("getLot not implemented in MySqlAdapter"); return null; }
-  async updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> { console.warn("updateLot not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteLot not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  // Bids
-  async getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> { console.warn("getBidsForLot not implemented in MySqlAdapter"); return []; }
-  async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }> { console.warn("placeBidOnLot not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  // Reviews
-  async getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> { console.warn("getReviewsForLot not implemented in MySqlAdapter"); return []; }
-  async createReview(review: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; reviewId?: string; }> { console.warn("createReview not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  // Questions
-  async getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]> { console.warn("getQuestionsForLot not implemented in MySqlAdapter"); return []; }
-  async createQuestion(question: Omit<LotQuestion, 'id' | 'createdAt' | 'answeredAt' | 'answeredByUserId' | 'answeredByUserDisplayName' | 'isPublic'>): Promise<{ success: boolean; message: string; questionId?: string; }> { console.warn("createQuestion not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> { console.warn("answerQuestion not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  // Users
-  async getUserProfileData(userId: string): Promise<UserProfileData | null> { console.warn("getUserProfileData not implemented in MySqlAdapter"); return null; }
-  async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> { console.warn("updateUserProfile not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password'>>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> { console.warn("ensureUserRole not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async getUsersWithRoles(): Promise<UserProfileData[]> { console.warn("getUsersWithRoles not implemented in MySqlAdapter"); return []; }
-  async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { console.warn("updateUserRole not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteUserProfile not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async getUserByEmail(email: string): Promise<UserProfileData | null> { console.warn("getUserByEmail not implemented in MySqlAdapter"); return null; }
-  // Roles
-  async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> { console.warn("createRole not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async getRoles(): Promise<Role[]> { console.warn("getRoles not implemented in MySqlAdapter"); return []; }
-  async getRole(id: string): Promise<Role | null> { console.warn("getRole not implemented in MySqlAdapter"); return null; }
-  async getRoleByName(name: string): Promise<Role | null> { console.warn("getRoleByName not implemented in MySqlAdapter"); return null; }
-  async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateRole not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async deleteRole(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteRole not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async getUserByEmail(email: string): Promise<UserProfileData | null> {
+    const connection = await getPool().getConnection();
+    try {
+      const query = 'SELECT u.*, r.name as role_name_from_join, r.permissions as role_permissions_from_join FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.email = ? LIMIT 1';
+      const [rows] = await connection.execute(query, [email.toLowerCase()]);
+      if ((rows as RowDataPacket[]).length === 0) return null;
+      
+      const userRow = mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]);
+      
+      let role: Role | null = null;
+      if (userRow.roleId) {
+        role = await this.getRole(String(userRow.roleId));
+      }
+      // Ensure permissions are populated from the role if they exist, otherwise from user's own permissions field
+      const profile = mapToUserProfileData(userRow, role);
+       if (role && (!profile.permissions || profile.permissions.length === 0) && role.permissions && role.permissions.length > 0) {
+        profile.permissions = role.permissions;
+      } else if (!role && userRow.rolePermissionsFromJoin) { // Fallback to joined permissions if direct role lookup failed
+        profile.permissions = parseJsonColumn<string[]>(userRow.rolePermissionsFromJoin, []);
+      }
+      if (!profile.roleName && userRow.roleNameFromJoin) { // Fallback for role name
+        profile.roleName = userRow.roleNameFromJoin;
+      }
+
+      return profile;
+    } catch (e: any) {
+      console.error(`[MySqlAdapter - getUserByEmail(${email})] Error:`, e);
+      return null;
+    } finally {
+      connection.release();
+    }
+  }
+
   async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }> {
     const connection = await getPool().getConnection();
     let rolesProcessedCount = 0;
@@ -940,14 +903,69 @@ export class MySqlAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Default roles ensured.', rolesProcessed: rolesProcessedCount };
     } catch (e: any) { await connection.rollback(); return { success: false, message: e.message, rolesProcessed: rolesProcessedCount }; } finally { connection.release(); }
   }
-  // Media Items
+
+
+  // Placeholder for remaining IDatabaseAdapter methods
+  async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> { console.warn("createState not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async getStates(): Promise<StateInfo[]> { console.warn("getStates not implemented in MySqlAdapter"); return []; }
+  async getState(idOrSlugOrUf: string): Promise<StateInfo | null> { console.warn("getState not implemented in MySqlAdapter"); return null; }
+  async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateState not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteState(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteState not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> { console.warn("createCity not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async getCities(stateIdOrSlugFilter?: string): Promise<CityInfo[]> { console.warn("getCities not implemented in MySqlAdapter"); return []; }
+  async getCity(idOrCompositeSlug: string): Promise<CityInfo | null> { console.warn("getCity not implemented in MySqlAdapter"); return null; }
+  async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateCity not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteCity(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteCity not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> { console.warn("createAuctioneer not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { console.warn("getAuctioneers not implemented in MySqlAdapter"); return []; }
+  async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> { console.warn("getAuctioneer not implemented in MySqlAdapter"); return null; }
+  async updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateAuctioneer not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteAuctioneer not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null> { console.warn("getAuctioneerBySlug not implemented in MySqlAdapter"); return null; }
+  async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> { console.warn("getAuctioneerByName not implemented in MySqlAdapter"); return null; }
+  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> { console.warn("createSeller not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async getSellers(): Promise<SellerProfileInfo[]> { console.warn("getSellers not implemented in MySqlAdapter"); return []; }
+  async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> { console.warn("getSeller not implemented in MySqlAdapter"); return null; }
+  async updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateSeller not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteSeller not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null> { console.warn("getSellerBySlug not implemented in MySqlAdapter"); return null; }
+  async getSellerByName(name: string): Promise<SellerProfileInfo | null> { console.warn("getSellerByName not implemented in MySqlAdapter"); return null; }
+  async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> { console.warn("createAuction not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async getAuctions(): Promise<Auction[]> { console.warn("getAuctions not implemented in MySqlAdapter"); return []; }
+  async getAuction(idOrPublicId: string): Promise<Auction | null> { console.warn("getAuction not implemented in MySqlAdapter"); return null; }
+  async updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> { console.warn("updateAuction not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteAuction(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteAuction not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> { console.warn("getAuctionsBySellerSlug not implemented in MySqlAdapter"); return []; }
+  async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> { console.warn("createLot not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async getLots(auctionIdParam?: string): Promise<Lot[]> { console.warn("getLots not implemented in MySqlAdapter"); return []; }
+  async getLot(idOrPublicId: string): Promise<Lot | null> { console.warn("getLot not implemented in MySqlAdapter"); return null; }
+  async updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> { console.warn("updateLot not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteLot not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> { console.warn("getBidsForLot not implemented in MySqlAdapter"); return []; }
+  async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }> { console.warn("placeBidOnLot not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> { console.warn("getReviewsForLot not implemented in MySqlAdapter"); return []; }
+  async createReview(review: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; reviewId?: string; }> { console.warn("createReview not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]> { console.warn("getQuestionsForLot not implemented in MySqlAdapter"); return []; }
+  async createQuestion(question: Omit<LotQuestion, 'id' | 'createdAt' | 'answeredAt' | 'answeredByUserId' | 'answeredByUserDisplayName' | 'isPublic'>): Promise<{ success: boolean; message: string; questionId?: string; }> { console.warn("createQuestion not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> { console.warn("answerQuestion not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async getUserProfileData(userId: string): Promise<UserProfileData | null> { console.warn("getUserProfileData not implemented in MySqlAdapter"); return null; }
+  async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> { console.warn("updateUserProfile not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password'>>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> { console.warn("ensureUserRole not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async getUsersWithRoles(): Promise<UserProfileData[]> { console.warn("getUsersWithRoles not implemented in MySqlAdapter"); return []; }
+  async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { console.warn("updateUserRole not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteUserProfile not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> { console.warn("createRole not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async getRoles(): Promise<Role[]> { console.warn("getRoles not implemented in MySqlAdapter"); return []; }
+  async getRole(id: string): Promise<Role | null> { console.warn("getRole not implemented in MySqlAdapter"); return null; }
+  async getRoleByName(name: string): Promise<Role | null> { console.warn("getRoleByName not implemented in MySqlAdapter"); return null; }
+  async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateRole not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteRole(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteRole not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> { console.warn("createMediaItem not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async getMediaItems(): Promise<MediaItem[]> { console.warn("getMediaItems not implemented in MySqlAdapter"); return []; }
   async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> { console.warn("updateMediaItemMetadata not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteMediaItemFromDb not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> { console.warn("linkMediaItemsToLot not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> { console.warn("unlinkMediaItemFromLot not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-
 
   async disconnect(): Promise<void> {
     if (pool) {
