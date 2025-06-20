@@ -113,7 +113,7 @@ interface LotCardProps {
 
 const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConfig, platformSettingsProp }) => {
   const [isFavorite, setIsFavorite] = useState(false);
-  const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`);
+  const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const { toast } = useToast();
@@ -134,10 +134,10 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setLotDetailUrl(`${window.location.origin}/auctions/${lot.auctionId}/lots/${lot.id}`);
+      setLotDetailUrl(`${window.location.origin}/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
       setIsFavorite(isLotFavoriteInStorage(lot.id));
     }
-  }, [lot.id, lot.auctionId]);
+  }, [lot.id, lot.auctionId, lot.publicId]);
 
    useEffect(() => {
     if (lot && lot.id) {
@@ -236,7 +236,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
     <>
     <Card className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-xl transition-shadow duration-300 rounded-lg group">
       <div className="relative"> {/* Container principal para imagem e todos os elementos sobrepostos */}
-        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block">
+        <Link href={lotDetailUrl} className="block">
           <div className="aspect-[16/10] relative bg-muted">
             <Image
               src={lot.imageUrl}
@@ -309,7 +309,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
       </div>
 
       <CardContent className="p-3 flex-grow space-y-1.5">
-        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block mt-2"> {/* mt-2 to ensure space below image area */}
+        <Link href={lotDetailUrl} className="block mt-2"> {/* Increased margin top here for more space */}
           <h3 className="text-sm font-semibold hover:text-primary transition-colors leading-tight">
             {lot.title}
           </h3>
@@ -384,13 +384,13 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
             <span className={`font-semibold ${lot.endDate && isPast(new Date(lot.endDate as string)) ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.number || lot.id.replace('LOTE', '')}</span>
         </div>
          <Button asChild className="w-full mt-2" size="sm">
-            <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>Ver Detalhes do Lote</Link>
+            <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>Ver Detalhes do Lote</Link>
         </Button>
       </CardFooter>
     </Card>
     <LotPreviewModal
         lot={lot}
-        auction={sampleAuctions.find(a => a.id === lot.auctionId)}
+        auction={sampleAuctions.find(a => a.id === lot.auctionId || a.publicId === lot.auctionId)}
         isOpen={isPreviewModalOpen}
         onClose={() => setIsPreviewModalOpen(false)}
       />
@@ -416,7 +416,7 @@ export default function LotCard({ lot, badgeVisibilityConfig, platformSettingsPr
         <Card className="flex flex-col overflow-hidden h-full shadow-md rounded-lg group">
              <div className="relative aspect-[16/10] bg-muted animate-pulse"></div>
              <CardContent className="p-3 flex-grow space-y-1.5">
-                <div className="h-4 bg-muted rounded w-3/4 animate-pulse mt-2"></div> {/* Adjusted margin */}
+                <div className="h-4 bg-muted rounded w-3/4 animate-pulse mt-2"></div>
                 <div className="h-8 bg-muted rounded w-full animate-pulse mt-1"></div>
                 <div className="h-4 bg-muted rounded w-1/2 animate-pulse mt-1"></div>
              </CardContent>

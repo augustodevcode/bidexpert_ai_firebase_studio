@@ -75,9 +75,9 @@ export const sampleUserProfiles: UserProfileData[] = [
     uid: 'admin-bidexpert-platform-001', // Consistent UID for admin
     email: 'admin@bidexpert.com.br',
     fullName: 'Administrador BidExpert',
-    roleId: 'role-admin',
+    roleId: 'role-admin', // Linked to sampleRoles
     roleName: 'ADMINISTRATOR',
-    permissions: ['manage_all'],
+    permissions: ['manage_all'], // Explicitly set for consistency
     status: 'ATIVO',
     habilitationStatus: 'HABILITADO',
     createdAt: createPastDate(100),
@@ -87,9 +87,9 @@ export const sampleUserProfiles: UserProfileData[] = [
     uid: 'user-test-002',
     email: 'testuser@example.com',
     fullName: 'Usuário de Teste',
-    roleId: 'role-user',
+    roleId: 'role-user', // Linked to sampleRoles
     roleName: 'USER',
-    permissions: ['view_auctions', 'place_bids', 'view_lots'],
+    permissions: ['view_auctions', 'place_bids', 'view_lots'], // Explicitly set
     status: 'ATIVO',
     habilitationStatus: 'HABILITADO',
     createdAt: createPastDate(50),
@@ -99,9 +99,9 @@ export const sampleUserProfiles: UserProfileData[] = [
     uid: 'consignor-example-003',
     email: 'consignor@bidexpert.com', // Example consignor email
     fullName: 'Comitente Exemplo (Bradesco)',
-    roleId: 'role-consignor',
+    roleId: 'role-consignor', // Linked to sampleRoles
     roleName: 'CONSIGNOR',
-    permissions: ['auctions:manage_own', 'lots:manage_own', 'view_reports', 'media:upload'],
+    permissions: ['auctions:manage_own', 'lots:manage_own', 'view_reports', 'media:upload'], // Explicitly set
     status: 'ATIVO',
     habilitationStatus: 'HABILITADO',
     createdAt: createPastDate(40),
@@ -171,8 +171,8 @@ export const sampleCitiesStatic: Omit<CityInfo, 'createdAt' | 'updatedAt' | 'lot
     { id: 'city-teotonio-vilela-al', name: 'Teotônio Vilela', slug: 'teotonio-vilela', stateId: 'state-al', stateUf: 'AL', ibgeCode: '2709152' },
 ];
 
-export const sampleSellersStatic: Omit<SellerProfileInfo, 'id'| 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'activeLotsCount' | 'totalSalesValue' | 'auctionsFacilitatedCount'>[] = [
-    { name: 'Banco Bradesco S.A.', logoUrl: 'https://placehold.co/100x100.png?text=B', dataAiHint: 'banco logo', city: 'São Paulo', state: 'SP', userId: 'consignor-example-003' }, // Link to sample user
+export const sampleSellersStatic: Omit<SellerProfileInfo, 'id'| 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'activeLotsCount' | 'totalSalesValue' | 'auctionsFacilitatedCount' | 'userId'>[] = [
+    { name: 'Banco Bradesco S.A.', logoUrl: 'https://placehold.co/100x100.png?text=B', dataAiHint: 'banco logo', city: 'São Paulo', state: 'SP', userId: 'consignor-example-003' },
     { name: 'Proprietário Particular 1', city: 'São Paulo', state: 'SP' },
     { name: 'Colecionadores RJ', city: 'Rio de Janeiro', state: 'RJ' },
     { name: 'Colecionadores Clássicos PR', city: 'Curitiba', state: 'PR' },
@@ -200,24 +200,24 @@ export const sampleSellersStatic: Omit<SellerProfileInfo, 'id'| 'publicId' | 'sl
 ];
 
 export const sampleAuctioneersStatic: Omit<AuctioneerProfileInfo, 'id'|'publicId'|'slug'|'createdAt'|'updatedAt'|'memberSince'|'rating'|'auctionsConductedCount'|'totalValueSold'>[] = [
-  { name: 'VICENTE PAULO - JUCEMA N° 12/96', logoUrl: 'https://placehold.co/150x50.png?text=VP&font=roboto', dataAiHint: 'leiloeiro martelo', city: 'São Luís', state: 'MA'},
-  { name: 'AGROLEILÕES LTDA - MATRICULA XYZ/00', logoUrl: 'https://images.unsplash.com/photo-1660071155921-7204712d7d1a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxhdWN0aW9uZWVyJTIwbG9nb3xlbnwwfHx8fDE3NTAzNTYwNjV8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'auctioneer logo', city: 'Rio Verde', state: 'GO'},
-  { name: 'SUPERBID Leilões - JUCESP Nº 123', logoUrl: 'https://placehold.co/150x75.png?text=SuperBid&font=roboto', dataAiHint: 'logo empresa moderno', city: 'São Paulo', state: 'SP'},
+  { name: 'VICENTE PAULO - JUCEMA N° 12/96', logoUrl: 'https://placehold.co/150x50.png?text=VP', dataAiHint: 'leiloeiro martelo', city: 'São Luís', state: 'MA'},
+  { name: 'AGROLEILÕES LTDA - MATRICULA XYZ/00', logoUrl: 'https://placehold.co/150x60.png?text=Agro', dataAiHint: 'auctioneer logo', city: 'Rio Verde', state: 'GO'},
+  { name: 'SUPERBID Leilões - JUCESP Nº 123', logoUrl: 'https://placehold.co/150x75.png?text=SuperBid', dataAiHint: 'logo empresa moderno', city: 'São Paulo', state: 'SP'},
   { name: 'Bomvalor Judicial', city: 'Ribeirão Preto', state: 'SP'},
-  { name: 'Galeria Antika - Leiloeiro Oficial A.Silva', logoUrl: 'https://images.unsplash.com/photo-1563798211121-19d806779c46?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YXVjdGlvbmVlciUyMGxvZ298ZW58MHx8fHwxNzUwMzU2MDY1fDA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'auctioneer logo', city: 'São Paulo', state: 'SP'},
-  { name: 'Clássicos Leilões BR - Leiloeiro J.Pimenta', logoUrl: 'https://images.unsplash.com/photo-1563798211121-19d806779c46?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YXVjdGlvbmVlciUyMGxvZ298ZW58MHx8fHwxNzUwMzU2MDY1fDA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'auctioneer logo', city: 'Curitiba', state: 'PR'},
+  { name: 'Galeria Antika - Leiloeiro Oficial A.Silva', logoUrl: 'https://placehold.co/150x55.png?text=Antika', dataAiHint: 'auctioneer logo', city: 'São Paulo', state: 'SP'},
+  { name: 'Clássicos Leilões BR - Leiloeiro J.Pimenta', logoUrl: 'https://placehold.co/150x65.png?text=ClassicosBR', dataAiHint: 'auctioneer logo', city: 'Curitiba', state: 'PR'},
   { name: 'Leiloeiro XYZ Oficial', city: 'Rio de Janeiro', state: 'RJ'},
-  { name: 'Leiloeiro Oficial Bradesco', logoUrl: 'https://images.unsplash.com/photo-1653499676737-becf2c9562c8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxhdWN0aW9uZWVyJTIwbG9nb3xlbnwwfHx8fDE3NTAzNTYwNjV8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'auctioneer logo', city: 'São Paulo', state: 'SP'},
-  { name: 'Leiloeiro Público Municipal Campinas', city: 'Campinas', state: 'SP', logoUrl: 'https://images.unsplash.com/photo-1703584449021-4cfdfe9650dd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhdWN0aW9uZWVyJTIwbG9nb3xlbnwwfHx8fDE3NTAzNTYwNjV8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'auctioneer logo'},
-  { name: 'Central de Compras Bahia', city: 'Salvador', state: 'BA', logoUrl: 'https://images.unsplash.com/photo-1563798211121-19d806779c46?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YXVjdGlvbmVlciUyMGxvZ298ZW58MHx8fHwxNzUwMzU2MDY1fDA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'auctioneer logo'},
+  { name: 'Leiloeiro Oficial Bradesco', logoUrl: 'https://placehold.co/150x50.png?text=LOB', dataAiHint: 'auctioneer logo', city: 'São Paulo', state: 'SP'},
+  { name: 'Leiloeiro Público Municipal Campinas', city: 'Campinas', state: 'SP', logoUrl: 'https://placehold.co/150x70.png?text=LPMC', dataAiHint: 'auctioneer logo'},
+  { name: 'Central de Compras Bahia', city: 'Salvador', state: 'BA', logoUrl: 'https://placehold.co/150x45.png?text=CCB', dataAiHint: 'auctioneer logo'},
 ];
 
 export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots' | 'totalLots' | 'category' | 'auctioneer' | 'seller' | 'auctioneerLogoUrl'>[] = [
-  { id: '100625bra', publicId: 'AUC-IMOVEIS-XYZ123P1', title: 'Leilão de Imóveis Residenciais e Comerciais', fullTitle: 'Grande Leilão de Imóveis do Banco Bradesco - Oportunidades em SP, BA e AL', description: 'Leilão online de casas, apartamentos e terrenos. Excelentes oportunidades de investimento e moradia. Lances a partir de R$ 45.000. Não perca!', status: 'ABERTO_PARA_LANCES', auctionType: 'EXTRAJUDICIAL', categoryId: 'cat-imoveis', auctioneerId: 'auct-leiloeiro-oficial-bradesco', sellerId: 'seller-banco-bradesco-s-a', auctionDate: createFutureDate(0, 0, 15), endDate: createFutureDate(10, 5), city: 'Nacional', state: 'BR', imageUrl: 'https://images.unsplash.com/photo-1711488398760-b89f4023905a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxsZWlsYW8lMjBpbW92ZWlzJTIwY2lkYWRlfGVufDB8fHx8MTc1MDM1NjA2NXww&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'leilao imoveis cidade', documentsUrl: '#', visits: 2580, initialOffer: 45000, isFavorite: false, auctionStages: [{ name: '1ª Praça', endDate: createFutureDate(5,0), statusText: 'Encerramento', initialPrice: 45000 }, { name: '2ª Praça', endDate: createFutureDate(10, 5), statusText: 'Encerramento', initialPrice: 30000 }], automaticBiddingEnabled: true, allowInstallmentBids: true, estimatedRevenue: 2000000, achievedRevenue: 0, totalHabilitatedUsers: 150, isFeaturedOnMarketplace: true, marketplaceAnnouncementTitle: 'Mega Leilão Bradesco Imóveis' },
-  { id: '300724car', publicId: 'AUC-VEICULOS-ABC456Q2', title: 'Leilão de Veículos Usados e Seminovos', description: 'Diversos modelos e marcas. Carros de passeio, utilitários e motos com preços especiais.', status: 'EM_BREVE', auctionType: 'EXTRAJUDICIAL', categoryId: 'cat-veiculos', auctioneerId: 'auct-superbid-leiloes', sellerId: 'seller-proprietario-particular-1', auctionDate: createFutureDate(7, 0), endDate: createFutureDate(14, 0), city: 'São Paulo', state: 'SP', imageUrl: 'https://images.unsplash.com/photo-1647089490645-c46e824475d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w7NDE5ODJ8MHwxfHNlYXJjaHw0fHxsZWlsYW8lMjBjYXJyb3MlMjBwYXRpb3xlbnwwfHx8fDE3NTAzNTYwNjV8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'leilao carros patio', initialOffer: 15000, visits: 1230, auctionStages: [{ name: 'Abertura', endDate: createFutureDate(7,0), statusText: 'Início dos Lances', initialPrice: 15000 }], automaticBiddingEnabled: false, allowInstallmentBids: false, estimatedRevenue: 500000, achievedRevenue: 0, totalHabilitatedUsers: 80 },
-  { id: 'ART001ANTIQ', publicId: 'AUC-ARTECLAS-GHI789R3', title: 'Leilão de Arte e Antiguidades Clássicas', description: 'Peças raras, pinturas, esculturas e mobiliário antigo. Oportunidade para colecionadores.', status: 'ABERTO_PARA_LANCES', auctionType: 'PARTICULAR', categoryId: 'cat-arte-e-antiguidades', auctioneerId: 'auct-galeria-antika-leiloeiro-oficial-asilva', sellerId: 'seller-colecionadores-rj', auctionDate: createPastDate(2), endDate: createFutureDate(8, 0), city: 'Rio de Janeiro', state: 'RJ', imageUrl: 'https://images.unsplash.com/photo-1748722144965-6f7a17a87570?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxsZWlsYW8lMjBhcnRlJTIwcXVhZHJvc3xlbnwwfHx8fDE3NTAzNTYwNjV8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'leilao arte quadros', initialOffer: 1000, visits: 850, estimatedRevenue: 50000, achievedRevenue: 12000, totalHabilitatedUsers: 25, allowInstallmentBids: true },
-  { id: 'CLASSICVEH24', publicId: 'AUC-MUSTANGS-JKL012S4', title: 'Leilão Especial de Mustangs Clássicos', description: 'Modelos raros de Ford Mustang das décadas de 60 e 70. Para apaixonados por clássicos.', status: 'ABERTO_PARA_LANCES', auctionType: 'PARTICULAR', categoryId: 'cat-veiculos', auctioneerId: 'auct-classicos-leiloes-br-leiloeiro-jpimenta', sellerId: 'seller-colecionadores-classicos-pr', auctionDate: createPastDate(1), endDate: createFutureDate(12, 0), city: 'Curitiba', state: 'PR', imageUrl: 'https://images.unsplash.com/photo-1598998267982-d2a80038fd0b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtdXN0YW5nJTIwY2xhc3NpY28lMjBwZXJmaWx8ZW58MHx8fHwxNzUwMzU2MDY1fDA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'mustang classico perfil', initialOffer: 150000, visits: 2100, auctionStages: [{ name: 'Pregão Único', endDate: createFutureDate(12,0), statusText: 'Encerramento Lances', initialPrice: 150000 }], allowInstallmentBids: true, estimatedRevenue: 300000 },
-  { id: '20301vei', publicId: 'AUC-MAQUINAS-MNO345T5', title: 'Leilão de Maquinário Pesado e Agrícola', description: 'Tratores, colheitadeiras e equipamentos industriais. Renove sua frota ou maquinário.', status: 'ABERTO_PARA_LANCES', auctionType: 'EXTRAJUDICIAL', categoryId: 'cat-maquinas-e-equipamentos', auctioneerId: 'auct-agroleiloes-ltda-matricula-xyz00', sellerId: 'seller-fazenda-boa-esperanca', auctionDate: createPastDate(3), endDate: createFutureDate(5, 0), city: 'Rio Verde', state: 'GO', imageUrl: 'https://images.unsplash.com/photo-1604225318415-20fddd721f35?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxtYXF1aW5hcyUyMHBlc2FkYXMlMjBjb25zdHJ1Y2FvfGVufDB8fHx8MTc1MDM1NjA2Nnww&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'maquinas pesadas construcao', initialOffer: 50000, visits: 975, isFavorite: true, estimatedRevenue: 400000, marketplaceAnnouncementTitle: 'Maquinário Pesado - Grande Leilão!', allowInstallmentBids: false },
+  { id: '100625bra', publicId: 'AUC-IMOVEIS-XYZ123P1', title: 'Leilão de Imóveis Residenciais e Comerciais', fullTitle: 'Grande Leilão de Imóveis do Banco Bradesco - Oportunidades em SP, BA e AL', description: 'Leilão online de casas, apartamentos e terrenos. Excelentes oportunidades de investimento e moradia. Lances a partir de R$ 45.000. Não perca!', status: 'ABERTO_PARA_LANCES', auctionType: 'EXTRAJUDICIAL', categoryId: 'cat-imoveis', auctioneerId: 'auct-leiloeiro-oficial-bradesco', sellerId: 'seller-banco-bradesco-s-a', auctionDate: createFutureDate(0, 0, 15), endDate: createFutureDate(10, 5), city: 'Nacional', state: 'BR', imageUrl: '/lotes-exemplo/auctions/leilao_imoveis_banner.jpg', dataAiHint: 'leilao imoveis cidade', documentsUrl: '#', visits: 2580, initialOffer: 45000, isFavorite: false, auctionStages: [{ name: '1ª Praça', endDate: createFutureDate(5,0), statusText: 'Encerramento', initialPrice: 45000 }, { name: '2ª Praça', endDate: createFutureDate(10, 5), statusText: 'Encerramento', initialPrice: 30000 }], automaticBiddingEnabled: true, allowInstallmentBids: true, estimatedRevenue: 2000000, achievedRevenue: 0, totalHabilitatedUsers: 150, isFeaturedOnMarketplace: true, marketplaceAnnouncementTitle: 'Mega Leilão Bradesco Imóveis' },
+  { id: '300724car', publicId: 'AUC-VEICULOS-ABC456Q2', title: 'Leilão de Veículos Usados e Seminovos', description: 'Diversos modelos e marcas. Carros de passeio, utilitários e motos com preços especiais.', status: 'EM_BREVE', auctionType: 'EXTRAJUDICIAL', categoryId: 'cat-veiculos', auctioneerId: 'auct-superbid-leiloes', sellerId: 'seller-proprietario-particular-1', auctionDate: createFutureDate(7, 0), endDate: createFutureDate(14, 0), city: 'São Paulo', state: 'SP', imageUrl: '/lotes-exemplo/auctions/leilao_carros_patio.jpg', dataAiHint: 'leilao carros patio', initialOffer: 15000, visits: 1230, auctionStages: [{ name: 'Abertura', endDate: createFutureDate(7,0), statusText: 'Início dos Lances', initialPrice: 15000 }], automaticBiddingEnabled: false, allowInstallmentBids: false, estimatedRevenue: 500000, achievedRevenue: 0, totalHabilitatedUsers: 80 },
+  { id: 'ART001ANTIQ', publicId: 'AUC-ARTECLAS-GHI789R3', title: 'Leilão de Arte e Antiguidades Clássicas', description: 'Peças raras, pinturas, esculturas e mobiliário antigo. Oportunidade para colecionadores.', status: 'ABERTO_PARA_LANCES', auctionType: 'PARTICULAR', categoryId: 'cat-arte-e-antiguidades', auctioneerId: 'auct-galeria-antika-leiloeiro-oficial-asilva', sellerId: 'seller-colecionadores-rj', auctionDate: createPastDate(2), endDate: createFutureDate(8, 0), city: 'Rio de Janeiro', state: 'RJ', imageUrl: '/lotes-exemplo/auctions/leilao_arte_quadros.jpg', dataAiHint: 'leilao arte quadros', initialOffer: 1000, visits: 850, estimatedRevenue: 50000, achievedRevenue: 12000, totalHabilitatedUsers: 25, allowInstallmentBids: true },
+  { id: 'CLASSICVEH24', publicId: 'AUC-MUSTANGS-JKL012S4', title: 'Leilão Especial de Mustangs Clássicos', description: 'Modelos raros de Ford Mustang das décadas de 60 e 70. Para apaixonados por clássicos.', status: 'ABERTO_PARA_LANCES', auctionType: 'PARTICULAR', categoryId: 'cat-veiculos', auctioneerId: 'auct-classicos-leiloes-br-leiloeiro-jpimenta', sellerId: 'seller-colecionadores-classicos-pr', auctionDate: createPastDate(1), endDate: createFutureDate(12, 0), city: 'Curitiba', state: 'PR', imageUrl: '/lotes-exemplo/auctions/mustang_classico_perfil.jpg', dataAiHint: 'mustang classico perfil', initialOffer: 150000, visits: 2100, auctionStages: [{ name: 'Pregão Único', endDate: createFutureDate(12,0), statusText: 'Encerramento Lances', initialPrice: 150000 }], allowInstallmentBids: true, estimatedRevenue: 300000 },
+  { id: '20301vei', publicId: 'AUC-MAQUINAS-MNO345T5', title: 'Leilão de Maquinário Pesado e Agrícola', description: 'Tratores, colheitadeiras e equipamentos industriais. Renove sua frota ou maquinário.', status: 'ABERTO_PARA_LANCES', auctionType: 'EXTRAJUDICIAL', categoryId: 'cat-maquinas-e-equipamentos', auctioneerId: 'auct-agroleiloes-ltda-matricula-xyz00', sellerId: 'seller-fazenda-boa-esperanca', auctionDate: createPastDate(3), endDate: createFutureDate(5, 0), city: 'Rio Verde', state: 'GO', imageUrl: '/lotes-exemplo/auctions/maquinas_pesadas_construcao.jpg', dataAiHint: 'maquinas pesadas construcao', initialOffer: 50000, visits: 975, isFavorite: true, estimatedRevenue: 400000, marketplaceAnnouncementTitle: 'Maquinário Pesado - Grande Leilão!', allowInstallmentBids: false },
   {
     id: 'TP001-NOTEBOOKS', publicId: 'AUC-TPNOTE-PMC001X9', title: 'Tomada de Preços - Aquisição de Notebooks',
     fullTitle: 'Tomada de Preços Nº 001/2024 - Aquisição de Notebooks para Secretaria de Educação de Campinas',
@@ -225,7 +225,7 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
     status: 'ABERTO_PARA_LANCES', auctionType: 'TOMADA_DE_PRECOS', categoryId: 'cat-eletronicos-e-tecnologia', 
     auctioneerId: 'auct-leiloeiro-publico-municipal-campinas', sellerId: 'seller-prefeitura-municipal-de-campinas',
     auctionDate: createFutureDate(1, 9), endDate: createFutureDate(15, 17),
-    city: 'Campinas', state: 'SP', imageUrl: 'https://images.unsplash.com/photo-1744051518421-1eaf2fbde680?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxub3RlYm9va3MlMjBwaWxoYSUyMGVzY3JpdG9yaW98ZW58MHx8fHwxNzUwMzU2MDY1fDA&ixlib=rb-4.1.0&q=80&w=1080',
+    city: 'Campinas', state: 'SP', imageUrl: '/lotes-exemplo/auctions/notebooks_pilha_escritorio.jpg',
     dataAiHint: 'notebooks pilha escritorio', documentsUrl: '#edital-notebooks', visits: 150,
     initialOffer: 320000,
     auctionStages: [{ name: 'Recebimento de Propostas', endDate: createFutureDate(15,17), statusText: 'Prazo Final', initialPrice: 320000 }],
@@ -238,7 +238,7 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
     status: 'ENCERRADO', auctionType: 'TOMADA_DE_PRECOS', categoryId: 'cat-veiculos',
     auctioneerId: 'auct-central-de-compras-bahia', sellerId: 'seller-secretaria-de-administracao-de-salvador',
     auctionDate: createPastDate(30, 9), endDate: createPastDate(15, 17),
-    city: 'Salvador', state: 'BA', imageUrl: 'https://images.unsplash.com/photo-1658241213593-b7904e271aa8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYXJyb3MlMjB1c2Fkb3MlMjBwYXRpb3xlbnwwfHx8fDE3NTAzNTYwNjV8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    city: 'Salvador', state: 'BA', imageUrl: '/lotes-exemplo/auctions/carros_usados_patio.jpg',
     dataAiHint: 'carros usados patio', documentsUrl: '#edital-veiculos', visits: 320,
     initialOffer: 80000,
     auctionStages: [{ name: 'Recebimento de Propostas', endDate: createPastDate(15,17), statusText: 'Encerrado', initialPrice: 80000 }],
@@ -251,7 +251,7 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
     status: 'ABERTO_PARA_LANCES', auctionType: 'JUDICIAL', categoryId: 'cat-imoveis',
     auctioneerId: 'auct-superbid-leiloes', sellerId: 'seller-vara-civel-de-sao-paulo-tjsp',
     auctionDate: createFutureDate(2, 0), endDate: createFutureDate(12, 0), city: 'São Paulo', state: 'SP',
-    imageUrl: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhcGFydG1lbnQlMjBleHRlcmlvcnxlbnwwfHx8fDE3NTA5NTg5MDZ8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    imageUrl: '/lotes-exemplo/auctions/apartamento_exterior.jpg',
     dataAiHint: 'apartamento predio moderno', documentsUrl: '#edital-jud001', visits: 1850,
     initialOffer: 250000,
     auctionStages: [
@@ -267,7 +267,7 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
     status: 'EM_BREVE', auctionType: 'JUDICIAL', categoryId: 'cat-veiculos',
     auctioneerId: 'auct-leiloeiro-xyz-oficial', sellerId: 'seller-vara-de-falencias-do-rio-de-janeiro-tjrj',
     auctionDate: createFutureDate(10, 0), endDate: createFutureDate(20, 0), city: 'Rio de Janeiro', state: 'RJ',
-    imageUrl: 'https://images.unsplash.com/photo-1617093583090-67685879968e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmaWF0JTIwdG9yb3xlbnwwfHx8fDE3NTA5NTg5MDZ8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    imageUrl: '/lotes-exemplo/auctions/fiat_toro_frente.jpg',
     dataAiHint: 'fiat toro branca frente', documentsUrl: '#edital-jud002', visits: 950,
     auctionStages: [{ name: 'Leilão Único', endDate: createFutureDate(20,0), statusText: 'Data do Leilão', initialPrice: 40000 }],
     estimatedRevenue: 45000, allowInstallmentBids: true
@@ -279,7 +279,7 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
     status: 'ABERTO_PARA_LANCES', auctionType: 'JUDICIAL', categoryId: 'cat-maquinas-e-equipamentos',
     auctioneerId: 'auct-classicos-leiloes-br-leiloeiro-jpimenta', sellerId: 'seller-vara-do-trabalho-de-curitiba-trt9',
     auctionDate: createPastDate(1,0), endDate: createFutureDate(5, 0), city: 'Curitiba', state: 'PR',
-    imageUrl: 'https://placehold.co/600x400.png?text=Trator+Judicial', dataAiHint: 'trator antigo vermelho',
+    imageUrl: '/lotes-exemplo/auctions/trator_judicial.jpg', dataAiHint: 'trator antigo vermelho',
     initialOffer: 22000, visits: 680,
     auctionStages: [{ name: 'Leilão Único', endDate: createFutureDate(5,0), statusText: 'Encerramento', initialPrice: 22000 }],
     achievedRevenue: 25000, totalHabilitatedUsers: 15, allowInstallmentBids: false
@@ -287,19 +287,19 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
 ];
 
 export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' | 'sellerName' | 'cityName' | 'stateUf' | 'type' | 'bids' | 'reviews' | 'questions' | 'subcategoryName' | 'endDate' | 'auctionDate' | 'lotSpecificAuctionDate' | 'secondAuctionDate'>[] = [
-  { id: 'LOTE001', auctionId: '100625bra', publicId: 'LOT-CASACENT-ABC123X1', title: 'CASA COM 129,30 M² - CENTRO', imageUrl: '/lotes-exemplo/imoveis/casa_centro_principal.jpg', dataAiHint: 'casa residencial', galleryImageUrls: ['/lotes-exemplo/imoveis/casa_centro_detalhe1.jpg', '/lotes-exemplo/imoveis/casa_centro_detalhe2.jpg'], mediaItemIds: ['media-casa-frente', 'media001'], status: 'ABERTO_PARA_LANCES', cityId: 'city-teotonio-vilela-al', stateId: 'state-al', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-casas', views: 1018, price: 45000, bidsCount: 12, description: 'Casa residencial bem localizada no centro da cidade.', sellerId: 'seller-banco-bradesco-s-a', initialPrice: 50000, secondInitialPrice: 42000, additionalTriggers: ['DESCONTO PROGRESSIVO'], isFeatured: true, latitude: -9.56096, longitude: -36.3516, mapAddress: 'Rua Central, Teotônio Vilela, Alagoas', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-36.3566,-9.5659,-36.3466,-9.5559&layer=mapnik&marker=-9.56096,-36.3516', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-9.56096,-36.3516&zoom=16&size=600x400&markers=color:blue%7C-9.56096,-36.3516&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, bidIncrementStep: 1000, allowInstallmentBids: true },
-  { id: 'LOTEVEI001', auctionId: '300724car', publicId: 'LOT-2013AUDI-DEF456Y2', title: '2013 AUDI A4 PREMIUM PLUS', year: 2013, make: 'AUDI', model: 'A4', imageUrl: '/lotes-exemplo/veiculos/audi_a4_principal.jpg', dataAiHint: 'carro sedan preto', galleryImageUrls: ['/lotes-exemplo/veiculos/audi_a4_interior.jpg', '/lotes-exemplo/veiculos/audi_a4_lateral.jpg'], mediaItemIds: ['media-audi-frente', 'media002'], status: 'ABERTO_PARA_LANCES', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-veiculos', subcategoryId: 'subcat-veiculos-carros', views: 1560, price: 68500, bidsCount: 25, description: 'Audi A4 Premium Plus 2013, completo, com baixa quilometragem.', sellerId: 'seller-proprietario-particular-1', isExclusive: true, additionalTriggers: ['ALTA DEMANDA', 'LANCE QUENTE'], isFeatured: true, latitude: -23.550520, longitude: -46.633308, mapAddress: 'Av. Paulista, 1578, Bela Vista, São Paulo - SP', mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3657.1489015339396!2d-46.65879078502246!3d-23.56318168468204!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce59c8da0aa315%3A0x168c9d0b70928d9a!2sAv.%20Paulista%2C%201578%20-%20Bela%20Vista%2C%20S%C3%A3o%20Paulo%20-%20SP%2C%2001310-200!5e0!3m2!1spt-BR!2sbr!4v1678886512345!5m2!1spt-BR!2sbr', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-23.550520,-46.633308&zoom=15&size=600x400&markers=color:red%7C-23.550520,-46.633308&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, bidIncrementStep: 500, allowInstallmentBids: false },
-  { id: 'LOTE003', auctionId: '100625bra', publicId: 'LOT-APTOCABU-GHI789Z3', title: 'APARTAMENTO COM 54,25 M² - CABULA', imageUrl: '/lotes-exemplo/imoveis/apto_cabula_sala.jpg', dataAiHint: 'apartamento predio residencial', status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-apartamentos', views: 754, price: 105000, bidsCount: 12, description: 'Apartamento funcional no Cabula, Salvador. 2 quartos, sala, cozinha e banheiro. Condomínio com portaria.', sellerId: 'seller-banco-bradesco-s-a', latitude: -12.960980, longitude: -38.467789, mapAddress: 'Rua do Cabula, Salvador - BA', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-12.960980,-38.467789&zoom=15&size=600x400&markers=color:blue%7C-12.960980,-38.467789&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
-  { id: 'LOTEART001', auctionId: 'ART001ANTIQ', publicId: 'LOT-PINTURAO-JKL012A4', title: 'Pintura a Óleo "Paisagem Toscana" - Séc. XIX', imageUrl: '/lotes-exemplo/arte/paisagem_toscana.jpg', dataAiHint: 'pintura oleo paisagem', status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-de-janeiro-rj', stateId: 'state-rj', categoryId: 'cat-arte-e-antiguidades', views: 320, price: 7500, bidsCount: 3, description: 'Belíssima pintura a óleo sobre tela, representando paisagem da Toscana. Assinatura ilegível. Moldura original.', sellerId: 'seller-colecionadores-rj', latitude: -22.9068, longitude: -43.1729, mapAddress: 'Copacabana, Rio de Janeiro - RJ', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-22.9068,-43.1729&zoom=14&size=600x400&markers=color:green%7C-22.9068,-43.1729&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, allowInstallmentBids: true },
-  { id: 'LOTEVCLASS001', auctionId: 'CLASSICVEH24', publicId: 'LOT-1967FORD-MNO345B5', title: '1967 FORD MUSTANG FASTBACK', year: 1967, make: 'FORD', model: 'MUSTANG', imageUrl: '/lotes-exemplo/veiculos/mustang_67_frente.jpg', dataAiHint: 'carro classico vermelho', status: 'ABERTO_PARA_LANCES', cityId: 'city-curitiba-pr', stateId: 'state-pr', categoryId: 'cat-veiculos', subcategoryId: 'subcat-veiculos-carros', views: 1850, price: 250000, bidsCount: 18, description: 'Icônico Ford Mustang Fastback 1967, motor V8, câmbio manual. Restaurado.', sellerId: 'seller-colecionadores-classicos-pr', initialPrice: 280000, secondInitialPrice: 250000, isFeatured: true, latitude: -25.4284, longitude: -49.2733, mapAddress: 'Batel, Curitiba - PR', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-25.4284,-49.2733&zoom=15&size=600x400&markers=color:red%7C-25.4284,-49.2733&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, bidIncrementStep: 2500, allowInstallmentBids: true },
-  { id: 'LOTE005', auctionId: '20301vei', publicId: 'LOT-TRATORAG-PQR678C6', title: 'TRATOR AGRÍCOLA NEW HOLLAND T7', year: 2018, make: 'NEW HOLLAND', model: 'T7.245', imageUrl: '/lotes-exemplo/maquinas/trator_nh_t7.jpg', dataAiHint: 'trator agricola campo', galleryImageUrls: ['/lotes-exemplo/maquinas/trator_nh_t7_detalhe.jpg'], mediaItemIds: ['media-trator-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-verde-go', stateId: 'state-go', categoryId: 'cat-maquinas-e-equipamentos', views: 650, price: 180000, bidsCount: 7, isFeatured: true, description: 'Trator New Holland T7.245, ano 2018, com apenas 1200 horas de uso. Excelente estado.', sellerId: 'seller-fazenda-boa-esperanca', latitude: -17.7999, longitude: -50.9253, mapAddress: 'Zona Rural, Rio Verde - GO', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-50.9353,-17.8099,-50.9153,-17.7899&layer=mapnik&marker=-17.7999,-50.9253', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-17.7999,-50.9253&zoom=13&size=600x400&markers=color:blue%7C-17.7999,-50.9253&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
-  { id: 'LOTE002', auctionId: '100625bra', publicId: 'LOT-CASAPORT-STU901D7', title: 'CASA COM 234,50 M² - PORTÃO', imageUrl: '/lotes-exemplo/imoveis/casa_portao_vista_aerea.jpg', dataAiHint: 'casa moderna suburbio', status: 'ABERTO_PARA_LANCES', cityId: 'city-lauro-de-freitas-ba', stateId: 'state-ba', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-casas', views: 681, price: 664000, bidsCount: 1, description: 'Espaçosa casa em Lauro de Freitas, Bahia. Perto da praia.', sellerId: 'seller-banco-bradesco-s-a', isFeatured: true, latitude: -12.8868, longitude: -38.3275, mapAddress: 'Rua Principal, Portão, Lauro de Freitas - BA', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-38.3375,-12.8968,-38.3175,-12.8768&layer=mapnik&marker=-12.8868,-38.3275', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-12.8868,-38.3275&zoom=16&size=600x400&markers=color:green%7C-12.8868,-38.3275&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, allowInstallmentBids: true },
-  { id: 'LOTE004', auctionId: '100625bra', publicId: 'LOT-CASAVILA-VWX234E8', title: 'CASA COM 133,04 M² - VILA PERI', imageUrl: '/lotes-exemplo/imoveis/casa_vila_peri_externa.jpg', dataAiHint: 'casa terrea simples', status: 'EM_BREVE', cityId: 'city-fortaleza-ce', stateId: 'state-ce', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-casas', views: 527, price: 238000, bidsCount: 0, description: 'Casa em Fortaleza, boa localização, necessita pequenas reformas.', sellerId: 'seller-banco-bradesco-s-a', latitude: -3.7929, longitude: -38.5396, mapAddress: 'Avenida Principal, Vila Peri, Fortaleza - CE', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-38.5496,-3.8029,-38.5296,-3.7829&layer=mapnik&marker=-3.7929,-38.5396', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-3.7929,-38.5396&zoom=15&size=600x400&markers=color:yellow%7C-3.7929,-38.5396&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
-  { id: 'LOTE006', auctionId: '20301vei', publicId: 'LOT-COLHEITA-YZA567F9', title: 'COLHEITADEIRA JOHN DEERE S680', imageUrl: '/lotes-exemplo/maquinas/colheitadeira_jd_campo.jpg', dataAiHint: 'colheitadeira graos campo', status: 'ENCERRADO', cityId: 'city-campo-grande-ms', stateId: 'state-ms', categoryId: 'cat-maquinas-e-equipamentos', views: 450, price: 365000, bidsCount: 22, description: 'Colheitadeira John Deere S680, usada, em bom estado de funcionamento.', sellerId: 'seller-produtores-rurais-ms', latitude: -20.4428, longitude: -54.6295, mapAddress: 'Saída para Três Lagoas, Campo Grande - MS', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-20.4428,-54.6295&zoom=14&size=600x400&markers=color:purple%7C-20.4428,-54.6295&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
-  { id: 'LOTEART002', auctionId: 'ART001ANTIQ', publicId: 'LOT-ESCULTUR-BCD890G0', title: 'Escultura em Bronze "O Pensador" - Réplica Assinada', imageUrl: '/lotes-exemplo/arte/escultura_pensador_detalhe.jpg', dataAiHint: 'escultura bronze pensador', status: 'EM_BREVE', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-arte-e-antiguidades', views: 150, price: 3200, bidsCount: 0, description: 'Réplica em bronze da famosa escultura, assinada pelo artista.', sellerId: 'seller-galeria-de-arte-sp', latitude: -23.5613, longitude: -46.6562, mapAddress: 'Próximo ao MASP, Avenida Paulista, São Paulo - SP', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-46.6662,-23.5713,-46.6462,-23.5513&layer=mapnik&marker=-23.5613,-46.6562', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-23.5613,-46.6562&zoom=15&size=600x400&markers=color:orange%7C-23.5613,-46.6562&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
+  { id: 'LOTE001', auctionId: '100625bra', publicId: 'LOT-CASACENT-ABC123X1', title: 'CASA COM 129,30 M² - CENTRO', imageUrl: '/lotes-exemplo/imoveis/casa_centro_principal.jpg', dataAiHint: 'casa residencial', galleryImageUrls: ['/lotes-exemplo/imoveis/casa_centro_detalhe1.jpg', '/lotes-exemplo/imoveis/casa_centro_detalhe2.jpg'], mediaItemIds: ['media-casa-frente', 'media001'], status: 'ABERTO_PARA_LANCES', cityId: 'city-teotonio-vilela-al', stateId: 'state-al', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-casas', views: 1018, price: 45000, bidsCount: 12, description: 'Casa residencial bem localizada no centro da cidade.', sellerId: 'seller-banco-bradesco-s-a', initialPrice: 50000, secondInitialPrice: 42000, additionalTriggers: ['DESCONTO PROGRESSIVO'], isFeatured: true, latitude: -9.56096, longitude: -36.3516, mapAddress: 'Rua Central, Teotônio Vilela, Alagoas', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-36.3566,-9.5659,-36.3466,-9.5559&layer=mapnik&marker=-9.56096,-36.3516', mapStaticImageUrl: `https://placehold.co/600x400.png`, bidIncrementStep: 1000, allowInstallmentBids: true },
+  { id: 'LOTEVEI001', auctionId: '300724car', publicId: 'LOT-2013AUDI-DEF456Y2', title: '2013 AUDI A4 PREMIUM PLUS', year: 2013, make: 'AUDI', model: 'A4', imageUrl: '/lotes-exemplo/veiculos/audi_a4_principal.jpg', dataAiHint: 'carro sedan preto', galleryImageUrls: ['/lotes-exemplo/veiculos/audi_a4_interior.jpg', '/lotes-exemplo/veiculos/audi_a4_lateral.jpg'], mediaItemIds: ['media-audi-frente', 'media002'], status: 'ABERTO_PARA_LANCES', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-veiculos', subcategoryId: 'subcat-veiculos-carros', views: 1560, price: 68500, bidsCount: 25, description: 'Audi A4 Premium Plus 2013, completo, com baixa quilometragem.', sellerId: 'seller-proprietario-particular-1', isExclusive: true, additionalTriggers: ['ALTA DEMANDA', 'LANCE QUENTE'], isFeatured: true, latitude: -23.550520, longitude: -46.633308, mapAddress: 'Av. Paulista, 1578, Bela Vista, São Paulo - SP', mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3657.1489015339396!2d-46.65879078502246!3d-23.56318168468204!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce59c8da0aa315%3A0x168c9d0b70928d9a!2sAv.%20Paulista%2C%201578%20-%20Bela%20Vista%2C%20S%C3%A3o%20Paulo%20-%20SP%2C%2001310-200!5e0!3m2!1spt-BR!2sbr!4v1678886512345!5m2!1spt-BR!2sbr', mapStaticImageUrl: `https://placehold.co/600x400.png`, bidIncrementStep: 500, allowInstallmentBids: false },
+  { id: 'LOTE003', auctionId: '100625bra', publicId: 'LOT-APTOCABU-GHI789Z3', title: 'APARTAMENTO COM 54,25 M² - CABULA', imageUrl: '/lotes-exemplo/imoveis/apto_cabula_sala.jpg', dataAiHint: 'apartamento predio residencial', status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-apartamentos', views: 754, price: 105000, bidsCount: 12, description: 'Apartamento funcional no Cabula, Salvador. 2 quartos, sala, cozinha e banheiro. Condomínio com portaria.', sellerId: 'seller-banco-bradesco-s-a', latitude: -12.960980, longitude: -38.467789, mapAddress: 'Rua do Cabula, Salvador - BA', mapEmbedUrl: null, mapStaticImageUrl: `https://placehold.co/600x400.png` },
+  { id: 'LOTEART001', auctionId: 'ART001ANTIQ', publicId: 'LOT-PINTURAO-JKL012A4', title: 'Pintura a Óleo "Paisagem Toscana" - Séc. XIX', imageUrl: '/lotes-exemplo/arte/paisagem_toscana.jpg', dataAiHint: 'pintura oleo paisagem', status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-de-janeiro-rj', stateId: 'state-rj', categoryId: 'cat-arte-e-antiguidades', views: 320, price: 7500, bidsCount: 3, description: 'Belíssima pintura a óleo sobre tela, representando paisagem da Toscana. Assinatura ilegível. Moldura original.', sellerId: 'seller-colecionadores-rj', latitude: -22.9068, longitude: -43.1729, mapAddress: 'Copacabana, Rio de Janeiro - RJ', mapEmbedUrl: null, mapStaticImageUrl: `https://placehold.co/600x400.png`, allowInstallmentBids: true },
+  { id: 'LOTEVCLASS001', auctionId: 'CLASSICVEH24', publicId: 'LOT-1967FORD-MNO345B5', title: '1967 FORD MUSTANG FASTBACK', year: 1967, make: 'FORD', model: 'MUSTANG', imageUrl: '/lotes-exemplo/veiculos/mustang_67_frente.jpg', dataAiHint: 'carro classico vermelho', status: 'ABERTO_PARA_LANCES', cityId: 'city-curitiba-pr', stateId: 'state-pr', categoryId: 'cat-veiculos', subcategoryId: 'subcat-veiculos-carros', views: 1850, price: 250000, bidsCount: 18, description: 'Icônico Ford Mustang Fastback 1967, motor V8, câmbio manual. Restaurado.', sellerId: 'seller-colecionadores-classicos-pr', initialPrice: 280000, secondInitialPrice: 250000, isFeatured: true, latitude: -25.4284, longitude: -49.2733, mapAddress: 'Batel, Curitiba - PR', mapEmbedUrl: null, mapStaticImageUrl: `https://placehold.co/600x400.png`, bidIncrementStep: 2500, allowInstallmentBids: true },
+  { id: 'LOTE005', auctionId: '20301vei', publicId: 'LOT-TRATORAG-PQR678C6', title: 'TRATOR AGRÍCOLA NEW HOLLAND T7', year: 2018, make: 'NEW HOLLAND', model: 'T7.245', imageUrl: '/lotes-exemplo/maquinas/trator_nh_t7.jpg', dataAiHint: 'trator agricola campo', galleryImageUrls: ['/lotes-exemplo/maquinas/trator_nh_t7_detalhe.jpg'], mediaItemIds: ['media-trator-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-verde-go', stateId: 'state-go', categoryId: 'cat-maquinas-e-equipamentos', views: 650, price: 180000, bidsCount: 7, isFeatured: true, description: 'Trator New Holland T7.245, ano 2018, com apenas 1200 horas de uso. Excelente estado.', sellerId: 'seller-fazenda-boa-esperanca', latitude: -17.7999, longitude: -50.9253, mapAddress: 'Zona Rural, Rio Verde - GO', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-50.9353,-17.8099,-50.9153,-17.7899&layer=mapnik&marker=-17.7999,-50.9253', mapStaticImageUrl: `https://placehold.co/600x400.png` },
+  { id: 'LOTE002', auctionId: '100625bra', publicId: 'LOT-CASAPORT-STU901D7', title: 'CASA COM 234,50 M² - PORTÃO', imageUrl: '/lotes-exemplo/imoveis/casa_portao_vista_aerea.jpg', dataAiHint: 'casa moderna suburbio', status: 'ABERTO_PARA_LANCES', cityId: 'city-lauro-de-freitas-ba', stateId: 'state-ba', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-casas', views: 681, price: 664000, bidsCount: 1, description: 'Espaçosa casa em Lauro de Freitas, Bahia. Perto da praia.', sellerId: 'seller-banco-bradesco-s-a', isFeatured: true, latitude: -12.8868, longitude: -38.3275, mapAddress: 'Rua Principal, Portão, Lauro de Freitas - BA', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-38.3375,-12.8968,-38.3175,-12.8768&layer=mapnik&marker=-12.8868,-38.3275', mapStaticImageUrl: `https://placehold.co/600x400.png`, allowInstallmentBids: true },
+  { id: 'LOTE004', auctionId: '100625bra', publicId: 'LOT-CASAVILA-VWX234E8', title: 'CASA COM 133,04 M² - VILA PERI', imageUrl: '/lotes-exemplo/imoveis/casa_vila_peri_externa.jpg', dataAiHint: 'casa terrea simples', status: 'EM_BREVE', cityId: 'city-fortaleza-ce', stateId: 'state-ce', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-casas', views: 527, price: 238000, bidsCount: 0, description: 'Casa em Fortaleza, boa localização, necessita pequenas reformas.', sellerId: 'seller-banco-bradesco-s-a', latitude: -3.7929, longitude: -38.5396, mapAddress: 'Avenida Principal, Vila Peri, Fortaleza - CE', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-38.5496,-3.8029,-38.5296,-3.7829&layer=mapnik&marker=-3.7929,-38.5396', mapStaticImageUrl: `https://placehold.co/600x400.png` },
+  { id: 'LOTE006', auctionId: '20301vei', publicId: 'LOT-COLHEITA-YZA567F9', title: 'COLHEITADEIRA JOHN DEERE S680', imageUrl: '/lotes-exemplo/maquinas/colheitadeira_jd_campo.jpg', dataAiHint: 'colheitadeira graos campo', status: 'ENCERRADO', cityId: 'city-campo-grande-ms', stateId: 'state-ms', categoryId: 'cat-maquinas-e-equipamentos', views: 450, price: 365000, bidsCount: 22, description: 'Colheitadeira John Deere S680, usada, em bom estado de funcionamento.', sellerId: 'seller-produtores-rurais-ms', latitude: -20.4428, longitude: -54.6295, mapAddress: 'Saída para Três Lagoas, Campo Grande - MS', mapEmbedUrl: null, mapStaticImageUrl: `https://placehold.co/600x400.png` },
+  { id: 'LOTEART002', auctionId: 'ART001ANTIQ', publicId: 'LOT-ESCULTUR-BCD890G0', title: 'Escultura em Bronze "O Pensador" - Réplica Assinada', imageUrl: '/lotes-exemplo/arte/escultura_pensador_detalhe.jpg', dataAiHint: 'escultura bronze pensador', status: 'EM_BREVE', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-arte-e-antiguidades', views: 150, price: 3200, bidsCount: 0, description: 'Réplica em bronze da famosa escultura, assinada pelo artista.', sellerId: 'seller-galeria-de-arte-sp', latitude: -23.5613, longitude: -46.6562, mapAddress: 'Próximo ao MASP, Avenida Paulista, São Paulo - SP', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-46.6662,-23.5713,-46.6462,-23.5513&layer=mapnik&marker=-23.5613,-46.6562', mapStaticImageUrl: `https://placehold.co/600x400.png` },
   { 
     id: 'LOTETP001-NB-A', auctionId: 'TP001-NOTEBOOKS', publicId: 'LOT-TPNOTEA-XZY987H7', title: 'Notebook Tipo A - Core i5, 8GB RAM, 256GB SSD (50 unidades)', 
-    imageUrl: 'https://images.unsplash.com/photo-1744051518421-1eaf2fbde680?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxub3RlYm9va3MlMjBwaWxoYSUyMGVzY3JpdG9yaW98ZW58MHx8fHwxNzUwMzU2MDY1fDA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'notebook moderno tela',
+    imageUrl: '/lotes-exemplo/eletronicos/notebook_corporativo_pilha.jpg', dataAiHint: 'notebook moderno tela',
     status: 'ABERTO_PARA_LANCES', cityId: 'city-campinas-sp', stateId: 'state-sp', categoryId: 'cat-eletronicos-e-tecnologia', 
     views: 75, price: 150000, description: 'Lote de 50 notebooks corporativos padrão, Processador Intel Core i5 de 11ª geração, 8GB RAM DDR4, 256GB SSD NVMe, Tela 14" Full HD. Conforme edital TP 001/2024.',
     sellerId: 'seller-prefeitura-municipal-de-campinas', initialPrice: 160000,
@@ -307,7 +307,7 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
   },
   { 
     id: 'LOTETP001-NB-B', auctionId: 'TP001-NOTEBOOKS', publicId: 'LOT-TPNOTEB-WXY654I8', title: 'Notebook Tipo B - Core i7, 16GB RAM, 512GB SSD (30 unidades)', 
-    imageUrl: 'https://images.unsplash.com/photo-1744051518421-1eaf2fbde680?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxub3RlYm9va3MlMjBwaWxoYSUyMGVzY3JpdG9yaW98ZW58MHx8fHwxNzUwMzU2MDY1fDA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'notebook avançado aberto',
+    imageUrl: '/lotes-exemplo/eletronicos/notebook_avancado_aberto.jpg', dataAiHint: 'notebook avançado aberto',
     status: 'ABERTO_PARA_LANCES', cityId: 'city-campinas-sp', stateId: 'state-sp', categoryId: 'cat-eletronicos-e-tecnologia',
     views: 60, price: 170000, description: 'Lote de 30 notebooks corporativos avançados, Processador Intel Core i7 de 12ª geração, 16GB RAM DDR4, 512GB SSD NVMe, Tela 15.6" Full HD IPS. Conforme edital TP 001/2024.',
     sellerId: 'seller-prefeitura-municipal-de-campinas', initialPrice: 180000,
@@ -315,7 +315,7 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
   },
   {
     id: 'LOTETP002-CAR1', auctionId: 'TP002-VEICULOS', publicId: 'LOT-TPVEIC1-UVX321J9', title: 'Veículo Sedan - Fiat Cronos 2019', 
-    imageUrl: 'https://images.unsplash.com/photo-1658241213593-b7904e271aa8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYXJyb3MlMjB1c2Fkb3MlMjBwYXRpb3xlbnwwfHx8fDE3NTAzNTYwNjV8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'carro sedan branco',
+    imageUrl: '/lotes-exemplo/veiculos/carro_sedan_branco.jpg', dataAiHint: 'carro sedan branco',
     status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'cat-veiculos', subcategoryId: 'subcat-veiculos-carros',
     views: 120, price: 35000, description: 'Fiat Cronos Drive 1.3, 2019, branco, completo. Estado de conservação regular. Placa final 5. Venda no estado em que se encontra. Edital TP 002/2024.',
     sellerId: 'seller-secretaria-de-administracao-de-salvador', initialPrice: 30000,
@@ -323,7 +323,7 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
   },
   {
     id: 'LOTETP002-UTIL1', auctionId: 'TP002-VEICULOS', publicId: 'LOT-TPVEIC2-RST098K0', title: 'Veículo Utilitário - Fiat Fiorino 2017', 
-    imageUrl: 'https://images.unsplash.com/photo-1658241213593-b7904e271aa8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYXJyb3MlMjB1c2Fkb3MlMjBwYXRpb3xlbnwwfHx8fDE3NTAzNTYwNjV8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'fiorino branca carga',
+    imageUrl: '/lotes-exemplo/veiculos/fiorino_branca_carga.jpg', dataAiHint: 'fiorino branca carga',
     status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'cat-veiculos',
     views: 95, price: 28000, description: 'Fiat Fiorino Hard Working 1.4, 2017, branca, furgão. Necessita reparos. Placa final 8. Venda no estado. Edital TP 002/2024.',
     sellerId: 'seller-secretaria-de-administracao-de-salvador', initialPrice: 25000,
@@ -331,7 +331,7 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
   },
   {
     id: 'LOTJUDIMV001', auctionId: 'JUD001IMV', publicId: 'LOT-APTMOEMA-SP01A1', title: 'Apartamento 2 Dorms Moema - Leilão Judicial',
-    imageUrl: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhcGFydG1lbnQlMjBpbnRlcmlvcnxlbnwwfHx8fDE3NTA5NTg5MDZ8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'apartamento interior moderno',
+    imageUrl: '/lotes-exemplo/imoveis/apartamento_moema_interior.jpg', dataAiHint: 'apartamento interior moderno',
     status: 'ABERTO_PARA_LANCES', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-apartamentos',
     price: 250000, initialPrice: 300000, secondInitialPrice: 250000, 
     judicialProcessNumber: '12345-67.2023.8.26.0001', courtDistrict: 'São Paulo', courtName: '1ª Vara Cível',
@@ -340,7 +340,7 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
   },
   {
     id: 'LOTJUDVEI001', auctionId: 'JUD002VEI', publicId: 'LOT-TORORJ-RJ02B2', title: 'Fiat Toro Freedom 2018 - Leilão Judicial',
-    imageUrl: 'https://images.unsplash.com/photo-1617093583090-67685879968e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmaWF0JTIwdG9yb3xlbnwwfHx8fDE3NTA5NTg5MDZ8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'fiat toro branca frente',
+    imageUrl: '/lotes-exemplo/veiculos/fiat_toro_branca_frente.jpg', dataAiHint: 'fiat toro branca frente',
     status: 'EM_BREVE', cityId: 'city-rio-de-janeiro-rj', stateId: 'state-rj', categoryId: 'cat-veiculos', subcategoryId: 'subcat-veiculos-carros',
     price: 40000, initialPrice: 40000, 
     judicialProcessNumber: '98765-43.2022.8.19.0001', courtDistrict: 'Rio de Janeiro', courtName: 'Vara de Falências',
@@ -349,7 +349,7 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
   },
   {
     id: 'LOTJUDMAQ001', auctionId: 'JUD003MAQ', publicId: 'LOT-TRATORMF-PR03C3', title: 'Trator Massey Ferguson 275 - Judicial',
-    imageUrl: 'https://placehold.co/600x400.png?text=Trator+MF+275', dataAiHint: 'trator vermelho antigo',
+    imageUrl: '/lotes-exemplo/maquinas/trator_mf_275.jpg', dataAiHint: 'trator vermelho antigo',
     status: 'ABERTO_PARA_LANCES', cityId: 'city-curitiba-pr', stateId: 'state-pr', categoryId: 'cat-maquinas-e-equipamentos',
     price: 22000, initialPrice: 22000, 
     judicialProcessNumber: '00123-2021-005-09-00-0', courtDistrict: 'Curitiba', courtName: 'Vara do Trabalho',
@@ -359,21 +359,21 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
 ];
 
 export const sampleDirectSaleOffersRaw: Omit<DirectSaleOffer, 'createdAt' | 'updatedAt' | 'expiresAt'>[] = [
-  { id: 'DSO001', title: 'Coleção Completa de Selos Raros do Brasil Império', description: 'Uma oportunidade única para colecionadores de selos do período imperial brasileiro. Inclui peças raras e bem conservadas, catalogadas e com histórico. Ideal para investidores e amantes da filatelia.', imageUrl: 'https://placehold.co/800x600.png?text=Selos+Raros', dataAiHint: 'selos antigos colecao', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 25000, category: 'Arte e Antiguidades', locationCity: 'Rio de Janeiro', locationState: 'RJ', sellerName: 'Antiguidades Imperial', status: 'ACTIVE', latitude: -22.9068, longitude: -43.1729, mapAddress: "Centro, Rio de Janeiro" },
-  { id: 'DSO002', title: 'MacBook Pro 16" M1 Max - Seminovo', description: 'MacBook Pro de 16 polegadas com chip M1 Max, 32GB RAM, 1TB SSD. Em excelente estado, pouco uso, com caixa e acessórios originais. Perfeito para profissionais de criação e desenvolvimento.', imageUrl: 'https://placehold.co/800x600.png?text=MacBook+Pro+16', dataAiHint: 'macbook pro aberto', offerType: 'BUY_NOW', price: 18500, category: 'Eletrônicos e Tecnologia', locationCity: 'São Paulo', locationState: 'SP', sellerName: 'Tech Revenda SP', status: 'ACTIVE', latitude: -23.5505, longitude: -46.6333, mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1dTEST' },
-  { id: 'DSO003', title: 'Serviço de Consultoria em Marketing Digital', description: 'Pacote de consultoria completo para startups, incluindo análise de mercado, SEO, gestão de redes sociais e campanhas de tráfego pago. Ideal para alavancar seu negócio online.', imageUrl: 'https://placehold.co/800x600.png?text=Consultoria+Marketing', dataAiHint: 'marketing digital reuniao', offerType: 'BUY_NOW', price: 4500, category: 'Outros Itens', locationCity: 'Remoto', locationState: 'BR', sellerName: 'Digital Boost Consultoria', status: 'ACTIVE', mapStaticImageUrl: 'https://placehold.co/600x400.png?text=Servico+Online' },
-  { id: 'DSO004', title: 'Ford Mustang 1968 Conversível', description: 'Raro Ford Mustang conversível de 1968, motor V8 289, câmbio automático. Placa preta. Veículo de coleção em excelente estado de conservação e originalidade. Para verdadeiros apreciadores.', imageUrl: 'https://placehold.co/800x600.png?text=Mustang+68+Conv', dataAiHint: 'mustang conversivel vermelho', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 320000, category: 'Veículos', locationCity: 'Curitiba', locationState: 'PR', sellerName: 'Garagem Clássicos PR', status: 'PENDING_APPROVAL', latitude: -25.4284, longitude: -49.2733, mapAddress: "Bairro Batel, Curitiba" },
-  { id: 'DSO005', title: 'Lote de Equipamentos de Academia Profissional', description: 'Lote completo de equipamentos de academia profissional, incluindo esteiras, bicicletas ergométricas, estações de musculação e pesos livres. Ideal para montar ou renovar sua academia.', imageUrl: 'https://placehold.co/800x600.png?text=Equip+Academia', dataAiHint: 'academia equipamentos profissional', offerType: 'BUY_NOW', price: 75000, category: 'Máquinas e Equipamentos', locationCity: 'Belo Horizonte', locationState: 'MG', sellerName: 'Fitness Total Equipamentos', status: 'SOLD', latitude: -19.9167, longitude: -43.9345, mapAddress: "Pampulha, Belo Horizonte" },
-  { id: 'DSO006', title: 'Obra de Arte Contemporânea - "Abstração Urbana"', description: 'Pintura acrílica sobre tela de grandes dimensões (150x200cm) do renomado artista plástico local. Cores vibrantes e técnica mista. Acompanha certificado de autenticidade.', imageUrl: 'https://placehold.co/800x600.png?text=Arte+Abstrata', dataAiHint: 'pintura abstrata colorida', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 12000, category: 'Arte e Antiguidades', locationCity: 'Porto Alegre', locationState: 'RS', sellerName: 'Galeria Pampa Arte', status: 'EXPIRED', latitude: -30.0346, longitude: -51.2177, mapAddress: "Moinhos de Vento, Porto Alegre" },
+  { id: 'DSO001', title: 'Coleção Completa de Selos Raros do Brasil Império', description: 'Uma oportunidade única para colecionadores de selos do período imperial brasileiro. Inclui peças raras e bem conservadas, catalogadas e com histórico. Ideal para investidores e amantes da filatelia.', imageUrl: 'https://placehold.co/800x600.png', dataAiHint: 'selos antigos colecao', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 25000, category: 'Arte e Antiguidades', locationCity: 'Rio de Janeiro', locationState: 'RJ', sellerName: 'Antiguidades Imperial', status: 'ACTIVE', latitude: -22.9068, longitude: -43.1729, mapAddress: "Centro, Rio de Janeiro" },
+  { id: 'DSO002', title: 'MacBook Pro 16" M1 Max - Seminovo', description: 'MacBook Pro de 16 polegadas com chip M1 Max, 32GB RAM, 1TB SSD. Em excelente estado, pouco uso, com caixa e acessórios originais. Perfeito para profissionais de criação e desenvolvimento.', imageUrl: 'https://placehold.co/800x600.png', dataAiHint: 'macbook pro aberto', offerType: 'BUY_NOW', price: 18500, category: 'Eletrônicos e Tecnologia', locationCity: 'São Paulo', locationState: 'SP', sellerName: 'Tech Revenda SP', status: 'ACTIVE', latitude: -23.5505, longitude: -46.6333, mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1dTEST' },
+  { id: 'DSO003', title: 'Serviço de Consultoria em Marketing Digital', description: 'Pacote de consultoria completo para startups, incluindo análise de mercado, SEO, gestão de redes sociais e campanhas de tráfego pago. Ideal para alavancar seu negócio online.', imageUrl: 'https://placehold.co/800x600.png', dataAiHint: 'marketing digital reuniao', offerType: 'BUY_NOW', price: 4500, category: 'Outros Itens', locationCity: 'Remoto', locationState: 'BR', sellerName: 'Digital Boost Consultoria', status: 'ACTIVE', mapStaticImageUrl: 'https://placehold.co/600x400.png' },
+  { id: 'DSO004', title: 'Ford Mustang 1968 Conversível', description: 'Raro Ford Mustang conversível de 1968, motor V8 289, câmbio automático. Placa preta. Veículo de coleção em excelente estado de conservação e originalidade. Para verdadeiros apreciadores.', imageUrl: 'https://placehold.co/800x600.png', dataAiHint: 'mustang conversivel vermelho', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 320000, category: 'Veículos', locationCity: 'Curitiba', locationState: 'PR', sellerName: 'Garagem Clássicos PR', status: 'PENDING_APPROVAL', latitude: -25.4284, longitude: -49.2733, mapAddress: "Bairro Batel, Curitiba" },
+  { id: 'DSO005', title: 'Lote de Equipamentos de Academia Profissional', description: 'Lote completo de equipamentos de academia profissional, incluindo esteiras, bicicletas ergométricas, estações de musculação e pesos livres. Ideal para montar ou renovar sua academia.', imageUrl: 'https://placehold.co/800x600.png', dataAiHint: 'academia equipamentos profissional', offerType: 'BUY_NOW', price: 75000, category: 'Máquinas e Equipamentos', locationCity: 'Belo Horizonte', locationState: 'MG', sellerName: 'Fitness Total Equipamentos', status: 'SOLD', latitude: -19.9167, longitude: -43.9345, mapAddress: "Pampulha, Belo Horizonte" },
+  { id: 'DSO006', title: 'Obra de Arte Contemporânea - "Abstração Urbana"', description: 'Pintura acrílica sobre tela de grandes dimensões (150x200cm) do renomado artista plástico local. Cores vibrantes e técnica mista. Acompanha certificado de autenticidade.', imageUrl: 'https://placehold.co/800x600.png', dataAiHint: 'pintura abstrata colorida', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 12000, category: 'Arte e Antiguidades', locationCity: 'Porto Alegre', locationState: 'RS', sellerName: 'Galeria Pampa Arte', status: 'EXPIRED', latitude: -30.0346, longitude: -51.2177, mapAddress: "Moinhos de Vento, Porto Alegre" },
 ];
 
 export const sampleMediaItemsRaw: Omit<MediaItem, 'uploadedAt' | 'linkedLotIds'>[] = [
     { id: 'media001', fileName: 'casa_centro_frente.jpg', title: 'Frente da Casa no Centro', mimeType: 'image/jpeg', sizeBytes: 102400, urlOriginal: '/lotes-exemplo/imoveis/casa_centro_principal.jpg', urlThumbnail: '/lotes-exemplo/imoveis/thumb_casa_centro_principal.jpg', urlMedium: '/lotes-exemplo/imoveis/medium_casa_centro_principal.jpg', urlLarge: '/lotes-exemplo/imoveis/casa_centro_principal.jpg', dataAiHint: 'fachada casa cidade' },
     { id: 'media002', fileName: 'audi_a4_2013_perfil.png', title: 'Audi A4 2013 Perfil', mimeType: 'image/png', sizeBytes: 204800, urlOriginal: '/lotes-exemplo/veiculos/audi_a4_principal.jpg', urlThumbnail: '/lotes-exemplo/veiculos/thumb_audi_a4_principal.jpg', urlMedium: '/lotes-exemplo/veiculos/medium_audi_a4_principal.jpg', urlLarge: '/lotes-exemplo/veiculos/audi_a4_principal.jpg', dataAiHint: 'carro audi perfil' },
-    { id: 'media003', fileName: 'edital_leilao_bradesco.pdf', title: 'Edital Leilão Bradesco 100625bra', mimeType: 'application/pdf', sizeBytes: 512000, urlOriginal: '#', urlThumbnail: 'https://placehold.co/150x100.png?text=PDF', urlMedium: '#', urlLarge: '#', dataAiHint: 'documento edital' },
+    { id: 'media003', fileName: 'edital_leilao_bradesco.pdf', title: 'Edital Leilão Bradesco 100625bra', mimeType: 'application/pdf', sizeBytes: 512000, urlOriginal: '#', urlThumbnail: 'https://placehold.co/150x100.png', urlMedium: '#', urlLarge: '#', dataAiHint: 'documento edital' },
     { id: 'media-casa-frente', fileName: 'casa_frente_detalhe.jpg', title: 'Detalhe Fachada Casa Centro', mimeType: 'image/jpeg', sizeBytes: 120000, urlOriginal: '/lotes-exemplo/imoveis/casa_centro_detalhe1.jpg', urlThumbnail: '/lotes-exemplo/imoveis/thumb_casa_centro_detalhe1.jpg', urlMedium: '/lotes-exemplo/imoveis/medium_casa_centro_detalhe1.jpg', urlLarge: '/lotes-exemplo/imoveis/casa_centro_detalhe1.jpg', dataAiHint: 'detalhe fachada' },
     { id: 'media-audi-frente', fileName: 'audi_a4_frente_total.jpg', title: 'Audi A4 2013 Vista Frontal', mimeType: 'image/jpeg', sizeBytes: 180000, urlOriginal: '/lotes-exemplo/veiculos/audi_a4_interior.jpg', urlThumbnail: '/lotes-exemplo/veiculos/thumb_audi_a4_interior.jpg', urlMedium: '/lotes-exemplo/veiculos/medium_audi_a4_interior.jpg', urlLarge: '/lotes-exemplo/veiculos/audi_a4_interior.jpg', dataAiHint: 'audi carro frente' },
-    { id: 'media-trator-frente', fileName: 'trator_nh_vista_frontal.jpg', title: 'Trator New Holland T7 Frontal', mimeType: 'image/jpeg', sizeBytes: 220000, urlOriginal: 'https://images.unsplash.com/photo-1633153627433-b15010a9b2f5?w=800', urlThumbnail: 'https://images.unsplash.com/photo-1633153627433-b15010a9b2f5?w=150', urlMedium: 'https://images.unsplash.com/photo-1633153627433-b15010a9b2f5?w=400', urlLarge: 'https://images.unsplash.com/photo-1633153627433-b15010a9b2f5?w=800', dataAiHint: 'trator campo frente' },
+    { id: 'media-trator-frente', fileName: 'trator_nh_vista_frontal.jpg', title: 'Trator New Holland T7 Frontal', mimeType: 'image/jpeg', sizeBytes: 220000, urlOriginal: '/lotes-exemplo/maquinas/trator_nh_t7_detalhe.jpg', urlThumbnail: '/lotes-exemplo/maquinas/thumb_trator_nh_t7_detalhe.jpg', urlMedium: '/lotes-exemplo/maquinas/medium_trator_nh_t7_detalhe.jpg', urlLarge: '/lotes-exemplo/maquinas/trator_nh_t7_detalhe.jpg', dataAiHint: 'trator campo frente' },
 ];
 
 // ============================================================================
@@ -677,7 +677,7 @@ export const getUniqueAuctioneersInternal = (): AuctioneerProfileInfo[] => {
                 rating: parseFloat((Math.random() * 1.5 + 3.5).toFixed(1)),
                 auctionsConductedCount: Math.floor(Math.random() * 50) + 5,
                 totalValueSold: (Math.random() * 2000000) + 500000,
-                logoUrl: aucStatic.logoUrl || `https://placehold.co/100x100.png?text=${initial}`,
+                logoUrl: aucStatic.logoUrl || `https://placehold.co/100x100.png`,
                 createdAt: memberSince, updatedAt: new Date(),
             });
         }
@@ -699,7 +699,7 @@ export const getUniqueAuctioneersInternal = (): AuctioneerProfileInfo[] => {
                     memberSince, rating: parseFloat((Math.random() * 1.5 + 3.5).toFixed(1)),
                     auctionsConductedCount: Math.floor(Math.random() * 200) + 50,
                     totalValueSold: (Math.random() * 5000000) + 1000000,
-                    logoUrl: aucStatic.logoUrl || `https://placehold.co/100x100.png?text=${initial}`,
+                    logoUrl: aucStatic.logoUrl || `https://placehold.co/100x100.png`,
                     createdAt: memberSince, updatedAt: new Date(),
                  });
             }
@@ -712,7 +712,7 @@ export const getUniqueAuctioneersInternal = (): AuctioneerProfileInfo[] => {
             auctioneerMap.set(slug, {
                 id: `auct-${slug}`, name: auction.auctioneer, slug,
                 publicId: `AUCT-PUB-${slug.substring(0,5)}-${uuidv4().substring(0,6)}`,
-                logoUrl: auction.auctioneerLogoUrl || `https://placehold.co/100x100.png?text=${initial}`,
+                logoUrl: auction.auctioneerLogoUrl || `https://placehold.co/100x100.png`,
                 dataAiHintLogo: auction.dataAiHint || 'logo leiloeiro',
                 registrationNumber: `MAT ${Math.floor(Math.random() * 900) + 100}`,
                 memberSince, rating: parseFloat((Math.random() * 1.5 + 3.5).toFixed(1)),
@@ -746,7 +746,7 @@ export const getUniqueSellersInternal = (): SellerProfileInfo[] => {
             memberSince: memberSince,
             rating: parseFloat((Math.random() * 1.5 + 3.5).toFixed(1)),
             activeLotsCount: Math.floor(Math.random() * 46) + 5,
-            logoUrl: sellStatic.logoUrl || `https://placehold.co/100x100.png?text=${initial}`,
+            logoUrl: sellStatic.logoUrl || `https://placehold.co/100x100.png`,
             createdAt: memberSince, updatedAt: new Date(),
         });
     }
@@ -770,28 +770,28 @@ export function getCategoryAssets(categoryNameOrSlug?: string): CategoryAssets {
   const logoChar = (resolvedName.charAt(0) || 'X').toUpperCase();
 
   const defaultAssets: CategoryAssets = {
-    logoUrl: `https://placehold.co/100x100.png?text=${encodeURIComponent(logoChar)}`,
+    logoUrl: `https://placehold.co/100x100.png`,
     logoAiHint: `logo ${resolvedSlug}`,
-    bannerUrl: `https://placehold.co/1200x300.png?text=Banner+${encodeURIComponent(resolvedName)}`,
+    bannerUrl: `https://placehold.co/1200x300.png`,
     bannerAiHint: `banner ${resolvedSlug}`,
     bannerText: `Descubra os melhores lotes em ${resolvedName}`,
   };
 
   const getOverride = (slug: string) => {
       const assetOverrides: Record<string, Partial<CategoryAssets>> = {
-        'veiculos': { logoUrl: 'https://placehold.co/100x100.png?text=Carro', logoAiHint: 'icone carro', bannerUrl: 'https://placehold.co/1200x300.png?text=Veiculos+Destaque', bannerAiHint: 'carros estrada', bannerText: `Excelentes Ofertas em Veículos - ${resolvedName}` },
-        'imoveis': { logoUrl: 'https://placehold.co/100x100.png?text=Casa', logoAiHint: 'icone casa', bannerUrl: 'https://placehold.co/1200x300.png?text=Oportunidades+Imobiliarias', bannerAiHint: 'imoveis cidade', bannerText: `Seu Novo Lar ou Investimento está aqui - ${resolvedName}` },
-        'arte-e-antiguidades': { logoUrl: 'https://placehold.co/100x100.png?text=Arte', logoAiHint: 'icone arte', bannerUrl: 'https://placehold.co/1200x300.png?text=Leilao+Arte', bannerAiHint: 'galeria arte', bannerText: `Obras Raras e Antiguidades - ${resolvedName}` },
-        'maquinas-e-equipamentos': { logoUrl: 'https://placehold.co/100x100.png?text=Trator', logoAiHint: 'icone trator', bannerUrl: 'https://placehold.co/1200x300.png?text=Maquinario+Agro', bannerAiHint: 'campo trator', bannerText: `Equipamentos Agrícolas e Maquinário Pesado - ${resolvedName}` },
-        'eletronicos-e-tecnologia': { logoUrl: 'https://placehold.co/100x100.png?text=Chip', logoAiHint: 'icone chip placa', bannerUrl: 'https://placehold.co/1200x300.png?text=Tecnologia+Eletronicos', bannerAiHint: 'computador smartphone', bannerText: `Os Melhores Gadgets e Eletrônicos - ${resolvedName}` },
-        'semoventes': { logoUrl: 'https://placehold.co/100x100.png?text=Boi', logoAiHint: 'icone boi cavalo', bannerUrl: 'https://placehold.co/1200x300.png?text=Leilao+Semoventes', bannerAiHint: 'gado pasto', bannerText: `Animais de Qualidade e Procedência - ${resolvedName}` },
-        'leiloes-judiciais': { logoUrl: 'https://placehold.co/100x100.png?text=TJ', logoAiHint: 'justica balanca', bannerUrl: 'https://placehold.co/1200x300.png?text=Leiloes+Judiciais', bannerAiHint: 'martelo tribunal', bannerText: 'Oportunidades Únicas em Leilões Judiciais' },
-        'leiloes-extrajudiciais': { logoUrl: 'https://placehold.co/100x100.png?text=LX', logoAiHint: 'acordo negocios', bannerUrl: 'https://placehold.co/1200x300.png?text=Leiloes+Extrajudiciais', bannerAiHint: 'documentos acordo', bannerText: 'Negociações Diretas e Ágeis em Leilões Extrajudiciais' },
-        'venda-direta': { logoUrl: 'https://placehold.co/100x100.png?text=VD', logoAiHint: 'etiqueta preco', bannerUrl: 'https://placehold.co/1200x300.png?text=Venda+Direta', bannerAiHint: 'loja vitrine', bannerText: 'Compre Itens com Preço Fixo, Sem Disputa de Lances' },
-        'segunda-praca': { logoUrl: 'https://placehold.co/100x100.png?text=2P', logoAiHint: 'numero dois leilao', bannerUrl: 'https://placehold.co/1200x300.png?text=Segunda+Praca', bannerAiHint: 'oportunidade desconto', bannerText: 'Novas Chances com Valores Atrativos em Segunda Praça' },
-        'leiloes-encerrados': { logoUrl: 'https://placehold.co/100x100.png?text=Fim', logoAiHint: 'calendario finalizado', bannerUrl: 'https://placehold.co/1200x300.png?text=Leiloes+Encerrados', bannerAiHint: 'arquivo historico', bannerText: 'Consulte o Histórico de Resultados de Leilões Encerrados' },
-        'leiloes-cancelados': { logoUrl: 'https://placehold.co/100x100.png?text=X', logoAiHint: 'simbolo cancelado', bannerUrl: 'https://placehold.co/1200x300.png?text=Leiloes+Cancelados', bannerAiHint: 'documento cancelado', bannerText: 'Veja os Leilões que Foram Cancelados' },
-        'tomada-de-precos': { logoUrl: 'https://placehold.co/100x100.png?text=TP', logoAiHint: 'documento propostas', bannerUrl: 'https://placehold.co/1200x300.png?text=Tomada+de+Precos', bannerAiHint: 'propostas envelope', bannerText: 'Participe de Tomadas de Preços e Faça a Melhor Oferta' },
+        'veiculos': { logoUrl: 'https://placehold.co/100x100.png', logoAiHint: 'icone carro', bannerUrl: 'https://placehold.co/1200x300.png', bannerAiHint: 'carros estrada', bannerText: `Excelentes Ofertas em Veículos - ${resolvedName}` },
+        'imoveis': { logoUrl: 'https://placehold.co/100x100.png', logoAiHint: 'icone casa', bannerUrl: 'https://placehold.co/1200x300.png', bannerAiHint: 'imoveis cidade', bannerText: `Seu Novo Lar ou Investimento está aqui - ${resolvedName}` },
+        'arte-e-antiguidades': { logoUrl: 'https://placehold.co/100x100.png', logoAiHint: 'icone arte', bannerUrl: 'https://placehold.co/1200x300.png', bannerAiHint: 'galeria arte', bannerText: `Obras Raras e Antiguidades - ${resolvedName}` },
+        'maquinas-e-equipamentos': { logoUrl: 'https://placehold.co/100x100.png', logoAiHint: 'icone trator', bannerUrl: 'https://placehold.co/1200x300.png', bannerAiHint: 'campo trator', bannerText: `Equipamentos Agrícolas e Maquinário Pesado - ${resolvedName}` },
+        'eletronicos-e-tecnologia': { logoUrl: 'https://placehold.co/100x100.png', logoAiHint: 'icone chip placa', bannerUrl: 'https://placehold.co/1200x300.png', bannerAiHint: 'computador smartphone', bannerText: `Os Melhores Gadgets e Eletrônicos - ${resolvedName}` },
+        'semoventes': { logoUrl: 'https://placehold.co/100x100.png', logoAiHint: 'icone boi cavalo', bannerUrl: 'https://placehold.co/1200x300.png', bannerAiHint: 'gado pasto', bannerText: `Animais de Qualidade e Procedência - ${resolvedName}` },
+        'leiloes-judiciais': { logoUrl: 'https://placehold.co/100x100.png', logoAiHint: 'justica balanca', bannerUrl: 'https://placehold.co/1200x300.png', bannerAiHint: 'martelo tribunal', bannerText: 'Oportunidades Únicas em Leilões Judiciais' },
+        'leiloes-extrajudiciais': { logoUrl: 'https://placehold.co/100x100.png', logoAiHint: 'acordo negocios', bannerUrl: 'https://placehold.co/1200x300.png', bannerAiHint: 'documentos acordo', bannerText: 'Negociações Diretas e Ágeis em Leilões Extrajudiciais' },
+        'venda-direta': { logoUrl: 'https://placehold.co/100x100.png', logoAiHint: 'etiqueta preco', bannerUrl: 'https://placehold.co/1200x300.png', bannerAiHint: 'loja vitrine', bannerText: 'Compre Itens com Preço Fixo, Sem Disputa de Lances' },
+        'segunda-praca': { logoUrl: 'https://placehold.co/100x100.png', logoAiHint: 'numero dois leilao', bannerUrl: 'https://placehold.co/1200x300.png', bannerAiHint: 'oportunidade desconto', bannerText: 'Novas Chances com Valores Atrativos em Segunda Praça' },
+        'leiloes-encerrados': { logoUrl: 'https://placehold.co/100x100.png', logoAiHint: 'calendario finalizado', bannerUrl: 'https://placehold.co/1200x300.png', bannerAiHint: 'arquivo historico', bannerText: 'Consulte o Histórico de Resultados de Leilões Encerrados' },
+        'leiloes-cancelados': { logoUrl: 'https://placehold.co/100x100.png', logoAiHint: 'simbolo cancelado', bannerUrl: 'https://placehold.co/1200x300.png', bannerAiHint: 'documento cancelado', bannerText: 'Veja os Leilões que Foram Cancelados' },
+        'tomada-de-precos': { logoUrl: 'https://placehold.co/100x100.png', logoAiHint: 'documento propostas', bannerUrl: 'https://placehold.co/1200x300.png', bannerAiHint: 'propostas envelope', bannerText: 'Participe de Tomadas de Preços e Faça a Melhor Oferta' },
       };
       if (assetOverrides[slug]) return assetOverrides[slug];
 
@@ -840,8 +840,6 @@ const processedSampleAuctions: Auction[] = sampleAuctionsRaw.map(auctionRaw => {
     if (effectiveAuctionEndDate && isPast(effectiveAuctionEndDate) && (currentStatus === 'ABERTO_PARA_LANCES' || currentStatus === 'ABERTO' || currentStatus === 'EM_BREVE')) {
         currentStatus = 'ENCERRADO';
     } else if (!effectiveAuctionEndDate && (currentStatus === 'ABERTO_PARA_LANCES' || currentStatus === 'ABERTO')) {
-        // If no end date and it's open, maybe it's ongoing indefinitely (Tomada de Preços?) or needs review
-        // For now, keep status as is, but log warning.
         console.warn(`[SampleData] Auction ${auctionRaw.id} is ${currentStatus} but has no effective end date. Review sample data.`);
     }
 
@@ -891,13 +889,9 @@ export const sampleLots: Lot[] = sampleLotsRaw.map(lotRaw => {
 
     if (parentAuction) {
         if (parentAuction.auctionStages && parentAuction.auctionStages.length > 0) {
-            // Assuming a lot belongs to all stages or the first open/upcoming one.
-            // More complex logic might assign a lot to a specific stage.
-            // For now, use the auction's overall effective dates derived from stages.
             const sortedStages = [...parentAuction.auctionStages].sort((a, b) => new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime());
             
             let relevantStage: AuctionStage | undefined;
-            // Find first stage that is not yet past, or the last past one if all are past
             relevantStage = sortedStages.find(s => !isPast(new Date(s.endDate as string)));
             if (!relevantStage && sortedStages.length > 0) {
                 relevantStage = sortedStages[sortedStages.length - 1]; // last stage if all past
@@ -905,7 +899,6 @@ export const sampleLots: Lot[] = sampleLotsRaw.map(lotRaw => {
 
             if (relevantStage) {
                 effectiveLotEndDate = new Date(relevantStage.endDate as string);
-                // Determine start date for this lot based on stages
                 const stageIndex = sortedStages.findIndex(s => s.name === relevantStage!.name);
                 if (stageIndex > 0 && sortedStages[stageIndex - 1].endDate) {
                     effectiveLotStartDate = new Date(sortedStages[stageIndex-1].endDate as string);
@@ -915,7 +908,6 @@ export const sampleLots: Lot[] = sampleLotsRaw.map(lotRaw => {
             }
         }
         
-        // Fallback to auction's main dates if no stages or no relevant stage found
         if (!effectiveLotEndDate && parentAuction.endDate) {
             effectiveLotEndDate = new Date(parentAuction.endDate as string);
         }
@@ -923,23 +915,20 @@ export const sampleLots: Lot[] = sampleLotsRaw.map(lotRaw => {
             effectiveLotStartDate = new Date(parentAuction.auctionDate as string);
         }
 
-        // Derive Lot Status based on Auction Status and Dates
         if (parentAuction.status === 'CANCELADO' || parentAuction.status === 'SUSPENSO') {
-            derivedStatus = 'ENCERRADO'; // Or a specific 'CANCELLED_BY_AUCTION' status
+            derivedStatus = 'ENCERRADO'; 
         } else if (effectiveLotEndDate && isPast(effectiveLotEndDate)) {
-            derivedStatus = lotRaw.status === 'VENDIDO' ? 'VENDIDO' : 'ENCERRADO'; // Preserve 'VENDIDO'
+            derivedStatus = lotRaw.status === 'VENDIDO' ? 'VENDIDO' : 'ENCERRADO'; 
         } else if (effectiveLotStartDate && isPast(effectiveLotStartDate) && parentAuction.status === 'ABERTO_PARA_LANCES') {
              derivedStatus = 'ABERTO_PARA_LANCES';
         } else if (effectiveLotStartDate && !isPast(effectiveLotStartDate) && (parentAuction.status === 'EM_BREVE' || parentAuction.status === 'ABERTO')) {
              derivedStatus = 'EM_BREVE';
         }
-         // If the raw lot status is something like VENDIDO or NAO_VENDIDO, it should take precedence if auction is ENCERRADO
         if (parentAuction.status === 'ENCERRADO' && (lotRaw.status === 'VENDIDO' || lotRaw.status === 'NAO_VENDIDO')) {
             derivedStatus = lotRaw.status;
         }
 
     } else {
-        // If no parent auction, use lot's own dates (should not happen ideally)
         effectiveLotEndDate = lotRaw.endDate ? new Date(lotRaw.endDate as string) : undefined;
         effectiveLotStartDate = lotRaw.lotSpecificAuctionDate ? new Date(lotRaw.lotSpecificAuctionDate as string) : (lotRaw.auctionDate ? new Date(lotRaw.auctionDate as string) : undefined);
         if (effectiveLotEndDate && isPast(effectiveLotEndDate) && derivedStatus === 'ABERTO_PARA_LANCES') {
@@ -957,7 +946,7 @@ export const sampleLots: Lot[] = sampleLotsRaw.map(lotRaw => {
         subcategoryName: subcategoryInfo?.name,
         auctionName: parentAuction?.title || 'Leilão Desconhecido',
         sellerName: sellerInfo?.name || parentAuction?.seller || 'Vendedor Desconhecido',
-        sellerId: sellerInfo?.id, // Add actual sellerId if found
+        sellerId: sellerInfo?.id, 
         cityName: cityInfo?.name || lotRaw.cityName,
         stateUf: stateInfo?.uf || lotRaw.stateUf,
         createdAt: createPastDate(Math.floor(Math.random() * 30) + 1, undefined, undefined, effectiveLotEndDate ? new Date(effectiveLotEndDate) : undefined),
@@ -965,15 +954,13 @@ export const sampleLots: Lot[] = sampleLotsRaw.map(lotRaw => {
         bidIncrementStep: lotRaw.bidIncrementStep || 100, 
         allowInstallmentBids: lotRaw.allowInstallmentBids !== undefined ? lotRaw.allowInstallmentBids : (parentAuction?.allowInstallmentBids || false),
         endDate: effectiveLotEndDate,
-        auctionDate: effectiveLotStartDate, // Using auctionDate to store effective start for display
-        lotSpecificAuctionDate: effectiveLotStartDate, // Keep for form/data consistency if needed
-        // secondAuctionDate is more complex, depends on specific stage. For now, leave if present in raw.
+        auctionDate: effectiveLotStartDate, 
+        lotSpecificAuctionDate: effectiveLotStartDate, 
         secondAuctionDate: lotRaw.secondAuctionDate ? new Date(lotRaw.secondAuctionDate as string) : null,
         status: derivedStatus,
     } as Lot;
 });
 
-// Now, populate auction.lots with the processed lots
 processedSampleAuctions.forEach(auction => {
     auction.lots = sampleLots.filter(l => l.auctionId === auction.id);
 });
@@ -992,8 +979,8 @@ export const sampleBids: BidInfo[] = sampleLots.flatMap(lot => {
         const lotEndDateOrNow = lot.endDate ? new Date(lot.endDate as string) : now;
         const bidTime = createPastDate(Math.floor(Math.random() * 5), Math.floor(Math.random() * 24), Math.floor(Math.random() * 60), lotEndDateOrNow);
         
-        if (isPast(lotEndDateOrNow) && bidTime > lotEndDateOrNow) continue; // Bid can't be after lot ended
-        if (!isPast(lotEndDateOrNow) && bidTime > now) continue; // Bid can't be in the future for active lots
+        if (isPast(lotEndDateOrNow) && bidTime > lotEndDateOrNow) continue; 
+        if (!isPast(lotEndDateOrNow) && bidTime > now) continue; 
 
         bids.push({
             id: `BID-${lot.id}-${uuidv4().substring(0,8)}`,
@@ -1012,7 +999,7 @@ export const sampleBids: BidInfo[] = sampleLots.flatMap(lot => {
             lotToUpdate.price = highestBid;
             lotToUpdate.bidsCount = (lotToUpdate.bidsCount || 0) + bids.length;
         }
-    } else if (bids.length > 0 && lot.status === 'ENCERRADO') { // If lot is closed, set price to highest bid if any
+    } else if (bids.length > 0 && lot.status === 'ENCERRADO') { 
         const highestBid = bids.reduce((max, b) => b.amount > max ? b.amount : max, 0);
          const lotToUpdate = sampleLots.find(l => l.id === lot.id);
         if (lotToUpdate && highestBid > lotToUpdate.price) {
