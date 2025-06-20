@@ -41,34 +41,35 @@
         *   Auctioneer detail page (for auctions).
         *   Main search page (`/search`).
 - **Subcategory Management (Items 16, 17, 18):**
-    *   **Item 16:** Defined `Subcategory` type, updated `LotCategory`, updated `IDatabaseAdapter`, implemented subcategory CRUD in SQL adapters, created Server Actions, developed UI (form, list, edit pages), added admin sidebar link.
-    *   **Item 17:** Added examples of subcategories to `sample-data.ts` and connected to main categories. `hasSubcategories` flag correctly set.
-    *   **Item 18:** Integrated subcategory selection into Lot CRUD form. Updated display components (`LotListItem`, `LotDetailClientContent`, lot list in auction edit, `LotCard`) to show subcategory name.
-- **Lot Dates & Status Derivation (Item 13):**
-    *   `sample-data.ts` logic updated to derive lot `endDate` and `status` from parent auction, considering `auctionStages`.
-    *   `LotDetailClientContent` (and its `DetailTimeRemaining` component) uses derived effective start/end dates.
-    *   `LotCard` and `LotListItem` reflect these derived dates/status via the updated `sampleLots`.
+    *   **Item 16 (DONE):** Defined `Subcategory` type, updated `LotCategory`, updated `IDatabaseAdapter`, implemented subcategory CRUD in SQL adapters, created Server Actions, developed UI (form, list, edit pages), added admin sidebar link.
+    *   **Item 17 (DONE):** Added examples of subcategories to `sample-data.ts` and connected to main categories. `hasSubcategories` flag correctly set.
+    *   **Item 18 (DONE):** Integrated subcategory selection into Lot CRUD form. Updated display components (`LotListItem`, `LotDetailClientContent`, `LotCard`, lot list in auction edit) to show subcategory name.
 - **Error Fixes (General):**
     *   Resolved various `Module not found`, `React is not defined`, `DialogTitle required`, `useMemo not defined`, `Tabs not defined` errors.
     *   Corrected `getCategoryAssets` to handle descriptive titles gracefully.
     *   Fixed multiple "Unexpected eof" and "Unexpected token" syntax errors.
     *   Diagnosed and provided guidance for "input token count exceeds maximum" for AI flows.
-    *   Addressed "Internal Server Error" related to SWC build issues by re-emitting files and ensuring correct component types/hook usage.
-- **Context Persistence System (User Request):**
+- **Context Persistence System (User Request - Setup DONE):**
     *   Created `context/PROJECT_CONTEXT_HISTORY.md`.
     *   Created `context/PROJECT_PROGRESS.MD` (this file).
     *   Created `context/PROJECT_INSTRUCTIONS.md`.
     *   Created `context/1st.md`.
-    *   **This session:** Updated all context files based on recent progress.
+    *   **This session:** Updated all context files (Items 18, 13 completion).
+- **Item 1 (LotCard Title Spacing):** Fixed spacing issue between image and title in LotCard.
+- **Lot Dates & Status Derivation (Item 13):**
+    *   `sample-data.ts` logic updated to derive lot `endDate` and `status` from parent auction, considering `auctionStages`.
+    *   `LotDetailClientContent` (and its `DetailTimeRemaining` component) uses derived effective start/end dates.
+    *   `LotCard` and `LotListItem` reflect these derived dates/status via the updated `sampleLots`.
+    *   Reviewed all display components to ensure consistency.
 
 ## WORKING
-- Investigating and resolving persistent "Cannot find module" / build errors. (Ongoing, re-emitted core files and context files this session).
+- Investigating and resolving persistent "Cannot find module" / build errors. (Ongoing, latest attempt involved re-emitting core files and context files).
 
 ## NEXT
 - **Item 19:** Implement Live Dashboard (`/live-dashboard`) with real-time updates for open lots.
 - **Item 20:** Develop Virtual Auditorium (`/auctions/[auctionId]/live`) with current lot display, bidding panel, upcoming lots, and chat.
 - **Complete SQL Adapter Implementation:**
-    *   Thoroughly test and complete all `IDatabaseAdapter` methods for MySQL and PostgreSQL for all entities (including full subcategory logic if not already 100% complete).
+    *   Thoroughly test and complete all `IDatabaseAdapter` methods for MySQL and PostgreSQL for all entities.
 - **Media Library (Core Functionality):**
     *   Implement file upload (Firebase Storage).
     *   Modal for metadata editing for `MediaItem`.
@@ -90,3 +91,4 @@
 - **Refine UI/UX & Mobile Responsiveness.**
 - **Comprehensive Testing & Performance Optimization.**
 - **Error Handling & Logging (User-friendly messages, server-side logging).**
+
