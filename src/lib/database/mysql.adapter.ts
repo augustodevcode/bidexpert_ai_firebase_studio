@@ -674,7 +674,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, lot_id INT UNSIGNED NOT NULL, auction_id INT UNSIGNED NOT NULL,
         user_id VARCHAR(255) NOT NULL, user_display_name VARCHAR(255), rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
         comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (lot_id) REFERENCES lots(id) ON DELETE CASCADE, FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
+        FOREIGN KEY (lot_id) REFERENCES lots(id) ON DELETE CASCADE,
+        FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
         FOREIGN KEY (user_id) REFERENCES users(uid) ON DELETE CASCADE,
         INDEX idx_lot_reviews_lot_id (lot_id), INDEX idx_lot_reviews_user_id (user_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
@@ -683,7 +684,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
         user_id VARCHAR(255) NOT NULL, user_display_name VARCHAR(255), question_text TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, answer_text TEXT, answered_at TIMESTAMP NULL,
         answered_by_user_id VARCHAR(255), answered_by_user_display_name VARCHAR(255), is_public BOOLEAN DEFAULT TRUE,
-        FOREIGN KEY (lot_id) REFERENCES lots(id) ON DELETE CASCADE, FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
+        FOREIGN KEY (lot_id) REFERENCES lots(id) ON DELETE CASCADE,
+        FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
         FOREIGN KEY (user_id) REFERENCES users(uid) ON DELETE CASCADE,
         FOREIGN KEY (answered_by_user_id) REFERENCES users(uid) ON DELETE SET NULL,
         INDEX idx_lot_questions_lot_id (lot_id), INDEX idx_lot_questions_user_id (user_id)
@@ -745,14 +747,22 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async getPlatformSettings(): Promise<PlatformSettings> {
     const connection = await getPool().getConnection();
     try {
-        const [rows] = await connection.execute<RowDataPacket[]>(`SELECT site_title, site_tagline, gallery_image_base_path, active_theme_name, themes, platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page, search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards, show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings, section_badge_visibility, homepage_sections, updated_at FROM platform_settings WHERE id = 'global';`);
+        const [rows] = await connection.execute<RowDataPacket[]>(`SELECT * FROM platform_settings WHERE id = 'global';`);
         if (rows.length > 0) {
             return mapToPlatformSettings(mapMySqlRowToCamelCase(rows[0]));
         }
-        const defaultSettings = samplePlatformSettings; // Use the comprehensive sample
-        await connection.execute(
-          `INSERT INTO platform_settings (id, site_title, site_tagline, gallery_image_base_path, active_theme_name, themes, platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page, search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards, show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings, section_badge_visibility, homepage_sections) VALUES ('global', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE id=id;`,
-          [
+        const defaultSettings = samplePlatformSettings;
+        const query = `
+          INSERT INTO platform_settings (
+            id, site_title, site_tagline, gallery_image_base_path, active_theme_name, themes,
+            platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page,
+            search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards,
+            show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings,
+            section_badge_visibility, homepage_sections
+          ) VALUES ('global', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE id=id;
+        `;
+        await connection.execute(query, [
             defaultSettings.siteTitle, defaultSettings.siteTagline, defaultSettings.galleryImageBasePath,
             defaultSettings.activeThemeName || null, JSON.stringify(defaultSettings.themes || []),
             JSON.stringify(defaultSettings.platformPublicIdMasks || {}), JSON.stringify(defaultSettings.mapSettings || {}),
@@ -761,8 +771,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
             defaultSettings.showRelatedLotsOnLotDetail, defaultSettings.relatedLotsCount,
             JSON.stringify(defaultSettings.mentalTriggerSettings || {}), JSON.stringify(defaultSettings.sectionBadgeVisibility || {}),
             JSON.stringify(defaultSettings.homepageSections || [])
-          ]
-        );
+        ]);
         return { ...defaultSettings, id: 'global', updatedAt: new Date() };
     } catch (e: any) {
         console.error("[MySqlAdapter - getPlatformSettings] Error, returning default:", e);
@@ -1062,16 +1071,18 @@ export class MySqlAdapter implements IDatabaseAdapter {
     const connection = await getPool().getConnection();
     try {
         let permissionsJson: string | null = null;
+        let roleName: string | null = null;
         if (roleId && roleId !== "---NONE---") {
             const role = await this.getRole(roleId);
             if (role) {
                 permissionsJson = JSON.stringify(role.permissions || []);
+                roleName = role.name;
             } else {
                 return { success: false, message: 'Role not found.'};
             }
         }
-        const query = `UPDATE users SET role_id = ?, permissions = ?, updated_at = NOW() WHERE uid = ?`;
-        await connection.execute(query, [roleId ? Number(roleId) : null, permissionsJson, userId]);
+        const query = `UPDATE users SET role_id = ?, permissions = ?, role_name = ?, updated_at = NOW() WHERE uid = ?`;
+        await connection.execute(query, [roleId ? Number(roleId) : null, permissionsJson, roleName, userId]);
         return { success: true, message: 'User role updated (MySQL)!'};
     } catch (e: any) {
         console.error("[MySqlAdapter - updateUserRole] Error:", e);
@@ -1257,5 +1268,4 @@ export class MySqlAdapter implements IDatabaseAdapter {
     }
   }
 }
-
     
