@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import {
     Printer, Share2, ArrowLeft, ChevronLeft, ChevronRight, Key, Info,
     Tag, CalendarDays, Clock, Users, DollarSign, MapPin, Car, ThumbsUp,
-    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye, ExternalLink, ListFilter, FileQuestion, Banknote, Building, Link2 as LinkIcon, AlertCircle, Percent, Zap, TrendingUp, Crown
+    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye, ExternalLink, ListFilter, FileQuestion, Banknote, Building, Link2 as LinkIcon, AlertCircle, Percent, Zap, TrendingUp, Crown, Layers
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -249,19 +249,16 @@ export default function LotDetailClientContent({
         
         if (relevantStage && relevantStage.endDate) {
             finalEndDate = new Date(relevantStage.endDate as string);
-            const stageIndex = auction.auctionStages.findIndex(s => s.name === relevantStage!.name); // O "!" é seguro aqui devido à condição anterior
+            const stageIndex = auction.auctionStages.findIndex(s => s.name === relevantStage!.name); 
             
-            // Definir a data de início da praça
             if (stageIndex > 0 && auction.auctionStages[stageIndex-1].endDate) {
                  finalStartDate = new Date(auction.auctionStages[stageIndex-1].endDate as string);
             } else {
-                 // Se é a primeira praça, a data de início é a do leilão
                  finalStartDate = new Date(auction.auctionDate as string);
             }
         }
     }
 
-    // Fallback para datas principais do leilão se não houver praças ou praça relevante
     if (!finalEndDate && auction.endDate) {
         finalEndDate = new Date(auction.endDate as string);
     }
@@ -269,14 +266,13 @@ export default function LotDetailClientContent({
         finalStartDate = new Date(auction.auctionDate as string);
     }
 
-    // Fallback final para datas do lote (menos prioritário)
     if (!finalEndDate && lot.endDate) {
         finalEndDate = new Date(lot.endDate as string);
          console.warn(`[LotDetailClient] Usando endDate do LOTE como fallback para lote ${lot.id}`);
     }
-     if (!finalStartDate && lot.lotSpecificAuctionDate) { // Usar lotSpecificAuctionDate para o início do lote, se disponível
+     if (!finalStartDate && lot.lotSpecificAuctionDate) { 
         finalStartDate = new Date(lot.lotSpecificAuctionDate as string);
-    } else if (!finalStartDate && lot.auctionDate) { // Fallback para auctionDate do lote se o específico não existir
+    } else if (!finalStartDate && lot.auctionDate) { 
         finalStartDate = new Date(lot.auctionDate as string);
     }
 
@@ -831,3 +827,4 @@ export default function LotDetailClientContent({
     </>
   );
 }
+

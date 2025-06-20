@@ -6,12 +6,12 @@ import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
 import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
-import { notFound, useRouter, useParams } from 'next/navigation'; // useParams importado
+import { notFound, useRouter, useParams } from 'next/navigation'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers } from 'lucide-react'; // Added Layers
 import { format, differenceInDays, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText, getLotStatusColor, samplePlatformSettings, slugify } from '@/lib/sample-data';
@@ -193,7 +193,7 @@ function AuctionInfoDisplay({ auction }: { auction: Auction }) {
 
 
 export default function EditAuctionPage() {
-  const paramsHook = useParams(); // Hook para obter parâmetros da rota
+  const paramsHook = useParams(); 
   const auctionId = paramsHook.auctionId as string; 
   const [auction, setAuction] = React.useState<Auction | null>(null);
   const [categories, setCategories] = React.useState<LotCategory[]>([]);
@@ -247,15 +247,10 @@ export default function EditAuctionPage() {
   }, [fetchPageData]);
 
   async function handleUpdateAuction(data: Partial<AuctionFormData>) {
-    // Esta é uma função handler de cliente, não uma Server Action inline.
-    // Ela chama a Server Action 'updateAuction' importada.
-    // Nenhuma diretiva 'use server' aqui.
     return updateAuction(auctionId, data);
   }
 
   async function handleDeleteLotAction(lotId: string, currentAuctionId: string) {
-    // Esta é uma função handler de cliente.
-    // Nenhuma diretiva 'use server' aqui.
     const result = await deleteLot(lotId, currentAuctionId); 
     if (!result.success) {
         console.error("Failed to delete lot:", result.message);
@@ -331,6 +326,12 @@ export default function EditAuctionPage() {
               <h4 className="font-semibold text-sm">{lot.number ? `Lote ${lot.number}: ` : ''}{lot.title}</h4>
             </Link>
             <p className="text-xs text-muted-foreground">ID: {lot.publicId || lot.id}</p>
+            {lot.type && (
+             <p className="text-xs text-muted-foreground">
+               Cat: {lot.type}
+               {lot.subcategoryName && ` / ${lot.subcategoryName}`}
+             </p>
+           )}
             <Badge variant="outline" className={`text-xs mt-1 ${getLotStatusColor(lot.status)} border-current`}>
                 {getAuctionStatusText(lot.status)}
             </Badge>
@@ -368,6 +369,12 @@ export default function EditAuctionPage() {
                 </CardTitle>
             </Link>
             <CardDescription className="text-xs">ID: {lot.publicId || lot.id}</CardDescription>
+            {lot.type && (
+             <CardDescription className="text-xs mt-0.5">
+               {lot.type}
+               {lot.subcategoryName && ` / ${lot.subcategoryName}`}
+             </CardDescription>
+           )}
         </CardHeader>
         <CardContent className="p-3 flex-grow space-y-1 text-xs">
             <Badge variant="outline" className={`${getLotStatusColor(lot.status)} border-current`}>
@@ -455,3 +462,4 @@ export default function EditAuctionPage() {
   );
 }
     
+

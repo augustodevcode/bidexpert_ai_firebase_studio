@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown, Tag } from 'lucide-react';
+import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown, Tag, ChevronRight, Layers } from 'lucide-react';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
@@ -298,6 +298,13 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
                 <span className="mx-1.5 text-muted-foreground/50">|</span>
                 <Tag className="h-3 w-3 mr-1 text-primary/80 flex-shrink-0" />
                 <span className="truncate" title={lot.type}>{lot.type}</span>
+                {lot.subcategoryName && (
+                  <>
+                    <ChevronRight className="h-3 w-3 mx-0.5 text-muted-foreground/70 flex-shrink-0" />
+                    <Layers className="h-3 w-3 mr-1 text-primary/70 flex-shrink-0" />
+                    <span className="truncate" title={lot.subcategoryName}>{lot.subcategoryName}</span>
+                  </>
+                )}
             </div>
 
             <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{lot.description}</p>
@@ -415,7 +422,7 @@ export default function LotListItem({ lot, badgeVisibilityConfig, platformSettin
              <div className="relative aspect-square h-full bg-muted animate-pulse w-1/3 md:w-1/4 flex-shrink-0"></div>
              <div className="flex flex-col flex-grow">
                 <CardContent className="p-4 flex-grow space-y-1.5">
-                    <div className="h-5 bg-muted rounded w-3/4 animate-pulse mt-1"></div> {/* Ajuste para o título */}
+                    <div className="h-5 bg-muted rounded w-3/4 animate-pulse mt-1"></div>
                     <div className="h-4 bg-muted rounded w-1/2 animate-pulse mt-1"></div>
                     <div className="h-4 bg-muted rounded w-full animate-pulse mt-1"></div>
                     <div className="h-4 bg-muted rounded w-2/3 animate-pulse mt-1"></div>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Lot } from '@/types';
@@ -14,6 +15,8 @@ export default function LotSpecificationTab({ lot }: LotSpecificationTabProps) {
     { label: "Marca", value: lot.make },
     { label: "Modelo", value: lot.model },
     { label: "Série", value: lot.series },
+    { label: "Categoria", value: lot.type },
+    { label: "Subcategoria", value: lot.subcategoryName },
     { label: "Nº de Estoque", value: lot.stockNumber },
     { label: "Filial de Venda", value: lot.sellingBranch },
     { label: "VIN", value: lot.vin },
@@ -71,3 +74,4 @@ export default function LotSpecificationTab({ lot }: LotSpecificationTabProps) {
     </Card>
   );
 }
+
