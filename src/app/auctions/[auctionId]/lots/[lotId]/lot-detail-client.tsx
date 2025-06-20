@@ -246,18 +246,22 @@ export default function LotDetailClientContent({
         if (!relevantStage && lot.status !== 'ENCERRADO' && lot.status !== 'VENDIDO' && lot.status !== 'NAO_VENDIDO') {
             relevantStage = auction.auctionStages.sort((a,b) => new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime())[0];
         }
-
+        
         if (relevantStage && relevantStage.endDate) {
             finalEndDate = new Date(relevantStage.endDate as string);
-            const stageIndex = auction.auctionStages.findIndex(s => s.name === relevantStage!.name);
+            const stageIndex = auction.auctionStages.findIndex(s => s.name === relevantStage!.name); // O "!" é seguro aqui devido à condição anterior
+            
+            // Definir a data de início da praça
             if (stageIndex > 0 && auction.auctionStages[stageIndex-1].endDate) {
                  finalStartDate = new Date(auction.auctionStages[stageIndex-1].endDate as string);
             } else {
+                 // Se é a primeira praça, a data de início é a do leilão
                  finalStartDate = new Date(auction.auctionDate as string);
             }
         }
     }
 
+    // Fallback para datas principais do leilão se não houver praças ou praça relevante
     if (!finalEndDate && auction.endDate) {
         finalEndDate = new Date(auction.endDate as string);
     }
@@ -265,11 +269,14 @@ export default function LotDetailClientContent({
         finalStartDate = new Date(auction.auctionDate as string);
     }
 
+    // Fallback final para datas do lote (menos prioritário)
     if (!finalEndDate && lot.endDate) {
         finalEndDate = new Date(lot.endDate as string);
          console.warn(`[LotDetailClient] Usando endDate do LOTE como fallback para lote ${lot.id}`);
     }
-     if (!finalStartDate && lot.auctionDate) {
+     if (!finalStartDate && lot.lotSpecificAuctionDate) { // Usar lotSpecificAuctionDate para o início do lote, se disponível
+        finalStartDate = new Date(lot.lotSpecificAuctionDate as string);
+    } else if (!finalStartDate && lot.auctionDate) { // Fallback para auctionDate do lote se o específico não existir
         finalStartDate = new Date(lot.auctionDate as string);
     }
 
@@ -734,7 +741,7 @@ export default function LotDetailClientContent({
                                     <Input type="number" placeholder={`Próximo lance R$ ${nextMinimumBid.toLocaleString('pt-BR')}`} value={bidAmountInput} onChange={(e) => setBidAmountInput(e.target.value)} className="pl-9 h-11 text-base" min={nextMinimumBid} step={bidIncrement} disabled={isPlacingBid} />
                                     <Button size="sm" variant="ghost" className="absolute right-2 top-1/2 -translate-y-1/2 h-7 text-primary" onClick={() => setBidAmountInput(String(nextMinimumBid))}>+</Button>
                                 </div>
-                                 <p className="text-xs text-muted-foreground text-center">Incremento: R$ {bidIncrement.toLocaleString('pt-BR')}</p>
+                                 <p className="text-xs text-muted-foreground text-center">Incremento: R$ {bidIncrement.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
                                 <Button onClick={handlePlaceBid} disabled={isPlacingBid || !bidAmountInput} className="w-full h-11 text-base bg-accent text-accent-foreground hover:bg-accent/90">
                                 {isPlacingBid ? <Loader2 className="animate-spin" /> : `Dar Lance (R$ ${parseFloat(bidAmountInput || '0').toLocaleString('pt-BR') || nextMinimumBid.toLocaleString('pt-BR') })`}
                                 </Button>

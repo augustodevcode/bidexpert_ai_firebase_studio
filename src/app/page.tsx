@@ -11,10 +11,9 @@ import { Landmark, Scale, FileText, Tags, CalendarX, CheckSquare, Star, FileText
 
 export default function HomePage() {
   try {
-    const platformSettings: PlatformSettings = samplePlatformSettings; // Usar as configurações de exemplo
+    const platformSettings: PlatformSettings = samplePlatformSettings; 
     const auctions: Auction[] = sampleAuctions.slice(0, 10);
 
-    // Filtrar lotes em destaque para mostrar apenas os que estão ABERTO_PARA_LANCES
     const featuredLots: Lot[] = sampleLots.filter(lot => lot.isFeatured && lot.status === 'ABERTO_PARA_LANCES').slice(0, 10);
 
     const filterLinksData = [
