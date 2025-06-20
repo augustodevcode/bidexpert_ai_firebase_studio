@@ -22,16 +22,16 @@ This document summarizes the BidExpert project, including its purpose, core feat
 *   Frontend: NextJS, React, ShadCN UI components, Tailwind CSS
 *   Backend/API: NextJS API Routes / Server Actions
 *   AI: Genkit (for AI flows)
-*   Database: Firestore (initial phase for some admin CRUDs), with a primary focus on SQL (MySQL/PostgreSQL) via an adapter pattern for core auction and lot data.
+*   Database: Firestore (initial phase for some admin CRUDs), with a primary focus on SQL (MySQL/PostgreSQL) via an adapter pattern for core auction and lot data. The current `ACTIVE_DATABASE_SYSTEM` environment variable dictates which system is used.
 *   Language: TypeScript
 
 **Style Guidelines (from PRD):**
-*   Icons: Clean, line-based.
+*   Icons: Clean, line-based (`lucide-react`).
 *   Animations: Subtle transitions and hover effects.
-*   Color Scheme:
+*   Color Scheme (Theme in `globals.css` should reflect this):
     *   Backgrounds: White (#FFFFFF), Light Gray (#F2F2F2).
-    *   Primary Interactive: Blue (#3498db).
-    *   Secondary Accent: Soft Green (#2ecc71).
+    *   Primary Interactive: Orange (hsl(25 95% 53%)).
+    *   Secondary Accent: Potentially a soft green or similar, TBD by theme adjustments.
 *   Font: 'Open Sans' (sans-serif) for headings and body.
 *   Layout: Card-based, rounded corners (8px), subtle shadows, ample white space.
 
@@ -40,93 +40,96 @@ This document summarizes the BidExpert project, including its purpose, core feat
 ### Key Features & Functionalities Implemented/Worked On:
 
 1.  **Admin Panel Foundation:**
-    *   CRUD operations for Lot Categories, States, Cities, Auctioneers, Sellers, Auctions, Lots, Roles, Users, Media Items established. Initially using sample data/Firestore for scaffolding, with a strong push towards SQL adapter implementation.
+    *   CRUD operations for Lot Categories, States, Cities, Auctioneers, Sellers, Auctions, Lots, Roles, Users, Media Items.
+    *   These CRUDs are designed to work with an abstracted database layer, supporting Firestore, MySQL, and PostgreSQL.
     *   Server Actions are the primary mechanism for data mutations.
 
 2.  **Database System:**
-    *   Initial focus on using `sample-data.ts` for UI development and rapid prototyping.
-    *   Implemented a database adapter system (`getDatabaseAdapter`) to support MySQL and PostgreSQL.
+    *   Implemented a database adapter system (`getDatabaseAdapter` in `src/lib/database/index.ts`) to switch between Firestore, MySQL, and PostgreSQL based on `ACTIVE_DATABASE_SYSTEM` env variable.
     *   SQL schema initialization scripts (`initialize-db.ts`) created and refined for various tables.
     *   Admin user setup script (`setup-admin-user.ts`) to ensure an administrator role and user exist.
 
 3.  **Header & Navigation:**
-    *   Dynamic display of site title and tagline (intended to be from platform settings).
+    *   Dynamic display of site title and tagline (from platform settings, `samplePlatformSettings` as fallback).
     *   Implementation of a multi-level **MegaMenu** for:
-        *   **Categorias de Lotes:** Title updated to "Categorias de Oportunidades". Dynamically populated from categories data. Features a two-column layout.
-        *   **Modalidades de Leilão:** Static links (Judicial, Extrajudicial, Venda Direta).
-        *   **Comitentes:** Dynamically populated from sellers data.
-        *   **Nossos Leiloeiros:** Dynamically populated from auctioneers data.
+        *   **Categorias de Oportunidades:** Dynamically populated from categories data, features a two-column layout with subcategories (work in progress for dynamic subcategories).
+        *   **Modalidades de Leilão:** Static links initially, then moved to a two-column layout.
+        *   **Comitentes:** Dynamically populated from sellers data, two-column layout.
+        *   **Nossos Leiloeiros:** Dynamically populated from auctioneers data, profile previews.
     *   Mobile-responsive navigation using a Sheet component.
     *   Search functionality within the header with category filtering and a dropdown for results.
     *   Recently Viewed and Favorite Lots dropdowns (using localStorage).
+    *   Historical navigation icon (`History`) added.
 
 4.  **Platform Customization (Admin Settings):**
-    *   Admin page (`/admin/settings`) to manage: Site Title, Tagline, Gallery Image Base Path, Public ID Masks.
+    *   Admin page (`/admin/settings`) to manage: Site Title, Tagline, Gallery Image Base Path, Public ID Masks, Map Provider, Search Pagination, Countdown Timers, Related Lots.
+    *   Settings persisted via the active database adapter.
     *   **Mental Triggers/Badges for Lots:**
         *   Implemented `BadgeVisibilitySettings` and `SectionBadgeConfig` in `PlatformSettings` (`src/types/index.ts`).
-        *   `samplePlatformSettings` updated with configurations for these badges.
-        *   `LotCard` and `LotListItem` updated to display:
-            *   Discount percentage badge (e.g., "% OFF").
-            *   Urgency timer badge.
-            *   Badges for "MAIS VISITADO", "LANCE QUENTE", "EXCLUSIVO".
-        *   Visibility of the main status badge is now configurable per section (e.g., hidden for "Lotes em Destaque").
+        *   `samplePlatformSettings` updated with configurations for these badges for various sections (featured, search grid, search list, lot detail).
+        *   `LotCard`, `LotListItem`, and `LotDetailClientContent` updated to display: Discount percentage, Urgency timer, "MAIS VISITADO", "LANCE QUENTE", "EXCLUSIVO" badges based on these settings.
 
 5.  **Homepage Enhancements:**
-    *   Promotional text ("Até 50% de Desconto...") removed.
-    *   General filter section removed from the homepage.
-    *   Hero Carousel updated:
-        *   Slide 1: Theme changed to "Velocidade e Estilo em Leilão" (sports car).
-        *   Slide 2: New slide added with theme "Oportunidades Únicas em Leilão" (general auction items).
-        *   Carousel is now dynamic, auto-plays, and has functional navigation.
-    *   "Lotes em Destaque" section now only shows lots with status `ABERTO_PARA_LANCES`.
+    *   Hero Carousel updated with dynamic slides and autoplay.
+    *   Filter Link Cards for quick navigation to different auction types/categories.
+    *   "Lotes em Destaque" section displays lots marked as featured and open for bids.
 
-6.  **Data Seeding & Management:**
-    *   Scripts for copying sample images to the `public` directory (`copy-sample-images-to-public.ts`).
-    *   Scripts for seeding Firestore with basic lot data and then updating with image URLs (`seed-lotes-data.ts`, `seed-lotes-with-images.ts`).
+6.  **Lot Detail Page Enhancements:**
+    *   Countdown timer styling improved (`DetailTimeRemaining` component).
+    *   Responsiveness of `TabsList` for lot details (Description, Specs, etc.) corrected.
+    *   Conditional tab "Documentos e Processo" implemented: appears if auction is judicial AND lot has specific legal info. Otherwise, shows as "Documentos".
+    *   Display of "Permite Lance Parcelado" and "Incremento Mínimo de Lance" added.
 
 7.  **User Authentication & Authorization:**
     *   User registration form (`/auth/register`) updated to include fields for Pessoa Jurídica and Comitente Venda Direta.
-    *   Basic Admin/Consignor dashboard layouts.
     *   `AuthContext` for managing user state (Firebase Auth and SQL-based).
-    *   `hasPermission` / `hasAnyPermission` helpers for role-based access.
+    *   `hasPermission` / `hasAnyPermission` helpers for role-based access control.
+    *   Admin layout protected by `manage_all` permission.
+    *   Consignor dashboard layout protected by consignor-specific permissions.
 
-8.  **Public Facing Pages:**
-    *   Initial setup and some content for: About, Contact, FAQ, Terms, Privacy, Seller Detail, Auctioneer Detail, Auction Detail, Lot Detail, Search, Direct Sales.
-    *   **Key Decision:** Public auction/lot detail pages are (still, as of last confirmation) using `sample-data.ts` for data display to facilitate rapid UI development.
+8.  **Subcategory Management (Item 16 - In Progress):**
+    *   Defined `Subcategory` type in `src/types/index.ts`.
+    *   Updated `LotCategory` type to include `hasSubcategories?: boolean;`.
+    *   Updated `IDatabaseAdapter` with CRUD methods for subcategories.
+    *   Implemented subcategory CRUD methods in `MySqlAdapter` and `PostgresAdapter`.
+    *   Created Server Actions for subcategories (`src/app/admin/subcategories/actions.ts`).
+    *   Developed UI (form, list, edit pages) for subcategory management under `/admin/subcategories`.
+    *   Added "Subcategorias" link to admin sidebar.
 
-### Errors Encountered & Resolved (Recent Summary):
+9.  **Data Display & UI Components:**
+    *   `SearchResultsFrame` component created for consistent display of search results/listings with sorting, view mode, and pagination.
+    *   `SearchResultsFrame` integrated into:
+        *   Auction edit page (`/admin/auctions/[auctionId]/edit/page.tsx`) for displaying lots.
+        *   Seller detail page (`/app/sellers/[sellerId]/page.tsx`) for displaying lots.
+        *   Auctioneer detail page (`/app/auctioneers/[auctioneerSlug]/page.tsx`) for displaying auctions.
+        *   Main search page (`/app/search/page.tsx`).
 
-*   **Module Not Found Errors:**
-    *   `navigation-menu` and `@radix-ui/react-navigation-menu`: Resolved by adding file/package.
-*   **Runtime Errors (JSX/React):**
-    *   `React is not defined`: Added import.
-    *   `DialogContent requires a DialogTitle`: Added `SheetHeader`/`SheetTitle`.
-    *   `ShoppingCart is not defined`: Added import.
-    *   `useMemo is not defined` in `lot-card.tsx`: Added `import { useMemo } from 'react';`.
-    *   `Tabs is not defined` in `search/page.tsx`: Added imports for `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`.
-*   **Data Fetching/Logic Errors:**
-    *   `getLotCategoryByName` for sample data: Corrected usage.
-    *   "Comitente não encontrado": Updated sample data.
-    *   `getCategoryAssets` logging "Nenhum nome de categoria encontrado": Modified `getCategoryAssets` to be more tolerant and return generic placeholders for descriptive titles used in `FilterLinkCard`s on the homepage, thus suppressing these specific error logs.
-*   **Build/Syntax Errors:**
-    *   "Unexpected eof" in `header.tsx`, `lot-list-item.tsx`, and `sample-data.tsx`: Resolved by re-emitting full, corrected file content, removing extraneous characters or malformed XML from previous AI responses.
-    *   "Unexpected token div" in `page.tsx`: Resolved by correcting syntax before the `return` statement.
-    *   "Expected ']', got 'Mode'" in `search/page.tsx`: Resolved by removing a duplicated/erroneous `getAuctionData` function from this file.
-*   **Server Errors:**
-    *   "An unexpected response was received from the server." (Generic client-side): Diagnosed by adding `try...catch` to `src/app/page.tsx` server-side rendering. The root cause was often a downstream compilation error (like the `search/page.tsx` syntax error).
-*   **Token Limit Error (AI):**
-    *   Advised on reducing input token count for Genkit flows (e.g., `recentAuctionData`, `pastAuctionData`) when "input token count exceeds the maximum" error occurs. This is not a code fix for the app itself but a usage guideline for the AI.
+10. **AI Flows (Genkit):**
+    *   Initial Genkit flows for `suggestListingDetails`, `predictOpeningValue`, `suggestSimilarListings` created in `src/ai/flows/`.
+
+### Errors Encountered & Resolved (Summary):
+
+*   **Module Not Found / Build Errors (SWC):** Frequent issues, often resolved by re-emitting full corrected files. Examples: `navigation-menu`, issues in `admin/auctions/[auctionId]/edit/page.tsx` (inline server actions, params access), `page.tsx` (syntax), `search/page.tsx` (syntax). A recent "Cannot find module './xxxx.js'" was resolved by re-emitting `app/page.tsx` and the last edited lot detail page.
+*   **Runtime Errors (JSX/React):** `React is not defined`, `DialogContent requires a DialogTitle`, `ShoppingCart is not defined`, `useMemo not defined`, `Tabs is not defined`.
+*   **Data Fetching/Logic Errors:** `getLotCategoryByName` (sample data), "Comitente não encontrado" (sample data), `getCategoryAssets` logging.
+*   **SQL Errors:** `ER_WRONG_VALUE_COUNT_ON_ROW` (MySQL inserts), syntax for `platform_settings` (JSON DEFAULT), `createLot` (undefined as null).
+*   **Firebase:** Firestore permission error display.
+*   **Token Limit Error (AI):** Advised on reducing input token count for Genkit flows.
 
 ### Key Decisions & Patterns:
 
 *   **Database Abstraction:** `getDatabaseAdapter()` for Firestore, MySQL, PostgreSQL.
 *   **Server Actions:** Primary for data mutations.
-*   **Client vs. Server Components:** Standard Next.js patterns.
-*   **`sample-data.ts`:** Heavily used for UI, with a plan to switch to DB for public pages.
-*   **Megamenus:** For core navigation categories, with dynamic data for some.
-*   **Permissions System:** `hasPermission`, `hasAnyPermission` for access control.
+*   **Client vs. Server Components:** Standard Next.js patterns, explicit `'use client'` where needed.
+*   **`sample-data.ts`:** Heavily used for UI development and rapid prototyping, with ongoing efforts to fully rely on the DB adapter.
+*   **Megamenus:** For core navigation categories, with dynamic data where feasible.
+*   **Permissions System:** `hasPermission`, `hasAnyPermission` for role-based access control.
 *   **Context Persistence System:** This current task of creating context files.
 
 This summary will be updated as we progress.
 
+### Current Session (This interaction):
+*   Goal: Create context persistence files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.MD`, `PROJECT_INSTRUCTIONS.md`, `1st.md`).
+*   This file (`PROJECT_CONTEXT_HISTORY.md`) is being generated as part of that goal.
+*   The content reflects the project's state up to and including the completion of Item 16 (Subcategory CRUD infrastructure).
   
