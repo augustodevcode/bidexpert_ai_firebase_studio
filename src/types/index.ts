@@ -20,10 +20,27 @@ export interface LotCategory {
     slug: string;
     description?: string;
     itemCount?: number;
+    hasSubcategories?: boolean; // Indicates if this category has subcategories
     createdAt: AnyTimestamp;
     updatedAt: AnyTimestamp;
-    subcategories?: string[];
+    // subcategories?: string[]; // Removed, will be handled by querying Subcategory with parentCategoryId
 }
+
+export interface Subcategory {
+  id: string;
+  name: string;
+  slug: string;
+  parentCategoryId: string; // ID of the LotCategory parent
+  description?: string;
+  itemCount?: number;
+  order?: number; // For display order within the parent category
+  iconUrl?: string;
+  dataAiHintIcon?: string;
+  createdAt: AnyTimestamp;
+  updatedAt: AnyTimestamp;
+}
+export type SubcategoryFormData = Omit<Subcategory, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'itemCount'>;
+
 
 export interface StateInfo {
   id: string;
@@ -204,16 +221,18 @@ export interface Lot {
   cityId?: string;
   cityName?: string;
   stateUf?: string;
-  type: string; 
-  categoryId?: string; 
+  type: string; // This will be the main category name
+  categoryId?: string; // ID of the main LotCategory
+  subcategoryId?: string; // ID of the Subcategory
+  subcategoryName?: string; // Name of the subcategory for display
   views?: number;
   auctionName?: string; 
   price: number; 
   initialPrice?: number; 
   secondInitialPrice?: number | null; 
   bidIncrementStep?: number; 
-  endDate?: AnyTimestamp; // Made optional
-  auctionDate?: AnyTimestamp; // Could be the start of the auction or specific stage for this lot
+  endDate?: AnyTimestamp; // Made optional, should derive from auction
+  auctionDate?: AnyTimestamp; // Made optional
   lotSpecificAuctionDate?: AnyTimestamp | null; // Made optional
   secondAuctionDate?: AnyTimestamp | null; // Made optional
   bidsCount?: number;
@@ -285,9 +304,10 @@ export type LotFormData = Omit<Lot,
   'publicId' |
   'createdAt' |
   'updatedAt' |
-  'endDate' | // Removed from direct edit, now optional at type level
-  'lotSpecificAuctionDate' | // Removed from direct edit, now optional at type level
-  'secondAuctionDate' | // Removed from direct edit, now optional at type level
+  'endDate' |
+  'auctionDate' |
+  'lotSpecificAuctionDate' | 
+  'secondAuctionDate' | 
   'isFavorite' |
   'isFeatured' |
   'views' |           
@@ -298,13 +318,15 @@ export type LotFormData = Omit<Lot,
   'stateUf' |         
   'auctioneerName' |
   'sellerName' |
-  'type' |
-  'auctionName'       
+  'type' | // Retain 'type' in form for main category selection
+  'auctionName' |
+  'subcategoryName'
 > & {
-  endDate?: Date | null; // Kept optional in form values if needed for display or specific override cases (rare)
+  endDate?: Date | null; 
   lotSpecificAuctionDate?: Date | null; 
   secondAuctionDate?: Date | null; 
-  type: string; 
+  type: string; // Main category name is still needed for selection
+  subcategoryId?: string | null; // Subcategory ID for the form
   views?: number;
   bidsCount?: number;
   mediaItemIds?: string[];
@@ -669,6 +691,15 @@ export interface IDatabaseAdapter {
   updateLotCategory(id: string, data: { name: string; description?: string }): Promise<{ success: boolean; message: string }>;
   deleteLotCategory(id: string): Promise<{ success: boolean; message: string }>;
 
+  // Subcategory methods
+  createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string }>;
+  getSubcategories(parentCategoryId: string): Promise<Subcategory[]>;
+  getSubcategory(id: string): Promise<Subcategory | null>;
+  getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null>;
+  updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string }>;
+  deleteSubcategory(id: string): Promise<{ success: boolean; message: string }>;
+
+
   createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string }>;
   getStates(): Promise<StateInfo[]>;
   getState(idOrSlugOrUf: string): Promise<StateInfo | null>;
@@ -717,7 +748,7 @@ export interface IDatabaseAdapter {
   createReview(review: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; reviewId?: string }>;
   getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]>;
   createQuestion(question: Omit<LotQuestion, 'id' | 'createdAt' | 'answeredAt' | 'answeredByUserId' | 'answeredByUserDisplayName' | 'isPublic'>): Promise<{ success: boolean; message: string; questionId?: string }>;
-  answerQuestion(questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string }>;
+  answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string }>;
 
 
   // User and Role Management
