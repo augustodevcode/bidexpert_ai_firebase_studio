@@ -2,19 +2,19 @@
 'use client'; 
 
 import AuctionForm from '../../auction-form';
-import { getAuction, updateAuction, type AuctionFormData, deleteAuction } from '../../actions'; 
+import { getAuction, updateAuction, deleteAuction } from '../../actions'; 
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
-import type { Auction, Lot, PlatformSettings } from '@/types';
-import { notFound, useRouter, useParams } from 'next/navigation'; // useParams importado, useRouter já estava
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
+import { notFound, useRouter, useParams } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart } from 'lucide-react';
 import { format, differenceInDays, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText, getLotStatusColor, samplePlatformSettings } from '@/lib/sample-data';
+import { getAuctionStatusText, getLotStatusColor, samplePlatformSettings, slugify } from '@/lib/sample-data';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,8 +30,9 @@ import { Badge } from '@/components/ui/badge';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { Separator } from '@/components/ui/separator';
-import React, { useEffect, useCallback } from 'react'; 
+import React, { useEffect, useCallback, useMemo, useState } from 'react'; 
 import { useToast } from '@/hooks/use-toast';
+import SearchResultsFrame from '@/components/search-results-frame'; // Importar SearchResultsFrame
 
 function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotId: string; lotTitle: string; auctionId: string; onDeleteSuccess: () => void }) {
   const [isDeleting, setIsDeleting] = React.useState(false);
@@ -53,8 +54,8 @@ function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotI
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" disabled={isDeleting}>
-          {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80 h-7 w-7" disabled={isDeleting}>
+          {isDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
           <span className="sr-only">Excluir Lote</span>
         </Button>
       </AlertDialogTrigger>
@@ -164,14 +165,14 @@ function AuctionInfoDisplay({ auction }: { auction: Auction }) {
                 </CardContent>
             </Card>
              <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-lg flex items-center"><AlertTriangle className="mr-2 h-5 w-5 text-amber-500"/>Requer Atenção</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-lg flex items-center"><AlertTriangle className="mr-2 h-5 w-5 text-amber-500"/>Pendências e Alertas</CardTitle></CardHeader>
                 <CardContent className="text-sm text-muted-foreground">
                    <p>Nenhum alerta crítico para este leilão no momento.</p>
                    <p className="text-xs mt-1">(Ex: Lotes sem lance inicial, datas próximas do fim, etc.)</p>
                 </CardContent>
             </Card>
              <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-lg flex items-center"><PackageIcon className="mr-2 h-5 w-5 text-green-500"/>Estatísticas de Lotes</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-lg flex items-center"><PackageIcon className="mr-2 h-5 w-5 text-green-500"/>Desempenho dos Lotes</CardTitle></CardHeader>
                 <CardContent className="text-sm text-muted-foreground">
                    <p>Total de Lotes: {auction?.totalLots || 0}</p>
                    <p>Lotes Vendidos: (Em breve)</p>
@@ -192,19 +193,25 @@ function AuctionInfoDisplay({ auction }: { auction: Auction }) {
 
 
 export default function EditAuctionPage() {
-  const params = useParams<{ auctionId: string }>();
-  const auctionId = params.auctionId;
+  const params = useParams();
+  const auctionId = params.auctionId as string; // Use type assertion
   const [auction, setAuction] = React.useState<Auction | null>(null);
-  const [categories, setCategories] = React.useState<any[]>([]);
+  const [categories, setCategories] = React.useState<LotCategory[]>([]);
   const [lotsInAuction, setLotsInAuction] = React.useState<Lot[]>([]);
-  const [auctioneers, setAuctioneersList] = React.useState<any[]>([]);
-  const [sellers, setSellersList] = React.useState<any[]>([]);
+  const [auctioneers, setAuctioneersList] = React.useState<AuctioneerProfileInfo[]>([]);
+  const [sellers, setSellersList] = React.useState<SellerProfileInfo[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const router = useRouter();
   const { toast } = useToast();
+  
+  // State for SearchResultsFrame (lots)
+  const [lotSortBy, setLotSortBy] = useState<string>('number_asc');
+  const [lotCurrentPage, setLotCurrentPage] = useState(1);
+  const [lotVisibleItemCount, setLotVisibleItemCount] = useState(samplePlatformSettings.searchLoadMoreCount || 10);
+  const platformSettings = samplePlatformSettings as PlatformSettings;
 
   const fetchPageData = useCallback(async () => {
-    if (!auctionId) return; // Garante que auctionId existe
+    if (!auctionId) return;
     setIsLoading(true);
     try {
         const [fetchedAuction, fetchedCategories, fetchedLots, fetchedAuctioneers, fetchedSellers] = await Promise.all([
@@ -224,13 +231,16 @@ export default function EditAuctionPage() {
         setLotsInAuction(fetchedLots);
         setAuctioneersList(fetchedAuctioneers);
         setSellersList(fetchedSellers);
+        setLotCurrentPage(1); // Reset pagination on data refresh
+        setLotVisibleItemCount(platformSettings.searchLoadMoreCount || 10);
     } catch (error) {
         console.error("Error fetching data for edit auction page:", error);
         toast({ title: "Erro ao carregar dados", description: "Não foi possível buscar os dados do leilão.", variant: "destructive"});
     } finally {
         setIsLoading(false);
     }
-  }, [auctionId, toast]); // Dependência `toast` é estável
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auctionId, toast, platformSettings.searchLoadMoreCount]);
 
 
   useEffect(() => {
@@ -238,10 +248,12 @@ export default function EditAuctionPage() {
   }, [fetchPageData]);
 
   async function handleUpdateAuction(data: Partial<AuctionFormData>) {
+    // 'use server'; // Removed - this is a client-side handler
     return updateAuction(auctionId, data);
   }
 
   async function handleDeleteLotAction(lotId: string, currentAuctionId: string) {
+    // 'use server'; // Removed - this is a client-side handler
     const result = await deleteLot(lotId, currentAuctionId); 
     if (!result.success) {
         console.error("Failed to delete lot:", result.message);
@@ -252,6 +264,134 @@ export default function EditAuctionPage() {
     }
   }
 
+  const lotSortOptions = [
+    { value: 'number_asc', label: 'Nº Lote Crescente' },
+    { value: 'number_desc', label: 'Nº Lote Decrescente' },
+    { value: 'title_asc', label: 'Título A-Z' },
+    { value: 'title_desc', label: 'Título Z-A' },
+    { value: 'status_asc', label: 'Status A-Z' },
+    { value: 'price_asc', label: 'Preço Crescente' },
+    { value: 'price_desc', label: 'Preço Decrescente' },
+  ];
+
+  const sortedLots = useMemo(() => {
+    return [...lotsInAuction].sort((a, b) => {
+      switch (lotSortBy) {
+        case 'number_asc':
+          return (parseInt(a.number || '0') || 0) - (parseInt(b.number || '0') || 0);
+        case 'number_desc':
+          return (parseInt(b.number || '0') || 0) - (parseInt(a.number || '0') || 0);
+        case 'title_asc':
+          return a.title.localeCompare(b.title);
+        case 'title_desc':
+          return b.title.localeCompare(a.title);
+        case 'status_asc':
+          return getAuctionStatusText(a.status).localeCompare(getAuctionStatusText(b.status));
+        case 'price_asc':
+          return a.price - b.price;
+        case 'price_desc':
+          return b.price - a.price;
+        default:
+          return 0;
+      }
+    });
+  }, [lotsInAuction, lotSortBy]);
+
+  const paginatedLots = useMemo(() => {
+    if (platformSettings.searchPaginationType === 'numberedPages') {
+      const startIndex = (lotCurrentPage - 1) * (platformSettings.searchItemsPerPage || 10);
+      const endIndex = startIndex + (platformSettings.searchItemsPerPage || 10);
+      return sortedLots.slice(startIndex, endIndex);
+    }
+    return sortedLots.slice(0, lotVisibleItemCount);
+  }, [sortedLots, lotCurrentPage, lotVisibleItemCount, platformSettings]);
+
+  const handleLotSortChange = (newSortBy: string) => {
+    setLotSortBy(newSortBy);
+    setLotCurrentPage(1);
+    setLotVisibleItemCount(platformSettings.searchLoadMoreCount || 10);
+  };
+
+  const handleLotPageChange = (newPage: number) => {
+    setLotCurrentPage(newPage);
+  };
+
+  const handleLoadMoreLots = () => {
+    setLotVisibleItemCount(prev => Math.min(prev + (platformSettings.searchLoadMoreCount || 10), sortedLots.length));
+  };
+
+  const renderLotListItemForAdmin = (lot: Lot) => (
+    <Card key={lot.id} className="mb-2 shadow-sm hover:shadow-md transition-shadow">
+      <CardContent className="p-3">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
+          <div className="flex-grow">
+            <Link href={`/admin/lots/${lot.publicId || lot.id}/edit`} className="hover:text-primary">
+              <h4 className="font-semibold text-sm">{lot.number ? `Lote ${lot.number}: ` : ''}{lot.title}</h4>
+            </Link>
+            <p className="text-xs text-muted-foreground">ID: {lot.publicId || lot.id}</p>
+            <Badge variant="outline" className={`text-xs mt-1 ${getLotStatusColor(lot.status)} border-current`}>
+                {getAuctionStatusText(lot.status)}
+            </Badge>
+          </div>
+          <div className="flex-shrink-0 text-right">
+            <p className="text-sm font-semibold">R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            <p className="text-xs text-muted-foreground">
+              {lot.endDate ? format(new Date(lot.endDate), 'dd/MM/yy HH:mm', { locale: ptBR }) : 'N/A'}
+            </p>
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter className="p-2 border-t flex justify-end items-center gap-1">
+        <Button variant="ghost" size="icon" asChild className="text-sky-600 hover:text-sky-700 h-7 w-7">
+          <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`} target="_blank" title="Ver Lote (Público)">
+            <Eye className="h-3.5 w-3.5" />
+          </Link>
+        </Button>
+        <Button variant="ghost" size="icon" asChild className="text-blue-600 hover:text-blue-700 h-7 w-7">
+          <Link href={`/admin/lots/${lot.publicId || lot.id}/edit`} title="Editar Lote">
+            <Edit className="h-3.5 w-3.5" />
+          </Link>
+        </Button>
+        <DeleteLotButton lotId={lot.publicId || lot.id} lotTitle={lot.title} auctionId={auction.publicId || auctionId} onDeleteSuccess={fetchPageData} />
+      </CardFooter>
+    </Card>
+  );
+
+  // For grid view, we can use a simplified card or adapt LotCard if it's too complex
+  const renderLotGridItemForAdmin = (lot: Lot) => (
+    <Card key={lot.id} className="flex flex-col shadow-sm hover:shadow-md transition-shadow">
+        <CardHeader className="p-3">
+            <Link href={`/admin/lots/${lot.publicId || lot.id}/edit`} className="hover:text-primary">
+                <CardTitle className="text-sm font-semibold line-clamp-2 leading-tight h-8">
+                    {lot.number ? `Lote ${lot.number}: ` : ''}{lot.title}
+                </CardTitle>
+            </Link>
+            <CardDescription className="text-xs">ID: {lot.publicId || lot.id}</CardDescription>
+        </CardHeader>
+        <CardContent className="p-3 flex-grow space-y-1 text-xs">
+            <Badge variant="outline" className={`${getLotStatusColor(lot.status)} border-current`}>
+                {getAuctionStatusText(lot.status)}
+            </Badge>
+            <p className="font-medium">R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            <p className="text-muted-foreground">
+              Fim: {lot.endDate ? format(new Date(lot.endDate), 'dd/MM HH:mm', { locale: ptBR }) : 'N/A'}
+            </p>
+        </CardContent>
+      <CardFooter className="p-2 border-t flex justify-end items-center gap-1">
+        <Button variant="ghost" size="icon" asChild className="text-sky-600 hover:text-sky-700 h-7 w-7">
+          <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`} target="_blank" title="Ver Lote (Público)">
+            <Eye className="h-3.5 w-3.5" />
+          </Link>
+        </Button>
+        <Button variant="ghost" size="icon" asChild className="text-blue-600 hover:text-blue-700 h-7 w-7">
+          <Link href={`/admin/lots/${lot.publicId || lot.id}/edit`} title="Editar Lote">
+            <Edit className="h-3.5 w-3.5" />
+          </Link>
+        </Button>
+        <DeleteLotButton lotId={lot.publicId || lot.id} lotTitle={lot.title} auctionId={auction.publicId || auctionId} onDeleteSuccess={fetchPageData} />
+      </CardFooter>
+    </Card>
+  );
 
   if (isLoading || !auction) {
     return <div className="flex justify-center items-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
@@ -282,7 +422,7 @@ export default function EditAuctionPage() {
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Lotes do Leilão ({lotsInAuction.length})</CardTitle>
+            <CardTitle>Lotes do Leilão</CardTitle>
             <CardDescription>Lista de lotes associados a este leilão.</CardDescription>
           </div>
           <Button asChild>
@@ -292,59 +432,26 @@ export default function EditAuctionPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          {lotsInAuction.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">Nenhum lote encontrado para este leilão.</p>
-          ) : (
-            <div className="border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[80px]">ID Lote</TableHead>
-                    <TableHead>Título</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Preço</TableHead>
-                    <TableHead>Encerra em</TableHead>
-                    <TableHead className="text-right w-[120px]">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {lotsInAuction.map((lot) => (
-                    <TableRow key={lot.id}>
-                      <TableCell className="font-mono text-xs">{lot.publicId ? lot.publicId.substring(0,10) : lot.id.substring(0,10)}{ (lot.publicId || lot.id).length > 10 ? '...' : ''}</TableCell>
-                      <TableCell className="font-medium">{lot.title}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={`text-xs ${getLotStatusColor(lot.status)} border-current`}>
-                            {getAuctionStatusText(lot.status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">
-                        R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {lot.endDate ? format(new Date(lot.endDate), 'dd/MM/yy HH:mm', { locale: ptBR }) : 'N/A'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" asChild className="text-sky-600 hover:text-sky-700">
-                          <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`} target="_blank">
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" size="icon" asChild className="text-blue-600 hover:text-blue-700">
-                          <Link href={`/admin/lots/${lot.publicId || lot.id}/edit`}>
-                            <Edit className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <DeleteLotButton lotId={lot.publicId || lot.id} lotTitle={lot.title} auctionId={auction.publicId || auctionId} onDeleteSuccess={fetchPageData} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+          <SearchResultsFrame
+            items={paginatedLots}
+            totalItemsCount={lotsInAuction.length}
+            renderGridItem={renderLotGridItemForAdmin}
+            renderListItem={renderLotListItemForAdmin}
+            sortOptions={lotSortOptions}
+            initialSortBy={lotSortBy}
+            onSortChange={handleLotSortChange}
+            platformSettings={platformSettings}
+            isLoading={isLoading}
+            searchTypeLabel="lotes"
+            currentPage={lotCurrentPage}
+            visibleItemCount={lotVisibleItemCount}
+            onPageChange={handleLotPageChange}
+            onLoadMore={handleLoadMoreLots}
+          />
         </CardContent>
       </Card>
     </div>
   );
 }
     
+
