@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown, Tag } from 'lucide-react';
+import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown, Tag, Layers } from 'lucide-react';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
@@ -196,7 +196,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
     if (upperType.includes('MAQUINÁRIO') || upperType.includes('TRATOR')) {
         return <Truck className="h-3 w-3 text-muted-foreground" />;
     }
-    return <Info className="h-3 w-3 text-muted-foreground" />;
+    return <Tag className="h-3 w-3 text-muted-foreground" />; // Default to Tag
   };
 
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
@@ -345,16 +345,21 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
             {lot.title}
           </h3>
         </Link>
-        <div className="flex justify-between items-center text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <MapPin className="h-3 w-3" />
-            <span className="truncate" title={displayLocation}>{displayLocation}</span>
-          </div>
-          <div className="flex items-center gap-1">
+        <div className="flex items-center text-xs text-muted-foreground">
             {getTypeIcon(lot.type)}
-            <span className="truncate" title={lot.type}>{lot.type}</span>
-          </div>
+            <span className="truncate ml-1" title={lot.type}>{lot.type}</span>
+            {lot.subcategoryName && (
+                <>
+                    <Layers className="h-3 w-3 ml-1.5 mr-0.5 text-primary/80" />
+                    <span className="truncate" title={lot.subcategoryName}>{lot.subcategoryName}</span>
+                </>
+            )}
         </div>
+        <div className="flex items-center text-xs text-muted-foreground">
+            <MapPin className="h-3 w-3 mr-1" />
+            <span className="truncate" title={displayLocation}>{displayLocation}</span>
+        </div>
+
         <div className="flex justify-between items-center text-xs text-muted-foreground">
             <div className="flex items-center gap-1 truncate" title={`Leilão: ${lot.auctionName}`}>
                 <ListChecks className="h-3 w-3" />
@@ -362,7 +367,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
             </div>
             <div className="flex items-center gap-1">
                 <Eye className="h-3 w-3" />
-                <span>{lot.views}</span>
+                <span>{lot.views || 0}</span>
             </div>
         </div>
       </CardContent>
@@ -370,17 +375,19 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
       <CardFooter className="p-3 border-t flex-col items-start space-y-1.5">
         <div className="w-full">
           <p className="text-xs text-muted-foreground">Lance Mínimo</p>
-          <p className={`text-xl font-bold ${isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
+          <p className={`text-xl font-bold ${isPast(new Date(lot.endDate || '')) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
             R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
-        <div className={`flex items-center text-xs text-muted-foreground ${isPast(new Date(lot.endDate)) ? 'line-through' : ''}`}>
-          <CalendarDays className="h-3 w-3 mr-1" />
-          <span>{format(new Date(lot.endDate), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
-        </div>
+        {lot.endDate && (
+          <div className={`flex items-center text-xs text-muted-foreground ${isPast(new Date(lot.endDate)) ? 'line-through' : ''}`}>
+            <CalendarDays className="h-3 w-3 mr-1" />
+            <span>{format(new Date(lot.endDate), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+          </div>
+        )}
 
         <div className="w-full flex justify-between items-center text-xs">
-            {showCountdownOnThisCard && (
+            {showCountdownOnThisCard && lot.endDate && (
               <TimeRemainingBadge
                 endDate={lot.endDate}
                 status={lot.status}
@@ -389,23 +396,23 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
                 urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
               />
             )}
-            {!showCountdownOnThisCard && lot.status === 'ABERTO_PARA_LANCES' && !isPast(new Date(lot.endDate)) && (
+            {!showCountdownOnThisCard && lot.endDate && lot.status === 'ABERTO_PARA_LANCES' && !isPast(new Date(lot.endDate)) && (
               <Badge variant="outline" className="text-xs font-medium">
                   <Clock className="h-3 w-3 mr-1" />
                   Aberto
               </Badge>
             )}
-            {!showCountdownOnThisCard && (lot.status !== 'ABERTO_PARA_LANCES' || isPast(new Date(lot.endDate))) && (
+            {!showCountdownOnThisCard && lot.endDate && (lot.status !== 'ABERTO_PARA_LANCES' || isPast(new Date(lot.endDate))) && (
               <Badge variant="outline" className="text-xs font-medium">
                   <Clock className="h-3 w-3 mr-1" />
                   {getAuctionStatusText(lot.status)}
               </Badge>
             )}
-            <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : ''}`}>
+            <div className={`flex items-center gap-1 ${lot.endDate && isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : ''}`}>
                 <Gavel className="h-3 w-3" />
                 <span>{lot.bidsCount || 0} Lances</span>
             </div>
-            <span className={`font-semibold ${isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.number || lot.id.replace('LOTE', '')}</span>
+            <span className={`font-semibold ${lot.endDate && isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.number || lot.id.replace('LOTE', '')}</span>
         </div>
          <Button asChild className="w-full mt-2" size="sm">
             <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>Ver Detalhes do Lote</Link>

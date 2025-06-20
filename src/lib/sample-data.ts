@@ -767,7 +767,9 @@ export const sampleLots: Lot[] = sampleLotsRaw.map(lot => {
 
     return {
         ...lot,
-        type: categoryInfo?.name || 'Desconhecida',
+        type: categoryInfo?.name || 'Desconhecida', // 'type' on Lot now holds the category name
+        categoryId: categoryInfo?.id, // Store the actual categoryId
+        subcategoryId: subcategoryInfo?.id, // Store the actual subcategoryId
         subcategoryName: subcategoryInfo?.name,
         auctionName: auctionInfo?.title || 'Leilão Desconhecido',
         sellerName: sellerInfo?.name || auctionInfo?.seller || 'Vendedor Desconhecido',
@@ -837,7 +839,7 @@ export const sampleBids: BidInfo[] = sampleLots.flatMap(lot => {
     }
     lot.bidsCount = (lot.bidsCount || 0) + bids.length;
     return bids;
-}).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+}).sort((a, b) => new Date(b.timestamp as Date).getTime() - new Date(a.timestamp as Date).getTime());
 
 
 export const sampleLotReviews: Review[] = sampleLots.flatMap(lot => {
@@ -1135,5 +1137,6 @@ sampleLotsRaw.forEach(lot => {
         lot.sellerId = `seller-${slugify(seller.name)}`;
     }
 });
+
 
 

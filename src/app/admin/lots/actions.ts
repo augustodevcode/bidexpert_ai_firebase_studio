@@ -45,7 +45,7 @@ export async function getLots(auctionIdParam?: string): Promise<Lot[]> {
   }
   // Enrich with names if IDs are present (simulating joins)
   for (const lot of lotsToReturn) {
-    if (lot.categoryId && !lot.type) {
+    if (lot.categoryId && !lot.type) { // 'type' will hold the category name
         const cat = sampleLotCategories.find(c => c.id === lot.categoryId || c.slug === lot.categoryId);
         if (cat) lot.type = cat.name;
     }
@@ -62,7 +62,7 @@ export async function getLots(auctionIdParam?: string): Promise<Lot[]> {
         if (st) lot.stateUf = st.uf;
     }
     if (lot.cityId && !lot.cityName) {
-        const ci = sampleCities.find(c => String(c.id) === lot.cityId || `${c.stateId}-${c.slug}` === lot.cityId);
+        const ci = sampleCities.find(c => String(c.id) === lot.cityId || `${c.stateId}-${c.slug}` === lot.cityId); // Assuming cityId can be composite for sample data
         if (ci) lot.cityName = ci.name;
     }
   }
@@ -74,8 +74,8 @@ export async function getLot(idOrPublicId: string): Promise<Lot | null> {
   await delay(50);
   const lot = sampleLots.find(l => l.id === idOrPublicId || l.publicId === idOrPublicId);
   if (lot) {
-    const enrichedLot = JSON.parse(JSON.stringify(lot));
-    if (enrichedLot.categoryId && !enrichedLot.type) {
+    const enrichedLot = JSON.parse(JSON.stringify(lot)); // Deep copy
+    if (enrichedLot.categoryId && !enrichedLot.type) { // 'type' will hold the category name
         const cat = sampleLotCategories.find(c => c.id === enrichedLot.categoryId || c.slug === enrichedLot.categoryId);
         if (cat) enrichedLot.type = cat.name;
     }
