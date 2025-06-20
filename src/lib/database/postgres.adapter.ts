@@ -321,7 +321,7 @@ function mapToLot(row: QueryResultRow): Lot {
     fuelType: row.fuel_type,
     cylinders: row.cylinders,
     restraintSystem: row.restraint_system,
-    exteriorInteriorColor: row.exterior_interior_color,
+    exteriorInteriorColor: row.exteriorinteriorcolor,
     options: row.options,
     manufacturedIn: row.manufactured_in,
     vehicleClass: row.vehicle_class,
@@ -1371,12 +1371,65 @@ export class PostgresAdapter implements IDatabaseAdapter {
     }
   }
 
-  // Other placeholders
-  async disconnect(): Promise<void> {
-    if (pool) {
-      await pool.end();
-      console.log('[PostgresAdapter] Pool de conexões PostgreSQL encerrado.');
-    }
-  }
+  // --- PLACEHOLDER METHODS ---
+  async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> { console.warn("createState not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async getStates(): Promise<StateInfo[]> { console.warn("getStates not implemented in PostgresAdapter"); return []; }
+  async getState(idOrSlugOrUf: string): Promise<StateInfo | null> { console.warn("getState not implemented in PostgresAdapter"); return null; }
+  async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateState not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteState(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteState not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> { console.warn("createCity not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async getCities(stateIdOrSlugFilter?: string): Promise<CityInfo[]> { console.warn("getCities not implemented in PostgresAdapter"); return []; }
+  async getCity(idOrCompositeSlug: string): Promise<CityInfo | null> { console.warn("getCity not implemented in PostgresAdapter"); return null; }
+  async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateCity not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteCity(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteCity not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> { console.warn("createAuctioneer not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { console.warn("getAuctioneers not implemented in PostgresAdapter"); return []; }
+  async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> { console.warn("getAuctioneer not implemented in PostgresAdapter"); return null; }
+  async updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateAuctioneer not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteAuctioneer not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null> { console.warn("getAuctioneerBySlug not implemented in PostgresAdapter"); return null; }
+  async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> { console.warn("getAuctioneerByName not implemented in PostgresAdapter"); return null; }
+  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> { console.warn("createSeller not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async getSellers(): Promise<SellerProfileInfo[]> { console.warn("getSellers not implemented in PostgresAdapter"); return []; }
+  async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> { console.warn("getSeller not implemented in PostgresAdapter"); return null; }
+  async updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateSeller not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteSeller not implemented in PostgresAdapter"); return null; }
+  async getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null> { console.warn("getSellerBySlug not implemented in PostgresAdapter"); return null; }
+  async getSellerByName(name: string): Promise<SellerProfileInfo | null> { console.warn("getSellerByName not implemented in PostgresAdapter"); return null; }
+  async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> { console.warn("createAuction not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async getAuctions(): Promise<Auction[]> { console.warn("getAuctions not implemented in PostgresAdapter"); return []; }
+  async getAuction(idOrPublicId: string): Promise<Auction | null> { console.warn("getAuction not implemented in PostgresAdapter"); return null; }
+  async updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> { console.warn("updateAuction not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteAuction(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteAuction not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> { console.warn("getAuctionsBySellerSlug not implemented in PostgresAdapter"); return []; }
+  async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> { console.warn("createLot not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async getLots(auctionIdParam?: string): Promise<Lot[]> { console.warn("getLots not implemented in PostgresAdapter"); return []; }
+  async getLot(idOrPublicId: string): Promise<Lot | null> { console.warn("getLot not implemented in PostgresAdapter"); return null; }
+  async updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> { console.warn("updateLot not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteLot not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> { console.warn("getBidsForLot not implemented in PostgresAdapter"); return []; }
+  async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }> { console.warn("placeBidOnLot not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> { console.warn("getReviewsForLot not implemented in PostgresAdapter"); return []; }
+  async createReview(review: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; reviewId?: string; }> { console.warn("createReview not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]> { console.warn("getQuestionsForLot not implemented in PostgresAdapter"); return []; }
+  async createQuestion(question: Omit<LotQuestion, 'id' | 'createdAt' | 'answeredAt' | 'answeredByUserId' | 'answeredByUserDisplayName' | 'isPublic'>): Promise<{ success: boolean; message: string; questionId?: string; }> { console.warn("createQuestion not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> { console.warn("answerQuestion not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> { console.warn("updateUserProfile not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async getUsersWithRoles(): Promise<UserProfileData[]> { console.warn("getUsersWithRoles not implemented in PostgresAdapter"); return []; }
+  async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { console.warn("updateUserRole not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteUserProfile not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> { console.warn("createRole not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async getRoles(): Promise<Role[]> { console.warn("getRoles not implemented in PostgresAdapter"); return []; }
+  async getRole(id: string): Promise<Role | null> { console.warn("getRole not implemented in PostgresAdapter"); return null; }
+  async getRoleByName(name: string): Promise<Role | null> { console.warn("getRoleByName not implemented in PostgresAdapter"); return null; }
+  async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateRole not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteRole(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteRole not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> { console.warn("createMediaItem not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async getMediaItems(): Promise<MediaItem[]> { console.warn("getMediaItems not implemented in PostgresAdapter"); return []; }
+  async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> { console.warn("updateMediaItemMetadata not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteMediaItemFromDb not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> { console.warn("linkMediaItemsToLot not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> { console.warn("unlinkMediaItemFromLot not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
 }
 
+    

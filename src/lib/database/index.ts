@@ -7,14 +7,17 @@ let dbInstance: IDatabaseAdapter | undefined;
 // Lista de métodos essenciais que o adapter DEVE ter
 const ESSENTIAL_ADAPTER_METHODS: (keyof IDatabaseAdapter)[] = [
   'initializeSchema',
-  'createLotCategory', 'getLotCategories', 'getLotCategory', 'updateLotCategory', 'deleteLotCategory',
+  'createLotCategory', 'getLotCategories', 'getLotCategory', 'getLotCategoryByName', 'updateLotCategory', 'deleteLotCategory',
+  'createSubcategory', 'getSubcategories', 'getSubcategory', 'getSubcategoryBySlug', 'updateSubcategory', 'deleteSubcategory',
   'createState', 'getStates', 'getState', 'updateState', 'deleteState',
   'createCity', 'getCities', 'getCity', 'updateCity', 'deleteCity',
-  'createAuctioneer', 'getAuctioneers', 'getAuctioneer', 'updateAuctioneer', 'deleteAuctioneer', 'getAuctioneerBySlug',
-  'createSeller', 'getSellers', 'getSeller', 'updateSeller', 'deleteSeller', 'getSellerBySlug',
+  'createAuctioneer', 'getAuctioneers', 'getAuctioneer', 'updateAuctioneer', 'deleteAuctioneer', 'getAuctioneerBySlug', 'getAuctioneerByName',
+  'createSeller', 'getSellers', 'getSeller', 'updateSeller', 'deleteSeller', 'getSellerBySlug', 'getSellerByName',
   'createAuction', 'getAuctions', 'getAuction', 'updateAuction', 'deleteAuction', 'getAuctionsBySellerSlug',
   'createLot', 'getLots', 'getLot', 'updateLot', 'deleteLot',
   'getBidsForLot', 'placeBidOnLot',
+  'getReviewsForLot', 'createReview',
+  'getQuestionsForLot', 'createQuestion', 'answerQuestion',
   'getUserProfileData', 'updateUserProfile', 'ensureUserRole', 'getUsersWithRoles', 'updateUserRole', 'deleteUserProfile', 'getUserByEmail',
   'createRole', 'getRoles', 'getRole', 'getRoleByName', 'updateRole', 'deleteRole', 'ensureDefaultRolesExist',
   'createMediaItem', 'getMediaItems', 'updateMediaItemMetadata', 'deleteMediaItemFromDb', 'linkMediaItemsToLot', 'unlinkMediaItemFromLot',
@@ -30,8 +33,6 @@ function isAdapterInstanceValid(adapter: IDatabaseAdapter | undefined, systemCon
   for (const method of ESSENTIAL_ADAPTER_METHODS) {
     if (typeof adapter[method] !== 'function') {
       console.warn(`[DB Factory - Sanity Check for ${systemContext}] Method ${method} is NOT a function on the adapter instance. Adapter constructor: ${adapter?.constructor?.name}`);
-      console.warn(`[DB Factory - Sanity Check for ${systemContext}] Adapter keys: ${Object.keys(adapter).join(', ')}`);
-      console.warn(`[DB Factory - Sanity Check for ${systemContext}] Adapter prototype keys: ${Object.keys(Object.getPrototypeOf(adapter) || {}).join(', ')}`);
       allMethodsPresent = false;
     }
   }
@@ -49,7 +50,7 @@ export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
 
   if (dbInstance) {
     if (isAdapterInstanceValid(dbInstance, `cached ${dbInstance.constructor.name}`)) {
-      console.log(`[DB Factory] Reusing valid existing dbInstance of type: ${dbInstance.constructor.name}. Has getRoles: ${typeof dbInstance.getRoles === 'function'}, Has updateUserProfile: ${typeof dbInstance.updateUserProfile === 'function'}`);
+      console.log(`[DB Factory] Reusing valid existing dbInstance of type: ${dbInstance.constructor.name}.`);
       return dbInstance;
     } else {
       console.warn(`[DB Factory] Cached dbInstance of type ${dbInstance?.constructor?.name} was MALFORMED. Forcing re-initialization.`);
@@ -92,6 +93,8 @@ export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
   }
   
   dbInstance = newInstance;
-  console.log(`[DB Factory - getDatabaseAdapter EXIT] New dbInstance created and cached. Type: ${dbInstance.constructor.name}. Has getRoles: ${typeof dbInstance.getRoles === 'function'}, Has updateUserProfile: ${typeof dbInstance.updateUserProfile === 'function'}`);
+  console.log(`[DB Factory - getDatabaseAdapter EXIT] New dbInstance created and cached. Type: ${dbInstance.constructor.name}.`);
   return dbInstance;
 }
+
+    

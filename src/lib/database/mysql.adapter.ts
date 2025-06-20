@@ -1268,4 +1268,5 @@ export class MySqlAdapter implements IDatabaseAdapter {
     }
   }
 }
+
     
