@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown } from 'lucide-react';
+import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown, Tag } from 'lucide-react';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
@@ -114,9 +114,9 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
 
   const platformSettings = platformSettingsProp || samplePlatformSettings;
   const mentalTriggersGlobalSettings = platformSettings.mentalTriggerSettings || {};
-  // Use searchGrid as a default if no specific config is passed for the section this card is in.
+
   const sectionBadges = badgeVisibilityConfig || platformSettings.sectionBadgeVisibility?.searchGrid || {
-    showStatusBadge: true, // Default to true if nothing is configured
+    showStatusBadge: true,
     showDiscountBadge: true,
     showUrgencyTimer: true,
     showPopularityBadge: true,
@@ -340,7 +340,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
       </div>
 
       <CardContent className="p-3 flex-grow space-y-1.5">
-        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
+        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block mt-1"> {/* Adicionado mt-1 para o link do título */}
           <h3 className="text-sm font-semibold hover:text-primary transition-colors leading-tight min-h-[2.2em] line-clamp-2">
             {lot.title}
           </h3>
@@ -389,7 +389,13 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
                 urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
               />
             )}
-            {!showCountdownOnThisCard && (
+            {!showCountdownOnThisCard && lot.status === 'ABERTO_PARA_LANCES' && !isPast(new Date(lot.endDate)) && (
+              <Badge variant="outline" className="text-xs font-medium">
+                  <Clock className="h-3 w-3 mr-1" />
+                  Aberto
+              </Badge>
+            )}
+            {!showCountdownOnThisCard && (lot.status !== 'ABERTO_PARA_LANCES' || isPast(new Date(lot.endDate))) && (
               <Badge variant="outline" className="text-xs font-medium">
                   <Clock className="h-3 w-3 mr-1" />
                   {getAuctionStatusText(lot.status)}
@@ -412,7 +418,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
         isOpen={isPreviewModalOpen}
         onClose={() => setIsPreviewModalOpen(false)}
       />
-    <LotMapPreviewModal
+       <LotMapPreviewModal
         lot={lot}
         platformSettings={platformSettings}
         isOpen={isMapModalOpen}
@@ -435,7 +441,7 @@ export default function LotCard({ lot, badgeVisibilityConfig, platformSettingsPr
         <Card className="flex flex-col overflow-hidden h-full shadow-md rounded-lg group">
              <div className="relative aspect-[16/10] bg-muted animate-pulse"></div>
              <CardContent className="p-3 flex-grow space-y-1.5">
-                <div className="h-4 bg-muted rounded w-3/4 animate-pulse"></div>
+                <div className="h-4 bg-muted rounded w-3/4 animate-pulse mt-1"></div> {/* Ajuste para o título */}
                 <div className="h-8 bg-muted rounded w-full animate-pulse mt-1"></div>
                 <div className="h-4 bg-muted rounded w-1/2 animate-pulse mt-1"></div>
              </CardContent>
@@ -451,3 +457,5 @@ export default function LotCard({ lot, badgeVisibilityConfig, platformSettingsPr
 
     return <LotCardClientContent lot={lot} badgeVisibilityConfig={badgeVisibilityConfig} platformSettingsProp={platformSettingsProp} />;
   }
+
+    

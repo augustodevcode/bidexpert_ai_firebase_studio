@@ -114,7 +114,14 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
 
   const platformSettings = platformSettingsProp || samplePlatformSettings;
   const mentalTriggersGlobalSettings = platformSettings.mentalTriggerSettings || {};
-  const sectionBadges = badgeVisibilityConfig || platformSettings.sectionBadgeVisibility?.searchList || {};
+  const sectionBadges = badgeVisibilityConfig || platformSettings.sectionBadgeVisibility?.searchList || {
+    showStatusBadge: true, // Default
+    showDiscountBadge: true,
+    showUrgencyTimer: true,
+    showPopularityBadge: true,
+    showHotBidBadge: true,
+    showExclusiveBadge: true,
+  };
 
   const showCountdownOnThisCard = platformSettings.showCountdownOnCards !== false;
 
@@ -211,17 +218,17 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
     let triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
     const settings = mentalTriggersGlobalSettings;
 
-    if (settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) {
+    if (sectionBadges.showPopularityBadge !== false && settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) {
       triggers.push('MAIS VISITADO');
     }
-    if (settings.showHotBidBadge && (lot.bidsCount || 0) > (settings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') {
+    if (sectionBadges.showHotBidBadge !== false && settings.showHotBidBadge && (lot.bidsCount || 0) > (settings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') {
       triggers.push('LANCE QUENTE');
     }
-    if (settings.showExclusiveBadge && lot.isExclusive) {
+    if (sectionBadges.showExclusiveBadge !== false && settings.showExclusiveBadge && lot.isExclusive) {
         triggers.push('EXCLUSIVO');
     }
     return Array.from(new Set(triggers));
-  }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings]);
+  }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
 
 
   return (
@@ -326,7 +333,13 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
                         urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
                     />
                    )}
-                   {!showCountdownOnThisCard && (
+                   {!showCountdownOnThisCard && lot.status === 'ABERTO_PARA_LANCES' && !isPast(new Date(lot.endDate)) && (
+                    <Badge variant="outline" className="text-xs font-medium">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Aberto
+                    </Badge>
+                   )}
+                   {!showCountdownOnThisCard && (lot.status !== 'ABERTO_PARA_LANCES' || isPast(new Date(lot.endDate))) && (
                     <Badge variant="outline" className="text-xs font-medium">
                         <Clock className="h-3 w-3 mr-1" />
                         {getAuctionStatusText(lot.status)}
@@ -402,7 +415,7 @@ export default function LotListItem({ lot, badgeVisibilityConfig, platformSettin
              <div className="relative aspect-square h-full bg-muted animate-pulse w-1/3 md:w-1/4 flex-shrink-0"></div>
              <div className="flex flex-col flex-grow">
                 <CardContent className="p-4 flex-grow space-y-1.5">
-                    <div className="h-5 bg-muted rounded w-3/4 animate-pulse"></div>
+                    <div className="h-5 bg-muted rounded w-3/4 animate-pulse mt-1"></div> {/* Ajuste para o título */}
                     <div className="h-4 bg-muted rounded w-1/2 animate-pulse mt-1"></div>
                     <div className="h-4 bg-muted rounded w-full animate-pulse mt-1"></div>
                     <div className="h-4 bg-muted rounded w-2/3 animate-pulse mt-1"></div>
@@ -422,3 +435,4 @@ export default function LotListItem({ lot, badgeVisibilityConfig, platformSettin
     return <LotListItemClientContent lot={lot} badgeVisibilityConfig={badgeVisibilityConfig} platformSettingsProp={platformSettingsProp} />;
   }
 
+    
