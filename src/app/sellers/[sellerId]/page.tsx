@@ -1,13 +1,15 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { sampleAuctions, sampleLots, slugify, sampleSellers } from '@/lib/sample-data'; 
-import type { Auction, Lot, SellerProfileInfo } from '@/types';
+import { sampleAuctions, sampleLots, slugify, sampleSellers, samplePlatformSettings } from '@/lib/sample-data';
+import type { Auction, Lot, SellerProfileInfo, PlatformSettings } from '@/types';
 import AuctionCard from '@/components/auction-card';
 import LotCard from '@/components/lot-card';
+import LotListItem from '@/components/lot-list-item';
+import SearchResultsFrame from '@/components/search-results-frame';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -15,6 +17,16 @@ import { ChevronLeft, Building, CalendarDays, PackageOpen, Star, Loader2 } from 
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 // Removido: import Breadcrumbs from '@/components/ui/breadcrumbs';
+
+const sortOptionsLots = [
+  { value: 'relevance', label: 'Relevância' },
+  { value: 'endDate_asc', label: 'Data Encerramento: Próximos' },
+  { value: 'endDate_desc', label: 'Data Encerramento: Distantes' },
+  { value: 'price_asc', label: 'Preço: Menor para Maior' },
+  { value: 'price_desc', label: 'Preço: Maior para Menor' },
+  { value: 'views_desc', label: 'Mais Visitados' },
+];
+
 
 export default function SellerDetailsPage() {
   const params = useParams();
@@ -26,13 +38,25 @@ export default function SellerDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const platformSettings = samplePlatformSettings as PlatformSettings;
+  const {
+    searchPaginationType = 'loadMore',
+    searchItemsPerPage = 6, // Ajustado para menos itens por página na visão geral do comitente
+    searchLoadMoreCount = 6
+  } = platformSettings;
+
+  const [lotSortBy, setLotSortBy] = useState<string>('endDate_asc');
+  const [currentLotPage, setCurrentLotPage] = useState(1);
+  const [visibleLotCount, setVisibleLotCount] = useState(searchLoadMoreCount);
+
+
   useEffect(() => {
     if (sellerIdSlug) {
       setIsLoading(true);
       setError(null);
 
       try {
-        const allSellers = sampleSellers; 
+        const allSellers = sampleSellers;
         const foundSeller = allSellers.find(s => s.slug === sellerIdSlug || s.publicId === sellerIdSlug || s.id === sellerIdSlug);
 
         if (!foundSeller) {
@@ -41,34 +65,39 @@ export default function SellerDetailsPage() {
           setIsLoading(false);
           return;
         }
-        
+
         setSellerProfile(foundSeller);
 
-        const auctionsByThisSeller = sampleAuctions.filter(auction => 
-          (auction.sellerId && auction.sellerId === foundSeller.id) || // Check by ID first
-          (auction.seller && slugify(auction.seller) === sellerIdSlug) 
+        const auctionsByThisSeller = sampleAuctions.filter(auction =>
+          (auction.sellerId && auction.sellerId === foundSeller.id) ||
+          (auction.seller && slugify(auction.seller) === sellerIdSlug)
         );
         setRelatedAuctions(auctionsByThisSeller);
 
-        let lotsByThisSeller = sampleLots.filter(lot => 
+        let lotsByThisSeller = sampleLots.filter(lot =>
           (lot.sellerId && lot.sellerId === foundSeller.id) ||
           (lot.sellerName && slugify(lot.sellerName) === sellerIdSlug)
         );
-        
+
         auctionsByThisSeller.forEach(auction => {
-          (auction.lots || []).forEach(auctionLot => { 
-            if (((!auctionLot.sellerName && auction.sellerId === foundSeller.id) || (auctionLot.sellerName && slugify(auctionLot.sellerName) === sellerIdSlug)) && 
+          (auction.lots || []).forEach(auctionLot => {
+            if (((!auctionLot.sellerName && auction.sellerId === foundSeller.id) || (auctionLot.sellerName && slugify(auctionLot.sellerName) === sellerIdSlug)) &&
                 !lotsByThisSeller.find(l => l.id === auctionLot.id)) {
-              lotsByThisSeller.push(auctionLot);
+              lotsByThisSeller.push({...auctionLot, auctionName: auction.title}); // Adiciona auctionName
             }
           });
         });
-        
+
         const uniqueLots = lotsByThisSeller.filter((lot, index, self) =>
           index === self.findIndex((l) => (l.id === lot.id))
-        );
+        ).map(lot => ({ // Garante que lotes tenham auctionName
+            ...lot,
+            auctionName: lot.auctionName || sampleAuctions.find(a => a.id === lot.auctionId)?.title || "Leilão Desconhecido"
+        }));
         setRelatedLots(uniqueLots);
-        
+        setCurrentLotPage(1);
+        setVisibleLotCount(searchLoadMoreCount);
+
       } catch (e) {
         console.error("Error processing seller data:", e);
         setError("Erro ao processar dados do comitente.");
@@ -79,7 +108,62 @@ export default function SellerDetailsPage() {
       setError("Slug/ID do comitente não fornecido.");
       setIsLoading(false);
     }
-  }, [sellerIdSlug]);
+  }, [sellerIdSlug, searchLoadMoreCount]);
+
+  const sortedLots = useMemo(() => {
+    return [...relatedLots].sort((a, b) => {
+      switch (lotSortBy) {
+        case 'endDate_asc':
+          return new Date(a.endDate).getTime() - new Date(b.endDate).getTime();
+        case 'endDate_desc':
+          return new Date(b.endDate).getTime() - new Date(a.endDate).getTime();
+        case 'price_asc':
+          return a.price - b.price;
+        case 'price_desc':
+          return b.price - a.price;
+        case 'views_desc':
+          return (b.views || 0) - (a.views || 0);
+        case 'relevance':
+        default:
+          // Simple relevance: open lots first, then by end date
+          if (a.status === 'ABERTO_PARA_LANCES' && b.status !== 'ABERTO_PARA_LANCES') return -1;
+          if (a.status !== 'ABERTO_PARA_LANCES' && b.status === 'ABERTO_PARA_LANCES') return 1;
+          return new Date(a.endDate).getTime() - new Date(b.endDate).getTime();
+      }
+    });
+  }, [relatedLots, lotSortBy]);
+
+  const paginatedLots = useMemo(() => {
+    if (searchPaginationType === 'numberedPages') {
+      const startIndex = (currentLotPage - 1) * searchItemsPerPage;
+      const endIndex = startIndex + searchItemsPerPage;
+      return sortedLots.slice(startIndex, endIndex);
+    }
+    return sortedLots.slice(0, visibleLotCount);
+  }, [sortedLots, currentLotPage, visibleLotCount, searchPaginationType, searchItemsPerPage]);
+
+  const handleLotSortChange = (newSortBy: string) => {
+    setLotSortBy(newSortBy);
+    setCurrentLotPage(1);
+    setVisibleLotCount(searchLoadMoreCount);
+  };
+
+  const handleLotPageChange = (newPage: number) => {
+    setCurrentLotPage(newPage);
+  };
+
+  const handleLoadMoreLots = () => {
+    setVisibleLotCount(prev => Math.min(prev + searchLoadMoreCount, sortedLots.length));
+  };
+
+  const renderLotGridItemForSellerPage = (lot: Lot, index: number): React.ReactNode => (
+    <LotCard key={lot.id} lot={lot} platformSettingsProp={platformSettings} />
+  );
+
+  const renderLotListItemForSellerPage = (lot: Lot, index: number): React.ReactNode => (
+    <LotListItem key={lot.id} lot={lot} platformSettingsProp={platformSettings} />
+  );
+
 
   if (isLoading) {
     return (
@@ -111,13 +195,12 @@ export default function SellerDetailsPage() {
       </div>
     );
   }
-  
+
   const sellerInitial = sellerProfile.name ? sellerProfile.name.charAt(0).toUpperCase() : 'S';
 
 
   return (
     <div className="space-y-8">
-      {/* Breadcrumbs removidos daqui */}
       <Card className="shadow-lg mb-8">
         <CardHeader>
           <div className="flex items-center justify-between mb-4">
@@ -170,12 +253,23 @@ export default function SellerDetailsPage() {
 
       {relatedLots.length > 0 && (
         <section>
-          <h2 className="text-2xl font-bold mb-4 mt-8 font-headline">Lotes Individuais de {sellerProfile.name}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {relatedLots.map(lot => (
-              <LotCard key={`${lot.auctionId}-${lot.id}`} lot={lot} />
-            ))}
-          </div>
+          <h2 className="text-2xl font-bold mb-4 mt-8 font-headline">Lotes de {sellerProfile.name}</h2>
+           <SearchResultsFrame
+              items={paginatedLots}
+              totalItemsCount={relatedLots.length}
+              renderGridItem={renderLotGridItemForSellerPage}
+              renderListItem={renderLotListItemForSellerPage}
+              sortOptions={sortOptionsLots}
+              initialSortBy={lotSortBy}
+              onSortChange={handleLotSortChange}
+              platformSettings={platformSettings}
+              isLoading={isLoading}
+              searchTypeLabel="lotes"
+              currentPage={currentLotPage}
+              visibleItemCount={visibleLotCount}
+              onPageChange={handleLotPageChange}
+              onLoadMore={handleLoadMoreLots}
+            />
         </section>
       )}
 
@@ -190,3 +284,5 @@ export default function SellerDetailsPage() {
   );
 }
 
+
+    
