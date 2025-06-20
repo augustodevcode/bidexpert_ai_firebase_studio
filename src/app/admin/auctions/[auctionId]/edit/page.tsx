@@ -2,11 +2,11 @@
 'use client'; 
 
 import AuctionForm from '../../auction-form';
-import { getAuction, updateAuction, deleteAuction } from '../../actions'; 
+import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '../../actions'; 
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
 import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
-import { notFound, useRouter, useParams } from 'next/navigation';
+import { notFound, useRouter, useParams } from 'next/navigation'; // useParams importado
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -32,7 +32,7 @@ import { getSellers } from '@/app/admin/sellers/actions';
 import { Separator } from '@/components/ui/separator';
 import React, { useEffect, useCallback, useMemo, useState } from 'react'; 
 import { useToast } from '@/hooks/use-toast';
-import SearchResultsFrame from '@/components/search-results-frame'; // Importar SearchResultsFrame
+import SearchResultsFrame from '@/components/search-results-frame';
 
 function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotId: string; lotTitle: string; auctionId: string; onDeleteSuccess: () => void }) {
   const [isDeleting, setIsDeleting] = React.useState(false);
@@ -193,8 +193,8 @@ function AuctionInfoDisplay({ auction }: { auction: Auction }) {
 
 
 export default function EditAuctionPage() {
-  const params = useParams();
-  const auctionId = params.auctionId as string; // Use type assertion
+  const paramsHook = useParams(); // Hook para obter parâmetros da rota
+  const auctionId = paramsHook.auctionId as string; 
   const [auction, setAuction] = React.useState<Auction | null>(null);
   const [categories, setCategories] = React.useState<LotCategory[]>([]);
   const [lotsInAuction, setLotsInAuction] = React.useState<Lot[]>([]);
@@ -204,7 +204,6 @@ export default function EditAuctionPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  // State for SearchResultsFrame (lots)
   const [lotSortBy, setLotSortBy] = useState<string>('number_asc');
   const [lotCurrentPage, setLotCurrentPage] = useState(1);
   const [lotVisibleItemCount, setLotVisibleItemCount] = useState(samplePlatformSettings.searchLoadMoreCount || 10);
@@ -231,7 +230,7 @@ export default function EditAuctionPage() {
         setLotsInAuction(fetchedLots);
         setAuctioneersList(fetchedAuctioneers);
         setSellersList(fetchedSellers);
-        setLotCurrentPage(1); // Reset pagination on data refresh
+        setLotCurrentPage(1); 
         setLotVisibleItemCount(platformSettings.searchLoadMoreCount || 10);
     } catch (error) {
         console.error("Error fetching data for edit auction page:", error);
@@ -248,12 +247,15 @@ export default function EditAuctionPage() {
   }, [fetchPageData]);
 
   async function handleUpdateAuction(data: Partial<AuctionFormData>) {
-    // 'use server'; // Removed - this is a client-side handler
+    // Esta é uma função handler de cliente, não uma Server Action inline.
+    // Ela chama a Server Action 'updateAuction' importada.
+    // Nenhuma diretiva 'use server' aqui.
     return updateAuction(auctionId, data);
   }
 
   async function handleDeleteLotAction(lotId: string, currentAuctionId: string) {
-    // 'use server'; // Removed - this is a client-side handler
+    // Esta é uma função handler de cliente.
+    // Nenhuma diretiva 'use server' aqui.
     const result = await deleteLot(lotId, currentAuctionId); 
     if (!result.success) {
         console.error("Failed to delete lot:", result.message);
@@ -352,12 +354,11 @@ export default function EditAuctionPage() {
             <Edit className="h-3.5 w-3.5" />
           </Link>
         </Button>
-        <DeleteLotButton lotId={lot.publicId || lot.id} lotTitle={lot.title} auctionId={auction.publicId || auctionId} onDeleteSuccess={fetchPageData} />
+        {auction && <DeleteLotButton lotId={lot.publicId || lot.id} lotTitle={lot.title} auctionId={auction.publicId || auctionId} onDeleteSuccess={fetchPageData} />}
       </CardFooter>
     </Card>
   );
 
-  // For grid view, we can use a simplified card or adapt LotCard if it's too complex
   const renderLotGridItemForAdmin = (lot: Lot) => (
     <Card key={lot.id} className="flex flex-col shadow-sm hover:shadow-md transition-shadow">
         <CardHeader className="p-3">
@@ -388,7 +389,7 @@ export default function EditAuctionPage() {
             <Edit className="h-3.5 w-3.5" />
           </Link>
         </Button>
-        <DeleteLotButton lotId={lot.publicId || lot.id} lotTitle={lot.title} auctionId={auction.publicId || auctionId} onDeleteSuccess={fetchPageData} />
+        {auction && <DeleteLotButton lotId={lot.publicId || lot.id} lotTitle={lot.title} auctionId={auction.publicId || auctionId} onDeleteSuccess={fetchPageData} />}
       </CardFooter>
     </Card>
   );
@@ -423,7 +424,7 @@ export default function EditAuctionPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Lotes do Leilão</CardTitle>
-            <CardDescription>Lista de lotes associados a este leilão.</CardDescription>
+            <CardDescription>Lista de lotes associados a este leilão ({lotsInAuction.length} no total).</CardDescription>
           </div>
           <Button asChild>
             <Link href={`/admin/lots/new?auctionId=${auction.publicId || auctionId}`}>
@@ -454,4 +455,3 @@ export default function EditAuctionPage() {
   );
 }
     
-

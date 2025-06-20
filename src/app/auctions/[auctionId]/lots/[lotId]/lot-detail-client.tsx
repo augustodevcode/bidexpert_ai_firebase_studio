@@ -1,12 +1,12 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
+import type { Lot, Auction, BidInfo, Review, LotQuestion, SellerProfileInfo, PlatformSettings } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Lot, Auction, BidInfo, SellerProfileInfo, Review, LotQuestion, PlatformSettings } from '@/types';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -43,7 +43,10 @@ import LotPreviewModal from '@/components/lot-preview-modal';
 import { hasPermission } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
 import LotAllBidsModal from '@/components/auction/lot-all-bids-modal';
-import LotCard from '@/components/lot-card'; // Importar LotCard
+import LotCard from '@/components/lot-card'; 
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+
 
 const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'admin@bidexpert.com.br'.toLowerCase();
 const SUPER_TEST_USER_UID_FOR_BYPASS = 'SUPER_TEST_USER_UID_PLACEHOLDER_AUG';
@@ -52,7 +55,7 @@ const SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS = 'Administrador BidExpert (Super T
 
 interface DetailTimeRemainingProps {
   endDate: Date | string;
-  startDate?: Date | string | null; // Adicionado
+  startDate?: Date | string | null; 
   status: Lot['status'];
   showUrgencyTimer?: boolean;
   urgencyThresholdDays?: number;
@@ -90,7 +93,7 @@ const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
         return;
       }
       
-      setDisplayMessage(null); // Clear message if countdown is active
+      setDisplayMessage(null); 
 
       const days = Math.floor(totalSecondsLeft / (3600 * 24));
       const hours = Math.floor((totalSecondsLeft % (3600 * 24)) / 3600);
@@ -133,7 +136,7 @@ const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
               <span className="text-3xl font-bold">{timeSegments.minutes}</span>
               <span className="text-xs uppercase">minutos</span>
             </div>
-            {parseInt(timeSegments.days, 10) === 0 && ( // Show seconds only if less than a day left
+            {parseInt(timeSegments.days, 10) === 0 && ( 
               <>
                 <span className="text-2xl font-light self-center pb-1">|</span>
                 <div className="flex flex-col items-center">
@@ -239,7 +242,8 @@ export default function LotDetailClientContent({
       };
       fetchDataForTabs();
     }
-  }, [lot, toast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lot?.id, toast]);
 
 
   const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || lot?.title}`.trim();
@@ -507,7 +511,7 @@ export default function LotDetailClientContent({
                     <Card className="shadow-lg">
                         <CardContent className="p-4 md:p-6">
                             <Tabs defaultValue="description" className="w-full">
-                                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-1 mb-4">
+                                <TabsList className="flex w-full flex-wrap gap-1 mb-4">
                                     <TabsTrigger value="description">Descrição</TabsTrigger>
                                     <TabsTrigger value="specification">Especificações</TabsTrigger>
                                     <TabsTrigger value="legal">Documentos</TabsTrigger>
@@ -570,6 +574,14 @@ export default function LotDetailClientContent({
                                     R$ {currentBidValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </p>
                                 <p className="text-xs text-muted-foreground">(BRL)</p>
+                                {lot.initialPrice && lot.price > lot.initialPrice && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Lance Inicial: <span className="line-through">R$ {lot.initialPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                  </p>
+                                )}
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Incremento Mínimo: <span className="font-semibold text-foreground">R$ {bidIncrement.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                </p>
                             </div>
                             {canUserBid ? (
                             <div className="space-y-2 pt-2">
@@ -669,3 +681,4 @@ export default function LotDetailClientContent({
     </>
   );
 }
+
