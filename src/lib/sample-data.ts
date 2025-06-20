@@ -1,5 +1,5 @@
 
-import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, CityInfo, MediaItem, PlatformSettings, MentalTriggerSettings, HomepageSectionConfig, BadgeVisibilitySettings, SectionBadgeConfig, MapSettings, AuctionStage, SearchPaginationType } from '@/types';
+import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, CityInfo, MediaItem, PlatformSettings, MentalTriggerSettings, HomepageSectionConfig, BadgeVisibilitySettings, SectionBadgeConfig, MapSettings, AuctionStage, SearchPaginationType, Subcategory } from '@/types';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays, addDays as dateFnsAddDays, isPast, addHours } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle } from 'lucide-react';
@@ -41,19 +41,31 @@ export const slugify = (text: string): string => {
 // 1. STATIC & RAW SAMPLE DATA DEFINITIONS
 // ============================================================================
 
-export const sampleLotCategoriesStatic: Omit<LotCategory, 'id' | 'createdAt' | 'updatedAt' | 'itemCount'>[] = [
-  { name: 'Imóveis', slug: 'imoveis', description: 'Casas, apartamentos, terrenos, salas comerciais, galpões, fazendas, sítios e chácaras.', subcategories: ['Apartamentos', 'Casas', 'Terrenos', 'Salas Comerciais', 'Galpões e Prédios', 'Imóveis Rurais', 'Vagas de Garagem', 'Glebas'] },
-  { name: 'Veículos', slug: 'veiculos', description: 'Carros, motos, caminhões, ônibus, utilitários e outros veículos terrestres.', subcategories: ['Carros', 'Motos', 'Caminhões e Ônibus', 'Veículos Pesados', 'Embarcações', 'Aeronaves'] },
-  { name: 'Máquinas e Equipamentos', slug: 'maquinas-e-equipamentos', description: 'Máquinas pesadas, agrícolas, industriais, equipamentos de construção e diversos.', subcategories: ['Máquinas Agrícolas', 'Máquinas Industriais', 'Equipamentos de Construção', 'Equipamentos de Mineração', 'Empilhadeiras e Transpaleteiras', 'Movimentação e Transporte'] },
-  { name: 'Eletrônicos e Tecnologia', slug: 'eletronicos-e-tecnologia', description: 'Celulares, computadores, notebooks, televisores, áudio, componentes e peças.', subcategories: ['Celulares e Tablets', 'Computadores e Notebooks', 'Televisores e Áudio', 'Componentes e Peças'] },
-  { name: 'Casa e Decoração', slug: 'casa-e-decoracao', description: 'Móveis, eletrodomésticos, utensílios de cozinha, itens de decoração e iluminação.', subcategories: ['Móveis Residenciais', 'Eletrodomésticos', 'Utensílios de Cozinha', 'Decoração e Iluminação', 'Cama, Mesa e Banho'] },
-  { name: 'Arte e Antiguidades', slug: 'arte-e-antiguidades', description: 'Obras de arte como pinturas e esculturas, móveis antigos e itens colecionáveis.', subcategories: ['Obras de Arte (Pinturas, Esculturas)', 'Antiguidades', 'Itens Colecionáveis', 'Numismática'] },
-  { name: 'Joias e Acessórios de Luxo', slug: 'joias-e-acessorios-de-luxo', description: 'Joias, relógios de pulso e bolso, bolsas de grife, canetas e artigos de luxo.', subcategories: ['Joias', 'Relógios de Luxo', 'Bolsas de Grife', 'Canetas Finas'] },
-  { name: 'Semoventes', slug: 'semoventes', description: 'Animais como bovinos, equinos, ovinos, caprinos e outros animais de produção ou estimação.', subcategories: ['Bovinos', 'Equinos', 'Ovinos e Caprinos', 'Aves', 'Outros Animais de Produção ou Estimação'] },
-  { name: 'Materiais e Sucatas', slug: 'materiais-e-sucatas', description: 'Materiais de construção civil, sucatas metálicas, resíduos industriais e recicláveis.', subcategories: ['Materiais de Construção Civil', 'Sucatas Metálicas (Ferrosas e Não Ferrosas)', 'Resíduos Industriais', 'Papel e Plástico Reciclável'] },
-  { name: 'Industrial (Geral)', slug: 'industrial-geral', description: 'Estoques industriais, matéria-prima, equipamentos de escritório (de empresas), e outros bens industriais.', subcategories: ['Estoques Industriais', 'Matéria-prima', 'Equipamentos de Escritório (Empresarial)', 'Mobiliário Corporativo'] },
-  { name: 'Serviços e Contratos', slug: 'servicos-e-contratos', description: 'Contratação de serviços, concessões e outras oportunidades contratuais.', subcategories: ['Serviços de TI', 'Serviços de Limpeza', 'Consultoria', 'Contratos de Fornecimento']},
-  { name: 'Outros Itens', slug: 'outros-itens', description: 'Consórcios, energia solar, direitos creditórios, itens diversos e oportunidades únicas.', subcategories: ['Consórcios', 'Energia Solar (Equipamentos)', 'Direitos Creditórios', 'Títulos e Valores Mobiliários', 'Vinhos e Bebidas Raras', 'Instrumentos Musicais', 'Bens Diversos'] },
+export const sampleLotCategoriesStatic: Omit<LotCategory, 'id' | 'createdAt' | 'updatedAt' | 'itemCount' | 'hasSubcategories'>[] = [
+  { name: 'Imóveis', slug: 'imoveis', description: 'Casas, apartamentos, terrenos, salas comerciais, galpões, fazendas, sítios e chácaras.' },
+  { name: 'Veículos', slug: 'veiculos', description: 'Carros, motos, caminhões, ônibus, utilitários e outros veículos terrestres.' },
+  { name: 'Máquinas e Equipamentos', slug: 'maquinas-e-equipamentos', description: 'Máquinas pesadas, agrícolas, industriais, equipamentos de construção e diversos.' },
+  { name: 'Eletrônicos e Tecnologia', slug: 'eletronicos-e-tecnologia', description: 'Celulares, computadores, notebooks, televisores, áudio, componentes e peças.' },
+  { name: 'Casa e Decoração', slug: 'casa-e-decoracao', description: 'Móveis, eletrodomésticos, utensílios de cozinha, itens de decoração e iluminação.' },
+  { name: 'Arte e Antiguidades', slug: 'arte-e-antiguidades', description: 'Obras de arte como pinturas e esculturas, móveis antigos e itens colecionáveis.' },
+  { name: 'Joias e Acessórios de Luxo', slug: 'joias-e-acessorios-de-luxo', description: 'Joias, relógios de pulso e bolso, bolsas de grife, canetas e artigos de luxo.' },
+  { name: 'Semoventes', slug: 'semoventes', description: 'Animais como bovinos, equinos, ovinos, caprinos e outros animais de produção ou estimação.' },
+  { name: 'Materiais e Sucatas', slug: 'materiais-e-sucatas', description: 'Materiais de construção civil, sucatas metálicas, resíduos industriais e recicláveis.' },
+  { name: 'Industrial (Geral)', slug: 'industrial-geral', description: 'Estoques industriais, matéria-prima, equipamentos de escritório (de empresas), e outros bens industriais.' },
+  { name: 'Serviços e Contratos', slug: 'servicos-e-contratos', description: 'Contratação de serviços, concessões e outras oportunidades contratuais.'},
+  { name: 'Outros Itens', slug: 'outros-itens', description: 'Consórcios, energia solar, direitos creditórios, itens diversos e oportunidades únicas.' },
+];
+
+export const sampleSubcategoriesStatic: Omit<Subcategory, 'id' | 'createdAt' | 'updatedAt' | 'itemCount' | 'slug' | 'parentCategoryName'>[] = [
+  // Imóveis
+  { name: 'Apartamentos', parentCategoryId: 'cat-imoveis', description: 'Apartamentos residenciais de diversos tamanhos.', displayOrder: 1, iconUrl: 'https://placehold.co/32x32.png?text=Apto', dataAiHintIcon: 'predio apartamento' },
+  { name: 'Casas', parentCategoryId: 'cat-imoveis', description: 'Casas térreas, sobrados e condomínios.', displayOrder: 2, iconUrl: 'https://placehold.co/32x32.png?text=Casa', dataAiHintIcon: 'casa residencial' },
+  { name: 'Terrenos e Lotes', parentCategoryId: 'cat-imoveis', description: 'Terrenos urbanos e rurais para construção ou investimento.', displayOrder: 3, iconUrl: 'https://placehold.co/32x32.png?text=Terr', dataAiHintIcon: 'terreno mapa' },
+  { name: 'Salas Comerciais', parentCategoryId: 'cat-imoveis', description: 'Espaços comerciais para escritórios e lojas.', displayOrder: 4, iconUrl: 'https://placehold.co/32x32.png?text=Sala', dataAiHintIcon: 'edificio comercial' },
+  // Veículos
+  { name: 'Carros', parentCategoryId: 'cat-veiculos', description: 'Veículos de passeio, hatch, sedan, SUV.', displayOrder: 1, iconUrl: 'https://placehold.co/32x32.png?text=Car', dataAiHintIcon: 'carro popular' },
+  { name: 'Motos', parentCategoryId: 'cat-veiculos', description: 'Motocicletas esportivas, custom, street.', displayOrder: 2, iconUrl: 'https://placehold.co/32x32.png?text=Moto', dataAiHintIcon: 'motocicleta esportiva' },
+  { name: 'Caminhões e Ônibus', parentCategoryId: 'cat-veiculos', description: 'Veículos pesados para transporte de carga e passageiros.', displayOrder: 3, iconUrl: 'https://placehold.co/32x32.png?text=Cam', dataAiHintIcon: 'caminhao estrada' },
 ];
 
 
@@ -138,7 +150,7 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
     id: 'TP001-NOTEBOOKS', publicId: 'AUC-TPNOTE-PMC001X9', title: 'Tomada de Preços - Aquisição de Notebooks',
     fullTitle: 'Tomada de Preços Nº 001/2024 - Aquisição de Notebooks para Secretaria de Educação de Campinas',
     description: 'Processo de tomada de preços para aquisição de 80 notebooks para equipar escolas municipais. Especificações detalhadas no edital. Propostas devem ser enviadas em envelope lacrado até a data limite.',
-    status: 'ACTIVE', auctionType: 'TOMADA_DE_PRECOS', categoryId: 'cat-eletronicos-e-tecnologia',
+    status: 'ABERTO_PARA_LANCES', auctionType: 'TOMADA_DE_PRECOS', categoryId: 'cat-eletronicos-e-tecnologia', // Changed status to OPEN_FOR_BIDS for testing, previously ACTIVE
     auctioneerId: 'auct-leiloeiro-publico-municipal-campinas', sellerId: 'seller-prefeitura-municipal-de-campinas',
     auctionDate: createFutureDate(1, 9), endDate: createFutureDate(15, 17),
     city: 'Campinas', state: 'SP', imageUrl: 'https://images.unsplash.com/photo-1744051518421-1eaf2fbde680?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxub3RlYm9va3MlMjBwaWxoYSUyMGVzY3JpdG9yaW98ZW58MHx8fHwxNzUwMzU2MDY1fDA&ixlib=rb-4.1.0&q=80&w=1080',
@@ -204,14 +216,14 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
 ];
 
 export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' | 'sellerName' | 'cityName' | 'stateUf' | 'type' | 'bids' | 'reviews' | 'questions'>[] = [
-  { id: 'LOTE001', auctionId: '100625bra', publicId: 'LOT-CASACENT-ABC123X1', title: 'CASA COM 129,30 M² - CENTRO', imageUrl: '/lotes-exemplo/imoveis/casa_centro_principal.jpg', dataAiHint: 'casa residencial', galleryImageUrls: ['/lotes-exemplo/imoveis/casa_centro_detalhe1.jpg', '/lotes-exemplo/imoveis/casa_centro_detalhe2.jpg'], mediaItemIds: ['media-casa-frente', 'media001'], status: 'ABERTO_PARA_LANCES', cityId: 'city-teotonio-vilela-al', stateId: 'state-al', categoryId: 'cat-imoveis', views: 1018, price: 45000, endDate: createFutureDate(0, 1, 30), bidsCount: 12, description: 'Casa residencial bem localizada no centro da cidade.', sellerId: 'seller-banco-bradesco-s-a', lotSpecificAuctionDate: createFutureDate(0, 1, 30), initialPrice: 50000, secondInitialPrice: 42000, additionalTriggers: ['DESCONTO PROGRESSIVO'], isFeatured: true, latitude: -9.56096, longitude: -36.3516, mapAddress: 'Rua Central, Teotônio Vilela, Alagoas', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-36.3566,-9.5659,-36.3466,-9.5559&layer=mapnik&marker=-9.56096,-36.3516', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-9.56096,-36.3516&zoom=16&size=600x400&markers=color:blue%7C-9.56096,-36.3516&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, bidIncrementStep: 1000, allowInstallmentBids: true },
-  { id: 'LOTEVEI001', auctionId: '300724car', publicId: 'LOT-2013AUDI-DEF456Y2', title: '2013 AUDI A4 PREMIUM PLUS', year: 2013, make: 'AUDI', model: 'A4', imageUrl: '/lotes-exemplo/veiculos/audi_a4_principal.jpg', dataAiHint: 'carro sedan preto', galleryImageUrls: ['/lotes-exemplo/veiculos/audi_a4_interior.jpg', '/lotes-exemplo/veiculos/audi_a4_lateral.jpg'], mediaItemIds: ['media-audi-frente', 'media002'], status: 'ABERTO_PARA_LANCES', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-veiculos', views: 1560, price: 68500, endDate: createFutureDate(0, 0, 45), bidsCount: 25, description: 'Audi A4 Premium Plus 2013, completo, com baixa quilometragem.', sellerId: 'seller-proprietario-particular-1', lotSpecificAuctionDate: createFutureDate(0, 0, 45), isExclusive: true, additionalTriggers: ['ALTA DEMANDA', 'LANCE QUENTE'], isFeatured: true, latitude: -23.550520, longitude: -46.633308, mapAddress: 'Av. Paulista, 1578, Bela Vista, São Paulo - SP', mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3657.1489015339396!2d-46.65879078502246!3d-23.56318168468204!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce59c8da0aa315%3A0x168c9d0b70928d9a!2sAv.%20Paulista%2C%201578%20-%20Bela%20Vista%2C%20S%C3%A3o%20Paulo%20-%20SP%2C%2001310-200!5e0!3m2!1spt-BR!2sbr!4v1678886512345!5m2!1spt-BR!2sbr', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-23.550520,-46.633308&zoom=15&size=600x400&markers=color:red%7C-23.550520,-46.633308&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, bidIncrementStep: 500, allowInstallmentBids: false },
-  { id: 'LOTE003', auctionId: '100625bra', publicId: 'LOT-APTOCABU-GHI789Z3', title: 'APARTAMENTO COM 54,25 M² - CABULA', imageUrl: '/lotes-exemplo/imoveis/apto_cabula_sala.jpg', dataAiHint: 'apartamento predio residencial', status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'cat-imoveis', views: 754, price: 105000, endDate: createPastDate(2), bidsCount: 12, description: 'Apartamento funcional no Cabula, Salvador. 2 quartos, sala, cozinha e banheiro. Condomínio com portaria.', sellerId: 'seller-banco-bradesco-sa', latitude: -12.960980, longitude: -38.467789, mapAddress: 'Rua do Cabula, Salvador - BA', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-12.960980,-38.467789&zoom=15&size=600x400&markers=color:blue%7C-12.960980,-38.467789&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
+  { id: 'LOTE001', auctionId: '100625bra', publicId: 'LOT-CASACENT-ABC123X1', title: 'CASA COM 129,30 M² - CENTRO', imageUrl: '/lotes-exemplo/imoveis/casa_centro_principal.jpg', dataAiHint: 'casa residencial', galleryImageUrls: ['/lotes-exemplo/imoveis/casa_centro_detalhe1.jpg', '/lotes-exemplo/imoveis/casa_centro_detalhe2.jpg'], mediaItemIds: ['media-casa-frente', 'media001'], status: 'ABERTO_PARA_LANCES', cityId: 'city-teotonio-vilela-al', stateId: 'state-al', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-casas', views: 1018, price: 45000, endDate: createFutureDate(0, 1, 30), bidsCount: 12, description: 'Casa residencial bem localizada no centro da cidade.', sellerId: 'seller-banco-bradesco-s-a', lotSpecificAuctionDate: createFutureDate(0, 1, 30), initialPrice: 50000, secondInitialPrice: 42000, additionalTriggers: ['DESCONTO PROGRESSIVO'], isFeatured: true, latitude: -9.56096, longitude: -36.3516, mapAddress: 'Rua Central, Teotônio Vilela, Alagoas', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-36.3566,-9.5659,-36.3466,-9.5559&layer=mapnik&marker=-9.56096,-36.3516', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-9.56096,-36.3516&zoom=16&size=600x400&markers=color:blue%7C-9.56096,-36.3516&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, bidIncrementStep: 1000, allowInstallmentBids: true },
+  { id: 'LOTEVEI001', auctionId: '300724car', publicId: 'LOT-2013AUDI-DEF456Y2', title: '2013 AUDI A4 PREMIUM PLUS', year: 2013, make: 'AUDI', model: 'A4', imageUrl: '/lotes-exemplo/veiculos/audi_a4_principal.jpg', dataAiHint: 'carro sedan preto', galleryImageUrls: ['/lotes-exemplo/veiculos/audi_a4_interior.jpg', '/lotes-exemplo/veiculos/audi_a4_lateral.jpg'], mediaItemIds: ['media-audi-frente', 'media002'], status: 'ABERTO_PARA_LANCES', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-veiculos', subcategoryId: 'subcat-veiculos-carros', views: 1560, price: 68500, endDate: createFutureDate(0, 0, 45), bidsCount: 25, description: 'Audi A4 Premium Plus 2013, completo, com baixa quilometragem.', sellerId: 'seller-proprietario-particular-1', lotSpecificAuctionDate: createFutureDate(0, 0, 45), isExclusive: true, additionalTriggers: ['ALTA DEMANDA', 'LANCE QUENTE'], isFeatured: true, latitude: -23.550520, longitude: -46.633308, mapAddress: 'Av. Paulista, 1578, Bela Vista, São Paulo - SP', mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3657.1489015339396!2d-46.65879078502246!3d-23.56318168468204!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce59c8da0aa315%3A0x168c9d0b70928d9a!2sAv.%20Paulista%2C%201578%20-%20Bela%20Vista%2C%20S%C3%A3o%20Paulo%20-%20SP%2C%2001310-200!5e0!3m2!1spt-BR!2sbr!4v1678886512345!5m2!1spt-BR!2sbr', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-23.550520,-46.633308&zoom=15&size=600x400&markers=color:red%7C-23.550520,-46.633308&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, bidIncrementStep: 500, allowInstallmentBids: false },
+  { id: 'LOTE003', auctionId: '100625bra', publicId: 'LOT-APTOCABU-GHI789Z3', title: 'APARTAMENTO COM 54,25 M² - CABULA', imageUrl: '/lotes-exemplo/imoveis/apto_cabula_sala.jpg', dataAiHint: 'apartamento predio residencial', status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-apartamentos', views: 754, price: 105000, endDate: createPastDate(2), bidsCount: 12, description: 'Apartamento funcional no Cabula, Salvador. 2 quartos, sala, cozinha e banheiro. Condomínio com portaria.', sellerId: 'seller-banco-bradesco-sa', latitude: -12.960980, longitude: -38.467789, mapAddress: 'Rua do Cabula, Salvador - BA', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-12.960980,-38.467789&zoom=15&size=600x400&markers=color:blue%7C-12.960980,-38.467789&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
   { id: 'LOTEART001', auctionId: 'ART001ANTIQ', publicId: 'LOT-PINTURAO-JKL012A4', title: 'Pintura a Óleo "Paisagem Toscana" - Séc. XIX', imageUrl: '/lotes-exemplo/arte/paisagem_toscana.jpg', dataAiHint: 'pintura oleo paisagem', status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-de-janeiro-rj', stateId: 'state-rj', categoryId: 'cat-arte-e-antiguidades', views: 320, price: 7500, endDate: createFutureDate(8, 0), bidsCount: 3, description: 'Belíssima pintura a óleo sobre tela, representando paisagem da Toscana. Assinatura ilegível. Moldura original.', sellerId: 'seller-colecionadores-rj', latitude: -22.9068, longitude: -43.1729, mapAddress: 'Copacabana, Rio de Janeiro - RJ', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-22.9068,-43.1729&zoom=14&size=600x400&markers=color:green%7C-22.9068,-43.1729&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, allowInstallmentBids: true },
-  { id: 'LOTEVCLASS001', auctionId: 'CLASSICVEH24', publicId: 'LOT-1967FORD-MNO345B5', title: '1967 FORD MUSTANG FASTBACK', year: 1967, make: 'FORD', model: 'MUSTANG', imageUrl: '/lotes-exemplo/veiculos/mustang_67_frente.jpg', dataAiHint: 'carro classico vermelho', status: 'ABERTO_PARA_LANCES', cityId: 'city-curitiba-pr', stateId: 'state-pr', categoryId: 'cat-veiculos', views: 1850, price: 250000, endDate: createFutureDate(12, 0), bidsCount: 18, description: 'Icônico Ford Mustang Fastback 1967, motor V8, câmbio manual. Restaurado.', sellerId: 'seller-colecionadores-classicos-pr', initialPrice: 280000, secondInitialPrice: 250000, isFeatured: true, latitude: -25.4284, longitude: -49.2733, mapAddress: 'Batel, Curitiba - PR', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-25.4284,-49.2733&zoom=15&size=600x400&markers=color:red%7C-25.4284,-49.2733&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, bidIncrementStep: 2500, allowInstallmentBids: true },
+  { id: 'LOTEVCLASS001', auctionId: 'CLASSICVEH24', publicId: 'LOT-1967FORD-MNO345B5', title: '1967 FORD MUSTANG FASTBACK', year: 1967, make: 'FORD', model: 'MUSTANG', imageUrl: '/lotes-exemplo/veiculos/mustang_67_frente.jpg', dataAiHint: 'carro classico vermelho', status: 'ABERTO_PARA_LANCES', cityId: 'city-curitiba-pr', stateId: 'state-pr', categoryId: 'cat-veiculos', subcategoryId: 'subcat-veiculos-carros', views: 1850, price: 250000, endDate: createFutureDate(12, 0), bidsCount: 18, description: 'Icônico Ford Mustang Fastback 1967, motor V8, câmbio manual. Restaurado.', sellerId: 'seller-colecionadores-classicos-pr', initialPrice: 280000, secondInitialPrice: 250000, isFeatured: true, latitude: -25.4284, longitude: -49.2733, mapAddress: 'Batel, Curitiba - PR', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-25.4284,-49.2733&zoom=15&size=600x400&markers=color:red%7C-25.4284,-49.2733&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, bidIncrementStep: 2500, allowInstallmentBids: true },
   { id: 'LOTE005', auctionId: '20301vei', publicId: 'LOT-TRATORAG-PQR678C6', title: 'TRATOR AGRÍCOLA NEW HOLLAND T7', year: 2018, make: 'NEW HOLLAND', model: 'T7.245', imageUrl: '/lotes-exemplo/maquinas/trator_nh_t7.jpg', dataAiHint: 'trator agricola campo', galleryImageUrls: ['/lotes-exemplo/maquinas/trator_nh_t7_detalhe.jpg'], mediaItemIds: ['media-trator-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-verde-go', stateId: 'state-go', categoryId: 'cat-maquinas-e-equipamentos', views: 650, price: 180000, endDate: createFutureDate(0, 1, 15), bidsCount: 7, isFeatured: true, description: 'Trator New Holland T7.245, ano 2018, com apenas 1200 horas de uso. Excelente estado.', sellerId: 'seller-fazenda-boa-esperanca', latitude: -17.7999, longitude: -50.9253, mapAddress: 'Zona Rural, Rio Verde - GO', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-50.9353,-17.8099,-50.9153,-17.7899&layer=mapnik&marker=-17.7999,-50.9253', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-17.7999,-50.9253&zoom=13&size=600x400&markers=color:blue%7C-17.7999,-50.9253&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
-  { id: 'LOTE002', auctionId: '100625bra', publicId: 'LOT-CASAPORT-STU901D7', title: 'CASA COM 234,50 M² - PORTÃO', imageUrl: '/lotes-exemplo/imoveis/casa_portao_vista_aerea.jpg', dataAiHint: 'casa moderna suburbio', status: 'ABERTO_PARA_LANCES', cityId: 'city-lauro-de-freitas-ba', stateId: 'state-ba', categoryId: 'cat-imoveis', views: 681, price: 664000, endDate: createFutureDate(10, 5), bidsCount: 1, description: 'Espaçosa casa em Lauro de Freitas, Bahia. Perto da praia.', sellerId: 'seller-banco-bradesco-sa', isFeatured: true, latitude: -12.8868, longitude: -38.3275, mapAddress: 'Rua Principal, Portão, Lauro de Freitas - BA', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-38.3375,-12.8968,-38.3175,-12.8768&layer=mapnik&marker=-12.8868,-38.3275', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-12.8868,-38.3275&zoom=16&size=600x400&markers=color:green%7C-12.8868,-38.3275&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, allowInstallmentBids: true },
-  { id: 'LOTE004', auctionId: '100625bra', publicId: 'LOT-CASAVILA-VWX234E8', title: 'CASA COM 133,04 M² - VILA PERI', imageUrl: '/lotes-exemplo/imoveis/casa_vila_peri_externa.jpg', dataAiHint: 'casa terrea simples', status: 'EM_BREVE', cityId: 'city-fortaleza-ce', stateId: 'state-ce', categoryId: 'cat-imoveis', views: 527, price: 238000, endDate: createFutureDate(3, 0), bidsCount: 0, description: 'Casa em Fortaleza, boa localização, necessita pequenas reformas.', sellerId: 'seller-banco-bradesco-sa', latitude: -3.7929, longitude: -38.5396, mapAddress: 'Avenida Principal, Vila Peri, Fortaleza - CE', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-38.5496,-3.8029,-38.5296,-3.7829&layer=mapnik&marker=-3.7929,-38.5396', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-3.7929,-38.5396&zoom=15&size=600x400&markers=color:yellow%7C-3.7929,-38.5396&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
+  { id: 'LOTE002', auctionId: '100625bra', publicId: 'LOT-CASAPORT-STU901D7', title: 'CASA COM 234,50 M² - PORTÃO', imageUrl: '/lotes-exemplo/imoveis/casa_portao_vista_aerea.jpg', dataAiHint: 'casa moderna suburbio', status: 'ABERTO_PARA_LANCES', cityId: 'city-lauro-de-freitas-ba', stateId: 'state-ba', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-casas', views: 681, price: 664000, endDate: createFutureDate(10, 5), bidsCount: 1, description: 'Espaçosa casa em Lauro de Freitas, Bahia. Perto da praia.', sellerId: 'seller-banco-bradesco-sa', isFeatured: true, latitude: -12.8868, longitude: -38.3275, mapAddress: 'Rua Principal, Portão, Lauro de Freitas - BA', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-38.3375,-12.8968,-38.3175,-12.8768&layer=mapnik&marker=-12.8868,-38.3275', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-12.8868,-38.3275&zoom=16&size=600x400&markers=color:green%7C-12.8868,-38.3275&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, allowInstallmentBids: true },
+  { id: 'LOTE004', auctionId: '100625bra', publicId: 'LOT-CASAVILA-VWX234E8', title: 'CASA COM 133,04 M² - VILA PERI', imageUrl: '/lotes-exemplo/imoveis/casa_vila_peri_externa.jpg', dataAiHint: 'casa terrea simples', status: 'EM_BREVE', cityId: 'city-fortaleza-ce', stateId: 'state-ce', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-casas', views: 527, price: 238000, endDate: createFutureDate(3, 0), bidsCount: 0, description: 'Casa em Fortaleza, boa localização, necessita pequenas reformas.', sellerId: 'seller-banco-bradesco-sa', latitude: -3.7929, longitude: -38.5396, mapAddress: 'Avenida Principal, Vila Peri, Fortaleza - CE', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-38.5496,-3.8029,-38.5296,-3.7829&layer=mapnik&marker=-3.7929,-38.5396', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-3.7929,-38.5396&zoom=15&size=600x400&markers=color:yellow%7C-3.7929,-38.5396&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
   { id: 'LOTE006', auctionId: '20301vei', publicId: 'LOT-COLHEITA-YZA567F9', title: 'COLHEITADEIRA JOHN DEERE S680', imageUrl: '/lotes-exemplo/maquinas/colheitadeira_jd_campo.jpg', dataAiHint: 'colheitadeira graos campo', status: 'ENCERRADO', cityId: 'city-campo-grande-ms', stateId: 'state-ms', categoryId: 'cat-maquinas-e-equipamentos', views: 450, price: 365000, endDate: createPastDate(5), bidsCount: 22, description: 'Colheitadeira John Deere S680, usada, em bom estado de funcionamento.', sellerId: 'seller-produtores-rurais-ms', latitude: -20.4428, longitude: -54.6295, mapAddress: 'Saída para Três Lagoas, Campo Grande - MS', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-20.4428,-54.6295&zoom=14&size=600x400&markers=color:purple%7C-20.4428,-54.6295&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
   { id: 'LOTEART002', auctionId: 'ART001ANTIQ', publicId: 'LOT-ESCULTUR-BCD890G0', title: 'Escultura em Bronze "O Pensador" - Réplica Assinada', imageUrl: '/lotes-exemplo/arte/escultura_pensador_detalhe.jpg', dataAiHint: 'escultura bronze pensador', status: 'EM_BREVE', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-arte-e-antiguidades', views: 150, price: 3200, endDate: createFutureDate(15, 0), bidsCount: 0, description: 'Réplica em bronze da famosa escultura, assinada pelo artista.', sellerId: 'seller-galeria-de-arte-sp', latitude: -23.5613, longitude: -46.6562, mapAddress: 'Próximo ao MASP, Avenida Paulista, São Paulo - SP', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-46.6662,-23.5713,-46.6462,-23.5513&layer=mapnik&marker=-23.5613,-46.6562', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-23.5613,-46.6562&zoom=15&size=600x400&markers=color:orange%7C-23.5613,-46.6562&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
   { 
@@ -233,7 +245,7 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
   {
     id: 'LOTETP002-CAR1', auctionId: 'TP002-VEICULOS', publicId: 'LOT-TPVEIC1-UVX321J9', title: 'Veículo Sedan - Fiat Cronos 2019', 
     imageUrl: 'https://images.unsplash.com/photo-1658241213593-b7904e271aa8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYXJyb3MlMjB1c2Fkb3MlMjBwYXRpb3xlbnwwfHx8fDE3NTAzNTYwNjV8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'carro sedan branco',
-    status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'cat-veiculos',
+    status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'cat-veiculos', subcategoryId: 'subcat-veiculos-carros',
     views: 120, price: 35000, endDate: createPastDate(15, 17), description: 'Fiat Cronos Drive 1.3, 2019, branco, completo. Estado de conservação regular. Placa final 5. Venda no estado em que se encontra. Edital TP 002/2024.',
     sellerId: 'seller-secretaria-de-administracao-de-salvador', initialPrice: 30000,
     latitude: -12.9714, longitude: -38.5014, mapAddress: 'Pátio da Prefeitura, Salvador - BA'
@@ -249,7 +261,7 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
   {
     id: 'LOTJUDIMV001', auctionId: 'JUD001IMV', publicId: 'LOT-APTMOEMA-SP01A1', title: 'Apartamento 2 Dorms Moema - Leilão Judicial',
     imageUrl: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhcGFydG1lbnQlMjBpbnRlcmlvcnxlbnwwfHx8fDE3NTA5NTg5MDZ8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'apartamento interior moderno',
-    status: 'ABERTO_PARA_LANCES', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-imoveis',
+    status: 'ABERTO_PARA_LANCES', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-apartamentos',
     price: 250000, initialPrice: 300000, secondInitialPrice: 250000, endDate: createFutureDate(12, 0),
     judicialProcessNumber: '12345-67.2023.8.26.0001', courtDistrict: 'São Paulo', courtName: '1ª Vara Cível',
     sellerId: 'seller-vara-civel-de-sao-paulo-tjsp', description: 'Lindo apartamento em Moema, parte de leilão judicial. 2 dormitórios, sala ampla, cozinha e área de serviço. Próximo ao Parque Ibirapuera.',
@@ -258,7 +270,7 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
   {
     id: 'LOTJUDVEI001', auctionId: 'JUD002VEI', publicId: 'LOT-TORORJ-RJ02B2', title: 'Fiat Toro Freedom 2018 - Leilão Judicial',
     imageUrl: 'https://images.unsplash.com/photo-1617093583090-67685879968e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmaWF0JTIwdG9yb3xlbnwwfHx8fDE3NTA5NTg5MDZ8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'fiat toro branca frente',
-    status: 'EM_BREVE', cityId: 'city-rio-de-janeiro-rj', stateId: 'state-rj', categoryId: 'cat-veiculos',
+    status: 'EM_BREVE', cityId: 'city-rio-de-janeiro-rj', stateId: 'state-rj', categoryId: 'cat-veiculos', subcategoryId: 'subcat-veiculos-carros',
     price: 40000, initialPrice: 40000, endDate: createFutureDate(20, 0),
     judicialProcessNumber: '98765-43.2022.8.19.0001', courtDistrict: 'Rio de Janeiro', courtName: 'Vara de Falências',
     sellerId: 'seller-vara-de-falencias-do-rio-de-janeiro-tjrj', description: 'Fiat Toro Freedom 1.8 AT, 2018, cor branca. Venda judicial. Veículo em bom estado geral. Consulte o edital para condições.',
@@ -447,9 +459,34 @@ export const getUserHabilitationStatusInfo = (status: UserHabilitationStatus): {
 // 3. DERIVED/PROCESSED DATA FUNCTIONS 
 // ============================================================================
 
+export const sampleSubcategories: Subcategory[] = sampleSubcategoriesStatic.map(subcat => {
+  const parentCat = sampleLotCategoriesStatic.find(cat => `cat-${cat.slug}` === subcat.parentCategoryId);
+  const subcatSlug = slugify(subcat.name);
+  return {
+    ...subcat,
+    id: `subcat-${parentCat?.slug || 'unk'}-${subcatSlug}`,
+    slug: subcatSlug,
+    parentCategoryName: parentCat?.name || 'Desconhecida',
+    itemCount: sampleLotsRaw.filter(lot => lot.subcategoryId === `subcat-${parentCat?.slug || 'unk'}-${subcatSlug}`).length,
+    createdAt: createPastDate(Math.floor(Math.random() * 20) + 5),
+    updatedAt: createPastDate(Math.floor(Math.random() * 5)),
+  };
+});
+
 export function getUniqueLotCategoriesFromSampleData(): LotCategory[] {
   const categoriesMap = new Map<string, LotCategory>();
-  sampleLotCategoriesStatic.forEach(cat => categoriesMap.set(cat.slug, { ...cat, id: `cat-${cat.slug}`, itemCount: 0, createdAt: createPastDate(30), updatedAt: createPastDate(1) }));
+  sampleLotCategoriesStatic.forEach(catStatic => {
+    const catId = `cat-${catStatic.slug}`;
+    const subcatsForThisParent = sampleSubcategoriesStatic.filter(sub => sub.parentCategoryId === catId);
+    categoriesMap.set(catStatic.slug, { 
+        ...catStatic, 
+        id: catId, 
+        itemCount: 0, // Item count será atualizado abaixo
+        hasSubcategories: subcatsForThisParent.length > 0,
+        createdAt: createPastDate(30), 
+        updatedAt: createPastDate(1) 
+    });
+  });
 
   const allItems = [...sampleLotsRaw, ...sampleAuctionsRaw, ...sampleDirectSaleOffersRaw];
 
@@ -480,12 +517,14 @@ export function getUniqueLotCategoriesFromSampleData(): LotCategory[] {
 
     if (categorySlugToUse && categoryNameToUse) {
       if (!categoriesMap.has(categorySlugToUse)) {
+        const subcatsForThisParent = sampleSubcategoriesStatic.filter(sub => sub.parentCategoryId === `cat-${categorySlugToUse}`);
         categoriesMap.set(categorySlugToUse, {
           id: `cat-${categorySlugToUse}`,
           name: categoryNameToUse,
           slug: categorySlugToUse,
           description: `Categoria de ${categoryNameToUse}`,
           itemCount: 0,
+          hasSubcategories: subcatsForThisParent.length > 0,
           createdAt: createPastDate(30),
           updatedAt: createPastDate(1),
         });
@@ -715,6 +754,7 @@ export const sampleLots: Lot[] = sampleLotsRaw.map(lot => {
     const auctionInfo = sampleAuctionsRaw.find(a => a.id === lot.auctionId);
     const stateInfo = sampleStates.find(s => s.id === lot.stateId);
     const cityInfo = sampleCities.find(c => c.id === lot.cityId);
+    const subcategoryInfo = sampleSubcategories.find(sub => sub.id === lot.subcategoryId || (sub.slug === lot.subcategoryId && sub.parentCategoryId === categoryInfo?.id));
     
     let resolvedSellerId = lot.sellerId;
     if (!resolvedSellerId && auctionInfo?.sellerId) {
@@ -728,6 +768,7 @@ export const sampleLots: Lot[] = sampleLotsRaw.map(lot => {
     return {
         ...lot,
         type: categoryInfo?.name || 'Desconhecida',
+        subcategoryName: subcategoryInfo?.name, // Add subcategory name
         auctionName: auctionInfo?.title || 'Leilão Desconhecido',
         sellerName: sellerInfo?.name || auctionInfo?.seller || 'Vendedor Desconhecido',
         cityName: cityInfo?.name || lot.cityName,
@@ -931,6 +972,9 @@ sampleLots.forEach(lot => {
   const categoryInfo = sampleLotCategories.find(c => c.id === lot.categoryId || c.slug === lot.categoryId || c.name === lot.type);
   if(categoryInfo) lot.type = categoryInfo.name;
 
+  const subcategoryInfo = sampleSubcategories.find(s => s.id === lot.subcategoryId);
+  if(subcategoryInfo) lot.subcategoryName = subcategoryInfo.name;
+
   const stateInfo = sampleStates.find(s => s.id === lot.stateId || s.uf === lot.stateUf);
   if(stateInfo) lot.stateUf = stateInfo.uf;
 
@@ -1091,8 +1135,4 @@ sampleLotsRaw.forEach(lot => {
         lot.sellerId = `seller-${slugify(seller.name)}`;
     }
 });
-
-
-
-
 
