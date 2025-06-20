@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck } from 'lucide-react'; // Added ShieldCheck
+import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers } from 'lucide-react'; // Added Layers
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -30,6 +30,12 @@ const sidebarNavItems = [
     title: 'Categorias de Lotes',
     href: '/admin/categories',
     icon: ListChecks,
+  },
+  {
+    title: 'Subcategorias', // New Item
+    href: '/admin/subcategories',
+    icon: Layers, // Using Layers icon for Subcategories
+    disabled: false,
   },
   {
     title: 'Biblioteca de Mídia',
@@ -62,13 +68,13 @@ const sidebarNavItems = [
     disabled: false, 
   },
   {
-    title: 'Gerenciar Usuários', // Novo
+    title: 'Gerenciar Usuários',
     href: '/admin/users',
-    icon: Users, // Pode usar o mesmo ícone ou um mais específico como UsersCog
+    icon: Users, 
     disabled: false, 
   },
   {
-    title: 'Gerenciar Perfis', // Novo
+    title: 'Gerenciar Perfis',
     href: '/admin/roles',
     icon: ShieldCheck,
     disabled: false,
@@ -121,6 +127,3 @@ export default function AdminSidebar() {
     </aside>
   );
 }
-    
-
-    

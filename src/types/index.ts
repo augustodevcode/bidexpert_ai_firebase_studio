@@ -20,26 +20,26 @@ export interface LotCategory {
     slug: string;
     description?: string;
     itemCount?: number;
-    hasSubcategories?: boolean; // Indicates if this category has subcategories
-    createdAt: AnyTimestamp;
-    updatedAt: AnyTimestamp;
-    // subcategories?: string[]; // Removed, will be handled by querying Subcategory with parentCategoryId
+    hasSubcategories?: boolean;
+    createdAt: AnyTimestamp; // Changed from Date
+    updatedAt: AnyTimestamp; // Changed from Date
 }
 
 export interface Subcategory {
   id: string;
   name: string;
   slug: string;
-  parentCategoryId: string; // ID of the LotCategory parent
+  parentCategoryId: string;
+  parentCategoryName?: string; // For display purposes
   description?: string;
   itemCount?: number;
-  order?: number; // For display order within the parent category
-  iconUrl?: string;
-  dataAiHintIcon?: string;
+  displayOrder?: number;
+  iconUrl?: string | null;
+  dataAiHintIcon?: string | null;
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
 }
-export type SubcategoryFormData = Omit<Subcategory, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'itemCount'>;
+export type SubcategoryFormData = Omit<Subcategory, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'itemCount' | 'parentCategoryName'>;
 
 
 export interface StateInfo {
@@ -231,10 +231,10 @@ export interface Lot {
   initialPrice?: number; 
   secondInitialPrice?: number | null; 
   bidIncrementStep?: number; 
-  endDate?: AnyTimestamp; // Made optional, should derive from auction
-  auctionDate?: AnyTimestamp; // Made optional
-  lotSpecificAuctionDate?: AnyTimestamp | null; // Made optional
-  secondAuctionDate?: AnyTimestamp | null; // Made optional
+  endDate?: AnyTimestamp; 
+  auctionDate?: AnyTimestamp; 
+  lotSpecificAuctionDate?: AnyTimestamp | null; 
+  secondAuctionDate?: AnyTimestamp | null; 
   bidsCount?: number;
   isFavorite?: boolean;
   isFeatured?: boolean;
@@ -304,10 +304,10 @@ export type LotFormData = Omit<Lot,
   'publicId' |
   'createdAt' |
   'updatedAt' |
-  'endDate' |
-  'auctionDate' |
-  'lotSpecificAuctionDate' | 
-  'secondAuctionDate' | 
+  'endDate' | // Removido do form, gerenciado pelo leilão
+  'auctionDate' | // Removido do form, gerenciado pelo leilão
+  'lotSpecificAuctionDate' | // Removido do form, gerenciado pelo leilão
+  'secondAuctionDate' | // Removido do form, gerenciado pelo leilão
   'isFavorite' |
   'isFeatured' |
   'views' |           
@@ -318,15 +318,13 @@ export type LotFormData = Omit<Lot,
   'stateUf' |         
   'auctioneerName' |
   'sellerName' |
-  'type' | // Retain 'type' in form for main category selection
+  'type' | 
   'auctionName' |
   'subcategoryName'
 > & {
-  endDate?: Date | null; 
-  lotSpecificAuctionDate?: Date | null; 
-  secondAuctionDate?: Date | null; 
-  type: string; // Main category name is still needed for selection
-  subcategoryId?: string | null; // Subcategory ID for the form
+  endDate?: Date | null; // Mantido como opcional, mas o formulário não o terá
+  type: string; // Main category name (used for display if categoryId is not resolved yet)
+  subcategoryId?: string | null;
   views?: number;
   bidsCount?: number;
   mediaItemIds?: string[];
@@ -334,10 +332,11 @@ export type LotFormData = Omit<Lot,
   allowInstallmentBids?: boolean;
 };
 
-export type LotDbData = Omit<LotFormData, 'type' | 'auctionName' | 'sellerName' | 'auctioneerName' > & {
+export type LotDbData = Omit<LotFormData, 'type' | 'auctionName' | 'sellerName' | 'auctioneerName' | 'subcategoryName' > & {
   categoryId?: string;
   auctioneerId?: string;
   sellerId?: string;
+  subcategoryId?: string;
 };
 
 export type BidInfo = {
@@ -567,7 +566,7 @@ export interface SectionBadgeConfig {
   featuredLots?: BadgeVisibilitySettings;
   searchGrid?: BadgeVisibilitySettings;
   searchList?: BadgeVisibilitySettings;
-  lotDetail?: BadgeVisibilitySettings; // Adicionado para página de detalhes do lote
+  lotDetail?: BadgeVisibilitySettings; 
 }
 
 export type HomepageSectionType = 'hero_carousel' | 'filter_links' | 'featured_lots' | 'active_auctions' | 'promo_banner_1' | 'categories_grid';
@@ -620,7 +619,6 @@ export interface PlatformSettings {
   sectionBadgeVisibility?: SectionBadgeConfig;
   mapSettings?: MapSettings;
   
-  // Novas Configurações de Paginação e Exibição
   searchPaginationType?: SearchPaginationType;
   searchItemsPerPage?: number;
   searchLoadMoreCount?: number;
@@ -637,7 +635,6 @@ export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'
     mentalTriggerSettings?: MentalTriggerSettings;
     sectionBadgeVisibility?: SectionBadgeConfig;
     mapSettings?: MapSettings;
-    // Novas Configurações de Paginação e Exibição (repetidas para o tipo do formulário)
     searchPaginationType?: SearchPaginationType;
     searchItemsPerPage?: number;
     searchLoadMoreCount?: number;
@@ -652,26 +649,26 @@ export interface MediaItem {
   id: string;
   fileName: string;
   uploadedAt: AnyTimestamp;
-  uploadedBy?: string; // UID do usuário que fez o upload
+  uploadedBy?: string; 
   title?: string | null;
   altText?: string | null;
   caption?: string | null;
   description?: string | null;
-  mimeType: string; // e.g., 'image/jpeg', 'application/pdf'
+  mimeType: string; 
   sizeBytes: number;
-  dimensions?: { width: number; height: number }; // Para imagens
-  urlOriginal: string; // URL pública principal
+  dimensions?: { width: number; height: number }; 
+  urlOriginal: string; 
   urlThumbnail?: string | null;
   urlMedium?: string | null;
   urlLarge?: string | null;
-  linkedLotIds?: string[]; // IDs dos lotes aos quais esta mídia está anexada
-  dataAiHint?: string | null; // Dica para IA buscar imagens placeholder
+  linkedLotIds?: string[]; 
+  dataAiHint?: string | null; 
 }
 
 export interface Role {
   id: string;
   name: string;
-  name_normalized: string; // Para buscas case-insensitive e garantir unicidade
+  name_normalized: string; 
   description?: string;
   permissions: string[];
   createdAt: AnyTimestamp;
@@ -688,17 +685,15 @@ export interface IDatabaseAdapter {
   getLotCategories(): Promise<LotCategory[]>;
   getLotCategory(idOrSlug: string): Promise<LotCategory | null>; 
   getLotCategoryByName(name: string): Promise<LotCategory | null>;
-  updateLotCategory(id: string, data: { name: string; description?: string }): Promise<{ success: boolean; message: string }>;
+  updateLotCategory(id: string, data: { name: string; description?: string, hasSubcategories?: boolean }): Promise<{ success: boolean; message: string }>;
   deleteLotCategory(id: string): Promise<{ success: boolean; message: string }>;
 
-  // Subcategory methods
-  createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string }>;
+  createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }>;
   getSubcategories(parentCategoryId: string): Promise<Subcategory[]>;
   getSubcategory(id: string): Promise<Subcategory | null>;
   getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null>;
-  updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string }>;
-  deleteSubcategory(id: string): Promise<{ success: boolean; message: string }>;
-
+  updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }>;
+  deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }>;
 
   createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string }>;
   getStates(): Promise<StateInfo[]>;
@@ -750,8 +745,6 @@ export interface IDatabaseAdapter {
   createQuestion(question: Omit<LotQuestion, 'id' | 'createdAt' | 'answeredAt' | 'answeredByUserId' | 'answeredByUserDisplayName' | 'isPublic'>): Promise<{ success: boolean; message: string; questionId?: string }>;
   answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string }>;
 
-
-  // User and Role Management
   getUserProfileData(userId: string): Promise<UserProfileData | null>;
   updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }>;
   ensureUserRole(
@@ -775,7 +768,6 @@ export interface IDatabaseAdapter {
   deleteRole(id: string): Promise<{ success: boolean; message: string }>;
   ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }>;
 
-  // Media Items
   createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }>;
   getMediaItems(): Promise<MediaItem[]>;
   updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }>;
@@ -783,7 +775,6 @@ export interface IDatabaseAdapter {
   linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }>;
   unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }>;
   
-  // Platform Settings
   getPlatformSettings(): Promise<PlatformSettings>;
   updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }>;
 }
@@ -801,3 +792,63 @@ export interface RecentlyViewedLotInfo {
   dataAiHint?: string;
 }
 
+// Garantir que AnyTimestamp cubra também os campos `createdAt` e `updatedAt` de `Subcategory`
+// (já feito acima)
+```
+  </change>
+  <change>
+    <file>/src/app/admin/subcategories/actions.ts</file>
+    <content><![CDATA[
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import { getDatabaseAdapter } from '@/lib/database';
+import type { Subcategory, SubcategoryFormData } from '@/types';
+
+export async function createSubcategoryAction(
+  data: SubcategoryFormData
+): Promise<{ success: boolean; message: string; subcategoryId?: string }> {
+  const db = await getDatabaseAdapter();
+  const result = await db.createSubcategory(data);
+  if (result.success) {
+    revalidatePath('/admin/subcategories');
+    revalidatePath(`/admin/categories`); // Revalidate categories in case hasSubcategories changed
+  }
+  return result;
+}
+
+export async function getSubcategoriesByParentIdAction(parentCategoryId: string): Promise<Subcategory[]> {
+  const db = await getDatabaseAdapter();
+  return db.getSubcategories(parentCategoryId);
+}
+
+export async function getSubcategoryByIdAction(subcategoryId: string): Promise<Subcategory | null> {
+  const db = await getDatabaseAdapter();
+  return db.getSubcategory(subcategoryId);
+}
+
+export async function updateSubcategoryAction(
+  subcategoryId: string,
+  data: Partial<SubcategoryFormData>
+): Promise<{ success: boolean; message: string }> {
+  const db = await getDatabaseAdapter();
+  const result = await db.updateSubcategory(subcategoryId, data);
+  if (result.success) {
+    revalidatePath('/admin/subcategories');
+    revalidatePath(`/admin/subcategories/${subcategoryId}/edit`);
+    revalidatePath(`/admin/categories`); // Parent category might be affected
+  }
+  return result;
+}
+
+export async function deleteSubcategoryAction(
+  subcategoryId: string
+): Promise<{ success: boolean; message: string }> {
+  const db = await getDatabaseAdapter();
+  const result = await db.deleteSubcategory(subcategoryId);
+  if (result.success) {
+    revalidatePath('/admin/subcategories');
+    revalidatePath(`/admin/categories`); // Parent category might be affected
+  }
+  return result;
+}
