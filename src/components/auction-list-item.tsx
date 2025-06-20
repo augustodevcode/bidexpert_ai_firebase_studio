@@ -92,7 +92,7 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
             {auction.auctionStages && auction.auctionStages.length > 0 ? (
                 <div className="space-y-1 mb-2 max-h-20 overflow-y-auto text-xs">
                     {auction.auctionStages.map((stage, index) => (
-                        <div key={index} className={`p-1.5 rounded-md ${new Date(stage.endDate) < new Date() ? 'bg-muted/40 text-muted-foreground line-through' : 'bg-accent/30'}`}>
+                        <div key={index} className={`p-1.5 rounded-md ${new Date(stage.endDate).getTime() < new Date().getTime() ? 'bg-muted/40 text-muted-foreground line-through' : 'bg-accent/30'}`}>
                             <div className="flex justify-between items-center">
                                 <span className="font-medium text-xs">{stage.name}</span>
                                 <span className="text-xs">{stage.statusText || 'Encerra'}: {format(new Date(stage.endDate), "dd/MM HH:mm", { locale: ptBR })}</span>
@@ -129,3 +129,4 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
     </TooltipProvider>
   );
 }
+

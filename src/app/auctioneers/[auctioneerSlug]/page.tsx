@@ -1,14 +1,16 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react'; // Added useMemo, useCallback
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
-import { sampleAuctions, slugify } from '@/lib/sample-data';
-import type { Auction, AuctioneerProfileInfo } from '@/types';
-import AuctionCard from '@/components/auction-card'; 
+import { sampleAuctions, slugify, samplePlatformSettings } from '@/lib/sample-data'; // Added samplePlatformSettings
+import type { Auction, AuctioneerProfileInfo, PlatformSettings } from '@/types'; // Added PlatformSettings
+import AuctionCard from '@/components/auction-card';
+import AuctionListItem from '@/components/auction-list-item'; // Added AuctionListItem
+import SearchResultsFrame from '@/components/search-results-frame'; // Added SearchResultsFrame
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -22,7 +24,16 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-// Removido: import Breadcrumbs from '@/components/ui/breadcrumbs';
+
+// Sort options for auctions (similar to search page)
+const sortOptionsAuctions = [
+  { value: 'relevance', label: 'Relevância' },
+  { value: 'endDate_asc', label: 'Data Encerramento: Próximos' },
+  { value: 'endDate_desc', label: 'Data Encerramento: Distantes' },
+  { value: 'visits_desc', label: 'Mais Visitados' },
+  { value: 'id_desc', label: 'Adicionados Recentemente' }
+];
+
 
 function RecentAuctionCarouselItem({ auction }: { auction: Auction }) {
   const auctionEndDate = auction.endDate || (auction.auctionStages && auction.auctionStages.length > 0 ? auction.auctionStages[auction.auctionStages.length - 1].endDate : auction.auctionDate);
@@ -31,7 +42,7 @@ function RecentAuctionCarouselItem({ auction }: { auction: Auction }) {
 
   return (
     <Card className="overflow-hidden shadow-md h-full flex flex-col">
-      <Link href={`/auctions/${auction.id}`} className="block">
+      <Link href={`/auctions/${auction.publicId || auction.id}`} className="block">
         <div className="relative aspect-[4/3] bg-muted">
           <Image
             src={auction.imageUrl || 'https://placehold.co/600x450.png'}
@@ -44,10 +55,10 @@ function RecentAuctionCarouselItem({ auction }: { auction: Auction }) {
       </Link>
       <CardContent className="p-3 flex-grow">
         <p className="text-lg font-bold text-primary">
-          R$ {(auction.initialOffer || auction.lots?.[0]?.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          R$ {(auction.initialOffer || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
         </p>
         <p className="text-xs text-muted-foreground truncate">
-          {auction.lots?.length || 0} lotes | {auction.category} | {auction.city}, {auction.state}
+          {auction.totalLots || 0} lotes | {auction.category} | {auction.city}, {auction.state}
         </p>
         <p className="text-xs text-muted-foreground mt-1">
           <span className="inline-block h-2 w-2 rounded-full bg-yellow-500 mr-1.5"></span>
@@ -70,8 +81,20 @@ export default function AuctioneerDetailsPage() {
 
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "start", slidesToScroll: 1 }, [Autoplay({ delay: 5000 })]);
 
-  const scrollPrev = () => emblaApi && emblaApi.scrollPrev();
-  const scrollNext = () => emblaApi && emblaApi.scrollNext();
+  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
+
+  // State for auction list managed by SearchResultsFrame
+  const platformSettings = samplePlatformSettings as PlatformSettings;
+  const {
+    searchPaginationType = 'loadMore',
+    searchItemsPerPage = 6, // Adjusted for this page
+    searchLoadMoreCount = 6
+  } = platformSettings;
+
+  const [auctionSortBy, setAuctionSortBy] = useState<string>('endDate_asc');
+  const [currentAuctionPage, setCurrentAuctionPage] = useState(1);
+  const [visibleAuctionCount, setVisibleAuctionCount] = useState(searchLoadMoreCount);
 
   useEffect(() => {
     async function fetchAuctioneerDetails() {
@@ -85,6 +108,7 @@ export default function AuctioneerDetailsPage() {
           if (!foundAuctioneer) {
             setError(`Leiloeiro com slug/publicId "${auctioneerSlug}" não encontrado.`);
             setAuctioneerProfile(null);
+            setRelatedAuctions([]);
             setIsLoading(false);
             return;
           }
@@ -94,6 +118,8 @@ export default function AuctioneerDetailsPage() {
             (auction.auctioneer && slugify(auction.auctioneer) === auctioneerSlug)
           );
           setRelatedAuctions(auctions);
+          setCurrentAuctionPage(1);
+          setVisibleAuctionCount(searchLoadMoreCount);
         } catch (e) {
           console.error("Error fetching auctioneer data:", e);
           setError("Erro ao carregar dados do leiloeiro.");
@@ -106,7 +132,55 @@ export default function AuctioneerDetailsPage() {
       }
     }
     fetchAuctioneerDetails();
-  }, [auctioneerSlug]);
+  }, [auctioneerSlug, searchLoadMoreCount]);
+
+  const sortedAuctions = useMemo(() => {
+    let auctionsToSort = [...relatedAuctions];
+    switch (auctionSortBy) {
+      case 'endDate_asc':
+        auctionsToSort.sort((a, b) => new Date(a.auctionDate).getTime() - new Date(b.auctionDate).getTime()); // Assuming auctionDate is primary for "ending soonest" for auctions
+        break;
+      case 'endDate_desc':
+        auctionsToSort.sort((a, b) => new Date(b.auctionDate).getTime() - new Date(a.auctionDate).getTime());
+        break;
+      case 'visits_desc':
+        auctionsToSort.sort((a, b) => (b.visits || 0) - (a.visits || 0));
+        break;
+      case 'id_desc': // Using auctionDate as proxy for "newly listed"
+        auctionsToSort.sort((a, b) => new Date(b.auctionDate).getTime() - new Date(a.auctionDate).getTime());
+        break;
+      case 'relevance':
+      default:
+        break;
+    }
+    return auctionsToSort;
+  }, [relatedAuctions, auctionSortBy]);
+
+  const paginatedAuctions = useMemo(() => {
+    if (searchPaginationType === 'numberedPages') {
+      const startIndex = (currentAuctionPage - 1) * searchItemsPerPage;
+      const endIndex = startIndex + searchItemsPerPage;
+      return sortedAuctions.slice(startIndex, endIndex);
+    }
+    return sortedAuctions.slice(0, visibleAuctionCount);
+  }, [sortedAuctions, currentAuctionPage, visibleAuctionCount, searchPaginationType, searchItemsPerPage]);
+
+  const handleAuctionSortChange = (newSortBy: string) => {
+    setAuctionSortBy(newSortBy);
+    setCurrentAuctionPage(1);
+    setVisibleAuctionCount(searchLoadMoreCount);
+  };
+
+  const handleAuctionPageChange = (newPage: number) => {
+    setCurrentAuctionPage(newPage);
+  };
+
+  const handleLoadMoreAuctions = () => {
+    setVisibleAuctionCount(prev => Math.min(prev + searchLoadMoreCount, sortedAuctions.length));
+  };
+
+  const renderAuctionGridItem = (auction: Auction) => <AuctionCard auction={auction} />;
+  const renderAuctionListItem = (auction: Auction) => <AuctionListItem auction={auction} />;
 
   if (isLoading) {
     return (
@@ -149,9 +223,7 @@ export default function AuctioneerDetailsPage() {
   return (
     <TooltipProvider>
       <div className="space-y-10 py-6">
-        {/* Breadcrumbs removidos daqui, serão tratados pelo Header */}
-
-        {/* Top Section: Auctioneer Info & Recent Auctions */}
+        {/* Top Section: Auctioneer Info & Recent Auctions Carousel */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start border-b pb-10">
           <div className="lg:col-span-1 space-y-3 text-center lg:text-left">
             <Avatar className="h-40 w-40 mx-auto lg:mx-0 mb-4 border-4 border-primary/30 shadow-lg">
@@ -334,11 +406,22 @@ export default function AuctioneerDetailsPage() {
             <h2 className="text-2xl font-bold mb-6 font-headline flex items-center">
               <TrendingUp className="h-6 w-6 mr-2 text-primary" /> Todos os Leilões de {auctioneerProfile.name}
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {relatedAuctions.map(auction => (
-                <AuctionCard key={auction.id} auction={auction} />
-              ))}
-            </div>
+            <SearchResultsFrame
+                items={paginatedAuctions}
+                totalItemsCount={relatedAuctions.length}
+                renderGridItem={renderAuctionGridItem}
+                renderListItem={renderAuctionListItem}
+                sortOptions={sortOptionsAuctions}
+                initialSortBy={auctionSortBy}
+                onSortChange={handleAuctionSortChange}
+                platformSettings={platformSettings}
+                isLoading={isLoading}
+                searchTypeLabel="leilões"
+                currentPage={currentAuctionPage}
+                visibleItemCount={visibleAuctionCount}
+                onPageChange={handleAuctionPageChange}
+                onLoadMore={handleLoadMoreAuctions}
+            />
           </section>
         )}
 
