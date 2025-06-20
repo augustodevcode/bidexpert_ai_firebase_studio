@@ -14,11 +14,13 @@ import type {
   Role, RoleFormData,
   MediaItem,
   PlatformSettings, PlatformSettingsFormData, Theme,
-  Subcategory, SubcategoryFormData // Added Subcategory types
+  Subcategory, SubcategoryFormData, // Added Subcategory types
+  MapSettings, SearchPaginationType, MentalTriggerSettings, SectionBadgeConfig, HomepageSectionConfig, AuctionStage // Added more PlatformSettings related types
 } from '@/types';
-import { slugify } from '@/lib/sample-data';
+import { slugify, samplePlatformSettings } from '@/lib/sample-data'; // Import samplePlatformSettings
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 import { v4 as uuidv4 } from 'uuid'; // For generating public IDs
+import { format } from 'date-fns';
 
 
 let pool: Pool;
@@ -54,10 +56,10 @@ function mapToLotCategory(row: QueryResultRow): LotCategory {
     name: row.name,
     slug: row.slug,
     description: row.description,
-    itemCount: Number(row.itemCount || 0),
-    hasSubcategories: Boolean(row.hasSubcategories || false), // Added
-    createdAt: new Date(row.createdAt),
-    updatedAt: new Date(row.updatedAt),
+    itemCount: Number(row.item_count || 0), // Adjusted for snake_case
+    hasSubcategories: Boolean(row.has_subcategories || false),
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
   };
 }
 
@@ -66,14 +68,14 @@ function mapToSubcategory(row: QueryResultRow): Subcategory {
     id: String(row.id),
     name: row.name,
     slug: row.slug,
-    parentCategoryId: String(row.parentCategoryId),
+    parentCategoryId: String(row.parent_category_id), // Adjusted for snake_case
     description: row.description,
-    itemCount: Number(row.itemCount || 0),
-    displayOrder: Number(row.displayOrder || 0),
-    iconUrl: row.iconUrl,
-    dataAiHintIcon: row.dataAiHintIcon,
-    createdAt: new Date(row.createdAt),
-    updatedAt: new Date(row.updatedAt),
+    itemCount: Number(row.item_count || 0),
+    displayOrder: Number(row.display_order || 0),
+    iconUrl: row.icon_url,
+    dataAiHintIcon: row.data_ai_hint_icon,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
   };
 }
 
@@ -83,9 +85,9 @@ function mapToStateInfo(row: QueryResultRow): StateInfo {
         name: row.name,
         uf: row.uf,
         slug: row.slug,
-        cityCount: Number(row.cityCount || 0),
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
+        cityCount: Number(row.city_count || 0),
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
     };
 }
 
@@ -94,68 +96,68 @@ function mapToCityInfo(row: QueryResultRow): CityInfo {
         id: String(row.id),
         name: row.name,
         slug: row.slug,
-        stateId: String(row.stateId),
-        stateUf: row.stateUf,
-        ibgeCode: row.ibgeCode,
-        lotCount: Number(row.lotCount || 0),
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
+        stateId: String(row.state_id),
+        stateUf: row.state_uf,
+        ibgeCode: row.ibge_code,
+        lotCount: Number(row.lot_count || 0),
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
     };
 }
 
 function mapToAuctioneerProfileInfo(row: QueryResultRow): AuctioneerProfileInfo {
     return {
         id: String(row.id),
-        publicId: row.publicId,
+        publicId: row.public_id,
         name: row.name,
         slug: row.slug,
-        registrationNumber: row.registrationNumber,
-        contactName: row.contactName,
+        registrationNumber: row.registration_number,
+        contactName: row.contact_name,
         email: row.email,
         phone: row.phone,
         address: row.address,
         city: row.city,
         state: row.state,
-        zipCode: row.zipCode,
+        zipCode: row.zip_code,
         website: row.website,
-        logoUrl: row.logoUrl,
-        dataAiHintLogo: row.dataAiHintLogo,
+        logoUrl: row.logo_url,
+        dataAiHintLogo: row.data_ai_hint_logo,
         description: row.description,
-        memberSince: row.memberSince ? new Date(row.memberSince) : undefined,
+        memberSince: row.member_since ? new Date(row.member_since) : undefined,
         rating: row.rating !== null ? Number(row.rating) : undefined,
-        auctionsConductedCount: Number(row.auctionsConductedCount || 0),
-        totalValueSold: Number(row.totalValueSold || 0),
-        userId: row.userId,
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
+        auctionsConductedCount: Number(row.auctions_conducted_count || 0),
+        totalValueSold: Number(row.total_value_sold || 0),
+        userId: row.user_id,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
     };
 }
 
 function mapToSellerProfileInfo(row: QueryResultRow): SellerProfileInfo {
     return {
         id: String(row.id),
-        publicId: row.publicId,
+        publicId: row.public_id,
         name: row.name,
         slug: row.slug,
-        contactName: row.contactName,
+        contactName: row.contact_name,
         email: row.email,
         phone: row.phone,
         address: row.address,
         city: row.city,
         state: row.state,
-        zipCode: row.zipCode,
+        zipCode: row.zip_code,
         website: row.website,
-        logoUrl: row.logoUrl,
-        dataAiHintLogo: row.dataAiHintLogo,
+        logoUrl: row.logo_url,
+        dataAiHintLogo: row.data_ai_hint_logo,
         description: row.description,
-        memberSince: row.memberSince ? new Date(row.memberSince) : undefined,
+        memberSince: row.member_since ? new Date(row.member_since) : undefined,
         rating: row.rating !== null ? Number(row.rating) : undefined,
-        activeLotsCount: Number(row.activeLotsCount || 0),
-        totalSalesValue: Number(row.totalSalesValue || 0),
-        auctionsFacilitatedCount: Number(row.auctionsFacilitatedCount || 0),
-        userId: row.userId,
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
+        activeLotsCount: Number(row.active_lots_count || 0),
+        totalSalesValue: Number(row.total_sales_value || 0),
+        auctionsFacilitatedCount: Number(row.auctions_facilitated_count || 0),
+        userId: row.user_id,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
     };
 }
 
@@ -164,11 +166,11 @@ function mapToRole(row: QueryResultRow): Role {
     return {
         id: String(row.id),
         name: row.name,
-        name_normalized: row.nameNormalized,
+        name_normalized: row.name_normalized,
         description: row.description,
         permissions: row.permissions || [],
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
     };
 }
 
@@ -176,40 +178,45 @@ function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProf
     const profile: UserProfileData = {
         uid: row.uid,
         email: row.email,
-        fullName: row.fullName,
-        password: row.passwordText,
-        roleId: row.roleId ? String(row.roleId) : undefined,
-        roleName: role?.name || row.roleName,
-        permissions: role?.permissions || row.permissions || [],
+        fullName: row.full_name,
+        password: row.password_text,
+        roleId: row.role_id ? String(row.role_id) : undefined,
+        roleName: role?.name || row.role_name_from_join || row.role_name,
+        permissions: role?.permissions && role.permissions.length > 0 ? role.permissions : (row.permissions || row.role_permissions_from_join || []),
         status: row.status,
-        habilitationStatus: row.habilitationStatus as UserHabilitationStatus,
+        habilitationStatus: row.habilitation_status as UserHabilitationStatus,
         cpf: row.cpf,
-        rgNumber: row.rgNumber,
-        rgIssuer: row.rgIssuer,
-        rgIssueDate: row.rgIssueDate ? new Date(row.rgIssueDate) : undefined,
-        rgState: row.rgState,
-        dateOfBirth: row.dateOfBirth ? new Date(row.dateOfBirth) : undefined,
-        cellPhone: row.cellPhone,
-        homePhone: row.homePhone,
+        rgNumber: row.rg_number,
+        rgIssuer: row.rg_issuer,
+        rgIssueDate: row.rg_issue_date ? new Date(row.rg_issue_date) : undefined,
+        rgState: row.rg_state,
+        dateOfBirth: row.date_of_birth ? new Date(row.date_of_birth) : undefined,
+        cellPhone: row.cell_phone,
+        homePhone: row.home_phone,
         gender: row.gender,
         profession: row.profession,
         nationality: row.nationality,
-        maritalStatus: row.maritalStatus,
-        propertyRegime: row.propertyRegime,
-        spouseName: row.spouseName,
-        spouseCpf: row.spouseCpf,
-        zipCode: row.zipCode,
+        maritalStatus: row.marital_status,
+        propertyRegime: row.property_regime,
+        spouseName: row.spouse_name,
+        spouseCpf: row.spouse_cpf,
+        zipCode: row.zip_code,
         street: row.street,
-        number: row.number,
+        number: row.number, // Keep "number" for address number
         complement: row.complement,
         neighborhood: row.neighborhood,
         city: row.city,
         state: row.state,
-        optInMarketing: row.optInMarketing,
-        avatarUrl: row.avatarUrl,
-        dataAiHint: row.dataAiHint,
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
+        optInMarketing: row.opt_in_marketing,
+        avatarUrl: row.avatar_url,
+        dataAiHint: row.data_ai_hint,
+        accountType: row.account_type,
+        razaoSocial: row.razao_social,
+        cnpj: row.cnpj,
+        inscricaoEstadual: row.inscricao_estadual,
+        websiteComitente: row.website_comitente,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
     };
     return profile;
 }
@@ -217,122 +224,144 @@ function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProf
 function mapToAuction(row: QueryResultRow): Auction {
     return {
         id: String(row.id),
-        publicId: row.publicId,
+        publicId: row.public_id,
         title: row.title,
-        fullTitle: row.fullTitle,
+        fullTitle: row.full_title,
         description: row.description,
         status: row.status as AuctionStatus,
-        auctionType: row.auctionType,
-        category: row.categoryName,
-        categoryId: row.categoryId ? String(row.categoryId) : undefined,
-        auctioneer: row.auctioneerName,
-        auctioneerId: row.auctioneerId ? String(row.auctioneerId) : undefined,
-        seller: row.sellerName,
-        sellerId: row.sellerId ? String(row.sellerId) : undefined,
-        auctionDate: new Date(row.auctionDate),
-        endDate: row.endDate ? new Date(row.endDate) : null,
-        auctionStages: row.auctionStages || [],
+        auctionType: row.auction_type,
+        category: row.category_name || row.category,
+        categoryId: row.category_id ? String(row.category_id) : undefined,
+        auctioneer: row.auctioneer_name || row.auctioneer,
+        auctioneerId: row.auctioneer_id ? String(row.auctioneer_id) : undefined,
+        seller: row.seller_name || row.seller,
+        sellerId: row.seller_id ? String(row.seller_id) : undefined,
+        auctionDate: new Date(row.auction_date),
+        endDate: row.end_date ? new Date(row.end_date) : null,
+        auctionStages: row.auction_stages || [],
         city: row.city,
         state: row.state,
-        imageUrl: row.imageUrl,
-        dataAiHint: row.dataAiHint,
-        documentsUrl: row.documentsUrl,
-        totalLots: Number(row.totalLots || 0),
+        imageUrl: row.image_url,
+        dataAiHint: row.data_ai_hint,
+        documentsUrl: row.documents_url,
+        totalLots: Number(row.total_lots || 0),
         visits: Number(row.visits || 0),
-        initialOffer: row.initialOffer !== null ? Number(row.initialOffer) : undefined,
-        isFavorite: row.isFavorite,
-        currentBid: row.currentBid !== null ? Number(row.currentBid) : undefined,
-        bidsCount: Number(row.bidsCount || 0),
-        sellingBranch: row.sellingBranch,
-        vehicleLocation: row.vehicleLocation,
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
-        auctioneerLogoUrl: row.auctioneerLogoUrl,
-        lots: []
+        initialOffer: row.initial_offer !== null ? Number(row.initial_offer) : undefined,
+        isFavorite: row.is_favorite,
+        currentBid: row.current_bid !== null ? Number(row.current_bid) : undefined,
+        bidsCount: Number(row.bids_count || 0),
+        sellingBranch: row.selling_branch,
+        vehicleLocation: row.vehicle_location,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
+        auctioneerLogoUrl: row.auctioneer_logo_url,
+        lots: [],
+        automaticBiddingEnabled: row.automatic_bidding_enabled,
+        allowInstallmentBids: row.allow_installment_bids,
+        estimatedRevenue: row.estimated_revenue !== null ? Number(row.estimated_revenue) : undefined,
+        achievedRevenue: row.achieved_revenue !== null ? Number(row.achieved_revenue) : undefined,
+        totalHabilitatedUsers: Number(row.total_habilitated_users || 0),
+        isFeaturedOnMarketplace: row.is_featured_on_marketplace,
+        marketplaceAnnouncementTitle: row.marketplace_announcement_title,
     };
 }
 
 function mapToLot(row: QueryResultRow): Lot {
   return {
     id: String(row.id),
-    publicId: row.publicId,
-    auctionId: String(row.auctionId),
+    publicId: row.public_id,
+    auctionId: String(row.auction_id),
     title: row.title,
     number: row.number,
-    imageUrl: row.imageUrl,
-    dataAiHint: row.dataAiHint,
-    galleryImageUrls: row.galleryImageUrls || [],
-    mediaItemIds: row.mediaItemIds || [],
+    imageUrl: row.image_url,
+    dataAiHint: row.data_ai_hint,
+    galleryImageUrls: row.gallery_image_urls || [],
+    mediaItemIds: row.media_item_ids || [],
     status: row.status as LotStatus,
-    stateId: row.stateId ? String(row.stateId) : undefined,
-    cityId: row.cityId ? String(row.cityId) : undefined,
-    cityName: row.cityName,
-    stateUf: row.stateUf,
-    type: row.categoryName,
-    categoryId: row.categoryId ? String(row.categoryId) : undefined,
-    subcategoryId: row.subcategoryId ? String(row.subcategoryId) : undefined, // Added
-    subcategoryName: row.subcategoryName, // Added
+    stateId: row.state_id ? String(row.state_id) : undefined,
+    cityId: row.city_id ? String(row.city_id) : undefined,
+    cityName: row.city_name,
+    stateUf: row.state_uf,
+    type: row.category_name,
+    categoryId: row.category_id ? String(row.category_id) : undefined,
+    subcategoryId: row.subcategory_id ? String(row.subcategory_id) : undefined,
+    subcategoryName: row.subcategory_name,
     views: Number(row.views || 0),
-    auctionName: row.auctionName,
+    auctionName: row.auction_name,
     price: Number(row.price),
-    initialPrice: row.initialPrice !== null ? Number(row.initialPrice) : undefined,
-    lotSpecificAuctionDate: row.lotSpecificAuctionDate ? new Date(row.lotSpecificAuctionDate) : null,
-    secondAuctionDate: row.secondAuctionDate ? new Date(row.secondAuctionDate) : null,
-    secondInitialPrice: row.secondInitialPrice !== null ? Number(row.secondInitialPrice) : undefined,
-    endDate: row.endDate ? new Date(row.endDate) : undefined,
-    bidsCount: Number(row.bidsCount || 0),
-    isFavorite: row.isFavorite,
-    isFeatured: row.isFeatured,
+    initialPrice: row.initial_price !== null ? Number(row.initial_price) : undefined,
+    lotSpecificAuctionDate: row.lot_specific_auction_date ? new Date(row.lot_specific_auction_date) : null,
+    secondAuctionDate: row.second_auction_date ? new Date(row.second_auction_date) : null,
+    secondInitialPrice: row.second_initial_price !== null ? Number(row.second_initial_price) : undefined,
+    endDate: row.end_date ? new Date(row.end_date) : undefined,
+    bidsCount: Number(row.bids_count || 0),
+    isFavorite: row.is_favorite,
+    isFeatured: row.is_featured,
     description: row.description,
     year: row.year !== null ? Number(row.year) : undefined,
     make: row.make,
     model: row.model,
     series: row.series,
-    stockNumber: row.stockNumber,
-    sellingBranch: row.sellingBranch,
+    stockNumber: row.stock_number,
+    sellingBranch: row.selling_branch,
     vin: row.vin,
-    vinStatus: row.vinStatus,
-    lossType: row.lossType,
-    primaryDamage: row.primaryDamage,
-    titleInfo: row.titleInfo,
-    titleBrand: row.titleBrand,
-    startCode: row.startCode,
-    hasKey: row.hasKey,
+    vinStatus: row.vin_status,
+    lossType: row.loss_type,
+    primaryDamage: row.primary_damage,
+    titleInfo: row.title_info,
+    titleBrand: row.title_brand,
+    startCode: row.start_code,
+    hasKey: row.has_key,
     odometer: row.odometer,
-    airbagsStatus: row.airbagsStatus,
-    bodyStyle: row.bodyStyle,
-    engineDetails: row.engineDetails,
-    transmissionType: row.transmissionType,
-    driveLineType: row.driveLineType,
-    fuelType: row.fuelType,
+    airbagsStatus: row.airbags_status,
+    bodyStyle: row.body_style,
+    engineDetails: row.engine_details,
+    transmissionType: row.transmission_type,
+    driveLineType: row.drive_line_type,
+    fuelType: row.fuel_type,
     cylinders: row.cylinders,
-    restraintSystem: row.restraintSystem,
-    exteriorInteriorColor: row.exteriorInteriorColor,
+    restraintSystem: row.restraint_system,
+    exteriorInteriorColor: row.exterior_interior_color,
     options: row.options,
-    manufacturedIn: row.manufacturedIn,
-    vehicleClass: row.vehicleClass,
-    vehicleLocationInBranch: row.vehicleLocationInBranch,
-    laneRunNumber: row.laneRunNumber,
-    aisleStall: row.aisleStall,
-    actualCashValue: row.actualCashValue,
-    estimatedRepairCost: row.estimatedRepairCost,
-    sellerName: row.lotSellerName,
-    sellerId: row.sellerIdFk ? String(row.sellerIdFk) : undefined,
-    auctioneerName: row.lotAuctioneerName,
-    auctioneerId: row.auctioneerIdFk ? String(row.auctioneerIdFk) : undefined,
+    manufacturedIn: row.manufactured_in,
+    vehicleClass: row.vehicle_class,
+    vehicleLocationInBranch: row.vehicle_location_in_branch,
+    laneRunNumber: row.lane_run_number,
+    aisleStall: row.aisle_stall,
+    actualCashValue: row.actual_cash_value,
+    estimatedRepairCost: row.estimated_repair_cost,
+    sellerName: row.lot_seller_name || row.seller_name,
+    sellerId: row.seller_id_fk ? String(row.seller_id_fk) : (row.seller_id ? String(row.seller_id) : undefined),
+    auctioneerName: row.lot_auctioneer_name || row.auctioneer_name,
+    auctioneerId: row.auctioneer_id_fk ? String(row.auctioneer_id_fk) : (row.auctioneer_id ? String(row.auctioneer_id) : undefined),
     condition: row.condition,
-    createdAt: new Date(row.createdAt),
-    updatedAt: new Date(row.updatedAt),
+    bidIncrementStep: row.bid_increment_step !== null ? Number(row.bid_increment_step) : undefined,
+    allowInstallmentBids: Boolean(row.allow_installment_bids),
+    judicialProcessNumber: row.judicial_process_number,
+    courtDistrict: row.court_district,
+    courtName: row.court_name,
+    publicProcessUrl: row.public_process_url,
+    propertyRegistrationNumber: row.property_registration_number,
+    propertyLiens: row.property_liens,
+    knownDebts: row.known_debts,
+    additionalDocumentsInfo: row.additional_documents_info,
+    latitude: row.latitude !== null ? parseFloat(row.latitude) : undefined,
+    longitude: row.longitude !== null ? parseFloat(row.longitude) : undefined,
+    mapAddress: row.map_address,
+    mapEmbedUrl: row.map_embed_url,
+    mapStaticImageUrl: row.map_static_image_url,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
   };
 }
 
 function mapToBidInfo(row: QueryResultRow): BidInfo {
     return {
         id: String(row.id),
-        lotId: String(row.lotId),
-        auctionId: String(row.auctionId),
-        bidderId: row.bidderId,
-        bidderDisplay: row.bidderDisplayName,
+        lotId: String(row.lot_id),
+        auctionId: String(row.auction_id),
+        bidderId: row.bidder_id,
+        bidderDisplay: row.bidder_display_name,
         amount: parseFloat(row.amount),
         timestamp: new Date(row.timestamp),
     };
@@ -341,22 +370,22 @@ function mapToBidInfo(row: QueryResultRow): BidInfo {
 function mapToMediaItem(row: QueryResultRow): MediaItem {
   return {
     id: String(row.id),
-    fileName: row.fileName,
-    uploadedAt: new Date(row.uploadedAt),
-    uploadedBy: row.uploadedBy,
+    fileName: row.file_name,
+    uploadedAt: new Date(row.uploaded_at),
+    uploadedBy: row.uploaded_by,
     title: row.title,
-    altText: row.altText,
+    altText: row.alt_text,
     caption: row.caption,
     description: row.description,
-    mimeType: row.mimeType,
-    sizeBytes: Number(row.sizeBytes),
-    dimensions: row.dimensionsWidth && row.dimensionsHeight ? { width: Number(row.dimensionsWidth), height: Number(row.dimensionsHeight) } : undefined,
-    urlOriginal: row.urlOriginal,
-    urlThumbnail: row.urlThumbnail,
-    urlMedium: row.urlMedium,
-    urlLarge: row.urlLarge,
-    linkedLotIds: row.linkedLotIds || [],
-    dataAiHint: row.dataAiHint,
+    mimeType: row.mime_type,
+    sizeBytes: Number(row.size_bytes),
+    dimensions: row.dimensions_width && row.dimensions_height ? { width: Number(row.dimensions_width), height: Number(row.dimensions_height) } : undefined,
+    urlOriginal: row.url_original,
+    urlThumbnail: row.url_thumbnail,
+    urlMedium: row.url_medium,
+    urlLarge: row.url_large,
+    linkedLotIds: row.linked_lot_ids || [],
+    dataAiHint: row.data_ai_hint,
   };
 }
 
@@ -368,8 +397,19 @@ function mapToPlatformSettings(row: QueryResultRow): PlatformSettings {
         galleryImageBasePath: row.gallery_image_base_path,
         activeThemeName: row.active_theme_name,
         themes: row.themes || [],
-        platformPublicIdMasks: row.platform_public_id_masks || undefined,
-        updatedAt: new Date(row.updated_at),
+        platformPublicIdMasks: row.platform_public_id_masks || {},
+        mapSettings: row.map_settings || samplePlatformSettings.mapSettings,
+        searchPaginationType: (row.search_pagination_type as SearchPaginationType) || samplePlatformSettings.searchPaginationType,
+        searchItemsPerPage: Number(row.search_items_per_page || samplePlatformSettings.searchItemsPerPage),
+        searchLoadMoreCount: Number(row.search_load_more_count || samplePlatformSettings.searchLoadMoreCount),
+        showCountdownOnLotDetail: row.show_countdown_on_lot_detail === null ? samplePlatformSettings.showCountdownOnLotDetail : Boolean(row.show_countdown_on_lot_detail),
+        showCountdownOnCards: row.show_countdown_on_cards === null ? samplePlatformSettings.showCountdownOnCards : Boolean(row.show_countdown_on_cards),
+        showRelatedLotsOnLotDetail: row.show_related_lots_on_lot_detail === null ? samplePlatformSettings.showRelatedLotsOnLotDetail : Boolean(row.show_related_lots_on_lot_detail),
+        relatedLotsCount: Number(row.related_lots_count || samplePlatformSettings.relatedLotsCount),
+        mentalTriggerSettings: row.mental_trigger_settings || samplePlatformSettings.mentalTriggerSettings,
+        sectionBadgeVisibility: row.section_badge_visibility || samplePlatformSettings.sectionBadgeVisibility,
+        homepageSections: row.homepage_sections || samplePlatformSettings.homepageSections,
+        updatedAt: new Date(row.updated_at)
     };
 }
 
@@ -456,52 +496,30 @@ export class PostgresAdapter implements IDatabaseAdapter {
         full_name VARCHAR(255),
         password_text VARCHAR(255) NULL,
         role_id INTEGER REFERENCES roles(id) ON DELETE SET NULL,
-        permissions JSONB,
-        status VARCHAR(50),
-        habilitation_status VARCHAR(50),
-        cpf VARCHAR(20),
-        rg_number VARCHAR(30),
-        rg_issuer VARCHAR(100),
-        rg_issue_date DATE,
-        rg_state VARCHAR(2),
-        date_of_birth DATE,
-        cell_phone VARCHAR(20),
-        home_phone VARCHAR(20),
-        gender VARCHAR(50),
-        profession VARCHAR(100),
-        nationality VARCHAR(100),
-        marital_status VARCHAR(50),
-        property_regime VARCHAR(100),
-        spouse_name VARCHAR(255),
-        spouse_cpf VARCHAR(20),
-        zip_code VARCHAR(10),
-        street VARCHAR(255),
-        "number" VARCHAR(20),
-        complement VARCHAR(100),
-        neighborhood VARCHAR(100),
-        city VARCHAR(100),
-        state VARCHAR(100),
-        opt_in_marketing BOOLEAN DEFAULT FALSE,
-        avatar_url TEXT,
-        data_ai_hint TEXT,
-        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        permissions JSONB, status VARCHAR(50), habilitation_status VARCHAR(50),
+        cpf VARCHAR(20), rg_number VARCHAR(30), rg_issuer VARCHAR(100), rg_issue_date DATE, rg_state VARCHAR(2),
+        date_of_birth DATE, cell_phone VARCHAR(20), home_phone VARCHAR(20), gender VARCHAR(50), profession VARCHAR(100),
+        nationality VARCHAR(100), marital_status VARCHAR(50), property_regime VARCHAR(100),
+        spouse_name VARCHAR(255), spouse_cpf VARCHAR(20), zip_code VARCHAR(10), street VARCHAR(255),
+        "number" VARCHAR(20), complement VARCHAR(100), neighborhood VARCHAR(100), city VARCHAR(100), state VARCHAR(100),
+        opt_in_marketing BOOLEAN DEFAULT FALSE, avatar_url TEXT, data_ai_hint TEXT,
+        account_type VARCHAR(50), razao_social VARCHAR(255), cnpj VARCHAR(20), inscricao_estadual VARCHAR(50), website_comitente TEXT,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
       `CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);`,
       `CREATE INDEX IF NOT EXISTS idx_users_role_id ON users(role_id);`,
 
       `CREATE TABLE IF NOT EXISTS platform_settings (
-        id VARCHAR(50) PRIMARY KEY DEFAULT 'global',
-        site_title VARCHAR(100) NULL,
-        site_tagline VARCHAR(255) NULL,
-        gallery_image_base_path TEXT NOT NULL DEFAULT '/media/gallery/',
-        active_theme_name TEXT NULL,
-        themes JSONB NOT NULL DEFAULT '[]'::jsonb,
-        platform_public_id_masks JSONB,
+        id VARCHAR(50) PRIMARY KEY DEFAULT 'global', site_title VARCHAR(100) NULL, site_tagline VARCHAR(255) NULL,
+        gallery_image_base_path TEXT NOT NULL DEFAULT '/media/gallery/', active_theme_name TEXT NULL,
+        themes JSONB NOT NULL DEFAULT '[]'::jsonb, platform_public_id_masks JSONB,
+        map_settings JSONB, search_pagination_type VARCHAR(50), search_items_per_page INTEGER, search_load_more_count INTEGER,
+        show_countdown_on_lot_detail BOOLEAN, show_countdown_on_cards BOOLEAN, show_related_lots_on_lot_detail BOOLEAN,
+        related_lots_count INTEGER, mental_trigger_settings JSONB, section_badge_visibility JSONB, homepage_sections JSONB,
         updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
 
-      `CREATE TABLE IF NOT EXISTS lot_categories (
+       `CREATE TABLE IF NOT EXISTS lot_categories (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         slug VARCHAR(255) NOT NULL UNIQUE,
@@ -640,6 +658,13 @@ export class PostgresAdapter implements IDatabaseAdapter {
         bids_count INTEGER DEFAULT 0,
         selling_branch VARCHAR(100),
         vehicle_location VARCHAR(255),
+        automatic_bidding_enabled BOOLEAN DEFAULT FALSE,
+        allow_installment_bids BOOLEAN DEFAULT FALSE,
+        estimated_revenue NUMERIC(15,2),
+        achieved_revenue NUMERIC(15,2),
+        total_habilitated_users INTEGER DEFAULT 0,
+        is_featured_on_marketplace BOOLEAN DEFAULT FALSE,
+        marketplace_announcement_title VARCHAR(150),
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
@@ -699,7 +724,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         fuel_type VARCHAR(50),
         cylinders VARCHAR(20),
         restraint_system VARCHAR(255),
-        exterior_interior_color VARCHAR(100),
+        exteriorInteriorColor VARCHAR(100),
         options TEXT,
         manufactured_in VARCHAR(100),
         vehicle_class VARCHAR(100),
@@ -711,6 +736,21 @@ export class PostgresAdapter implements IDatabaseAdapter {
         seller_id_fk INTEGER REFERENCES sellers(id) ON DELETE SET NULL,
         auctioneer_id_fk INTEGER REFERENCES auctioneers(id) ON DELETE SET NULL,
         condition TEXT,
+        bid_increment_step NUMERIC(10,2),
+        allow_installment_bids BOOLEAN,
+        judicial_process_number VARCHAR(100),
+        court_district VARCHAR(100),
+        court_name VARCHAR(100),
+        public_process_url TEXT,
+        property_registration_number VARCHAR(100),
+        property_liens TEXT,
+        known_debts TEXT,
+        additional_documents_info TEXT,
+        latitude NUMERIC(10, 8),
+        longitude NUMERIC(11, 8),
+        map_address VARCHAR(255),
+        map_embed_url TEXT,
+        map_static_image_url TEXT,
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
@@ -839,7 +879,205 @@ export class PostgresAdapter implements IDatabaseAdapter {
     }
   }
 
-  // Subcategory methods
+  async getPlatformSettings(): Promise<PlatformSettings> {
+    const client = await getPool().connect();
+    try {
+        const res = await client.query(`SELECT site_title, site_tagline, gallery_image_base_path, active_theme_name, themes, platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page, search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards, show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings, section_badge_visibility, homepage_sections, updated_at FROM platform_settings WHERE id = 'global';`);
+        if (res.rowCount && res.rowCount > 0) {
+            return mapToPlatformSettings(mapRowToCamelCase(res.rows[0]));
+        }
+        const defaultSettings = samplePlatformSettings; // Use the comprehensive sample
+        const insertQuery = `
+          INSERT INTO platform_settings (
+            id, site_title, site_tagline, gallery_image_base_path, active_theme_name, themes,
+            platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page,
+            search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards,
+            show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings,
+            section_badge_visibility, homepage_sections
+          ) VALUES ('global', $1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8, $9, $10, $11, $12, $13, $14, $15::jsonb, $16::jsonb, $17::jsonb)
+          ON CONFLICT (id) DO NOTHING;
+        `;
+        await client.query(insertQuery, [
+            defaultSettings.siteTitle, defaultSettings.siteTagline, defaultSettings.galleryImageBasePath,
+            defaultSettings.activeThemeName || null, JSON.stringify(defaultSettings.themes || []),
+            JSON.stringify(defaultSettings.platformPublicIdMasks || {}), JSON.stringify(defaultSettings.mapSettings || {}),
+            defaultSettings.searchPaginationType, defaultSettings.searchItemsPerPage, defaultSettings.searchLoadMoreCount,
+            defaultSettings.showCountdownOnLotDetail, defaultSettings.showCountdownOnCards,
+            defaultSettings.showRelatedLotsOnLotDetail, defaultSettings.relatedLotsCount,
+            JSON.stringify(defaultSettings.mentalTriggerSettings || {}), JSON.stringify(defaultSettings.sectionBadgeVisibility || {}),
+            JSON.stringify(defaultSettings.homepageSections || [])
+        ]);
+        return { ...defaultSettings, id: 'global', updatedAt: new Date() };
+    } catch (e: any) {
+        console.error("[PostgresAdapter - getPlatformSettings] Error, returning default:", e);
+        return { ...samplePlatformSettings, id: 'global', updatedAt: new Date() };
+    } finally {
+        client.release();
+    }
+  }
+
+  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
+    const client = await getPool().connect();
+    if (!data.galleryImageBasePath || !data.galleryImageBasePath.startsWith('/') || !data.galleryImageBasePath.endsWith('/')) {
+        return { success: false, message: 'Caminho base da galeria inválido. Deve começar e terminar com "/".' };
+    }
+    try {
+        const query = `
+          INSERT INTO platform_settings (
+            id, site_title, site_tagline, gallery_image_base_path, active_theme_name, themes,
+            platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page,
+            search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards,
+            show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings,
+            section_badge_visibility, homepage_sections, updated_at
+          ) VALUES ('global', $1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8, $9, $10, $11, $12, $13, $14, $15::jsonb, $16::jsonb, $17::jsonb, NOW())
+          ON CONFLICT (id) DO UPDATE SET
+            site_title = EXCLUDED.site_title, site_tagline = EXCLUDED.site_tagline,
+            gallery_image_base_path = EXCLUDED.gallery_image_base_path, active_theme_name = EXCLUDED.active_theme_name,
+            themes = EXCLUDED.themes, platform_public_id_masks = EXCLUDED.platform_public_id_masks,
+            map_settings = EXCLUDED.map_settings, search_pagination_type = EXCLUDED.search_pagination_type,
+            search_items_per_page = EXCLUDED.search_items_per_page, search_load_more_count = EXCLUDED.search_load_more_count,
+            show_countdown_on_lot_detail = EXCLUDED.show_countdown_on_lot_detail, show_countdown_on_cards = EXCLUDED.show_countdown_on_cards,
+            show_related_lots_on_lot_detail = EXCLUDED.show_related_lots_on_lot_detail, related_lots_count = EXCLUDED.related_lots_count,
+            mental_trigger_settings = EXCLUDED.mental_trigger_settings, section_badge_visibility = EXCLUDED.section_badge_visibility,
+            homepage_sections = EXCLUDED.homepage_sections, updated_at = NOW();
+        `;
+        await client.query(query, [
+            data.siteTitle || null, data.siteTagline || null, data.galleryImageBasePath,
+            data.activeThemeName || null, JSON.stringify(data.themes || []),
+            JSON.stringify(data.platformPublicIdMasks || {}), JSON.stringify(data.mapSettings || {}),
+            data.searchPaginationType, data.searchItemsPerPage, data.searchLoadMoreCount,
+            data.showCountdownOnLotDetail, data.showCountdownOnCards, data.showRelatedLotsOnLotDetail,
+            data.relatedLotsCount, JSON.stringify(data.mentalTriggerSettings || {}),
+            JSON.stringify(data.sectionBadgeVisibility || {}), JSON.stringify(data.homepageSections || [])
+        ]);
+        return { success: true, message: 'Configurações atualizadas (PostgreSQL)!' };
+    } catch (e: any) {
+        console.error("[PostgresAdapter - updatePlatformSettings] Error:", e);
+        return { success: false, message: e.message };
+    } finally {
+        client.release();
+    }
+  }
+
+  async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> {
+     if (!data.name || data.name.trim() === '') {
+      return { success: false, message: 'O nome da categoria é obrigatório.' };
+    }
+    const client = await getPool().connect();
+    try {
+      const slug = slugify(data.name.trim());
+      const queryText = `
+        INSERT INTO lot_categories (name, slug, description, item_count, has_subcategories, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, FALSE, NOW(), NOW())
+        RETURNING id;
+      `;
+      const values = [data.name.trim(), slug, data.description?.trim() || null, 0];
+      const res = await client.query(queryText, values);
+      const categoryId = res.rows[0]?.id;
+      return { success: true, message: 'Categoria criada com sucesso (PostgreSQL)!', categoryId: String(categoryId) };
+    } catch (error: any) {
+      console.error("[PostgresAdapter - createLotCategory] Error:", error);
+      return { success: false, message: error.message || 'Falha ao criar categoria (PostgreSQL).' };
+    } finally {
+      client.release();
+    }
+  }
+
+  async getLotCategories(): Promise<LotCategory[]> {
+    const client = await getPool().connect();
+    try {
+      const res = await client.query('SELECT id, name, slug, description, item_count, has_subcategories, created_at, updated_at FROM lot_categories ORDER BY name ASC;');
+      return mapRowsToCamelCase(res.rows).map(mapToLotCategory);
+    } catch (error: any) {
+      console.error("[PostgresAdapter - getLotCategories] Error:", error);
+      return [];
+    } finally {
+      client.release();
+    }
+  }
+
+  async getLotCategory(idOrSlug: string): Promise<LotCategory | null> {
+    const client = await getPool().connect();
+    try {
+        const numericId = parseInt(idOrSlug, 10);
+        let res;
+        if (isNaN(numericId)) {
+            res = await client.query('SELECT * FROM lot_categories WHERE slug = $1', [idOrSlug]);
+        } else {
+            res = await client.query('SELECT * FROM lot_categories WHERE id = $1', [numericId]);
+        }
+        if (res.rowCount === 0) return null;
+        return mapToLotCategory(mapRowToCamelCase(res.rows[0]));
+    } catch (error: any) {
+        console.error(`[PostgresAdapter - getLotCategory with ID/slug ${idOrSlug}] Error:`, error);
+        return null;
+    } finally {
+        client.release();
+    }
+  }
+
+  async updateLotCategory(id: string, data: { name: string; description?: string; hasSubcategories?: boolean }): Promise<{ success: boolean; message: string; }> {
+     if (!data.name || data.name.trim() === '') {
+      return { success: false, message: 'O nome da categoria é obrigatório.' };
+    }
+    const client = await getPool().connect();
+    try {
+      const slug = slugify(data.name.trim());
+      const fields: string[] = [];
+      const values: any[] = [];
+      let paramCount = 1;
+
+      fields.push(`name = $${paramCount++}`); values.push(data.name.trim());
+      fields.push(`slug = $${paramCount++}`); values.push(slug);
+      fields.push(`description = $${paramCount++}`); values.push(data.description?.trim() || null);
+      if (data.hasSubcategories !== undefined) {
+        fields.push(`has_subcategories = $${paramCount++}`); values.push(data.hasSubcategories);
+      }
+      fields.push(`updated_at = NOW()`);
+
+      const queryText = `UPDATE lot_categories SET ${fields.join(', ')} WHERE id = $${paramCount};`;
+      values.push(Number(id));
+
+      await client.query(queryText, values);
+      return { success: true, message: 'Categoria atualizada com sucesso (PostgreSQL)!' };
+    } catch (error: any) {
+      console.error("[PostgresAdapter - updateLotCategory] Error:", error);
+      return { success: false, message: error.message || 'Falha ao atualizar categoria (PostgreSQL).' };
+    } finally {
+      client.release();
+    }
+  }
+
+  async getLotCategoryByName(name: string): Promise<LotCategory | null> {
+    const client = await getPool().connect();
+    try {
+        const normalizedName = name.trim();
+        const res = await client.query(
+            'SELECT * FROM lot_categories WHERE name = $1 OR slug = $2 LIMIT 1',
+            [normalizedName, slugify(normalizedName)]
+        );
+        if (res.rowCount === 0) return null;
+        return mapToLotCategory(mapRowToCamelCase(res.rows[0]));
+    } catch (error: any) {
+        console.error(`[PostgresAdapter - getLotCategoryByName(${name})] Error:`, error);
+        return null;
+    } finally {
+        client.release();
+    }
+  }
+  deleteLotCategory = async (id: string): Promise<{ success: boolean; message: string; }> => {
+    const client = await getPool().connect();
+    try {
+      await client.query('DELETE FROM lot_categories WHERE id = $1;', [Number(id)]);
+      return { success: true, message: 'Categoria excluída com sucesso (PostgreSQL)!' };
+    } catch (error: any) {
+      console.error("[PostgresAdapter - deleteLotCategory] Error:", error);
+      return { success: false, message: error.message || 'Falha ao excluir categoria (PostgreSQL).' };
+    } finally {
+      client.release();
+    }
+  }
+
   async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> {
     const client = await getPool().connect();
     try {
@@ -855,7 +1093,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
       const res = await client.query(query, values);
       const subcategoryId = res.rows[0]?.id;
 
-      // Update hasSubcategories on parent category
       await client.query(
         'UPDATE lot_categories SET has_subcategories = TRUE, updated_at = NOW() WHERE id = $1',
         [Number(data.parentCategoryId)]
@@ -946,7 +1183,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
     const client = await getPool().connect();
     try {
       await client.query('DELETE FROM subcategories WHERE id = $1;', [Number(id)]);
-      // Optional: Check if parent category has any remaining subcategories and update has_subcategories flag.
       return { success: true, message: 'Subcategoria excluída com sucesso (PostgreSQL)!' };
     } catch (error: any) {
       console.error(`[PostgresAdapter - deleteSubcategory(${id})] Error:`, error);
@@ -955,342 +1191,192 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
+  async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }> {
+    const client = await getPool().connect();
+    let rolesProcessedCount = 0;
+    try {
+      await client.query('BEGIN');
+      for (const roleData of defaultRolesData) {
+        const res = await client.query('SELECT id, description, permissions FROM roles WHERE name_normalized = $1', [roleData.name.toUpperCase()]);
+        const validPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
+        const permissionsJson = JSON.stringify(validPermissions);
 
-  async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> {
-     if (!data.name || data.name.trim() === '') {
-      return { success: false, message: 'O nome da categoria é obrigatório.' };
+        if (res.rowCount === 0) {
+          await client.query(
+            'INSERT INTO roles (name, name_normalized, description, permissions) VALUES ($1, $2, $3, $4::jsonb)',
+            [roleData.name, roleData.name.toUpperCase(), roleData.description, permissionsJson]
+          );
+          rolesProcessedCount++;
+        } else {
+          const existingRole = res.rows[0];
+          const currentPermissions = existingRole.permissions || [];
+          if (existingRole.description !== roleData.description || JSON.stringify(currentPermissions.sort()) !== JSON.stringify(validPermissions.sort())) {
+            await client.query(
+              'UPDATE roles SET description = $1, permissions = $2::jsonb, updated_at = NOW() WHERE id = $3',
+              [roleData.description, permissionsJson, existingRole.id]
+            );
+            rolesProcessedCount++;
+          }
+        }
+      }
+      await client.query('COMMIT');
+      return { success: true, message: 'Default roles ensured (PostgreSQL).', rolesProcessed: rolesProcessedCount };
+    } catch (e: any) {
+      await client.query('ROLLBACK');
+      console.error("[PostgreSQLAdapter - ensureDefaultRolesExist] Error:", e);
+      return { success: false, message: `PostgreSQL Error: ${e.message}`, rolesProcessed: rolesProcessedCount };
+    } finally {
+      client.release();
     }
+  }
+  async getUserByEmail(email: string): Promise<UserProfileData | null> {
     const client = await getPool().connect();
     try {
-      const slug = slugify(data.name.trim());
-      const queryText = `
-        INSERT INTO lot_categories (name, slug, description, item_count, has_subcategories, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, FALSE, NOW(), NOW())
-        RETURNING id;
+      const query = `
+        SELECT u.*, r.name as role_name_from_join, r.permissions as role_permissions_from_join
+        FROM users u
+        LEFT JOIN roles r ON u.role_id = r.id
+        WHERE u.email = $1 LIMIT 1;
       `;
-      const values = [data.name.trim(), slug, data.description?.trim() || null, 0];
-      const res = await client.query(queryText, values);
-      const categoryId = res.rows[0]?.id;
-      return { success: true, message: 'Categoria criada com sucesso (PostgreSQL)!', categoryId: String(categoryId) };
-    } catch (error: any) {
-      console.error("[PostgresAdapter - createLotCategory] Error:", error);
-      return { success: false, message: error.message || 'Falha ao criar categoria (PostgreSQL).' };
-    } finally {
-      client.release();
-    }
-  }
-
-  async getLotCategories(): Promise<LotCategory[]> {
-    const client = await getPool().connect();
-    try {
-      const res = await client.query('SELECT id, name, slug, description, item_count, has_subcategories, created_at, updated_at FROM lot_categories ORDER BY name ASC;');
-      return mapRowsToCamelCase(res.rows).map(mapToLotCategory);
-    } catch (error: any) {
-      console.error("[PostgresAdapter - getLotCategories] Error:", error);
-      return [];
-    } finally {
-      client.release();
-    }
-  }
-
-  async getLotCategory(id: string): Promise<LotCategory | null> {
-    const client = await getPool().connect();
-    try {
-        const numericId = parseInt(id, 10);
-        let res;
-        if (isNaN(numericId)) {
-            res = await client.query('SELECT * FROM lot_categories WHERE slug = $1', [id]);
-        } else {
-            res = await client.query('SELECT * FROM lot_categories WHERE id = $1', [numericId]);
-        }
-        if (res.rowCount === 0) return null;
-        return mapToLotCategory(mapRowToCamelCase(res.rows[0]));
-    } catch (error: any) {
-        console.error(`[PostgresAdapter - getLotCategory with ID/slug ${id}] Error:`, error);
-        return null;
-    } finally {
-        client.release();
-    }
-  }
-
-  async updateLotCategory(id: string, data: { name: string; description?: string; hasSubcategories?: boolean }): Promise<{ success: boolean; message: string; }> {
-     if (!data.name || data.name.trim() === '') {
-      return { success: false, message: 'O nome da categoria é obrigatório.' };
-    }
-    const client = await getPool().connect();
-    try {
-      const slug = slugify(data.name.trim());
-      const fields: string[] = [];
-      const values: any[] = [];
-      let paramCount = 1;
-
-      fields.push(`name = $${paramCount++}`); values.push(data.name.trim());
-      fields.push(`slug = $${paramCount++}`); values.push(slug);
-      fields.push(`description = $${paramCount++}`); values.push(data.description?.trim() || null);
-      if (data.hasSubcategories !== undefined) {
-        fields.push(`has_subcategories = $${paramCount++}`); values.push(data.hasSubcategories);
-      }
-      fields.push(`updated_at = NOW()`);
-
-      const queryText = `UPDATE lot_categories SET ${fields.join(', ')} WHERE id = $${paramCount};`;
-      values.push(Number(id));
-
-      await client.query(queryText, values);
-      return { success: true, message: 'Categoria atualizada com sucesso (PostgreSQL)!' };
-    } catch (error: any) {
-      console.error("[PostgresAdapter - updateLotCategory] Error:", error);
-      return { success: false, message: error.message || 'Falha ao atualizar categoria (PostgreSQL).' };
-    } finally {
-      client.release();
-    }
-  }
-
-  async getLotCategoryByName(name: string): Promise<LotCategory | null> {
-    const client = await getPool().connect();
-    try {
-        const normalizedName = name.trim();
-        const res = await client.query(
-            'SELECT * FROM lot_categories WHERE name = $1 OR slug = $2 LIMIT 1',
-            [normalizedName, slugify(normalizedName)]
-        );
-        if (res.rowCount === 0) return null;
-        return mapToLotCategory(mapRowToCamelCase(res.rows[0]));
-    } catch (error: any) {
-        console.error(`[PostgresAdapter - getLotCategoryByName(${name})] Error:`, error);
-        return null;
-    } finally {
-        client.release();
-    }
-  }
-  // ... (rest of the methods: deleteLotCategory, State, City, Auctioneer, Seller, Auction, Lot, Bids, User, Role, Media, PlatformSettings)
-  // Ensure all these methods use the helper functions mapRowToCamelCase and mapTo<Entity> if they return data.
-  // For all INSERT and UPDATE queries, ensure proper handling of null values for optional fields (pass NULL to SQL).
-  // For all SELECT queries that join tables for names (e.g., category_name from lot_categories), make sure the mapTo<Entity> functions correctly use these joined names.
-  // Remember to release the connection in a `finally` block for every method.
-
-  deleteLotCategory = async (id: string): Promise<{ success: boolean; message: string; }> => {
-    const client = await getPool().connect();
-    try {
-      await client.query('DELETE FROM lot_categories WHERE id = $1;', [Number(id)]);
-      return { success: true, message: 'Categoria excluída com sucesso (PostgreSQL)!' };
-    } catch (error: any) {
-      console.error("[PostgresAdapter - deleteLotCategory] Error:", error);
-      return { success: false, message: error.message || 'Falha ao excluir categoria (PostgreSQL).' };
-    } finally {
-      client.release();
-    }
-  }
-  deleteState = async (id: string): Promise<{ success: boolean; message: string; }> => {
-    const client = await getPool().connect();
-    try {
-      await client.query('DELETE FROM states WHERE id = $1', [Number(id)]);
-      return { success: true, message: 'Estado excluído (PostgreSQL)!' };
-    } catch (e: any) { console.error(`[PostgresAdapter - deleteState(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
-  }
-  deleteCity = async (id: string): Promise<{ success: boolean; message: string; }> => {
-    const client = await getPool().connect();
-    try {
-      await client.query('DELETE FROM cities WHERE id = $1', [Number(id)]);
-      return { success: true, message: 'Cidade excluída (PostgreSQL)!' };
-    } catch (e: any) { console.error(`[PostgresAdapter - deleteCity(${id})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
-  }
-  deleteSeller = async (idOrPublicId: string): Promise<{ success: boolean; message: string; }> => {
-    const client = await getPool().connect();
-    try {
-      const numericId = Number(idOrPublicId);
-      if (!isNaN(numericId)) {
-        await client.query('DELETE FROM sellers WHERE id = $1;', [numericId]);
-      } else {
-        await client.query('DELETE FROM sellers WHERE public_id = $1;', [idOrPublicId]);
-      }
-      return { success: true, message: 'Comitente excluído (PostgreSQL)!' };
-    } catch (e: any) { console.error(`[PostgresAdapter - deleteSeller(${idOrPublicId})] Error:`, e); return { success: false, message: e.message }; } finally { client.release(); }
-  }
-  getAuctioneerByName = async (name: string): Promise<AuctioneerProfileInfo | null> => {
-    const client = await getPool().connect();
-    try {
-      const res = await client.query('SELECT * FROM auctioneers WHERE name = $1 LIMIT 1;', [name]);
-      if (res.rowCount === 0) return null;
-      return mapToAuctioneerProfileInfo(mapRowToCamelCase(res.rows[0]));
-    } catch (e: any) { console.error(`[PostgresAdapter - getAuctioneerByName(${name})] Error:`, e); return null; } finally { client.release(); }
-  }
-  getSellerByName = async (name: string): Promise<SellerProfileInfo | null> => {
-    const client = await getPool().connect();
-    try {
-      const res = await client.query('SELECT * FROM sellers WHERE name = $1 LIMIT 1;', [name]);
-      if (res.rowCount === 0) return null;
-      return mapToSellerProfileInfo(mapRowToCamelCase(res.rows[0]));
-    } catch (e: any) { console.error(`[PostgresAdapter - getSellerByName(${name})] Error:`, e); return null; } finally { client.release(); }
-  }
-  ensureUserRole = async (userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> => {
-    // ... (full implementation as before)
-    const client = await getPool().connect();
-    try {
-        await this.ensureDefaultRolesExist();
-        let targetRole: Role | null = null;
-        if (roleIdToAssign) targetRole = await this.getRole(roleIdToAssign);
-        if (!targetRole) targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
-
-        if (!targetRole || !targetRole.id) return { success: false, message: `Perfil padrão '${targetRoleName}' ou 'USER' não encontrado.` };
-
-        await client.query('BEGIN');
-        const userRes = await client.query('SELECT * FROM users WHERE uid = $1', [userId]);
-        let finalProfileData: UserProfileData;
-
-        if (userRes.rowCount > 0) {
-            const userDataFromDB = mapToUserProfileData(mapRowToCamelCase(userRes.rows[0]));
-            const updatePayload: any = { updatedAt: new Date() };
-            let needsUpdate = false;
-            if (String(userDataFromDB.roleId) !== String(targetRole.id)) { updatePayload.role_id = Number(targetRole.id); needsUpdate = true; }
-            if (userDataFromDB.roleName !== targetRole.name) { updatePayload.role_name = targetRole.name; needsUpdate = true; }
-            const dbPermissions = userDataFromDB.permissions || [];
-            const targetPermissions = targetRole.permissions || [];
-            if (JSON.stringify([...dbPermissions].sort()) !== JSON.stringify([...targetPermissions].sort())) {
-                updatePayload.permissions = JSON.stringify(targetPermissions);
-                needsUpdate = true;
-            }
-            if (additionalProfileData?.password) { updatePayload.password_text = additionalProfileData.password; needsUpdate = true;}
-            if (additionalProfileData) {
-                for (const key in additionalProfileData) {
-                    if (key !== 'password' && Object.prototype.hasOwnProperty.call(additionalProfileData, key)) {
-                        const dbKey = key.replace(/([A-Z])/g, "_$1").toLowerCase() as keyof UserProfileData;
-                        // @ts-ignore
-                        if (additionalProfileData[key] !== undefined && additionalProfileData[key] !== userDataFromDB[dbKey]) {
-                            // @ts-ignore
-                            updatePayload[dbKey] = additionalProfileData[key];
-                            needsUpdate = true;
-                        }
-                    }
-                }
-            }
-            if (needsUpdate) {
-                const updateFields: string[] = []; const updateValues: any[] = []; let pCount = 1;
-                Object.keys(updatePayload).forEach(key => { const sqlColumn = key.replace(/([A-Z])/g, "_$1").toLowerCase(); updateFields.push(`${sqlColumn} = $${pCount++}`); updateValues.push(updatePayload[key]); });
-                updateValues.push(userId);
-                await client.query(`UPDATE users SET ${updateFields.join(', ')} WHERE uid = $${pCount}`, updateValues);
-            }
-            finalProfileData = { ...userDataFromDB, ...updatePayload, uid: userId, permissions: targetRole.permissions || [] } as UserProfileData;
-        } else {
-            const insertQuery = `INSERT INTO users (uid, email, full_name, password_text, role_id, permissions, status, habilitation_status, cpf, cell_phone, date_of_birth, account_type, razao_social, cnpj, inscricao_estadual, website_comitente, zip_code, street, "number", complement, neighborhood, city, state, opt_in_marketing, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, NOW(), NOW()) RETURNING *;`;
-            const insertValues = [userId, email, fullName || email.split('@')[0], additionalProfileData?.password || null, Number(targetRole.id), JSON.stringify(targetRole.permissions || []), 'ATIVO', targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS', additionalProfileData?.cpf || null, additionalProfileData?.cellPhone || null, additionalProfileData?.dateOfBirth || null, additionalProfileData?.accountType || null, additionalProfileData?.razaoSocial || null, additionalProfileData?.cnpj || null, additionalProfileData?.inscricaoEstadual || null, additionalProfileData?.websiteComitente || null, additionalProfileData?.zipCode || null, additionalProfileData?.street || null, additionalProfileData?.number || null, additionalProfileData?.complement || null, additionalProfileData?.neighborhood || null, additionalProfileData?.city || null, additionalProfileData?.state || null, additionalProfileData?.optInMarketing || false];
-            const newUserRes = await client.query(insertQuery, insertValues);
-            finalProfileData = mapToUserProfileData(mapRowToCamelCase(newUserRes.rows[0]), targetRole);
-        }
-        await client.query('COMMIT');
-        return { success: true, message: 'Perfil de usuário assegurado/atualizado (PostgreSQL).', userProfile: finalProfileData };
-    } catch (e: any) { await client.query('ROLLBACK'); return { success: false, message: e.message }; } finally { client.release(); }
-  }
-  getUsersWithRoles = async (): Promise<UserProfileData[]> => {
-    const client = await getPool().connect();
-    try {
-      const res = await client.query(`SELECT u.*, r.name as role_name, r.permissions as role_permissions FROM users u LEFT JOIN roles r ON u.role_id = r.id ORDER BY u.full_name ASC;`);
-      return mapRowsToCamelCase(res.rows).map(row => {
-        const profile = mapToUserProfileData(row);
-        if ((!profile.permissions || profile.permissions.length === 0) && row.role_permissions) { profile.permissions = row.role_permissions; }
-        return profile;
-      });
-    } catch (e: any) { return []; } finally { client.release(); }
-  }
-  updateUserRole = async (userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> => {
-    const client = await getPool().connect();
-    try {
-      let roleName = null; let permissions = null;
-      if (roleId && roleId !== "---NONE---") {
-        const role = await this.getRole(roleId);
-        if (role) { roleName = role.name; permissions = JSON.stringify(role.permissions || []); }
-        else return { success: false, message: 'Perfil não encontrado.'};
-      }
-      const queryText = `UPDATE users SET role_id = $1, role_name = $2, permissions = $3::jsonb, updated_at = NOW() WHERE uid = $4`;
-      await client.query(queryText, [roleId ? Number(roleId) : null, roleName, permissions, userId]);
-      return { success: true, message: 'Perfil do usuário atualizado (PostgreSQL)!'};
-    } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
-  }
-  deleteUserProfile = async (userId: string): Promise<{ success: boolean; message: string; }> => {
-    const client = await getPool().connect();
-    try {
-      await client.query('DELETE FROM users WHERE uid = $1', [userId]);
-      return { success: true, message: 'Perfil de usuário excluído (PostgreSQL)!'};
-    } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
-  }
-  getUserByEmail = async (email: string): Promise<UserProfileData | null> => {
-    const client = await getPool().connect();
-    try {
-      const query = 'SELECT u.*, r.name as role_name, r.permissions as role_permissions FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.email = $1 LIMIT 1;';
       const res = await client.query(query, [email.toLowerCase()]);
       if (res.rowCount === 0) return null;
       const userRow = mapRowToCamelCase(res.rows[0]);
       let role: Role | null = null;
-      if (userRow.roleId) role = await this.getRole(userRow.roleId);
-      const profile = mapToUserProfileData(userRow, role);
-      if ((!profile.permissions || profile.permissions.length === 0) && role?.permissions?.length) { profile.permissions = role.permissions; }
-      return profile;
-    } catch (e: any) { return null; } finally { client.release(); }
-  }
-  deleteMediaItemFromDb = async (id: string): Promise<{ success: boolean; message: string; }> => {
-    const client = await getPool().connect();
-    try {
-      await client.query('DELETE FROM media_items WHERE id = $1;', [Number(id)]);
-      return { success: true, message: 'Item de mídia excluído do DB (PostgreSQL).' };
-    } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
-  }
-  linkMediaItemsToLot = async (lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> => {
-    const client = await getPool().connect();
-    try {
-      await client.query('BEGIN');
-      for (const mediaId of mediaItemIds) {
-        await client.query(
-          `UPDATE media_items SET linked_lot_ids = COALESCE(linked_lot_ids, '[]'::jsonb) || ($1::TEXT)::jsonb
-           WHERE id = $2 AND NOT (linked_lot_ids @> ($1::TEXT)::jsonb);`,
-          [JSON.stringify([lotId]), Number(mediaId)]
-        );
+      if (userRow.roleId) {
+        role = await this.getRole(String(userRow.roleId));
       }
-      await client.query(
-        `UPDATE lots SET media_item_ids = COALESCE(media_item_ids, '[]'::jsonb) || $1::jsonb, updated_at = NOW()
-         WHERE id = $2;`,
-        [JSON.stringify(mediaItemIds), Number(lotId)]
-      );
-      await client.query('COMMIT');
-      return { success: true, message: 'Mídias vinculadas (PostgreSQL).' };
-    } catch (e: any) { await client.query('ROLLBACK'); return { success: false, message: e.message }; } finally { client.release(); }
+      const profile = mapToUserProfileData(userRow, role);
+      return profile;
+    } catch (e: any) {
+      console.error(`[PostgresAdapter - getUserByEmail(${email})] Error:`, e);
+      return null;
+    } finally {
+      client.release();
+    }
   }
-  unlinkMediaItemFromLot = async (lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> => {
+  async ensureUserRole(
+    userId: string, email: string, fullName: string | null,
+    targetRoleName: string,
+    additionalProfileData?: Partial<UserProfileData & {password?: string}>,
+    roleIdToAssign?: string
+  ): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
     const client = await getPool().connect();
     try {
-      await client.query('BEGIN');
-      await client.query(
-        `UPDATE media_items SET linked_lot_ids = COALESCE(linked_lot_ids, '[]'::jsonb) - $1
-         WHERE id = $2;`,
-        [lotId, Number(mediaItemId)]
-      );
-      await client.query(
-        `UPDATE lots SET media_item_ids = COALESCE(media_item_ids, '[]'::jsonb) - $1, updated_at = NOW()
-         WHERE id = $2;`,
-        [mediaItemId, Number(lotId)]
-      );
-      await client.query('COMMIT');
-      return { success: true, message: 'Mídia desvinculada (PostgreSQL).' };
-    } catch (e: any) { await client.query('ROLLBACK'); return { success: false, message: e.message }; } finally { client.release(); }
-  }
-  getPlatformSettings = async (): Promise<PlatformSettings> => {
-    const client = await getPool().connect();
-    try {
-        const res = await client.query(`SELECT site_title, site_tagline, gallery_image_base_path, active_theme_name, themes, platform_public_id_masks, updated_at FROM platform_settings WHERE id = 'global';`);
-        if (res.rowCount > 0) {
-            const settingsRow = mapRowToCamelCase(res.rows[0]);
-            return { id: 'global', siteTitle: settingsRow.siteTitle, siteTagline: settingsRow.siteTagline, galleryImageBasePath: settingsRow.galleryImageBasePath, activeThemeName: settingsRow.activeThemeName, themes: settingsRow.themes || [], platformPublicIdMasks: settingsRow.platformPublicIdMasks || undefined, updatedAt: new Date(settingsRow.updatedAt) };
+        await this.ensureDefaultRolesExist();
+        let targetRole: Role | null = null;
+
+        if (roleIdToAssign && roleIdToAssign !== "---NONE---") {
+            targetRole = await this.getRole(roleIdToAssign);
         }
-        const defaultSettings: PlatformSettings = { id: 'global', siteTitle: 'BidExpert', siteTagline: 'Leilões Online Especializados', galleryImageBasePath: '/media/gallery/', activeThemeName: null, themes: [], platformPublicIdMasks: {}, updatedAt: new Date() };
-        await client.query(`INSERT INTO platform_settings (id, site_title, site_tagline, gallery_image_base_path, themes, platform_public_id_masks) VALUES ('global', $1, $2, $3, '[]'::jsonb, '{}'::jsonb) ON CONFLICT (id) DO NOTHING;`, [defaultSettings.siteTitle, defaultSettings.siteTagline, defaultSettings.galleryImageBasePath]);
-        return defaultSettings;
-    } catch (e: any) { return { id: 'global', siteTitle: 'BidExpert', siteTagline: 'Leilões Online Especializados', galleryImageBasePath: '/media/gallery/', activeThemeName: null, themes: [], platformPublicIdMasks: {}, updatedAt: new Date() }; } finally { client.release(); }
+        if (!targetRole) {
+            targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
+        }
+
+        if (!targetRole || !targetRole.id) {
+            return { success: false, message: `Target role '${targetRoleName}' or default 'USER' role not found.` };
+        }
+
+        await client.query('BEGIN');
+        const userRes = await client.query('SELECT * FROM users WHERE uid = $1', [userId]);
+        let finalProfileData: UserProfileData;
+        const userPermissionsJson = JSON.stringify(targetRole.permissions || []);
+
+        const commonUserData = {
+            email: email.toLowerCase(),
+            full_name: fullName || email.split('@')[0],
+            role_id: Number(targetRole.id),
+            permissions: userPermissionsJson,
+            status: 'ATIVO',
+            habilitation_status: targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_ANALYSIS',
+            cpf: additionalProfileData?.cpf || null,
+            cell_phone: additionalProfileData?.cellPhone || null,
+            date_of_birth: additionalProfileData?.dateOfBirth ? format(new Date(additionalProfileData.dateOfBirth), 'yyyy-MM-dd') : null,
+            account_type: additionalProfileData?.accountType || 'PHYSICAL',
+            razao_social: additionalProfileData?.razaoSocial || null,
+            cnpj: additionalProfileData?.cnpj || null,
+            inscricao_estadual: additionalProfileData?.inscricaoEstadual || null,
+            website_comitente: additionalProfileData?.websiteComitente || null,
+            zip_code: additionalProfileData?.zipCode || null,
+            street: additionalProfileData?.street || null,
+            number: additionalProfileData?.number || null,
+            complement: additionalProfileData?.complement || null,
+            neighborhood: additionalProfileData?.neighborhood || null,
+            city: additionalProfileData?.city || null,
+            state: additionalProfileData?.state || null,
+            opt_in_marketing: Boolean(additionalProfileData?.optInMarketing),
+            rg_number: additionalProfileData?.rgNumber || null,
+            rg_issuer: additionalProfileData?.rgIssuer || null,
+            rg_issue_date: additionalProfileData?.rgIssueDate ? format(new Date(additionalProfileData.rgIssueDate), 'yyyy-MM-dd') : null,
+            rg_state: additionalProfileData?.rgState || null,
+            home_phone: additionalProfileData?.homePhone || null,
+            gender: additionalProfileData?.gender || null,
+            profession: additionalProfileData?.profession || null,
+            nationality: additionalProfileData?.nationality || null,
+            marital_status: additionalProfileData?.maritalStatus || null,
+            property_regime: additionalProfileData?.propertyRegime || null,
+            spouse_name: additionalProfileData?.spouseName || null,
+            spouse_cpf: additionalProfileData?.spouseCpf || null,
+            avatar_url: additionalProfileData?.avatarUrl || null,
+            data_ai_hint: additionalProfileData?.dataAiHint || null,
+            password_text: additionalProfileData?.password || null,
+        };
+
+        if (userRes.rowCount > 0) {
+            const existingUserRaw = userRes.rows[0];
+            const updateQuery = `
+                UPDATE users SET email = $1, full_name = $2, role_id = $3, permissions = $4::jsonb, status = $5, habilitation_status = $6,
+                cpf = $7, cell_phone = $8, date_of_birth = $9, account_type = $10, razao_social = $11, cnpj = $12, inscricao_estadual = $13,
+                website_comitente = $14, zip_code = $15, street = $16, "number" = $17, complement = $18, neighborhood = $19, city = $20, state = $21,
+                opt_in_marketing = $22, rg_number = $23, rg_issuer = $24, rg_issue_date = $25, rg_state = $26, home_phone = $27, gender = $28,
+                profession = $29, nationality = $30, marital_status = $31, property_regime = $32, spouse_name = $33, spouse_cpf = $34,
+                avatar_url = $35, data_ai_hint = $36, password_text = COALESCE($37, password_text), updated_at = NOW()
+                WHERE uid = $38`;
+            await client.query(updateQuery, [
+                commonUserData.email, commonUserData.full_name, commonUserData.role_id, commonUserData.permissions, commonUserData.status, commonUserData.habilitation_status,
+                commonUserData.cpf, commonUserData.cell_phone, commonUserData.date_of_birth, commonUserData.account_type, commonUserData.razao_social, commonUserData.cnpj, commonUserData.inscricao_estadual,
+                commonUserData.website_comitente, commonUserData.zip_code, commonUserData.street, commonUserData.number, commonUserData.complement, commonUserData.neighborhood, commonUserData.city, commonUserData.state,
+                commonUserData.opt_in_marketing, commonUserData.rg_number, commonUserData.rg_issuer, commonUserData.rg_issue_date, commonUserData.rg_state, commonUserData.home_phone, commonUserData.gender,
+                commonUserData.profession, commonUserData.nationality, commonUserData.marital_status, commonUserData.property_regime, commonUserData.spouse_name, commonUserData.spouse_cpf,
+                commonUserData.avatar_url, commonUserData.data_ai_hint, commonUserData.password_text,
+                userId
+            ]);
+            finalProfileData = mapToUserProfileData({ ...mapRowToCamelCase(existingUserRaw), ...commonUserData, updated_at: new Date() }, targetRole);
+        } else {
+            const insertQuery = `
+                INSERT INTO users (uid, email, full_name, role_id, permissions, status, habilitation_status,
+                cpf, cell_phone, date_of_birth, account_type, razao_social, cnpj, inscricao_estadual,
+                website_comitente, zip_code, street, "number", complement, neighborhood, city, state,
+                opt_in_marketing, rg_number, rg_issuer, rg_issue_date, rg_state, home_phone, gender,
+                profession, nationality, marital_status, property_regime, spouse_name, spouse_cpf,
+                avatar_url, data_ai_hint, password_text, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, NOW(), NOW()) RETURNING *;`;
+            const insertRes = await client.query(insertQuery, [
+                userId, commonUserData.email, commonUserData.full_name, commonUserData.role_id, commonUserData.permissions, commonUserData.status, commonUserData.habilitation_status,
+                commonUserData.cpf, commonUserData.cell_phone, commonUserData.date_of_birth, commonUserData.account_type, commonUserData.razao_social, commonUserData.cnpj, commonUserData.inscricao_estadual,
+                commonUserData.website_comitente, commonUserData.zip_code, commonUserData.street, commonUserData.number, commonUserData.complement, commonUserData.neighborhood, commonUserData.city, commonUserData.state,
+                commonUserData.opt_in_marketing, commonUserData.rg_number, commonUserData.rg_issuer, commonUserData.rg_issue_date, commonUserData.rg_state, commonUserData.home_phone, commonUserData.gender,
+                commonUserData.profession, commonUserData.nationality, commonUserData.marital_status, commonUserData.property_regime, commonUserData.spouse_name, commonUserData.spouse_cpf,
+                commonUserData.avatar_url, commonUserData.data_ai_hint, commonUserData.password_text
+            ]);
+            finalProfileData = mapToUserProfileData(mapRowToCamelCase(insertRes.rows[0]), targetRole);
+        }
+        await client.query('COMMIT');
+        return { success: true, message: 'User profile ensured (PostgreSQL).', userProfile: finalProfileData };
+    } catch (e: any) {
+        await client.query('ROLLBACK');
+        console.error("[PostgreSQLAdapter - ensureUserRole] Error:", e);
+        return { success: false, message: `PostgreSQL Error: ${e.message}` };
+    } finally {
+        client.release();
+    }
   }
-  updatePlatformSettings = async (data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> => {
-    const client = await getPool().connect();
-    if (!data.galleryImageBasePath || !data.galleryImageBasePath.startsWith('/') || !data.galleryImageBasePath.endsWith('/')) { return { success: false, message: 'Caminho base da galeria inválido. Deve começar e terminar com "/".' }; }
-    try {
-        const query = `INSERT INTO platform_settings (id, site_title, site_tagline, gallery_image_base_path, active_theme_name, themes, platform_public_id_masks, updated_at) VALUES ('global', $1, $2, $3, $4, $5::jsonb, $6::jsonb, NOW()) ON CONFLICT (id) DO UPDATE SET site_title = EXCLUDED.site_title, site_tagline = EXCLUDED.site_tagline, gallery_image_base_path = EXCLUDED.gallery_image_base_path, active_theme_name = EXCLUDED.active_theme_name, themes = EXCLUDED.themes, platform_public_id_masks = EXCLUDED.platform_public_id_masks, updated_at = NOW();`;
-        await client.query(query, [data.siteTitle || null, data.siteTagline || null, data.galleryImageBasePath, data.activeThemeName || null, JSON.stringify(data.themes || []), JSON.stringify(data.platformPublicIdMasks || {})]);
-        return { success: true, message: 'Configurações atualizadas (PostgreSQL)!' };
-    } catch (e: any) { return { success: false, message: e.message }; } finally { client.release(); }
+
+  // Other placeholders
+  async disconnect(): Promise<void> {
+    if (pool) {
+      await pool.end();
+      console.log('[PostgresAdapter] Pool de conexões PostgreSQL encerrado.');
+    }
   }
 }
+
