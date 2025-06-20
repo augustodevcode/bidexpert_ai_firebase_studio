@@ -1,4 +1,5 @@
 
+
 import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, CityInfo, MediaItem, PlatformSettings, MentalTriggerSettings, HomepageSectionConfig, BadgeVisibilitySettings, SectionBadgeConfig, MapSettings, AuctionStage, SearchPaginationType, Subcategory, Role, UserProfileData } from '@/types';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays, addDays as dateFnsAddDays, isPast, addHours, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -74,6 +75,7 @@ export const sampleUserProfiles: UserProfileData[] = [
   {
     uid: 'admin-bidexpert-platform-001', // Consistent UID for admin
     email: 'admin@bidexpert.com.br',
+    password: '@dmin2025',
     fullName: 'Administrador BidExpert',
     roleId: 'role-admin', // Linked to sampleRoles
     roleName: 'ADMINISTRATOR',
@@ -87,6 +89,7 @@ export const sampleUserProfiles: UserProfileData[] = [
     uid: 'user-test-002',
     email: 'testuser@example.com',
     fullName: 'Usuário de Teste',
+    password: 'password123',
     roleId: 'role-user', // Linked to sampleRoles
     roleName: 'USER',
     permissions: ['view_auctions', 'place_bids', 'view_lots'], // Explicitly set
@@ -98,6 +101,7 @@ export const sampleUserProfiles: UserProfileData[] = [
   {
     uid: 'consignor-example-003',
     email: 'consignor@bidexpert.com', // Example consignor email
+    password: 'password123',
     fullName: 'Comitente Exemplo (Bradesco)',
     roleId: 'role-consignor', // Linked to sampleRoles
     roleName: 'CONSIGNOR',

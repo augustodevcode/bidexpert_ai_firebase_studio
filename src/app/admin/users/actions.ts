@@ -154,7 +154,7 @@ export async function ensureUserProfileInDb(
     roleName: targetRole.name,
     permissions: targetRole.permissions,
     status: 'ATIVO',
-    habilitationStatus: targetRole.name_normalized === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS',
+    habilitationStatus: targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS',
     createdAt: new Date(),
     updatedAt: new Date(),
     ...additionalProfileData,

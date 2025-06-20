@@ -57,19 +57,19 @@
     *   Reviewed all display components to ensure consistency.
 
 ## WORKING
-- **Fixing Startup Crash (DOING):** Implementing all placeholder methods in `MySqlAdapter` and `PostgresAdapter` to satisfy the `IDatabaseAdapter` interface and fix critical "FAILED to create a VALID dbInstance" startup errors. This ensures the app can initialize correctly with the SQL database adapters.
 - **Admin User Permissions (`admin@bidexpert.com.br`)**: Ensure `admin@bidexpert.com.br` has 'manage_all' permission and sees admin menu items.
     - **Sub-task 1 (DONE):** Updated `scripts/setup-admin-user.ts` to use `admin@bidexpert.com.br`.
     - **Sub-task 2 (DONE):** Updated `src/app/admin/users/actions.ts` (`ensureUserProfileInDb`) to prioritize 'ADMINISTRATOR' role for `admin@bidexpert.com.br`.
-    - **Sub-task 3 (DONE):** Transitioned user/role management to `sample-data.ts` for testing.
-    - **Sub-task 4 (DONE):** Reverted user/role management back to DB adapters after `sample-data` testing. Finalized adapter implementations for `ensureUserRole` and `getUserByEmail`.
+    - **Sub-task 3 (DOING):** Transitioned user/role management to `sample-data.ts` for testing. Actions/queries updated. Admin user and roles defined in sample data.
+- **Fixing Startup Crash (DONE):** Placeholder methods in SQL adapters implemented. The app can start now.
 
 ## NEXT
 - **Item 19:** Implement visual timeline for auction stages in the auction CRUD form (`/admin/auctions/[auctionId]/edit`).
 - **Item 20:** Develop Virtual Auditorium (`/auctions/[auctionId]/live`) with current lot display, bidding panel, upcoming lots, and chat.
 - **Item 21:** Gantt chart for auctions on the auction dashboard (`/admin/auctions/page.tsx`).
 - **Complete SQL Adapter Implementation:**
-    *   Thoroughly test and complete all `IDatabaseAdapter` methods for MySQL and PostgreSQL for all entities (beyond just placeholder stubs).
+    *   Thoroughly test and complete all `IDatabaseAdapter` methods for MySQL and PostgreSQL for all entities.
+    *   Revert user/role management to DB adapters when testing phase is over.
 - **Media Library (Core Functionality):**
     *   Implement file upload (Firebase Storage).
     *   Modal for metadata editing for `MediaItem`.
