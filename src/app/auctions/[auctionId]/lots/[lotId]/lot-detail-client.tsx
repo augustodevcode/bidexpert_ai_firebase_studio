@@ -43,7 +43,7 @@ import LotPreviewModal from '@/components/lot-preview-modal';
 import { hasPermission } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
 import LotAllBidsModal from '@/components/auction/lot-all-bids-modal';
-import LotCard from '@/components/lot-card'; 
+import LotCard from '@/components/lot-card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
@@ -55,7 +55,7 @@ const SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS = 'Administrador BidExpert (Super T
 
 interface DetailTimeRemainingProps {
   effectiveEndDate: Date | null;
-  effectiveStartDate?: Date | null; 
+  effectiveStartDate?: Date | null;
   lotStatus: Lot['status'];
   showUrgencyTimer?: boolean;
   urgencyThresholdDays?: number;
@@ -99,8 +99,8 @@ const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
         setTimeSegments(null);
         return;
       }
-      
-      setDisplayMessage(null); 
+
+      setDisplayMessage(null);
 
       const days = Math.floor(totalSecondsLeft / (3600 * 24));
       const hours = Math.floor((totalSecondsLeft % (3600 * 24)) / 3600);
@@ -143,7 +143,7 @@ const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
               <span className="text-3xl font-bold">{timeSegments.minutes}</span>
               <span className="text-xs uppercase">minutos</span>
             </div>
-            {parseInt(timeSegments.days, 10) === 0 && ( 
+            {parseInt(timeSegments.days, 10) === 0 && (
               <>
                 <span className="text-2xl font-light self-center pb-1">|</span>
                 <div className="flex flex-col items-center">
@@ -182,6 +182,19 @@ interface LotDetailClientContentProps {
   previousLotId?: string;
   nextLotId?: string;
   totalLotsInAuction?: number;
+}
+
+function hasProcessInfo(lot: Lot): boolean {
+    return !!(
+        lot.judicialProcessNumber ||
+        lot.courtDistrict ||
+        lot.courtName ||
+        lot.publicProcessUrl ||
+        lot.propertyRegistrationNumber ||
+        lot.propertyLiens ||
+        lot.knownDebts ||
+        lot.additionalDocumentsInfo
+    );
 }
 
 export default function LotDetailClientContent({
@@ -233,7 +246,7 @@ export default function LotDetailClientContent({
         if (!relevantStage && lot.status !== 'ENCERRADO' && lot.status !== 'VENDIDO' && lot.status !== 'NAO_VENDIDO') {
             relevantStage = auction.auctionStages.sort((a,b) => new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime())[0];
         }
-        
+
         if (relevantStage && relevantStage.endDate) {
             finalEndDate = new Date(relevantStage.endDate as string);
             const stageIndex = auction.auctionStages.findIndex(s => s.name === relevantStage!.name);
@@ -256,7 +269,7 @@ export default function LotDetailClientContent({
         finalEndDate = new Date(lot.endDate as string);
          console.warn(`[LotDetailClient] Usando endDate do LOTE como fallback para lote ${lot.id}`);
     }
-     if (!finalStartDate && lot.auctionDate) { 
+     if (!finalStartDate && lot.auctionDate) {
         finalStartDate = new Date(lot.auctionDate as string);
     }
 
@@ -531,6 +544,12 @@ export default function LotDetailClientContent({
       .slice(0, platformSettings.relatedLotsCount || 5);
   }, [auction, lot, platformSettings.relatedLotsCount]);
 
+  const isJudicialAuction = auction.auctionType === 'JUDICIAL';
+  const currentLotHasProcessInfo = hasProcessInfo(lot);
+  const showLegalProcessTab = isJudicialAuction && currentLotHasProcessInfo;
+
+  const legalTabTitle = showLegalProcessTab ? "Documentos e Processo" : "Documentos";
+
  return (
     <>
         <div className="space-y-6">
@@ -601,7 +620,7 @@ export default function LotDetailClientContent({
                                 <TabsList className="flex w-full flex-wrap gap-1 mb-4">
                                     <TabsTrigger value="description">Descrição</TabsTrigger>
                                     <TabsTrigger value="specification">Especificações</TabsTrigger>
-                                    <TabsTrigger value="legal">Documentos</TabsTrigger>
+                                    <TabsTrigger value="legal">{legalTabTitle}</TabsTrigger>
                                     <TabsTrigger value="seller">Comitente</TabsTrigger>
                                     <TabsTrigger value="reviews">Avaliações</TabsTrigger>
                                     <TabsTrigger value="questions">Perguntas</TabsTrigger>
@@ -611,19 +630,32 @@ export default function LotDetailClientContent({
                                 <TabsContent value="legal">
                                     <Card className="shadow-none border-0">
                                         <CardHeader className="px-1 pt-0">
-                                            <CardTitle className="text-xl font-semibold flex items-center"><FileText className="h-5 w-5 mr-2 text-muted-foreground" /> Informações Legais e Documentos</CardTitle>
+                                            <CardTitle className="text-xl font-semibold flex items-center">
+                                                <FileText className="h-5 w-5 mr-2 text-muted-foreground" /> {legalTabTitle}
+                                            </CardTitle>
                                         </CardHeader>
                                         <CardContent className="px-1 space-y-2 text-sm">
-                                            {lot.judicialProcessNumber && <p><strong className="text-foreground">Nº Processo Judicial:</strong> <span className="text-muted-foreground">{lot.judicialProcessNumber}</span></p>}
-                                            {lot.courtDistrict && <p><strong className="text-foreground">Comarca:</strong> <span className="text-muted-foreground">{lot.courtDistrict}</span></p>}
-                                            {lot.courtName && <p><strong className="text-foreground">Vara:</strong> <span className="text-muted-foreground">{lot.courtName}</span></p>}
-                                            {lot.publicProcessUrl && <p><strong className="text-foreground">Consulta Pública:</strong> <a href={lot.publicProcessUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Acessar Processo <LinkIcon className="h-3 w-3"/></a></p>}
-                                            {lot.propertyRegistrationNumber && <p><strong className="text-foreground">Matrícula do Imóvel:</strong> <span className="text-muted-foreground">{lot.propertyRegistrationNumber}</span></p>}
-                                            {lot.propertyLiens && <p><strong className="text-foreground">Ônus/Gravames:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.propertyLiens}</span></p>}
-                                            {lot.knownDebts && <p><strong className="text-foreground">Dívidas Conhecidas:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.knownDebts}</span></p>}
-                                            {lot.additionalDocumentsInfo && <p><strong className="text-foreground">Outros Documentos/Obs:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.additionalDocumentsInfo}</span></p>}
-                                            {auction.documentsUrl && <p className="mt-2"><strong className="text-foreground">Edital do Leilão:</strong> <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Ver Edital Completo <FileText className="h-3 w-3"/></a></p>}
-                                            {(!lot.judicialProcessNumber && !auction.documentsUrl && !lot.additionalDocumentsInfo) && <p className="text-muted-foreground">Nenhuma informação legal ou documental adicional fornecida para este lote.</p>}
+                                            {showLegalProcessTab && (
+                                                <>
+                                                    {lot.judicialProcessNumber && <p><strong className="text-foreground">Nº Processo Judicial:</strong> <span className="text-muted-foreground">{lot.judicialProcessNumber}</span></p>}
+                                                    {lot.courtDistrict && <p><strong className="text-foreground">Comarca:</strong> <span className="text-muted-foreground">{lot.courtDistrict}</span></p>}
+                                                    {lot.courtName && <p><strong className="text-foreground">Vara:</strong> <span className="text-muted-foreground">{lot.courtName}</span></p>}
+                                                    {lot.publicProcessUrl && <p><strong className="text-foreground">Consulta Pública:</strong> <a href={lot.publicProcessUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Acessar Processo <LinkIcon className="h-3 w-3"/></a></p>}
+                                                    {lot.propertyRegistrationNumber && <p><strong className="text-foreground">Matrícula do Imóvel:</strong> <span className="text-muted-foreground">{lot.propertyRegistrationNumber}</span></p>}
+                                                    {lot.propertyLiens && <p><strong className="text-foreground">Ônus/Gravames:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.propertyLiens}</span></p>}
+                                                    {lot.knownDebts && <p><strong className="text-foreground">Dívidas Conhecidas:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.knownDebts}</span></p>}
+                                                    {lot.additionalDocumentsInfo && <p><strong className="text-foreground">Outros Documentos/Obs:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.additionalDocumentsInfo}</span></p>}
+                                                    <Separator className="my-3" />
+                                                </>
+                                            )}
+                                            {auction.documentsUrl && <p><strong className="text-foreground">Edital do Leilão:</strong> <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Ver Edital Completo <FileText className="h-3 w-3"/></a></p>}
+                                            
+                                            {!auction.documentsUrl && !showLegalProcessTab && (
+                                                <p className="text-muted-foreground">Nenhuma informação legal ou documental adicional fornecida para este lote.</p>
+                                            )}
+                                             {auction.documentsUrl && !showLegalProcessTab && !currentLotHasProcessInfo && (
+                                                <p className="text-muted-foreground mt-2 text-xs">Outras informações processuais específicas deste lote não foram fornecidas.</p>
+                                            )}
                                         </CardContent>
                                     </Card>
                                 </TabsContent>
@@ -792,5 +824,3 @@ export default function LotDetailClientContent({
     </>
   );
 }
-
-
