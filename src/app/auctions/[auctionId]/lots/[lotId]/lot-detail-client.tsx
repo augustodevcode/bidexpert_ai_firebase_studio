@@ -226,43 +226,38 @@ export default function LotDetailClientContent({
 
     if (auction.auctionStages && auction.auctionStages.length > 0) {
         const now = new Date();
-        // Encontrar a praça atual ou a próxima praça não encerrada
         let relevantStage: AuctionStage | undefined = auction.auctionStages
-            .filter(stage => stage.endDate && !isPast(new Date(stage.endDate)))
-            .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime())[0];
+            .filter(stage => stage.endDate && !isPast(new Date(stage.endDate as string)))
+            .sort((a, b) => new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime())[0];
 
         if (!relevantStage && lot.status !== 'ENCERRADO' && lot.status !== 'VENDIDO' && lot.status !== 'NAO_VENDIDO') {
-            // Se não há praças futuras, mas o lote não está finalizado, pegar a última praça (pode estar encerrada)
-            relevantStage = auction.auctionStages.sort((a,b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime())[0];
+            relevantStage = auction.auctionStages.sort((a,b) => new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime())[0];
         }
         
         if (relevantStage && relevantStage.endDate) {
-            finalEndDate = new Date(relevantStage.endDate);
-            // Start date da praça pode ser a endDate da praça anterior ou a data do leilão
+            finalEndDate = new Date(relevantStage.endDate as string);
             const stageIndex = auction.auctionStages.findIndex(s => s.name === relevantStage!.name);
             if (stageIndex > 0 && auction.auctionStages[stageIndex-1].endDate) {
-                 finalStartDate = new Date(auction.auctionStages[stageIndex-1].endDate);
+                 finalStartDate = new Date(auction.auctionStages[stageIndex-1].endDate as string);
             } else {
-                 finalStartDate = new Date(auction.auctionDate);
+                 finalStartDate = new Date(auction.auctionDate as string);
             }
         }
     }
 
-    // Se não houver praças ou a lógica de praças não definir uma data, usar a data principal do leilão
     if (!finalEndDate && auction.endDate) {
-        finalEndDate = new Date(auction.endDate);
+        finalEndDate = new Date(auction.endDate as string);
     }
     if (!finalStartDate && auction.auctionDate) {
-        finalStartDate = new Date(auction.auctionDate);
+        finalStartDate = new Date(auction.auctionDate as string);
     }
 
-    // Como fallback final, usar as datas do próprio lote, se existirem
     if (!finalEndDate && lot.endDate) {
-        finalEndDate = new Date(lot.endDate);
+        finalEndDate = new Date(lot.endDate as string);
          console.warn(`[LotDetailClient] Usando endDate do LOTE como fallback para lote ${lot.id}`);
     }
-     if (!finalStartDate && lot.auctionDate) { // lot.auctionDate pode ser o início específico do lote
-        finalStartDate = new Date(lot.auctionDate);
+     if (!finalStartDate && lot.auctionDate) { 
+        finalStartDate = new Date(lot.auctionDate as string);
     }
 
 
@@ -289,7 +284,7 @@ export default function LotDetailClientContent({
             getQuestionsForLot(lot.id)
           ]);
           console.log(`[LotDetailClient] Bids fetched: ${bids.length}, Reviews: ${reviews.length}, Questions: ${questions.length}`);
-          setLotBids(bids.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+          setLotBids(bids.sort((a, b) => new Date(b.timestamp as string).getTime() - new Date(a.timestamp as string).getTime()));
           setLotReviews(reviews);
           setLotQuestions(questions);
         } catch (error: any) {
@@ -399,7 +394,7 @@ export default function LotDetailClientContent({
 
       if (result.success && result.updatedLot && result.newBid) {
         setLot(prevLot => ({ ...prevLot!, ...result.updatedLot }));
-        setLotBids(prevBids => [result.newBid!, ...prevBids].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+        setLotBids(prevBids => [result.newBid!, ...prevBids].sort((a, b) => new Date(b.timestamp as string).getTime() - new Date(a.timestamp as string).getTime()));
         setBidAmountInput('');
         toast({ title: "Lance Enviado!", description: result.message });
       } else {
@@ -573,7 +568,6 @@ export default function LotDetailClientContent({
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Coluna Esquerda: Imagens e Abas de Informação */}
                 <div className="lg:col-span-2 space-y-6">
                     <Card className="shadow-lg">
                     <CardContent className="p-4">
@@ -641,7 +635,6 @@ export default function LotDetailClientContent({
                     </Card>
                 </div>
 
-                {/* Coluna Direita: Informações de Lance, Venda, Histórico e Mapa */}
                 <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
                     <Card className="shadow-md">
                         <CardContent className="p-4 space-y-3">
@@ -677,7 +670,6 @@ export default function LotDetailClientContent({
                                 </p>
                             </div>
 
-                            {/* Mental Trigger Badges and Installment Info */}
                             <div className="space-y-2 pt-2">
                                 {sectionBadgesLotDetail.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentageLotDetail > 0 && (
                                     <Badge variant="destructive" className="text-sm px-2 py-1 w-full justify-center animate-pulse">
@@ -714,7 +706,6 @@ export default function LotDetailClientContent({
                                 <Button onClick={handlePlaceBid} disabled={isPlacingBid || !bidAmountInput} className="w-full h-11 text-base bg-accent text-accent-foreground hover:bg-accent/90">
                                 {isPlacingBid ? <Loader2 className="animate-spin" /> : `Dar Lance (R$ ${parseFloat(bidAmountInput || '0').toLocaleString('pt-BR') || nextMinimumBid.toLocaleString('pt-BR') })`}
                                 </Button>
-                                {/* Placeholder for "Estimar comissões" and "Habilitar lance rápido" */}
                                 <Button variant="link" size="sm" className="w-full text-primary text-xs">Estimar comissões e demais valores</Button>
                                 <div className="flex items-center space-x-2 justify-center pt-2">
                                     <Switch id="quick-bid" disabled />
@@ -751,7 +742,7 @@ export default function LotDetailClientContent({
                                         <li key={bid.id} className="flex justify-between items-center p-1.5 bg-secondary/40 rounded-md">
                                             <div>
                                                 <span className="font-medium text-foreground text-xs">{bid.bidderDisplay}</span>
-                                                <span className="text-[0.65rem] text-muted-foreground ml-1.5">({bid.timestamp ? format(new Date(bid.timestamp), "dd/MM HH:mm:ss", { locale: ptBR }) : 'Data Indisponível'})</span>
+                                                <span className="text-[0.65rem] text-muted-foreground ml-1.5">({bid.timestamp ? format(new Date(bid.timestamp as string), "dd/MM HH:mm:ss", { locale: ptBR }) : 'Data Indisponível'})</span>
                                             </div>
                                             <span className="font-semibold text-primary text-xs">R$ {bid.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                                         </li>
@@ -801,4 +792,5 @@ export default function LotDetailClientContent({
     </>
   );
 }
+
 

@@ -79,18 +79,16 @@ export default function LotForm({
   const [selectedMediaForGallery, setSelectedMediaForGallery] = React.useState<Partial<MediaItem>[]>(() => {
     const itemsMap = new Map<string, Partial<MediaItem>>();
     
-    // Process mediaItemIds first
     (initialData?.mediaItemIds || []).forEach(mediaId => {
-        const existingMediaItem = sampleMediaItems.find(mi => mi.id === mediaId); // Find full item from sample data
+        const existingMediaItem = sampleMediaItems.find(mi => mi.id === mediaId); 
         if (existingMediaItem) {
-            itemsMap.set(mediaId, { // Use mediaId as key
+            itemsMap.set(mediaId, { 
                 id: existingMediaItem.id,
                 urlOriginal: existingMediaItem.urlOriginal,
                 title: existingMediaItem.title || existingMediaItem.fileName,
                 dataAiHint: existingMediaItem.dataAiHint
             });
         } else {
-            // If mediaId not in sampleMediaItems, create a placeholder
             itemsMap.set(mediaId, {
                 id: mediaId,
                 urlOriginal: `https://placehold.co/100x100.png?text=ID:${mediaId.substring(0,4)}`,
@@ -99,12 +97,10 @@ export default function LotForm({
         }
     });
 
-    // Process galleryImageUrls, adding only those not already covered by mediaItemIds
     (initialData?.galleryImageUrls || []).forEach((url, index) => {
-        // Check if this URL is already represented by an item in itemsMap
         const urlExistsInMap = Array.from(itemsMap.values()).some(item => item.urlOriginal === url);
         if (!urlExistsInMap) {
-            const uniqueUrlId = `gallery-url-${uuidv4()}`; // Ensure unique ID for URL-only items
+            const uniqueUrlId = `gallery-url-${uuidv4()}`; 
             itemsMap.set(uniqueUrlId, {
                 id: uniqueUrlId,
                 urlOriginal: url,
@@ -133,7 +129,7 @@ export default function LotForm({
       imageUrl: initialData?.imageUrl || '',
       galleryImageUrls: initialData?.galleryImageUrls || [],
       mediaItemIds: initialData?.mediaItemIds || [],
-      endDate: initialData?.endDate ? new Date(initialData.endDate as Date) : undefined, // Made optional here, derived from auction
+      endDate: initialData?.endDate ? new Date(initialData.endDate as Date) : undefined, 
       lotSpecificAuctionDate: initialData?.lotSpecificAuctionDate ? new Date(initialData.lotSpecificAuctionDate as Date) : null,
       secondAuctionDate: initialData?.secondAuctionDate ? new Date(initialData.secondAuctionDate as Date) : null,
       secondInitialPrice: initialData?.secondInitialPrice || null,
@@ -206,9 +202,9 @@ export default function LotForm({
 
   const handleSelectMediaForGallery = (newlySelectedItems: Partial<MediaItem>[]) => {
     setSelectedMediaForGallery(prev => {
-        const currentMediaMap = new Map(prev.map(item => [item.id || item.urlOriginal, item])); // Use URL as fallback key if ID is missing
+        const currentMediaMap = new Map(prev.map(item => [item.id || item.urlOriginal, item])); 
         newlySelectedItems.forEach(newItem => {
-          if (newItem.id || newItem.urlOriginal) { // Ensure there's some identifier
+          if (newItem.id || newItem.urlOriginal) { 
             currentMediaMap.set(newItem.id || newItem.urlOriginal!, newItem);
           }
         });
@@ -228,11 +224,9 @@ export default function LotForm({
   async function onSubmit(values: LotFormValues) {
     setIsSubmitting(true);
     try {
-      // endDate should ideally be null or undefined if it's derived from auction
-      // but for the form values, we'll let it pass if it was set (though it's not editable)
       const dataToSubmit: LotFormValues = {
         ...values,
-        endDate: values.endDate ? values.endDate : null, // Ensure it's null if not set
+        endDate: values.endDate ? values.endDate : null, 
         imageUrl: mainImagePreviewUrl || values.imageUrl, 
         galleryImageUrls: selectedMediaForGallery.map(item => item.urlOriginal || '').filter(Boolean),
         mediaItemIds: selectedMediaForGallery.map(item => item.id || '').filter(itemid => !itemid.startsWith('gallery-url-')).filter(Boolean),
@@ -688,7 +682,6 @@ export default function LotForm({
               <FormDescription className="text-sm">
                   As datas de encerramento e praças são gerenciadas na configuração do Leilão ao qual este lote está associado.
               </FormDescription>
-              {/* Campos de data foram removidos do formulário do lote */}
               
               <div className="grid md:grid-cols-2 gap-6 pt-2">
                   <FormField
