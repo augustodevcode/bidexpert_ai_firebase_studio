@@ -310,7 +310,7 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
   },
   { 
     id: 'LOTETP001-NB-B', auctionId: 'TP001-NOTEBOOKS', publicId: 'LOT-TPNOTEB-WXY654I8', title: 'Notebook Tipo B - Core i7, 16GB RAM, 512GB SSD (30 unidades)', 
-    imageUrl: 'https://placehold.co/800x600.png', dataAiHint: 'notebook avançado aberto',
+    imageUrl: 'https://images.unsplash.com/photo-1566647387313-9fda80664848?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNnx8bGFwdG9wc3xlbnwwfHx8fDE3NTA0NjE2ODd8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'notebook avançado aberto',
     status: 'ABERTO_PARA_LANCES', cityId: 'city-campinas-sp', stateId: 'state-sp', categoryId: 'cat-eletronicos-e-tecnologia',
     views: 60, price: 170000, description: 'Lote de 30 notebooks corporativos avançados, Processador Intel Core i7 de 12ª geração, 16GB RAM DDR4, 512GB SSD NVMe, Tela 15.6" Full HD IPS. Conforme edital TP 001/2024.',
     sellerId: 'seller-prefeitura-municipal-de-campinas', initialPrice: 180000,
