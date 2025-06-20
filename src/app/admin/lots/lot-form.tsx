@@ -133,7 +133,7 @@ export default function LotForm({
       imageUrl: initialData?.imageUrl || '',
       galleryImageUrls: initialData?.galleryImageUrls || [],
       mediaItemIds: initialData?.mediaItemIds || [],
-      endDate: initialData?.endDate ? new Date(initialData.endDate as Date) : new Date(),
+      endDate: initialData?.endDate ? new Date(initialData.endDate as Date) : undefined, // Made optional here, derived from auction
       lotSpecificAuctionDate: initialData?.lotSpecificAuctionDate ? new Date(initialData.lotSpecificAuctionDate as Date) : null,
       secondAuctionDate: initialData?.secondAuctionDate ? new Date(initialData.secondAuctionDate as Date) : null,
       secondInitialPrice: initialData?.secondInitialPrice || null,
@@ -228,8 +228,11 @@ export default function LotForm({
   async function onSubmit(values: LotFormValues) {
     setIsSubmitting(true);
     try {
+      // endDate should ideally be null or undefined if it's derived from auction
+      // but for the form values, we'll let it pass if it was set (though it's not editable)
       const dataToSubmit: LotFormValues = {
         ...values,
+        endDate: values.endDate ? values.endDate : null, // Ensure it's null if not set
         imageUrl: mainImagePreviewUrl || values.imageUrl, 
         galleryImageUrls: selectedMediaForGallery.map(item => item.urlOriginal || '').filter(Boolean),
         mediaItemIds: selectedMediaForGallery.map(item => item.id || '').filter(itemid => !itemid.startsWith('gallery-url-')).filter(Boolean),
@@ -681,130 +684,13 @@ export default function LotForm({
               )} />
 
               <Separator />
-              <h3 className="text-md font-semibold text-muted-foreground pt-2 flex items-center gap-2"><CalendarIcon className="h-5 w-5" /> Datas e Prazos</h3>
-              <FormField
-                control={form.control}
-                name="endDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Data de Encerramento do Lote</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}
-                          >
-                            {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha data e hora</span>}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                        <div className="p-2 border-t">
-                            <Input type="time" defaultValue={field.value ? format(field.value, "HH:mm") : "10:00"}
-                            onChange={(e) => {
-                                const [hours, minutes] = e.target.value.split(':').map(Number);
-                                const newDate = field.value ? new Date(field.value) : new Date();
-                                newDate.setHours(hours, minutes);
-                                field.onChange(newDate);
-                            }} />
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid md:grid-cols-2 gap-6">
-                  <FormField
-                  control={form.control}
-                  name="lotSpecificAuctionDate"
-                  render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                      <FormLabel>Data 1ª Praça/Leilão (Opcional)</FormLabel>
-                      <Popover>
-                          <PopoverTrigger asChild>
-                          <FormControl>
-                              <Button
-                              variant={"outline"}
-                              className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                              >
-                              {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha data e hora</span>}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                          </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus />
-                          <div className="p-2 border-t">
-                              <Input type="time" defaultValue={field.value ? format(field.value, "HH:mm") : "10:00"}
-                              onChange={(e) => {
-                                  const [hours, minutes] = e.target.value.split(':').map(Number);
-                                  const newDate = field.value ? new Date(field.value) : new Date();
-                                  newDate.setHours(hours, minutes);
-                                  field.onChange(newDate);
-                              }}/>
-                          </div>
-                          </PopoverContent>
-                      </Popover>
-                      <FormDescription>Data específica da primeira praça deste lote.</FormDescription>
-                      <FormMessage />
-                      </FormItem>
-                  )}
-                  />
-                  <FormField
-                      control={form.control}
-                      name="secondInitialPrice"
-                      render={({ field }) => (
-                      <FormItem>
-                          <FormLabel>Lance Inicial 2ª Praça (Opcional)</FormLabel>
-                          <FormControl>
-                          <Input type="number" placeholder="Ex: 10000.00" {...field} value={field.value ?? ''} />
-                          </FormControl>
-                          <FormMessage />
-                      </FormItem>
-                      )}
-                  />
-              </div>
-              <FormField
-              control={form.control}
-              name="secondAuctionDate"
-              render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                  <FormLabel>Data 2ª Praça/Leilão (Opcional)</FormLabel>
-                  <Popover>
-                      <PopoverTrigger asChild>
-                      <FormControl>
-                          <Button
-                          variant={"outline"}
-                          className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                          >
-                          {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha data e hora</span>}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                      </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus />
-                          <div className="p-2 border-t">
-                          <Input type="time" defaultValue={field.value ? format(field.value, "HH:mm") : "10:00"}
-                          onChange={(e) => {
-                              const [hours, minutes] = e.target.value.split(':').map(Number);
-                              const newDate = field.value ? new Date(field.value) : new Date();
-                              newDate.setHours(hours, minutes);
-                              field.onChange(newDate);
-                          }}/>
-                      </div>
-                      </PopoverContent>
-                  </Popover>
-                  <FormDescription>Data específica da segunda praça deste lote, se aplicável.</FormDescription>
-                  <FormMessage />
-                  </FormItem>
-              )}
-              />
-              <div className="grid md:grid-cols-2 gap-6">
+              <h3 className="text-md font-semibold text-muted-foreground pt-2 flex items-center gap-2"><CalendarIcon className="h-5 w-5" /> Datas e Prazos (Derivado do Leilão)</h3>
+              <FormDescription className="text-sm">
+                  As datas de encerramento e praças são gerenciadas na configuração do Leilão ao qual este lote está associado.
+              </FormDescription>
+              {/* Campos de data foram removidos do formulário do lote */}
+              
+              <div className="grid md:grid-cols-2 gap-6 pt-2">
                   <FormField
                       control={form.control}
                       name="views"

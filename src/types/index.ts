@@ -212,10 +212,10 @@ export interface Lot {
   initialPrice?: number; 
   secondInitialPrice?: number | null; 
   bidIncrementStep?: number; 
-  endDate: AnyTimestamp; 
-  auctionDate?: AnyTimestamp; 
-  lotSpecificAuctionDate?: AnyTimestamp | null; 
-  secondAuctionDate?: AnyTimestamp | null; 
+  endDate?: AnyTimestamp; // Made optional
+  auctionDate?: AnyTimestamp; // Could be the start of the auction or specific stage for this lot
+  lotSpecificAuctionDate?: AnyTimestamp | null; // Made optional
+  secondAuctionDate?: AnyTimestamp | null; // Made optional
   bidsCount?: number;
   isFavorite?: boolean;
   isFeatured?: boolean;
@@ -285,9 +285,9 @@ export type LotFormData = Omit<Lot,
   'publicId' |
   'createdAt' |
   'updatedAt' |
-  'endDate' |
-  'lotSpecificAuctionDate' |
-  'secondAuctionDate' |
+  'endDate' | // Removed from direct edit, now optional at type level
+  'lotSpecificAuctionDate' | // Removed from direct edit, now optional at type level
+  'secondAuctionDate' | // Removed from direct edit, now optional at type level
   'isFavorite' |
   'isFeatured' |
   'views' |           
@@ -301,9 +301,9 @@ export type LotFormData = Omit<Lot,
   'type' |
   'auctionName'       
 > & {
-  endDate: Date;
-  lotSpecificAuctionDate?: Date | null;
-  secondAuctionDate?: Date | null;
+  endDate?: Date | null; // Kept optional in form values if needed for display or specific override cases (rare)
+  lotSpecificAuctionDate?: Date | null; 
+  secondAuctionDate?: Date | null; 
   type: string; 
   views?: number;
   bidsCount?: number;
@@ -769,6 +769,4 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
-
-
 

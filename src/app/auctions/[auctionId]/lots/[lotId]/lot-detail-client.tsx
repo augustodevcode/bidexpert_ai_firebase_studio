@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Lot, Auction, BidInfo, Review, LotQuestion, SellerProfileInfo, PlatformSettings } from '@/types';
+import type { Lot, Auction, BidInfo, Review, LotQuestion, SellerProfileInfo, PlatformSettings, AuctionStage } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect, useMemo } from 'react';
@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { format, isPast, differenceInSeconds } from 'date-fns';
+import { format, isPast, differenceInSeconds, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { addRecentlyViewedId } from '@/lib/recently-viewed-store';
 import { useToast } from '@/hooks/use-toast';
@@ -54,9 +54,9 @@ const SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS = 'Administrador BidExpert (Super T
 
 
 interface DetailTimeRemainingProps {
-  endDate: Date | string;
-  startDate?: Date | string | null; 
-  status: Lot['status'];
+  effectiveEndDate: Date | null;
+  effectiveStartDate?: Date | null; 
+  lotStatus: Lot['status'];
   showUrgencyTimer?: boolean;
   urgencyThresholdDays?: number;
   urgencyThresholdHours?: number;
@@ -64,9 +64,9 @@ interface DetailTimeRemainingProps {
 }
 
 const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
-  endDate,
-  startDate,
-  status,
+  effectiveEndDate,
+  effectiveStartDate,
+  lotStatus,
   showUrgencyTimer = true,
   urgencyThresholdDays = 1,
   urgencyThresholdHours = 0,
@@ -76,12 +76,19 @@ const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
   const [displayMessage, setDisplayMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!effectiveEndDate) {
+      setDisplayMessage(getAuctionStatusText(lotStatus));
+      setTimeSegments(null);
+      return;
+    }
+
+    const end = effectiveEndDate instanceof Date ? effectiveEndDate : new Date(effectiveEndDate);
+
     const calculateTime = () => {
       const now = new Date();
-      const end = endDate instanceof Date ? endDate : new Date(endDate);
 
-      if (isPast(end) || status !== 'ABERTO_PARA_LANCES') {
-        setDisplayMessage(getAuctionStatusText(status === 'ABERTO_PARA_LANCES' && isPast(end) ? 'ENCERRADO' : status));
+      if (isPast(end) || lotStatus !== 'ABERTO_PARA_LANCES') {
+        setDisplayMessage(getAuctionStatusText(lotStatus === 'ABERTO_PARA_LANCES' && isPast(end) ? 'ENCERRADO' : lotStatus));
         setTimeSegments(null);
         return;
       }
@@ -111,12 +118,12 @@ const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
     calculateTime();
     const interval = setInterval(calculateTime, 1000);
     return () => clearInterval(interval);
-  }, [endDate, status]);
+  }, [effectiveEndDate, lotStatus]);
 
 
   return (
     <div className={cn("text-center py-3 bg-secondary/30 rounded-md shadow-inner", className)}>
-      {timeSegments && status === 'ABERTO_PARA_LANCES' && !isPast(new Date(endDate)) ? (
+      {timeSegments && lotStatus === 'ABERTO_PARA_LANCES' && effectiveEndDate && !isPast(new Date(effectiveEndDate)) ? (
         <>
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Encerra em:</p>
           <div className="flex justify-center items-baseline space-x-2 text-destructive">
@@ -151,14 +158,14 @@ const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
         <div className="text-lg font-semibold text-muted-foreground">{displayMessage}</div>
       )}
        <div className="text-xs text-muted-foreground mt-2 grid grid-cols-2 gap-x-2 px-2">
-        {startDate && (
+        {effectiveStartDate && (
            <div className="text-right">
-             <span className="font-medium">Abertura:</span> {format(new Date(startDate), 'dd/MM/yy HH:mm', {locale: ptBR})}
+             <span className="font-medium">Abertura:</span> {format(new Date(effectiveStartDate), 'dd/MM/yy HH:mm', {locale: ptBR})}
            </div>
         )}
-        {endDate && (
+        {effectiveEndDate && (
            <div className="text-left">
-             <span className="font-medium">Encerramento:</span> {format(new Date(endDate), 'dd/MM/yy HH:mm', {locale: ptBR})}
+             <span className="font-medium">Encerramento:</span> {format(new Date(effectiveEndDate), 'dd/MM/yy HH:mm', {locale: ptBR})}
            </div>
         )}
       </div>
@@ -210,6 +217,58 @@ export default function LotDetailClientContent({
     const uniqueUrls = Array.from(new Set(combined.filter(Boolean)));
     return uniqueUrls.length > 0 ? uniqueUrls : ['https://placehold.co/800x600.png?text=Imagem+Indisponivel'];
   }, [lot]);
+
+  const { effectiveLotEndDate, effectiveLotStartDate } = useMemo(() => {
+    if (!lot || !auction) return { effectiveLotEndDate: null, effectiveLotStartDate: null };
+
+    let finalEndDate: Date | null = null;
+    let finalStartDate: Date | null = null;
+
+    if (auction.auctionStages && auction.auctionStages.length > 0) {
+        const now = new Date();
+        // Encontrar a praça atual ou a próxima praça não encerrada
+        let relevantStage: AuctionStage | undefined = auction.auctionStages
+            .filter(stage => stage.endDate && !isPast(new Date(stage.endDate)))
+            .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime())[0];
+
+        if (!relevantStage && lot.status !== 'ENCERRADO' && lot.status !== 'VENDIDO' && lot.status !== 'NAO_VENDIDO') {
+            // Se não há praças futuras, mas o lote não está finalizado, pegar a última praça (pode estar encerrada)
+            relevantStage = auction.auctionStages.sort((a,b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime())[0];
+        }
+        
+        if (relevantStage && relevantStage.endDate) {
+            finalEndDate = new Date(relevantStage.endDate);
+            // Start date da praça pode ser a endDate da praça anterior ou a data do leilão
+            const stageIndex = auction.auctionStages.findIndex(s => s.name === relevantStage!.name);
+            if (stageIndex > 0 && auction.auctionStages[stageIndex-1].endDate) {
+                 finalStartDate = new Date(auction.auctionStages[stageIndex-1].endDate);
+            } else {
+                 finalStartDate = new Date(auction.auctionDate);
+            }
+        }
+    }
+
+    // Se não houver praças ou a lógica de praças não definir uma data, usar a data principal do leilão
+    if (!finalEndDate && auction.endDate) {
+        finalEndDate = new Date(auction.endDate);
+    }
+    if (!finalStartDate && auction.auctionDate) {
+        finalStartDate = new Date(auction.auctionDate);
+    }
+
+    // Como fallback final, usar as datas do próprio lote, se existirem
+    if (!finalEndDate && lot.endDate) {
+        finalEndDate = new Date(lot.endDate);
+         console.warn(`[LotDetailClient] Usando endDate do LOTE como fallback para lote ${lot.id}`);
+    }
+     if (!finalStartDate && lot.auctionDate) { // lot.auctionDate pode ser o início específico do lote
+        finalStartDate = new Date(lot.auctionDate);
+    }
+
+
+    return { effectiveLotEndDate: finalEndDate, effectiveLotStartDate: finalStartDate };
+  }, [lot, auction]);
+
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -588,9 +647,9 @@ export default function LotDetailClientContent({
                         <CardContent className="p-4 space-y-3">
                             {platformSettings.showCountdownOnLotDetail !== false && (
                                 <DetailTimeRemaining
-                                    endDate={lot.endDate}
-                                    startDate={lot.auctionDate || auction.auctionDate}
-                                    status={lot.status}
+                                    effectiveEndDate={effectiveLotEndDate}
+                                    effectiveStartDate={effectiveLotStartDate}
+                                    lotStatus={lot.status}
                                     showUrgencyTimer={sectionBadgesLotDetail.showUrgencyTimer !== false && mentalTriggersGlobalSettings.showUrgencyTimer}
                                     urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays}
                                     urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
@@ -742,5 +801,4 @@ export default function LotDetailClientContent({
     </>
   );
 }
-
 

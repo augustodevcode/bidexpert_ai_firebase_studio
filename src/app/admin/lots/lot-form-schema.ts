@@ -35,12 +35,13 @@ export const lotFormSchema = z.object({
   imageUrl: z.string().url({ message: "Por favor, insira uma URL de imagem válida." }).optional().or(z.literal('')),
   galleryImageUrls: z.array(z.string().url({ message: "Uma das URLs da galeria é inválida." })).optional(),
   mediaItemIds: z.array(z.string()).optional(),
-  endDate: z.date({
-    required_error: "A data de encerramento é obrigatória.",
-    invalid_type_error: "Por favor, insira uma data de encerramento válida.",
-  }),
-  lotSpecificAuctionDate: z.date().optional().nullable(),
-  secondAuctionDate: z.date().optional().nullable(),
+  // endDate: z.date({ // Removido - será derivado do leilão
+  //   required_error: "A data de encerramento é obrigatória.",
+  //   invalid_type_error: "Por favor, insira uma data de encerramento válida.",
+  // }).optional().nullable(), // Tornando opcional, pois virá do leilão
+  endDate: z.date().optional().nullable(), // Mantido como opcional no schema, mas não no form
+  lotSpecificAuctionDate: z.date().optional().nullable(), // Já era opcional
+  secondAuctionDate: z.date().optional().nullable(), // Já era opcional
   secondInitialPrice: z.coerce.number().positive().optional().nullable(),
   views: z.coerce.number().int().nonnegative().optional(),
   bidsCount: z.coerce.number().int().nonnegative().optional(),
