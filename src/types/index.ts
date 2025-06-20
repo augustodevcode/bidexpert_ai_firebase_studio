@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -261,6 +262,7 @@ export interface Lot {
   discountPercentage?: number;
   additionalTriggers?: string[];
   isExclusive?: boolean;
+  allowInstallmentBids?: boolean; 
   latitude?: number | null;
   longitude?: number | null;
   mapAddress?: string | null;
@@ -307,6 +309,7 @@ export type LotFormData = Omit<Lot,
   bidsCount?: number;
   mediaItemIds?: string[];
   galleryImageUrls?: string[]; 
+  allowInstallmentBids?: boolean;
 };
 
 export type LotDbData = Omit<LotFormData, 'type' | 'auctionName' | 'sellerName' | 'auctioneerName' > & {
@@ -542,7 +545,7 @@ export interface SectionBadgeConfig {
   featuredLots?: BadgeVisibilitySettings;
   searchGrid?: BadgeVisibilitySettings;
   searchList?: BadgeVisibilitySettings;
-  lotDetail?: BadgeVisibilitySettings;
+  lotDetail?: BadgeVisibilitySettings; // Adicionado para página de detalhes do lote
 }
 
 export type HomepageSectionType = 'hero_carousel' | 'filter_links' | 'featured_lots' | 'active_auctions' | 'promo_banner_1' | 'categories_grid';
@@ -766,5 +769,6 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
+
 
 

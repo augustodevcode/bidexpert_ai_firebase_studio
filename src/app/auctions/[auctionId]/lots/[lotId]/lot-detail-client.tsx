@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import {
     Printer, Share2, ArrowLeft, ChevronLeft, ChevronRight, Key, Info,
     Tag, CalendarDays, Clock, Users, DollarSign, MapPin, Car, ThumbsUp,
-    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye, ExternalLink, ListFilter, FileQuestion, Banknote, Building, Link2 as LinkIcon, AlertCircle
+    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye, ExternalLink, ListFilter, FileQuestion, Banknote, Building, Link2 as LinkIcon, AlertCircle, Percent, Zap, TrendingUp, Crown
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -356,6 +356,40 @@ export default function LotDetailClientContent({
   const currentBidLabel = lot?.bidsCount && lot.bidsCount > 0 ? "Último lance:" : "Lance Inicial:";
   const currentBidValue = lot?.price || 0;
 
+  const mentalTriggersGlobalSettings = platformSettings.mentalTriggerSettings || {};
+  const sectionBadgesLotDetail = platformSettings.sectionBadgeVisibility?.lotDetail || {
+    showStatusBadge: true,
+    showDiscountBadge: true,
+    showUrgencyTimer: true,
+    showPopularityBadge: true,
+    showHotBidBadge: true,
+    showExclusiveBadge: true,
+  };
+
+  const discountPercentageLotDetail = useMemo(() => {
+    if (lot.initialPrice && lot.secondInitialPrice && lot.secondInitialPrice < lot.initialPrice && (lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE')) {
+      return Math.round(((lot.initialPrice - lot.secondInitialPrice) / lot.initialPrice) * 100);
+    }
+    return lot.discountPercentage || 0;
+  }, [lot.initialPrice, lot.secondInitialPrice, lot.status, lot.discountPercentage]);
+
+  const mentalTriggersLotDetail = useMemo(() => {
+    let triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
+    const settings = mentalTriggersGlobalSettings;
+
+    if (sectionBadgesLotDetail.showPopularityBadge !== false && settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) {
+      triggers.push('MAIS VISITADO');
+    }
+    if (sectionBadgesLotDetail.showHotBidBadge !== false && settings.showHotBidBadge && (lot.bidsCount || 0) > (settings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') {
+      triggers.push('LANCE QUENTE');
+    }
+    if (sectionBadgesLotDetail.showExclusiveBadge !== false && settings.showExclusiveBadge && lot.isExclusive) {
+        triggers.push('EXCLUSIVO');
+    }
+    return Array.from(new Set(triggers));
+  }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadgesLotDetail]);
+
+
   if (!lot || !auction) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
@@ -557,9 +591,9 @@ export default function LotDetailClientContent({
                                     endDate={lot.endDate}
                                     startDate={lot.auctionDate || auction.auctionDate}
                                     status={lot.status}
-                                    showUrgencyTimer={platformSettings.mentalTriggerSettings?.showUrgencyTimer}
-                                    urgencyThresholdDays={platformSettings.mentalTriggerSettings?.urgencyTimerThresholdDays}
-                                    urgencyThresholdHours={platformSettings.mentalTriggerSettings?.urgencyTimerThresholdHours}
+                                    showUrgencyTimer={sectionBadgesLotDetail.showUrgencyTimer !== false && mentalTriggersGlobalSettings.showUrgencyTimer}
+                                    urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays}
+                                    urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
                                 />
                             )}
                             <div className="flex justify-between items-center text-sm">
@@ -583,6 +617,33 @@ export default function LotDetailClientContent({
                                   Incremento Mínimo: <span className="font-semibold text-foreground">R$ {bidIncrement.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                                 </p>
                             </div>
+
+                            {/* Mental Trigger Badges and Installment Info */}
+                            <div className="space-y-2 pt-2">
+                                {sectionBadgesLotDetail.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentageLotDetail > 0 && (
+                                    <Badge variant="destructive" className="text-sm px-2 py-1 w-full justify-center animate-pulse">
+                                        <Percent className="h-4 w-4 mr-1.5" /> {discountPercentageLotDetail}% DE DESCONTO AGORA!
+                                    </Badge>
+                                )}
+                                <div className="flex flex-wrap gap-2 justify-center">
+                                    {mentalTriggersLotDetail.map(trigger => (
+                                        <Badge key={trigger} variant="secondary" className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
+                                            {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3.5 w-3.5 mr-1" />}
+                                            {trigger === 'LANCE QUENTE' && <Zap className="h-3.5 w-3.5 mr-1 text-red-500 fill-red-500" />}
+                                            {trigger === 'EXCLUSIVO' && <Crown className="h-3.5 w-3.5 mr-1 text-purple-600" />}
+                                            {trigger}
+                                        </Badge>
+                                    ))}
+                                </div>
+                                {(lot.allowInstallmentBids || auction.allowInstallmentBids) && (
+                                    <div className="flex items-center justify-center text-xs text-green-600 bg-green-100 border border-green-300 p-1.5 rounded-md">
+                                        <Banknote className="h-4 w-4 mr-1.5" />
+                                        Permite Lance Parcelado (Consulte Condições)
+                                    </div>
+                                )}
+                            </div>
+
+
                             {canUserBid ? (
                             <div className="space-y-2 pt-2">
                                 <div className="relative">
@@ -681,4 +742,5 @@ export default function LotDetailClientContent({
     </>
   );
 }
+
 
