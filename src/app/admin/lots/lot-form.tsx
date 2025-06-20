@@ -22,8 +22,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
-import type { Lot, LotStatus, LotCategory, Auction, StateInfo, CityInfo, MediaItem } from '@/types';
-import { Loader2, Save, CalendarIcon, Package, ImagePlus, UploadCloud, Trash2, MapPin, FileText, Shield, Banknote, Link as LinkIcon, TrendingUp } from 'lucide-react';
+import type { Lot, LotStatus, LotCategory, Auction, StateInfo, CityInfo, MediaItem, Subcategory } from '@/types';
+import { Loader2, Save, CalendarIcon, Package, ImagePlus, UploadCloud, Trash2, MapPin, FileText, Shield, Banknote, Link as LinkIcon, TrendingUp, Layers } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -33,6 +33,8 @@ import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
+import { getSubcategoriesByParentIdAction } from '@/app/admin/subcategories/actions';
+
 
 interface LotFormProps {
   initialData?: Lot | null;
@@ -111,6 +113,9 @@ export default function LotForm({
     return Array.from(itemsMap.values());
   });
 
+  const [availableSubcategories, setAvailableSubcategories] = React.useState<Subcategory[]>([]);
+  const [isLoadingSubcategories, setIsLoadingSubcategories] = React.useState(false);
+
 
   const form = useForm<LotFormValues>({
     resolver: zodResolver(lotFormSchema),
@@ -125,11 +130,12 @@ export default function LotForm({
       status: initialData?.status || 'EM_BREVE',
       stateId: initialData?.stateId || undefined,
       cityId: initialData?.cityId || undefined,
-      type: initialData?.type || '',
+      type: initialData?.categoryId || initialData?.type || '', // Prioritize categoryId if available
+      subcategoryId: initialData?.subcategoryId || undefined,
       imageUrl: initialData?.imageUrl || '',
       galleryImageUrls: initialData?.galleryImageUrls || [],
       mediaItemIds: initialData?.mediaItemIds || [],
-      endDate: initialData?.endDate ? new Date(initialData.endDate as Date) : undefined, 
+      // endDate: initialData?.endDate ? new Date(initialData.endDate as Date) : undefined, // Removido - gerenciado pelo leilão
       lotSpecificAuctionDate: initialData?.lotSpecificAuctionDate ? new Date(initialData.lotSpecificAuctionDate as Date) : null,
       secondAuctionDate: initialData?.secondAuctionDate ? new Date(initialData.secondAuctionDate as Date) : null,
       secondInitialPrice: initialData?.secondInitialPrice || null,
@@ -152,6 +158,7 @@ export default function LotForm({
   });
 
   const selectedStateId = form.watch('stateId');
+  const selectedParentCategoryId = form.watch('type'); // 'type' field holds the parent category ID/slug
 
   React.useEffect(() => {
     if (defaultAuctionId) {
@@ -187,6 +194,41 @@ export default function LotForm({
     form.setValue('mediaItemIds', selectedMediaForGallery.map(item => item.id || '').filter(itemid => !itemid.startsWith('gallery-url-')).filter(Boolean));
   }, [selectedMediaForGallery, form]);
 
+  React.useEffect(() => {
+    const fetchSubcats = async (parentId: string) => {
+        setIsLoadingSubcategories(true);
+        setAvailableSubcategories([]); 
+        try {
+            const parentCategory = categories.find(cat => cat.id === parentId || cat.slug === parentId);
+            if (parentCategory && parentCategory.hasSubcategories) {
+                const subcats = await getSubcategoriesByParentIdAction(parentCategory.id);
+                setAvailableSubcategories(subcats);
+                
+                // Reset subcategoryId if it's not valid for the new parent or if it's no longer in the list
+                const currentSubcategoryId = form.getValues('subcategoryId');
+                if (currentSubcategoryId && !subcats.find(s => s.id === currentSubcategoryId)) {
+                   form.setValue('subcategoryId', undefined);
+                }
+
+            } else {
+                form.setValue('subcategoryId', undefined); // Clear subcategory if parent has none
+            }
+        } catch (error) {
+            console.error("Error fetching subcategories:", error);
+            toast({ title: "Erro ao buscar subcategorias", variant: "destructive" });
+        } finally {
+            setIsLoadingSubcategories(false);
+        }
+    };
+
+    if (selectedParentCategoryId) {
+        fetchSubcats(selectedParentCategoryId);
+    } else {
+        setAvailableSubcategories([]);
+        form.setValue('subcategoryId', undefined);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedParentCategoryId, categories, form.setValue, toast]); // form.setValue was missing, added form.getValues for reset logic
 
   const handleSelectMainImageFromDialog = (selectedItems: Partial<MediaItem>[]) => {
     if (selectedItems.length > 0) {
@@ -226,11 +268,14 @@ export default function LotForm({
     try {
       const dataToSubmit: LotFormValues = {
         ...values,
-        endDate: values.endDate ? values.endDate : null, 
+        // endDate: values.endDate ? values.endDate : null, // Removido
         imageUrl: mainImagePreviewUrl || values.imageUrl, 
         galleryImageUrls: selectedMediaForGallery.map(item => item.urlOriginal || '').filter(Boolean),
         mediaItemIds: selectedMediaForGallery.map(item => item.id || '').filter(itemid => !itemid.startsWith('gallery-url-')).filter(Boolean),
+        categoryId: values.type, // Ensure categoryId is passed from 'type' field
       };
+      delete (dataToSubmit as any).type; // Remove 'type' if it's just for form handling
+
       
       const result = await onSubmitAction(dataToSubmit);
       if (result.success) {
@@ -264,6 +309,7 @@ export default function LotForm({
     }
   }
 
+  const selectedParentCategory = categories.find(cat => cat.id === selectedParentCategoryId || cat.slug === selectedParentCategoryId);
 
   return (
     <>
@@ -415,11 +461,17 @@ export default function LotForm({
                 />
                 <FormField
                   control={form.control}
-                  name="type"
+                  name="type" // Agora este campo armazena o ID ou slug da categoria pai
                   render={({ field }) => (
                       <FormItem>
                       <FormLabel>Tipo/Categoria do Lote</FormLabel>
-                     <Select onValueChange={field.onChange} value={field.value}>
+                     <Select 
+                        onValueChange={(value) => {
+                            field.onChange(value);
+                            form.setValue('subcategoryId', undefined); // Reset subcategory when parent changes
+                        }} 
+                        value={field.value}
+                     >
                         <FormControl>
                             <SelectTrigger>
                             <SelectValue placeholder="Selecione o tipo/categoria" />
@@ -430,7 +482,7 @@ export default function LotForm({
                              <p className="p-2 text-sm text-muted-foreground">Nenhuma categoria cadastrada</p>
                            ) : (
                              categories.map(cat => (
-                               <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                               <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem> 
                              ))
                            )}
                         </SelectContent>
@@ -440,6 +492,36 @@ export default function LotForm({
                   )}
                   />
               </div>
+              
+              {selectedParentCategory && selectedParentCategory.hasSubcategories && (
+                 <FormField
+                    control={form.control}
+                    name="subcategoryId"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Subcategoria</FormLabel>
+                        <Select 
+                            onValueChange={field.onChange} 
+                            value={field.value || undefined}
+                            disabled={isLoadingSubcategories || availableSubcategories.length === 0}
+                        >
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder={isLoadingSubcategories ? "Carregando..." : (availableSubcategories.length === 0 ? "Nenhuma subcategoria" : "Selecione a subcategoria")} />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {availableSubcategories.map(subcat => (
+                                <SelectItem key={subcat.id} value={subcat.id}>{subcat.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+              )}
+
 
               <div className="grid md:grid-cols-2 gap-6">
                   <FormField
