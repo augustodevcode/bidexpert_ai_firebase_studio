@@ -25,9 +25,9 @@ import LotMapPreviewModal from './lot-map-preview-modal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TimeRemainingBadgeProps {
-  endDate: Date | string;
+  endDate: Date | string | undefined | null; // Allow undefined or null
   status: Lot['status'];
-  showUrgencyTimer?: boolean; // Este é o showUrgencyTimer da mentalTriggerSettings
+  showUrgencyTimer?: boolean; 
   urgencyThresholdDays?: number;
   urgencyThresholdHours?: number;
 }
@@ -35,7 +35,7 @@ interface TimeRemainingBadgeProps {
 const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({
   endDate,
   status,
-  showUrgencyTimer = true, // Default to true if not overridden by platform settings
+  showUrgencyTimer = true, 
   urgencyThresholdDays = 1,
   urgencyThresholdHours = 0
 }) => {
@@ -43,9 +43,15 @@ const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({
   const [isUrgent, setIsUrgent] = useState(false);
 
   useEffect(() => {
+    if (!endDate) {
+      setTimeRemaining(getAuctionStatusText(status));
+      setIsUrgent(false);
+      return;
+    }
+
     const calculateTime = () => {
       const now = new Date();
-      const end = endDate instanceof Date ? endDate : new Date(endDate);
+      const end = endDate instanceof Date ? endDate : new Date(endDate as string);
 
       if (isPast(end) || status !== 'ABERTO_PARA_LANCES') {
         setTimeRemaining(getAuctionStatusText(status === 'ABERTO_PARA_LANCES' && isPast(end) ? 'ENCERRADO' : status));
@@ -62,7 +68,7 @@ const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({
 
       const thresholdInSeconds = (urgencyThresholdDays * 24 * 60 * 60) + (urgencyThresholdHours * 60 * 60);
       const currentlyUrgent = totalSecondsLeft <= thresholdInSeconds;
-      setIsUrgent(currentlyUrgent && showUrgencyTimer); // Only urgent if showUrgencyTimer (from mentalTriggers) is true
+      setIsUrgent(currentlyUrgent && showUrgencyTimer); 
 
       if (currentlyUrgent && showUrgencyTimer) {
         const hours = Math.floor(totalSecondsLeft / 3600);
@@ -196,7 +202,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
     if (upperType.includes('MAQUINÁRIO') || upperType.includes('TRATOR')) {
         return <Truck className="h-3 w-3 text-muted-foreground" />;
     }
-    return <Tag className="h-3 w-3 text-muted-foreground" />; // Default to Tag
+    return <Tag className="h-3 w-3 text-muted-foreground" />; 
   };
 
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
@@ -222,7 +228,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
     if (sectionBadges.showExclusiveBadge !== false && settings.showExclusiveBadge && lot.isExclusive) {
         triggers.push('EXCLUSIVO');
     }
-    return Array.from(new Set(triggers)); // Garante valores únicos
+    return Array.from(new Set(triggers)); 
   }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
 
 
@@ -231,7 +237,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
     <Card className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-xl transition-shadow duration-300 rounded-lg group">
       <div className="relative">
         <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block">
-          <div className="aspect-[16/10] relative bg-muted"> {/* Mantém proporção da imagem */}
+          <div className="aspect-[16/10] relative bg-muted"> 
             <Image
               src={lot.imageUrl}
               alt={lot.title}
@@ -240,7 +246,6 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
               className="object-cover"
               data-ai-hint={lot.dataAiHint || 'imagem lote'}
             />
-            {/* Container para badges no topo da imagem */}
             <div className="absolute top-2 left-2 right-2 flex justify-between items-start z-10">
               {sectionBadges.showStatusBadge !== false && (
                 <Badge className={`text-xs px-2 py-1 ${getLotStatusColor(lot.status)}`}>
@@ -274,31 +279,10 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
             </div>
 
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-row space-x-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}>
-                    <Heart className={`h-3.5 w-3.5 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handlePreviewOpen} aria-label="Pré-visualizar Lote">
-                    <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Pré-visualizar Lote</p></TooltipContent>
-              </Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}><Heart className={`h-3.5 w-3.5 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handlePreviewOpen} aria-label="Pré-visualizar Lote"><Eye className="h-3.5 w-3.5 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Pré-visualizar</p></TooltipContent></Tooltip>
               {(lot.latitude || lot.longitude || lot.mapAddress || lot.mapEmbedUrl) && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handleMapPreviewOpen} aria-label="Ver no Mapa">
-                      <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent><p>Ver no Mapa</p></TooltipContent>
-                </Tooltip>
+                <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handleMapPreviewOpen} aria-label="Ver no Mapa"><MapPin className="h-3.5 w-3.5 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Ver Mapa</p></TooltipContent></Tooltip>
               )}
               <DropdownMenu>
                 <Tooltip>
@@ -312,26 +296,10 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
                     <TooltipContent><p>Compartilhar</p></TooltipContent>
                 </Tooltip>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <a href={getSocialLink('x', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
-                      <X className="h-3.5 w-3.5" /> X (Twitter)
-                    </a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <a href={getSocialLink('facebook', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
-                      <Facebook className="h-3.5 w-3.5" /> Facebook
-                    </a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <a href={getSocialLink('whatsapp', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
-                      <MessageSquareText className="h-3.5 w-3.5" /> WhatsApp
-                    </a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <a href={getSocialLink('email', lotDetailUrl, lot.title)} className="flex items-center gap-2 text-xs">
-                      <Mail className="h-3.5 w-3.5" /> Email
-                    </a>
-                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild><a href={getSocialLink('x', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><X className="h-3.5 w-3.5" /> X (Twitter)</a></DropdownMenuItem>
+                  <DropdownMenuItem asChild><a href={getSocialLink('facebook', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><Facebook className="h-3.5 w-3.5" /> Facebook</a></DropdownMenuItem>
+                  <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><MessageSquareText className="h-3.5 w-3.5" /> WhatsApp</a></DropdownMenuItem>
+                  <DropdownMenuItem asChild><a href={getSocialLink('email', lotDetailUrl)} className="flex items-center gap-2 text-xs"><Mail className="h-3.5 w-3.5" /> Email</a></DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -340,7 +308,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
       </div>
 
       <CardContent className="p-3 flex-grow space-y-1.5">
-        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block mt-1"> {/* Adicionado mt-1 para o link do título */}
+        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block mt-1">
           <h3 className="text-sm font-semibold hover:text-primary transition-colors leading-tight min-h-[2.2em] line-clamp-2">
             {lot.title}
           </h3>
@@ -374,15 +342,15 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
 
       <CardFooter className="p-3 border-t flex-col items-start space-y-1.5">
         <div className="w-full">
-          <p className="text-xs text-muted-foreground">Lance Mínimo</p>
-          <p className={`text-xl font-bold ${isPast(new Date(lot.endDate || '')) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
+          <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
+          <p className={`text-xl font-bold ${lot.endDate && isPast(new Date(lot.endDate as string)) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
             R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
         {lot.endDate && (
-          <div className={`flex items-center text-xs text-muted-foreground ${isPast(new Date(lot.endDate)) ? 'line-through' : ''}`}>
+          <div className={`flex items-center text-xs text-muted-foreground ${isPast(new Date(lot.endDate as string)) ? 'line-through' : ''}`}>
             <CalendarDays className="h-3 w-3 mr-1" />
-            <span>{format(new Date(lot.endDate), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+            <span>{format(new Date(lot.endDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
           </div>
         )}
 
@@ -396,23 +364,23 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
                 urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
               />
             )}
-            {!showCountdownOnThisCard && lot.endDate && lot.status === 'ABERTO_PARA_LANCES' && !isPast(new Date(lot.endDate)) && (
+            {!showCountdownOnThisCard && lot.endDate && lot.status === 'ABERTO_PARA_LANCES' && !isPast(new Date(lot.endDate as string)) && (
               <Badge variant="outline" className="text-xs font-medium">
                   <Clock className="h-3 w-3 mr-1" />
                   Aberto
               </Badge>
             )}
-            {!showCountdownOnThisCard && lot.endDate && (lot.status !== 'ABERTO_PARA_LANCES' || isPast(new Date(lot.endDate))) && (
+            {!showCountdownOnThisCard && lot.endDate && (lot.status !== 'ABERTO_PARA_LANCES' || isPast(new Date(lot.endDate as string))) && (
               <Badge variant="outline" className="text-xs font-medium">
                   <Clock className="h-3 w-3 mr-1" />
                   {getAuctionStatusText(lot.status)}
               </Badge>
             )}
-            <div className={`flex items-center gap-1 ${lot.endDate && isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : ''}`}>
+            <div className={`flex items-center gap-1 ${lot.endDate && isPast(new Date(lot.endDate as string)) ? 'text-muted-foreground line-through' : ''}`}>
                 <Gavel className="h-3 w-3" />
                 <span>{lot.bidsCount || 0} Lances</span>
             </div>
-            <span className={`font-semibold ${lot.endDate && isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.number || lot.id.replace('LOTE', '')}</span>
+            <span className={`font-semibold ${lot.endDate && isPast(new Date(lot.endDate as string)) ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.number || lot.id.replace('LOTE', '')}</span>
         </div>
          <Button asChild className="w-full mt-2" size="sm">
             <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>Ver Detalhes do Lote</Link>
@@ -443,12 +411,11 @@ export default function LotCard({ lot, badgeVisibilityConfig, platformSettingsPr
     }, []);
 
     if (!isClient) {
-      // Skeleton para SSR ou enquanto JS não carregou
       return (
         <Card className="flex flex-col overflow-hidden h-full shadow-md rounded-lg group">
              <div className="relative aspect-[16/10] bg-muted animate-pulse"></div>
              <CardContent className="p-3 flex-grow space-y-1.5">
-                <div className="h-4 bg-muted rounded w-3/4 animate-pulse mt-1"></div> {/* Ajuste para o título */}
+                <div className="h-4 bg-muted rounded w-3/4 animate-pulse mt-1"></div>
                 <div className="h-8 bg-muted rounded w-full animate-pulse mt-1"></div>
                 <div className="h-4 bg-muted rounded w-1/2 animate-pulse mt-1"></div>
              </CardContent>
@@ -464,5 +431,3 @@ export default function LotCard({ lot, badgeVisibilityConfig, platformSettingsPr
 
     return <LotCardClientContent lot={lot} badgeVisibilityConfig={badgeVisibilityConfig} platformSettingsProp={platformSettingsProp} />;
   }
-
-    
