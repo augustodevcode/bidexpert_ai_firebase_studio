@@ -163,7 +163,7 @@ export default function LotForm({
   React.useEffect(() => {
     if (defaultAuctionId) {
       form.setValue('auctionId', defaultAuctionId);
-      const selectedAuction = auctions.find(a => a.id === defaultAuctionId || a.publicId === defaultAuctionId);
+      const selectedAuction = auctions.find(a => a.id === defaultAuctionId);
       if (selectedAuction) {
         form.setValue('auctionName', selectedAuction.title);
       }
@@ -285,7 +285,7 @@ export default function LotForm({
         });
         if (defaultAuctionId) {
           const auctionForRedirect = auctions.find(a => a.id === defaultAuctionId || a.publicId === defaultAuctionId);
-          router.push(`/admin/auctions/${auctionForRedirect?.publicId || defaultAuctionId}/edit`);
+          router.push(`/admin/auctions/${auctionForRedirect?.id || defaultAuctionId}/edit`);
         } else {
           router.push('/admin/lots');
         }
@@ -343,11 +343,11 @@ export default function LotForm({
                     <Select
                       onValueChange={(value) => {
                         field.onChange(value);
-                        const selectedAuction = auctions.find(a => a.id === value || a.publicId === value);
+                        const selectedAuction = auctions.find(a => a.id === value);
                         form.setValue('auctionName', selectedAuction?.title || '');
                       }}
                       value={field.value}
-                      disabled={!!defaultAuctionId && (initialData?.auctionId === defaultAuctionId || initialData?.auctionId === auctions.find(a=>a.publicId === defaultAuctionId)?.id) }
+                      disabled={!!defaultAuctionId && (initialData?.auctionId === defaultAuctionId)}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -359,7 +359,7 @@ export default function LotForm({
                           <p className="p-2 text-sm text-muted-foreground">Nenhum leilão cadastrado</p>
                         ) : (
                           auctions.map(auction => (
-                            <SelectItem key={auction.id} value={auction.publicId || auction.id}>{auction.title} (ID: ...{(auction.publicId || auction.id).slice(-6)})</SelectItem>
+                            <SelectItem key={auction.id} value={auction.id}>{auction.title} (ID: ...{auction.id.slice(-6)})</SelectItem>
                           ))
                         )}
                       </SelectContent>

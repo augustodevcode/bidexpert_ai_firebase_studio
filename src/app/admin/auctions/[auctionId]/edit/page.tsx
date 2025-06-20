@@ -33,6 +33,7 @@ import { Separator } from '@/components/ui/separator';
 import React, { useEffect, useCallback, useMemo, useState } from 'react'; 
 import { useToast } from '@/hooks/use-toast';
 import SearchResultsFrame from '@/components/search-results-frame';
+import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 
 function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotId: string; lotTitle: string; auctionId: string; onDeleteSuccess: () => void }) {
   const [isDeleting, setIsDeleting] = React.useState(false);
@@ -434,7 +435,7 @@ export default function EditAuctionPage() {
             <CardDescription>Lista de lotes associados a este leilão ({lotsInAuction.length} no total).</CardDescription>
           </div>
           <Button asChild>
-            <Link href={`/admin/lots/new?auctionId=${auction.publicId || auctionId}`}>
+            <Link href={`/admin/lots/new?auctionId=${auction.id}`}>
               <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Lote
             </Link>
           </Button>
@@ -462,4 +463,3 @@ export default function EditAuctionPage() {
   );
 }
     
-
