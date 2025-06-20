@@ -299,7 +299,7 @@ export default function Header() {
         label: 'Histórico',
         isMegaMenu: true,
         contentKey: 'history',
-        icon: History,
+        icon: History, // Ícone History aqui
         href: '/dashboard/history',
         megaMenuAlign: 'end'
     },
@@ -566,7 +566,7 @@ export default function Header() {
 
       {/* Breadcrumbs Bar */}
       {isClient && pathname !== '/' && (
-        <nav aria-label="Breadcrumb" className="bg-secondary text-secondary-foreground text-xs py-2.5 border-b">
+        <nav aria-label="Breadcrumb" className="bg-secondary text-secondary-foreground text-xs py-2.5 border-b h-10 flex items-center">
             <div className="container mx-auto px-4">
                 <DynamicBreadcrumbs />
             </div>
@@ -578,3 +578,4 @@ export default function Header() {
     
       
     
+
