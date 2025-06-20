@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { useForm, Controller, useFieldArray, useWatch } from 'react-hook-form'; // Added useWatch
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -24,13 +24,14 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
 import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage } from '@/types';
-import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark } from 'lucide-react';
+import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon } from 'lucide-react'; // Added ClockIcon
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText } from '@/lib/sample-data';
 import { Separator } from '@/components/ui/separator';
+import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline'; // Import the new component
 
 
 interface AuctionFormProps {
@@ -100,7 +101,7 @@ export default function AuctionForm({
       estimatedRevenue: initialData?.estimatedRevenue || undefined,
       isFeaturedOnMarketplace: initialData?.isFeaturedOnMarketplace || false,
       marketplaceAnnouncementTitle: initialData?.marketplaceAnnouncementTitle || '',
-      auctionStages: initialData?.auctionStages?.map(stage => ({ ...stage, endDate: new Date(stage.endDate as Date)})) || [{ name: '1ª Praça', endDate: new Date(), initialPrice: undefined }],
+      auctionStages: initialData?.auctionStages?.map(stage => ({ ...stage, endDate: new Date(stage.endDate as Date), initialPrice: stage.initialPrice || undefined })) || [{ name: '1ª Praça', endDate: new Date(), initialPrice: undefined }],
     },
   });
 
@@ -108,6 +109,9 @@ export default function AuctionForm({
     control: form.control,
     name: "auctionStages",
   });
+
+  const watchedAuctionDate = useWatch({ control: form.control, name: 'auctionDate' });
+  const watchedStages = useWatch({ control: form.control, name: 'auctionStages' });
 
   async function onSubmit(values: AuctionFormValues) {
     setIsSubmitting(true);
@@ -314,8 +318,47 @@ export default function AuctionForm({
                 </FormItem>
                 )}
             />
+
             <Separator />
-            <h3 className="text-md font-semibold text-muted-foreground flex items-center"><FileText className="h-4 w-4 mr-2"/>Praças / Etapas do Leilão</h3>
+             <FormField
+                control={form.control}
+                name="auctionDate"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                    <FormLabel>Data Principal de Início do Leilão</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button
+                            variant={"outline"}
+                            className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}
+                            >
+                            {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha data e hora</span>}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                        </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                        <div className="p-2 border-t">
+                            <Input type="time" defaultValue={field.value ? format(field.value, "HH:mm") : "10:00"}
+                            onChange={(e) => {
+                                const [hours, minutes] = e.target.value.split(':').map(Number);
+                                const newDate = field.value ? new Date(field.value) : new Date();
+                                newDate.setHours(hours, minutes);
+                                field.onChange(newDate);
+                            }} />
+                        </div>
+                        </PopoverContent>
+                    </Popover>
+                    <FormDescription>Data e hora de início do evento principal do leilão.</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            
+            <Separator />
+            <h3 className="text-md font-semibold text-muted-foreground flex items-center"><ClockIcon className="h-4 w-4 mr-2"/>Praças / Etapas do Leilão</h3>
             {fields.map((field, index) => (
               <Card key={field.id} className="p-4 space-y-3 bg-secondary/30">
                 <div className="flex justify-between items-center">
@@ -388,48 +431,15 @@ export default function AuctionForm({
               <PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa
             </Button>
 
+            {/* Timeline Component */}
+            <AuctionStagesTimeline auctionOverallStartDate={watchedAuctionDate} stages={watchedStages as AuctionStage[]} />
+
+
             <Separator />
             <h3 className="text-md font-semibold text-muted-foreground flex items-center"><Landmark className="h-4 w-4 mr-2"/>Localização e Detalhes Adicionais</h3>
-            <div className="grid md:grid-cols-2 gap-6">
-                <FormField
+             <FormField
                 control={form.control}
-                name="auctionDate"
-                render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                    <FormLabel>Data Principal do Leilão</FormLabel>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                        <FormControl>
-                            <Button
-                            variant={"outline"}
-                            className={cn("w-full pl-3 text-left font-normal",!field.value && "text-muted-foreground")}
-                            >
-                            {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha data e hora</span>}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                        </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                        <div className="p-2 border-t">
-                            <Input type="time" defaultValue={field.value ? format(field.value, "HH:mm") : "10:00"}
-                            onChange={(e) => {
-                                const [hours, minutes] = e.target.value.split(':').map(Number);
-                                const newDate = field.value ? new Date(field.value) : new Date();
-                                newDate.setHours(hours, minutes);
-                                field.onChange(newDate);
-                            }} />
-                        </div>
-                        </PopoverContent>
-                    </Popover>
-                    <FormDescription>Data e hora de início do evento principal do leilão.</FormDescription>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="endDate"
+                name="endDate" // Este é o END DATE GERAL, pode ser opcional se as praças cobrirem
                 render={({ field }) => (
                     <FormItem className="flex flex-col">
                     <FormLabel>Data de Encerramento Geral (Opcional)</FormLabel>
@@ -440,7 +450,7 @@ export default function AuctionForm({
                             variant={"outline"}
                             className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                             >
-                            {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha data e hora</span>}
+                            {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha data e hora (se aplicável)</span>}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                         </FormControl>
@@ -458,12 +468,11 @@ export default function AuctionForm({
                         </div>
                         </PopoverContent>
                     </Popover>
-                    <FormDescription>Data final para todos os lances, se não definida por praças.</FormDescription>
+                    <FormDescription>Data final para todos os lances, se não definida por praças individuais.</FormDescription>
                     <FormMessage />
                     </FormItem>
                 )}
                 />
-            </div>
             <div className="grid md:grid-cols-2 gap-6">
                 <FormField
                     control={form.control}
@@ -605,8 +614,3 @@ export default function AuctionForm({
     </Card>
   );
 }
-
-    
-
-    
-

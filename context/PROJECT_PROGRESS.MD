@@ -44,30 +44,26 @@
     *   **Item 16 (DONE):** Defined `Subcategory` type, updated `LotCategory`, updated `IDatabaseAdapter`, implemented subcategory CRUD in SQL adapters, created Server Actions, developed UI (form, list, edit pages), added admin sidebar link.
     *   **Item 17 (DONE):** Added examples of subcategories to `sample-data.ts` and connected to main categories. `hasSubcategories` flag correctly set.
     *   **Item 18 (DONE):** Integrated subcategory selection into Lot CRUD form. Updated display components (`LotListItem`, `LotDetailClientContent`, `LotCard`, lot list in auction edit) to show subcategory name.
-- **Error Fixes (General):**
-    *   Resolved various `Module not found`, `React is not defined`, `DialogTitle required`, `useMemo not defined`, `Tabs not defined` errors.
-    *   Corrected `getCategoryAssets` to handle descriptive titles gracefully.
-    *   Fixed multiple "Unexpected eof" and "Unexpected token" syntax errors.
-    *   Diagnosed and provided guidance for "input token count exceeds maximum" for AI flows.
 - **Context Persistence System (User Request - Setup DONE):**
     *   Created `context/PROJECT_CONTEXT_HISTORY.md`.
     *   Created `context/PROJECT_PROGRESS.MD` (this file).
     *   Created `context/PROJECT_INSTRUCTIONS.md`.
     *   Created `context/1st.md`.
-    *   **This session:** Updated all context files (Items 18, 13 completion).
 - **Item 1 (LotCard Title Spacing):** Fixed spacing issue between image and title in LotCard.
-- **Lot Dates & Status Derivation (Item 13):**
+- **Lot Dates & Status Derivation (Item 13 - DONE):**
     *   `sample-data.ts` logic updated to derive lot `endDate` and `status` from parent auction, considering `auctionStages`.
     *   `LotDetailClientContent` (and its `DetailTimeRemaining` component) uses derived effective start/end dates.
     *   `LotCard` and `LotListItem` reflect these derived dates/status via the updated `sampleLots`.
     *   Reviewed all display components to ensure consistency.
 
 ## WORKING
-- Investigating and resolving persistent "Cannot find module" / build errors. (Ongoing, latest attempt involved re-emitting core files and context files).
+- **Item 19:** Implement visual timeline for auction stages in the auction CRUD form (`/admin/auctions/[auctionId]/edit`).
+  - **Sub-task 1 (DONE):** Create `AuctionStagesTimeline.tsx` component.
+  - **Sub-task 2 (DONE):** Integrate `AuctionStagesTimeline` into `AuctionForm.tsx`.
 
 ## NEXT
-- **Item 19:** Implement Live Dashboard (`/live-dashboard`) with real-time updates for open lots.
 - **Item 20:** Develop Virtual Auditorium (`/auctions/[auctionId]/live`) with current lot display, bidding panel, upcoming lots, and chat.
+- **Item 21:** Gantt chart for auctions on the auction dashboard (`/admin/auctions/page.tsx`).
 - **Complete SQL Adapter Implementation:**
     *   Thoroughly test and complete all `IDatabaseAdapter` methods for MySQL and PostgreSQL for all entities.
 - **Media Library (Core Functionality):**
@@ -91,4 +87,3 @@
 - **Refine UI/UX & Mobile Responsiveness.**
 - **Comprehensive Testing & Performance Optimization.**
 - **Error Handling & Logging (User-friendly messages, server-side logging).**
-
