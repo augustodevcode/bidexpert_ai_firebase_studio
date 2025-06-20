@@ -1,4 +1,3 @@
-
 # Project Progress - BidExpert
 
 ## DONE
@@ -60,15 +59,14 @@
 - **Admin User Permissions (`admin@bidexpert.com.br`)**: Ensure `admin@bidexpert.com.br` has 'manage_all' permission and sees admin menu items.
     - **Sub-task 1 (DONE):** Updated `scripts/setup-admin-user.ts` to use `admin@bidexpert.com.br`.
     - **Sub-task 2 (DONE):** Updated `src/app/admin/users/actions.ts` (`ensureUserProfileInDb`) to prioritize 'ADMINISTRATOR' role for `admin@bidexpert.com.br`.
-    - **Sub-task 3 (DOING):** Transitioned user/role management to `sample-data.ts` for testing. Actions/queries updated. Admin user and roles defined in sample data.
-- **Fixing Startup Crash (DONE):** Placeholder methods in SQL adapters implemented. The app can start now.
+    - **Sub-task 3 (DONE):** Transitioned user/role management entirely to `sample-data.ts` for testing. Server actions in `/admin/users` and `/admin/roles` now read directly from `sample-data.ts`. The login action (`authenticateUserSql`) now also uses these mocked actions, bypassing the database for user authentication. This should resolve the login and permission issues.
 
 ## NEXT
 - **Item 19:** Implement visual timeline for auction stages in the auction CRUD form (`/admin/auctions/[auctionId]/edit`).
 - **Item 20:** Develop Virtual Auditorium (`/auctions/[auctionId]/live`) with current lot display, bidding panel, upcoming lots, and chat.
 - **Item 21:** Gantt chart for auctions on the auction dashboard (`/admin/auctions/page.tsx`).
 - **Complete SQL Adapter Implementation:**
-    *   Thoroughly test and complete all `IDatabaseAdapter` methods for MySQL and PostgreSQL for all entities.
+    *   Thoroughly test and complete all `IDatabaseAdapter` methods for MySQL and PostgreSQL for all entities **(except users and roles, which will remain on sample-data for now)**.
     *   Revert user/role management to DB adapters when testing phase is over.
 - **Media Library (Core Functionality):**
     *   Implement file upload (Firebase Storage).

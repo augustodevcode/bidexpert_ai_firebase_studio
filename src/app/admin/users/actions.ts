@@ -3,11 +3,11 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { sampleUserProfiles, sampleRoles, slugify } from '@/lib/sample-data';
+import { sampleUserProfiles, sampleRoles } from '@/lib/sample-data';
 import type { UserProfileData, Role, UserHabilitationStatus, UserProfileWithPermissions } from '@/types';
 import type { UserFormValues } from './user-form-schema';
 import { v4 as uuidv4 } from 'uuid';
-import { getRoleInternal, getRoleByNameInternal, ensureDefaultRolesExistInternal } from '../roles/queries';
+import { getRoleByNameInternal } from '../roles/queries';
 
 const ADMIN_SUPER_EMAIL = 'admin@bidexpert.com.br';
 
@@ -36,23 +36,10 @@ export interface UserCreationData {
   optInMarketing?: boolean;
 }
 
-export async function createUser(
-  data: UserCreationData
-): Promise<{ success: boolean; message: string; userId?: string }> {
-  console.log(`[createUser Action - SampleData Mode] Simulating creation for: ${data.email}`);
-  // In sample data mode, we don't actually modify the sampleUserProfiles array.
-  // We just simulate a successful creation.
-  const existingUser = sampleUserProfiles.find(u => u.email.toLowerCase() === data.email.trim().toLowerCase());
-  if (existingUser) {
-    return { success: false, message: `Usuário com email ${data.email} já existe nos dados de exemplo.` };
-  }
-  revalidatePath('/admin/users');
-  return { success: true, message: 'Usuário (simulado) criado com sucesso.', userId: `sample-user-${uuidv4()}` };
-}
+// --- Internal Query-like Functions for Users ---
 
-export async function getUsersWithRoles(): Promise<UserProfileData[]> {
-  console.log('[getUsersWithRoles - SampleData Mode] Fetching from sampleUserProfiles.');
-  // Enrich with roleName and permissions from sampleRoles
+async function getUsersWithRolesInternal(): Promise<UserProfileData[]> {
+  console.log('[getUsersWithRolesInternal - SampleData Mode] Fetching from sampleUserProfiles.');
   const usersWithFullRoleInfo = sampleUserProfiles.map(user => {
     const role = sampleRoles.find(r => r.id === user.roleId);
     return {
@@ -64,18 +51,41 @@ export async function getUsersWithRoles(): Promise<UserProfileData[]> {
   return Promise.resolve(JSON.parse(JSON.stringify(usersWithFullRoleInfo)));
 }
 
-export async function getUserProfileData(userId: string): Promise<UserProfileData | null> {
-  console.log(`[getUserProfileData - SampleData Mode] Fetching user ID: ${userId} from sampleUserProfiles.`);
+async function getUserProfileDataInternal(userId: string): Promise<UserProfileData | null> {
+  console.log(`[getUserProfileDataInternal - SampleData Mode] Fetching user ID: ${userId} from sampleUserProfiles.`);
   const user = sampleUserProfiles.find(u => u.uid === userId);
   if (user) {
     const role = sampleRoles.find(r => r.id === user.roleId);
-    return Promise.resolve(JSON.parse(JSON.stringify({
+    const profile = {
       ...user,
       roleName: role?.name || 'Não Definido',
       permissions: role?.permissions || []
-    })));
+    };
+    return Promise.resolve(JSON.parse(JSON.stringify(profile)));
   }
   return Promise.resolve(null);
+}
+
+// --- Server Actions ---
+
+export async function createUser(
+  data: UserCreationData
+): Promise<{ success: boolean; message: string; userId?: string }> {
+  console.log(`[createUser Action - SampleData Mode] Simulating creation for: ${data.email}`);
+  const existingUser = sampleUserProfiles.find(u => u.email.toLowerCase() === data.email.trim().toLowerCase());
+  if (existingUser) {
+    return { success: false, message: `Usuário com email ${data.email} já existe nos dados de exemplo.` };
+  }
+  revalidatePath('/admin/users');
+  return { success: true, message: 'Usuário (simulado) criado com sucesso.', userId: `sample-user-${uuidv4()}` };
+}
+
+export async function getUsersWithRoles(): Promise<UserProfileData[]> {
+  return getUsersWithRolesInternal();
+}
+
+export async function getUserProfileData(userId: string): Promise<UserProfileData | null> {
+  return getUserProfileDataInternal(userId);
 }
 
 export async function updateUserRole(
@@ -83,7 +93,6 @@ export async function updateUserRole(
   roleId: string | null
 ): Promise<{ success: boolean; message: string }> {
   console.log(`[updateUserRole - SampleData Mode] Simulating update for user: ${userId}, new roleId: ${roleId}`);
-  // Simulate success
   revalidatePath('/admin/users');
   revalidatePath(`/admin/users/${userId}/edit`);
   return { success: true, message: 'Perfil do usuário (simulado) atualizado!' };
@@ -91,7 +100,6 @@ export async function updateUserRole(
 
 export async function deleteUser(userId: string): Promise<{ success: boolean; message: string }> {
   console.log(`[deleteUser - SampleData Mode] Simulating deletion for user: ${userId}`);
-  // Simulate success
   revalidatePath('/admin/users');
   return { success: true, message: 'Usuário (simulado) excluído!' };
 }
@@ -110,32 +118,28 @@ export async function ensureUserProfileInDb(
 
   if (existingProfile) {
     console.log(`[ensureUserProfileInDb - SampleData Mode] Found existing profile for ${email || userUid}.`);
-    const role = sampleRoles.find(r => r.id === existingProfile.roleId);
-    const profileWithFullRole = {
-      ...existingProfile,
-      roleName: role?.name || 'Não Definido',
-      permissions: role?.permissions || [],
-    };
+    let role = sampleRoles.find(r => r.id === existingProfile.roleId);
+
     // Special handling for admin@bidexpert.com.br to ensure it ALWAYS gets admin role
     if (email && email.toLowerCase() === ADMIN_SUPER_EMAIL.toLowerCase()) {
       const adminRole = sampleRoles.find(r => r.name_normalized === 'ADMINISTRATOR');
       if (adminRole) {
-        profileWithFullRole.roleId = adminRole.id;
-        profileWithFullRole.roleName = adminRole.name;
-        profileWithFullRole.permissions = adminRole.permissions;
+        role = adminRole; // Force admin role
         console.log(`[ensureUserProfileInDb - SampleData Mode] Ensured admin role for ${ADMIN_SUPER_EMAIL}.`);
       }
     }
-    return { success: true, message: 'Perfil de usuário encontrado (SampleData).', userProfile: profileWithFullRole as UserProfileWithPermissions };
+    const profileWithFullRole: UserProfileWithPermissions = {
+      ...existingProfile,
+      roleName: role?.name || 'Não Definido',
+      permissions: role?.permissions || [],
+    };
+    return { success: true, message: 'Perfil de usuário encontrado (SampleData).', userProfile: profileWithFullRole };
   }
 
   // If user not in sampleUserProfiles (e.g., new Firebase Auth user), simulate creation for context
   console.log(`[ensureUserProfileInDb - SampleData Mode] User ${email} not in sample data. Simulating profile creation.`);
   let targetRole: Role | null = null;
-  if (email && email.toLowerCase() === ADMIN_SUPER_EMAIL.toLowerCase()) {
-    targetRole = sampleRoles.find(r => r.name_normalized === 'ADMINISTRATOR') || null;
-    console.log(`[ensureUserProfileInDb - SampleData Mode] New admin user ${ADMIN_SUPER_EMAIL}. Target role: ADMINISTRATOR`);
-  } else if (roleIdToAssign && roleIdToAssign !== "---NONE---") {
+  if (roleIdToAssign && roleIdToAssign !== "---NONE---") {
     targetRole = sampleRoles.find(r => r.id === roleIdToAssign) || null;
   }
   if (!targetRole) {
@@ -154,23 +158,23 @@ export async function ensureUserProfileInDb(
     roleName: targetRole.name,
     permissions: targetRole.permissions,
     status: 'ATIVO',
-    habilitationStatus: targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS',
+    habilitationStatus: targetRole.name === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_DOCUMENTOS',
     createdAt: new Date(),
     updatedAt: new Date(),
-    ...additionalProfileData,
+    ...(additionalProfileData as any), // Cast to any to bypass strict checks for this simulation
   };
   console.log(`[ensureUserProfileInDb - SampleData Mode] Simulated new profile for ${email}:`, simulatedNewProfile);
   return { success: true, message: 'Perfil de usuário simulado criado (SampleData).', userProfile: simulatedNewProfile };
 }
 
-export async function getUserByEmail(email: string): Promise<UserProfileData | null> {
+export async function getUserByEmail(email: string): Promise<UserProfileWithPermissions | null> {
   console.log(`[getUserByEmail - SampleData Mode] Fetching email: ${email} from sampleUserProfiles.`);
   const user = sampleUserProfiles.find(u => u.email.toLowerCase() === email.toLowerCase());
   if (user) {
     const role = sampleRoles.find(r => r.id === user.roleId);
-    const profileWithPassword = { // Ensure password is part of the structure if expected by calling functions
+    const profileWithPassword: UserProfileWithPermissions = {
         ...user,
-        password: user.password || 'sampleDataPasswordPlaceholder', // Add placeholder if not present
+        password: user.password || 'password123', // Ensure password exists for login check
         roleName: role?.name || 'Não Definido',
         permissions: role?.permissions || [],
     };

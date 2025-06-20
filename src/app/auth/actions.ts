@@ -1,41 +1,39 @@
-
 'use server';
 import { getDatabaseAdapter } from '@/lib/database';
-import type { SqlAuthResult, UserProfileData } from '@/types';
-// Em um cenário de produção, você usaria bcrypt para senhas
-// import bcrypt from 'bcryptjs';
+import type { SqlAuthResult, UserProfileWithPermissions } from '@/types';
+// Import a user action that is now guaranteed to use sample data
+import { getUserByEmail } from '@/app/admin/users/actions';
 
 export async function authenticateUserSql(
   email: string,
   passwordAttempt: string
 ): Promise<SqlAuthResult> {
-  const db = await getDatabaseAdapter();
+  // This function will now use the mocked user action instead of the database adapter,
+  // making it consistent with the rest of the user/role logic.
   try {
-    // Esta função getUserByEmail precisa ser implementada no seu adaptador de banco de dados
-    const userProfile = await db.getUserByEmail(email.toLowerCase());
+    console.log(`[authenticateUserSql] Attempting to authenticate ${email} via user actions (sample-data).`);
+    const userProfile = await getUserByEmail(email.toLowerCase());
 
     if (!userProfile) {
       return { success: false, message: 'Usuário não encontrado.' };
     }
-
-    // ATENÇÃO: Comparação de senha em TEXTO PLANO - MUITO INSEGURO PARA PRODUÇÃO
-    // Em produção, você faria algo como:
-    // const isMatch = await bcrypt.compare(passwordAttempt, userProfile.passwordHash);
-    // Por agora, para o protótipo, comparamos diretamente.
-    // Certifique-se de que 'password_text' existe no seu UserProfileData para SQL e contém a senha.
-    if (userProfile.password === passwordAttempt) { // Assumindo que userProfile.password contém a senha em texto plano do DB
-      // Remover a senha antes de retornar o perfil
+    
+    console.log(`[authenticateUserSql] Profile found for ${email}. Checking password.`);
+    // The password from sample data is in plain text for this prototype.
+    if (userProfile.password === passwordAttempt) {
       const { password, ...userToReturn } = userProfile;
+      console.log(`[authenticateUserSql] Password match for ${email}. Login successful.`);
       return {
         success: true,
-        message: 'Login bem-sucedido (SQL)!',
-        user: userToReturn as UserProfileData, 
+        message: 'Login bem-sucedido (SampleData)!',
+        user: userToReturn as UserProfileWithPermissions, 
       };
     } else {
+      console.warn(`[authenticateUserSql] Password mismatch for ${email}.`);
       return { success: false, message: 'Senha incorreta.' };
     }
   } catch (error: any) {
-    console.error('[authenticateUserSql] Erro:', error);
-    return { success: false, message: error.message || 'Erro durante a autenticação SQL.' };
+    console.error('[authenticateUserSql] Error:', error);
+    return { success: false, message: error.message || 'Erro durante a autenticação.' };
   }
 }
