@@ -22,7 +22,7 @@
     *   Homepage "Lotes em Destaque" shows only `ABERTO_PARA_LANCES` lots.
     *   `LotDetailClientContent` displays "Permite Lance Parcelado" and "Incremento Mínimo".
     *   Countdown timer styling on lot detail page improved.
-    *   Conditional tab "Documentos e Processo" on lot detail page.
+    *   **Item 15:** Conditional tab "Documentos e Processo" on lot detail page implemented.
 - **User Authentication & Authorization:**
     - Updated registration form for Pessoa Jurídica & Comitente Venda Direta.
     - `AuthContext` for SQL/Firebase user state.
@@ -40,37 +40,35 @@
         *   Seller detail page (for lots).
         *   Auctioneer detail page (for auctions).
         *   Main search page (`/search`).
-- **Subcategory Management (Item 16):**
-    *   Defined `Subcategory` type in `src/types/index.ts`.
-    *   Updated `LotCategory` type.
-    *   Updated `IDatabaseAdapter` with subcategory CRUD methods.
-    *   Implemented subcategory CRUD methods in `MySqlAdapter` and `PostgresAdapter`.
-    *   Created Server Actions for subcategories.
-    *   Developed UI (form, list, edit pages) for subcategory management.
-    *   Added "Subcategorias" link to admin sidebar.
+- **Subcategory Management (Items 16, 17, 18):**
+    *   **Item 16:** Defined `Subcategory` type, updated `LotCategory`, updated `IDatabaseAdapter`, implemented subcategory CRUD in SQL adapters, created Server Actions, developed UI (form, list, edit pages), added admin sidebar link.
+    *   **Item 17:** Added examples of subcategories to `sample-data.ts` and connected to main categories. `hasSubcategories` flag correctly set.
+    *   **Item 18:** Integrated subcategory selection into Lot CRUD form. Updated display components (`LotListItem`, `LotDetailClientContent`, lot list in auction edit, `LotCard`) to show subcategory name.
+- **Lot Dates & Status Derivation (Item 13):**
+    *   `sample-data.ts` logic updated to derive lot `endDate` and `status` from parent auction, considering `auctionStages`.
+    *   `LotDetailClientContent` (and its `DetailTimeRemaining` component) uses derived effective start/end dates.
+    *   `LotCard` and `LotListItem` reflect these derived dates/status via the updated `sampleLots`.
 - **Error Fixes (General):**
     *   Resolved various `Module not found`, `React is not defined`, `DialogTitle required`, `useMemo not defined`, `Tabs not defined` errors.
     *   Corrected `getCategoryAssets` to handle descriptive titles gracefully.
     *   Fixed multiple "Unexpected eof" and "Unexpected token" syntax errors.
     *   Diagnosed and provided guidance for "input token count exceeds maximum" for AI flows.
     *   Addressed "Internal Server Error" related to SWC build issues by re-emitting files and ensuring correct component types/hook usage.
-- **Context Persistence System (This Task - Item User Request):**
+- **Context Persistence System (User Request):**
     *   Created `context/PROJECT_CONTEXT_HISTORY.md`.
     *   Created `context/PROJECT_PROGRESS.MD` (this file).
     *   Created `context/PROJECT_INSTRUCTIONS.md`.
     *   Created `context/1st.md`.
+    *   **This session:** Updated all context files based on recent progress.
 
 ## WORKING
-- **Finalizing Subcategory Feature (Item 17 & 18):**
-    *   **Item 17:** Add examples of subcategories to `sample-data.ts` and connect to main categories.
-    *   **Item 18:** Integrate subcategory selection into the Lot CRUD form and display on lot pages/cards.
+- Investigating and resolving persistent "Cannot find module" / build errors. (Ongoing, re-emitted core files and context files this session).
 
 ## NEXT
-- **Item 13 (Partially Done - needs full review):** Ensure all lot dates (endDate, stages) are consistently derived from the parent Auction across all displays (cards, lists, detail pages).
 - **Item 19:** Implement Live Dashboard (`/live-dashboard`) with real-time updates for open lots.
 - **Item 20:** Develop Virtual Auditorium (`/auctions/[auctionId]/live`) with current lot display, bidding panel, upcoming lots, and chat.
 - **Complete SQL Adapter Implementation:**
-    *   Thoroughly test and complete all `IDatabaseAdapter` methods for MySQL and PostgreSQL for all entities.
+    *   Thoroughly test and complete all `IDatabaseAdapter` methods for MySQL and PostgreSQL for all entities (including full subcategory logic if not already 100% complete).
 - **Media Library (Core Functionality):**
     *   Implement file upload (Firebase Storage).
     *   Modal for metadata editing for `MediaItem`.
@@ -92,4 +90,3 @@
 - **Refine UI/UX & Mobile Responsiveness.**
 - **Comprehensive Testing & Performance Optimization.**
 - **Error Handling & Logging (User-friendly messages, server-side logging).**
-  

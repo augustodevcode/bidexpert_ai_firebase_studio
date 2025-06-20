@@ -52,7 +52,7 @@ This document summarizes the BidExpert project, including its purpose, core feat
 3.  **Header & Navigation:**
     *   Dynamic display of site title and tagline (from platform settings, `samplePlatformSettings` as fallback).
     *   Implementation of a multi-level **MegaMenu** for:
-        *   **Categorias de Oportunidades:** Dynamically populated from categories data, features a two-column layout with subcategories (work in progress for dynamic subcategories).
+        *   **Categorias de Oportunidades:** Dynamically populated from categories data, features a two-column layout with subcategories.
         *   **Modalidades de Leilão:** Static links initially, then moved to a two-column layout.
         *   **Comitentes:** Dynamically populated from sellers data, two-column layout.
         *   **Nossos Leiloeiros:** Dynamically populated from auctioneers data, profile previews.
@@ -72,12 +72,12 @@ This document summarizes the BidExpert project, including its purpose, core feat
 5.  **Homepage Enhancements:**
     *   Hero Carousel updated with dynamic slides and autoplay.
     *   Filter Link Cards for quick navigation to different auction types/categories.
-    *   "Lotes em Destaque" section displays lots marked as featured and open for bids.
+    *   "Lotes em Destaque" section displays lots marked as featured and open for bids (status derived from auction).
 
 6.  **Lot Detail Page Enhancements:**
-    *   Countdown timer styling improved (`DetailTimeRemaining` component).
+    *   **Item 13 (Dates Derived from Auction):** Countdown timer (`DetailTimeRemaining`) logic significantly updated to prioritize auction stages, then auction end/start dates, before falling back to lot-specific dates. This ensures consistent timing.
     *   Responsiveness of `TabsList` for lot details (Description, Specs, etc.) corrected.
-    *   Conditional tab "Documentos e Processo" implemented: appears if auction is judicial AND lot has specific legal info. Otherwise, shows as "Documentos".
+    *   **Item 15 (Conditional Legal Tab):** "Documentos e Processo" tab implemented: appears if auction is judicial AND lot has specific legal info. Otherwise, shows as "Documentos".
     *   Display of "Permite Lance Parcelado" and "Incremento Mínimo de Lance" added.
 
 7.  **User Authentication & Authorization:**
@@ -87,7 +87,7 @@ This document summarizes the BidExpert project, including its purpose, core feat
     *   Admin layout protected by `manage_all` permission.
     *   Consignor dashboard layout protected by consignor-specific permissions.
 
-8.  **Subcategory Management (Item 16 - In Progress):**
+8.  **Subcategory Management (Item 16, 17, 18):**
     *   Defined `Subcategory` type in `src/types/index.ts`.
     *   Updated `LotCategory` type to include `hasSubcategories?: boolean;`.
     *   Updated `IDatabaseAdapter` with CRUD methods for subcategories.
@@ -95,6 +95,9 @@ This document summarizes the BidExpert project, including its purpose, core feat
     *   Created Server Actions for subcategories (`src/app/admin/subcategories/actions.ts`).
     *   Developed UI (form, list, edit pages) for subcategory management under `/admin/subcategories`.
     *   Added "Subcategorias" link to admin sidebar.
+    *   Added examples of subcategories to `sample-data.ts` and linked to main categories.
+    *   Integrated subcategory selection into the Lot CRUD form.
+    *   Updated display components (`LotListItem`, `LotDetailClientContent`, lot list in auction edit) to show subcategory name. `LotCard` updated.
 
 9.  **Data Display & UI Components:**
     *   `SearchResultsFrame` component created for consistent display of search results/listings with sorting, view mode, and pagination.
@@ -109,9 +112,9 @@ This document summarizes the BidExpert project, including its purpose, core feat
 
 ### Errors Encountered & Resolved (Summary):
 
-*   **Module Not Found / Build Errors (SWC):** Frequent issues, often resolved by re-emitting full corrected files. Examples: `navigation-menu`, issues in `admin/auctions/[auctionId]/edit/page.tsx` (inline server actions, params access), `page.tsx` (syntax), `search/page.tsx` (syntax). A recent "Cannot find module './xxxx.js'" was resolved by re-emitting `app/page.tsx` and the last edited lot detail page.
+*   **Module Not Found / Build Errors (SWC):** Frequent issues, often resolved by re-emitting full corrected files. Examples: `navigation-menu`, issues in `admin/auctions/[auctionId]/edit/page.tsx` (inline server actions, params access), `page.tsx` (syntax), `search/page.tsx` (syntax). A recent "Cannot find module './xxxx.js'" was resolved by re-emitting `app/page.tsx`, `src/app/admin/layout.tsx` and relevant context files.
 *   **Runtime Errors (JSX/React):** `React is not defined`, `DialogContent requires a DialogTitle`, `ShoppingCart is not defined`, `useMemo not defined`, `Tabs is not defined`.
-*   **Data Fetching/Logic Errors:** `getLotCategoryByName` (sample data), "Comitente não encontrado" (sample data), `getCategoryAssets` logging.
+*   **Data Fetching/Logic Errors:** `getLotCategoryByName` (sample data), "Comitente não encontrado" (sample data), `getCategoryAssets` logging. Lot status/date derivation in `sample-data.ts` was a key area of refinement.
 *   **SQL Errors:** `ER_WRONG_VALUE_COUNT_ON_ROW` (MySQL inserts), syntax for `platform_settings` (JSON DEFAULT), `createLot` (undefined as null).
 *   **Firebase:** Firestore permission error display.
 *   **Token Limit Error (AI):** Advised on reducing input token count for Genkit flows.
@@ -121,15 +124,16 @@ This document summarizes the BidExpert project, including its purpose, core feat
 *   **Database Abstraction:** `getDatabaseAdapter()` for Firestore, MySQL, PostgreSQL.
 *   **Server Actions:** Primary for data mutations.
 *   **Client vs. Server Components:** Standard Next.js patterns, explicit `'use client'` where needed.
-*   **`sample-data.ts`:** Heavily used for UI development and rapid prototyping, with ongoing efforts to fully rely on the DB adapter.
+*   **`sample-data.ts`:** Heavily used for UI development and rapid prototyping, with ongoing efforts to fully rely on the DB adapter. Logic for deriving lot dates/status from parent auction data within `sample-data.ts` was significantly enhanced.
 *   **Megamenus:** For core navigation categories, with dynamic data where feasible.
 *   **Permissions System:** `hasPermission`, `hasAnyPermission` for role-based access control.
 *   **Context Persistence System:** This current task of creating context files.
 
-This summary will be updated as we progress.
-
 ### Current Session (This interaction):
-*   Goal: Create context persistence files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.MD`, `PROJECT_INSTRUCTIONS.md`, `1st.md`).
-*   This file (`PROJECT_CONTEXT_HISTORY.md`) is being generated as part of that goal.
-*   The content reflects the project's state up to and including the completion of Item 16 (Subcategory CRUD infrastructure).
+*   Focused on resolving "Cannot find module" build errors by re-emitting key files.
+*   Updated context persistence files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.MD`, `PROJECT_INSTRUCTIONS.md`, `1st.md`).
+*   Finalized Item 13 (Lot dates derived from Auction), ensuring consistency across `sample-data.ts` and display components.
+*   Completed Item 18 (Subcategory display in LotCard).
+
+This summary will be updated as we progress.
   

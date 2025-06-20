@@ -14,6 +14,7 @@ export default function HomePage() {
     const platformSettings: PlatformSettings = samplePlatformSettings; 
     const auctions: Auction[] = sampleAuctions.slice(0, 10);
 
+    // For featured lots, we'll use the status derived from the auction logic in sample-data.ts
     const featuredLots: Lot[] = sampleLots.filter(lot => lot.isFeatured && lot.status === 'ABERTO_PARA_LANCES').slice(0, 10);
 
     const filterLinksData = [
@@ -59,7 +60,7 @@ export default function HomePage() {
         imageUrl: getCategoryAssets('Segunda Praça').bannerUrl,
         imageAlt: 'Ícone Segunda Praça',
         dataAiHint: getCategoryAssets('Segunda Praça').bannerAiHint,
-        link: '/search?type=auctions&stage=second_praça',
+        link: '/search?type=auctions&stage=second_praça', // Assuming a filter for second stage
         bgColorClass: 'bg-violet-50 dark:bg-violet-900/40 hover:border-violet-300',
       },
       {
