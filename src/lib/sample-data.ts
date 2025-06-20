@@ -1,5 +1,5 @@
 
-import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, CityInfo, MediaItem, PlatformSettings, MentalTriggerSettings, HomepageSectionConfig, BadgeVisibilitySettings, SectionBadgeConfig, MapSettings, AuctionStage, SearchPaginationType, Subcategory } from '@/types';
+import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, CityInfo, MediaItem, PlatformSettings, MentalTriggerSettings, HomepageSectionConfig, BadgeVisibilitySettings, SectionBadgeConfig, MapSettings, AuctionStage, SearchPaginationType, Subcategory, Role, UserProfileData } from '@/types';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays, addDays as dateFnsAddDays, isPast, addHours, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle } from 'lucide-react';
@@ -36,6 +36,80 @@ export const slugify = (text: string): string => {
     .replace(/[^\w-]+/g, '') 
     .replace(/--+/g, '-'); 
 };
+
+// ============================================================================
+// 0. USERS & ROLES SAMPLE DATA
+// ============================================================================
+export const sampleRoles: Role[] = [
+  {
+    id: 'role-admin',
+    name: 'ADMINISTRATOR',
+    name_normalized: 'ADMINISTRATOR',
+    description: 'Acesso total à plataforma.',
+    permissions: ['manage_all'],
+    createdAt: createPastDate(100),
+    updatedAt: createPastDate(1),
+  },
+  {
+    id: 'role-user',
+    name: 'USER',
+    name_normalized: 'USER',
+    description: 'Usuário padrão com acesso básico.',
+    permissions: ['view_auctions', 'place_bids', 'view_lots'],
+    createdAt: createPastDate(100),
+    updatedAt: createPastDate(10),
+  },
+  {
+    id: 'role-consignor',
+    name: 'CONSIGNOR',
+    name_normalized: 'CONSIGNOR',
+    description: 'Comitente com permissões para gerenciar seus itens.',
+    permissions: ['auctions:manage_own', 'lots:manage_own', 'view_reports', 'media:upload'],
+    createdAt: createPastDate(90),
+    updatedAt: createPastDate(5),
+  },
+];
+
+export const sampleUserProfiles: UserProfileData[] = [
+  {
+    uid: 'admin-bidexpert-platform-001', // Consistent UID for admin
+    email: 'admin@bidexpert.com.br',
+    fullName: 'Administrador BidExpert',
+    roleId: 'role-admin',
+    roleName: 'ADMINISTRATOR',
+    permissions: ['manage_all'],
+    status: 'ATIVO',
+    habilitationStatus: 'HABILITADO',
+    createdAt: createPastDate(100),
+    updatedAt: createPastDate(1),
+  },
+  {
+    uid: 'user-test-002',
+    email: 'testuser@example.com',
+    fullName: 'Usuário de Teste',
+    roleId: 'role-user',
+    roleName: 'USER',
+    permissions: ['view_auctions', 'place_bids', 'view_lots'],
+    status: 'ATIVO',
+    habilitationStatus: 'HABILITADO',
+    createdAt: createPastDate(50),
+    updatedAt: createPastDate(2),
+  },
+  {
+    uid: 'consignor-example-003',
+    email: 'consignor@bidexpert.com', // Example consignor email
+    fullName: 'Comitente Exemplo (Bradesco)',
+    roleId: 'role-consignor',
+    roleName: 'CONSIGNOR',
+    permissions: ['auctions:manage_own', 'lots:manage_own', 'view_reports', 'media:upload'],
+    status: 'ATIVO',
+    habilitationStatus: 'HABILITADO',
+    createdAt: createPastDate(40),
+    updatedAt: createPastDate(3),
+    sellerProfileId: 'seller-banco-bradesco-s-a' // Link to sample seller
+  },
+];
+
 
 // ============================================================================
 // 1. STATIC & RAW SAMPLE DATA DEFINITIONS
@@ -98,7 +172,7 @@ export const sampleCitiesStatic: Omit<CityInfo, 'createdAt' | 'updatedAt' | 'lot
 ];
 
 export const sampleSellersStatic: Omit<SellerProfileInfo, 'id'| 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'activeLotsCount' | 'totalSalesValue' | 'auctionsFacilitatedCount'>[] = [
-    { name: 'Banco Bradesco S.A.', logoUrl: 'https://placehold.co/100x100.png?text=B', dataAiHint: 'banco logo', city: 'São Paulo', state: 'SP' },
+    { name: 'Banco Bradesco S.A.', logoUrl: 'https://placehold.co/100x100.png?text=B', dataAiHint: 'banco logo', city: 'São Paulo', state: 'SP', userId: 'consignor-example-003' }, // Link to sample user
     { name: 'Proprietário Particular 1', city: 'São Paulo', state: 'SP' },
     { name: 'Colecionadores RJ', city: 'Rio de Janeiro', state: 'RJ' },
     { name: 'Colecionadores Clássicos PR', city: 'Curitiba', state: 'PR' },
@@ -215,12 +289,12 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
 export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' | 'sellerName' | 'cityName' | 'stateUf' | 'type' | 'bids' | 'reviews' | 'questions' | 'subcategoryName' | 'endDate' | 'auctionDate' | 'lotSpecificAuctionDate' | 'secondAuctionDate'>[] = [
   { id: 'LOTE001', auctionId: '100625bra', publicId: 'LOT-CASACENT-ABC123X1', title: 'CASA COM 129,30 M² - CENTRO', imageUrl: '/lotes-exemplo/imoveis/casa_centro_principal.jpg', dataAiHint: 'casa residencial', galleryImageUrls: ['/lotes-exemplo/imoveis/casa_centro_detalhe1.jpg', '/lotes-exemplo/imoveis/casa_centro_detalhe2.jpg'], mediaItemIds: ['media-casa-frente', 'media001'], status: 'ABERTO_PARA_LANCES', cityId: 'city-teotonio-vilela-al', stateId: 'state-al', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-casas', views: 1018, price: 45000, bidsCount: 12, description: 'Casa residencial bem localizada no centro da cidade.', sellerId: 'seller-banco-bradesco-s-a', initialPrice: 50000, secondInitialPrice: 42000, additionalTriggers: ['DESCONTO PROGRESSIVO'], isFeatured: true, latitude: -9.56096, longitude: -36.3516, mapAddress: 'Rua Central, Teotônio Vilela, Alagoas', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-36.3566,-9.5659,-36.3466,-9.5559&layer=mapnik&marker=-9.56096,-36.3516', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-9.56096,-36.3516&zoom=16&size=600x400&markers=color:blue%7C-9.56096,-36.3516&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, bidIncrementStep: 1000, allowInstallmentBids: true },
   { id: 'LOTEVEI001', auctionId: '300724car', publicId: 'LOT-2013AUDI-DEF456Y2', title: '2013 AUDI A4 PREMIUM PLUS', year: 2013, make: 'AUDI', model: 'A4', imageUrl: '/lotes-exemplo/veiculos/audi_a4_principal.jpg', dataAiHint: 'carro sedan preto', galleryImageUrls: ['/lotes-exemplo/veiculos/audi_a4_interior.jpg', '/lotes-exemplo/veiculos/audi_a4_lateral.jpg'], mediaItemIds: ['media-audi-frente', 'media002'], status: 'ABERTO_PARA_LANCES', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-veiculos', subcategoryId: 'subcat-veiculos-carros', views: 1560, price: 68500, bidsCount: 25, description: 'Audi A4 Premium Plus 2013, completo, com baixa quilometragem.', sellerId: 'seller-proprietario-particular-1', isExclusive: true, additionalTriggers: ['ALTA DEMANDA', 'LANCE QUENTE'], isFeatured: true, latitude: -23.550520, longitude: -46.633308, mapAddress: 'Av. Paulista, 1578, Bela Vista, São Paulo - SP', mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3657.1489015339396!2d-46.65879078502246!3d-23.56318168468204!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce59c8da0aa315%3A0x168c9d0b70928d9a!2sAv.%20Paulista%2C%201578%20-%20Bela%20Vista%2C%20S%C3%A3o%20Paulo%20-%20SP%2C%2001310-200!5e0!3m2!1spt-BR!2sbr!4v1678886512345!5m2!1spt-BR!2sbr', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-23.550520,-46.633308&zoom=15&size=600x400&markers=color:red%7C-23.550520,-46.633308&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, bidIncrementStep: 500, allowInstallmentBids: false },
-  { id: 'LOTE003', auctionId: '100625bra', publicId: 'LOT-APTOCABU-GHI789Z3', title: 'APARTAMENTO COM 54,25 M² - CABULA', imageUrl: '/lotes-exemplo/imoveis/apto_cabula_sala.jpg', dataAiHint: 'apartamento predio residencial', status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-apartamentos', views: 754, price: 105000, bidsCount: 12, description: 'Apartamento funcional no Cabula, Salvador. 2 quartos, sala, cozinha e banheiro. Condomínio com portaria.', sellerId: 'seller-banco-bradesco-sa', latitude: -12.960980, longitude: -38.467789, mapAddress: 'Rua do Cabula, Salvador - BA', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-12.960980,-38.467789&zoom=15&size=600x400&markers=color:blue%7C-12.960980,-38.467789&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
+  { id: 'LOTE003', auctionId: '100625bra', publicId: 'LOT-APTOCABU-GHI789Z3', title: 'APARTAMENTO COM 54,25 M² - CABULA', imageUrl: '/lotes-exemplo/imoveis/apto_cabula_sala.jpg', dataAiHint: 'apartamento predio residencial', status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-apartamentos', views: 754, price: 105000, bidsCount: 12, description: 'Apartamento funcional no Cabula, Salvador. 2 quartos, sala, cozinha e banheiro. Condomínio com portaria.', sellerId: 'seller-banco-bradesco-s-a', latitude: -12.960980, longitude: -38.467789, mapAddress: 'Rua do Cabula, Salvador - BA', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-12.960980,-38.467789&zoom=15&size=600x400&markers=color:blue%7C-12.960980,-38.467789&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
   { id: 'LOTEART001', auctionId: 'ART001ANTIQ', publicId: 'LOT-PINTURAO-JKL012A4', title: 'Pintura a Óleo "Paisagem Toscana" - Séc. XIX', imageUrl: '/lotes-exemplo/arte/paisagem_toscana.jpg', dataAiHint: 'pintura oleo paisagem', status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-de-janeiro-rj', stateId: 'state-rj', categoryId: 'cat-arte-e-antiguidades', views: 320, price: 7500, bidsCount: 3, description: 'Belíssima pintura a óleo sobre tela, representando paisagem da Toscana. Assinatura ilegível. Moldura original.', sellerId: 'seller-colecionadores-rj', latitude: -22.9068, longitude: -43.1729, mapAddress: 'Copacabana, Rio de Janeiro - RJ', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-22.9068,-43.1729&zoom=14&size=600x400&markers=color:green%7C-22.9068,-43.1729&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, allowInstallmentBids: true },
   { id: 'LOTEVCLASS001', auctionId: 'CLASSICVEH24', publicId: 'LOT-1967FORD-MNO345B5', title: '1967 FORD MUSTANG FASTBACK', year: 1967, make: 'FORD', model: 'MUSTANG', imageUrl: '/lotes-exemplo/veiculos/mustang_67_frente.jpg', dataAiHint: 'carro classico vermelho', status: 'ABERTO_PARA_LANCES', cityId: 'city-curitiba-pr', stateId: 'state-pr', categoryId: 'cat-veiculos', subcategoryId: 'subcat-veiculos-carros', views: 1850, price: 250000, bidsCount: 18, description: 'Icônico Ford Mustang Fastback 1967, motor V8, câmbio manual. Restaurado.', sellerId: 'seller-colecionadores-classicos-pr', initialPrice: 280000, secondInitialPrice: 250000, isFeatured: true, latitude: -25.4284, longitude: -49.2733, mapAddress: 'Batel, Curitiba - PR', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-25.4284,-49.2733&zoom=15&size=600x400&markers=color:red%7C-25.4284,-49.2733&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, bidIncrementStep: 2500, allowInstallmentBids: true },
   { id: 'LOTE005', auctionId: '20301vei', publicId: 'LOT-TRATORAG-PQR678C6', title: 'TRATOR AGRÍCOLA NEW HOLLAND T7', year: 2018, make: 'NEW HOLLAND', model: 'T7.245', imageUrl: '/lotes-exemplo/maquinas/trator_nh_t7.jpg', dataAiHint: 'trator agricola campo', galleryImageUrls: ['/lotes-exemplo/maquinas/trator_nh_t7_detalhe.jpg'], mediaItemIds: ['media-trator-frente'], status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-verde-go', stateId: 'state-go', categoryId: 'cat-maquinas-e-equipamentos', views: 650, price: 180000, bidsCount: 7, isFeatured: true, description: 'Trator New Holland T7.245, ano 2018, com apenas 1200 horas de uso. Excelente estado.', sellerId: 'seller-fazenda-boa-esperanca', latitude: -17.7999, longitude: -50.9253, mapAddress: 'Zona Rural, Rio Verde - GO', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-50.9353,-17.8099,-50.9153,-17.7899&layer=mapnik&marker=-17.7999,-50.9253', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-17.7999,-50.9253&zoom=13&size=600x400&markers=color:blue%7C-17.7999,-50.9253&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
-  { id: 'LOTE002', auctionId: '100625bra', publicId: 'LOT-CASAPORT-STU901D7', title: 'CASA COM 234,50 M² - PORTÃO', imageUrl: '/lotes-exemplo/imoveis/casa_portao_vista_aerea.jpg', dataAiHint: 'casa moderna suburbio', status: 'ABERTO_PARA_LANCES', cityId: 'city-lauro-de-freitas-ba', stateId: 'state-ba', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-casas', views: 681, price: 664000, bidsCount: 1, description: 'Espaçosa casa em Lauro de Freitas, Bahia. Perto da praia.', sellerId: 'seller-banco-bradesco-sa', isFeatured: true, latitude: -12.8868, longitude: -38.3275, mapAddress: 'Rua Principal, Portão, Lauro de Freitas - BA', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-38.3375,-12.8968,-38.3175,-12.8768&layer=mapnik&marker=-12.8868,-38.3275', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-12.8868,-38.3275&zoom=16&size=600x400&markers=color:green%7C-12.8868,-38.3275&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, allowInstallmentBids: true },
-  { id: 'LOTE004', auctionId: '100625bra', publicId: 'LOT-CASAVILA-VWX234E8', title: 'CASA COM 133,04 M² - VILA PERI', imageUrl: '/lotes-exemplo/imoveis/casa_vila_peri_externa.jpg', dataAiHint: 'casa terrea simples', status: 'EM_BREVE', cityId: 'city-fortaleza-ce', stateId: 'state-ce', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-casas', views: 527, price: 238000, bidsCount: 0, description: 'Casa em Fortaleza, boa localização, necessita pequenas reformas.', sellerId: 'seller-banco-bradesco-sa', latitude: -3.7929, longitude: -38.5396, mapAddress: 'Avenida Principal, Vila Peri, Fortaleza - CE', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-38.5496,-3.8029,-38.5296,-3.7829&layer=mapnik&marker=-3.7929,-38.5396', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-3.7929,-38.5396&zoom=15&size=600x400&markers=color:yellow%7C-3.7929,-38.5396&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
+  { id: 'LOTE002', auctionId: '100625bra', publicId: 'LOT-CASAPORT-STU901D7', title: 'CASA COM 234,50 M² - PORTÃO', imageUrl: '/lotes-exemplo/imoveis/casa_portao_vista_aerea.jpg', dataAiHint: 'casa moderna suburbio', status: 'ABERTO_PARA_LANCES', cityId: 'city-lauro-de-freitas-ba', stateId: 'state-ba', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-casas', views: 681, price: 664000, bidsCount: 1, description: 'Espaçosa casa em Lauro de Freitas, Bahia. Perto da praia.', sellerId: 'seller-banco-bradesco-s-a', isFeatured: true, latitude: -12.8868, longitude: -38.3275, mapAddress: 'Rua Principal, Portão, Lauro de Freitas - BA', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-38.3375,-12.8968,-38.3175,-12.8768&layer=mapnik&marker=-12.8868,-38.3275', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-12.8868,-38.3275&zoom=16&size=600x400&markers=color:green%7C-12.8868,-38.3275&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}`, allowInstallmentBids: true },
+  { id: 'LOTE004', auctionId: '100625bra', publicId: 'LOT-CASAVILA-VWX234E8', title: 'CASA COM 133,04 M² - VILA PERI', imageUrl: '/lotes-exemplo/imoveis/casa_vila_peri_externa.jpg', dataAiHint: 'casa terrea simples', status: 'EM_BREVE', cityId: 'city-fortaleza-ce', stateId: 'state-ce', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-casas', views: 527, price: 238000, bidsCount: 0, description: 'Casa em Fortaleza, boa localização, necessita pequenas reformas.', sellerId: 'seller-banco-bradesco-s-a', latitude: -3.7929, longitude: -38.5396, mapAddress: 'Avenida Principal, Vila Peri, Fortaleza - CE', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-38.5496,-3.8029,-38.5296,-3.7829&layer=mapnik&marker=-3.7929,-38.5396', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-3.7929,-38.5396&zoom=15&size=600x400&markers=color:yellow%7C-3.7929,-38.5396&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
   { id: 'LOTE006', auctionId: '20301vei', publicId: 'LOT-COLHEITA-YZA567F9', title: 'COLHEITADEIRA JOHN DEERE S680', imageUrl: '/lotes-exemplo/maquinas/colheitadeira_jd_campo.jpg', dataAiHint: 'colheitadeira graos campo', status: 'ENCERRADO', cityId: 'city-campo-grande-ms', stateId: 'state-ms', categoryId: 'cat-maquinas-e-equipamentos', views: 450, price: 365000, bidsCount: 22, description: 'Colheitadeira John Deere S680, usada, em bom estado de funcionamento.', sellerId: 'seller-produtores-rurais-ms', latitude: -20.4428, longitude: -54.6295, mapAddress: 'Saída para Três Lagoas, Campo Grande - MS', mapEmbedUrl: null, mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-20.4428,-54.6295&zoom=14&size=600x400&markers=color:purple%7C-20.4428,-54.6295&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
   { id: 'LOTEART002', auctionId: 'ART001ANTIQ', publicId: 'LOT-ESCULTUR-BCD890G0', title: 'Escultura em Bronze "O Pensador" - Réplica Assinada', imageUrl: '/lotes-exemplo/arte/escultura_pensador_detalhe.jpg', dataAiHint: 'escultura bronze pensador', status: 'EM_BREVE', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-arte-e-antiguidades', views: 150, price: 3200, bidsCount: 0, description: 'Réplica em bronze da famosa escultura, assinada pelo artista.', sellerId: 'seller-galeria-de-arte-sp', latitude: -23.5613, longitude: -46.6562, mapAddress: 'Próximo ao MASP, Avenida Paulista, São Paulo - SP', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-46.6662,-23.5713,-46.6462,-23.5513&layer=mapnik&marker=-23.5613,-46.6562', mapStaticImageUrl: `https://maps.googleapis.com/maps/api/staticmap?center=-23.5613,-46.6562&zoom=15&size=600x400&markers=color:orange%7C-23.5613,-46.6562&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}` },
   { 
@@ -1195,3 +1269,4 @@ export function getPlaceholderIfEmpty(value: string | number | null | undefined,
     }
     return String(value);
 }
+
