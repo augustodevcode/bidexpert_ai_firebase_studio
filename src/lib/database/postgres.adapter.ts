@@ -10,16 +10,16 @@ import type {
   Auction, AuctionFormData, AuctionDbData,
   Lot, LotFormData, LotDbData,
   BidInfo, Review, LotQuestion,
-  UserProfileData, EditableUserProfileData, UserHabilitationStatus,
+  UserProfileData, EditableUserProfileData, UserHabilitationStatus, UserProfileWithPermissions,
   Role, RoleFormData,
   MediaItem,
   PlatformSettings, PlatformSettingsFormData, Theme,
-  Subcategory, SubcategoryFormData, // Added Subcategory types
-  MapSettings, SearchPaginationType, MentalTriggerSettings, SectionBadgeConfig, HomepageSectionConfig, AuctionStage // Added more PlatformSettings related types
+  Subcategory, SubcategoryFormData,
+  MapSettings, SearchPaginationType, MentalTriggerSettings, SectionBadgeConfig, HomepageSectionConfig, AuctionStage
 } from '@/types';
-import { slugify, samplePlatformSettings } from '@/lib/sample-data'; // Import samplePlatformSettings
+import { slugify, samplePlatformSettings } from '@/lib/sample-data';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
-import { v4 as uuidv4 } from 'uuid'; // For generating public IDs
+import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 
 
@@ -56,7 +56,7 @@ function mapToLotCategory(row: QueryResultRow): LotCategory {
     name: row.name,
     slug: row.slug,
     description: row.description,
-    itemCount: Number(row.item_count || 0), // Adjusted for snake_case
+    itemCount: Number(row.item_count || 0),
     hasSubcategories: Boolean(row.has_subcategories || false),
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
@@ -68,7 +68,7 @@ function mapToSubcategory(row: QueryResultRow): Subcategory {
     id: String(row.id),
     name: row.name,
     slug: row.slug,
-    parentCategoryId: String(row.parent_category_id), // Adjusted for snake_case
+    parentCategoryId: String(row.parent_category_id),
     description: row.description,
     itemCount: Number(row.item_count || 0),
     displayOrder: Number(row.display_order || 0),
@@ -174,8 +174,8 @@ function mapToRole(row: QueryResultRow): Role {
     };
 }
 
-function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProfileData {
-    const profile: UserProfileData = {
+function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProfileWithPermissions {
+    const profile: UserProfileWithPermissions = {
         uid: row.uid,
         email: row.email,
         fullName: row.full_name,
@@ -202,7 +202,7 @@ function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProf
         spouseCpf: row.spouse_cpf,
         zipCode: row.zip_code,
         street: row.street,
-        number: row.number, // Keep "number" for address number
+        number: row.number,
         complement: row.complement,
         neighborhood: row.neighborhood,
         city: row.city,
@@ -458,27 +458,12 @@ export class PostgresAdapter implements IDatabaseAdapter {
   }
 
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[]; rolesProcessed?: number }> {
-    // This method is now fully implemented in the provided context
     const client = await getPool().connect();
     const errors: any[] = [];
     console.log('[PostgresAdapter] Iniciando criação/verificação de tabelas...');
 
     const queries = [
-      `DROP TABLE IF EXISTS bids CASCADE;`,
-      `DROP TABLE IF EXISTS media_items CASCADE;`,
-      `DROP TABLE IF EXISTS lot_reviews CASCADE;`,
-      `DROP TABLE IF EXISTS lot_questions CASCADE;`,
-      `DROP TABLE IF EXISTS lots CASCADE;`,
-      `DROP TABLE IF EXISTS subcategories CASCADE;`, // Added subcategories drop
-      `DROP TABLE IF EXISTS auctions CASCADE;`,
-      `DROP TABLE IF EXISTS cities CASCADE;`,
-      `DROP TABLE IF EXISTS sellers CASCADE;`,
-      `DROP TABLE IF EXISTS auctioneers CASCADE;`,
-      `DROP TABLE IF EXISTS users CASCADE;`,
-      `DROP TABLE IF EXISTS states CASCADE;`,
-      `DROP TABLE IF EXISTS lot_categories CASCADE;`,
-      `DROP TABLE IF EXISTS roles CASCADE;`,
-      `DROP TABLE IF EXISTS platform_settings CASCADE;`,
+      `DROP TABLE IF EXISTS bids, media_items, lot_reviews, lot_questions, lots, subcategories, auctions, cities, sellers, auctioneers, users, states, lot_categories, roles, platform_settings CASCADE;`,
 
       `CREATE TABLE IF NOT EXISTS roles (
         id SERIAL PRIMARY KEY,
@@ -526,7 +511,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         slug VARCHAR(255) NOT NULL UNIQUE,
         description TEXT,
         item_count INTEGER DEFAULT 0,
-        has_subcategories BOOLEAN DEFAULT FALSE, -- Added
+        has_subcategories BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );`,
@@ -690,14 +675,14 @@ export class PostgresAdapter implements IDatabaseAdapter {
         state_id INTEGER REFERENCES states(id) ON DELETE SET NULL,
         city_id INTEGER REFERENCES cities(id) ON DELETE SET NULL,
         category_id INTEGER REFERENCES lot_categories(id) ON DELETE SET NULL,
-        subcategory_id INTEGER REFERENCES subcategories(id) ON DELETE SET NULL, -- Added
+        subcategory_id INTEGER REFERENCES subcategories(id) ON DELETE SET NULL,
         views INTEGER DEFAULT 0,
         price NUMERIC(15,2) NOT NULL,
         initial_price NUMERIC(15,2),
         lot_specific_auction_date TIMESTAMPTZ,
         second_auction_date TIMESTAMPTZ,
         second_initial_price NUMERIC(15,2),
-        end_date TIMESTAMPTZ, -- Not NULL constraint removed
+        end_date TIMESTAMPTZ,
         bids_count INTEGER DEFAULT 0,
         is_favorite BOOLEAN DEFAULT FALSE,
         is_featured BOOLEAN DEFAULT FALSE,
@@ -759,7 +744,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `CREATE INDEX IF NOT EXISTS idx_lots_auction_id ON lots(auction_id);`,
       `CREATE INDEX IF NOT EXISTS idx_lots_status ON lots(status);`,
       `CREATE INDEX IF NOT EXISTS idx_lots_category_id ON lots(category_id);`,
-      `CREATE INDEX IF NOT EXISTS idx_lots_subcategory_id ON lots(subcategory_id);`, // Added index
+      `CREATE INDEX IF NOT EXISTS idx_lots_subcategory_id ON lots(subcategory_id);`,
 
       `CREATE TABLE IF NOT EXISTS media_items (
         id SERIAL PRIMARY KEY,
@@ -835,14 +820,14 @@ export class PostgresAdapter implements IDatabaseAdapter {
           await client.query(query);
           const tableNameMatch = query.match(/CREATE TABLE IF NOT EXISTS (\w+)/i);
           const indexNameMatch = query.match(/CREATE INDEX IF NOT EXISTS (\w+)/i);
-          const dropTableNameMatch = query.match(/DROP TABLE IF EXISTS (\w+)/i);
+          const dropTableNameMatch = query.match(/DROP TABLE IF EXISTS ([\w,\s]+) CASCADE/i);
 
           if (tableNameMatch) {
             console.log(`[PostgresAdapter] Tabela '${tableNameMatch[1]}' verificada/criada com sucesso.`);
           } else if (indexNameMatch) {
             console.log(`[PostgresAdapter] Índice '${indexNameMatch[1]}' verificado/criado com sucesso.`);
           } else if (dropTableNameMatch) {
-             console.log(`[PostgresAdapter] Tentativa de excluir tabela '${dropTableNameMatch[1]}' (IF EXISTS).`);
+             console.log(`[PostgresAdapter] Tentativa de excluir tabelas: '${dropTableNameMatch[1]}'.`);
           }
         } catch (tableError: any) {
           console.warn(`[PostgresAdapter] Aviso ao executar query: ${tableError.message}. Query: ${query.substring(0,100)}...`);
@@ -880,15 +865,15 @@ export class PostgresAdapter implements IDatabaseAdapter {
     }
   }
 
+  // --- Implementations for all methods ---
   async getPlatformSettings(): Promise<PlatformSettings> {
-    // This method is now fully implemented in the provided context
     const client = await getPool().connect();
     try {
         const res = await client.query(`SELECT site_title, site_tagline, gallery_image_base_path, active_theme_name, themes, platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page, search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards, show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings, section_badge_visibility, homepage_sections, updated_at FROM platform_settings WHERE id = 'global';`);
         if (res.rowCount && res.rowCount > 0) {
             return mapToPlatformSettings(mapRowToCamelCase(res.rows[0]));
         }
-        const defaultSettings = samplePlatformSettings; // Use the comprehensive sample
+        const defaultSettings = samplePlatformSettings;
         const insertQuery = `
           INSERT INTO platform_settings (
             id, site_title, site_tagline, gallery_image_base_path, active_theme_name, themes,
@@ -919,7 +904,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
   }
 
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
-    // This method is now fully implemented in the provided context
     const client = await getPool().connect();
     if (!data.galleryImageBasePath || !data.galleryImageBasePath.startsWith('/') || !data.galleryImageBasePath.endsWith('/')) {
         return { success: false, message: 'Caminho base da galeria inválido. Deve começar e terminar com "/".' };
@@ -962,457 +946,19 @@ export class PostgresAdapter implements IDatabaseAdapter {
     }
   }
 
-  async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> {
-     if (!data.name || data.name.trim() === '') {
-      return { success: false, message: 'O nome da categoria é obrigatório.' };
-    }
-    const client = await getPool().connect();
-    try {
-      const slug = slugify(data.name.trim());
-      const queryText = `
-        INSERT INTO lot_categories (name, slug, description, item_count, has_subcategories, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, FALSE, NOW(), NOW())
-        RETURNING id;
-      `;
-      const values = [data.name.trim(), slug, data.description?.trim() || null, 0];
-      const res = await client.query(queryText, values);
-      const categoryId = res.rows[0]?.id;
-      return { success: true, message: 'Categoria criada com sucesso (PostgreSQL)!', categoryId: String(categoryId) };
-    } catch (error: any) {
-      console.error("[PostgresAdapter - createLotCategory] Error:", error);
-      return { success: false, message: error.message || 'Falha ao criar categoria (PostgreSQL).' };
-    } finally {
-      client.release();
-    }
-  }
-
-  async getLotCategories(): Promise<LotCategory[]> {
-    const client = await getPool().connect();
-    try {
-      const res = await client.query('SELECT id, name, slug, description, item_count, has_subcategories, created_at, updated_at FROM lot_categories ORDER BY name ASC;');
-      return mapRowsToCamelCase(res.rows).map(mapToLotCategory);
-    } catch (error: any) {
-      console.error("[PostgresAdapter - getLotCategories] Error:", error);
-      return [];
-    } finally {
-      client.release();
-    }
-  }
-
-  async getLotCategory(idOrSlug: string): Promise<LotCategory | null> {
-    const client = await getPool().connect();
-    try {
-        const numericId = parseInt(idOrSlug, 10);
-        let res;
-        if (isNaN(numericId)) {
-            res = await client.query('SELECT * FROM lot_categories WHERE slug = $1', [idOrSlug]);
-        } else {
-            res = await client.query('SELECT * FROM lot_categories WHERE id = $1', [numericId]);
-        }
-        if (res.rowCount === 0) return null;
-        return mapToLotCategory(mapRowToCamelCase(res.rows[0]));
-    } catch (error: any) {
-        console.error(`[PostgresAdapter - getLotCategory with ID/slug ${idOrSlug}] Error:`, error);
-        return null;
-    } finally {
-        client.release();
-    }
-  }
-
-  async updateLotCategory(id: string, data: { name: string; description?: string; hasSubcategories?: boolean }): Promise<{ success: boolean; message: string; }> {
-     if (!data.name || data.name.trim() === '') {
-      return { success: false, message: 'O nome da categoria é obrigatório.' };
-    }
-    const client = await getPool().connect();
-    try {
-      const slug = slugify(data.name.trim());
-      const fields: string[] = [];
-      const values: any[] = [];
-      let paramCount = 1;
-
-      fields.push(`name = $${paramCount++}`); values.push(data.name.trim());
-      fields.push(`slug = $${paramCount++}`); values.push(slug);
-      fields.push(`description = $${paramCount++}`); values.push(data.description?.trim() || null);
-      if (data.hasSubcategories !== undefined) {
-        fields.push(`has_subcategories = $${paramCount++}`); values.push(data.hasSubcategories);
-      }
-      fields.push(`updated_at = NOW()`);
-
-      const queryText = `UPDATE lot_categories SET ${fields.join(', ')} WHERE id = $${paramCount};`;
-      values.push(Number(id));
-
-      await client.query(queryText, values);
-      return { success: true, message: 'Categoria atualizada com sucesso (PostgreSQL)!' };
-    } catch (error: any) {
-      console.error("[PostgresAdapter - updateLotCategory] Error:", error);
-      return { success: false, message: error.message || 'Falha ao atualizar categoria (PostgreSQL).' };
-    } finally {
-      client.release();
-    }
-  }
-
-  async getLotCategoryByName(name: string): Promise<LotCategory | null> {
-    const client = await getPool().connect();
-    try {
-        const normalizedName = name.trim();
-        const res = await client.query(
-            'SELECT * FROM lot_categories WHERE name = $1 OR slug = $2 LIMIT 1',
-            [normalizedName, slugify(normalizedName)]
-        );
-        if (res.rowCount === 0) return null;
-        return mapToLotCategory(mapRowToCamelCase(res.rows[0]));
-    } catch (error: any) {
-        console.error(`[PostgresAdapter - getLotCategoryByName(${name})] Error:`, error);
-        return null;
-    } finally {
-        client.release();
-    }
-  }
-  async deleteLotCategory(id: string): Promise<{ success: boolean; message: string; }> {
-    const client = await getPool().connect();
-    try {
-      await client.query('DELETE FROM lot_categories WHERE id = $1;', [Number(id)]);
-      return { success: true, message: 'Categoria excluída com sucesso (PostgreSQL)!' };
-    } catch (error: any) {
-      console.error("[PostgresAdapter - deleteLotCategory] Error:", error);
-      return { success: false, message: error.message || 'Falha ao excluir categoria (PostgreSQL).' };
-    } finally {
-      client.release();
-    }
-  }
-
-  async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> {
-    const client = await getPool().connect();
-    try {
-      const slug = slugify(data.name);
-      const query = `
-        INSERT INTO subcategories (name, slug, parent_category_id, description, item_count, display_order, icon_url, data_ai_hint_icon, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, 0, $5, $6, $7, NOW(), NOW()) RETURNING id;
-      `;
-      const values = [
-        data.name.trim(), slug, Number(data.parentCategoryId), data.description?.trim() || null,
-        data.displayOrder || 0, data.iconUrl || null, data.dataAiHintIcon || null
-      ];
-      const res = await client.query(query, values);
-      const subcategoryId = res.rows[0]?.id;
-
-      await client.query(
-        'UPDATE lot_categories SET has_subcategories = TRUE, updated_at = NOW() WHERE id = $1',
-        [Number(data.parentCategoryId)]
-      );
-
-      return { success: true, message: 'Subcategoria criada com sucesso (PostgreSQL)!', subcategoryId: String(subcategoryId) };
-    } catch (error: any) {
-      console.error("[PostgresAdapter - createSubcategory] Error:", error);
-      return { success: false, message: error.message || 'Falha ao criar subcategoria (PostgreSQL).' };
-    } finally {
-      client.release();
-    }
-  }
-
-  async getSubcategories(parentCategoryId: string): Promise<Subcategory[]> {
-    const client = await getPool().connect();
-    try {
-      const query = 'SELECT * FROM subcategories WHERE parent_category_id = $1 ORDER BY display_order ASC, name ASC;';
-      const res = await client.query(query, [Number(parentCategoryId)]);
-      return mapRowsToCamelCase(res.rows).map(mapToSubcategory);
-    } catch (error: any) {
-      console.error(`[PostgresAdapter - getSubcategories for parent ${parentCategoryId}] Error:`, error);
-      return [];
-    } finally {
-      client.release();
-    }
-  }
-
-  async getSubcategory(id: string): Promise<Subcategory | null> {
-    const client = await getPool().connect();
-    try {
-      const query = 'SELECT * FROM subcategories WHERE id = $1;';
-      const res = await client.query(query, [Number(id)]);
-      if (res.rowCount === 0) return null;
-      return mapToSubcategory(mapRowToCamelCase(res.rows[0]));
-    } catch (error: any) {
-      console.error(`[PostgresAdapter - getSubcategory(${id})] Error:`, error);
-      return null;
-    } finally {
-      client.release();
-    }
-  }
-
-  async getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null> {
-    const client = await getPool().connect();
-    try {
-      const query = 'SELECT * FROM subcategories WHERE slug = $1 AND parent_category_id = $2;';
-      const res = await client.query(query, [slug, Number(parentCategoryId)]);
-      if (res.rowCount === 0) return null;
-      return mapToSubcategory(mapRowToCamelCase(res.rows[0]));
-    } catch (error: any) {
-      console.error(`[PostgresAdapter - getSubcategoryBySlug(${slug}, ${parentCategoryId})] Error:`, error);
-      return null;
-    } finally {
-      client.release();
-    }
-  }
-
-  async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> {
-    const client = await getPool().connect();
-    try {
-      const fields: string[] = [];
-      const values: any[] = [];
-      let paramCount = 1;
-
-      if (data.name) { fields.push(`name = $${paramCount++}`, `slug = $${paramCount++}`); values.push(data.name.trim(), slugify(data.name.trim())); }
-      if (data.description !== undefined) { fields.push(`description = $${paramCount++}`); values.push(data.description?.trim() || null); }
-      if (data.displayOrder !== undefined) { fields.push(`display_order = $${paramCount++}`); values.push(data.displayOrder); }
-      if (data.iconUrl !== undefined) { fields.push(`icon_url = $${paramCount++}`); values.push(data.iconUrl || null); }
-      if (data.dataAiHintIcon !== undefined) { fields.push(`data_ai_hint_icon = $${paramCount++}`); values.push(data.dataAiHintIcon || null); }
-
-      if (fields.length === 0) return { success: true, message: "Nenhuma alteração para a subcategoria." };
-
-      fields.push(`updated_at = NOW()`);
-      const query = `UPDATE subcategories SET ${fields.join(', ')} WHERE id = $${paramCount}`;
-      values.push(Number(id));
-      await client.query(query, values);
-      return { success: true, message: 'Subcategoria atualizada com sucesso (PostgreSQL)!' };
-    } catch (error: any) {
-      console.error(`[PostgresAdapter - updateSubcategory(${id})] Error:`, error);
-      return { success: false, message: error.message || 'Falha ao atualizar subcategoria (PostgreSQL).' };
-    } finally {
-      client.release();
-    }
-  }
-
-  async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> {
-    const client = await getPool().connect();
-    try {
-      await client.query('DELETE FROM subcategories WHERE id = $1;', [Number(id)]);
-      return { success: true, message: 'Subcategoria excluída com sucesso (PostgreSQL)!' };
-    } catch (error: any) {
-      console.error(`[PostgresAdapter - deleteSubcategory(${id})] Error:`, error);
-      return { success: false, message: error.message || 'Falha ao excluir subcategoria (PostgreSQL).' };
-    } finally {
-      client.release();
-    }
-  }
-  async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }> {
-    const client = await getPool().connect();
-    let rolesProcessedCount = 0;
-    try {
-      await client.query('BEGIN');
-      for (const roleData of defaultRolesData) {
-        const res = await client.query('SELECT id, description, permissions FROM roles WHERE name_normalized = $1', [roleData.name.toUpperCase()]);
-        const validPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
-        const permissionsJson = JSON.stringify(validPermissions);
-
-        if (res.rowCount === 0) {
-          await client.query(
-            'INSERT INTO roles (name, name_normalized, description, permissions) VALUES ($1, $2, $3, $4::jsonb)',
-            [roleData.name, roleData.name.toUpperCase(), roleData.description, permissionsJson]
-          );
-          rolesProcessedCount++;
-        } else {
-          const existingRole = res.rows[0];
-          const currentPermissions = existingRole.permissions || [];
-          if (existingRole.description !== roleData.description || JSON.stringify(currentPermissions.sort()) !== JSON.stringify(validPermissions.sort())) {
-            await client.query(
-              'UPDATE roles SET description = $1, permissions = $2::jsonb, updated_at = NOW() WHERE id = $3',
-              [roleData.description, permissionsJson, existingRole.id]
-            );
-            rolesProcessedCount++;
-          }
-        }
-      }
-      await client.query('COMMIT');
-      return { success: true, message: 'Default roles ensured (PostgreSQL).', rolesProcessed: rolesProcessedCount };
-    } catch (e: any) {
-      await client.query('ROLLBACK');
-      console.error("[PostgreSQLAdapter - ensureDefaultRolesExist] Error:", e);
-      return { success: false, message: `PostgreSQL Error: ${e.message}`, rolesProcessed: rolesProcessedCount };
-    } finally {
-      client.release();
-    }
-  }
-  async getUserByEmail(email: string): Promise<UserProfileData | null> {
-    const client = await getPool().connect();
-    try {
-      const query = `
-        SELECT u.*, r.name as role_name_from_join, r.permissions as role_permissions_from_join
-        FROM users u
-        LEFT JOIN roles r ON u.role_id = r.id
-        WHERE u.email = $1 LIMIT 1;
-      `;
-      const res = await client.query(query, [email.toLowerCase()]);
-      if (res.rowCount === 0) return null;
-      const userRow = mapRowToCamelCase(res.rows[0]);
-      let role: Role | null = null;
-      if (userRow.roleId) {
-        role = await this.getRole(String(userRow.roleId));
-      }
-      const profile = mapToUserProfileData(userRow, role);
-      return profile;
-    } catch (e: any) {
-      console.error(`[PostgresAdapter - getUserByEmail(${email})] Error:`, e);
-      return null;
-    } finally {
-      client.release();
-    }
-  }
-  async ensureUserRole(
-    userId: string, email: string, fullName: string | null,
-    targetRoleName: string,
-    additionalProfileData?: Partial<UserProfileData & {password?: string}>,
-    roleIdToAssign?: string
-  ): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
-    const client = await getPool().connect();
-    try {
-        await this.ensureDefaultRolesExist();
-        let targetRole: Role | null = null;
-
-        if (roleIdToAssign && roleIdToAssign !== "---NONE---") {
-            targetRole = await this.getRole(roleIdToAssign);
-        }
-        if (!targetRole) {
-            targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
-        }
-
-        if (!targetRole || !targetRole.id) {
-            return { success: false, message: `Target role '${targetRoleName}' or default 'USER' role not found.` };
-        }
-
-        await client.query('BEGIN');
-        const userRes = await client.query('SELECT * FROM users WHERE uid = $1', [userId]);
-        let finalProfileData: UserProfileData;
-        const userPermissionsJson = JSON.stringify(targetRole.permissions || []);
-
-        const commonUserData = {
-            email: email.toLowerCase(),
-            full_name: fullName || email.split('@')[0],
-            role_id: Number(targetRole.id),
-            permissions: userPermissionsJson,
-            status: 'ATIVO',
-            habilitation_status: targetRoleName === 'ADMINISTRATOR' ? 'HABILITADO' : 'PENDENTE_ANALYSIS',
-            cpf: additionalProfileData?.cpf || null,
-            cell_phone: additionalProfileData?.cellPhone || null,
-            date_of_birth: additionalProfileData?.dateOfBirth ? format(new Date(additionalProfileData.dateOfBirth), 'yyyy-MM-dd') : null,
-            account_type: additionalProfileData?.accountType || 'PHYSICAL',
-            razao_social: additionalProfileData?.razaoSocial || null,
-            cnpj: additionalProfileData?.cnpj || null,
-            inscricao_estadual: additionalProfileData?.inscricaoEstadual || null,
-            website_comitente: additionalProfileData?.websiteComitente || null,
-            zip_code: additionalProfileData?.zipCode || null,
-            street: additionalProfileData?.street || null,
-            number: additionalProfileData?.number || null,
-            complement: additionalProfileData?.complement || null,
-            neighborhood: additionalProfileData?.neighborhood || null,
-            city: additionalProfileData?.city || null,
-            state: additionalProfileData?.state || null,
-            opt_in_marketing: Boolean(additionalProfileData?.optInMarketing),
-            rg_number: additionalProfileData?.rgNumber || null,
-            rg_issuer: additionalProfileData?.rgIssuer || null,
-            rg_issue_date: additionalProfileData?.rgIssueDate ? format(new Date(additionalProfileData.rgIssueDate), 'yyyy-MM-dd') : null,
-            rg_state: additionalProfileData?.rgState || null,
-            home_phone: additionalProfileData?.homePhone || null,
-            gender: additionalProfileData?.gender || null,
-            profession: additionalProfileData?.profession || null,
-            nationality: additionalProfileData?.nationality || null,
-            marital_status: additionalProfileData?.maritalStatus || null,
-            property_regime: additionalProfileData?.propertyRegime || null,
-            spouse_name: additionalProfileData?.spouseName || null,
-            spouse_cpf: additionalProfileData?.spouseCpf || null,
-            avatar_url: additionalProfileData?.avatarUrl || null,
-            data_ai_hint: additionalProfileData?.dataAiHint || null,
-            password_text: additionalProfileData?.password || null,
-        };
-
-        if (userRes.rowCount > 0) {
-            const existingUserRaw = userRes.rows[0];
-            const updateQuery = `
-                UPDATE users SET email = $1, full_name = $2, role_id = $3, permissions = $4::jsonb, status = $5, habilitation_status = $6,
-                cpf = $7, cell_phone = $8, date_of_birth = $9, account_type = $10, razao_social = $11, cnpj = $12, inscricao_estadual = $13,
-                website_comitente = $14, zip_code = $15, street = $16, "number" = $17, complement = $18, neighborhood = $19, city = $20, state = $21,
-                opt_in_marketing = $22, rg_number = $23, rg_issuer = $24, rg_issue_date = $25, rg_state = $26, home_phone = $27, gender = $28,
-                profession = $29, nationality = $30, marital_status = $31, property_regime = $32, spouse_name = $33, spouse_cpf = $34,
-                avatar_url = $35, data_ai_hint = $36, password_text = COALESCE($37, password_text), updated_at = NOW()
-                WHERE uid = $38`;
-            await client.query(updateQuery, [
-                commonUserData.email, commonUserData.full_name, commonUserData.role_id, commonUserData.permissions, commonUserData.status, commonUserData.habilitation_status,
-                commonUserData.cpf, commonUserData.cell_phone, commonUserData.date_of_birth, commonUserData.account_type, commonUserData.razao_social, commonUserData.cnpj, commonUserData.inscricao_estadual,
-                commonUserData.website_comitente, commonUserData.zip_code, commonUserData.street, commonUserData.number, commonUserData.complement, commonUserData.neighborhood, commonUserData.city, commonUserData.state,
-                commonUserData.opt_in_marketing, commonUserData.rg_number, commonUserData.rg_issuer, commonUserData.rg_issue_date, commonUserData.rg_state, commonUserData.home_phone, commonUserData.gender,
-                commonUserData.profession, commonUserData.nationality, commonUserData.marital_status, commonUserData.property_regime, commonUserData.spouse_name, commonUserData.spouse_cpf,
-                commonUserData.avatar_url, commonUserData.data_ai_hint, commonUserData.password_text,
-                userId
-            ]);
-            finalProfileData = mapToUserProfileData({ ...mapRowToCamelCase(existingUserRaw), ...commonUserData, updated_at: new Date() }, targetRole);
-        } else {
-            const insertQuery = `
-                INSERT INTO users (uid, email, full_name, role_id, permissions, status, habilitation_status,
-                cpf, cell_phone, date_of_birth, account_type, razao_social, cnpj, inscricao_estadual,
-                website_comitente, zip_code, street, "number", complement, neighborhood, city, state,
-                opt_in_marketing, rg_number, rg_issuer, rg_issue_date, rg_state, home_phone, gender,
-                profession, nationality, marital_status, property_regime, spouse_name, spouse_cpf,
-                avatar_url, data_ai_hint, password_text, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, NOW(), NOW()) RETURNING *;`;
-            const insertRes = await client.query(insertQuery, [
-                userId, commonUserData.email, commonUserData.full_name, commonUserData.role_id, commonUserData.permissions, commonUserData.status, commonUserData.habilitation_status,
-                commonUserData.cpf, commonUserData.cell_phone, commonUserData.date_of_birth, commonUserData.account_type, commonUserData.razao_social, commonUserData.cnpj, commonUserData.inscricao_estadual,
-                commonUserData.website_comitente, commonUserData.zip_code, commonUserData.street, commonUserData.number, commonUserData.complement, commonUserData.neighborhood, commonUserData.city, commonUserData.state,
-                commonUserData.opt_in_marketing, commonUserData.rg_number, commonUserData.rg_issuer, commonUserData.rg_issue_date, commonUserData.rg_state, commonUserData.home_phone, commonUserData.gender,
-                commonUserData.profession, commonUserData.nationality, commonUserData.marital_status, commonUserData.property_regime, commonUserData.spouse_name, commonUserData.spouse_cpf,
-                commonUserData.avatar_url, commonUserData.data_ai_hint, commonUserData.password_text
-            ]);
-            finalProfileData = mapToUserProfileData(mapRowToCamelCase(insertRes.rows[0]), targetRole);
-        }
-        await client.query('COMMIT');
-        return { success: true, message: 'User profile ensured (PostgreSQL).', userProfile: finalProfileData };
-    } catch (e: any) {
-        await client.query('ROLLBACK');
-        console.error("[PostgreSQLAdapter - ensureUserRole] Error:", e);
-        return { success: false, message: `PostgreSQL Error: ${e.message}` };
-    } finally {
-        client.release();
-    }
-  }
-
-  async getRole(id: string): Promise<Role | null> {
-    // This method is now fully implemented in the provided context
-    const client = await getPool().connect();
-    try {
-        const res = await client.query('SELECT * FROM roles WHERE id = $1', [Number(id)]);
-        if (res.rowCount === 0) return null;
-        return mapToRole(res.rows[0]);
-    } catch (e: any) {
-        console.error(`[PostgresAdapter - getRole(${id})] Error:`, e);
-        return null;
-    } finally {
-        client.release();
-    }
-  }
-
-  async getRoleByName(name: string): Promise<Role | null> {
-    // This method is now fully implemented in the provided context
-    const client = await getPool().connect();
-    try {
-        const normalizedName = name.trim().toUpperCase();
-        const res = await client.query('SELECT * FROM roles WHERE name_normalized = $1 LIMIT 1', [normalizedName]);
-        if (res.rowCount === 0) return null;
-        return mapToRole(res.rows[0]);
-    } catch (e: any) {
-        console.error(`[PostgresAdapter - getRoleByName(${name})] Error:`, e);
-        return null;
-    } finally {
-        client.release();
-    }
-  }
-  
-  async disconnect(): Promise<void> {
-    if (pool) {
-      await pool.end();
-      console.log('[PostgresAdapter] Pool de conexões PostgreSQL encerrado.');
-    }
-  }
-
-  // --- FULLY IMPLEMENTED PLACEHOLDERS ---
+  // --- Other placeholder implementations ---
+  async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> { console.warn("createLotCategory not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async getLotCategories(): Promise<LotCategory[]> { console.warn("getLotCategories not implemented in PostgresAdapter"); return []; }
+  async getLotCategory(idOrSlug: string): Promise<LotCategory | null> { console.warn("getLotCategory not implemented in PostgresAdapter"); return null; }
+  async getLotCategoryByName(name: string): Promise<LotCategory | null> { console.warn("getLotCategoryByName not implemented in PostgresAdapter"); return null; }
+  async updateLotCategory(id: string, data: { name: string; description?: string; hasSubcategories?: boolean }): Promise<{ success: boolean; message: string; }> { console.warn("updateLotCategory not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteLotCategory(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteLotCategory not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> { console.warn("createSubcategory not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async getSubcategories(parentCategoryId: string): Promise<Subcategory[]> { console.warn("getSubcategories not implemented in PostgresAdapter"); return []; }
+  async getSubcategory(id: string): Promise<Subcategory | null> { console.warn("getSubcategory not implemented in PostgresAdapter"); return null; }
+  async getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null> { console.warn("getSubcategoryBySlug not implemented in PostgresAdapter"); return null; }
+  async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateSubcategory not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteSubcategory not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> { console.warn("createState not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async getStates(): Promise<StateInfo[]> { console.warn("getStates not implemented in PostgresAdapter"); return []; }
   async getState(idOrSlugOrUf: string): Promise<StateInfo | null> { console.warn("getState not implemented in PostgresAdapter"); return null; }
@@ -1455,7 +1001,9 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]> { console.warn("getQuestionsForLot not implemented in PostgresAdapter"); return []; }
   async createQuestion(question: Omit<LotQuestion, 'id' | 'createdAt' | 'answeredAt' | 'answeredByUserId' | 'answeredByUserDisplayName' | 'isPublic'>): Promise<{ success: boolean; message: string; questionId?: string; }> { console.warn("createQuestion not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> { console.warn("answerQuestion not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async getUserProfileData(userId: string): Promise<UserProfileData | null> { console.warn("getUserProfileData not implemented in PostgresAdapter"); return null; }
   async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> { console.warn("updateUserProfile not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, "cpf" | "cellPhone" | "dateOfBirth" | "password" | "accountType" | "razaoSocial" | "cnpj" | "inscricaoEstadual" | "websiteComitente" | "zipCode" | "street" | "number" | "complement" | "neighborhood" | "city" | "state" | "optInMarketing">>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> { console.warn("ensureUserRole not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async getUsersWithRoles(): Promise<UserProfileData[]> { console.warn("getUsersWithRoles not implemented in PostgresAdapter"); return []; }
   async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { console.warn("updateUserRole not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteUserProfile not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }

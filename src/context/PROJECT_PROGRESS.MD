@@ -1,4 +1,3 @@
-
 # Project Progress - BidExpert
 
 ## DONE
@@ -55,17 +54,17 @@
     *   `LotDetailClientContent` (and its `DetailTimeRemaining` component) uses derived effective start/end dates.
     *   `LotCard` and `LotListItem` reflect these derived dates/status via the updated `sampleLots`.
     *   Reviewed all display components to ensure consistency.
-
-## WORKING
-- **Finalizing SQL Adapters**: Implementing all placeholder methods in `MySqlAdapter` and `PostgresAdapter` to satisfy the `IDatabaseAdapter` interface and fix critical startup errors (`FAILED to create a VALID dbInstance`). Ensuring all required functions are present and async.
-- **Item 19:** Implement visual timeline for auction stages in the auction CRUD form (`/admin/auctions/[auctionId]/edit`).
-  - **Sub-task 1 (DONE):** Create `AuctionStagesTimeline.tsx` component.
-  - **Sub-task 2 (DONE):** Integrate `AuctionStagesTimeline` into `AuctionForm.tsx`.
 - **Admin User Permissions (`admin@bidexpert.com.br`)**: Ensure `admin@bidexpert.com.br` has 'manage_all' permission.
     - **Sub-task 1 (DONE):** Updated `scripts/setup-admin-user.ts` to use `admin@bidexpert.com.br`.
     - **Sub-task 2 (DONE):** Updated `src/app/admin/users/actions.ts` (`ensureUserProfileInDb`) to prioritize 'ADMINISTRATOR' role for `admin@bidexpert.com.br`.
     - **Sub-task 3 (DONE):** Transitioned user/role management to `sample-data.ts` for testing.
-    - **Sub-task 4 (DOING):** Reverted user/role management back to DB adapters after `sample-data` testing. Finalizing adapter implementations for `ensureUserRole` and `getUserByEmail`.
+    - **Sub-task 4 (DONE):** Reverted user/role management back to DB adapters after `sample-data` testing. Finalized adapter implementations for `ensureUserRole` and `getUserByEmail`.
+
+## WORKING
+- **Fixing Startup Crash**: Implementing all placeholder methods in `MySqlAdapter` and `PostgresAdapter` to satisfy the `IDatabaseAdapter` interface and fix critical "FAILED to create a VALID dbInstance" startup errors.
+- **Item 19:** Implement visual timeline for auction stages in the auction CRUD form (`/admin/auctions/[auctionId]/edit`).
+  - **Sub-task 1 (DONE):** Create `AuctionStagesTimeline.tsx` component.
+  - **Sub-task 2 (DONE):** Integrate `AuctionStagesTimeline` into `AuctionForm.tsx`.
 
 
 ## NEXT
