@@ -9,7 +9,7 @@ import { getLots, deleteLot } from './actions';
 import type { Lot } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { PlusCircle, Edit, Trash2, Package, AlertTriangle, Eye } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Package, AlertTriangle, Eye, Loader2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,15 +24,32 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useState, useEffect, useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
-function DeleteLotButton({ lotId, lotTitle, onDelete }: { lotId: string; lotTitle: string; onDelete: (id: string) => Promise<void> }) {
+function DeleteLotButtonClient({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotId: string; lotTitle: string; auctionId?: string; onDeleteSuccess: () => void }) {
+  const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    const result = await deleteLot(lotId, auctionId);
+    if (result.success) {
+      toast({ title: "Sucesso", description: "Lote excluído com sucesso.", variant: "default" });
+      onDeleteSuccess();
+    } else {
+      toast({ title: "Erro", description: result.message || "Falha ao excluir lote.", variant: "destructive" });
+    }
+    setIsDeleting(false);
+  };
+
   return (
     <AlertDialog>
       <Tooltip>
         <TooltipTrigger asChild>
           <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label="Excluir Lote">
-              <Trash2 className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" aria-label="Excluir Lote" disabled={isDeleting}>
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
             </Button>
           </AlertDialogTrigger>
         </TooltipTrigger>
@@ -46,13 +63,13 @@ function DeleteLotButton({ lotId, lotTitle, onDelete }: { lotId: string; lotTitl
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={async () => {
-                await onDelete(lotId);
-            }}
+          <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleDelete}
+            disabled={isDeleting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
+            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Excluir
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -62,16 +79,36 @@ function DeleteLotButton({ lotId, lotTitle, onDelete }: { lotId: string; lotTitl
 }
 
 
-export default async function AdminLotsPage() {
-  const lots = await getLots();
+export default function AdminLotsPage() {
+  const [lots, setLots] = useState<Lot[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
-  async function handleDeleteLot(id: string) {
-    'use server';
-    const lotToDelete = lots.find(l => l.id === id);
-    const result = await deleteLot(id, lotToDelete?.auctionId);
-    if (!result.success) {
-        console.error("Failed to delete lot:", result.message);
+  const fetchLots = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const fetchedLots = await getLots();
+      setLots(fetchedLots);
+    } catch (error) {
+      console.error("Error fetching lots:", error);
+      toast({ title: "Erro", description: "Falha ao buscar lotes.", variant: "destructive" });
+      setLots([]);
+    } finally {
+      setIsLoading(false);
     }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchLots();
+  }, [fetchLots]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-3 text-muted-foreground">Carregando lotes...</p>
+      </div>
+    );
   }
 
   return (
@@ -157,7 +194,7 @@ export default async function AdminLotsPage() {
                             </TooltipTrigger>
                             <TooltipContent><p>Editar Lote</p></TooltipContent>
                           </Tooltip>
-                          <DeleteLotButton lotId={lot.id} lotTitle={lot.title} onDelete={handleDeleteLot} />
+                          <DeleteLotButtonClient lotId={lot.id} lotTitle={lot.title} auctionId={lot.auctionId} onDeleteSuccess={fetchLots} />
                         </TableCell>
                       </TableRow>
                     ))}
