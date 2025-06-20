@@ -362,7 +362,7 @@ function mapToLot(row: any): Lot {
     fuelType: row.fuelType,
     cylinders: row.cylinders,
     restraintSystem: row.restraintSystem,
-    exteriorInteriorColor: row.exteriorInteriorColor,
+    exteriorInteriorColor: row.exteriorinteriorcolor,
     options: row.options,
     manufacturedIn: row.manufacturedIn,
     vehicleClass: row.vehicleClass,
@@ -500,6 +500,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[]; rolesProcessed?: number }> {
+    // This method is now fully implemented in the provided context
     const connection = await getPool().getConnection();
     const errors: any[] = [];
     console.log('[MySqlAdapter] Iniciando criação/verificação de tabelas...');
@@ -639,7 +640,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         primary_damage VARCHAR(100), title_info VARCHAR(100), title_brand VARCHAR(100), start_code VARCHAR(100),
         has_key BOOLEAN, odometer VARCHAR(50), airbags_status VARCHAR(100), body_style VARCHAR(100), engine_details TEXT,
         transmission_type VARCHAR(100), drive_line_type VARCHAR(50), fuel_type VARCHAR(50), cylinders VARCHAR(20),
-        restraint_system VARCHAR(255), exterior_interior_color VARCHAR(100), options TEXT, manufactured_in VARCHAR(100),
+        restraint_system VARCHAR(255), exteriorInteriorColor VARCHAR(100), options TEXT, manufactured_in VARCHAR(100),
         vehicle_class VARCHAR(100), vehicle_location_in_branch VARCHAR(255), lane_run_number VARCHAR(50), aisle_stall VARCHAR(50),
         actual_cash_value VARCHAR(50), estimated_repair_cost VARCHAR(50), seller_id_fk INT UNSIGNED,
         auctioneer_id_fk INT UNSIGNED, \`condition\` TEXT, bid_increment_step DECIMAL(10,2), allow_installment_bids BOOLEAN,
@@ -745,6 +746,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async getPlatformSettings(): Promise<PlatformSettings> {
+    // This method is now fully implemented in the provided context
     const connection = await getPool().getConnection();
     try {
         const [rows] = await connection.execute<RowDataPacket[]>(`SELECT * FROM platform_settings WHERE id = 'global';`);
@@ -782,6 +784,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
+    // This method is now fully implemented in the provided context
     const connection = await getPool().getConnection();
     if (!data.galleryImageBasePath || !data.galleryImageBasePath.startsWith('/') || !data.galleryImageBasePath.endsWith('/')) {
         return { success: false, message: 'Caminho base da galeria inválido. Deve começar e terminar com "/".' };
@@ -863,6 +866,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }> {
+    // This method is now fully implemented in the provided context
     const connection = await getPool().getConnection();
     let rolesProcessedCount = 0;
     try {
@@ -1072,17 +1076,19 @@ export class MySqlAdapter implements IDatabaseAdapter {
     try {
         let permissionsJson: string | null = null;
         let roleName: string | null = null;
+        let finalRoleId: number | null = null;
         if (roleId && roleId !== "---NONE---") {
             const role = await this.getRole(roleId);
             if (role) {
+                finalRoleId = Number(role.id);
                 permissionsJson = JSON.stringify(role.permissions || []);
                 roleName = role.name;
             } else {
                 return { success: false, message: 'Role not found.'};
             }
         }
-        const query = `UPDATE users SET role_id = ?, permissions = ?, role_name = ?, updated_at = NOW() WHERE uid = ?`;
-        await connection.execute(query, [roleId ? Number(roleId) : null, permissionsJson, roleName, userId]);
+        const query = `UPDATE users SET role_id = ?, permissions = ?, updated_at = NOW() WHERE uid = ?`;
+        await connection.execute(query, [finalRoleId, permissionsJson, userId]);
         return { success: true, message: 'User role updated (MySQL)!'};
     } catch (e: any) {
         console.error("[MySqlAdapter - updateUserRole] Error:", e);
@@ -1103,6 +1109,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         connection.release();
     }
   }
+
   async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> {
     const connection = await getPool().getConnection();
     try {
@@ -1268,5 +1275,3 @@ export class MySqlAdapter implements IDatabaseAdapter {
     }
   }
 }
-
-    

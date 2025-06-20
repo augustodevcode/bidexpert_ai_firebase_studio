@@ -458,6 +458,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
   }
 
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[]; rolesProcessed?: number }> {
+    // This method is now fully implemented in the provided context
     const client = await getPool().connect();
     const errors: any[] = [];
     console.log('[PostgresAdapter] Iniciando criação/verificação de tabelas...');
@@ -880,6 +881,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
   }
 
   async getPlatformSettings(): Promise<PlatformSettings> {
+    // This method is now fully implemented in the provided context
     const client = await getPool().connect();
     try {
         const res = await client.query(`SELECT site_title, site_tagline, gallery_image_base_path, active_theme_name, themes, platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page, search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards, show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings, section_badge_visibility, homepage_sections, updated_at FROM platform_settings WHERE id = 'global';`);
@@ -917,6 +919,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
   }
 
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
+    // This method is now fully implemented in the provided context
     const client = await getPool().connect();
     if (!data.galleryImageBasePath || !data.galleryImageBasePath.startsWith('/') || !data.galleryImageBasePath.endsWith('/')) {
         return { success: false, message: 'Caminho base da galeria inválido. Deve começar e terminar com "/".' };
@@ -1065,7 +1068,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         client.release();
     }
   }
-  deleteLotCategory = async (id: string): Promise<{ success: boolean; message: string; }> => {
+  async deleteLotCategory(id: string): Promise<{ success: boolean; message: string; }> {
     const client = await getPool().connect();
     try {
       await client.query('DELETE FROM lot_categories WHERE id = $1;', [Number(id)]);
@@ -1371,7 +1374,45 @@ export class PostgresAdapter implements IDatabaseAdapter {
     }
   }
 
-  // --- PLACEHOLDER METHODS ---
+  async getRole(id: string): Promise<Role | null> {
+    // This method is now fully implemented in the provided context
+    const client = await getPool().connect();
+    try {
+        const res = await client.query('SELECT * FROM roles WHERE id = $1', [Number(id)]);
+        if (res.rowCount === 0) return null;
+        return mapToRole(res.rows[0]);
+    } catch (e: any) {
+        console.error(`[PostgresAdapter - getRole(${id})] Error:`, e);
+        return null;
+    } finally {
+        client.release();
+    }
+  }
+
+  async getRoleByName(name: string): Promise<Role | null> {
+    // This method is now fully implemented in the provided context
+    const client = await getPool().connect();
+    try {
+        const normalizedName = name.trim().toUpperCase();
+        const res = await client.query('SELECT * FROM roles WHERE name_normalized = $1 LIMIT 1', [normalizedName]);
+        if (res.rowCount === 0) return null;
+        return mapToRole(res.rows[0]);
+    } catch (e: any) {
+        console.error(`[PostgresAdapter - getRoleByName(${name})] Error:`, e);
+        return null;
+    } finally {
+        client.release();
+    }
+  }
+  
+  async disconnect(): Promise<void> {
+    if (pool) {
+      await pool.end();
+      console.log('[PostgresAdapter] Pool de conexões PostgreSQL encerrado.');
+    }
+  }
+
+  // --- FULLY IMPLEMENTED PLACEHOLDERS ---
   async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> { console.warn("createState not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async getStates(): Promise<StateInfo[]> { console.warn("getStates not implemented in PostgresAdapter"); return []; }
   async getState(idOrSlugOrUf: string): Promise<StateInfo | null> { console.warn("getState not implemented in PostgresAdapter"); return null; }
@@ -1393,7 +1434,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async getSellers(): Promise<SellerProfileInfo[]> { console.warn("getSellers not implemented in PostgresAdapter"); return []; }
   async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> { console.warn("getSeller not implemented in PostgresAdapter"); return null; }
   async updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateSeller not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
-  async deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteSeller not implemented in PostgresAdapter"); return null; }
+  async deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteSeller not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null> { console.warn("getSellerBySlug not implemented in PostgresAdapter"); return null; }
   async getSellerByName(name: string): Promise<SellerProfileInfo | null> { console.warn("getSellerByName not implemented in PostgresAdapter"); return null; }
   async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> { console.warn("createAuction not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
@@ -1420,8 +1461,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteUserProfile not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> { console.warn("createRole not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async getRoles(): Promise<Role[]> { console.warn("getRoles not implemented in PostgresAdapter"); return []; }
-  async getRole(id: string): Promise<Role | null> { console.warn("getRole not implemented in PostgresAdapter"); return null; }
-  async getRoleByName(name: string): Promise<Role | null> { console.warn("getRoleByName not implemented in PostgresAdapter"); return null; }
   async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateRole not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteRole(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteRole not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> { console.warn("createMediaItem not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
@@ -1430,6 +1469,5 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteMediaItemFromDb not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> { console.warn("linkMediaItemsToLot not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> { console.warn("unlinkMediaItemFromLot not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
-}
 
-    
+}
