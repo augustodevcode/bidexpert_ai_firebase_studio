@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown, Tag, Layers } from 'lucide-react';
+import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown, Tag, ChevronRight, Layers } from 'lucide-react';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
@@ -27,7 +27,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 interface TimeRemainingBadgeProps {
   endDate: Date | string | undefined | null; // Allow undefined or null
   status: Lot['status'];
-  showUrgencyTimer?: boolean; 
+  showUrgencyTimer?: boolean;
   urgencyThresholdDays?: number;
   urgencyThresholdHours?: number;
 }
@@ -35,7 +35,7 @@ interface TimeRemainingBadgeProps {
 const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({
   endDate,
   status,
-  showUrgencyTimer = true, 
+  showUrgencyTimer = true,
   urgencyThresholdDays = 1,
   urgencyThresholdHours = 0
 }) => {
@@ -68,7 +68,7 @@ const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({
 
       const thresholdInSeconds = (urgencyThresholdDays * 24 * 60 * 60) + (urgencyThresholdHours * 60 * 60);
       const currentlyUrgent = totalSecondsLeft <= thresholdInSeconds;
-      setIsUrgent(currentlyUrgent && showUrgencyTimer); 
+      setIsUrgent(currentlyUrgent && showUrgencyTimer);
 
       if (currentlyUrgent && showUrgencyTimer) {
         const hours = Math.floor(totalSecondsLeft / 3600);
@@ -202,7 +202,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
     if (upperType.includes('MAQUINÁRIO') || upperType.includes('TRATOR')) {
         return <Truck className="h-3 w-3 text-muted-foreground" />;
     }
-    return <Tag className="h-3 w-3 text-muted-foreground" />; 
+    return <Tag className="h-3 w-3 text-muted-foreground" />;
   };
 
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
@@ -228,7 +228,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
     if (sectionBadges.showExclusiveBadge !== false && settings.showExclusiveBadge && lot.isExclusive) {
         triggers.push('EXCLUSIVO');
     }
-    return Array.from(new Set(triggers)); 
+    return Array.from(new Set(triggers));
   }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
 
 
@@ -237,7 +237,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
     <Card className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-xl transition-shadow duration-300 rounded-lg group">
       <div className="relative">
         <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block">
-          <div className="aspect-[16/10] relative bg-muted"> 
+          <div className="aspect-[16/10] relative bg-muted">
             <Image
               src={lot.imageUrl}
               alt={lot.title}
@@ -299,7 +299,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
                   <DropdownMenuItem asChild><a href={getSocialLink('x', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><X className="h-3.5 w-3.5" /> X (Twitter)</a></DropdownMenuItem>
                   <DropdownMenuItem asChild><a href={getSocialLink('facebook', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><Facebook className="h-3.5 w-3.5" /> Facebook</a></DropdownMenuItem>
                   <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><MessageSquareText className="h-3.5 w-3.5" /> WhatsApp</a></DropdownMenuItem>
-                  <DropdownMenuItem asChild><a href={getSocialLink('email', lotDetailUrl)} className="flex items-center gap-2 text-xs"><Mail className="h-3.5 w-3.5" /> Email</a></DropdownMenuItem>
+                  <DropdownMenuItem asChild><a href={getSocialLink('email', lotDetailUrl, lot.title)} className="flex items-center gap-2 text-xs"><Mail className="h-3.5 w-3.5" /> Email</a></DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -308,8 +308,8 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
       </div>
 
       <CardContent className="p-3 flex-grow space-y-1.5">
-        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block mt-1">
-          <h3 className="text-sm font-semibold hover:text-primary transition-colors leading-tight min-h-[2.2em] line-clamp-2">
+        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block mt-2"> {/* Changed mt-1 to mt-2 */}
+          <h3 className="text-sm font-semibold hover:text-primary transition-colors leading-tight line-clamp-2"> {/* Removed min-h-[2.2em] */}
             {lot.title}
           </h3>
         </Link>
