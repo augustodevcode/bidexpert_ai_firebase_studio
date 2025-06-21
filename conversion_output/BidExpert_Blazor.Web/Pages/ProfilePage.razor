@@ -1,0 +1,183 @@
+@page "/profile"
+@attribute [Layout(typeof(DashboardLayout))] @* Ou MainLayout se preferir *@
+@attribute [Authorize]
+@using BidExpert_Blazor.ServiceDefaults.Dtos
+@using System.ComponentModel.DataAnnotations // Para os atributos de validação
+@* @inject IUserClientApiService UserProfileService *@
+@* @inject IToastService ToastService // Exemplo de serviço de notificação *@
+
+<PageTitle>Meu Perfil - BidExpert</PageTitle>
+<h1 class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-6">Meu Perfil</h1>
+
+@if (userProfile == null && isLoading)
+{
+    <p>Carregando perfil...</p>
+}
+else if (userProfile != null)
+{
+    <EditForm Model="profileUpdateModel" OnValidSubmit="HandleUpdateProfile">
+        <DataAnnotationsValidator />
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            @* Coluna de Avatar e Ações *@
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white shadow-lg rounded-xl p-6 text-center">
+                    <img src="@(userProfile.AvatarUrl ?? "/images/avatar-placeholder.png")" alt="Avatar" class="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-gray-200" />
+                    <h2 class="text-xl font-semibold">@userProfile.FullName</h2>
+                    <p class="text-sm text-gray-500">@userProfile.Email</p>
+                    @* Placeholder para upload de avatar *@
+                    <button type="button" class="mt-3 text-sm text-orange-600 hover:underline">Alterar Foto</button>
+                </div>
+
+                <div class="bg-white shadow-lg rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">Segurança</h3>
+                    <button type="button" @onclick="NavigateToChangePassword" class="w-full text-left py-2 px-3 text-sm text-gray-700 hover:bg-gray-100 rounded-md">Alterar Senha</button>
+                    @* Adicionar TwoFactorAuthentication se aplicável *@
+                </div>
+            </div>
+
+            @* Coluna de Informações do Perfil *@
+            <div class="lg:col-span-2 bg-white shadow-lg rounded-xl p-6 sm:p-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-6 border-b pb-3">Informações Pessoais</h3>
+
+                <ValidationSummary class="mb-4 bg-red-50 text-red-700 p-3 rounded-md" />
+                @if (updateSuccess) { <p class="mb-4 bg-green-50 text-green-700 p-3 rounded-md">Perfil atualizado com sucesso!</p> }
+                @if (!string.IsNullOrWhiteSpace(updateErrorMessage)) { <p class="mb-4 bg-red-50 text-red-700 p-3 rounded-md">@updateErrorMessage</p> }
+
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                    <div>
+                        <label for="fullName" class="block text-sm font-medium text-gray-700">Nome Completo</label>
+                        <InputText id="fullName" @bind-Value="profileUpdateModel.FullName" class="mt-1 input-form-control" />
+                        <ValidationMessage For="@(() => profileUpdateModel.FullName)" />
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                        <InputText id="email" Value="@userProfile.Email" disabled class="mt-1 input-form-control bg-gray-100 cursor-not-allowed" />
+                    </div>
+                    <div>
+                        <label for="cpf" class="block text-sm font-medium text-gray-700">CPF</label>
+                        <InputText id="cpf" @bind-Value="profileUpdateModel.Cpf" class="mt-1 input-form-control" placeholder="000.000.000-00"/>
+                         <ValidationMessage For="@(() => profileUpdateModel.Cpf)" />
+                    </div>
+                    <div>
+                        <label for="cellPhone" class="block text-sm font-medium text-gray-700">Celular</label>
+                        <InputText id="cellPhone" @bind-Value="profileUpdateModel.CellPhone" class="mt-1 input-form-control" placeholder="(00) 00000-0000"/>
+                        <ValidationMessage For="@(() => profileUpdateModel.CellPhone)" />
+                    </div>
+                    <div>
+                        <label for="dateOfBirth" class="block text-sm font-medium text-gray-700">Data de Nascimento</label>
+                        <InputDate id="dateOfBirth" @bind-Value="profileUpdateModel.DateOfBirth" class="mt-1 input-form-control" />
+                        <ValidationMessage For="@(() => profileUpdateModel.DateOfBirth)" />
+                    </div>
+
+                    @* Adicionar campos de Endereço, etc. *@
+                </div>
+
+                <div class="mt-8 pt-5 border-t border-gray-200">
+                    <div class="flex justify-end">
+                        <button type="button" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 mr-3">Cancelar</button>
+                        <button type="submit" disabled="@isSubmitting" class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:bg-orange-300">
+                            @if(isSubmitting) { <span class="spinner-border spinner-border-sm mr-1"></span> }
+                            Salvar Alterações
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </EditForm>
+}
+else
+{
+    <p class="text-red-500">Não foi possível carregar o perfil do usuário.</p>
+}
+@code {
+    private UserProfileDataDto? userProfile;
+    private UpdateUserProfileFormModel profileUpdateModel = new();
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private bool updateSuccess = false;
+    private string? updateErrorMessage;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        // userProfile = await UserProfileService.GetMyProfileAsync();
+        // Mock data
+        await Task.Delay(200);
+        userProfile = new UserProfileDataDto {
+            Uid = "test-user-123",
+            FullName = "Usuário Fulano de Tal",
+            Email = "fulano.tal@example.com",
+            Cpf = "123.456.789-00",
+            CellPhone = "(99) 99999-9999",
+            DateOfBirth = new DateTimeOffset(new DateTime(1990, 5, 15)),
+            AvatarUrl = "https://placehold.co/128x128/E2E8F0/AAAAAA?text=User"
+        };
+
+        if (userProfile != null)
+        {
+            // Mapear DTO para o modelo do formulário
+            profileUpdateModel = new UpdateUserProfileFormModel
+            {
+                FullName = userProfile.FullName,
+                Cpf = userProfile.Cpf,
+                CellPhone = userProfile.CellPhone,
+                DateOfBirth = userProfile.DateOfBirth?.Date // Apenas a data para InputDate
+            };
+        }
+        isLoading = false;
+    }
+
+    private async Task HandleUpdateProfile()
+    {
+        isSubmitting = true;
+        updateSuccess = false;
+        updateErrorMessage = null;
+        // var command = new UpdateUserProfileCommand { /* Mapear de profileUpdateModel */ };
+        // var result = await UserProfileService.UpdateMyProfileAsync(command);
+        // if(result.Succeeded) {
+        //    updateSuccess = true;
+        //    ToastService.ShowSuccess("Perfil atualizado com sucesso!");
+        //    userProfile = await UserProfileService.GetMyProfileAsync(); // Recarregar dados
+        //    MapToFormModel(userProfile);
+        // } else {
+        //    updateErrorMessage = result.Errors?.FirstOrDefault() ?? "Erro ao atualizar perfil.";
+        //    ToastService.ShowError(updateErrorMessage);
+        // }
+        await Task.Delay(1000); // Simular
+        Console.WriteLine($"Perfil atualizado (placeholder): {profileUpdateModel.FullName}");
+        updateSuccess = true;
+        // ToastService.ShowSuccess("Perfil atualizado com sucesso!"); // Exemplo
+        isSubmitting = false;
+    }
+
+    private void NavigateToChangePassword()
+    {
+        NavigationManager.NavigateTo("/auth/change-password"); // Exemplo de rota
+    }
+
+    // Modelo para o formulário de atualização, pode ter validações específicas
+    public class UpdateUserProfileFormModel
+    {
+        [Required(ErrorMessage = "Nome completo é obrigatório.")]
+        [StringLength(100, MinimumLength = 3, ErrorMessage = "Nome deve ter entre 3 e 100 caracteres.")]
+        public string? FullName { get; set; }
+
+        // Adicionar outras propriedades e validações (CPF, Telefone, etc.)
+        // [RegularExpression(@"^\d{3}\.\d{3}\.\d{3}-\d{2}$", ErrorMessage = "CPF em formato inválido.")]
+        public string? Cpf { get; set; }
+
+        // [Phone(ErrorMessage = "Número de celular inválido.")]
+        public string? CellPhone { get; set; }
+
+        public DateTime? DateOfBirth { get; set; } // InputDate geralmente funciona melhor com DateTime não anulável ou DateTime?
+    }
+}
+
+<style>
+    .input-form-control {
+        @apply mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm;
+    }
+</style>

@@ -1,0 +1,119 @@
+@page "/dashboard"
+@page "/dashboard/overview"
+@layout DashboardLayout
+@attribute [Authorize]
+@using BidExpert_Blazor.ServiceDefaults.Dtos
+@using BidExpert_Blazor.ServiceDefaults.Dtos.Enums // Para UserHabilitationStatus
+
+<PageTitle>Visão Geral - Painel BidExpert</PageTitle>
+
+<h1 class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-6">Visão Geral do Painel</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    @* Card Exemplo: Lances Ativos *@
+    <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow transform hover:-translate-y-1">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold text-gray-700">Lances Ativos</h2>
+            @* Icon Placeholder *@
+            <span class="text-orange-500">@* <GavelIcon class="h-6 w-6" /> *@ ⚖️</span>
+        </div>
+        <p class="text-4xl font-bold text-orange-600 mb-1">@activeBidsCount</p>
+        <NavLink href="dashboard/bids" class="text-sm text-orange-500 hover:text-orange-700 hover:underline font-medium mt-2 inline-block">Ver meus lances &rarr;</NavLink>
+    </div>
+
+    @* Card Exemplo: Arremates Recentes *@
+    <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow transform hover:-translate-y-1">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold text-gray-700">Arremates Recentes</h2>
+            @* Icon Placeholder *@
+            <span class="text-green-500">@* <TrophyIcon class="h-6 w-6" /> *@ 🏆</span>
+        </div>
+        <p class="text-4xl font-bold text-green-600 mb-1">@recentWinsCount</p>
+        <NavLink href="dashboard/wins" class="text-sm text-green-500 hover:text-green-700 hover:underline font-medium mt-2 inline-block">Ver meus arremates &rarr;</NavLink>
+    </div>
+
+    @* Card Exemplo: Documentos Pendentes *@
+    <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow transform hover:-translate-y-1">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold text-gray-700">Status Documentos</h2>
+             @* Icon Placeholder *@
+            <span class="@GetHabilitationStatusColor(habilitationStatus, "icon")">@* <DocumentCheckIcon class="h-6 w-6" /> *@ 📄</span>
+        </div>
+        <p class="text-2xl font-bold @GetHabilitationStatusColor(habilitationStatus, "text") mb-1">@GetHabilitationStatusText(habilitationStatus)</p>
+        <NavLink href="dashboard/documents" class="text-sm text-blue-500 hover:text-blue-700 hover:underline font-medium mt-2 inline-block">Ver meus documentos &rarr;</NavLink>
+    </div>
+
+    @* Card Exemplo: Itens Favoritos *@
+    <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow transform hover:-translate-y-1">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold text-gray-700">Itens Favoritos</h2>
+            <span class="text-red-500">@* <HeartIcon class="h-6 w-6" /> *@ ❤️</span>
+        </div>
+        <p class="text-4xl font-bold text-red-500 mb-1">@favoriteItemsCount</p>
+        <NavLink href="dashboard/favorites" class="text-sm text-red-500 hover:text-red-700 hover:underline font-medium mt-2 inline-block">Ver favoritos &rarr;</NavLink>
+    </div>
+
+    @* Placeholder para outras informações rápidas ou ações *@
+</div>
+
+@* Seção de "Próximos Passos" ou "Ações Rápidas" *@
+<div class="mt-10 bg-white p-6 rounded-xl shadow-lg">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">Ações Rápidas</h2>
+    <div class="flex flex-wrap gap-4">
+        <button @onclick='() => NavigationManager.NavigateTo("/search?type=auctions")' class="px-5 py-2.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium">Procurar Leilões</button>
+        <button @onclick='() => NavigationManager.NavigateTo("/profile")' class="px-5 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium">Atualizar Perfil</button>
+        @if(habilitationStatus != UserHabilitationStatus.Habilitado)
+        {
+            <button @onclick='() => NavigationManager.NavigateTo("/dashboard/documents")' class="px-5 py-2.5 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-medium">Enviar Documentos</button>
+        }
+    </div>
+</div>
+
+
+@code {
+    // @inject IUserDashboardClientApiService DashboardService // Exemplo
+    private int activeBidsCount = 0;
+    private int recentWinsCount = 0;
+    private int favoriteItemsCount = 0;
+    private UserHabilitationStatus habilitationStatus = UserHabilitationStatus.PendingDocuments;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // var summary = await DashboardService.GetOverviewSummaryAsync();
+        // if(summary != null) {
+        //      activeBidsCount = summary.ActiveBidsCount;
+        //      recentWinsCount = summary.RecentWinsCount;
+        //      habilitationStatus = summary.HabilitationStatus;
+        //      favoriteItemsCount = summary.FavoriteItemsCount;
+        // }
+
+        // Mock data
+        activeBidsCount = 5;
+        recentWinsCount = 2;
+        favoriteItemsCount = 12;
+        habilitationStatus = UserHabilitationStatus.Habilitado;
+        await Task.CompletedTask;
+    }
+
+    private string GetHabilitationStatusColor(UserHabilitationStatus status, string type = "text")
+    {
+        string baseColor = status switch
+        {
+            UserHabilitationStatus.Habilitado => "green",
+            UserHabilitationStatus.PendingAnalysis or UserHabilitationStatus.PendingDocuments => "yellow",
+            UserHabilitationStatus.RejectedDocuments or UserHabilitationStatus.Blocked => "red",
+            _ => "gray"
+        };
+        return type == "text" ? $"text-{baseColor}-600" : $"text-{baseColor}-500";
+    }
+
+    private string GetHabilitationStatusText(UserHabilitationStatus status) => status switch
+    {
+        UserHabilitationStatus.Habilitado => "Habilitado",
+        UserHabilitationStatus.PendingAnalysis => "Em Análise",
+        UserHabilitationStatus.PendingDocuments => "Documentos Pendentes",
+        UserHabilitationStatus.RejectedDocuments => "Documentos Rejeitados",
+        UserHabilitationStatus.Blocked => "Bloqueado",
+        _ => "Desconhecido"
+    };
+}
