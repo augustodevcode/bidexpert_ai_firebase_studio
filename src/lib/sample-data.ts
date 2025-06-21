@@ -528,7 +528,66 @@ export const getUserHabilitationStatusInfo = (status: UserHabilitationStatus): {
 };
 
 // ============================================================================
-// 3. DERIVED/PROCESSED DATA FUNCTIONS 
+// 3. DERIVED/PROCESSED DATA FUNCTIONS (DEFINED BEFORE USE)
+// ============================================================================
+
+function getUniqueLotCategoriesFromSampleData(): LotCategory[] {
+  const subcategoryParentIds = new Set(sampleSubcategoriesStatic.map(sub => sub.parentCategoryId));
+  return sampleLotCategoriesStatic.map(cat => {
+    const categoryId = `cat-${cat.slug}`;
+    const itemCount = sampleLotsRaw.filter(lot => lot.categoryId === categoryId).length;
+    return {
+      ...cat,
+      id: categoryId,
+      itemCount: itemCount,
+      hasSubcategories: subcategoryParentIds.has(categoryId),
+      createdAt: createPastDate(Math.floor(Math.random() * 30) + 1),
+      updatedAt: createPastDate(Math.floor(Math.random() * 30)),
+    };
+  });
+}
+
+function getUniqueAuctioneersInternal(): AuctioneerProfileInfo[] {
+    return sampleAuctioneersStatic.map(auc => {
+        const slug = slugify(auc.name);
+        return {
+            ...auc,
+            id: `auct-${slug}`,
+            publicId: `AUCT-PUB-${slug.substring(0, 6).toUpperCase()}${uuidv4().substring(0, 4)}`,
+            slug: slug,
+            createdAt: createPastDate(Math.floor(Math.random() * 90) + 10),
+            updatedAt: createPastDate(Math.floor(Math.random() * 9)),
+            memberSince: createPastDate(Math.floor(Math.random() * 365) + 30),
+            rating: parseFloat((Math.random() * (5.0 - 4.2) + 4.2).toFixed(1)),
+            auctionsConductedCount: Math.floor(Math.random() * 50) + 5,
+            totalValueSold: Math.random() * 1000000 + 50000,
+            userId: auc.userId, 
+        };
+    });
+}
+
+function getUniqueSellersInternal(): SellerProfileInfo[] {
+    return sampleSellersStatic.map(seller => {
+        const slug = slugify(seller.name);
+        return {
+            ...seller,
+            id: `seller-${slug}`,
+            publicId: `SELL-PUB-${slug.substring(0, 6).toUpperCase()}${uuidv4().substring(0, 4)}`,
+            slug: slug,
+            createdAt: createPastDate(Math.floor(Math.random() * 90) + 10),
+            updatedAt: createPastDate(Math.floor(Math.random() * 9)),
+            memberSince: createPastDate(Math.floor(Math.random() * 365) + 30),
+            rating: parseFloat((Math.random() * (5.0 - 4.5) + 4.5).toFixed(1)),
+            activeLotsCount: Math.floor(Math.random() * 100) + 10,
+            totalSalesValue: Math.random() * 5000000 + 100000,
+            auctionsFacilitatedCount: Math.floor(Math.random() * 20) + 1,
+            userId: seller.userId,
+        };
+    });
+}
+
+// ============================================================================
+// 4. EXPORTED SAMPLE DATA (PROCESSED)
 // ============================================================================
 
 export const sampleLotCategories: LotCategory[] = getUniqueLotCategoriesFromSampleData();
@@ -581,6 +640,19 @@ const processedSampleAuctions: Auction[] = sampleAuctionsRaw.map(auctionRaw => {
         status: currentStatus, // Status derived/corrected
         lots: [], // Lots will be populated in the next step
     } as Auction;
+});
+
+export const sampleSubcategories: Subcategory[] = sampleSubcategoriesStatic.map(sub => {
+  const slug = slugify(sub.name);
+  const parentCategory = sampleLotCategories.find(c => c.id === sub.parentCategoryId);
+  return {
+    ...sub,
+    id: `subcat-${parentCategory?.slug}-${slug}`,
+    slug: slug,
+    itemCount: sampleLotsRaw.filter(lot => lot.subcategoryId === `subcat-${parentCategory?.slug}-${slug}`).length,
+    createdAt: createPastDate(Math.floor(Math.random() * 30) + 1),
+    updatedAt: createPastDate(Math.floor(Math.random() * 30)),
+  };
 });
 
 export const sampleLots: Lot[] = sampleLotsRaw.map(lotRaw => {
@@ -974,9 +1046,54 @@ export function getPlaceholderIfEmpty(value: string | number | null | undefined,
     return String(value);
 }
 
+export function getCategoryNameFromSlug(slug: string): string | undefined {
+    return sampleLotCategories.find(c => c.slug === slug)?.name;
+}
 
+export function getCategoryAssets(categoryNameOrSlug: string) {
+    const slug = slugify(categoryNameOrSlug);
 
+    const defaultAssets = {
+        bannerUrl: 'https://placehold.co/1200x200.png',
+        logoUrl: 'https://placehold.co/100x100.png',
+        bannerAiHint: 'leilao abstrato',
+        logoAiHint: 'logo generico',
+        bannerText: 'Encontre as melhores oportunidades.'
+    };
 
+    const assetsMap: Record<string, Partial<typeof defaultAssets>> = {
+        'imoveis': { bannerUrl: 'https://placehold.co/1200x200.png', bannerAiHint: 'imoveis cidade panorama', logoAiHint: 'predio casa', bannerText: 'Encontre seu próximo imóvel com condições especiais.'},
+        'veiculos': { bannerUrl: 'https://placehold.co/1200x200.png', bannerAiHint: 'carros patio leilao', logoAiHint: 'carro moto', bannerText: 'Diversidade de veículos para todas as necessidades e gostos.'},
+        'maquinas-e-equipamentos': { bannerUrl: 'https://placehold.co/1200x200.png', bannerAiHint: 'maquinas pesadas industrial', logoAiHint: 'trator engrenagem', bannerText: 'Equipamentos robustos para impulsionar seu negócio.' },
+        'leiloes-judiciais': { bannerUrl: 'https://placehold.co/400x225.png', bannerAiHint: 'martelo tribunal', logoAiHint: 'justica balanca' },
+        'leiloes-extrajudiciais': { bannerUrl: 'https://placehold.co/400x225.png', bannerAiHint: 'acordo negocios aperto mao', logoAiHint: 'documento selo' },
+        'tomada-de-precos': { bannerUrl: 'https://placehold.co/400x225.png', bannerAiHint: 'graficos analise', logoAiHint: 'prancheta lista' },
+        'venda-direta': { bannerUrl: 'https://placehold.co/400x225.png', bannerAiHint: 'etiqueta preco', logoAiHint: 'carrinho compras' },
+        'segunda-praca': { bannerUrl: 'https://placehold.co/400x225.png', bannerAiHint: 'seta descendo desconto', logoAiHint: 'porcentagem' },
+        'leiloes-encerrados': { bannerUrl: 'https://placehold.co/400x225.png', bannerAiHint: 'carimbo vendido', logoAiHint: 'calendario passado' },
+        'leiloes-cancelados': { bannerUrl: 'https://placehold.co/400x225.png', bannerAiHint: 'sinal proibido', logoAiHint: 'documento rasgado' }
+    };
+    
+    return { ...defaultAssets, ...(assetsMap[slug] || {}) };
+}
 
+export function getUniqueSellerNames(): string[] {
+    const names = new Set(sampleLots.map(lot => lot.sellerName).filter(Boolean));
+    return Array.from(names).sort();
+}
+
+export function getUniqueLotLocations(): string[] {
+  const locations = new Set<string>();
+  sampleLots.forEach(lot => {
+    if (lot.cityName && lot.stateUf) {
+      locations.add(`${lot.cityName} - ${lot.stateUf}`);
+    } else if (lot.cityName) {
+      locations.add(lot.cityName);
+    } else if (lot.stateUf) {
+      locations.add(lot.stateUf);
+    }
+  });
+  return Array.from(locations).sort();
+}
 
     
