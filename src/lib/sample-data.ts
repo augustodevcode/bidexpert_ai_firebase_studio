@@ -370,7 +370,7 @@ export const sampleDirectSaleOffersRaw: Omit<DirectSaleOffer, 'createdAt' | 'upd
   { id: 'DSO006', title: 'Obra de Arte Contemporânea - "Abstração Urbana"', description: 'Pintura acrílica sobre tela de grandes dimensões (150x200cm) do renomado artista plástico local. Cores vibrantes e técnica mista. Acompanha certificado de autenticidade.', imageUrl: 'https://placehold.co/800x600.png', dataAiHint: 'pintura abstrata colorida', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 12000, category: 'Arte e Antiguidades', locationCity: 'Porto Alegre', locationState: 'RS', sellerName: 'Galeria Pampa Arte', status: 'EXPIRED', latitude: -30.0346, longitude: -51.2177, mapAddress: "Moinhos de Vento, Porto Alegre" },
 ];
 
-export const sampleMediaItemsRaw: Omit<MediaItem, 'uploadedAt' | 'linkedLotIds'>[] = [
+export const sampleMediaItemsRaw: Omit<MediaItem, 'uploadedAt' | 'linkedLotIds' | 'storagePath'>[] = [
     { id: 'media001', fileName: 'casa_centro_frente.jpg', title: 'Frente da Casa no Centro', mimeType: 'image/jpeg', sizeBytes: 102400, urlOriginal: 'https://placehold.co/800x600.png', urlThumbnail: 'https://placehold.co/150x100.png', urlMedium: 'https://placehold.co/400x300.png', urlLarge: 'https://placehold.co/800x600.png', dataAiHint: 'fachada casa cidade' },
     { id: 'media002', fileName: 'audi_a4_2013_perfil.png', title: 'Audi A4 2013 Perfil', mimeType: 'image/png', sizeBytes: 204800, urlOriginal: 'https://placehold.co/800x600.png', urlThumbnail: 'https://placehold.co/150x100.png', urlMedium: 'https://placehold.co/400x300.png', urlLarge: 'https://placehold.co/800x600.png', dataAiHint: 'carro audi perfil' },
     { id: 'media003', fileName: 'edital_leilao_bradesco.pdf', title: 'Edital Leilão Bradesco 100625bra', mimeType: 'application/pdf', sizeBytes: 512000, urlOriginal: '#', urlThumbnail: 'https://placehold.co/150x100.png', urlMedium: '#', urlLarge: '#', dataAiHint: 'documento edital' },
@@ -900,6 +900,7 @@ export const sampleMediaItems: MediaItem[] = sampleMediaItemsRaw.map(item => ({
     ...item,
     uploadedAt: createPastDate(Math.floor(Math.random() * 30) + 1),
     linkedLotIds: sampleLots.filter(l => l.mediaItemIds?.includes(item.id)).map(l => l.id),
+    storagePath: `/uploads/media/${item.fileName}`, // Assuming local storage path for sample data
 }));
 
 export const sampleDocumentTypes: DocumentType[] = [
@@ -1004,7 +1005,9 @@ export const samplePlatformSettings: PlatformSettings = {
   id: 'global',
   siteTitle: 'BidExpert Leilões',
   siteTagline: 'Sua plataforma definitiva para leilões online.',
-  galleryImageBasePath: '/lotes-exemplo/', 
+  galleryImageBasePath: '/uploads/media/', 
+  storageProvider: 'local',
+  firebaseStorageBucket: 'bidexpert-630df.appspot.com',
   activeThemeName: 'Padrão BidExpert',
   themes: [
     {
@@ -1095,6 +1098,3 @@ export function getUniqueLotLocations(): string[] {
   });
   return Array.from(locations).sort();
 }
-    
-
-    

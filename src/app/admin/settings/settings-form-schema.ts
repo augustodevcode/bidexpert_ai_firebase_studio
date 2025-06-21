@@ -1,5 +1,6 @@
+
 import * as z from 'zod';
-import type { MapSettings, SearchPaginationType } from '@/types'; // Import MapSettings
+import type { MapSettings, SearchPaginationType, StorageProviderType } from '@/types'; // Import MapSettings, StorageProviderType
 
 const themeColorSchema = z.record(z.string().regex(/^hsl\(\d{1,3}(deg)?(\s\d{1,3}%){2}\)$/i, {
     message: "Cor deve estar no formato HSL, ex: hsl(25 95% 53%)"
@@ -19,6 +20,10 @@ export const platformSettingsFormSchema = z.object({
     .endsWith("/", { message: "O caminho deve terminar com uma barra '/'." })
     .regex(/^(\/[a-zA-Z0-9_-]+)+\/$/, { message: "Caminho inválido. Use apenas letras, números, hífens, underscores e barras. Ex: /media/gallery/" })
     .max(200, { message: "O caminho não pode exceder 200 caracteres." }),
+  storageProvider: z.enum(['local', 'firebase'], {
+    errorMap: () => ({ message: "Por favor, selecione um provedor de armazenamento válido." })
+  }).optional().default('local'),
+  firebaseStorageBucket: z.string().max(200, {message: "Nome do bucket muito longo."}).optional().nullable(),
   activeThemeName: z.string().optional().nullable(),
   themes: z.array(themeSchema).optional().default([]), 
   platformPublicIdMasks: z.object({ 
@@ -35,7 +40,6 @@ export const platformSettingsFormSchema = z.object({
     staticImageMapZoom: z.coerce.number().min(1, {message: "Zoom deve ser entre 1 e 20."}).max(20, {message: "Zoom deve ser entre 1 e 20."}).optional().default(15),
     staticImageMapMarkerColor: z.string().max(50, {message: "Cor do marcador não pode exceder 50 caracteres."}).optional().default('blue'),
   }).optional(),
-  // Novas configurações
   searchPaginationType: z.enum(['loadMore', 'numberedPages'], {
     errorMap: () => ({ message: "Selecione um tipo de paginação válido."})
   }).optional().default('loadMore'),
@@ -48,7 +52,3 @@ export const platformSettingsFormSchema = z.object({
 });
 
 export type PlatformSettingsFormValues = z.infer<typeof platformSettingsFormSchema>;
-
-    
-
-    

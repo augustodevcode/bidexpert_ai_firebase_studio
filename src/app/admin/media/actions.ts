@@ -2,26 +2,18 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { ensureAdminInitialized } from '@/lib/firebase/admin'; // For Storage Admin
-import { sampleMediaItems } from '@/lib/sample-data';
+import { getStorageAdapter } from '@/lib/storage'; // Import the new storage factory
+import { getDatabaseAdapter } from '@/lib/database';
 import type { MediaItem } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// handleImageUpload continues to use Firebase Storage as it's an external service interaction.
 export async function handleImageUpload(
   formData: FormData
 ): Promise<{ success: boolean; message: string; items?: MediaItem[] }> {
-  const { storageAdmin, error: sdkError } = ensureAdminInitialized();
-  // Database adapter is not needed here as we are simulating DB operations for media with sample data
-  // const db = await getDatabaseAdapter(); 
-
-  if (sdkError || !storageAdmin) {
-    const msg = `Erro de configuração: Admin SDK Storage não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}`;
-    console.error(`[Server Action - handleImageUpload] ${msg}`);
-    return { success: false, message: msg };
-  }
+  const storage = await getStorageAdapter();
+  const db = await getDatabaseAdapter();
 
   const files = formData.getAll('files') as File[];
   if (!files || files.length === 0) {
@@ -29,129 +21,116 @@ export async function handleImageUpload(
   }
 
   const uploadedItems: MediaItem[] = [];
-  const bucket = storageAdmin.bucket(); 
 
   try {
     for (const file of files) {
       const fileBuffer = Buffer.from(await file.arrayBuffer());
       const uniqueFilename = `${uuidv4()}-${file.name}`;
-      const filePath = `media_uploads/${uniqueFilename}`;
-
-      const storageFile = bucket.file(filePath);
-      await storageFile.save(fileBuffer, {
-        metadata: { contentType: file.type },
-      });
-
-      await storageFile.makePublic();
-      const publicUrl = storageFile.publicUrl();
       
-      // Simulate adding to sampleMediaItems (this won't persist beyond current request cycle)
-      // In a real scenario, this would be an actual DB write.
-      const newMediaItem: MediaItem = {
-        id: `sample-media-${Date.now()}-${Math.random().toString(36).substring(2,7)}`,
+      const { publicUrl, storagePath } = await storage.upload(uniqueFilename, file.type, fileBuffer);
+      
+      const mediaItemData: Omit<MediaItem, 'id' | 'uploadedAt'> = {
         fileName: file.name,
-        uploadedAt: new Date(), // Use current date for simulation
-        title: file.name,
-        altText: file.name,
+        storagePath: storagePath,
+        title: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
+        altText: file.name.replace(/\.[^/.]+$/, ""),
         mimeType: file.type,
         sizeBytes: file.size,
         urlOriginal: publicUrl,
-        urlThumbnail: publicUrl, // Placeholder, ideally generate thumbnails
+        urlThumbnail: publicUrl, // Placeholder - idealmente gerado por uma função
         urlMedium: publicUrl,
         urlLarge: publicUrl,
         linkedLotIds: [],
         dataAiHint: formData.get(`dataAiHint_${file.name}`) as string || 'upload usuario',
-        uploadedBy: 'admin_placeholder', // Simulate
+        uploadedBy: 'admin_placeholder', // TODO: Obter ID do usuário logado
       };
-      // sampleMediaItems.unshift(newMediaItem); // Add to the beginning for visibility if list is re-read
-      uploadedItems.push(newMediaItem);
-      console.log(`[Action - handleImageUpload - SampleData Mode] Simulating DB save for: ${file.name}, URL: ${publicUrl}`);
+      
+      const dbResult = await db.createMediaItem(mediaItemData, publicUrl, 'admin_placeholder');
+      
+      if (dbResult.success && dbResult.item) {
+        uploadedItems.push(dbResult.item);
+      } else {
+        throw new Error(dbResult.message || `Falha ao salvar metadados do arquivo ${file.name} no banco de dados.`);
+      }
     }
+    
     revalidatePath('/admin/media');
-    return { success: true, message: `${uploadedItems.length} arquivo(s) enviado(s) com sucesso (Storage OK, DB simulado)!`, items: uploadedItems };
+    return { success: true, message: `${uploadedItems.length} arquivo(s) enviado(s) com sucesso!`, items: uploadedItems };
+
   } catch (error: any) {
     console.error("[Server Action - handleImageUpload] Error:", error);
+    // TODO: Implementar lógica de rollback (excluir arquivos já upados se o DB falhar)
     return { success: false, message: error.message || 'Falha ao fazer upload do(s) arquivo(s).' };
   }
 }
 
 export async function getMediaItems(): Promise<MediaItem[]> {
-  console.log('[Action - getMediaItems - SampleData Mode] Fetching from sample-data.ts');
-  await delay(50);
-  return Promise.resolve(JSON.parse(JSON.stringify(sampleMediaItems)));
+  const db = await getDatabaseAdapter();
+  return db.getMediaItems();
 }
 
 export async function updateMediaItemMetadata(
   id: string,
   metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>
 ): Promise<{ success: boolean; message: string }> {
-  console.log(`[Action - updateMediaItemMetadata - SampleData Mode] Simulating update for ID: ${id} with data:`, metadata);
-  await delay(100);
-  // Find and update in sampleMediaItems in memory (won't persist file change)
-  const itemIndex = sampleMediaItems.findIndex(item => item.id === id);
-  if (itemIndex > -1) {
-    // sampleMediaItems[itemIndex] = { ...sampleMediaItems[itemIndex], ...metadata, updatedAt: new Date() };
-    console.log(`[Action - updateMediaItemMetadata - SampleData Mode] Simulated update in-memory for ${id}.`);
+  const db = await getDatabaseAdapter();
+  const result = await db.updateMediaItemMetadata(id, metadata);
+  if (result.success) {
+      revalidatePath('/admin/media');
   }
-  revalidatePath('/admin/media');
-  return { success: true, message: 'Metadados (simulados) atualizados.' };
+  return result;
 }
 
 export async function deleteMediaItem(id: string): Promise<{ success: boolean; message: string }> {
-  const { storageAdmin, error: sdkError } = ensureAdminInitialized();
-  // No DB adapter needed for sample data mode for this part
+  const db = await getDatabaseAdapter();
+  const storage = await getStorageAdapter();
 
-  if (sdkError || !storageAdmin) {
-    const msg = `Erro de config: Admin SDK Storage não disponível. Detalhe: ${sdkError?.message || 'SDK não inicializado'}`;
-    console.error(`[Server Action - deleteMediaItem] ${msg}`);
-    return { success: false, message: msg };
-  }
   if (!id) return { success: false, message: 'ID da imagem não fornecido.' };
   
-  console.log(`[Action - deleteMediaItem - SampleData Mode] Simulating deletion for ID: ${id}`);
-  await delay(100);
-
-  const mediaItemData = sampleMediaItems.find(item => item.id === id);
-
-  if (mediaItemData && mediaItemData.urlOriginal && !mediaItemData.urlOriginal.startsWith('https://placehold.co')) { // Don't delete placeholders
-    try {
-      const bucket = storageAdmin.bucket();
-      const urlParts = mediaItemData.urlOriginal.split(`/${bucket.name}/`);
-      if (urlParts.length > 1) {
-        const filePath = urlParts[1].split('?')[0];
-        const file = bucket.file(filePath);
-        await file.delete();
-        console.log(`[Server Action - deleteMediaItem] Arquivo ${filePath} excluído do Storage.`);
-      } else {
-        console.warn(`[Server Action - deleteMediaItem] Não foi possível extrair caminho do arquivo da URL: ${mediaItemData.urlOriginal} para exclusão do Storage.`);
-      }
-    } catch (storageError: any) {
-      console.error(`[Server Action - deleteMediaItem] Falha ao excluir do Storage (continuando com simulação de DB):`, storageError);
-    }
+  // 1. Obter dados do item de mídia do DB para pegar o storagePath
+  const mediaItemData = await db.getMediaItem(id);
+  if (!mediaItemData) {
+      return { success: false, message: 'Item de mídia não encontrado no banco de dados.'};
   }
-  // Remove from sampleMediaItems in memory (won't persist file change)
-  // const itemIndex = sampleMediaItems.findIndex(item => item.id === id);
-  // if (itemIndex > -1) sampleMediaItems.splice(itemIndex, 1);
+
+  // 2. Excluir do storage (nuvem ou local)
+  if (mediaItemData.storagePath) {
+    const storageResult = await storage.delete(mediaItemData.storagePath);
+    if (!storageResult.success) {
+        // Logar o erro mas continuar para tentar remover do DB
+        console.error(`[deleteMediaItem Action] Falha ao excluir do storage: ${storageResult.message}`);
+    }
+  } else {
+      console.warn(`[deleteMediaItem Action] Item de mídia ${id} não possui storagePath. Pulando exclusão do storage.`);
+  }
+
+  // 3. Excluir do banco de dados
+  const dbResult = await db.deleteMediaItemFromDb(id);
   
-  revalidatePath('/admin/media');
-  return { success: true, message: `Item de mídia (simulado) com ID ${id} excluído do DB e Storage (se aplicável).` };
+  if (dbResult.success) {
+    revalidatePath('/admin/media');
+  }
+
+  return dbResult;
 }
 
 
 export async function linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string }> {
-  console.log(`[Action - linkMediaItemsToLot - SampleData Mode] Simulating link for lot ${lotId} with media: ${mediaItemIds.join(', ')}`);
-  await delay(50);
-  revalidatePath(`/admin/lots/${lotId}/edit`);
-  revalidatePath('/admin/media');
-  return { success: true, message: 'Mídias (simuladas) vinculadas.'};
+  const db = await getDatabaseAdapter();
+  const result = await db.linkMediaItemsToLot(lotId, mediaItemIds);
+  if(result.success) {
+    revalidatePath(`/admin/lots/${lotId}/edit`);
+    revalidatePath('/admin/media');
+  }
+  return result;
 }
 
 export async function unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string }> {
-  console.log(`[Action - unlinkMediaItemFromLot - SampleData Mode] Simulating unlink for lot ${lotId} from media: ${mediaItemId}`);
-  await delay(50);
-  revalidatePath(`/admin/lots/${lotId}/edit`);
-  revalidatePath('/admin/media');
-  return { success: true, message: 'Mídia (simulada) desvinculada.'};
+  const db = await getDatabaseAdapter();
+  const result = await db.unlinkMediaItemFromLot(lotId, mediaItemId);
+  if(result.success) {
+    revalidatePath(`/admin/lots/${lotId}/edit`);
+    revalidatePath('/admin/media');
+  }
+  return result;
 }
-
-    

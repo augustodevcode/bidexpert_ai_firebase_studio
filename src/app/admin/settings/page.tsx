@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, Suspense, useCallback } from 'react'; // Added useCallback
@@ -5,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { getPlatformSettings } from './actions';
 import SettingsForm from './settings-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings as SettingsIcon, Palette, Fingerprint, Wrench, Loader2, MapPin, Search as SearchIconLucide, Clock as ClockIcon, Link2 as LinkIcon } from 'lucide-react'; // Adicionado SearchIconLucide, ClockIcon, LinkIcon
+import { Settings as SettingsIcon, Palette, Fingerprint, Wrench, Loader2, MapPin, Search as SearchIconLucide, Clock as ClockIcon, Link2 as LinkIcon, Database } from 'lucide-react'; // Adicionado SearchIconLucide, ClockIcon, LinkIcon, Database
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { PlatformSettings } from '@/types';
@@ -14,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 const settingsSections = [
     { id: 'identity', label: 'Identidade do Site', icon: Fingerprint, description: 'Título, tagline, logo e favicon.' },
     { id: 'general', label: 'Configurações Gerais', icon: Wrench, description: 'Caminhos de mídia, máscaras de ID, etc.' },
+    { id: 'storage', label: 'Armazenamento', icon: Database, description: 'Configure onde os arquivos de mídia são salvos.' },
     { id: 'appearance', label: 'Aparência e Exibição', icon: Palette, description: 'Gerencie temas, paginação e cronômetros.' }, // Renomeado e combinadp
     { id: 'maps', label: 'Configurações de Mapa', icon: MapPin, description: 'Provedor de mapa padrão e chaves API.' },
 ];
@@ -159,5 +161,4 @@ export default function AdminSettingsPageWrapper() {
         </Suspense>
     );
 }
-
 

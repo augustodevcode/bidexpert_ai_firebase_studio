@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -17,15 +18,14 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { platformSettingsFormSchema, type PlatformSettingsFormValues } from './settings-form-schema';
-import type { PlatformSettings, MapSettings, SearchPaginationType } from '@/types';
-import { Loader2, Save, Palette, Fingerprint, Wrench, MapPin as MapIcon, Search as SearchIconLucide, Clock as ClockIcon, Link2 } from 'lucide-react'; // Renomeado Map para MapIcon para evitar conflito
+import type { PlatformSettings, MapSettings, SearchPaginationType, StorageProviderType } from '@/types';
+import { Loader2, Save, Palette, Fingerprint, Wrench, MapPin as MapIcon, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database } from 'lucide-react'; // Renomeado Map para MapIcon para evitar conflito
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea'; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 
-// A action de submit será importada de './actions'
 import { updatePlatformSettings } from './actions';
 
 interface SettingsFormProps {
@@ -52,6 +52,8 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
       siteTitle: initialData?.siteTitle || 'BidExpert',
       siteTagline: initialData?.siteTagline || 'Leilões Online Especializados',
       galleryImageBasePath: initialData?.galleryImageBasePath || '/media/gallery/',
+      storageProvider: initialData?.storageProvider || 'local',
+      firebaseStorageBucket: initialData?.firebaseStorageBucket || '',
       activeThemeName: initialData?.activeThemeName || null,
       themes: initialData?.themes || [],
       platformPublicIdMasks: initialData?.platformPublicIdMasks || { auctions: '', lots: '', auctioneers: '', sellers: ''},
@@ -71,6 +73,8 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
         siteTitle: initialData?.siteTitle || 'BidExpert',
         siteTagline: initialData?.siteTagline || 'Leilões Online Especializados',
         galleryImageBasePath: initialData?.galleryImageBasePath || '/media/gallery/',
+        storageProvider: initialData?.storageProvider || 'local',
+        firebaseStorageBucket: initialData?.firebaseStorageBucket || '',
         activeThemeName: initialData?.activeThemeName || null,
         themes: initialData?.themes || [],
         platformPublicIdMasks: initialData?.platformPublicIdMasks || { auctions: '', lots: '', auctioneers: '', sellers: ''},
@@ -120,6 +124,8 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
       setIsSubmitting(false);
     }
   }
+  
+  const watchedStorageProvider = form.watch('storageProvider');
 
   return (
     <Form {...form}>
@@ -182,12 +188,12 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
               name="galleryImageBasePath"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Caminho Base para Imagens da Galeria</FormLabel>
+                  <FormLabel>Caminho Base para Imagens (Local Storage)</FormLabel>
                   <FormControl>
                     <Input placeholder="/uploads/media_gallery/" {...field} value={field.value ?? ""} />
                   </FormControl>
                   <FormDescription>
-                    Caminho no servidor (relativo à pasta pública) onde as imagens da galeria serão armazenadas e acessadas. Deve começar e terminar com uma barra "/". Ex: <code>/media/gallery/</code>
+                    Caminho na pasta `public` onde as imagens serão armazenadas. Ex: <code>/media/gallery/</code>
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -245,6 +251,49 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
                   />
               </CardContent>
             </Card>
+          </section>
+        )}
+
+        {activeSection === 'storage' && (
+          <section className="space-y-6">
+            <FormField
+              control={form.control}
+              name="storageProvider"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Provedor de Armazenamento de Mídia</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || 'local'}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o provedor de armazenamento" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="local">Servidor Local (Pasta Public)</SelectItem>
+                      <SelectItem value="firebase">Firebase Cloud Storage</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Onde os arquivos da Biblioteca de Mídia serão salvos. "Local" é recomendado apenas para desenvolvimento.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {watchedStorageProvider === 'firebase' && (
+              <FormField
+                control={form.control}
+                name="firebaseStorageBucket"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome do Bucket (Firebase Storage)</FormLabel>
+                    <FormControl><Input placeholder="Ex: seu-projeto.appspot.com" {...field} value={field.value ?? ''} /></FormControl>
+                    <FormDescription>O nome do seu bucket no Firebase Cloud Storage. Se deixado em branco, tentará usar a configuração padrão.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </section>
         )}
 
@@ -441,8 +490,3 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
     </Form>
   );
 }
-
-    
-
-    
-
