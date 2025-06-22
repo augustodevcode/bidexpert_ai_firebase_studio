@@ -3,7 +3,7 @@
 
 import type { Lot, BidInfo, Review, LotQuestion, SellerProfileInfo } from '@/types';
 import { revalidatePath } from 'next/cache';
-import { sampleLotQuestions, sampleLotReviews, sampleLots, sampleBids, sampleSellers, sampleAuctions } from '@/lib/sample-data'; 
+import { getDatabaseAdapter } from '@/lib/database';
 
 interface PlaceBidResult {
   success: boolean;
@@ -19,70 +19,33 @@ export async function placeBidOnLot(
   userDisplayName: string,
   bidAmount: number
 ): Promise<PlaceBidResult> {
-  console.log(`[Action - placeBidOnLot - SampleData Mode] Simulating bid for lot: ${lotIdOrPublicId}, amount: ${bidAmount}`);
+  console.log(`[Action - placeBidOnLot] Calling DB adapter for lot: ${lotIdOrPublicId}, amount: ${bidAmount}`);
+  const db = await getDatabaseAdapter();
+  const result = await db.placeBidOnLot(lotIdOrPublicId, auctionIdOrPublicId, userId, userDisplayName, bidAmount);
   
-  const lotIndex = sampleLots.findIndex(l => l.id === lotIdOrPublicId || l.publicId === lotIdOrPublicId);
-  if (lotIndex === -1) {
-    return { success: false, message: `Lote com ID/PublicID "${lotIdOrPublicId}" não encontrado nos dados de exemplo.` };
+  if (result.success) {
+    revalidatePath(`/auctions/${auctionIdOrPublicId}/lots/${lotIdOrPublicId}`);
+    console.log(`[Action - placeBidOnLot] Bid successful for ${lotIdOrPublicId}.`);
+  } else {
+    console.error(`[Action - placeBidOnLot] Bid failed for ${lotIdOrPublicId}: ${result.message}`);
   }
-  
-  const lot = sampleLots[lotIndex];
-  if (bidAmount <= lot.price) {
-    return { success: false, message: "Lance (simulado) deve ser maior que o atual." };
-  }
 
-  const newBid: BidInfo = {
-    id: `sample-bid-${Date.now()}`,
-    lotId: lot.id, 
-    auctionId: lot.auctionId,
-    bidderId: userId,
-    bidderDisplay: userDisplayName,
-    amount: bidAmount,
-    timestamp: new Date(),
-  };
-  
-  sampleBids.unshift(newBid); 
-
-  const updatedLotData = { 
-    price: bidAmount, 
-    bidsCount: (lot.bidsCount || 0) + 1 
-  };
-  
-  // Simula a atualização no array sampleLots em memória (não persistirá entre reinícios de servidor)
-  // Isso é principalmente para que o client-side possa refletir a mudança se ele refizer o fetch da lot.
-  // @ts-ignore
-  sampleLots[lotIndex] = { ...sampleLots[lotIndex], ...updatedLotData };
-  
-  revalidatePath(`/auctions/${auctionIdOrPublicId}/lots/${lotIdOrPublicId}`);
-  console.log(`[Action - placeBidOnLot - SampleData Mode] Lance simulado para ${lotIdOrPublicId} de ${bidAmount}.`);
-
-  return { 
-    success: true, 
-    message: "Lance (simulado) registrado com sucesso!", 
-    updatedLot: updatedLotData, 
-    newBid 
-  };
+  return result;
 }
 
 export async function getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> {
-  console.log(`[Action - getBidsForLot - SampleData Mode] Fetching bids for lot ID/PublicID: ${lotIdOrPublicId}`);
-  const lot = sampleLots.find(l => l.id === lotIdOrPublicId || l.publicId === lotIdOrPublicId);
-  if (lot) {
-    const bids = sampleBids.filter(bid => bid.lotId === lot.id);
-    return Promise.resolve(JSON.parse(JSON.stringify(bids)));
-  }
-  return Promise.resolve([]);
+  console.log(`[Action - getBidsForLot] Fetching bids for lot ID/PublicID: ${lotIdOrPublicId}`);
+  const db = await getDatabaseAdapter();
+  const bids = await db.getBidsForLot(lotIdOrPublicId);
+  // Sorting is now handled by the adapter or should be done on the client if needed
+  return bids;
 }
 
 // --- Reviews Actions ---
 export async function getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> {
-  console.log(`[Action - getReviewsForLot - SampleData Mode] Fetching reviews for lot ID/PublicID: ${lotIdOrPublicId}`);
-  const lot = sampleLots.find(l => l.id === lotIdOrPublicId || l.publicId === lotIdOrPublicId);
-  if (lot) {
-    const reviews = sampleLotReviews.filter(review => review.lotId === lot.id);
-    return Promise.resolve(JSON.parse(JSON.stringify(reviews)));
-  }
-  return Promise.resolve([]);
+  console.log(`[Action - getReviewsForLot] Fetching reviews for lot ID/PublicID: ${lotIdOrPublicId}`);
+  const db = await getDatabaseAdapter();
+  return db.getReviewsForLot(lotIdOrPublicId);
 }
 
 export async function createReview(
@@ -92,37 +55,28 @@ export async function createReview(
   rating: number,
   comment: string
 ): Promise<{ success: boolean; message: string; reviewId?: string }> {
-  console.log(`[Action - createReview - SampleData Mode] Simulating review for lot: ${lotIdOrPublicId}`);
-  const lot = sampleLots.find(l => l.id === lotIdOrPublicId || l.publicId === lotIdOrPublicId);
+  console.log(`[Action - createReview] Creating review for lot: ${lotIdOrPublicId}`);
+  const db = await getDatabaseAdapter();
+  
+  const lot = await db.getLot(lotIdOrPublicId);
   if (!lot) {
-    return { success: false, message: `Lote com ID/PublicID "${lotIdOrPublicId}" (simulado) não encontrado para avaliação.` };
+      return { success: false, message: "Lot não encontrado para criar avaliação." };
   }
-  
-  const newReview: Review = {
-    id: `sample-review-${Date.now()}`,
-    lotId: lot.id,
-    auctionId: lot.auctionId,
-    userId,
-    userDisplayName,
-    rating,
-    comment,
-    createdAt: new Date(),
-  };
-  sampleLotReviews.unshift(newReview);
-  
-  revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
-  return { success: true, message: "Avaliação (simulada) adicionada.", reviewId: newReview.id };
+  const reviewData = { lotId: lotIdOrPublicId, auctionId: lot.auctionId, userId, userDisplayName, rating, comment };
+
+  const result = await db.createReview(reviewData);
+
+  if (result.success) {
+    revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lotIdOrPublicId}`);
+  }
+  return result;
 }
 
 // --- Questions Actions ---
 export async function getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]> {
-  console.log(`[Action - getQuestionsForLot - SampleData Mode] Fetching questions for lot ID/PublicID: ${lotIdOrPublicId}`);
-  const lot = sampleLots.find(l => l.id === lotIdOrPublicId || l.publicId === lotIdOrPublicId);
-  if (lot) {
-    const questions = sampleLotQuestions.filter(q => q.lotId === lot.id);
-    return Promise.resolve(JSON.parse(JSON.stringify(questions)));
-  }
-  return Promise.resolve([]);
+  console.log(`[Action - getQuestionsForLot] Fetching questions for lot ID/PublicID: ${lotIdOrPublicId}`);
+  const db = await getDatabaseAdapter();
+  return db.getQuestionsForLot(lotIdOrPublicId);
 }
 
 export async function askQuestionOnLot(
@@ -131,26 +85,20 @@ export async function askQuestionOnLot(
   userDisplayName: string,
   questionText: string
 ): Promise<{ success: boolean; message: string; questionId?: string }> {
-  console.log(`[Action - askQuestionOnLot - SampleData Mode] Simulating question for lot: ${lotIdOrPublicId}`);
-   const lot = sampleLots.find(l => l.id === lotIdOrPublicId || l.publicId === lotIdOrPublicId);
-   if (!lot) {
-    return { success: false, message: `Lote com ID/PublicID "${lotIdOrPublicId}" (simulado) não encontrado para pergunta.` };
+  console.log(`[Action - askQuestionOnLot] Creating question for lot: ${lotIdOrPublicId}`);
+  const db = await getDatabaseAdapter();
+  const lot = await db.getLot(lotIdOrPublicId);
+  if (!lot) {
+      return { success: false, message: "Lot não encontrado para fazer pergunta." };
   }
+  
+  const questionData = { lotId: lotIdOrPublicId, auctionId: lot.auctionId, userId, userDisplayName, questionText };
+  const result = await db.createQuestion(questionData);
 
-  const newQuestion: LotQuestion = {
-    id: `sample-qst-${Date.now()}`,
-    lotId: lot.id,
-    auctionId: lot.auctionId,
-    userId,
-    userDisplayName,
-    questionText,
-    createdAt: new Date(),
-    isPublic: true,
-  };
-  sampleLotQuestions.unshift(newQuestion);
-
-  revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
-  return { success: true, message: "Pergunta (simulada) enviada.", questionId: newQuestion.id };
+  if (result.success) {
+    revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lotIdOrPublicId}`);
+  }
+  return result;
 }
 
 export async function answerQuestionOnLot(
@@ -158,29 +106,23 @@ export async function answerQuestionOnLot(
   answerText: string,
   answeredByUserId: string,
   answeredByUserDisplayName: string,
-  lotId: string, 
-  auctionId: string 
+  lotId: string, // Assuming we get this from the client now
+  auctionId: string // Assuming we get this from the client now
 ): Promise<{ success: boolean; message: string }> {
-  console.log(`[Action - answerQuestionOnLot - SampleData Mode] Simulating answer for question ID: ${questionId}`);
-  const questionIndex = sampleLotQuestions.findIndex(q => q.id === questionId);
-  if (questionIndex === -1) {
-    return { success: false, message: "Pergunta (simulada) não encontrada." };
+  console.log(`[Action - answerQuestionOnLot] Answering question ID: ${questionId}`);
+  const db = await getDatabaseAdapter();
+  const result = await db.answerQuestion(lotId, questionId, answerText, answeredByUserId, answeredByUserDisplayName);
+  
+  if (result.success) {
+    revalidatePath(`/auctions/${auctionId}/lots/${lotId}`);
   }
-  // Simular atualização da pergunta em memória (não persistente)
-  // sampleLotQuestions[questionIndex] = {
-  //   ...sampleLotQuestions[questionIndex],
-  //   answerText,
-  //   answeredAt: new Date(),
-  //   answeredByUserId,
-  //   answeredByUserDisplayName,
-  // };
-  revalidatePath(`/auctions/${auctionId}/lots/${lotId}`);
-  return { success: true, message: "Pergunta (simulada) respondida." };
+  return result;
 }
 
 export async function getSellerDetailsForLotPage(sellerIdOrPublicIdOrSlug?: string): Promise<SellerProfileInfo | null> {
-    console.log(`[Action - getSellerDetailsForLotPage - SampleData Mode] Fetching seller ID/publicId/slug: ${sellerIdOrPublicIdOrSlug}`);
+    console.log(`[Action - getSellerDetailsForLotPage] Fetching seller ID/publicId/slug: ${sellerIdOrPublicIdOrSlug}`);
     if (!sellerIdOrPublicIdOrSlug) return Promise.resolve(null);
-    const seller = sampleSellers.find(s => s.id === sellerIdOrPublicIdOrSlug || s.publicId === sellerIdOrPublicIdOrSlug || s.slug === sellerIdOrPublicIdOrSlug);
-    return Promise.resolve(seller ? JSON.parse(JSON.stringify(seller)) : null);
+    const db = await getDatabaseAdapter();
+    const seller = await db.getSellerBySlug(sellerIdOrPublicIdOrSlug);
+    return seller;
 }
