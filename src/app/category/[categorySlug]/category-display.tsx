@@ -92,7 +92,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         if (foundCategory) {
           const lotsForCategory = allLotsData.filter(lot => lot.categoryId === foundCategory.id || slugify(lot.type) === foundCategory.slug);
           setFilteredLots(lotsForCategory);
-          setActiveFilters(prev => ({ ...prev, category: foundCategory.slug }));
+          setActiveFilters((prev: ActiveFilters) => ({ ...prev, category: foundCategory.slug }));
         } else {
           console.warn(`Category with slug '${categorySlug}' not found.`);
           setFilteredLots([]);
@@ -117,31 +117,32 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
   }, [currentCategory, categorySlug]);
   
   const handleFilterSubmit = (filters: ActiveFilters) => {
-    setActiveFilters(filters);
+    // Keep the current category fixed
+    const fixedCategoryFilter = {...filters, category: categorySlug};
+    setActiveFilters(fixedCategoryFilter);
     setIsFilterSheetOpen(false); 
     
-    // Use the main category page as the base, then apply filters on top.
+    // Always start from the base lots of the current category
     const baseLots = currentCategory 
       ? allLots.filter(lot => lot.categoryId === currentCategory.id || slugify(lot.type) === currentCategory.slug)
-      : allLots;
+      : [];
 
-    // Apply additional filters
     const newlyFilteredLots = baseLots.filter(lot => {
       // Price Range
-      if (lot.price < filters.priceRange[0] || lot.price > filters.priceRange[1]) {
+      if (lot.price < fixedCategoryFilter.priceRange[0] || lot.price > fixedCategoryFilter.priceRange[1]) {
           return false;
       }
       // Locations
-      if (filters.locations.length > 0) {
+      if (fixedCategoryFilter.locations.length > 0) {
           const lotLocation = `${lot.cityName} - ${lot.stateUf}`;
-          if (!filters.locations.includes(lotLocation)) return false;
+          if (!fixedCategoryFilter.locations.includes(lotLocation)) return false;
       }
       // Sellers
-      if (filters.sellers.length > 0 && lot.sellerName && !filters.sellers.includes(lot.sellerName)) {
+      if (fixedCategoryFilter.sellers.length > 0 && lot.sellerName && !fixedCategoryFilter.sellers.includes(lot.sellerName)) {
           return false;
       }
       // Status
-       if (filters.status && filters.status.length > 0 && !filters.status.includes(lot.status)) {
+       if (fixedCategoryFilter.status && fixedCategoryFilter.status.length > 0 && !fixedCategoryFilter.status.includes(lot.status)) {
          return false;
        }
       return true;
@@ -149,10 +150,9 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
 
     setFilteredLots(newlyFilteredLots);
   };
-
+  
   const handleFilterReset = () => {
-    // Reset filters but keep the current page's category context
-    const resetFilters = {...initialFiltersState, category: currentCategory?.slug || 'TODAS'};
+    const resetFilters = {...initialFiltersState, category: categorySlug};
     setActiveFilters(resetFilters);
 
     if (currentCategory) {
@@ -216,7 +216,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
       </div>
     );
   }
-
+  
   return (
     <div className="space-y-8">
        <div className="flex items-center text-sm text-muted-foreground mb-2">
