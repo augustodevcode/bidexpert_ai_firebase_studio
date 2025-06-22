@@ -242,15 +242,130 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async createQuestion(questionData: Omit<LotQuestion, "id" | "createdAt" | "answeredAt" | "answeredByUserId" | "answeredByUserDisplayName" | "isPublic">): Promise<{ success: boolean; message: string; questionId?: string | undefined; }> { const newQuestion: LotQuestion = {...questionData, id: `qst-${uuidv4()}`, createdAt: new Date(), isPublic: true}; this.data.sampleLotQuestions.unshift(newQuestion); await this._persistData(); return { success: true, message: "Pergunta enviada!", questionId: newQuestion.id }; }
   async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleLotQuestions.findIndex(q => q.id === questionId); if(index === -1) return {success: false, message: 'Pergunta não encontrada.'}; this.data.sampleLotQuestions[index] = {...this.data.sampleLotQuestions[index], answerText, answeredByUserId, answeredByUserDisplayName, answeredAt: new Date()}; await this._persistData(); return {success: true, message: 'Pergunta respondida!'}; }
   
-  // --- Users & Roles ---
+  // --- Roles ---
+  async getRoles(): Promise<Role[]> {
+    await delay(20);
+    return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleRoles)));
+  }
+
+  async getRole(id: string): Promise<Role | null> {
+    await delay(20);
+    const role = this.data.sampleRoles.find(r => r.id === id);
+    return Promise.resolve(role ? JSON.parse(JSON.stringify(role)) : null);
+  }
+
+  async getRoleByName(name: string): Promise<Role | null> {
+    await delay(20);
+    const role = this.data.sampleRoles.find(r => r.name_normalized === name.toUpperCase());
+    return Promise.resolve(role ? JSON.parse(JSON.stringify(role)) : null);
+  }
+
+  async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> {
+    await delay(50);
+    const normalizedName = data.name.trim().toUpperCase();
+    if (this.data.sampleRoles.some(r => r.name_normalized === normalizedName)) {
+      return { success: false, message: `Perfil "${data.name}" já existe.` };
+    }
+    const newRole: Role = {
+      ...data,
+      id: `role-${slugify(data.name)}`,
+      name_normalized: normalizedName,
+      permissions: data.permissions || [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.data.sampleRoles.push(newRole);
+    await this._persistData();
+    return { success: true, message: 'Perfil criado!', roleId: newRole.id };
+  }
+
+  async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> {
+    await delay(50);
+    const index = this.data.sampleRoles.findIndex(r => r.id === id);
+    if (index === -1) return { success: false, message: 'Perfil não encontrado.' };
+    const currentRole = this.data.sampleRoles[index];
+    if (['ADMINISTRATOR', 'USER'].includes(currentRole.name_normalized)) {
+      if (data.name && currentRole.name !== data.name) return { success: false, message: "Não é permitido alterar o nome de perfis padrão." };
+    }
+    this.data.sampleRoles[index] = { ...currentRole, ...data, updatedAt: new Date() };
+    if (data.name) {
+      this.data.sampleRoles[index].name_normalized = data.name.trim().toUpperCase();
+    }
+    await this._persistData();
+    return { success: true, message: 'Perfil atualizado!' };
+  }
+
+  async deleteRole(id: string): Promise<{ success: boolean; message: string; }> {
+    await delay(50);
+    const roleToDelete = this.data.sampleRoles.find(r => r.id === id);
+    if (!roleToDelete) return { success: false, message: 'Perfil não encontrado.' };
+    if (['ADMINISTRATOR', 'USER'].includes(roleToDelete.name_normalized)) {
+      return { success: false, message: 'Perfis de sistema não podem ser excluídos.' };
+    }
+    this.data.sampleRoles = this.data.sampleRoles.filter(r => r.id !== id);
+    await this._persistData();
+    return { success: true, message: 'Perfil excluído!' };
+  }
+
   async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }> { return Promise.resolve({ success: true, message: 'Default roles ensured.', rolesProcessed: this.data.sampleRoles.length }); }
-  async getRoleByName(name: string): Promise<Role | null> { await delay(20); const item = this.data.sampleRoles.find(r => r.name_normalized === name.toUpperCase()); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
-  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<UserProfileData>, roleIdToAssign?: string | undefined): Promise<{ success: boolean; message: string; userProfile?: UserProfileData | undefined; }> { const existing = await this.getUserByEmail(email); if(existing) return { success: true, message: 'User profile exists (SampleData).', userProfile: existing }; const role = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER'); const newUser: UserProfileData = { uid: userId, email, fullName: fullName || email.split('@')[0], roleId: role?.id, roleName: role?.name, permissions: role?.permissions, status: 'ATIVO', habilitationStatus: 'PENDENTE_DOCUMENTOS', ...(additionalProfileData || {}), createdAt: new Date(), updatedAt: new Date() }; return { success: true, message: 'User profile ensured (SampleData).', userProfile: newUser }; }
+  
+  // --- Users ---
+  async getUsersWithRoles(): Promise<UserProfileWithPermissions[]> {
+    await delay(20);
+    return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleUserProfiles)));
+  }
+  
+  async getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null> {
+    await delay(20);
+    const user = this.data.sampleUserProfiles.find(u => u.uid === userId);
+    return Promise.resolve(user ? JSON.parse(JSON.stringify(user)) : null);
+  }
+  
+  async getUserByEmail(email: string): Promise<UserProfileWithPermissions | null> {
+    await delay(20);
+    const user = this.data.sampleUserProfiles.find(u => u.email.toLowerCase() === email.toLowerCase());
+    return Promise.resolve(user ? JSON.parse(JSON.stringify(user)) : null);
+  }
+
+  async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
+    await delay(50);
+    const userIndex = this.data.sampleUserProfiles.findIndex(u => u.uid === userId);
+    if (userIndex === -1) return { success: false, message: 'Usuário não encontrado.' };
+    
+    if (roleId) {
+      const role = await this.getRole(roleId);
+      if (!role) return { success: false, message: 'Perfil não encontrado.' };
+      this.data.sampleUserProfiles[userIndex].roleId = role.id;
+      this.data.sampleUserProfiles[userIndex].roleName = role.name;
+      this.data.sampleUserProfiles[userIndex].permissions = role.permissions;
+    } else {
+      this.data.sampleUserProfiles[userIndex].roleId = null;
+      this.data.sampleUserProfiles[userIndex].roleName = 'Não Definido';
+      this.data.sampleUserProfiles[userIndex].permissions = [];
+    }
+    this.data.sampleUserProfiles[userIndex].updatedAt = new Date();
+    await this._persistData();
+    return { success: true, message: 'Perfil do usuário atualizado!' };
+  }
+  
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<UserProfileData>, roleIdToAssign?: string | undefined): Promise<{ success: boolean; message: string; userProfile?: UserProfileWithPermissions | undefined; }> { 
+    const existing = await this.getUserByEmail(email); 
+    if(existing) {
+        console.log(`[SampleDataAdapter - ensureUserRole] Found existing user: ${email}`);
+        return { success: true, message: 'User profile exists (SampleData).', userProfile: existing };
+    }
+    console.log(`[SampleDataAdapter - ensureUserRole] User not found, creating new profile for: ${email}`);
+    const role = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER'); 
+    const newUser: UserProfileWithPermissions = { uid: userId, email, fullName: fullName || email.split('@')[0], roleId: role?.id, roleName: role?.name, permissions: role?.permissions || [], status: 'ATIVO', habilitationStatus: 'PENDENTE_DOCUMENTOS', ...(additionalProfileData || {}), createdAt: new Date(), updatedAt: new Date() };
+    this.data.sampleUserProfiles.push(newUser);
+    await this._persistData();
+    return { success: true, message: 'User profile ensured (SampleData).', userProfile: newUser }; 
+  }
   async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> { this.data.sampleUserProfiles = this.data.sampleUserProfiles.filter(u => u.uid !== userId); await this._persistData(); return {success: true, message: 'Usuário excluído!'}; }
   async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleUserProfiles.findIndex(u => u.uid === userId); if(index === -1) return {success: false, message: 'Usuário não encontrado.'}; this.data.sampleUserProfiles[index] = {...this.data.sampleUserProfiles[index], ...data, updatedAt: new Date()}; await this._persistData(); return {success: true, message: 'Perfil atualizado!'}; }
 
   // --- Media ---
-  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> { const newItem: MediaItem = {...data, id: `media-${uuidv4()}`, uploadedAt: new Date(), urlOriginal: filePublicUrl, urlThumbnail: filePublicUrl, urlMedium: filePublicUrl, urlLarge: filePublicUrl, uploadedBy: uploadedBy || 'system', linkedLotIds:[]}; this.data.sampleMediaItems.unshift(newItem); await this._persistData(); return {success: true, message: 'Mídia criada!', item: newItem}; }
+  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> { const newItem: MediaItem = {...data, id: `media-${uuidv4()}`, storagePath: filePublicUrl, uploadedAt: new Date(), urlOriginal: filePublicUrl, urlThumbnail: filePublicUrl, urlMedium: filePublicUrl, urlLarge: filePublicUrl, uploadedBy: uploadedBy || 'system', linkedLotIds:[]}; this.data.sampleMediaItems.unshift(newItem); await this._persistData(); return {success: true, message: 'Mídia criada!', item: newItem}; }
   async getMediaItems(): Promise<MediaItem[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleMediaItems))); }
   async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, "title" | "altText" | "caption" | "description">>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleMediaItems.findIndex(m => m.id === id); if(index === -1) return {success: false, message: 'Mídia não encontrada.'}; this.data.sampleMediaItems[index] = {...this.data.sampleMediaItems[index], ...metadata}; await this._persistData(); return {success: true, message: 'Metadados da mídia atualizados!'}; }
   async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> { this.data.sampleMediaItems = this.data.sampleMediaItems.filter(m => m.id !== id); await this._persistData(); return {success: true, message: 'Mídia excluída!'}; }
@@ -262,5 +377,13 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     console.log('[SampleDataAdapter] Fetching PlatformSettings.');
     await delay(10);
     return Promise.resolve(JSON.parse(JSON.stringify(this.data.samplePlatformSettings)));
+  }
+
+  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
+    console.log(`[SampleDataAdapter] Updating PlatformSettings.`);
+    await delay(50);
+    this.data.samplePlatformSettings = { ...this.data.samplePlatformSettings, ...data, id: 'global', updatedAt: new Date() };
+    await this._persistData();
+    return { success: true, message: "Configurações da plataforma atualizadas (Sample Data)!" };
   }
 }
