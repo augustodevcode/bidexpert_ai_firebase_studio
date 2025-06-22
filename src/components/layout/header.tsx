@@ -299,7 +299,7 @@ export default function Header() {
         label: 'Histórico',
         isMegaMenu: true,
         contentKey: 'history',
-        icon: History, // Ícone History aqui
+        icon: History,
         href: '/dashboard/history',
         megaMenuAlign: 'end'
     },
@@ -578,4 +578,3 @@ export default function Header() {
     
       
     
-
