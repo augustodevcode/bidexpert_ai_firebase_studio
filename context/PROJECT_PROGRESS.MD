@@ -1,4 +1,3 @@
-
 # Project Progress - BidExpert
 
 ## DONE
@@ -55,22 +54,18 @@
     *   `LotDetailClientContent` (and its `DetailTimeRemaining` component) uses derived effective start/end dates.
     *   `LotCard` and `LotListItem` reflect these derived dates/status via the updated `sampleLots`.
     *   Reviewed all display components to ensure consistency.
+- **Admin User Permissions & Login (`admin@bidexpert.com.br` - DONE)**: Restored database adapter logic for user/role management, resolving login issues by removing hardcoded sample-data access in actions. The system now respects the `ACTIVE_DATABASE_SYSTEM` environment variable.
 
 ## WORKING
-- **Admin User Permissions (`admin@bidexpert.com.br`)**: Ensure `admin@bidexpert.com.br` has 'manage_all' permission and sees admin menu items.
-    - **Sub-task 1 (DONE):** Updated `scripts/setup-admin-user.ts` to use `admin@bidexpert.com.br`.
-    - **Sub-task 2 (DONE):** Updated `src/app/admin/users/actions.ts` to prioritize 'ADMINISTRATOR' role for `admin@bidexpert.com.br`.
-    - **Sub-task 3 (DOING):** Transitioned user/role management to `sample-data.ts` for testing. Actions/queries updated. Admin user and roles defined in sample data.
 - **Item 19:** Implement visual timeline for auction stages in the auction CRUD form (`/admin/auctions/[auctionId]/edit`).
   - **Sub-task 1 (DONE):** Create `AuctionStagesTimeline.tsx` component.
-  - **Sub-task 2 (DONE):** Integrate `AuctionStagesTimeline` into `AuctionForm.tsx`.
+  - **Sub-task 2 (DOING):** Integrate `AuctionStagesTimeline` into `AuctionForm.tsx`.
 
 ## NEXT
 - **Item 20:** Develop Virtual Auditorium (`/auctions/[auctionId]/live`) with current lot display, bidding panel, upcoming lots, and chat.
 - **Item 21:** Gantt chart for auctions on the auction dashboard (`/admin/auctions/page.tsx`).
 - **Complete SQL Adapter Implementation:**
     *   Thoroughly test and complete all `IDatabaseAdapter` methods for MySQL and PostgreSQL for all entities.
-    *   Revert user/role management to DB adapters when testing phase is over.
 - **Media Library (Core Functionality):**
     *   Implement file upload (Firebase Storage).
     *   Modal for metadata editing for `MediaItem`.
