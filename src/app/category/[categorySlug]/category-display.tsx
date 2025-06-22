@@ -115,10 +115,6 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     fetchData();
   }, [categorySlug]);
   
-  const categoryAssets = useMemo(() => {
-    return getCategoryAssets(currentCategory?.name || categorySlug);
-  }, [currentCategory, categorySlug]);
-  
   const handleFilterSubmit = (filters: ActiveFilters) => {
     // Keep the current category fixed
     const fixedCategoryFilter = {...filters, category: categorySlug};
@@ -220,6 +216,9 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     );
   }
   
+  const bannerUrl = currentCategory.coverImageUrl || getCategoryAssets(currentCategory.name).bannerUrl;
+  const bannerAiHint = currentCategory.dataAiHintCover || getCategoryAssets(currentCategory.name).bannerAiHint;
+
   return (
     <div className="space-y-8">
        <div className="flex items-center text-sm text-muted-foreground mb-2">
@@ -233,16 +232,16 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
       <Card className="shadow-lg overflow-hidden">
         <div className="relative h-48 md:h-64 w-full">
           <Image 
-            src={categoryAssets.bannerUrl} 
+            src={bannerUrl} 
             alt={`Banner ${currentCategory.name}`} 
             fill 
             className="object-cover"
-            data-ai-hint={categoryAssets.bannerAiHint}
+            data-ai-hint={bannerAiHint}
             priority
           />
           <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-4">
             <h1 className="text-3xl md:text-4xl font-bold text-white font-headline mb-1">{currentCategory.name}</h1>
-            {categoryAssets.bannerText && <p className="text-md md:text-lg text-gray-200 max-w-xl">{categoryAssets.bannerText}</p>}
+            {currentCategory.description && <p className="text-md md:text-lg text-gray-200 max-w-xl">{currentCategory.description}</p>}
           </div>
         </div>
       </Card>

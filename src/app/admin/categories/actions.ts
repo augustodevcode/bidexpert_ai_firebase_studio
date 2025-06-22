@@ -3,68 +3,80 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { sampleLotCategories, slugify } from '@/lib/sample-data';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { LotCategory } from '@/types';
+import type { CategoryFormValues } from './category-form-schema';
 
 // Simula uma pequena latência de rede
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function createLotCategory(
-  data: { name: string; description?: string; }
+  data: CategoryFormValues
 ): Promise<{ success: boolean; message: string; categoryId?: string; }> {
-  // Usar concatenação de string simples
-  console.log('[Action - createLotCategory - SampleData Mode] Simulating creation for: ' + data.name);
-  await delay(100); 
-  // Não modifica o array `sampleLotCategories` em `sample-data.ts` pois é estático.
-  // Apenas simula sucesso.
-  revalidatePath('/admin/categories');
-  return { success: true, message: `Categoria "${data.name}" (simulada) criada com sucesso!`, categoryId: `sample-cat-${Date.now()}` };
+  const db = await getDatabaseAdapter();
+  const result = await db.createLotCategory(data);
+  if (result.success) {
+    revalidatePath('/admin/categories');
+  }
+  return result;
 }
 
 export async function getLotCategories(): Promise<LotCategory[]> {
-  console.log('[Action - getLotCategories - SampleData Mode] Fetching from sampleLotCategories in sample-data.ts');
-  await delay(50);
-  return Promise.resolve(JSON.parse(JSON.stringify(sampleLotCategories))); // Retorna cópia para evitar mutação acidental
+  const db = await getDatabaseAdapter();
+  return db.getLotCategories();
 }
 
 export async function getLotCategory(id: string): Promise<LotCategory | null> {
-  console.log('[Action - getLotCategory - SampleData Mode] Fetching category ID: ' + id + ' from sampleLotCategories');
-  await delay(50);
-  const category = sampleLotCategories.find(cat => cat.id === id || cat.slug === id);
-  return Promise.resolve(category ? JSON.parse(JSON.stringify(category)) : null);
+  const db = await getDatabaseAdapter();
+  return db.getLotCategory(id);
 }
 
 export async function getLotCategoryBySlug(slug: string): Promise<LotCategory | null> {
-  console.log('[Action - getLotCategoryBySlug - SampleData Mode] Fetching category slug: ' + slug + ' from sampleLotCategories');
-  await delay(50);
-  const category = sampleLotCategories.find(cat => cat.slug === slug);
-  return Promise.resolve(category ? JSON.parse(JSON.stringify(category)) : null);
+  console.warn("getLotCategoryBySlug may not be implemented in all adapters. Check adapter logic.");
+  const db = await getDatabaseAdapter();
+  // Fallback logic in case the adapter doesn't have it (like sample-data)
+  if (typeof (db as any).getLotCategoryBySlug === 'function') {
+      return (db as any).getLotCategoryBySlug(slug);
+  }
+  const allCategories = await db.getLotCategories();
+  return allCategories.find(c => c.slug === slug) || null;
 }
 
 export async function getLotCategoryByName(name: string): Promise<LotCategory | null> {
-  console.log('[Action - getLotCategoryByName - SampleData Mode] Fetching category name: ' + name + ' from sampleLotCategories');
-  await delay(50);
-  const normalizedName = name.trim().toLowerCase();
-  const category = sampleLotCategories.find(cat => cat.name.toLowerCase() === normalizedName);
-  return Promise.resolve(category ? JSON.parse(JSON.stringify(category)) : null);
+  const db = await getDatabaseAdapter();
+  return db.getLotCategoryByName(name);
 }
 
 export async function updateLotCategory(
   id: string,
-  data: { name: string; description?: string; }
+  data: CategoryFormValues
 ): Promise<{ success: boolean; message: string; }> {
-  console.log('[Action - updateLotCategory - SampleData Mode] Simulating update for category ID: ' + id + ' with data: ' + JSON.stringify(data));
-  await delay(100);
-  revalidatePath('/admin/categories');
-  revalidatePath(`/admin/categories/${id}/edit`);
-  return { success: true, message: `Categoria "${data.name}" (simulada) atualizada com sucesso!` };
+  const db = await getDatabaseAdapter();
+  const result = await db.updateLotCategory(id, data);
+  if(result.success) {
+    revalidatePath('/admin/categories');
+    revalidatePath(`/admin/categories/${id}/edit`);
+    revalidatePath(`/category/${data.name ? slugify(data.name) : ''}`);
+  }
+  return result;
 }
 
 export async function deleteLotCategory(
   id: string
 ): Promise<{ success: boolean; message: string; }> {
-  console.log('[Action - deleteLotCategory - SampleData Mode] Simulating deletion for category ID: ' + id);
-  await delay(100);
-  revalidatePath('/admin/categories');
-  return { success: true, message: `Categoria com ID "${id}" (simulada) excluída com sucesso!` };
+  const db = await getDatabaseAdapter();
+  const result = await db.deleteLotCategory(id);
+  if (result.success) {
+      revalidatePath('/admin/categories');
+  }
+  return result;
+}
+
+// Helper function to be used within this file, not for direct export if it's internal logic
+function slugify(text: string): string {
+  if (!text) return '';
+  return text.toString().toLowerCase().trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-');
 }

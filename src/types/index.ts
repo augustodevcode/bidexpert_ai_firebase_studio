@@ -21,6 +21,12 @@ export interface LotCategory {
     description?: string;
     itemCount?: number;
     hasSubcategories?: boolean;
+    logoUrl?: string | null;
+    coverImageUrl?: string | null;
+    megaMenuImageUrl?: string | null;
+    dataAiHintLogo?: string | null;
+    dataAiHintCover?: string | null;
+    dataAiHintMegaMenu?: string | null;
     createdAt: AnyTimestamp; // Changed from Date
     updatedAt: AnyTimestamp; // Changed from Date
 }
@@ -801,6 +807,12 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
+
+// Garantir que os IDs únicos de auctioneerId e sellerId sejam usados nos leilões
+// (já feito acima)
+
+// Garantir que os IDs únicos de auctionId e sellerId sejam usados nos lotes
+// (já feito acima)
 
 // Garantir que AnyTimestamp cubra também os campos `createdAt` e `updatedAt` de `Subcategory`
 // (já feito acima)
