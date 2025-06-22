@@ -170,7 +170,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         case 'lotNumber_asc':
           return (parseInt(String(a.number || a.id).replace(/\D/g,'')) || 0) - (parseInt(String(b.number || b.id).replace(/\D/g,'')) || 0);
         case 'lotNumber_desc':
-          return (parseInt(String(b.number || b.id).replace(/\D/g,'')) || 0) - (parseInt(String(a.number || a.id).replace(/\D/g,'')) || 0));
+          return (parseInt(String(b.number || b.id).replace(/\D/g,'')) || 0) - (parseInt(String(a.number || a.id).replace(/\D/g,'')) || 0);
         case 'endDate_asc':
           return new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime();
         case 'endDate_desc':
@@ -285,4 +285,3 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     </div>
   );
 }
-
