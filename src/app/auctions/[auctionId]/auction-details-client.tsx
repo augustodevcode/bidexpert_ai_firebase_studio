@@ -18,6 +18,7 @@ import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText, slugify } from '@/lib/sample-data';
 import SearchResultsFrame from '@/components/search-results-frame';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 
 const sortOptionsLots = [
   { value: 'relevance', label: 'Relevância' },
