@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -39,6 +40,7 @@ interface SidebarFiltersProps {
   onFilterReset: () => void;
   initialFilters?: ActiveFilters;
   filterContext?: 'auctions' | 'directSales'; // To show relevant filters
+  disableCategoryFilter?: boolean; // New prop to disable category selection
 }
 
 const defaultModalities = [
@@ -79,6 +81,7 @@ export default function SidebarFilters({
   onFilterReset,
   initialFilters,
   filterContext = 'auctions',
+  disableCategoryFilter = false, // Default to enabled
 }: SidebarFiltersProps) {
   
   const statuses = filterContext === 'directSales' ? defaultDirectSaleStatuses : defaultAuctionStatuses;
@@ -153,7 +156,9 @@ export default function SidebarFilters({
 
   const resetInternalFilters = () => {
     setSelectedModality(modalities.length > 0 ? modalities[0].value : '');
-    setSelectedCategorySlug('TODAS');
+    if (!disableCategoryFilter) {
+        setSelectedCategorySlug('TODAS');
+    }
     setPriceRange([0, 500000]);
     setSelectedLocations([]);
     setSelectedSellers([]);
@@ -233,8 +238,10 @@ export default function SidebarFilters({
         )}
         
         {categories.length > 0 && (
-            <AccordionItem value="categories">
-            <AccordionTrigger className="text-md font-medium">Categorias</AccordionTrigger>
+            <AccordionItem value="categories" disabled={disableCategoryFilter}>
+            <AccordionTrigger className="text-md font-medium" disabled={disableCategoryFilter}>
+                Categorias {disableCategoryFilter && <span className="text-xs text-muted-foreground ml-1">(Atual)</span>}
+            </AccordionTrigger>
             <AccordionContent>
                 <RadioGroup value={selectedCategorySlug} onValueChange={handleCategoryChange} className="space-y-1 max-h-60 overflow-y-auto pr-2">
                     <div key="TODAS" className="flex items-center space-x-2">

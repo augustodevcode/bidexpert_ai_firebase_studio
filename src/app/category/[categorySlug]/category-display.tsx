@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LayoutGrid, List, SlidersHorizontal, Loader2, ChevronRight, AlertCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
+import SearchResultsFrame from '@/components/search-results-frame'; // Import SearchResultsFrame
 
 interface CategoryDisplayProps {
   params: {
@@ -50,22 +51,29 @@ const initialFiltersState: ActiveFilters = {
 export default function CategoryDisplay({ params }: CategoryDisplayProps) {
   const { categorySlug } = params; 
 
-  const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
   const [isLoading, setIsLoading] = useState(true);
   const [currentCategory, setCurrentCategory] = useState<LotCategory | null>(null);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
-  const [categoryLots, setCategoryLots] = useState<Lot[]>([]);
+  const [allLots, setAllLots] = useState<Lot[]>([]); // Store all lots once
+  const [filteredLots, setFilteredLots] = useState<Lot[]>([]); // Lots to display after filtering
+
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [sortBy, setSortBy] = useState<string>('relevance');
   
+  // States for filter options
   const [allCategoriesForFilter, setAllCategoriesForFilter] = useState<LotCategory[]>([]);
   const [uniqueLocationsForFilter, setUniqueLocationsForFilter] = useState<string[]>([]);
   const [uniqueSellersForFilter, setUniqueSellersForFilter] = useState<string[]>([]);
-  const [allLots, setAllLots] = useState<Lot[]>([]);
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({...initialFiltersState, category: categorySlug });
+
 
   useEffect(() => {
     async function fetchData() {
+      if (!categorySlug || categorySlug === 'undefined') {
+        console.error("Category slug is invalid:", categorySlug);
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
       try {
         const [allCats, settings, allLotsData] = await Promise.all([
@@ -73,20 +81,21 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
             getPlatformSettings(),
             getLots(),
         ]);
-        setAllLots(allLotsData); 
+        
         setAllCategoriesForFilter(allCats);
         setPlatformSettings(settings);
-        
+        setAllLots(allLotsData);
+
         const foundCategory = allCats.find(cat => cat.slug === categorySlug);
         setCurrentCategory(foundCategory || null);
 
         if (foundCategory) {
           const lotsForCategory = allLotsData.filter(lot => lot.categoryId === foundCategory.id || slugify(lot.type) === foundCategory.slug);
-          setCategoryLots(lotsForCategory);
+          setFilteredLots(lotsForCategory);
           setActiveFilters(prev => ({ ...prev, category: foundCategory.slug }));
         } else {
           console.warn(`Category with slug '${categorySlug}' not found.`);
-          setCategoryLots([]);
+          setFilteredLots([]);
         }
         
         setUniqueLocationsForFilter(getUniqueLotLocations(allLotsData));
@@ -95,7 +104,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
       } catch (error) {
         console.error("Error fetching category data:", error);
         setCurrentCategory(null);
-        setCategoryLots([]);
+        setFilteredLots([]);
       } finally {
         setIsLoading(false);
       }
@@ -111,68 +120,80 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     setActiveFilters(filters);
     setIsFilterSheetOpen(false); 
     
-    let lotsToFilter = allLots; // Start with all lots
+    // Start with the lots for the current category page
+    const baseLots = currentCategory 
+      ? allLots.filter(lot => lot.categoryId === currentCategory.id || slugify(lot.type) === currentCategory.slug)
+      : allLots;
 
-    // Apply category filter first
-    if (filters.category && filters.category !== 'TODAS') {
-        const categoryToFilter = allCategoriesForFilter.find(c => c.slug === filters.category);
-        if (categoryToFilter) {
-            lotsToFilter = allLots.filter(lot => lot.categoryId === categoryToFilter.id);
-        } else {
-             lotsToFilter = []; // Category not found, show no lots
-        }
-    }
-    // Note: Other filters like price, location, etc. would be applied here on `lotsToFilter`
-    
-    setCategoryLots(lotsToFilter);
+    // Apply additional filters
+    const newlyFilteredLots = baseLots.filter(lot => {
+      // Price Range
+      if (lot.price < filters.priceRange[0] || lot.price > filters.priceRange[1]) {
+          return false;
+      }
+      // Locations
+      if (filters.locations.length > 0) {
+          const lotLocation = `${lot.cityName} - ${lot.stateUf}`;
+          if (!filters.locations.includes(lotLocation)) return false;
+      }
+      // Sellers
+      if (filters.sellers.length > 0 && lot.sellerName && !filters.sellers.includes(lot.sellerName)) {
+          return false;
+      }
+      // Status
+       if (filters.status && filters.status.length > 0 && !filters.status.includes(lot.status)) {
+         return false;
+       }
+      return true;
+    });
+
+    setFilteredLots(newlyFilteredLots);
   };
 
   const handleFilterReset = () => {
+    // Reset filters but keep the current page's category context
     const resetFilters = {...initialFiltersState, category: currentCategory?.slug || 'TODAS'};
     setActiveFilters(resetFilters);
+
     if (currentCategory) {
       const lotsForCategory = allLots.filter(lot => lot.categoryId === currentCategory.id || slugify(lot.type) === currentCategory.slug);
-      setCategoryLots(lotsForCategory);
+      setFilteredLots(lotsForCategory);
     } else {
-      setCategoryLots(allLots); 
+      setFilteredLots([]); 
     }
     setIsFilterSheetOpen(false);
   };
 
-  const sortedAndFilteredLots = useMemo(() => {
-    let lotsToSort = [...categoryLots];
-    switch (sortBy) {
-      case 'lotNumber_asc':
-        lotsToSort.sort((a, b) => (parseInt(String(a.number || a.id).replace(/\D/g,'')) || 0) - (parseInt(String(b.number || b.id).replace(/\D/g,'')) || 0));
-        break;
-      case 'lotNumber_desc':
-        lotsToSort.sort((a, b) => (parseInt(String(b.number || b.id).replace(/\D/g,'')) || 0) - (parseInt(String(a.number || a.id).replace(/\D/g,'')) || 0));
-        break;
-      case 'endDate_asc':
-        lotsToSort.sort((a, b) => new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime());
-        break;
-      case 'endDate_desc':
-        lotsToSort.sort((a, b) => new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime());
-        break;
-      case 'price_asc':
-        lotsToSort.sort((a, b) => a.price - b.price);
-        break;
-      case 'price_desc':
-        lotsToSort.sort((a, b) => b.price - a.price);
-        break;
-      case 'views_desc':
-        lotsToSort.sort((a, b) => (b.views || 0) - (a.views || 0));
-        break;
-      case 'id_desc': 
-        // This is a simplistic sort by ID, assuming higher ID means newer. A createdAt field would be better.
-        lotsToSort.sort((a, b) => (b.id > a.id ? 1 : -1));
-        break;
-      case 'relevance':
-      default:
-        break;
-    }
-    return lotsToSort;
-  }, [categoryLots, sortBy]);
+  const sortedLots = useMemo(() => {
+    return [...filteredLots].sort((a, b) => {
+      switch (sortBy) {
+        case 'lotNumber_asc':
+          return (parseInt(String(a.number || a.id).replace(/\D/g,'')) || 0) - (parseInt(String(b.number || b.id).replace(/\D/g,'')) || 0);
+        case 'lotNumber_desc':
+          return (parseInt(String(b.number || b.id).replace(/\D/g,'')) || 0) - (parseInt(String(a.number || a.id).replace(/\D/g,'')) || 0));
+        case 'endDate_asc':
+          return new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime();
+        case 'endDate_desc':
+          return new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime();
+        case 'price_asc':
+          return a.price - b.price;
+        case 'price_desc':
+          return b.price - a.price;
+        case 'views_desc':
+          return (b.views || 0) - (a.views || 0);
+        case 'id_desc': 
+          return b.id.localeCompare(a.id);
+        case 'relevance':
+        default:
+          if (a.status === 'ABERTO_PARA_LANCES' && b.status !== 'ABERTO_PARA_LANCES') return -1;
+          if (a.status !== 'ABERTO_PARA_LANCES' && b.status === 'ABERTO_PARA_LANCES') return 1;
+          return new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime();
+      }
+    });
+  }, [filteredLots, sortBy]);
+
+  const renderGridItem = (item: Lot) => <LotCard lot={item} platformSettings={platformSettings!} />;
+  const renderListItem = (item: Lot) => <LotListItem lot={item} platformSettings={platformSettings!} />;
 
   if (isLoading || !platformSettings) {
     return (
@@ -241,90 +262,27 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
             onFilterSubmit={handleFilterSubmit}
             onFilterReset={handleFilterReset}
             initialFilters={activeFilters}
+            disableCategoryFilter={true}
           />
         </aside>
 
-        <main className="space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-card border rounded-lg shadow-sm">
-            <p className="text-sm text-muted-foreground">
-              Mostrando {sortedAndFilteredLots.length} lote{sortedAndFilteredLots.length !== 1 ? 's' : ''} em <span className="font-semibold text-foreground">{currentCategory.name}</span>
-            </p>
-            <div className="flex items-center gap-3">
-              <div className="md:hidden">
-                <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <SlidersHorizontal className="mr-2 h-4 w-4" /> Filtros
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="left" className="p-0 w-[85vw] max-w-sm">
-                    <div className="p-4 h-full overflow-y-auto">
-                      <SidebarFilters 
-                        categories={allCategoriesForFilter}
-                        locations={uniqueLocationsForFilter}
-                        sellers={uniqueSellersForFilter}
-                        onFilterSubmit={handleFilterSubmit}
-                        onFilterReset={handleFilterReset}
-                        initialFilters={activeFilters}
-                      />
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[180px] h-9 text-xs">
-                  <SelectValue placeholder="Ordenar por" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sortOptions.map(option => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-muted-foreground hidden sm:inline">Ver:</span>
-                <Button
-                  variant={viewMode === 'card' ? 'secondary' : 'ghost'}
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setViewMode('card')}
-                  aria-label="Visualização em Grade"
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setViewMode('list')}
-                  aria-label="Visualização em Lista"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {sortedAndFilteredLots.length > 0 ? (
-            <div className={`grid gap-6 ${viewMode === 'card' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
-              {sortedAndFilteredLots.map((lot) => (
-                viewMode === 'card' 
-                  ? <LotCard key={lot.id} lot={lot} platformSettings={platformSettings} />
-                  : <LotListItem key={lot.id} lot={lot} platformSettings={platformSettings} />
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="text-center py-12">
-                <h2 className="text-xl font-semibold mb-2">Nenhum Lote Encontrado</h2>
-                <p className="text-muted-foreground">Não há lotes disponíveis nesta categoria no momento ou com os filtros aplicados.</p>
-              </CardContent>
-            </Card>
-          )}
+        <main>
+          <SearchResultsFrame
+            items={sortedLots}
+            totalItemsCount={sortedLots.length}
+            renderGridItem={renderGridItem}
+            renderListItem={renderListItem}
+            sortOptions={sortOptions}
+            initialSortBy={sortBy}
+            onSortChange={setSortBy}
+            platformSettings={platformSettings}
+            isLoading={isLoading}
+            searchTypeLabel="lotes"
+            emptyStateMessage={`Nenhum lote encontrado em "${currentCategory.name}" com os filtros aplicados.`}
+          />
         </main>
       </div>
     </div>
   );
 }
+
