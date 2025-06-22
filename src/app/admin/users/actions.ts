@@ -6,8 +6,6 @@ import { getDatabaseAdapter } from '@/lib/database';
 import type { UserProfileData, Role, UserHabilitationStatus, UserProfileWithPermissions } from '@/types';
 import type { UserFormValues } from './user-form-schema';
 
-console.log('[Users Actions] Using database adapter source.');
-
 export interface UserCreationData {
   fullName: string;
   email: string;
