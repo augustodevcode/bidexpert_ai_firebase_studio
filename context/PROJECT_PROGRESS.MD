@@ -53,7 +53,8 @@
 ## DOING
 - **Media Library Integration (Items 3, 4, 7):**
   - **Sub-task 2 (DOING):** Replace URL inputs in Auctioneer, Seller, and Auction forms.
-    - Auctioneer form updated. Next: Seller and Auction forms.
+    - Auctioneer form updated.
+    - Seller form updated. Next: Auction form.
   - **Sub-task 3 (TODO):** Perform data migration in `sample-data.local.json` to move all image URLs into `mediaItems` and link them to their respective entities. This will be a larger refactor.
 
 ## NEXT

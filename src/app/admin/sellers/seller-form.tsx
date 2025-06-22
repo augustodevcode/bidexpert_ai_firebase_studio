@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -19,9 +19,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { sellerFormSchema, type SellerFormValues } from './seller-form-schema';
-import type { SellerProfileInfo } from '@/types';
-import { Loader2, Save, Users } from 'lucide-react';
+import type { SellerProfileInfo, MediaItem } from '@/types';
+import { Loader2, Save, Users, Image as ImageIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import Image from 'next/image';
+import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 
 interface SellerFormProps {
   initialData?: SellerProfileInfo | null;
@@ -41,6 +43,7 @@ export default function SellerForm({
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
 
   const form = useForm<SellerFormValues>({
     resolver: zodResolver(sellerFormSchema),
@@ -59,6 +62,20 @@ export default function SellerForm({
       description: initialData?.description || '',
     },
   });
+
+  const logoUrlPreview = useWatch({ control: form.control, name: 'logoUrl' });
+
+  const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
+    if (selectedItems.length > 0) {
+      const selectedMediaItem = selectedItems[0];
+      if (selectedMediaItem?.urlOriginal) {
+        form.setValue('logoUrl', selectedMediaItem.urlOriginal);
+      } else {
+        toast({ title: "Seleção Inválida", description: "O item de mídia selecionado não possui uma URL válida.", variant: "destructive" });
+      }
+    }
+    setIsMediaDialogOpen(false);
+  };
 
   async function onSubmit(values: SellerFormValues) {
     setIsSubmitting(true);
@@ -91,6 +108,7 @@ export default function SellerForm({
   }
 
   return (
+    <>
     <Card className="max-w-3xl mx-auto shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><Users className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
@@ -120,7 +138,7 @@ export default function SellerForm({
                   <FormItem>
                     <FormLabel>Nome do Contato (Opcional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nome do responsável" {...field} />
+                      <Input placeholder="Nome do responsável" {...field} value={field.value ?? ''}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -133,7 +151,7 @@ export default function SellerForm({
                   <FormItem>
                     <FormLabel>Email (Opcional)</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="contato@comitente.com" {...field} />
+                      <Input type="email" placeholder="contato@comitente.com" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -148,7 +166,7 @@ export default function SellerForm({
                   <FormItem>
                     <FormLabel>Telefone (Opcional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="(XX) XXXXX-XXXX" {...field} />
+                      <Input placeholder="(XX) XXXXX-XXXX" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -161,7 +179,7 @@ export default function SellerForm({
                   <FormItem>
                     <FormLabel>Website (Opcional)</FormLabel>
                     <FormControl>
-                      <Input type="url" placeholder="https://www.comitente.com" {...field} />
+                      <Input type="url" placeholder="https://www.comitente.com" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -175,7 +193,7 @@ export default function SellerForm({
                   <FormItem>
                     <FormLabel>Endereço (Opcional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Rua Exemplo, 123, Bairro" {...field} />
+                      <Input placeholder="Rua Exemplo, 123, Bairro" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -189,7 +207,7 @@ export default function SellerForm({
                   <FormItem>
                     <FormLabel>Cidade (Opcional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="São Paulo" {...field} />
+                      <Input placeholder="São Paulo" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -202,7 +220,7 @@ export default function SellerForm({
                   <FormItem>
                     <FormLabel>Estado/UF (Opcional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="SP" {...field} />
+                      <Input placeholder="SP" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -215,40 +233,58 @@ export default function SellerForm({
                   <FormItem>
                     <FormLabel>CEP (Opcional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="00000-000" {...field} />
+                      <Input placeholder="00000-000" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-             <FormField
-                control={form.control}
-                name="logoUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>URL do Logo (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input type="url" placeholder="https://exemplo.com/logo.png" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="dataAiHintLogo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Dica para IA (Logo - Opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: banco logo, empresa tecnologia" {...field} />
-                    </FormControl>
-                     <FormDescription>Duas palavras chave para ajudar a IA encontrar uma imagem de placeholder, se a URL do logo não for fornecida.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            
+            <FormItem>
+              <FormLabel>Logo do Comitente</FormLabel>
+              <div className="flex items-center gap-4">
+                <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">
+                  {logoUrlPreview ? (
+                    <Image src={logoUrlPreview} alt="Prévia do Logo" fill className="object-contain" data-ai-hint="previa logo comitente" />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      <ImageIcon className="h-8 w-8" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-grow space-y-2">
+                  <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>
+                    {logoUrlPreview ? 'Alterar Logo' : 'Escolher da Biblioteca'}
+                  </Button>
+                  <FormField
+                    control={form.control}
+                    name="logoUrl"
+                    render={({ field }) => (
+                        <FormControl>
+                            <Input type="text" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} className="text-xs h-8" />
+                        </FormControl>
+                    )}
+                    />
+                  <FormMessage />
+                </div>
+              </div>
+            </FormItem>
+
+            <FormField
+              control={form.control}
+              name="dataAiHintLogo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dica para IA (Logo - Opcional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex: banco logo, empresa tecnologia" {...field} value={field.value ?? ''} />
+                  </FormControl>
+                   <FormDescription>Duas palavras chave para ajudar a IA encontrar uma imagem de placeholder, se a URL do logo não for fornecida.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="description"
@@ -256,7 +292,7 @@ export default function SellerForm({
                 <FormItem>
                   <FormLabel>Descrição/Observações (Opcional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Detalhes adicionais sobre o comitente..." {...field} rows={4} />
+                    <Textarea placeholder="Detalhes adicionais sobre o comitente..." {...field} value={field.value ?? ''} rows={4} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -275,7 +311,12 @@ export default function SellerForm({
         </form>
       </Form>
     </Card>
+     <ChooseMediaDialog
+        isOpen={isMediaDialogOpen}
+        onOpenChange={setIsMediaDialogOpen}
+        onMediaSelect={handleMediaSelect}
+        allowMultiple={false}
+      />
+    </>
   );
 }
-
-    
