@@ -4,13 +4,13 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon, FileText as TomadaPrecosIcon } from 'lucide-react';
+import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon, FileText as TomadaPrecosIcon } from 'lucide-react'; // Adicionado SearchIcon
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
-import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters';
+import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters'; 
 import AuctionCard from '@/components/auction-card';
 import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
@@ -134,8 +134,10 @@ export default function SearchPage() {
             const locations = new Set<string>();
             [...auctions, ...lots].forEach(item => {
                 if (item.city && item.stateUf) locations.add(`${item.city} - ${item.stateUf}`);
+                else if (item.city && item.state) locations.add(`${item.city} - ${item.state}`);
                 else if (item.city) locations.add(item.city);
                 else if (item.stateUf) locations.add(item.stateUf);
+                else if (item.state) locations.add(item.state);
             });
             setUniqueLocationsForFilter(Array.from(locations).sort());
 
@@ -517,16 +519,21 @@ export default function SearchPage() {
         <span className="text-foreground font-medium">Resultados da Busca</span>
       </div>
 
-      <Card className="shadow-lg">
-        <CardContent className="p-6 text-center">
-          <SearchIcon className="h-12 w-12 mx-auto text-primary mb-3" />
-          <h1 className="text-3xl font-bold font-headline">Resultados da Busca</h1>
-          <p className="text-muted-foreground mt-2">
-            Encontre leilões, lotes e ofertas de venda direta.
-          </p>
-        </CardContent>
+      <Card className="shadow-lg overflow-hidden">
+        <div className="relative h-48 md:h-56 w-full">
+            <img 
+                src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxncmFkaWVudCUyMGJsdWV8ZW58MHx8fHwxNzUyMTEyMTYyfDA&ixlib=rb-4.1.0&q=80&w=1080" 
+                alt="Banner de Busca" 
+                className="object-cover w-full h-full"
+                data-ai-hint="gradiente abstrato"
+            />
+            <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
+                <h1 className="text-3xl md:text-4xl font-bold text-white font-headline mb-1">Resultados da Busca</h1>
+                <p className="text-md md:text-lg text-gray-200 max-w-xl">Encontre leilões, lotes e ofertas de venda direta.</p>
+            </div>
+        </div>
       </Card>
-
+      
       <form onSubmit={handleSearchFormSubmit} className="flex flex-col md:flex-row items-center gap-4 mb-6 max-w-3xl mx-auto">
         <div className="relative flex-grow w-full">
             <SearchIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
@@ -609,4 +616,3 @@ export default function SearchPage() {
     </div>
   );
 }
-

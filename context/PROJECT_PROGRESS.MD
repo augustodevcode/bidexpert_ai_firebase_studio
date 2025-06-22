@@ -16,8 +16,7 @@
     - Management of Site Title, Tagline, Gallery Image Base Path, Public ID Masks, Map Provider, Search Pagination, Countdown Timers, Related Lots via `/admin/settings`.
     - Settings persisted via active database adapter.
 - **Lot Card & Detail Enhancements (Mental Triggers & Info):**
-    *   Implemented `BadgeVisibilitySettings` and `SectionBadgeConfig` in `PlatformSettings`.
-    *   Display logic for Discount, Urgency Timer, "MAIS VISITADO", "LANCE QUENTE", "EXCLUSIVO" badges on `LotCard`, `LotListItem`, and `LotDetailClientContent`.
+    *   **Item 1 (Badges Review - DONE):** Implemented `BadgeVisibilitySettings` and `SectionBadgeConfig` in `PlatformSettings`. Display logic for Discount, Urgency Timer, "MAIS VISITADO", "LANCE QUENTE", "EXCLUSIVO" badges on `LotCard`, `LotListItem`, and `LotDetailClientContent` verified.
     *   Homepage "Lotes em Destaque" shows only `ABERTO_PARA_LANCES` lots.
     *   `LotDetailClientContent` displays "Permite Lance Parcelado" and "Incremento Mínimo".
     *   Countdown timer styling on lot detail page improved.
@@ -30,49 +29,38 @@
 - **Public Facing Pages:**
     *   Initial setup for various informational and detail pages.
     *   Responsiveness of `TabsList` on lot detail page fixed.
+    *   Category page display logic reviewed and corrected.
 - **AI Flows:**
     *   Initial Genkit flows for `suggestListingDetails`, `predictOpeningValue`, `suggestSimilarListings`.
-- **`SearchResultsFrame` Component:**
+- **`SearchResultsFrame` Component (Item 5 - DONE):**
     *   Created for consistent display of search results/listings.
-    *   Integrated into:
-        *   Auction edit page (for lots).
-        *   Seller detail page (for lots).
-        *   Auctioneer detail page (for auctions).
-        *   Main search page (`/search`).
+    *   Integrated into: Auction edit page (for lots), Seller detail page (for lots), Auctioneer detail page (for auctions), Main search page (`/search`), Category page. Confirmed as standard component.
 - **Subcategory Management (Items 16, 17, 18):**
     *   **Item 16 (DONE):** Defined `Subcategory` type, updated `LotCategory`, updated `IDatabaseAdapter`, implemented subcategory CRUD in SQL adapters, created Server Actions, developed UI (form, list, edit pages), added admin sidebar link.
     *   **Item 17 (DONE):** Added examples of subcategories to `sample-data.ts` and connected to main categories. `hasSubcategories` flag correctly set.
     *   **Item 18 (DONE):** Integrated subcategory selection into Lot CRUD form. Updated display components (`LotListItem`, `LotDetailClientContent`, `LotCard`, lot list in auction edit) to show subcategory name.
-- **Context Persistence System (User Request - Setup DONE):**
-    *   Created `context/PROJECT_CONTEXT_HISTORY.md`.
-    *   Created `context/PROJECT_PROGRESS.MD` (this file).
-    *   Created `context/PROJECT_INSTRUCTIONS.md`.
-    *   Created `context/1st.md`.
-- **Item 1 (LotCard Title Spacing - DONE):** Fixed spacing issue between image and title in LotCard.
 - **Lot Dates & Status Derivation (Item 13 - DONE):**
     *   `sample-data.ts` logic updated to derive lot `endDate` and `status` from parent auction, considering `auctionStages`.
     *   `LotDetailClientContent` (and its `DetailTimeRemaining` component) uses derived effective start/end dates.
     *   `LotCard` and `LotListItem` reflect these derived dates/status via the updated `sampleLots`.
     *   Reviewed all display components to ensure consistency.
 - **Admin User Permissions & Login (`admin@bidexpert.com.br` - DONE)**: Restored database adapter logic for user/role management, resolving login issues by removing hardcoded sample-data access in actions. The system now respects the `ACTIVE_DATABASE_SYSTEM` environment variable.
+- **Search Page Hero (Item 2 - DONE):** Removed smaller icon from the center of the main hero banner on the search page.
 
-## WORKING
-- **Item 19:** Implement visual timeline for auction stages in the auction CRUD form (`/admin/auctions/[auctionId]/edit`).
-  - **Sub-task 1 (DONE):** Create `AuctionStagesTimeline.tsx` component.
-  - **Sub-task 2 (DOING):** Integrate `AuctionStagesTimeline` into `AuctionForm.tsx`.
+## DOING
+- **CRUD Actions Refactoring (Item 6):**
+  - **Sub-task 1 (DONE):** Refactored server actions for States, Cities, Auctioneers, and Sellers to use the `getDatabaseAdapter()`, ensuring they work with the configured data source (sample-data, MySQL, or PostgreSQL).
+- **Media Library Integration (Items 3, 4, 7):**
+  - **Sub-task 1 (DOING):** Integrating `ChooseMediaDialog` into forms. Replaced URL text inputs with a media selection button and preview in the Category CRUD form.
+  - **Sub-task 2 (TODO):** Replace URL inputs in Auctioneer, Seller, and Auction forms.
+  - **Sub-task 3 (TODO):** Perform data migration in `sample-data.local.json` to move all image URLs into `mediaItems` and link them to their respective entities. This will be a larger refactor.
 
 ## NEXT
+- **Item 19:** Implement visual timeline for auction stages in the auction CRUD form (`/admin/auctions/[auctionId]/edit`).
 - **Item 20:** Develop Virtual Auditorium (`/auctions/[auctionId]/live`) with current lot display, bidding panel, upcoming lots, and chat.
 - **Item 21:** Gantt chart for auctions on the auction dashboard (`/admin/auctions/page.tsx`).
 - **Complete SQL Adapter Implementation:**
     *   Thoroughly test and complete all `IDatabaseAdapter` methods for MySQL and PostgreSQL for all entities.
-- **Media Library (Core Functionality):**
-    *   Implement file upload (Firebase Storage).
-    *   Modal for metadata editing for `MediaItem`.
-    *   Deletion functionality (DB & Storage).
-- **Lot Form Media Integration:**
-    *   Modal to select from Media Library for lot images.
-    *   Display/manage linked media in lot form.
 - **User Authentication & Authorization (Enhancements):**
     *   Implement robust, granular permission checks in all Server Actions.
     *   Complete `habilitationStatus` workflow for users.
