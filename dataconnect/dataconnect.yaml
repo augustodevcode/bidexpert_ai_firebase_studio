@@ -1,16 +1,1 @@
-# Arquivo de configuração para Firebase Data Connect (opcional).
-# Deixado vazio intencionalmente pois não estamos usando Data Connect diretamente neste projeto.
-# Este arquivo existe para silenciar avisos do Firebase CLI.
-schema: {}
-
-# Exemplo de como seria se fosse usado:
-# serviceId: my-sql-service
-# source:
-#   mysql:
-#     connectionString: MYSQL_CONNECTION_STRING_ENV_VAR
-# connectors:
-#   - type: OPENAPI
-#     location: openapi.yaml
-# allowedOrigins:
-#   - https://your-app.web.app
-#   - http://localhost:3000
+# This file is intentionally left empty to avoid conflicts with the root dataconnect.yaml.
