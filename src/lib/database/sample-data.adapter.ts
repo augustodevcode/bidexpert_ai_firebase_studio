@@ -290,7 +290,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     await delay(20);
     const resolved = this.data.sampleAuctions.map(auc => ({
       ...auc,
-      imageUrl: resolveMediaUrl(auc.imageMediaId, this.data.sampleMediaItems),
+      imageUrl: resolveMediaUrl(auc.imageMediaId, this.data.sampleMediaItems) || 'https://placehold.co/600x400.png',
       auctioneerLogoUrl: resolveMediaUrl(this.data.sampleAuctioneers.find(a => a.id === auc.auctioneerId)?.logoMediaId, this.data.sampleMediaItems)
     }));
     return Promise.resolve(JSON.parse(JSON.stringify(resolved)));
@@ -301,12 +301,12 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     if (!item) return null;
     const resolved = { 
         ...item, 
-        imageUrl: resolveMediaUrl(item.imageMediaId, this.data.sampleMediaItems),
+        imageUrl: resolveMediaUrl(item.imageMediaId, this.data.sampleMediaItems) || 'https://placehold.co/600x400.png',
         auctioneerLogoUrl: resolveMediaUrl(this.data.sampleAuctioneers.find(a => a.id === item.auctioneerId)?.logoMediaId, this.data.sampleMediaItems)
     };
     return Promise.resolve(JSON.parse(JSON.stringify(resolved)));
   }
-  async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> { const seller = await this.getSellerBySlug(sellerSlugOrPublicId); if (!seller) return Promise.resolve([]); const items = this.data.sampleAuctions.filter(a => a.sellerId === seller.id || a.seller === seller.name); const resolved = items.map(auc => ({...auc, imageUrl: resolveMediaUrl(auc.imageMediaId, this.data.sampleMediaItems)})); return Promise.resolve(JSON.parse(JSON.stringify(resolved))); }
+  async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> { const seller = await this.getSellerBySlug(sellerSlugOrPublicId); if (!seller) return Promise.resolve([]); const items = this.data.sampleAuctions.filter(a => a.sellerId === seller.id || a.seller === seller.name); const resolved = items.map(auc => ({...auc, imageUrl: resolveMediaUrl(auc.imageMediaId, this.data.sampleMediaItems) || 'https://placehold.co/600x400.png'})); return Promise.resolve(JSON.parse(JSON.stringify(resolved))); }
   async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> { const newAuction: Auction = {...(data as any), id: `auc-${uuidv4()}`, publicId: `AUC-PUB-${uuidv4()}`, createdAt: new Date(), updatedAt: new Date(), lots:[], totalLots:0}; this.data.sampleAuctions.push(newAuction); await this._persistData(); return {success: true, message: 'Leilão criado!', auctionId: newAuction.id, auctionPublicId: newAuction.publicId}; }
   async updateAuction(id: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleAuctions.findIndex(a => a.id === id || a.publicId === id); if(index === -1) return {success: false, message: 'Leilão não encontrado.'}; this.data.sampleAuctions[index] = {...this.data.sampleAuctions[index], ...data, updatedAt: new Date()}; await this._persistData(); return {success: true, message: 'Leilão atualizado!'}; }
   async deleteAuction(id: string): Promise<{ success: boolean; message: string; }> { this.data.sampleAuctions = this.data.sampleAuctions.filter(a => a.id !== id && a.publicId !== id); this.data.sampleLots = this.data.sampleLots.filter(l => l.auctionId !== id); await this._persistData(); return {success: true, message: 'Leilão excluído!'}; }
@@ -324,8 +324,8 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     }
     const resolved = lots.map(lot => ({
       ...lot,
-      imageUrl: resolveMediaUrl(lot.imageMediaId, this.data.sampleMediaItems)!,
-      galleryImageUrls: (lot.mediaItemIds || []).map(id => resolveMediaUrl(id, this.data.sampleMediaItems)).filter(Boolean) as string[]
+      imageUrl: resolveMediaUrl(lot.imageMediaId, this.data.sampleMediaItems) || 'https://placehold.co/600x400.png',
+      galleryImageUrls: (lot.mediaItemIds || []).map(id => resolveMediaUrl(id, this.data.sampleMediaItems)).filter((url): url is string => !!url)
     }));
     return Promise.resolve(JSON.parse(JSON.stringify(resolved)));
   }
@@ -335,8 +335,8 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     if (!item) return null;
     const resolved = {
       ...item,
-      imageUrl: resolveMediaUrl(item.imageMediaId, this.data.sampleMediaItems)!,
-      galleryImageUrls: (item.mediaItemIds || []).map(id => resolveMediaUrl(id, this.data.sampleMediaItems)).filter(Boolean) as string[]
+      imageUrl: resolveMediaUrl(item.imageMediaId, this.data.sampleMediaItems) || 'https://placehold.co/600x400.png',
+      galleryImageUrls: (item.mediaItemIds || []).map(id => resolveMediaUrl(id, this.data.sampleMediaItems)).filter((url): url is string => !!url)
     };
     return Promise.resolve(JSON.parse(JSON.stringify(resolved)));
   }
