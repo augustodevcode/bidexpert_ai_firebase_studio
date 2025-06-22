@@ -89,6 +89,34 @@ export async function updateAuction(
   return { success: true, message: `Leilão (simulado) atualizado!` };
 }
 
+export async function updateAuctionFeaturedStatus(
+  idOrPublicId: string,
+  newStatus: boolean
+): Promise<{ success: boolean; message: string }> {
+  console.log(`[Action - updateAuctionFeaturedStatus - SampleData Mode] Simulating update for ID/publicId: ${idOrPublicId} to featured: ${newStatus}`);
+  await delay(100);
+  revalidatePath('/');
+  revalidatePath(`/auctions/${idOrPublicId}`);
+  revalidatePath('/search');
+  return { success: true, message: `Destaque do leilão (simulado) atualizado!` };
+}
+
+export async function updateAuctionTitle(
+  idOrPublicId: string,
+  newTitle: string
+): Promise<{ success: boolean; message: string }> {
+  console.log(`[Action - updateAuctionTitle - SampleData Mode] Simulating title update for ID/publicId: ${idOrPublicId}`);
+  if (!newTitle || newTitle.trim().length < 5) {
+    return { success: false, message: "Título deve ter pelo menos 5 caracteres." };
+  }
+  await delay(100);
+  revalidatePath(`/auctions/${idOrPublicId}`);
+  revalidatePath('/search');
+  revalidatePath('/');
+  return { success: true, message: `Título do leilão (simulado) atualizado!` };
+}
+
+
 export async function deleteAuction(
   idOrPublicId: string
 ): Promise<{ success: boolean; message: string }> {

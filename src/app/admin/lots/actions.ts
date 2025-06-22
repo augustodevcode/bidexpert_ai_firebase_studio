@@ -119,6 +119,33 @@ export async function updateLot(
   return { success: true, message: `Lote (simulado) atualizado!` };
 }
 
+export async function updateLotFeaturedStatus(
+  idOrPublicId: string,
+  newStatus: boolean
+): Promise<{ success: boolean; message: string }> {
+  console.log(`[Action - updateLotFeaturedStatus - SampleData Mode] Simulating update for ID/publicId: ${idOrPublicId} to featured: ${newStatus}`);
+  await delay(100);
+  revalidatePath('/'); // Revalidate homepage for featured lots section
+  revalidatePath(`/auctions/${idOrPublicId}`);
+  revalidatePath('/search');
+  return { success: true, message: `Destaque do lote (simulado) atualizado!` };
+}
+
+export async function updateLotTitle(
+  idOrPublicId: string,
+  newTitle: string
+): Promise<{ success: boolean; message: string }> {
+  console.log(`[Action - updateLotTitle - SampleData Mode] Simulating title update for ID/publicId: ${idOrPublicId}`);
+  if (!newTitle || newTitle.trim().length < 5) {
+    return { success: false, message: "Título deve ter pelo menos 5 caracteres." };
+  }
+  await delay(100);
+  revalidatePath(`/auctions/lots/${idOrPublicId}`); // Assuming a direct lot page might exist
+  revalidatePath('/search');
+  revalidatePath('/');
+  return { success: true, message: `Título do lote (simulado) atualizado!` };
+}
+
 export async function deleteLot(
   idOrPublicId: string,
   auctionId?: string

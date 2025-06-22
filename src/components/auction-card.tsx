@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Auction, AuctionStage as AuctionStageType } from '@/types';
-import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon } from 'lucide-react';
+import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import EntityEditMenu from './entity-edit-menu'; // Import the new component
 
 interface AuctionStageItemProps {
   stage: AuctionStageType;
@@ -97,10 +98,11 @@ const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, auctionId, i
 
 
 interface AuctionCardProps {
-  auction: Auction; 
+  auction: Auction;
+  onUpdate?: () => void;
 }
 
-export default function AuctionCard({ auction }: AuctionCardProps) {
+export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   const [isFavorite, setIsFavorite] = useState(auction.isFavorite || false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [auctionFullUrl, setAuctionFullUrl] = useState<string>(`/auctions/${auction.publicId || auction.id}`);
@@ -241,6 +243,14 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              <EntityEditMenu
+                entityType="auction"
+                entityId={auction.id}
+                publicId={auction.publicId}
+                currentTitle={auction.title}
+                isFeatured={auction.isFeaturedOnMarketplace || false}
+                onUpdate={onUpdate}
+              />
             </div>
           </div>
 
@@ -309,3 +319,4 @@ export default function AuctionCard({ auction }: AuctionCardProps) {
     </TooltipProvider>
   );
 }
+
