@@ -12,13 +12,14 @@ import type { Lot, LotCategory, PlatformSettings } from '@/types';
 import { getUniqueLotLocations, getUniqueSellerNames, slugify, getCategoryAssets } from '@/lib/sample-data';
 import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
-import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters';
+import SidebarFilters from '@/components/sidebar-filters';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LayoutGrid, List, SlidersHorizontal, Loader2, ChevronRight, AlertCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
 import SearchResultsFrame from '@/components/search-results-frame'; 
+import type { ActiveFilters } from '@/components/sidebar-filters';
 
 interface CategoryDisplayProps {
   params: {
@@ -240,15 +241,6 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
             priority
           />
           <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-4">
-             <div className="relative h-16 w-16 mb-3">
-                 <Image 
-                    src={categoryAssets.logoUrl} 
-                    alt={`Logo ${currentCategory.name}`} 
-                    fill 
-                    className="object-contain p-1 bg-white/80 rounded-full"
-                    data-ai-hint={categoryAssets.logoAiHint}
-                 />
-             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-white font-headline mb-1">{currentCategory.name}</h1>
             {categoryAssets.bannerText && <p className="text-md md:text-lg text-gray-200 max-w-xl">{categoryAssets.bannerText}</p>}
           </div>
