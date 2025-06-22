@@ -1,6 +1,7 @@
 # Arquivo de configuração para Firebase Data Connect (opcional).
 # Deixado vazio intencionalmente pois não estamos usando Data Connect diretamente neste projeto.
 # Este arquivo existe para silenciar avisos do Firebase CLI.
+schema: {}
 
 # Exemplo de como seria se fosse usado:
 # serviceId: my-sql-service
