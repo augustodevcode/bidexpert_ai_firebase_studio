@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { DirectSaleOffer } from '@/types';
@@ -24,7 +25,7 @@ export default function DirectSaleOfferCard({ offer }: DirectSaleOfferCardProps)
         <Link href={`/direct-sales/${offer.id}`} className="block">
           <div className="aspect-[16/10] relative bg-muted">
             <Image
-              src={offer.imageUrl}
+              src={offer.imageUrl || 'https://placehold.co/600x400.png'}
               alt={offer.title}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

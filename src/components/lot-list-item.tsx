@@ -238,7 +238,7 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
           <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted">
             <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block h-full w-full">
               <Image
-                src={lot.imageUrl}
+                src={lot.imageUrl || 'https://placehold.co/600x400.png'}
                 alt={lot.title}
                 fill
                 className="object-cover"

@@ -33,7 +33,7 @@ export default function DirectSaleOfferListItem({ offer }: DirectSaleOfferListIt
           <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted">
             <Link href={`/direct-sales/${offer.id}`} className="block h-full w-full">
               <Image
-                src={offer.imageUrl}
+                src={offer.imageUrl || 'https://placehold.co/600x400.png'}
                 alt={offer.title}
                 fill
                 className="object-cover"
@@ -98,7 +98,7 @@ export default function DirectSaleOfferListItem({ offer }: DirectSaleOfferListIt
 
             <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{offer.description}</p>
 
-            <div className="mt-auto flex flex-col sm:flex-row sm:items-end justify-between gap-3 pt-2 border-t border-dashed">
+            <div className="mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2 border-t border-dashed">
               <div className="flex-shrink-0">
                 {offer.offerType === 'BUY_NOW' && offer.price !== undefined ? (
                     <>
@@ -123,7 +123,7 @@ export default function DirectSaleOfferListItem({ offer }: DirectSaleOfferListIt
                 )}
                 
               </div>
-              <Button asChild size="sm" className="w-full sm:w-auto mt-2 sm:mt-0">
+              <Button asChild size="sm" className="w-full md:w-auto mt-2 md:mt-0">
                 <Link href={`/direct-sales/${offer.id}`}>
                     {offer.offerType === 'BUY_NOW' ? <ShoppingCart className="mr-2 h-4 w-4" /> : <Edit className="mr-2 h-4 w-4" />}
                     {offer.offerType === 'BUY_NOW' ? 'Comprar Agora' : 'Ver e Propor'}
@@ -136,4 +136,3 @@ export default function DirectSaleOfferListItem({ offer }: DirectSaleOfferListIt
     </TooltipProvider>
   );
 }
-

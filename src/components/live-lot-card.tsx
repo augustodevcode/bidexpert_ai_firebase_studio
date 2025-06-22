@@ -62,7 +62,7 @@ export default function LiveLotCard({ lot, isHighlighted = false }: LiveLotCardP
         <Link href={`/auctions/${lot.auctionId}/live?lotId=${lot.id}`} className="block">
           <div className={`aspect-[16/10] relative ${isHighlighted ? 'bg-primary/10' : 'bg-muted'}`}>
             <Image
-              src={lot.imageUrl}
+              src={lot.imageUrl || 'https://placehold.co/600x400.png'}
               alt={lot.title}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

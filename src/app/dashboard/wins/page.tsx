@@ -48,7 +48,7 @@ export default function MyWinsPage() {
                   <Card key={win.id} className="overflow-hidden shadow-md flex flex-col">
                     <div className="relative aspect-[16/9] bg-muted">
                       <Image 
-                        src={win.lot.imageUrl} 
+                        src={win.lot.imageUrl || 'https://placehold.co/600x400.png'} 
                         alt={win.lot.title} 
                         fill 
                         className="object-cover"

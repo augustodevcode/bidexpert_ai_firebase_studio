@@ -107,7 +107,7 @@ export default function FavoriteLotsPage() {
                 <Card key={lot.id} className="overflow-hidden shadow-md flex flex-col">
                   <div className="relative aspect-[16/10]">
                     <Image 
-                        src={lot.imageUrl} 
+                        src={lot.imageUrl || 'https://placehold.co/600x400.png'} 
                         alt={lot.title} 
                         fill 
                         className="object-cover"

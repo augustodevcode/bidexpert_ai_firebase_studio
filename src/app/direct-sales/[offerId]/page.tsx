@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -40,6 +41,15 @@ export default function DirectSaleOfferDetailPage() {
     setIsLoading(false);
   }, [offerId]);
 
+  const galleryImages = useMemo(() => {
+    if (!offer) return ['https://placehold.co/800x600.png?text=Imagem+Indispon%C3%ADvel'];
+    const images = [offer.imageUrl, ...(offer.galleryImageUrls || [])].filter(Boolean) as string[];
+    if (images.length === 0) {
+      images.push('https://placehold.co/800x600.png?text=Imagem+Indispon%C3%ADvel');
+    }
+    return images;
+  }, [offer]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
@@ -65,7 +75,6 @@ export default function DirectSaleOfferDetailPage() {
     ? `${offer.locationCity} - ${offer.locationState}`
     : offer.locationState || offer.locationCity || 'Não informado';
 
-  const galleryImages = [offer.imageUrl, ...(offer.galleryImageUrls || [])];
 
   const handleBuyNow = () => {
     if (!isAuthenticated) {

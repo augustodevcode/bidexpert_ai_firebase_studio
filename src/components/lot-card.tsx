@@ -219,7 +219,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
         <Link href={lotDetailUrl} className="block">
           <div className="aspect-[16/10] relative bg-muted">
             <Image
-              src={lot.imageUrl}
+              src={lot.imageUrl || 'https://placehold.co/600x400.png'}
               alt={lot.title}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -333,12 +333,12 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
                 urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
               />
             )}
-            {!showCountdownOnThisCard && lot.endDate && lot.status === 'ABERTO_PARA_LANCES' && !isPast(new Date(lot.endDate)) && (
+           {!showCountdownOnThisCard && lot.endDate && lot.status === 'ABERTO_PARA_LANCES' && !isPast(new Date(lot.endDate)) && (
               <Badge variant="outline" className="text-xs font-medium">
                   <Clock className="h-3 w-3 mr-1" />
                   Aberto
               </Badge>
-            )}
+           )}
            {!showCountdownOnThisCard && lot.endDate && (lot.status !== 'ABERTO_PARA_LANCES' || isPast(new Date(lot.endDate))) && (
               <Badge variant="outline" className="text-xs font-medium">
                   <Clock className="h-3 w-3 mr-1" />
