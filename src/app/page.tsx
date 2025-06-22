@@ -4,18 +4,23 @@ import AuctionCard from '@/components/auction-card';
 import HeroCarousel from '@/components/hero-carousel';
 import FilterLinkCard from '@/components/filter-link-card';
 import LotCard from '@/components/lot-card';
-import { sampleAuctions, sampleLots, getCategoryAssets, samplePlatformSettings } from '@/lib/sample-data';
+import { getCategoryAssets, samplePlatformSettings, slugify } from '@/lib/sample-data';
 import type { Auction, Lot, PlatformSettings } from '@/types';
 import Link from 'next/link';
 import { Landmark, Scale, FileText, Tags, CalendarX, CheckSquare, Star, FileText as FileTextIcon } from 'lucide-react';
+import { getAuctions } from '@/app/admin/auctions/actions';
+import { getLots } from '@/app/admin/lots/actions';
 
-export default function HomePage() {
+export default async function HomePage() {
   try {
-    const platformSettings: PlatformSettings = samplePlatformSettings; 
-    const auctions: Auction[] = sampleAuctions.slice(0, 10);
+    const platformSettings: PlatformSettings = samplePlatformSettings;
+    
+    // Fetch data using server actions
+    const allAuctions = await getAuctions();
+    const allLots = await getLots();
 
-    // For featured lots, we'll use the status derived from the auction logic in sample-data.ts
-    const featuredLots: Lot[] = sampleLots.filter(lot => lot.isFeatured && lot.status === 'ABERTO_PARA_LANCES').slice(0, 10);
+    const auctions: Auction[] = allAuctions.slice(0, 10);
+    const featuredLots: Lot[] = allLots.filter(lot => lot.isFeatured && lot.status === 'ABERTO_PARA_LANCES').slice(0, 10);
 
     const filterLinksData = [
       {
