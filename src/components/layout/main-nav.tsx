@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react'; 
@@ -245,7 +244,7 @@ export default function MainNav({
                     isActiveTrigger && 'bg-accent text-primary font-semibold'
                   )}
                 >
-                  {item.icon && item.contentKey !== 'history' && <item.icon className="mr-1.5 h-4 w-4" /> } 
+                  {item.icon && <item.icon className="mr-1.5 h-4 w-4" /> } 
                   {item.label}
                 </NavigationMenuTrigger>
                 <NavigationMenuContent align={item.megaMenuAlign || "start"}>
@@ -313,4 +312,3 @@ export default function MainNav({
     </NavigationMenu>
   );
 }
-
