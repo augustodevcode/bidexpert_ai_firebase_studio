@@ -156,7 +156,6 @@ export interface Auction {
   id: string;
   publicId: string;
   title: string;
-  fullTitle?: string;
   description?: string;
   status: AuctionStatus;
   auctionType?: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS';

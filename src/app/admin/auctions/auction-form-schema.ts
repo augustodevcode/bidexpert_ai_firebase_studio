@@ -28,9 +28,6 @@ export const auctionFormSchema = z.object({
   }).max(200, {
     message: "O título do leilão não pode exceder 200 caracteres.",
   }),
-  fullTitle: z.string().max(300, {
-    message: "O título completo não pode exceder 300 caracteres.",
-  }).optional(),
   description: z.string().max(5000, {
     message: "A descrição não pode exceder 5000 caracteres.",
   }).optional(),
@@ -73,4 +70,3 @@ export type AuctionFormValues = z.infer<typeof auctionFormSchema>;
     
 
     
-

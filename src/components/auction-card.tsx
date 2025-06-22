@@ -162,11 +162,6 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
     <TooltipProvider>
       <>
         <Card className="flex flex-col overflow-hidden h-full shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg group">
-          {auction.fullTitle && (
-            <CardHeader className="p-3 bg-primary text-primary-foreground rounded-t-lg">
-              <h2 className="text-md font-semibold truncate">{auction.fullTitle}</h2>
-            </CardHeader>
-          )}
           <div className="relative">
             <Link href={`/auctions/${auction.publicId || auction.id}`} className="block">
               <div className="aspect-[16/10] relative bg-muted">

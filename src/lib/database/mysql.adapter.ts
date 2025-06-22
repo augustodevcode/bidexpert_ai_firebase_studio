@@ -262,7 +262,6 @@ function mapToAuction(row: any): Auction {
         id: String(row.id),
         publicId: row.publicId,
         title: row.title,
-        fullTitle: row.fullTitle,
         description: row.description,
         status: row.status as AuctionStatus,
         auctionType: row.auctionType,
@@ -595,7 +594,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
       `CREATE TABLE IF NOT EXISTS auctions (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(100) NOT NULL UNIQUE, title VARCHAR(255) NOT NULL,
-        full_title TEXT, description TEXT, status VARCHAR(50) NOT NULL, auction_type VARCHAR(50),
+        description TEXT, status VARCHAR(50) NOT NULL, auction_type VARCHAR(50),
         category_id INT UNSIGNED, auctioneer_id INT UNSIGNED, seller_id INT UNSIGNED, auction_date DATETIME NOT NULL,
         end_date DATETIME NULL, auction_stages JSON, city VARCHAR(100), state VARCHAR(2), image_url TEXT,
         data_ai_hint TEXT, documents_url TEXT, total_lots INT UNSIGNED DEFAULT 0, visits INT UNSIGNED DEFAULT 0,
@@ -1031,7 +1030,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         connection.release();
     }
   }
-  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> { console.warn("createMediaItem not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
+  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> { console.warn("createMediaItem not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async getMediaItems(): Promise<MediaItem[]> { console.warn("getMediaItems not implemented in MySqlAdapter"); return []; }
   async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> { console.warn("updateMediaItemMetadata not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteMediaItemFromDb not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }

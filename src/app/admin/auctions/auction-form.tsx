@@ -85,7 +85,6 @@ export default function AuctionForm({
     resolver: zodResolver(auctionFormSchema),
     defaultValues: {
       title: initialData?.title || '',
-      fullTitle: initialData?.fullTitle || '',
       description: initialData?.description || '',
       status: initialData?.status || 'RASCUNHO',
       auctionType: initialData?.auctionType || undefined,
@@ -178,19 +177,6 @@ export default function AuctionForm({
                   <FormLabel>Título do Leilão</FormLabel>
                   <FormControl>
                     <Input placeholder="Ex: Leilão de Imóveis da Empresa X" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="fullTitle"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Título Completo (Opcional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Título mais descritivo para SEO e clareza" {...field} value={field.value ?? ""} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

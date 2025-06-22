@@ -226,7 +226,6 @@ function mapToAuction(row: QueryResultRow): Auction {
         id: String(row.id),
         publicId: row.public_id,
         title: row.title,
-        fullTitle: row.full_title,
         description: row.description,
         status: row.status as AuctionStatus,
         auctionType: row.auction_type,
@@ -373,6 +372,7 @@ function mapToMediaItem(row: QueryResultRow): MediaItem {
     fileName: row.file_name,
     uploadedAt: new Date(row.uploaded_at),
     uploadedBy: row.uploaded_by,
+    storagePath: row.storage_path,
     title: row.title,
     altText: row.alt_text,
     caption: row.caption,
@@ -386,7 +386,6 @@ function mapToMediaItem(row: QueryResultRow): MediaItem {
     urlLarge: row.url_large,
     linkedLotIds: row.linked_lot_ids || [],
     dataAiHint: row.data_ai_hint,
-    storagePath: row.storage_path
   };
 }
 
@@ -624,7 +623,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
         id SERIAL PRIMARY KEY,
         public_id TEXT NOT NULL UNIQUE,
         title VARCHAR(255) NOT NULL,
-        full_title TEXT,
         description TEXT,
         status VARCHAR(50) NOT NULL,
         auction_type VARCHAR(50),
@@ -1041,7 +1039,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateRole not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteRole(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteRole not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }> { console.warn("ensureDefaultRolesExist not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
-  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> { console.warn("createMediaItem not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
+  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> { console.warn("createMediaItem not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async getMediaItems(): Promise<MediaItem[]> { console.warn("getMediaItems not implemented in PostgresAdapter"); return []; }
   async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> { console.warn("updateMediaItemMetadata not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteMediaItemFromDb not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }

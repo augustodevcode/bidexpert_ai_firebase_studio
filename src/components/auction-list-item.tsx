@@ -72,8 +72,8 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
                     {auction.title}
                   </h3>
                 </Link>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate" title={auction.fullTitle || undefined}>
-                  {auction.fullTitle || auction.description?.substring(0, 70) + '...'}
+                <p className="text-xs text-muted-foreground mt-0.5 truncate" title={auction.description || undefined}>
+                  {auction.description?.substring(0, 70) + '...'}
                 </p>
               </div>
             </div>
@@ -116,7 +116,7 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
             )}
             
 
-            <div className="mt-auto flex flex-col sm:flex-row sm:items-end justify-between gap-3 pt-2">
+            <div className="mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2">
               <div className="flex-shrink-0">
                 <p className="text-xs text-muted-foreground">
                   {auction.auctionType === 'TOMADA_DE_PRECOS' ? 'Valor de Referência' : 'A partir de'}
@@ -125,7 +125,7 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
                   R$ {(auction.initialOffer || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
-              <Button asChild size="sm" className="w-full sm:w-auto mt-2 sm:mt-0">
+              <Button asChild size="sm" className="w-full md:w-auto mt-2 md:mt-0">
                 <Link href={`/auctions/${auction.publicId || auction.id}`}>
                     <Eye className="mr-2 h-4 w-4" /> Ver Leilão ({auction.totalLots || 0} Lotes)
                 </Link>

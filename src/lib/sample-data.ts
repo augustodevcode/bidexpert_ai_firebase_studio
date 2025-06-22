@@ -215,14 +215,13 @@ export const sampleAuctioneersStatic: Omit<AuctioneerProfileInfo, 'id'|'publicId
 ];
 
 export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots' | 'totalLots' | 'category' | 'auctioneer' | 'seller' | 'auctioneerLogoUrl' | 'imageUrl'>[] = [
-  { id: '100625bra', publicId: 'AUC-IMOVEIS-XYZ123P1', title: 'Leilão de Imóveis Residenciais e Comerciais', fullTitle: 'Grande Leilão de Imóveis do Banco Bradesco - Oportunidades em SP, BA e AL', description: 'Leilão online de casas, apartamentos e terrenos. Excelentes oportunidades de investimento e moradia. Lances a partir de R$ 45.000. Não perca!', status: 'ABERTO_PARA_LANCES', auctionType: 'EXTRAJUDICIAL', categoryId: 'cat-imoveis', auctioneerId: 'auct-leiloeiro-oficial-bradesco', sellerId: 'seller-banco-bradesco-s-a', auctionDate: createFutureDate(0, 0, 15), endDate: createFutureDate(10, 5), city: 'Nacional', state: 'BR', imageMediaId: 'media-auc-imoveis-banner', dataAiHint: 'leilao imoveis cidade', documentsUrl: '#', visits: 2580, initialOffer: 45000, isFavorite: false, auctionStages: [{ name: '1ª Praça', endDate: createFutureDate(5,0), statusText: 'Encerramento', initialPrice: 45000 }, { name: '2ª Praça', endDate: createFutureDate(10, 5), statusText: 'Encerramento', initialPrice: 30000 }], automaticBiddingEnabled: true, allowInstallmentBids: true, estimatedRevenue: 2000000, achievedRevenue: 0, totalHabilitatedUsers: 150, isFeaturedOnMarketplace: true, marketplaceAnnouncementTitle: 'Mega Leilão Bradesco Imóveis' },
+  { id: '100625bra', publicId: 'AUC-IMOVEIS-XYZ123P1', title: 'Leilão de Imóveis Residenciais e Comerciais', description: 'Leilão online de casas, apartamentos e terrenos. Excelentes oportunidades de investimento e moradia. Lances a partir de R$ 45.000. Não perca!', status: 'ABERTO_PARA_LANCES', auctionType: 'EXTRAJUDICIAL', categoryId: 'cat-imoveis', auctioneerId: 'auct-leiloeiro-oficial-bradesco', sellerId: 'seller-banco-bradesco-s-a', auctionDate: createFutureDate(0, 0, 15), endDate: createFutureDate(10, 5), city: 'Nacional', state: 'BR', imageMediaId: 'media-auc-imoveis-banner', dataAiHint: 'leilao imoveis cidade', documentsUrl: '#', visits: 2580, initialOffer: 45000, isFavorite: false, auctionStages: [{ name: '1ª Praça', endDate: createFutureDate(5,0), statusText: 'Encerramento', initialPrice: 45000 }, { name: '2ª Praça', endDate: createFutureDate(10, 5), statusText: 'Encerramento', initialPrice: 30000 }], automaticBiddingEnabled: true, allowInstallmentBids: true, estimatedRevenue: 2000000, achievedRevenue: 0, totalHabilitatedUsers: 150, isFeaturedOnMarketplace: true, marketplaceAnnouncementTitle: 'Mega Leilão Bradesco Imóveis' },
   { id: '300724car', publicId: 'AUC-VEICULOS-ABC456Q2', title: 'Leilão de Veículos Usados e Seminovos', description: 'Diversos modelos e marcas. Carros de passeio, utilitários e motos com preços especiais.', status: 'EM_BREVE', auctionType: 'EXTRAJUDICIAL', categoryId: 'cat-veiculos', auctioneerId: 'auct-superbid-leiloes', sellerId: 'seller-proprietario-particular-1', auctionDate: createFutureDate(7, 0), endDate: createFutureDate(14, 0), city: 'São Paulo', state: 'SP', imageMediaId: 'media-auc-veiculos-banner', dataAiHint: 'leilao carros patio', initialOffer: 15000, visits: 1230, auctionStages: [{ name: 'Abertura', endDate: createFutureDate(7,0), statusText: 'Início dos Lances', initialPrice: 15000 }], automaticBiddingEnabled: false, allowInstallmentBids: false, estimatedRevenue: 500000, achievedRevenue: 0, totalHabilitatedUsers: 80 },
   { id: 'ART001ANTIQ', publicId: 'AUC-ARTECLAS-GHI789R3', title: 'Leilão de Arte e Antiguidades Clássicas', description: 'Peças raras, pinturas, esculturas e mobiliário antigo. Oportunidade para colecionadores.', status: 'ABERTO_PARA_LANCES', auctionType: 'PARTICULAR', categoryId: 'cat-arte-e-antiguidades', auctioneerId: 'auct-galeria-antika-leiloeiro-oficial-asilva', sellerId: 'seller-colecionadores-rj', auctionDate: createPastDate(2), endDate: createFutureDate(8, 0), city: 'Rio de Janeiro', state: 'RJ', imageMediaId: 'media-auc-arte-banner', dataAiHint: 'leilao arte quadros', initialOffer: 1000, visits: 850, estimatedRevenue: 50000, achievedRevenue: 12000, totalHabilitatedUsers: 25, allowInstallmentBids: true },
   { id: 'CLASSICVEH24', publicId: 'AUC-MUSTANGS-JKL012S4', title: 'Leilão Especial de Mustangs Clássicos', description: 'Modelos raros de Ford Mustang das décadas de 60 e 70. Para apaixonados por clássicos.', status: 'ABERTO_PARA_LANCES', auctionType: 'PARTICULAR', categoryId: 'cat-veiculos', auctioneerId: 'auct-classicos-leiloes-br-leiloeiro-jpimenta', sellerId: 'seller-colecionadores-classicos-pr', auctionDate: createPastDate(1), endDate: createFutureDate(12, 0), city: 'Curitiba', state: 'PR', imageMediaId: 'media-auc-mustang-banner', dataAiHint: 'mustang classico perfil', initialOffer: 150000, visits: 2100, auctionStages: [{ name: 'Pregão Único', endDate: createFutureDate(12,0), statusText: 'Encerramento Lances', initialPrice: 150000 }], allowInstallmentBids: true, estimatedRevenue: 300000 },
   { id: '20301vei', publicId: 'AUC-MAQUINAS-MNO345T5', title: 'Leilão de Maquinário Pesado e Agrícola', description: 'Tratores, colheitadeiras e equipamentos industriais. Renove sua frota ou maquinário.', status: 'ABERTO_PARA_LANCES', auctionType: 'EXTRAJUDICIAL', categoryId: 'cat-maquinas-e-equipamentos', auctioneerId: 'auct-agroleiloes-ltda-matricula-xyz00', sellerId: 'seller-fazenda-boa-esperanca', auctionDate: createPastDate(3), endDate: createFutureDate(5, 0), city: 'Rio Verde', state: 'GO', imageMediaId: 'media-auc-maquinas-banner', dataAiHint: 'maquinas pesadas construcao', initialOffer: 50000, visits: 975, isFavorite: true, estimatedRevenue: 400000, marketplaceAnnouncementTitle: 'Maquinário Pesado - Grande Leilão!', allowInstallmentBids: false },
   {
     id: 'TP001-NOTEBOOKS', publicId: 'AUC-TPNOTE-PMC001X9', title: 'Tomada de Preços - Aquisição de Notebooks',
-    fullTitle: 'Tomada de Preços Nº 001/2024 - Aquisição de Notebooks para Secretaria de Educação de Campinas',
     description: 'Processo de tomada de preços para aquisição de 80 notebooks para equipar escolas municipais. Especificações detalhadas no edital. Propostas devem ser enviadas em envelope lacrado até a data limite.',
     status: 'ABERTO_PARA_LANCES', auctionType: 'TOMADA_DE_PRECOS', categoryId: 'cat-eletronicos-e-tecnologia', 
     auctioneerId: 'auct-leiloeiro-publico-municipal-campinas', sellerId: 'seller-prefeitura-municipal-de-campinas',
@@ -235,7 +234,6 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
   },
   {
     id: 'TP002-VEICULOS', publicId: 'AUC-TPVEIC-SAS002Y0', title: 'Tomada de Preços - Alienação de Veículos da Frota',
-    fullTitle: 'Tomada de Preços Nº 002/2024 - Alienação de Veículos Usados da Frota da Secretaria de Salvador',
     description: 'Alienação de veículos usados da frota municipal, incluindo carros de passeio e utilitários. Visitação permitida conforme edital. Propostas para lotes individuais ou para a frota completa.',
     status: 'ENCERRADO', auctionType: 'TOMADA_DE_PRECOS', categoryId: 'cat-veiculos',
     auctioneerId: 'auct-central-de-compras-bahia', sellerId: 'seller-secretaria-de-administracao-de-salvador',
@@ -248,7 +246,6 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
   },
   {
     id: 'JUD001IMV', publicId: 'AUC-JUDIMV-SP001A1', title: 'Leilão Judicial - Apartamento em Moema',
-    fullTitle: 'Leilão Judicial do TJSP - Apartamento 2 Dormitórios em Moema, São Paulo',
     description: 'Apartamento de 2 dormitórios, localizado em Moema, São Paulo. Leilão determinado pelo Processo nº 12345-67.2023.8.26.0001 da 1ª Vara Cível de São Paulo. Consulte o edital para mais informações.',
     status: 'ABERTO_PARA_LANCES', auctionType: 'JUDICIAL', categoryId: 'cat-imoveis',
     auctioneerId: 'auct-superbid-leiloes', sellerId: 'seller-vara-civel-de-sao-paulo-tjsp',
@@ -264,7 +261,6 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
   },
   {
     id: 'JUD002VEI', publicId: 'AUC-JUDVEI-RJ002B2', title: 'Leilão Judicial - Veículo Fiat Toro',
-    fullTitle: 'Leilão Judicial TJRJ - Veículo Fiat Toro Freedom 2018 - Processo Falimentar',
     description: 'Veículo Fiat Toro Freedom 1.8 AT, ano/modelo 2018/2018, cor branca. Leilão oriundo do Processo nº 98765-43.2022.8.19.0001 da Vara de Falências do Rio de Janeiro. Veículo vendido no estado em que se encontra.',
     status: 'EM_BREVE', auctionType: 'JUDICIAL', categoryId: 'cat-veiculos',
     auctioneerId: 'auct-leiloeiro-xyz-oficial', sellerId: 'seller-vara-de-falencias-do-rio-de-janeiro-tjrj',
@@ -276,7 +272,6 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
   },
   {
     id: 'JUD003MAQ', publicId: 'AUC-JUDMAQ-PR003C3', title: 'Leilão Judicial - Trator Massey Ferguson',
-    fullTitle: 'Leilão Judicial TRT9 - Trator Massey Ferguson 275 - Processo Trabalhista',
     description: 'Trator Massey Ferguson 275, ano 1998, em funcionamento. Leilão do Processo Trabalhista nº 00123-2021-005-09-00-0 da Vara do Trabalho de Curitiba.',
     status: 'ABERTO_PARA_LANCES', auctionType: 'JUDICIAL', categoryId: 'cat-maquinas-e-equipamentos',
     auctioneerId: 'auct-classicos-leiloes-br-leiloeiro-jpimenta', sellerId: 'seller-vara-do-trabalho-de-curitiba-trt9',
