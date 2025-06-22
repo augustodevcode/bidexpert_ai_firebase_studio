@@ -804,7 +804,7 @@ export default function LotDetailClientContent({
                             <LotCard
                                 key={relatedLot.id}
                                 lot={relatedLot}
-                                platformSettingsProp={platformSettings}
+                                platformSettings={platformSettings}
                                 badgeVisibilityConfig={platformSettings.sectionBadgeVisibility?.searchGrid}
                             />
                         ))}
@@ -827,4 +827,3 @@ export default function LotDetailClientContent({
     </>
   );
 }
-
