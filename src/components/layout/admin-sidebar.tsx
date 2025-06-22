@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers } from 'lucide-react'; // Added Layers
+import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv } from 'lucide-react'; // Added Layers, Tv
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,6 +13,12 @@ const sidebarNavItems = [
     title: 'Dashboard',
     href: '/admin/dashboard', 
     icon: LayoutDashboard,
+  },
+   {
+    title: 'Auditório Virtual',
+    href: '/live-dashboard', // Link para a página de dashboard dos leilões ao vivo
+    icon: Tv, 
+    disabled: false, 
   },
   {
     title: 'Leilões',

@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -151,6 +152,11 @@ export default function UserNav() {
              <Bell className="mr-2 h-4 w-4" /> Notificações
             </Link>
           </DropdownMenuItem>
+           <DropdownMenuItem asChild>
+            <Link href="/live-dashboard" className="flex items-center">
+              <Tv className="mr-2 h-4 w-4" /> Leilões Ao Vivo
+            </Link>
+          </DropdownMenuItem>
           
           {canSeeConsignorDashboardLink && (
              <>
@@ -170,11 +176,6 @@ export default function UserNav() {
               <DropdownMenuItem asChild>
                 <Link href="/admin/dashboard" className="flex items-center">
                   <ShieldCheck className="mr-2 h-4 w-4" /> Painel Admin
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/live-dashboard" className="flex items-center">
-                  <Tv className="mr-2 h-4 w-4" /> Auditório Virtual
                 </Link>
               </DropdownMenuItem>
             </>

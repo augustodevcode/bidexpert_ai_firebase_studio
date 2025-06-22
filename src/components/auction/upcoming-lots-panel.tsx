@@ -30,7 +30,7 @@ export default function UpcomingLotsPanel({ lots, currentLotId }: UpcomingLotsPa
             {lots.map((lot) => (
               <Link
                 key={lot.id}
-                href={`/auctions/${lot.auctionId}/lots/${lot.id}?live=true`} // Assuming a query param to stay in live context
+                href={`/auctions/${lot.auctionId}/live?lotId=${lot.id}`} // Assuming a query param to stay in live context
                 className={`block p-2 rounded-md hover:bg-accent transition-colors ${
                   lot.id === currentLotId ? 'bg-primary/10 border border-primary' : 'bg-secondary/30'
                 }`}

@@ -141,7 +141,7 @@ export default function LiveAuctionPage() {
       <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
         <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
         <h1 className="text-2xl font-bold">Nenhum Lote Ativo ou Programado</h1>
-        <p className="text-muted-foreground mb-6">Não há lotes adequados (em breve ou abertos para lance) para este leilão (ID: {auctionData.auction.id}) no momento, ou o lote específico não foi encontrado.</p>
+        <p className="text-muted-foreground mb-6">Não há lotes adequados (em breve ou abertos para lance) para este leilão (ID: ${auctionData.auction.id}) no momento, ou o lote específico não foi encontrado.</p>
         <Button asChild>
           <Link href={`/auctions/${auctionData.auction.id}`}>Ver Detalhes do Leilão</Link>
         </Button>
@@ -160,4 +160,3 @@ export default function LiveAuctionPage() {
     />
   );
 }
-
