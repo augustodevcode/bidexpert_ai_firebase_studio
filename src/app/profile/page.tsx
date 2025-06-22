@@ -26,7 +26,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { updateUserProfile } from './edit/actions'; // Corrigido o caminho
+import { updateUserProfile } from './edit/actions'; 
 import type { UserProfileData, EditableUserProfileData } from '@/types';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
@@ -74,8 +74,8 @@ export default function ProfilePage() {
   const router = useRouter(); 
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingPage, setIsLoadingPage] = useState(true); // Reintroduzido
-  const [errorPage, setErrorPage] = useState<string | null>(null); // Reintroduzido (era fetchError)
+  const [isLoadingPage, setIsLoadingPage] = useState(true); 
+  const [errorPage, setErrorPage] = useState<string | null>(null); 
   const [activeSystem, setActiveSystem] = useState<string | null>(null);
   const [profileToDisplay, setProfileToDisplay] = useState<UserProfileData | null>(null);
   
@@ -91,7 +91,7 @@ export default function ProfilePage() {
   });
 
   const fetchProfileData = useCallback(async (uid: string) => {
-    setIsFetchingData(true); // Renomeado para consistência
+    setIsFetchingData(true); 
     setErrorPage(null);
     console.log('[ProfilePage fetchProfileData] Attempting for UID:', uid);
     try {
@@ -170,11 +170,55 @@ export default function ProfilePage() {
       console.error(`[ProfilePage fetchProfileData] Error fetching Firestore profile:`, e);
       setProfileToDisplay(null);
     } finally {
-      setIsFetchingData(false); // Renomeado para consistência
+      setIsFetchingData(false);
     }
-  }, [authUser, form]); 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser, toast, form.reset]); 
 
-  const [isFetchingData, setIsFetchingData] = useState(true); // Renomeado para consistência
+  const [isFetchingData, setIsFetchingData] = useState(true);
+
+  const handleRetryFetch = useCallback(() => {
+    setErrorPage(null); 
+    setIsLoadingPage(true); 
+    if (activeSystem === 'FIRESTORE' && authUser?.uid) {
+      fetchProfileData(authUser.uid);
+    } else if (activeSystem !== 'FIRESTORE') {
+      if(userProfileWithPermissions) {
+        const processedProfile = {
+          ...userProfileWithPermissions,
+          dateOfBirth: userProfileWithPermissions.dateOfBirth ? new Date(userProfileWithPermissions.dateOfBirth) : null,
+          rgIssueDate: userProfileWithPermissions.rgIssueDate ? new Date(userProfileWithPermissions.rgIssueDate) : null,
+          cpf: userProfileWithPermissions.cpf || '',
+          rgNumber: userProfileWithPermissions.rgNumber || '',
+          rgIssuer: userProfileWithPermissions.rgIssuer || '',
+          rgState: userProfileWithPermissions.rgState || '',
+          cellPhone: userProfileWithPermissions.cellPhone || '',
+          homePhone: userProfileWithPermissions.homePhone || '',
+          gender: userProfileWithPermissions.gender || '',
+          profession: userProfileWithPermissions.profession || '',
+          nationality: userProfileWithPermissions.nationality || '',
+          maritalStatus: userProfileWithPermissions.maritalStatus || '',
+          propertyRegime: userProfileWithPermissions.propertyRegime || '',
+          spouseName: userProfileWithPermissions.spouseName || '',
+          spouseCpf: userProfileWithPermissions.spouseCpf || '',
+          zipCode: userProfileWithPermissions.zipCode || '',
+          street: userProfileWithPermissions.street || '',
+          number: userProfileWithPermissions.number || '',
+          complement: userProfileWithPermissions.complement || '',
+          neighborhood: userProfileWithPermissions.neighborhood || '',
+          city: userProfileWithPermissions.city || '',
+          state: userProfileWithPermissions.state || '',
+          optInMarketing: userProfileWithPermissions.optInMarketing || false,
+        };
+        setProfileToDisplay(processedProfile as UserProfileData);
+        form.reset(processedProfile as ProfileFormValues);
+        setIsLoadingPage(false);
+      } else {
+        router.push('/auth/login?redirect=/profile'); 
+        setIsLoadingPage(false);
+      }
+    }
+  }, [activeSystem, authUser, userProfileWithPermissions, fetchProfileData, router, form]);
 
   useEffect(() => {
     const system = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM?.toUpperCase() || 'FIRESTORE';
@@ -238,52 +282,8 @@ export default function ProfilePage() {
         setIsLoadingPage(false);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authUser, userProfileWithPermissions, authContextLoading, fetchProfileData, router, form]); 
+  }, [authUser, userProfileWithPermissions, authContextLoading, fetchProfileData, router]); 
   
-  const handleRetryFetch = useCallback(() => {
-    setErrorPage(null); 
-    setIsLoadingPage(true); 
-    if (activeSystem === 'FIRESTORE' && authUser?.uid) {
-      fetchProfileData(authUser.uid);
-    } else if (activeSystem !== 'FIRESTORE') {
-      if(userProfileWithPermissions) {
-        const processedProfile = {
-          ...userProfileWithPermissions,
-          dateOfBirth: userProfileWithPermissions.dateOfBirth ? new Date(userProfileWithPermissions.dateOfBirth) : null,
-          rgIssueDate: userProfileWithPermissions.rgIssueDate ? new Date(userProfileWithPermissions.rgIssueDate) : null,
-          cpf: userProfileWithPermissions.cpf || '',
-          rgNumber: userProfileWithPermissions.rgNumber || '',
-          rgIssuer: userProfileWithPermissions.rgIssuer || '',
-          rgState: userProfileWithPermissions.rgState || '',
-          cellPhone: userProfileWithPermissions.cellPhone || '',
-          homePhone: userProfileWithPermissions.homePhone || '',
-          gender: userProfileWithPermissions.gender || '',
-          profession: userProfileWithPermissions.profession || '',
-          nationality: userProfileWithPermissions.nationality || '',
-          maritalStatus: userProfileWithPermissions.maritalStatus || '',
-          propertyRegime: userProfileWithPermissions.propertyRegime || '',
-          spouseName: userProfileWithPermissions.spouseName || '',
-          spouseCpf: userProfileWithPermissions.spouseCpf || '',
-          zipCode: userProfileWithPermissions.zipCode || '',
-          street: userProfileWithPermissions.street || '',
-          number: userProfileWithPermissions.number || '',
-          complement: userProfileWithPermissions.complement || '',
-          neighborhood: userProfileWithPermissions.neighborhood || '',
-          city: userProfileWithPermissions.city || '',
-          state: userProfileWithPermissions.state || '',
-          optInMarketing: userProfileWithPermissions.optInMarketing || false,
-        };
-        setProfileToDisplay(processedProfile as UserProfileData);
-        form.reset(processedProfile as ProfileFormValues);
-        setIsLoadingPage(false);
-      } else {
-        router.push('/auth/login?redirect=/profile'); 
-        setIsLoadingPage(false);
-      }
-    }
-  }, [activeSystem, authUser, userProfileWithPermissions, fetchProfileData, router, form]);
-
   async function onSubmit(data: ProfileFormValues) {
     const userId = activeSystem === 'FIRESTORE' ? authUser?.uid : userProfileWithPermissions?.uid;
     if (!userId) {
@@ -790,5 +790,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
