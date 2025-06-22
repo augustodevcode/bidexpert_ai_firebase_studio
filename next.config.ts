@@ -25,6 +25,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  serverActions: {
+    bodySizeLimit: '10mb',
+  },
   // `serverExternalPackages` is used to tell Next.js not to bundle certain packages
   // that are intended to be run on the server, like 'firebase-admin'.
   serverExternalPackages: ['firebase-admin'],
