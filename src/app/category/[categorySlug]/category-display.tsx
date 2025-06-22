@@ -1,15 +1,16 @@
 
 'use client'; 
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { sampleLots, getUniqueLotLocations, getUniqueSellerNames, slugify, getCategoryAssets } from '@/lib/sample-data'; // Keep sampleLots for now
-import { getLotCategories, getLotCategory } from '@/app/admin/categories/actions'; // Import actions
-import type { Lot, LotCategory } from '@/types';
+import { getLotCategories } from '@/app/admin/categories/actions';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import type { Lot, LotCategory, PlatformSettings, ActiveFilters } from '@/types';
+import { sampleLots, getUniqueLotLocations, getUniqueSellerNames, slugify, getCategoryAssets } from '@/lib/sample-data';
 import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
-import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters';
+import SidebarFilters from '@/components/sidebar-filters';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LayoutGrid, List, SlidersHorizontal, Loader2, ChevronRight, AlertCircle } from 'lucide-react';
@@ -51,11 +52,11 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
   const [isLoading, setIsLoading] = useState(true);
   const [currentCategory, setCurrentCategory] = useState<LotCategory | null>(null);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [categoryLots, setCategoryLots] = useState<Lot[]>([]);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [sortBy, setSortBy] = useState<string>('relevance');
   
-  // For SidebarFilters
   const [allCategoriesForFilter, setAllCategoriesForFilter] = useState<LotCategory[]>([]);
   const [uniqueLocationsForFilter, setUniqueLocationsForFilter] = useState<string[]>([]);
   const [uniqueSellersForFilter, setUniqueSellersForFilter] = useState<string[]>([]);
@@ -65,17 +66,17 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     async function fetchData() {
       setIsLoading(true);
       try {
-        // Fetch all categories for the filter sidebar
-        const allCats = await getLotCategories();
+        const [allCats, settings] = await Promise.all([
+            getLotCategories(),
+            getPlatformSettings()
+        ]);
         setAllCategoriesForFilter(allCats);
+        setPlatformSettings(settings);
         
-        // Find the current category by slug
         const foundCategory = allCats.find(cat => cat.slug === categorySlug);
         setCurrentCategory(foundCategory || null);
 
         if (foundCategory) {
-          // TODO: Replace sampleLots with actual fetching of lots for this category
-          // For now, filter sampleLots by the category name found
           const lotsForCategory = sampleLots.filter(lot => lot.type && slugify(lot.type) === foundCategory.slug);
           setCategoryLots(lotsForCategory);
           setActiveFilters(prev => ({ ...prev, category: foundCategory.slug }));
@@ -83,7 +84,6 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
           setCategoryLots([]);
         }
         
-        // For now, locations and sellers still come from sample-data
         setUniqueLocationsForFilter(getUniqueLotLocations());
         setUniqueSellersForFilter(getUniqueSellerNames());
 
@@ -105,43 +105,32 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
   const handleFilterSubmit = (filters: ActiveFilters) => {
     setActiveFilters(filters);
     setIsFilterSheetOpen(false); 
-    // TODO: Re-fetch or re-filter lots based on new activeFilters
-    // For now, we only filter by category on initial load. Advanced filtering will require more logic.
     if (filters.category && filters.category !== 'TODAS') {
          const lotsForCategory = sampleLots.filter(lot => lot.type && slugify(lot.type) === filters.category);
          setCategoryLots(lotsForCategory);
     } else {
-        // If "TODAS" is selected, show all sample lots or implement logic for this
-        // For now, if currentCategory exists, stick to its lots, otherwise show all for "TODAS"
         if (currentCategory) {
             const lotsForCurrentCategory = sampleLots.filter(lot => lot.type && slugify(lot.type) === currentCategory.slug);
             setCategoryLots(lotsForCurrentCategory);
         } else {
-            setCategoryLots(sampleLots); // Example: show all if category is 'TODAS' and no current one.
+            setCategoryLots(sampleLots); 
         }
     }
-
   };
 
   const handleFilterReset = () => {
     const resetFilters = {...initialFiltersState, category: currentCategory?.slug || 'TODAS'};
     setActiveFilters(resetFilters);
-    // Re-filter based on the original category slug or 'TODAS'
     if (currentCategory) {
       const lotsForCategory = sampleLots.filter(lot => lot.type && slugify(lot.type) === currentCategory.slug);
       setCategoryLots(lotsForCategory);
     } else {
-      // If no current category (e.g., slug was invalid), maybe show no lots or all (sampleLots for now)
       setCategoryLots(sampleLots); 
     }
     setIsFilterSheetOpen(false);
   };
 
-
   const sortedAndFilteredLots = useMemo(() => {
-    // TODO: Implement full filtering based on activeFilters here, not just category.
-    // For now, categoryLots is pre-filtered by categorySlug on load.
-    // This sorting logic will apply to `categoryLots`.
     let lotsToSort = [...categoryLots];
     switch (sortBy) {
       case 'lotNumber_asc':
@@ -151,10 +140,10 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         lotsToSort.sort((a, b) => (parseInt(b.id.replace(/\D/g,'')) || 0) - (parseInt(a.id.replace(/\D/g,'')) || 0));
         break;
       case 'endDate_asc':
-        lotsToSort.sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime());
+        lotsToSort.sort((a, b) => new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime());
         break;
       case 'endDate_desc':
-        lotsToSort.sort((a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime());
+        lotsToSort.sort((a, b) => new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime());
         break;
       case 'price_asc':
         lotsToSort.sort((a, b) => a.price - b.price);
@@ -175,8 +164,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     return lotsToSort;
   }, [categoryLots, sortBy]);
 
-
-  if (isLoading) {
+  if (isLoading || !platformSettings) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -313,8 +301,8 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
             <div className={`grid gap-6 ${viewMode === 'card' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
               {sortedAndFilteredLots.map((lot) => (
                 viewMode === 'card' 
-                  ? <LotCard key={lot.id} lot={lot} />
-                  : <LotListItem key={lot.id} lot={lot} />
+                  ? <LotCard key={lot.id} lot={lot} platformSettings={platformSettings} />
+                  : <LotListItem key={lot.id} lot={lot} platformSettings={platformSettings} />
               ))}
             </div>
           ) : (
