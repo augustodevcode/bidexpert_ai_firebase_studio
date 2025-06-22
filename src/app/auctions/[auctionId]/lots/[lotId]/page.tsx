@@ -39,11 +39,12 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   const lotIndex = lotsForThisAuction?.findIndex(l => l.id === lotFromDb.id || l.publicId === lotFromDb.publicId) ?? -1;
   const totalLotsInAuction = lotsForThisAuction?.length ?? 0;
   const previousLotId = (lotsForThisAuction && lotIndex > 0) ? (lotsForThisAuction[lotIndex - 1].publicId || lotsForThisAuction[lotIndex - 1].id) : undefined;
-  const nextLotId = (lotsForThisAuction && lotIndex < totalLotsInAuction - 1) ? (lotsForThisAuction[lotIndex + 1].publicId || lotsForThisAuction[lotIndex + 1].id) : undefined;
+  const nextLotId = (lotsForThisAuction && lotIndex > -1 && lotIndex < totalLotsInAuction - 1) ? (lotsForThisAuction[lotIndex + 1].publicId || lotsForThisAuction[lotIndex + 1].id) : undefined;
   
   let sellerName = lotFromDb.sellerName || auctionToReturn.seller;
-  if (!sellerName && (lotFromDb.sellerId || auctionToReturn.sellerId)) {
-    const seller = await getSellerBySlug(lotFromDb.sellerId || auctionToReturn.sellerId!);
+  const sellerIdToFetch = lotFromDb.sellerId || auctionToReturn.sellerId;
+  if (!sellerName && sellerIdToFetch) {
+    const seller = await getSellerBySlug(sellerIdToFetch);
     sellerName = seller?.name;
   }
   
@@ -106,7 +107,7 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
 export async function generateStaticParams() {
   const allLots = await getLots(); 
   const paths = allLots.map(lot => ({
-      auctionId: lot.auctionId, // This might be internal ID, publicId preferred
+      auctionId: lot.auctionId,
       lotId: lot.publicId || lot.id,
     }));
   return paths;
