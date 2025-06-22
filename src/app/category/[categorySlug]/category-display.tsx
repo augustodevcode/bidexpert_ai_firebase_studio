@@ -11,8 +11,7 @@ import type { Lot, LotCategory, PlatformSettings } from '@/types';
 import { getUniqueLotLocations, getUniqueSellerNames, slugify, getCategoryAssets } from '@/lib/sample-data';
 import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
-import SidebarFilters from '@/components/sidebar-filters';
-import type { ActiveFilters } from '@/components/sidebar-filters';
+import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LayoutGrid, List, SlidersHorizontal, Loader2, ChevronRight, AlertCircle } from 'lucide-react';
@@ -93,7 +92,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         if (foundCategory) {
           const lotsForCategory = allLotsData.filter(lot => lot.categoryId === foundCategory.id || slugify(lot.type) === foundCategory.slug);
           setFilteredLots(lotsForCategory);
-          setActiveFilters((prev: ActiveFilters) => ({ ...prev, category: foundCategory.slug }));
+          setActiveFilters(prev => ({ ...prev, category: foundCategory.slug }));
         } else {
           console.warn(`Category with slug '${categorySlug}' not found.`);
           setFilteredLots([]);
@@ -121,7 +120,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     setActiveFilters(filters);
     setIsFilterSheetOpen(false); 
     
-    // Start with the lots for the current category page
+    // Use the main category page as the base, then apply filters on top.
     const baseLots = currentCategory 
       ? allLots.filter(lot => lot.categoryId === currentCategory.id || slugify(lot.type) === currentCategory.slug)
       : allLots;
@@ -286,4 +285,3 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     </div>
   );
 }
-
