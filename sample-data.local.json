@@ -2200,7 +2200,7 @@
       "id": "LOTE001",
       "auctionId": "100625bra",
       "publicId": "LOT-CASACENT-ABC123X1",
-      "title": "CASA COM 129,30 M² - CENTRO",
+      "title": "CASA COM 129,30 M² - CENTRO DA CIDADE",
       "imageUrl": "https://images.unsplash.com/photo-1598228723793-52759bba239c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxOHx8Y2FzYXxlbnwwfHx8fDE3NTA0Mzc1MTV8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "dataAiHint": "casa residencial",
       "galleryImageUrls": [
@@ -2240,7 +2240,7 @@
       "cityName": "Teotônio Vilela",
       "stateUf": "AL",
       "createdAt": "2025-05-29T04:56:12.389Z",
-      "updatedAt": "2025-05-31T04:56:12.389Z",
+      "updatedAt": "2025-06-22T05:03:53.843Z",
       "endDate": "2025-06-27T04:56:12.389Z",
       "auctionDate": "2025-06-22T05:11:12.389Z",
       "lotSpecificAuctionDate": "2025-06-22T05:11:12.389Z",

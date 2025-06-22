@@ -1,25 +1,25 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
-import { sampleAuctions, sampleLots } from '@/lib/sample-data'; // Usar sampleData
-import type { Auction, Lot } from '@/types';
+import { sampleAuctions, sampleLots, samplePlatformSettings } from '@/lib/sample-data'; // Usar sampleData
+import type { Auction, PlatformSettings } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import AuctionDetailsClient from './auction-details-client'; // Renomeado para AuctionDetailsClient
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-// Removido: import Breadcrumbs from '@/components/ui/breadcrumbs';
+import AuctionDetailsClient from './auction-details-client';
 
-async function getAuctionData(id: string): Promise<Auction | undefined> {
+async function getAuctionData(id: string): Promise<{ auction?: Auction; platformSettings: PlatformSettings }> {
   console.log(`[getAuctionData - SampleData Mode] Chamada com ID: ${id}`);
+  
+  const platformSettingsData = samplePlatformSettings;
+
   if (!id) {
     console.warn('[getAuctionData - SampleData Mode] ID do leilão não fornecido ou undefined.');
-    return undefined;
+    return { auction: undefined, platformSettings: platformSettingsData };
   }
   
-  const auctionFromSample = sampleAuctions.find(a => a.id === id || a.publicId === id); // Adicionado busca por publicId
+  const auctionFromSample = sampleAuctions.find(a => a.id === id || a.publicId === id);
   if (!auctionFromSample) {
     console.warn(`[getAuctionData - SampleData Mode] Nenhum leilão encontrado para o ID/PublicID: ${id} em sampleAuctions.`);
-    return undefined;
+    return { auction: undefined, platformSettings: platformSettingsData };
   }
 
   const auction = { ...auctionFromSample };
@@ -29,10 +29,10 @@ async function getAuctionData(id: string): Promise<Auction | undefined> {
 
   console.log(`[getAuctionData - SampleData Mode] Leilão ID ${id} encontrado. Total de lotes: ${lotsForAuction.length}`);
   
-  return auction; 
+  return { auction, platformSettings: platformSettingsData };
 }
 
-export default async function AuctionDetailPage({ params }: { params: { auctionId: string } }) { // Renomeado para AuctionDetailPage
+export default async function AuctionDetailPage({ params }: { params: { auctionId: string } }) {
   const auctionIdParam = params.auctionId; 
 
   if (!auctionIdParam) {
@@ -48,7 +48,7 @@ export default async function AuctionDetailPage({ params }: { params: { auctionI
     );
   }
   
-  const auction = await getAuctionData(auctionIdParam);
+  const { auction, platformSettings } = await getAuctionData(auctionIdParam);
 
   if (!auction) {
     return (
@@ -64,14 +64,13 @@ export default async function AuctionDetailPage({ params }: { params: { auctionI
 
   return (
     <div className="container mx-auto px-0 sm:px-4 py-2 sm:py-8"> 
-        {/* Breadcrumbs agora está no Header */}
-        <AuctionDetailsClient auction={auction} />
+        <AuctionDetailsClient auction={auction} platformSettings={platformSettings} />
     </div>
   );
 }
 
 export async function generateStaticParams() {
   return sampleAuctions.map((auction) => ({
-    auctionId: auction.publicId || auction.id, // Prioriza publicId se existir
+    auctionId: auction.publicId || auction.id,
   }));
 }

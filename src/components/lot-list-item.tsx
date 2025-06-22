@@ -114,7 +114,7 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
 
   const mentalTriggersGlobalSettings = platformSettings.mentalTriggerSettings || {};
   const sectionBadges = badgeVisibilityConfig || platformSettings.sectionBadgeVisibility?.searchList || {
-    showStatusBadge: true, // Default
+    showStatusBadge: true,
     showDiscountBadge: true,
     showUrgencyTimer: true,
     showPopularityBadge: true,
@@ -198,11 +198,11 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
   };
 
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
-  const displayAuctionDate = lot.auctionDate && !isNaN(new Date(lot.auctionDate).getTime())
-    ? format(new Date(lot.auctionDate), "dd/MM - HH:mm", { locale: ptBR })
+  const displayAuctionDate = lot.auctionDate && !isNaN(new Date(lot.auctionDate as string).getTime())
+    ? format(new Date(lot.auctionDate as string), "dd/MM - HH:mm", { locale: ptBR })
     : 'N/D';
-  const displaySecondAuctionDate = lot.secondAuctionDate && !isNaN(new Date(lot.secondAuctionDate).getTime())
-    ? format(new Date(lot.secondAuctionDate), "dd/MM - HH:mm", { locale: ptBR })
+  const displaySecondAuctionDate = lot.secondAuctionDate && !isNaN(new Date(lot.secondAuctionDate as string).getTime())
+    ? format(new Date(lot.secondAuctionDate as string), "dd/MM - HH:mm", { locale: ptBR })
     : 'N/D';
 
   const discountPercentage = useMemo(() => {
@@ -326,11 +326,11 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
             <div className="mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2">
               <div>
                 <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
-                <p className={`text-2xl font-bold ${isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
+                <p className={`text-2xl font-bold ${lot.endDate && isPast(new Date(lot.endDate as string)) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
                   R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
                  <div className="flex items-center text-xs text-muted-foreground mt-0.5 gap-2">
-                   {showCountdownOnThisCard && (
+                   {showCountdownOnThisCard && lot.endDate && (
                      <TimeRemainingBadge
                         endDate={lot.endDate}
                         status={lot.status}
@@ -339,19 +339,19 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
                         urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
                     />
                    )}
-                   {!showCountdownOnThisCard && lot.status === 'ABERTO_PARA_LANCES' && !isPast(new Date(lot.endDate)) && (
+                   {!showCountdownOnThisCard && lot.endDate && lot.status === 'ABERTO_PARA_LANCES' && !isPast(new Date(lot.endDate)) && (
                     <Badge variant="outline" className="text-xs font-medium">
                         <Clock className="h-3 w-3 mr-1" />
                         Aberto
                     </Badge>
                    )}
-                   {!showCountdownOnThisCard && (lot.status !== 'ABERTO_PARA_LANCES' || isPast(new Date(lot.endDate))) && (
+                   {!showCountdownOnThisCard && lot.endDate && (lot.status !== 'ABERTO_PARA_LANCES' || isPast(new Date(lot.endDate))) && (
                     <Badge variant="outline" className="text-xs font-medium">
                         <Clock className="h-3 w-3 mr-1" />
                         {getAuctionStatusText(lot.status)}
                     </Badge>
                    )}
-                    <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate)) ? 'line-through' : ''}`}>
+                    <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate as string)) ? 'line-through' : ''}`}>
                         <Gavel className="h-3 w-3" />
                         <span>{lot.bidsCount || 0} Lances</span>
                     </div>

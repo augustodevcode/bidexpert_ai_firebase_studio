@@ -17,10 +17,10 @@ import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdF
 import LotPreviewModal from './lot-preview-modal';
 import LotMapPreviewModal from './lot-map-preview-modal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import EntityEditMenu from './entity-edit-menu'; // Import the new component
+import EntityEditMenu from './entity-edit-menu';
 
 interface TimeRemainingBadgeProps {
-  endDate: Date | string | undefined | null; // Allow undefined or null
+  endDate: Date | string | undefined | null;
   status: Lot['status'];
   showUrgencyTimer?: boolean;
   urgencyThresholdDays?: number;
@@ -176,7 +176,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
     if (upperType.includes('CASA') || upperType.includes('IMÓVEL') || upperType.includes('APARTAMENTO')) {
         return <Building className="h-3 w-3 text-muted-foreground" />;
     }
-    if (upperType.includes('VEÍCULO') || upperType.includes('AUTOMÓVEL') || upperType.includes('CARRO')) {
+    if (upperType.includes('VEÍCulo') || upperType.includes('AUTOMÓVEL') || upperType.includes('CARRO')) {
         return <Car className="h-3 w-3 text-muted-foreground" />;
     }
     if (upperType.includes('MAQUINÁRIO') || upperType.includes('TRATOR')) {
@@ -215,7 +215,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
   return (
     <>
     <Card className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-xl transition-shadow duration-300 rounded-lg group">
-      <div className="relative"> {/* Container principal para imagem e todos os elementos sobrepostos */}
+      <div className="relative">
         <Link href={lotDetailUrl} className="block">
           <div className="aspect-[16/10] relative bg-muted">
             <Image
@@ -229,7 +229,6 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
           </div>
         </Link>
 
-        {/* Container para todos os badges no topo da imagem */}
         <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
           {sectionBadges.showStatusBadge !== false && (
             <Badge className={`text-xs px-2 py-1 ${getLotStatusColor(lot.status)}`}>
@@ -260,7 +259,6 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
           })}
         </div>
 
-        {/* Botões de ação que aparecem no hover, posicionados sobre a imagem */}
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-row space-x-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
           <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}><Heart className={`h-3.5 w-3.5 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
           <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handlePreviewOpen} aria-label="Pré-visualizar Lote"><Eye className="h-3.5 w-3.5 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Pré-visualizar</p></TooltipContent></Tooltip>
@@ -279,7 +277,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
       </div>
 
       <CardContent className="p-3 flex-grow space-y-1.5">
-        <Link href={lotDetailUrl} className="block mt-2"> {/* Increased margin top here for more space */}
+        <Link href={lotDetailUrl} className="block mt-2">
           <h3 className="text-sm font-semibold hover:text-primary transition-colors leading-tight">
             {lot.title}
           </h3>
@@ -347,14 +345,14 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
                   {getAuctionStatusText(lot.status)}
               </Badge>
            )}
-            <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate)) ? 'line-through' : ''}`}>
+            <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate as string)) ? 'line-through' : ''}`}>
                 <Gavel className="h-3 w-3" />
                 <span>{lot.bidsCount || 0} Lances</span>
             </div>
-            <span className={`font-semibold ${isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.number || lot.id.replace('LOTE', '')}</span>
+            <span className={`font-semibold ${isPast(new Date(lot.endDate as string)) ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.number || lot.id.replace('LOTE', '')}</span>
         </div>
          <Button asChild className="w-full mt-2" size="sm">
-            <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>Ver Detalhes do Lote</Link>
+            <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>Ver Detalhes do Lote</Link>
         </Button>
       </CardFooter>
     </Card>

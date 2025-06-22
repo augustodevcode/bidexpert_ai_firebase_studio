@@ -1,10 +1,11 @@
+
 'use client';
 import React from 'react';
 
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Auction } from '@/types';
+import type { Auction, PlatformSettings } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import LotCard from '@/components/lot-card';
@@ -23,9 +24,10 @@ const estados = [
 
 interface AuctionDetailsClientProps {
   auction: Auction;
+  platformSettings: PlatformSettings;
 }
 
-export default function AuctionDetailsClient({ auction }: AuctionDetailsClientProps) {
+export default function AuctionDetailsClient({ auction, platformSettings }: AuctionDetailsClientProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   return (
@@ -110,13 +112,13 @@ export default function AuctionDetailsClient({ auction }: AuctionDetailsClientPr
           viewMode === 'grid' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {auction.lots.map((lot) => (
-                <LotCard key={lot.id} lot={lot} />
+                <LotCard key={lot.id} lot={lot} platformSettings={platformSettings} />
               ))}
             </div>
           ) : (
             <div className="space-y-4">
               {auction.lots.map((lot) => (
-                <LotListItem key={lot.id} lot={lot} />
+                <LotListItem key={lot.id} lot={lot} platformSettings={platformSettings} />
               ))}
             </div>
           )
