@@ -395,6 +395,8 @@ function mapToPlatformSettings(row: QueryResultRow): PlatformSettings {
         siteTitle: row.site_title,
         siteTagline: row.site_tagline,
         galleryImageBasePath: row.gallery_image_base_path,
+        storageProvider: row.storage_provider as PlatformSettings['storageProvider'],
+        firebaseStorageBucket: row.firebase_storage_bucket,
         activeThemeName: row.active_theme_name,
         themes: row.themes || [],
         platformPublicIdMasks: row.platform_public_id_masks || {},
@@ -497,8 +499,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
       `CREATE TABLE IF NOT EXISTS platform_settings (
         id VARCHAR(50) PRIMARY KEY DEFAULT 'global', site_title VARCHAR(100) NULL, site_tagline VARCHAR(255) NULL,
-        gallery_image_base_path TEXT NOT NULL DEFAULT '/media/gallery/', active_theme_name TEXT NULL,
-        themes JSONB NOT NULL DEFAULT '[]'::jsonb, platform_public_id_masks JSONB,
+        gallery_image_base_path TEXT NOT NULL DEFAULT '/media/gallery/', storage_provider VARCHAR(50), firebase_storage_bucket VARCHAR(255),
+        active_theme_name TEXT NULL, themes JSONB NOT NULL DEFAULT '[]'::jsonb, platform_public_id_masks JSONB,
         map_settings JSONB, search_pagination_type VARCHAR(50), search_items_per_page INTEGER, search_load_more_count INTEGER,
         show_countdown_on_lot_detail BOOLEAN, show_countdown_on_cards BOOLEAN, show_related_lots_on_lot_detail BOOLEAN,
         related_lots_count INTEGER, mental_trigger_settings JSONB, section_badge_visibility JSONB, homepage_sections JSONB,
@@ -710,7 +712,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         fuel_type VARCHAR(50),
         cylinders VARCHAR(20),
         restraint_system VARCHAR(255),
-        exteriorInteriorColor VARCHAR(100),
+        exteriorinteriorcolor VARCHAR(100),
         options TEXT,
         manufactured_in VARCHAR(100),
         vehicle_class VARCHAR(100),
@@ -843,11 +845,13 @@ export class PostgresAdapter implements IDatabaseAdapter {
         console.log(`[PostgresAdapter] ${rolesResult.rolesProcessed || 0} perfis padrão processados.`);
       }
 
-      const settingsResult = await this.getPlatformSettings();
-      if (!settingsResult.galleryImageBasePath) {
-          errors.push(new Error('Falha ao garantir configurações padrão da plataforma.'));
-      } else {
-        console.log('[PostgresAdapter] Configurações padrão da plataforma verificadas/criadas.');
+      // Seed default platform settings
+      try {
+        console.log('[PostgresAdapter] Seeding default platform settings...');
+        await this.updatePlatformSettings(samplePlatformSettings);
+        console.log('[PostgresAdapter] Configurações padrão da plataforma verificadas/inseridas.');
+      } catch (settingsError: any) {
+         errors.push(new Error(`Falha ao inserir configurações padrão da plataforma: ${settingsError.message}`));
       }
 
       if (errors.length > 0) {
@@ -869,34 +873,14 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async getPlatformSettings(): Promise<PlatformSettings> {
     const client = await getPool().connect();
     try {
-        const res = await client.query(`SELECT site_title, site_tagline, gallery_image_base_path, active_theme_name, themes, platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page, search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards, show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings, section_badge_visibility, homepage_sections, updated_at FROM platform_settings WHERE id = 'global';`);
+        const res = await client.query(`SELECT id, site_title, site_tagline, gallery_image_base_path, storage_provider, firebase_storage_bucket, active_theme_name, themes, platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page, search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards, show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings, section_badge_visibility, homepage_sections, updated_at FROM platform_settings WHERE id = 'global';`);
         if (res.rowCount && res.rowCount > 0) {
-            return mapToPlatformSettings(mapRowToCamelCase(res.rows[0]));
+            return mapToPlatformSettings(res.rows[0]);
         }
-        const defaultSettings = samplePlatformSettings;
-        const insertQuery = `
-          INSERT INTO platform_settings (
-            id, site_title, site_tagline, gallery_image_base_path, active_theme_name, themes,
-            platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page,
-            search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards,
-            show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings,
-            section_badge_visibility, homepage_sections
-          ) VALUES ('global', $1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8, $9, $10, $11, $12, $13, $14, $15::jsonb, $16::jsonb, $17::jsonb)
-          ON CONFLICT (id) DO NOTHING;
-        `;
-        await client.query(insertQuery, [
-            defaultSettings.siteTitle, defaultSettings.siteTagline, defaultSettings.galleryImageBasePath,
-            defaultSettings.activeThemeName || null, JSON.stringify(defaultSettings.themes || []),
-            JSON.stringify(defaultSettings.platformPublicIdMasks || {}), JSON.stringify(defaultSettings.mapSettings || {}),
-            defaultSettings.searchPaginationType, defaultSettings.searchItemsPerPage, defaultSettings.searchLoadMoreCount,
-            defaultSettings.showCountdownOnLotDetail, defaultSettings.showCountdownOnCards,
-            defaultSettings.showRelatedLotsOnLotDetail, defaultSettings.relatedLotsCount,
-            JSON.stringify(defaultSettings.mentalTriggerSettings || {}), JSON.stringify(defaultSettings.sectionBadgeVisibility || {}),
-            JSON.stringify(defaultSettings.homepageSections || [])
-        ]);
-        return { ...defaultSettings, id: 'global', updatedAt: new Date() };
+        console.warn("[PostgresAdapter - getPlatformSettings] No settings found in DB, returning sample data as fallback.");
+        return { ...samplePlatformSettings, id: 'global', updatedAt: new Date() };
     } catch (e: any) {
-        console.error("[PostgresAdapter - getPlatformSettings] Error, returning default:", e);
+        console.error("[PostgresAdapter - getPlatformSettings] Error, returning sample data:", e);
         return { ...samplePlatformSettings, id: 'global', updatedAt: new Date() };
     } finally {
         client.release();
@@ -911,15 +895,16 @@ export class PostgresAdapter implements IDatabaseAdapter {
     try {
         const query = `
           INSERT INTO platform_settings (
-            id, site_title, site_tagline, gallery_image_base_path, active_theme_name, themes,
-            platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page,
+            id, site_title, site_tagline, gallery_image_base_path, storage_provider, firebase_storage_bucket,
+            active_theme_name, themes, platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page,
             search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards,
             show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings,
             section_badge_visibility, homepage_sections, updated_at
-          ) VALUES ('global', $1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8, $9, $10, $11, $12, $13, $14, $15::jsonb, $16::jsonb, $17::jsonb, NOW())
+          ) VALUES ('global', $1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9::jsonb, $10, $11, $12, $13, $14, $15, $16, $17::jsonb, $18::jsonb, $19::jsonb, NOW())
           ON CONFLICT (id) DO UPDATE SET
             site_title = EXCLUDED.site_title, site_tagline = EXCLUDED.site_tagline,
-            gallery_image_base_path = EXCLUDED.gallery_image_base_path, active_theme_name = EXCLUDED.active_theme_name,
+            gallery_image_base_path = EXCLUDED.gallery_image_base_path, storage_provider = EXCLUDED.storage_provider,
+            firebase_storage_bucket = EXCLUDED.firebase_storage_bucket, active_theme_name = EXCLUDED.active_theme_name,
             themes = EXCLUDED.themes, platform_public_id_masks = EXCLUDED.platform_public_id_masks,
             map_settings = EXCLUDED.map_settings, search_pagination_type = EXCLUDED.search_pagination_type,
             search_items_per_page = EXCLUDED.search_items_per_page, search_load_more_count = EXCLUDED.search_load_more_count,
@@ -930,6 +915,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         `;
         await client.query(query, [
             data.siteTitle || null, data.siteTagline || null, data.galleryImageBasePath,
+            data.storageProvider, data.firebaseStorageBucket,
             data.activeThemeName || null, JSON.stringify(data.themes || []),
             JSON.stringify(data.platformPublicIdMasks || {}), JSON.stringify(data.mapSettings || {}),
             data.searchPaginationType, data.searchItemsPerPage, data.searchLoadMoreCount,

@@ -30,6 +30,9 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ['firebase-admin'],
   experimental: {
   },
+  // Required for dev environments that proxy the dev server
+  // Read more: https://nextjs.org/docs/app/api-reference/next-config-js/allowedDevOrigins
+  allowedDevOrigins: ['https://6000-firebase-studio-1748711833657.cluster-ve345ymguzcd6qqzuko2qbxtfe.cloudworkstations.dev'],
   headers: async () => [
     {
       source: '/:path*',

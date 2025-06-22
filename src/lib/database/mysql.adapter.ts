@@ -431,6 +431,8 @@ function mapToPlatformSettings(row: any): PlatformSettings {
         siteTitle: row.siteTitle,
         siteTagline: row.siteTagline,
         galleryImageBasePath: row.galleryImageBasePath,
+        storageProvider: row.storageProvider as PlatformSettings['storageProvider'],
+        firebaseStorageBucket: row.firebaseStorageBucket,
         activeThemeName: row.activeThemeName,
         themes: parseJsonColumn<Theme[]>(row.themes, []),
         platformPublicIdMasks: parseJsonColumn<PlatformSettings['platformPublicIdMasks']>(row.platformPublicIdMasks, {}),
@@ -531,7 +533,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
       `CREATE TABLE IF NOT EXISTS platform_settings (
         id VARCHAR(50) PRIMARY KEY DEFAULT 'global', site_title VARCHAR(100), site_tagline VARCHAR(255),
-        gallery_image_base_path TEXT, active_theme_name VARCHAR(100), themes JSON, platform_public_id_masks JSON,
+        gallery_image_base_path TEXT, storage_provider VARCHAR(50), firebase_storage_bucket VARCHAR(255),
+        active_theme_name VARCHAR(100), themes JSON, platform_public_id_masks JSON,
         map_settings JSON, search_pagination_type VARCHAR(50), search_items_per_page INT, search_load_more_count INT,
         show_countdown_on_lot_detail BOOLEAN, show_countdown_on_cards BOOLEAN, show_related_lots_on_lot_detail BOOLEAN,
         related_lots_count INT, mental_trigger_settings JSON, section_badge_visibility JSON, homepage_sections JSON,
@@ -703,11 +706,43 @@ export class MySqlAdapter implements IDatabaseAdapter {
         console.log(`[MySqlAdapter] ${rolesResult.rolesProcessed || 0} perfis padrão processados.`);
       }
 
-      const settingsResult = await this.getPlatformSettings();
-      if (!settingsResult.galleryImageBasePath) {
-          errors.push(new Error('Falha ao garantir configurações padrão da plataforma.'));
-      } else {
-        console.log('[MySqlAdapter] Configurações padrão da plataforma verificadas/criadas.');
+      // Seed default platform settings
+      try {
+        console.log('[MySqlAdapter] Seeding default platform settings...');
+        const defaultSettings = samplePlatformSettings;
+        const settingsQuery = `
+          INSERT IGNORE INTO platform_settings (
+            id, site_title, site_tagline, gallery_image_base_path, storage_provider, firebase_storage_bucket,
+            active_theme_name, themes, platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page,
+            search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards,
+            show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings,
+            section_badge_visibility, homepage_sections
+          ) VALUES ('global', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        `;
+        await connection.execute(settingsQuery, [
+            defaultSettings.siteTitle,
+            defaultSettings.siteTagline,
+            defaultSettings.galleryImageBasePath,
+            defaultSettings.storageProvider,
+            defaultSettings.firebaseStorageBucket,
+            defaultSettings.activeThemeName || null,
+            JSON.stringify(defaultSettings.themes || []),
+            JSON.stringify(defaultSettings.platformPublicIdMasks || {}),
+            JSON.stringify(defaultSettings.mapSettings || {}),
+            defaultSettings.searchPaginationType,
+            defaultSettings.searchItemsPerPage,
+            defaultSettings.searchLoadMoreCount,
+            defaultSettings.showCountdownOnLotDetail,
+            defaultSettings.showCountdownOnCards,
+            defaultSettings.showRelatedLotsOnLotDetail,
+            defaultSettings.relatedLotsCount,
+            JSON.stringify(defaultSettings.mentalTriggerSettings || {}),
+            JSON.stringify(defaultSettings.sectionBadgeVisibility || {}),
+            JSON.stringify(defaultSettings.homepageSections || [])
+        ]);
+        console.log('[MySqlAdapter] Configurações padrão da plataforma verificadas/inseridas.');
+      } catch (settingsError: any) {
+        errors.push(new Error(`Falha ao inserir configurações padrão da plataforma: ${settingsError.message}`));
       }
 
       if (errors.length > 0) {
@@ -725,6 +760,69 @@ export class MySqlAdapter implements IDatabaseAdapter {
     }
   }
 
+  async getPlatformSettings(): Promise<PlatformSettings> {
+    const connection = await getPool().getConnection();
+    try {
+        const [rows] = await connection.execute<RowDataPacket[]>(`SELECT * FROM platform_settings WHERE id = 'global';`);
+        if (rows.length > 0) {
+            return mapToPlatformSettings(mapMySqlRowToCamelCase(rows[0]));
+        }
+        console.warn("[MySqlAdapter - getPlatformSettings] No settings found in DB, returning sample data as fallback.");
+        return { ...samplePlatformSettings, id: 'global', updatedAt: new Date() };
+    } catch (e: any) {
+        console.error("[MySqlAdapter - getPlatformSettings] Error, returning sample data:", e);
+        return { ...samplePlatformSettings, id: 'global', updatedAt: new Date() };
+    } finally {
+        connection.release();
+    }
+  }
+
+  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
+    const connection = await getPool().getConnection();
+    if (!data.galleryImageBasePath || !data.galleryImageBasePath.startsWith('/') || !data.galleryImageBasePath.endsWith('/')) {
+        return { success: false, message: 'Caminho base da galeria inválido. Deve começar e terminar com "/".' };
+    }
+    try {
+        const query = `
+          INSERT INTO platform_settings (
+            id, site_title, site_tagline, gallery_image_base_path, storage_provider, firebase_storage_bucket, 
+            active_theme_name, themes, platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page,
+            search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards,
+            show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings,
+            section_badge_visibility, homepage_sections, updated_at
+          ) VALUES ('global', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+          ON DUPLICATE KEY UPDATE
+            site_title = VALUES(site_title), site_tagline = VALUES(site_tagline),
+            gallery_image_base_path = VALUES(gallery_image_base_path), storage_provider = VALUES(storage_provider),
+            firebase_storage_bucket = VALUES(firebase_storage_bucket), active_theme_name = VALUES(active_theme_name),
+            themes = VALUES(themes), platform_public_id_masks = VALUES(platform_public_id_masks),
+            map_settings = VALUES(map_settings), search_pagination_type = VALUES(search_pagination_type),
+            search_items_per_page = VALUES(search_items_per_page), search_load_more_count = VALUES(search_load_more_count),
+            show_countdown_on_lot_detail = VALUES(show_countdown_on_lot_detail), show_countdown_on_cards = VALUES(show_countdown_on_cards),
+            show_related_lots_on_lot_detail = VALUES(show_related_lots_on_lot_detail), related_lots_count = VALUES(related_lots_count),
+            mental_trigger_settings = VALUES(mental_trigger_settings), section_badge_visibility = VALUES(section_badge_visibility),
+            homepage_sections = VALUES(homepage_sections), updated_at = NOW();
+        `;
+        await connection.execute(query, [
+            data.siteTitle || null, data.siteTagline || null, data.galleryImageBasePath,
+            data.storageProvider, data.firebaseStorageBucket,
+            data.activeThemeName || null, JSON.stringify(data.themes || []),
+            JSON.stringify(data.platformPublicIdMasks || {}), JSON.stringify(data.mapSettings || {}),
+            data.searchPaginationType, data.searchItemsPerPage, data.searchLoadMoreCount,
+            data.showCountdownOnLotDetail, data.showCountdownOnCards, data.showRelatedLotsOnLotDetail,
+            data.relatedLotsCount, JSON.stringify(data.mentalTriggerSettings || {}),
+            JSON.stringify(data.sectionBadgeVisibility || {}), JSON.stringify(data.homepageSections || [])
+        ]);
+        return { success: true, message: 'Configurações atualizadas (MySQL)!' };
+    } catch (e: any) {
+        console.error("[MySqlAdapter - updatePlatformSettings] Error:", e);
+        return { success: false, message: e.message };
+    } finally {
+        connection.release();
+    }
+  }
+
+  // --- Methods that were missing or incomplete ---
   async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> {
     const connection = await getPool().getConnection();
     try {
@@ -838,18 +936,18 @@ export class MySqlAdapter implements IDatabaseAdapter {
     try {
         await connection.beginTransaction();
         for (const roleData of defaultRolesData) {
-            const [existingRoles] = await connection.execute<RowDataPacket[]>('SELECT id, description, permissions FROM roles WHERE name_normalized = ?', [roleData.name.toUpperCase()]);
+            const [existingRows] = await connection.execute<RowDataPacket[]>('SELECT id, description, permissions FROM roles WHERE name_normalized = ?', [roleData.name.toUpperCase()]);
             const validPermissions = (roleData.permissions || []).filter(p => predefinedPermissions.some(pp => pp.id === p));
             const permissionsJson = JSON.stringify(validPermissions);
 
-            if (existingRoles.length === 0) {
+            if (existingRows.length === 0) {
                 await connection.execute(
                     'INSERT INTO roles (name, name_normalized, description, permissions) VALUES (?, ?, ?, ?)',
                     [roleData.name, roleData.name.toUpperCase(), roleData.description, permissionsJson]
                 );
                 rolesProcessedCount++;
             } else {
-                const existingRole = existingRoles[0];
+                const existingRole = existingRows[0];
                 const currentPermissions = parseJsonColumn<string[]>(existingRole.permissions, []);
                 if (existingRole.description !== roleData.description || JSON.stringify(currentPermissions.sort()) !== JSON.stringify(validPermissions.sort())) {
                     await connection.execute(
@@ -1013,85 +1111,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
       } finally {
           connection.release();
       }
-  }
-  async getPlatformSettings(): Promise<PlatformSettings> {
-    const connection = await getPool().getConnection();
-    try {
-        const [rows] = await connection.execute<RowDataPacket[]>(`SELECT * FROM platform_settings WHERE id = 'global';`);
-        if (rows.length > 0) {
-            return mapToPlatformSettings(mapMySqlRowToCamelCase(rows[0]));
-        }
-        const defaultSettings = samplePlatformSettings;
-        const insertQuery = `
-          INSERT INTO platform_settings (
-            id, site_title, site_tagline, gallery_image_base_path, active_theme_name, themes,
-            platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page,
-            search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards,
-            show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings,
-            section_badge_visibility, homepage_sections
-          ) VALUES ('global', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          ON DUPLICATE KEY UPDATE id=id;
-        `;
-        await connection.execute(insertQuery, [
-            defaultSettings.siteTitle, defaultSettings.siteTagline, defaultSettings.galleryImageBasePath,
-            defaultSettings.activeThemeName || null, JSON.stringify(defaultSettings.themes || []),
-            JSON.stringify(defaultSettings.platformPublicIdMasks || {}), JSON.stringify(defaultSettings.mapSettings || {}),
-            defaultSettings.searchPaginationType, defaultSettings.searchItemsPerPage, defaultSettings.searchLoadMoreCount,
-            defaultSettings.showCountdownOnLotDetail, defaultSettings.showCountdownOnCards,
-            defaultSettings.showRelatedLotsOnLotDetail, defaultSettings.relatedLotsCount,
-            JSON.stringify(defaultSettings.mentalTriggerSettings || {}), JSON.stringify(defaultSettings.sectionBadgeVisibility || {}),
-            JSON.stringify(defaultSettings.homepageSections || [])
-        ]);
-        return { ...defaultSettings, id: 'global', updatedAt: new Date() };
-    } catch (e: any) {
-        console.error("[MySqlAdapter - getPlatformSettings] Error, returning default:", e);
-        return { ...samplePlatformSettings, id: 'global', updatedAt: new Date() };
-    } finally {
-        connection.release();
-    }
-  }
-
-  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
-    const connection = await getPool().getConnection();
-    if (!data.galleryImageBasePath || !data.galleryImageBasePath.startsWith('/') || !data.galleryImageBasePath.endsWith('/')) {
-        return { success: false, message: 'Caminho base da galeria inválido. Deve começar e terminar com "/".' };
-    }
-    try {
-        const query = `
-          INSERT INTO platform_settings (
-            id, site_title, site_tagline, gallery_image_base_path, active_theme_name, themes,
-            platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page,
-            search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards,
-            show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings,
-            section_badge_visibility, homepage_sections, updated_at
-          ) VALUES ('global', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
-          ON DUPLICATE KEY UPDATE
-            site_title = VALUES(site_title), site_tagline = VALUES(site_tagline),
-            gallery_image_base_path = VALUES(gallery_image_base_path), active_theme_name = VALUES(active_theme_name),
-            themes = VALUES(themes), platform_public_id_masks = VALUES(platform_public_id_masks),
-            map_settings = VALUES(map_settings), search_pagination_type = VALUES(search_pagination_type),
-            search_items_per_page = VALUES(search_items_per_page), search_load_more_count = VALUES(search_load_more_count),
-            show_countdown_on_lot_detail = VALUES(show_countdown_on_lot_detail), show_countdown_on_cards = VALUES(show_countdown_on_cards),
-            show_related_lots_on_lot_detail = VALUES(show_related_lots_on_lot_detail), related_lots_count = VALUES(related_lots_count),
-            mental_trigger_settings = VALUES(mental_trigger_settings), section_badge_visibility = VALUES(section_badge_visibility),
-            homepage_sections = VALUES(homepage_sections), updated_at = NOW();
-        `;
-        await connection.execute(query, [
-            data.siteTitle || null, data.siteTagline || null, data.galleryImageBasePath,
-            data.activeThemeName || null, JSON.stringify(data.themes || []),
-            JSON.stringify(data.platformPublicIdMasks || {}), JSON.stringify(data.mapSettings || {}),
-            data.searchPaginationType, data.searchItemsPerPage, data.searchLoadMoreCount,
-            data.showCountdownOnLotDetail, data.showCountdownOnCards, data.showRelatedLotsOnLotDetail,
-            data.relatedLotsCount, JSON.stringify(data.mentalTriggerSettings || {}),
-            JSON.stringify(data.sectionBadgeVisibility || {}), JSON.stringify(data.homepageSections || [])
-        ]);
-        return { success: true, message: 'Configurações atualizadas (MySQL)!' };
-    } catch (e: any) {
-        console.error("[MySqlAdapter - updatePlatformSettings] Error:", e);
-        return { success: false, message: e.message };
-    } finally {
-        connection.release();
-    }
   }
 
   // --- Methods that were missing or incomplete ---
