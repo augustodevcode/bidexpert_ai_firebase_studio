@@ -1,6 +1,8 @@
+
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -34,6 +36,7 @@ export default function EntityEditMenu({
 }: EntityEditMenuProps) {
   const { userProfileWithPermissions } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   const [isTitleModalOpen, setIsTitleModalOpen] = useState(false);
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
 
@@ -56,6 +59,7 @@ export default function EntityEditMenu({
 
     if (result.success) {
       toast({ title: 'Sucesso!', description: result.message });
+      router.refresh();
       onUpdate?.(); // Trigger a refresh if the parent component provided a callback
     } else {
       toast({ title: 'Erro', description: result.message, variant: 'destructive' });
@@ -72,6 +76,7 @@ export default function EntityEditMenu({
     if (result.success) {
       toast({ title: 'Sucesso!', description: 'Título atualizado com sucesso.' });
       setIsTitleModalOpen(false);
+      router.refresh();
       onUpdate?.();
     } else {
       toast({ title: 'Erro ao Atualizar Título', description: result.message, variant: 'destructive' });
@@ -82,12 +87,13 @@ export default function EntityEditMenu({
     if (selectedItems.length > 0 && selectedItems[0].urlOriginal) {
         // Here you would call a server action like `updateLotImage(entityId, selectedItems[0].urlOriginal)`
         toast({ title: "Imagem Atualizada (Simulação)", description: `A imagem d${entityType === 'lot' ? 'o lote' : 'o leilão'} foi atualizada.` });
+        router.refresh();
         onUpdate?.();
     }
   };
 
 
-  const adminEditUrl = `/admin/${entityType}s/${entityId}/edit`;
+  const adminEditUrl = `/admin/${entityType}s/${publicId || entityId}/edit`;
 
   return (
     <>
@@ -130,8 +136,8 @@ export default function EntityEditMenu({
       <UpdateTitleModal
         isOpen={isTitleModalOpen}
         onClose={() => setIsTitleModalOpen(false)}
-        currentTitle={currentTitle}
         onSubmit={handleTitleUpdate}
+        currentTitle={currentTitle}
         entityTypeLabel={entityType === 'lot' ? 'Lote' : 'Leilão'}
       />
       
