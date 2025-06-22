@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Lot, PlatformSettings } from '@/types';
@@ -37,7 +36,6 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
   const displayAddressText = mapAddress || (latitude && longitude ? `${latitude.toFixed(4)}, ${longitude.toFixed(4)}` : "Localização do Lote");
 
   let mapContent = null;
-  let finalExternalMapLink: string | null = null;
   let mapProviderUsedForDisplay: string = 'Configuração Pendente';
 
   // 1. Determinar o conteúdo do mapa (mapContent)
@@ -87,14 +85,15 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
           ></iframe>
         );
     } else if (mapAddress) {
+        const staticMapUrl = `https://placehold.co/600x400.png?text=Mapa+(${encodeURIComponent(mapAddress)})&font=roboto`;
         mapContent = (
-             <div className="flex flex-col items-center justify-center h-full bg-muted text-muted-foreground p-4">
-                <MapPin className="h-12 w-12 mb-2" />
-                <p>Pré-visualização de mapa para endereço via OpenStreetMap não disponível.</p>
-                <a href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(mapAddress)}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline mt-2 flex items-center">
-                    Buscar no OpenStreetMap <ExternalLink className="h-3 w-3 ml-1" />
-                </a>
-            </div>
+            <Image
+                src={staticMapUrl}
+                alt={`Mapa placeholder para ${mapAddress}`}
+                fill
+                className="object-cover"
+                data-ai-hint="mapa placeholder endereco"
+            />
         );
     }
     mapProviderUsedForDisplay = 'OpenStreetMap (Plataforma)';
