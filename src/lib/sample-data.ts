@@ -1,5 +1,4 @@
-
-import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, CityInfo, MediaItem, PlatformSettings, MentalTriggerSettings, HomepageSectionConfig, BadgeVisibilitySettings, SectionBadgeConfig, MapSettings, AuctionStage, SearchPaginationType, Subcategory, Role, UserProfileData } from '@/types';
+import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, CityInfo, MediaItem, PlatformSettings, MentalTriggerSettings, HomepageSectionConfig, BadgeVisibilitySettings, SectionBadgeConfig, MapSettings, AuctionStage, SearchPaginationType, Subcategory, Role, UserProfileData, UserProfileWithPermissions } from '@/types';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays, addDays as dateFnsAddDays, isPast, addHours, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle } from 'lucide-react';
@@ -70,7 +69,7 @@ export const sampleRoles: Role[] = [
   },
 ];
 
-export const sampleUserProfiles: UserProfileData[] = [
+export const sampleUserProfiles: UserProfileWithPermissions[] = [
   {
     uid: 'admin-bidexpert-platform-001', // Consistent UID for admin
     email: 'admin@bidexpert.com.br',
@@ -87,8 +86,8 @@ export const sampleUserProfiles: UserProfileData[] = [
   {
     uid: 'user-test-002',
     email: 'testuser@example.com',
-    fullName: 'Usuário de Teste',
     password: 'password123',
+    fullName: 'Usuário de Teste',
     roleId: 'role-user', // Linked to sampleRoles
     roleName: 'USER',
     permissions: ['view_auctions', 'place_bids', 'view_lots'], // Explicitly set
@@ -1097,4 +1096,32 @@ export function getUniqueLotLocations(): string[] {
     }
   });
   return Array.from(locations).sort();
+}
+
+
+// Function to return a single object with all sample data arrays
+export function getSampleData() {
+    return {
+        sampleRoles,
+        sampleUserProfiles,
+        sampleLotCategories,
+        sampleSubcategories,
+        sampleStates,
+        sampleCities,
+        sampleAuctioneers,
+        sampleSellers,
+        sampleAuctions,
+        sampleLots,
+        sampleBids,
+        sampleLotReviews,
+        sampleLotQuestions,
+        sampleDirectSaleOffers,
+        sampleMediaItems,
+        sampleDocumentTypes,
+        sampleUserDocuments,
+        sampleUserWins,
+        sampleUserBids,
+        samplePlatformSettings,
+        sampleUserHabilitationStatus,
+    };
 }
