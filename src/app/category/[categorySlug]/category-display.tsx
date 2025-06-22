@@ -61,17 +61,19 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
   const [allCategoriesForFilter, setAllCategoriesForFilter] = useState<LotCategory[]>([]);
   const [uniqueLocationsForFilter, setUniqueLocationsForFilter] = useState<string[]>([]);
   const [uniqueSellersForFilter, setUniqueSellersForFilter] = useState<string[]>([]);
+  const [allLots, setAllLots] = useState<Lot[]>([]);
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({...initialFiltersState, category: categorySlug });
 
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
       try {
-        const [allCats, settings, allLots] = await Promise.all([
+        const [allCats, settings, allLotsData] = await Promise.all([
             getLotCategories(),
             getPlatformSettings(),
             getLots(),
         ]);
+        setAllLots(allLotsData); 
         setAllCategoriesForFilter(allCats);
         setPlatformSettings(settings);
         
@@ -79,15 +81,15 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         setCurrentCategory(foundCategory || null);
 
         if (foundCategory) {
-          const lotsForCategory = allLots.filter(lot => lot.categoryId === foundCategory.id);
+          const lotsForCategory = allLotsData.filter(lot => lot.categoryId === foundCategory.id);
           setCategoryLots(lotsForCategory);
           setActiveFilters(prev => ({ ...prev, category: foundCategory.slug }));
         } else {
           setCategoryLots([]);
         }
         
-        setUniqueLocationsForFilter(getUniqueLotLocations(allLots));
-        setUniqueSellersForFilter(getUniqueSellerNames(allLots));
+        setUniqueLocationsForFilter(getUniqueLotLocations(allLotsData));
+        setUniqueSellersForFilter(getUniqueSellerNames(allLotsData));
 
       } catch (error) {
         console.error("Error fetching category data:", error);
@@ -107,17 +109,25 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
   const handleFilterSubmit = (filters: ActiveFilters) => {
     setActiveFilters(filters);
     setIsFilterSheetOpen(false); 
+    
+    let lotsToFilter = allLots; // Start with all lots
+
+    // Apply category filter first
     if (filters.category && filters.category !== 'TODAS') {
-         const lotsForCategory = allLots.filter(lot => lot.categoryId === filters.category); // Use allLots state
-         setCategoryLots(lotsForCategory);
-    } else {
-        if (currentCategory) {
-            const lotsForCurrentCategory = allLots.filter(lot => lot.categoryId === currentCategory.id); // Use allLots state
-            setCategoryLots(lotsForCurrentCategory);
+        const categoryToFilter = allCategoriesForFilter.find(c => c.slug === filters.category);
+        if (categoryToFilter) {
+            lotsToFilter = allLots.filter(lot => lot.categoryId === categoryToFilter.id);
         } else {
-            setCategoryLots(allLots); 
+             lotsToFilter = []; // Category not found, show no lots
         }
+    } else if (currentCategory && filters.category === 'TODAS') {
+         // If "All Categories" is selected on a specific category page, revert to showing all lots on that page
+        lotsToFilter = allLots.filter(lot => lot.categoryId === currentCategory.id);
     }
+    
+    // Apply other filters (this part would be built out further)
+    // For now, we'll just set the lots based on category
+    setCategoryLots(lotsToFilter);
   };
 
   const handleFilterReset = () => {
@@ -136,10 +146,10 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     let lotsToSort = [...categoryLots];
     switch (sortBy) {
       case 'lotNumber_asc':
-        lotsToSort.sort((a, b) => (parseInt(String(a.id).replace(/\D/g,'')) || 0) - (parseInt(String(b.id).replace(/\D/g,'')) || 0));
+        lotsToSort.sort((a, b) => (parseInt(String(a.number || a.id).replace(/\D/g,'')) || 0) - (parseInt(String(b.number || b.id).replace(/\D/g,'')) || 0));
         break;
       case 'lotNumber_desc':
-        lotsToSort.sort((a, b) => (parseInt(String(b.id).replace(/\D/g,'')) || 0) - (parseInt(String(a.id).replace(/\D/g,'')) || 0));
+        lotsToSort.sort((a, b) => (parseInt(String(b.number || b.id).replace(/\D/g,'')) || 0) - (parseInt(String(a.number || a.id).replace(/\D/g,'')) || 0));
         break;
       case 'endDate_asc':
         lotsToSort.sort((a, b) => new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime());
@@ -157,7 +167,8 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         lotsToSort.sort((a, b) => (b.views || 0) - (a.views || 0));
         break;
       case 'id_desc': 
-        lotsToSort.sort((a, b) => (parseInt(b.id.replace(/\D/g,'')) || 0) - (parseInt(a.id.replace(/\D/g,'')) || 0));
+        // This is a simplistic sort by ID, assuming higher ID means newer. A createdAt field would be better.
+        lotsToSort.sort((a, b) => (b.id > a.id ? 1 : -1));
         break;
       case 'relevance':
       default:
@@ -165,8 +176,6 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     }
     return lotsToSort;
   }, [categoryLots, sortBy]);
-
-  const [allLots, setAllLots] = useState<Lot[]>([]); // State to hold all lots
 
   if (isLoading || !platformSettings) {
     return (
@@ -278,7 +287,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
                 </SelectContent>
               </Select>
               <div className="flex items-center gap-1">
-                <span className="text-xs text-muted-foreground">Ver:</span>
+                <span className="text-xs text-muted-foreground hidden sm:inline">Ver:</span>
                 <Button
                   variant={viewMode === 'card' ? 'secondary' : 'ghost'}
                   size="icon"
