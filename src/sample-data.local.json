@@ -166,24 +166,173 @@
     }
   ],
   "sampleMediaItems": [
-    { "id": "media-cat-imoveis-cover", "fileName": "imoveis-cover.jpg", "urlOriginal": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxyZWFsJTIwZXN0YXRlfGVufDB8fHx8MTc1MDYxMjUzNnww&ixlib=rb-4.1.0&q=80&w=1080", "mimeType": "image/jpeg", "sizeBytes": 123456 },
-    { "id": "media-cat-veiculos-cover", "fileName": "veiculos-cover.jpg", "urlOriginal": "https://images.unsplash.com/photo-1553440569-b27b5148311a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxhdWN0aW9uJTIwY2Fyc3xlbnwwfHx8fDE3NTE5ODg2NjJ8MA&ixlib=rb-4.1.0&q=80&w=1080", "mimeType": "image/jpeg", "sizeBytes": 130000 },
-    { "id": "media-cat-maquinas-cover", "fileName": "maquinas-cover.jpg", "urlOriginal": "https://images.unsplash.com/photo-1623862220790-2e0350374e27?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxoZWF2eSUyMG1hY2hpbmVyeXxlbnwwfHx8fDE3NTE5ODg2OTR8MA&ixlib=rb-4.1.0&q=80&w=1080", "mimeType": "image/jpeg", "sizeBytes": 140000 },
-    { "id": "media-cat-arte-cover", "fileName": "arte-cover.jpg", "urlOriginal": "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxmaW5lJTIwYXJ0JTIwcGFpbnRpbmd8ZW58MHx8fHwxNzUyMTE3NzgwfDA&ixlib=rb-4.1.0&q=80&w=1080", "mimeType": "image/jpeg", "sizeBytes": 150000 },
-    { "id": "media-auc-imoveis-banner", "fileName": "leilao-imoveis.jpg", "urlOriginal": "https://images.unsplash.com/photo-1582407947304-fd86f028f716?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxpbW9iaWxpYXJpYXxlbnwwfHx8fDE3NTA0NTkwOTZ8MA&ixlib=rb-4.1.0&q=80&w=1080", "mimeType": "image/jpeg", "sizeBytes": 125000 },
-    { "id": "media-auc-veiculos-banner", "fileName": "leilao-veiculos.jpg", "urlOriginal": "https://images.unsplash.com/photo-1526726538690-5cbf956ae2fd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxM3x8Y2FycyUyMHxlbnwwfHx8fDE3NTA0NTk2MDR8MA&ixlib=rb-4.1.0&q=80&w=1080", "mimeType": "image/jpeg", "sizeBytes": 135000 },
-    { "id": "media-auc-arte-banner", "fileName": "leilao-arte.jpg", "urlOriginal": "https://images.unsplash.com/photo-1671351966385-f9a09485fe75?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNXx8YW50aWd1aWRhZGVzfGVufDB8fHx8MTc1MDQ2MDAzNnww&ixlib=rb-4.1.0&q=80&w=1080", "mimeType": "image/jpeg", "sizeBytes": 145000 },
-    { "id": "media-auc-mustang-banner", "fileName": "leilao-mustang.jpg", "urlOriginal": "https://images.unsplash.com/photo-1625604238425-05f1b2461f50?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHwxOTY3JTIwZm9yZCUyMG11c3RhbmclMjBmYXN0YmFja3xlbnwwfHx8fDE3NTA0Mzc0MjZ8MA&ixlib=rb-4.1.0&q=80&w=1080", "mimeType": "image/jpeg", "sizeBytes": 155000 },
-    { "id": "media-auc-maquinas-banner", "fileName": "leilao-maquinas.jpg", "urlOriginal": "https://images.unsplash.com/photo-1659021181759-2f987070b6c9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNHx8VHJhY3RvciUyMG5ldyUyMGhvbGxhbmQlMjB0N3xlbnwwfHx8fDE3NTA0MzU0NDV8MA&ixlib=rb-4.1.0&q=80&w=1080", "mimeType": "image/jpeg", "sizeBytes": 165000 },
-    { "id": "media-auc-notebooks-banner", "fileName": "leilao-notebooks.jpg", "urlOriginal": "https://images.unsplash.com/photo-1737947640001-54765a2b0287?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNHx8TGFwdG9wcyUyMG1hY3xlbnwwfHx8fDE3NTA0NjMxNDJ8MA&ixlib=rb-4.1.0&q=80&w=1080", "mimeType": "image/jpeg", "sizeBytes": 175000 },
-    { "id": "media-lot-casa-centro-main", "fileName": "casa-centro.jpg", "urlOriginal": "https://images.unsplash.com/photo-1598228723793-52759bba239c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxOHx8Y2FzYXxlbnwwfHx8fDE3NTA0Mzc1MTV8MA&ixlib=rb-4.1.0&q=80&w=1080", "mimeType": "image/jpeg", "sizeBytes": 110000 },
-    { "id": "media-lot-casa-centro-garagem", "fileName": "garagem-casa-centro.jpg", "urlOriginal": "https://images.unsplash.com/photo-1572120360610-d971b9d7767c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxnYXJhZ2V8ZW58MHx8fHwxNzUyMTE4MjE3fDA&ixlib=rb-4.1.0&q=80&w=1080", "mimeType": "image/jpeg", "sizeBytes": 115000 },
-    { "id": "media-lot-audi-a4-main", "fileName": "audi-a4-2013.jpg", "urlOriginal": "https://images.unsplash.com/photo-1617469724524-de5396b7975c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxibGFjayUyMGF1ZGklMjBhNCUyMHNlZGFufGVufDB8fHx8MTc1MjExODMwN3ww&ixlib=rb-4.1.0&q=80&w=1080", "mimeType": "image/jpeg", "sizeBytes": 120000 },
-    { "id": "media-lot-audi-a4-interior", "fileName": "audi-a4-interior.jpg", "urlOriginal": "https://images.unsplash.com/photo-1617469724285-33368856000c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxibGFjayUyMGF1ZGklMjBhNCUyMHNlZGFuJTIwaW50ZXJpb3J8ZW58MHx8fHwxNzUyMTE4MzM0fDA&ixlib=rb-4.1.0&q=80&w=1080", "mimeType": "image/jpeg", "sizeBytes": 125000 },
-    { "id": "media-lot-pintura-toscana-main", "fileName": "pintura-toscana.jpg", "urlOriginal": "https://images.unsplash.com/photo-1703593693037-3f816218baa1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8b2lsJTIwcGFpbnR1cmUlMjB0dXNjYW55fGVufDB8fHx8MTc1MDYwNTI5Mnww&ixlib=rb-4.1.0&q=80&w=1080", "mimeType": "image/jpeg", "sizeBytes": 130000 },
-    { "id": "media-lot-mustang-1967-main", "fileName": "mustang-1967.jpg", "urlOriginal": "https://images.unsplash.com/photo-1625604238425-05f1b2461f50?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHwxOTY3JTIwZm9yZCUyMG11c3RhbmclMjBmYXN0YmFja3xlbnwwfHx8fDE3NTA0Mzc0MjZ8MA&ixlib=rb-4.1.0&q=80&w=1080", "mimeType": "image/jpeg", "sizeBytes": 135000 },
-    { "id": "media-lot-trator-nh-main", "fileName": "trator-newholland-t7.jpg", "urlOriginal": "https://images.unsplash.com/photo-1659021181759-2f987070b6c9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNHx8VHJhY3RvciUyMG5ldyUyMGhvbGxhbmQlMjB0N3xlbnwwfHx8fDE3NTA0MzU0NDV8MA&ixlib=rb-4.1.0&q=80&w=1080", "mimeType": "image/jpeg", "sizeBytes": 140000 },
-    { "id": "media-lot-casa-portao-main", "fileName": "casa-portao.jpg", "urlOriginal": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Y2FzYXxlbnwwfHx8fDE3NTA0Mzc1MTV8MA&ixlib=rb-4.1.0&q=80&w=1080", "mimeType": "image/jpeg", "sizeBytes": 145000 },
-    { "id": "media-seller-bradesco-logo", "fileName": "bradesco-logo.png", "urlOriginal": "https://placehold.co/100x100.png?text=B", "mimeType": "image/png", "sizeBytes": 1024 }
+    {
+      "id": "media-cat-imoveis-cover",
+      "fileName": "imoveis-cover.jpg",
+      "urlOriginal": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxyZWFsJTIwZXN0YXRlfGVufDB8fHx8MTc1MDYxMjUzNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 123456,
+      "uploadedAt": "2025-06-22T19:59:12.123Z"
+    },
+    {
+      "id": "media-subcat-apartamentos-icon",
+      "fileName": "apartamento-icon.png",
+      "urlOriginal": "https://placehold.co/32x32.png",
+      "mimeType": "image/png",
+      "sizeBytes": 1024,
+      "uploadedAt": "2025-06-21T18:45:12.123Z"
+    },
+    {
+      "id": "media-subcat-casas-icon",
+      "fileName": "casa-icon.png",
+      "urlOriginal": "https://placehold.co/32x32.png",
+      "mimeType": "image/png",
+      "sizeBytes": 1024,
+      "uploadedAt": "2025-06-20T17:30:12.123Z"
+    },
+    {
+      "id": "media-cat-veiculos-cover",
+      "fileName": "veiculos-cover.jpg",
+      "urlOriginal": "https://images.unsplash.com/photo-1553440569-b27b5148311a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxhdWN0aW9uJTIwY2Fyc3xlbnwwfHx8fDE3NTE5ODg2NjJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 130000,
+      "uploadedAt": "2025-06-19T16:15:12.123Z"
+    },
+    {
+      "id": "media-cat-maquinas-cover",
+      "fileName": "maquinas-cover.jpg",
+      "urlOriginal": "https://images.unsplash.com/photo-1623862220790-2e0350374e27?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxoZWF2eSUyMG1hY2hpbmVyeXxlbnwwfHx8fDE3NTE5ODg2OTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 140000,
+      "uploadedAt": "2025-06-18T15:00:12.123Z"
+    },
+    {
+      "id": "media-cat-arte-cover",
+      "fileName": "arte-cover.jpg",
+      "urlOriginal": "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxmaW5lJTIwYXJ0JTIwcGFpbnRpbmd8ZW58MHx8fHwxNzUyMTE3NzgwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 150000,
+      "uploadedAt": "2025-06-17T13:45:12.123Z"
+    },
+    {
+      "id": "media-auc-imoveis-banner",
+      "fileName": "leilao-imoveis.jpg",
+      "urlOriginal": "https://images.unsplash.com/photo-1582407947304-fd86f028f716?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxpbW9iaWxpYXJpYXxlbnwwfHx8fDE3NTA0NTkwOTZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 125000,
+      "uploadedAt": "2025-06-16T12:30:12.123Z"
+    },
+    {
+      "id": "media-auc-veiculos-banner",
+      "fileName": "leilao-veiculos.jpg",
+      "urlOriginal": "https://images.unsplash.com/photo-1526726538690-5cbf956ae2fd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxM3x8Y2FycyUyMHxlbnwwfHx8fDE3NTA0NTk2MDR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 135000,
+      "uploadedAt": "2025-06-15T11:15:12.123Z"
+    },
+    {
+      "id": "media-auc-arte-banner",
+      "fileName": "leilao-arte.jpg",
+      "urlOriginal": "https://images.unsplash.com/photo-1671351966385-f9a09485fe75?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNXx8YW50aWd1aWRhZGVzfGVufDB8fHx8MTc1MDQ2MDAzNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 145000,
+      "uploadedAt": "2025-06-14T10:00:12.123Z"
+    },
+    {
+      "id": "media-auc-mustang-banner",
+      "fileName": "leilao-mustang.jpg",
+      "urlOriginal": "https://images.unsplash.com/photo-1625604238425-05f1b2461f50?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHwxOTY3JTIwZm9yZCUyMG11c3RhbmclMjBmYXN0YmFja3xlbnwwfHx8fDE3NTA0Mzc0MjZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 155000,
+      "uploadedAt": "2025-06-13T08:45:12.123Z"
+    },
+    {
+      "id": "media-auc-maquinas-banner",
+      "fileName": "leilao-maquinas.jpg",
+      "urlOriginal": "https://images.unsplash.com/photo-1659021181759-2f987070b6c9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNHx8VHJhY3RvciUyMG5ldyUyMGhvbGxhbmQlMjB0N3xlbnwwfHx8fDE3NTA0MzU0NDV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 165000,
+      "uploadedAt": "2025-06-12T07:30:12.123Z"
+    },
+    {
+      "id": "media-auc-notebooks-banner",
+      "fileName": "leilao-notebooks.jpg",
+      "urlOriginal": "https://images.unsplash.com/photo-1737947640001-54765a2b0287?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNHx8TGFwdG9wcyUyMG1hY3xlbnwwfHx8fDE3NTA0NjMxNDJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 175000,
+      "uploadedAt": "2025-06-11T06:15:12.123Z"
+    },
+    {
+      "id": "media-lot-casa-centro-main",
+      "fileName": "casa-centro.jpg",
+      "urlOriginal": "https://images.unsplash.com/photo-1598228723793-52759bba239c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxOHx8Y2FzYXxlbnwwfHx8fDE3NTA0Mzc1MTV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 110000,
+      "uploadedAt": "2025-06-10T05:00:12.123Z"
+    },
+    {
+      "id": "media-lot-casa-centro-garagem",
+      "fileName": "garagem-casa-centro.jpg",
+      "urlOriginal": "https://images.unsplash.com/photo-1572120360610-d971b9d7767c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxnYXJhZ2V8ZW58MHx8fHwxNzUyMTE4MjE3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 115000,
+      "uploadedAt": "2025-06-09T03:45:12.123Z"
+    },
+    {
+      "id": "media-lot-audi-a4-main",
+      "fileName": "audi-a4-2013.jpg",
+      "urlOriginal": "https://images.unsplash.com/photo-1617469724524-de5396b7975c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxibGFjayUyMGF1ZGklMjBhNCUyMHNlZGFufGVufDB8fHx8MTc1MjExODMwN3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 120000,
+      "uploadedAt": "2025-06-08T02:30:12.123Z"
+    },
+    {
+      "id": "media-lot-audi-a4-interior",
+      "fileName": "audi-a4-interior.jpg",
+      "urlOriginal": "https://images.unsplash.com/photo-1617469724285-33368856000c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxibGFjayUyMGF1ZGklMjBhNCUyMHNlZGFuJTIwaW50ZXJpb3J8ZW58MHx8fHwxNzUyMTE4MzM0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 125000,
+      "uploadedAt": "2025-06-07T01:15:12.123Z"
+    },
+    {
+      "id": "media-lot-pintura-toscana-main",
+      "fileName": "pintura-toscana.jpg",
+      "urlOriginal": "https://images.unsplash.com/photo-1703593693037-3f816218baa1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8b2lsJTIwcGFpbnR1cmUlMjB0dXNjYW55fGVufDB8fHx8MTc1MDYwNTI5Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 130000,
+      "uploadedAt": "2025-06-06T00:00:12.123Z"
+    },
+    {
+      "id": "media-lot-mustang-1967-main",
+      "fileName": "mustang-1967.jpg",
+      "urlOriginal": "https://images.unsplash.com/photo-1625604238425-05f1b2461f50?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHwxOTY3JTIwZm9yZCUyMG11c3RhbmclMjBmYXN0YmFja3xlbnwwfHx8fDE3NTA0Mzc0MjZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 135000,
+      "uploadedAt": "2025-06-05T22:45:12.123Z"
+    },
+    {
+      "id": "media-lot-trator-nh-main",
+      "fileName": "trator-newholland-t7.jpg",
+      "urlOriginal": "https://images.unsplash.com/photo-1659021181759-2f987070b6c9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxNHx8VHJhY3RvciUyMG5ldyUyMGhvbGxhbmQlMjB0N3xlbnwwfHx8fDE3NTA0MzU0NDV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 140000,
+      "uploadedAt": "2025-06-04T21:30:12.123Z"
+    },
+    {
+      "id": "media-lot-casa-portao-main",
+      "fileName": "casa-portao.jpg",
+      "urlOriginal": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Y2FzYXxlbnwwfHx8fDE3NTA0Mzc1MTV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 145000,
+      "uploadedAt": "2025-06-03T20:15:12.123Z"
+    },
+    {
+      "id": "media-seller-bradesco-logo",
+      "fileName": "bradesco-logo.png",
+      "urlOriginal": "https://placehold.co/100x100.png?text=B",
+      "mimeType": "image/png",
+      "sizeBytes": 1024,
+      "uploadedAt": "2025-06-02T19:00:12.123Z"
+    }
   ]
 }

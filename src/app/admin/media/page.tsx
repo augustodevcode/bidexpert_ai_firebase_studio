@@ -209,7 +209,7 @@ export default function MediaLibraryPage() {
                             : 'Não anexado'}
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
-                          {format(new Date(item.uploadedAt), 'dd/MM/yy HH:mm', { locale: ptBR })}
+                          {item.uploadedAt ? format(new Date(item.uploadedAt), 'dd/MM/yy HH:mm', { locale: ptBR }) : 'N/A'}
                         </TableCell>
                         <TableCell className="text-right">
                           <Tooltip>
@@ -323,7 +323,7 @@ export default function MediaLibraryPage() {
                         {(item.sizeBytes / 1024).toFixed(1)} KB
                       </p>
                       <p className="text-muted-foreground/80">
-                        {format(new Date(item.uploadedAt), 'dd/MM/yy', { locale: ptBR })}
+                         {item.uploadedAt ? format(new Date(item.uploadedAt), 'dd/MM/yy', { locale: ptBR }) : 'N/A'}
                       </p>
                     </div>
                   </Card>
@@ -342,4 +342,3 @@ export default function MediaLibraryPage() {
     </TooltipProvider>
   );
 }
-
