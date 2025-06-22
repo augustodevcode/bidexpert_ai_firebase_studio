@@ -792,7 +792,7 @@ export interface IDatabaseAdapter {
   deleteRole(id: string): Promise<{ success: boolean; message: string }>;
   ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }>;
 
-  createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }>;
+  createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }>;
   getMediaItems(): Promise<MediaItem[]>;
   updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }>;
   deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }>;

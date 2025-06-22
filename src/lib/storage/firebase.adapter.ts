@@ -12,15 +12,15 @@ export class FirebaseStorageAdapter implements IStorageAdapter {
   }
 
   async upload(fileName: string, contentType: string, buffer: Buffer): Promise<{ publicUrl: string; storagePath: string; }> {
-    const { storageAdmin, error: sdkError } = ensureAdminInitialized();
-    if (sdkError || !storageAdmin) {
+    const { storage, error: sdkError } = ensureAdminInitialized();
+    if (sdkError || !storage) {
       const msg = `Firebase Admin SDK for Storage is not available. ${sdkError?.message || ''}`;
       console.error(`[FirebaseStorageAdapter - upload] ${msg}`);
       throw new Error(msg);
     }
     
     try {
-      const bucket = this.bucketName ? storageAdmin.bucket(this.bucketName) : storageAdmin.bucket();
+      const bucket = this.bucketName ? storage.bucket(this.bucketName) : storage.bucket();
       const storagePath = `media_uploads/${fileName}`;
       const file = bucket.file(storagePath);
       
@@ -40,15 +40,15 @@ export class FirebaseStorageAdapter implements IStorageAdapter {
   }
 
   async delete(storagePath: string): Promise<{ success: boolean; message: string; }> {
-    const { storageAdmin, error: sdkError } = ensureAdminInitialized();
-    if (sdkError || !storageAdmin) {
+    const { storage, error: sdkError } = ensureAdminInitialized();
+    if (sdkError || !storage) {
       const msg = `Firebase Admin SDK for Storage is not available. ${sdkError?.message || ''}`;
       console.error(`[FirebaseStorageAdapter - delete] ${msg}`);
       return { success: false, message: msg };
     }
 
     try {
-        const bucket = this.bucketName ? storageAdmin.bucket(this.bucketName) : storageAdmin.bucket();
+        const bucket = this.bucketName ? storage.bucket(this.bucketName) : storage.bucket();
         const file = bucket.file(storagePath);
 
         // Check if file exists before trying to delete

@@ -51,7 +51,7 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
     defaultValues: {
       siteTitle: initialData?.siteTitle || 'BidExpert',
       siteTagline: initialData?.siteTagline || 'Leilões Online Especializados',
-      galleryImageBasePath: initialData?.galleryImageBasePath || '/media/gallery/',
+      galleryImageBasePath: initialData?.galleryImageBasePath || '/uploads/media/',
       storageProvider: initialData?.storageProvider || 'local',
       firebaseStorageBucket: initialData?.firebaseStorageBucket || '',
       activeThemeName: initialData?.activeThemeName || null,
@@ -72,7 +72,7 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
     form.reset({
         siteTitle: initialData?.siteTitle || 'BidExpert',
         siteTagline: initialData?.siteTagline || 'Leilões Online Especializados',
-        galleryImageBasePath: initialData?.galleryImageBasePath || '/media/gallery/',
+        galleryImageBasePath: initialData?.galleryImageBasePath || '/uploads/media/',
         storageProvider: initialData?.storageProvider || 'local',
         firebaseStorageBucket: initialData?.firebaseStorageBucket || '',
         activeThemeName: initialData?.activeThemeName || null,

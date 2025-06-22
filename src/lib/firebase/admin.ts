@@ -28,15 +28,6 @@ export function ensureAdminInitialized(): {
 } {
   console.log('[Admin SDK ensureAdminInitialized] Called.');
 
-  if (process.env.ACTIVE_DATABASE_SYSTEM?.toUpperCase() !== 'FIRESTORE') {
-    const msg = `[Admin SDK ensureAdminInitialized] SKIPPING Firebase Admin initialization because ACTIVE_DATABASE_SYSTEM is not FIRESTORE. Current value: ${process.env.ACTIVE_DATABASE_SYSTEM || 'NOT SET'}`;
-    console.warn(msg);
-    return {
-      error: new Error(msg),
-      alreadyInitialized: false,
-    };
-  }
-
   // Import 'firebase-admin' dinamicamente AQUI
   let admin: typeof import('firebase-admin');
   try {
