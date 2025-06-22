@@ -29,7 +29,6 @@
 - **Public Facing Pages:**
     *   Initial setup for various informational and detail pages.
     *   Responsiveness of `TabsList` on lot detail page fixed.
-    *   Category page display logic reviewed and corrected.
 - **AI Flows:**
     *   Initial Genkit flows for `suggestListingDetails`, `predictOpeningValue`, `suggestSimilarListings`.
 - **`SearchResultsFrame` Component (Item 5 - DONE):**
@@ -46,13 +45,15 @@
     *   Reviewed all display components to ensure consistency.
 - **Admin User Permissions & Login (`admin@bidexpert.com.br` - DONE)**: Restored database adapter logic for user/role management, resolving login issues by removing hardcoded sample-data access in actions. The system now respects the `ACTIVE_DATABASE_SYSTEM` environment variable.
 - **Search Page Hero (Item 2 - DONE):** Removed smaller icon from the center of the main hero banner on the search page.
-
-## DOING
 - **CRUD Actions Refactoring (Item 6):**
   - **Sub-task 1 (DONE):** Refactored server actions for States, Cities, Auctioneers, and Sellers to use the `getDatabaseAdapter()`, ensuring they work with the configured data source (sample-data, MySQL, or PostgreSQL).
 - **Media Library Integration (Items 3, 4, 7):**
-  - **Sub-task 1 (DOING):** Integrating `ChooseMediaDialog` into forms. Replaced URL text inputs with a media selection button and preview in the Category CRUD form.
-  - **Sub-task 2 (TODO):** Replace URL inputs in Auctioneer, Seller, and Auction forms.
+  - **Sub-task 1 (DONE):** Replaced URL text inputs with a media selection button and preview in the Category CRUD form.
+
+## DOING
+- **Media Library Integration (Items 3, 4, 7):**
+  - **Sub-task 2 (DOING):** Replace URL inputs in Auctioneer, Seller, and Auction forms.
+    - Auctioneer form updated. Next: Seller and Auction forms.
   - **Sub-task 3 (TODO):** Perform data migration in `sample-data.local.json` to move all image URLs into `mediaItems` and link them to their respective entities. This will be a larger refactor.
 
 ## NEXT
