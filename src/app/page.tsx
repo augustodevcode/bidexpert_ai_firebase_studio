@@ -115,7 +115,7 @@ export default function HomePage() {
                 <LotCard
                   key={lot.id}
                   lot={lot}
-                  platformSettingsProp={platformSettings}
+                  platformSettings={platformSettings}
                   badgeVisibilityConfig={platformSettings.sectionBadgeVisibility?.featuredLots}
                 />
               ))}
@@ -160,4 +160,3 @@ export default function HomePage() {
     );
   }
 }
-

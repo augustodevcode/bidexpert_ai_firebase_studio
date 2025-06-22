@@ -102,17 +102,16 @@ const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({
 interface LotListItemProps {
   lot: Lot;
   badgeVisibilityConfig?: BadgeVisibilitySettings;
-  platformSettingsProp?: PlatformSettings;
+  platformSettings: PlatformSettings;
 }
 
-function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettingsProp }: LotListItemProps) {
+function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings }: LotListItemProps) {
   const [isFavorite, setIsFavorite] = useState(lot.isFavorite || false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`);
   const { toast } = useToast();
 
-  const platformSettings = platformSettingsProp || samplePlatformSettings;
   const mentalTriggersGlobalSettings = platformSettings.mentalTriggerSettings || {};
   const sectionBadges = badgeVisibilityConfig || platformSettings.sectionBadgeVisibility?.searchList || {
     showStatusBadge: true, // Default
@@ -263,7 +262,7 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
               </div>
               <div className="flex-shrink-0 flex flex-col items-end gap-1">
                 {sectionBadges.showStatusBadge !== false && (
-                  <Badge className={`text-xs px-1.5 py-0.5 ${getLotStatusColor(lot.status)} self-end`}>
+                  <Badge className={`text-xs px-1.5 py-0.5 ${getLotStatusColor(lot.status)} border-current`}>
                     {getAuctionStatusText(lot.status)}
                   </Badge>
                 )}
@@ -410,7 +409,7 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
   );
 }
 
-export default function LotListItem({ lot, badgeVisibilityConfig, platformSettingsProp }: LotListItemProps) {
+export default function LotListItem({ lot, badgeVisibilityConfig, platformSettings }: LotListItemProps) {
     const [isClient, setIsClient] = useState(false);
     useEffect(() => {
       setIsClient(true);
@@ -439,7 +438,5 @@ export default function LotListItem({ lot, badgeVisibilityConfig, platformSettin
       );
     }
 
-    return <LotListItemClientContent lot={lot} badgeVisibilityConfig={badgeVisibilityConfig} platformSettingsProp={platformSettingsProp} />;
+    return <LotListItemClientContent lot={lot} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} />;
   }
-
-    

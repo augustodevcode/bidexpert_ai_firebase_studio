@@ -347,11 +347,11 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
                   {getAuctionStatusText(lot.status)}
               </Badge>
            )}
-            <div className={`flex items-center gap-1 ${lot.endDate && isPast(new Date(lot.endDate as string)) ? 'line-through' : ''}`}>
+            <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate)) ? 'line-through' : ''}`}>
                 <Gavel className="h-3 w-3" />
                 <span>{lot.bidsCount || 0} Lances</span>
             </div>
-            <span className={`font-semibold ${lot.endDate && isPast(new Date(lot.endDate as string)) ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.number || lot.id.replace('LOTE', '')}</span>
+            <span className={`font-semibold ${isPast(new Date(lot.endDate)) ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.number || lot.id.replace('LOTE', '')}</span>
         </div>
          <Button asChild className="w-full mt-2" size="sm">
             <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>Ver Detalhes do Lote</Link>
@@ -402,4 +402,3 @@ export default function LotCard({ lot, badgeVisibilityConfig, platformSettings }
 
     return <LotCardClientContent lot={lot} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} />;
   }
-
