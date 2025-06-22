@@ -386,6 +386,7 @@ function mapToMediaItem(row: QueryResultRow): MediaItem {
     urlLarge: row.url_large,
     linkedLotIds: row.linked_lot_ids || [],
     dataAiHint: row.data_ai_hint,
+    storagePath: row.storage_path
   };
 }
 
@@ -751,6 +752,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `CREATE TABLE IF NOT EXISTS media_items (
         id SERIAL PRIMARY KEY,
         file_name VARCHAR(255) NOT NULL,
+        storage_path TEXT,
         uploaded_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         uploaded_by VARCHAR(255),
         title TEXT,
@@ -868,75 +870,117 @@ export class PostgresAdapter implements IDatabaseAdapter {
       client.release();
     }
   }
-
-  // --- Implementations for all methods ---
-  async getPlatformSettings(): Promise<PlatformSettings> {
+  
+  async getLotCategories(): Promise<LotCategory[]> {
     const client = await getPool().connect();
     try {
-        const res = await client.query(`SELECT id, site_title, site_tagline, gallery_image_base_path, storage_provider, firebase_storage_bucket, active_theme_name, themes, platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page, search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards, show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings, section_badge_visibility, homepage_sections, updated_at FROM platform_settings WHERE id = 'global';`);
-        if (res.rowCount && res.rowCount > 0) {
-            return mapToPlatformSettings(res.rows[0]);
-        }
-        console.warn("[PostgresAdapter - getPlatformSettings] No settings found in DB, returning sample data as fallback.");
-        return { ...samplePlatformSettings, id: 'global', updatedAt: new Date() };
+        const res = await client.query('SELECT * FROM lot_categories ORDER BY name ASC');
+        return res.rows.map(mapToLotCategory);
     } catch (e: any) {
-        console.error("[PostgresAdapter - getPlatformSettings] Error, returning sample data:", e);
-        return { ...samplePlatformSettings, id: 'global', updatedAt: new Date() };
+        console.error("[PostgresAdapter - getLotCategories] Error:", e);
+        return [];
+    } finally {
+        client.release();
+    }
+  }
+  
+  async getLots(auctionIdParam?: string): Promise<Lot[]> {
+    const client = await getPool().connect();
+    try {
+        let query = `
+            SELECT l.*,
+                   c.name as category_name,
+                   sc.name as subcategory_name,
+                   city.name as city_name,
+                   st.uf as state_uf,
+                   a.title as auction_name,
+                   s.name as lot_seller_name
+            FROM lots l
+            LEFT JOIN lot_categories c ON l.category_id = c.id
+            LEFT JOIN subcategories sc ON l.subcategory_id = sc.id
+            LEFT JOIN cities city ON l.city_id = city.id
+            LEFT JOIN states st ON l.state_id = st.id
+            LEFT JOIN auctions a ON l.auction_id = a.id
+            LEFT JOIN sellers s ON l.seller_id_fk = s.id
+        `;
+        const params: (string | number)[] = [];
+        if (auctionIdParam) {
+            query += ' WHERE l.auction_id = $1';
+            const aucRes = await client.query('SELECT id FROM auctions WHERE id::text = $1 OR public_id = $1', [auctionIdParam]);
+            if (aucRes.rows.length > 0) {
+              params.push(aucRes.rows[0].id);
+            } else {
+              return [];
+            }
+        }
+        query += ' ORDER BY l.id ASC';
+        const res = await client.query(query, params);
+        return res.rows.map(mapToLot);
+    } catch (e: any) {
+        console.error("[PostgresAdapter - getLots] Error:", e);
+        return [];
     } finally {
         client.release();
     }
   }
 
-  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
+  async getAuctions(): Promise<Auction[]> {
+      const client = await getPool().connect();
+      try {
+          const query = `
+              SELECT a.*,
+                     c.name as category_name,
+                     au.name as auctioneer_name,
+                     s.name as seller_name,
+                     au.logo_url as auctioneer_logo_url
+              FROM auctions a
+              LEFT JOIN lot_categories c ON a.category_id = c.id
+              LEFT JOIN auctioneers au ON a.auctioneer_id = au.id
+              LEFT JOIN sellers s ON a.seller_id = s.id
+              ORDER BY a.auction_date DESC
+          `;
+          const res = await client.query(query);
+          return res.rows.map(mapToAuction);
+      } catch (e: any) {
+          console.error("[PostgresAdapter - getAuctions] Error:", e);
+          return [];
+      } finally {
+          client.release();
+      }
+  }
+
+  async getSellers(): Promise<SellerProfileInfo[]> {
     const client = await getPool().connect();
-    if (!data.galleryImageBasePath || !data.galleryImageBasePath.startsWith('/') || !data.galleryImageBasePath.endsWith('/')) {
-        return { success: false, message: 'Caminho base da galeria inválido. Deve começar e terminar com "/".' };
-    }
     try {
-        const query = `
-          INSERT INTO platform_settings (
-            id, site_title, site_tagline, gallery_image_base_path, storage_provider, firebase_storage_bucket,
-            active_theme_name, themes, platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page,
-            search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards,
-            show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings,
-            section_badge_visibility, homepage_sections, updated_at
-          ) VALUES ('global', $1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9::jsonb, $10, $11, $12, $13, $14, $15, $16, $17::jsonb, $18::jsonb, $19::jsonb, NOW())
-          ON CONFLICT (id) DO UPDATE SET
-            site_title = EXCLUDED.site_title, site_tagline = EXCLUDED.site_tagline,
-            gallery_image_base_path = EXCLUDED.gallery_image_base_path, storage_provider = EXCLUDED.storage_provider,
-            firebase_storage_bucket = EXCLUDED.firebase_storage_bucket, active_theme_name = EXCLUDED.active_theme_name,
-            themes = EXCLUDED.themes, platform_public_id_masks = EXCLUDED.platform_public_id_masks,
-            map_settings = EXCLUDED.map_settings, search_pagination_type = EXCLUDED.search_pagination_type,
-            search_items_per_page = EXCLUDED.search_items_per_page, search_load_more_count = EXCLUDED.search_load_more_count,
-            show_countdown_on_lot_detail = EXCLUDED.show_countdown_on_lot_detail, show_countdown_on_cards = EXCLUDED.show_countdown_on_cards,
-            show_related_lots_on_lot_detail = EXCLUDED.show_related_lots_on_lot_detail, related_lots_count = EXCLUDED.related_lots_count,
-            mental_trigger_settings = EXCLUDED.mental_trigger_settings, section_badge_visibility = EXCLUDED.section_badge_visibility,
-            homepage_sections = EXCLUDED.homepage_sections, updated_at = NOW();
-        `;
-        await client.query(query, [
-            data.siteTitle || null, data.siteTagline || null, data.galleryImageBasePath,
-            data.storageProvider, data.firebaseStorageBucket,
-            data.activeThemeName || null, JSON.stringify(data.themes || []),
-            JSON.stringify(data.platformPublicIdMasks || {}), JSON.stringify(data.mapSettings || {}),
-            data.searchPaginationType, data.searchItemsPerPage, data.searchLoadMoreCount,
-            data.showCountdownOnLotDetail, data.showCountdownOnCards, data.showRelatedLotsOnLotDetail,
-            data.relatedLotsCount, JSON.stringify(data.mentalTriggerSettings || {}),
-            JSON.stringify(data.sectionBadgeVisibility || {}), JSON.stringify(data.homepageSections || [])
-        ]);
-        return { success: true, message: 'Configurações atualizadas (PostgreSQL)!' };
+        const res = await client.query('SELECT * FROM sellers ORDER BY name ASC');
+        return res.rows.map(mapToSellerProfileInfo);
     } catch (e: any) {
-        console.error("[PostgresAdapter - updatePlatformSettings] Error:", e);
-        return { success: false, message: e.message };
+        console.error("[PostgresAdapter - getSellers] Error:", e);
+        return [];
+    } finally {
+        client.release();
+    }
+  }
+
+  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
+    const client = await getPool().connect();
+    try {
+        const res = await client.query('SELECT * FROM auctioneers ORDER BY name ASC');
+        return res.rows.map(mapToAuctioneerProfileInfo);
+    } catch (e: any) {
+        console.error("[PostgresAdapter - getAuctioneers] Error:", e);
+        return [];
     } finally {
         client.release();
     }
   }
 
   // --- Other placeholder implementations ---
-  async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> { console.warn("createLotCategory not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
-  async getLotCategories(): Promise<LotCategory[]> { console.warn("getLotCategories not implemented in PostgresAdapter"); return []; }
+  async getPlatformSettings(): Promise<PlatformSettings> { console.warn("getPlatformSettings not implemented in PostgresAdapter"); return samplePlatformSettings; }
+  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> { console.warn("updatePlatformSettings not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async getLotCategory(idOrSlug: string): Promise<LotCategory | null> { console.warn("getLotCategory not implemented in PostgresAdapter"); return null; }
   async getLotCategoryByName(name: string): Promise<LotCategory | null> { console.warn("getLotCategoryByName not implemented in PostgresAdapter"); return null; }
+  async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> { console.warn("createLotCategory not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async updateLotCategory(id: string, data: { name: string; description?: string; hasSubcategories?: boolean }): Promise<{ success: boolean; message: string; }> { console.warn("updateLotCategory not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteLotCategory(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteLotCategory not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> { console.warn("createSubcategory not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
@@ -956,27 +1000,23 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateCity not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteCity(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteCity not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> { console.warn("createAuctioneer not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
-  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { console.warn("getAuctioneers not implemented in PostgresAdapter"); return []; }
   async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> { console.warn("getAuctioneer not implemented in PostgresAdapter"); return null; }
   async updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateAuctioneer not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteAuctioneer not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null> { console.warn("getAuctioneerBySlug not implemented in PostgresAdapter"); return null; }
   async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> { console.warn("getAuctioneerByName not implemented in PostgresAdapter"); return null; }
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> { console.warn("createSeller not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
-  async getSellers(): Promise<SellerProfileInfo[]> { console.warn("getSellers not implemented in PostgresAdapter"); return []; }
   async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> { console.warn("getSeller not implemented in PostgresAdapter"); return null; }
   async updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateSeller not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteSeller not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null> { console.warn("getSellerBySlug not implemented in PostgresAdapter"); return null; }
   async getSellerByName(name: string): Promise<SellerProfileInfo | null> { console.warn("getSellerByName not implemented in PostgresAdapter"); return null; }
   async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> { console.warn("createAuction not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
-  async getAuctions(): Promise<Auction[]> { console.warn("getAuctions not implemented in PostgresAdapter"); return []; }
   async getAuction(idOrPublicId: string): Promise<Auction | null> { console.warn("getAuction not implemented in PostgresAdapter"); return null; }
   async updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> { console.warn("updateAuction not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteAuction(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteAuction not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> { console.warn("getAuctionsBySellerSlug not implemented in PostgresAdapter"); return []; }
   async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> { console.warn("createLot not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
-  async getLots(auctionIdParam?: string): Promise<Lot[]> { console.warn("getLots not implemented in PostgresAdapter"); return []; }
   async getLot(idOrPublicId: string): Promise<Lot | null> { console.warn("getLot not implemented in PostgresAdapter"); return null; }
   async updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> { console.warn("updateLot not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteLot not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }

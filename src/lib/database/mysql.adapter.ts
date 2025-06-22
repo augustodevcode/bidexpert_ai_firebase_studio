@@ -1,3 +1,4 @@
+
 // src/lib/database/mysql.adapter.ts
 import mysql, { type RowDataPacket, type Pool } from 'mysql2/promise';
 import type {
@@ -421,6 +422,7 @@ function mapToMediaItem(row: any): MediaItem {
     urlLarge: row.urlLarge,
     linkedLotIds: parseJsonColumn<string[]>(row.linkedLotIds, []),
     dataAiHint: row.dataAiHint,
+    storagePath: row.storagePath
   };
 }
 
@@ -638,7 +640,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         INDEX idx_lots_category_id (category_id), INDEX idx_lots_subcategory_id (subcategory_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
       `CREATE TABLE IF NOT EXISTS media_items (
-        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, file_name VARCHAR(255) NOT NULL, uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, file_name VARCHAR(255) NOT NULL, storage_path TEXT, uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         uploaded_by VARCHAR(255), title TEXT, alt_text TEXT, caption TEXT, description TEXT, mime_type VARCHAR(100) NOT NULL,
         size_bytes BIGINT NOT NULL, dimensions_width INT, dimensions_height INT, url_original TEXT NOT NULL,
         url_thumbnail TEXT, url_medium TEXT, url_large TEXT, linked_lot_ids JSON, data_ai_hint TEXT,
@@ -708,37 +710,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       // Seed default platform settings
       try {
         console.log('[MySqlAdapter] Seeding default platform settings...');
-        const defaultSettings = samplePlatformSettings;
-        const settingsQuery = `
-          INSERT IGNORE INTO platform_settings (
-            id, site_title, site_tagline, gallery_image_base_path, storage_provider, firebase_storage_bucket,
-            active_theme_name, themes, platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page,
-            search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards,
-            show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings,
-            section_badge_visibility, homepage_sections
-          ) VALUES ('global', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-        `;
-        await connection.execute(settingsQuery, [
-            defaultSettings.siteTitle,
-            defaultSettings.siteTagline,
-            defaultSettings.galleryImageBasePath,
-            defaultSettings.storageProvider,
-            defaultSettings.firebaseStorageBucket,
-            defaultSettings.activeThemeName || null,
-            JSON.stringify(defaultSettings.themes || []),
-            JSON.stringify(defaultSettings.platformPublicIdMasks || {}),
-            JSON.stringify(defaultSettings.mapSettings || {}),
-            defaultSettings.searchPaginationType,
-            defaultSettings.searchItemsPerPage,
-            defaultSettings.searchLoadMoreCount,
-            defaultSettings.showCountdownOnLotDetail,
-            defaultSettings.showCountdownOnCards,
-            defaultSettings.showRelatedLotsOnLotDetail,
-            defaultSettings.relatedLotsCount,
-            JSON.stringify(defaultSettings.mentalTriggerSettings || {}),
-            JSON.stringify(defaultSettings.sectionBadgeVisibility || {}),
-            JSON.stringify(defaultSettings.homepageSections || [])
-        ]);
+        await this.updatePlatformSettings(samplePlatformSettings);
         console.log('[MySqlAdapter] Configurações padrão da plataforma verificadas/inseridas.');
       } catch (settingsError: any) {
         errors.push(new Error(`Falha ao inserir configurações padrão da plataforma: ${settingsError.message}`));
@@ -788,8 +760,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
             active_theme_name, themes, platform_public_id_masks, map_settings, search_pagination_type, search_items_per_page,
             search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards,
             show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings,
-            section_badge_visibility, homepage_sections, updated_at
-          ) VALUES ('global', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            section_badge_visibility, homepage_sections
+          ) VALUES ('global', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON DUPLICATE KEY UPDATE
             site_title = VALUES(site_title), site_tagline = VALUES(site_tagline),
             gallery_image_base_path = VALUES(gallery_image_base_path), storage_provider = VALUES(storage_provider),
@@ -821,8 +793,111 @@ export class MySqlAdapter implements IDatabaseAdapter {
     }
   }
 
+  async getLotCategories(): Promise<LotCategory[]> {
+    const connection = await getPool().getConnection();
+    try {
+        const [rows] = await connection.execute<RowDataPacket[]>('SELECT * FROM lot_categories ORDER BY name ASC');
+        return mapMySqlRowsToCamelCase(rows).map(mapToLotCategory);
+    } catch (e: any) {
+        console.error("[MySqlAdapter - getLotCategories] Error:", e);
+        return [];
+    } finally {
+        connection.release();
+    }
+  }
+
+  async getLots(auctionIdParam?: string): Promise<Lot[]> {
+    const connection = await getPool().getConnection();
+    try {
+        let query = `
+            SELECT l.*,
+                   c.name as category_name,
+                   sc.name as subcategory_name,
+                   city.name as city_name,
+                   st.uf as state_uf,
+                   a.title as auction_name,
+                   s.name as lot_seller_name
+            FROM lots l
+            LEFT JOIN lot_categories c ON l.category_id = c.id
+            LEFT JOIN subcategories sc ON l.subcategory_id = sc.id
+            LEFT JOIN cities city ON l.city_id = city.id
+            LEFT JOIN states st ON l.state_id = st.id
+            LEFT JOIN auctions a ON l.auction_id = a.id
+            LEFT JOIN sellers s ON l.seller_id_fk = s.id
+        `;
+        const params: (string | number)[] = [];
+        if (auctionIdParam) {
+            query += ' WHERE l.auction_id = ?';
+            const [aucRows] = await connection.execute<RowDataPacket[]>('SELECT id FROM auctions WHERE id = ? OR public_id = ?', [auctionIdParam, auctionIdParam]);
+            if(aucRows.length > 0) {
+              params.push(aucRows[0].id);
+            } else {
+              return []; 
+            }
+        }
+        query += ' ORDER BY l.id ASC';
+        const [rows] = await connection.execute<RowDataPacket[]>(query, params);
+        return mapMySqlRowsToCamelCase(rows).map(mapToLot);
+    } catch (e: any) {
+        console.error("[MySqlAdapter - getLots] Error:", e);
+        return [];
+    } finally {
+        connection.release();
+    }
+  }
+
+  async getAuctions(): Promise<Auction[]> {
+      const connection = await getPool().getConnection();
+      try {
+          const query = `
+              SELECT a.*,
+                     c.name as category_name,
+                     au.name as auctioneer_name,
+                     s.name as seller_name,
+                     au.logo_url as auctioneer_logo_url
+              FROM auctions a
+              LEFT JOIN lot_categories c ON a.category_id = c.id
+              LEFT JOIN auctioneers au ON a.auctioneer_id = au.id
+              LEFT JOIN sellers s ON a.seller_id = s.id
+              ORDER BY a.auction_date DESC
+          `;
+          const [rows] = await connection.execute<RowDataPacket[]>(query);
+          return mapMySqlRowsToCamelCase(rows).map(mapToAuction);
+      } catch (e: any) {
+          console.error("[MySqlAdapter - getAuctions] Error:", e);
+          return [];
+      } finally {
+          connection.release();
+      }
+  }
+  
+  async getSellers(): Promise<SellerProfileInfo[]> {
+    const connection = await getPool().getConnection();
+    try {
+        const [rows] = await connection.execute<RowDataPacket[]>('SELECT * FROM sellers ORDER BY name ASC');
+        return mapMySqlRowsToCamelCase(rows).map(mapToSellerProfileInfo);
+    } catch (e: any) {
+        console.error("[MySqlAdapter - getSellers] Error:", e);
+        return [];
+    } finally {
+        connection.release();
+    }
+  }
+  
+  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
+    const connection = await getPool().getConnection();
+    try {
+        const [rows] = await connection.execute<RowDataPacket[]>('SELECT * FROM auctioneers ORDER BY name ASC');
+        return mapMySqlRowsToCamelCase(rows).map(mapToAuctioneerProfileInfo);
+    } catch (e: any) {
+        console.error("[MySqlAdapter - getAuctioneers] Error:", e);
+        return [];
+    } finally {
+        connection.release();
+    }
+  }
+
   // --- Methods that were missing or incomplete ---
-  async getLotCategories(): Promise<LotCategory[]> { console.warn("getLotCategories not implemented in MySqlAdapter"); return []; }
   async getLotCategory(idOrSlug: string): Promise<LotCategory | null> { console.warn("getLotCategory not implemented in MySqlAdapter"); return null; }
   async getLotCategoryByName(name: string): Promise<LotCategory | null> { console.warn("getLotCategoryByName not implemented in MySqlAdapter"); return null; }
   async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> { console.warn("createLotCategory not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
@@ -845,27 +920,23 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateCity not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteCity(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteCity not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> { console.warn("createAuctioneer not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { console.warn("getAuctioneers not implemented in MySqlAdapter"); return []; }
   async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> { console.warn("getAuctioneer not implemented in MySqlAdapter"); return null; }
   async updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateAuctioneer not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteAuctioneer not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null> { console.warn("getAuctioneerBySlug not implemented in MySqlAdapter"); return null; }
   async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> { console.warn("getAuctioneerByName not implemented in MySqlAdapter"); return null; }
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> { console.warn("createSeller not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async getSellers(): Promise<SellerProfileInfo[]> { console.warn("getSellers not implemented in MySqlAdapter"); return []; }
   async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> { console.warn("getSeller not implemented in MySqlAdapter"); return null; }
   async updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateSeller not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteSeller not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null> { console.warn("getSellerBySlug not implemented in MySqlAdapter"); return null; }
   async getSellerByName(name: string): Promise<SellerProfileInfo | null> { console.warn("getSellerByName not implemented in MySqlAdapter"); return null; }
   async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> { console.warn("createAuction not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async getAuctions(): Promise<Auction[]> { console.warn("getAuctions not implemented in MySqlAdapter"); return []; }
   async getAuction(idOrPublicId: string): Promise<Auction | null> { console.warn("getAuction not implemented in MySqlAdapter"); return null; }
   async updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> { console.warn("updateAuction not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteAuction(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteAuction not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> { console.warn("getAuctionsBySellerSlug not implemented in MySqlAdapter"); return []; }
   async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> { console.warn("createLot not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
-  async getLots(auctionIdParam?: string): Promise<Lot[]> { console.warn("getLots not implemented in MySqlAdapter"); return []; }
   async getLot(idOrPublicId: string): Promise<Lot | null> { console.warn("getLot not implemented in MySqlAdapter"); return null; }
   async updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> { console.warn("updateLot not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteLot not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
