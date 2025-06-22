@@ -33,6 +33,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   }
 
   private _loadData(): SampleDataContainer {
+    const pristineData = getSampleData();
     try {
       if (fs.existsSync(dataFilePath)) {
         console.log(`[SampleDataAdapter] Loading data from ${dataFilePath}`);
@@ -44,14 +45,13 @@ export class SampleDataAdapter implements IDatabaseAdapter {
             }
             return value;
         });
-        return parsedData as SampleDataContainer;
+        // Merge with defaults to ensure all keys are present, preventing crashes from incomplete files.
+        return { ...pristineData, ...parsedData };
       }
     } catch (error) {
       console.error(`[SampleDataAdapter] Error loading from ${dataFilePath}, falling back to default. Error:`, error);
     }
     // Fallback to pristine data if file doesn't exist or fails to parse
-    const pristineData = getSampleData();
-    // DO NOT WRITE THE FILE ON LOAD to prevent hot-reload loops.
     // The file will be created on the first mutation.
     return pristineData;
   }
