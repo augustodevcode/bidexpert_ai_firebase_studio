@@ -661,8 +661,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `CREATE INDEX IF NOT EXISTS idx_auctions_status ON auctions(status);`,
       `CREATE INDEX IF NOT EXISTS idx_auctions_auction_date ON auctions(auction_date);`,
       `CREATE INDEX IF NOT EXISTS idx_auctions_category_id ON auctions(category_id);`,
-      `CREATE INDEX IF NOT EXISTS idx_auctions_auctioneer_id ON auctions(auctioneer_id);`,
-      `CREATE INDEX IF NOT EXISTS idx_auctions_seller_id ON auctions(seller_id);`,
+      `CREATE INDEX IF NOT EXISTS idx_auctions_auctioneer_id ON auctioneers(id);`,
+      `CREATE INDEX IF NOT EXISTS idx_auctions_seller_id ON sellers(id);`,
 
       `CREATE TABLE IF NOT EXISTS lots (
         id SERIAL PRIMARY KEY,
@@ -976,6 +976,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
   }
 
   // --- Other placeholder implementations ---
+  async getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null> { console.warn("getSubcategoryBySlug not implemented in PostgresAdapter"); return null; }
   async getPlatformSettings(): Promise<PlatformSettings> { console.warn("getPlatformSettings not implemented in PostgresAdapter"); return samplePlatformSettings; }
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> { console.warn("updatePlatformSettings not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async getLotCategory(idOrSlug: string): Promise<LotCategory | null> { console.warn("getLotCategory not implemented in PostgresAdapter"); return null; }
@@ -986,7 +987,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> { console.warn("createSubcategory not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async getSubcategories(parentCategoryId: string): Promise<Subcategory[]> { console.warn("getSubcategories not implemented in PostgresAdapter"); return []; }
   async getSubcategory(id: string): Promise<Subcategory | null> { console.warn("getSubcategory not implemented in PostgresAdapter"); return null; }
-  async getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null> { console.warn("getSubcategoryBySlug not implemented in PostgresAdapter"); return null; }
   async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateSubcategory not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteSubcategory not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }
   async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> { console.warn("createState not implemented in PostgresAdapter"); return { success: false, message: "Not implemented" }; }

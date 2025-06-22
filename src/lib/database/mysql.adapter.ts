@@ -898,6 +898,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   // --- Methods that were missing or incomplete ---
+  async getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null> { console.warn("getSubcategoryBySlug not implemented in MySqlAdapter"); return null; }
   async getLotCategory(idOrSlug: string): Promise<LotCategory | null> { console.warn("getLotCategory not implemented in MySqlAdapter"); return null; }
   async getLotCategoryByName(name: string): Promise<LotCategory | null> { console.warn("getLotCategoryByName not implemented in MySqlAdapter"); return null; }
   async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> { console.warn("createLotCategory not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
@@ -906,7 +907,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> { console.warn("createSubcategory not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async getSubcategories(parentCategoryId: string): Promise<Subcategory[]> { console.warn("getSubcategories not implemented in MySqlAdapter"); return []; }
   async getSubcategory(id: string): Promise<Subcategory | null> { console.warn("getSubcategory not implemented in MySqlAdapter"); return null; }
-  async getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null> { console.warn("getSubcategoryBySlug not implemented in MySqlAdapter"); return null; }
   async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateSubcategory not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteSubcategory not implemented in MySqlAdapter"); return { success: false, message: "Not implemented" }; }
   async getStates(): Promise<StateInfo[]> { console.warn("getStates not implemented in MySqlAdapter"); return []; }
