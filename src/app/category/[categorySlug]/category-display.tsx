@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLots } from '@/app/admin/lots/actions'; // Fetch lots via action
@@ -17,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LayoutGrid, List, SlidersHorizontal, Loader2, ChevronRight, AlertCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
-import SearchResultsFrame from '@/components/search-results-frame'; // Import SearchResultsFrame
+import SearchResultsFrame from '@/components/search-results-frame'; 
 
 interface CategoryDisplayProps {
   params: {
@@ -49,7 +50,8 @@ const initialFiltersState: ActiveFilters = {
 };
 
 export default function CategoryDisplay({ params }: CategoryDisplayProps) {
-  const { categorySlug } = params; 
+  const paramsFromHook = useParams();
+  const categorySlug = (paramsFromHook.categorySlug as string) || params.categorySlug;
 
   const [isLoading, setIsLoading] = useState(true);
   const [currentCategory, setCurrentCategory] = useState<LotCategory | null>(null);
