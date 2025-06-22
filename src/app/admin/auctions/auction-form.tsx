@@ -170,7 +170,6 @@ export default function AuctionForm({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-6">
-            {/* ... campos existentes ... */}
             <FormField
               control={form.control}
               name="title"
@@ -449,7 +448,6 @@ export default function AuctionForm({
               <PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa
             </Button>
 
-            {/* Timeline Component */}
             <AuctionStagesTimeline auctionOverallStartDate={watchedAuctionDate} stages={watchedStages as AuctionStage[]} />
 
 
@@ -457,7 +455,7 @@ export default function AuctionForm({
             <h3 className="text-md font-semibold text-muted-foreground flex items-center"><Landmark className="h-4 w-4 mr-2"/>Localização e Detalhes Adicionais</h3>
              <FormField
                 control={form.control}
-                name="endDate" // Este é o END DATE GERAL, pode ser opcional se as praças cobrirem
+                name="endDate"
                 render={({ field }) => (
                     <FormItem className="flex flex-col">
                     <FormLabel>Data de Encerramento Geral (Opcional)</FormLabel>

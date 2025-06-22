@@ -45,18 +45,18 @@
     *   Reviewed all display components to ensure consistency.
 - **Admin User Permissions & Login (`admin@bidexpert.com.br` - DONE)**: Restored database adapter logic for user/role management, resolving login issues by removing hardcoded sample-data access in actions. The system now respects the `ACTIVE_DATABASE_SYSTEM` environment variable.
 - **Search Page Hero (Item 2 - DONE):** Removed smaller icon from the center of the main hero banner on the search page.
-- **CRUD Actions Refactoring (Item 6):**
+- **CRUD Actions Refactoring (Item 6 - DONE):**
   - **Sub-task 1 (DONE):** Refactored server actions for States, Cities, Auctioneers, and Sellers to use the `getDatabaseAdapter()`, ensuring they work with the configured data source (sample-data, MySQL, or PostgreSQL).
-- **Media Library Integration (Items 3, 4, 7):**
+- **Media Library Integration (Items 3, 4, 7 - UI Done):**
   - **Sub-task 1 (DONE):** Replaced URL text inputs with a media selection button and preview in the Category CRUD form.
   - **Sub-task 2 (DONE):** Replaced URL inputs in Auctioneer, Seller, and Auction forms.
+- **Item 19 (Auction Stages Timeline - DONE):** Implemented a visual timeline in the auction edit form that dynamically updates as the user changes stage dates.
 
 ## DOING
 - **Media Library Integration (Items 3, 4, 7):**
-  - **Sub-task 3 (DOING):** Perform data migration in `sample-data.local.json` to move all image URLs into `mediaItems` and link them to their respective entities. This will be a larger refactor.
+  - **Sub-task 3 (DOING):** Finalize data migration in `sample-data.local.json` to ensure all images are sourced from `mediaItems`.
 
 ## NEXT
-- **Item 19:** Implement visual timeline for auction stages in the auction CRUD form (`/admin/auctions/[auctionId]/edit`).
 - **Item 20:** Develop Virtual Auditorium (`/auctions/[auctionId]/live`) with current lot display, bidding panel, upcoming lots, and chat.
 - **Item 21:** Gantt chart for auctions on the auction dashboard (`/admin/auctions/page.tsx`).
 - **Complete SQL Adapter Implementation:**
@@ -75,5 +75,3 @@
 - **Refine UI/UX & Mobile Responsiveness.**
 - **Comprehensive Testing & Performance Optimization.**
 - **Error Handling & Logging (User-friendly messages, server-side logging).**
-
-  
