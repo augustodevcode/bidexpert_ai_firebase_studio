@@ -40,6 +40,15 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
                 data-ai-hint={auction.dataAiHint || 'imagem leilao lista'}
               />
             </Link>
+             <Badge 
+              className={`absolute top-2 left-2 text-xs px-2 py-1 z-10
+                ${auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'bg-green-600 text-white' : ''}
+                ${auction.status === 'EM_BREVE' ? 'bg-blue-500 text-white' : ''}
+                ${auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO' || auction.status === 'CANCELADO' || auction.status === 'SUSPENSO' || auction.status === 'RASCUNHO' || auction.status === 'EM_PREPARACAO' ? 'bg-gray-500 text-white' : ''}
+              `}
+            >
+              {getAuctionStatusText(auction.status)}
+            </Badge>
             {auction.auctioneerLogoUrl && (
               <div className="absolute bottom-1 right-1 bg-background/80 p-1 rounded-sm shadow max-w-[80px] max-h-[40px] overflow-hidden">
                 <Image
@@ -58,7 +67,6 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
           <div className="flex flex-col flex-grow p-4">
             <div className="flex justify-between items-start mb-1.5">
               <div className="flex-grow min-w-0">
-                <Badge variant="outline" className="text-xs mb-1 py-0.5 px-1.5">{getAuctionStatusText(auction.status)}</Badge>
                 <Link href={`/auctions/${auction.publicId || auction.id}`}>
                   <h3 className="text-base font-semibold hover:text-primary transition-colors leading-tight line-clamp-2 mr-2" title={auction.title}>
                     {auction.title}
@@ -129,4 +137,3 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
     </TooltipProvider>
   );
 }
-

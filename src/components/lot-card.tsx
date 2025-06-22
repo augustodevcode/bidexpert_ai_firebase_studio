@@ -229,7 +229,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
           </div>
         </Link>
 
-        <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
+        <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10">
           {sectionBadges.showStatusBadge !== false && (
             <Badge className={`text-xs px-2 py-1 ${getLotStatusColor(lot.status)}`}>
               {getAuctionStatusText(lot.status)}

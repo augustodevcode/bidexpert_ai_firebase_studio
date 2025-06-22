@@ -192,6 +192,15 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                 )}
               </div>
             </Link>
+             <Badge 
+              className={`absolute top-2 left-2 text-xs px-2 py-1 z-10
+                ${auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'bg-green-600 text-white' : ''}
+                ${auction.status === 'EM_BREVE' ? 'bg-blue-500 text-white' : ''}
+                ${auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO' || auction.status === 'CANCELADO' || auction.status === 'SUSPENSO' || auction.status === 'RASCUNHO' || auction.status === 'EM_PREPARACAO' ? 'bg-gray-500 text-white' : ''}
+              `}
+            >
+              {getAuctionStatusText(auction.status)}
+            </Badge>
             <div className="absolute top-2 right-2 flex flex-col space-y-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -283,16 +292,6 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
 
           </CardContent>
           <CardFooter className="p-4 border-t flex-col items-start space-y-2">
-            <Badge 
-              className={`w-full justify-center py-1.5 text-sm font-semibold
-                ${auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'bg-green-600 hover:bg-green-700' : ''}
-                ${auction.status === 'EM_BREVE' ? 'bg-blue-500 hover:bg-blue-600' : ''}
-                ${auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO' ? 'bg-gray-500 hover:bg-gray-600' : ''}
-                text-white
-              `}
-            >
-              {getAuctionStatusText(auction.status)}
-            </Badge>
             {auction.initialOffer && (
               <div className="w-full">
                 <p className="text-xs text-muted-foreground">
@@ -319,4 +318,3 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
     </TooltipProvider>
   );
 }
-
