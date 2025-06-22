@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Controller, useFieldArray, useWatch } from 'react-hook-form'; // Added useWatch
+import { useForm, Controller, useFieldArray, useWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -23,15 +23,17 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
-import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage } from '@/types';
-import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon } from 'lucide-react'; // Added ClockIcon
+import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem } from '@/types';
+import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText } from '@/lib/sample-data';
 import { Separator } from '@/components/ui/separator';
-import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline'; // Import the new component
+import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
+import Image from 'next/image';
+import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 
 
 interface AuctionFormProps {
@@ -77,6 +79,7 @@ export default function AuctionForm({
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
 
   const form = useForm<AuctionFormValues>({
     resolver: zodResolver(auctionFormSchema),
@@ -104,11 +107,25 @@ export default function AuctionForm({
       auctionStages: initialData?.auctionStages?.map(stage => ({ ...stage, endDate: new Date(stage.endDate as Date), initialPrice: stage.initialPrice || undefined })) || [{ name: '1ª Praça', endDate: new Date(), initialPrice: undefined }],
     },
   });
+  
+  const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "auctionStages",
   });
+
+  const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
+    if (selectedItems.length > 0) {
+      const selectedMediaItem = selectedItems[0];
+      if (selectedMediaItem?.urlOriginal) {
+        form.setValue('imageUrl', selectedMediaItem.urlOriginal);
+      } else {
+        toast({ title: "Seleção Inválida", description: "O item de mídia selecionado não possui uma URL válida.", variant: "destructive" });
+      }
+    }
+    setIsMediaDialogOpen(false);
+  };
 
   const watchedAuctionDate = useWatch({ control: form.control, name: 'auctionDate' });
   const watchedStages = useWatch({ control: form.control, name: 'auctionStages' });
@@ -144,6 +161,7 @@ export default function AuctionForm({
   }
 
   return (
+    <>
     <Card className="max-w-3xl mx-auto shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><Gavel className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
@@ -497,17 +515,37 @@ export default function AuctionForm({
                     )}
                 />
             </div>
-            <FormField
-                control={form.control}
-                name="imageUrl"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel>URL da Imagem de Capa (Opcional)</FormLabel>
-                    <FormControl><Input type="url" placeholder="https://exemplo.com/imagem-leilao.jpg" {...field} value={field.value ?? ""} /></FormControl>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
+            
+            <FormItem>
+              <FormLabel>Imagem de Capa (Opcional)</FormLabel>
+              <div className="flex items-center gap-4">
+                <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">
+                  {imageUrlPreview ? (
+                    <Image src={imageUrlPreview} alt="Prévia da Imagem" fill className="object-contain" data-ai-hint="previa imagem leilao" />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      <ImageIcon className="h-8 w-8" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-grow space-y-2">
+                  <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>
+                    {imageUrlPreview ? 'Alterar Imagem' : 'Escolher da Biblioteca'}
+                  </Button>
+                  <FormField
+                    control={form.control}
+                    name="imageUrl"
+                    render={({ field }) => (
+                      <FormControl>
+                        <Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} className="text-xs h-8" />
+                      </FormControl>
+                    )}
+                  />
+                  <FormMessage />
+                </div>
+              </div>
+            </FormItem>
+
              <FormField
                 control={form.control}
                 name="documentsUrl"
@@ -612,5 +650,12 @@ export default function AuctionForm({
         </form>
       </Form>
     </Card>
+    <ChooseMediaDialog
+      isOpen={isMediaDialogOpen}
+      onOpenChange={setIsMediaDialogOpen}
+      onMediaSelect={handleMediaSelect}
+      allowMultiple={false}
+    />
+    </>
   );
 }

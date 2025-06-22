@@ -49,13 +49,11 @@
   - **Sub-task 1 (DONE):** Refactored server actions for States, Cities, Auctioneers, and Sellers to use the `getDatabaseAdapter()`, ensuring they work with the configured data source (sample-data, MySQL, or PostgreSQL).
 - **Media Library Integration (Items 3, 4, 7):**
   - **Sub-task 1 (DONE):** Replaced URL text inputs with a media selection button and preview in the Category CRUD form.
+  - **Sub-task 2 (DONE):** Replaced URL inputs in Auctioneer, Seller, and Auction forms.
 
 ## DOING
 - **Media Library Integration (Items 3, 4, 7):**
-  - **Sub-task 2 (DOING):** Replace URL inputs in Auctioneer, Seller, and Auction forms.
-    - Auctioneer form updated.
-    - Seller form updated. Next: Auction form.
-  - **Sub-task 3 (TODO):** Perform data migration in `sample-data.local.json` to move all image URLs into `mediaItems` and link them to their respective entities. This will be a larger refactor.
+  - **Sub-task 3 (DOING):** Perform data migration in `sample-data.local.json` to move all image URLs into `mediaItems` and link them to their respective entities. This will be a larger refactor.
 
 ## NEXT
 - **Item 19:** Implement visual timeline for auction stages in the auction CRUD form (`/admin/auctions/[auctionId]/edit`).
