@@ -1,4 +1,3 @@
-
 // src/lib/database/index.ts
 import type { IDatabaseAdapter } from '@/types';
 
@@ -44,7 +43,7 @@ function isAdapterInstanceValid(adapter: IDatabaseAdapter | undefined, systemCon
 
 export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
   const activeSystemEnv = process.env.ACTIVE_DATABASE_SYSTEM;
-  const activeSystem = activeSystemEnv?.toUpperCase() || 'MYSQL'; 
+  const activeSystem = activeSystemEnv?.toUpperCase() || 'SAMPLE_DATA'; 
 
   console.log(`[DB Factory - getDatabaseAdapter ENTER] ACTIVE_DATABASE_SYSTEM: ${activeSystem}. Current dbInstance type: ${dbInstance?.constructor?.name}`);
 
@@ -62,6 +61,11 @@ export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
   let newInstance: IDatabaseAdapter | undefined;
 
   switch (activeSystem) {
+    case 'SAMPLE_DATA':
+      console.log('[DB Adapter] Dynamically importing Sample Data Adapter...');
+      const { SampleDataAdapter } = await import('./sample-data.adapter');
+      newInstance = new SampleDataAdapter();
+      break;
     case 'POSTGRES':
       console.log('[DB Adapter] Dynamically importing PostgreSQL Adapter...');
       const { PostgresAdapter } = await import('./postgres.adapter');
@@ -73,7 +77,7 @@ export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
       newInstance = new MySqlAdapter();
       break;
     default:
-      const errorMessage = `[DB Factory] FATAL: Unsupported or misconfigured database system: '${activeSystem}'. Supported: 'POSTGRES', 'MYSQL'.`;
+      const errorMessage = `[DB Factory] FATAL: Unsupported or misconfigured database system: '${activeSystem}'. Supported: 'SAMPLE_DATA', 'POSTGRES', 'MYSQL'.`;
       console.error(errorMessage);
       throw new Error(errorMessage);
   }
@@ -96,5 +100,3 @@ export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
   console.log(`[DB Factory - getDatabaseAdapter EXIT] New dbInstance created and cached. Type: ${dbInstance.constructor.name}.`);
   return dbInstance;
 }
-
-    
