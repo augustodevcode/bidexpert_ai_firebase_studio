@@ -62,7 +62,7 @@ export const HistoryListItem = forwardRef<
       {...props}
     >
       <div className="relative h-10 w-12 flex-shrink-0 bg-muted rounded-sm overflow-hidden">
-        <Image src={item.imageUrl} alt={item.title} fill className="object-cover" data-ai-hint={item.dataAiHint || "item visto recentemente"} />
+        <Image src={item.imageUrl || 'https://placehold.co/120x100.png'} alt={item.title} fill className="object-cover" data-ai-hint={item.dataAiHint || "item visto recentemente"} />
       </div>
       <span className="truncate flex-grow text-foreground/90">{item.title}</span>
     </Link>
@@ -577,4 +577,6 @@ export default function Header() {
 }
     
       
+    
+
     
