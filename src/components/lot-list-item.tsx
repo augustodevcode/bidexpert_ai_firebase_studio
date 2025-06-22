@@ -235,8 +235,8 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
       <Card className="w-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group overflow-hidden">
         <div className="flex flex-col md:flex-row">
           {/* Image Column */}
-          <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted">
-            <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block h-full w-full">
+          <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-auto bg-muted">
+            <Link href={lotDetailUrl} className="block h-full w-full">
               <Image
                 src={lot.imageUrl || 'https://placehold.co/600x400.png'}
                 alt={lot.title}
@@ -245,13 +245,42 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
                 data-ai-hint={lot.dataAiHint || 'imagem lote lista'}
               />
             </Link>
+            <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10">
+              {sectionBadges.showStatusBadge !== false && (
+                <Badge className={`text-xs px-1.5 py-0.5 ${getLotStatusColor(lot.status)} border-current`}>
+                  {getAuctionStatusText(lot.status)}
+                </Badge>
+              )}
+            </div>
+            <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
+              {sectionBadges.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentage > 0 && (
+                <Badge variant="destructive" className="text-xs px-1.5 py-0.5 animate-pulse">
+                  <Percent className="h-3 w-3 mr-0.5" /> {discountPercentage}% OFF
+                </Badge>
+              )}
+              {mentalTriggers.map(trigger => {
+                let showThisTrigger = false;
+                if (trigger === 'MAIS VISITADO' && sectionBadges.showPopularityBadge !== false && mentalTriggersGlobalSettings.showPopularityBadge) showThisTrigger = true;
+                if (trigger === 'LANCE QUENTE' && sectionBadges.showHotBidBadge !== false && mentalTriggersGlobalSettings.showHotBidBadge) showThisTrigger = true;
+                if (trigger === 'EXCLUSIVO' && sectionBadges.showExclusiveBadge !== false && mentalTriggersGlobalSettings.showExclusiveBadge) showThisTrigger = true;
+                if (!showThisTrigger) return null;
+                return (
+                  <Badge key={trigger} variant="secondary" className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
+                    {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3 mr-0.5" />}
+                    {trigger === 'LANCE QUENTE' && <Zap className="h-3 w-3 mr-0.5 text-red-500 fill-red-500" />}
+                    {trigger === 'EXCLUSIVO' && <Crown className="h-3 w-3 mr-0.5 text-purple-600" />}
+                    {trigger}
+                  </Badge>
+                );
+              })}
+            </div>
           </div>
 
           {/* Content Column */}
           <div className="flex flex-col flex-grow p-4">
             <div className="flex justify-between items-start mb-1.5">
               <div className="flex-grow min-w-0">
-                 <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
+                 <Link href={lotDetailUrl}>
                   <h3 className="text-base font-semibold hover:text-primary transition-colors leading-tight line-clamp-2 mr-2" title={lot.title}>
                     {lot.title}
                   </h3>
@@ -260,37 +289,33 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
                   Lote {lot.number || lot.id.replace('LOTE','')} | Leilão: {lot.auctionName}
                 </p>
               </div>
-              <div className="flex-shrink-0 flex flex-col items-end gap-1">
-                {sectionBadges.showStatusBadge !== false && (
-                  <Badge className={`text-xs px-1.5 py-0.5 ${getLotStatusColor(lot.status)} border-current`}>
-                    {getAuctionStatusText(lot.status)}
-                  </Badge>
+              <div className="flex-shrink-0 flex items-center space-x-0.5">
+                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleFavoriteToggle}><Heart className={`h-4 w-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
+                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={handlePreviewOpen}><Eye className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Pré-visualizar</p></TooltipContent></Tooltip>
+                {(lot.latitude || lot.longitude || lot.mapAddress || lot.mapEmbedUrl) && (
+                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleMapPreviewOpen}><MapPin className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Ver Mapa</p></TooltipContent></Tooltip>
                 )}
-                <div className="flex flex-wrap gap-1.5 justify-end mt-1">
-                    {sectionBadges.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentage > 0 && (
-                        <Badge variant="destructive" className="text-xs px-1.5 py-0.5">
-                            <Percent className="h-3 w-3 mr-0.5" /> {discountPercentage}% OFF
-                        </Badge>
-                    )}
-                    {mentalTriggers.map(trigger => {
-                        let showThisTrigger = false;
-                        if (trigger === 'MAIS VISITADO' && sectionBadges.showPopularityBadge !== false && mentalTriggersGlobalSettings.showPopularityBadge) showThisTrigger = true;
-                        if (trigger === 'LANCE QUENTE' && sectionBadges.showHotBidBadge !== false && mentalTriggersGlobalSettings.showHotBidBadge) showThisTrigger = true;
-                        if (trigger === 'EXCLUSIVO' && sectionBadges.showExclusiveBadge !== false && mentalTriggersGlobalSettings.showExclusiveBadge) showThisTrigger = true;
-                        if (!showThisTrigger) return null;
-                        return (
-                            <Badge key={trigger} variant="secondary" className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
-                            {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3 mr-0.5" />}
-                            {trigger === 'LANCE QUENTE' && <Zap className="h-3 w-3 mr-0.5 text-red-500 fill-red-500" />}
-                            {trigger === 'EXCLUSIVO' && <Crown className="h-3 w-3 mr-0.5 text-purple-600" />}
-                            {trigger}
-                            </Badge>
-                        );
-                    })}
-                </div>
+                <DropdownMenu>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Compartilhar">
+                            <Share2 className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Compartilhar</p></TooltipContent>
+                    </Tooltip>
+                    <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild><a href={getSocialLink('x', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><X className="h-3.5 w-3.5" /> X (Twitter)</a></DropdownMenuItem>
+                    <DropdownMenuItem asChild><a href={getSocialLink('facebook', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><Facebook className="h-3.5 w-3.5" /> Facebook</a></DropdownMenuItem>
+                    <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><MessageSquareText className="h-3.5 w-3.5" /> WhatsApp</a></DropdownMenuItem>
+                    <DropdownMenuItem asChild><a href={getSocialLink('email', lotDetailUrl, lot.title)} className="flex items-center gap-2 text-xs"><Mail className="h-3.5 w-3.5" /> Email</a></DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
-
+            
             <div className="flex items-center text-xs text-muted-foreground mb-1">
                 <MapPin className="h-3 w-3 mr-1 text-primary/80 flex-shrink-0" />
                 <span className="truncate" title={displayLocation}>{displayLocation}</span>
@@ -308,22 +333,7 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
 
             <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{lot.description}</p>
 
-            <div className="flex flex-col sm:flex-row justify-between text-xs text-muted-foreground mb-3 pt-2 border-t border-dashed">
-                <div className="mb-1 sm:mb-0">
-                  <p className="font-medium">1ª Praça:</p>
-                  <p>Data: {lot.lotSpecificAuctionDate ? format(new Date(lot.lotSpecificAuctionDate), "dd/MM HH:mm", { locale: ptBR }) : displayAuctionDate}</p>
-                  <p>Lance Inicial: R$ {lot.initialPrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 'N/D'}</p>
-                </div>
-                {lot.secondAuctionDate && (
-                  <div className="sm:pl-2 sm:border-l sm:border-dashed">
-                    <p className="font-medium">2ª Praça:</p>
-                    <p>Data: {displaySecondAuctionDate}</p>
-                    <p>Lance Inicial: R$ {lot.secondInitialPrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 'N/D'}</p>
-                  </div>
-                )}
-            </div>
-
-            <div className="mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2">
+            <div className="mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2 border-t border-dashed">
               <div>
                 <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
                 <p className={`text-2xl font-bold ${lot.endDate && isPast(new Date(lot.endDate as string)) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
@@ -339,56 +349,17 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
                         urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
                     />
                    )}
-                   {!showCountdownOnThisCard && lot.endDate && lot.status === 'ABERTO_PARA_LANCES' && !isPast(new Date(lot.endDate)) && (
-                    <Badge variant="outline" className="text-xs font-medium">
-                        <Clock className="h-3 w-3 mr-1" />
-                        Aberto
-                    </Badge>
-                   )}
-                   {!showCountdownOnThisCard && lot.endDate && (lot.status !== 'ABERTO_PARA_LANCES' || isPast(new Date(lot.endDate))) && (
-                    <Badge variant="outline" className="text-xs font-medium">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {getAuctionStatusText(lot.status)}
-                    </Badge>
-                   )}
                     <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate as string)) ? 'line-through' : ''}`}>
                         <Gavel className="h-3 w-3" />
                         <span>{lot.bidsCount || 0} Lances</span>
                     </div>
                 </div>
               </div>
-               <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto items-stretch">
-                <Button asChild size="sm" className="flex-1 md:flex-initial">
+               <Button asChild size="sm" className="w-full md:w-auto mt-2 md:mt-0">
                     <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
-                        <Eye className="mr-2 h-4 w-4" /> Ver Detalhes
+                        <Eye className="mr-2 h-4 w-4" /> Ver Detalhes do Lote
                     </Link>
                 </Button>
-                <div className="flex items-center space-x-0.5 justify-center">
-                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleFavoriteToggle}><Heart className={`h-4 w-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
-                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={handlePreviewOpen}><Eye className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Pré-visualizar</p></TooltipContent></Tooltip>
-                    {(lot.latitude || lot.longitude || lot.mapAddress || lot.mapEmbedUrl) && (
-                       <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleMapPreviewOpen}><MapPin className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Ver Mapa</p></TooltipContent></Tooltip>
-                    )}
-                     <DropdownMenu>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Compartilhar">
-                                <Share2 className="h-4 w-4 text-muted-foreground" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            </TooltipTrigger>
-                            <TooltipContent><p>Compartilhar</p></TooltipContent>
-                        </Tooltip>
-                        <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild><a href={getSocialLink('x', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><X className="h-3.5 w-3.5" /> X (Twitter)</a></DropdownMenuItem>
-                        <DropdownMenuItem asChild><a href={getSocialLink('facebook', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><Facebook className="h-3.5 w-3.5" /> Facebook</a></DropdownMenuItem>
-                        <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><MessageSquareText className="h-3.5 w-3.5" /> WhatsApp</a></DropdownMenuItem>
-                        <DropdownMenuItem asChild><a href={getSocialLink('email', lotDetailUrl, lot.title)} className="flex items-center gap-2 text-xs"><Mail className="h-3.5 w-3.5" /> Email</a></DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-               </div>
             </div>
           </div>
         </div>

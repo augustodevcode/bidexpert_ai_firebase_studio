@@ -2,14 +2,14 @@
 'use client';
 
 import * as React from 'react'; // Adicionado import do React
-import type { Auction } from '@/types';
+import type { Auction, AuctionStage as AuctionStageType } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, CalendarDays, Tag, MapPin, ListChecks, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon } from 'lucide-react';
-import { format } from 'date-fns';
+import { Eye, CalendarDays, Tag, MapPin, ListChecks, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Users, Clock, Star } from 'lucide-react';
+import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText } from '@/lib/sample-data';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -24,6 +24,35 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
     : { label: auction.auctionType || 'Leilão', icon: <AuctionTypeIcon className="h-3.5 w-3.5" /> };
 
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'N/A';
+
+  const mentalTriggers = React.useMemo(() => {
+    const triggers: string[] = [];
+    const now = new Date();
+
+    if (auction.endDate) {
+        const endDate = new Date(auction.endDate as string);
+        if (!isPast(endDate)) {
+            const daysDiff = differenceInDays(endDate, now);
+            if (daysDiff === 0) triggers.push('ENCERRA HOJE');
+            else if (daysDiff === 1) triggers.push('ENCERRA AMANHÃ');
+        }
+    }
+    
+    if ((auction.totalHabilitatedUsers || 0) > 100) {
+        triggers.push('ALTA DEMANDA');
+    }
+    
+    if (auction.isFeaturedOnMarketplace) {
+        triggers.push('DESTAQUE');
+    }
+
+    if (auction.additionalTriggers) {
+        triggers.push(...auction.additionalTriggers);
+    }
+    
+    return Array.from(new Set(triggers));
+  }, [auction.endDate, auction.totalHabilitatedUsers, auction.isFeaturedOnMarketplace, auction.additionalTriggers]);
+
 
   return (
     <TooltipProvider>
@@ -40,27 +69,27 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
                 data-ai-hint={auction.dataAiHint || 'imagem leilao lista'}
               />
             </Link>
-             <Badge 
-              className={`absolute top-2 left-2 text-xs px-2 py-1 z-10
-                ${auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'bg-green-600 text-white' : ''}
-                ${auction.status === 'EM_BREVE' ? 'bg-blue-500 text-white' : ''}
-                ${auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO' || auction.status === 'CANCELADO' || auction.status === 'SUSPENSO' || auction.status === 'RASCUNHO' || auction.status === 'EM_PREPARACAO' ? 'bg-gray-500 text-white' : ''}
-              `}
-            >
-              {getAuctionStatusText(auction.status)}
-            </Badge>
-            {auction.auctioneerLogoUrl && (
-              <div className="absolute bottom-1 right-1 bg-background/80 p-1 rounded-sm shadow max-w-[80px] max-h-[40px] overflow-hidden">
-                <Image
-                  src={auction.auctioneerLogoUrl}
-                  alt={auction.auctioneer || 'Logo Leiloeiro'}
-                  width={80}
-                  height={40}
-                  className="object-contain h-full w-full"
-                  data-ai-hint="auctioneer logo small"
-                />
-              </div>
-            )}
+            <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10">
+                <Badge 
+                className={`text-xs px-2 py-1
+                    ${auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'bg-green-600 text-white' : ''}
+                    ${auction.status === 'EM_BREVE' ? 'bg-blue-500 text-white' : ''}
+                    ${auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO' || auction.status === 'CANCELADO' || auction.status === 'SUSPENSO' || auction.status === 'RASCUNHO' || auction.status === 'EM_PREPARACAO' ? 'bg-gray-500 text-white' : ''}
+                `}
+                >
+                {getAuctionStatusText(auction.status)}
+                </Badge>
+            </div>
+            <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
+                {mentalTriggers.map(trigger => (
+                    <Badge key={trigger} variant="secondary" className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
+                        {trigger.startsWith('ENCERRA') && <Clock className="h-3 w-3 mr-0.5" />}
+                        {trigger === 'ALTA DEMANDA' && <Users className="h-3 w-3 mr-0.5" />}
+                        {trigger === 'DESTAQUE' && <Star className="h-3 w-3 mr-0.5" />}
+                        {trigger}
+                    </Badge>
+                ))}
+            </div>
           </div>
 
           {/* Content Column */}

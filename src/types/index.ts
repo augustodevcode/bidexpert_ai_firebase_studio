@@ -193,6 +193,7 @@ export interface Auction {
   totalHabilitatedUsers?: number;
   isFeaturedOnMarketplace?: boolean;
   marketplaceAnnouncementTitle?: string;
+  additionalTriggers?: string[];
   lots?: Lot[]; 
 }
 
@@ -747,7 +748,7 @@ export interface IDatabaseAdapter {
   getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null>;
   getSellerByName(name: string): Promise<SellerProfileInfo | null>;
 
-  createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string }>;
+  createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }>;
   getAuctions(): Promise<Auction[]>;
   getAuction(idOrPublicId: string): Promise<Auction | null>;
   updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string }>;

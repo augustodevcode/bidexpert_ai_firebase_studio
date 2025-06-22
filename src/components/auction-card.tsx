@@ -7,10 +7,10 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Auction, AuctionStage as AuctionStageType } from '@/types';
-import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Pencil } from 'lucide-react';
-import { format } from 'date-fns';
+import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Pencil, Clock, Users, Star } from 'lucide-react';
+import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import AuctionPreviewModal from './auction-preview-modal';
 import { getAuctionStatusText } from '@/lib/sample-data';
 import {
@@ -107,6 +107,35 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [auctionFullUrl, setAuctionFullUrl] = useState<string>(`/auctions/${auction.publicId || auction.id}`);
 
+  const mentalTriggers = useMemo(() => {
+    const triggers: string[] = [];
+    const now = new Date();
+
+    if (auction.endDate) {
+        const endDate = new Date(auction.endDate as string);
+        if (!isPast(endDate)) {
+            const daysDiff = differenceInDays(endDate, now);
+            if (daysDiff === 0) triggers.push('ENCERRA HOJE');
+            else if (daysDiff === 1) triggers.push('ENCERRA AMANHÃ');
+        }
+    }
+    
+    if ((auction.totalHabilitatedUsers || 0) > 100) { // Example threshold
+        triggers.push('ALTA DEMANDA');
+    }
+    
+    if (auction.isFeaturedOnMarketplace) {
+        triggers.push('DESTAQUE');
+    }
+
+    if (auction.additionalTriggers) {
+        triggers.push(...auction.additionalTriggers);
+    }
+    
+    return Array.from(new Set(triggers));
+  }, [auction.endDate, auction.totalHabilitatedUsers, auction.isFeaturedOnMarketplace, auction.additionalTriggers]);
+
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setAuctionFullUrl(`${window.location.origin}/auctions/${auction.publicId || auction.id}`);
@@ -173,30 +202,30 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                   className="object-cover"
                   data-ai-hint={mainImageDataAiHint}
                 />
-                {auction.auctioneerLogoUrl && auction.auctioneerLogoUrl !== auction.imageUrl && (
-                  <div className="absolute bottom-2 right-2 bg-background/80 p-1.5 rounded-md shadow-md max-w-[100px] max-h-[50px] overflow-hidden">
-                    <Image
-                      src={auction.auctioneerLogoUrl}
-                      alt={auction.auctioneer || 'Logo Comitente'}
-                      width={100}
-                      height={50}
-                      className="object-contain h-full w-full"
-                      data-ai-hint="auctioneer logo"
-                    />
-                  </div>
-                )}
               </div>
             </Link>
-             <Badge 
-              className={`absolute top-2 left-2 text-xs px-2 py-1 z-10
-                ${auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'bg-green-600 text-white' : ''}
-                ${auction.status === 'EM_BREVE' ? 'bg-blue-500 text-white' : ''}
-                ${auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO' || auction.status === 'CANCELADO' || auction.status === 'SUSPENSO' || auction.status === 'RASCUNHO' || auction.status === 'EM_PREPARACAO' ? 'bg-gray-500 text-white' : ''}
-              `}
-            >
-              {getAuctionStatusText(auction.status)}
-            </Badge>
-            <div className="absolute top-2 right-2 flex flex-col space-y-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+             <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10">
+                <Badge 
+                className={`text-xs px-2 py-1
+                    ${auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'bg-green-600 text-white' : ''}
+                    ${auction.status === 'EM_BREVE' ? 'bg-blue-500 text-white' : ''}
+                    ${auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO' || auction.status === 'CANCELADO' || auction.status === 'SUSPENSO' || auction.status === 'RASCUNHO' || auction.status === 'EM_PREPARACAO' ? 'bg-gray-500 text-white' : ''}
+                `}
+                >
+                {getAuctionStatusText(auction.status)}
+                </Badge>
+            </div>
+             <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
+                {mentalTriggers.map(trigger => (
+                    <Badge key={trigger} variant="secondary" className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
+                        {trigger.startsWith('ENCERRA') && <Clock className="h-3 w-3 mr-0.5" />}
+                        {trigger === 'ALTA DEMANDA' && <Users className="h-3 w-3 mr-0.5" />}
+                        {trigger === 'DESTAQUE' && <Star className="h-3 w-3 mr-0.5" />}
+                        {trigger}
+                    </Badge>
+                ))}
+            </div>
+            <div className="absolute top-12 right-2 flex flex-col space-y-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}>
