@@ -28,7 +28,7 @@ interface SearchResultsFrameProps<TItem> {
   onLoadMore?: () => void; 
 }
 
-export default function SearchResultsFrame<TItem>({
+export default function SearchResultsFrame<TItem extends { id: string | number }>({
   items,
   totalItemsCount,
   renderGridItem,
@@ -119,7 +119,9 @@ export default function SearchResultsFrame<TItem>({
       ) : items.length > 0 ? (
         <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4' : 'grid-cols-1'}`}>
           {items.map((item, index) => (
-            viewMode === 'grid' ? renderGridItem(item, index) : renderListItem(item, index)
+            <React.Fragment key={item.id || index}>
+              {viewMode === 'grid' ? renderGridItem(item, index) : renderListItem(item, index)}
+            </React.Fragment>
           ))}
         </div>
       ) : (
