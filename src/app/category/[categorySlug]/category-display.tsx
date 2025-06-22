@@ -81,10 +81,11 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         setCurrentCategory(foundCategory || null);
 
         if (foundCategory) {
-          const lotsForCategory = allLotsData.filter(lot => lot.categoryId === foundCategory.id);
+          const lotsForCategory = allLotsData.filter(lot => lot.categoryId === foundCategory.id || slugify(lot.type) === foundCategory.slug);
           setCategoryLots(lotsForCategory);
           setActiveFilters(prev => ({ ...prev, category: foundCategory.slug }));
         } else {
+          console.warn(`Category with slug '${categorySlug}' not found.`);
           setCategoryLots([]);
         }
         
@@ -120,13 +121,9 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         } else {
              lotsToFilter = []; // Category not found, show no lots
         }
-    } else if (currentCategory && filters.category === 'TODAS') {
-         // If "All Categories" is selected on a specific category page, revert to showing all lots on that page
-        lotsToFilter = allLots.filter(lot => lot.categoryId === currentCategory.id);
     }
+    // Note: Other filters like price, location, etc. would be applied here on `lotsToFilter`
     
-    // Apply other filters (this part would be built out further)
-    // For now, we'll just set the lots based on category
     setCategoryLots(lotsToFilter);
   };
 
@@ -134,7 +131,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     const resetFilters = {...initialFiltersState, category: currentCategory?.slug || 'TODAS'};
     setActiveFilters(resetFilters);
     if (currentCategory) {
-      const lotsForCategory = allLots.filter(lot => lot.categoryId === currentCategory.id);
+      const lotsForCategory = allLots.filter(lot => lot.categoryId === currentCategory.id || slugify(lot.type) === currentCategory.slug);
       setCategoryLots(lotsForCategory);
     } else {
       setCategoryLots(allLots); 

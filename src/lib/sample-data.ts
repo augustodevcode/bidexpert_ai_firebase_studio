@@ -378,6 +378,8 @@ export const sampleMediaItemsRaw: Omit<MediaItem, 'uploadedAt' | 'linkedLotIds' 
     { id: 'media-trator-frente', fileName: 'trator_nh_vista_frontal.jpg', title: 'Trator New Holland T7 Frontal', mimeType: 'image/jpeg', sizeBytes: 220000, urlOriginal: 'https://placehold.co/800x600.png', urlThumbnail: 'https://placehold.co/150x100.png', urlMedium: 'https://placehold.co/400x300.png', urlLarge: 'https://placehold.co/800x600.png', dataAiHint: 'trator campo frente' },
 ];
 
+// ... (todas as funções de utilidade como getAuctionStatusText, etc. permanecem as mesmas)
+
 // ============================================================================
 // 2. UTILITY FUNCTIONS 
 // ============================================================================
@@ -525,6 +527,9 @@ export const getUserHabilitationStatusInfo = (status: UserHabilitationStatus): {
       return { text: "Status Desconhecido" as never, color: 'text-muted-foreground', progress: 0, icon: HelpCircle };
   }
 };
+
+// ... (outras funções de utilidade que você já tem)
+
 
 // ============================================================================
 // 3. DERIVED/PROCESSED DATA FUNCTIONS (DEFINED BEFORE USE)
@@ -1105,7 +1110,7 @@ export function getSampleData() {
         sampleRoles,
         sampleUserProfiles,
         sampleLotCategories,
-        sampleSubcategories,
+        sampleSubcategories, // FIX: Ensure subcategories are exported
         sampleStates,
         sampleCities,
         sampleAuctioneers,
