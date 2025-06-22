@@ -14,6 +14,8 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import path from 'path';
+import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
+
 
 // This adapter simulates a database using the static data from sample-data.ts
 // It now reads from/writes to a .json file for persistence across server restarts.
@@ -25,7 +27,6 @@ type SampleDataContainer = ReturnType<typeof getSampleData>;
 
 export class SampleDataAdapter implements IDatabaseAdapter {
   private data: SampleDataContainer;
-  private isDirty = false; // Flag to check if data has changed
 
   constructor() {
     this.data = this._loadData();
@@ -72,12 +73,12 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   }
 
   // --- LotCategory ---
-  async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string }> {
+  async createLotCategory(data: { name: string; description?: string; hasSubcategories?: boolean }): Promise<{ success: boolean; message: string; categoryId?: string }> {
     console.log(`[SampleDataAdapter] Creating LotCategory: ${data.name}`);
     await delay(50);
     const newCategory: LotCategory = {
         ...data,
-        id: `sample-cat-${uuidv4()}`,
+        id: `cat-${slugify(data.name)}`,
         slug: slugify(data.name),
         itemCount: 0,
         createdAt: new Date(),
@@ -133,17 +134,18 @@ export class SampleDataAdapter implements IDatabaseAdapter {
 
   // --- Subcategory ---
   async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> {
-    console.log(`[SampleDataAdapter] Creating Subcategory: ${data.name}`);
     await delay(50);
     const parentCat = this.data.sampleLotCategories.find(c => c.id === data.parentCategoryId);
+    if (!parentCat) return { success: false, message: "Categoria principal não encontrada." };
+    
     const newSubcategory: Subcategory = {
         ...data,
-        id: `sample-subcat-${uuidv4()}`,
+        id: `subcat-${parentCat.slug}-${slugify(data.name)}`,
         slug: slugify(data.name),
         itemCount: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
-        parentCategoryName: parentCat?.name,
+        parentCategoryName: parentCat.name,
     };
     this.data.sampleSubcategories.push(newSubcategory);
     await this._persistData();
@@ -151,28 +153,24 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   }
   
   async getSubcategories(parentCategoryId: string): Promise<Subcategory[]> {
-    console.log(`[SampleDataAdapter] Fetching Subcategories for parent: ${parentCategoryId}`);
     await delay(20);
     const subcategories = this.data.sampleSubcategories.filter(sub => sub.parentCategoryId === parentCategoryId);
     return Promise.resolve(JSON.parse(JSON.stringify(subcategories)));
   }
 
   async getSubcategory(id: string): Promise<Subcategory | null> {
-    console.log(`[SampleDataAdapter] Fetching Subcategory by ID: ${id}`);
     await delay(20);
     const subcategory = this.data.sampleSubcategories.find(sub => sub.id === id);
     return Promise.resolve(subcategory ? JSON.parse(JSON.stringify(subcategory)) : null);
   }
 
   async getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null> {
-    console.log(`[SampleDataAdapter] Fetching Subcategory by slug: ${slug} in parent ${parentCategoryId}`);
     await delay(20);
     const subcategory = this.data.sampleSubcategories.find(sub => sub.slug === slug && sub.parentCategoryId === parentCategoryId);
     return Promise.resolve(subcategory ? JSON.parse(JSON.stringify(subcategory)) : null);
   }
   
   async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> {
-    console.log(`[SampleDataAdapter] Updating Subcategory ID: ${id}`);
     await delay(50);
     const index = this.data.sampleSubcategories.findIndex(s => s.id === id);
     if(index === -1) return { success: false, message: 'Subcategoria não encontrada.' };
@@ -182,7 +180,6 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   }
   
   async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> {
-    console.log(`[SampleDataAdapter] Deleting Subcategory ID: ${id}`);
     await delay(50);
     const initialLength = this.data.sampleSubcategories.length;
     this.data.sampleSubcategories = this.data.sampleSubcategories.filter(s => s.id !== id);
@@ -193,112 +190,77 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return { success: false, message: 'Subcategoria não encontrada.' };
   }
 
-  // --- States and Cities (Read-only) ---
+  // --- States and Cities ---
   async getStates(): Promise<StateInfo[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleStates))); }
   async getState(idOrSlugOrUf: string): Promise<StateInfo | null> { await delay(20); const state = this.data.sampleStates.find(s => s.id === idOrSlugOrUf || s.slug === idOrSlugOrUf || s.uf === idOrSlugOrUf.toUpperCase()); return Promise.resolve(state ? JSON.parse(JSON.stringify(state)) : null); }
   async getCities(stateIdOrSlugFilter?: string): Promise<CityInfo[]> { await delay(20); let cities = this.data.sampleCities; if (stateIdOrSlugFilter) { const state = await this.getState(stateIdOrSlugFilter); if (state) { cities = cities.filter(c => c.stateId === state.id); } else { return Promise.resolve([]); } } return Promise.resolve(JSON.parse(JSON.stringify(cities))); }
   async getCity(idOrCompositeSlug: string): Promise<CityInfo | null> { await delay(20); const city = this.data.sampleCities.find(c => c.id === idOrCompositeSlug || `${c.stateId}-${c.slug}` === idOrCompositeSlug); return Promise.resolve(city ? JSON.parse(JSON.stringify(city)) : null); }
-  
-  // --- Auctioneers & Sellers (Read-only) ---
+  async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string }> { await delay(50); const newState: StateInfo = { ...data, id: `state-${data.uf.toLowerCase()}`, slug: slugify(data.name), cityCount: 0, createdAt: new Date(), updatedAt: new Date() }; this.data.sampleStates.push(newState); await this._persistData(); return { success: true, message: 'Estado criado!', stateId: newState.id }; }
+  async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string }> { await delay(50); const index = this.data.sampleStates.findIndex(s => s.id === id); if(index === -1) return {success: false, message: 'Estado não encontrado.'}; this.data.sampleStates[index] = {...this.data.sampleStates[index], ...data, slug: slugify(data.name || this.data.sampleStates[index].name), updatedAt: new Date()}; await this._persistData(); return {success: true, message: 'Estado atualizado!'}; }
+  async deleteState(id: string): Promise<{ success: boolean; message: string }> { await delay(50); this.data.sampleStates = this.data.sampleStates.filter(s => s.id !== id); await this._persistData(); return {success: true, message: 'Estado excluído!'}; }
+  async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string }> { const state = await this.getState(data.stateId); if (!state) return {success: false, message: 'Estado não encontrado.'}; const newCity: CityInfo = { ...data, id: `city-${slugify(data.name)}-${state.uf.toLowerCase()}`, slug: slugify(data.name), stateUf: state.uf, lotCount: 0, createdAt: new Date(), updatedAt: new Date() }; this.data.sampleCities.push(newCity); await this._persistData(); return { success: true, message: 'Cidade criada!', cityId: newCity.id }; }
+  async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string }> { const index = this.data.sampleCities.findIndex(c => c.id === id); if(index === -1) return {success: false, message: 'Cidade não encontrada.'}; this.data.sampleCities[index] = {...this.data.sampleCities[index], ...data, slug: slugify(data.name || this.data.sampleCities[index].name), updatedAt: new Date()}; await this._persistData(); return {success: true, message: 'Cidade atualizada!'}; }
+  async deleteCity(id: string): Promise<{ success: boolean; message: string }> { this.data.sampleCities = this.data.sampleCities.filter(c => c.id !== id); await this._persistData(); return {success: true, message: 'Cidade excluída!'}; }
+
+  // --- Auctioneers & Sellers ---
   async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleAuctioneers))); }
   async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> { await delay(20); const item = this.data.sampleAuctioneers.find(a => a.id === idOrPublicId || a.publicId === idOrPublicId || a.slug === idOrPublicId); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
   async getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null> { return this.getAuctioneer(slugOrPublicId); }
   async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> { await delay(20); const item = this.data.sampleAuctioneers.find(a => a.name.toLowerCase() === name.toLowerCase()); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
+  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> { const slug = slugify(data.name); const newAuct: AuctioneerProfileInfo = {...data, id: `auct-${slug}`, publicId: `AUCT-PUB-${uuidv4()}`, slug, createdAt: new Date(), updatedAt: new Date()}; this.data.sampleAuctioneers.push(newAuct); await this._persistData(); return {success: true, message: 'Leiloeiro criado!', auctioneerId: newAuct.id, auctioneerPublicId: newAuct.publicId}; }
+  async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleAuctioneers.findIndex(a => a.id === id || a.publicId === id); if(index === -1) return {success: false, message: 'Leiloeiro não encontrado.'}; this.data.sampleAuctioneers[index] = {...this.data.sampleAuctioneers[index], ...data, slug: slugify(data.name || this.data.sampleAuctioneers[index].name), updatedAt: new Date()}; await this._persistData(); return {success: true, message: 'Leiloeiro atualizado!'}; }
+  async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> { this.data.sampleAuctioneers = this.data.sampleAuctioneers.filter(a => a.id !== id && a.publicId !== id); await this._persistData(); return {success: true, message: 'Leiloeiro excluído!'}; }
+  
   async getSellers(): Promise<SellerProfileInfo[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleSellers))); }
   async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> { await delay(20); const item = this.data.sampleSellers.find(s => s.id === idOrPublicId || s.publicId === idOrPublicId || s.slug === idOrPublicId); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
   async getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null> { return this.getSeller(slugOrPublicId); }
   async getSellerByName(name: string): Promise<SellerProfileInfo | null> { await delay(20); const item = this.data.sampleSellers.find(s => s.name.toLowerCase() === name.toLowerCase()); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
+  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> { const slug = slugify(data.name); const newSeller: SellerProfileInfo = {...data, id: `seller-${slug}`, publicId: `SELL-PUB-${uuidv4()}`, slug, createdAt: new Date(), updatedAt: new Date()}; this.data.sampleSellers.push(newSeller); await this._persistData(); return {success: true, message: 'Comitente criado!', sellerId: newSeller.id, sellerPublicId: newSeller.publicId}; }
+  async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleSellers.findIndex(s => s.id === id || s.publicId === id); if(index === -1) return {success: false, message: 'Comitente não encontrado.'}; this.data.sampleSellers[index] = {...this.data.sampleSellers[index], ...data, slug: slugify(data.name || this.data.sampleSellers[index].name), updatedAt: new Date()}; await this._persistData(); return {success: true, message: 'Comitente atualizado!'}; }
+  async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> { this.data.sampleSellers = this.data.sampleSellers.filter(s => s.id !== id && s.publicId !== id); await this._persistData(); return {success: true, message: 'Comitente excluído!'}; }
 
   // --- Auctions & Lots ---
   async getAuctions(): Promise<Auction[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleAuctions))); }
   async getAuction(idOrPublicId: string): Promise<Auction | null> { await delay(20); const item = this.data.sampleAuctions.find(a => a.id === idOrPublicId || a.publicId === idOrPublicId); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
   async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> { const seller = await this.getSellerBySlug(sellerSlugOrPublicId); if (!seller) return Promise.resolve([]); const items = this.data.sampleAuctions.filter(a => a.sellerId === seller.id || a.seller === seller.name); return Promise.resolve(JSON.parse(JSON.stringify(items))); }
+  async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> { const newAuction: Auction = {...(data as any), id: `auc-${uuidv4()}`, publicId: `AUC-PUB-${uuidv4()}`, createdAt: new Date(), updatedAt: new Date(), lots:[], totalLots:0}; this.data.sampleAuctions.push(newAuction); await this._persistData(); return {success: true, message: 'Leilão criado!', auctionId: newAuction.id, auctionPublicId: newAuction.publicId}; }
+  async updateAuction(id: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleAuctions.findIndex(a => a.id === id || a.publicId === id); if(index === -1) return {success: false, message: 'Leilão não encontrado.'}; this.data.sampleAuctions[index] = {...this.data.sampleAuctions[index], ...data, updatedAt: new Date()}; await this._persistData(); return {success: true, message: 'Leilão atualizado!'}; }
+  async deleteAuction(id: string): Promise<{ success: boolean; message: string; }> { this.data.sampleAuctions = this.data.sampleAuctions.filter(a => a.id !== id && a.publicId !== id); this.data.sampleLots = this.data.sampleLots.filter(l => l.auctionId !== id); await this._persistData(); return {success: true, message: 'Leilão excluído!'}; }
+  
   async getLots(auctionIdParam?: string): Promise<Lot[]> { await delay(20); let lots = this.data.sampleLots; if (auctionIdParam) { const auction = await this.getAuction(auctionIdParam); if (auction) { lots = lots.filter(l => l.auctionId === auction.id || l.auctionId === auction.publicId); } else { return Promise.resolve([]); } } return Promise.resolve(JSON.parse(JSON.stringify(lots))); }
   async getLot(idOrPublicId: string): Promise<Lot | null> { await delay(20); const item = this.data.sampleLots.find(l => l.id === idOrPublicId || l.publicId === idOrPublicId); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
+  async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> { const newLot: Lot = {...(data as any), id: `lot-${uuidv4()}`, publicId: `LOT-PUB-${uuidv4()}`, createdAt: new Date(), updatedAt: new Date()}; this.data.sampleLots.push(newLot); await this._persistData(); return {success: true, message: 'Lote criado!', lotId: newLot.id, lotPublicId: newLot.publicId}; }
+  async updateLot(id: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleLots.findIndex(l => l.id === id || l.publicId === id); if(index === -1) return {success: false, message: 'Lote não encontrado.'}; this.data.sampleLots[index] = {...this.data.sampleLots[index], ...data, updatedAt: new Date()}; await this._persistData(); return {success: true, message: 'Lote atualizado!'}; }
+  async deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string; }> { this.data.sampleLots = this.data.sampleLots.filter(l => l.id !== id && l.publicId !== id); await this._persistData(); return {success: true, message: 'Lote excluído!'}; }
 
+  // --- Bids, Reviews, Questions ---
+  async getBidsForLot(lotId: string): Promise<BidInfo[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleBids.filter(b => b.lotId === lotId)))); }
+  async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status">>; newBid?: BidInfo }> { const lotIndex = this.data.sampleLots.findIndex(l => l.id === lotId || l.publicId === lotId); if(lotIndex === -1) return { success: false, message: "Lote não encontrado."}; const lot = this.data.sampleLots[lotIndex]; if(bidAmount <= lot.price) return {success: false, message: 'Lance deve ser maior que o atual.'}; const newBid: BidInfo = { id: `bid-${uuidv4()}`, lotId, auctionId, bidderId: userId, bidderDisplay: userDisplayName, amount: bidAmount, timestamp: new Date() }; this.data.sampleBids.unshift(newBid); this.data.sampleLots[lotIndex] = {...lot, price: bidAmount, bidsCount: (lot.bidsCount || 0) + 1}; await this._persistData(); return { success: true, message: "Lance registrado!", updatedLot: {price: bidAmount, bidsCount: lot.bidsCount}, newBid }; }
+  async getReviewsForLot(lotId: string): Promise<Review[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleLotReviews.filter(r => r.lotId === lotId)))); }
+  async createReview(reviewData: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<{ success: boolean; message: string; reviewId?: string | undefined; }> { const newReview: Review = {...reviewData, id: `rev-${uuidv4()}`, createdAt: new Date()}; this.data.sampleLotReviews.unshift(newReview); await this._persistData(); return { success: true, message: "Avaliação adicionada!", reviewId: newReview.id }; }
+  async getQuestionsForLot(lotId: string): Promise<LotQuestion[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleLotQuestions.filter(q => q.lotId === lotId)))); }
+  async createQuestion(questionData: Omit<LotQuestion, "id" | "createdAt" | "answeredAt" | "answeredByUserId" | "answeredByUserDisplayName" | "isPublic">): Promise<{ success: boolean; message: string; questionId?: string | undefined; }> { const newQuestion: LotQuestion = {...questionData, id: `qst-${uuidv4()}`, createdAt: new Date(), isPublic: true}; this.data.sampleLotQuestions.unshift(newQuestion); await this._persistData(); return { success: true, message: "Pergunta enviada!", questionId: newQuestion.id }; }
+  async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleLotQuestions.findIndex(q => q.id === questionId); if(index === -1) return {success: false, message: 'Pergunta não encontrada.'}; this.data.sampleLotQuestions[index] = {...this.data.sampleLotQuestions[index], answerText, answeredByUserId, answeredByUserDisplayName, answeredAt: new Date()}; await this._persistData(); return {success: true, message: 'Pergunta respondida!'}; }
+  
   // --- Users & Roles ---
   async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }> { return Promise.resolve({ success: true, message: 'Default roles ensured.', rolesProcessed: this.data.sampleRoles.length }); }
-  async getRoles(): Promise<Role[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleRoles))); }
-  async getRole(id: string): Promise<Role | null> { await delay(20); const item = this.data.sampleRoles.find(r => r.id === id); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
   async getRoleByName(name: string): Promise<Role | null> { await delay(20); const item = this.data.sampleRoles.find(r => r.name_normalized === name.toUpperCase()); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
-  async getUsersWithRoles(): Promise<UserProfileWithPermissions[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleUserProfiles))); }
-  async getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null> { await delay(20); const item = this.data.sampleUserProfiles.find(u => u.uid === userId); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
-  async getUserByEmail(email: string): Promise<UserProfileWithPermissions | null> { await delay(20); const item = this.data.sampleUserProfiles.find(u => u.email.toLowerCase() === email.toLowerCase()); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
-
-  // --- Write operations ---
-  
-  async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> {
-    const newRole: Role = { ...data, id: `sample-role-${uuidv4()}`, name_normalized: data.name.toUpperCase(), createdAt: new Date(), updatedAt: new Date() };
-    this.data.sampleRoles.push(newRole); await this._persistData();
-    return { success: true, message: 'Role created!', roleId: newRole.id };
-  }
-
-  async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> {
-    const index = this.data.sampleRoles.findIndex(r => r.id === id); if(index === -1) return { success: false, message: 'Role not found.'};
-    this.data.sampleRoles[index] = { ...this.data.sampleRoles[index], ...data, name_normalized: (data.name || this.data.sampleRoles[index].name).toUpperCase(), updatedAt: new Date() }; await this._persistData();
-    return { success: true, message: 'Role updated!' };
-  }
-
-  async deleteRole(id: string): Promise<{ success: boolean; message: string; }> {
-    this.data.sampleRoles = this.data.sampleRoles.filter(r => r.id !== id); await this._persistData();
-    return { success: true, message: 'Role deleted!' };
-  }
-  
-  async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
-    const userIndex = this.data.sampleUserProfiles.findIndex(u => u.uid === userId); if(userIndex === -1) return { success: false, message: 'User not found.' };
-    const role = roleId ? await this.getRole(roleId) : null;
-    this.data.sampleUserProfiles[userIndex].roleId = role?.id; this.data.sampleUserProfiles[userIndex].roleName = role?.name; this.data.sampleUserProfiles[userIndex].permissions = role?.permissions || [];
-    await this._persistData(); return { success: true, message: 'User role updated!' };
-  }
-
-  async updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> {
-    const index = this.data.sampleAuctions.findIndex(a => a.id === idOrPublicId || a.publicId === idOrPublicId); if(index === -1) return { success: false, message: `Auction not found.` };
-    this.data.sampleAuctions[index] = { ...this.data.sampleAuctions[index], ...data, updatedAt: new Date() }; await this._persistData();
-    return { success: true, message: 'Auction (simulated) updated!' };
-  }
-
-  async updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> {
-    const index = this.data.sampleLots.findIndex(l => l.id === idOrPublicId || l.publicId === idOrPublicId); if(index === -1) return { success: false, message: `Lot not found.` };
-    this.data.sampleLots[index] = { ...this.data.sampleLots[index], ...data, updatedAt: new Date() }; await this._persistData();
-    return { success: true, message: 'Lot (simulated) updated!' };
-  }
-  
-  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
-    this.data.samplePlatformSettings = { ...this.data.samplePlatformSettings, ...data, updatedAt: new Date() }; await this._persistData();
-    return { success: true, message: 'Platform settings updated!' };
-  }
-  
-  // --- Remaining placeholders ---
-  async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> { console.warn("createState not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateState not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async deleteState(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteState not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> { console.warn("createCity not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateCity not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async deleteCity(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteCity not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> { console.warn("createAuctioneer not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateAuctioneer not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteAuctioneer not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> { console.warn("createSeller not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateSeller not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteSeller not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> { console.warn("createAuction not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async deleteAuction(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteAuction not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> { console.warn("createLot not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteLot not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status">>; newBid?: BidInfo }> { console.warn("placeBidOnLot not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async getBidsForLot(lotId: string): Promise<BidInfo[]> { await delay(20); return Promise.resolve(this.data.sampleBids.filter(b => b.lotId === lotId)); }
-  async createReview(reviewData: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<{ success: boolean; message: string; reviewId?: string | undefined; }> { await delay(50); return { success: true, message: 'Review (simulated) created!' }; }
-  async getReviewsForLot(lotId: string): Promise<Review[]> { await delay(20); return Promise.resolve(this.data.sampleLotReviews.filter(r => r.lotId === lotId)); }
-  async createQuestion(questionData: Omit<LotQuestion, "id" | "createdAt" | "answeredAt" | "answeredByUserId" | "answeredByUserDisplayName" | "isPublic">): Promise<{ success: boolean; message: string; questionId?: string | undefined; }> { await delay(50); return { success: true, message: 'Question (simulated) created!' }; }
-  async getQuestionsForLot(lotId: string): Promise<LotQuestion[]> { await delay(20); return Promise.resolve(this.data.sampleLotQuestions.filter(q => q.lotId === lotId)); }
-  async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> { await delay(50); return { success: true, message: 'Question (simulated) answered!' }; }
   async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<UserProfileData>, roleIdToAssign?: string | undefined): Promise<{ success: boolean; message: string; userProfile?: UserProfileData | undefined; }> { const existing = await this.getUserByEmail(email); if(existing) return { success: true, message: 'User profile exists (SampleData).', userProfile: existing }; const role = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER'); const newUser: UserProfileData = { uid: userId, email, fullName: fullName || email.split('@')[0], roleId: role?.id, roleName: role?.name, permissions: role?.permissions, status: 'ATIVO', habilitationStatus: 'PENDENTE_DOCUMENTOS', ...(additionalProfileData || {}), createdAt: new Date(), updatedAt: new Date() }; return { success: true, message: 'User profile ensured (SampleData).', userProfile: newUser }; }
-  async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteUserProfile not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> { console.warn("updateUserProfile not implemented in SampleDataAdapter"); return { success: false, message: "Not implemented" }; }
-  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> { await delay(50); return { success: true, message: 'Media item (simulated) created!' }; }
+  async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> { this.data.sampleUserProfiles = this.data.sampleUserProfiles.filter(u => u.uid !== userId); await this._persistData(); return {success: true, message: 'Usuário excluído!'}; }
+  async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleUserProfiles.findIndex(u => u.uid === userId); if(index === -1) return {success: false, message: 'Usuário não encontrado.'}; this.data.sampleUserProfiles[index] = {...this.data.sampleUserProfiles[index], ...data, updatedAt: new Date()}; await this._persistData(); return {success: true, message: 'Perfil atualizado!'}; }
+
+  // --- Media ---
+  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> { const newItem: MediaItem = {...data, id: `media-${uuidv4()}`, uploadedAt: new Date(), urlOriginal: filePublicUrl, urlThumbnail: filePublicUrl, urlMedium: filePublicUrl, urlLarge: filePublicUrl, uploadedBy: uploadedBy || 'system', linkedLotIds:[]}; this.data.sampleMediaItems.unshift(newItem); await this._persistData(); return {success: true, message: 'Mídia criada!', item: newItem}; }
   async getMediaItems(): Promise<MediaItem[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleMediaItems))); }
-  async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, "title" | "altText" | "caption" | "description">>): Promise<{ success: boolean; message: string; }> { await delay(50); return { success: true, message: 'Media metadata (simulated) updated!' }; }
-  async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> { await delay(50); return { success: true, message: 'Media item (simulated) deleted!' }; }
-  async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> { await delay(50); return { success: true, message: 'Media (simulated) linked!' }; }
-  async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> { await delay(50); return { success: true, message: 'Media (simulated) unlinked!' }; }
+  async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, "title" | "altText" | "caption" | "description">>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleMediaItems.findIndex(m => m.id === id); if(index === -1) return {success: false, message: 'Mídia não encontrada.'}; this.data.sampleMediaItems[index] = {...this.data.sampleMediaItems[index], ...metadata}; await this._persistData(); return {success: true, message: 'Metadados da mídia atualizados!'}; }
+  async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> { this.data.sampleMediaItems = this.data.sampleMediaItems.filter(m => m.id !== id); await this._persistData(); return {success: true, message: 'Mídia excluída!'}; }
+  async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> { const lotIndex = this.data.sampleLots.findIndex(l => l.id === lotId || l.publicId === lotId); if(lotIndex === -1) return {success: false, message: 'Lote não encontrado.'}; const lot = this.data.sampleLots[lotIndex]; lot.mediaItemIds = Array.from(new Set([...(lot.mediaItemIds || []), ...mediaItemIds])); mediaItemIds.forEach(mediaId => { const mediaIndex = this.data.sampleMediaItems.findIndex(m => m.id === mediaId); if(mediaIndex > -1) { this.data.sampleMediaItems[mediaIndex].linkedLotIds = Array.from(new Set([...(this.data.sampleMediaItems[mediaIndex].linkedLotIds || []), lotId])); }}); await this._persistData(); return {success: true, message: 'Mídia vinculada!'}; }
+  async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> { const lotIndex = this.data.sampleLots.findIndex(l => l.id === lotId || l.publicId === lotId); if(lotIndex > -1) { this.data.sampleLots[lotIndex].mediaItemIds = (this.data.sampleLots[lotIndex].mediaItemIds || []).filter(id => id !== mediaItemId); } const mediaIndex = this.data.sampleMediaItems.findIndex(m => m.id === mediaItemId); if(mediaIndex > -1) { this.data.sampleMediaItems[mediaIndex].linkedLotIds = (this.data.sampleMediaItems[mediaIndex].linkedLotIds || []).filter(id => id !== lotId); } await this._persistData(); return {success: true, message: 'Mídia desvinculada!'}; }
+
+   // --- Platform Settings ---
+  async getPlatformSettings(): Promise<PlatformSettings> {
+    console.log('[SampleDataAdapter] Fetching PlatformSettings.');
+    await delay(10);
+    return Promise.resolve(JSON.parse(JSON.stringify(this.data.samplePlatformSettings)));
+  }
 }
