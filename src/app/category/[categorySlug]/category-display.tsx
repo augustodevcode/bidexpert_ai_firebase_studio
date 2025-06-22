@@ -7,11 +7,12 @@ import Link from 'next/link';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLots } from '@/app/admin/lots/actions'; // Fetch lots via action
-import type { Lot, LotCategory, PlatformSettings, ActiveFilters } from '@/types';
+import type { Lot, LotCategory, PlatformSettings } from '@/types';
 import { getUniqueLotLocations, getUniqueSellerNames, slugify, getCategoryAssets } from '@/lib/sample-data';
 import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
 import SidebarFilters from '@/components/sidebar-filters';
+import type { ActiveFilters } from '@/components/sidebar-filters';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LayoutGrid, List, SlidersHorizontal, Loader2, ChevronRight, AlertCircle } from 'lucide-react';
@@ -92,7 +93,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         if (foundCategory) {
           const lotsForCategory = allLotsData.filter(lot => lot.categoryId === foundCategory.id || slugify(lot.type) === foundCategory.slug);
           setFilteredLots(lotsForCategory);
-          setActiveFilters(prev => ({ ...prev, category: foundCategory.slug }));
+          setActiveFilters((prev: ActiveFilters) => ({ ...prev, category: foundCategory.slug }));
         } else {
           console.warn(`Category with slug '${categorySlug}' not found.`);
           setFilteredLots([]);
@@ -285,3 +286,4 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     </div>
   );
 }
+
