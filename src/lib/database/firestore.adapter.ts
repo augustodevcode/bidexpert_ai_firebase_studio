@@ -32,7 +32,7 @@ const ServerTimestamp = FirebaseAdminTimestampType;
 
 
 // Helper to convert various timestamp types to JS Date
-function safeConvertToDate(timestampField: any): Date {
+export function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date(); 
   // Verifica se é um Timestamp do Admin SDK (que tem toDate)
   if (timestampField && typeof timestampField.toDate === 'function') {
@@ -54,7 +54,7 @@ function safeConvertToDate(timestampField: any): Date {
   return new Date();
 }
 
-function safeConvertOptionalDate(timestampField: any): Date | undefined | null {
+export function safeConvertOptionalDate(timestampField: any): Date | undefined | null {
     if (timestampField === null || timestampField === undefined) {
       return null;
     }
