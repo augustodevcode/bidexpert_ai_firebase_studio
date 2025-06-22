@@ -167,7 +167,7 @@ export default function DashboardOverviewPage() {
               <Card key={lot.id} className="overflow-hidden">
                 <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
                   <div className="relative aspect-video bg-muted">
-                    <Image src={lot.imageUrl} alt={lot.title} fill className="object-cover" data-ai-hint={lot.dataAiHint || "lote proximo encerramento"} />
+                    <Image src={lot.imageUrl || 'https://placehold.co/600x400.png'} alt={lot.title} fill className="object-cover" data-ai-hint={lot.dataAiHint || "lote proximo encerramento"} />
                   </div>
                   <div className="p-3">
                     <h4 className="text-sm font-semibold truncate mb-1">{lot.title}</h4>
@@ -199,7 +199,7 @@ export default function DashboardOverviewPage() {
               <Card key={lot.id} className="overflow-hidden">
                 <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
                   <div className="relative aspect-video bg-muted">
-                    <Image src={lot.imageUrl} alt={lot.title} fill className="object-cover" data-ai-hint={lot.dataAiHint || "lote recomendado"} />
+                    <Image src={lot.imageUrl || 'https://placehold.co/600x400.png'} alt={lot.title} fill className="object-cover" data-ai-hint={lot.dataAiHint || "lote recomendado"} />
                   </div>
                   <div className="p-3">
                     <h4 className="text-sm font-semibold truncate mb-1">{lot.title}</h4>
@@ -249,4 +249,3 @@ export default function DashboardOverviewPage() {
     </div>
   );
 }
-
