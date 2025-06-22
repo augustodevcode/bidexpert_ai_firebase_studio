@@ -1,17 +1,14 @@
 'use server';
 import { getDatabaseAdapter } from '@/lib/database';
 import type { SqlAuthResult, UserProfileWithPermissions } from '@/types';
-// Import a user action that is now guaranteed to use sample data
 import { getUserByEmail } from '@/app/admin/users/actions';
 
 export async function authenticateUserSql(
   email: string,
   passwordAttempt: string
 ): Promise<SqlAuthResult> {
-  // This function will now use the mocked user action instead of the database adapter,
-  // making it consistent with the rest of the user/role logic.
   try {
-    console.log(`[authenticateUserSql] Attempting to authenticate ${email} via user actions (sample-data).`);
+    console.log(`[authenticateUserSql] Attempting to authenticate ${email} via user actions adapter.`);
     const userProfile = await getUserByEmail(email.toLowerCase());
 
     if (!userProfile) {
@@ -19,13 +16,12 @@ export async function authenticateUserSql(
     }
     
     console.log(`[authenticateUserSql] Profile found for ${email}. Checking password.`);
-    // The password from sample data is in plain text for this prototype.
     if (userProfile.password === passwordAttempt) {
       const { password, ...userToReturn } = userProfile;
       console.log(`[authenticateUserSql] Password match for ${email}. Login successful.`);
       return {
         success: true,
-        message: 'Login bem-sucedido (SampleData)!',
+        message: 'Login bem-sucedido!',
         user: userToReturn as UserProfileWithPermissions, 
       };
     } else {

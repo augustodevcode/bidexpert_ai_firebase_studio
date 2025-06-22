@@ -1,4 +1,3 @@
-
 // src/app/admin/users/actions.ts
 'use server';
 
@@ -38,16 +37,11 @@ export interface UserCreationData {
 export async function createUser(
   data: UserCreationData
 ): Promise<{ success: boolean; message: string; userId?: string }> {
-  console.log(`[createUser Action] Simulating creation for: ${data.email}`);
+  const db = await getDatabaseAdapter();
+  // This is a simplified placeholder for the user creation flow.
   // In a real scenario, this would use Firebase Admin SDK to create the user in Auth,
   // then call ensureUserProfileInDb with the new UID.
   // For this prototype, we'll assume ensureUserProfileInDb handles it.
-  const db = await getDatabaseAdapter();
-  
-  // This is a simplified placeholder for the user creation flow.
-  // A real implementation would require Firebase Admin SDK here to create the auth user.
-  // We'll proceed with ensureUserProfileInDb which can create the DB record.
-  // We need a UID, for now we generate one if not provided. This is NOT secure for production.
   const pseudoUid = `user-${Date.now()}`;
   
   const result = await db.ensureUserRole(
@@ -61,7 +55,7 @@ export async function createUser(
   
   if (result.success && result.userProfile) {
     revalidatePath('/admin/users');
-    return { success: true, message: 'Usuário (simulado) criado com sucesso.', userId: result.userProfile.uid };
+    return { success: true, message: 'Usuário criado com sucesso.', userId: result.userProfile.uid };
   } else {
     return { success: false, message: result.message || 'Falha ao criar perfil de usuário no banco de dados.' };
   }
@@ -72,9 +66,17 @@ export async function getUsersWithRoles(): Promise<UserProfileData[]> {
   return db.getUsersWithRoles();
 }
 
-export async function getUserProfileData(userId: string): Promise<UserProfileData | null> {
+export async function getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null> {
   const db = await getDatabaseAdapter();
-  return db.getUserProfileData(userId);
+  const profile = await db.getUserProfileData(userId);
+  // Ensure the returned profile conforms to UserProfileWithPermissions
+  if (profile) {
+    return {
+      ...profile,
+      permissions: profile.permissions || [],
+    };
+  }
+  return null;
 }
 
 export async function updateUserRole(
@@ -102,7 +104,7 @@ export async function deleteUser(userId: string): Promise<{ success: boolean; me
 
 export async function ensureUserProfileInDb(
   userUid: string,
-  email: string | null,
+  email: string,
   fullName: string | null,
   targetRoleNameInput: string,
   additionalProfileData?: Partial<UserProfileData & {password?: string}>,

@@ -6,8 +6,6 @@ import { getDatabaseAdapter } from '@/lib/database';
 import type { Role, RoleFormData } from '@/types';
 import { predefinedPermissions } from './role-form-schema';
 
-console.log('[Roles Actions] Using database adapter source.');
-
 // Server Action to create a Role
 export async function createRole(
   data: RoleFormData
