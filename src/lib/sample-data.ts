@@ -1,3 +1,4 @@
+
 import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, CityInfo, MediaItem, PlatformSettings, MentalTriggerSettings, HomepageSectionConfig, BadgeVisibilitySettings, SectionBadgeConfig, MapSettings, AuctionStage, SearchPaginationType, Subcategory, Role, UserProfileData, UserProfileWithPermissions } from '@/types';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays, addDays as dateFnsAddDays, isPast, addHours, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -973,7 +974,7 @@ const defaultHomepageSections: HomepageSectionConfig[] = [
 
 export const defaultSectionBadgeVisibility: SectionBadgeConfig = {
   featuredLots: { 
-    showStatusBadge: false, 
+    showStatusBadge: true, 
     showDiscountBadge: true,
     showUrgencyTimer: true,
     showPopularityBadge: true,
