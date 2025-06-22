@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Lot, PlatformSettings } from '@/types';
@@ -143,6 +144,7 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
   }
 
   // 2. Determinar o link externo (finalExternalMapLink)
+  let finalExternalMapLink: string | null = null;
   if (latitude && longitude) {
     // Prioridade máxima: usar coordenadas para um link de busca universal do Google Maps
     finalExternalMapLink = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
