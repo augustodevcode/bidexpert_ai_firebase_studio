@@ -1,15 +1,16 @@
 
 'use client';
 
-import { useState, useEffect } from 'react'; // Ensure this import is present
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import type { Lot, AuctionStatus } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, MapPin, Tag, CalendarClock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Tag, CalendarClock, ImageOff } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
+import { Button } from '../ui/button';
 
 interface CurrentLotDisplayProps {
   lot: Lot;
@@ -17,8 +18,22 @@ interface CurrentLotDisplayProps {
 }
 
 export default function CurrentLotDisplay({ lot, auctionStatus }: CurrentLotDisplayProps) {
-  const gallery = [lot.imageUrl, ...(lot.galleryImageUrls || [])].filter(Boolean);
+  const gallery = useMemo(() => {
+    if (!lot) return ['https://placehold.co/800x600.png?text=Imagem+Indisponivel'];
+    const mainImage = [lot.imageUrl].filter(Boolean) as string[];
+    const galleryImages = (lot.galleryImageUrls || []).filter(Boolean) as string[];
+    const combined = [...mainImage, ...galleryImages];
+    const uniqueUrls = Array.from(new Set(combined));
+    return uniqueUrls.length > 0 ? uniqueUrls : ['https://placehold.co/800x600.png?text=Imagem+Indisponivel'];
+  }, [lot]);
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    // Reset image index if lot changes
+    setCurrentImageIndex(0);
+  }, [lot.id]);
+
 
   const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % gallery.length);
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + gallery.length) % gallery.length);
@@ -26,7 +41,7 @@ export default function CurrentLotDisplay({ lot, auctionStatus }: CurrentLotDisp
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
 
   // Placeholder timer - in a real app, this would be driven by a WebSocket or frequent polling
-  const [timer, setTimer] = useState("00:04:55"); 
+  const [timer, setTimer] = useState("00:04:55");
   useEffect(() => {
     if (lot.status === 'ABERTO_PARA_LANCES') {
       // Simulate countdown - replace with actual logic
@@ -63,14 +78,21 @@ export default function CurrentLotDisplay({ lot, auctionStatus }: CurrentLotDisp
         {/* Image Gallery */}
         <div className="md:w-3/5 p-3 md:p-4 flex flex-col items-center justify-center bg-muted/30">
           <div className="relative w-full aspect-video rounded-md overflow-hidden shadow-inner">
-            <Image
-              src={gallery[currentImageIndex]}
-              alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`}
-              fill
-              className="object-contain"
-              data-ai-hint={lot.dataAiHint || "imagem lote atual"}
-              priority
-            />
+             {gallery.length > 0 && gallery[currentImageIndex] ? (
+              <Image
+                src={gallery[currentImageIndex]}
+                alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`}
+                fill
+                className="object-contain"
+                data-ai-hint={lot.dataAiHint || "imagem lote atual"}
+                priority
+              />
+             ) : (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                <ImageOff className="h-16 w-16 mb-2" />
+                <span>Imagem indisponível</span>
+              </div>
+             )}
             {gallery.length > 1 && (
               <>
                 <Button
@@ -78,6 +100,7 @@ export default function CurrentLotDisplay({ lot, auctionStatus }: CurrentLotDisp
                   size="icon"
                   onClick={prevImage}
                   className="absolute left-1 top-1/2 -translate-y-1/2 bg-background/50 hover:bg-background/80 h-8 w-8 rounded-full"
+                  aria-label="Imagem Anterior"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </Button>
@@ -86,6 +109,7 @@ export default function CurrentLotDisplay({ lot, auctionStatus }: CurrentLotDisp
                   size="icon"
                   onClick={nextImage}
                   className="absolute right-1 top-1/2 -translate-y-1/2 bg-background/50 hover:bg-background/80 h-8 w-8 rounded-full"
+                  aria-label="Próxima Imagem"
                 >
                   <ChevronRight className="h-5 w-5" />
                 </Button>
