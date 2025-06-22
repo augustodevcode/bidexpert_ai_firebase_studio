@@ -3,14 +3,19 @@
 import type { IStorageAdapter } from '@/types';
 import fs from 'fs';
 import path from 'path';
+import { samplePlatformSettings } from '../sample-data';
 
 export class LocalStorageAdapter implements IStorageAdapter {
   private uploadDir: string;
   private publicPath: string;
 
   constructor() {
-    this.publicPath = '/uploads/media';
-    this.uploadDir = path.join(process.cwd(), 'public', this.publicPath);
+    // Usar o caminho base das configurações para consistência
+    this.publicPath = samplePlatformSettings.galleryImageBasePath || '/uploads/media/';
+    // Garantir que o caminho comece e termine com barra, mas não duplamente
+    const cleanPublicPath = `/${this.publicPath.replace(/^\/|\/$/g, '')}/`;
+
+    this.uploadDir = path.join(process.cwd(), 'public', cleanPublicPath);
 
     // Garante que o diretório de upload exista
     if (!fs.existsSync(this.uploadDir)) {
@@ -25,8 +30,8 @@ export class LocalStorageAdapter implements IStorageAdapter {
       const filePath = path.join(this.uploadDir, fileName);
       fs.writeFileSync(filePath, buffer);
       
-      const publicUrl = `${this.publicPath}/${fileName}`;
-      const storagePath = `${this.publicPath}/${fileName}`; // For local, public URL and storage path are the same relative to /public
+      const publicUrl = path.join(this.publicPath, fileName).replace(/\\/g, '/');
+      const storagePath = publicUrl; // For local, public URL and storage path are the same relative to /public
 
       console.log(`[LocalStorageAdapter] File saved successfully to ${filePath}`);
       return { publicUrl, storagePath };

@@ -9,8 +9,8 @@ import { UploadCloud, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useState, type FormEvent, useRef } from 'react'; 
-import { handleImageUpload } from '../actions'; 
+import { useState, type FormEvent, useRef } from 'react';
+import { handleImageUpload } from '../actions';
 
 export default function MediaUploadPage() {
   const { toast } = useToast();
@@ -129,7 +129,7 @@ export default function MediaUploadPage() {
         </CardContent>
         <CardFooter className="flex-col items-start text-xs text-muted-foreground pt-4">
           <p>Você pode enviar múltiplos arquivos de uma vez.</p>
-          <p>Tamanho máximo de upload de arquivo: 5 MB (configuração de exemplo).</p>
+          <p>Tamanho máximo de upload de arquivo: 10 MB.</p>
           <p className="mt-2">Formatos suportados: PNG, JPG/JPEG, WEBP, PDF.</p>
         </CardFooter>
       </Card>
