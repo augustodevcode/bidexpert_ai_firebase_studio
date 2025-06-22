@@ -5,8 +5,8 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { getAuctioneers } from '@/app/admin/auctioneers/actions';
-import { sampleAuctions, slugify, samplePlatformSettings } from '@/lib/sample-data';
+import { getAuctionsBySellerSlug } from '@/app/admin/auctions/actions';
+import { samplePlatformSettings } from '@/lib/sample-data';
 import type { Auction, Lot, PlatformSettings } from '@/types';
 import AuctionCard from '@/components/auction-card';
 import AuctionListItem from '@/components/auction-list-item';
@@ -24,19 +24,19 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { getSellerBySlug, getSellers } from '@/app/admin/sellers/actions';
+import { getSellerBySlug } from '@/app/admin/sellers/actions';
 import { getLots } from '@/app/admin/lots/actions';
 import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
 import type { SellerProfileInfo } from '@/types';
 
-// Sort options for auctions (similar to search page)
-const sortOptionsAuctions = [
+const sortOptionsLots = [
   { value: 'relevance', label: 'Relevância' },
   { value: 'endDate_asc', label: 'Data Encerramento: Próximos' },
   { value: 'endDate_desc', label: 'Data Encerramento: Distantes' },
-  { value: 'visits_desc', label: 'Mais Visitados' },
-  { value: 'id_desc', label: 'Adicionados Recentemente' }
+  { value: 'price_asc', label: 'Preço: Menor para Maior' },
+  { value: 'price_desc', label: 'Preço: Maior para Menor' },
+  { value: 'views_desc', label: 'Mais Visitados' },
 ];
 
 
