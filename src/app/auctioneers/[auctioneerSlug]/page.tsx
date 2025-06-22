@@ -1,16 +1,17 @@
 
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react'; // Added useMemo, useCallback
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { getAuctioneers } from '@/app/admin/auctioneers/actions';
-import { sampleAuctions, slugify, samplePlatformSettings } from '@/lib/sample-data'; // Added samplePlatformSettings
-import type { Auction, AuctioneerProfileInfo, PlatformSettings } from '@/types'; // Added PlatformSettings
+import { getAuctions } from '@/app/admin/auctions/actions'; // Changed import
+import { getAuctioneerBySlug } from '@/app/admin/auctioneers/actions'; // Changed import
+import { samplePlatformSettings } from '@/lib/sample-data';
+import type { Auction, AuctioneerProfileInfo, PlatformSettings } from '@/types';
 import AuctionCard from '@/components/auction-card';
-import AuctionListItem from '@/components/auction-list-item'; // Added AuctionListItem
-import SearchResultsFrame from '@/components/search-results-frame'; // Added SearchResultsFrame
+import AuctionListItem from '@/components/auction-list-item';
+import SearchResultsFrame from '@/components/search-results-frame';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -37,8 +38,8 @@ const sortOptionsAuctions = [
 
 function RecentAuctionCarouselItem({ auction }: { auction: Auction }) {
   const auctionEndDate = auction.endDate || (auction.auctionStages && auction.auctionStages.length > 0 ? auction.auctionStages[auction.auctionStages.length - 1].endDate : auction.auctionDate);
-  const daysAgo = differenceInDays(new Date(), new Date(auctionEndDate));
-  const statusText = new Date(auctionEndDate) < new Date() ? `Encerrado ${daysAgo} dias atrás` : `Encerra em ${differenceInDays(new Date(auctionEndDate), new Date())} dias`;
+  const daysAgo = differenceInDays(new Date(), new Date(auctionEndDate as string));
+  const statusText = new Date(auctionEndDate as string) < new Date() ? `Encerrado ${daysAgo} dias atrás` : `Encerra em ${differenceInDays(new Date(auctionEndDate as string), new Date())} dias`;
 
   return (
     <Card className="overflow-hidden shadow-md h-full flex flex-col">
@@ -102,8 +103,11 @@ export default function AuctioneerDetailsPage() {
         setIsLoading(true);
         setError(null);
         try {
-          const allAuctioneers = await getAuctioneers();
-          const foundAuctioneer = allAuctioneers.find(s => s.slug === auctioneerSlug || s.publicId === auctioneerSlug);
+          // Fetch all data in parallel
+          const [foundAuctioneer, allAuctions] = await Promise.all([
+            getAuctioneerBySlug(auctioneerSlug), // More direct fetch
+            getAuctions(),
+          ]);
 
           if (!foundAuctioneer) {
             setError(`Leiloeiro com slug/publicId "${auctioneerSlug}" não encontrado.`);
@@ -113,9 +117,9 @@ export default function AuctioneerDetailsPage() {
             return;
           }
           setAuctioneerProfile(foundAuctioneer);
-          const auctions = sampleAuctions.filter(auction =>
-            (auction.auctioneerId && auction.auctioneerId === foundAuctioneer.id) ||
-            (auction.auctioneer && slugify(auction.auctioneer) === auctioneerSlug)
+          // Filter the freshly fetched auctions
+          const auctions = allAuctions.filter(auction =>
+            auction.auctioneerId === foundAuctioneer.id
           );
           setRelatedAuctions(auctions);
           setCurrentAuctionPage(1);
@@ -138,16 +142,16 @@ export default function AuctioneerDetailsPage() {
     let auctionsToSort = [...relatedAuctions];
     switch (auctionSortBy) {
       case 'endDate_asc':
-        auctionsToSort.sort((a, b) => new Date(a.auctionDate).getTime() - new Date(b.auctionDate).getTime()); // Assuming auctionDate is primary for "ending soonest" for auctions
+        auctionsToSort.sort((a, b) => new Date(a.auctionDate as string).getTime() - new Date(b.auctionDate as string).getTime());
         break;
       case 'endDate_desc':
-        auctionsToSort.sort((a, b) => new Date(b.auctionDate).getTime() - new Date(a.auctionDate).getTime());
+        auctionsToSort.sort((a, b) => new Date(b.auctionDate as string).getTime() - new Date(a.auctionDate as string).getTime());
         break;
       case 'visits_desc':
         auctionsToSort.sort((a, b) => (b.visits || 0) - (a.visits || 0));
         break;
       case 'id_desc': // Using auctionDate as proxy for "newly listed"
-        auctionsToSort.sort((a, b) => new Date(b.auctionDate).getTime() - new Date(a.auctionDate).getTime());
+        auctionsToSort.sort((a, b) => new Date(b.auctionDate as string).getTime() - new Date(a.auctionDate as string).getTime());
         break;
       case 'relevance':
       default:
@@ -436,4 +440,3 @@ export default function AuctioneerDetailsPage() {
     </TooltipProvider>
   );
 }
-

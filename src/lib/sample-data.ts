@@ -1079,14 +1079,14 @@ export function getCategoryAssets(categoryNameOrSlug: string) {
     return { ...defaultAssets, ...(assetsMap[slug] || {}) };
 }
 
-export function getUniqueSellerNames(): string[] {
-    const names = new Set(sampleLots.map(lot => lot.sellerName).filter(Boolean));
+export function getUniqueSellerNames(lots: Lot[] = sampleLots): string[] {
+    const names = new Set(lots.map(lot => lot.sellerName).filter(Boolean));
     return Array.from(names).sort();
 }
 
-export function getUniqueLotLocations(): string[] {
+export function getUniqueLotLocations(lots: Lot[] = sampleLots): string[] {
   const locations = new Set<string>();
-  sampleLots.forEach(lot => {
+  lots.forEach(lot => {
     if (lot.cityName && lot.stateUf) {
       locations.add(`${lot.cityName} - ${lot.stateUf}`);
     } else if (lot.cityName) {

@@ -6,8 +6,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { getLots } from '@/app/admin/lots/actions'; // Fetch lots via action
 import type { Lot, LotCategory, PlatformSettings, ActiveFilters } from '@/types';
-import { sampleLots, getUniqueLotLocations, getUniqueSellerNames, slugify, getCategoryAssets } from '@/lib/sample-data';
+import { getUniqueLotLocations, getUniqueSellerNames, slugify, getCategoryAssets } from '@/lib/sample-data';
 import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
 import SidebarFilters from '@/components/sidebar-filters';
@@ -66,9 +67,10 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     async function fetchData() {
       setIsLoading(true);
       try {
-        const [allCats, settings] = await Promise.all([
+        const [allCats, settings, allLots] = await Promise.all([
             getLotCategories(),
-            getPlatformSettings()
+            getPlatformSettings(),
+            getLots(),
         ]);
         setAllCategoriesForFilter(allCats);
         setPlatformSettings(settings);
@@ -77,15 +79,15 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         setCurrentCategory(foundCategory || null);
 
         if (foundCategory) {
-          const lotsForCategory = sampleLots.filter(lot => lot.type && slugify(lot.type) === foundCategory.slug);
+          const lotsForCategory = allLots.filter(lot => lot.categoryId === foundCategory.id);
           setCategoryLots(lotsForCategory);
           setActiveFilters(prev => ({ ...prev, category: foundCategory.slug }));
         } else {
           setCategoryLots([]);
         }
         
-        setUniqueLocationsForFilter(getUniqueLotLocations());
-        setUniqueSellersForFilter(getUniqueSellerNames());
+        setUniqueLocationsForFilter(getUniqueLotLocations(allLots));
+        setUniqueSellersForFilter(getUniqueSellerNames(allLots));
 
       } catch (error) {
         console.error("Error fetching category data:", error);
@@ -106,14 +108,14 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     setActiveFilters(filters);
     setIsFilterSheetOpen(false); 
     if (filters.category && filters.category !== 'TODAS') {
-         const lotsForCategory = sampleLots.filter(lot => lot.type && slugify(lot.type) === filters.category);
+         const lotsForCategory = allLots.filter(lot => lot.categoryId === filters.category); // Use allLots state
          setCategoryLots(lotsForCategory);
     } else {
         if (currentCategory) {
-            const lotsForCurrentCategory = sampleLots.filter(lot => lot.type && slugify(lot.type) === currentCategory.slug);
+            const lotsForCurrentCategory = allLots.filter(lot => lot.categoryId === currentCategory.id); // Use allLots state
             setCategoryLots(lotsForCurrentCategory);
         } else {
-            setCategoryLots(sampleLots); 
+            setCategoryLots(allLots); 
         }
     }
   };
@@ -122,10 +124,10 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     const resetFilters = {...initialFiltersState, category: currentCategory?.slug || 'TODAS'};
     setActiveFilters(resetFilters);
     if (currentCategory) {
-      const lotsForCategory = sampleLots.filter(lot => lot.type && slugify(lot.type) === currentCategory.slug);
+      const lotsForCategory = allLots.filter(lot => lot.categoryId === currentCategory.id);
       setCategoryLots(lotsForCategory);
     } else {
-      setCategoryLots(sampleLots); 
+      setCategoryLots(allLots); 
     }
     setIsFilterSheetOpen(false);
   };
@@ -134,10 +136,10 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     let lotsToSort = [...categoryLots];
     switch (sortBy) {
       case 'lotNumber_asc':
-        lotsToSort.sort((a, b) => (parseInt(a.id.replace(/\D/g,'')) || 0) - (parseInt(b.id.replace(/\D/g,'')) || 0));
+        lotsToSort.sort((a, b) => (parseInt(String(a.id).replace(/\D/g,'')) || 0) - (parseInt(String(b.id).replace(/\D/g,'')) || 0));
         break;
       case 'lotNumber_desc':
-        lotsToSort.sort((a, b) => (parseInt(b.id.replace(/\D/g,'')) || 0) - (parseInt(a.id.replace(/\D/g,'')) || 0));
+        lotsToSort.sort((a, b) => (parseInt(String(b.id).replace(/\D/g,'')) || 0) - (parseInt(String(a.id).replace(/\D/g,'')) || 0));
         break;
       case 'endDate_asc':
         lotsToSort.sort((a, b) => new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime());
@@ -163,6 +165,8 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     }
     return lotsToSort;
   }, [categoryLots, sortBy]);
+
+  const [allLots, setAllLots] = useState<Lot[]>([]); // State to hold all lots
 
   if (isLoading || !platformSettings) {
     return (
@@ -191,7 +195,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
        <div className="flex items-center text-sm text-muted-foreground mb-2">
         <Link href="/" className="hover:text-primary">Home</Link>
         <ChevronRight className="h-4 w-4 mx-1" />
-        <Link href="/search" className="hover:text-primary">Categorias</Link>
+        <Link href="/search?type=lots&tab=categories" className="hover:text-primary">Categorias</Link>
         <ChevronRight className="h-4 w-4 mx-1" />
         <span className="text-foreground font-medium">{currentCategory.name}</span>
       </div>

@@ -1,5 +1,6 @@
 
-import { sampleAuctions } from '@/lib/sample-data';
+import { getAuctions } from '@/app/admin/auctions/actions';
+import { getLots } from '@/app/admin/lots/actions';
 import type { Auction, Lot } from '@/types';
 import LiveLotCard from '@/components/live-lot-card';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,21 +8,25 @@ import { Tv, AlertCircle } from 'lucide-react';
 import { isPast } from 'date-fns';
 
 async function getLiveDashboardData(): Promise<{ allOpenLots: Lot[] }> {
-  const auctions: Auction[] = sampleAuctions;
+  const [allAuctions, allLots] = await Promise.all([
+    getAuctions(),
+    getLots()
+  ]);
+
+  const openAuctions = allAuctions.filter(a => a.status === 'ABERTO_PARA_LANCES' || a.status === 'ABERTO');
+  const openAuctionIds = new Set(openAuctions.map(a => a.id));
+
   let allOpenLots: Lot[] = [];
 
-  auctions.forEach(auction => {
-    if (Array.isArray(auction.lots)) {
-      auction.lots.forEach(lot => {
-        if (lot.status === 'ABERTO_PARA_LANCES' && !isPast(new Date(lot.endDate))) {
-          allOpenLots.push({ ...lot, auctionName: auction.title }); // Adiciona nome do leilão ao lote
-        }
-      });
+  allLots.forEach(lot => {
+    if (openAuctionIds.has(lot.auctionId) && lot.status === 'ABERTO_PARA_LANCES' && lot.endDate && !isPast(new Date(lot.endDate))) {
+      const parentAuction = openAuctions.find(a => a.id === lot.auctionId);
+      allOpenLots.push({ ...lot, auctionName: parentAuction?.title || lot.auctionName });
     }
   });
 
   // Ordenar globalmente pelo horário de encerramento mais próximo
-  allOpenLots.sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime());
+  allOpenLots.sort((a, b) => new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime());
 
   return { allOpenLots };
 }
