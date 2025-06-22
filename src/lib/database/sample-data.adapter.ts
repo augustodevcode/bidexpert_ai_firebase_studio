@@ -1,3 +1,4 @@
+
 // src/lib/database/sample-data.adapter.ts
 import type {
   IDatabaseAdapter, LotCategory, StateInfo, StateFormData, CityInfo, CityFormData,
@@ -23,6 +24,12 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const dataFilePath = path.join(process.cwd(), 'sample-data.local.json');
 
 type SampleDataContainer = ReturnType<typeof getSampleData>;
+
+function resolveMediaUrl(mediaId: string | null | undefined, allMedia: MediaItem[]): string | undefined {
+  if (!mediaId) return undefined;
+  const mediaItem = allMedia.find(m => m.id === mediaId);
+  return mediaItem?.urlOriginal;
+}
 
 export class SampleDataAdapter implements IDatabaseAdapter {
   private data: SampleDataContainer;
@@ -52,7 +59,6 @@ export class SampleDataAdapter implements IDatabaseAdapter {
       console.error(`[SampleDataAdapter] Error loading from ${dataFilePath}, falling back to default. Error:`, error);
     }
     // Fallback to pristine data if file doesn't exist or fails to parse
-    // The file will be created on the first mutation.
     return pristineData;
   }
   
@@ -91,14 +97,28 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async getLotCategories(): Promise<LotCategory[]> {
     console.log('[SampleDataAdapter] Fetching LotCategories.');
     await delay(20);
-    return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleLotCategories)));
+    const categories = this.data.sampleLotCategories.map(cat => ({
+      ...cat,
+      logoUrl: resolveMediaUrl(cat.logoMediaId, this.data.sampleMediaItems),
+      coverImageUrl: resolveMediaUrl(cat.coverImageMediaId, this.data.sampleMediaItems),
+      megaMenuImageUrl: resolveMediaUrl(cat.megaMenuImageMediaId, this.data.sampleMediaItems),
+    }));
+    return Promise.resolve(JSON.parse(JSON.stringify(categories)));
   }
 
   async getLotCategory(idOrSlug: string): Promise<LotCategory | null> {
     console.log(`[SampleDataAdapter] Fetching LotCategory by id/slug: ${idOrSlug}`);
     await delay(20);
     const category = this.data.sampleLotCategories.find(cat => cat.id === idOrSlug || cat.slug === idOrSlug);
-    return Promise.resolve(category ? JSON.parse(JSON.stringify(category)) : null);
+    if (!category) return null;
+
+    const resolvedCategory = {
+      ...category,
+      logoUrl: resolveMediaUrl(category.logoMediaId, this.data.sampleMediaItems),
+      coverImageUrl: resolveMediaUrl(category.coverImageMediaId, this.data.sampleMediaItems),
+      megaMenuImageUrl: resolveMediaUrl(category.megaMenuImageMediaId, this.data.sampleMediaItems),
+    };
+    return Promise.resolve(JSON.parse(JSON.stringify(resolvedCategory)));
   }
 
   async getLotCategoryByName(name: string): Promise<LotCategory | null> {
@@ -106,7 +126,15 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     await delay(20);
     const normalizedName = name.trim().toLowerCase();
     const category = this.data.sampleLotCategories.find(cat => cat.name.toLowerCase() === normalizedName);
-    return Promise.resolve(category ? JSON.parse(JSON.stringify(category)) : null);
+    if (!category) return null;
+
+    const resolvedCategory = {
+      ...category,
+      logoUrl: resolveMediaUrl(category.logoMediaId, this.data.sampleMediaItems),
+      coverImageUrl: resolveMediaUrl(category.coverImageMediaId, this.data.sampleMediaItems),
+      megaMenuImageUrl: resolveMediaUrl(category.megaMenuImageMediaId, this.data.sampleMediaItems),
+    };
+    return Promise.resolve(JSON.parse(JSON.stringify(resolvedCategory)));
   }
   
   async updateLotCategory(id: string, data: { name: string; description?: string; hasSubcategories?: boolean }): Promise<{ success: boolean; message: string; }> {
@@ -153,20 +181,33 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   
   async getSubcategories(parentCategoryId: string): Promise<Subcategory[]> {
     await delay(20);
-    const subcategories = this.data.sampleSubcategories.filter(sub => sub.parentCategoryId === parentCategoryId);
+    const subcategories = this.data.sampleSubcategories.filter(sub => sub.parentCategoryId === parentCategoryId).map(sub => ({
+      ...sub,
+      iconUrl: resolveMediaUrl(sub.iconMediaId, this.data.sampleMediaItems),
+    }));
     return Promise.resolve(JSON.parse(JSON.stringify(subcategories)));
   }
 
   async getSubcategory(id: string): Promise<Subcategory | null> {
     await delay(20);
     const subcategory = this.data.sampleSubcategories.find(sub => sub.id === id);
-    return Promise.resolve(subcategory ? JSON.parse(JSON.stringify(subcategory)) : null);
+    if (!subcategory) return null;
+    const resolvedSub = {
+      ...subcategory,
+      iconUrl: resolveMediaUrl(subcategory.iconMediaId, this.data.sampleMediaItems),
+    };
+    return Promise.resolve(JSON.parse(JSON.stringify(resolvedSub)));
   }
 
   async getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null> {
     await delay(20);
     const subcategory = this.data.sampleSubcategories.find(sub => sub.slug === slug && sub.parentCategoryId === parentCategoryId);
-    return Promise.resolve(subcategory ? JSON.parse(JSON.stringify(subcategory)) : null);
+    if (!subcategory) return null;
+    const resolvedSub = {
+      ...subcategory,
+      iconUrl: resolveMediaUrl(subcategory.iconMediaId, this.data.sampleMediaItems),
+    };
+    return Promise.resolve(JSON.parse(JSON.stringify(resolvedSub)));
   }
   
   async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> {
@@ -202,32 +243,103 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async deleteCity(id: string): Promise<{ success: boolean; message: string }> { this.data.sampleCities = this.data.sampleCities.filter(c => c.id !== id); await this._persistData(); return {success: true, message: 'Cidade excluída!'}; }
 
   // --- Auctioneers & Sellers ---
-  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleAuctioneers))); }
-  async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> { await delay(20); const item = this.data.sampleAuctioneers.find(a => a.id === idOrPublicId || a.publicId === idOrPublicId || a.slug === idOrPublicId); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
+  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
+    await delay(20);
+    const resolved = this.data.sampleAuctioneers.map(auc => ({
+      ...auc,
+      logoUrl: resolveMediaUrl(auc.logoMediaId, this.data.sampleMediaItems)
+    }));
+    return Promise.resolve(JSON.parse(JSON.stringify(resolved)));
+  }
+  async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
+    await delay(20);
+    const item = this.data.sampleAuctioneers.find(a => a.id === idOrPublicId || a.publicId === idOrPublicId || a.slug === idOrPublicId);
+    if (!item) return null;
+    const resolved = { ...item, logoUrl: resolveMediaUrl(item.logoMediaId, this.data.sampleMediaItems) };
+    return Promise.resolve(JSON.parse(JSON.stringify(resolved)));
+  }
   async getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null> { return this.getAuctioneer(slugOrPublicId); }
-  async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> { await delay(20); const item = this.data.sampleAuctioneers.find(a => a.name.toLowerCase() === name.toLowerCase()); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
-  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> { const slug = slugify(data.name); const newAuct: AuctioneerProfileInfo = {...data, id: `auct-${slug}`, publicId: `AUCT-PUB-${uuidv4()}`, slug, createdAt: new Date(), updatedAt: new Date()}; this.data.sampleAuctioneers.push(newAuct); await this._persistData(); return {success: true, message: 'Leiloeiro criado!', auctioneerId: newAuct.id, auctioneerPublicId: newAuct.publicId}; }
+  async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> { await delay(20); const item = this.data.sampleAuctioneers.find(a => a.name.toLowerCase() === name.toLowerCase()); if (!item) return null; const resolved = { ...item, logoUrl: resolveMediaUrl(item.logoMediaId, this.data.sampleMediaItems) }; return Promise.resolve(JSON.parse(JSON.stringify(resolved))); }
+  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> { const slug = slugify(data.name); const newAuct: AuctioneerProfileInfo = {...data, id: `auct-${slug}`, publicId: `AUCT-PUB-${uuidv4().substring(0, 8)}`, slug, createdAt: new Date(), updatedAt: new Date()}; this.data.sampleAuctioneers.push(newAuct); await this._persistData(); return {success: true, message: 'Leiloeiro criado!', auctioneerId: newAuct.id, auctioneerPublicId: newAuct.publicId}; }
   async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleAuctioneers.findIndex(a => a.id === id || a.publicId === id); if(index === -1) return {success: false, message: 'Leiloeiro não encontrado.'}; this.data.sampleAuctioneers[index] = {...this.data.sampleAuctioneers[index], ...data, slug: slugify(data.name || this.data.sampleAuctioneers[index].name), updatedAt: new Date()}; await this._persistData(); return {success: true, message: 'Leiloeiro atualizado!'}; }
   async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> { this.data.sampleAuctioneers = this.data.sampleAuctioneers.filter(a => a.id !== id && a.publicId !== id); await this._persistData(); return {success: true, message: 'Leiloeiro excluído!'}; }
   
-  async getSellers(): Promise<SellerProfileInfo[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleSellers))); }
-  async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> { await delay(20); const item = this.data.sampleSellers.find(s => s.id === idOrPublicId || s.publicId === idOrPublicId || s.slug === idOrPublicId); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
+  async getSellers(): Promise<SellerProfileInfo[]> {
+    await delay(20);
+    const resolved = this.data.sampleSellers.map(s => ({
+      ...s,
+      logoUrl: resolveMediaUrl(s.logoMediaId, this.data.sampleMediaItems)
+    }));
+    return Promise.resolve(JSON.parse(JSON.stringify(resolved)));
+  }
+  async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> {
+    await delay(20);
+    const item = this.data.sampleSellers.find(s => s.id === idOrPublicId || s.publicId === idOrPublicId || s.slug === idOrPublicId);
+    if (!item) return null;
+    const resolved = { ...item, logoUrl: resolveMediaUrl(item.logoMediaId, this.data.sampleMediaItems) };
+    return Promise.resolve(JSON.parse(JSON.stringify(resolved)));
+  }
   async getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null> { return this.getSeller(slugOrPublicId); }
-  async getSellerByName(name: string): Promise<SellerProfileInfo | null> { await delay(20); const item = this.data.sampleSellers.find(s => s.name.toLowerCase() === name.toLowerCase()); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
-  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> { const slug = slugify(data.name); const newSeller: SellerProfileInfo = {...data, id: `seller-${slug}`, publicId: `SELL-PUB-${uuidv4()}`, slug, createdAt: new Date(), updatedAt: new Date()}; this.data.sampleSellers.push(newSeller); await this._persistData(); return {success: true, message: 'Comitente criado!', sellerId: newSeller.id, sellerPublicId: newSeller.publicId}; }
+  async getSellerByName(name: string): Promise<SellerProfileInfo | null> { await delay(20); const item = this.data.sampleSellers.find(s => s.name.toLowerCase() === name.toLowerCase()); if (!item) return null; const resolved = { ...item, logoUrl: resolveMediaUrl(item.logoMediaId, this.data.sampleMediaItems) }; return Promise.resolve(JSON.parse(JSON.stringify(resolved))); }
+  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> { const slug = slugify(data.name); const newSeller: SellerProfileInfo = {...data, id: `seller-${slug}`, publicId: `SELL-PUB-${uuidv4().substring(0,8)}`, slug, createdAt: new Date(), updatedAt: new Date()}; this.data.sampleSellers.push(newSeller); await this._persistData(); return {success: true, message: 'Comitente criado!', sellerId: newSeller.id, sellerPublicId: newSeller.publicId}; }
   async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleSellers.findIndex(s => s.id === id || s.publicId === id); if(index === -1) return {success: false, message: 'Comitente não encontrado.'}; this.data.sampleSellers[index] = {...this.data.sampleSellers[index], ...data, slug: slugify(data.name || this.data.sampleSellers[index].name), updatedAt: new Date()}; await this._persistData(); return {success: true, message: 'Comitente atualizado!'}; }
   async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> { this.data.sampleSellers = this.data.sampleSellers.filter(s => s.id !== id && s.publicId !== id); await this._persistData(); return {success: true, message: 'Comitente excluído!'}; }
 
   // --- Auctions & Lots ---
-  async getAuctions(): Promise<Auction[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleAuctions))); }
-  async getAuction(idOrPublicId: string): Promise<Auction | null> { await delay(20); const item = this.data.sampleAuctions.find(a => a.id === idOrPublicId || a.publicId === idOrPublicId); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
-  async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> { const seller = await this.getSellerBySlug(sellerSlugOrPublicId); if (!seller) return Promise.resolve([]); const items = this.data.sampleAuctions.filter(a => a.sellerId === seller.id || a.seller === seller.name); return Promise.resolve(JSON.parse(JSON.stringify(items))); }
+  async getAuctions(): Promise<Auction[]> {
+    await delay(20);
+    const resolved = this.data.sampleAuctions.map(auc => ({
+      ...auc,
+      imageUrl: resolveMediaUrl(auc.imageMediaId, this.data.sampleMediaItems),
+      auctioneerLogoUrl: resolveMediaUrl(this.data.sampleAuctioneers.find(a => a.id === auc.auctioneerId)?.logoMediaId, this.data.sampleMediaItems)
+    }));
+    return Promise.resolve(JSON.parse(JSON.stringify(resolved)));
+  }
+  async getAuction(idOrPublicId: string): Promise<Auction | null> {
+    await delay(20);
+    const item = this.data.sampleAuctions.find(a => a.id === idOrPublicId || a.publicId === idOrPublicId);
+    if (!item) return null;
+    const resolved = { 
+        ...item, 
+        imageUrl: resolveMediaUrl(item.imageMediaId, this.data.sampleMediaItems),
+        auctioneerLogoUrl: resolveMediaUrl(this.data.sampleAuctioneers.find(a => a.id === item.auctioneerId)?.logoMediaId, this.data.sampleMediaItems)
+    };
+    return Promise.resolve(JSON.parse(JSON.stringify(resolved)));
+  }
+  async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> { const seller = await this.getSellerBySlug(sellerSlugOrPublicId); if (!seller) return Promise.resolve([]); const items = this.data.sampleAuctions.filter(a => a.sellerId === seller.id || a.seller === seller.name); const resolved = items.map(auc => ({...auc, imageUrl: resolveMediaUrl(auc.imageMediaId, this.data.sampleMediaItems)})); return Promise.resolve(JSON.parse(JSON.stringify(resolved))); }
   async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> { const newAuction: Auction = {...(data as any), id: `auc-${uuidv4()}`, publicId: `AUC-PUB-${uuidv4()}`, createdAt: new Date(), updatedAt: new Date(), lots:[], totalLots:0}; this.data.sampleAuctions.push(newAuction); await this._persistData(); return {success: true, message: 'Leilão criado!', auctionId: newAuction.id, auctionPublicId: newAuction.publicId}; }
   async updateAuction(id: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleAuctions.findIndex(a => a.id === id || a.publicId === id); if(index === -1) return {success: false, message: 'Leilão não encontrado.'}; this.data.sampleAuctions[index] = {...this.data.sampleAuctions[index], ...data, updatedAt: new Date()}; await this._persistData(); return {success: true, message: 'Leilão atualizado!'}; }
   async deleteAuction(id: string): Promise<{ success: boolean; message: string; }> { this.data.sampleAuctions = this.data.sampleAuctions.filter(a => a.id !== id && a.publicId !== id); this.data.sampleLots = this.data.sampleLots.filter(l => l.auctionId !== id); await this._persistData(); return {success: true, message: 'Leilão excluído!'}; }
   
-  async getLots(auctionIdParam?: string): Promise<Lot[]> { await delay(20); let lots = this.data.sampleLots; if (auctionIdParam) { const auction = await this.getAuction(auctionIdParam); if (auction) { lots = lots.filter(l => l.auctionId === auction.id || l.auctionId === auction.publicId); } else { return Promise.resolve([]); } } return Promise.resolve(JSON.parse(JSON.stringify(lots))); }
-  async getLot(idOrPublicId: string): Promise<Lot | null> { await delay(20); const item = this.data.sampleLots.find(l => l.id === idOrPublicId || l.publicId === idOrPublicId); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
+  async getLots(auctionIdParam?: string): Promise<Lot[]> {
+    await delay(20);
+    let lots = this.data.sampleLots;
+    if (auctionIdParam) {
+      const auction = await this.getAuction(auctionIdParam);
+      if (auction) {
+        lots = lots.filter(l => l.auctionId === auction.id || l.auctionId === auction.publicId);
+      } else {
+        return Promise.resolve([]);
+      }
+    }
+    const resolved = lots.map(lot => ({
+      ...lot,
+      imageUrl: resolveMediaUrl(lot.imageMediaId, this.data.sampleMediaItems)!,
+      galleryImageUrls: (lot.mediaItemIds || []).map(id => resolveMediaUrl(id, this.data.sampleMediaItems)).filter(Boolean) as string[]
+    }));
+    return Promise.resolve(JSON.parse(JSON.stringify(resolved)));
+  }
+  async getLot(idOrPublicId: string): Promise<Lot | null> {
+    await delay(20);
+    const item = this.data.sampleLots.find(l => l.id === idOrPublicId || l.publicId === idOrPublicId);
+    if (!item) return null;
+    const resolved = {
+      ...item,
+      imageUrl: resolveMediaUrl(item.imageMediaId, this.data.sampleMediaItems)!,
+      galleryImageUrls: (item.mediaItemIds || []).map(id => resolveMediaUrl(id, this.data.sampleMediaItems)).filter(Boolean) as string[]
+    };
+    return Promise.resolve(JSON.parse(JSON.stringify(resolved)));
+  }
   async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> { const newLot: Lot = {...(data as any), id: `lot-${uuidv4()}`, publicId: `LOT-PUB-${uuidv4()}`, createdAt: new Date(), updatedAt: new Date()}; this.data.sampleLots.push(newLot); await this._persistData(); return {success: true, message: 'Lote criado!', lotId: newLot.id, lotPublicId: newLot.publicId}; }
   async updateLot(id: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleLots.findIndex(l => l.id === id || l.publicId === id); if(index === -1) return {success: false, message: 'Lote não encontrado.'}; this.data.sampleLots[index] = {...this.data.sampleLots[index], ...data, updatedAt: new Date()}; await this._persistData(); return {success: true, message: 'Lote atualizado!'}; }
   async deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string; }> { this.data.sampleLots = this.data.sampleLots.filter(l => l.id !== id && l.publicId !== id); await this._persistData(); return {success: true, message: 'Lote excluído!'}; }
@@ -386,3 +498,5 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return { success: true, message: "Configurações da plataforma atualizadas (Sample Data)!" };
   }
 }
+
+  

@@ -22,8 +22,11 @@ export interface LotCategory {
     itemCount?: number;
     hasSubcategories?: boolean;
     logoUrl?: string | null;
+    logoMediaId?: string | null;
     coverImageUrl?: string | null;
+    coverImageMediaId?: string | null;
     megaMenuImageUrl?: string | null;
+    megaMenuImageMediaId?: string | null;
     dataAiHintLogo?: string | null;
     dataAiHintCover?: string | null;
     dataAiHintMegaMenu?: string | null;
@@ -41,6 +44,7 @@ export interface Subcategory {
   itemCount?: number;
   displayOrder?: number;
   iconUrl?: string | null;
+  iconMediaId?: string | null;
   dataAiHintIcon?: string | null;
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
@@ -88,6 +92,7 @@ export interface AuctioneerProfileInfo {
   zipCode?: string | null;
   website?: string | null;
   logoUrl?: string | null;
+  logoMediaId?: string | null;
   dataAiHintLogo?: string | null;
   description?: string | null;
   memberSince?: AnyTimestamp;
@@ -116,6 +121,7 @@ export interface SellerProfileInfo {
   zipCode?: string | null;
   website?: string | null;
   logoUrl?: string | null;
+  logoMediaId?: string | null;
   dataAiHintLogo?: string | null;
   description?: string | null;
   memberSince?: AnyTimestamp;
@@ -166,6 +172,7 @@ export interface Auction {
   city?: string;
   state?: string;
   imageUrl?: string;
+  imageMediaId?: string | null;
   dataAiHint?: string;
   documentsUrl?: string;
   totalLots?: number;
@@ -219,6 +226,7 @@ export interface Lot {
   title: string;
   number?: string; 
   imageUrl: string;
+  imageMediaId?: string | null;
   dataAiHint?: string;
   galleryImageUrls?: string[];
   mediaItemIds?: string[]; 
@@ -808,11 +816,4 @@ export interface RecentlyViewedLotInfo {
   dataAiHint?: string;
 }
 
-// Garantir que os IDs únicos de auctioneerId e sellerId sejam usados nos leilões
-// (já feito acima)
-
-// Garantir que os IDs únicos de auctionId e sellerId sejam usados nos lotes
-// (já feito acima)
-
-// Garantir que AnyTimestamp cubra também os campos `createdAt` e `updatedAt` de `Subcategory`
-// (já feito acima)
+  
