@@ -1,4 +1,3 @@
-
 // src/lib/database/sample-data.adapter.ts
 import type {
   IDatabaseAdapter, LotCategory, StateInfo, StateFormData, CityInfo, CityFormData,
@@ -52,8 +51,8 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     }
     // Fallback to pristine data if file doesn't exist or fails to parse
     const pristineData = getSampleData();
-    // Persist for next time
-    fs.writeFileSync(dataFilePath, JSON.stringify(pristineData, null, 2), 'utf-8');
+    // DO NOT WRITE THE FILE ON LOAD to prevent hot-reload loops.
+    // The file will be created on the first mutation.
     return pristineData;
   }
   
