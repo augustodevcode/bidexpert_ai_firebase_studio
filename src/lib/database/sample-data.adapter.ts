@@ -45,6 +45,15 @@ export class SampleDataAdapter implements IDatabaseAdapter {
       if (fs.existsSync(dataFilePath)) {
         console.log(`[SampleDataAdapter] Loading data from ${dataFilePath}`);
         const fileContent = fs.readFileSync(dataFilePath, 'utf-8');
+
+        // Safeguard against empty or malformed file content
+        if (!fileContent || fileContent.trim().length < 2 || !fileContent.trim().startsWith('{')) {
+            console.warn(`[SampleDataAdapter] File at ${dataFilePath} is empty or malformed. Using default data instead.`);
+            // To prevent a loop of bad writes, we can optionally delete the bad file.
+            // For now, we'll just ignore it for this load.
+            return pristineData;
+        }
+
         // Revive dates from string format
         const parsedData = JSON.parse(fileContent, (key, value) => {
            if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(value)) {
@@ -498,5 +507,3 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return { success: true, message: "Configurações da plataforma atualizadas (Sample Data)!" };
   }
 }
-
-  
