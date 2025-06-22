@@ -122,18 +122,20 @@ const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
 
 
   return (
-    <div className={cn("text-center py-3 bg-secondary/30 rounded-md shadow-inner", className)}>
+    <div className={cn("absolute bottom-0 left-0 right-0 p-2 text-center text-white bg-gradient-to-t from-black/80 to-transparent", className)}>
       {timeSegments && lotStatus === 'ABERTO_PARA_LANCES' && effectiveEndDate && !isPast(new Date(effectiveEndDate)) ? (
         <>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Encerra em:</p>
-          <div className="flex justify-center items-baseline space-x-2 text-destructive">
+          <p className="text-xs text-gray-200 uppercase tracking-wider mb-1">Encerra em:</p>
+          <div className="flex justify-center items-baseline space-x-2 text-white">
             {parseInt(timeSegments.days, 10) > 0 && (
-              <div className="flex flex-col items-center">
-                <span className="text-3xl font-bold">{timeSegments.days}</span>
-                <span className="text-xs uppercase">dias</span>
-              </div>
+              <>
+                <div className="flex flex-col items-center">
+                  <span className="text-3xl font-bold">{timeSegments.days}</span>
+                  <span className="text-xs uppercase">dias</span>
+                </div>
+                <span className="text-2xl font-light self-center pb-1">|</span>
+              </>
             )}
-            {parseInt(timeSegments.days, 10) > 0 && <span className="text-2xl font-light self-center pb-1">|</span>}
             <div className="flex flex-col items-center">
               <span className="text-3xl font-bold">{timeSegments.hours}</span>
               <span className="text-xs uppercase">horas</span>
@@ -143,29 +145,25 @@ const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
               <span className="text-3xl font-bold">{timeSegments.minutes}</span>
               <span className="text-xs uppercase">minutos</span>
             </div>
-            {parseInt(timeSegments.days, 10) === 0 && (
-              <>
-                <span className="text-2xl font-light self-center pb-1">|</span>
-                <div className="flex flex-col items-center">
-                  <span className="text-3xl font-bold">{timeSegments.seconds}</span>
-                  <span className="text-xs uppercase">segs</span>
-                </div>
-              </>
-            )}
+            <span className="text-2xl font-light self-center pb-1">|</span>
+            <div className="flex flex-col items-center">
+              <span className="text-3xl font-bold">{timeSegments.seconds}</span>
+              <span className="text-xs uppercase">segs</span>
+            </div>
           </div>
         </>
       ) : (
-        <div className="text-lg font-semibold text-muted-foreground">{displayMessage}</div>
+        <div className="text-lg font-semibold text-gray-100">{displayMessage}</div>
       )}
-       <div className="text-xs text-muted-foreground mt-2 grid grid-cols-2 gap-x-2 px-2">
+       <div className="text-xs text-gray-300 mt-2 grid grid-cols-2 gap-x-2 px-2">
         {effectiveStartDate && (
            <div className="text-right">
-             <span className="font-medium">Abertura:</span> {format(new Date(effectiveStartDate), 'dd/MM/yy HH:mm', {locale: ptBR})}
+             <span className="font-medium text-gray-100">Abertura:</span> {format(new Date(effectiveStartDate), 'dd/MM/yy HH:mm', {locale: ptBR})}
            </div>
         )}
         {effectiveEndDate && (
            <div className="text-left">
-             <span className="font-medium">Encerramento:</span> {format(new Date(effectiveEndDate), 'dd/MM/yy HH:mm', {locale: ptBR})}
+             <span className="font-medium text-gray-100">Encerramento:</span> {format(new Date(effectiveEndDate), 'dd/MM/yy HH:mm', {locale: ptBR})}
            </div>
         )}
       </div>
@@ -594,15 +592,25 @@ export default function LotDetailClientContent({
                     <Card className="shadow-lg">
                     <CardContent className="p-4">
                         <div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden mb-4">
-                        {gallery.length > 0 && gallery[currentImageIndex] ? (
-                            <Image src={gallery[currentImageIndex]} alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`} fill className="object-contain" data-ai-hint={lot.dataAiHint || "imagem principal lote"} priority={currentImageIndex === 0} unoptimized={gallery[currentImageIndex]?.startsWith('https://placehold.co')}/>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground"><ImageOff className="h-16 w-16 mb-2" /><span>Imagem principal não disponível</span></div>
-                        )}
-                        {gallery.length > 1 && (
-                            <><Button variant="outline" size="icon" onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Imagem Anterior"><ChevronLeft className="h-5 w-5" /></Button>
-                            <Button variant="outline" size="icon" onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Próxima Imagem"><ChevronRight className="h-5 w-5" /></Button></>
-                        )}
+                          {gallery.length > 0 && gallery[currentImageIndex] ? (
+                              <Image src={gallery[currentImageIndex]} alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`} fill className="object-contain" data-ai-hint={lot.dataAiHint || "imagem principal lote"} priority={currentImageIndex === 0} unoptimized={gallery[currentImageIndex]?.startsWith('https://placehold.co')}/>
+                          ) : (
+                              <div className="flex flex-col items-center justify-center h-full text-muted-foreground"><ImageOff className="h-16 w-16 mb-2" /><span>Imagem principal não disponível</span></div>
+                          )}
+                           {platformSettings.showCountdownOnLotDetail !== false && (
+                                <DetailTimeRemaining
+                                    effectiveEndDate={effectiveLotEndDate}
+                                    effectiveStartDate={effectiveLotStartDate}
+                                    lotStatus={lot.status}
+                                    showUrgencyTimer={sectionBadgesLotDetail.showUrgencyTimer !== false && mentalTriggersGlobalSettings.showUrgencyTimer}
+                                    urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays}
+                                    urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
+                                />
+                            )}
+                          {gallery.length > 1 && (
+                              <><Button variant="outline" size="icon" onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Imagem Anterior"><ChevronLeft className="h-5 w-5" /></Button>
+                              <Button variant="outline" size="icon" onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Próxima Imagem"><ChevronRight className="h-5 w-5" /></Button></>
+                          )}
                         </div>
                         {gallery.length > 1 && (
                         <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2">
@@ -673,16 +681,6 @@ export default function LotDetailClientContent({
                 <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
                     <Card className="shadow-md">
                         <CardContent className="p-4 space-y-3">
-                            {platformSettings.showCountdownOnLotDetail !== false && (
-                                <DetailTimeRemaining
-                                    effectiveEndDate={effectiveLotEndDate}
-                                    effectiveStartDate={effectiveLotStartDate}
-                                    lotStatus={lot.status}
-                                    showUrgencyTimer={sectionBadgesLotDetail.showUrgencyTimer !== false && mentalTriggersGlobalSettings.showUrgencyTimer}
-                                    urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays}
-                                    urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
-                                />
-                            )}
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground">Visitas: {lot.views}</span>
                                 <span className="text-muted-foreground">Participantes: {auction.totalHabilitatedUsers || 0}</span>
