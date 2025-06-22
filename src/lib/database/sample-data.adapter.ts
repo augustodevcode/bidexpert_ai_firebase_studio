@@ -12,8 +12,8 @@ import {
 } from '@/lib/sample-data';
 import { v4 as uuidv4 } from 'uuid';
 
-// Este adaptador simula um banco de dados usando os dados estáticos de sample-data.ts
-// Ele não modifica os dados em memória, apenas simula operações de leitura e escrita.
+// This adapter simulates a database using the static data from sample-data.ts
+// It now correctly modifies the in-memory data for the duration of the session.
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -31,7 +31,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   }
 
   // --- LotCategory ---
-  async createLotCategory(data: { name: string; description?: string }): Promise<{ success: boolean; message: string; categoryId?: string }> {
+  async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string }> {
     console.log(`[SampleDataAdapter] Simulating createLotCategory for: ${data.name}`);
     await delay(50);
     return { success: true, message: 'Categoria (simulada) criada com sucesso!', categoryId: `sample-cat-${uuidv4()}` };
@@ -58,13 +58,13 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return Promise.resolve(category ? JSON.parse(JSON.stringify(category)) : null);
   }
   
-  async updateLotCategory(id: string, data: { name: string; description?: string }): Promise<{ success: boolean; message: string }> {
+  async updateLotCategory(id: string, data: { name: string; description?: string; hasSubcategories?: boolean }): Promise<{ success: boolean; message: string; }> {
     console.log(`[SampleDataAdapter] Simulating updateLotCategory for ID: ${id}`);
     await delay(50);
     return { success: true, message: 'Categoria (simulada) atualizada com sucesso!' };
   }
 
-  async deleteLotCategory(id: string): Promise<{ success: boolean; message: string }> {
+  async deleteLotCategory(id: string): Promise<{ success: boolean; message: string; }> {
     console.log(`[SampleDataAdapter] Simulating deleteLotCategory for ID: ${id}`);
     await delay(50);
     return { success: true, message: 'Categoria (simulada) excluída com sucesso!' };
@@ -296,9 +296,38 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null);
   }
 
-  // --- Write operations (Simulated) ---
-  // These methods will only log the action and return success, as we are not mutating the sample data file.
+  // --- Write operations (Implemented to modify in-memory data) ---
   
+  async updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> {
+    console.log(`[SampleDataAdapter] Updating auction ID/publicId: ${idOrPublicId} with`, data);
+    await delay(50);
+    const auctionIndex = this.data.sampleAuctions.findIndex(a => a.id === idOrPublicId || a.publicId === idOrPublicId);
+    
+    if (auctionIndex === -1) {
+      return { success: false, message: `Auction with ID/PublicID "${idOrPublicId}" not found in sample data.` };
+    }
+
+    this.data.sampleAuctions[auctionIndex] = { ...this.data.sampleAuctions[auctionIndex], ...data, updatedAt: new Date() };
+    console.log(`[SampleDataAdapter] Auction "${this.data.sampleAuctions[auctionIndex].title}" updated in memory.`);
+    return { success: true, message: 'Auction (simulated) updated!' };
+  }
+
+  async updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> {
+    console.log(`[SampleDataAdapter] Updating lot ID/publicId: ${idOrPublicId} with`, data);
+    await delay(50);
+    const lotIndex = this.data.sampleLots.findIndex(l => l.id === idOrPublicId || l.publicId === idOrPublicId);
+    
+    if (lotIndex === -1) {
+      return { success: false, message: `Lot with ID/PublicID "${idOrPublicId}" not found in sample data.` };
+    }
+
+    this.data.sampleLots[lotIndex] = { ...this.data.sampleLots[lotIndex], ...data, updatedAt: new Date() };
+    console.log(`[SampleDataAdapter] Lot "${this.data.sampleLots[lotIndex].title}" updated in memory.`);
+    return { success: true, message: 'Lot (simulated) updated!' };
+  }
+
+  // --- Other Write operations (Simulated) ---
+
   async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> { console.log(`[SampleDataAdapter] Simulating createRole for: ${data.name}`); await delay(50); return { success: true, message: 'Role (simulated) created!', roleId: `sample-role-${uuidv4()}` }; }
   async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> { console.log(`[SampleDataAdapter] Simulating updateRole for ID: ${id}`); await delay(50); return { success: true, message: 'Role (simulated) updated!' }; }
   async deleteRole(id: string): Promise<{ success: boolean; message: string; }> { console.log(`[SampleDataAdapter] Simulating deleteRole for ID: ${id}`); await delay(50); return { success: true, message: 'Role (simulated) deleted!' }; }
@@ -315,10 +344,8 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { console.log(`[SampleDataAdapter] Simulating updateSeller for ID: ${id}`); await delay(50); return { success: true, message: 'Seller (simulated) updated!' }; }
   async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> { console.log(`[SampleDataAdapter] Simulating deleteSeller for ID: ${id}`); await delay(50); return { success: true, message: 'Seller (simulated) deleted!' }; }
   async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> { console.log(`[SampleDataAdapter] Simulating createAuction for: ${data.title}`); await delay(50); return { success: true, message: 'Auction (simulated) created!', auctionId: `sample-auc-${uuidv4()}`, auctionPublicId: `AUC-PUB-${uuidv4()}` }; }
-  async updateAuction(id: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> { console.log(`[SampleDataAdapter] Simulating updateAuction for ID: ${id}`); await delay(50); return { success: true, message: 'Auction (simulated) updated!' }; }
   async deleteAuction(id: string): Promise<{ success: boolean; message: string; }> { console.log(`[SampleDataAdapter] Simulating deleteAuction for ID: ${id}`); await delay(50); return { success: true, message: 'Auction (simulated) deleted!' }; }
   async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> { console.log(`[SampleDataAdapter] Simulating createLot for: ${data.title}`); await delay(50); return { success: true, message: 'Lot (simulated) created!', lotId: `sample-lot-${uuidv4()}`, lotPublicId: `LOT-PUB-${uuidv4()}` }; }
-  async updateLot(id: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> { console.log(`[SampleDataAdapter] Simulating updateLot for ID: ${id}`); await delay(50); return { success: true, message: 'Lot (simulated) updated!' }; }
   async deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string; }> { console.log(`[SampleDataAdapter] Simulating deleteLot for ID: ${id}`); await delay(50); return { success: true, message: 'Lot (simulated) deleted!' }; }
   async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> { console.log(`[SampleDataAdapter] Simulating updateUserProfile for ID: ${userId}`); await delay(50); return { success: true, message: 'Profile (simulated) updated!' }; }
   async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { console.log(`[SampleDataAdapter] Simulating updateUserRole for ID: ${userId}`); await delay(50); return { success: true, message: 'User role (simulated) updated!' }; }

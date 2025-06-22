@@ -2,128 +2,102 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { sampleAuctions, sampleLots, slugify } from '@/lib/sample-data'; 
+import { getDatabaseAdapter } from '@/lib/database';
 import type { Auction, AuctionFormData, AuctionDbData } from '@/types';
-import { getLotCategoryByName } from '@/app/admin/categories/actions';
-import { getAuctioneerByName } from '@/app/admin/auctioneers/actions'; 
-import { getSellerByName } from '@/app/admin/sellers/actions';     
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-export async function createAuction(
-  data: AuctionFormData
-): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> {
-  console.log(`[Action - createAuction - SampleData Mode] Simulating creation for: ${data.title}`);
-  console.log(`[Action - createAuction - SampleData Mode] Data received:`, {
-    ...data,
-    automaticBiddingEnabled: data.automaticBiddingEnabled,
-    allowInstallmentBids: data.allowInstallmentBids,
-    estimatedRevenue: data.estimatedRevenue,
-    isFeaturedOnMarketplace: data.isFeaturedOnMarketplace,
-    marketplaceAnnouncementTitle: data.marketplaceAnnouncementTitle,
-    auctionType: data.auctionType
-  });
-  await delay(100);
-  revalidatePath('/admin/auctions');
-  revalidatePath('/consignor-dashboard/overview');
-  return { success: true, message: `Leilão "${data.title}" (simulado) criado!`, auctionId: `sample-auc-${Date.now()}`, auctionPublicId: `AUC-PUB-SAMP-${Date.now()}` };
-}
-
-export async function getAuctions(): Promise<Auction[]> {
-  console.log('[Action - getAuctions - SampleData Mode] Fetching from sample-data.ts');
-  await delay(50);
-  const auctionsWithLots = sampleAuctions.map(auction => ({
-    ...auction,
-    lots: sampleLots.filter(lot => lot.auctionId === auction.id),
-    totalLots: sampleLots.filter(lot => lot.auctionId === auction.id).length,
-  }));
-  return Promise.resolve(JSON.parse(JSON.stringify(auctionsWithLots)));
-}
-
-export async function getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
-  console.log(`[Action - getAuctionsBySellerSlug - SampleData Mode] Fetching for slug: ${sellerSlugOrPublicId}`);
-  await delay(50);
-  const auctions = sampleAuctions.filter(auction => 
-    (auction.seller && slugify(auction.seller) === sellerSlugOrPublicId) || auction.sellerId === sellerSlugOrPublicId
-  ).map(auction => ({
-    ...auction,
-    lots: sampleLots.filter(lot => lot.auctionId === auction.id),
-    totalLots: sampleLots.filter(lot => lot.auctionId === auction.id).length,
-  }));
-  return Promise.resolve(JSON.parse(JSON.stringify(auctions)));
-}
-
-export async function getAuction(idOrPublicId: string): Promise<Auction | null> {
-  console.log(`[Action - getAuction - SampleData Mode] Fetching ID/publicId: ${idOrPublicId}`);
-  await delay(50);
-  const auction = sampleAuctions.find(a => a.id === idOrPublicId || a.publicId === idOrPublicId);
-  if (auction) {
-    const auctionWithLots = {
-        ...auction,
-        lots: sampleLots.filter(lot => lot.auctionId === auction.id),
-        totalLots: sampleLots.filter(lot => lot.auctionId === auction.id).length,
-    };
-    return Promise.resolve(JSON.parse(JSON.stringify(auctionWithLots)));
-  }
-  return Promise.resolve(null);
-}
-
+// The main update action that calls the adapter
 export async function updateAuction(
   idOrPublicId: string,
   data: Partial<AuctionFormData>
 ): Promise<{ success: boolean; message: string }> {
-  console.log(`[Action - updateAuction - SampleData Mode] Simulating update for ID/publicId: ${idOrPublicId}`);
-   console.log(`[Action - updateAuction - SampleData Mode] Data received for update:`, {
-    ...data,
-    automaticBiddingEnabled: data.automaticBiddingEnabled,
-    allowInstallmentBids: data.allowInstallmentBids,
-    estimatedRevenue: data.estimatedRevenue,
-    isFeaturedOnMarketplace: data.isFeaturedOnMarketplace,
-    marketplaceAnnouncementTitle: data.marketplaceAnnouncementTitle,
-    auctionType: data.auctionType
-  });
-  await delay(100);
-  revalidatePath('/admin/auctions');
-  revalidatePath(`/admin/auctions/${idOrPublicId}/edit`);
-  revalidatePath('/consignor-dashboard/overview');
-  return { success: true, message: `Leilão (simulado) atualizado!` };
-}
+  const db = await getDatabaseAdapter();
 
-export async function updateAuctionFeaturedStatus(
-  idOrPublicId: string,
-  newStatus: boolean
-): Promise<{ success: boolean; message: string }> {
-  console.log(`[Action - updateAuctionFeaturedStatus - SampleData Mode] Simulating update for ID/publicId: ${idOrPublicId} to featured: ${newStatus}`);
-  await delay(100);
-  revalidatePath('/');
-  revalidatePath(`/auctions/${idOrPublicId}`);
-  revalidatePath('/search');
-  return { success: true, message: `Destaque do leilão (simulado) atualizado!` };
+  // The adapter expects AuctionDbData. We need to convert names to IDs.
+  // For a simple title update, this is not necessary, but this is where it would go.
+  const dataForDb: Partial<AuctionDbData> = {
+    ...data,
+  };
+
+  const result = await db.updateAuction(idOrPublicId, dataForDb);
+  if (result.success) {
+    revalidatePath('/admin/auctions');
+    revalidatePath(`/admin/auctions/${idOrPublicId}/edit`);
+    revalidatePath('/consignor-dashboard/overview');
+  }
+  return result;
 }
 
 export async function updateAuctionTitle(
   idOrPublicId: string,
   newTitle: string
 ): Promise<{ success: boolean; message: string }> {
-  console.log(`[Action - updateAuctionTitle - SampleData Mode] Simulating title update for ID/publicId: ${idOrPublicId}`);
   if (!newTitle || newTitle.trim().length < 5) {
     return { success: false, message: "Título deve ter pelo menos 5 caracteres." };
   }
-  await delay(100);
-  revalidatePath(`/auctions/${idOrPublicId}`);
-  revalidatePath('/search');
-  revalidatePath('/');
-  return { success: true, message: `Título do leilão (simulado) atualizado!` };
+
+  // Call the main update action, which correctly uses the adapter
+  const result = await updateAuction(idOrPublicId, { title: newTitle });
+
+  if (result.success) {
+    // Revalidate paths to ensure UI updates across the app
+    revalidatePath(`/auctions/${idOrPublicId}`);
+    revalidatePath('/search');
+    revalidatePath('/');
+  }
+  return result;
 }
 
+// --- Other Auction Actions ---
+
+export async function createAuction(
+  data: AuctionFormData
+): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> {
+  const db = await getDatabaseAdapter();
+  // The adapter handles converting form data to DB data
+  const result = await db.createAuction(data);
+  if (result.success) {
+    revalidatePath('/admin/auctions');
+    revalidatePath('/consignor-dashboard/overview');
+  }
+  return result;
+}
+
+export async function getAuctions(): Promise<Auction[]> {
+  const db = await getDatabaseAdapter();
+  return db.getAuctions();
+}
+
+export async function getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
+  const db = await getDatabaseAdapter();
+  return db.getAuctionsBySellerSlug(sellerSlugOrPublicId);
+}
+
+export async function getAuction(idOrPublicId: string): Promise<Auction | null> {
+  const db = await getDatabaseAdapter();
+  return db.getAuction(idOrPublicId);
+}
+
+export async function updateAuctionFeaturedStatus(
+  idOrPublicId: string,
+  newStatus: boolean
+): Promise<{ success: boolean; message: string }> {
+  const result = await updateAuction(idOrPublicId, { isFeaturedOnMarketplace: newStatus });
+  if (result.success) {
+    revalidatePath('/');
+    revalidatePath(`/auctions/${idOrPublicId}`);
+    revalidatePath('/search');
+  }
+  return { success: result.success, message: 'Destaque do leilão atualizado!' };
+}
 
 export async function deleteAuction(
   idOrPublicId: string
 ): Promise<{ success: boolean; message: string }> {
-  console.log(`[Action - deleteAuction - SampleData Mode] Simulating deletion for ID/publicId: ${idOrPublicId}`);
-  await delay(100);
-  revalidatePath('/admin/auctions');
-  revalidatePath('/consignor-dashboard/overview');
-  return { success: true, message: `Leilão (simulado) excluído!` };
+  const db = await getDatabaseAdapter();
+  const result = await db.deleteAuction(idOrPublicId);
+  if (result.success) {
+    revalidatePath('/admin/auctions');
+    revalidatePath('/consignor-dashboard/overview');
+  }
+  return result;
 }
-    
