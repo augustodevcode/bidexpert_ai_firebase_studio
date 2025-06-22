@@ -29,20 +29,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter(); 
 
   const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM?.toUpperCase() || 'FIRESTORE';
-  console.log(`[AuthProvider] Initializing with ACTIVE_DATABASE_SYSTEM (client-side): ${activeSystem}`);
 
-  // Wrapper para setUserProfileWithPermissions para adicionar log
   const setUserProfileWithPermissions = (profile: SetStateAction<UserProfileWithPermissions | null>) => {
-    console.log('[AuthProvider] setUserProfileWithPermissions called with:', profile);
     _setUserProfileWithPermissions(profile);
   };
 
-
   useEffect(() => {
-    console.log(`[AuthProvider UseEffect] Running for system: ${activeSystem}. Current Firebase user: ${user?.email}, SQL profile from state: ${userProfileWithPermissions?.email}`);
-    
     let unsubscribe: (() => void) | undefined;
-
+    
     if (activeSystem === 'FIRESTORE') {
       console.log("[AuthProvider UseEffect] Firestore mode: Setting up onAuthStateChanged listener.");
       unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -55,7 +49,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (currentUser && currentUser.email) {
-          console.log(`[AuthProvider onAuthStateChanged] Usuário Firebase ${currentUser.email} detectado. Processando perfil DB...`);
           try {
             const targetRoleForNewUsers = 'USER'; 
             const profileResult = await ensureUserProfileInDb(
@@ -66,34 +59,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             );
 
             if (profileResult.success && profileResult.userProfile) {
-              console.log(`[AuthProvider onAuthStateChanged] ensureUserProfileInDb SUCESSO para ${currentUser.email}. Perfil:`, JSON.stringify(profileResult.userProfile));
-              setUserProfileWithPermissions({
-                ...profileResult.userProfile,
-                createdAt: profileResult.userProfile.createdAt ? new Date(profileResult.userProfile.createdAt) : undefined,
-                updatedAt: profileResult.userProfile.updatedAt ? new Date(profileResult.userProfile.updatedAt) : undefined,
-                dateOfBirth: profileResult.userProfile.dateOfBirth ? new Date(profileResult.userProfile.dateOfBirth) : undefined,
-                rgIssueDate: profileResult.userProfile.rgIssueDate ? new Date(profileResult.userProfile.rgIssueDate) : undefined,
-              } as UserProfileWithPermissions); 
+              setUserProfileWithPermissions(profileResult.userProfile as UserProfileWithPermissions);
             } else {
               console.error(`[AuthProvider onAuthStateChanged] Falha ao executar ensureUserProfileInDb para ${currentUser.email}: ${profileResult?.message || 'Resultado indefinido.'}`);
               setUserProfileWithPermissions(null); 
             }
           } catch (error) {
-            console.error(`[AuthProvider onAuthStateChanged] Erro ao chamar ensureUserProfileInDb para ${currentUser.email}:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
+            console.error(`[AuthProvider onAuthStateChanged] Erro ao chamar ensureUserProfileInDb para ${currentUser.email}:`, error);
             setUserProfileWithPermissions(null); 
           }
         } else {
-          console.log("[AuthProvider onAuthStateChanged] Nenhum usuário Firebase logado ou sem e-mail.");
           setUser(null); 
           setUserProfileWithPermissions(null); 
         }
         setLoading(false);
       });
-    } else {
-      console.log(`[AuthProvider UseEffect] Mode: ${activeSystem}. Setting initial state, no Firebase listener. Current userProfileWithPermissions:`, userProfileWithPermissions?.email);
-      setUser(null); 
-      // No modo SQL, o perfil é carregado pela página de login e setado diretamente no contexto.
-      // Apenas garantimos que o loading seja falso.
+    } else { // SQL or Sample Data mode
+      console.log(`[AuthProvider UseEffect] Mode: ${activeSystem}. Checking for localStorage profile.`);
+      try {
+        const storedProfile = localStorage.getItem('userProfile');
+        if (storedProfile) {
+          const profile = JSON.parse(storedProfile);
+          console.log('[AuthProvider UseEffect] Profile found in localStorage, setting context state.');
+          setUserProfileWithPermissions(profile);
+        } else {
+          console.log('[AuthProvider UseEffect] No profile found in localStorage.');
+        }
+      } catch (e) {
+        console.error("Failed to parse user profile from localStorage", e);
+        localStorage.removeItem('userProfile');
+      }
       setLoading(false);
     }
 
@@ -108,12 +103,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutSqlUser = () => {
     console.log("[AuthProvider logoutSqlUser] Logging out SQL user.");
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('userProfile');
+    }
     setUser(null);
     setUserProfileWithPermissions(null);
     router.push('/'); 
   };
-
-  console.log(`[AuthProvider Render] loading: ${loading}, user: ${user?.email}, userProfileWithPermissions: ${userProfileWithPermissions?.email}`);
 
   if (loading) {
     return (

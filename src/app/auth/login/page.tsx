@@ -60,7 +60,11 @@ export default function LoginPage() {
             title: `Login bem-sucedido (${activeSystem})!`,
             description: "Redirecionando...",
           });
-          // Simular o estado de usuário logado no AuthContext
+          // Salvar no localStorage para persistência
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('userProfile', JSON.stringify(result.user));
+          }
+          // Setar no contexto para uso imediato
           setUser(null); // Limpar qualquer usuário Firebase, se houver
           setUserProfileWithPermissions(result.user as UserProfileWithPermissions);
           router.push(redirectUrl);
