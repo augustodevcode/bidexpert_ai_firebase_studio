@@ -229,12 +229,17 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
           </div>
         </Link>
 
+        {/* LEFT BADGES (STATUS ONLY) */}
         <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10">
           {sectionBadges.showStatusBadge !== false && (
             <Badge className={`text-xs px-2 py-1 ${getLotStatusColor(lot.status)}`}>
               {getAuctionStatusText(lot.status)}
             </Badge>
           )}
+        </div>
+
+        {/* RIGHT BADGES (MENTAL TRIGGERS) */}
+        <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
           {sectionBadges.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentage > 0 && (
             <Badge variant="destructive" className="text-xs px-1.5 py-0.5 animate-pulse">
               <Percent className="h-3 w-3 mr-1" /> {discountPercentage}% OFF
@@ -287,7 +292,8 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
             <span className="truncate ml-1" title={lot.type}>{lot.type}</span>
             {lot.subcategoryName && (
                 <>
-                    <Layers className="h-3 w-3 ml-1.5 mr-0.5 text-primary/80" />
+                    <ChevronRight className="h-3 w-3 mx-0.5 text-muted-foreground/70 flex-shrink-0" />
+                    <Layers className="h-3 w-3 mr-1 text-primary/70 flex-shrink-0" />
                     <span className="truncate" title={lot.subcategoryName}>{lot.subcategoryName}</span>
                 </>
             )}
@@ -358,7 +364,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
     </Card>
     <LotPreviewModal
         lot={lot}
-        auction={sampleAuctions.find(a => a.id === lot.auctionId || a.publicId === lot.auctionId)}
+        auction={sampleAuctions.find(a => a.id === lot.auctionId)}
         isOpen={isPreviewModalOpen}
         onClose={() => setIsPreviewModalOpen(false)}
       />
@@ -373,7 +379,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
 }
 
 
-export default function LotCard({ lot, badgeVisibilityConfig, platformSettings }: LotCardProps) {
+export default function LotCard({ lot, badgeVisibilityConfig, platformSettings, onUpdate }: LotCardProps) {
     const [isClient, setIsClient] = useState(false);
     useEffect(() => {
       setIsClient(true);
@@ -398,5 +404,6 @@ export default function LotCard({ lot, badgeVisibilityConfig, platformSettings }
       );
     }
 
-    return <LotCardClientContent lot={lot} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} />;
+    return <LotCardClientContent lot={lot} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} onUpdate={onUpdate} />;
   }
+
