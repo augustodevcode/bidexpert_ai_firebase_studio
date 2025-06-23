@@ -5,8 +5,6 @@ import { revalidatePath } from 'next/cache';
 import { getDatabaseAdapter } from '@/lib/database';
 import type { PlatformSettings, PlatformSettingsFormData } from '@/types';
 
-export const revalidate = 0; // Force dynamic rendering and no caching
-
 export async function getPlatformSettings(): Promise<PlatformSettings> {
   const db = await getDatabaseAdapter();
   return db.getPlatformSettings();
