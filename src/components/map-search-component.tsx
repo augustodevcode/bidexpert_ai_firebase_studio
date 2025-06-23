@@ -3,6 +3,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 import type { Lot, Auction } from '@/types';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
@@ -10,6 +12,18 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Loader2 } from 'lucide-react';
+
+// This is a known issue with Leaflet and Webpack. We need to manually fix the icon paths.
+// This should be done once, outside the component body.
+// @ts-ignore
+delete L.Icon.Default.prototype._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default.src,
+  iconUrl: require('leaflet/dist/images/marker-icon.png').default.src,
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png').default.src,
+});
+
 
 function LotPopupCard({ lot }: { lot: Lot }) {
     return (
@@ -57,25 +71,8 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // This effect runs only once on the client after the component mounts
-    // It dynamically imports Leaflet and its CSS, and fixes the icon path issue.
-    (async () => {
-      if (typeof window !== 'undefined') {
-        const L = await import('leaflet');
-        await import('leaflet/dist/leaflet.css');
-
-        // @ts-ignore
-        delete L.Icon.Default.prototype._getIconUrl;
-
-        L.Icon.Default.mergeOptions({
-          iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default.src,
-          iconUrl: require('leaflet/dist/images/marker-icon.png').default.src,
-          shadowUrl: require('leaflet/dist/images/marker-shadow.png').default.src,
-        });
-
-        setIsClient(true);
-      }
-    })();
+    // This effect runs only once on the client, after the component mounts.
+    setIsClient(true);
   }, []);
 
   const mapCenter: [number, number] = [-14.2350, -51.9253];
@@ -84,7 +81,8 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
   const validItems = useMemo(() => {
     return items.filter(item => 'latitude' in item && 'longitude' in item && item.latitude && item.longitude);
   }, [items]);
-
+  
+  // This is the key fix: Do not render MapContainer until we are sure we are on the client.
   if (!isClient) {
     return (
       <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
@@ -107,7 +105,7 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       {validItems.map(item => {
-        const lot = item as Lot; 
+        const lot = item as Lot; // Assuming all valid items have lat/lng
         return (
           <Marker key={item.id} position={[lot.latitude!, lot.longitude!]}>
             <Popup minWidth={192}>
