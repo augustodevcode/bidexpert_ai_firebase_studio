@@ -9,12 +9,13 @@ import type { Lot, Auction } from '@/types';
 interface MapSearchComponentProps {
   items: (Lot | Auction)[];
   itemType: 'lots' | 'auctions';
-  initialCenter: [number, number];
+  mapCenter: [number, number];
+  mapZoom: number;
   onBoundsChange: (bounds: LatLngBounds) => void;
-  shouldFitBounds: boolean; // Controls when to auto-fit
+  shouldFitBounds: boolean; 
 }
 
-export default function MapSearchComponent({ items, itemType, initialCenter, onBoundsChange, shouldFitBounds }: MapSearchComponentProps) {
+export default function MapSearchComponent({ items, itemType, mapCenter, mapZoom, onBoundsChange, shouldFitBounds }: MapSearchComponentProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
   const markersRef = useRef<LayerGroup | null>(null);
@@ -25,6 +26,7 @@ export default function MapSearchComponent({ items, itemType, initialCenter, onB
       (async () => {
         const L = (await import('leaflet')).default;
 
+        // Fix for default icon paths with webpack
         // @ts-ignore
         delete L.Icon.Default.prototype._getIconUrl;
         L.Icon.Default.mergeOptions({
@@ -33,7 +35,10 @@ export default function MapSearchComponent({ items, itemType, initialCenter, onB
           shadowUrl: require('leaflet/dist/images/marker-shadow.png').default.src,
         });
 
-        mapRef.current = L.map(mapContainerRef.current).setView(initialCenter, 13); // Set initial view
+        mapRef.current = L.map(mapContainerRef.current, {
+            center: mapCenter,
+            zoom: mapZoom
+        });
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -46,13 +51,13 @@ export default function MapSearchComponent({ items, itemType, initialCenter, onB
             onBoundsChange(mapRef.current.getBounds());
           }
         });
-      })();
-    } else if (mapRef.current && isInitialLoad.current) {
-        mapRef.current.setView(initialCenter, 13);
         isInitialLoad.current = false;
+      })();
+    } else if (mapRef.current && !isInitialLoad.current && !shouldFitBounds) {
+        // Only re-center programmatically if not fitting to bounds
+        mapRef.current.setView(mapCenter, mapZoom);
     }
-
-  }, [initialCenter, onBoundsChange]);
+  }, [mapCenter, mapZoom, onBoundsChange, shouldFitBounds]);
 
   useEffect(() => {
     if (mapRef.current && markersRef.current && items) {
@@ -66,11 +71,21 @@ export default function MapSearchComponent({ items, itemType, initialCenter, onB
           if ('latitude' in item && 'longitude' in item && item.latitude && item.longitude) {
             lat = item.latitude;
             lng = item.longitude;
-            url = `/auctions/${item.auctionId}/lots/${item.publicId || item.id}`;
-            popupContent = `
-              <strong><a href="${url}" target="_blank" rel="noopener noreferrer">${item.title}</a></strong>
-              <p>Preço: R$ ${(item as Lot).price.toLocaleString('pt-BR')}</p>
-            `;
+            
+            if (itemType === 'lots') {
+                url = `/auctions/${(item as Lot).auctionId}/lots/${item.publicId || item.id}`;
+                popupContent = `
+                <strong><a href="${url}" target="_blank" rel="noopener noreferrer">${item.title}</a></strong>
+                <p>Preço: R$ ${(item as Lot).price.toLocaleString('pt-BR')}</p>
+                `;
+            } else {
+                 url = `/auctions/${item.publicId || item.id}`;
+                 popupContent = `
+                <strong><a href="${url}" target="_blank" rel="noopener noreferrer">${item.title}</a></strong>
+                <p>Lotes: ${(item as Auction).totalLots || 0}</p>
+                `;
+            }
+
           } else {
              return; 
           }
