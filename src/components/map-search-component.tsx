@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -11,7 +11,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Loader2 } from 'lucide-react';
 
 // This is a known issue with Leaflet and Webpack. We need to manually fix the icon paths.
 // This should be done once, outside the component body.
@@ -68,29 +67,12 @@ function LotPopupCard({ lot }: { lot: Lot }) {
   }
 
 export default function MapSearchComponent({ items, itemType }: { items: (Lot | Auction)[]; itemType: 'lots' | 'auctions'; }) {
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    // This effect runs only once on the client, after the component mounts.
-    setIsClient(true);
-  }, []);
-
   const mapCenter: [number, number] = [-14.2350, -51.9253];
   const defaultZoom = 4;
 
   const validItems = useMemo(() => {
     return items.filter(item => 'latitude' in item && 'longitude' in item && item.latitude && item.longitude);
   }, [items]);
-  
-  // This is the key fix: Do not render MapContainer until we are sure we are on the client.
-  if (!isClient) {
-    return (
-      <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="ml-2 text-muted-foreground">Carregando mapa...</p>
-      </div>
-    );
-  }
   
   return (
     <MapContainer 
