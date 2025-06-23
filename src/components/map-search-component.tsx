@@ -12,22 +12,21 @@ interface MapSearchComponentProps {
   mapCenter: [number, number];
   mapZoom: number;
   onBoundsChange: (bounds: LatLngBounds) => void;
-  shouldFitBounds: boolean; 
+  shouldFitBounds: boolean;
 }
 
 export default function MapSearchComponent({ items, itemType, mapCenter, mapZoom, onBoundsChange, shouldFitBounds }: MapSearchComponentProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
   const markersRef = useRef<LayerGroup | null>(null);
-  const isInitialLoad = useRef(true);
 
+  // Effect for ONE-TIME map initialization and cleanup
   useEffect(() => {
     if (mapContainerRef.current && !mapRef.current) {
       (async () => {
         const L = (await import('leaflet')).default;
 
-        // Fix for default icon paths with webpack
-        // @ts-ignore
+        // @ts-ignore - Fix for default icon paths with webpack
         delete L.Icon.Default.prototype._getIconUrl;
         L.Icon.Default.mergeOptions({
           iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default.src,
@@ -51,14 +50,28 @@ export default function MapSearchComponent({ items, itemType, mapCenter, mapZoom
             onBoundsChange(mapRef.current.getBounds());
           }
         });
-        isInitialLoad.current = false;
       })();
-    } else if (mapRef.current && !isInitialLoad.current && !shouldFitBounds) {
-        // Only re-center programmatically if not fitting to bounds
-        mapRef.current.setView(mapCenter, mapZoom);
     }
-  }, [mapCenter, mapZoom, onBoundsChange, shouldFitBounds]);
+    
+    // Cleanup function to run when the component is unmounted
+    return () => {
+        if (mapRef.current) {
+            mapRef.current.remove();
+            mapRef.current = null;
+        }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array ensures this runs only once on mount
 
+  // Effect to update map view when center or zoom props change, but not when fitting bounds
+  useEffect(() => {
+    if (mapRef.current && !shouldFitBounds) {
+        mapRef.current.setView(mapCenter, mapZoom, { animate: true });
+    }
+  }, [mapCenter, mapZoom, shouldFitBounds]);
+
+
+  // Effect to update markers when items or `shouldFitBounds` change
   useEffect(() => {
     if (mapRef.current && markersRef.current && items) {
       (async () => {
@@ -85,7 +98,6 @@ export default function MapSearchComponent({ items, itemType, mapCenter, mapZoom
                 <p>Lotes: ${(item as Auction).totalLots || 0}</p>
                 `;
             }
-
           } else {
              return; 
           }
@@ -102,7 +114,7 @@ export default function MapSearchComponent({ items, itemType, mapCenter, mapZoom
         });
         
         if (shouldFitBounds && markersRef.current.getLayers().length > 0) {
-            mapRef.current?.fitBounds(markersRef.current.getBounds(), { padding: [50, 50] });
+            mapRef.current?.fitBounds(markersRef.current.getBounds(), { padding: [50, 50], animate: true });
         }
       })();
     }
