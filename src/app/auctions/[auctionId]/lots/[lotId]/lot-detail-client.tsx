@@ -46,6 +46,7 @@ import LotAllBidsModal from '@/components/auction/lot-all-bids-modal';
 import LotCard from '@/components/lot-card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
 const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'admin@bidexpert.com.br'.toLowerCase();
@@ -628,35 +629,54 @@ export default function LotDetailClientContent({
                     <Card id="auction-details-section" className="shadow-lg">
                         <CardHeader>
                             <CardTitle className="text-xl font-semibold flex items-center">
-                            <Gavel className="h-5 w-5 mr-2 text-muted-foreground" />
-                            Informações do Leilão
+                                <Gavel className="h-5 w-5 mr-2 text-muted-foreground" />
+                                Informações do Leilão
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-3 text-sm">
-                            <Link href={`/auctions/${auction.publicId || auction.id}`} className="hover:text-primary">
-                            <p className="font-bold text-lg text-foreground">{auction.title}</p>
-                            </Link>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-muted-foreground">
-                                <div className="flex items-center">
-                                    <UserCircle className="h-4 w-4 mr-2" /> Leiloeiro: <span className="font-medium ml-1 text-foreground">{auction.auctioneer}</span>
-                                </div>
-                                <div className="flex items-center">
-                                    <Tag className="h-4 w-4 mr-2" /> Categoria: <span className="font-medium ml-1 text-foreground">{auction.category}</span>
-                                </div>
-                                <div className="flex items-center">
-                                    <Info className="h-4 w-4 mr-2" /> Status: 
-                                    <Badge variant="outline" className={`ml-2 text-xs ${getLotStatusColor(auction.status)} border-current`}>
-                                    {getAuctionStatusText(auction.status)}
-                                    </Badge>
-                                </div>
-                                {auction.endDate && (
-                                    <div className="flex items-center">
-                                    <CalendarDays className="h-4 w-4 mr-2" /> Fim: <span className="font-medium ml-1 text-foreground">{format(new Date(auction.endDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
-                                    </div>
+                        <CardContent className="p-4 md:p-6 pt-0">
+                            <div className="flex items-start gap-4">
+                                {auction.auctioneerLogoUrl && (
+                                    <Avatar className="h-16 w-16 border-2 border-primary/20 flex-shrink-0">
+                                        <AvatarImage src={auction.auctioneerLogoUrl} alt={auction.auctioneerName} data-ai-hint="logo leiloeiro" />
+                                        <AvatarFallback>{auction.auctioneerName?.charAt(0) || 'L'}</AvatarFallback>
+                                    </Avatar>
                                 )}
+                                <div className="flex-grow">
+                                    <Link href={`/auctions/${auction.publicId || auction.id}`} className="hover:text-primary">
+                                        <p className="font-bold text-lg text-foreground">{auction.title}</p>
+                                    </Link>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 mt-2 text-sm">
+                                        <div className="flex items-center text-muted-foreground">
+                                            <UserCircle className="h-4 w-4 mr-2" />
+                                            <span>Leiloeiro: <span className="font-medium text-foreground">{auction.auctioneer}</span></span>
+                                        </div>
+                                        <div className="flex items-center text-muted-foreground">
+                                            <Tag className="h-4 w-4 mr-2" />
+                                            <span>Categoria: <span className="font-medium text-foreground">{auction.category}</span></span>
+                                        </div>
+                                        <div className="flex items-center text-muted-foreground">
+                                            <Gavel className="h-4 w-4 mr-2" />
+                                            <span>Modalidade: <span className="font-medium text-foreground">{auction.auctionType || 'Não especificada'}</span></span>
+                                        </div>
+                                        <div className="flex items-center text-muted-foreground">
+                                            <Info className="h-4 w-4 mr-2" />
+                                            <span>Status:
+                                                <Badge variant="outline" className={`ml-2 text-xs ${getLotStatusColor(auction.status)} border-current`}>
+                                                    {getAuctionStatusText(auction.status)}
+                                                </Badge>
+                                            </span>
+                                        </div>
+                                        {auction.endDate && (
+                                            <div className="flex items-center text-muted-foreground">
+                                                <CalendarDays className="h-4 w-4 mr-2" />
+                                                <span>Fim: <span className="font-medium text-foreground">{format(new Date(auction.endDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span></span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </CardContent>
-                        <CardFooter>
+                        <CardFooter className="p-4 md:p-6 pt-0">
                             <Button asChild variant="outline" size="sm">
                                 <Link href={`/auctions/${auction.publicId || auction.id}`}>Ver todos os lotes do leilão <ChevronRight className="h-4 w-4 ml-2" /></Link>
                             </Button>
@@ -664,7 +684,12 @@ export default function LotDetailClientContent({
                     </Card>
 
                     <Card className="shadow-lg">
-                        <CardContent className="p-4 md:p-6">
+                        <CardHeader>
+                           <CardTitle className="text-xl font-semibold flex items-center">
+                             <FileText className="h-5 w-5 mr-2 text-muted-foreground" /> Detalhes do Lote
+                           </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4 md:p-6 pt-0">
                             <Tabs defaultValue="description" className="w-full">
                                 <TabsList className="flex w-full flex-wrap gap-1 mb-4">
                                     <TabsTrigger value="description">Descrição</TabsTrigger>
@@ -693,7 +718,7 @@ export default function LotDetailClientContent({
                                                     {lot.propertyRegistrationNumber && <p><strong className="text-foreground">Matrícula do Imóvel:</strong> <span className="text-muted-foreground">{lot.propertyRegistrationNumber}</span></p>}
                                                     {lot.propertyLiens && <p><strong className="text-foreground">Ônus/Gravames:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.propertyLiens}</span></p>}
                                                     {lot.knownDebts && <p><strong className="text-foreground">Dívidas Conhecidas:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.knownDebts}</span></p>}
-                                                    {lot.additionalDocumentsInfo && <p><strong className="text-foreground">Outros Documentos/Obs:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.additionalDocumentsInfo}</span></p>}
+                                                    {lot.additionalDocumentsInfo && <p><strong className="text-foreground">Outras Informações/Links de Documentos:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.additionalDocumentsInfo}</span></p>}
                                                     <Separator className="my-3" />
                                                 </>
                                             )}
