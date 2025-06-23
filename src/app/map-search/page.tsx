@@ -6,32 +6,24 @@ import { MapPin, Loader2, AlertCircle, ListFilter, Layers, Search as SearchIcon 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { sampleLots, sampleAuctions, samplePlatformSettings } from '@/lib/sample-data';
 import type { Lot, Auction, PlatformSettings } from '@/types';
 import LotCard from '@/components/lot-card';
 import AuctionCard from '@/components/auction-card';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation'; 
-import { ScrollArea } from '@/components/ui/scroll-area'; 
+import { ScrollArea } from '@/components/ui/scroll-area';
+import dynamic from 'next/dynamic';
 
-// Placeholder for a future, more robust map component
-const MapComponentPlaceholder = ({ items, itemType }: { items: (Lot | Auction)[], itemType: 'lot' | 'auction' }) => {
-  const itemCount = items.length;
-  return (
-    <div className="relative w-full h-full bg-muted rounded-lg shadow-inner overflow-hidden flex items-center justify-center text-center p-4">
-        <Image src="https://placehold.co/1200x800.png?text=Mapa+Interativo+do+Brasil" alt="Mapa do Brasil com pins" fill className="object-cover opacity-30" data-ai-hint="mapa brasil pins" />
-        <div className="z-10">
-            <MapPin className="h-16 w-16 text-primary mb-4 mx-auto" />
-            <h3 className="text-xl font-semibold text-foreground">Visualização de Mapa Interativa</h3>
-            <p className="text-muted-foreground">
-                {itemCount > 0 ? `Exibindo ${itemCount} ${itemType === 'lot' ? 'lote(s)' : 'leilão(ões)'} no mapa.` : 'Nenhum item para exibir no mapa com os filtros atuais.'}
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">(Componente de mapa real a ser implementado aqui)</p>
-        </div>
+const MapSearchComponent = dynamic(() => import('@/components/map-search-component'), {
+  ssr: false,
+  loading: () => (
+    <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
+      <Loader2 className="h-10 w-10 animate-spin text-primary" />
     </div>
-  );
-};
+  ),
+});
 
 export default function MapSearchPage() {
   const router = useRouter();
@@ -68,7 +60,7 @@ export default function MapSearchPage() {
         results = sampleLots.filter(lot => 
             (lot.title.toLowerCase().includes(term) || 
              (lot.description && lot.description.toLowerCase().includes(term)) ||
-             (lot.city && lot.city.toLowerCase().includes(term)) ||
+             (lot.cityName && lot.cityName.toLowerCase().includes(term)) ||
              (lot.stateUf && lot.stateUf.toLowerCase().includes(term))
             ) && lot.latitude && lot.longitude
         );
@@ -146,7 +138,7 @@ export default function MapSearchPage() {
                 {!isLoading && !error && displayedItems.length > 0 && (
                     displayedItems.map(item => 
                     searchType === 'lots' 
-                        ? <LotCard key={`lot-${item.id}`} lot={item as Lot} platformSettings={platformSettings} badgeVisibilityConfig={platformSettings.sectionBadgeVisibility?.searchGrid}/> 
+                        ? <LotCard key={`lot-${item.id}`} lot={item as Lot} platformSettings={platformSettings} /> 
                         : <AuctionCard key={`auction-${item.id}`} auction={item as Auction} />
                     )
                 )}
@@ -155,8 +147,8 @@ export default function MapSearchPage() {
         </Card>
 
         {/* Coluna da Direita: Mapa */}
-        <div className="flex-grow h-full md:h-auto">
-             <MapComponentPlaceholder items={mapItems} itemType={searchType} />
+        <div className="flex-grow h-full md:h-auto rounded-lg overflow-hidden shadow-lg">
+             <MapSearchComponent items={mapItems} itemType={searchType} />
         </div>
     </div>
   );
