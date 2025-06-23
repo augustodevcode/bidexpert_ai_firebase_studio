@@ -5,24 +5,25 @@ import React from 'react';
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Auction, Lot, PlatformSettings, AuctionStage } from '@/types';
+import type { Auction, Lot, PlatformSettings, AuctionStage, LotCategory, SellerProfileInfo } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
 import {
-  ChevronRight, FileText, Heart, Eye, ListChecks, MapPin, Gavel, Tag, CalendarDays
+  FileText, Heart, Eye, ListChecks, MapPin, Gavel, Tag, CalendarDays, SlidersHorizontal
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText, slugify } from '@/lib/sample-data';
+import { getAuctionStatusText, slugify, getUniqueLotLocations } from '@/lib/sample-data';
 import SearchResultsFrame from '@/components/search-results-frame';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
+import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const sortOptionsLots = [
   { value: 'relevance', label: 'Relevância' },
@@ -35,23 +36,57 @@ const sortOptionsLots = [
   { value: 'views_desc', label: 'Mais Visitados' },
 ];
 
+const initialFiltersState: ActiveFilters = {
+  modality: 'TODAS',
+  category: 'TODAS', 
+  priceRange: [0, 1000000],
+  locations: [],
+  sellers: [],
+  startDate: undefined,
+  endDate: undefined,
+  status: [],
+};
+
+
 interface AuctionDetailsClientProps {
   auction: Auction;
   platformSettings: PlatformSettings;
+  allCategories: LotCategory[];
+  allSellers: SellerProfileInfo[];
 }
 
-export default function AuctionDetailsClient({ auction, platformSettings }: AuctionDetailsClientProps) {
+export default function AuctionDetailsClient({ auction, platformSettings, allCategories, allSellers }: AuctionDetailsClientProps) {
+  const [isClient, setIsClient] = useState(false);
+  const [lotSearchTerm, setLotSearchTerm] = useState('');
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+
+  // State for lot filtering and sorting
+  const [activeFilters, setActiveFilters] = useState<ActiveFilters>(initialFiltersState);
   const [sortBy, setSortBy] = useState('relevance');
   const [currentPage, setCurrentPage] = useState(1);
   const [visibleItemCount, setVisibleItemCount] = useState(platformSettings.searchLoadMoreCount || 12);
-  const [isClient, setIsClient] = useState(false);
-  const [lotSearchTerm, setLotSearchTerm] = useState('');
-  const [lotStatusFilter, setLotStatusFilter] = useState('ALL');
+  
+  const uniqueLocationsForFilter = useMemo(() => getUniqueLotLocations(auction.lots || []), [auction.lots]);
+  const sellersForFilter = useMemo(() => allSellers.filter(seller => seller.name === auction.seller), [allSellers, auction.seller]);
 
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const handleFilterSubmit = (filters: ActiveFilters) => {
+    setActiveFilters(filters);
+    setIsFilterSheetOpen(false); 
+    setCurrentPage(1);
+    setVisibleItemCount(platformSettings.searchLoadMoreCount || 12);
+  };
+  
+  const handleFilterReset = () => {
+    setActiveFilters(initialFiltersState);
+    setIsFilterSheetOpen(false);
+    setCurrentPage(1);
+    setVisibleItemCount(platformSettings.searchLoadMoreCount || 12);
+  };
 
   const filteredAndSortedLots = useMemo(() => {
     let lotsToProcess = [...(auction.lots || [])];
@@ -64,10 +99,29 @@ export default function AuctionDetailsClient({ auction, platformSettings }: Auct
         (lot.description && lot.description.toLowerCase().includes(term))
       );
     }
-
-    if (lotStatusFilter !== 'ALL') {
-      lotsToProcess = lotsToProcess.filter(lot => lot.status === lotStatusFilter);
+    
+    if (activeFilters.category !== 'TODAS') {
+       const categoryForFilter = allCategories.find(c => c.slug === activeFilters.category);
+       if(categoryForFilter) {
+          lotsToProcess = lotsToProcess.filter(lot => lot.categoryId === categoryForFilter.id || slugify(lot.type) === categoryForFilter.slug);
+       }
     }
+
+    if (activeFilters.priceRange[0] > 0 || activeFilters.priceRange[1] < 1000000) {
+      lotsToProcess = lotsToProcess.filter(lot => lot.price >= activeFilters.priceRange[0] && lot.price <= activeFilters.priceRange[1]);
+    }
+    
+    if (activeFilters.locations.length > 0) {
+      lotsToProcess = lotsToProcess.filter(lot => {
+        const lotLocation = `${lot.cityName} - ${lot.stateUf}`;
+        return activeFilters.locations.includes(lotLocation);
+      });
+    }
+    
+    if (activeFilters.status && activeFilters.status.length > 0) {
+      lotsToProcess = lotsToProcess.filter(lot => activeFilters.status.includes(lot.status));
+    }
+
 
     // Sorting
     return lotsToProcess.sort((a, b) => {
@@ -93,7 +147,7 @@ export default function AuctionDetailsClient({ auction, platformSettings }: Auct
                 return new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime();
         }
     });
-  }, [auction.lots, sortBy, lotSearchTerm, lotStatusFilter]);
+  }, [auction.lots, sortBy, lotSearchTerm, activeFilters, allCategories]);
   
   const paginatedLots = useMemo(() => {
     if (platformSettings.searchPaginationType === 'numberedPages') {
@@ -119,20 +173,11 @@ export default function AuctionDetailsClient({ auction, platformSettings }: Auct
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center text-sm text-muted-foreground">
-        <Link href="/" className="hover:text-primary">Home</Link>
-        <ChevronRight className="h-4 w-4 mx-1" />
-        <Link href="/search" className="hover:text-primary">Leilões</Link>
-        <ChevronRight className="h-4 w-4 mx-1" />
-        <span className="font-medium text-foreground truncate">{auction.title}</span>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2 space-y-8">
           <Card className="shadow-lg overflow-hidden">
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-              {/* Image Section */}
-              <div className="relative aspect-video md:aspect-auto min-h-[225px] bg-muted">
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+              <div className="relative aspect-video md:aspect-[4/3] md:col-span-1 bg-muted">
                 <Image
                     src={auction.imageUrl || 'https://placehold.co/600x800.png'}
                     alt={auction.title}
@@ -147,8 +192,7 @@ export default function AuctionDetailsClient({ auction, platformSettings }: Auct
                   </div>
               </div>
 
-              {/* Details Section */}
-              <div className="p-6 flex flex-col">
+              <div className="p-6 flex flex-col md:col-span-2">
                 <Badge variant="secondary" className="mb-2 w-fit">{auction.auctionType || 'Leilão'}</Badge>
                 <h1 className="text-3xl font-bold font-headline">{auction.title}</h1>
                 <p className="text-muted-foreground mt-2">{auction.description}</p>
@@ -189,50 +233,6 @@ export default function AuctionDetailsClient({ auction, platformSettings }: Auct
               </div>
             </div>
           </Card>
-
-          <div className="mt-8">
-            <Card className="shadow-sm mb-6">
-                <CardContent className="p-4 flex flex-col sm:flex-row gap-4 items-center">
-                    <Input 
-                        placeholder="Buscar lotes neste leilão..." 
-                        value={lotSearchTerm} 
-                        onChange={(e) => setLotSearchTerm(e.target.value)}
-                        className="flex-grow"
-                    />
-                    <Select value={lotStatusFilter} onValueChange={setLotStatusFilter}>
-                        <SelectTrigger className="w-full sm:w-[200px]">
-                            <SelectValue placeholder="Filtrar por status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="ALL">Todos os Status</SelectItem>
-                            <SelectItem value="ABERTO_PARA_LANCES">Aberto para Lances</SelectItem>
-                            <SelectItem value="EM_BREVE">Em Breve</SelectItem>
-                            <SelectItem value="ENCERRADO">Encerrado</SelectItem>
-                            <SelectItem value="VENDIDO">Vendido</SelectItem>
-                            <SelectItem value="NAO_VENDIDO">Não Vendido</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </CardContent>
-            </Card>
-
-            <SearchResultsFrame
-                items={paginatedLots}
-                totalItemsCount={filteredAndSortedLots.length}
-                renderGridItem={renderGridItem}
-                renderListItem={renderListItem}
-                sortOptions={sortOptionsLots}
-                initialSortBy={sortBy}
-                onSortChange={handleSortChange}
-                platformSettings={platformSettings}
-                isLoading={!isClient}
-                searchTypeLabel="lotes"
-                emptyStateMessage={`Nenhum lote encontrado para o leilão "${auction.title}" com os filtros aplicados.`}
-                currentPage={currentPage}
-                visibleItemCount={visibleItemCount}
-                onPageChange={handlePageChange}
-                onLoadMore={handleLoadMore}
-            />
-          </div>
         </div>
 
         <div className="lg:col-span-1 space-y-6">
@@ -246,6 +246,67 @@ export default function AuctionDetailsClient({ auction, platformSettings }: Auct
           </Card>
         </div>
       </div>
+
+      <Separator />
+
+      <h2 className="text-2xl font-bold font-headline">Lotes do Leilão</h2>
+      
+      <div className="grid md:grid-cols-[280px_1fr] gap-8 items-start">
+         <aside className="hidden md:block">
+           <SidebarFilters
+             categories={allCategories}
+             locations={uniqueLocationsForFilter}
+             sellers={sellersForFilter}
+             onFilterSubmit={handleFilterSubmit}
+             onFilterReset={handleFilterReset}
+             initialFilters={activeFilters}
+             filterContext="auctions"
+           />
+         </aside>
+
+         <main>
+          <div className="md:hidden mb-4">
+              <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" className="w-full">
+                    <SlidersHorizontal className="mr-2 h-4 w-4" /> Filtros e Ordenação
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="p-0 w-[85vw] max-w-sm">
+                    <div className="p-4 h-full overflow-y-auto">
+                        <SidebarFilters
+                            categories={allCategories}
+                            locations={uniqueLocationsForFilter}
+                            sellers={sellersForFilter}
+                            onFilterSubmit={handleFilterSubmit}
+                            onFilterReset={handleFilterReset}
+                            initialFilters={activeFilters}
+                            filterContext="auctions"
+                        />
+                    </div>
+                </SheetContent>
+              </Sheet>
+          </div>
+          <SearchResultsFrame
+              items={paginatedLots}
+              totalItemsCount={filteredAndSortedLots.length}
+              renderGridItem={renderGridItem}
+              renderListItem={renderListItem}
+              sortOptions={sortOptionsLots}
+              initialSortBy={sortBy}
+              onSortChange={handleSortChange}
+              platformSettings={platformSettings}
+              isLoading={!isClient}
+              searchTypeLabel="lotes"
+              emptyStateMessage={`Nenhum lote encontrado para o leilão "${auction.title}" com os filtros aplicados.`}
+              currentPage={currentPage}
+              visibleItemCount={visibleItemCount}
+              onPageChange={handlePageChange}
+              onLoadMore={handleLoadMore}
+          />
+         </main>
+      </div>
+
     </div>
   );
 }

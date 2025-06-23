@@ -1,34 +1,44 @@
 
 
-import Image from 'next/image';
-import Link from 'next/link';
-import type { Auction, PlatformSettings } from '@/types';
-import { Button } from '@/components/ui/button';
+// src/app/auctions/[auctionId]/page.tsx
+import type { Auction, PlatformSettings, LotCategory, SellerProfileInfo } from '@/types';
 import AuctionDetailsClient from './auction-details-client';
-import { getAuction, getAuctions } from '@/app/admin/auctions/actions'; // Import getAuction
-import { getLots } from '@/app/admin/lots/actions'; // Import getLots
-import { getPlatformSettings } from '@/app/admin/settings/actions'; // Import getPlatformSettings
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { getAuction } from '@/app/admin/auctions/actions';
+import { getLots } from '@/app/admin/lots/actions';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { getLotCategories } from '@/app/admin/categories/actions';
+import { getSellers } from '@/app/admin/sellers/actions';
 
-async function getAuctionData(id: string): Promise<{ auction?: Auction; platformSettings: PlatformSettings }> {
-  console.log(`[getAuctionData - Adapter Mode] Chamada com ID: ${id}`);
+async function getAuctionPageData(id: string): Promise<{ 
+  auction?: Auction; 
+  platformSettings: PlatformSettings;
+  allCategories: LotCategory[];
+  allSellers: SellerProfileInfo[];
+}> {
+  console.log(`[getAuctionPageData - Adapter Mode] Buscando leilão: ${id}`);
   
-  const [platformSettingsData, auctionFromDb] = await Promise.all([
+  const [platformSettingsData, auctionFromDb, allCategoriesData, allSellersData] = await Promise.all([
     getPlatformSettings(),
-    getAuction(id)
+    getAuction(id),
+    getLotCategories(),
+    getSellers()
   ]);
   
   if (!auctionFromDb) {
-    console.warn(`[getAuctionData - Adapter Mode] Nenhum leilão encontrado para o ID/PublicID: ${id}.`);
-    return { auction: undefined, platformSettings: platformSettingsData };
+    console.warn(`[getAuctionPageData] Leilão não encontrado para o ID/PublicID: ${id}.`);
+    return { platformSettings: platformSettingsData, allCategories: allCategoriesData, allSellers: allSellersData };
   }
 
   const lotsForAuction = await getLots(auctionFromDb.id);
   const auction = { ...auctionFromDb, lots: lotsForAuction, totalLots: lotsForAuction.length };
 
-  console.log(`[getAuctionData - Adapter Mode] Leilão ID ${id} encontrado. Total de lotes: ${lotsForAuction.length}`);
+  console.log(`[getAuctionPageData - Adapter Mode] Leilão ID ${id} encontrado. Total de lotes: ${lotsForAuction.length}`);
   
-  return { auction, platformSettings: platformSettingsData };
+  return { auction, platformSettings: platformSettingsData, allCategories: allCategoriesData, allSellers: allSellersData };
 }
+
 
 export default async function AuctionDetailPage({ params }: { params: { auctionId: string } }) {
   const auctionIdParam = params.auctionId; 
@@ -46,7 +56,7 @@ export default async function AuctionDetailPage({ params }: { params: { auctionI
     );
   }
   
-  const { auction, platformSettings } = await getAuctionData(auctionIdParam);
+  const { auction, platformSettings, allCategories, allSellers } = await getAuctionPageData(auctionIdParam);
 
   if (!auction) {
     return (
@@ -62,7 +72,12 @@ export default async function AuctionDetailPage({ params }: { params: { auctionI
 
   return (
     <div className="container mx-auto px-0 sm:px-4 py-2 sm:py-8"> 
-        <AuctionDetailsClient auction={auction} platformSettings={platformSettings} />
+        <AuctionDetailsClient 
+          auction={auction} 
+          platformSettings={platformSettings}
+          allCategories={allCategories}
+          allSellers={allSellers}
+        />
     </div>
   );
 }
