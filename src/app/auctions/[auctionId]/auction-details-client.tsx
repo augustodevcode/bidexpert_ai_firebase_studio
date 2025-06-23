@@ -13,17 +13,16 @@ import LotListItem from '@/components/lot-list-item';
 import {
   FileText, Heart, Eye, ListChecks, MapPin, Gavel, Tag, CalendarDays, SlidersHorizontal
 } from 'lucide-react';
-import { format, isPast } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { isPast } from 'date-fns';
 import { getAuctionStatusText, slugify, getUniqueLotLocations } from '@/lib/sample-data';
 import SearchResultsFrame from '@/components/search-results-frame';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 const sortOptionsLots = [
   { value: 'relevance', label: 'Relevância' },
@@ -171,15 +170,17 @@ export default function AuctionDetailsClient({ auction, platformSettings, allCat
   
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'Nacional';
 
+  const auctioneerInitial = auction.auctioneer ? auction.auctioneer.charAt(0).toUpperCase() : '?';
+
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2 space-y-8">
           <Card className="shadow-lg overflow-hidden">
              <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
-              <div className="relative aspect-video md:aspect-[4/3] md:col-span-1 bg-muted">
+              <div className="relative aspect-[4/3] md:col-span-1 bg-muted">
                 <Image
-                    src={auction.imageUrl || 'https://placehold.co/600x800.png'}
+                    src={auction.imageUrl || 'https://placehold.co/600x450.png'}
                     alt={auction.title}
                     fill
                     className="object-cover"
@@ -193,7 +194,7 @@ export default function AuctionDetailsClient({ auction, platformSettings, allCat
               </div>
 
               <div className="p-6 flex flex-col md:col-span-2">
-                <Badge variant="secondary" className="mb-2 w-fit">{auction.auctionType || 'Leilão'}</Badge>
+                <Badge variant="outline" className="mb-2 w-fit">{auction.auctionType || 'Leilão'}</Badge>
                 <h1 className="text-3xl font-bold font-headline">{auction.title}</h1>
                 <p className="text-muted-foreground mt-2">{auction.description}</p>
                 
@@ -208,13 +209,16 @@ export default function AuctionDetailsClient({ auction, platformSettings, allCat
                         <MapPin className="h-4 w-4 mr-2 text-primary"/>
                         <span className="truncate">{displayLocation}</span>
                     </div>
-                    <div className="flex items-center" title="Leiloeiro Responsável">
-                        <Gavel className="h-4 w-4 mr-2 text-primary"/>
-                        <span className="truncate">{auction.auctioneer}</span>
-                    </div>
-                    <div className="flex items-center" title="Total de Visitas">
+                    <div className="flex items-center" title="Visitas">
                         <Eye className="h-4 w-4 mr-2 text-primary"/>
                         <span>{auction.visits?.toLocaleString('pt-BR') || 0} Visitas</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                       <Avatar className="h-6 w-6 border">
+                            <AvatarImage src={auction.auctioneerLogoUrl} alt={auction.auctioneer} data-ai-hint="logo leiloeiro pequeno" />
+                            <AvatarFallback>{auctioneerInitial}</AvatarFallback>
+                        </Avatar>
+                       <span className="truncate" title={auction.auctioneer}>{auction.auctioneer}</span>
                     </div>
                 </div>
 
@@ -261,6 +265,7 @@ export default function AuctionDetailsClient({ auction, platformSettings, allCat
              onFilterReset={handleFilterReset}
              initialFilters={activeFilters}
              filterContext="auctions"
+             disableCategoryFilter={true}
            />
          </aside>
 
@@ -282,6 +287,7 @@ export default function AuctionDetailsClient({ auction, platformSettings, allCat
                             onFilterReset={handleFilterReset}
                             initialFilters={activeFilters}
                             filterContext="auctions"
+                            disableCategoryFilter={true}
                         />
                     </div>
                 </SheetContent>
