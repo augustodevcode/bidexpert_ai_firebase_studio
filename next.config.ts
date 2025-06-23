@@ -39,7 +39,7 @@ const nextConfig: NextConfig = {
   headers: async () => [
     {
       source: '/:path*',
-      headers: [{ key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*; style-src 'self' 'unsafe-inline' https://*; img-src 'self' data: https://*; media-src https://*; font-src 'self' https://*; connect-src 'self' https://*; object-src 'none'; base-uri 'self'; form-action 'self';" }],
+      headers: [{ key: 'Content-Security-Policy', value: "default-src 'self'; frame-src 'self' https://www.google.com https://www.openstreetmap.org; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*; style-src 'self' 'unsafe-inline' https://*; img-src 'self' data: https://*; media-src https://*; font-src 'self' https://*; connect-src 'self' https://*; object-src 'none'; base-uri 'self'; form-action 'self';" }],
     },
   ],
 };
