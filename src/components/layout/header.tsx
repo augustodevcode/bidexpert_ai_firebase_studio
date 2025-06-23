@@ -75,7 +75,7 @@ export default function Header() {
   const [searchCategories, setSearchCategories] = useState<LotCategory[]>([]);
   const [auctioneers, setAuctioneers] = useState<AuctioneerProfileInfo[]>([]);
   const [consignorMegaMenuGroups, setConsignorMegaMenuGroups] = useState<MegaMenuGroup[]>([]);
-  const [isClient, setIsClient] = useState(false);
+  const [favoriteCount, setFavoriteCount] = useState(0);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSearchCategorySlug, setSelectedSearchCategorySlug] = useState<string | undefined>(undefined);
@@ -101,7 +101,20 @@ export default function Header() {
   }, [isMobileMenuOpen, setIsMobileMenuOpen]);
 
   useEffect(() => {
-    setIsClient(true);
+    const updateFavoriteCount = () => {
+        setFavoriteCount(getFavoriteLotIdsFromStorage().length);
+    };
+    updateFavoriteCount();
+
+    // Custom event to update favorites from other components
+    const handleFavoritesChange = () => updateFavoriteCount();
+    window.addEventListener('favorites-updated', handleFavoritesChange);
+    // Also listen to storage changes from other tabs
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'bidExpertFavoriteLotIds') {
+            updateFavoriteCount();
+        }
+    });
 
     async function fetchInitialData() {
       console.log('[Header fetchInitialData] Iniciando busca de dados...');
@@ -160,6 +173,8 @@ export default function Header() {
       }
     }
     fetchInitialData();
+    
+    return () => window.removeEventListener('favorites-updated', handleFavoritesChange);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -514,7 +529,7 @@ export default function Header() {
             <Button variant="ghost" size="icon" className="relative hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" asChild aria-label="Favoritos">
               <Link href="/dashboard/favorites">
                 <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
-                {isClient && <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-accent-foreground text-accent border-accent">{getFavoriteLotIdsFromStorage().length > 0 ? getFavoriteLotIdsFromStorage().length : 0}</Badge>}
+                {favoriteCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-accent-foreground text-accent border-accent">{favoriteCount}</Badge>}
               </Link>
             </Button>
              <UserNav />
@@ -526,7 +541,7 @@ export default function Header() {
       <div className="border-b bg-background text-foreground hidden md:block">
         <div className="container mx-auto px-4 flex h-12 items-center justify-between">
             {/* Categorias Megamenu (à esquerda) */}
-            {isClient && firstNavItem && firstNavItem.isMegaMenu && (
+            {firstNavItem && firstNavItem.isMegaMenu && (
             <NavigationMenu className="relative z-10 flex items-center justify-start">
                 <NavigationMenuList>
                 <NavigationMenuItem value={firstNavItem.label}>
@@ -565,12 +580,12 @@ export default function Header() {
       </div>
 
       {/* Breadcrumbs Bar */}
-      {isClient && pathname !== '/' && (
-        <nav aria-label="Breadcrumb" className="bg-secondary text-secondary-foreground text-xs py-2.5 border-b h-10 flex items-center">
+      {pathname !== '/' && (
+        <div className="bg-secondary text-secondary-foreground text-xs h-10 flex items-center border-b">
             <div className="container mx-auto px-4">
                 <DynamicBreadcrumbs />
             </div>
-        </nav>
+        </div>
       )}
     </header>
   );
