@@ -1,79 +1,98 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
 import type { Lot, Auction } from '@/types';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-
-// This is a one-time side effect. This is the cleanest place to put it,
-// right after the import and before the component definition.
-// This is safe because the entire file is client-side only due to the dynamic import in the parent page.
-// @ts-ignore
-delete L.Icon.Default.prototype._getIconUrl;
-
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default.src,
-    iconUrl: require('leaflet/dist/images/marker-icon.png').default.src,
-    shadowUrl: require('leaflet/dist/images/marker-shadow.png').default.src,
-});
-
+import { Loader2 } from 'lucide-react';
 
 function LotPopupCard({ lot }: { lot: Lot }) {
-  return (
-    <div className="w-48">
-      <div className="relative aspect-video">
-        <Image 
-          src={lot.imageUrl || 'https://placehold.co/200x150.png'} 
-          alt={lot.title} 
-          fill 
-          className="object-cover rounded-t-md"
-          data-ai-hint={lot.dataAiHint || 'imagem lote mapa'}
-        />
-      </div>
-      <div className="p-2">
-        <h4 className="font-bold text-sm truncate" title={lot.title}>{lot.title}</h4>
-        <p className="text-primary font-bold text-md">
-          R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-        </p>
-        <Button asChild size="sm" className="w-full mt-2 h-8 text-xs">
-          <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>Ver Lote</Link>
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function AuctionPopupCard({ auction }: { auction: Auction }) {
     return (
-        <div className="w-48 p-2">
-             <h4 className="font-bold text-sm truncate" title={auction.title}>{auction.title}</h4>
-             <p className="text-xs text-muted-foreground">
-                Início: {format(new Date(auction.auctionDate as Date), "dd/MM/yyyy", { locale: ptBR })}
-             </p>
-             <p className="text-primary font-bold text-md">
-                {auction.totalLots || 0} Lotes
-            </p>
-            <Button asChild size="sm" className="w-full mt-2 h-8 text-xs">
-                <Link href={`/auctions/${auction.publicId || auction.id}`}>Ver Leilão</Link>
-            </Button>
+      <div className="w-48">
+        <div className="relative aspect-video">
+          <Image 
+            src={lot.imageUrl || 'https://placehold.co/200x150.png'} 
+            alt={lot.title} 
+            fill 
+            className="object-cover rounded-t-md"
+            data-ai-hint={lot.dataAiHint || 'imagem lote mapa'}
+          />
         </div>
+        <div className="p-2">
+          <h4 className="font-bold text-sm truncate" title={lot.title}>{lot.title}</h4>
+          <p className="text-primary font-bold text-md">
+            R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          </p>
+          <Button asChild size="sm" className="w-full mt-2 h-8 text-xs">
+            <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>Ver Lote</Link>
+          </Button>
+        </div>
+      </div>
     );
-}
+  }
+  
+  function AuctionPopupCard({ auction }: { auction: Auction }) {
+      return (
+          <div className="w-48 p-2">
+               <h4 className="font-bold text-sm truncate" title={auction.title}>{auction.title}</h4>
+               <p className="text-xs text-muted-foreground">
+                  Início: {format(new Date(auction.auctionDate as Date), "dd/MM/yyyy", { locale: ptBR })}
+               </p>
+               <p className="text-primary font-bold text-md">
+                  {auction.totalLots || 0} Lotes
+              </p>
+              <Button asChild size="sm" className="w-full mt-2 h-8 text-xs">
+                  <Link href={`/auctions/${auction.publicId || auction.id}`}>Ver Leilão</Link>
+              </Button>
+          </div>
+      );
+  }
 
 export default function MapSearchComponent({ items, itemType }: { items: (Lot | Auction)[]; itemType: 'lots' | 'auctions'; }) {
-  const mapCenter: [number, number] = [-14.2350, -51.9253]; // Brazil's center
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    // This effect runs only once on the client after the component mounts
+    // It dynamically imports Leaflet and its CSS, and fixes the icon path issue.
+    (async () => {
+      if (typeof window !== 'undefined') {
+        const L = await import('leaflet');
+        await import('leaflet/dist/leaflet.css');
+
+        // @ts-ignore
+        delete L.Icon.Default.prototype._getIconUrl;
+
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default.src,
+          iconUrl: require('leaflet/dist/images/marker-icon.png').default.src,
+          shadowUrl: require('leaflet/dist/images/marker-shadow.png').default.src,
+        });
+
+        setIsClient(true);
+      }
+    })();
+  }, []);
+
+  const mapCenter: [number, number] = [-14.2350, -51.9253];
   const defaultZoom = 4;
 
   const validItems = useMemo(() => {
     return items.filter(item => 'latitude' in item && 'longitude' in item && item.latitude && item.longitude);
   }, [items]);
+
+  if (!isClient) {
+    return (
+      <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="ml-2 text-muted-foreground">Carregando mapa...</p>
+      </div>
+    );
+  }
   
   return (
     <MapContainer 
@@ -88,7 +107,6 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       {validItems.map(item => {
-        // All items with lat/lng will be treated as Lot-like for positioning
         const lot = item as Lot; 
         return (
           <Marker key={item.id} position={[lot.latitude!, lot.longitude!]}>
