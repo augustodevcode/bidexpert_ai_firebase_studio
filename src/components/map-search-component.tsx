@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Loader2 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
 function LotPopupCard({ lot }: { lot: Lot }) {
   return (
@@ -58,24 +59,21 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // This effect runs only on the client side, after the component has mounted.
     setIsClient(true);
     
-    // Dynamically import leaflet and fix icon paths only on the client
-    (async () => {
-        const L = (await import('leaflet')).default;
-        // @ts-ignore
-        delete L.Icon.Default.prototype._getIconUrl;
+    // This runs only on the client, after the component has mounted.
+    // It prevents server-side rendering issues and fixes icon paths for webpack.
+    // @ts-ignore
+    delete L.Icon.Default.prototype._getIconUrl;
 
-        L.Icon.Default.mergeOptions({
-            iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default.src,
-            iconUrl: require('leaflet/dist/images/marker-icon.png').default.src,
-            shadowUrl: require('leaflet/dist/images/marker-shadow.png').default.src,
-        });
-    })();
+    L.Icon.Default.mergeOptions({
+        iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default.src,
+        iconUrl: require('leaflet/dist/images/marker-icon.png').default.src,
+        shadowUrl: require('leaflet/dist/images/marker-shadow.png').default.src,
+    });
   }, []);
 
-  const mapCenter: [number, number] = [-14.2350, -51.9253]; // Centro do Brasil
+  const mapCenter: [number, number] = [-14.2350, -51.9253]; // Brazil's center
   const defaultZoom = 4;
 
   const validItems = useMemo(() => {
@@ -86,6 +84,7 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
     return (
         <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <p className="ml-2 text-sm text-muted-foreground">Carregando mapa...</p>
         </div>
     );
   }
@@ -102,7 +101,8 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       {validItems.map(item => {
-        const lot = item as Lot; // All items with lat/lng will be treated as Lot for positioning
+        // All items with lat/lng will be treated as Lot-like for positioning
+        const lot = item as Lot; 
         return (
           <Marker key={item.id} position={[lot.latitude!, lot.longitude!]}>
             <Popup minWidth={192}>
