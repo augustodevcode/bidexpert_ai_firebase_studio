@@ -1,9 +1,9 @@
+
 'use client';
 
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import type { Lot, Auction } from '@/types';
-import L from 'leaflet';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -58,17 +58,22 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
-    
-    // This is still necessary to fix the broken icon path in Leaflet when used with bundlers like Webpack.
-    // @ts-ignore
-    delete L.Icon.Default.prototype._getIconUrl;
+    // This effect runs only on the client side.
+    // Dynamically import Leaflet here to avoid server-side errors.
+    import('leaflet').then(L => {
+      // Fix for Leaflet icons not showing up in Next.js
+      // @ts-ignore
+      delete L.Icon.Default.prototype._getIconUrl;
 
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      });
     });
+    
+    // Set isClient to true to trigger render of the map container.
+    setIsClient(true);
   }, []);
 
   const mapCenter: [number, number] = [-14.2350, -51.9253]; // Centro do Brasil
