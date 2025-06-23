@@ -31,6 +31,7 @@ import { updatePlatformSettings } from './actions';
 interface SettingsFormProps {
   initialData: PlatformSettings;
   activeSection: string;
+  onUpdateSuccess?: () => void;
 }
 
 const defaultMapSettings: MapSettings = {
@@ -41,7 +42,7 @@ const defaultMapSettings: MapSettings = {
 };
 
 
-export default function SettingsForm({ initialData, activeSection }: SettingsFormProps) {
+export default function SettingsForm({ initialData, activeSection, onUpdateSuccess }: SettingsFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -105,7 +106,7 @@ export default function SettingsForm({ initialData, activeSection }: SettingsFor
           title: 'Sucesso!',
           description: result.message,
         });
-        router.refresh();
+        onUpdateSuccess?.(); // Trigger re-fetch in parent
       } else {
         toast({
           title: 'Erro ao Salvar',

@@ -112,7 +112,7 @@ function AdminSettingsPageContent({ initialSettings, initialError, onRetry }: Ad
                 </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <SettingsForm initialData={initialSettings} activeSection={activeSection} />
+                    <SettingsForm initialData={initialSettings} activeSection={activeSection} onUpdateSuccess={onRetry} />
                 </CardContent>
             </Card>
         </div>
@@ -161,4 +161,3 @@ export default function AdminSettingsPageWrapper() {
         </Suspense>
     );
 }
-
