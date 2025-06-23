@@ -1,8 +1,9 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 import type { Lot, Auction } from '@/types';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
@@ -10,8 +11,19 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Loader2 } from 'lucide-react';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+
+// This icon setup MUST run before any map is rendered.
+// It's safe to run it at the top level because the parent component
+// uses dynamic import with ssr: false, so this file only executes on the client.
+// @ts-ignore
+delete L.Icon.Default.prototype._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default.src,
+    iconUrl: require('leaflet/dist/images/marker-icon.png').default.src,
+    shadowUrl: require('leaflet/dist/images/marker-shadow.png').default.src,
+});
+
 
 function LotPopupCard({ lot }: { lot: Lot }) {
   return (
@@ -59,18 +71,9 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    // This effect will run once on the client after the initial render,
+    // causing a re-render where the map is finally displayed.
     setIsClient(true);
-    
-    // This runs only on the client, after the component has mounted.
-    // It prevents server-side rendering issues and fixes icon paths for webpack.
-    // @ts-ignore
-    delete L.Icon.Default.prototype._getIconUrl;
-
-    L.Icon.Default.mergeOptions({
-        iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default.src,
-        iconUrl: require('leaflet/dist/images/marker-icon.png').default.src,
-        shadowUrl: require('leaflet/dist/images/marker-shadow.png').default.src,
-    });
   }, []);
 
   const mapCenter: [number, number] = [-14.2350, -51.9253]; // Brazil's center
@@ -81,7 +84,13 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
   }, [items]);
   
   if (!isClient) {
-    return null; // Return null on first render, parent's dynamic import handles loading UI
+    // Return a placeholder that matches the parent's loading state.
+    // The key is that this does NOT contain a MapContainer.
+    return (
+        <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        </div>
+    );
   }
   
   return (
