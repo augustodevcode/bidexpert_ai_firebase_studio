@@ -5,7 +5,7 @@ import type { Auction, PlatformSettings, LotCategory, SellerProfileInfo } from '
 import AuctionDetailsClient from './auction-details-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { getAuction } from '@/app/admin/auctions/actions';
+import { getAuction, getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
