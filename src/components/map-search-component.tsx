@@ -10,21 +10,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-
-// Corrige o problema com os ícones padrão do Leaflet no Next.js
-// @ts-ignore
-delete L.Icon.Default.prototype._getIconUrl;
-
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
-
-interface MapSearchComponentProps {
-  items: (Lot | Auction)[];
-  itemType: 'lot' | 'auction';
-}
+import { useEffect } from 'react';
 
 function LotPopupCard({ lot }: { lot: Lot }) {
   return (
@@ -44,7 +30,7 @@ function LotPopupCard({ lot }: { lot: Lot }) {
           R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
         </p>
         <Button asChild size="sm" className="w-full mt-2 h-8 text-xs">
-          <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>Ver Lote</Link>
+          <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>Ver Lote</Link>
         </Button>
       </div>
     </div>
@@ -62,14 +48,25 @@ function AuctionPopupCard({ auction }: { auction: Auction }) {
                 {auction.totalLots || 0} Lotes
             </p>
             <Button asChild size="sm" className="w-full mt-2 h-8 text-xs">
-                <Link href={`/auctions/${auction.id}`}>Ver Leilão</Link>
+                <Link href={`/auctions/${auction.publicId || auction.id}`}>Ver Leilão</Link>
             </Button>
         </div>
     );
 }
 
+export default function MapSearchComponent({ items, itemType }: { items: (Lot | Auction)[]; itemType: 'lot' | 'auction'; }) {
 
-export default function MapSearchComponent({ items, itemType }: MapSearchComponentProps) {
+  useEffect(() => {
+    // @ts-ignore
+    delete L.Icon.Default.prototype._getIconUrl;
+
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    });
+  }, []);
+
   const mapCenter: [number, number] = [-14.2350, -51.9253]; // Centro do Brasil
   const defaultZoom = 4;
 
