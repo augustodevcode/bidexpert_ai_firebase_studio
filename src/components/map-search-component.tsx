@@ -54,11 +54,8 @@ function LotPopupCard({ lot }: { lot: Lot }) {
           <div className="w-48 p-2">
                <h4 className="font-bold text-sm truncate" title={auction.title}>{auction.title}</h4>
                <p className="text-xs text-muted-foreground">
-                  Início: {format(new Date(auction.auctionDate as Date), "dd/MM/yyyy", { locale: ptBR })}
+                  Lotes: {auction.totalLots || 0}
                </p>
-               <p className="text-primary font-bold text-md">
-                  {auction.totalLots || 0} Lotes
-              </p>
               <Button asChild size="sm" className="w-full mt-2 h-8 text-xs">
                   <Link href={`/auctions/${auction.publicId || auction.id}`}>Ver Leilão</Link>
               </Button>
@@ -80,7 +77,6 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
       zoom={defaultZoom} 
       scrollWheelZoom={true} 
       style={{ height: '100%', width: '100%' }}
-      className="rounded-lg"
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
