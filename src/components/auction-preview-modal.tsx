@@ -20,7 +20,7 @@ interface AuctionPreviewModalProps {
 export default function AuctionPreviewModal({ auction, isOpen, onClose }: AuctionPreviewModalProps) {
   if (!isOpen) return null;
 
-  const lastStageEndDate = auction.auctionStages.length > 0 
+  const lastStageEndDate = auction.auctionStages && auction.auctionStages.length > 0 
     ? auction.auctionStages[auction.auctionStages.length - 1].endDate 
     : auction.endDate; // fallback to auction.endDate if available
 
@@ -74,7 +74,7 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
           <div className="flex items-center">
             <DollarSign className="h-4 w-4 mr-2 text-primary" /> Oferta Inicial: 
             <span className="font-medium ml-1">
-              R$ {auction.initialOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              R$ {(auction.initialOffer || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
            <div className="flex items-center">
@@ -91,7 +91,7 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
         <div className="mb-4">
           <h4 className="font-semibold mb-1">Praças do Leilão:</h4>
           <div className="space-y-2">
-            {auction.auctionStages.map((stage, index) => (
+            {auction.auctionStages && auction.auctionStages.map((stage, index) => (
               <div key={index} className={`p-2.5 rounded-md text-sm border ${new Date(stage.endDate) < new Date() ? 'border-muted text-muted-foreground line-through' : 'border-primary/30 bg-primary/5'}`}>
                 <p className="font-medium">{stage.name}</p>
                 <p className="text-xs">{stage.statusText || 'Encerramento'}: {format(new Date(stage.endDate), "dd 'de' MMMM 'de' yyyy 'às' HH:mm'h'", { locale: ptBR })}</p>

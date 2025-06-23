@@ -1915,11 +1915,11 @@
       "seller": "Vara de Falências do Rio de Janeiro - TJRJ",
       "totalLots": 1,
       "createdAt": "2025-05-21T18:34:27.765Z",
-      "updatedAt": "2025-05-22T18:34:27.765Z",
+      "updatedAt": "2025-06-23T01:38:45.215Z",
       "automaticBiddingEnabled": false,
       "achievedRevenue": 0,
       "totalHabilitatedUsers": 0,
-      "isFeaturedOnMarketplace": false,
+      "isFeaturedOnMarketplace": true,
       "marketplaceAnnouncementTitle": "",
       "lots": [
         {
