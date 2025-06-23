@@ -1,7 +1,6 @@
 
 'use client';
 
-import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import type { Lot, Auction } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -9,8 +8,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { useEffect } from 'react';
 
 function LotPopupCard({ lot }: { lot: Lot }) {
   return (
@@ -55,13 +53,11 @@ function AuctionPopupCard({ auction }: { auction: Auction }) {
 }
 
 export default function MapSearchComponent({ items, itemType }: { items: (Lot | Auction)[]; itemType: 'lot' | 'auction'; }) {
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // This effect runs only on the client side.
-    // Dynamically import Leaflet here to avoid server-side errors.
+    // These imports only run on the client, avoiding server-side errors.
+    import('leaflet/dist/leaflet.css');
     import('leaflet').then(L => {
-      // Fix for Leaflet icons not showing up in Next.js
       // @ts-ignore
       delete L.Icon.Default.prototype._getIconUrl;
 
@@ -71,9 +67,6 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
     });
-    
-    // Set isClient to true to trigger render of the map container.
-    setIsClient(true);
   }, []);
 
   const mapCenter: [number, number] = [-14.2350, -51.9253]; // Centro do Brasil
@@ -81,15 +74,6 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
 
   const validItems = items.filter(item => 'latitude' in item && 'longitude' in item && item.latitude && item.longitude);
   
-  if (!isClient) {
-    return (
-      <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="ml-2 text-muted-foreground">Carregando mapa...</p>
-      </div>
-    );
-  }
-
   return (
     <MapContainer 
       center={mapCenter} 
@@ -102,7 +86,7 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       {validItems.map(item => {
-        const lot = item as Lot; // Assuming all items with lat/lng are Lots for this structure
+        const lot = item as Lot; // All items with lat/lng will be treated as Lot for positioning
         return (
           <Marker key={item.id} position={[lot.latitude!, lot.longitude!]}>
             <Popup minWidth={192}>
