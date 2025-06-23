@@ -8,7 +8,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { Loader2 } from 'lucide-react';
+// import L from 'leaflet'; // <-- REMOVED STATIC IMPORT
 
 function LotPopupCard({ lot }: { lot: Lot }) {
   return (
@@ -52,10 +54,13 @@ function AuctionPopupCard({ auction }: { auction: Auction }) {
     );
 }
 
-export default function MapSearchComponent({ items, itemType }: { items: (Lot | Auction)[]; itemType: 'lot' | 'auction'; }) {
+export default function MapSearchComponent({ items, itemType }: { items: (Lot | Auction)[]; itemType: 'lots' | 'auctions'; }) {
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // These imports only run on the client, avoiding server-side errors.
+    setIsClient(true);
+    
+    // Import leaflet and its CSS dynamically ONLY on the client-side
     import('leaflet/dist/leaflet.css');
     import('leaflet').then(L => {
       // @ts-ignore
@@ -72,8 +77,18 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
   const mapCenter: [number, number] = [-14.2350, -51.9253]; // Centro do Brasil
   const defaultZoom = 4;
 
-  const validItems = items.filter(item => 'latitude' in item && 'longitude' in item && item.latitude && item.longitude);
+  const validItems = useMemo(() => {
+    return items.filter(item => 'latitude' in item && 'longitude' in item && item.latitude && item.longitude);
+  }, [items]);
   
+  if (!isClient) {
+    return (
+      <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <MapContainer 
       center={mapCenter} 
@@ -90,7 +105,7 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
         return (
           <Marker key={item.id} position={[lot.latitude!, lot.longitude!]}>
             <Popup minWidth={192}>
-              {itemType === 'lot' ? <LotPopupCard lot={item as Lot} /> : <AuctionPopupCard auction={item as Auction} />}
+              {itemType === 'lots' ? <LotPopupCard lot={item as Lot} /> : <AuctionPopupCard auction={item as Auction} />}
             </Popup>
           </Marker>
         );
