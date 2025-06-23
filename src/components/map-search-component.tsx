@@ -1,7 +1,7 @@
 
 'use client';
 
-import 'leaflet/dist/leaflet.css';
+import { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import type { Lot, Auction } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -9,21 +9,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useMemo } from 'react';
-import L from 'leaflet';
-
-// This is a common fix for a known issue with Leaflet and Webpack.
-// It ensures that the default marker icons are loaded correctly.
-// We need to do this before any map or markers are rendered.
-// @ts-ignore
-delete L.Icon.Default.prototype._getIconUrl;
-
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default.src,
-  iconUrl: require('leaflet/dist/images/marker-icon.png').default.src,
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png').default.src,
-});
-
+import { Loader2 } from 'lucide-react';
+import 'leaflet/dist/leaflet.css';
 
 function LotPopupCard({ lot }: { lot: Lot }) {
   return (
@@ -68,12 +55,40 @@ function AuctionPopupCard({ auction }: { auction: Auction }) {
 }
 
 export default function MapSearchComponent({ items, itemType }: { items: (Lot | Auction)[]; itemType: 'lots' | 'auctions'; }) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    // This effect runs only on the client side, after the component has mounted.
+    setIsClient(true);
+    
+    // Dynamically import leaflet and fix icon paths only on the client
+    (async () => {
+        const L = (await import('leaflet')).default;
+        // @ts-ignore
+        delete L.Icon.Default.prototype._getIconUrl;
+
+        L.Icon.Default.mergeOptions({
+            iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default.src,
+            iconUrl: require('leaflet/dist/images/marker-icon.png').default.src,
+            shadowUrl: require('leaflet/dist/images/marker-shadow.png').default.src,
+        });
+    })();
+  }, []);
+
   const mapCenter: [number, number] = [-14.2350, -51.9253]; // Centro do Brasil
   const defaultZoom = 4;
 
   const validItems = useMemo(() => {
     return items.filter(item => 'latitude' in item && 'longitude' in item && item.latitude && item.longitude);
   }, [items]);
+  
+  if (!isClient) {
+    return (
+        <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        </div>
+    );
+  }
   
   return (
     <MapContainer 
