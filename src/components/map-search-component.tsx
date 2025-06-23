@@ -81,12 +81,7 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
   }, [items]);
   
   if (!isClient) {
-    return (
-        <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            <p className="ml-2 text-sm text-muted-foreground">Carregando mapa...</p>
-        </div>
-    );
+    return null; // Return null on first render, parent's dynamic import handles loading UI
   }
   
   return (
