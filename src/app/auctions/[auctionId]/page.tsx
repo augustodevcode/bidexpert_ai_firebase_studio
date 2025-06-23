@@ -1,7 +1,7 @@
 
 
 // src/app/auctions/[auctionId]/page.tsx
-import type { Auction, PlatformSettings, LotCategory, SellerProfileInfo } from '@/types';
+import type { Auction, PlatformSettings, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import AuctionDetailsClient from './auction-details-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -10,20 +10,29 @@ import { getLots } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
+import { getAuctioneers } from '@/app/admin/auctioneers/actions'; // Importar getAuctioneers
 
 async function getAuctionPageData(id: string): Promise<{ 
   auction?: Auction; 
+  auctioneer?: AuctioneerProfileInfo | null;
   platformSettings: PlatformSettings;
   allCategories: LotCategory[];
   allSellers: SellerProfileInfo[];
 }> {
   console.log(`[getAuctionPageData - Adapter Mode] Buscando leilão: ${id}`);
   
-  const [platformSettingsData, auctionFromDb, allCategoriesData, allSellersData] = await Promise.all([
+  const [
+      platformSettingsData, 
+      auctionFromDb, 
+      allCategoriesData, 
+      allSellersData,
+      allAuctioneersData
+    ] = await Promise.all([
     getPlatformSettings(),
     getAuction(id),
     getLotCategories(),
-    getSellers()
+    getSellers(),
+    getAuctioneers()
   ]);
   
   if (!auctionFromDb) {
@@ -34,9 +43,15 @@ async function getAuctionPageData(id: string): Promise<{
   const lotsForAuction = await getLots(auctionFromDb.id);
   const auction = { ...auctionFromDb, lots: lotsForAuction, totalLots: lotsForAuction.length };
 
+  let auctioneer: AuctioneerProfileInfo | null = null;
+  if (auction.auctioneerId) {
+      const found = allAuctioneersData.find(a => a.id === auction.auctioneerId);
+      auctioneer = found || null;
+  }
+
   console.log(`[getAuctionPageData - Adapter Mode] Leilão ID ${id} encontrado. Total de lotes: ${lotsForAuction.length}`);
   
-  return { auction, platformSettings: platformSettingsData, allCategories: allCategoriesData, allSellers: allSellersData };
+  return { auction, auctioneer, platformSettings: platformSettingsData, allCategories: allCategoriesData, allSellers: allSellersData };
 }
 
 
@@ -56,7 +71,7 @@ export default async function AuctionDetailPage({ params }: { params: { auctionI
     );
   }
   
-  const { auction, platformSettings, allCategories, allSellers } = await getAuctionPageData(auctionIdParam);
+  const { auction, auctioneer, platformSettings, allCategories, allSellers } = await getAuctionPageData(auctionIdParam);
 
   if (!auction) {
     return (
@@ -74,6 +89,7 @@ export default async function AuctionDetailPage({ params }: { params: { auctionI
     <div className="container mx-auto px-0 sm:px-4 py-2 sm:py-8"> 
         <AuctionDetailsClient 
           auction={auction} 
+          auctioneer={auctioneer}
           platformSettings={platformSettings}
           allCategories={allCategories}
           allSellers={allSellers}

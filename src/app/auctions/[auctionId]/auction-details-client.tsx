@@ -5,13 +5,13 @@ import React from 'react';
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Auction, Lot, PlatformSettings, AuctionStage, LotCategory, SellerProfileInfo } from '@/types';
+import type { Auction, Lot, PlatformSettings, AuctionStage, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
 import {
-  FileText, Heart, Eye, ListChecks, MapPin, Gavel, Tag, CalendarDays, SlidersHorizontal
+  FileText, Heart, Eye, ListChecks, MapPin, Gavel, Tag, CalendarDays, SlidersHorizontal, UserCircle, Briefcase, ExternalLink
 } from 'lucide-react';
 import { isPast } from 'date-fns';
 import { getAuctionStatusText, slugify, getUniqueLotLocations } from '@/lib/sample-data';
@@ -49,12 +49,13 @@ const initialFiltersState: ActiveFilters = {
 
 interface AuctionDetailsClientProps {
   auction: Auction;
+  auctioneer: AuctioneerProfileInfo | null;
   platformSettings: PlatformSettings;
   allCategories: LotCategory[];
   allSellers: SellerProfileInfo[];
 }
 
-export default function AuctionDetailsClient({ auction, platformSettings, allCategories, allSellers }: AuctionDetailsClientProps) {
+export default function AuctionDetailsClient({ auction, auctioneer, platformSettings, allCategories, allSellers }: AuctionDetailsClientProps) {
   const [isClient, setIsClient] = useState(false);
   const [lotSearchTerm, setLotSearchTerm] = useState('');
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
@@ -170,32 +171,32 @@ export default function AuctionDetailsClient({ auction, platformSettings, allCat
   
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'Nacional';
 
-  const auctioneerInitial = auction.auctioneer ? auction.auctioneer.charAt(0).toUpperCase() : '?';
+  const auctioneerInitial = auctioneer?.name ? auctioneer.name.charAt(0).toUpperCase() : (auction.auctioneer ? auction.auctioneer.charAt(0).toUpperCase() : '?');
 
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2 space-y-8">
           <Card className="shadow-lg overflow-hidden">
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
-              <div className="relative aspect-[4/3] md:col-span-1 bg-muted">
+             <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-0">
+              <div className="relative aspect-square md:aspect-[3/4] bg-muted">
                 <Image
-                    src={auction.imageUrl || 'https://placehold.co/600x450.png'}
+                    src={auction.imageUrl || 'https://placehold.co/400x533.png'}
                     alt={auction.title}
                     fill
                     className="object-cover"
                     priority
                     data-ai-hint={auction.dataAiHint || 'imagem leilao'}
                 />
-                  <div className="absolute top-2 left-2 flex flex-col items-start gap-1.5 z-10">
-                      <Badge variant="outline" className="bg-background/80 font-semibold">{getAuctionStatusText(auction.status)}</Badge>
-                      {auction.isFeaturedOnMarketplace && <Badge className="bg-amber-400 text-amber-900">DESTAQUE</Badge>}
-                  </div>
+                <div className="absolute top-2 left-2 flex flex-col items-start gap-1.5 z-10">
+                    <Badge variant="outline" className="bg-background/80 font-semibold">{getAuctionStatusText(auction.status)}</Badge>
+                    {auction.isFeaturedOnMarketplace && <Badge className="bg-amber-400 text-amber-900">DESTAQUE</Badge>}
+                </div>
               </div>
 
-              <div className="p-6 flex flex-col md:col-span-2">
+              <div className="p-6 flex flex-col">
                 <Badge variant="outline" className="mb-2 w-fit">{auction.auctionType || 'Leilão'}</Badge>
-                <h1 className="text-3xl font-bold font-headline">{auction.title}</h1>
+                <h1 className="text-2xl md:text-3xl font-bold font-headline">{auction.title}</h1>
                 <p className="text-muted-foreground mt-2">{auction.description}</p>
                 
                 <Separator className="my-4"/>
@@ -209,16 +210,13 @@ export default function AuctionDetailsClient({ auction, platformSettings, allCat
                         <MapPin className="h-4 w-4 mr-2 text-primary"/>
                         <span className="truncate">{displayLocation}</span>
                     </div>
+                     <div className="flex items-center" title="Total de Lotes">
+                        <ListChecks className="h-4 w-4 mr-2 text-primary"/>
+                        <span>{auction.totalLots || 0} Lotes no total</span>
+                    </div>
                     <div className="flex items-center" title="Visitas">
                         <Eye className="h-4 w-4 mr-2 text-primary"/>
                         <span>{auction.visits?.toLocaleString('pt-BR') || 0} Visitas</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                       <Avatar className="h-6 w-6 border">
-                            <AvatarImage src={auction.auctioneerLogoUrl} alt={auction.auctioneer} data-ai-hint="logo leiloeiro pequeno" />
-                            <AvatarFallback>{auctioneerInitial}</AvatarFallback>
-                        </Avatar>
-                       <span className="truncate" title={auction.auctioneer}>{auction.auctioneer}</span>
                     </div>
                 </div>
 
@@ -239,9 +237,29 @@ export default function AuctionDetailsClient({ auction, platformSettings, allCat
           </Card>
         </div>
 
-        <div className="lg:col-span-1 space-y-6">
-          <Card className="shadow-md sticky top-24">
-            <CardContent className="p-6">
+        <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
+          {auctioneer && (
+             <Card className="shadow-md">
+                <CardHeader className="text-center">
+                    <Avatar className="h-20 w-20 mx-auto mb-3 border-2 border-primary/30">
+                        <AvatarImage src={auctioneer.logoUrl || `https://placehold.co/80x80.png?text=${auctioneerInitial}`} alt={auctioneer.name} data-ai-hint={auctioneer.dataAiHintLogo || "logo leiloeiro"} />
+                        <AvatarFallback>{auctioneerInitial}</AvatarFallback>
+                    </Avatar>
+                    <CardTitle className="text-lg">{auctioneer.name}</CardTitle>
+                    <CardDescription className="text-xs">{auctioneer.registrationNumber || 'Leiloeiro Oficial'}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button asChild variant="outline" className="w-full">
+                        <Link href={`/auctioneers/${auctioneer.slug || auctioneer.publicId}`}>
+                           <Briefcase className="mr-2 h-4 w-4" /> Ver outros leilões
+                        </Link>
+                    </Button>
+                </CardContent>
+             </Card>
+          )}
+
+          <Card className="shadow-md">
+            <CardContent className="p-4 md:p-6">
               <AuctionStagesTimeline 
                   auctionOverallStartDate={new Date(auction.auctionDate)}
                   stages={auction.auctionStages || []}
