@@ -19,6 +19,7 @@ import { getAuctionStatusText, slugify } from '@/lib/sample-data';
 import SearchResultsFrame from '@/components/search-results-frame';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 
 const sortOptionsLots = [
   { value: 'relevance', label: 'Relevância' },
@@ -104,80 +105,100 @@ export default function AuctionDetailsClient({ auction, platformSettings }: Auct
         <span className="font-medium text-foreground truncate">{auction.title}</span>
       </div>
 
-      <Card className="shadow-lg overflow-hidden">
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4">
-            <div className="p-6">
-                <Badge variant="outline" className="mb-2">{auction.auctionType || 'Leilão'}</Badge>
-                <h1 className="text-3xl font-bold font-headline">{auction.title}</h1>
-                <p className="text-muted-foreground mt-2">{auction.description}</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <div className="lg:col-span-2 space-y-8">
+          <Card className="shadow-lg overflow-hidden">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+              {/* Image Section */}
+              <div className="relative aspect-video md:aspect-auto min-h-[300px] bg-muted">
+                <Image
+                    src={auction.imageUrl || 'https://placehold.co/600x800.png'}
+                    alt={auction.title}
+                    fill
+                    className="object-cover"
+                    priority
+                    data-ai-hint={auction.dataAiHint || 'imagem leilao'}
+                />
+                  <div className="absolute top-2 left-2 flex flex-col items-start gap-1.5 z-10">
+                      <Badge variant="outline" className="bg-background/80 font-semibold">{getAuctionStatusText(auction.status)}</Badge>
+                      {auction.isFeaturedOnMarketplace && <Badge className="bg-amber-400 text-amber-900">DESTAQUE</Badge>}
+                  </div>
+              </div>
+
+              {/* Details Section */}
+              <div className="p-6 flex flex-col">
+                <Badge variant="secondary" className="mb-2 w-fit">{auction.auctionType || 'Leilão'}</Badge>
+                <h1 className="text-2xl font-bold font-headline">{auction.title}</h1>
+                <p className="text-muted-foreground mt-2 text-sm">{auction.description}</p>
+                
                 <Separator className="my-4"/>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm">
-                    <div className="flex items-center" title="Status do Leilão">
-                        <ListChecks className="h-4 w-4 mr-2 text-primary"/>
-                        <span className="font-semibold">{getAuctionStatusText(auction.status)}</span>
-                    </div>
-                     <div className="flex items-center" title="Categoria">
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <div className="flex items-center" title="Categoria">
                         <Tag className="h-4 w-4 mr-2 text-primary"/>
                         <span className="truncate">{auction.category}</span>
-                    </div>
-                     <div className="flex items-center" title="Data de Início">
-                        <CalendarDays className="h-4 w-4 mr-2 text-primary"/>
-                        {format(new Date(auction.auctionDate), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                     </div>
                     <div className="flex items-center" title="Localização Principal">
                         <MapPin className="h-4 w-4 mr-2 text-primary"/>
                         <span className="truncate">{displayLocation}</span>
                     </div>
-                     <div className="flex items-center" title="Leiloeiro Responsável">
+                    <div className="flex items-center" title="Leiloeiro Responsável">
                         <Gavel className="h-4 w-4 mr-2 text-primary"/>
                         <span className="truncate">{auction.auctioneer}</span>
                     </div>
-                     <div className="flex items-center" title="Total de Visitas">
+                    <div className="flex items-center" title="Total de Visitas">
                         <Eye className="h-4 w-4 mr-2 text-primary"/>
                         <span>{auction.visits?.toLocaleString('pt-BR') || 0} Visitas</span>
                     </div>
                 </div>
-            </div>
-            <div className="bg-secondary/40 p-6 flex flex-col justify-between gap-4">
-                {auction.auctioneerLogoUrl && (
-                    <Link href={`/auctioneers/${slugify(auction.auctioneer)}`} className="block text-center">
-                        <Image src={auction.auctioneerLogoUrl} alt={`Logo ${auction.auctioneer}`} width={150} height={60} className="object-contain mx-auto" data-ai-hint="logo leiloeiro" />
-                    </Link>
-                )}
-                <div className="space-y-2 text-center md:text-right">
-                    {auction.documentsUrl && (
-                        <Button asChild className="w-full">
+
+                <div className="mt-auto pt-6 flex flex-wrap gap-2">
+                      {auction.documentsUrl && (
+                        <Button asChild>
                             <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer">
-                                <FileText className="h-4 w-4 mr-2" /> Ver Edital e Documentos
+                                <FileText className="h-4 w-4 mr-2" /> Ver Edital
                             </a>
                         </Button>
                     )}
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline">
                         <Heart className="h-4 w-4 mr-2" /> Favoritar Leilão
                     </Button>
                 </div>
+              </div>
             </div>
-        </div>
-      </Card>
+          </Card>
 
-      <div className="mt-8">
-         <SearchResultsFrame
-            items={paginatedLots}
-            totalItemsCount={sortedLots.length}
-            renderGridItem={renderGridItem}
-            renderListItem={renderListItem}
-            sortOptions={sortOptionsLots}
-            initialSortBy={sortBy}
-            onSortChange={handleSortChange}
-            platformSettings={platformSettings}
-            isLoading={!isClient}
-            searchTypeLabel="lotes"
-            emptyStateMessage={`Nenhum lote encontrado para o leilão "${auction.title}".`}
-            currentPage={currentPage}
-            visibleItemCount={visibleItemCount}
-            onPageChange={handlePageChange}
-            onLoadMore={handleLoadMore}
-        />
+          <div className="mt-8">
+            <SearchResultsFrame
+                items={paginatedLots}
+                totalItemsCount={sortedLots.length}
+                renderGridItem={renderGridItem}
+                renderListItem={renderListItem}
+                sortOptions={sortOptionsLots}
+                initialSortBy={sortBy}
+                onSortChange={handleSortChange}
+                platformSettings={platformSettings}
+                isLoading={!isClient}
+                searchTypeLabel="lotes"
+                emptyStateMessage={`Nenhum lote encontrado para o leilão "${auction.title}".`}
+                currentPage={currentPage}
+                visibleItemCount={visibleItemCount}
+                onPageChange={handlePageChange}
+                onLoadMore={handleLoadMore}
+            />
+          </div>
+        </div>
+
+        <div className="lg:col-span-1 space-y-6">
+          <Card className="shadow-md sticky top-24">
+            <CardContent className="p-6">
+              <AuctionStagesTimeline 
+                  auctionOverallStartDate={new Date(auction.auctionDate)}
+                  stages={auction.auctionStages || []}
+              />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

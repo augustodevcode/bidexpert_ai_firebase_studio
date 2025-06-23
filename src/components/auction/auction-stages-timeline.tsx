@@ -1,128 +1,87 @@
 
 'use client';
 
-import type { AuctionStage, AnyTimestamp } from '@/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, CalendarDays, Clock } from 'lucide-react';
+import type { AuctionStage } from '@/types';
+import { CalendarDays } from 'lucide-react';
 import { format, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import React from 'react';
 
 interface AuctionStagesTimelineProps {
-  auctionOverallStartDate: Date | null | undefined;
+  auctionOverallStartDate?: Date | null;
   stages: AuctionStage[];
 }
 
 export default function AuctionStagesTimeline({ auctionOverallStartDate, stages }: AuctionStagesTimelineProps) {
-  if ((!auctionOverallStartDate && (!stages || stages.length === 0)) || !stages ) {
-    return (
-      <Card className="mt-6 bg-secondary/30">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold">Linha do Tempo das Praças</CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 text-sm text-muted-foreground">
-          Defina a data de início do leilão e adicione praças/etapas para visualizar a linha do tempo.
-        </CardContent>
-      </Card>
-    );
+  const now = new Date();
+  
+  const processedStages = stages
+    .map(stage => ({
+      ...stage,
+      endDate: stage.endDate ? new Date(stage.endDate as string) : null,
+    }))
+    .sort((a, b) => (a.endDate?.getTime() || 0) - (b.endDate?.getTime() || 0));
+
+  let activeStageIndex = processedStages.findIndex(stage => stage.endDate && !isPast(stage.endDate));
+  if (activeStageIndex === -1 && processedStages.length > 0) {
+      // If all stages are in the past, consider the last one as "active" for styling purposes of what was the last step.
+      const lastStage = processedStages[processedStages.length - 1];
+      if (lastStage.endDate && isPast(lastStage.endDate)) {
+        activeStageIndex = processedStages.length; // All are completed
+      } else {
+        activeStageIndex = processedStages.length - 1;
+      }
   }
 
-  const overallStart = auctionOverallStartDate ? new Date(auctionOverallStartDate) : null;
-  const processedStages = stages.map(stage => ({
-    ...stage,
-    endDate: stage.endDate ? new Date(stage.endDate) : null,
-  }));
 
   return (
-    <Card className="mt-6 shadow-md">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold">Linha do Tempo das Praças</CardTitle>
-        <CardDescription className="text-xs">Visualização cronológica das etapas do leilão.</CardDescription>
-      </CardHeader>
-      <CardContent className="p-4">
-        <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:space-x-2 overflow-x-auto pb-3 -mb-3">
-          {/* Start of Auction */}
-          {overallStart && (
-            <div className="flex items-center space-x-2 flex-shrink-0">
-              <div className={cn(
-                "flex flex-col items-center p-3 border rounded-lg bg-green-50 dark:bg-green-900/30 min-w-[140px] text-center",
-                isPast(overallStart) ? "border-dashed border-green-400" : "border-solid border-green-500 shadow-sm"
-              )}>
-                <CalendarDays className="h-5 w-5 text-green-700 dark:text-green-400 mb-1" />
-                <span className="text-xs font-semibold text-green-700 dark:text-green-400">Início do Leilão</span>
-                <span className="text-xs text-muted-foreground mt-0.5">{format(overallStart, "dd/MM/yy HH:mm", { locale: ptBR })}</span>
-              </div>
-              {processedStages.length > 0 && <ArrowRight className="h-5 w-5 text-muted-foreground hidden sm:block" />}
-            </div>
-          )}
+    <div>
+        <h4 className="text-md font-semibold mb-3 flex items-center"><CalendarDays className="h-4 w-4 mr-2 text-primary" />Linha do Tempo</h4>
+        <div className="relative pl-3 space-y-0">
+            {processedStages.map((stage, index) => {
+                const isCompleted = stage.endDate ? isPast(stage.endDate) : false;
+                const isActive = index === activeStageIndex;
+                const isLast = index === processedStages.length - 1;
+                
+                return (
+                    <div key={stage.name || index} className="relative pb-6">
+                        {/* Timeline line */}
+                        {!isLast && (
+                            <div
+                                className={cn(
+                                "absolute left-[3px] top-2 h-full w-0.5",
+                                (isCompleted || isActive) ? "bg-primary" : "bg-border"
+                                )}
+                            />
+                        )}
 
-          {processedStages.map((stage, index) => {
-            const stageEndDate = stage.endDate;
-            const stageIsPast = stageEndDate ? isPast(stageEndDate) : false;
-            
-            let stageStartDate: Date | null = null;
-            if (index === 0 && overallStart) {
-                stageStartDate = overallStart;
-            } else if (index > 0 && processedStages[index - 1].endDate) {
-                stageStartDate = processedStages[index - 1].endDate;
-            }
+                        {/* Timeline circle */}
+                        <div className={cn(
+                            "absolute left-0 top-1.5 h-2 w-2 rounded-full",
+                            isCompleted ? "bg-primary" : (isActive ? "bg-primary ring-2 ring-primary/30" : "bg-border")
+                        )} />
 
-            return (
-              <React.Fragment key={(stage.name || `stage-${index}`) + index}>
-                {index > 0 && overallStart && ( /* Arrow for mobile connecting to overall start if it's the first in list but overallStart exists */
-                  <div className="sm:hidden h-4 flex items-center justify-center">
-                    <ArrowRight className="h-4 w-4 text-muted-foreground rotate-90" />
-                  </div>
-                )}
-                <div className={cn(
-                  "flex flex-col p-3 rounded-lg border min-w-[200px] flex-shrink-0",
-                  stageIsPast ? "bg-muted/50 border-dashed" : "bg-card border-border shadow-sm",
-                )}>
-                  <span className={cn(
-                    "text-sm font-semibold mb-1 truncate",
-                    stageIsPast ? "text-muted-foreground line-through" : "text-primary"
-                  )} title={stage.name || `Etapa ${index + 1}`}>
-                    {stage.name || `Etapa ${index + 1}`}
-                  </span>
-                   {stage.initialPrice !== undefined && (
-                     <span className="text-xs text-muted-foreground">
-                       Lance Inicial: R$ {stage.initialPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                     </span>
-                   )}
-                   {stageStartDate && (
-                     <div className="flex items-center text-xs mt-1 text-muted-foreground/80">
-                        <CalendarDays className={cn("h-3.5 w-3.5 mr-1.5", stageIsPast ? "" : "text-green-600")} />
-                        <span>
-                        Início: {format(stageStartDate, "dd/MM/yy HH:mm", { locale: ptBR })}
-                        </span>
+                        {/* Content */}
+                        <div className="pl-6">
+                            <p className={cn(
+                                "text-sm font-semibold",
+                                isCompleted ? "text-muted-foreground" : "text-foreground",
+                                isActive && "text-primary"
+                            )}>
+                                {stage.name || `Etapa ${index + 1}`}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                {stage.endDate ? format(stage.endDate, "dd/MM/yyyy 'às' HH:mm'h'", { locale: ptBR }) : 'Data indefinida'}
+                            </p>
+                        </div>
                     </div>
-                   )}
-                  <div className="flex items-center text-xs mt-1">
-                    <Clock className={cn("h-3.5 w-3.5 mr-1.5", stageIsPast ? "text-muted-foreground/70" : "text-red-600")} />
-                    <span className={cn(stageIsPast ? "text-muted-foreground/80" : "text-red-700 font-medium")}>
-                      Fim: {stageEndDate ? format(stageEndDate, "dd/MM/yy HH:mm", { locale: ptBR }) : "Não definido"}
-                    </span>
-                  </div>
-                </div>
-                {index < processedStages.length - 1 && (
-                  <div className="hidden sm:flex items-center justify-center flex-shrink-0 mx-1">
-                    <ArrowRight className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                )}
-                 {index < processedStages.length - 1 && (
-                  <div className="sm:hidden h-4 flex items-center justify-center">
-                    <ArrowRight className="h-4 w-4 text-muted-foreground rotate-90" />
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          })}
+                );
+            })}
+             {processedStages.length === 0 && (
+                <p className="text-xs text-muted-foreground">Datas das etapas não disponíveis.</p>
+            )}
         </div>
-        {(!overallStart && (!stages || stages.length === 0)) && (
-             <p className="text-sm text-muted-foreground text-center pt-2">Defina a data de início do leilão e as praças para ver a linha do tempo.</p>
-        )}
-      </CardContent>
-    </Card>
+    </div>
   );
 }
