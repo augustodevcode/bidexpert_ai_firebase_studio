@@ -1,3 +1,4 @@
+
 // src/lib/database/index.ts
 import type { IDatabaseAdapter } from '@/types';
 
@@ -43,7 +44,7 @@ function isAdapterInstanceValid(adapter: IDatabaseAdapter | undefined, systemCon
 
 export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
   const activeSystemEnv = process.env.ACTIVE_DATABASE_SYSTEM;
-  const activeSystem = activeSystemEnv?.toUpperCase() || 'SAMPLE_DATA'; 
+  const activeSystem = activeSystemEnv?.toUpperCase() || 'FIRESTORE'; // Default back to Firestore if not set
 
   console.log(`[DB Factory - getDatabaseAdapter ENTER] ACTIVE_DATABASE_SYSTEM: ${activeSystem}. Current dbInstance type: ${dbInstance?.constructor?.name}`);
 
@@ -76,8 +77,21 @@ export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
       const { MySqlAdapter } = await import('./mysql.adapter');
       newInstance = new MySqlAdapter();
       break;
+    case 'FIRESTORE': {
+        console.log('[DB Adapter] Dynamically importing Firestore Adapter...');
+        const { ensureAdminInitialized } = await import('@/lib/firebase/admin');
+        const { FirestoreAdapter } = await import('./firestore.adapter');
+        const { db: dbAdmin, error: sdkError } = ensureAdminInitialized();
+        if (sdkError || !dbAdmin) {
+            const errorMessage = `[DB Factory] Failed to initialize Firebase Admin SDK for Firestore Adapter: ${sdkError?.message || 'dbAdmin instance is null'}`;
+            console.error(errorMessage);
+            throw new Error(errorMessage);
+        }
+        newInstance = new FirestoreAdapter(dbAdmin);
+        break;
+    }
     default:
-      const errorMessage = `[DB Factory] FATAL: Unsupported or misconfigured database system: '${activeSystem}'. Supported: 'SAMPLE_DATA', 'POSTGRES', 'MYSQL'.`;
+      const errorMessage = `[DB Factory] FATAL: Unsupported or misconfigured database system: '${activeSystem}'. Supported: 'SAMPLE_DATA', 'POSTGRES', 'MYSQL', 'FIRESTORE'.`;
       console.error(errorMessage);
       throw new Error(errorMessage);
   }
