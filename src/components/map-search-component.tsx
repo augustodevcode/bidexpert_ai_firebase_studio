@@ -1,4 +1,3 @@
-
 'use client';
 
 import 'leaflet/dist/leaflet.css';
@@ -10,7 +9,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
 function LotPopupCard({ lot }: { lot: Lot }) {
@@ -56,8 +55,11 @@ function AuctionPopupCard({ auction }: { auction: Auction }) {
 }
 
 export default function MapSearchComponent({ items, itemType }: { items: (Lot | Auction)[]; itemType: 'lot' | 'auction'; }) {
-  
+  const [isClient, setIsClient] = useState(false);
+
   useEffect(() => {
+    setIsClient(true);
+    
     // This is still necessary to fix the broken icon path in Leaflet when used with bundlers like Webpack.
     // @ts-ignore
     delete L.Icon.Default.prototype._getIconUrl;
@@ -74,17 +76,21 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
 
   const validItems = items.filter(item => 'latitude' in item && 'longitude' in item && item.latitude && item.longitude);
   
+  if (!isClient) {
+    return (
+      <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="ml-2 text-muted-foreground">Carregando mapa...</p>
+      </div>
+    );
+  }
+
   return (
     <MapContainer 
       center={mapCenter} 
       zoom={defaultZoom} 
       scrollWheelZoom={true} 
       style={{ height: '100%', width: '100%' }}
-      placeholder={
-        <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        </div>
-      }
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
