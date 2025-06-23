@@ -1,19 +1,19 @@
 
 'use client';
 
-import type { Lot, Auction, BidInfo, Review, LotQuestion, SellerProfileInfo, PlatformSettings, AuctionStage } from '@/types';
+import type { Lot, Auction, BidInfo, Review, LotQuestion, SellerProfileInfo, PlatformSettings, AuctionStage, LotCategory } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
     Printer, Share2, ArrowLeft, ChevronLeft, ChevronRight, Key, Info,
     Tag, CalendarDays, Clock, Users, DollarSign, MapPin, Car, ThumbsUp,
-    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye, ExternalLink, ListFilter, FileQuestion, Banknote, Building, Link2 as LinkIcon, AlertCircle, Percent, Zap, TrendingUp, Crown, Layers
+    ShieldCheck, HelpCircle, ShoppingCart, Heart, X, Facebook, Mail, MessageSquareText, Gavel, ImageOff, Loader2, FileText, ThumbsDown, MessageCircle, Send, Eye, ExternalLink, ListFilter, FileQuestion, Banknote, Building, Link2 as LinkIcon, AlertCircle, Percent, Zap, TrendingUp, Crown, Layers, UserCircle
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -623,6 +623,44 @@ export default function LotDetailClientContent({
                         <span className="flex items-center"><MapPin className="h-4 w-4 mr-1 text-primary"/> Localização: {lotLocation}</span>
                         </div>
                     </CardContent>
+                    </Card>
+
+                    <Card id="auction-details-section" className="shadow-lg">
+                        <CardHeader>
+                            <CardTitle className="text-xl font-semibold flex items-center">
+                            <Gavel className="h-5 w-5 mr-2 text-muted-foreground" />
+                            Informações do Leilão
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3 text-sm">
+                            <Link href={`/auctions/${auction.publicId || auction.id}`} className="hover:text-primary">
+                            <p className="font-bold text-lg text-foreground">{auction.title}</p>
+                            </Link>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-muted-foreground">
+                                <div className="flex items-center">
+                                    <UserCircle className="h-4 w-4 mr-2" /> Leiloeiro: <span className="font-medium ml-1 text-foreground">{auction.auctioneer}</span>
+                                </div>
+                                <div className="flex items-center">
+                                    <Tag className="h-4 w-4 mr-2" /> Categoria: <span className="font-medium ml-1 text-foreground">{auction.category}</span>
+                                </div>
+                                <div className="flex items-center">
+                                    <Info className="h-4 w-4 mr-2" /> Status: 
+                                    <Badge variant="outline" className={`ml-2 text-xs ${getLotStatusColor(auction.status)} border-current`}>
+                                    {getAuctionStatusText(auction.status)}
+                                    </Badge>
+                                </div>
+                                {auction.endDate && (
+                                    <div className="flex items-center">
+                                    <CalendarDays className="h-4 w-4 mr-2" /> Fim: <span className="font-medium ml-1 text-foreground">{format(new Date(auction.endDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                        <CardFooter>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/auctions/${auction.publicId || auction.id}`}>Ver todos os lotes do leilão <ChevronRight className="h-4 w-4 ml-2" /></Link>
+                            </Button>
+                        </CardFooter>
                     </Card>
 
                     <Card className="shadow-lg">
