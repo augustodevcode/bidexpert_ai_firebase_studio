@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -10,11 +11,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Loader2 } from 'lucide-react';
 
-// This icon setup MUST run before any map is rendered.
-// It's safe to run it at the top level because the parent component
-// uses dynamic import with ssr: false, so this file only executes on the client.
+// This is a one-time side effect. This is the cleanest place to put it,
+// right after the import and before the component definition.
+// This is safe because the entire file is client-side only due to the dynamic import in the parent page.
 // @ts-ignore
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -68,14 +68,6 @@ function AuctionPopupCard({ auction }: { auction: Auction }) {
 }
 
 export default function MapSearchComponent({ items, itemType }: { items: (Lot | Auction)[]; itemType: 'lots' | 'auctions'; }) {
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    // This effect will run once on the client after the initial render,
-    // causing a re-render where the map is finally displayed.
-    setIsClient(true);
-  }, []);
-
   const mapCenter: [number, number] = [-14.2350, -51.9253]; // Brazil's center
   const defaultZoom = 4;
 
@@ -83,22 +75,13 @@ export default function MapSearchComponent({ items, itemType }: { items: (Lot | 
     return items.filter(item => 'latitude' in item && 'longitude' in item && item.latitude && item.longitude);
   }, [items]);
   
-  if (!isClient) {
-    // Return a placeholder that matches the parent's loading state.
-    // The key is that this does NOT contain a MapContainer.
-    return (
-        <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        </div>
-    );
-  }
-  
   return (
     <MapContainer 
       center={mapCenter} 
       zoom={defaultZoom} 
       scrollWheelZoom={true} 
       style={{ height: '100%', width: '100%' }}
+      className="rounded-lg"
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

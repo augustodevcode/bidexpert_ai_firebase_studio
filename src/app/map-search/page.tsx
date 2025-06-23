@@ -16,15 +16,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import dynamic from 'next/dynamic';
 
-const MapSearchComponent = dynamic(() => import('@/components/map-search-component'), {
-  ssr: false,
-  loading: () => (
-    <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
-      <Loader2 className="h-10 w-10 animate-spin text-primary" />
-    </div>
-  ),
-});
-
 export default function MapSearchPage() {
   const router = useRouter();
   const searchParamsHook = useSearchParams();
@@ -35,6 +26,16 @@ export default function MapSearchPage() {
   const [mapItems, setMapItems] = useState<(Lot | Auction)[]>([]);
   
   const platformSettings: PlatformSettings = samplePlatformSettings; 
+
+  const MapSearchComponent = useMemo(() => dynamic(() => import('@/components/map-search-component'), {
+    ssr: false,
+    loading: () => (
+      <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    ),
+  }), []);
+
 
   useEffect(() => {
     setIsLoading(true);
