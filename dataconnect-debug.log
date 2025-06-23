@@ -619,3 +619,15 @@ E0623 05:08:50.349047    3857 load.go:23] Could not load config from "/home/user
 E0623 05:09:00.342340    3857 load.go:23] Could not load config from "/home/user/studio/dataconnect": schema is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
 E0623 05:09:10.342668    3857 load.go:23] Could not load config from "/home/user/studio/dataconnect": schema is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
 E0623 05:09:20.350601    3857 load.go:23] Could not load config from "/home/user/studio/dataconnect": schema is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0623 05:09:30.351215    3857 load.go:23] Could not load config from "/home/user/studio/dataconnect": schema is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0623 05:09:40.342747    3857 load.go:23] Could not load config from "/home/user/studio/dataconnect": schema is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0623 05:09:50.343882    3857 load.go:23] Could not load config from "/home/user/studio/dataconnect": schema is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0623 05:10:00.351248    3857 load.go:23] Could not load config from "/home/user/studio/dataconnect": schema is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0623 05:10:10.342360    3857 load.go:23] Could not load config from "/home/user/studio/dataconnect": schema is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0623 05:10:20.349333    3857 load.go:23] Could not load config from "/home/user/studio/dataconnect": schema is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0623 05:10:30.352731    3857 load.go:23] Could not load config from "/home/user/studio/dataconnect": schema is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0623 05:10:40.342136    3857 load.go:23] Could not load config from "/home/user/studio/dataconnect": schema is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0623 05:10:50.348055    3857 load.go:23] Could not load config from "/home/user/studio/dataconnect": schema is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0623 05:11:00.341972    3857 load.go:23] Could not load config from "/home/user/studio/dataconnect": schema is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0623 05:11:10.342007    3857 load.go:23] Could not load config from "/home/user/studio/dataconnect": schema is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+E0623 05:11:20.351050    3857 load.go:23] Could not load config from "/home/user/studio/dataconnect": schema is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`

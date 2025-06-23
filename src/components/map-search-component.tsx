@@ -86,7 +86,7 @@ export default function MapSearchComponent({ items, itemType, mapCenter, mapZoom
             lng = item.longitude;
             
             if (itemType === 'lots') {
-                url = `/auctions/${(item as Lot).auctionId}/lots/${item.publicId || item.id}`;
+                url = `/auctions/${(item as Lot).auctionId}/lots/${(item as Lot).publicId || item.id}`;
                 popupContent = `
                 <strong><a href="${url}" target="_blank" rel="noopener noreferrer">${item.title}</a></strong>
                 <p>Preço: R$ ${(item as Lot).price.toLocaleString('pt-BR')}</p>
@@ -123,7 +123,7 @@ export default function MapSearchComponent({ items, itemType, mapCenter, mapZoom
   return (
     <div
       ref={mapContainerRef}
-      className="w-full h-full"
+      className="w-full h-full relative z-0"
       style={{ minHeight: '400px' }}
     />
   );
