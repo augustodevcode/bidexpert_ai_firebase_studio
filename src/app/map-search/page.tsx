@@ -1,31 +1,39 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { MapPin, Loader2, AlertCircle, ListFilter, Layers, Search as SearchIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { sampleLots, sampleAuctions, samplePlatformSettings } from '@/lib/sample-data';
 import type { Lot, Auction, PlatformSettings } from '@/types';
 import LotCard from '@/components/lot-card';
 import AuctionCard from '@/components/auction-card';
-import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation'; 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import dynamic from 'next/dynamic';
+import { getAuctions } from '@/app/admin/auctions/actions';
+import { getLots } from '@/app/admin/lots/actions';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { LatLngBounds } from 'leaflet';
 
 export default function MapSearchPage() {
   const router = useRouter();
   const searchParamsHook = useSearchParams();
+  
+  const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
+  const [allLots, setAllLots] = useState<Lot[]>([]);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
+
   const [searchTerm, setSearchTerm] = useState(searchParamsHook.get('term') || '');
   const [searchType, setSearchType] = useState<'lots' | 'auctions'>( (searchParamsHook.get('type') as 'lots' | 'auctions') || 'lots');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [mapItems, setMapItems] = useState<(Lot | Auction)[]>([]);
-  
-  const platformSettings: PlatformSettings = samplePlatformSettings; 
+
+  const [initialCenter, setInitialCenter] = useState<[number, number]>([-14.235, -51.9253]); // Brazil center
+  const [mapBounds, setMapBounds] = useState<LatLngBounds | null>(null);
+  const [isUserInteraction, setIsUserInteraction] = useState(false); // Flag to check if map was moved by user
 
   const MapSearchComponent = useMemo(() => dynamic(() => import('@/components/map-search-component'), {
     ssr: false,
@@ -36,57 +44,97 @@ export default function MapSearchPage() {
     ),
   }), []);
 
-
   useEffect(() => {
-    setIsLoading(true);
-    // Simular pedido de localização ao usuário (navigator.geolocation)
-    // Por enquanto, vamos apenas carregar os itens iniciais
-    setTimeout(() => {
-        const initialItems = searchType === 'lots'
-            ? sampleLots.filter(lot => lot.latitude && lot.longitude)
-            : sampleAuctions.filter(auc => auc.city && auc.state); 
-        setMapItems(initialItems);
-        setIsLoading(false);
-    }, 500);
-  }, [searchType]);
+    // Get user's current location to center map
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setInitialCenter([position.coords.latitude, position.coords.longitude]);
+            },
+            () => {
+                console.warn("Geolocation permission denied. Defaulting to center of Brazil.");
+            }
+        );
+    }
+
+    async function fetchData() {
+        setIsLoading(true);
+        try {
+            const [settings, auctions, lots] = await Promise.all([
+                getPlatformSettings(),
+                getAuctions(),
+                getLots()
+            ]);
+            setPlatformSettings(settings);
+            setAllAuctions(auctions);
+            setAllLots(lots);
+        } catch (err) {
+            console.error("Failed to fetch map data", err);
+            setError("Falha ao carregar dados do mapa.");
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    fetchData();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-    setTimeout(() => {
-      let results: (Lot | Auction)[] = [];
-      const term = searchTerm.toLowerCase();
-      if (searchType === 'lots') {
-        results = sampleLots.filter(lot => 
-            (lot.title.toLowerCase().includes(term) || 
-             (lot.description && lot.description.toLowerCase().includes(term)) ||
-             (lot.cityName && lot.cityName.toLowerCase().includes(term)) ||
-             (lot.stateUf && lot.stateUf.toLowerCase().includes(term))
-            ) && lot.latitude && lot.longitude
-        );
-      } else {
-        results = sampleAuctions.filter(auc => 
-            (auc.title.toLowerCase().includes(term) ||
-             (auc.description && auc.description.toLowerCase().includes(term)) ||
-             (auc.city && auc.city.toLowerCase().includes(term)) ||
-             (auc.state && auc.state.toLowerCase().includes(term))
-            )
-        );
-      }
-      setMapItems(results);
-      setIsLoading(false);
-      if (results.length === 0) {
-        setError("Nenhum resultado encontrado para sua busca.");
-      }
-    }, 700);
+    setIsUserInteraction(false); // Reset interaction flag to allow map to fit new bounds
+    setMapBounds(null); // Clear bounds to trigger re-fit
+    // Filtering will happen automatically in useMemo
   };
+
+  const handleBoundsChange = useCallback((bounds: LatLngBounds) => {
+    setMapBounds(bounds);
+    setIsUserInteraction(true); // User moved the map
+  }, []);
   
-  const displayedItems = mapItems.slice(0, 20); // Limitar a exibição na lista
+  const filteredItems = useMemo(() => {
+    if (isLoading) return [];
+    
+    const baseItems = searchType === 'lots' ? allLots : allAuctions;
+    
+    let results = baseItems.filter(item => {
+        // Search term filter
+        const term = searchTerm.toLowerCase();
+        if (term) {
+             const searchableText = `${item.title} ${item.description || ''} ${'city' in item ? item.city : ''} ${'state' in item ? item.state : ''} ${'cityName' in item ? item.cityName : ''} ${'stateUf' in item ? item.stateUf : ''}`;
+             if (!searchableText.toLowerCase().includes(term)) {
+                 return false;
+             }
+        }
+
+        // Map bounds filter (only if user has interacted with map)
+        if (isUserInteraction && mapBounds) {
+            if ('latitude' in item && 'longitude' in item && item.latitude && item.longitude) {
+                if (!mapBounds.contains([item.latitude, item.longitude])) {
+                    return false;
+                }
+            } else {
+                return false; // Don't show items without coordinates when filtering by map
+            }
+        }
+
+        return true;
+    });
+
+    return results;
+
+  }, [searchTerm, searchType, allLots, allAuctions, isLoading, mapBounds, isUserInteraction]);
+  
+  const displayedItems = filteredItems.slice(0, 50); // Limit list display to 50 items
+
+  if (!platformSettings) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-var(--header-height,160px)-1rem)] gap-4 md:gap-6">
-        {/* Coluna da Esquerda: Filtros e Lista de Resultados */}
         <Card className="md:w-2/5 lg:w-1/3 xl:w-1/4 flex flex-col shadow-lg h-full">
             <CardHeader className="p-4 border-b">
                 <form onSubmit={handleSearch} className="flex flex-col gap-3">
@@ -118,10 +166,10 @@ export default function MapSearchPage() {
             </CardHeader>
             <ScrollArea className="flex-grow">
                 <CardContent className="p-3 space-y-3">
-                {isLoading && !error && mapItems.length === 0 && (
+                {isLoading && (
                     <div className="text-center py-6">
                         <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto" />
-                        <p className="text-sm text-muted-foreground mt-2">Buscando...</p>
+                        <p className="text-sm text-muted-foreground mt-2">Carregando...</p>
                     </div>
                 )}
                 {!isLoading && error && (
@@ -147,9 +195,14 @@ export default function MapSearchPage() {
             </ScrollArea>
         </Card>
 
-        {/* Coluna da Direita: Mapa */}
         <div className="flex-grow h-full md:h-auto rounded-lg overflow-hidden shadow-lg">
-             <MapSearchComponent items={mapItems} itemType={searchType} />
+             <MapSearchComponent
+                items={filteredItems}
+                itemType={searchType}
+                initialCenter={initialCenter}
+                onBoundsChange={handleBoundsChange}
+                shouldFitBounds={!isUserInteraction}
+             />
         </div>
     </div>
   );
