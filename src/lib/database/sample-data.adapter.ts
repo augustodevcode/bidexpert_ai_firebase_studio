@@ -22,6 +22,7 @@ import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const dataFilePath = path.join(process.cwd(), 'sample-data.local.json');
+const tempDataFilePath = path.join(process.cwd(), 'sample-data.local.json.tmp');
 
 type SampleDataContainer = ReturnType<typeof getSampleData>;
 
@@ -49,19 +50,44 @@ export class SampleDataAdapter implements IDatabaseAdapter {
         // Safeguard against empty or malformed file content
         if (!fileContent || fileContent.trim().length < 2 || !fileContent.trim().startsWith('{')) {
             console.warn(`[SampleDataAdapter] File at ${dataFilePath} is empty or malformed. Using default data instead.`);
-            // To prevent a loop of bad writes, we can optionally delete the bad file.
-            // For now, we'll just ignore it for this load.
             return pristineData;
         }
 
-        // Revive dates from string format
         const parsedData = JSON.parse(fileContent, (key, value) => {
            if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(value)) {
                 return new Date(value);
             }
             return value;
         });
-        // Merge with defaults to ensure all keys are present, preventing crashes from incomplete files.
+
+        // DEEP MERGE PLATFORM SETTINGS
+        if (parsedData.samplePlatformSettings && pristineData.samplePlatformSettings) {
+          const mergedSettings = {
+            ...pristineData.samplePlatformSettings,
+            ...parsedData.samplePlatformSettings,
+            // Ensure nested objects are also merged to prevent data loss
+            platformPublicIdMasks: {
+              ...(pristineData.samplePlatformSettings.platformPublicIdMasks || {}),
+              ...(parsedData.samplePlatformSettings.platformPublicIdMasks || {}),
+            },
+            mapSettings: {
+              ...(pristineData.samplePlatformSettings.mapSettings || {}),
+              ...(parsedData.samplePlatformSettings.mapSettings || {}),
+            },
+            mentalTriggerSettings: {
+              ...(pristineData.samplePlatformSettings.mentalTriggerSettings || {}),
+              ...(parsedData.samplePlatformSettings.mentalTriggerSettings || {}),
+            },
+             sectionBadgeVisibility: {
+              ...(pristineData.samplePlatformSettings.sectionBadgeVisibility || {}),
+              ...(parsedData.samplePlatformSettings.sectionBadgeVisibility || {}),
+            },
+          };
+          // Assign the properly merged settings back to parsedData
+          parsedData.samplePlatformSettings = mergedSettings;
+        }
+
+
         return { ...pristineData, ...parsedData };
       }
     } catch (error) {
@@ -74,7 +100,11 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   private async _persistData(): Promise<void> {
     try {
         console.log(`[SampleDataAdapter] Persisting data changes to ${dataFilePath}`);
-        await fs.promises.writeFile(dataFilePath, JSON.stringify(this.data, null, 2), 'utf-8');
+        const dataString = JSON.stringify(this.data, null, 2);
+        // Atomic write: write to temp file first, then rename
+        await fs.promises.writeFile(tempDataFilePath, dataString, 'utf-8');
+        await fs.promises.rename(tempDataFilePath, dataFilePath);
+        console.log(`[SampleDataAdapter] Data successfully persisted.`);
     } catch (error) {
         console.error(`[SampleDataAdapter] CRITICAL: Failed to persist data to ${dataFilePath}`, error);
     }
@@ -500,9 +530,37 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   }
 
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
-    console.log(`[SampleDataAdapter] Updating PlatformSettings.`);
+    console.log(`[SampleDataAdapter] Updating PlatformSettings with data:`, data);
     await delay(50);
-    this.data.samplePlatformSettings = { ...this.data.samplePlatformSettings, ...data, id: 'global', updatedAt: new Date() };
+    
+    const currentSettings = this.data.samplePlatformSettings || {};
+    // Deep merge to avoid losing nested properties not present in the form submit
+    const newSettings = {
+      ...currentSettings,
+      ...data,
+      platformPublicIdMasks: {
+        ...(currentSettings.platformPublicIdMasks || {}),
+        ...(data.platformPublicIdMasks || {}),
+      },
+      mapSettings: {
+        ...(currentSettings.mapSettings || {}),
+        ...(data.mapSettings || {}),
+      },
+       mentalTriggerSettings: {
+        ...(currentSettings.mentalTriggerSettings || {}),
+        ...(data.mentalTriggerSettings || {}),
+      },
+      sectionBadgeVisibility: {
+        ...(currentSettings.sectionBadgeVisibility || {}),
+        ...(data.sectionBadgeVisibility || {}),
+      },
+      id: 'global',
+      updatedAt: new Date()
+    };
+    
+    this.data.samplePlatformSettings = newSettings;
+    
+    console.log(`[SampleDataAdapter] New settings state after merge:`, this.data.samplePlatformSettings);
     await this._persistData();
     return { success: true, message: "Configurações da plataforma atualizadas (Sample Data)!" };
   }

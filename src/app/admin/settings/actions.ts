@@ -16,7 +16,9 @@ export async function updatePlatformSettings(
   const db = await getDatabaseAdapter();
   const result = await db.updatePlatformSettings(data);
   if (result.success) {
-    revalidatePath('/admin/settings', 'layout'); // Revalidate the layout to ensure all components get new data
+    // The revalidation is handled by the client-side fetch on success,
+    // which avoids potential race conditions with the dev server's cache.
+    // revalidatePath('/admin/settings', 'layout'); 
   }
   return result;
 }
