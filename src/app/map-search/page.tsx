@@ -146,7 +146,7 @@ export default function MapSearchPage() {
                 {!isLoading && !error && displayedItems.length > 0 && (
                     displayedItems.map(item => 
                     searchType === 'lots' 
-                        ? <LotCard key={`lot-${item.id}`} lot={item as Lot} platformSettingsProp={platformSettings} badgeVisibilityConfig={platformSettings.sectionBadgeVisibility?.searchGrid}/> 
+                        ? <LotCard key={`lot-${item.id}`} lot={item as Lot} platformSettings={platformSettings} badgeVisibilityConfig={platformSettings.sectionBadgeVisibility?.searchGrid}/> 
                         : <AuctionCard key={`auction-${item.id}`} auction={item as Auction} />
                     )
                 )}
@@ -161,5 +161,3 @@ export default function MapSearchPage() {
     </div>
   );
 }
-    
-
