@@ -23,6 +23,7 @@ import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdF
 import LotPreviewModal from './lot-preview-modal';
 import LotMapPreviewModal from './lot-map-preview-modal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import EntityEditMenu from './entity-edit-menu';
 
 interface TimeRemainingBadgeProps {
   endDate: Date | string;
@@ -126,10 +127,10 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setLotDetailUrl(`${window.location.origin}/auctions/${lot.auctionId}/lots/${lot.id}`);
+      setLotDetailUrl(`${window.location.origin}/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
       setIsFavorite(isLotFavoriteInStorage(lot.id));
     }
-  }, [lot.id, lot.auctionId]);
+  }, [lot.id, lot.auctionId, lot.publicId]);
 
   useEffect(() => {
     if (lot && lot.id) {
@@ -339,21 +340,11 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
                 <p className={`text-2xl font-bold ${lot.endDate && isPast(new Date(lot.endDate as string)) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
                   R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
-                 <div className="flex items-center text-xs text-muted-foreground mt-0.5 gap-2">
-                   {showCountdownOnThisCard && lot.endDate && (
-                     <TimeRemainingBadge
-                        endDate={lot.endDate}
-                        status={lot.status}
-                        showUrgencyTimer={sectionBadges.showUrgencyTimer !== false && mentalTriggersGlobalSettings.showUrgencyTimer}
-                        urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays}
-                        urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
-                    />
-                   )}
-                    <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate as string)) ? 'line-through' : ''}`}>
-                        <Gavel className="h-3 w-3" />
-                        <span>{lot.bidsCount || 0} Lances</span>
-                    </div>
-                </div>
+                {lot.bidIncrementStep && (
+                    <p className="text-xs text-muted-foreground">
+                    Incremento: R$ {lot.bidIncrementStep.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                )}
               </div>
                <Button asChild size="sm" className="w-full md:w-auto mt-2 md:mt-0">
                     <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>

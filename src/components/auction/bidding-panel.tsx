@@ -6,7 +6,7 @@ import type { Lot } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Zap, Clock, Info, Gavel } from 'lucide-react';
+import { DollarSign, Zap, Clock, Info, Gavel, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -33,8 +33,13 @@ export default function BiddingPanel({ currentLot }: BiddingPanelProps) {
   const [isPlacingBid, setIsPlacingBid] = useState(false);
 
   const currentBid = currentLot.price;
-  const bidIncrement = currentBid > 10000 ? 500 : (currentBid > 1000 ? 100 : 50); // Example increment logic
+  const bidIncrement = currentLot.bidIncrementStep || ((currentLot.price || 0) > 10000 ? 500 : ((currentLot.price || 0) > 1000 ? 100 : 50));
   const nextMinimumBid = currentBid + bidIncrement;
+  
+  const displayBidAmount = parseFloat(bidAmount || '0');
+  const finalBidAmount = displayBidAmount >= nextMinimumBid ? displayBidAmount : nextMinimumBid;
+  const bidButtonLabel = `Dar Lance (R$ ${finalBidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;
+
 
   const handlePlaceBid = () => {
     setIsPlacingBid(true);
@@ -42,7 +47,7 @@ export default function BiddingPanel({ currentLot }: BiddingPanelProps) {
     setTimeout(() => {
       toast({
         title: "Lance Enviado (Simulação)",
-        description: `Seu lance de R$ ${bidAmount || nextMinimumBid} para "${currentLot.title}" foi registrado.`,
+        description: `Seu lance de R$ ${finalBidAmount.toLocaleString('pt-BR')} para "${currentLot.title}" foi registrado.`,
       });
       setBidAmount('');
       setIsPlacingBid(false);
@@ -88,8 +93,11 @@ export default function BiddingPanel({ currentLot }: BiddingPanelProps) {
                 step={bidIncrement}
               />
             </div>
+            <p className="text-xs text-center text-muted-foreground -mt-2">
+                Incremento mínimo: R$ {bidIncrement.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </p>
             <Button onClick={handlePlaceBid} disabled={isPlacingBid} className="w-full h-11 text-base">
-              {isPlacingBid ? 'Enviando...' : `Dar Lance (R$ ${bidAmount || nextMinimumBid.toLocaleString('pt-BR')})`}
+              {isPlacingBid ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : bidButtonLabel}
             </Button>
 
             <div className="flex items-center justify-between space-x-2 p-3 border rounded-md bg-muted/20">
