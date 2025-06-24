@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -767,10 +768,13 @@ export interface IDatabaseAdapter {
   getLot(idOrPublicId: string): Promise<Lot | null>;
   updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string }>;
   deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string }>;
+  
   getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]>;
   placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }>;
+  
   getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]>;
   createReview(review: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; reviewId?: string }>;
+  
   getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]>;
   createQuestion(question: Omit<LotQuestion, 'id' | 'createdAt' | 'answeredAt' | 'answeredByUserId' | 'answeredByUserDisplayName' | 'isPublic'>): Promise<{ success: boolean; message: string; questionId?: string }>;
   answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string }>;
@@ -795,7 +799,7 @@ export interface IDatabaseAdapter {
   getRole(id: string): Promise<Role | null>;
   getRoleByName(name: string): Promise<Role | null>;
   updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string }>;
-  deleteRole(id: string): Promise<{ success: boolean; message: string }>;
+  deleteRole(id: string): Promise<{ success: boolean; message: string; }>;
   ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }>;
 
   createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }>;
