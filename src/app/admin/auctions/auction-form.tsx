@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -114,6 +113,9 @@ export default function AuctionForm({
     name: "auctionStages",
   });
 
+  const watchedAuctionDate = useWatch({ control: form.control, name: 'auctionDate' });
+  const watchedStages = useWatch({ control: form.control, name: 'auctionStages' });
+
   const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
     if (selectedItems.length > 0) {
       const selectedMediaItem = selectedItems[0];
@@ -125,9 +127,6 @@ export default function AuctionForm({
     }
     setIsMediaDialogOpen(false);
   };
-
-  const watchedAuctionDate = useWatch({ control: form.control, name: 'auctionDate' });
-  const watchedStages = useWatch({ control: form.control, name: 'auctionStages' });
 
   async function onSubmit(values: AuctionFormValues) {
     setIsSubmitting(true);
@@ -433,9 +432,8 @@ export default function AuctionForm({
             <Button type="button" variant="outline" size="sm" onClick={() => append({ name: `${fields.length + 1}ª Praça`, endDate: new Date(), initialPrice: undefined })} className="text-xs">
               <PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa
             </Button>
-
+            
             <AuctionStagesTimeline auctionOverallStartDate={watchedAuctionDate} stages={watchedStages as AuctionStage[]} />
-
 
             <Separator />
             <h3 className="text-md font-semibold text-muted-foreground flex items-center"><Landmark className="h-4 w-4 mr-2"/>Localização e Detalhes Adicionais</h3>

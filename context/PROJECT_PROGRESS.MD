@@ -1,3 +1,4 @@
+
 # Project Progress - BidExpert
 
 ## DONE
@@ -47,7 +48,7 @@
 - **Search Page Hero (Item 2 - DONE):** Removed smaller icon from the center of the main hero banner on the search page.
 - **CRUD Actions Refactoring (Item 6 - DONE):**
   - **Sub-task 1 (DONE):** Refactored server actions for States, Cities, Auctioneers, and Sellers to use the `getDatabaseAdapter()`, ensuring they work with the configured data source (sample-data, MySQL, or PostgreSQL).
-- **Media Library Integration (Items 3, 4, 7 - UI Done):**
+- **Media Library Integration (Items 3, 4, 7):**
   - **Sub-task 1 (DONE):** Replaced URL text inputs with a media selection button and preview in the Category CRUD form.
   - **Sub-task 2 (DONE):** Replaced URL inputs in Auctioneer, Seller, and Auction forms.
 - **Item 19 (Auction Stages Timeline - DONE):** Implemented a visual timeline in the auction edit form that dynamically updates as the user changes stage dates.
@@ -75,3 +76,4 @@
 - **Refine UI/UX & Mobile Responsiveness.**
 - **Comprehensive Testing & Performance Optimization.**
 - **Error Handling & Logging (User-friendly messages, server-side logging).**
+
