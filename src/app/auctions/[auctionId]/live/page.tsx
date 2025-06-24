@@ -1,7 +1,6 @@
 
 'use client'; // This page now needs client-side hooks for searchParams
 
-import { sampleAuctions } from '@/lib/sample-data';
 import type { Auction, Lot } from '@/types';
 import VirtualAuditoriumClient from './virtual-auditorium-client';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import Link from 'next/link';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { getAuction, getLots } from '@/app/admin/auctions/actions'; // Updated to use correct actions
+import { getAuction } from '@/app/admin/auctions/actions';
 import { getLots as getLotData } from '@/app/admin/lots/actions';
 
 
