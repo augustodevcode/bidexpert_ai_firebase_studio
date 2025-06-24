@@ -1,43 +1,21 @@
 'use client';
 
-import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import React, { useEffect, useRef } from 'react';
 import L, { type LatLngBounds } from 'leaflet';
-import React, { useEffect, useMemo, useCallback, useState } from 'react';
+import 'leaflet/dist/leaflet.css';
 import type { Lot, Auction } from '@/types';
-import { Loader2 } from 'lucide-react';
 
-// This is the correct and robust way to fix default icon paths with bundlers like Webpack
-// It should be done once before any map components are rendered.
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+// Fix for default Leaflet icon paths in Next.js
+// This needs to be done BEFORE any markers are created.
+// @ts-ignore
+delete L.Icon.Default.prototype._getIconUrl;
 
 L.Icon.Default.mergeOptions({
-    iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png').default.src,
-    iconUrl: require('leaflet/dist/images/marker-icon.png').default.src,
-    shadowUrl: require('leaflet/dist/images/marker-shadow.png').default.src,
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-
-// Internal component to handle map events
-function MapEvents({ onBoundsChange }: { onBoundsChange: (bounds: LatLngBounds) => void }) {
-  const map = useMapEvents({
-    moveend: () => onBoundsChange(map.getBounds()),
-    zoomend: () => onBoundsChange(map.getBounds()),
-    load: () => onBoundsChange(map.getBounds()),
-  });
-  return null;
-}
-
-// Internal component to handle auto-fitting bounds
-function ChangeView({ bounds }: { bounds: LatLngBounds }) {
-    const map = useMap();
-    useEffect(() => {
-        if (bounds.isValid()) {
-            map.fitBounds(bounds, { padding: [50, 50], animate: true });
-        }
-    }, [bounds, map]);
-    return null;
-}
 
 interface MapSearchComponentProps {
   items: (Lot | Auction)[];
@@ -48,73 +26,113 @@ interface MapSearchComponentProps {
   shouldFitBounds: boolean;
 }
 
-export default function MapSearchComponent({ items, itemType, mapCenter, mapZoom, onBoundsChange, shouldFitBounds }: MapSearchComponentProps) {
-    const [isClient, setIsClient] = useState(false);
+export default function MapSearchComponent({
+  items,
+  itemType,
+  mapCenter,
+  mapZoom,
+  onBoundsChange,
+  shouldFitBounds
+}: MapSearchComponentProps) {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.LayerGroup | null>(null);
 
-    useEffect(() => {
-        // This effect runs only once on the client after the component mounts
-        setIsClient(true);
-    }, []);
+  // Initialize map only once
+  useEffect(() => {
+    if (mapContainerRef.current && !mapRef.current) {
+      // Create map instance
+      mapRef.current = L.map(mapContainerRef.current, {
+        center: mapCenter,
+        zoom: mapZoom,
+        scrollWheelZoom: true,
+      });
 
+      // Add tile layer
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(mapRef.current);
 
-    const markers = useMemo(() => {
-        return items.map(item => {
-        if ('latitude' in item && 'longitude' in item && item.latitude && item.longitude) {
-            const url = itemType === 'lots'
-            ? `/auctions/${(item as Lot).auctionId}/lots/${(item as Lot).publicId || item.id}`
-            : `/auctions/${item.publicId || item.id}`;
-
-            const popupContent = `
-            <strong><a href="${url}" target="_blank" rel="noopener noreferrer">${item.title}</a></strong>
-            <p>${itemType === 'lots' ? `Preço: R$ ${(item as Lot).price.toLocaleString('pt-BR')}` : `Lotes: ${(item as Auction).totalLots || 0}`}</p>
-            `;
-
-            return (
-            <Marker key={`${itemType}-${item.id}`} position={[item.latitude, item.longitude]}>
-                <Popup>{popupContent}</Popup>
-            </Marker>
-            );
+      // Add marker layer group
+      markersRef.current = L.layerGroup().addTo(mapRef.current);
+      
+      // Add event listeners for bounds changes
+      mapRef.current.on('moveend', () => {
+        if (mapRef.current) {
+          onBoundsChange(mapRef.current.getBounds());
         }
-        return null;
-        }).filter(Boolean);
-    }, [items, itemType]);
-
-    const bounds = useMemo(() => {
-        const points: [number, number][] = [];
-        items.forEach(item => {
-            if ('latitude' in item && 'longitude' in item && item.latitude && item.longitude) {
-                points.push([item.latitude, item.longitude]);
-            }
-        });
-        if (points.length > 0) {
-            return new L.LatLngBounds(points);
+      });
+      mapRef.current.on('zoomend', () => {
+        if (mapRef.current) {
+          onBoundsChange(mapRef.current.getBounds());
         }
-        return null;
-    }, [items]);
-    
-    // Render a placeholder on the server and during the initial client render
-    if (!isClient) {
-        return (
-            <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            </div>
-        );
+      });
     }
 
-    return (
-        <MapContainer
-            center={mapCenter}
-            zoom={mapZoom}
-            scrollWheelZoom={true}
-            className="w-full h-full"
-        >
-            {shouldFitBounds && bounds && <ChangeView bounds={bounds} />}
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <MapEvents onBoundsChange={onBoundsChange} />
-            {markers}
-        </MapContainer>
-    );
+    // Cleanup function to remove the map instance
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array ensures this runs only once
+
+  // Effect to update map view (center/zoom/bounds)
+  useEffect(() => {
+    if (mapRef.current) {
+      if (shouldFitBounds && items.length > 0) {
+        const points = items
+          .filter(item => item.latitude && item.longitude)
+          .map(item => [item.latitude, item.longitude] as [number, number]);
+        
+        if (points.length > 0) {
+          const bounds = L.latLngBounds(points);
+          mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+        }
+      } else {
+         mapRef.current.setView(mapCenter, mapZoom);
+      }
+    }
+  }, [mapCenter, mapZoom, shouldFitBounds, items]);
+
+
+  // Effect to update markers
+  useEffect(() => {
+    if (markersRef.current) {
+      markersRef.current.clearLayers();
+      items
+        .filter(item => item.latitude && item.longitude)
+        .forEach(item => {
+          const url = itemType === 'lots'
+            ? `/auctions/${(item as Lot).auctionId}/lots/${item.publicId || item.id}`
+            : `/auctions/${item.publicId || item.id}`;
+          
+          const popupContent = `
+            <div>
+              <strong>
+                <a href="${url}" target="_blank" rel="noopener noreferrer">
+                  ${item.title}
+                </a>
+              </strong>
+              <p>
+                ${itemType === 'lots' 
+                  ? `Preço: R$ ${((item as Lot).price || 0).toLocaleString('pt-BR')}` 
+                  : `Lotes: ${(item as Auction).totalLots || 0}`
+                }
+              </p>
+            </div>
+          `;
+          
+          L.marker([item.latitude!, item.longitude!])
+            .addTo(markersRef.current!)
+            .bindPopup(popupContent);
+        });
+    }
+  }, [items, itemType]);
+
+  return (
+    <div ref={mapContainerRef} className="w-full h-full rounded-lg" style={{zIndex: 0}}></div>
+  );
 }
