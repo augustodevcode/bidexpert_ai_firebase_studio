@@ -20,8 +20,15 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters';
+import type { ActiveFilters } from '@/components/sidebar-filters';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import dynamic from 'next/dynamic';
+import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
+
+const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
+  loading: () => <SidebarFiltersSkeleton />,
+  ssr: false,
+});
 
 
 const sortOptionsLots = [

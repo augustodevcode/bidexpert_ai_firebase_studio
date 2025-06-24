@@ -510,91 +510,168 @@ export default function LotDetailClientContent({
     : nextMinimumBid;
   const bidButtonLabel = `Dar Lance (R$ ${displayBidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;
 
- return (
+  return (
     <>
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
-            <div className="flex-grow">
-                <h1 className="text-2xl md:text-3xl font-bold font-headline text-left">{lotTitle}</h1>
-                <div className="flex items-center gap-2 mt-1">
-                    <Badge className={`text-xs px-2 py-0.5 ${getLotStatusColor(lot.status)}`}>{getAuctionStatusText(lot.status)}</Badge>
-                </div>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-2 mb-2">
+          <div className="flex-grow">
+            <h1 className="text-2xl md:text-3xl font-bold font-headline text-left">{lotTitle}</h1>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge className={`text-xs px-2 py-0.5 ${getLotStatusColor(lot.status)}`}>{getAuctionStatusText(lot.status)}</Badge>
             </div>
-            <div className="flex items-center space-x-2 flex-wrap justify-start sm:justify-end mt-2 sm:mt-0">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild><Button variant="outline" size="icon" aria-label="Compartilhar"><Share2 className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild><a href={getSocialLink('x', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><X className="h-4 w-4" /> X (Twitter)</a></DropdownMenuItem>
-                        <DropdownMenuItem asChild><a href={getSocialLink('facebook', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><Facebook className="h-4 w-4" /> Facebook</a></DropdownMenuItem>
-                        <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><MessageSquareText className="h-4 w-4" /> WhatsApp</a></DropdownMenuItem>
-                        <DropdownMenuItem asChild><a href={getSocialLink('email', currentUrl, lotTitle)} className="flex items-center gap-2 cursor-pointer"><Mail className="h-4 w-4" /> Email</a></DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                <Button variant="outline" size="icon" asChild aria-label="Voltar para o leilão"><Link href={`/auctions/${auction.publicId || auction.id}`}><ArrowLeft className="h-4 w-4" /></Link></Button>
-            </div>
-            </div>
+          </div>
+          <div className="flex items-center space-x-2 flex-wrap justify-start sm:justify-end mt-2 sm:mt-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild><Button variant="outline" size="icon" aria-label="Compartilhar"><Share2 className="h-4 w-4" /></Button></DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild><a href={getSocialLink('x', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><X className="h-4 w-4" /> X (Twitter)</a></DropdownMenuItem>
+                <DropdownMenuItem asChild><a href={getSocialLink('facebook', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><Facebook className="h-4 w-4" /> Facebook</a></DropdownMenuItem>
+                <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><MessageSquareText className="h-4 w-4" /> WhatsApp</a></DropdownMenuItem>
+                <DropdownMenuItem asChild><a href={getSocialLink('email', currentUrl, lotTitle)} className="flex items-center gap-2 cursor-pointer"><Mail className="h-4 w-4" /> Email</a></DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button variant="outline" size="icon" asChild aria-label="Voltar para o leilão"><Link href={`/auctions/${auction.publicId || auction.id}`}><ArrowLeft className="h-4 w-4" /></Link></Button>
+          </div>
+        </div>
 
-            <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-                <span className="font-medium text-foreground">Lote Nº: {actualLotNumber}</span>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!previousLotId} disabled={!previousLotId} aria-label="Lote Anterior">{previousLotId ? <Link href={`/auctions/${auction.publicId || auction.id}/lots/${previousLotId}`}><ChevronLeft className="h-4 w-4" /></Link> : <ChevronLeft className="h-4 w-4"/>}</Button>
-                    <span className="text-sm text-muted-foreground mx-1">Lote {displayLotPosition} de {displayTotalLots}</span>
-                    <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">{nextLotId ? <Link href={`/auctions/${auction.publicId || auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" />}</Button>
-                </div>
-            </div>
+        <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+          <span className="font-medium text-foreground">Lote Nº: {actualLotNumber}</span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!previousLotId} disabled={!previousLotId} aria-label="Lote Anterior">{previousLotId ? <Link href={`/auctions/${auction.publicId || auction.id}/lots/${previousLotId}`}><ChevronLeft className="h-4 w-4" /></Link> : <ChevronLeft className="h-4 w-4"/>}</Button>
+            <span className="text-sm text-muted-foreground mx-1">Lote {displayLotPosition} de {displayTotalLots}</span>
+            <Button variant="outline" size="icon" className="h-8 w-8" asChild={!!nextLotId} disabled={!nextLotId} aria-label="Próximo Lote">{nextLotId ? <Link href={`/auctions/${auction.publicId || auction.id}/lots/${nextLotId}`}><ChevronRight className="h-4 w-4" /></Link> : <ChevronRight className="h-4 w-4" />}</Button>
+          </div>
+        </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
-                    <Card className="shadow-lg"><CardContent className="p-4"><div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden mb-4">{gallery.length > 0 && gallery[currentImageIndex] ? <Image src={gallery[currentImageIndex]} alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`} fill className="object-contain" data-ai-hint={lot.dataAiHint || "imagem principal lote"} priority={currentImageIndex === 0} unoptimized={gallery[currentImageIndex]?.startsWith('https://placehold.co')}/> : <div className="flex flex-col items-center justify-center h-full text-muted-foreground"><ImageOff className="h-16 w-16 mb-2" /><span>Imagem principal não disponível</span></div>}{platformSettings.showCountdownOnLotDetail !== false && (<DetailTimeRemaining effectiveEndDate={effectiveLotEndDate} effectiveStartDate={effectiveLotStartDate} lotStatus={lot.status} showUrgencyTimer={sectionBadgesLotDetail.showUrgencyTimer !== false && mentalTriggersGlobalSettings.showUrgencyTimer} urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays} urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}/>)}{gallery.length > 1 && (<><Button variant="outline" size="icon" onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Imagem Anterior"><ChevronLeft className="h-5 w-5" /></Button><Button variant="outline" size="icon" onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Próxima Imagem"><ChevronRight className="h-5 w-5" /></Button></>)}</div>{gallery.length > 1 && (<div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2">{gallery.map((url, index) => (<button key={index} className={`relative aspect-square bg-muted rounded overflow-hidden border-2 transition-all ${index === currentImageIndex ? 'border-primary ring-2 ring-primary ring-offset-2' : 'border-transparent hover:border-muted-foreground/50'}`} onClick={() => setCurrentImageIndex(index)} aria-label={`Ver imagem ${index + 1}`}><Image src={url} alt={`Miniatura ${index + 1}`} fill className="object-cover" data-ai-hint={lot.dataAiHint || 'imagem galeria carro'} unoptimized={url.startsWith('https://placehold.co')}/></button>))}</div>)}{gallery.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">Nenhuma imagem na galeria.</p>)}<div className="flex justify-between items-center mt-4 text-sm text-muted-foreground">{lot.hasKey && <span className="flex items-center"><Key className="h-4 w-4 mr-1 text-primary"/> Chave Presente</span>}<span className="flex items-center"><MapPin className="h-4 w-4 mr-1 text-primary"/> Localização: {lotLocation}</span></div></CardContent></Card>
-                    <Card id="auction-details-section" className="shadow-lg"><CardHeader><CardTitle className="text-xl font-semibold flex items-center"><Gavel className="h-5 w-5 mr-2 text-muted-foreground" />Informações do Leilão</CardTitle></CardHeader><CardContent className="p-4 md:p-6 pt-0"><div className="flex items-start gap-4">{auction.auctioneerLogoUrl && (<Avatar className="h-16 w-16 border-2 border-primary/20 flex-shrink-0"><AvatarImage src={auction.auctioneerLogoUrl} alt={auction.auctioneerName || ''} data-ai-hint="logo leiloeiro" /><AvatarFallback>{auction.auctioneerName?.charAt(0) || 'L'}</AvatarFallback></Avatar>)}<div className="flex-grow"><Link href={`/auctions/${auction.publicId || auction.id}`} className="hover:text-primary"><p className="font-bold text-lg text-foreground">{auction.title}</p></Link><div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 mt-2 text-sm"><div className="flex items-center text-muted-foreground"><UserCircle className="h-4 w-4 mr-2" /><span>Leiloeiro: <span className="font-medium text-foreground">{auction.auctioneer}</span></span></div><div className="flex items-center text-muted-foreground"><Tag className="h-4 w-4 mr-2" /><span>Categoria: <span className="font-medium text-foreground">{auction.category}</span></span></div><div className="flex items-center text-muted-foreground"><Gavel className="h-4 w-4 mr-2" /><span>Modalidade: <span className="font-medium text-foreground">{auction.auctionType || 'Não especificada'}</span></span></div><div className="flex items-center text-muted-foreground"><Info className="h-4 w-4 mr-2" /><span>Status:<Badge variant="outline" className={`ml-2 text-xs ${getLotStatusColor(auction.status)} border-current`}>{getAuctionStatusText(auction.status)}</Badge></span></div>{auction.endDate && (<div className="flex items-center text-muted-foreground"><CalendarDays className="h-4 w-4 mr-2" /><span>Fim: <span className="font-medium text-foreground">{format(new Date(auction.endDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span></span></div>)}</div></div></div></CardContent><CardFooter className="p-4 md:p-6 pt-0"><Button asChild variant="outline" size="sm"><Link href={`/auctions/${auction.publicId || auction.id}`}>Ver todos os lotes do leilão <ChevronRight className="h-4 w-4 ml-2" /></Link></Button></CardFooter></Card>
-                    <Card className="shadow-lg"><CardHeader><CardTitle className="text-xl font-semibold flex items-center"><FileText className="h-5 w-5 mr-2 text-muted-foreground" />Detalhes do Lote</CardTitle></CardHeader><CardContent className="p-4 md:p-6 pt-0"><Tabs defaultValue="description" className="w-full"><TabsList className="flex w-full flex-wrap gap-1 mb-4"><TabsTrigger value="description">Descrição</TabsTrigger><TabsTrigger value="specification">Especificações</TabsTrigger><TabsTrigger value="legal">{legalTabTitle}</TabsTrigger><TabsTrigger value="seller">Comitente</TabsTrigger><TabsTrigger value="reviews">Avaliações</TabsTrigger><TabsTrigger value="questions">Perguntas</TabsTrigger></TabsList><TabsContent value="description"><LotDescriptionTab lot={lot} /></TabsContent><TabsContent value="specification"><LotSpecificationTab lot={lot} /></TabsContent><TabsContent value="legal"><Card className="shadow-none border-0"><CardHeader className="px-1 pt-0"><CardTitle className="text-xl font-semibold flex items-center"><FileText className="h-5 w-5 mr-2 text-muted-foreground" /> {legalTabTitle}</CardTitle></CardHeader><CardContent className="px-1 space-y-2 text-sm">{showLegalProcessTab && (<>{lot.judicialProcessNumber && <p><strong className="text-foreground">Nº Processo Judicial:</strong> <span className="text-muted-foreground">{lot.judicialProcessNumber}</span></p>}{lot.courtDistrict && <p><strong className="text-foreground">Comarca:</strong> <span className="text-muted-foreground">{lot.courtDistrict}</span></p>}{lot.courtName && <p><strong className="text-foreground">Vara:</strong> <span className="text-muted-foreground">{lot.courtName}</span></p>}{lot.publicProcessUrl && <p><strong className="text-foreground">Consulta Pública:</strong> <a href={lot.publicProcessUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Acessar Processo <LinkIcon className="h-3 w-3"/></a></p>}{lot.propertyRegistrationNumber && <p><strong className="text-foreground">Matrícula do Imóvel:</strong> <span className="text-muted-foreground">{lot.propertyRegistrationNumber}</span></p>}{lot.propertyLiens && <p><strong className="text-foreground">Ônus/Gravames:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.propertyLiens}</span></p>}{lot.knownDebts && <p><strong className="text-foreground">Dívidas Conhecidas:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.knownDebts}</span></p>}{lot.additionalDocumentsInfo && <p><strong className="text-foreground">Outras Informações/Links de Documentos:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.additionalDocumentsInfo}</span></p>}<Separator className="my-3" /></>)}{auction.documentsUrl && <p><strong className="text-foreground">Edital do Leilão:</strong> <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Ver Edital Completo <FileText className="h-3 w-3"/></a></p>}{!auction.documentsUrl && !showLegalProcessTab && (<p className="text-muted-foreground">Nenhuma informação legal ou documental adicional fornecida para este lote.</p>)}{auction.documentsUrl && !showLegalProcessTab && !currentLotHasProcessInfo && (<p className="text-muted-foreground mt-2 text-xs">Outras informações processuais específicas deste lote não foram fornecidas.</p>)}</CardContent></Card></TabsContent><TabsContent value="seller"><LotSellerTab sellerName={initialSellerName || auction.seller || "Não Informado"} sellerId={lot.sellerId} auctionSellerName={auction.seller} /></TabsContent><TabsContent value="reviews"><LotReviewsTab lot={lot} reviews={lotReviews} isLoading={isLoadingData} onNewReview={handleNewReview} canUserReview={canUserReview} /></TabsContent><TabsContent value="questions"><LotQuestionsTab lot={lot} questions={lotQuestions} isLoading={isLoadingData} onNewQuestion={handleNewQuestion} canUserAskQuestion={canUserAskQuestion} /></TabsContent></Tabs></CardContent></Card>
-                    
-                    <Card className="shadow-lg">
-                        <CardHeader><CardTitle className="text-xl font-semibold">Valores e Condições Legais</CardTitle></CardHeader>
-                        <CardContent className="space-y-2 text-sm">
-                            {lot.evaluationValue && <div className="flex justify-between"><span className="text-muted-foreground">Valor de Avaliação:</span> <span className="font-semibold text-foreground">R$ {lot.evaluationValue.toLocaleString('pt-BR')}</span></div>}
-                            {lot.reservePrice && <div className="flex justify-between"><span className="text-muted-foreground">Preço de Reserva:</span> <span className="font-semibold text-foreground">(Confidencial)</span></div>}
-                            {lot.debtAmount && <div className="flex justify-between"><span className="text-muted-foreground">Montante da Dívida:</span> <span className="font-semibold text-foreground">R$ {lot.debtAmount.toLocaleString('pt-BR')}</span></div>}
-                            {lot.itbiValue && <div className="flex justify-between"><span className="text-muted-foreground">Valor de ITBI:</span> <span className="font-semibold text-foreground">R$ {lot.itbiValue.toLocaleString('pt-BR')}</span></div>}
-                            {(!lot.evaluationValue && !lot.reservePrice && !lot.debtAmount && !lot.itbiValue) && <p className="text-muted-foreground text-center text-xs">Nenhuma condição de valor especial para este lote.</p>}
-                        </CardContent>
-                    </Card>
-                </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="shadow-lg"><CardContent className="p-4"><div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden mb-4">{gallery.length > 0 && gallery[currentImageIndex] ? <Image src={gallery[currentImageIndex]} alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`} fill className="object-contain" data-ai-hint={lot.dataAiHint || "imagem principal lote"} priority={currentImageIndex === 0} unoptimized={gallery[currentImageIndex]?.startsWith('https://placehold.co')}/> : <div className="flex flex-col items-center justify-center h-full text-muted-foreground"><ImageOff className="h-16 w-16 mb-2" /><span>Imagem principal não disponível</span></div>}{platformSettings.showCountdownOnLotDetail !== false && (<DetailTimeRemaining effectiveEndDate={effectiveLotEndDate} effectiveStartDate={effectiveLotStartDate} lotStatus={lot.status} showUrgencyTimer={sectionBadgesLotDetail.showUrgencyTimer !== false && mentalTriggersGlobalSettings.showUrgencyTimer} urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays} urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}/>)}{gallery.length > 1 && (<><Button variant="outline" size="icon" onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Imagem Anterior"><ChevronLeft className="h-5 w-5" /></Button><Button variant="outline" size="icon" onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Próxima Imagem"><ChevronRight className="h-5 w-5" /></Button></>)}</div>{gallery.length > 1 && (<div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2">{gallery.map((url, index) => (<button key={index} className={`relative aspect-square bg-muted rounded overflow-hidden border-2 transition-all ${index === currentImageIndex ? 'border-primary ring-2 ring-primary ring-offset-2' : 'border-transparent hover:border-muted-foreground/50'}`} onClick={() => setCurrentImageIndex(index)} aria-label={`Ver imagem ${index + 1}`}><Image src={url} alt={`Miniatura ${index + 1}`} fill className="object-cover" data-ai-hint={lot.dataAiHint || 'imagem galeria carro'} unoptimized={url.startsWith('https://placehold.co')}/></button>))}</div>)}{gallery.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">Nenhuma imagem na galeria.</p>)}<div className="flex justify-between items-center mt-4 text-sm text-muted-foreground">{lot.hasKey && <span className="flex items-center"><Key className="h-4 w-4 mr-1 text-primary"/> Chave Presente</span>}<span className="flex items-center"><MapPin className="h-4 w-4 mr-1 text-primary"/> Localização: {lotLocation}</span></div></CardContent></Card>
+            <Card id="auction-details-section" className="shadow-lg"><CardHeader><CardTitle className="text-xl font-semibold flex items-center"><Gavel className="h-5 w-5 mr-2 text-muted-foreground" />Informações do Leilão</CardTitle></CardHeader><CardContent className="p-4 md:p-6 pt-0"><div className="flex items-start gap-4">{auction.auctioneerLogoUrl && (<Avatar className="h-16 w-16 border-2 border-primary/20 flex-shrink-0"><AvatarImage src={auction.auctioneerLogoUrl} alt={auction.auctioneerName || ''} data-ai-hint="logo leiloeiro" /><AvatarFallback>{auction.auctioneerName?.charAt(0) || 'L'}</AvatarFallback></Avatar>)}<div className="flex-grow"><Link href={`/auctions/${auction.publicId || auction.id}`} className="hover:text-primary"><p className="font-bold text-lg text-foreground">{auction.title}</p></Link><div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 mt-2 text-sm"><div className="flex items-center text-muted-foreground"><UserCircle className="h-4 w-4 mr-2" /><span>Leiloeiro: <span className="font-medium text-foreground">{auction.auctioneer}</span></span></div><div className="flex items-center text-muted-foreground"><Tag className="h-4 w-4 mr-2" /><span>Categoria: <span className="font-medium text-foreground">{auction.category}</span></span></div><div className="flex items-center text-muted-foreground"><Gavel className="h-4 w-4 mr-2" /><span>Modalidade: <span className="font-medium text-foreground">{auction.auctionType || 'Não especificada'}</span></span></div><div className="flex items-center text-muted-foreground"><Info className="h-4 w-4 mr-2" /><span>Status:<Badge variant="outline" className={`ml-2 text-xs ${getLotStatusColor(auction.status)} border-current`}>{getAuctionStatusText(auction.status)}</Badge></span></div>{auction.endDate && (<div className="flex items-center text-muted-foreground"><CalendarDays className="h-4 w-4 mr-2" /><span>Fim: <span className="font-medium text-foreground">{format(new Date(auction.endDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span></span></div>)}</div></div></div></CardContent><CardFooter className="p-4 md:p-6 pt-0"><Button asChild variant="outline" size="sm"><Link href={`/auctions/${auction.publicId || auction.id}`}>Ver todos os lotes do leilão <ChevronRight className="h-4 w-4 ml-2" /></Link></Button></CardFooter></Card>
+            <Card className="shadow-lg"><CardHeader><CardTitle className="text-xl font-semibold flex items-center"><FileText className="h-5 w-5 mr-2 text-muted-foreground" />Detalhes do Lote</CardTitle></CardHeader><CardContent className="p-4 md:p-6 pt-0"><Tabs defaultValue="description" className="w-full"><TabsList className="flex w-full flex-wrap gap-1 mb-4"><TabsTrigger value="description">Descrição</TabsTrigger><TabsTrigger value="specification">Especificações</TabsTrigger><TabsTrigger value="legal">{legalTabTitle}</TabsTrigger><TabsTrigger value="seller">Comitente</TabsTrigger><TabsTrigger value="reviews">Avaliações</TabsTrigger><TabsTrigger value="questions">Perguntas</TabsTrigger></TabsList><TabsContent value="description"><LotDescriptionTab lot={lot} /></TabsContent><TabsContent value="specification"><LotSpecificationTab lot={lot} /></TabsContent><TabsContent value="legal"><Card className="shadow-none border-0"><CardHeader className="px-1 pt-0"><CardTitle className="text-xl font-semibold flex items-center"><FileText className="h-5 w-5 mr-2 text-muted-foreground" /> {legalTabTitle}</CardTitle></CardHeader><CardContent className="px-1 space-y-2 text-sm">{showLegalProcessTab && (<>{lot.judicialProcessNumber && <p><strong className="text-foreground">Nº Processo Judicial:</strong> <span className="text-muted-foreground">{lot.judicialProcessNumber}</span></p>}{lot.courtDistrict && <p><strong className="text-foreground">Comarca:</strong> <span className="text-muted-foreground">{lot.courtDistrict}</span></p>}{lot.courtName && <p><strong className="text-foreground">Vara:</strong> <span className="text-muted-foreground">{lot.courtName}</span></p>}{lot.publicProcessUrl && <p><strong className="text-foreground">Consulta Pública:</strong> <a href={lot.publicProcessUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Acessar Processo <LinkIcon className="h-3 w-3"/></a></p>}{lot.propertyRegistrationNumber && <p><strong className="text-foreground">Matrícula do Imóvel:</strong> <span className="text-muted-foreground">{lot.propertyRegistrationNumber}</span></p>}{lot.propertyLiens && <p><strong className="text-foreground">Ônus/Gravames:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.propertyLiens}</span></p>}{lot.knownDebts && <p><strong className="text-foreground">Dívidas Conhecidas:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.knownDebts}</span></p>}{lot.additionalDocumentsInfo && <p><strong className="text-foreground">Outras Informações/Links de Documentos:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.additionalDocumentsInfo}</span></p>}<Separator className="my-3" /></>)}{auction.documentsUrl && <p><strong className="text-foreground">Edital do Leilão:</strong> <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Ver Edital Completo <FileText className="h-3 w-3"/></a></p>}{!auction.documentsUrl && !showLegalProcessTab && (<p className="text-muted-foreground">Nenhuma informação legal ou documental adicional fornecida para este lote.</p>)}{auction.documentsUrl && !showLegalProcessTab && !currentLotHasProcessInfo && (<p className="text-muted-foreground mt-2 text-xs">Outras informações processuais específicas deste lote não foram fornecidas.</p>)}</CardContent></Card></TabsContent><TabsContent value="seller"><LotSellerTab sellerName={initialSellerName || auction.seller || "Não Informado"} sellerId={lot.sellerId} auctionSellerName={auction.seller} /></TabsContent><TabsContent value="reviews"><LotReviewsTab lot={lot} reviews={lotReviews} isLoading={isLoadingData} onNewReview={handleNewReview} canUserReview={canUserReview} /></TabsContent><TabsContent value="questions"><LotQuestionsTab lot={lot} questions={lotQuestions} isLoading={isLoadingData} onNewQuestion={handleNewQuestion} canUserAskQuestion={canUserAskQuestion} /></TabsContent></Tabs></CardContent></Card>
+            
+            <Card className="shadow-lg">
+                <CardHeader><CardTitle className="text-xl font-semibold">Valores e Condições Legais</CardTitle></CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                    {lot.evaluationValue && <div className="flex justify-between"><span className="text-muted-foreground">Valor de Avaliação:</span> <span className="font-semibold text-foreground">R$ {lot.evaluationValue.toLocaleString('pt-BR')}</span></div>}
+                    {lot.reservePrice && <div className="flex justify-between"><span className="text-muted-foreground">Preço de Reserva:</span> <span className="font-semibold text-foreground">(Confidencial)</span></div>}
+                    {lot.debtAmount && <div className="flex justify-between"><span className="text-muted-foreground">Montante da Dívida:</span> <span className="font-semibold text-foreground">R$ {lot.debtAmount.toLocaleString('pt-BR')}</span></div>}
+                    {lot.itbiValue && <div className="flex justify-between"><span className="text-muted-foreground">Valor de ITBI:</span> <span className="font-semibold text-foreground">R$ {lot.itbiValue.toLocaleString('pt-BR')}</span></div>}
+                    {(!lot.evaluationValue && !lot.reservePrice && !lot.debtAmount && !lot.itbiValue) && <p className="text-muted-foreground text-center text-xs">Nenhuma condição de valor especial para este lote.</p>}
+                </CardContent>
+            </Card>
+          </div>
 
-                <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
-                    <Card className="shadow-md"><CardContent className="p-4 space-y-3"><div className="flex justify-between items-center text-sm"><span className="text-muted-foreground">Visitas: {lot.views}</span><span className="text-muted-foreground">Participantes: {auction.totalHabilitatedUsers || 0}</span><span className="text-muted-foreground">Lances: {lot.bidsCount || 0}</span></div><Separator /><div className="text-sm"><p className="text-muted-foreground">{currentBidLabel}</p><p className="text-3xl font-bold text-primary">R$ {currentBidValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p><p className="text-xs text-muted-foreground">(BRL)</p>{lot.initialPrice && lot.price > lot.initialPrice && (<p className="text-xs text-muted-foreground">Lance Inicial: <span className="line-through">R$ {lot.initialPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></p>)}{lot.bidIncrementStep && <p className="text-xs text-muted-foreground mt-1">Incremento Mínimo: <span className="font-semibold text-foreground">R$ {lot.bidIncrementStep.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></p>}</div><div className="space-y-2 pt-2">{sectionBadgesLotDetail.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentageLotDetail > 0 && (<Badge variant="destructive" className="text-sm px-2 py-1 w-full justify-center animate-pulse"><Percent className="h-4 w-4 mr-1.5" /> {discountPercentageLotDetail}% DE DESCONTO AGORA!</Badge>)}<div className="flex flex-wrap gap-2 justify-center">{mentalTriggersLotDetail.map(trigger => (<Badge key={trigger} variant="secondary" className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 border-amber-300">{trigger === 'MAIS VISITADO' && <TrendingUp className="h-3.5 w-3.5 mr-1" />}{trigger === 'LANCE QUENTE' && <Zap className="h-3.5 w-3.5 mr-1 text-red-500 fill-red-500" />}{trigger === 'EXCLUSIVO' && <Crown className="h-3.5 w-3.5 mr-1 text-purple-600" />}{trigger}</Badge>)))}</div>{(lot.allowInstallmentBids || auction.allowInstallmentBids) && (<div className="flex items-center justify-center text-xs text-green-600 bg-green-100 border border-green-300 p-1.5 rounded-md"><Banknote className="h-4 w-4 mr-1.5" />Permite Lance Parcelado (Consulte Condições)</div>)}</div>
-                    {canUserBid ? (
-                        <div className="space-y-2 pt-2">
-                            <div className="relative">
-                                <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input type="number" placeholder={`Próximo lance R$ ${nextMinimumBid.toLocaleString('pt-BR')}`} value={bidAmountInput} onChange={(e) => setBidAmountInput(e.target.value)} className="pl-9 h-11 text-base" min={nextMinimumBid} step={bidIncrement} disabled={isPlacingBid} />
-                                <Button size="sm" variant="ghost" className="absolute right-2 top-1/2 -translate-y-1/2 h-7 text-primary" onClick={() => setBidAmountInput(String(nextMinimumBid))}>+</Button>
-                            </div>
-                            <p className="text-xs text-muted-foreground text-center">Incremento: R$ {bidIncrement.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                            <Button onClick={handlePlaceBid} disabled={isPlacingBid || !bidAmountInput} className="w-full h-11 text-base bg-accent text-accent-foreground hover:bg-accent/90">
-                                {isPlacingBid ? <Loader2 className="animate-spin" /> : bidButtonLabel}
-                            </Button>
-                            <Button variant="link" size="sm" className="w-full text-primary text-xs">Estimar comissões e demais valores</Button>
-                            <div className="flex items-center space-x-2 justify-center pt-2"><Switch id="quick-bid" disabled /><Label htmlFor="quick-bid" className="text-xs text-muted-foreground">Habilitar lance rápido</Label></div>
-                        </div>
-                    ) : (
-                        <div className="text-sm text-center p-3 bg-destructive/10 text-destructive rounded-md">
-                            <p>{lot.status !== 'ABERTO_PARA_LANCES' ? `Lances para este lote estão ${getAuctionStatusText(lot.status).toLowerCase()}.` : (userProfileWithPermissions ? 'Para ver sua posição na disputa ou dar lances, habilite-se.' : 'Para ver sua posição na disputa, efetue o login.')}</p>
-                            {!userProfileWithPermissions && <Link href={`/auth/login?redirect=/auctions/${auction.publicId || auction.id}/lots/${lot.publicId || lot.id}`} className="text-primary hover:underline font-medium">Faça login ou registre-se.</Link>}
-                            {userProfileWithPermissions && (!isUserHabilitado && !hasAdminRights && !isEffectivelySuperTestUser) && <Button size="lg" className="w-full mt-3 bg-purple-600 hover:bg-purple-700 text-white">HABILITE-SE</Button>}
+          <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
+            <Card className="shadow-md">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">Visitas: {lot.views}</span>
+                    <span className="text-muted-foreground">Participantes: {auction.totalHabilitatedUsers || 0}</span>
+                    <span className="text-muted-foreground">Lances: {lot.bidsCount || 0}</span>
+                </div>
+                <Separator />
+                <div className="text-sm">
+                    <p className="text-muted-foreground">{currentBidLabel}</p>
+                    <p className="text-3xl font-bold text-primary">R$ {currentBidValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="text-xs text-muted-foreground">(BRL)</p>
+                    {lot.initialPrice && lot.price > lot.initialPrice && (
+                        <p className="text-xs text-muted-foreground">Lance Inicial: <span className="line-through">R$ {lot.initialPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></p>
+                    )}
+                    {lot.bidIncrementStep && <p className="text-xs text-muted-foreground mt-1">Incremento Mínimo: <span className="font-semibold text-foreground">R$ {lot.bidIncrementStep.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></p>}
+                </div>
+                <div className="space-y-2 pt-2">
+                    {sectionBadgesLotDetail.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentageLotDetail > 0 && (
+                        <Badge variant="destructive" className="text-sm px-2 py-1 w-full justify-center animate-pulse"><Percent className="h-4 w-4 mr-1.5" /> {discountPercentageLotDetail}% DE DESCONTO AGORA!</Badge>
+                    )}
+                    <div className="flex flex-wrap gap-2 justify-center">
+                        {mentalTriggersLotDetail.map(trigger => (
+                            <Badge key={trigger} variant="secondary" className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
+                                {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3.5 w-3.5 mr-1" />}
+                                {trigger === 'LANCE QUENTE' && <Zap className="h-3.5 w-3.5 mr-1 text-red-500 fill-red-500" />}
+                                {trigger === 'EXCLUSIVO' && <Crown className="h-3.5 w-3.5 mr-1 text-purple-600" />}
+                                {trigger}
+                            </Badge>
+                        ))}
+                    </div>
+                    {(lot.allowInstallmentBids || auction.allowInstallmentBids) && (
+                        <div className="flex items-center justify-center text-xs text-green-600 bg-green-100 border border-green-300 p-1.5 rounded-md">
+                            <Banknote className="h-4 w-4 mr-1.5" />Permite Lance Parcelado (Consulte Condições)
                         </div>
                     )}
-                    <Button variant="outline" className="w-full" onClick={handleToggleFavorite}><Heart className={`mr-2 h-4 w-4 ${isLotFavorite ? 'fill-red-500 text-red-500' : ''}`} />{isLotFavorite ? 'Remover da Minha Lista' : 'Adicionar à Minha Lista'}</Button>
-                    </CardContent></Card>
-                    <Card className="shadow-md"><CardHeader className="flex flex-row items-center justify-between p-4"><CardTitle className="text-lg flex items-center">Histórico de Lances</CardTitle>{lotBids.length > 2 && (<Button variant="outline" size="sm" onClick={() => setIsAllBidsModalOpen(true)}>Ver Todos ({lotBids.length})</Button>)}</CardHeader><CardContent className="p-4 pt-0">{isLoadingData ? (<div className="flex items-center justify-center h-20"> <Loader2 className="h-6 w-6 animate-spin text-primary" /></div>) : lotBids.length > 0 ? (<ul className="space-y-1.5 text-xs">{lotBids.slice(0, 2).map(bid => (<li key={bid.id} className="flex justify-between items-center p-1.5 bg-secondary/40 rounded-md"><div><span className="font-medium text-foreground text-xs">{bid.bidderDisplay}</span><span className="text-[0.65rem] text-muted-foreground ml-1.5">({bid.timestamp ? format(new Date(bid.timestamp as string), "dd/MM HH:mm:ss", { locale: ptBR }) : 'Data Indisponível'})</span></div><span className="font-semibold text-primary text-xs">R$ {bid.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></li>))}</ul>) : (<p className="text-xs text-muted-foreground text-center py-3">Nenhum lance registrado para este lote ainda.</p>)}</CardContent></Card>
-                    <div className="w-full aspect-square"><LotMapDisplay lot={lot} platformSettings={platformSettings} /></div>
                 </div>
+                {canUserBid ? (
+                  <div className="space-y-2 pt-2">
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input type="number" placeholder={`Próximo lance R$ ${nextMinimumBid.toLocaleString('pt-BR')}`} value={bidAmountInput} onChange={(e) => setBidAmountInput(e.target.value)} className="pl-9 h-11 text-base" min={nextMinimumBid} step={bidIncrement} disabled={isPlacingBid} />
+                      <Button size="sm" variant="ghost" className="absolute right-2 top-1/2 -translate-y-1/2 h-7 text-primary" onClick={() => setBidAmountInput(String(nextMinimumBid))}>+</Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center">Incremento: R$ {bidIncrement.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                    <Button onClick={handlePlaceBid} disabled={isPlacingBid || !bidAmountInput} className="w-full h-11 text-base bg-accent text-accent-foreground hover:bg-accent/90">
+                      {isPlacingBid ? <Loader2 className="animate-spin" /> : bidButtonLabel}
+                    </Button>
+                    <Button variant="link" size="sm" className="w-full text-primary text-xs">Estimar comissões e demais valores</Button>
+                    <div className="flex items-center space-x-2 justify-center pt-2">
+                      <Switch id="quick-bid" disabled />
+                      <Label htmlFor="quick-bid" className="text-xs text-muted-foreground">Habilitar lance rápido</Label>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-center p-3 bg-destructive/10 text-destructive rounded-md">
+                    <p>{lot.status !== 'ABERTO_PARA_LANCES' ? `Lances para este lote estão ${getAuctionStatusText(lot.status).toLowerCase()}.` : (userProfileWithPermissions ? 'Para ver sua posição na disputa ou dar lances, habilite-se.' : 'Para ver sua posição na disputa, efetue o login.')}</p>
+                    {!userProfileWithPermissions && <Link href={`/auth/login?redirect=/auctions/${auction.publicId || auction.id}/lots/${lot.publicId || lot.id}`} className="text-primary hover:underline font-medium">Faça login ou registre-se.</Link>}
+                    {userProfileWithPermissions && (!isUserHabilitado && !hasAdminRights && !isEffectivelySuperTestUser) && <Button size="lg" className="w-full mt-3 bg-purple-600 hover:bg-purple-700 text-white">HABILITE-SE</Button>}
+                  </div>
+                )}
+                <Button variant="outline" className="w-full" onClick={handleToggleFavorite}>
+                  <Heart className={`mr-2 h-4 w-4 ${isLotFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+                  {isLotFavorite ? 'Remover da Minha Lista' : 'Adicionar à Minha Lista'}
+                </Button>
+              </CardContent>
+            </Card>
+            <Card className="shadow-md">
+              <CardHeader className="flex flex-row items-center justify-between p-4">
+                <CardTitle className="text-lg flex items-center">Histórico de Lances</CardTitle>
+                {lotBids.length > 2 && (<Button variant="outline" size="sm" onClick={() => setIsAllBidsModalOpen(true)}>Ver Todos ({lotBids.length})</Button>)}
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                {isLoadingData ? (
+                  <div className="flex items-center justify-center h-20"> <Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                ) : lotBids.length > 0 ? (
+                  <ul className="space-y-1.5 text-xs">
+                    {lotBids.slice(0, 2).map(bid => (
+                      <li key={bid.id} className="flex justify-between items-center p-1.5 bg-secondary/40 rounded-md">
+                        <div>
+                          <span className="font-medium text-foreground text-xs">{bid.bidderDisplay}</span>
+                          <span className="text-[0.65rem] text-muted-foreground ml-1.5">({bid.timestamp ? format(new Date(bid.timestamp as string), "dd/MM HH:mm:ss", { locale: ptBR }) : 'Data Indisponível'})</span>
+                        </div>
+                        <span className="font-semibold text-primary text-xs">R$ {bid.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-muted-foreground text-center py-3">Nenhum lance registrado para este lote ainda.</p>
+                )}
+              </CardContent>
+            </Card>
+            <div className="w-full aspect-square">
+              <LotMapDisplay lot={lot} platformSettings={platformSettings} />
             </div>
-
-            {platformSettings.showRelatedLotsOnLotDetail !== false && relatedLots.length > 0 && (
-                <section className="mt-12"><Separator className="my-8" /><h2 className="text-2xl font-bold mb-6 font-headline">Outros Lotes Deste Leilão</h2><div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">{relatedLots.map(relatedLot => (<LotCard key={relatedLot.id} lot={relatedLot} platformSettings={platformSettings} badgeVisibilityConfig={platformSettings.sectionBadgeVisibility?.searchGrid} />))}</div></section>
-            )}
+          </div>
         </div>
+
+        {platformSettings.showRelatedLotsOnLotDetail !== false && relatedLots.length > 0 && (
+          <section className="mt-12">
+            <Separator className="my-8" />
+            <h2 className="text-2xl font-bold mb-6 font-headline">Outros Lotes Deste Leilão</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {relatedLots.map(relatedLot => (
+                <LotCard key={relatedLot.id} lot={relatedLot} platformSettings={platformSettings} badgeVisibilityConfig={platformSettings.sectionBadgeVisibility?.searchGrid} />
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
       <LotPreviewModal lot={lot} auction={auction} isOpen={isPreviewModalOpen} onClose={() => setIsPreviewModalOpen(false)} />
       <LotAllBidsModal isOpen={isAllBidsModalOpen} onClose={() => setIsAllBidsModalOpen(false)} lotBids={lotBids} lotTitle={lot.title} />
     </>

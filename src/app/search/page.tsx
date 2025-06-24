@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -10,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
-import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters'; 
+import type { ActiveFilters } from '@/components/sidebar-filters'; 
 import AuctionCard from '@/components/auction-card';
 import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
@@ -27,6 +26,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AuctionListItem from '@/components/auction-list-item';
 import SearchResultsFrame from '@/components/search-results-frame';
+import dynamic from 'next/dynamic';
+import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
+
+const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
+  loading: () => <SidebarFiltersSkeleton />,
+  ssr: false,
+});
+
 
 const sortOptionsAuctions = [
   { value: 'relevance', label: 'Relevância' },
@@ -421,7 +428,7 @@ export default function SearchPage() {
             filtered.sort((a,b) => (parseInt(String((a as Lot).number || a.id).replace(/\D/g,'')) || 0) - (parseInt(String((b as Lot).number || b.id).replace(/\D/g,'')) || 0));
             break;
         case 'lotNumber_desc':
-            filtered.sort((a,b) => (parseInt(String((b as Lot).number || b.id).replace(/\D/g,'')) || 0) - (parseInt(String((a as Lot).number || a.id).replace(/\D/g,'')) || 0));
+            filtered.sort((a,b) => (parseInt(String((b as Lot).number || a.id).replace(/\D/g,'')) || 0) - (parseInt(String((a as Lot).number || a.id).replace(/\D/g,'')) || 0));
             break;
         case 'relevance':
         default:

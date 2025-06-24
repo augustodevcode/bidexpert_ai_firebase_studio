@@ -12,14 +12,20 @@ import type { Lot, LotCategory, PlatformSettings } from '@/types';
 import { getUniqueLotLocations, getUniqueSellerNames, slugify, getCategoryAssets } from '@/lib/sample-data';
 import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
-import SidebarFilters from '@/components/sidebar-filters';
+import type { ActiveFilters } from '@/components/sidebar-filters';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LayoutGrid, List, SlidersHorizontal, Loader2, ChevronRight, AlertCircle } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
 import SearchResultsFrame from '@/components/search-results-frame'; 
-import type { ActiveFilters } from '@/components/sidebar-filters';
+import dynamic from 'next/dynamic';
+import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
+
+const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
+  loading: () => <SidebarFiltersSkeleton />,
+  ssr: false,
+});
 
 interface CategoryDisplayProps {
   params: {

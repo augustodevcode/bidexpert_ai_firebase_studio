@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
-import SidebarFilters, { type ActiveFilters } from '@/components/sidebar-filters'; 
+import type { ActiveFilters } from '@/components/sidebar-filters'; 
 import DirectSaleOfferCard from '@/components/direct-sale-offer-card';
 import type { DirectSaleOffer, LotCategory, DirectSaleOfferType } from '@/types';
 import { 
@@ -21,6 +21,13 @@ import {
 } from '@/lib/sample-data';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { useRouter, useSearchParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
+
+const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
+  loading: () => <SidebarFiltersSkeleton />,
+  ssr: false,
+});
 
 const sortOptionsDirectSales = [
   { value: 'relevance', label: 'Relevância' },
@@ -318,4 +325,3 @@ export default function DirectSalesPage() {
     </div>
   );
 }
-
