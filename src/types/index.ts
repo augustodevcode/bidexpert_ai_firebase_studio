@@ -371,6 +371,17 @@ export type BidInfo = {
   timestamp: AnyTimestamp;
 };
 
+// GAP 4.2.5
+export interface UserLotMaxBid {
+  id: string;
+  userId: string;
+  lotId: string;
+  maxAmount: number;
+  isActive: boolean;
+  createdAt: AnyTimestamp;
+  updatedAt: AnyTimestamp;
+}
+
 export type Review = {
   id: string;
   lotId: string;
@@ -425,20 +436,6 @@ export interface UserDocument {
 
 export type UserBidStatus = 'GANHANDO' | 'PERDENDO' | 'SUPERADO' | 'ARREMATADO' | 'NAO_ARREMATADO';
 export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO';
-
-export interface UserBid {
-  id: string;
-  lotId: string;
-  auctionId: string;
-  lotTitle: string;
-  lotImageUrl: string;
-  lotImageAiHint?: string;
-  userBidAmount: number;
-  currentLotPrice: number;
-  bidStatus: UserBidStatus;
-  bidDate: AnyTimestamp;
-  lotEndDate: AnyTimestamp;
-}
 
 export interface UserWin {
   id: string;
@@ -827,4 +824,5 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
+
 

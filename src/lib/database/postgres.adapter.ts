@@ -469,7 +469,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.log('[PostgresAdapter] Iniciando criação/verificação de tabelas...');
 
     const queries = [
-      `DROP TABLE IF EXISTS bids, lot_reviews, lot_questions, lots, media_items, subcategories, auctions, cities, sellers, auctioneers, users, states, lot_categories, roles, platform_settings CASCADE;`,
+      `DROP TABLE IF EXISTS user_lot_max_bids, bids, lot_reviews, lot_questions, lots, media_items, subcategories, auctions, cities, sellers, auctioneers, users, states, lot_categories, roles, platform_settings CASCADE;`,
 
       `CREATE TABLE IF NOT EXISTS roles (
         id SERIAL PRIMARY KEY,
@@ -792,6 +792,17 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `CREATE INDEX IF NOT EXISTS idx_bids_lot_id ON bids(lot_id);`,
       `CREATE INDEX IF NOT EXISTS idx_bids_bidder_id ON bids(bidder_id);`,
 
+      `CREATE TABLE IF NOT EXISTS user_lot_max_bids (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR(255) REFERENCES users(uid) ON DELETE CASCADE NOT NULL,
+        lot_id INTEGER REFERENCES lots(id) ON DELETE CASCADE NOT NULL,
+        max_amount NUMERIC(15,2) NOT NULL,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (user_id, lot_id),
+        INDEX idx_user_lot_max_bids_lot_id_active (lot_id, is_active)
+      );`,
       `CREATE TABLE IF NOT EXISTS lot_reviews (
         id SERIAL PRIMARY KEY,
         lot_id INTEGER REFERENCES lots(id) ON DELETE CASCADE NOT NULL,

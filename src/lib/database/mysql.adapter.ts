@@ -507,7 +507,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
     const queries = [
       `SET FOREIGN_KEY_CHECKS = 0;`,
-      `DROP TABLE IF EXISTS bids, lot_reviews, lot_questions, lots, media_items, subcategories, auctions, cities, sellers, auctioneers, users, states, lot_categories, roles, platform_settings;`,
+      `DROP TABLE IF EXISTS user_lot_max_bids, bids, lot_reviews, lot_questions, lots, media_items, subcategories, auctions, cities, sellers, auctioneers, users, states, lot_categories, roles, platform_settings;`,
 
       `CREATE TABLE IF NOT EXISTS roles (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -659,6 +659,19 @@ export class MySqlAdapter implements IDatabaseAdapter {
         FOREIGN KEY (bidder_id) REFERENCES users(uid) ON DELETE CASCADE,
         INDEX idx_bids_lot_id (lot_id), INDEX idx_bids_bidder_id (bidder_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+      `CREATE TABLE IF NOT EXISTS user_lot_max_bids (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        user_id VARCHAR(255) NOT NULL,
+        lot_id INT UNSIGNED NOT NULL,
+        max_amount DECIMAL(15,2) NOT NULL,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(uid) ON DELETE CASCADE,
+        FOREIGN KEY (lot_id) REFERENCES lots(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_user_lot_proxy (user_id, lot_id),
+        INDEX idx_user_lot_max_bids_lot_id_active (lot_id, is_active)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
       `CREATE TABLE IF NOT EXISTS lot_reviews (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, lot_id INT UNSIGNED NOT NULL, auction_id INT UNSIGNED NOT NULL,
         user_id VARCHAR(255) NOT NULL, user_display_name VARCHAR(255), rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
@@ -737,3 +750,4 @@ export class MySqlAdapter implements IDatabaseAdapter {
   // Omitted for brevity - all other methods remain unchanged.
   // ...
 }
+
