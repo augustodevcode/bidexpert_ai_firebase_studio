@@ -598,7 +598,7 @@ export const sampleAuctioneers: AuctioneerProfileInfo[] = getUniqueAuctioneersIn
 export const sampleSellers: SellerProfileInfo[] = getUniqueSellersInternal();
 
 
-const processedSampleAuctions: Auction[] = sampleAuctionsRaw.map(auctionRaw => {
+const initialProcessedAuctions: Auction[] = sampleAuctionsRaw.map(auctionRaw => {
     const lotsForAuction = sampleLotsRaw.filter(l => l.auctionId === auctionRaw.id);
     const categoryInfo = sampleLotCategories.find(c => c.id === auctionRaw.categoryId || c.name === auctionRaw.category || c.slug === auctionRaw.category);
     const auctioneerInfo = sampleAuctioneers.find(auc => auc.id === auctionRaw.auctioneerId || auc.name === auctionRaw.auctioneerId || auc.slug === auctionRaw.auctioneerId);
@@ -657,7 +657,7 @@ export const sampleSubcategories: Subcategory[] = sampleSubcategoriesStatic.map(
 });
 
 export const sampleLots: Lot[] = sampleLotsRaw.map(lotRaw => {
-    const parentAuction = processedSampleAuctions.find(a => a.id === lotRaw.auctionId);
+    const parentAuction = initialProcessedAuctions.find(a => a.id === lotRaw.auctionId);
     const categoryInfo = sampleLotCategories.find(c => c.id === lotRaw.categoryId || c.slug === lotRaw.categoryId || c.name === lotRaw.categoryId);
     const subcategoryInfo = sampleSubcategories.find(sub => sub.id === lotRaw.subcategoryId || (sub.slug === lotRaw.subcategoryId && sub.parentCategoryId === categoryInfo?.id));
     const stateInfo = sampleStates.find(s => s.id === lotRaw.stateId);
@@ -760,10 +760,10 @@ export const sampleLots: Lot[] = sampleLotsRaw.map(lotRaw => {
     } as Lot;
 });
 
-processedSampleAuctions.forEach(auction => {
-    auction.lots = sampleLots.filter(l => l.auctionId === auction.id);
-});
-export const sampleAuctions: Auction[] = processedSampleAuctions;
+export const sampleAuctions: Auction[] = initialProcessedAuctions.map(auction => ({
+    ...auction,
+    lots: sampleLots.filter(l => l.auctionId === auction.id)
+}));
 
 
 export const sampleBids: BidInfo[] = sampleLots.flatMap(lot => {
