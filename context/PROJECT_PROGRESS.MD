@@ -34,6 +34,7 @@
     *   Thoroughly test and complete all `IDatabaseAdapter` methods for MySQL and PostgreSQL for all entities.
 - **Auction Theory Enhancements:**
     *   **Soft-Close/Anti-Sniping (GAP 4.1.1):** Implement logic to extend auction end times based on last-minute bids.
+    *   **Proxy Bidding (GAP 4.2.5):** Implement secure backend logic (in `placeBidOnLot`) and UI for automatic proxy bidding based on the new `UserLotMaxBid` entity.
     *   **Configurable Bid Increments (GAP 4.1.3):** Add `Auction.bidIncrementRule` and display it clearly.
 - **User Authentication & Authorization (Enhancements):**
     *   Implement robust, granular permission checks in all Server Actions.

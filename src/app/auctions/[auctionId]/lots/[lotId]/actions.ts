@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { Lot, BidInfo, Review, LotQuestion, SellerProfileInfo } from '@/types';
+import type { Lot, BidInfo, Review, LotQuestion, SellerProfileInfo, UserLotMaxBid } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { getDatabaseAdapter } from '@/lib/database';
 
@@ -33,11 +33,41 @@ export async function placeBidOnLot(
   return result;
 }
 
+export async function placeMaxBid(lotId: string, userId: string, maxAmount: number): Promise<{ success: boolean, message: string }> {
+  console.log(`[Action - placeMaxBid] User ${userId} is setting max bid of ${maxAmount} on lot ${lotId}`);
+  const db = await getDatabaseAdapter();
+  const lot = await db.getLot(lotId);
+  if (!lot) {
+      return { success: false, message: 'Lote não encontrado.' };
+  }
+  if (lot.status !== 'ABERTO_PARA_LANCES') {
+      return { success: false, message: 'Lances não estão abertos para este lote.' };
+  }
+  if (maxAmount <= lot.price) {
+      return { success: false, message: `Seu lance máximo deve ser maior que o lance atual de R$ ${lot.price.toLocaleString('pt-BR')}.` };
+  }
+
+  const result = await db.createUserLotMaxBid(userId, lot.id, maxAmount);
+  if (result.success) {
+      revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
+  }
+  return result;
+}
+
+export async function getActiveMaxBid(lotId: string, userId: string): Promise<UserLotMaxBid | null> {
+  if (!userId) return null;
+  console.log(`[Action - getActiveMaxBid] Fetching max bid for user ${userId} on lot ${lotId}`);
+  const db = await getDatabaseAdapter();
+  const lot = await db.getLot(lotId);
+  if (!lot) return null;
+  return db.getActiveUserLotMaxBid(userId, lot.id);
+}
+
+
 export async function getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> {
   console.log(`[Action - getBidsForLot] Fetching bids for lot ID/PublicID: ${lotIdOrPublicId}`);
   const db = await getDatabaseAdapter();
   const bids = await db.getBidsForLot(lotIdOrPublicId);
-  // Sorting is now handled by the adapter or should be done on the client if needed
   return bids;
 }
 
@@ -106,8 +136,8 @@ export async function answerQuestionOnLot(
   answerText: string,
   answeredByUserId: string,
   answeredByUserDisplayName: string,
-  lotId: string, // Assuming we get this from the client now
-  auctionId: string // Assuming we get this from the client now
+  lotId: string,
+  auctionId: string 
 ): Promise<{ success: boolean; message: string }> {
   console.log(`[Action - answerQuestionOnLot] Answering question ID: ${questionId}`);
   const db = await getDatabaseAdapter();
