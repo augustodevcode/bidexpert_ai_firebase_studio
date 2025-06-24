@@ -1,13 +1,14 @@
+
 'use client';
 
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L, { type LatLngBounds } from 'leaflet';
-import React, { useEffect, useMemo, useCallback } from 'react';
+import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import type { Lot, Auction } from '@/types';
+import { Loader2 } from 'lucide-react';
 
-// Fix for default icon paths with webpack, which is the recommended approach for react-leaflet with bundlers like Next.js
-// This ensures that the marker images are correctly bundled and loaded.
+// Fix for default icon paths with webpack
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 
 L.Icon.Default.mergeOptions({
@@ -51,6 +52,12 @@ interface MapInnerProps {
 }
 
 export default function MapInner({ items, itemType, mapCenter, mapZoom, onBoundsChange, shouldFitBounds }: MapInnerProps) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
 
   const markers = useMemo(() => {
     return items.map(item => {
@@ -86,6 +93,15 @@ export default function MapInner({ items, itemType, mapCenter, mapZoom, onBounds
     }
     return null;
   }, [items]);
+
+  if (!isClient) {
+    return (
+      <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="ml-2 text-muted-foreground">Carregando Mapa...</p>
+      </div>
+    );
+  }
 
   return (
     <MapContainer 
