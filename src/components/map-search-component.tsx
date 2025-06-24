@@ -4,8 +4,9 @@
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L, { type LatLngBounds } from 'leaflet';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import type { Lot, Auction } from '@/types';
+import { Loader2 } from 'lucide-react';
 
 // Fix for default icon paths with webpack
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -31,6 +32,9 @@ function MapEvents({ onBoundsChange }: { onBoundsChange: (bounds: LatLngBounds) 
     moveend: () => {
       onBoundsChange(map.getBounds());
     },
+    zoomend: () => {
+      onBoundsChange(map.getBounds());
+    }
   });
   return null;
 }
@@ -56,6 +60,11 @@ interface MapSearchComponentProps {
 }
 
 export default function MapSearchComponent({ items, itemType, mapCenter, mapZoom, onBoundsChange, shouldFitBounds }: MapSearchComponentProps) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const markers = useMemo(() => {
     return items.map(item => {
@@ -92,12 +101,21 @@ export default function MapSearchComponent({ items, itemType, mapCenter, mapZoom
     return null;
   }, [items]);
 
+  if (!isClient) {
+    return (
+      <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="ml-2 text-muted-foreground">Carregando Mapa...</p>
+      </div>
+    );
+  }
+
   return (
     <MapContainer 
       center={mapCenter} 
       zoom={mapZoom} 
       scrollWheelZoom={true} 
-      style={{ height: '100%', width: '100%', borderRadius: 'inherit' }}
+      style={{ height: '100%', width: '100%' }}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

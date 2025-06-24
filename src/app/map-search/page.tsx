@@ -12,11 +12,11 @@ import type { Lot, Auction, PlatformSettings } from '@/types';
 import LotCard from '@/components/lot-card';
 import AuctionCard from '@/components/auction-card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import dynamic from 'next/dynamic';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import type { LatLngBounds } from 'leaflet';
+import MapSearchComponent from '@/components/map-search-component';
 
 export default function MapSearchPage() {
   const router = useRouter();
@@ -35,15 +35,6 @@ export default function MapSearchPage() {
   const [mapZoom, setMapZoom] = useState(4);
   const [mapBounds, setMapBounds] = useState<LatLngBounds | null>(null);
   const [isUserInteraction, setIsUserInteraction] = useState(false);
-
-  const MapComponent = useMemo(() => dynamic(() => import('@/components/map-search-component'), {
-    ssr: false,
-    loading: () => (
-      <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      </div>
-    ),
-  }), []);
 
 
   useEffect(() => {
@@ -202,8 +193,8 @@ export default function MapSearchPage() {
             </ScrollArea>
         </Card>
 
-        <div className="flex-grow h-full md:h-auto rounded-lg overflow-hidden shadow-lg">
-             <MapComponent
+        <div className="flex-grow h-full md:h-auto rounded-lg overflow-hidden shadow-lg relative z-0">
+             <MapSearchComponent
                 items={filteredItems}
                 itemType={searchType}
                 mapCenter={mapCenter}
