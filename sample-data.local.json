@@ -2045,7 +2045,7 @@
       "auctionId": "100625bra",
       "publicId": "LOT-CASACENT-ABC123X1",
       "title": "CASA COM 129,30 M² - CENTRO",
-      "imageMediaId": "media-b541c252-6f9b-4053-b0ae-32f433b55064",
+      "imageMediaId": "media-2cba7324-3480-4589-9161-2b0523403bcb",
       "dataAiHint": "casa residencial",
       "mediaItemIds": [
         "media-lot-casa-centro-main",
@@ -2057,8 +2057,8 @@
       "categoryId": "cat-imoveis",
       "subcategoryId": "subcat-imoveis-casas",
       "views": 1018,
-      "price": 45000,
-      "bidsCount": 12,
+      "price": 46000,
+      "bidsCount": 13,
       "description": "Casa residencial bem localizada no centro da cidade.",
       "initialPrice": 50000,
       "secondInitialPrice": 42000,
@@ -2080,12 +2080,12 @@
       "cityName": "Teotônio Vilela",
       "stateUf": "AL",
       "createdAt": "2025-06-15T18:34:27.765Z",
-      "updatedAt": "2025-06-24T04:00:22.086Z",
+      "updatedAt": "2025-06-24T04:27:05.857Z",
       "endDate": "2025-06-27T18:34:27.765Z",
       "auctionDate": "2025-06-22T18:49:27.765Z",
       "lotSpecificAuctionDate": "2025-06-22T18:49:27.765Z",
       "secondAuctionDate": null,
-      "imageUrl": "/uploads/media/5294f220-5768-4680-abda-bf1296a32d38-group-trucks-parked-row.jpg",
+      "imageUrl": "/uploads/media/203313de-ff72-44c8-a4d4-641ffb173502-charming-yellow-house-with-wooden-windows-green-grassy-garden.jpg",
       "galleryImageUrls": [
         "https://placehold.co/100x100.png?text=ID:medi",
         "https://placehold.co/100x100.png?text=ID:medi"
@@ -2268,6 +2268,15 @@
     }
   ],
   "sampleBids": [
+    {
+      "id": "bid-885a7146-59cd-4684-a60e-ab2968978139",
+      "lotId": "LOTE001",
+      "auctionId": "100625bra",
+      "bidderId": "admin-bidexpert-platform-001",
+      "bidderDisplay": "Administrador BidExpert",
+      "amount": 46000,
+      "timestamp": "2025-06-24T04:30:48.014Z"
+    },
     {
       "id": "BID-LOTETP002-UTIL1-a578024c",
       "lotId": "LOTETP002-UTIL1",
