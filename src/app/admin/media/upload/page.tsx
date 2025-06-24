@@ -10,7 +10,6 @@ import { UploadCloud, ArrowLeft, Loader2, FileImage, X, CheckCircle, AlertCircle
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { handleImageUpload } from '../actions';
 import { cn } from '@/lib/utils';
 import type { MediaItem } from '@/types';
 
@@ -26,7 +25,7 @@ interface UploadResult {
   errors?: UploadError[];
 }
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf', 'image/svg+xml'];
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
@@ -73,7 +72,7 @@ export default function AdvancedMediaUploadPage() {
 
     if (validFiles.length > 0) {
       setFiles(prev => [...prev, ...validFiles]);
-      setUploadResult(null); // Clear previous results when new files are added
+      setUploadResult(null);
     }
   }, [files, toast]);
 
@@ -98,7 +97,7 @@ export default function AdvancedMediaUploadPage() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       addFiles(e.target.files);
-      if(fileInputRef.current) fileInputRef.current.value = ''; // Reset input
+      if(fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -113,19 +112,42 @@ export default function AdvancedMediaUploadPage() {
     const formData = new FormData();
     files.forEach(file => formData.append('files', file));
 
-    const result = await handleImageUpload(formData);
-    setUploadResult(result);
-    
-    if (result.success) {
-        toast({ title: 'Upload Concluído', description: result.message });
-        setFiles([]); // Clear list on full success
-        router.push('/admin/media');
-    } else {
-        toast({ title: 'Falha no Upload', description: result.message, variant: 'destructive', duration: 10000 });
-        // Optionally remove only successful files if partial success is a state
+    try {
+        const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+        });
+
+        const result: UploadResult = await response.json();
+        setUploadResult(result);
+
+        if (response.ok && result.success) {
+            toast({ title: 'Upload Concluído', description: result.message });
+            setFiles([]);
+            router.push('/admin/media');
+            router.refresh();
+        } else if (response.ok && !result.success && result.errors) {
+            toast({ title: 'Upload Parcial', description: result.message, variant: 'default' });
+            const successfulFileNames = new Set((result.items || []).map(item => item.fileName));
+            setFiles(currentFiles => currentFiles.filter(f => !successfulFileNames.has(f.name)));
+        } else {
+            throw new Error(result.message || `Erro HTTP: ${response.status}`);
+        }
+    } catch (error: any) {
+        console.error("Upload error:", error);
+        toast({ title: 'Falha no Upload', description: error.message || 'Ocorreu um erro na comunicação com o servidor.', variant: 'destructive' });
+        setUploadResult({ success: false, message: error.message || 'Erro de comunicação.', errors: [{fileName: 'Erro Geral', message: 'Verifique sua conexão ou o console do servidor.'}]});
+    } finally {
+        setIsLoading(false);
     }
-    
-    setIsLoading(false);
+  };
+  
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (
@@ -149,11 +171,11 @@ export default function AdvancedMediaUploadPage() {
           >
             <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground/70" />
             <p className="text-lg font-medium text-muted-foreground">Solte os arquivos aqui ou</p>
-            <Input id="file-upload" type="file" multiple className="hidden" onChange={handleFileSelect} disabled={isLoading} ref={fileInputRef} />
+            <Input id="file-upload" type="file" multiple className="hidden" onChange={handleFileSelect} disabled={isLoading} ref={fileInputRef} accept={ALLOWED_TYPES.join(',')} />
             <Label htmlFor="file-upload" className={cn("font-semibold text-primary underline-offset-4 hover:underline cursor-pointer", isLoading && "pointer-events-none")}>
               selecione do seu computador
             </Label>
-            <p className="text-xs text-muted-foreground">Máx. {MAX_FILE_SIZE_MB}MB por arquivo. Tipos suportados: {ALLOWED_TYPES.join(', ')}</p>
+            <p className="text-xs text-muted-foreground">Máx. {MAX_FILE_SIZE_MB}MB por arquivo. Tipos suportados: JPG, PNG, WEBP, GIF, PDF, SVG</p>
           </div>
         </CardContent>
       </Card>
@@ -165,15 +187,15 @@ export default function AdvancedMediaUploadPage() {
             </CardHeader>
             <CardContent className="space-y-3">
                 {files.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 border rounded-md bg-secondary/50">
-                        <div className="flex items-center gap-3">
-                            <FileImage className="h-6 w-6 text-muted-foreground" />
-                            <div className="flex flex-col">
-                                <span className="text-sm font-medium text-foreground truncate max-w-[200px] sm:max-w-xs">{file.name}</span>
-                                <span className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB - {file.type}</span>
+                    <div key={`${file.name}-${index}`} className="flex items-center justify-between p-2 border rounded-md bg-secondary/50">
+                        <div className="flex items-center gap-3 min-w-0">
+                            <FileImage className="h-6 w-6 text-muted-foreground flex-shrink-0" />
+                            <div className="flex flex-col min-w-0">
+                                <span className="text-sm font-medium text-foreground truncate">{file.name}</span>
+                                <span className="text-xs text-muted-foreground">{formatFileSize(file.size)} - {file.type}</span>
                             </div>
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => removeFile(index)} className="text-destructive hover:text-destructive h-7 w-7" disabled={isLoading}>
+                        <Button variant="ghost" size="icon" onClick={() => removeFile(index)} className="text-destructive hover:text-destructive h-7 w-7 flex-shrink-0" disabled={isLoading}>
                             <X className="h-4 w-4" />
                         </Button>
                     </div>
