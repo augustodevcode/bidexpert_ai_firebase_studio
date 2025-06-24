@@ -1,15 +1,14 @@
 
 'use client';
 
-import type { Lot, PlatformSettings } from '@/types';
+import type { Lot, PlatformSettings, MapSettings } from '@/types';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'; 
 import { MapPin, Info, ExternalLink } from 'lucide-react';
-import { samplePlatformSettings } from '@/lib/sample-data'; // Para fallback
 
 interface LotMapDisplayProps {
   lot: Lot;
-  platformSettings?: PlatformSettings; // Tornando opcional para usar samplePlatformSettings como fallback
+  platformSettings?: PlatformSettings;
 }
 
 // Helper function para extrair o parâmetro 'q' de uma URL de embed do Google Maps
@@ -26,12 +25,17 @@ function extractQueryFromGoogleEmbed(embedUrl: string): string | null {
   return null;
 }
 
-const defaultMapSettings = samplePlatformSettings.mapSettings;
+const hardcodedDefaultMapSettings: MapSettings = {
+    defaultProvider: 'openstreetmap',
+    googleMapsApiKey: '',
+    staticImageMapZoom: 15,
+    staticImageMapMarkerColor: 'blue',
+};
 
 
 export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayProps) {
-  const settings = platformSettings || samplePlatformSettings; // Usa settings passadas ou o padrão
-  const mapSettings = settings.mapSettings || defaultMapSettings;
+  const settings = platformSettings;
+  const mapSettings = settings?.mapSettings || hardcodedDefaultMapSettings;
   const { latitude, longitude, mapEmbedUrl, mapStaticImageUrl, mapAddress, title } = lot;
 
   const displayAddressText = mapAddress || (latitude && longitude ? `${latitude.toFixed(4)}, ${longitude.toFixed(4)}` : "Localização do Lote");
@@ -205,4 +209,3 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
     </Card>
   );
 }
-
