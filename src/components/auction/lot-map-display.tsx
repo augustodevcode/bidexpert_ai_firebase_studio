@@ -205,3 +205,4 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
     </Card>
   );
 }
+

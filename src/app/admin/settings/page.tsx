@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { getPlatformSettings } from './actions';
 import SettingsForm from './settings-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings as SettingsIcon, Palette, Fingerprint, Wrench, Loader2, MapPin, Search as SearchIconLucide, Clock as ClockIcon, Link2 as LinkIcon, Database } from 'lucide-react'; // Adicionado SearchIconLucide, ClockIcon, LinkIcon, Database
+import { Settings as SettingsIcon, Palette, Fingerprint, Wrench, Loader2, MapPin, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database } from 'lucide-react'; // Adicionado SearchIconLucide, ClockIcon, LinkIcon, Database
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { PlatformSettings } from '@/types';
@@ -161,3 +161,4 @@ export default function AdminSettingsPageWrapper() {
         </Suspense>
     );
 }
+
