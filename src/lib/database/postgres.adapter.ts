@@ -258,6 +258,8 @@ function mapToAuction(row: QueryResultRow): Auction {
         lots: [],
         automaticBiddingEnabled: row.automatic_bidding_enabled,
         allowInstallmentBids: row.allow_installment_bids,
+        softCloseEnabled: row.soft_close_enabled,
+        softCloseMinutes: row.soft_close_minutes !== null ? Number(row.soft_close_minutes) : undefined,
         estimatedRevenue: row.estimated_revenue !== null ? Number(row.estimated_revenue) : undefined,
         achievedRevenue: row.achieved_revenue !== null ? Number(row.achieved_revenue) : undefined,
         totalHabilitatedUsers: Number(row.total_habilitated_users || 0),
@@ -487,6 +489,10 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
       if (bidAmount <= lot.price) throw new Error('Lance deve ser maior que o atual.');
       if (lot.status !== 'ABERTO_PARA_LANCES') throw new Error('Lances não estão abertos para este lote.');
+      
+      const auctionRes = await client.query('SELECT * FROM auctions WHERE id = $1', [lot.auctionId]);
+      if (auctionRes.rows.length === 0) throw new Error('Leilão pai não encontrado.');
+      const auction = mapToAuction(auctionRes.rows[0]);
 
       // 1. Insert the initial manual bid
       const bidRes = await client.query(
@@ -532,6 +538,20 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
           if (currentPrice >= topProxy.maxAmount) {
                await client.query('UPDATE user_lot_max_bids SET is_active = FALSE WHERE id = $1', [topProxy.id]);
+          }
+      }
+
+      // 3. Soft-Close Logic
+      if (auction.softCloseEnabled && auction.softCloseMinutes && lot.endDate) {
+          const now = new Date();
+          const endDate = new Date(lot.endDate);
+          const diffSeconds = (endDate.getTime() - now.getTime()) / 1000;
+          const softCloseSeconds = auction.softCloseMinutes * 60;
+
+          if (diffSeconds > 0 && diffSeconds <= softCloseSeconds) {
+              const newEndDate = new Date(now.getTime() + softCloseSeconds * 1000);
+              await client.query('UPDATE lots SET end_date = $1 WHERE id = $2', [newEndDate, lot.id]);
+              console.log(`[PostgresAdapter - placeBidOnLot] Soft-close triggered for lot ${lot.id}. New end date: ${newEndDate.toISOString()}`);
           }
       }
 
@@ -739,6 +759,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
         vehicle_location VARCHAR(255),
         automatic_bidding_enabled BOOLEAN DEFAULT FALSE,
         allow_installment_bids BOOLEAN DEFAULT FALSE,
+        soft_close_enabled BOOLEAN DEFAULT FALSE,
+        soft_close_minutes INTEGER DEFAULT 2,
         estimated_revenue NUMERIC(15,2),
         achieved_revenue NUMERIC(15,2),
         total_habilitated_users INTEGER DEFAULT 0,

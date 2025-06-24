@@ -294,6 +294,8 @@ function mapToAuction(row: any): Auction {
         lots: [],
         automaticBiddingEnabled: Boolean(row.automaticBiddingEnabled),
         allowInstallmentBids: Boolean(row.allowInstallmentBids),
+        softCloseEnabled: Boolean(row.softCloseEnabled),
+        softCloseMinutes: row.softCloseMinutes !== null ? Number(row.softCloseMinutes) : undefined,
         estimatedRevenue: row.estimatedRevenue !== null ? Number(row.estimatedRevenue) : undefined,
         achievedRevenue: row.achievedRevenue !== null ? Number(row.achievedRevenue) : undefined,
         totalHabilitatedUsers: Number(row.totalHabilitatedUsers || 0),
@@ -525,6 +527,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
         if (bidAmount <= lot.price) throw new Error('Lance deve ser maior que o atual.');
         if (lot.status !== 'ABERTO_PARA_LANCES') throw new Error('Lances não estão abertos para este lote.');
+        
+        const [auctionRows] = await connection.execute('SELECT * FROM auctions WHERE id = ?', [lot.auctionId]);
+        if ((auctionRows as any[]).length === 0) throw new Error('Leilão pai não encontrado.');
+        const auction = mapToAuction(mapMySqlRowToCamelCase((auctionRows as RowDataPacket[])[0]));
 
         // 1. Insert the initial manual bid
         const [bidResult] = await connection.execute(
@@ -540,7 +546,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
         
         // 2. Proxy Bidding Loop
         while (true) {
-            // Find the highest proxy bid from a different user that can beat the current price
             const [proxyRows] = await connection.execute(
                 `SELECT p.*, u.full_name as user_display_name FROM user_lot_max_bids p
                  JOIN users u ON p.user_id = u.uid
@@ -550,24 +555,15 @@ export class MySqlAdapter implements IDatabaseAdapter {
             );
             const proxyBids = mapMySqlRowsToCamelCase(proxyRows as RowDataPacket[]);
 
-            if (proxyBids.length === 0) {
-                // No more competing proxy bids, exit loop
-                break;
-            }
+            if (proxyBids.length === 0) break;
 
             const topProxy = proxyBids[0];
             const increment = lot.bidIncrementStep || 100;
             let nextBidAmount = currentPrice + increment;
             
-            if (nextBidAmount > topProxy.maxAmount) {
-                nextBidAmount = topProxy.maxAmount;
-            }
-            
-            if (nextBidAmount <= currentPrice) {
-                break; // Safety break
-            }
+            if (nextBidAmount > topProxy.maxAmount) nextBidAmount = topProxy.maxAmount;
+            if (nextBidAmount <= currentPrice) break;
 
-            // Place the bid for the proxy user
             await connection.execute(
                 'INSERT INTO bids (lot_id, auction_id, bidder_id, bidder_display_name, amount) VALUES (?, ?, ?, ?, ?)',
                 [lot.id, lot.auctionId, topProxy.userId, topProxy.userDisplayName, nextBidAmount]
@@ -577,13 +573,24 @@ export class MySqlAdapter implements IDatabaseAdapter {
             bidsCount++;
             lastBidderId = topProxy.userId;
 
-            await connection.execute(
-                'UPDATE lots SET price = ?, bids_count = ? WHERE id = ?',
-                [currentPrice, bidsCount, lot.id]
-            );
+            await connection.execute('UPDATE lots SET price = ?, bids_count = ? WHERE id = ?', [currentPrice, bidsCount, lot.id]);
 
             if (currentPrice >= topProxy.maxAmount) {
                  await connection.execute('UPDATE user_lot_max_bids SET is_active = FALSE WHERE id = ?', [topProxy.id]);
+            }
+        }
+        
+        // 3. Soft-Close Logic
+        if (auction.softCloseEnabled && auction.softCloseMinutes && lot.endDate) {
+            const now = new Date();
+            const endDate = new Date(lot.endDate);
+            const diffSeconds = (endDate.getTime() - now.getTime()) / 1000;
+            const softCloseSeconds = auction.softCloseMinutes * 60;
+
+            if (diffSeconds > 0 && diffSeconds <= softCloseSeconds) {
+                const newEndDate = new Date(now.getTime() + softCloseSeconds * 1000);
+                await connection.execute('UPDATE lots SET end_date = ? WHERE id = ?', [newEndDate.toISOString().slice(0, 19).replace('T', ' '), lot.id]);
+                console.log(`[MySqlAdapter - placeBidOnLot] Soft-close triggered for lot ${lot.id}. New end date: ${newEndDate.toISOString()}`);
             }
         }
 
@@ -706,7 +713,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         data_ai_hint TEXT, documents_url TEXT, total_lots INT UNSIGNED DEFAULT 0, visits INT UNSIGNED DEFAULT 0,
         initial_offer DECIMAL(15,2), is_favorite BOOLEAN DEFAULT FALSE, current_bid DECIMAL(15,2),
         bids_count INT UNSIGNED DEFAULT 0, selling_branch VARCHAR(100), vehicle_location VARCHAR(255),
-        automatic_bidding_enabled BOOLEAN DEFAULT FALSE, allow_installment_bids BOOLEAN DEFAULT FALSE,
+        automatic_bidding_enabled BOOLEAN DEFAULT FALSE, allow_installment_bids BOOLEAN DEFAULT FALSE, soft_close_enabled BOOLEAN DEFAULT FALSE, soft_close_minutes INT DEFAULT 2,
         estimated_revenue DECIMAL(15,2), achieved_revenue DECIMAL(15,2), total_habilitated_users INT UNSIGNED DEFAULT 0,
         is_featured_on_marketplace BOOLEAN DEFAULT FALSE, marketplace_announcement_title VARCHAR(150),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

@@ -23,12 +23,12 @@
 - **Q&A System (GAP 4.1.2):** Added data models, database tables, server actions, and UI components for a per-lot Question & Answer feature.
 - **Inconsistent Search Behavior (GAP 4.1):** Refactored search logic and centralized sample data into `sample-data.local.json`, resolving client-side build errors.
 - **Proxy Bidding / Lance por Procuração (GAP 4.2.5):** Implemented the full data model, database schema, server actions, UI, and backend logic for placing and processing confidential maximum bids.
+- **Soft-Close / Anti-Sniping (GAP 4.1.1):** Implemented logic to extend auction end times based on last-minute bids.
 
 ## DOING
-- **Soft-Close / Anti-Sniping (GAP 4.1.1):** Implement logic to extend auction end times based on last-minute bids.
+- **Item 20:** Develop Virtual Auditorium (`/auctions/[auctionId]/live`) with current lot display, bidding panel, upcoming lots, and chat.
 
 ## NEXT
-- **Item 20:** Develop Virtual Auditorium (`/auctions/[auctionId]/live`) with current lot display, bidding panel, upcoming lots, and chat.
 - **Item 21:** Gantt chart for auctions on the auction dashboard (`/admin/auctions/page.tsx`).
 - **Complete SQL Adapter Implementation:**
     *   Thoroughly test and complete all `IDatabaseAdapter` methods for MySQL and PostgreSQL for all entities.
