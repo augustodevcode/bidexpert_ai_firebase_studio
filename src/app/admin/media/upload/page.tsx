@@ -1,150 +1,218 @@
 
 'use client';
 
+import React, { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { UploadCloud, ArrowLeft, Loader2 } from 'lucide-react';
+import { UploadCloud, ArrowLeft, Loader2, FileImage, X, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useState, type FormEvent, useRef, type DragEvent, type ChangeEvent } from 'react';
 import { handleImageUpload } from '../actions';
+import { cn } from '@/lib/utils';
+import type { MediaItem } from '@/types';
 
-export default function MediaUploadPage() {
+interface UploadError {
+  fileName: string;
+  message: string;
+}
+
+interface UploadResult {
+  success: boolean;
+  message: string;
+  items?: MediaItem[];
+  errors?: UploadError[];
+}
+
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
+const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+export default function AdvancedMediaUploadPage() {
   const { toast } = useToast();
   const router = useRouter();
+  
+  const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const processAndSubmitFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0) {
-      toast({ title: 'Nenhum arquivo selecionado', variant: 'destructive'});
+  const validateFile = (file: File): { isValid: boolean; error?: string } => {
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      return { isValid: false, error: `Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Máx: ${MAX_FILE_SIZE_MB}MB` };
+    }
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return { isValid: false, error: `Tipo de arquivo não permitido.` };
+    }
+    return { isValid: true };
+  };
+
+  const addFiles = useCallback((newFiles: FileList | File[]) => {
+    const fileArray = Array.from(newFiles);
+    const validFiles: File[] = [];
+    const errors: string[] = [];
+
+    fileArray.forEach(file => {
+      const validation = validateFile(file);
+      if (validation.isValid) {
+        if (!files.find(f => f.name === file.name && f.size === file.size)) {
+          validFiles.push(file);
+        }
+      } else {
+        errors.push(`${file.name}: ${validation.error}`);
+      }
+    });
+
+    if (errors.length > 0) {
+      toast({ title: 'Arquivos Inválidos', description: errors.join('\n'), variant: 'destructive', duration: 7000 });
+    }
+
+    if (validFiles.length > 0) {
+      setFiles(prev => [...prev, ...validFiles]);
+      setUploadResult(null); // Clear previous results when new files are added
+    }
+  }, [files, toast]);
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') setDragActive(true);
+    else if (e.type === 'dragleave') setDragActive(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      addFiles(e.dataTransfer.files);
+    }
+  }, [addFiles]);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      addFiles(e.target.files);
+      if(fileInputRef.current) fileInputRef.current.value = ''; // Reset input
+    }
+  };
+
+  const handleUpload = async () => {
+    if (files.length === 0) {
+      toast({ title: 'Nenhum arquivo para enviar', variant: 'destructive'});
       return;
     }
 
     setIsLoading(true);
+    setUploadResult(null);
     const formData = new FormData();
-    Array.from(files).forEach(file => {
-      formData.append('files', file);
-    });
+    files.forEach(file => formData.append('files', file));
 
     const result = await handleImageUpload(formData);
-    setIsLoading(false);
-
-    const hasSuccesses = result.items && result.items.length > 0;
-    const hasErrors = result.errors && result.errors.length > 0;
-
-    if (hasSuccesses) {
-      toast({
-        title: hasErrors ? 'Upload Parcialmente Concluído' : 'Upload Concluído!',
-        description: result.message,
-      });
-    }
-
-    if (hasErrors) {
-      const errorDescription = (
-        <ul className="mt-2 list-disc list-inside">
-          {result.errors!.map((e, i) => <li key={i}><strong>{e.fileName}:</strong> {e.message}</li>)}
-        </ul>
-      );
-      toast({
-        title: `Falha no Upload (${result.errors!.length} arquivo(s))`,
-        description: errorDescription,
-        variant: 'destructive',
-        duration: 10000,
-      });
+    setUploadResult(result);
+    
+    if (result.success) {
+        toast({ title: 'Upload Concluído', description: result.message });
+        setFiles([]); // Clear list on full success
+        router.push('/admin/media');
+    } else {
+        toast({ title: 'Falha no Upload', description: result.message, variant: 'destructive', duration: 10000 });
+        // Optionally remove only successful files if partial success is a state
     }
     
-    // Redirect only if there were some successes and no errors
-    if (hasSuccesses && !hasErrors) {
-        router.push('/admin/media');
-    }
-
-    // Limpar o valor do input de arquivo para permitir o re-upload do mesmo arquivo se necessário
-    if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-    }
-  };
-
-  const handleFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
-    await processAndSubmitFiles(event.target.files);
-  };
-
-  const handleDrop = async (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    await processAndSubmitFiles(event.dataTransfer.files);
-  };
-
-  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
+    setIsLoading(false);
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <Button variant="outline" size="sm" asChild className="mb-4 print:hidden" disabled={isLoading}>
-        <Link href="/admin/media">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar para Biblioteca
-        </Link>
+        <Link href="/admin/media"><ArrowLeft className="mr-2 h-4 w-4" />Voltar para Biblioteca</Link>
       </Button>
 
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold font-headline">Enviar Nova Mídia</CardTitle>
-          <CardDescription>
-            Arraste arquivos para cá ou clique no botão para selecionar do seu computador.
-          </CardDescription>
+          <CardDescription>Arraste arquivos ou selecione do seu computador. Os arquivos válidos aparecerão na lista abaixo.</CardDescription>
         </CardHeader>
-        <CardContent
-          className={`border-2 border-dashed border-muted-foreground/30 rounded-lg p-10 text-center space-y-4 hover:border-primary/70 transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-          onDrop={isLoading ? undefined : handleDrop}
-          onDragOver={isLoading ? undefined : handleDragOver}
-        >
-          {isLoading ? (
-            <Loader2 className="mx-auto h-16 w-16 text-primary animate-spin" />
-          ) : (
-            <UploadCloud className="mx-auto h-16 w-16 text-muted-foreground/70" />
-          )}
-          <p className="text-lg font-medium text-muted-foreground">
-            {isLoading ? 'Processando...' : 'Solte arquivos aqui para enviar'}
-          </p>
-          <p className="text-sm text-muted-foreground">ou</p>
-          
-          <Input 
-            id="file-upload" 
-            type="file" 
-            multiple 
-            className="hidden" 
-            onChange={handleFileSelect}
-            accept="image/png, image/jpeg, image/webp, image/gif, application/pdf"
-            disabled={isLoading}
-            ref={fileInputRef}
-          />
-          <Label
-            htmlFor="file-upload"
-            className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-10 px-4 py-2 
-            ${isLoading ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer'}`}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Enviando...
-              </>
-            ) : (
-              'Selecionar Arquivos'
+        <CardContent>
+          <div
+            className={cn("border-2 border-dashed rounded-lg p-10 text-center space-y-4 transition-colors", 
+              isLoading ? 'opacity-50 cursor-not-allowed' : 'border-muted-foreground/30',
+              dragActive ? 'border-primary bg-primary/10' : 'hover:border-primary/70'
             )}
-          </Label>
+            onDragEnter={handleDrag} onDragOver={handleDrag} onDragLeave={handleDrag} onDrop={handleDrop}
+          >
+            <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground/70" />
+            <p className="text-lg font-medium text-muted-foreground">Solte os arquivos aqui ou</p>
+            <Input id="file-upload" type="file" multiple className="hidden" onChange={handleFileSelect} disabled={isLoading} ref={fileInputRef} />
+            <Label htmlFor="file-upload" className={cn("font-semibold text-primary underline-offset-4 hover:underline cursor-pointer", isLoading && "pointer-events-none")}>
+              selecione do seu computador
+            </Label>
+            <p className="text-xs text-muted-foreground">Máx. {MAX_FILE_SIZE_MB}MB por arquivo. Tipos suportados: {ALLOWED_TYPES.join(', ')}</p>
+          </div>
         </CardContent>
-        <CardFooter className="flex-col items-start text-xs text-muted-foreground pt-4">
-          <p>Você pode enviar múltiplos arquivos de uma vez.</p>
-          <p>Tamanho máximo de upload por arquivo: 10 MB.</p>
-          <p className="mt-2">Formatos suportados: PNG, JPG/JPEG, WEBP, GIF, PDF.</p>
-        </CardFooter>
       </Card>
+      
+      {files.length > 0 && (
+        <Card>
+            <CardHeader>
+                <CardTitle>Arquivos para Enviar ({files.length})</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+                {files.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 border rounded-md bg-secondary/50">
+                        <div className="flex items-center gap-3">
+                            <FileImage className="h-6 w-6 text-muted-foreground" />
+                            <div className="flex flex-col">
+                                <span className="text-sm font-medium text-foreground truncate max-w-[200px] sm:max-w-xs">{file.name}</span>
+                                <span className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB - {file.type}</span>
+                            </div>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => removeFile(index)} className="text-destructive hover:text-destructive h-7 w-7" disabled={isLoading}>
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                ))}
+            </CardContent>
+             <CardFooter className="flex justify-end">
+                <Button size="lg" onClick={handleUpload} disabled={isLoading || files.length === 0}>
+                    {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <UploadCloud className="mr-2 h-5 w-5" />}
+                    Enviar {files.length} {files.length === 1 ? 'Arquivo' : 'Arquivos'}
+                </Button>
+            </CardFooter>
+        </Card>
+      )}
+
+      {uploadResult && (uploadResult.items || uploadResult.errors) && (
+        <Card>
+            <CardHeader>
+                <CardTitle>Resultado do Upload</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+                {uploadResult.items && uploadResult.items.length > 0 && (
+                    <div className="p-3 border rounded-md bg-green-50 border-green-200">
+                        <h4 className="font-semibold text-green-800 flex items-center gap-2 mb-2"><CheckCircle className="h-5 w-5"/>Sucessos ({uploadResult.items.length})</h4>
+                        <ul className="space-y-1 text-xs text-green-700 list-disc list-inside">
+                           {uploadResult.items.map(item => <li key={item.id}>{item.fileName}</li>)}
+                        </ul>
+                    </div>
+                )}
+                 {uploadResult.errors && uploadResult.errors.length > 0 && (
+                    <div className="p-3 border rounded-md bg-red-50 border-red-200">
+                        <h4 className="font-semibold text-red-800 flex items-center gap-2 mb-2"><AlertCircle className="h-5 w-5"/>Falhas ({uploadResult.errors.length})</h4>
+                        <ul className="space-y-1 text-xs text-red-700 list-disc list-inside">
+                           {uploadResult.errors.map((err, i) => <li key={i}><strong>{err.fileName}:</strong> {err.message}</li>)}
+                        </ul>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
