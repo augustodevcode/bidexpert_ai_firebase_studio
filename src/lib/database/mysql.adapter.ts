@@ -1,4 +1,5 @@
 
+
 // src/lib/database/mysql.adapter.ts
 import mysql, { type RowDataPacket, type Pool } from 'mysql2/promise';
 import type {
@@ -21,7 +22,8 @@ import type {
   BadgeVisibilitySettings,
   SectionBadgeConfig,
   HomepageSectionConfig,
-  AuctionStage
+  AuctionStage,
+  DirectSaleOffer
 } from '@/types';
 import { slugify, samplePlatformSettings } from '@/lib/sample-data';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
@@ -507,7 +509,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
     const queries = [
       `SET FOREIGN_KEY_CHECKS = 0;`,
-      `DROP TABLE IF EXISTS user_lot_max_bids, bids, lot_reviews, lot_questions, lots, media_items, subcategories, auctions, cities, sellers, auctioneers, users, states, lot_categories, roles, platform_settings;`,
+      `DROP TABLE IF EXISTS user_lot_max_bids, bids, lot_reviews, lot_questions, lots, media_items, subcategories, auctions, cities, sellers, auctioneers, users, states, lot_categories, roles, platform_settings, direct_sale_offers;`,
 
       `CREATE TABLE IF NOT EXISTS roles (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -692,6 +694,37 @@ export class MySqlAdapter implements IDatabaseAdapter {
         FOREIGN KEY (answered_by_user_id) REFERENCES users(uid) ON DELETE SET NULL,
         INDEX idx_lot_questions_lot_id (lot_id), INDEX idx_lot_questions_user_id (user_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+       `CREATE TABLE IF NOT EXISTS direct_sale_offers (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            public_id VARCHAR(100) NOT NULL UNIQUE,
+            title VARCHAR(255) NOT NULL,
+            description TEXT,
+            image_url TEXT,
+            data_ai_hint TEXT,
+            gallery_image_urls JSON,
+            offer_type VARCHAR(50) NOT NULL,
+            price DECIMAL(15,2),
+            minimum_offer_price DECIMAL(15,2),
+            category VARCHAR(255),
+            location_city VARCHAR(100),
+            location_state VARCHAR(100),
+            seller_name VARCHAR(255),
+            seller_id INT UNSIGNED,
+            status VARCHAR(50) NOT NULL,
+            items_included JSON,
+            tags JSON,
+            views INT UNSIGNED DEFAULT 0,
+            proposals_count INT UNSIGNED DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            expires_at TIMESTAMP NULL,
+            latitude DECIMAL(10, 8),
+            longitude DECIMAL(11, 8),
+            map_address VARCHAR(255),
+            map_embed_url TEXT,
+            map_static_image_url TEXT,
+            FOREIGN KEY (seller_id) REFERENCES sellers(id) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
       `SET FOREIGN_KEY_CHECKS = 1;`
     ];
 
@@ -749,5 +782,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
   // Omitted for brevity - all other methods remain unchanged.
   // ...
+
+  async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
+      return []; // Placeholder implementation for MySQL
+  }
 }
+
 

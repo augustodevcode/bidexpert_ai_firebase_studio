@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon } from 'lucide-react'; // Adicionado SearchIcon
+import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon, FileText as TomadaPrecosIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,14 +12,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import type { ActiveFilters } from '@/components/sidebar-filters'; 
 import DirectSaleOfferCard from '@/components/direct-sale-offer-card';
 import type { DirectSaleOffer, LotCategory, DirectSaleOfferType } from '@/types';
-import { 
-    sampleDirectSaleOffers,
-    getUniqueLotLocations, 
-    getUniqueSellerNames, 
-    slugify,
-    sampleLotCategories 
-} from '@/lib/sample-data';
+import { slugify } from '@/lib/sample-data-helpers';
 import { getLotCategories } from '@/app/admin/categories/actions';
+import { getDirectSaleOffers } from './actions';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
@@ -38,7 +33,7 @@ const sortOptionsDirectSales = [
   { value: 'views_desc', label: 'Mais Visitados' },
 ];
 
-const initialFiltersState: ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; searchType?: 'auctions' | 'lots' | 'direct_sale' } = {
+const initialFiltersState: ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; searchType?: 'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos' } = {
   modality: 'TODAS', 
   category: 'TODAS', 
   priceRange: [0, 1000000],
@@ -55,15 +50,17 @@ const initialFiltersState: ActiveFilters & { offerType?: DirectSaleOfferType | '
 export default function DirectSalesPage() {
   const router = useRouter();
   const searchParamsHook = useSearchParams();
+  
+  const [allOffers, setAllOffers] = useState<DirectSaleOffer[]>([]);
+  const [allCategoriesForFilter, setAllCategoriesForFilter] = useState<LotCategory[]>([]);
+  const [uniqueLocationsForFilter, setUniqueLocationsForFilter] = useState<string[]>([]);
+  const [uniqueSellersForFilter, setUniqueSellersForFilter] = useState<string[]>([]);
 
   const [searchTerm, setSearchTerm] = useState(searchParamsHook.get('term') || '');
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [sortBy, setSortBy] = useState<string>('relevance');
   
-  const [allCategoriesForFilter, setAllCategoriesForFilter] = useState<LotCategory[]>([]);
-  const [uniqueLocationsForFilter, setUniqueLocationsForFilter] = useState<string[]>([]);
-  const [uniqueSellersForFilter, setUniqueSellersForFilter] = useState<string[]>([]);
-  const [activeFilters, setActiveFilters] = useState<ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; searchType?: 'auctions' | 'lots' | 'direct_sale' }>(() => {
+  const [activeFilters, setActiveFilters] = useState<ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; searchType?: 'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos' }>(() => {
     const initial: typeof initialFiltersState = {...initialFiltersState, searchType: 'direct_sale'};
     if (searchParamsHook.get('category')) initial.category = searchParamsHook.get('category')!;
     if (searchParamsHook.get('offerType')) initial.offerType = searchParamsHook.get('offerType') as any;
@@ -77,26 +74,30 @@ export default function DirectSalesPage() {
     async function fetchData() {
       setIsLoading(true);
       try {
-        const categories = await getLotCategories(); // Using admin categories for now
+        const [categories, offers] = await Promise.all([
+          getLotCategories(),
+          getDirectSaleOffers(),
+        ]);
+        
+        setAllOffers(offers);
         setAllCategoriesForFilter(categories);
 
         const locations = new Set<string>();
-        sampleDirectSaleOffers.forEach(offer => {
+        offers.forEach(offer => {
           if (offer.locationCity && offer.locationState) locations.add(`${offer.locationCity} - ${offer.locationState}`);
           else if (offer.locationCity) locations.add(offer.locationCity);
           else if (offer.locationState) locations.add(offer.locationState);
         });
         setUniqueLocationsForFilter(Array.from(locations).sort());
         
-        // Using a simplified version for sellers for direct sales, assuming sellerName is primary
         const sellers = new Set<string>();
-        sampleDirectSaleOffers.forEach(offer => {
+        offers.forEach(offer => {
             if (offer.sellerName) sellers.add(offer.sellerName);
         });
         setUniqueSellersForFilter(Array.from(sellers).sort());
 
       } catch (error) {
-        console.error("Error fetching filter data for direct sales:", error);
+        console.error("Error fetching data for direct sales:", error);
       } finally {
         setIsLoading(false);
       }
@@ -128,7 +129,7 @@ export default function DirectSalesPage() {
   };
 
   const filteredAndSortedOffers = useMemo(() => {
-    let offers = sampleDirectSaleOffers.filter(offer => {
+    let offers = allOffers.filter(offer => {
       // Search Term
       if (searchTerm) {
           const term = searchTerm.toLowerCase();
@@ -169,10 +170,10 @@ export default function DirectSalesPage() {
     // Sorting
     switch (sortBy) {
       case 'createdAt_desc':
-        offers.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        offers.sort((a, b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
         break;
       case 'createdAt_asc':
-        offers.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        offers.sort((a, b) => new Date(a.createdAt as string).getTime() - new Date(b.createdAt as string).getTime());
         break;
       case 'price_asc':
         offers.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
@@ -188,7 +189,7 @@ export default function DirectSalesPage() {
         break;
     }
     return offers;
-  }, [searchTerm, activeFilters, sortBy]);
+  }, [searchTerm, activeFilters, sortBy, allOffers]);
 
   const handleSearchFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -298,7 +299,6 @@ export default function DirectSalesPage() {
                         ))}
                         </SelectContent>
                     </Select>
-                    {/* View mode toggle can be added here if needed */}
                 </div>
             </div>
 
@@ -316,7 +316,6 @@ export default function DirectSalesPage() {
                 </CardContent>
             </Card>
             )}
-            {/* Placeholder for Pagination */}
             <div className="flex justify-center mt-8">
             <Button variant="outline" disabled>Carregar Mais (Paginação Pendente)</Button>
             </div>

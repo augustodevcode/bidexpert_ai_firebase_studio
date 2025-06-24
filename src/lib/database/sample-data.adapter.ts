@@ -5,7 +5,7 @@ import type {
   Auction, AuctionFormData, AuctionDbData, Lot, LotFormData, LotDbData,
   BidInfo, Review, LotQuestion, UserProfileData, EditableUserProfileData,
   UserProfileWithPermissions, Role, RoleFormData, MediaItem, PlatformSettings,
-  PlatformSettingsFormData, Subcategory, SubcategoryFormData
+  PlatformSettingsFormData, Subcategory, SubcategoryFormData, DirectSaleOffer
 } from '@/types';
 import {
   slugify,
@@ -21,7 +21,7 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 // --- Start of moved data loading logic from sample-data-helpers.ts ---
 
 let sampleDataCache: any | null = null;
-const dataFilePath = path.join(process.cwd(), 'sample-data.local.json');
+const dataFilePath = path.join(process.cwd(), 'src', 'lib', 'sample-data.local.json');
 
 function getSampleData() {
   if (sampleDataCache) {
@@ -267,4 +267,10 @@ export class SampleDataAdapter implements IDatabaseAdapter {
    // --- Platform Settings ---
   async getPlatformSettings(): Promise<PlatformSettings> { await delay(10); return Promise.resolve(JSON.parse(JSON.stringify(this.data.samplePlatformSettings))); }
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> { await delay(50); const currentSettings = this.data.samplePlatformSettings || {}; const newSettings = { ...currentSettings, ...data, platformPublicIdMasks: { ...(currentSettings.platformPublicIdMasks || {}), ...(data.platformPublicIdMasks || {}), }, mapSettings: { ...(currentSettings.mapSettings || {}), ...(data.mapSettings || {}), }, mentalTriggerSettings: { ...(currentSettings.mentalTriggerSettings || {}), ...(data.mentalTriggerSettings || {}), }, sectionBadgeVisibility: { ...(currentSettings.sectionBadgeVisibility || {}), ...(data.sectionBadgeVisibility || {}), }, id: 'global', updatedAt: new Date() }; this.data.samplePlatformSettings = newSettings; return { success: true, message: "Configurações da plataforma atualizadas (Sample Data)!" }; }
+
+  // --- Direct Sale Offers ---
+  async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
+    await delay(20);
+    return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleDirectSaleOffers)));
+  }
 }

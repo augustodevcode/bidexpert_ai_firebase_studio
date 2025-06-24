@@ -521,6 +521,7 @@ export type DirectSaleOfferStatus = 'ACTIVE' | 'SOLD' | 'EXPIRED' | 'PENDING_APP
 
 export interface DirectSaleOffer {
     id: string;
+    publicId: string;
     title: string;
     description: string;
     imageUrl: string;
@@ -768,6 +769,8 @@ export interface IDatabaseAdapter {
   updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string }>;
   deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string }>;
   
+  getDirectSaleOffers(): Promise<DirectSaleOffer[]>;
+
   getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]>;
   placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>; newBid?: BidInfo }>;
   

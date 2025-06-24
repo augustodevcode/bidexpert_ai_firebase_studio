@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon, FileText as TomadaPrecosIcon } from 'lucide-react'; // Adicionado SearchIcon
+import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon, FileText as TomadaPrecosIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,14 +16,23 @@ import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
 import DirectSaleOfferCard from '@/components/direct-sale-offer-card';
 import DirectSaleOfferListItem from '@/components/direct-sale-offer-list-item';
-import type { Auction, Lot, LotCategory, DirectSaleOffer, DirectSaleOfferType, PlatformSettings } from '@/types';
-import { slugify, getSampleData } from '@/lib/sample-data'; // Changed import
+import type { Auction, Lot, LotCategory, DirectSaleOffer, DirectSaleOfferType, PlatformSettings, SellerProfileInfo } from '@/types';
+import { slugify } from '@/lib/sample-data-helpers';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AuctionListItem from '@/components/auction-list-item';
 import SearchResultsFrame from '@/components/search-results-frame';
 import dynamic from 'next/dynamic';
 import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
+
+// Server Actions
+import { getAuctions } from '@/app/admin/auctions/actions';
+import { getLots } from '@/app/admin/lots/actions';
+import { getDirectSaleOffers } from '@/app/direct-sales/actions';
+import { getLotCategories } from '@/app/admin/categories/actions';
+import { getSellers } from '@/app/admin/sellers/actions';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+
 
 const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
   loading: () => <SidebarFiltersSkeleton />,
@@ -109,29 +118,34 @@ export default function SearchPage() {
     async function fetchData() {
         setIsLoading(true);
         try {
-            const { 
-              sampleAuctions, sampleLots, sampleDirectSaleOffers,
-              sampleLotCategories, sampleSellers, samplePlatformSettings
-            } = getSampleData();
+            const [
+              auctions, lots, directSales, 
+              categories, sellers, platformSettings
+            ] = await Promise.all([
+              getAuctions(),
+              getLots(),
+              getDirectSaleOffers(),
+              getLotCategories(),
+              getSellers(),
+              getPlatformSettings()
+            ]);
             
             const locations = new Set<string>();
-            [...sampleAuctions, ...sampleLots].forEach(item => {
-                if (item.city && item.stateUf) locations.add(`${item.city} - ${item.stateUf}`);
-                else if (item.city && (item as Auction).state) locations.add(`${item.city} - ${(item as Auction).state}`);
-                else if (item.city) locations.add(item.city);
-                else if (item.stateUf) locations.add(item.stateUf);
+            [...auctions, ...lots].forEach(item => {
+                if ('city' in item && 'state' in item && item.city && item.state) locations.add(`${item.city} - ${item.state}`);
+                else if ('cityName' in item && 'stateUf' in item && item.cityName && item.stateUf) locations.add(`${item.cityName} - ${item.stateUf}`);
             });
-            const sellerNames = new Set(sampleSellers.map(s => s.name));
+            const sellerNames = new Set(sellers.map(s => s.name));
 
             setAllData({
-              allAuctions: sampleAuctions,
-              allLots: sampleLots,
-              allLotsWithAuctionData: sampleLots, // this is already processed in getSampleData
-              allDirectSales: sampleDirectSaleOffers,
-              allCategoriesForFilter: sampleLotCategories,
+              allAuctions: auctions,
+              allLots: lots,
+              allLotsWithAuctionData: lots,
+              allDirectSales: directSales,
+              allCategoriesForFilter: categories,
               uniqueLocationsForFilter: Array.from(locations).sort(),
               uniqueSellersForFilter: Array.from(sellerNames).sort(),
-              platformSettings: samplePlatformSettings
+              platformSettings: platformSettings
             });
 
         } catch (error) {
@@ -309,7 +323,8 @@ export default function SearchPage() {
     let filteredItems = searchedItems.filter(item => {
       if (activeFilters.category !== 'TODAS') {
         const itemCategoryName = 'type' in item && item.type ? item.type : ('category' in item ? item.category : undefined);
-        if (!itemCategoryName || slugify(itemCategoryName) !== activeFilters.category) return false;
+        const category = allData.allCategoriesForFilter.find(c => c.slug === activeFilters.category);
+        if (!itemCategoryName || !category || item.categoryId !== category.id) return false;
       }
       const itemPrice = 'price' in item && typeof item.price === 'number' ? item.price : ('initialOffer' in item && typeof item.initialOffer === 'number' ? item.initialOffer : undefined);
       if (itemPrice !== undefined && (itemPrice < activeFilters.priceRange[0] || itemPrice > activeFilters.priceRange[1])) return false;
@@ -410,7 +425,7 @@ export default function SearchPage() {
 
   const renderGridItem = (item: any, index: number): React.ReactNode => {
     if (!allData?.platformSettings) return null;
-    if (currentSearchType === 'lots') return <LotCard key={`${(item as Lot).auctionId}-${item.id}-${index}`} lot={item as Lot} platformSettings={allData.platformSettings}/>;
+    if (currentSearchType === 'lots') return <LotCard key={`${(item as Lot).auctionId}-${item.id}-${index}`} lot={item as Lot} auction={allData.allAuctions.find(a => a.id === item.auctionId)} platformSettings={allData.platformSettings}/>;
     if (currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos') return <AuctionCard key={`${item.id}-${index}`} auction={item as Auction} />;
     if (currentSearchType === 'direct_sale') return <DirectSaleOfferCard key={`${item.id}-${index}`} offer={item as DirectSaleOffer} />;
     return null;
@@ -418,7 +433,7 @@ export default function SearchPage() {
 
   const renderListItem = (item: any, index: number): React.ReactNode => {
     if (!allData?.platformSettings) return null;
-    if (currentSearchType === 'lots') return <LotListItem key={`${(item as Lot).auctionId}-${item.id}-${index}`} lot={item as Lot} platformSettings={allData.platformSettings}/>;
+    if (currentSearchType === 'lots') return <LotListItem key={`${(item as Lot).auctionId}-${item.id}-${index}`} lot={item as Lot} auction={allData.allAuctions.find(a => a.id === item.auctionId)} platformSettings={allData.platformSettings}/>;
     if (currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos') return <AuctionListItem key={`${item.id}-${index}`} auction={item as Auction} />;
     if (currentSearchType === 'direct_sale') return <DirectSaleOfferListItem key={`${item.id}-${index}`} offer={item as DirectSaleOffer} />;
     return null;
@@ -548,4 +563,5 @@ export default function SearchPage() {
     </div>
   );
 }
+
 

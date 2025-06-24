@@ -1,4 +1,5 @@
 
+
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -15,7 +16,8 @@ import type {
   MediaItem,
   PlatformSettings, PlatformSettingsFormData, Theme,
   Subcategory, SubcategoryFormData,
-  MapSettings, SearchPaginationType, MentalTriggerSettings, SectionBadgeConfig, HomepageSectionConfig, AuctionStage
+  MapSettings, SearchPaginationType, MentalTriggerSettings, SectionBadgeConfig, HomepageSectionConfig, AuctionStage,
+  DirectSaleOffer
 } from '@/types';
 import { slugify, samplePlatformSettings } from '@/lib/sample-data';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
@@ -469,7 +471,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.log('[PostgresAdapter] Iniciando criação/verificação de tabelas...');
 
     const queries = [
-      `DROP TABLE IF EXISTS user_lot_max_bids, bids, lot_reviews, lot_questions, lots, media_items, subcategories, auctions, cities, sellers, auctioneers, users, states, lot_categories, roles, platform_settings CASCADE;`,
+      `DROP TABLE IF EXISTS user_lot_max_bids, bids, lot_reviews, lot_questions, lots, media_items, subcategories, auctions, cities, sellers, auctioneers, users, states, lot_categories, roles, platform_settings, direct_sale_offers CASCADE;`,
 
       `CREATE TABLE IF NOT EXISTS roles (
         id SERIAL PRIMARY KEY,
@@ -833,6 +835,37 @@ export class PostgresAdapter implements IDatabaseAdapter {
       );`,
       `CREATE INDEX IF NOT EXISTS idx_lot_questions_lot_id ON lot_questions(lot_id);`,
       `CREATE INDEX IF NOT EXISTS idx_lot_questions_user_id ON lot_questions(user_id);`,
+
+      `CREATE TABLE IF NOT EXISTS direct_sale_offers (
+          id SERIAL PRIMARY KEY,
+          public_id TEXT NOT NULL UNIQUE,
+          title VARCHAR(255) NOT NULL,
+          description TEXT,
+          image_url TEXT,
+          data_ai_hint TEXT,
+          gallery_image_urls JSONB,
+          offer_type VARCHAR(50) NOT NULL,
+          price NUMERIC(15,2),
+          minimum_offer_price NUMERIC(15,2),
+          category VARCHAR(255),
+          location_city VARCHAR(100),
+          location_state VARCHAR(100),
+          seller_name VARCHAR(255),
+          seller_id INTEGER REFERENCES sellers(id) ON DELETE SET NULL,
+          status VARCHAR(50) NOT NULL,
+          items_included JSONB,
+          tags JSONB,
+          views INTEGER DEFAULT 0,
+          proposals_count INTEGER DEFAULT 0,
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+          expires_at TIMESTAMPTZ,
+          latitude NUMERIC(10, 8),
+          longitude NUMERIC(11, 8),
+          map_address VARCHAR(255),
+          map_embed_url TEXT,
+          map_static_image_url TEXT
+      );`,
     ];
 
     try {
@@ -891,4 +924,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
   
   // Omitted for brevity - all other methods remain unchanged.
   // ...
+
+  async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
+      return []; // Placeholder implementation for PostgreSQL
+  }
 }
