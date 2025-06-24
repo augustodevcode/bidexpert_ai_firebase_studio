@@ -9,23 +9,25 @@ import Link from 'next/link';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
+import { getAuction, getLots } from '@/app/admin/auctions/actions'; // Updated to use correct actions
+import { getLots as getLotData } from '@/app/admin/lots/actions';
 
-// Moved getAuctionData to be callable from client component or useEffect
-async function fetchAuctionData(auctionId: string, targetLotId?: string | null): Promise<{ auction: Auction | undefined; currentLot: Lot | undefined; upcomingLots: Lot[] }> {
+
+async function fetchAuctionData(auctionId: string, targetLotId?: string | null): Promise<{ auction: Auction | null; currentLot: Lot | undefined; upcomingLots: Lot[] }> {
   console.log(`[LiveAuctionPage] fetchAuctionData called for auctionId: ${auctionId}, targetLotId: ${targetLotId}`);
   try {
-    const auction = sampleAuctions.find(a => a.id === auctionId);
+    const auction = await getAuction(auctionId);
     if (!auction) {
       console.warn(`[LiveAuctionPage] Auction not found for ID: ${auctionId}`);
-      return { auction: undefined, currentLot: undefined, upcomingLots: [] };
+      return { auction: null, currentLot: undefined, upcomingLots: [] };
     }
     console.log(`[LiveAuctionPage] Found auction: ${auction.title} (ID: ${auction.id})`);
 
-    const lotsArray = Array.isArray(auction.lots) ? auction.lots : [];
+    const lotsArray = await getLotData(auction.id);
     console.log(`[LiveAuctionPage] auction.lots for ${auction.id} has ${lotsArray.length} items.`);
     
     if (lotsArray.length === 0) {
-      console.warn(`[LiveAuctionPage] Auction ID ${auction.id} has no lots in its 'lots' property.`);
+      console.warn(`[LiveAuctionPage] Auction ID ${auction.id} has no lots.`);
       return { auction, currentLot: undefined, upcomingLots: [] };
     }
 
@@ -34,7 +36,7 @@ async function fetchAuctionData(auctionId: string, targetLotId?: string | null):
     let currentLotIndex = -1;
 
     if (targetLotId) {
-      currentLotIndex = lotsArray.findIndex(lot => lot.id === targetLotId);
+      currentLotIndex = lotsArray.findIndex(lot => lot.id === targetLotId || lot.publicId === targetLotId);
       if (currentLotIndex !== -1) {
         currentLot = lotsArray[currentLotIndex];
         console.log(`[LiveAuctionPage] Focused on targetLotId: ${currentLot?.id}`);
@@ -72,11 +74,13 @@ async function fetchAuctionData(auctionId: string, targetLotId?: string | null):
         console.log(`[LiveAuctionPage] Successfully determined currentLot: ${currentLot.id} for auction ${auction.id}, upcoming: ${upcomingLots.length}`);
     }
 
+    // Attach lots to auction object for client component
+    auction.lots = lotsArray;
     return { auction, currentLot, upcomingLots };
 
   } catch (error) {
     console.error(`[LiveAuctionPage] Critical error in fetchAuctionData for auctionId ${auctionId}:`, error);
-    return { auction: undefined, currentLot: undefined, upcomingLots: [] }; 
+    return { auction: null, currentLot: undefined, upcomingLots: [] }; 
   }
 }
 
@@ -87,7 +91,7 @@ export default function LiveAuctionPage() {
   const auctionId = typeof params.auctionId === 'string' ? params.auctionId : '';
   const targetLotId = searchParams.get('lotId');
 
-  const [auctionData, setAuctionData] = useState<{ auction: Auction | undefined; currentLot: Lot | undefined; upcomingLots: Lot[] } | null>(null);
+  const [auctionData, setAuctionData] = useState<{ auction: Auction | null; currentLot: Lot | undefined; upcomingLots: Lot[] } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -143,7 +147,7 @@ export default function LiveAuctionPage() {
         <h1 className="text-2xl font-bold">Nenhum Lote Ativo ou Programado</h1>
         <p className="text-muted-foreground mb-6">Não há lotes adequados (em breve ou abertos para lance) para este leilão (ID: ${auctionData.auction.id}) no momento, ou o lote específico não foi encontrado.</p>
         <Button asChild>
-          <Link href={`/auctions/${auctionData.auction.id}`}>Ver Detalhes do Leilão</Link>
+          <Link href={`/auctions/${auctionData.auction.publicId || auctionData.auction.id}`}>Ver Detalhes do Leilão</Link>
         </Button>
          <Button asChild variant="secondary" className="ml-2">
           <Link href="/live-dashboard">Voltar ao Painel Ao Vivo</Link>

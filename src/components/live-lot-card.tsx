@@ -59,7 +59,7 @@ export default function LiveLotCard({ lot, isHighlighted = false }: LiveLotCardP
   return (
     <Card className={`flex flex-col overflow-hidden h-full shadow-md hover:shadow-xl transition-shadow duration-300 rounded-lg group ${isHighlighted ? 'border-2 border-primary ring-2 ring-primary/50' : ''}`}>
       <div className="relative">
-        <Link href={`/auctions/${lot.auctionId}/live?lotId=${lot.id}`} className="block">
+        <Link href={`/auctions/${lot.auctionId}/live?lotId=${lot.publicId || lot.id}`} className="block">
           <div className={`aspect-[16/10] relative ${isHighlighted ? 'bg-primary/10' : 'bg-muted'}`}>
             <Image
               src={lot.imageUrl || 'https://placehold.co/600x400.png'}
@@ -84,7 +84,7 @@ export default function LiveLotCard({ lot, isHighlighted = false }: LiveLotCardP
       </div>
 
       <CardContent className="p-3 flex-grow space-y-1.5">
-        <Link href={`/auctions/${lot.auctionId}/live?lotId=${lot.id}`}>
+        <Link href={`/auctions/${lot.auctionId}/live?lotId=${lot.publicId || lot.id}`}>
           <h3 className="text-sm font-semibold hover:text-primary transition-colors leading-tight min-h-[2.2em] line-clamp-2">
             {lot.title} (Lote {lot.number || lot.id.replace('LOTE', '')})
           </h3>
@@ -108,7 +108,7 @@ export default function LiveLotCard({ lot, isHighlighted = false }: LiveLotCardP
         <div className="w-full flex justify-between items-center text-xs">
             <div className={`flex items-center gap-1 ${isHighlighted ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
                 <Clock className="h-3 w-3" />
-                <TimeRemaining endDate={new Date(lot.endDate)} status={lot.status} />
+                <TimeRemaining endDate={new Date(lot.endDate as string)} status={lot.status} />
             </div>
             <div className={`flex items-center gap-1 ${isHighlighted ? 'text-foreground' : 'text-muted-foreground'}`}>
                 <Gavel className="h-3 w-3" />
@@ -116,7 +116,7 @@ export default function LiveLotCard({ lot, isHighlighted = false }: LiveLotCardP
             </div>
         </div>
          <Button asChild className="w-full mt-2" size="sm">
-            <Link href={`/auctions/${lot.auctionId}/live?lotId=${lot.id}`}>
+            <Link href={`/auctions/${lot.auctionId}/live?lotId=${lot.publicId || lot.id}`}>
                 <Eye className="mr-2 h-4 w-4" /> Entrar no Auditório
             </Link>
         </Button>

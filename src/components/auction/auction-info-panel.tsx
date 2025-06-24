@@ -50,7 +50,7 @@ export default function AuctionInfoPanel({ auction }: AuctionInfoPanelProps) {
             </Button>
           )}
           <Button variant="outline" size="sm" asChild className="w-full justify-start text-left">
-            <Link href={`/auctions/${auction.id}`}>
+            <Link href={`/auctions/${auction.publicId || auction.id}`}>
               <ExternalLink className="h-3.5 w-3.5 mr-2" /> Detalhes Completos do Leilão
             </Link>
           </Button>

@@ -28,7 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useAuth } from '@/contexts/auth-context';
-import { getAuctionStatusText, getLotStatusColor, sampleAuctions, samplePlatformSettings } from '@/lib/sample-data';
+import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data-helpers';
 
 import { getBidsForLot, getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, placeBidOnLot, getActiveMaxBid, placeMaxBid } from './actions';
 
@@ -64,7 +64,7 @@ interface DetailTimeRemainingProps {
   className?: string;
 }
 
-const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
+export const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
   effectiveEndDate,
   effectiveStartDate,
   lotStatus,
@@ -278,10 +278,10 @@ export default function LotDetailClientContent({
         try {
           console.log(`[LotDetailClient] Fetching data for lot ID: ${lot.id}`);
           const promises: [Promise<BidInfo[]>, Promise<Review[]>, Promise<LotQuestion[]>, Promise<UserLotMaxBid | null>] = [
-            getBidsForLot(lot.id),
-            getReviewsForLot(lot.id),
-            getQuestionsForLot(lot.id),
-            getActiveMaxBid(lot.id, userProfileWithPermissions?.uid || '')
+            getBidsForLot(lot.publicId || lot.id),
+            getReviewsForLot(lot.publicId || lot.id),
+            getQuestionsForLot(lot.publicId || lot.id),
+            getActiveMaxBid(lot.publicId || lot.id, userProfileWithPermissions?.uid || '')
           ];
 
           const [bids, reviews, questions, maxBid] = await Promise.all(promises);
@@ -299,7 +299,7 @@ export default function LotDetailClientContent({
       };
       fetchData();
     }
-  }, [lot?.id, toast, userProfileWithPermissions?.uid]);
+  }, [lot?.id, lot.publicId, toast, userProfileWithPermissions?.uid]);
 
 
   const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || ''} ${lot?.title || ''}`.trim();
@@ -367,7 +367,7 @@ export default function LotDetailClientContent({
     }
 
     try {
-      const result = await placeBidOnLot(lot.id, lot.auctionId, userIdForBid!, displayNameForBid!, amountToBid);
+      const result = await placeBidOnLot(lot.publicId || lot.id, lot.auctionId, userIdForBid!, displayNameForBid!, amountToBid);
       if (result.success && result.updatedLot && result.newBid) {
         setLot(prevLot => ({ ...prevLot!, ...result.updatedLot }));
         setLotBids(prevBids => [result.newBid!, ...prevBids].sort((a, b) => new Date(b.timestamp as string).getTime() - new Date(a.timestamp as string).getTime()));
@@ -398,10 +398,10 @@ export default function LotDetailClientContent({
       return;
     }
     try {
-        const result = await placeMaxBid(lot.id, userIdForBid, amount);
+        const result = await placeMaxBid(lot.publicId || lot.id, userIdForBid, amount);
         if (result.success) {
             toast({ title: "Lance Máximo Definido!", description: result.message });
-            const newActiveMaxBid = await getActiveMaxBid(lot.id, userIdForBid);
+            const newActiveMaxBid = await getActiveMaxBid(lot.publicId || lot.id, userIdForBid);
             setActiveMaxBid(newActiveMaxBid);
         } else {
             toast({ title: "Erro ao Definir Lance Máximo", description: result.message, variant: "destructive" });
@@ -548,7 +548,7 @@ export default function LotDetailClientContent({
                                             <Input type="number" placeholder="Definir lance máximo confidencial" value={maxBidAmountInput} onChange={(e) => setMaxBidAmountInput(e.target.value)} className="pl-9 h-11 text-base" disabled={isSettingMaxBid}/>
                                         </div>
                                         <Button onClick={handleSetMaxBid} disabled={isSettingMaxBid || !maxBidAmountInput} className="w-full h-11 text-base">
-                                            {isSettingMaxBid ? <Loader2 className="animate-spin" /> : "Salvar Lance Máximo"}
+                                            {isSettingMaxBid ? <Loader2 className="animate-spin mr-2" /> : "Salvar Lance Máximo"}
                                         </Button>
                                         <p className="text-xs text-muted-foreground text-center">Seu lance máximo é secreto e usado para cobrir outros lances automaticamente.</p>
                                     </>

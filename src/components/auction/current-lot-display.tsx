@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
 import { Button } from '../ui/button';
+import { DetailTimeRemaining } from '@/app/auctions/[auctionId]/lots/[lotId]/lot-detail-client';
 
 interface CurrentLotDisplayProps {
   lot: Lot;
@@ -39,28 +40,6 @@ export default function CurrentLotDisplay({ lot, auctionStatus }: CurrentLotDisp
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + gallery.length) % gallery.length);
 
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
-
-  // Placeholder timer - in a real app, this would be driven by a WebSocket or frequent polling
-  const [timer, setTimer] = useState("00:04:55");
-  useEffect(() => {
-    if (lot.status === 'ABERTO_PARA_LANCES') {
-      // Simulate countdown - replace with actual logic
-      let duration = 295; // 4 minutes 55 seconds
-      const interval = setInterval(() => {
-        const minutes = Math.floor(duration / 60);
-        const seconds = duration % 60;
-        setTimer(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
-        if (--duration < 0) {
-          clearInterval(interval);
-          setTimer("Encerrado");
-        }
-      }, 1000);
-      return () => clearInterval(interval);
-    } else {
-      setTimer(getAuctionStatusText(lot.status));
-    }
-  }, [lot.status]);
-
 
   return (
     <Card className="h-full flex flex-col shadow-lg rounded-lg overflow-hidden">
@@ -115,6 +94,9 @@ export default function CurrentLotDisplay({ lot, auctionStatus }: CurrentLotDisp
                 </Button>
               </>
             )}
+            
+            <DetailTimeRemaining effectiveEndDate={lot.endDate} effectiveStartDate={lot.auctionDate} lotStatus={lot.status} />
+
           </div>
           {gallery.length > 1 && (
             <div className="flex gap-2 mt-2 overflow-x-auto py-1">
@@ -157,29 +139,6 @@ export default function CurrentLotDisplay({ lot, auctionStatus }: CurrentLotDisp
                     R$ {(lot.initialPrice || lot.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
             </div>
-
-            {lot.status === 'ABERTO_PARA_LANCES' && (
-                <div className="mt-auto pt-3 border-t border-dashed">
-                    <p className="text-sm text-center font-medium text-destructive mb-1">Tempo Restante:</p>
-                    <div className="text-3xl md:text-4xl font-bold text-center text-destructive tabular-nums tracking-tight">
-                        {timer}
-                    </div>
-                </div>
-            )}
-             {(lot.status === 'EM_BREVE' || lot.status === 'ENCERRADO' || lot.status === 'VENDIDO' || lot.status === 'NAO_VENDIDO' ) && (
-                <div className="mt-auto pt-3 border-t border-dashed">
-                     <p className="text-sm text-center font-medium text-muted-foreground mb-1">Status do Lote:</p>
-                    <div className="text-2xl md:text-3xl font-bold text-center text-muted-foreground tracking-tight">
-                        {getAuctionStatusText(lot.status)}
-                    </div>
-                    {lot.status === 'EM_BREVE' && lot.endDate && (
-                         <p className="text-xs text-center text-muted-foreground">
-                            Inicia em: {format(new Date(lot.endDate), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                        </p>
-                    )}
-                </div>
-            )}
-
         </div>
       </CardContent>
     </Card>
