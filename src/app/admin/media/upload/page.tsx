@@ -9,14 +9,14 @@ import { UploadCloud, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useState, type FormEvent, useRef } from 'react';
+import { useState, type FormEvent, useRef, type DragEvent, type ChangeEvent } from 'react';
 import { handleImageUpload } from '../actions';
 
 export default function MediaUploadPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null); // Ref para o input de arquivo
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const processAndSubmitFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) {
@@ -27,46 +27,58 @@ export default function MediaUploadPage() {
     setIsLoading(true);
     const formData = new FormData();
     Array.from(files).forEach(file => {
-      formData.append('files', file); // O nome 'files' deve corresponder ao esperado na action
-      // Para enviar metadados adicionais por arquivo, como dataAiHint, você pode usar
-      // formData.append(`dataAiHint_${file.name}`, 'sua_dica_aqui');
-      // Isso requer que a action handleImageUpload seja ajustada para ler esses campos.
+      formData.append('files', file);
     });
 
     const result = await handleImageUpload(formData);
     setIsLoading(false);
 
-    if (result.success) {
+    const hasSuccesses = result.items && result.items.length > 0;
+    const hasErrors = result.errors && result.errors.length > 0;
+
+    if (hasSuccesses) {
       toast({
-        title: 'Upload Concluído',
+        title: hasErrors ? 'Upload Parcialmente Concluído' : 'Upload Concluído!',
         description: result.message,
-      });
-      router.refresh();
-      router.push('/admin/media');
-    } else {
-      toast({
-        title: 'Falha no Upload',
-        description: result.message,
-        variant: 'destructive',
       });
     }
+
+    if (hasErrors) {
+      const errorDescription = (
+        <ul className="mt-2 list-disc list-inside">
+          {result.errors!.map((e, i) => <li key={i}><strong>{e.fileName}:</strong> {e.message}</li>)}
+        </ul>
+      );
+      toast({
+        title: `Falha no Upload (${result.errors!.length} arquivo(s))`,
+        description: errorDescription,
+        variant: 'destructive',
+        duration: 10000,
+      });
+    }
+    
+    // Redirect only if there were some successes and no errors
+    if (hasSuccesses && !hasErrors) {
+        router.push('/admin/media');
+    }
+
     // Limpar o valor do input de arquivo para permitir o re-upload do mesmo arquivo se necessário
     if (fileInputRef.current) {
         fileInputRef.current.value = '';
     }
   };
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
     await processAndSubmitFiles(event.target.files);
   };
 
-  const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = async (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
     await processAndSubmitFiles(event.dataTransfer.files);
   };
 
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
   };
@@ -108,9 +120,9 @@ export default function MediaUploadPage() {
             multiple 
             className="hidden" 
             onChange={handleFileSelect}
-            accept="image/png, image/jpeg, image/webp, application/pdf" // Ajuste conforme necessário
+            accept="image/png, image/jpeg, image/webp, image/gif, application/pdf"
             disabled={isLoading}
-            ref={fileInputRef} // Atribuir a ref
+            ref={fileInputRef}
           />
           <Label
             htmlFor="file-upload"
@@ -129,8 +141,8 @@ export default function MediaUploadPage() {
         </CardContent>
         <CardFooter className="flex-col items-start text-xs text-muted-foreground pt-4">
           <p>Você pode enviar múltiplos arquivos de uma vez.</p>
-          <p>Tamanho máximo de upload de arquivo: 10 MB.</p>
-          <p className="mt-2">Formatos suportados: PNG, JPG/JPEG, WEBP, PDF.</p>
+          <p>Tamanho máximo de upload por arquivo: 10 MB.</p>
+          <p className="mt-2">Formatos suportados: PNG, JPG/JPEG, WEBP, GIF, PDF.</p>
         </CardFooter>
       </Card>
     </div>
