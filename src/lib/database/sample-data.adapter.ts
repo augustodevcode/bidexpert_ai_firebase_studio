@@ -53,6 +53,64 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     this.data = getSampleData();
     console.log("[SampleDataAdapter] Instance created and data loaded.");
   }
+
+  async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status">>; newBid?: BidInfo; }> {
+    const lotIndex = this.data.sampleLots.findIndex(l => l.id === lotId || l.publicId === lotId);
+    if (lotIndex === -1) return { success: false, message: "Lote não encontrado." };
+    const lot = this.data.sampleLots[lotIndex];
+
+    if (bidAmount <= lot.price) return { success: false, message: 'Lance deve ser maior que o atual.' };
+    if (lot.status !== 'ABERTO_PARA_LANCES') return { success: false, message: 'Lances não estão abertos para este lote.' };
+
+    const newBid: BidInfo = { id: `bid-${uuidv4()}`, lotId: lot.id, auctionId: lot.auctionId, bidderId: userId, bidderDisplay: userDisplayName, amount: bidAmount, timestamp: new Date() };
+    this.data.sampleBids.unshift(newBid);
+
+    let currentPrice = bidAmount;
+    let bidsCount = (lot.bidsCount || 0) + 1;
+    let lastBidderId = userId;
+
+    // Simplified proxy bidding loop for sample data
+    for (let i = 0; i < 10; i++) { // Safety break after 10 iterations
+        const topProxy = this.data.sampleUserLotMaxBids
+            .filter((p: UserLotMaxBid) => p.lotId === lot.id && p.userId !== lastBidderId && p.isActive && p.maxAmount > currentPrice)
+            .sort((a: UserLotMaxBid, b: UserLotMaxBid) => b.maxAmount - a.maxAmount)[0];
+
+        if (!topProxy) {
+            break; // No more competing bids
+        }
+
+        const increment = lot.bidIncrementStep || 100;
+        let nextBidAmount = currentPrice + increment;
+
+        if (nextBidAmount > topProxy.maxAmount) {
+            nextBidAmount = topProxy.maxAmount;
+        }
+        
+        if (nextBidAmount <= currentPrice) {
+            break; // Safety break
+        }
+
+        const proxyUserData = this.data.sampleUserProfiles.find((u: UserProfileData) => u.uid === topProxy.userId);
+        const proxyBidderDisplay = proxyUserData?.fullName || 'Proxy Bidder';
+
+        const proxyBid: BidInfo = { id: `bid-${uuidv4()}`, lotId: lot.id, auctionId: lot.auctionId, bidderId: topProxy.userId, bidderDisplay: proxyBidderDisplay, amount: nextBidAmount, timestamp: new Date() };
+        this.data.sampleBids.unshift(proxyBid);
+
+        currentPrice = nextBidAmount;
+        bidsCount++;
+        lastBidderId = topProxy.userId;
+
+        if (currentPrice >= topProxy.maxAmount) {
+            const proxyIndex = this.data.sampleUserLotMaxBids.findIndex((p: UserLotMaxBid) => p.id === topProxy.id);
+            if(proxyIndex > -1) this.data.sampleUserLotMaxBids[proxyIndex].isActive = false;
+        }
+    }
+
+    this.data.sampleLots[lotIndex] = { ...lot, price: currentPrice, bidsCount: bidsCount };
+    
+    return { success: true, message: "Lance registrado e lances automáticos processados!", updatedLot: { price: currentPrice, bidsCount: bidsCount }, newBid };
+}
+
   
   private async _persistData(): Promise<void> {
     // This functionality is complex with deep object structures and dates.
@@ -230,8 +288,9 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string; }> { this.data.sampleLots = this.data.sampleLots.filter(l => l.id !== id && l.publicId !== id); return {success: true, message: 'Lote excluído!'}; }
 
   // --- Bids, Reviews, Questions ---
+  
   async getBidsForLot(lotId: string): Promise<BidInfo[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleBids.filter(b => b.lotId === lotId)))); }
-  async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status">>; newBid?: BidInfo }> { const lotIndex = this.data.sampleLots.findIndex(l => l.id === lotId || l.publicId === lotId); if(lotIndex === -1) return { success: false, message: "Lote não encontrado."}; const lot = this.data.sampleLots[lotIndex]; if(bidAmount <= lot.price) return {success: false, message: 'Lance deve ser maior que o atual.'}; const newBid: BidInfo = { id: `bid-${uuidv4()}`, lotId, auctionId, bidderId: userId, bidderDisplay: userDisplayName, amount: bidAmount, timestamp: new Date() }; this.data.sampleBids.unshift(newBid); this.data.sampleLots[lotIndex] = {...lot, price: bidAmount, bidsCount: (lot.bidsCount || 0) + 1}; return { success: true, message: "Lance registrado!", updatedLot: {price: bidAmount, bidsCount: lot.bidsCount}, newBid }; }
+  
   async getReviewsForLot(lotId: string): Promise<Review[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleLotReviews.filter(r => r.lotId === lotId)))); }
   async createReview(reviewData: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<{ success: boolean; message: string; reviewId?: string | undefined; }> { const newReview: Review = {...reviewData, id: `rev-${uuidv4()}`, createdAt: new Date()}; this.data.sampleLotReviews.unshift(newReview); return { success: true, message: "Avaliação adicionada!", reviewId: newReview.id }; }
   async getQuestionsForLot(lotId: string): Promise<LotQuestion[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleLotQuestions.filter(q => q.lotId === lotId)))); }

@@ -476,13 +476,87 @@ export class PostgresAdapter implements IDatabaseAdapter {
     getPool();
   }
 
+  async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status">>; newBid?: BidInfo }> {
+    const client = await getPool().connect();
+    try {
+      await client.query('BEGIN');
+
+      const lotRes = await client.query('SELECT * FROM lots WHERE id = $1 FOR UPDATE', [lotId]);
+      if (lotRes.rows.length === 0) throw new Error('Lote não encontrado.');
+      let lot = mapToLot(lotRes.rows[0]);
+
+      if (bidAmount <= lot.price) throw new Error('Lance deve ser maior que o atual.');
+      if (lot.status !== 'ABERTO_PARA_LANCES') throw new Error('Lances não estão abertos para este lote.');
+
+      // 1. Insert the initial manual bid
+      const bidRes = await client.query(
+          'INSERT INTO bids (lot_id, auction_id, bidder_id, bidder_display_name, amount) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+          [lot.id, lot.auctionId, userId, userDisplayName, bidAmount]
+      );
+      const newBidId = bidRes.rows[0].id;
+      await client.query('UPDATE lots SET price = $1, bids_count = bids_count + 1, updated_at = NOW() WHERE id = $2', [bidAmount, lot.id]);
+
+      let currentPrice = bidAmount;
+      let bidsCount = (lot.bidsCount || 0) + 1;
+      let lastBidderId = userId;
+      
+      // 2. Proxy Bidding Loop
+      while (true) {
+          const proxyRes = await client.query(
+              `SELECT p.*, u.full_name as user_display_name FROM user_lot_max_bids p
+               JOIN users u ON p.user_id = u.uid
+               WHERE p.lot_id = $1 AND p.user_id != $2 AND p.is_active = TRUE AND p.max_amount > $3
+               ORDER BY p.max_amount DESC, p.created_at ASC LIMIT 1`,
+              [lot.id, lastBidderId, currentPrice]
+          );
+
+          if (proxyRes.rows.length === 0) break;
+
+          const topProxy = mapRowToCamelCase(proxyRes.rows[0]);
+          const increment = lot.bidIncrementStep || 100;
+          let nextBidAmount = currentPrice + increment;
+          
+          if (nextBidAmount > topProxy.maxAmount) nextBidAmount = topProxy.maxAmount;
+          if (nextBidAmount <= currentPrice) break;
+
+          await client.query(
+              'INSERT INTO bids (lot_id, auction_id, bidder_id, bidder_display_name, amount) VALUES ($1, $2, $3, $4, $5)',
+              [lot.id, lot.auctionId, topProxy.userId, topProxy.userDisplayName, nextBidAmount]
+          );
+          
+          currentPrice = nextBidAmount;
+          bidsCount++;
+          lastBidderId = topProxy.userId;
+
+          await client.query('UPDATE lots SET price = $1, bids_count = $2 WHERE id = $3', [currentPrice, bidsCount, lot.id]);
+
+          if (currentPrice >= topProxy.maxAmount) {
+               await client.query('UPDATE user_lot_max_bids SET is_active = FALSE WHERE id = $1', [topProxy.id]);
+          }
+      }
+
+      await client.query('COMMIT');
+      
+      const newBid: BidInfo = { id: String(newBidId), lotId: lot.id, auctionId: lot.auctionId, bidderId: userId, bidderDisplay: userDisplayName, amount: bidAmount, timestamp: new Date() };
+
+      return { success: true, message: 'Lance registrado! Lances automáticos foram processados.', updatedLot: { price: currentPrice, bidsCount: bidsCount }, newBid };
+    } catch (error: any) {
+      await client.query('ROLLBACK');
+      console.error("[PostgresAdapter - placeBidOnLot] Transaction Error:", error);
+      return { success: false, message: error.message };
+    } finally {
+      client.release();
+    }
+  }
+
+
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[]; rolesProcessed?: number }> {
     const client = await getPool().connect();
     const errors: any[] = [];
     console.log('[PostgresAdapter] Iniciando criação/verificação de tabelas...');
 
     const queries = [
-      `DROP TABLE IF EXISTS user_lot_max_bids, bids, lot_reviews, lot_questions, lots, media_items, subcategories, auctions, cities, sellers, auctioneers, users, states, lot_categories, roles, platform_settings, direct_sale_offers CASCADE;`,
+      `DROP TABLE IF EXISTS user_lot_max_bids, bids, lot_reviews, lot_questions, lots, media_items, subcategories, auctions, cities, sellers, auctioneers, users, states, lot_categories, platform_settings, direct_sale_offers CASCADE;`,
 
       `CREATE TABLE IF NOT EXISTS roles (
         id SERIAL PRIMARY KEY,
@@ -933,44 +1007,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
     }
   }
 
-  // --- Proxy Bidding ---
-  async createUserLotMaxBid(userId: string, lotId: string, maxAmount: number): Promise<{ success: boolean; message: string; maxBidId?: string; }> {
-    try {
-      const query = `
-        INSERT INTO user_lot_max_bids (user_id, lot_id, max_amount, is_active)
-        VALUES ($1, $2, $3, TRUE)
-        ON CONFLICT (user_id, lot_id) DO UPDATE SET
-          max_amount = EXCLUDED.max_amount,
-          is_active = TRUE,
-          updated_at = CURRENT_TIMESTAMP
-        RETURNING id;
-      `;
-      const { rows } = await getPool().query(query, [userId, parseInt(lotId, 10), maxAmount]);
-      if (rows.length > 0) {
-        return { success: true, message: 'Lance máximo salvo com sucesso.', maxBidId: String(rows[0].id) };
-      }
-      return { success: false, message: 'Não foi possível salvar o lance máximo.' };
-    } catch (error: any) {
-      console.error("[PostgresAdapter - createUserLotMaxBid] Error:", error);
-      return { success: false, message: error.message };
-    }
-  }
-
-  async getActiveUserLotMaxBid(userId: string, lotId: string): Promise<UserLotMaxBid | null> {
-    try {
-      const query = `
-        SELECT * FROM user_lot_max_bids
-        WHERE user_id = $1 AND lot_id = $2 AND is_active = TRUE;
-      `;
-      const { rows } = await getPool().query(query, [userId, parseInt(lotId, 10)]);
-      if (rows.length === 0) return null;
-      return mapToUserLotMaxBid(rows[0]);
-    } catch (error: any) {
-      console.error("[PostgresAdapter - getActiveUserLotMaxBid] Error:", error);
-      return null;
-    }
-  }
-  
   // Omitted for brevity - all other methods remain unchanged.
   // ...
 
