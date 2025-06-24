@@ -1,5 +1,5 @@
 // src/lib/sample-data-helpers.ts
-import type { LotCategory, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, AuctionStatus, PlatformSettings } from '@/types';
+import type { Lot, LotCategory, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, AuctionStatus, PlatformSettings } from '@/types';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle } from 'lucide-react';
 import { isPast } from 'date-fns';
 
@@ -30,6 +30,17 @@ export const getCategoryAssets = (categoryName: string): { bannerUrl: string, ba
       'Default': { bannerUrl: 'https://placehold.co/1200x250.png?text=Leiloes', bannerAiHint: 'leilao geral' }
   };
   return assets[categoryName] || assets['Default'];
+};
+
+export const getUniqueLotLocations = (lots: Lot[]): string[] => {
+  if (!lots) return [];
+  const locations = new Set<string>();
+  lots.forEach(lot => {
+    if (lot.cityName && lot.stateUf) {
+      locations.add(`${lot.cityName} - ${lot.stateUf}`);
+    }
+  });
+  return Array.from(locations).sort();
 };
 
 
