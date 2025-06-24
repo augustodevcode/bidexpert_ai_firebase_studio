@@ -74,7 +74,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
               ...(pristineData.samplePlatformSettings.mapSettings || {}),
               ...(parsedData.samplePlatformSettings.mapSettings || {}),
             },
-            mentalTriggerSettings: {
+             mentalTriggerSettings: {
               ...(pristineData.samplePlatformSettings.mentalTriggerSettings || {}),
               ...(parsedData.samplePlatformSettings.mentalTriggerSettings || {}),
             },
@@ -516,7 +516,38 @@ export class SampleDataAdapter implements IDatabaseAdapter {
 
   // --- Media ---
   async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> { const newItem: MediaItem = {...data, id: `media-${uuidv4()}`, storagePath: filePublicUrl, uploadedAt: new Date(), urlOriginal: filePublicUrl, urlThumbnail: filePublicUrl, urlMedium: filePublicUrl, urlLarge: filePublicUrl, uploadedBy: uploadedBy || 'system', linkedLotIds:[]}; this.data.sampleMediaItems.unshift(newItem); await this._persistData(); return {success: true, message: 'Mídia criada!', item: newItem}; }
-  async getMediaItems(): Promise<MediaItem[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleMediaItems))); }
+  
+  async getMediaItems(): Promise<MediaItem[]> {
+    await delay(20);
+    
+    // Create a deep copy to avoid mutating the original data
+    const mediaItems: MediaItem[] = JSON.parse(JSON.stringify(this.data.sampleMediaItems));
+    const lots: Lot[] = this.data.sampleLots;
+
+    // Build the reverse mapping from mediaId to lotIds
+    mediaItems.forEach((mediaItem) => {
+      // Reset linkedLotIds to ensure it's recalculated correctly each time
+      mediaItem.linkedLotIds = []; 
+      
+      lots.forEach((lot) => {
+        // Check if the media item is the main image of the lot
+        const isMainImage = lot.imageMediaId === mediaItem.id;
+        // Check if the media item is in the gallery array of the lot
+        const isInGallery = lot.mediaItemIds?.includes(mediaItem.id);
+
+        if (isMainImage || isInGallery) {
+          // Use the more permanent publicId if available, otherwise the internal ID
+          const lotIdentifier = lot.publicId || lot.id;
+          if (!mediaItem.linkedLotIds?.includes(lotIdentifier)) {
+            mediaItem.linkedLotIds?.push(lotIdentifier);
+          }
+        }
+      });
+    });
+
+    return Promise.resolve(mediaItems);
+  }
+
   async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, "title" | "altText" | "caption" | "description">>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleMediaItems.findIndex(m => m.id === id); if(index === -1) return {success: false, message: 'Mídia não encontrada.'}; this.data.sampleMediaItems[index] = {...this.data.sampleMediaItems[index], ...metadata}; await this._persistData(); return {success: true, message: 'Metadados da mídia atualizados!'}; }
   async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> { this.data.sampleMediaItems = this.data.sampleMediaItems.filter(m => m.id !== id); await this._persistData(); return {success: true, message: 'Mídia excluída!'}; }
   async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> { const lotIndex = this.data.sampleLots.findIndex(l => l.id === lotId || l.publicId === lotId); if(lotIndex === -1) return {success: false, message: 'Lote não encontrado.'}; const lot = this.data.sampleLots[lotIndex]; lot.mediaItemIds = Array.from(new Set([...(lot.mediaItemIds || []), ...mediaItemIds])); mediaItemIds.forEach(mediaId => { const mediaIndex = this.data.sampleMediaItems.findIndex(m => m.id === mediaId); if(mediaIndex > -1) { this.data.sampleMediaItems[mediaIndex].linkedLotIds = Array.from(new Set([...(this.data.sampleMediaItems[mediaIndex].linkedLotIds || []), lotId])); }}); await this._persistData(); return {success: true, message: 'Mídia vinculada!'}; }
@@ -565,3 +596,5 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return { success: true, message: "Configurações da plataforma atualizadas (Sample Data)!" };
   }
 }
+
+    
