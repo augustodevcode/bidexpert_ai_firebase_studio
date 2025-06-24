@@ -12,15 +12,16 @@ import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useRef, useCallback, forwardRef } from 'react';
-import { slugify } from '@/lib/sample-data-helpers'; // Changed import
+import { slugify } from '@/lib/sample-data-helpers';
 import UserNav from './user-nav';
+import MainNav from './main-nav';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Loader2, Heart, Bell, X, Facebook, MessageSquareText, Mail } from 'lucide-react';
 import type { RecentlyViewedLotInfo, Lot, LotCategory, PlatformSettings, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
-import { getLots, getLotsByIds } from '@/app/admin/lots/actions'; // Changed import
+import { getLotsByIds } from '@/app/admin/lots/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getFavoriteLotIdsFromStorage } from '@/lib/favorite-store';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
@@ -36,7 +37,6 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { cn } from '@/lib/utils';
 import MegaMenuCategories from './mega-menu-categories';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
@@ -589,3 +589,4 @@ export default function Header() {
     
 
     
+
