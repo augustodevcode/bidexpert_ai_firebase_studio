@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -311,6 +310,12 @@ export interface Lot {
   propertyLiens?: string | null; // Ônus (descrição ou link)
   knownDebts?: string | null; // Dívidas conhecidas (IPTU, Condomínio)
   additionalDocumentsInfo?: string | null; // Campo de texto para outras infos/links de docs
+
+  // Novos campos para teoria dos leilões e conformidade
+  reservePrice?: number | null; // Preço de reserva confidencial
+  evaluationValue?: number | null; // Valor de avaliação oficial
+  debtAmount?: number | null; // Montante da dívida (Alienação Fiduciária)
+  itbiValue?: number | null; // Valor de ITBI (Alienação Fiduciária)
 }
 
 export type LotFormData = Omit<Lot,
@@ -318,10 +323,8 @@ export type LotFormData = Omit<Lot,
   'publicId' |
   'createdAt' |
   'updatedAt' |
-  'endDate' | // Removido do form, gerenciado pelo leilão
-  'auctionDate' | // Removido do form, gerenciado pelo leilão
-  'lotSpecificAuctionDate' | // Removido do form, gerenciado pelo leilão
-  'secondAuctionDate' | // Removido do form, gerenciado pelo leilão
+  'endDate' | 
+  'auctionDate' |
   'isFavorite' |
   'isFeatured' |
   'views' |           
@@ -336,8 +339,11 @@ export type LotFormData = Omit<Lot,
   'auctionName' |
   'subcategoryName'
 > & {
-  endDate?: Date | null; // Mantido como opcional, mas o formulário não o terá
-  type: string; // Main category name (used for display if categoryId is not resolved yet)
+  endDate?: Date | null; 
+  auctionDate?: Date | null;
+  lotSpecificAuctionDate?: Date | null;
+  secondAuctionDate?: Date | null;
+  type: string; 
   subcategoryId?: string | null;
   views?: number;
   bidsCount?: number;
@@ -815,6 +821,3 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
-
-  
-

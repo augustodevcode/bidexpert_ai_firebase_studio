@@ -32,16 +32,13 @@ export const lotFormSchema = z.object({
   stateId: z.string().optional().nullable(),
   cityId: z.string().optional().nullable(),
   type: z.string().min(1, { message: "O tipo/categoria do lote é obrigatório."}).max(100),
+  subcategoryId: z.string().optional().nullable(),
   imageUrl: z.string().url({ message: "Por favor, insira uma URL de imagem válida." }).optional().or(z.literal('')),
   galleryImageUrls: z.array(z.string().url({ message: "Uma das URLs da galeria é inválida." })).optional(),
   mediaItemIds: z.array(z.string()).optional(),
-  // endDate: z.date({ // Removido - será derivado do leilão
-  //   required_error: "A data de encerramento é obrigatória.",
-  //   invalid_type_error: "Por favor, insira uma data de encerramento válida.",
-  // }).optional().nullable(), // Tornando opcional, pois virá do leilão
-  endDate: z.date().optional().nullable(), // Mantido como opcional no schema, mas não no form
-  lotSpecificAuctionDate: z.date().optional().nullable(), // Já era opcional
-  secondAuctionDate: z.date().optional().nullable(), // Já era opcional
+  endDate: z.date().optional().nullable(), 
+  lotSpecificAuctionDate: z.date().optional().nullable(), 
+  secondAuctionDate: z.date().optional().nullable(), 
   secondInitialPrice: z.coerce.number().positive().optional().nullable(),
   views: z.coerce.number().int().nonnegative().optional(),
   bidsCount: z.coerce.number().int().nonnegative().optional(),
@@ -62,6 +59,12 @@ export const lotFormSchema = z.object({
   propertyLiens: z.string().max(1000).optional().nullable(), // Ônus
   knownDebts: z.string().max(1000).optional().nullable(), // Dívidas
   additionalDocumentsInfo: z.string().max(2000).optional().nullable(), // Observações/links para docs
+
+  // Novos campos para teoria dos leilões e conformidade
+  reservePrice: z.coerce.number().positive({ message: "O preço de reserva deve ser positivo." }).optional().nullable(),
+  evaluationValue: z.coerce.number().positive({ message: "O valor de avaliação deve ser positivo." }).optional().nullable(),
+  debtAmount: z.coerce.number().positive({ message: "O montante da dívida deve ser positivo." }).optional().nullable(),
+  itbiValue: z.coerce.number().positive({ message: "O valor do ITBI deve ser positivo." }).optional().nullable(),
 });
 
 export type LotFormValues = z.infer<typeof lotFormSchema>;
