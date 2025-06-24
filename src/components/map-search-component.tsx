@@ -1,12 +1,13 @@
 
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import L, { type LatLngBounds } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Lot, Auction } from '@/types';
 
 // Fix for default Leaflet icon paths in Next.js
+// Use direct URLs to a CDN to avoid bundling issues with image assets on the server.
 const defaultIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -16,6 +17,7 @@ const defaultIcon = L.icon({
   popupAnchor: [1, -34],
   shadowSize: [41, 41],
 });
+
 
 interface MapSearchComponentProps {
   items: (Lot | Auction)[];
@@ -56,7 +58,7 @@ export default function MapSearchComponent({
 
       const onMapMoveEnd = () => {
         if (programmaticMoveRef.current) {
-          programmaticMoveRef.current = false; // Reset the flag and do not trigger a state update
+          programmaticMoveRef.current = false; 
           return;
         }
         if (mapRef.current) {
@@ -67,14 +69,14 @@ export default function MapSearchComponent({
       mapRef.current.on('moveend', onMapMoveEnd);
     }
     
-    // Cleanup function to remove the map instance on unmount
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
       }
     };
-  }, []); // Empty dependency array ensures this runs only once
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Effect to update markers when items change
   useEffect(() => {
@@ -102,7 +104,7 @@ export default function MapSearchComponent({
             </div>
           `;
           
-          L.marker([item.latitude, item.longitude], { icon: defaultIcon })
+          L.marker([item.latitude!, item.longitude!], { icon: defaultIcon })
             .addTo(markersRef.current!)
             .bindPopup(popupContent);
         }
@@ -118,7 +120,7 @@ export default function MapSearchComponent({
         .map(item => [item.latitude!, item.longitude!] as [number, number]);
       
       if (points.length > 0) {
-        programmaticMoveRef.current = true; // Set flag before programmatic move
+        programmaticMoveRef.current = true;
         const bounds = L.latLngBounds(points);
         mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
       } else {
@@ -126,7 +128,7 @@ export default function MapSearchComponent({
          mapRef.current.setView(mapCenter, mapZoom);
       }
     }
-  }, [items, shouldFitBounds, mapCenter, mapZoom]); // items dependency is needed here to refit bounds for new search results
+  }, [items, shouldFitBounds, mapCenter, mapZoom]);
 
   return <div ref={mapContainerRef} className="w-full h-full rounded-lg" style={{zIndex: 0}}></div>;
 }
