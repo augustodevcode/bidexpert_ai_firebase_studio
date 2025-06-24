@@ -1,4 +1,5 @@
 
+
 'use client'; 
 
 import AuctionForm from '../../auction-form';
@@ -14,7 +15,7 @@ import Link from 'next/link';
 import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers } from 'lucide-react'; // Added Layers
 import { format, differenceInDays, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText, getLotStatusColor, samplePlatformSettings, slugify } from '@/lib/sample-data';
+import { getAuctionStatusText, slugify } from '@/lib/sample-data-helpers';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +35,7 @@ import React, { useEffect, useCallback, useMemo, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import SearchResultsFrame from '@/components/search-results-frame';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
+import { samplePlatformSettings } from '@/lib/sample-data.local.json'; 
 
 function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotId: string; lotTitle: string; auctionId: string; onDeleteSuccess: () => void }) {
   const [isDeleting, setIsDeleting] = React.useState(false);
@@ -109,9 +111,9 @@ function AuctionInfoDisplay({ auction }: { auction: Auction }) {
                     <p><strong>ID do Leilão:</strong> {auction.id}</p>
                     <p><strong>ID Público:</strong> {auction.publicId}</p>
                     <div className="flex items-center"><strong>Status:</strong><Badge variant="outline" className={`ml-2 ${auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'border-green-500 text-green-600' : 'border-gray-400'}`}>{getAuctionStatusText(auction.status)}</Badge></div>
-                    <p><strong>Data Início:</strong> {auction.auctionDate ? format(new Date(auction.auctionDate), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'N/A'}</p>
-                    <p><strong>Data Fim (Estimada):</strong> {auction.endDate ? format(new Date(auction.endDate), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'Não definida'}</p>
-                    {auction.endDate && !isPast(new Date(auction.endDate)) && <p><strong>Tempo Restante:</strong> {getDaysRemaining(auction.endDate)}</p>}
+                    <p><strong>Data Início:</strong> {auction.auctionDate ? format(new Date(auction.auctionDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'N/A'}</p>
+                    <p><strong>Data Fim (Estimada):</strong> {auction.endDate ? format(new Date(auction.endDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'Não definida'}</p>
+                    {auction.endDate && !isPast(new Date(auction.endDate as string)) && <p><strong>Tempo Restante:</strong> {getDaysRemaining(auction.endDate)}</p>}
                     <p><strong>Categoria:</strong> {auction.category}</p>
                     <p><strong>Leiloeiro:</strong> {auction.auctioneer}</p>
                     <p><strong>Comitente:</strong> {auction.seller || 'N/A'}</p>
@@ -333,14 +335,14 @@ export default function EditAuctionPage() {
                {lot.subcategoryName && ` / ${lot.subcategoryName}`}
              </p>
            )}
-            <Badge variant="outline" className={`text-xs mt-1 ${getLotStatusColor(lot.status)} border-current`}>
+            <Badge variant="outline" className={`text-xs mt-1 border-current`}>
                 {getAuctionStatusText(lot.status)}
             </Badge>
           </div>
           <div className="flex-shrink-0 text-right">
             <p className="text-sm font-semibold">R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
             <p className="text-xs text-muted-foreground">
-              {lot.endDate ? format(new Date(lot.endDate), 'dd/MM/yy HH:mm', { locale: ptBR }) : 'N/A'}
+              {lot.endDate ? format(new Date(lot.endDate as string), 'dd/MM/yy HH:mm', { locale: ptBR }) : 'N/A'}
             </p>
           </div>
         </div>
@@ -378,12 +380,12 @@ export default function EditAuctionPage() {
            )}
         </CardHeader>
         <CardContent className="p-3 flex-grow space-y-1 text-xs">
-            <Badge variant="outline" className={`${getLotStatusColor(lot.status)} border-current`}>
+            <Badge variant="outline" className={`border-current`}>
                 {getAuctionStatusText(lot.status)}
             </Badge>
             <p className="font-medium">R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
             <p className="text-muted-foreground">
-              Fim: {lot.endDate ? format(new Date(lot.endDate), 'dd/MM HH:mm', { locale: ptBR }) : 'N/A'}
+              Fim: {lot.endDate ? format(new Date(lot.endDate as string), 'dd/MM HH:mm', { locale: ptBR }) : 'N/A'}
             </p>
         </CardContent>
       <CardFooter className="p-2 border-t flex justify-end items-center gap-1">

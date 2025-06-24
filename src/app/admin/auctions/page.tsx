@@ -1,4 +1,5 @@
 
+
 'use client'; // Adicionado para permitir que DeleteAuctionButton seja um Client Component aqui
 
 import Link from 'next/link';
@@ -22,7 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
-import { getAuctionStatusText } from '@/lib/sample-data';
+import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast'; // Import useToast
 import { useEffect, useState, useCallback } from 'react'; // Import useEffect, useState, useCallback
@@ -173,7 +174,7 @@ export default function AdminAuctionsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
-                          {auction.auctionDate ? format(new Date(auction.auctionDate), 'dd/MM/yy HH:mm', { locale: ptBR }) : 'N/A'}
+                          {auction.auctionDate ? format(new Date(auction.auctionDate as string), 'dd/MM/yy HH:mm', { locale: ptBR }) : 'N/A'}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">{auction.category}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">{auction.auctioneer}</TableCell>
@@ -212,4 +213,5 @@ export default function AdminAuctionsPage() {
     </TooltipProvider>
   );
 }
+
 

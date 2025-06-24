@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -22,7 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
-import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
+import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -171,7 +172,7 @@ export default function AdminLotsPage() {
                           R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
-                          {lot.endDate ? format(new Date(lot.endDate), 'dd/MM/yy HH:mm', { locale: ptBR }) : 'N/A'}
+                          {lot.endDate ? format(new Date(lot.endDate as string), 'dd/MM/yy HH:mm', { locale: ptBR }) : 'N/A'}
                         </TableCell>
                         <TableCell className="text-right">
                           <Tooltip>
@@ -208,3 +209,4 @@ export default function AdminLotsPage() {
     </TooltipProvider>
   );
 }
+

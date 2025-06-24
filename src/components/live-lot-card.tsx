@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { Lot } from '@/types';
@@ -11,7 +12,7 @@ import { Clock, Eye, Gavel, Tag } from 'lucide-react';
 import { format, differenceInMinutes, differenceInHours, differenceInDays, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
-import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
+import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data-helpers';
 
 interface LiveLotCardProps {
   lot: Lot;

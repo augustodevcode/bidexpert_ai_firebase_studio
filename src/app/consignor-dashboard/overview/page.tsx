@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -14,7 +15,7 @@ import type { Lot } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Loader2 } from 'lucide-react';
-import { getAuctionStatusText, slugify } from '@/lib/sample-data'; // Import slugify
+import { getAuctionStatusText, slugify } from '@/lib/sample-data-helpers';
 
 // Emails com acesso de admin/analista (idealmente de um local compartilhado)
 const ALLOWED_EMAILS_FOR_ADMIN_ACCESS = ['admin@bidexpert.com', 'analyst@bidexpert.com', 'augusto.devcode@gmail.com'];
@@ -70,10 +71,10 @@ export default function ConsignorOverviewPage() {
         
         const upcoming = auctions
           .filter(auc => auc.status === 'EM_BREVE' || auc.status === 'ABERTO' || auc.status === 'ABERTO_PARA_LANCES')
-          .sort((a, b) => new Date(a.auctionDate).getTime() - new Date(b.auctionDate).getTime())
+          .sort((a, b) => new Date(a.auctionDate as string).getTime() - new Date(b.auctionDate as string).getTime())
           .map(auc => ({
             auction: auc,
-            lots: (auc.lots || []).filter(lot => lot.sellerName === profile.name || (auction.seller && slugify(auction.seller) === profile.slug)) 
+            lots: (auc.lots || []).filter(lot => lot.sellerName === profile.name || (auc.seller && slugify(auc.seller) === profile.slug)) 
           }))
           .filter(item => item.lots.length > 0)
           .slice(0, 3);
@@ -223,7 +224,7 @@ export default function ConsignorOverviewPage() {
                       <div>
                         <CardTitle className="text-lg">{auction.title}</CardTitle>
                         <CardDescription>
-                          Data: {format(new Date(auction.auctionDate), "dd/MM/yyyy HH:mm", { locale: ptBR })} | Status: {getAuctionStatusText(auction.status)}
+                          Data: {format(new Date(auction.auctionDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR })} | Status: {getAuctionStatusText(auction.status)}
                         </CardDescription>
                       </div>
                        <Button variant="outline" size="sm" asChild>
@@ -243,7 +244,7 @@ export default function ConsignorOverviewPage() {
                               </div>
                               <div className="p-3">
                                 <p className="text-xs font-semibold truncate">{lot.title}</p>
-                                <p className="text-xs text-muted-foreground">Lance Inicial: R$ {lot.initialPrice?.toLocaleString('pt-BR') || lot.price.toLocaleString('pt-BR')}</p>
+                                <p className="text-xs text-muted-foreground">Lance Inicial: R$ {(lot.initialPrice || lot.price).toLocaleString('pt-BR')}</p>
                               </div>
                             </Card>
                           </Link>

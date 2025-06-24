@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -7,10 +8,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingBag, FileText, CreditCard, CalendarDays, Eye, AlertCircle, Truck, CalendarCheck, HandCoins } from 'lucide-react';
-import { sampleUserWins, getPaymentStatusText, getPaymentStatusColor } from '@/lib/sample-data';
+import { sampleUserWins } from '@/lib/sample-data.local.json';
+import { getPaymentStatusText, getAuctionStatusText } from '@/lib/sample-data-helpers';
 import type { UserWin } from '@/types';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+const getPaymentStatusColor = (status: string) => {
+  switch (status) {
+    case 'PAGO':
+      return 'bg-green-100 text-green-800 border-green-300';
+    case 'PENDENTE':
+      return 'bg-amber-100 text-amber-800 border-amber-300';
+    case 'FALHOU':
+    case 'REEMBOLSADO':
+      return 'bg-red-100 text-red-800 border-red-300';
+    default:
+      return 'bg-secondary text-secondary-foreground';
+  }
+};
+
 
 export default function MyWinsPage() {
   const wins: UserWin[] = sampleUserWins; // Em um aplicativo real, isso viria do usuário logado
@@ -39,7 +56,7 @@ export default function MyWinsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {wins.map((win) => {
-                const paymentDeadline = addDays(new Date(win.winDate), 5); // Exemplo: 5 dias para pagar
+                const paymentDeadline = addDays(new Date(win.winDate as string), 5); // Exemplo: 5 dias para pagar
                 const commissionRate = 0.05; // Exemplo: 5% de comissão
                 const commissionValue = win.winningBidAmount * commissionRate;
                 const totalDue = win.winningBidAmount + commissionValue; // Simplificado, pode haver outras taxas
@@ -78,7 +95,7 @@ export default function MyWinsPage() {
                       </div>
                       <div className="flex items-center">
                           <CalendarDays className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span>Arrematado em: {format(new Date(win.winDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+                          <span>Arrematado em: {format(new Date(win.winDate as string), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
                       </div>
                       <div className="flex items-center">
                           <CreditCard className="h-4 w-4 mr-2 text-muted-foreground" />

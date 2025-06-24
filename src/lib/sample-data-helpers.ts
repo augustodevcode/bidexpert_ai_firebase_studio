@@ -18,6 +18,100 @@ export const slugify = (text: string): string => {
     .replace(/--+/g, '-'); 
 };
 
+
+export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDocumentStatus | UserHabilitationStatus | PaymentStatus | DirectSaleOfferStatus | string | undefined ): string => {
+  if (!status) return 'Status Desconhecido';
+  switch (status) {
+    case 'ABERTO_PARA_LANCES': return 'Aberto para Lances';
+    case 'EM_BREVE': return 'Em Breve';
+    case 'ENCERRADO': return 'Encerrado';
+    case 'FINALIZADO': return 'Finalizado';
+    case 'ABERTO': return 'Aberto';
+    case 'CANCELADO': return 'Cancelado';
+    case 'SUSPENSO': return 'Suspenso';
+    case 'VENDIDO': return 'Vendido';
+    case 'NAO_VENDIDO': return 'Não Vendido';
+    case 'NOT_SENT': return 'Não Enviado';
+    case 'SUBMITTED': return 'Enviado';
+    case 'APPROVED': return 'Aprovado';
+    case 'REJECTED': return 'Rejeitado';
+    case 'PENDING_ANALYSIS': return 'Em Análise';
+    case 'PENDING_DOCUMENTS': return 'Documentação Pendente';
+    case 'HABILITADO': return 'Habilitado para Dar Lances'; 
+    case 'REJECTED_DOCUMENTS': return 'Documentos Rejeitados';
+    case 'BLOCKED': return 'Conta Bloqueada';
+    case 'ACTIVE': return 'Ativa'; 
+    case 'SOLD': return 'Vendido'; 
+    case 'EXPIRED': return 'Expirada'; 
+    case 'PENDING_APPROVAL': return 'Pendente Aprovação';
+    case 'RASCUNHO': return 'Rascunho';
+    case 'EM_PREPARACAO': return 'Em Preparação';
+    case 'PENDENTE': return 'Pendente';
+    case 'PROCESSANDO': return 'Processando';
+    case 'PAGO': return 'Pago';
+    case 'FALHOU': return 'Falhou';
+    case 'REEMBOLSADO': return 'Reembolsado';
+    default: {
+      if (typeof status === 'string') {
+        return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      }
+      return 'Status Desconhecido';
+    }
+  }
+};
+
+export const getLotStatusColor = (status: LotStatus | DirectSaleOfferStatus): string => {
+  switch (status) {
+    case 'ABERTO_PARA_LANCES':
+    case 'ACTIVE': 
+      return 'bg-green-600 text-white';
+    case 'EM_BREVE':
+    case 'PENDING_APPROVAL': 
+      return 'bg-blue-500 text-white';
+    case 'ENCERRADO':
+    case 'VENDIDO':
+    case 'NAO_VENDIDO':
+    case 'SOLD': 
+    case 'EXPIRED': 
+      return 'bg-gray-500 text-white';
+    default:
+      return 'bg-gray-300 text-gray-800';
+  }
+};
+
+export const getPaymentStatusText = (status: PaymentStatus): string => getAuctionStatusText(status);
+
+export const getUserDocumentStatusColor = (status: UserDocumentStatus): string => {
+  switch (status) {
+    case 'APPROVED': return 'border-green-500 text-green-700 bg-green-50';
+    case 'REJECTED': return 'border-red-500 text-red-700 bg-red-50';
+    case 'PENDING_ANALYSIS':
+    case 'SUBMITTED':
+      return 'border-yellow-500 text-yellow-700 bg-yellow-50';
+    case 'NOT_SENT':
+    default:
+      return 'border-gray-400 text-gray-600 bg-gray-50';
+  }
+};
+
+export const getUserHabilitationStatusInfo = (status: UserHabilitationStatus | undefined) => {
+  if (!status) return { text: 'Pendente', color: 'bg-orange-500', icon: FileWarning, progress: 25 };
+  switch (status) {
+    case 'HABILITADO':
+      return { text: 'Habilitado', color: 'bg-green-600', icon: CheckCircle2, progress: 100 };
+    case 'PENDING_ANALYSIS':
+      return { text: 'Em Análise', color: 'bg-yellow-500', icon: Clock, progress: 75 };
+    case 'PENDING_DOCUMENTS':
+      return { text: 'Documentos Pendentes', color: 'bg-orange-500', icon: FileWarning, progress: 25 };
+    case 'REJECTED_DOCUMENTS':
+      return { text: 'Documentos Rejeitados', color: 'bg-red-600', icon: FileWarning, progress: 50 };
+    case 'BLOCKED':
+      return { text: 'Conta Bloqueada', color: 'bg-gray-700', icon: ShieldAlert, progress: 0 };
+    default:
+      return { text: 'Status Desconhecido', color: 'bg-gray-400', icon: HelpCircle, progress: 0 };
+  }
+};
+
 export const getCategoryAssets = (categoryName: string): { bannerUrl: string, bannerAiHint: string } => {
   const assets: Record<string, { bannerUrl: string, bannerAiHint: string }> = {
       'Leilões Judiciais': { bannerUrl: 'https://placehold.co/1200x250.png?text=Leiloes+Judiciais', bannerAiHint: 'tribunal martelo' },
@@ -42,149 +136,3 @@ export const getUniqueLotLocations = (lots: Lot[]): string[] => {
   });
   return Array.from(locations).sort();
 };
-
-
-// Default Platform Settings - can be imported by any component or adapter as a fallback.
-export const samplePlatformSettings: PlatformSettings = {
-  id: 'global',
-  siteTitle: 'BidExpert',
-  siteTagline: 'A Plataforma Definitiva para Leilões',
-  galleryImageBasePath: '/uploads/media/',
-  storageProvider: 'local',
-  firebaseStorageBucket: 'bidexpert-630df.appspot.com',
-  platformPublicIdMasks: {
-    auctions: 'LEIL-',
-    lots: 'LOTE-',
-  },
-  mapSettings: {
-    defaultProvider: 'openstreetmap',
-    googleMapsApiKey: '',
-    staticImageMapZoom: 14,
-    staticImageMapMarkerColor: 'blue',
-  },
-  searchPaginationType: 'loadMore',
-  searchItemsPerPage: 12,
-  searchLoadMoreCount: 12,
-  showCountdownOnLotDetail: true,
-  showCountdownOnCards: true,
-  showRelatedLotsOnLotDetail: true,
-  relatedLotsCount: 4,
-  mentalTriggerSettings: {
-    showDiscountBadge: true,
-    showUrgencyTimer: true,
-    urgencyTimerThresholdDays: 2,
-    urgencyTimerThresholdHours: 0,
-    showPopularityBadge: true,
-    popularityViewThreshold: 100,
-    showHotBidBadge: true,
-    hotBidThreshold: 10,
-    showExclusiveBadge: true,
-  },
-  sectionBadgeVisibility: {
-    featuredLots: {
-      showStatusBadge: true, showDiscountBadge: true, showUrgencyTimer: true,
-      showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true,
-    },
-    searchGrid: {
-      showStatusBadge: true, showDiscountBadge: true, showUrgencyTimer: true,
-      showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true,
-    },
-    searchList: {
-      showStatusBadge: true, showDiscountBadge: true, showUrgencyTimer: true,
-      showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true,
-    },
-    lotDetail: {
-      showStatusBadge: true, showDiscountBadge: true, showUrgencyTimer: true,
-      showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true,
-    },
-  },
-  homepageSections: [
-    { id: 'hero', type: 'hero_carousel', visible: true, order: 1 },
-    { id: 'filters', type: 'filter_links', visible: true, order: 2 },
-    { id: 'featured', type: 'featured_lots', title: 'Lotes em Destaque', visible: true, order: 3, itemCount: 5 },
-    { id: 'active', type: 'active_auctions', title: 'Leilões Ativos', visible: true, order: 4, itemCount: 10 },
-  ],
-  updatedAt: new Date(),
-};
-
-
-// ============================================================================
-// SERVER-SIDE DATA PROCESSING
-// This should only be called by a server-side data loader (like the SampleDataAdapter).
-// ============================================================================
-
-export function processSampleData(rawData: any) {
-  // This function is now only responsible for processing the raw data object.
-  // It does NOT read files.
-
-  const sampleAuctioneers = (rawData.sampleAuctioneers || []).map((auc: any) => ({
-    ...auc, logoUrl: rawData.sampleMediaItems.find((m: any) => m.id === auc.logoMediaId)?.urlOriginal
-  }));
-
-  const sampleSellers = (rawData.sampleSellers || []).map((seller: any) => ({
-    ...seller, logoUrl: rawData.sampleMediaItems.find((m: any) => m.id === seller.logoMediaId)?.urlOriginal
-  }));
-
-  const sampleLotCategories = (rawData.sampleLotCategories || []).map((cat: any) => ({
-    ...cat,
-    logoUrl: rawData.sampleMediaItems.find((m: any) => m.id === cat.logoMediaId)?.urlOriginal,
-    coverImageUrl: rawData.sampleMediaItems.find((m: any) => m.id === cat.coverImageMediaId)?.urlOriginal,
-    megaMenuImageUrl: rawData.sampleMediaItems.find((m: any) => m.id === cat.megaMenuImageMediaId)?.urlOriginal,
-    hasSubcategories: (rawData.sampleSubcategories || []).some((sub: any) => sub.parentCategoryId === cat.id)
-  }));
-  
-  const processedAuctions = (rawData.sampleAuctions || []).map((auction: any) => {
-    const categoryInfo = sampleLotCategories.find((c:any) => c.id === auction.categoryId);
-    const auctioneerInfo = sampleAuctioneers.find((auc:any) => auc.id === auction.auctioneerId);
-    const sellerInfo = sampleSellers.find((s:any) => s.id === auction.sellerId);
-    
-    let effectiveEndDate: Date | null = null;
-    if (auction.auctionStages && auction.auctionStages.length > 0) {
-        const sortedStages = [...auction.auctionStages].sort((a:any, b:any) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime());
-        effectiveEndDate = sortedStages.length > 0 ? new Date(sortedStages[sortedStages.length - 1].endDate) : null;
-    } else if (auction.endDate) {
-        effectiveEndDate = new Date(auction.endDate);
-    }
-    
-    let derivedStatus: AuctionStatus = auction.status;
-    if (effectiveEndDate && isPast(effectiveEndDate) && ['ABERTO_PARA_LANCES', 'ABERTO', 'EM_BREVE'].includes(derivedStatus)) {
-        derivedStatus = 'ENCERRADO';
-    }
-
-    return {
-      ...auction,
-      category: categoryInfo?.name || auction.category,
-      auctioneer: auctioneerInfo?.name || auction.auctioneer,
-      seller: sellerInfo?.name || auction.seller,
-      auctioneerLogoUrl: auctioneerInfo?.logoUrl,
-      imageUrl: rawData.sampleMediaItems.find((m: any) => m.id === auction.imageMediaId)?.urlOriginal || 'https://placehold.co/600x400.png',
-      endDate: effectiveEndDate,
-      status: derivedStatus,
-      lots: [],
-    };
-  });
-
-  const processedLots = (rawData.sampleLots || []).map((lot: any) => {
-    const parentAuction = processedAuctions.find((a:any) => a.id === lot.auctionId);
-    let derivedStatus = lot.status;
-
-    if (parentAuction) {
-      if (['CANCELADO', 'SUSPENSO'].includes(parentAuction.status)) {
-        derivedStatus = 'ENCERRADO';
-      } else if (parentAuction.endDate && isPast(new Date(parentAuction.endDate)) && lot.status === 'ABERTO_PARA_LANCES') {
-        if (lot.reservePrice && lot.price < lot.reservePrice) derivedStatus = 'NAO_VENDIDO';
-        else if ((lot.bidsCount || 0) > 0) derivedStatus = 'VENDIDO';
-        else derivedStatus = 'NAO_VENDIDO';
-      }
-    }
-    return { ...lot, status: derivedStatus };
-  });
-
-  processedAuctions.forEach((auction:any) => {
-    const lotsForThisAuction = processedLots.filter((l:any) => l.auctionId === auction.id);
-    auction.lots = lotsForThisAuction;
-    auction.totalLots = lotsForThisAuction.length;
-  });
-
-  return { ...rawData, sampleAuctions: processedAuctions, sampleLots: processedLots, sampleLotCategories, sampleSellers, sampleAuctioneers };
-}

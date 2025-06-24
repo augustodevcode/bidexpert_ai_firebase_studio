@@ -1,4 +1,5 @@
 
+
 'use client';
 import React from 'react';
 
@@ -268,7 +269,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
           <Card className="shadow-md">
             <CardContent className="p-4 md:p-6">
               <AuctionStagesTimeline 
-                  auctionOverallStartDate={new Date(auction.auctionDate)}
+                  auctionOverallStartDate={new Date(auction.auctionDate as string)}
                   stages={auction.auctionStages || []}
               />
             </CardContent>

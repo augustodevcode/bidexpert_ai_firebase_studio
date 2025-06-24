@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -13,7 +14,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { ChevronRight, Tag, MapPin, DollarSign, ShoppingCart, Edit, MessageSquare, UserCircle, CalendarDays, Clock, AlertCircle, Loader2, CheckCircle, Info } from 'lucide-react';
 import type { DirectSaleOffer } from '@/types';
-import { sampleDirectSaleOffers, getLotStatusColor, getAuctionStatusText, slugify } from '@/lib/sample-data'; // Reusing status helpers
+import { sampleDirectSaleOffers } from '@/lib/sample-data.local.json';
+import { getLotStatusColor, getAuctionStatusText, slugify } from '@/lib/sample-data-helpers'; // Reusing status helpers
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -35,7 +37,7 @@ export default function DirectSaleOfferDetailPage() {
 
   useEffect(() => {
     if (offerId) {
-      const foundOffer = sampleDirectSaleOffers.find(o => o.id === offerId);
+      const foundOffer = sampleDirectSaleOffers.find((o: DirectSaleOffer) => o.id === offerId);
       setOffer(foundOffer || null);
     }
     setIsLoading(false);
@@ -232,11 +234,11 @@ export default function DirectSaleOfferDetailPage() {
                 <MapPin className="h-4 w-4 mr-2 text-primary" /> Localização: {displayLocation}
               </div>
               <div className="flex items-center text-sm text-muted-foreground">
-                <CalendarDays className="h-4 w-4 mr-2 text-primary" /> Publicado em: {format(new Date(offer.createdAt), 'dd/MM/yyyy', {locale: ptBR})}
+                <CalendarDays className="h-4 w-4 mr-2 text-primary" /> Publicado em: {format(new Date(offer.createdAt as string), 'dd/MM/yyyy', {locale: ptBR})}
               </div>
               {offer.expiresAt && (
                 <div className="flex items-center text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4 mr-2 text-primary" /> Válido até: {format(new Date(offer.expiresAt), 'dd/MM/yyyy', {locale: ptBR})}
+                    <Clock className="h-4 w-4 mr-2 text-primary" /> Válido até: {format(new Date(offer.expiresAt as string), 'dd/MM/yyyy', {locale: ptBR})}
                 </div>
               )}
 

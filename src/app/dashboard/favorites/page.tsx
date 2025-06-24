@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -7,11 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Heart, Eye, XCircle, AlertCircle } from 'lucide-react';
-import { sampleLots, getLotStatusColor, getAuctionStatusText } from '@/lib/sample-data';
+import { getLotStatusColor, getAuctionStatusText } from '@/lib/sample-data-helpers';
 import type { Lot } from '@/types';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getFavoriteLotIdsFromStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store'; // Nova importação
+import { getLots } from '@/app/admin/lots/actions';
 
 export default function FavoriteLotsPage() {
   const [favoriteLots, setFavoriteLots] = useState<Lot[]>([]);
@@ -20,9 +22,16 @@ export default function FavoriteLotsPage() {
 
   useEffect(() => {
     setIsClient(true);
-    const favoriteIds = getFavoriteLotIdsFromStorage();
-    const currentlyFavoriteLots = sampleLots.filter(lot => favoriteIds.includes(lot.id));
-    setFavoriteLots(currentlyFavoriteLots);
+    async function loadFavorites() {
+        const favoriteIds = getFavoriteLotIdsFromStorage();
+        if (favoriteIds.length > 0) {
+            // This assumes getLots can fetch by multiple IDs. If not, this needs a new action getLotsByIds
+            const allLots = await getLots(); 
+            const currentlyFavoriteLots = allLots.filter(lot => favoriteIds.includes(lot.id));
+            setFavoriteLots(currentlyFavoriteLots);
+        }
+    }
+    loadFavorites();
   }, []);
 
   const handleRemoveFavorite = (lotId: string) => {
@@ -30,12 +39,6 @@ export default function FavoriteLotsPage() {
     
     removeFavoriteLotIdFromStorage(lotId); // Remove do localStorage
     setFavoriteLots(prev => prev.filter(lot => lot.id !== lotId)); // Atualiza UI
-
-    // Opcional: se ainda quisermos modificar sampleLots em memória para consistência na sessão atual (sem refresh)
-    // const lotInSampleData = sampleLots.find(l => l.id === lotId);
-    // if (lotInSampleData) {
-    //   lotInSampleData.isFavorite = false; 
-    // }
     
     toast({
       title: "Removido dos Favoritos",
@@ -124,7 +127,7 @@ export default function FavoriteLotsPage() {
                         </Link>
                     </h4>
                     <p className="text-xs text-muted-foreground mb-0.5">Leilão: {lot.auctionName}</p>
-                    <p className="text-xs text-muted-foreground">Local: {lot.location}</p>
+                    <p className="text-xs text-muted-foreground">Local: {lot.cityName} - {lot.stateUf}</p>
                     <p className="text-sm text-muted-foreground mt-1.5">
                         {lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE' ? 'Lance Inicial:' : 'Valor:'}
                         <span className="text-primary font-bold ml-1 text-md">

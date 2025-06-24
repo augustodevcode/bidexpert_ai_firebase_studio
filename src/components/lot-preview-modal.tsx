@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Lot, Auction } from '@/types';
@@ -8,7 +9,7 @@ import { CalendarDays, MapPin, Tag, DollarSign, Eye, ChevronLeft, ChevronRight, 
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Link from 'next/link';
-import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
+import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data-helpers';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 
@@ -121,7 +122,7 @@ export default function LotPreviewModal({ lot, auction, isOpen, onClose }: LotPr
              {lot.endDate && (
                 <div className="flex items-center">
                     <CalendarDays className="h-4 w-4 mr-2 text-primary" /> Encerramento: 
-                    <span className="font-medium ml-1">{format(new Date(lot.endDate), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+                    <span className="font-medium ml-1">{format(new Date(lot.endDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
                 </div>
             )}
           </div>

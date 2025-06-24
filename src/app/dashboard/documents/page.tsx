@@ -1,19 +1,22 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from '@/components/ui/separator';
 import { UploadCloud, Eye, AlertCircle, CheckCircle2, FileText, ShieldCheck, FileWarning, Clock } from 'lucide-react';
-import { sampleUserDocuments, sampleDocumentTypes, sampleUserHabilitationStatus, getUserHabilitationStatusInfo, getUserDocumentStatusColor, getAuctionStatusText } from '@/lib/sample-data';
+import { sampleUserDocuments, sampleDocumentTypes } from '@/lib/sample-data.local.json';
+import { getUserHabilitationStatusInfo, getUserDocumentStatusColor, getAuctionStatusText } from '@/lib/sample-data-helpers';
 import type { UserDocument, DocumentType, UserHabilitationStatus, UserDocumentStatus } from '@/types';
 
 export default function UserDocumentsPage() {
-  // Simula o ID do usuário logado
+  // Simula o ID do usuário logado e o status de habilitação
   const currentUserId = 'user123'; 
+  const sampleUserHabilitationStatus: UserHabilitationStatus = 'PENDING_DOCUMENTS'; 
 
   // Filtra os documentos do usuário atual. O campo 'documentType' já está populado em sampleUserDocuments.
   const userDocuments = sampleUserDocuments

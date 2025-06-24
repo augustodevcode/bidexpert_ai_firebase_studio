@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -9,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, MapPin, Tag, CalendarClock, ImageOff } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
+import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data-helpers';
 import { Button } from '../ui/button';
 import { DetailTimeRemaining } from '@/app/auctions/[auctionId]/lots/[lotId]/lot-detail-client';
 

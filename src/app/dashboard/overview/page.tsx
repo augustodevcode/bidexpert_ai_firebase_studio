@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { UserCircle, Bell, ShoppingBag, Gavel, AlertCircle, Star, Settings, Loader2, CheckCircle2, Clock, FileText, FileWarning, ShieldAlert, HelpCircle } from 'lucide-react'; // Added more icons
 import Link from 'next/link';
 import Image from 'next/image';
-import { sampleLots, sampleUserWins, sampleUserBids, sampleUserHabilitationStatus, getUserHabilitationStatusInfo } from '@/lib/sample-data';
-import type { Lot, UserWin, UserBid } from '@/types';
+import { sampleLots, sampleUserWins, sampleUserBids } from '@/lib/sample-data.local.json';
+import { getUserHabilitationStatusInfo } from '@/lib/sample-data-helpers';
+import type { Lot, UserWin, UserBid, UserHabilitationStatus } from '@/types';
 import { useEffect, useState } from 'react';
 import { format, differenceInHours, differenceInMinutes, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -49,25 +51,26 @@ export default function DashboardOverviewPage() {
   const [pendingWinsCount, setPendingWinsCount] = useState(0);
   const [recommendedLots, setRecommendedLots] = useState<Lot[]>([]);
   const [activeBidsCount, setActiveBidsCount] = useState(0);
+  const [sampleUserHabilitationStatus, setSampleUserHabilitationStatus] = useState<UserHabilitationStatus>('PENDING_DOCUMENTS');
   const [habilitationInfo, setHabilitationInfo] = useState(getUserHabilitationStatusInfo(sampleUserHabilitationStatus));
 
 
   useEffect(() => {
     // Próximos Encerramentos
     const openLots = sampleLots
-      .filter(lot => lot.status === 'ABERTO_PARA_LANCES' && !isPast(new Date(lot.endDate)))
-      .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime());
+      .filter((lot: Lot) => lot.status === 'ABERTO_PARA_LANCES' && lot.endDate && !isPast(new Date(lot.endDate as string)))
+      .sort((a: Lot, b: Lot) => new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime());
     setUpcomingLots(openLots.slice(0, 3));
 
     // Arremates Pendentes
-    const pending = sampleUserWins.filter(win => win.paymentStatus === 'PENDENTE');
+    const pending = sampleUserWins.filter((win: UserWin) => win.paymentStatus === 'PENDENTE');
     setPendingWinsCount(pending.length);
 
     // Recomendações
-    setRecommendedLots(sampleLots.filter(lot => lot.isFeatured).slice(0, 3));
+    setRecommendedLots(sampleLots.filter((lot: Lot) => lot.isFeatured).slice(0, 3));
 
     // Lances Ativos
-    const currentActiveBids = sampleUserBids.filter(bid => 
+    const currentActiveBids = sampleUserBids.filter((bid: UserBid) => 
       bid.bidStatus === 'GANHANDO' || bid.bidStatus === 'PERDENDO' || bid.bidStatus === 'SUPERADO'
     ).length;
     setActiveBidsCount(currentActiveBids);
@@ -75,9 +78,9 @@ export default function DashboardOverviewPage() {
     // Status da Habilitação (já definido no useState inicial, mas poderia ser atualizado aqui se fosse dinâmico)
     setHabilitationInfo(getUserHabilitationStatusInfo(sampleUserHabilitationStatus));
 
-  }, []);
+  }, [sampleUserHabilitationStatus]);
   
-  const auctionsWonCount = sampleUserWins.filter(win => win.paymentStatus === 'PAGO').length;
+  const auctionsWonCount = sampleUserWins.filter((win: UserWin) => win.paymentStatus === 'PAGO').length;
   const HabilitationIcon = habilitationInfo.icon; // Alias for JSX rendering
 
   return (
@@ -175,7 +178,7 @@ export default function DashboardOverviewPage() {
                     <div className="mt-2 flex justify-between items-center">
                         <p className="text-lg font-bold text-primary">R$ {lot.price.toLocaleString('pt-BR')}</p>
                         <Badge variant="outline" className="text-xs">
-                            <Clock className="h-3 w-3 mr-1" /> <TimeRemaining endDate={new Date(lot.endDate)} />
+                            <Clock className="h-3 w-3 mr-1" /> <TimeRemaining endDate={new Date(lot.endDate as string)} />
                         </Badge>
                     </div>
                   </div>
@@ -203,7 +206,7 @@ export default function DashboardOverviewPage() {
                   </div>
                   <div className="p-3">
                     <h4 className="text-sm font-semibold truncate mb-1">{lot.title}</h4>
-                    <p className="text-xs text-muted-foreground">Local: {lot.location}</p>
+                    <p className="text-xs text-muted-foreground">Local: {lot.cityName} - {lot.stateUf}</p>
                     <p className="text-lg font-bold text-primary mt-1">R$ {lot.price.toLocaleString('pt-BR')}</p>
                   </div>
                 </Link>
