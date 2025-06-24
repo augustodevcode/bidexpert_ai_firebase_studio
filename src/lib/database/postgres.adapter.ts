@@ -1,5 +1,3 @@
-
-
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -17,9 +15,10 @@ import type {
   PlatformSettings, PlatformSettingsFormData, Theme,
   Subcategory, SubcategoryFormData,
   MapSettings, SearchPaginationType, MentalTriggerSettings, SectionBadgeConfig, HomepageSectionConfig, AuctionStage,
-  DirectSaleOffer
+  DirectSaleOffer,
+  UserLotMaxBid
 } from '@/types';
-import { slugify, samplePlatformSettings } from '@/lib/sample-data';
+import { slugify, samplePlatformSettings } from '@/lib/sample-data-helpers';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
@@ -369,6 +368,18 @@ function mapToBidInfo(row: QueryResultRow): BidInfo {
         bidderDisplay: row.bidder_display_name,
         amount: parseFloat(row.amount),
         timestamp: new Date(row.timestamp),
+    };
+}
+
+function mapToUserLotMaxBid(row: QueryResultRow): UserLotMaxBid {
+    return {
+        id: String(row.id),
+        userId: row.user_id,
+        lotId: String(row.lot_id),
+        maxAmount: parseFloat(row.max_amount),
+        isActive: Boolean(row.is_active),
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
     };
 }
 
@@ -919,6 +930,44 @@ export class PostgresAdapter implements IDatabaseAdapter {
       return { success: false, message: `Erro ao inicializar esquema PostgreSQL: ${error.message}`, errors };
     } finally {
       client.release();
+    }
+  }
+
+  // --- Proxy Bidding ---
+  async createUserLotMaxBid(userId: string, lotId: string, maxAmount: number): Promise<{ success: boolean; message: string; maxBidId?: string; }> {
+    try {
+      const query = `
+        INSERT INTO user_lot_max_bids (user_id, lot_id, max_amount, is_active)
+        VALUES ($1, $2, $3, TRUE)
+        ON CONFLICT (user_id, lot_id) DO UPDATE SET
+          max_amount = EXCLUDED.max_amount,
+          is_active = TRUE,
+          updated_at = CURRENT_TIMESTAMP
+        RETURNING id;
+      `;
+      const { rows } = await getPool().query(query, [userId, parseInt(lotId, 10), maxAmount]);
+      if (rows.length > 0) {
+        return { success: true, message: 'Lance máximo salvo com sucesso.', maxBidId: String(rows[0].id) };
+      }
+      return { success: false, message: 'Não foi possível salvar o lance máximo.' };
+    } catch (error: any) {
+      console.error("[PostgresAdapter - createUserLotMaxBid] Error:", error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  async getActiveUserLotMaxBid(userId: string, lotId: string): Promise<UserLotMaxBid | null> {
+    try {
+      const query = `
+        SELECT * FROM user_lot_max_bids
+        WHERE user_id = $1 AND lot_id = $2 AND is_active = TRUE;
+      `;
+      const { rows } = await getPool().query(query, [userId, parseInt(lotId, 10)]);
+      if (rows.length === 0) return null;
+      return mapToUserLotMaxBid(rows[0]);
+    } catch (error: any) {
+      console.error("[PostgresAdapter - getActiveUserLotMaxBid] Error:", error);
+      return null;
     }
   }
   

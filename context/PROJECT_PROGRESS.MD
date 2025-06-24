@@ -1,4 +1,3 @@
-
 # Project Progress - BidExpert
 
 ## DONE
@@ -22,9 +21,11 @@
 - **Reserve Price Logic (GAP 4.1.1):** Implemented logic in `sample-data.ts` to determine lot status based on `reservePrice`.
 - **Lot Detail Page Accessibility (GAP 4.1):** Fixed critical 404 error by implementing a redirect from `/lots/[lotId]` to the full canonical URL.
 - **Q&A System (GAP 4.1.2):** Added data models, database tables, server actions, and UI components for a per-lot Question & Answer feature.
+- **Inconsistent Search Behavior (GAP 4.1):** Refactored search logic and centralized sample data into `sample-data.local.json`, resolving client-side build errors.
+- **Proxy Bidding / Lance por Procuração (GAP 4.2.5 - Part 1):** Implemented the foundational data model (`UserLotMaxBid`), database schema, and database adapter methods for storing users' maximum confidential bids.
 
 ## DOING
-- **Inconsistent Search Behavior (GAP 4.1):** Refactoring search logic to prioritize global keywords over pre-selected filters. Centralizing sample data into a single `sample-data.local.json` file for better management and consistency.
+- **Proxy Bidding / Lance por Procuração (GAP 4.2.5 - Part 2):** Implementing the server actions and UI for placing and managing maximum confidential bids.
 
 ## NEXT
 - **Item 20:** Develop Virtual Auditorium (`/auctions/[auctionId]/live`) with current lot display, bidding panel, upcoming lots, and chat.
@@ -33,7 +34,6 @@
     *   Thoroughly test and complete all `IDatabaseAdapter` methods for MySQL and PostgreSQL for all entities.
 - **Auction Theory Enhancements:**
     *   **Soft-Close/Anti-Sniping (GAP 4.1.1):** Implement logic to extend auction end times based on last-minute bids.
-    *   **Proxy Bidding (GAP 4.2.5):** Implement secure backend logic and data storage for automatic proxy bidding.
     *   **Configurable Bid Increments (GAP 4.1.3):** Add `Auction.bidIncrementRule` and display it clearly.
 - **User Authentication & Authorization (Enhancements):**
     *   Implement robust, granular permission checks in all Server Actions.

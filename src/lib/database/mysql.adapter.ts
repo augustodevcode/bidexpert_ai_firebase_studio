@@ -1,5 +1,3 @@
-
-
 // src/lib/database/mysql.adapter.ts
 import mysql, { type RowDataPacket, type Pool } from 'mysql2/promise';
 import type {
@@ -23,9 +21,10 @@ import type {
   SectionBadgeConfig,
   HomepageSectionConfig,
   AuctionStage,
-  DirectSaleOffer
+  DirectSaleOffer,
+  UserLotMaxBid
 } from '@/types';
-import { slugify, samplePlatformSettings } from '@/lib/sample-data';
+import { slugify, samplePlatformSettings } from '@/lib/sample-data-helpers';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
@@ -408,6 +407,18 @@ function mapToBidInfo(row: any): BidInfo {
     };
 }
 
+function mapToUserLotMaxBid(row: any): UserLotMaxBid {
+    return {
+        id: String(row.id),
+        userId: row.userId,
+        lotId: String(row.lotId),
+        maxAmount: parseFloat(row.maxAmount),
+        isActive: Boolean(row.isActive),
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt)
+    };
+}
+
 function mapToMediaItem(row: any): MediaItem {
   return {
     id: String(row.id),
@@ -780,6 +791,46 @@ export class MySqlAdapter implements IDatabaseAdapter {
     }
   }
 
+  // --- Proxy Bidding ---
+  async createUserLotMaxBid(userId: string, lotId: string, maxAmount: number): Promise<{ success: boolean; message: string; maxBidId?: string; }> {
+    try {
+      const query = `
+        INSERT INTO user_lot_max_bids (user_id, lot_id, max_amount, is_active)
+        VALUES (?, ?, ?, TRUE)
+        ON DUPLICATE KEY UPDATE
+          max_amount = VALUES(max_amount),
+          is_active = TRUE,
+          updated_at = CURRENT_TIMESTAMP;
+      `;
+      const [result] = await getPool().execute(query, [userId, lotId, maxAmount]);
+      const insertResult = result as any;
+      if (insertResult.affectedRows > 0) {
+        return { success: true, message: 'Lance máximo salvo com sucesso.', maxBidId: String(insertResult.insertId) };
+      }
+      return { success: false, message: 'Não foi possível salvar o lance máximo.' };
+    } catch (error: any) {
+      console.error("[MySqlAdapter - createUserLotMaxBid] Error:", error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  async getActiveUserLotMaxBid(userId: string, lotId: string): Promise<UserLotMaxBid | null> {
+    try {
+      const query = `
+        SELECT * FROM user_lot_max_bids
+        WHERE user_id = ? AND lot_id = ? AND is_active = TRUE;
+      `;
+      const [rows] = await getPool().execute(query, [userId, lotId]);
+      const bids = mapMySqlRowsToCamelCase(rows as RowDataPacket[]);
+      if (bids.length === 0) return null;
+      
+      return mapToUserLotMaxBid(bids[0]);
+    } catch (error: any) {
+      console.error("[MySqlAdapter - getActiveUserLotMaxBid] Error:", error);
+      return null;
+    }
+  }
+
   // Omitted for brevity - all other methods remain unchanged.
   // ...
 
@@ -787,5 +838,3 @@ export class MySqlAdapter implements IDatabaseAdapter {
       return []; // Placeholder implementation for MySQL
   }
 }
-
-

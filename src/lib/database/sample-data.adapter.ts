@@ -5,7 +5,7 @@ import type {
   Auction, AuctionFormData, AuctionDbData, Lot, LotFormData, LotDbData,
   BidInfo, Review, LotQuestion, UserProfileData, EditableUserProfileData,
   UserProfileWithPermissions, Role, RoleFormData, MediaItem, PlatformSettings,
-  PlatformSettingsFormData, Subcategory, SubcategoryFormData, DirectSaleOffer
+  PlatformSettingsFormData, Subcategory, SubcategoryFormData, DirectSaleOffer, UserLotMaxBid
 } from '@/types';
 import {
   slugify,
@@ -238,6 +238,40 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async createQuestion(questionData: Omit<LotQuestion, "id" | "createdAt" | "answeredAt" | "answeredByUserId" | "answeredByUserDisplayName" | "isPublic">): Promise<{ success: boolean; message: string; questionId?: string | undefined; }> { const newQuestion: LotQuestion = {...questionData, id: `qst-${uuidv4()}`, createdAt: new Date(), isPublic: true}; this.data.sampleLotQuestions.unshift(newQuestion); return { success: true, message: "Pergunta enviada!", questionId: newQuestion.id }; }
   async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleLotQuestions.findIndex(q => q.id === questionId); if(index === -1) return {success: false, message: 'Pergunta não encontrada.'}; this.data.sampleLotQuestions[index] = {...this.data.sampleLotQuestions[index], answerText, answeredByUserId, answeredByUserDisplayName, answeredAt: new Date()}; return {success: true, message: 'Pergunta respondida!'}; }
   
+  // --- Proxy Bidding ---
+  async createUserLotMaxBid(userId: string, lotId: string, maxAmount: number): Promise<{ success: boolean; message: string; maxBidId?: string; }> {
+    await delay(50);
+    const existingIndex = this.data.sampleUserLotMaxBids.findIndex(b => b.userId === userId && b.lotId === lotId);
+
+    if (existingIndex > -1) {
+      this.data.sampleUserLotMaxBids[existingIndex] = {
+        ...this.data.sampleUserLotMaxBids[existingIndex],
+        maxAmount,
+        isActive: true,
+        updatedAt: new Date(),
+      };
+      return { success: true, message: "Lance máximo atualizado.", maxBidId: this.data.sampleUserLotMaxBids[existingIndex].id };
+    } else {
+      const newMaxBid: UserLotMaxBid = {
+        id: `proxy-${uuidv4()}`,
+        userId,
+        lotId,
+        maxAmount,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      this.data.sampleUserLotMaxBids.push(newMaxBid);
+      return { success: true, message: "Lance máximo criado.", maxBidId: newMaxBid.id };
+    }
+  }
+
+  async getActiveUserLotMaxBid(userId: string, lotId: string): Promise<UserLotMaxBid | null> {
+    await delay(20);
+    const bid = this.data.sampleUserLotMaxBids.find(b => b.userId === userId && b.lotId === lotId && b.isActive);
+    return Promise.resolve(bid ? JSON.parse(JSON.stringify(bid)) : null);
+  }
+
   // --- Roles ---
   async getRoles(): Promise<Role[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleRoles))); }
   async getRole(id: string): Promise<Role | null> { await delay(20); const role = this.data.sampleRoles.find(r => r.id === id); return Promise.resolve(role ? JSON.parse(JSON.stringify(role)) : null); }
