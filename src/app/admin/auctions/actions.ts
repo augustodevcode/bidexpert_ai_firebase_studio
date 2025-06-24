@@ -47,6 +47,19 @@ export async function updateAuctionTitle(
   return result;
 }
 
+export async function updateAuctionImage(
+  auctionIdOrPublicId: string,
+  mediaItemId: string,
+  imageUrl: string
+): Promise<{ success: boolean; message: string }> {
+  const result = await updateAuction(auctionIdOrPublicId, { imageMediaId: mediaItemId, imageUrl: imageUrl });
+  if (result.success) {
+    revalidatePath('/search');
+    revalidatePath('/');
+  }
+  return result;
+}
+
 // --- Other Auction Actions ---
 
 export async function createAuction(

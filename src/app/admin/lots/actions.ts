@@ -56,6 +56,20 @@ export async function updateLotTitle(
   return result;
 }
 
+export async function updateLotImage(
+  lotIdOrPublicId: string,
+  mediaItemId: string,
+  imageUrl: string
+): Promise<{ success: boolean; message: string }> {
+  const result = await updateLot(lotIdOrPublicId, { imageMediaId: mediaItemId, imageUrl: imageUrl });
+  if (result.success) {
+    revalidatePath('/search');
+    revalidatePath('/');
+    revalidatePath('/dashboard/favorites');
+  }
+  return result;
+}
+
 
 // --- Other Lot Actions ---
 

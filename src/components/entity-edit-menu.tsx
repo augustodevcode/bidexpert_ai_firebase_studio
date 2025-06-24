@@ -10,8 +10,8 @@ import { Pencil, Image as ImageIcon, TextCursorInput, Star, Trash2, ExternalLink
 import { useAuth } from '@/contexts/auth-context';
 import { hasPermission } from '@/lib/permissions';
 import { useToast } from '@/hooks/use-toast';
-import { updateLotFeaturedStatus, updateLotTitle } from '@/app/admin/lots/actions';
-import { updateAuctionFeaturedStatus, updateAuctionTitle } from '@/app/admin/auctions/actions';
+import { updateLotFeaturedStatus, updateLotTitle, updateLotImage } from '@/app/admin/lots/actions';
+import { updateAuctionFeaturedStatus, updateAuctionTitle, updateAuctionImage } from '@/app/admin/auctions/actions';
 import UpdateTitleModal from './update-title-modal';
 import ChooseMediaDialog from './admin/media/choose-media-dialog';
 import type { MediaItem } from '@/types';
@@ -83,12 +83,26 @@ export default function EntityEditMenu({
     }
   };
   
-   const handleImageUpdate = (selectedItems: Partial<MediaItem>[]) => {
-    if (selectedItems.length > 0 && selectedItems[0].urlOriginal) {
-        // Here you would call a server action like `updateLotImage(entityId, selectedItems[0].urlOriginal)`
-        toast({ title: "Imagem Atualizada (Simulação)", description: `A imagem d${entityType === 'lot' ? 'o lote' : 'o leilão'} foi atualizada.` });
-        router.refresh();
-        onUpdate?.();
+   const handleImageUpdate = async (selectedItems: Partial<MediaItem>[]) => {
+    if (selectedItems.length > 0 && selectedItems[0]?.id && selectedItems[0]?.urlOriginal) {
+        const mediaItem = selectedItems[0];
+        let result;
+
+        if (entityType === 'lot') {
+            result = await updateLotImage(publicId || entityId, mediaItem.id, mediaItem.urlOriginal);
+        } else {
+            result = await updateAuctionImage(publicId || entityId, mediaItem.id, mediaItem.urlOriginal);
+        }
+
+        if (result.success) {
+            toast({ title: "Imagem Atualizada!", description: `A imagem d${entityType === 'lot' ? 'o lote' : 'o leilão'} foi atualizada.` });
+            router.refresh();
+            onUpdate?.();
+        } else {
+            toast({ title: "Erro ao Atualizar Imagem", description: result.message, variant: "destructive" });
+        }
+    } else {
+        toast({ title: "Seleção Inválida", description: "O item de mídia selecionado é inválido ou não possui uma ID.", variant: "destructive" });
     }
   };
 
