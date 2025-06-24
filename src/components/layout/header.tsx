@@ -43,6 +43,7 @@ import { getSellers } from '@/app/admin/sellers/actions';
 import type { MegaMenuGroup } from './mega-menu-link-list';
 import type { MegaMenuLinkItem } from './mega-menu-link-list';
 import TwoColumnMegaMenu from './two-column-mega-menu';
+import { cn } from '@/lib/utils';
 
 
 // HistoryListItem é usado por MainNav quando renderiza o conteúdo do Histórico
@@ -589,4 +590,5 @@ export default function Header() {
     
 
     
+
 
