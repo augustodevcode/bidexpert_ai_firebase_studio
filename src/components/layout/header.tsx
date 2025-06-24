@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Loader2, Heart, Bell, X, Facebook, MessageSquareText, Mail } from 'lucide-react';
 import type { RecentlyViewedLotInfo, Lot, LotCategory, PlatformSettings, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
-import { getLotsByIds } from '@/app/admin/lots/actions';
+import { getLotsByIds, getLots } from '@/app/admin/lots/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getFavoriteLotIdsFromStorage } from '@/lib/favorite-store';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
@@ -590,5 +590,7 @@ export default function Header() {
     
 
     
+
+
 
 
