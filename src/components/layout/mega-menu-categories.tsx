@@ -8,7 +8,7 @@ import { NavigationMenuLink } from '@/components/ui/navigation-menu';
 import type { LotCategory } from '@/types';
 import { cn } from '@/lib/utils';
 import { ChevronRight, Tag, ListChecks } from 'lucide-react';
-import { slugify } from '@/lib/sample-data';
+import { slugify } from '@/lib/sample-data-helpers';
 import { Button } from '@/components/ui/button';
 
 interface MegaMenuCategoriesProps {
