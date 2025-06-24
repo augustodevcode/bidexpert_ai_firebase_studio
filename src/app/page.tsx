@@ -9,7 +9,7 @@ import { Landmark, Scale, FileText, Tags, CalendarX, CheckSquare, Star, FileText
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import { getCategoryAssets } from '@/lib/sample-data'; // Corrected import path
+import { getCategoryAssets } from '@/lib/sample-data-helpers'; // Corrected import path
 
 export default async function HomePage() {
   try {
