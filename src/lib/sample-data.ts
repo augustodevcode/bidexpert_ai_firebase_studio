@@ -1,5 +1,6 @@
 
-import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, CityInfo, MediaItem, PlatformSettings, MentalTriggerSettings, HomepageSectionConfig, BadgeVisibilitySettings, SectionBadgeConfig, MapSettings, AuctionStage, SearchPaginationType, Subcategory, Role, UserProfileData, UserProfileWithPermissions } from '@/types';
+
+import type { Auction, Lot, AuctionStatus, LotStatus, DocumentType, UserDocument, UserHabilitationStatus, UserDocumentStatus, UserBid, UserBidStatus, UserWin, PaymentStatus, SellerProfileInfo, RecentlyViewedLotInfo, AuctioneerProfileInfo, DirectSaleOffer, DirectSaleOfferType, DirectSaleOfferStatus, BidInfo, Review, LotQuestion, LotCategory, StateInfo, StateFormData, CityInfo, CityFormData, MediaItem, PlatformSettings, MentalTriggerSettings, HomepageSectionConfig, BadgeVisibilitySettings, SectionBadgeConfig, MapSettings, AuctionStage, SearchPaginationType, Subcategory, Role, UserProfileData, UserProfileWithPermissions } from '@/types';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, subYears, subMonths, subDays, addDays as dateFnsAddDays, isPast, addHours, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle } from 'lucide-react';
@@ -285,7 +286,7 @@ export const sampleAuctionsRaw: Omit<Auction, 'createdAt' | 'updatedAt' | 'lots'
 ];
 
 export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' | 'sellerName' | 'cityName' | 'stateUf' | 'type' | 'bids' | 'reviews' | 'questions' | 'subcategoryName' | 'endDate' | 'auctionDate' | 'lotSpecificAuctionDate' | 'secondAuctionDate' | 'imageUrl' | 'galleryImageUrls'>[] = [
-  { id: 'LOTE001', auctionId: '100625bra', publicId: 'LOT-CASACENT-ABC123X1', title: 'CASA COM 129,30 M² - CENTRO', imageMediaId: 'media-lot-casa-centro-main', dataAiHint: 'casa residencial', mediaItemIds: ['media-lot-casa-centro-main', 'media-lot-casa-centro-garagem'], status: 'ABERTO_PARA_LANCES', cityId: 'city-teotonio-vilela-al', stateId: 'state-al', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-casas', views: 1018, price: 45000, bidsCount: 12, description: 'Casa residencial bem localizada no centro da cidade.', sellerId: 'seller-banco-bradesco-s-a', initialPrice: 50000, secondInitialPrice: 42000, additionalTriggers: ['DESCONTO PROGRESSIVO'], isFeatured: true, latitude: -9.56096, longitude: -36.3516, mapAddress: 'Rua Central, Teotônio Vilela, Alagoas', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-36.3566,-9.5659,-36.3466,-9.5559&layer=mapnik&marker=-9.56096,-36.3516', mapStaticImageUrl: `https://placehold.co/600x400.png`, bidIncrementStep: 1000, allowInstallmentBids: true },
+  { id: 'LOTE001', auctionId: '100625bra', publicId: 'LOT-CASACENT-ABC123X1', title: 'CASA COM 129,30 M² - CENTRO', imageMediaId: 'media-lot-casa-centro-main', dataAiHint: 'casa residencial', mediaItemIds: ['media-lot-casa-centro-main', 'media-lot-casa-centro-garagem'], status: 'ABERTO_PARA_LANCES', cityId: 'city-teotonio-vilela-al', stateId: 'state-al', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-casas', views: 1018, price: 45000, bidsCount: 12, description: 'Casa residencial bem localizada no centro da cidade.', sellerId: 'seller-banco-bradesco-s-a', initialPrice: 50000, secondInitialPrice: 42000, additionalTriggers: ['DESCONTO PROGRESSIVO'], isFeatured: true, latitude: -9.56096, longitude: -36.3516, mapAddress: 'Rua Central, Teotônio Vilela, Alagoas', mapEmbedUrl: 'https://www.openstreetmap.org/export/embed.html?bbox=-36.3566,-9.5659,-36.3466,-9.5559&layer=mapnik&marker=-9.56096,-36.3516', mapStaticImageUrl: `https://placehold.co/600x400.png`, bidIncrementStep: 1000, allowInstallmentBids: true, reservePrice: 40000 },
   { id: 'LOTEVEI001', auctionId: '300724car', publicId: 'LOT-2013AUDI-DEF456Y2', title: '2013 AUDI A4 PREMIUM PLUS', year: 2013, make: 'AUDI', model: 'A4', imageMediaId: 'media-lot-audi-a4-main', dataAiHint: 'carro sedan preto', mediaItemIds: ['media-lot-audi-a4-main', 'media-lot-audi-a4-interior'], status: 'ABERTO_PARA_LANCES', cityId: 'city-sao-paulo-sp', stateId: 'state-sp', categoryId: 'cat-veiculos', subcategoryId: 'subcat-veiculos-carros', views: 1560, price: 68500, bidsCount: 25, description: 'Audi A4 Premium Plus 2013, completo, com baixa quilometragem.', sellerId: 'seller-proprietario-particular-1', isExclusive: true, additionalTriggers: ['ALTA DEMANDA', 'LANCE QUENTE'], isFeatured: true, latitude: -23.550520, longitude: -46.633308, mapAddress: 'Av. Paulista, 1578, Bela Vista, São Paulo - SP', mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3657.1489015339396!2d-46.65879078502246!3d-23.56318168468204!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce59c8da0aa315%3A0x168c9d0b70928d9a!2sAv.%20Paulista%2C%201578%20-%20Bela%20Vista%2C%20S%C3%A3o%20Paulo%20-%20SP%2C%2001310-200!5e0!3m2!1spt-BR!2sbr!4v1678886512345!5m2!1spt-BR!2sbr', mapStaticImageUrl: `https://placehold.co/600x400.png`, bidIncrementStep: 500, allowInstallmentBids: false },
   { id: 'LOTE003', auctionId: '100625bra', publicId: 'LOT-APTOCABU-GHI789Z3', title: 'APARTAMENTO COM 54,25 M² - CABULA', imageMediaId: 'media-lot-apto-cabula-main', dataAiHint: 'apartamento predio residencial', status: 'ENCERRADO', cityId: 'city-salvador-ba', stateId: 'state-ba', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-apartamentos', views: 754, price: 105000, bidsCount: 12, description: 'Apartamento funcional no Cabula, Salvador. 2 quartos, sala, cozinha e banheiro. Condomínio com portaria.', sellerId: 'seller-banco-bradesco-s-a', latitude: -12.960980, longitude: -38.467789, mapAddress: 'Rua do Cabula, Salvador - BA', mapEmbedUrl: null, mapStaticImageUrl: `https://placehold.co/600x400.png` },
   { id: 'LOTEART001', auctionId: 'ART001ANTIQ', publicId: 'LOT-PINTURAO-JKL012A4', title: 'Pintura a Óleo "Paisagem Toscana" - Séc. XIX', imageMediaId: 'media-lot-pintura-toscana-main', dataAiHint: 'pintura oleo paisagem', status: 'ABERTO_PARA_LANCES', cityId: 'city-rio-de-janeiro-rj', stateId: 'state-rj', categoryId: 'cat-arte-e-antiguidades', views: 320, price: 7500, bidsCount: 3, description: 'Belíssima pintura a óleo sobre tela, representando paisagem da Toscana. Assinatura ilegível. Moldura original.', sellerId: 'seller-colecionadores-rj', latitude: -22.9068, longitude: -43.1729, mapAddress: 'Copacabana, Rio de Janeiro - RJ', mapEmbedUrl: null, mapStaticImageUrl: `https://placehold.co/600x400.png`, allowInstallmentBids: true },
@@ -349,7 +350,7 @@ export const sampleLotsRaw: Omit<Lot, 'createdAt' | 'updatedAt' | 'auctionName' 
     id: 'LOTJUDMAQ001', auctionId: 'JUD003MAQ', publicId: 'LOT-TRATORMF-PR03C3', title: 'Trator Massey Ferguson 275 - Judicial',
     imageMediaId: 'media-lot-trator-mf-main', dataAiHint: 'trator vermelho antigo',
     status: 'ABERTO_PARA_LANCES', cityId: 'city-curitiba-pr', stateId: 'state-pr', categoryId: 'cat-maquinas-e-equipamentos',
-    price: 22000, initialPrice: 22000, 
+    price: 22000, initialPrice: 22000, reservePrice: 25000,
     judicialProcessNumber: '00123-2021-005-09-00-0', courtDistrict: 'Curitiba', courtName: 'Vara do Trabalho',
     sellerId: 'seller-vara-do-trabalho-de-curitiba-trt9', description: 'Trator Massey Ferguson 275, ano 1998. Funcionando. Leilão judicial trabalhista.',
     views: 510, bidsCount: 5, bidIncrementStep: 200
@@ -707,21 +708,30 @@ export const sampleLots: Lot[] = sampleLotsRaw.map(lotRaw => {
         if (parentAuction.status === 'CANCELADO' || parentAuction.status === 'SUSPENSO') {
             derivedStatus = 'ENCERRADO'; 
         } else if (effectiveLotEndDate && isPast(effectiveLotEndDate)) {
-            derivedStatus = lotRaw.status === 'VENDIDO' ? 'VENDIDO' : 'ENCERRADO'; 
+             if (lotRaw.reservePrice && lotRaw.price < lotRaw.reservePrice) {
+                derivedStatus = 'NAO_VENDIDO';
+            } else if ((lotRaw.bidsCount || 0) > 0) { // If there were bids and reserve was met (or no reserve)
+                derivedStatus = 'VENDIDO';
+            } else { // No bids, and auction is over
+                derivedStatus = 'NAO_VENDIDO';
+            }
         } else if (effectiveLotStartDate && isPast(effectiveLotStartDate) && parentAuction.status === 'ABERTO_PARA_LANCES') {
              derivedStatus = 'ABERTO_PARA_LANCES';
         } else if (effectiveLotStartDate && !isPast(effectiveLotStartDate) && (parentAuction.status === 'EM_BREVE' || parentAuction.status === 'ABERTO')) {
              derivedStatus = 'EM_BREVE';
-        }
-        if (parentAuction.status === 'ENCERRADO' && (lotRaw.status === 'VENDIDO' || lotRaw.status === 'NAO_VENDIDO')) {
-            derivedStatus = lotRaw.status;
         }
 
     } else {
         effectiveLotEndDate = lotRaw.endDate ? new Date(lotRaw.endDate as string) : undefined;
         effectiveLotStartDate = lotRaw.lotSpecificAuctionDate ? new Date(lotRaw.lotSpecificAuctionDate as string) : (lotRaw.auctionDate ? new Date(lotRaw.auctionDate as string) : undefined);
         if (effectiveLotEndDate && isPast(effectiveLotEndDate) && derivedStatus === 'ABERTO_PARA_LANCES') {
-            derivedStatus = 'ENCERRADO';
+            if (lotRaw.reservePrice && lotRaw.price < lotRaw.reservePrice) {
+                derivedStatus = 'NAO_VENDIDO';
+            } else if ((lotRaw.bidsCount || 0) > 0) {
+                derivedStatus = 'VENDIDO';
+            } else {
+                derivedStatus = 'NAO_VENDIDO';
+            }
         }
         console.warn(`[SampleData] Lot ${lotRaw.id} is missing parent auction. Dates derived from lot itself.`);
     }
@@ -1126,4 +1136,3 @@ export function getSampleData() {
         sampleUserHabilitationStatus,
     };
 }
-
