@@ -1,5 +1,4 @@
 
-
 import AuctionCard from '@/components/auction-card';
 import HeroCarousel from '@/components/hero-carousel';
 import FilterLinkCard from '@/components/filter-link-card';
@@ -10,12 +9,12 @@ import Link from 'next/link';
 import { Landmark, Scale, FileText, Tags, CalendarX, CheckSquare, Star, FileText as FileTextIcon } from 'lucide-react';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
-import { getSampleData, getCategoryAssets } from '@/lib/sample-data-helpers';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { getCategoryAssets } from '@/lib/sample-data-helpers';
 
 export default async function HomePage() {
   try {
-    const { samplePlatformSettings } = getSampleData();
-    const platformSettings: PlatformSettings = samplePlatformSettings;
+    const platformSettings = await getPlatformSettings();
     
     // Fetch data using server actions
     const allAuctions = await getAuctions();
