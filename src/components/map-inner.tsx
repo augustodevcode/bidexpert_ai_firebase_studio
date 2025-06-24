@@ -98,21 +98,4 @@ export default function MapInner({ items, itemType, mapCenter, mapZoom, onBounds
     );
   }
 
-  return (
-    <MapContainer 
-      center={mapCenter} 
-      zoom={mapZoom} 
-      scrollWheelZoom={true} 
-      style={{ height: '100%', width: '100%' }}
-      className="rounded-lg" // Ensure container itself has rounded corners if needed
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      {markers}
-      <MapEvents onBoundsChange={onBoundsChange} />
-      {shouldFitBounds && bounds && <ChangeView bounds={bounds} />}
-    </MapContainer>
-  );
 }
