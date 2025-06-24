@@ -11,13 +11,14 @@ import { Heart, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users,
 import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
-import { getAuctionStatusText, getLotStatusColor, samplePlatformSettings } from '@/lib/sample-data';
+import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import LotPreviewModal from './lot-preview-modal';
 import LotMapPreviewModal from './lot-map-preview-modal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EntityEditMenu from './entity-edit-menu';
+import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 
 interface TimeRemainingBadgeProps {
   endDate: Date | string | undefined | null;
@@ -102,7 +103,7 @@ const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({
 
 interface LotCardProps {
   lot: Lot;
-  auction?: Auction; // ADDED
+  auction?: Auction;
   badgeVisibilityConfig?: BadgeVisibilitySettings;
   platformSettings: PlatformSettings;
   onUpdate?: () => void;
@@ -110,6 +111,7 @@ interface LotCardProps {
 
 const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisibilityConfig, platformSettings, onUpdate }) => {
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isViewed, setIsViewed] = useState(false);
   const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
@@ -132,6 +134,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
     if (typeof window !== 'undefined') {
       setLotDetailUrl(`${window.location.origin}/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
       setIsFavorite(isLotFavoriteInStorage(lot.id));
+      setIsViewed(getRecentlyViewedIds().includes(lot.id));
     }
   }, [lot.id, lot.auctionId, lot.publicId]);
 
@@ -241,6 +244,11 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
 
         {/* RIGHT BADGES (MENTAL TRIGGERS) */}
         <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
+          {isViewed && (
+              <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
+                <Eye className="h-3 w-3 mr-0.5" /> Visto
+              </Badge>
+          )}
           {sectionBadges.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentage > 0 && (
             <Badge variant="destructive" className="text-xs px-1.5 py-0.5 animate-pulse">
               <Percent className="h-3 w-3 mr-1" /> {discountPercentage}% OFF
@@ -406,5 +414,3 @@ export default function LotCard({ lot, auction, badgeVisibilityConfig, platformS
 
     return <LotCardClientContent lot={lot} auction={auction} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} onUpdate={onUpdate} />;
   }
-
-

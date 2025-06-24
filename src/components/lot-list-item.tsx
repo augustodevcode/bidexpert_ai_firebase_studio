@@ -25,6 +25,7 @@ import LotPreviewModal from './lot-preview-modal';
 import LotMapPreviewModal from './lot-map-preview-modal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EntityEditMenu from './entity-edit-menu';
+import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 
 interface TimeRemainingBadgeProps {
   endDate: Date | string;
@@ -110,6 +111,7 @@ interface LotListItemProps {
 
 function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platformSettings }: LotListItemProps) {
   const [isFavorite, setIsFavorite] = useState(lot.isFavorite || false);
+  const [isViewed, setIsViewed] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`);
@@ -131,6 +133,7 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
     if (typeof window !== 'undefined') {
       setLotDetailUrl(`${window.location.origin}/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
       setIsFavorite(isLotFavoriteInStorage(lot.id));
+      setIsViewed(getRecentlyViewedIds().includes(lot.id));
     }
   }, [lot.id, lot.auctionId, lot.publicId]);
 
@@ -252,6 +255,11 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
               {sectionBadges.showStatusBadge !== false && (
                 <Badge className={`text-xs px-1.5 py-0.5 ${getLotStatusColor(lot.status)} border-current`}>
                   {getAuctionStatusText(lot.status)}
+                </Badge>
+              )}
+              {isViewed && (
+                <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
+                  <Eye className="h-3 w-3 mr-0.5" /> Visto
                 </Badge>
               )}
             </div>
@@ -404,4 +412,3 @@ export default function LotListItem({ lot, auction, badgeVisibilityConfig, platf
 
     return <LotListItemClientContent lot={lot} auction={auction} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} />;
   }
-
