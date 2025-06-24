@@ -275,25 +275,24 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    Onde os arquivos da Biblioteca de Mídia serão salvos. "Local" é recomendado apenas para desenvolvimento.
+                    Onde os arquivos da Biblioteca de Mídia serão salvos. "Local" é recomendado apenas para desenvolvimento. A alteração desta configuração requer uma reinicialização do servidor e deve ser feita através da variável de ambiente `STORAGE_PROVIDER`.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
             {watchedStorageProvider === 'firebase' && (
-              <FormField
-                control={form.control}
-                name="firebaseStorageBucket"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome do Bucket (Firebase Storage)</FormLabel>
-                    <FormControl><Input placeholder="Ex: seu-projeto.appspot.com" {...field} value={field.value ?? ''} /></FormControl>
-                    <FormDescription>O nome do seu bucket no Firebase Cloud Storage. Se deixado em branco, tentará usar a configuração padrão.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormItem>
+                <FormLabel>Nome do Bucket (Firebase Storage)</FormLabel>
+                <Input
+                  value={process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'Não configurado'}
+                  readOnly
+                  disabled
+                />
+                <FormDescription>
+                  O nome do seu bucket no Firebase. Este valor é configurado através da variável de ambiente `FIREBASE_STORAGE_BUCKET`.
+                </FormDescription>
+              </FormItem>
             )}
           </section>
         )}

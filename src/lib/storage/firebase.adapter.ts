@@ -4,11 +4,8 @@ import type { IStorageAdapter } from '@/types';
 import { ensureAdminInitialized } from '@/lib/firebase/admin';
 
 export class FirebaseStorageAdapter implements IStorageAdapter {
-  private bucketName?: string;
-
-  constructor(bucketName?: string) {
-    this.bucketName = bucketName;
-    console.log(`[FirebaseStorageAdapter] Initialized. Target bucket: ${bucketName || 'default'}`);
+  constructor() {
+    console.log(`[FirebaseStorageAdapter] Initialized. Bucket will be determined from environment or default.`);
   }
 
   async upload(fileName: string, contentType: string, buffer: Buffer): Promise<{ publicUrl: string; storagePath: string; }> {
@@ -20,7 +17,8 @@ export class FirebaseStorageAdapter implements IStorageAdapter {
     }
     
     try {
-      const bucket = this.bucketName ? storage.bucket(this.bucketName) : storage.bucket();
+      const bucketName = process.env.FIREBASE_STORAGE_BUCKET;
+      const bucket = bucketName ? storage.bucket(bucketName) : storage.bucket();
       const storagePath = `media_uploads/${fileName}`;
       const file = bucket.file(storagePath);
       
@@ -48,10 +46,10 @@ export class FirebaseStorageAdapter implements IStorageAdapter {
     }
 
     try {
-        const bucket = this.bucketName ? storage.bucket(this.bucketName) : storage.bucket();
+        const bucketName = process.env.FIREBASE_STORAGE_BUCKET;
+        const bucket = bucketName ? storage.bucket(bucketName) : storage.bucket();
         const file = bucket.file(storagePath);
 
-        // Check if file exists before trying to delete
         const [exists] = await file.exists();
         if (exists) {
             await file.delete();

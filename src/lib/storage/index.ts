@@ -1,10 +1,8 @@
 
 // src/lib/storage/index.ts
 import type { IStorageAdapter } from '@/types';
-import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { LocalStorageAdapter } from './local.adapter';
 import { FirebaseStorageAdapter } from './firebase.adapter';
-import { samplePlatformSettings } from '@/lib/sample-data'; // Fallback
 
 let storageInstance: IStorageAdapter | undefined;
 
@@ -13,23 +11,17 @@ export async function getStorageAdapter(): Promise<IStorageAdapter> {
     return storageInstance;
   }
 
-  let settings;
-  try {
-    settings = await getPlatformSettings();
-  } catch (error) {
-    console.warn("[getStorageAdapter] Could not fetch platform settings from DB, using sample data as fallback. Error:", error);
-    settings = samplePlatformSettings;
-  }
+  // Configuration MUST come from environment variables to avoid circular dependencies
+  // where getting a setting requires a DB adapter, which requires...
+  const provider = process.env.STORAGE_PROVIDER?.toUpperCase() || 'LOCAL';
   
-  const provider = settings.storageProvider || 'local';
   console.log(`[getStorageAdapter] Initializing storage adapter for provider: ${provider}`);
 
   switch (provider) {
-    case 'firebase':
-      const bucketName = settings.firebaseStorageBucket || undefined;
-      storageInstance = new FirebaseStorageAdapter(bucketName);
+    case 'FIREBASE':
+      storageInstance = new FirebaseStorageAdapter();
       break;
-    case 'local':
+    case 'LOCAL':
     default:
       storageInstance = new LocalStorageAdapter();
       break;
