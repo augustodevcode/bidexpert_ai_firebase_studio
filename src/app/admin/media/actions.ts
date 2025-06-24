@@ -15,84 +15,94 @@ const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'
 export async function handleImageUpload(
   formData: FormData
 ): Promise<{ success: boolean; message: string; items?: MediaItem[], errors?: { fileName: string; message: string }[] }> {
-  const storage = await getStorageAdapter();
-  const db = await getDatabaseAdapter();
+  try {
+    const storage = await getStorageAdapter();
+    const db = await getDatabaseAdapter();
 
-  const files = formData.getAll('files') as File[];
-  if (!files || files.length === 0) {
-    return { success: false, message: 'Nenhum arquivo para upload.' };
-  }
-
-  const uploadedItems: MediaItem[] = [];
-  const uploadErrors: { fileName: string; message: string }[] = [];
-
-  for (const file of files) {
-    try {
-      // --- VALIDATION START ---
-      if (file.size > MAX_FILE_SIZE_BYTES) {
-        uploadErrors.push({ fileName: file.name, message: `Arquivo excede o limite de ${MAX_FILE_SIZE_MB}MB.` });
-        continue; // Skip this file
-      }
-      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-        uploadErrors.push({ fileName: file.name, message: `Tipo de arquivo '${file.type}' não permitido.` });
-        continue; // Skip this file
-      }
-      // --- VALIDATION END ---
-
-      const fileBuffer = Buffer.from(await file.arrayBuffer());
-      const uniqueFilename = `${uuidv4()}-${file.name}`;
-      
-      const { publicUrl, storagePath } = await storage.upload(uniqueFilename, file.type, fileBuffer);
-      
-      const mediaItemData: Omit<MediaItem, 'id' | 'uploadedAt'> = {
-        fileName: file.name,
-        storagePath: storagePath,
-        title: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
-        altText: file.name.replace(/\.[^/.]+$/, ""),
-        mimeType: file.type,
-        sizeBytes: file.size,
-        urlOriginal: publicUrl,
-        urlThumbnail: publicUrl, // Placeholder - idealmente gerado por uma função
-        urlMedium: publicUrl,
-        urlLarge: publicUrl,
-        linkedLotIds: [],
-        dataAiHint: formData.get(`dataAiHint_${file.name}`) as string || 'upload usuario',
-        uploadedBy: 'admin_placeholder', // TODO: Obter ID do usuário logado
-      };
-      
-      const dbResult = await db.createMediaItem(mediaItemData, publicUrl, 'admin_placeholder');
-      
-      if (dbResult.success && dbResult.item) {
-        uploadedItems.push(dbResult.item);
-      } else {
-        // Se a gravação no DB falhar, tente excluir o arquivo do storage para evitar órfãos.
-        await storage.delete(storagePath);
-        throw new Error(dbResult.message || `Falha ao salvar metadados do arquivo ${file.name} no banco de dados.`);
-      }
-    } catch (error: any) {
-        console.error(`[Server Action - handleImageUpload] Error processing file ${file.name}:`, error);
-        uploadErrors.push({ fileName: file.name, message: error.message || 'Erro desconhecido durante o upload.' });
+    const files = formData.getAll('files') as File[];
+    if (!files || files.length === 0) {
+      return { success: false, message: 'Nenhum arquivo para upload.' };
     }
-  }
-  
-  let finalMessage = '';
-  if (uploadedItems.length > 0) {
-    finalMessage += `${uploadedItems.length} arquivo(s) enviado(s) com sucesso! `;
-  }
-  if (uploadErrors.length > 0) {
-    finalMessage += `${uploadErrors.length} arquivo(s) falharam.`;
-  }
 
-  if (uploadedItems.length > 0) {
-    revalidatePath('/admin/media');
-  }
+    const uploadedItems: MediaItem[] = [];
+    const uploadErrors: { fileName: string; message: string }[] = [];
 
-  return { 
-    success: uploadErrors.length === 0 && uploadedItems.length > 0, 
-    message: finalMessage.trim(), 
-    items: uploadedItems,
-    errors: uploadErrors
-  };
+    for (const file of files) {
+      try {
+        // --- VALIDATION START ---
+        if (file.size > MAX_FILE_SIZE_BYTES) {
+          uploadErrors.push({ fileName: file.name, message: `Arquivo excede o limite de ${MAX_FILE_SIZE_MB}MB.` });
+          continue; // Skip this file
+        }
+        if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+          uploadErrors.push({ fileName: file.name, message: `Tipo de arquivo '${file.type}' não permitido.` });
+          continue; // Skip this file
+        }
+        // --- VALIDATION END ---
+
+        const fileBuffer = Buffer.from(await file.arrayBuffer());
+        const uniqueFilename = `${uuidv4()}-${file.name}`;
+        
+        const { publicUrl, storagePath } = await storage.upload(uniqueFilename, file.type, fileBuffer);
+        
+        const mediaItemData: Omit<MediaItem, 'id' | 'uploadedAt'> = {
+          fileName: file.name,
+          storagePath: storagePath,
+          title: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
+          altText: file.name.replace(/\.[^/.]+$/, ""),
+          mimeType: file.type,
+          sizeBytes: file.size,
+          urlOriginal: publicUrl,
+          urlThumbnail: publicUrl, // Placeholder - idealmente gerado por uma função
+          urlMedium: publicUrl,
+          urlLarge: publicUrl,
+          linkedLotIds: [],
+          dataAiHint: formData.get(`dataAiHint_${file.name}`) as string || 'upload usuario',
+          uploadedBy: 'admin_placeholder', // TODO: Obter ID do usuário logado
+        };
+        
+        const dbResult = await db.createMediaItem(mediaItemData, publicUrl, 'admin_placeholder');
+        
+        if (dbResult.success && dbResult.item) {
+          uploadedItems.push(dbResult.item);
+        } else {
+          // Se a gravação no DB falhar, tente excluir o arquivo do storage para evitar órfãos.
+          await storage.delete(storagePath);
+          throw new Error(dbResult.message || `Falha ao salvar metadados do arquivo ${file.name} no banco de dados.`);
+        }
+      } catch (error: any) {
+          console.error(`[Server Action - handleImageUpload loop] Error processing file ${file.name}:`, error);
+          uploadErrors.push({ fileName: file.name, message: error.message || 'Erro desconhecido durante o upload.' });
+      }
+    }
+    
+    let finalMessage = '';
+    if (uploadedItems.length > 0) {
+      finalMessage += `${uploadedItems.length} arquivo(s) enviado(s) com sucesso! `;
+    }
+    if (uploadErrors.length > 0) {
+      finalMessage += `${uploadErrors.length} arquivo(s) falharam.`;
+    }
+
+    if (uploadedItems.length > 0) {
+      revalidatePath('/admin/media');
+    }
+
+    return { 
+      success: uploadErrors.length === 0 && uploadedItems.length > 0, 
+      message: finalMessage.trim(), 
+      items: uploadedItems,
+      errors: uploadErrors
+    };
+  } catch (e: any) {
+    console.error(`[Server Action - handleImageUpload - TOP LEVEL] Unhandled error:`, e);
+    return { 
+        success: false, 
+        message: `Erro inesperado no servidor: ${e.message}`, 
+        items: [], 
+        errors: [{ fileName: 'Erro Geral do Servidor', message: e.message }]
+    };
+  }
 }
 
 export async function getMediaItems(): Promise<MediaItem[]> {

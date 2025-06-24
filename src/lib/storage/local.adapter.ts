@@ -9,12 +9,9 @@ export class LocalStorageAdapter implements IStorageAdapter {
   private publicPath: string;
 
   constructor() {
-    // Path is now self-contained and not dependent on other modules.
-    this.publicPath = '/uploads/media/';
-    // Ensure the path starts and ends with a slash, but not doubly
-    const cleanPublicPath = `/${this.publicPath.replace(/^\/|\/$/g, '')}/`;
-
-    this.uploadDir = path.join(process.cwd(), 'public', cleanPublicPath);
+    // Define the public path without leading/trailing slashes for joining
+    this.publicPath = 'uploads/media';
+    this.uploadDir = path.join(process.cwd(), 'public', this.publicPath);
 
     // Ensures the upload directory exists
     if (!fs.existsSync(this.uploadDir)) {
@@ -27,9 +24,10 @@ export class LocalStorageAdapter implements IStorageAdapter {
   async upload(fileName: string, contentType: string, buffer: Buffer): Promise<{ publicUrl: string; storagePath: string; }> {
     try {
       const filePath = path.join(this.uploadDir, fileName);
-      fs.writeFileSync(filePath, buffer);
+      await fs.promises.writeFile(filePath, buffer);
       
-      const publicUrl = path.join(this.publicPath, fileName).replace(/\\/g, '/');
+      // Construct the URL path, ensuring it uses forward slashes
+      const publicUrl = `/${this.publicPath}/${fileName}`;
       const storagePath = publicUrl; // For local, public URL and storage path are the same relative to /public
 
       console.log(`[LocalStorageAdapter] File saved successfully to ${filePath}`);
@@ -46,7 +44,7 @@ export class LocalStorageAdapter implements IStorageAdapter {
       const filePath = path.join(process.cwd(), 'public', storagePath);
       
       if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+        await fs.promises.unlink(filePath);
         console.log(`[LocalStorageAdapter] File deleted successfully from ${filePath}`);
         return { success: true, message: 'Arquivo local excluído com sucesso.' };
       } else {
