@@ -2,66 +2,39 @@
 # Project Progress - BidExpert
 
 ## DONE
-- **Admin Panel Foundation:** CRUDs for Lot Categories, States, Cities, Auctioneers, Sellers, Auctions, Lots, Roles, Users, Media Items (initial scaffolding, some with sample data).
+- **Admin Panel Foundation:** CRUDs for Lot Categories, States, Cities, Auctioneers, Sellers, Auctions, Lots, Roles, Users, Media Items.
 - **Database System:**
     - Adapter pattern for Firestore, MySQL, PostgreSQL.
     - SQL schema initialization (`initialize-db.ts`) and admin user setup (`setup-admin-user.ts`) scripts created/refined.
-- **Header & Navigation:**
-    - Dynamic site title/tagline (via `samplePlatformSettings`).
-    - **Megamenus Implemented:** "Categorias de Oportunidades", "Modalidades de Leilão", "Comitentes", "Nossos Leiloeiros".
-    - Mobile responsive navigation (Sheet component).
-    - Header search bar with category filter and results dropdown.
-    - Recently Viewed & Favorite Lots dropdowns (localStorage).
-    - History icon added to "Histórico" menu item.
-- **Platform Customization (Admin Settings):**
-    - Management of Site Title, Tagline, Gallery Image Base Path, Public ID Masks, Map Provider, Search Pagination, Countdown Timers, Related Lots via `/admin/settings`.
-    - Settings persisted via active database adapter.
-- **Lot Card & Detail Enhancements (Mental Triggers & Info):**
-    *   **Item 1 (Badges Review - DONE):** Implemented `BadgeVisibilitySettings` and `SectionBadgeConfig` in `PlatformSettings`. Display logic for Discount, Urgency Timer, "MAIS VISITADO", "LANCE QUENTE", "EXCLUSIVO" badges on `LotCard`, `LotListItem`, and `LotDetailClientContent` verified.
-    *   Homepage "Lotes em Destaque" shows only `ABERTO_PARA_LANCES` lots.
-    *   `LotDetailClientContent` displays "Permite Lance Parcelado" and "Incremento Mínimo".
-    *   Countdown timer styling on lot detail page improved.
-    *   **Item 15:** Conditional tab "Documentos e Processo" on lot detail page implemented.
-- **User Authentication & Authorization:**
-    - Updated registration form for Pessoa Jurídica & Comitente Venda Direta.
-    - `AuthContext` for SQL/Firebase user state.
-    - `hasPermission` / `hasAnyPermission` helpers implemented.
-    - Admin and Consignor dashboard layouts protected.
-- **Public Facing Pages:**
-    *   Initial setup for various informational and detail pages.
-    *   Responsiveness of `TabsList` on lot detail page fixed.
-- **AI Flows:**
-    *   Initial Genkit flows for `suggestListingDetails`, `predictOpeningValue`, `suggestSimilarListings`.
-- **`SearchResultsFrame` Component (Item 5 - DONE):**
-    *   Created for consistent display of search results/listings.
-    *   Integrated into: Auction edit page (for lots), Seller detail page (for lots), Auctioneer detail page (for auctions), Main search page (`/search`), Category page. Confirmed as standard component.
-- **Subcategory Management (Items 16, 17, 18):**
-    *   **Item 16 (DONE):** Defined `Subcategory` type, updated `LotCategory`, updated `IDatabaseAdapter`, implemented subcategory CRUD in SQL adapters, created Server Actions, developed UI (form, list, edit pages), added admin sidebar link.
-    *   **Item 17 (DONE):** Added examples of subcategories to `sample-data.ts` and connected to main categories. `hasSubcategories` flag correctly set.
-    *   **Item 18 (DONE):** Integrated subcategory selection into Lot CRUD form. Updated display components (`LotListItem`, `LotDetailClientContent`, `LotCard`, lot list in auction edit) to show subcategory name.
-- **Lot Dates & Status Derivation (Item 13 - DONE):**
-    *   `sample-data.ts` logic updated to derive lot `endDate` and `status` from parent auction, considering `auctionStages`.
-    *   `LotDetailClientContent` (and its `DetailTimeRemaining` component) uses derived effective start/end dates.
-    *   `LotCard` and `LotListItem` reflect these derived dates/status via the updated `sampleLots`.
-    *   Reviewed all display components to ensure consistency.
-- **Admin User Permissions & Login (`admin@bidexpert.com.br` - DONE)**: Restored database adapter logic for user/role management, resolving login issues by removing hardcoded sample-data access in actions. The system now respects the `ACTIVE_DATABASE_SYSTEM` environment variable.
-- **Search Page Hero (Item 2 - DONE):** Removed smaller icon from the center of the main hero banner on the search page.
-- **CRUD Actions Refactoring (Item 6 - DONE):**
-  - **Sub-task 1 (DONE):** Refactored server actions for States, Cities, Auctioneers, and Sellers to use the `getDatabaseAdapter()`, ensuring they work with the configured data source (sample-data, MySQL, or PostgreSQL).
-- **Media Library Integration (Items 3, 4, 7):**
-  - **Sub-task 1 (DONE):** Replaced URL text inputs with a media selection button and preview in the Category CRUD form.
-  - **Sub-task 2 (DONE):** Replaced URL inputs in Auctioneer, Seller, and Auction forms.
-- **Item 19 (Auction Stages Timeline - DONE):** Implemented a visual timeline in the auction edit form that dynamically updates as the user changes stage dates.
+- **Header & Navigation:** Implemented dynamic multi-level megamenus for categories, modalities, consignors, and auctioneers.
+- **Platform Customization (Admin Settings):** Core settings management page implemented.
+- **Lot Card & Detail Enhancements:** Implemented "Mental Triggers" (badges), conditional legal info tab, and improved countdown timers.
+- **User Authentication:** Registration form updated; basic AuthContext implemented.
+- **`SearchResultsFrame` Component:** Created and integrated for consistent listing displays.
+- **Subcategory Management (Items 16, 17, 18):** Full CRUD and display functionality for subcategories completed.
+- **Lot Dates & Status Derivation (Item 13):** Logic to derive lot status from the parent auction implemented and verified across components.
+- **Admin User Login/Permissions:** Resolved login issues by abstracting data source access via adapters.
+- **Search Page UI (Item 2):** Fixed minor UI issue on search hero banner.
+- **Media Library Integration (Partial):** Replaced URL inputs with media selection buttons in Category, Auctioneer, Seller, and Auction forms.
+- **Auction Stages Timeline (Item 19):** Implemented a visual timeline in the auction edit form.
+- **Advanced Lot Fields (GAP 4.2.1, 4.2.2):** Added `reservePrice`, `evaluationValue`, `debtAmount`, `itbiValue` to `Lot` type, database schemas, and forms.
+- **Lot Detail Transparency (GAP 4.2.1, 4.2.2):** Implemented display for new legal/financial fields on the lot detail page.
+- **Reserve Price Logic (GAP 4.1.1):** Implemented logic in `sample-data.ts` to determine lot status based on `reservePrice`.
+- **Lot Detail Page Accessibility (GAP 4.1):** Fixed critical 404 error by implementing a redirect from `/lots/[lotId]` to the full canonical URL.
+- **Q&A System (GAP 4.1.2):** Added data models, database tables, server actions, and UI components for a per-lot Question & Answer feature.
 
 ## DOING
-- **Media Library Integration (Items 3, 4, 7):**
-  - **Sub-task 3 (DOING):** Finalize data migration in `sample-data.local.json` to ensure all images are sourced from `mediaItems`.
+- **Inconsistent Search Behavior (GAP 4.1):** Refactoring search logic to prioritize global keywords over pre-selected filters. Centralizing sample data into a single `sample-data.local.json` file for better management and consistency.
 
 ## NEXT
 - **Item 20:** Develop Virtual Auditorium (`/auctions/[auctionId]/live`) with current lot display, bidding panel, upcoming lots, and chat.
 - **Item 21:** Gantt chart for auctions on the auction dashboard (`/admin/auctions/page.tsx`).
 - **Complete SQL Adapter Implementation:**
     *   Thoroughly test and complete all `IDatabaseAdapter` methods for MySQL and PostgreSQL for all entities.
+- **Auction Theory Enhancements:**
+    *   **Soft-Close/Anti-Sniping (GAP 4.1.1):** Implement logic to extend auction end times based on last-minute bids.
+    *   **Proxy Bidding (GAP 4.2.5):** Implement secure backend logic and data storage for automatic proxy bidding.
+    *   **Configurable Bid Increments (GAP 4.1.3):** Add `Auction.bidIncrementRule` and display it clearly.
 - **User Authentication & Authorization (Enhancements):**
     *   Implement robust, granular permission checks in all Server Actions.
     *   Complete `habilitationStatus` workflow for users.
@@ -71,9 +44,7 @@
     *   Implement backend logic and data display for "My Bids", "My Wins", "My Lots" (Consignor), Financials (Consignor).
 - **Implement Remaining PRD Core Features:**
     *   Full Auction Catalog functionality on Home Page (with live DB filters, sorting).
-    *   Bidding system (beyond current simulation, consider real-time updates).
     *   User Profile management (public view, full editing).
 - **Refine UI/UX & Mobile Responsiveness.**
 - **Comprehensive Testing & Performance Optimization.**
 - **Error Handling & Logging (User-friendly messages, server-side logging).**
-

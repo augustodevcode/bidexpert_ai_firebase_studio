@@ -12,7 +12,7 @@ import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useRef, useCallback, forwardRef } from 'react';
-import MainNav, { type NavItem } from './main-nav';
+import { slugify } from '@/lib/sample-data-helpers'; // Changed import
 import UserNav from './user-nav';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Loader2, Heart, Bell, X, Facebook, MessageSquareText, Mail } from 'lucide-react';
 import type { RecentlyViewedLotInfo, Lot, LotCategory, PlatformSettings, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
-import { sampleLots, slugify } from '@/lib/sample-data';
+import { getLots, getLotsByIds } from '@/app/admin/lots/actions'; // Changed import
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getFavoriteLotIdsFromStorage } from '@/lib/favorite-store';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
@@ -73,6 +73,7 @@ HistoryListItem.displayName = "HistoryListItem";
 export default function Header() {
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
   const [searchCategories, setSearchCategories] = useState<LotCategory[]>([]);
+  const [allLots, setAllLots] = useState<Lot[]>([]); // New state for search
   const [auctioneers, setAuctioneers] = useState<AuctioneerProfileInfo[]>([]);
   const [consignorMegaMenuGroups, setConsignorMegaMenuGroups] = useState<MegaMenuGroup[]>([]);
   const [favoriteCount, setFavoriteCount] = useState(0);
@@ -106,10 +107,8 @@ export default function Header() {
     };
     updateFavoriteCount();
 
-    // Custom event to update favorites from other components
     const handleFavoritesChange = () => updateFavoriteCount();
     window.addEventListener('favorites-updated', handleFavoritesChange);
-    // Also listen to storage changes from other tabs
     window.addEventListener('storage', (e) => {
         if (e.key === 'bidExpertFavoriteLotIds') {
             updateFavoriteCount();
@@ -119,37 +118,17 @@ export default function Header() {
     async function fetchInitialData() {
       console.log('[Header fetchInitialData] Iniciando busca de dados...');
       try {
-        const settings = await getPlatformSettings();
-        setPlatformSettings(settings);
-      } catch (error) {
-        console.error("Error fetching platform settings for header:", error);
-      }
-
-      const viewedIds = getRecentlyViewedIds();
-      const items: RecentlyViewedLotInfo[] = viewedIds.map(id => {
-        const lot = sampleLots.find(l => l.id === id);
-        return lot ? {
-          id: lot.id,
-          title: lot.title,
-          imageUrl: lot.imageUrl,
-          auctionId: lot.auctionId,
-          dataAiHint: lot.dataAiHint
-        } : null;
-      }).filter(item => item !== null) as RecentlyViewedLotInfo[];
-      setRecentlyViewedItems(items);
-      console.log('[Header fetchInitialData] Recently viewed items:', items.length);
-
-
-      try {
-        const [fetchedCategories, fetchedAuctioneers, fetchedSellers] = await Promise.all([
+        const [settings, categories, allFetchedLots, fetchedAuctioneers, fetchedSellers] = await Promise.all([
+          getPlatformSettings(),
           getLotCategories(),
+          getLots(), // Fetch all lots once for search
           getAuctioneers(),
           getSellers()
         ]);
-        setSearchCategories(fetchedCategories);
-        console.log('[Header fetchInitialData] Fetched Categories for search/nav:', fetchedCategories.length);
+        setPlatformSettings(settings);
+        setSearchCategories(categories);
+        setAllLots(allFetchedLots);
         setAuctioneers(fetchedAuctioneers);
-        console.log('[Header fetchInitialData] Fetched Auctioneers for nav:', fetchedAuctioneers.length);
 
         const consignorItemsForMenu: MegaMenuLinkItem[] = fetchedSellers.map(seller => ({
             href: `/sellers/${seller.slug || seller.publicId || seller.id}`,
@@ -163,13 +142,28 @@ export default function Header() {
             items: consignorItemsForMenu,
         }];
         setConsignorMegaMenuGroups(formattedSellersForMenu.filter(group => group.items.length > 0));
-        console.log('[Header fetchInitialData] Formatted Consignors Groups for nav (total items):', consignorItemsForMenu.length);
+
+        // Now process recently viewed items using a server action
+        const viewedIds = getRecentlyViewedIds();
+        if (viewedIds.length > 0) {
+          const itemsData = await getLotsByIds(viewedIds);
+          const items: RecentlyViewedLotInfo[] = viewedIds.map(id => {
+              const lot = itemsData.find(l => l.id === id);
+              return lot ? {
+                id: lot.id,
+                title: lot.title,
+                imageUrl: lot.imageUrl,
+                auctionId: lot.auctionId,
+                dataAiHint: lot.dataAiHint
+              } : null;
+          }).filter(item => item !== null) as RecentlyViewedLotInfo[];
+          setRecentlyViewedItems(items);
+        } else {
+          setRecentlyViewedItems([]);
+        }
 
       } catch (error) {
-        console.error("Error fetching data for main navigation:", error);
-        setSearchCategories([]);
-        setAuctioneers([]);
-        setConsignorMegaMenuGroups([]);
+        console.error("Error fetching data for header:", error);
       }
     }
     fetchInitialData();
@@ -201,7 +195,7 @@ export default function Header() {
 
     setIsSearchLoading(true);
     const debounceTimer = setTimeout(() => {
-      const filtered = sampleLots.filter(lot => {
+      const filtered = allLots.filter(lot => {
         const term = searchTerm.toLowerCase();
         const categoryMatch = selectedSearchCategorySlug && selectedSearchCategorySlug !== 'todas'
           ? slugify(lot.type) === selectedSearchCategorySlug
@@ -210,7 +204,7 @@ export default function Header() {
         const textMatch = (
           lot.title.toLowerCase().includes(term) ||
           (lot.description && lot.description.toLowerCase().includes(term)) ||
-          lot.auctionName.toLowerCase().includes(term) ||
+          (lot.auctionName && lot.auctionName.toLowerCase().includes(term)) ||
           lot.id.toLowerCase().includes(term)
         );
         return categoryMatch && textMatch;
@@ -221,7 +215,7 @@ export default function Header() {
     }, 500);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchTerm, selectedSearchCategorySlug]);
+  }, [searchTerm, selectedSearchCategorySlug, allLots]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();

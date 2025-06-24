@@ -37,7 +37,7 @@ const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, auctionId, i
     let isValidDate = false;
 
     if (stage.endDate) { 
-        stageEndDateObj = stage.endDate instanceof Date ? stage.endDate : new Date(stage.endDate);
+        stageEndDateObj = stage.endDate instanceof Date ? stage.endDate : new Date(stage.endDate as string);
         if (stageEndDateObj && !isNaN(stageEndDateObj.getTime())) {
             isValidDate = true;
         }

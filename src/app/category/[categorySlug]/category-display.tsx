@@ -6,10 +6,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { getLotCategories } from '@/app/admin/categories/actions';
-import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLots } from '@/app/admin/lots/actions'; // Fetch lots via action
 import type { Lot, LotCategory, PlatformSettings } from '@/types';
-import { getUniqueLotLocations, getUniqueSellerNames, slugify, getCategoryAssets } from '@/lib/sample-data';
+import { slugify } from '@/lib/sample-data-helpers';
 import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
 import type { ActiveFilters } from '@/components/sidebar-filters';
@@ -21,6 +20,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import SearchResultsFrame from '@/components/search-results-frame'; 
 import dynamic from 'next/dynamic';
 import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
+import { getSampleData, getCategoryAssets, getUniqueLotLocations, getUniqueSellerNames } from '@/lib/sample-data-helpers';
 
 const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
   loading: () => <SidebarFiltersSkeleton />,
@@ -85,21 +85,17 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
       }
       setIsLoading(true);
       try {
-        const [allCats, settings, allLotsData] = await Promise.all([
-            getLotCategories(),
-            getPlatformSettings(),
-            getLots(),
-        ]);
+        const { sampleLotCategories, samplePlatformSettings, sampleLots, sampleSellers } = getSampleData();
         
-        setAllCategoriesForFilter(allCats);
-        setPlatformSettings(settings);
-        setAllLots(allLotsData);
+        setAllCategoriesForFilter(sampleLotCategories);
+        setPlatformSettings(samplePlatformSettings);
+        setAllLots(sampleLots);
 
-        const foundCategory = allCats.find(cat => cat.slug === categorySlug);
+        const foundCategory = sampleLotCategories.find(cat => cat.slug === categorySlug);
         setCurrentCategory(foundCategory || null);
 
         if (foundCategory) {
-          const lotsForCategory = allLotsData.filter(lot => lot.categoryId === foundCategory.id || slugify(lot.type) === foundCategory.slug);
+          const lotsForCategory = sampleLots.filter(lot => lot.categoryId === foundCategory.id || slugify(lot.type) === foundCategory.slug);
           setFilteredLots(lotsForCategory);
           setActiveFilters((prev: ActiveFilters) => ({ ...prev, category: foundCategory.slug }));
         } else {
@@ -107,8 +103,8 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
           setFilteredLots([]);
         }
         
-        setUniqueLocationsForFilter(getUniqueLotLocations(allLotsData));
-        setUniqueSellersForFilter(getUniqueSellerNames(allLotsData));
+        setUniqueLocationsForFilter(getUniqueLotLocations(sampleLots));
+        setUniqueSellersForFilter(getUniqueSellerNames(sampleLots));
 
       } catch (error) {
         console.error("Error fetching category data:", error);

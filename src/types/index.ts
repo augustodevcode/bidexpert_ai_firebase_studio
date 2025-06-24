@@ -1,4 +1,5 @@
 
+
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -764,7 +765,8 @@ export interface IDatabaseAdapter {
 
 
   createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }>;
-  getLots(auctionIdParam?: string): Promise<Lot[]>; 
+  getLots(auctionIdParam?: string): Promise<Lot[]>;
+  getLotsByIds(ids: string[]): Promise<Lot[]>;
   getLot(idOrPublicId: string): Promise<Lot | null>;
   updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string }>;
   deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string }>;
@@ -825,3 +827,4 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
+

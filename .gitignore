@@ -3,12 +3,8 @@
 # dependencies
 /node_modules
 /.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+.pnp.js
+.yarn/install-state.gz
 
 # testing
 /coverage
@@ -28,64 +24,25 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+firebase-debug.log
+/genkit-debug.log
+.firebase/
 
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
+tsconfig.tsbuildinfo
 
-.genkit/*
-.env*
+# local env files
+.env*.local
+.env
 
-# firebase
-firebase-debug.log
-firestore-debug.log
-.idx/.data/mysql/#ib_16384_0.dblwr
-.idx/.data/mysql/binlog.000001
-.idx/.data/mysql/binlog.000002
-.idx/.data/mysql/binlog.index
-.idx/.data/mysql/firebase-studio-1748711833657.pid
-.idx/.data/mysql/ibdata1
-.idx/.data/mysql/ibtmp1
-.idx/.data/mysql/mysql.ibd
-.idx/.data/mysql/undo_001
-.idx/.data/mysql/undo_002
-.idx/.data/mysql/#innodb_redo/#ib_redo5
-.idx/.data/mysql/#innodb_temp/temp_1.ibt
-.idx/.data/mysql/#innodb_temp/temp_2.ibt
-.idx/.data/mysql/#innodb_temp/temp_3.ibt
-.idx/.data/mysql/#innodb_temp/temp_4.ibt
-.idx/.data/mysql/#innodb_temp/temp_5.ibt
-.idx/.data/mysql/#innodb_temp/temp_6.ibt
-.idx/.data/mysql/#innodb_temp/temp_7.ibt
-.idx/.data/mysql/#innodb_temp/temp_8.ibt
-.idx/.data/mysql/#innodb_temp/temp_9.ibt
-.idx/.data/mysql/#innodb_temp/temp_10.ibt
-.idx/.data/mysql/#ib_16384_0.dblwr
-.idx/.data/mysql/binlog.000001
-.idx/.data/mysql/binlog.000003
-.idx/.data/mysql/binlog.index
-.idx/.data/mysql/firebase-studio-1748711833657.pid
-.idx/.data/mysql/ibdata1
-.idx/.data/mysql/ibtmp1
-.idx/.data/mysql/mysql.ibd
-.idx/.data/mysql/undo_001
-.idx/.data/mysql/undo_002
-.idx/.data/mysql/#innodb_redo/#ib_redo5
-.idx/.data/mysql/#innodb_temp/temp_1.ibt
-.idx/.data/mysql/#innodb_temp/temp_2.ibt
-.idx/.data/mysql/#innodb_temp/temp_3.ibt
-.idx/.data/mysql/#innodb_temp/temp_4.ibt
-.idx/.data/mysql/#innodb_temp/temp_5.ibt
-.idx/.data/mysql/#innodb_temp/temp_6.ibt
-.idx/.data/mysql/#innodb_temp/temp_7.ibt
-.idx/.data/mysql/#innodb_temp/temp_8.ibt
-.idx/.data/mysql/#innodb_temp/temp_9.ibt
-.idx/.data/mysql/#innodb_temp/temp_10.ibt
-dataconnect-debug.log
-.firebase/logs/vsce-debug.log
-.firebase/logs/vsce-debug.log
-dataconnect-debug.log
+# Studio
+.studio
+studio.json
+*.studio.json
+
+# Local sample data
+sample-data.local.json

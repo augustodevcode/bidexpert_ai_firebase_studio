@@ -5,10 +5,11 @@ import type { Lot, Auction, PlatformSettings } from '@/types';
 import LotDetailClientContent from './lot-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { getAuction } from '@/app/admin/auctions/actions';
+import { getAuction, getAuctions } from '@/app/admin/auctions/actions';
 import { getLot, getLots } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getSellerBySlug } from '@/app/admin/sellers/actions';
+import { getSampleData } from '@/lib/sample-data-helpers';
 
 async function getLotPageData(currentAuctionId: string, currentLotId: string): Promise<{
   lot: Lot | undefined,
@@ -20,17 +21,18 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   nextLotId?: string,
   totalLotsInAuction?: number
 }> {
-  console.log(`[getLotPageData - Adapter Mode] Buscando leilão: ${currentAuctionId}, lote: ${currentLotId}`);
+  console.log(`[getLotPageData] Buscando leilão: ${currentAuctionId}, lote: ${currentLotId}`);
 
-  const [platformSettingsData, auctionFromDb, lotFromDb] = await Promise.all([
-    getPlatformSettings(),
+  const { samplePlatformSettings } = getSampleData();
+
+  const [auctionFromDb, lotFromDb] = await Promise.all([
     getAuction(currentAuctionId),
     getLot(currentLotId)
   ]);
   
   if (!auctionFromDb || !lotFromDb) {
     console.warn(`[getLotPageData] Leilão ou Lote não encontrado. Auction found: ${!!auctionFromDb}, Lot found: ${!!lotFromDb}`);
-    return { lot: lotFromDb, auction: auctionFromDb, platformSettings: platformSettingsData };
+    return { lot: lotFromDb, auction: auctionFromDb, platformSettings: samplePlatformSettings };
   }
 
   const lotsForThisAuction = await getLots(auctionFromDb.id);
@@ -51,7 +53,7 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   return { 
     lot: lotFromDb, 
     auction: auctionToReturn, 
-    platformSettings: platformSettingsData, 
+    platformSettings: samplePlatformSettings, 
     sellerName, 
     lotIndex, 
     previousLotId, 

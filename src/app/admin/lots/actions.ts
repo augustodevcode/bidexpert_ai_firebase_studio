@@ -93,6 +93,12 @@ export async function getLots(auctionIdParam?: string): Promise<Lot[]> {
   return db.getLots(auctionIdParam);
 }
 
+export async function getLotsByIds(ids: string[]): Promise<Lot[]> {
+  if (!ids || ids.length === 0) return [];
+  const db = await getDatabaseAdapter();
+  return db.getLotsByIds(ids);
+}
+
 export async function getLot(idOrPublicId: string): Promise<Lot | null> {
   const db = await getDatabaseAdapter();
   return db.getLot(idOrPublicId);
