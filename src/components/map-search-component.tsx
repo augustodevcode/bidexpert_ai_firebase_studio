@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -13,7 +14,6 @@ const MapInner = dynamic(() => import('./map-inner'), {
   loading: () => (
     <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
       <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      <p className="ml-2 text-muted-foreground">Carregando Mapa...</p>
     </div>
   ),
 });

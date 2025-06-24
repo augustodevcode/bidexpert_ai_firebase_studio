@@ -8,7 +8,7 @@ import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import type { Lot, Auction } from '@/types';
 import { Loader2 } from 'lucide-react';
 
-// Fix for default icon paths with webpack
+// This is the correct and robust way to fix default icon paths with bundlers like Webpack
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 
 L.Icon.Default.mergeOptions({
@@ -21,12 +21,9 @@ L.Icon.Default.mergeOptions({
 // Internal component to handle map events
 function MapEvents({ onBoundsChange }: { onBoundsChange: (bounds: LatLngBounds) => void }) {
   const map = useMapEvents({
-    moveend: () => {
-      onBoundsChange(map.getBounds());
-    },
-    zoomend: () => {
-      onBoundsChange(map.getBounds());
-    }
+    moveend: () => onBoundsChange(map.getBounds()),
+    zoomend: () => onBoundsChange(map.getBounds()),
+    load: () => onBoundsChange(map.getBounds()), // Also trigger on initial load
   });
   return null;
 }
@@ -58,7 +55,6 @@ export default function MapInner({ items, itemType, mapCenter, mapZoom, onBounds
     setIsClient(true);
   }, []);
 
-
   const markers = useMemo(() => {
     return items.map(item => {
       if ('latitude' in item && 'longitude' in item && item.latitude && item.longitude) {
@@ -72,7 +68,7 @@ export default function MapInner({ items, itemType, mapCenter, mapZoom, onBounds
         `;
 
         return (
-          <Marker key={item.id} position={[item.latitude, item.longitude]}>
+          <Marker key={`${itemType}-${item.id}`} position={[item.latitude, item.longitude]}>
             <Popup>{popupContent}</Popup>
           </Marker>
         );
@@ -98,7 +94,6 @@ export default function MapInner({ items, itemType, mapCenter, mapZoom, onBounds
     return (
       <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="ml-2 text-muted-foreground">Carregando Mapa...</p>
       </div>
     );
   }
@@ -109,6 +104,7 @@ export default function MapInner({ items, itemType, mapCenter, mapZoom, onBounds
       zoom={mapZoom} 
       scrollWheelZoom={true} 
       style={{ height: '100%', width: '100%' }}
+      className="rounded-lg" // Ensure container itself has rounded corners if needed
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

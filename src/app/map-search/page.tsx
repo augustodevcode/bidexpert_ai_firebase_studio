@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { MapPin, Loader2, AlertCircle, ListFilter, Layers, Search as SearchIcon } from 'lucide-react';
+import { MapPin, Loader2, AlertCircle, Search as SearchIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,18 +16,28 @@ import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import type { LatLngBounds } from 'leaflet';
-import MapSearchComponent from '@/components/map-search-component';
+import dynamic from 'next/dynamic';
 
 export default function MapSearchPage() {
   const router = useRouter();
   const searchParamsHook = useSearchParams();
-  
+
+  // Memoize the dynamically imported map component to prevent re-initialization on re-renders
+  const MapSearchComponent = useMemo(() => dynamic(() => import('@/components/map-search-component'), {
+    ssr: false,
+    loading: () => (
+      <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="ml-2 text-muted-foreground">Carregando Mapa...</p>
+      </div>
+    ),
+  }), []);
+
   const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
   const [allLots, setAllLots] = useState<Lot[]>([]);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
-
   const [searchTerm, setSearchTerm] = useState(searchParamsHook.get('term') || '');
-  const [searchType, setSearchType] = useState<'lots' | 'auctions'>( (searchParamsHook.get('type') as 'lots' | 'auctions') || 'lots');
+  const [searchType, setSearchType] = useState<'lots' | 'auctions'>((searchParamsHook.get('type') as 'lots' | 'auctions') || 'lots');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +45,6 @@ export default function MapSearchPage() {
   const [mapZoom, setMapZoom] = useState(4);
   const [mapBounds, setMapBounds] = useState<LatLngBounds | null>(null);
   const [isUserInteraction, setIsUserInteraction] = useState(false);
-
 
   useEffect(() => {
     // Determine initial map center and zoom
@@ -49,10 +58,11 @@ export default function MapSearchPage() {
           console.warn("Geolocation permission denied. Defaulting to center of Brazil.");
           setMapCenter([-14.235, -51.9253]); // Brazil center
           setMapZoom(4);
-        }
+        },
+        { timeout: 5000 }
       );
     } else {
-        console.warn("Geolocation is not supported by this browser. Defaulting to center of Brazil.");
+        console.warn("Geolocation is not supported. Defaulting to center of Brazil.");
         setMapCenter([-14.235, -51.9253]); // Brazil center
         setMapZoom(4);
     }
@@ -81,7 +91,7 @@ export default function MapSearchPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setIsUserInteraction(false);
-    setMapBounds(null); 
+    setMapBounds(null);
   };
 
   const handleBoundsChange = useCallback((bounds: LatLngBounds) => {
@@ -94,7 +104,7 @@ export default function MapSearchPage() {
     
     const baseItems = searchType === 'lots' ? allLots : allAuctions;
     
-    let results = baseItems.filter(item => {
+    return baseItems.filter(item => {
         const term = searchTerm.toLowerCase();
         if (term) {
              const searchableText = `${item.title} ${item.description || ''} ${'city' in item ? item.city : ''} ${'state' in item ? item.state : ''} ${'cityName' in item ? item.cityName : ''} ${'stateUf' in item ? item.stateUf : ''}`;
@@ -116,20 +126,9 @@ export default function MapSearchPage() {
         return true;
     });
 
-    return results;
-
   }, [searchTerm, searchType, allLots, allAuctions, isLoading, mapBounds, isUserInteraction]);
   
   const displayedItems = filteredItems.slice(0, 50);
-
-  if (isLoading || !platformSettings || !mapCenter) {
-    return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-3 text-muted-foreground">Carregando mapa e dados...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-var(--header-height,160px)-1rem)] gap-4 md:gap-6">
@@ -182,7 +181,7 @@ export default function MapSearchPage() {
                         <p className="text-sm text-muted-foreground">Nenhum resultado encontrado. Tente uma busca diferente ou mova o mapa.</p>
                     </div>
                 )}
-                {!isLoading && !error && displayedItems.length > 0 && (
+                {!isLoading && !error && platformSettings && displayedItems.length > 0 && (
                     displayedItems.map(item => 
                     searchType === 'lots' 
                         ? <LotCard key={`lot-${item.id}`} lot={item as Lot} platformSettings={platformSettings} /> 
@@ -194,14 +193,21 @@ export default function MapSearchPage() {
         </Card>
 
         <div className="flex-grow h-full md:h-auto rounded-lg overflow-hidden shadow-lg relative z-0">
-             <MapSearchComponent
-                items={filteredItems}
-                itemType={searchType}
-                mapCenter={mapCenter}
-                mapZoom={mapZoom}
-                onBoundsChange={handleBoundsChange}
-                shouldFitBounds={!isUserInteraction}
-             />
+             {mapCenter ? (
+                <MapSearchComponent
+                    items={filteredItems}
+                    itemType={searchType}
+                    mapCenter={mapCenter}
+                    mapZoom={mapZoom}
+                    onBoundsChange={handleBoundsChange}
+                    shouldFitBounds={!isUserInteraction}
+                />
+            ) : (
+                <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                    <p className="ml-2 text-muted-foreground">Obtendo localização...</p>
+                </div>
+            )}
         </div>
     </div>
   );
