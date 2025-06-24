@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react'; // Adicionado import do React
 import type { Auction, Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -11,7 +12,7 @@ import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock
 import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
-import { getAuctionStatusText, getLotStatusColor, sampleAuctions, samplePlatformSettings } from '@/lib/sample-data';
+import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -102,11 +103,12 @@ const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({
 
 interface LotListItemProps {
   lot: Lot;
+  auction?: Auction;
   badgeVisibilityConfig?: BadgeVisibilitySettings;
   platformSettings: PlatformSettings;
 }
 
-function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings }: LotListItemProps) {
+function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platformSettings }: LotListItemProps) {
   const [isFavorite, setIsFavorite] = useState(lot.isFavorite || false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
@@ -357,7 +359,7 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
       </Card>
       <LotPreviewModal
         lot={lot}
-        auction={sampleAuctions.find(a => a.id === lot.auctionId)}
+        auction={auction}
         isOpen={isPreviewModalOpen}
         onClose={() => setIsPreviewModalOpen(false)}
       />
@@ -371,7 +373,7 @@ function LotListItemClientContent({ lot, badgeVisibilityConfig, platformSettings
   );
 }
 
-export default function LotListItem({ lot, badgeVisibilityConfig, platformSettings }: LotListItemProps) {
+export default function LotListItem({ lot, auction, badgeVisibilityConfig, platformSettings }: LotListItemProps) {
     const [isClient, setIsClient] = useState(false);
     useEffect(() => {
       setIsClient(true);
@@ -400,5 +402,6 @@ export default function LotListItem({ lot, badgeVisibilityConfig, platformSettin
       );
     }
 
-    return <LotListItemClientContent lot={lot} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} />;
+    return <LotListItemClientContent lot={lot} auction={auction} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} />;
   }
+

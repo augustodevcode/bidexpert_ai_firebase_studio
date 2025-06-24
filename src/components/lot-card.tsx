@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings } from '@/types';
+import type { Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings, Auction } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { Heart, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users,
 import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
-import { getAuctionStatusText, getLotStatusColor, sampleAuctions, samplePlatformSettings } from '@/lib/sample-data';
+import { getAuctionStatusText, getLotStatusColor, samplePlatformSettings } from '@/lib/sample-data';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import LotPreviewModal from './lot-preview-modal';
@@ -102,12 +102,13 @@ const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({
 
 interface LotCardProps {
   lot: Lot;
+  auction?: Auction; // ADDED
   badgeVisibilityConfig?: BadgeVisibilitySettings;
   platformSettings: PlatformSettings;
   onUpdate?: () => void;
 }
 
-const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConfig, platformSettings, onUpdate }) => {
+const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisibilityConfig, platformSettings, onUpdate }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
@@ -176,7 +177,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
     if (upperType.includes('CASA') || upperType.includes('IMÓVEL') || upperType.includes('APARTAMENTO')) {
         return <Building className="h-3 w-3 text-muted-foreground" />;
     }
-    if (upperType.includes('VEÍCulo') || upperType.includes('AUTOMÓVEL') || upperType.includes('CARRO')) {
+    if (upperType.includes('VEÍCULO') || upperType.includes('AUTOMÓVEL') || upperType.includes('CARRO')) {
         return <Car className="h-3 w-3 text-muted-foreground" />;
     }
     if (upperType.includes('MAQUINÁRIO') || upperType.includes('TRATOR')) {
@@ -250,7 +251,6 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
             if (trigger === 'MAIS VISITADO' && sectionBadges.showPopularityBadge !== false && mentalTriggersGlobalSettings.showPopularityBadge) showThisTrigger = true;
             if (trigger === 'LANCE QUENTE' && sectionBadges.showHotBidBadge !== false && mentalTriggersGlobalSettings.showHotBidBadge) showThisTrigger = true;
             if (trigger === 'EXCLUSIVO' && sectionBadges.showExclusiveBadge !== false && mentalTriggersGlobalSettings.showExclusiveBadge) showThisTrigger = true;
-
             if (!showThisTrigger) return null;
 
             return (
@@ -364,7 +364,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
     </Card>
     <LotPreviewModal
         lot={lot}
-        auction={sampleAuctions.find(a => a.id === lot.auctionId)}
+        auction={auction}
         isOpen={isPreviewModalOpen}
         onClose={() => setIsPreviewModalOpen(false)}
       />
@@ -379,7 +379,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, badgeVisibilityConf
 }
 
 
-export default function LotCard({ lot, badgeVisibilityConfig, platformSettings, onUpdate }: LotCardProps) {
+export default function LotCard({ lot, auction, badgeVisibilityConfig, platformSettings, onUpdate }: LotCardProps) {
     const [isClient, setIsClient] = useState(false);
     useEffect(() => {
       setIsClient(true);
@@ -404,6 +404,7 @@ export default function LotCard({ lot, badgeVisibilityConfig, platformSettings, 
       );
     }
 
-    return <LotCardClientContent lot={lot} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} onUpdate={onUpdate} />;
+    return <LotCardClientContent lot={lot} auction={auction} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} onUpdate={onUpdate} />;
   }
+
 

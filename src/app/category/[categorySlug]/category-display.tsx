@@ -6,8 +6,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { getLotCategories } from '@/app/admin/categories/actions';
-import { getLots } from '@/app/admin/lots/actions'; // Fetch lots via action
-import type { Lot, LotCategory, PlatformSettings } from '@/types';
+import { getLots } from '@/app/admin/lots/actions';
+import { getSellers } from '@/app/admin/sellers/actions';
+import { getAuctions } from '@/app/admin/auctions/actions';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import type { Lot, LotCategory, PlatformSettings, SellerProfileInfo, Auction } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
 import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
@@ -20,7 +23,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import SearchResultsFrame from '@/components/search-results-frame'; 
 import dynamic from 'next/dynamic';
 import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
-import { getSampleData, getCategoryAssets, getUniqueLotLocations, getUniqueSellerNames } from '@/lib/sample-data-helpers';
+import { getCategoryAssets } from '@/lib/sample-data-helpers';
 
 const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
   loading: () => <SidebarFiltersSkeleton />,
@@ -63,13 +66,13 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [currentCategory, setCurrentCategory] = useState<LotCategory | null>(null);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
-  const [allLots, setAllLots] = useState<Lot[]>([]); // Store all lots once
-  const [filteredLots, setFilteredLots] = useState<Lot[]>([]); // Lots to display after filtering
+  const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
+  const [allLots, setAllLots] = useState<Lot[]>([]); 
+  const [filteredLots, setFilteredLots] = useState<Lot[]>([]);
 
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [sortBy, setSortBy] = useState<string>('relevance');
   
-  // States for filter options
   const [allCategoriesForFilter, setAllCategoriesForFilter] = useState<LotCategory[]>([]);
   const [uniqueLocationsForFilter, setUniqueLocationsForFilter] = useState<string[]>([]);
   const [uniqueSellersForFilter, setUniqueSellersForFilter] = useState<string[]>([]);
@@ -85,17 +88,24 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
       }
       setIsLoading(true);
       try {
-        const { sampleLotCategories, samplePlatformSettings, sampleLots, sampleSellers } = getSampleData();
+        const [categories, platform, lots, sellers, auctions] = await Promise.all([
+          getLotCategories(),
+          getPlatformSettings(),
+          getLots(),
+          getSellers(),
+          getAuctions(),
+        ]);
         
-        setAllCategoriesForFilter(sampleLotCategories);
-        setPlatformSettings(samplePlatformSettings);
-        setAllLots(sampleLots);
+        setAllAuctions(auctions);
+        setAllCategoriesForFilter(categories);
+        setPlatformSettings(platform);
+        setAllLots(lots);
 
-        const foundCategory = sampleLotCategories.find(cat => cat.slug === categorySlug);
+        const foundCategory = categories.find(cat => cat.slug === categorySlug);
         setCurrentCategory(foundCategory || null);
 
         if (foundCategory) {
-          const lotsForCategory = sampleLots.filter(lot => lot.categoryId === foundCategory.id || slugify(lot.type) === foundCategory.slug);
+          const lotsForCategory = lots.filter(lot => lot.categoryId === foundCategory.id || slugify(lot.type) === foundCategory.slug);
           setFilteredLots(lotsForCategory);
           setActiveFilters((prev: ActiveFilters) => ({ ...prev, category: foundCategory.slug }));
         } else {
@@ -103,8 +113,12 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
           setFilteredLots([]);
         }
         
-        setUniqueLocationsForFilter(getUniqueLotLocations(sampleLots));
-        setUniqueSellersForFilter(getUniqueSellerNames(sampleLots));
+        const locations = new Set<string>();
+        lots.forEach(item => {
+            if (item.cityName && item.stateUf) locations.add(`${item.cityName} - ${item.stateUf}`);
+        });
+        setUniqueLocationsForFilter(Array.from(locations).sort());
+        setUniqueSellersForFilter(sellers.map(s => s.name).sort());
 
       } catch (error) {
         console.error("Error fetching category data:", error);
@@ -118,31 +132,25 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
   }, [categorySlug]);
   
   const handleFilterSubmit = (filters: ActiveFilters) => {
-    // Keep the current category fixed
     const fixedCategoryFilter = {...filters, category: categorySlug};
     setActiveFilters(fixedCategoryFilter);
     setIsFilterSheetOpen(false); 
     
-    // Always start from the base lots of the current category
     const baseLots = currentCategory 
       ? allLots.filter(lot => lot.categoryId === currentCategory.id || slugify(lot.type) === currentCategory.slug)
       : [];
 
     const newlyFilteredLots = baseLots.filter(lot => {
-      // Price Range
       if (lot.price < fixedCategoryFilter.priceRange[0] || lot.price > fixedCategoryFilter.priceRange[1]) {
           return false;
       }
-      // Locations
       if (fixedCategoryFilter.locations.length > 0) {
           const lotLocation = `${lot.cityName} - ${lot.stateUf}`;
           if (!fixedCategoryFilter.locations.includes(lotLocation)) return false;
       }
-      // Sellers
       if (fixedCategoryFilter.sellers.length > 0 && lot.sellerName && !fixedCategoryFilter.sellers.includes(lot.sellerName)) {
           return false;
       }
-      // Status
        if (fixedCategoryFilter.status && fixedCategoryFilter.status.length > 0 && !fixedCategoryFilter.status.includes(lot.status)) {
          return false;
        }
@@ -193,8 +201,15 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
     });
   }, [filteredLots, sortBy]);
 
-  const renderGridItem = (item: Lot) => <LotCard lot={item} platformSettings={platformSettings!} />;
-  const renderListItem = (item: Lot) => <LotListItem lot={item} platformSettings={platformSettings!} />;
+  const renderGridItem = (item: Lot) => {
+    const parentAuction = allAuctions.find(a => a.id === item.auctionId);
+    return <LotCard lot={item} auction={parentAuction} platformSettings={platformSettings!} />;
+  };
+
+  const renderListItem = (item: Lot) => {
+    const parentAuction = allAuctions.find(a => a.id === item.auctionId);
+    return <LotListItem lot={item} auction={parentAuction} platformSettings={platformSettings!} />;
+  };
 
   if (isLoading || !platformSettings) {
     return (

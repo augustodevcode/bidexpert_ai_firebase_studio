@@ -6,25 +6,33 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { History, AlertCircle, Loader2 } from 'lucide-react';
-import { sampleLots } from '@/lib/sample-data';
-import type { Lot, PlatformSettings } from '@/types';
+import { getLots } from '@/app/admin/lots/actions';
+import { getAuctions } from '@/app/admin/auctions/actions';
+import type { Lot, PlatformSettings, Auction } from '@/types';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import LotCard from '@/components/lot-card';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 
 export default function BrowsingHistoryPage() {
   const [viewedLots, setViewedLots] = useState<Lot[]>([]);
+  const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   
   useEffect(() => {
     async function loadHistory() {
         setIsLoading(true);
-        const settings = await getPlatformSettings();
+        const [settings, auctions, allLotsData] = await Promise.all([
+          getPlatformSettings(),
+          getAuctions(),
+          getLots(),
+        ]);
+        
         setPlatformSettings(settings);
+        setAllAuctions(auctions);
 
         const ids = getRecentlyViewedIds();
-        const lotsFromHistory = ids.map(id => sampleLots.find(lot => lot.id === id)).filter(lot => lot !== undefined) as Lot[];
+        const lotsFromHistory = ids.map(id => allLotsData.find(lot => lot.id === id)).filter(lot => lot !== undefined) as Lot[];
         setViewedLots(lotsFromHistory);
         setIsLoading(false);
     }
@@ -67,9 +75,12 @@ export default function BrowsingHistoryPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {viewedLots.map((lot) => (
-                <LotCard key={lot.id} lot={lot} platformSettings={platformSettings} />
-              ))}
+              {viewedLots.map((lot) => {
+                const parentAuction = allAuctions.find(a => a.id === lot.auctionId);
+                return (
+                  <LotCard key={lot.id} lot={lot} auction={parentAuction} platformSettings={platformSettings} />
+                );
+              })}
             </div>
           )}
         </CardContent>

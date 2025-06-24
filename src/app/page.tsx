@@ -9,7 +9,7 @@ import { Landmark, Scale, FileText, Tags, CalendarX, CheckSquare, Star, FileText
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import { getCategoryAssets } from '@/lib/sample-data-helpers'; // Corrected import path
+import { getCategoryAssets } from '@/lib/sample-data-helpers';
 
 export default async function HomePage() {
   try {
@@ -116,14 +116,18 @@ export default async function HomePage() {
               <Star className="h-7 w-7 mr-2 text-amber-500" /> Lotes em Destaque
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {featuredLots.map((lot) => (
-                <LotCard
-                  key={lot.id}
-                  lot={lot}
-                  platformSettings={platformSettings}
-                  badgeVisibilityConfig={platformSettings.sectionBadgeVisibility?.featuredLots}
-                />
-              ))}
+              {featuredLots.map((lot) => {
+                const parentAuction = allAuctions.find(a => a.id === lot.auctionId);
+                return (
+                  <LotCard
+                    key={lot.id}
+                    lot={lot}
+                    auction={parentAuction}
+                    platformSettings={platformSettings}
+                    badgeVisibilityConfig={platformSettings.sectionBadgeVisibility?.featuredLots}
+                  />
+                );
+              })}
             </div>
           </section>
         )}

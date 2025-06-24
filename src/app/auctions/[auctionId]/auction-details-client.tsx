@@ -14,7 +14,7 @@ import {
   FileText, Heart, Eye, ListChecks, MapPin, Gavel, Tag, CalendarDays, SlidersHorizontal, UserCircle, Briefcase, ExternalLink
 } from 'lucide-react';
 import { isPast } from 'date-fns';
-import { getAuctionStatusText, slugify, getUniqueLotLocations } from '@/lib/sample-data';
+import { getAuctionStatusText, slugify, getUniqueLotLocations } from '@/lib/sample-data-helpers';
 import SearchResultsFrame from '@/components/search-results-frame';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -173,8 +173,8 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
   const handlePageChange = (newPage: number) => setCurrentPage(newPage);
   const handleLoadMore = () => setVisibleItemCount(prev => Math.min(prev + (platformSettings.searchLoadMoreCount || 12), filteredAndSortedLots.length));
 
-  const renderGridItem = (lot: Lot) => <LotCard lot={lot} platformSettings={platformSettings} />;
-  const renderListItem = (lot: Lot) => <LotListItem lot={lot} platformSettings={platformSettings} />;
+  const renderGridItem = (lot: Lot) => <LotCard lot={lot} auction={auction} platformSettings={platformSettings} />;
+  const renderListItem = (lot: Lot) => <LotListItem lot={lot} auction={auction} platformSettings={platformSettings} />;
   
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'Nacional';
 
