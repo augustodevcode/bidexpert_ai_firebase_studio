@@ -1,3 +1,4 @@
+
 // src/lib/database/sample-data.adapter.ts
 import type {
   IDatabaseAdapter, LotCategory, StateInfo, StateFormData, CityInfo, CityFormData,
@@ -9,7 +10,6 @@ import type {
 } from '@/types';
 import {
   slugify,
-  processSampleData as processData, // Renaming to avoid confusion with local function
 } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
@@ -18,8 +18,65 @@ import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// --- Start of moved data loading logic from sample-data-helpers.ts ---
+// --- Data processing function specific to this adapter ---
+function processSampleData(rawData: any) {
+  if (!rawData) return {};
 
+  const {
+    sampleLots = [],
+    sampleAuctions = [],
+    sampleAuctioneers = [],
+    sampleSellers = [],
+    sampleMediaItems = []
+  } = rawData;
+
+  // 1. Resolve media URLs for auctioneers and sellers
+  const resolvedAuctioneers = sampleAuctioneers.map((auc: any) => ({
+    ...auc,
+    logoUrl: sampleMediaItems.find((m: any) => m.id === auc.logoMediaId)?.urlOriginal
+  }));
+
+  const resolvedSellers = sampleSellers.map((seller: any) => ({
+    ...seller,
+    logoUrl: sampleMediaItems.find((m: any) => m.id === seller.logoMediaId)?.urlOriginal
+  }));
+
+  // 2. Process auctions: add lot counts and resolve media URLs
+  const processedAuctions = sampleAuctions.map((auction: any) => {
+    const lotsForThisAuction = sampleLots.filter((lot: any) => lot.auctionId === auction.id);
+    const auctioneer = resolvedAuctioneers.find((a:any) => a.id === auction.auctioneerId);
+    return {
+      ...auction,
+      totalLots: lotsForThisAuction.length,
+      lots: lotsForThisAuction, // Embed for easier access in other parts of the app
+      auctioneerLogoUrl: auctioneer?.logoUrl,
+      imageUrl: sampleMediaItems.find((m: any) => m.id === auction.imageMediaId)?.urlOriginal || 'https://placehold.co/600x400.png',
+    };
+  });
+
+  // 3. Process lots: add auction names and resolve image URLs
+  const processedLots = sampleLots.map((lot: any) => {
+    const auction = processedAuctions.find((a: any) => a.id === lot.auctionId);
+    const seller = resolvedSellers.find((s:any) => s.id === lot.sellerId);
+    return {
+      ...lot,
+      auctionName: auction?.title,
+      sellerName: seller?.name,
+      imageUrl: sampleMediaItems.find((m: any) => m.id === lot.imageMediaId)?.urlOriginal || 'https://placehold.co/600x400.png',
+    };
+  });
+
+  return {
+    ...rawData,
+    sampleAuctioneers: resolvedAuctioneers,
+    sampleSellers: resolvedSellers,
+    sampleAuctions: processedAuctions,
+    sampleLots: processedLots,
+  };
+}
+
+
+// --- Cache and data loading ---
 let sampleDataCache: any | null = null;
 const dataFilePath = path.join(process.cwd(), 'src', 'lib', 'sample-data.local.json');
 
@@ -38,13 +95,9 @@ function getSampleData() {
   }
 
   const rawData = JSON.parse(fileContent);
-  // Pass fs to the processor if it needs it, or handle file reading inside getSampleData only
-  sampleDataCache = processData(rawData);
+  sampleDataCache = processSampleData(rawData); // Call the local function
   return sampleDataCache;
 }
-
-// --- End of moved data loading logic ---
-
 
 export class SampleDataAdapter implements IDatabaseAdapter {
   private data: ReturnType<typeof getSampleData>;
