@@ -1,5 +1,5 @@
 // src/lib/sample-data-helpers.ts
-import type { LotCategory, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, AuctionStatus } from '@/types';
+import type { LotCategory, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, AuctionStatus, PlatformSettings } from '@/types';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle } from 'lucide-react';
 import { isPast } from 'date-fns';
 
@@ -33,6 +33,70 @@ export const getCategoryAssets = (categoryName: string): { bannerUrl: string, ba
 };
 
 
+// Default Platform Settings - can be imported by any component or adapter as a fallback.
+export const samplePlatformSettings: PlatformSettings = {
+  id: 'global',
+  siteTitle: 'BidExpert',
+  siteTagline: 'A Plataforma Definitiva para Leilões',
+  galleryImageBasePath: '/uploads/media/',
+  storageProvider: 'local',
+  firebaseStorageBucket: 'bidexpert-630df.appspot.com',
+  platformPublicIdMasks: {
+    auctions: 'LEIL-',
+    lots: 'LOTE-',
+  },
+  mapSettings: {
+    defaultProvider: 'openstreetmap',
+    googleMapsApiKey: '',
+    staticImageMapZoom: 14,
+    staticImageMapMarkerColor: 'blue',
+  },
+  searchPaginationType: 'loadMore',
+  searchItemsPerPage: 12,
+  searchLoadMoreCount: 12,
+  showCountdownOnLotDetail: true,
+  showCountdownOnCards: true,
+  showRelatedLotsOnLotDetail: true,
+  relatedLotsCount: 4,
+  mentalTriggerSettings: {
+    showDiscountBadge: true,
+    showUrgencyTimer: true,
+    urgencyTimerThresholdDays: 2,
+    urgencyTimerThresholdHours: 0,
+    showPopularityBadge: true,
+    popularityViewThreshold: 100,
+    showHotBidBadge: true,
+    hotBidThreshold: 10,
+    showExclusiveBadge: true,
+  },
+  sectionBadgeVisibility: {
+    featuredLots: {
+      showStatusBadge: true, showDiscountBadge: true, showUrgencyTimer: true,
+      showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true,
+    },
+    searchGrid: {
+      showStatusBadge: true, showDiscountBadge: true, showUrgencyTimer: true,
+      showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true,
+    },
+    searchList: {
+      showStatusBadge: true, showDiscountBadge: true, showUrgencyTimer: true,
+      showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true,
+    },
+    lotDetail: {
+      showStatusBadge: true, showDiscountBadge: true, showUrgencyTimer: true,
+      showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true,
+    },
+  },
+  homepageSections: [
+    { id: 'hero', type: 'hero_carousel', visible: true, order: 1 },
+    { id: 'filters', type: 'filter_links', visible: true, order: 2 },
+    { id: 'featured', type: 'featured_lots', title: 'Lotes em Destaque', visible: true, order: 3, itemCount: 5 },
+    { id: 'active', type: 'active_auctions', title: 'Leilões Ativos', visible: true, order: 4, itemCount: 10 },
+  ],
+  updatedAt: new Date(),
+};
+
+
 // ============================================================================
 // SERVER-SIDE DATA PROCESSING
 // This should only be called by a server-side data loader (like the SampleDataAdapter).
@@ -59,13 +123,13 @@ export function processSampleData(rawData: any) {
   }));
   
   const processedAuctions = (rawData.sampleAuctions || []).map((auction: any) => {
-    const categoryInfo = sampleLotCategories.find(c => c.id === auction.categoryId);
-    const auctioneerInfo = sampleAuctioneers.find(auc => auc.id === auction.auctioneerId);
-    const sellerInfo = sampleSellers.find(s => s.id === auction.sellerId);
+    const categoryInfo = sampleLotCategories.find((c:any) => c.id === auction.categoryId);
+    const auctioneerInfo = sampleAuctioneers.find((auc:any) => auc.id === auction.auctioneerId);
+    const sellerInfo = sampleSellers.find((s:any) => s.id === auction.sellerId);
     
     let effectiveEndDate: Date | null = null;
     if (auction.auctionStages && auction.auctionStages.length > 0) {
-        const sortedStages = [...auction.auctionStages].sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime());
+        const sortedStages = [...auction.auctionStages].sort((a:any, b:any) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime());
         effectiveEndDate = sortedStages.length > 0 ? new Date(sortedStages[sortedStages.length - 1].endDate) : null;
     } else if (auction.endDate) {
         effectiveEndDate = new Date(auction.endDate);
@@ -90,7 +154,7 @@ export function processSampleData(rawData: any) {
   });
 
   const processedLots = (rawData.sampleLots || []).map((lot: any) => {
-    const parentAuction = processedAuctions.find(a => a.id === lot.auctionId);
+    const parentAuction = processedAuctions.find((a:any) => a.id === lot.auctionId);
     let derivedStatus = lot.status;
 
     if (parentAuction) {
@@ -105,8 +169,8 @@ export function processSampleData(rawData: any) {
     return { ...lot, status: derivedStatus };
   });
 
-  processedAuctions.forEach(auction => {
-    const lotsForThisAuction = processedLots.filter(l => l.auctionId === auction.id);
+  processedAuctions.forEach((auction:any) => {
+    const lotsForThisAuction = processedLots.filter((l:any) => l.auctionId === auction.id);
     auction.lots = lotsForThisAuction;
     auction.totalLots = lotsForThisAuction.length;
   });
