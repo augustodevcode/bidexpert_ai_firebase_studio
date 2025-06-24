@@ -9,56 +9,74 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { getMediaItems, handleImageUpload } from '@/app/admin/media/actions';
+import { getMediaItems } from '@/app/admin/media/actions';
 import type { MediaItem } from '@/types';
 import Image from 'next/image';
-import { UploadCloud, Loader2, ImagePlus, FileText, Check } from 'lucide-react'; // Removed CheckboxIcon
-// import { Checkbox } from '@/components/ui/checkbox'; // Checkbox não está sendo usado no modo de seleção
+import { UploadCloud, Loader2, ImagePlus, FileText, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
+
+interface UploadResult {
+  success: boolean;
+  message: string;
+  items?: MediaItem[];
+  errors?: { fileName: string; message: string }[];
+}
 
 interface ChooseMediaDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onMediaSelect: (selectedItems: Partial<MediaItem>[]) => void;
-  allowMultiple?: boolean; // Nova prop para controlar seleção múltipla
+  allowMultiple?: boolean;
 }
 
 function MediaUploadTab({ onUploadComplete }: { onUploadComplete: (uploadedItems: MediaItem[]) => void }) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const fileInputRefTab = useRef<HTMLInputElement>(null); // Ref para o input de arquivo da aba
+  const fileInputRefTab = useRef<HTMLInputElement>(null);
 
   const processFilesForTab = async (files: FileList | null) => {
     if (!files || files.length === 0) {
       toast({ title: 'Nenhum arquivo selecionado', variant: 'destructive'});
       return;
     }
-
+    
     setIsLoading(true);
     const formData = new FormData();
     Array.from(files).forEach(file => {
       formData.append('files', file);
     });
 
-    const result = await handleImageUpload(formData);
-    setIsLoading(false);
+    try {
+        const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+        });
 
-    if (result.success && result.items) {
-      toast({
-        title: 'Upload Concluído',
-        description: result.message,
-      });
-      onUploadComplete(result.items);
-    } else {
-      toast({
-        title: 'Falha no Upload',
-        description: result.message,
-        variant: 'destructive',
-      });
-    }
-    if (fileInputRefTab.current) {
-        fileInputRefTab.current.value = '';
+        const result: UploadResult = await response.json();
+        
+        if (response.ok && result.success && result.items) {
+          toast({
+            title: 'Upload Concluído',
+            description: result.message,
+          });
+          onUploadComplete(result.items);
+        } else {
+          // Handle partial successes or full failures
+           const errorMessage = result.errors ? result.errors.map(e => `${e.fileName}: ${e.message}`).join(', ') : result.message;
+           throw new Error(errorMessage || `Erro HTTP: ${response.status}`);
+        }
+    } catch (error: any) {
+        toast({
+          title: 'Falha no Upload',
+          description: error.message || 'Ocorreu um erro na comunicação com o servidor.',
+          variant: 'destructive',
+        });
+    } finally {
+        setIsLoading(false);
+        if (fileInputRefTab.current) {
+            fileInputRefTab.current.value = '';
+        }
     }
   };
 
@@ -116,7 +134,7 @@ function MediaUploadTab({ onUploadComplete }: { onUploadComplete: (uploadedItems
         </Label>
       </div>
       <div className="text-xs text-muted-foreground text-center">
-        <p>Tamanho máximo de upload: 5MB (exemplo). Formatos: PNG, JPG, WEBP, PDF.</p>
+        <p>Tamanho máximo de upload: 10MB. Formatos: PNG, JPG, WEBP, PDF.</p>
       </div>
     </div>
   );
@@ -127,7 +145,7 @@ export default function ChooseMediaDialog({
   isOpen, 
   onOpenChange, 
   onMediaSelect, 
-  allowMultiple = false // Default para seleção única
+  allowMultiple = false
 }: ChooseMediaDialogProps) {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [isLoadingLibrary, setIsLoadingLibrary] = useState(true);
@@ -148,7 +166,7 @@ export default function ChooseMediaDialog({
   };
 
   useEffect(() => {
-    if (isOpen && currentTab === 'library') { // Apenas busca se a aba da biblioteca estiver ativa
+    if (isOpen && currentTab === 'library') {
       fetchLibraryItems();
     }
     if (isOpen) {
@@ -163,7 +181,6 @@ export default function ChooseMediaDialog({
           ? prevSelected.filter(id => id !== itemId)
           : [...prevSelected, itemId];
       } else {
-        // Seleção única: se já selecionado, desmarca. Se outro selecionado, substitui.
         return prevSelected.includes(itemId) ? [] : [itemId];
       }
     });
@@ -176,10 +193,8 @@ export default function ChooseMediaDialog({
   };
 
   const handleUploadAndRefresh = async (uploadedItems: MediaItem[]) => {
-    // Adiciona os novos itens à lista existente temporariamente para UI ou refaz o fetch
-    // setMediaItems(prev => [...uploadedItems.map(ui => ({...ui, uploadedAt: new Date(ui.uploadedAt!)})), ...prev]);
-    await fetchLibraryItems(); // Re-busca para garantir consistência
-    setCurrentTab('library'); // Switch to library tab after upload
+    await fetchLibraryItems();
+    setCurrentTab('library');
   };
 
 
