@@ -52,6 +52,8 @@ export const auctionFormSchema = z.object({
   sellingBranch: z.string().max(100).optional(),
   automaticBiddingEnabled: z.boolean().optional().default(false),
   allowInstallmentBids: z.boolean().optional().default(false),
+  softCloseEnabled: z.boolean().optional().default(false), // NEW
+  softCloseMinutes: z.coerce.number().int().min(1, "Mínimo de 1 minuto").max(30, "Máximo de 30 minutos").optional().default(2), // NEW
   estimatedRevenue: z.coerce.number().positive({message: "Estimativa deve ser positiva."}).optional().nullable(),
   isFeaturedOnMarketplace: z.boolean().optional().default(false),
   marketplaceAnnouncementTitle: z.string().max(150, {message: "Título do anúncio muito longo."}).optional().nullable(),

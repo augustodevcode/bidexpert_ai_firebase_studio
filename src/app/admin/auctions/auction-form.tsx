@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -23,7 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
 import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem } from '@/types';
-import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -99,6 +100,8 @@ export default function AuctionForm({
       sellingBranch: initialData?.sellingBranch || '',
       automaticBiddingEnabled: initialData?.automaticBiddingEnabled || false,
       allowInstallmentBids: initialData?.allowInstallmentBids || false,
+      softCloseEnabled: initialData?.softCloseEnabled || false,
+      softCloseMinutes: initialData?.softCloseMinutes || 2,
       estimatedRevenue: initialData?.estimatedRevenue || undefined,
       isFeaturedOnMarketplace: initialData?.isFeaturedOnMarketplace || false,
       marketplaceAnnouncementTitle: initialData?.marketplaceAnnouncementTitle || '',
@@ -107,6 +110,7 @@ export default function AuctionForm({
   });
   
   const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
+  const softCloseEnabled = useWatch({ control: form.control, name: 'softCloseEnabled' });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -565,6 +569,33 @@ export default function AuctionForm({
                     </FormItem>
                 )}
             />
+            <FormField
+                control={form.control}
+                name="softCloseEnabled"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                        <FormLabel className="flex items-center gap-2"><Zap className="h-4 w-4 text-amber-500" /> Soft-Close (Anti-Sniping)</FormLabel>
+                        <FormDescription>Estender o tempo final se houver lances nos últimos minutos?</FormDescription>
+                    </div>
+                    <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                    </FormItem>
+                )}
+            />
+            {softCloseEnabled && (
+                 <FormField
+                    control={form.control}
+                    name="softCloseMinutes"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Minutos para Soft-Close</FormLabel>
+                        <FormControl><Input type="number" {...field} value={field.value ?? 2} onChange={e => field.onChange(parseInt(e.target.value, 10))} /></FormControl>
+                        <FormDescription>Se um lance ocorrer neste período final, o leilão será estendido.</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            )}
             <FormField
                 control={form.control}
                 name="allowInstallmentBids"

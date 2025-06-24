@@ -187,6 +187,8 @@ export interface Auction {
   auctioneerName?: string;
   automaticBiddingEnabled?: boolean;
   allowInstallmentBids?: boolean;
+  softCloseEnabled?: boolean; // NEW
+  softCloseMinutes?: number; // NEW
   estimatedRevenue?: number;
   achievedRevenue?: number;
   totalHabilitatedUsers?: number;
