@@ -29,7 +29,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText } from '@/lib/sample-data';
+import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import { Separator } from '@/components/ui/separator';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import Image from 'next/image';
