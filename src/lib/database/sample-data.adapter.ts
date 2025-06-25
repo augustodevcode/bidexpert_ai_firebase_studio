@@ -1,4 +1,3 @@
-
 // src/lib/database/sample-data.adapter.ts
 import type {
   IDatabaseAdapter, LotCategory, StateInfo, StateFormData, CityInfo, CityFormData,
@@ -105,6 +104,15 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   constructor() {
     this.data = getSampleData();
     console.log("[SampleDataAdapter] Instance created and data loaded.");
+  }
+
+  async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {
+    await delay(20);
+    const auctioneer = this.data.sampleAuctioneers.find((a: AuctioneerProfileInfo) => a.slug === auctioneerSlugOrPublicId || a.publicId === auctioneerSlugOrPublicId);
+    if (!auctioneer) return Promise.resolve([]);
+    const items = this.data.sampleAuctions.filter((a: Auction) => a.auctioneerId === auctioneer.id || a.auctioneer === auctioneer.name);
+    const resolved = items.map((auc: Auction) => ({ ...auc, imageUrl: this.resolveMediaUrl(auc.imageMediaId) || 'https://placehold.co/600x400.png' }));
+    return Promise.resolve(JSON.parse(JSON.stringify(resolved)));
   }
 
   async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status">>; newBid?: BidInfo; }> {

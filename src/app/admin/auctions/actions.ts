@@ -85,6 +85,12 @@ export async function getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Pro
   return db.getAuctionsBySellerSlug(sellerSlugOrPublicId);
 }
 
+export async function getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {
+  const db = await getDatabaseAdapter();
+  return db.getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId);
+}
+
+
 export async function getAuction(idOrPublicId: string): Promise<Auction | null> {
   const db = await getDatabaseAdapter();
   return db.getAuction(idOrPublicId);

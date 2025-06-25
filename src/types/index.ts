@@ -760,6 +760,7 @@ export interface IDatabaseAdapter {
   updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string }>;
   deleteAuction(idOrPublicId: string): Promise<{ success: boolean; message: string }>;
   getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]>;
+  getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]>;
 
 
   createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }>;

@@ -5,9 +5,9 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { getAuctions } from '@/app/admin/auctions/actions'; // Changed import
-import { getAuctioneerBySlug } from '@/app/admin/auctioneers/actions'; // Changed import
-import { samplePlatformSettings } from '@/lib/sample-data';
+import { getAuctionsByAuctioneerSlug } from '@/app/admin/auctions/actions'; 
+import { getAuctioneerBySlug } from '@/app/admin/auctioneers/actions'; 
+import { getPlatformSettings } from '@/app/admin/settings/actions';
 import type { Auction, AuctioneerProfileInfo, PlatformSettings } from '@/types';
 import AuctionCard from '@/components/auction-card';
 import AuctionListItem from '@/components/auction-list-item';
@@ -34,7 +34,6 @@ const sortOptionsAuctions = [
   { value: 'visits_desc', label: 'Mais Visitados' },
   { value: 'id_desc', label: 'Adicionados Recentemente' }
 ];
-
 
 function RecentAuctionCarouselItem({ auction }: { auction: Auction }) {
   const auctionEndDate = auction.endDate || (auction.auctionStages && auction.auctionStages.length > 0 ? auction.auctionStages[auction.auctionStages.length - 1].endDate : auction.auctionDate);
@@ -85,17 +84,10 @@ export default function AuctioneerDetailsPage() {
   const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
 
-  // State for auction list managed by SearchResultsFrame
-  const platformSettings = samplePlatformSettings as PlatformSettings;
-  const {
-    searchPaginationType = 'loadMore',
-    searchItemsPerPage = 6, // Adjusted for this page
-    searchLoadMoreCount = 6
-  } = platformSettings;
-
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [auctionSortBy, setAuctionSortBy] = useState<string>('endDate_asc');
   const [currentAuctionPage, setCurrentAuctionPage] = useState(1);
-  const [visibleAuctionCount, setVisibleAuctionCount] = useState(searchLoadMoreCount);
+  const [visibleAuctionCount, setVisibleAuctionCount] = useState(6);
 
   useEffect(() => {
     async function fetchAuctioneerDetails() {
@@ -103,11 +95,12 @@ export default function AuctioneerDetailsPage() {
         setIsLoading(true);
         setError(null);
         try {
-          // Fetch all data in parallel
-          const [foundAuctioneer, allAuctions] = await Promise.all([
-            getAuctioneerBySlug(auctioneerSlug), // More direct fetch
-            getAuctions(),
+          const [foundAuctioneer, auctions, settings] = await Promise.all([
+            getAuctioneerBySlug(auctioneerSlug),
+            getAuctionsByAuctioneerSlug(auctioneerSlug),
+            getPlatformSettings(),
           ]);
+          setPlatformSettings(settings);
 
           if (!foundAuctioneer) {
             setError(`Leiloeiro com slug/publicId "${auctioneerSlug}" não encontrado.`);
@@ -117,13 +110,11 @@ export default function AuctioneerDetailsPage() {
             return;
           }
           setAuctioneerProfile(foundAuctioneer);
-          // Filter the freshly fetched auctions
-          const auctions = allAuctions.filter(auction =>
-            auction.auctioneerId === foundAuctioneer.id
-          );
           setRelatedAuctions(auctions);
+
           setCurrentAuctionPage(1);
-          setVisibleAuctionCount(searchLoadMoreCount);
+          setVisibleAuctionCount(settings?.searchLoadMoreCount || 6);
+
         } catch (e) {
           console.error("Error fetching auctioneer data:", e);
           setError("Erro ao carregar dados do leiloeiro.");
@@ -136,7 +127,8 @@ export default function AuctioneerDetailsPage() {
       }
     }
     fetchAuctioneerDetails();
-  }, [auctioneerSlug, searchLoadMoreCount]);
+  }, [auctioneerSlug]);
+
 
   const sortedAuctions = useMemo(() => {
     let auctionsToSort = [...relatedAuctions];
@@ -161,18 +153,19 @@ export default function AuctioneerDetailsPage() {
   }, [relatedAuctions, auctionSortBy]);
 
   const paginatedAuctions = useMemo(() => {
-    if (searchPaginationType === 'numberedPages') {
-      const startIndex = (currentAuctionPage - 1) * searchItemsPerPage;
-      const endIndex = startIndex + searchItemsPerPage;
+    if (!platformSettings) return [];
+    if (platformSettings.searchPaginationType === 'numberedPages') {
+      const startIndex = (currentAuctionPage - 1) * (platformSettings.searchItemsPerPage || 6);
+      const endIndex = startIndex + (platformSettings.searchItemsPerPage || 6);
       return sortedAuctions.slice(startIndex, endIndex);
     }
     return sortedAuctions.slice(0, visibleAuctionCount);
-  }, [sortedAuctions, currentAuctionPage, visibleAuctionCount, searchPaginationType, searchItemsPerPage]);
+  }, [sortedAuctions, currentAuctionPage, visibleAuctionCount, platformSettings]);
 
   const handleAuctionSortChange = (newSortBy: string) => {
     setAuctionSortBy(newSortBy);
     setCurrentAuctionPage(1);
-    setVisibleAuctionCount(searchLoadMoreCount);
+    setVisibleAuctionCount(platformSettings?.searchLoadMoreCount || 6);
   };
 
   const handleAuctionPageChange = (newPage: number) => {
@@ -180,13 +173,13 @@ export default function AuctioneerDetailsPage() {
   };
 
   const handleLoadMoreAuctions = () => {
-    setVisibleAuctionCount(prev => Math.min(prev + searchLoadMoreCount, sortedAuctions.length));
+    setVisibleAuctionCount(prev => Math.min(prev + (platformSettings?.searchLoadMoreCount || 6), sortedAuctions.length));
   };
-
+  
   const renderAuctionGridItem = (auction: Auction) => <AuctionCard auction={auction} />;
   const renderAuctionListItem = (auction: Auction) => <AuctionListItem auction={auction} />;
 
-  if (isLoading) {
+  if (isLoading || !platformSettings) {
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-4 min-h-[calc(100vh-20rem)]">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -237,14 +230,10 @@ export default function AuctioneerDetailsPage() {
             <h1 className="text-3xl font-bold font-headline">{auctioneerProfile.name}</h1>
             <p className="text-sm text-muted-foreground">{auctioneerProfile.registrationNumber || 'Empresa de Leilões Credenciada'}</p>
             <p className="text-sm text-muted-foreground -mt-1">{auctioneerProfile.city && auctioneerProfile.state ? `${auctioneerProfile.city} - ${auctioneerProfile.state}` : 'Localização não informada'}</p>
-            <p className="text-sm text-muted-foreground">Líder em Leilões Transparentes (Placeholder)</p>
             {auctioneerProfile.rating !== undefined && auctioneerProfile.rating > 0 && (
               <div className="flex items-center justify-center lg:justify-start text-sm text-amber-600 mt-1">
                 <Star className="h-5 w-5 fill-amber-500 text-amber-500 mr-1" />
                 {auctioneerProfile.rating.toFixed(1)}
-                <Link href="#" className="text-primary hover:underline ml-1.5">
-                  ({placeholderTeamReviews} avaliações da equipe)
-                </Link>
               </div>
             )}
           </div>
@@ -253,28 +242,13 @@ export default function AuctioneerDetailsPage() {
             <div className="flex justify-between items-center mb-2">
               <div>
                 <h2 className="text-lg font-semibold text-primary flex items-center">
-                  <Users className="h-5 w-5 mr-1.5"/> LEILÕES Recentes
+                  <Users className="h-5 w-5 mr-1.5"/> Leilões Recentes
                 </h2>
-                <p className="text-xs text-muted-foreground">Estes números representam os leilões conduzidos.</p>
               </div>
               {recentAuctionsForCarousel.length > 1 && (
                 <div className="flex gap-2 print:hidden">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" size="icon" onClick={scrollPrev} className="h-8 w-8 rounded-full bg-background/70 hover:bg-background" aria-label="Slide Anterior">
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>Anterior</p></TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" size="icon" onClick={scrollNext} className="h-8 w-8 rounded-full bg-background/70 hover:bg-background" aria-label="Próximo Slide">
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>Próximo</p></TooltipContent>
-                  </Tooltip>
+                  <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" onClick={scrollPrev} className="h-8 w-8 rounded-full bg-background/70 hover:bg-background" aria-label="Slide Anterior"><ChevronLeft className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>Anterior</p></TooltipContent></Tooltip>
+                  <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" onClick={scrollNext} className="h-8 w-8 rounded-full bg-background/70 hover:bg-background" aria-label="Próximo Slide"><ChevronRight className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>Próximo</p></TooltipContent></Tooltip>
                 </div>
               )}
             </div>
@@ -289,32 +263,16 @@ export default function AuctioneerDetailsPage() {
                 </div>
               </div>
             ) : (
-              <Card className="shadow-sm">
-                <CardContent className="p-6 text-center text-muted-foreground">
-                  Nenhum leilão recente para exibir no momento.
-                </CardContent>
-              </Card>
+              <Card className="shadow-sm"><CardContent className="p-6 text-center text-muted-foreground">Nenhum leilão recente para exibir no momento.</CardContent></Card>
             )}
           </div>
         </section>
 
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center py-6">
-          <div>
-            <p className="text-3xl font-bold text-primary">{auctioneerProfile.auctionsConductedCount || 0}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Leilões (últimos 12m)</p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-primary">R$ {(auctioneerProfile.totalValueSold || 0).toLocaleString('pt-BR')}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Valor Total Vendido</p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-primary">{placeholderPriceRange}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Faixa de Preço (Leilões)</p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-primary">{placeholderAveragePrice}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Preço Médio (Leilões)</p>
-          </div>
+          <div><p className="text-3xl font-bold text-primary">{auctioneerProfile.auctionsConductedCount || 0}</p><p className="text-xs text-muted-foreground uppercase tracking-wider">Leilões Conduzidos</p></div>
+          <div><p className="text-3xl font-bold text-primary">R$ {(auctioneerProfile.totalValueSold || 0).toLocaleString('pt-BR')}</p><p className="text-xs text-muted-foreground uppercase tracking-wider">Valor Total Vendido</p></div>
+          <div><p className="text-3xl font-bold text-primary">{placeholderPriceRange}</p><p className="text-xs text-muted-foreground uppercase tracking-wider">Faixa de Preço (Leilões)</p></div>
+          <div><p className="text-3xl font-bold text-primary">{placeholderAveragePrice}</p><p className="text-xs text-muted-foreground uppercase tracking-wider">Preço Médio (Leilões)</p></div>
         </section>
 
         <Separator className="print:hidden"/>
@@ -322,11 +280,7 @@ export default function AuctioneerDetailsPage() {
         <section className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-6">
           <div className="md:col-span-2">
             <Card className="shadow-md">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold flex items-center">
-                  <Briefcase className="h-5 w-5 mr-2 text-primary" /> Sobre {auctioneerProfile.name}
-                </CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle className="text-xl font-semibold flex items-center"><Briefcase className="h-5 w-5 mr-2 text-primary" /> Sobre {auctioneerProfile.name}</CardTitle></CardHeader>
               <CardContent>
                 {auctioneerProfile.description ? (
                   <p className="text-sm text-muted-foreground whitespace-pre-line">{auctioneerProfile.description}</p>
@@ -335,7 +289,7 @@ export default function AuctioneerDetailsPage() {
                 )}
                 {auctioneerProfile.memberSince && (
                   <p className="text-xs text-muted-foreground mt-3">
-                    Membro desde: {format(new Date(auctioneerProfile.memberSince), 'MMMM yyyy', { locale: ptBR })}
+                    Membro desde: {format(new Date(auctioneerProfile.memberSince as string), 'MMMM yyyy', { locale: ptBR })}
                   </p>
                 )}
               </CardContent>
@@ -344,59 +298,21 @@ export default function AuctioneerDetailsPage() {
 
           <div>
             <Card className="shadow-md">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold flex items-center">
-                  <MessageSquare className="h-5 w-5 mr-2 text-primary" /> Contatar {auctioneerProfile.name}
-                </CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle className="text-xl font-semibold flex items-center"><MessageSquare className="h-5 w-5 mr-2 text-primary" /> Contatar {auctioneerProfile.name}</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <form onSubmit={(e) => e.preventDefault()} className="space-y-3">
-                  <div>
-                    <Label htmlFor="contact-name" className="text-xs">Nome</Label>
-                    <Input id="contact-name" placeholder="Seu Nome Completo" />
-                  </div>
-                  <div>
-                    <Label htmlFor="contact-phone" className="text-xs">Telefone</Label>
-                    <Input id="contact-phone" type="tel" placeholder="(XX) XXXXX-XXXX" />
-                  </div>
-                  <div>
-                    <Label htmlFor="contact-email" className="text-xs">Email</Label>
-                    <Input id="contact-email" type="email" placeholder="seu@email.com" />
-                  </div>
-                  <div>
-                    <Label htmlFor="contact-message" className="text-xs">Mensagem</Label>
-                    <Textarea id="contact-message" placeholder="Sua mensagem..." rows={3} />
-                  </div>
+                  <div><Label htmlFor="contact-name" className="text-xs">Nome</Label><Input id="contact-name" placeholder="Seu Nome Completo" /></div>
+                  <div><Label htmlFor="contact-phone" className="text-xs">Telefone</Label><Input id="contact-phone" type="tel" placeholder="(XX) XXXXX-XXXX" /></div>
+                  <div><Label htmlFor="contact-email" className="text-xs">Email</Label><Input id="contact-email" type="email" placeholder="seu@email.com" /></div>
+                  <div><Label htmlFor="contact-message" className="text-xs">Mensagem</Label><Textarea id="contact-message" placeholder="Sua mensagem..." rows={3} /></div>
                   <Button type="submit" className="w-full" disabled>Enviar Mensagem (Indisponível)</Button>
                 </form>
                 <Separator className="my-3"/>
                 <div className="space-y-2 text-sm">
-                   {auctioneerProfile.phone && (
-                      <div className="flex items-center">
-                      <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <a href={`tel:${auctioneerProfile.phone}`} className="hover:text-primary">{auctioneerProfile.phone}</a>
-                      </div>
-                  )}
-                  {auctioneerProfile.email && (
-                      <div className="flex items-center">
-                      <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <a href={`mailto:${auctioneerProfile.email}`} className="hover:text-primary">{auctioneerProfile.email}</a>
-                      </div>
-                  )}
-                   {auctioneerProfile.address && (
-                      <div className="flex items-start">
-                      <Landmark className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground flex-shrink-0" />
-                      <p>{auctioneerProfile.address}{auctioneerProfile.city && `, ${auctioneerProfile.city}`}{auctioneerProfile.state && ` - ${auctioneerProfile.state}`}</p>
-                      </div>
-                  )}
-                  {auctioneerProfile.website && (
-                      <div className="flex items-center">
-                      <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <a href={auctioneerProfile.website.startsWith('http') ? auctioneerProfile.website : `https://${auctioneerProfile.website}`} target="_blank" rel="noopener noreferrer" className="hover:text-primary truncate">
-                          {auctioneerProfile.website.replace(/^https?:\/\//, '')}
-                      </a>
-                      </div>
-                  )}
+                   {auctioneerProfile.phone && (<div className="flex items-center"><Phone className="h-4 w-4 mr-2 text-muted-foreground" /><a href={`tel:${auctioneerProfile.phone}`} className="hover:text-primary">{auctioneerProfile.phone}</a></div>)}
+                  {auctioneerProfile.email && (<div className="flex items-center"><Mail className="h-4 w-4 mr-2 text-muted-foreground" /><a href={`mailto:${auctioneerProfile.email}`} className="hover:text-primary">{auctioneerProfile.email}</a></div>)}
+                   {auctioneerProfile.address && (<div className="flex items-start"><Landmark className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground flex-shrink-0" /><p>{auctioneerProfile.address}{auctioneerProfile.city && `, ${auctioneerProfile.city}`}{auctioneerProfile.state && ` - ${auctioneerProfile.state}`}</p></div>)}
+                  {auctioneerProfile.website && (<div className="flex items-center"><Globe className="h-4 w-4 mr-2 text-muted-foreground" /><a href={auctioneerProfile.website.startsWith('http') ? auctioneerProfile.website : `https://${auctioneerProfile.website}`} target="_blank" rel="noopener noreferrer" className="hover:text-primary truncate">{auctioneerProfile.website.replace(/^https?:\/\//, '')}</a></div>)}
                 </div>
               </CardContent>
             </Card>
@@ -407,9 +323,7 @@ export default function AuctioneerDetailsPage() {
 
         {relatedAuctions.length > 0 && (
           <section className="pt-6">
-            <h2 className="text-2xl font-bold mb-6 font-headline flex items-center">
-              <TrendingUp className="h-6 w-6 mr-2 text-primary" /> Todos os Leilões de {auctioneerProfile.name}
-            </h2>
+            <h2 className="text-2xl font-bold mb-6 font-headline flex items-center"><TrendingUp className="h-6 w-6 mr-2 text-primary" /> Todos os Leilões de {auctioneerProfile.name}</h2>
             <SearchResultsFrame
                 items={paginatedAuctions}
                 totalItemsCount={relatedAuctions.length}
@@ -430,11 +344,7 @@ export default function AuctioneerDetailsPage() {
         )}
 
         {relatedAuctions.length === 0 && !isLoading && (
-          <Card className="shadow-sm mt-8">
-            <CardContent className="text-center py-10">
-              <p className="text-muted-foreground">Nenhum leilão ativo encontrado para este leiloeiro no momento.</p>
-            </CardContent>
-          </Card>
+          <Card className="shadow-sm mt-8"><CardContent className="text-center py-10"><p className="text-muted-foreground">Nenhum leilão ativo encontrado para este leiloeiro no momento.</p></CardContent></Card>
         )}
       </div>
     </TooltipProvider>
