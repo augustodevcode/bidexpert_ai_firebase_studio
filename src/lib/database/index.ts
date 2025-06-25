@@ -7,22 +7,37 @@ let dbInstance: IDatabaseAdapter | undefined;
 // Lista de métodos essenciais que o adapter DEVE ter
 const ESSENTIAL_ADAPTER_METHODS: (keyof IDatabaseAdapter)[] = [
   'initializeSchema',
+  // Categories
   'createLotCategory', 'getLotCategories', 'getLotCategory', 'getLotCategoryByName', 'updateLotCategory', 'deleteLotCategory',
+  // Subcategories
   'createSubcategory', 'getSubcategories', 'getSubcategory', 'getSubcategoryBySlug', 'updateSubcategory', 'deleteSubcategory',
+  // States
   'createState', 'getStates', 'getState', 'updateState', 'deleteState',
+  // Cities
   'createCity', 'getCities', 'getCity', 'updateCity', 'deleteCity',
+  // Auctioneers
   'createAuctioneer', 'getAuctioneers', 'getAuctioneer', 'updateAuctioneer', 'deleteAuctioneer', 'getAuctioneerBySlug', 'getAuctioneerByName',
+  // Sellers
   'createSeller', 'getSellers', 'getSeller', 'updateSeller', 'deleteSeller', 'getSellerBySlug', 'getSellerByName',
-  'createAuction', 'getAuctions', 'getAuction', 'updateAuction', 'deleteAuction', 'getAuctionsBySellerSlug',
-  'createLot', 'getLots', 'getLot', 'updateLot', 'deleteLot',
-  'getBidsForLot', 'placeBidOnLot',
-  'getReviewsForLot', 'createReview',
-  'getQuestionsForLot', 'createQuestion', 'answerQuestion',
+  // Auctions
+  'createAuction', 'getAuctions', 'getAuction', 'updateAuction', 'deleteAuction', 'getAuctionsBySellerSlug', 'getAuctionsByIds', 'getAuctionsByAuctioneerSlug',
+  // Lots
+  'createLot', 'getLots', 'getLot', 'updateLot', 'deleteLot', 'getLotsByIds',
+  // Bids & Proxy
+  'getBidsForLot', 'placeBidOnLot', 'createUserLotMaxBid', 'getActiveUserLotMaxBid',
+  // Reviews & Questions
+  'getReviewsForLot', 'createReview', 'getQuestionsForLot', 'createQuestion', 'answerQuestion',
+  // Users & Roles
   'getUserProfileData', 'updateUserProfile', 'ensureUserRole', 'getUsersWithRoles', 'updateUserRole', 'deleteUserProfile', 'getUserByEmail',
   'createRole', 'getRoles', 'getRole', 'getRoleByName', 'updateRole', 'deleteRole', 'ensureDefaultRolesExist',
+  // Media
   'createMediaItem', 'getMediaItems', 'updateMediaItemMetadata', 'deleteMediaItemFromDb', 'linkMediaItemsToLot', 'unlinkMediaItemFromLot',
+  // Platform Settings
   'getPlatformSettings', 'updatePlatformSettings',
+  // Direct Sales
+  'getDirectSaleOffers'
 ];
+
 
 function isAdapterInstanceValid(adapter: IDatabaseAdapter | undefined, systemContext: string): adapter is IDatabaseAdapter {
   if (!adapter) {
