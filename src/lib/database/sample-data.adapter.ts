@@ -17,7 +17,7 @@ import type {
   UserLotMaxBid,
   UserWin
 } from '@/types';
-import { slugify, getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { slugify } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 import * as sampleData from '@/lib/sample-data'; // Import all exports from the new sample-data.ts
@@ -331,43 +331,6 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async getPlatformSettings(): Promise<PlatformSettings> { await delay(10); return Promise.resolve(JSON.parse(JSON.stringify(this.data.samplePlatformSettings))); }
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> { await delay(50); const currentSettings = this.data.samplePlatformSettings || {}; const newSettings = { ...currentSettings, ...data, platformPublicIdMasks: { ...(currentSettings.platformPublicIdMasks || {}), ...(data.platformPublicIdMasks || {}), }, mapSettings: { ...(currentSettings.mapSettings || {}), ...(data.mapSettings || {}), }, mentalTriggerSettings: { ...(currentSettings.mentalTriggerSettings || {}), ...(data.mentalTriggerSettings || {}), }, sectionBadgeVisibility: { ...(currentSettings.sectionBadgeVisibility || {}), ...(data.sectionBadgeVisibility || {}), }, id: 'global', updatedAt: new Date() }; this.data.samplePlatformSettings = newSettings; this._persistData(); return { success: true, message: "Configurações da plataforma atualizadas (Sample Data)!" }; }
 
-  // --- Reviews ---
-  async getReviewsForLot(lotId: string): Promise<Review[]> {
-    await delay(20); 
-    const reviews = this.data.sampleLotReviews.filter((r: Review) => r.lotId === lotId);
-    return Promise.resolve(JSON.parse(JSON.stringify(reviews))); 
-  }
-
-  async createReview(reviewData: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; reviewId?: string; }> { 
-    const newReview: Review = {...reviewData, id: `rev-${uuidv4()}`, createdAt: new Date()}; 
-    this.data.sampleLotReviews.unshift(newReview); 
-    this._persistData(); 
-    return { success: true, message: "Avaliação adicionada!", reviewId: newReview.id }; 
-  }
-
-  // --- Questions ---
-  async getQuestionsForLot(lotId: string): Promise<LotQuestion[]> { 
-    await delay(20); 
-    const questions = this.data.sampleLotQuestions.filter((q: LotQuestion) => q.lotId === lotId);
-    return Promise.resolve(JSON.parse(JSON.stringify(questions))); 
-  }
-
-  async createQuestion(questionData: Omit<LotQuestion, "id" | "createdAt" | "answeredAt" | "answeredByUserId" | "answeredByUserDisplayName" | "isPublic">): Promise<{ success: boolean; message: string; questionId?: string | undefined; }> { 
-    const newQuestion: LotQuestion = {...questionData, id: `qst-${uuidv4()}`, createdAt: new Date(), isPublic: true}; 
-    this.data.sampleLotQuestions.unshift(newQuestion); 
-    this._persistData(); 
-    return { success: true, message: "Pergunta enviada!", questionId: newQuestion.id }; 
-  }
-
-  async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> { 
-    const index = this.data.sampleLotQuestions.findIndex((q: LotQuestion) => q.id === questionId); 
-    if(index === -1) return {success: false, message: 'Pergunta não encontrada.'}; 
-    this.data.sampleLotQuestions[index] = {...this.data.sampleLotQuestions[index], answerText, answeredByUserId, answeredByUserDisplayName, answeredAt: new Date()}; 
-    this._persistData(); 
-    return {success: true, message: 'Pergunta respondida!'}; 
-  }
-  
-  // --- Direct Sale Offers ---
   async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
     await delay(20);
     return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleDirectSaleOffers)));
