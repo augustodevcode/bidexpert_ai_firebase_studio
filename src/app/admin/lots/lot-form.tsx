@@ -28,7 +28,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText, getLotStatusColor, sampleMediaItems } from '@/lib/sample-data'; // Import sampleMediaItems
+import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data-helpers';
+import { sampleMediaItems } from '@/lib/sample-data.local.json';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { Separator } from '@/components/ui/separator';
