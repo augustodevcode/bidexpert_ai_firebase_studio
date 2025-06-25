@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -182,6 +181,8 @@ export interface Auction {
   bidsCount?: number;
   sellingBranch?: string;
   vehicleLocation?: string; 
+  latitude?: number | null;
+  longitude?: number | null;
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
   auctioneerLogoUrl?: string;
@@ -203,7 +204,8 @@ export type AuctionFormData = Omit<Auction,
   'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' |
   'lots' | 'totalLots' | 'visits' | 'isFavorite' |
   'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' |
-  'categoryId' | 'auctioneerId' | 'sellerId' | 'achievedRevenue' | 'totalHabilitatedUsers'
+  'categoryId' | 'auctioneerId' | 'sellerId' | 'achievedRevenue' | 'totalHabilitatedUsers' |
+  'latitude' | 'longitude' 
 > & {
   auctionDate: Date; 
   endDate?: Date | null; 
@@ -218,6 +220,8 @@ export type AuctionDbData = Omit<AuctionFormData, 'category' | 'auctioneer' | 's
   totalHabilitatedUsers?: number;
   auctionType?: Auction['auctionType'];
   auctionStages?: AuctionStage[];
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 

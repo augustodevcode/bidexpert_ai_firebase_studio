@@ -14,6 +14,9 @@ import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 const randomItem = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const randomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - 1 - min + 1)) + min;
 const randomDate = (start: Date, end: Date): Date => new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+const BRAZIL_BOUNDS = { latMin: -33.7, latMax: 5.2, lonMin: -73.9, lonMax: -34.8 };
+const randomCoord = (min: number, max: number): number => min + Math.random() * (max - min);
+
 
 // ==================================
 // BASE STATIC DATA
@@ -123,6 +126,8 @@ auctionTypes.forEach(type => {
       status: status, auctionType: type, categoryId: selectedCategory.id, category: selectedCategory.name,
       auctioneerId: auctioneer.id, auctioneer: auctioneer.name, sellerId: seller.id, seller: seller.name,
       city: city.name, state: city.stateUf, auctionDate: startDate, endDate: endDate,
+      latitude: randomCoord(BRAZIL_BOUNDS.latMin, BRAZIL_BOUNDS.latMax),
+      longitude: randomCoord(BRAZIL_BOUNDS.lonMin, BRAZIL_BOUNDS.lonMax),
       createdAt: new Date(), updatedAt: new Date(), totalLots: 0,
       initialOffer: randomInt(50000, 200000), visits: randomInt(100, 2000),
       isFeaturedOnMarketplace: Math.random() > 0.8, lots: []
@@ -176,6 +181,8 @@ auctionTypes.forEach(type => {
         status: finalLotStatus, categoryId: selectedCategory.id, type: selectedCategory.name,
         subcategoryId: selectedSubcat?.id, subcategoryName: selectedSubcat?.name,
         price: currentPrice, bidsCount: bidsCount, endDate: lotEndDate,
+        latitude: (auction.latitude || 0) + (Math.random() - 0.5) * 0.5,
+        longitude: (auction.longitude || 0) + (Math.random() - 0.5) * 0.5,
         views: randomInt(50, 1000), cityName: city.name, stateUf: city.stateUf,
         isFeatured: Math.random() > 0.85, initialPrice: initialPrice,
         auctionName: auction.title,

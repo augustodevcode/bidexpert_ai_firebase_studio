@@ -1,5 +1,3 @@
-
-
 // src/app/auctions/[auctionId]/page.tsx
 import type { Auction, PlatformSettings, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import AuctionDetailsClient from './auction-details-client';

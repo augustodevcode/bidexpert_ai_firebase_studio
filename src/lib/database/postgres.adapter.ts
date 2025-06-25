@@ -1,4 +1,3 @@
-
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -254,6 +253,8 @@ function mapToAuction(row: QueryResultRow): Auction {
         bidsCount: Number(row.bids_count || 0),
         sellingBranch: row.selling_branch,
         vehicleLocation: row.vehicle_location,
+        latitude: row.latitude !== null ? parseFloat(row.latitude) : undefined,
+        longitude: row.longitude !== null ? parseFloat(row.longitude) : undefined,
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at),
         auctioneerLogoUrl: row.auctioneer_logo_url,

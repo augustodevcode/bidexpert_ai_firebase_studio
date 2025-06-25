@@ -1,4 +1,3 @@
-
 // src/lib/database/mysql.adapter.ts
 import mysql, { type RowDataPacket, type Pool } from 'mysql2/promise';
 import type {
@@ -290,6 +289,8 @@ function mapToAuction(row: any): Auction {
         bidsCount: Number(row.bidsCount || 0),
         sellingBranch: row.sellingBranch,
         vehicleLocation: row.vehicleLocation,
+        latitude: row.latitude !== null ? parseFloat(row.latitude) : undefined,
+        longitude: row.longitude !== null ? parseFloat(row.longitude) : undefined,
         createdAt: new Date(row.createdAt),
         updatedAt: new Date(row.updatedAt),
         auctioneerLogoUrl: row.auctioneerLogoUrl,
@@ -518,7 +519,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
   
   async getAuction(idOrPublicId: string): Promise<Auction | null> {
-    const [rows] = await getPool().execute(
+    const [rows] = await getPool().execute<RowDataPacket[]>(
       `SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url 
        FROM auctions a
        LEFT JOIN lot_categories cat ON a.category_id = cat.id
@@ -529,11 +530,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
       [idOrPublicId, idOrPublicId]
     );
 
-    if ((rows as any[]).length === 0) return null;
-    const auctionData = mapMySqlRowToCamelCase((rows as RowDataPacket[])[0]);
+    if (rows.length === 0) return null;
+    const auctionData = mapMySqlRowToCamelCase(rows[0]);
     
     // Now fetch the lots associated with this auction
-    const [lotRows] = await getPool().execute(
+    const [lotRows] = await getPool().execute<RowDataPacket[]>(
       `SELECT l.*, c.name as category_name, s.name as subcategory_name, st.uf as state_uf, city.name as city_name, a.title as auction_name
        FROM lots l
        LEFT JOIN auctions a ON l.auction_id = a.id
@@ -545,7 +546,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       [auctionData.id]
     );
 
-    const lots = mapMySqlRowsToCamelCase(lotRows as RowDataPacket[]).map(mapToLot);
+    const lots = mapMySqlRowsToCamelCase(lotRows).map(mapToLot);
     
     const auction = mapToAuction(auctionData);
     auction.lots = lots;
