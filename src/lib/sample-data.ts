@@ -1,3 +1,4 @@
+
 // src/lib/sample-data.ts
 import type {
   Lot, LotCategory, Auction, AuctioneerProfileInfo, SellerProfileInfo,
@@ -99,6 +100,34 @@ const sampleUserProfilesData: UserProfileWithPermissions[] = [
 // ==================================
 // DYNAMIC DATA GENERATION
 // ==================================
+const vehicleMakes: { [key: string]: string[] } = {
+  Carros: ['Ford', 'Chevrolet', 'Volkswagen', 'Fiat', 'Honda', 'Toyota', 'Hyundai', 'BMW', 'Mercedes-Benz', 'Audi'],
+  Motos: ['Honda', 'Yamaha', 'Kawasaki', 'Suzuki', 'Harley-Davidson', 'Ducati'],
+};
+const vehicleModels: { [key: string]: string[] } = {
+  'Ford': ['Ka', 'Fiesta', 'Focus', 'Ranger', 'Mustang'],
+  'Chevrolet': ['Onix', 'Prisma', 'S10', 'Cruze', 'Camaro'],
+  'Volkswagen': ['Gol', 'Polo', 'Virtus', 'T-Cross', 'Jetta'],
+  'Fiat': ['Mobi', 'Argo', 'Strada', 'Toro', 'Pulse'],
+  'Honda': ['Civic', 'Fit', 'HR-V', 'City', 'CB 500F'],
+  'Toyota': ['Corolla', 'Hilux', 'Yaris', 'RAV4'],
+  'Hyundai': ['HB20', 'Creta', 'Tucson', 'Santa Fe'],
+  'BMW': ['320i', 'X1', 'GS 1250'],
+  'Mercedes-Benz': ['Classe C', 'GLA', 'Classe A'],
+  'Audi': ['A3', 'Q3', 'A4'],
+  'Yamaha': ['Factor 150', 'Fazer 250', 'MT-03'],
+  'Kawasaki': ['Ninja 400', 'Z400'],
+  'Suzuki': ['GSX-S750'],
+  'Harley-Davidson': ['Iron 883', 'Fat Boy'],
+  'Ducati': ['Monster', 'Panigale']
+};
+
+const machineTypes = ['Trator', 'Escavadeira', 'Retroescavadeira', 'Motoniveladora'];
+const machineMakes = ['John Deere', 'Caterpillar', 'Komatsu', 'Volvo', 'Case'];
+const artTypes = ['Pintura a Óleo', 'Escultura em Bronze', 'Aquarela', 'Fotografia Vintage'];
+const artistNames = ['Silva', 'Santos', 'Oliveira', 'Pereira', 'Lima'];
+
+
 const generatedAuctions: Auction[] = [];
 const generatedLots: Lot[] = [];
 const generatedBids: BidInfo[] = [];
@@ -147,6 +176,33 @@ auctionTypes.forEach(type => {
       let currentPrice = initialPrice;
       let bidsCount = 0;
       let winner: UserProfileWithPermissions | null = null;
+      
+      let lotTitle = `Item ${selectedSubcat ? selectedSubcat.name : selectedCategory.name} - Lote ${j}`;
+      let lotDetails: Partial<Lot> = {};
+
+      if (selectedCategory.slug === 'veiculos' && selectedSubcat) {
+        const makes = vehicleMakes[selectedSubcat.name as keyof typeof vehicleMakes];
+        if (makes) {
+          const make = randomItem(makes);
+          const model = randomItem(vehicleModels[make as keyof typeof vehicleModels]);
+          const year = randomInt(2015, 2023);
+          lotTitle = `${make} ${model} 1.6 Flex - Lote ${j}`;
+          lotDetails = { make, model, year };
+        }
+      } else if (selectedCategory.slug === 'imoveis' && selectedSubcat) {
+          const cityForLot = randomItem(sampleCitiesData);
+          lotTitle = `${selectedSubcat.name} em ${cityForLot.name} - ${cityForLot.stateUf} - Lote ${j}`;
+      } else if (selectedCategory.slug === 'maquinas-e-equipamentos' && selectedSubcat) {
+          const type = randomItem(machineTypes);
+          const make = randomItem(machineMakes);
+          lotTitle = `${type} ${make} - Lote ${j}`;
+          lotDetails = { make, model: type };
+      } else if (selectedCategory.slug === 'arte-e-antiguidades') {
+          const type = randomItem(artTypes);
+          const artist = randomItem(artistNames);
+          lotTitle = `${type} por ${artist} - Lote ${j}`;
+      }
+
 
       if (lotStatus !== 'EM_BREVE') {
         const numBids = randomInt(0, 25);
@@ -176,7 +232,8 @@ auctionTypes.forEach(type => {
 
       const lot: Lot = {
         id: lotId, publicId: `LOT-PUB-${lotId}`, auctionId: auction.id,
-        title: `Item ${selectedSubcat ? selectedSubcat.name : selectedCategory.name} - Lote ${j}`,
+        title: lotTitle,
+        ...lotDetails,
         number: `${j}`, imageUrl: media.urlOriginal, imageMediaId: media.id,
         status: finalLotStatus, categoryId: selectedCategory.id, type: selectedCategory.name,
         subcategoryId: selectedSubcat?.id, subcategoryName: selectedSubcat?.name,

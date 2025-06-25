@@ -191,6 +191,24 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   };
 
   const auctionTypeDisplay = getAuctionTypeDisplay(auction.auctionType);
+  
+  const getStatusDisplay = () => {
+    if (auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO') {
+      if (soldLotsCount > 0) {
+        return { text: `Vendido (${soldLotsCount}/${auction.totalLots})`, className: 'bg-green-600 text-white' };
+      }
+      return { text: 'Finalizado (Sem Venda)', className: 'bg-gray-500 text-white' };
+    }
+    if (auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO') {
+      return { text: getAuctionStatusText(auction.status), className: 'bg-green-600 text-white' };
+    }
+    if (auction.status === 'EM_BREVE') {
+      return { text: getAuctionStatusText(auction.status), className: 'bg-blue-500 text-white' };
+    }
+    return { text: getAuctionStatusText(auction.status), className: 'bg-gray-500 text-white' };
+  };
+
+  const statusDisplay = getStatusDisplay();
 
   return (
     <TooltipProvider>
@@ -210,14 +228,8 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
               </div>
             </Link>
              <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10">
-                <Badge 
-                className={`text-xs px-2 py-1
-                    ${auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'bg-green-600 text-white' : ''}
-                    ${auction.status === 'EM_BREVE' ? 'bg-blue-500 text-white' : ''}
-                    ${auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO' || auction.status === 'CANCELADO' || auction.status === 'SUSPENSO' || auction.status === 'RASCUNHO' || auction.status === 'EM_PREPARACAO' ? 'bg-gray-500 text-white' : ''}
-                `}
-                >
-                {getAuctionStatusText(auction.status)}
+                <Badge className={`text-xs px-2 py-1 ${statusDisplay.className}`}>
+                    {statusDisplay.text}
                 </Badge>
             </div>
              <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
