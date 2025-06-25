@@ -516,6 +516,24 @@ export class MySqlAdapter implements IDatabaseAdapter {
     getPool();
   }
   
+  async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {
+    const [rows] = await getPool().execute(
+      `SELECT
+        a.*,
+        cat.name as category_name,
+        auct.name as auctioneer_name,
+        s.name as seller_name
+       FROM auctions a
+       JOIN auctioneers auct ON a.auctioneer_id = auct.id
+       LEFT JOIN lot_categories cat ON a.category_id = cat.id
+       LEFT JOIN sellers s ON a.seller_id = s.id
+       WHERE auct.slug = ? OR auct.public_id = ?
+       ORDER BY a.auction_date DESC`,
+      [auctioneerSlugOrPublicId, auctioneerSlugOrPublicId]
+    );
+    return mapMySqlRowsToCamelCase(rows as RowDataPacket[]).map(mapToAuction);
+  }
+  
   async getAuctions(): Promise<Auction[]> {
     const [rows] = await getPool().execute(
       `SELECT

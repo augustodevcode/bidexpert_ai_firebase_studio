@@ -479,6 +479,24 @@ export class PostgresAdapter implements IDatabaseAdapter {
     getPool();
   }
 
+  async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {
+    const res = await getPool().query(
+      `SELECT
+        a.*,
+        cat.name as category_name,
+        auct.name as auctioneer_name,
+        s.name as seller_name
+       FROM auctions a
+       JOIN auctioneers auct ON a.auctioneer_id = auct.id
+       LEFT JOIN lot_categories cat ON a.category_id = cat.id
+       LEFT JOIN sellers s ON a.seller_id = s.id
+       WHERE auct.slug = $1 OR auct.public_id = $1
+       ORDER BY a.auction_date DESC`,
+      [auctioneerSlugOrPublicId]
+    );
+    return res.rows.map(mapToAuction);
+  }
+
   async getAuctions(): Promise<Auction[]> {
     const res = await getPool().query(
       `SELECT 
