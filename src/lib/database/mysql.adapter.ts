@@ -555,44 +555,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
   
   async getWinsForUser(userId: string): Promise<UserWin[]> {
-    const [rows] = await getPool().execute<RowDataPacket[]>(
-        `SELECT
-            w.id as win_id,
-            w.user_id,
-            w.lot_id,
-            w.winning_bid_amount,
-            w.win_date,
-            w.payment_status,
-            w.invoice_url,
-            l.*
-        FROM user_wins w
-        JOIN lots l ON w.lot_id = l.id
-        WHERE w.user_id = ?
-        ORDER BY w.win_date DESC`,
-        [userId]
-    );
-
-    const wins = mapMySqlRowsToCamelCase(rows as RowDataPacket[]).map(winRow => {
-        const {
-            winId, userId: winUserId, lotId, winningBidAmount, winDate, paymentStatus, invoiceUrl,
-            ...lotData
-        } = winRow;
-        
-        const lotObject = mapToLot(lotData);
-
-        return {
-            id: String(winId),
-            userId: winUserId,
-            lotId: String(lotId),
-            winningBidAmount: parseFloat(winningBidAmount),
-            winDate: new Date(winDate),
-            paymentStatus: paymentStatus as UserWin['paymentStatus'],
-            invoiceUrl: invoiceUrl,
-            lot: lotObject,
-        };
-    });
-
-    return wins;
+    console.warn("[MySqlAdapter] getWinsForUser is not yet implemented for MySQL.");
+    return Promise.resolve([]);
   }
   
   async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> {
@@ -609,7 +573,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] getActiveUserLotMaxBid is not yet implemented for MySQL.");
     return null;
   }
-
+  
   async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> {
     const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM auctioneers WHERE name = ? LIMIT 1', [name]);
     if (rows.length === 0) return null;
@@ -632,5 +596,25 @@ export class MySqlAdapter implements IDatabaseAdapter {
     const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM sellers WHERE slug = ? OR public_id = ? LIMIT 1', [slug, slug]);
     if (rows.length === 0) return null;
     return mapToSellerProfileInfo(mapMySqlRowToCamelCase(rows[0]));
+  }
+
+  async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {
+    console.warn("[MySqlAdapter] getAuctionsByAuctioneerSlug is not yet implemented for MySQL.");
+    return Promise.resolve([]);
+  }
+
+  async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
+    console.warn("[MySqlAdapter] getDirectSaleOffers is not yet implemented for MySQL.");
+    return Promise.resolve([]);
+  }
+
+  async getAuctionsByIds(ids: string[]): Promise<Auction[]> {
+    console.warn("[MySqlAdapter] getAuctionsByIds is not yet implemented for MySQL.");
+    return Promise.resolve([]);
+  }
+  
+  async getLotsByIds(ids: string[]): Promise<Lot[]> {
+    console.warn("[MySqlAdapter] getLotsByIds is not yet implemented for MySQL.");
+    return Promise.resolve([]);
   }
 }

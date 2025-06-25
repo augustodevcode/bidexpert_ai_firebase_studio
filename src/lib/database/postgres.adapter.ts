@@ -618,4 +618,24 @@ export class PostgresAdapter implements IDatabaseAdapter {
     if (rows.length === 0) return null;
     return mapToSellerProfileInfo(rows[0]);
   }
+
+  async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {
+    console.warn("[PostgresAdapter] getAuctionsByAuctioneerSlug is not yet implemented for PostgreSQL.");
+    return Promise.resolve([]);
+  }
+
+  async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
+    console.warn("[PostgresAdapter] getDirectSaleOffers is not yet implemented for PostgreSQL.");
+    return Promise.resolve([]);
+  }
+
+  async getAuctionsByIds(ids: string[]): Promise<Auction[]> {
+    console.warn("[PostgresAdapter] getAuctionsByIds is not yet implemented for PostgreSQL.");
+    return Promise.resolve([]);
+  }
+
+  async getLotsByIds(ids: string[]): Promise<Lot[]> {
+    console.warn("[PostgresAdapter] getLotsByIds is not yet implemented for PostgreSQL.");
+    return Promise.resolve([]);
+  }
 }
