@@ -54,7 +54,7 @@ export default function BiddingPanel({ currentLot, onBidSuccess }: BiddingPanelP
     try {
       const [history, maxBid] = await Promise.all([
         getBidsForLot(currentLot.publicId || currentLot.id),
-        getActiveMaxBid(currentLot.publicId || currentLot.id, userProfileWithPermissions?.uid || '')
+        getActiveUserLotMaxBid(currentLot.publicId || currentLot.id, userProfileWithPermissions?.uid || '')
       ]);
       setBidHistory(history);
       setActiveMaxBid(maxBid);

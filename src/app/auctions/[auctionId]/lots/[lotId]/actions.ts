@@ -57,7 +57,7 @@ export async function placeMaxBid(lotId: string, userId: string, maxAmount: numb
   return result;
 }
 
-export async function getActiveMaxBid(lotId: string, userId: string): Promise<UserLotMaxBid | null> {
+export async function getActiveUserLotMaxBid(lotId: string, userId: string): Promise<UserLotMaxBid | null> {
   if (!userId) return null;
   console.log(`[Action - getActiveMaxBid] Fetching max bid for user ${userId} on lot ${lotId}`);
   const db = await getDatabaseAdapter();
