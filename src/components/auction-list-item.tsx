@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Eye, CalendarDays, Tag, MapPin, ListChecks, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Users, Clock, Star } from 'lucide-react';
 import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText } from '@/lib/sample-data';
+import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface AuctionListItemProps {
@@ -129,10 +129,10 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
             {auction.auctionStages && auction.auctionStages.length > 0 ? (
                 <div className="space-y-1 mb-2 max-h-20 overflow-y-auto text-xs">
                     {auction.auctionStages.map((stage, index) => (
-                        <div key={index} className={`p-1.5 rounded-md ${new Date(stage.endDate).getTime() < new Date().getTime() ? 'bg-muted/40 text-muted-foreground line-through' : 'bg-accent/30'}`}>
+                        <div key={index} className={`p-1.5 rounded-md ${new Date(stage.endDate as string).getTime() < new Date().getTime() ? 'bg-muted/40 text-muted-foreground line-through' : 'bg-accent/30'}`}>
                             <div className="flex justify-between items-center">
                                 <span className="font-medium text-xs">{stage.name}</span>
-                                <span className="text-xs">{stage.statusText || 'Encerra'}: {format(new Date(stage.endDate), "dd/MM HH:mm", { locale: ptBR })}</span>
+                                <span className="text-xs">{stage.statusText || 'Encerra'}: {format(new Date(stage.endDate as string), "dd/MM HH:mm", { locale: ptBR })}</span>
                             </div>
                         </div>
                     ))}
@@ -145,7 +145,7 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
             )}
             
 
-            <div className="mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2">
+            <div className="mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2 border-t border-dashed">
               <div className="flex-shrink-0">
                 <p className="text-xs text-muted-foreground">
                   {auction.auctionType === 'TOMADA_DE_PRECOS' ? 'Valor de Referência' : 'A partir de'}
