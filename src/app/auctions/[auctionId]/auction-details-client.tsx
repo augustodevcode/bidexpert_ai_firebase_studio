@@ -286,7 +286,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
 
       <Separator />
 
-      <h2 className="text-2xl font-bold font-headline">Lotes do Leilão</h2>
+      <h2 className="text-2xl font-bold font-headline">Lotes do Leilão ({auction.totalLots || auction.lots?.length || 0})</h2>
       
       <div className="grid md:grid-cols-[280px_1fr] gap-8 items-start">
          <aside className="hidden md:block">

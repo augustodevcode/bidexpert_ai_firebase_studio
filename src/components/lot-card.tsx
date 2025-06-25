@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings, Auction } from '@/types';
@@ -292,9 +293,12 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
 
       <CardContent className="p-3 flex-grow space-y-1.5">
         <Link href={lotDetailUrl} className="block mt-2">
-          <h3 className="text-sm font-semibold hover:text-primary transition-colors leading-tight">
+          <h3 className="text-sm font-semibold hover:text-primary transition-colors leading-tight min-h-[2.2em] line-clamp-2">
             {lot.title}
           </h3>
+          <p className="text-xs text-muted-foreground line-clamp-2 mt-1 h-8 group-hover:text-primary/90">
+            {lot.description || ''}
+          </p>
         </Link>
         <div className="flex items-center text-xs text-muted-foreground">
             {getTypeIcon(lot.type)}
