@@ -44,6 +44,7 @@ import type { MegaMenuGroup } from './mega-menu-link-list';
 import type { MegaMenuLinkItem } from './mega-menu-link-list';
 import TwoColumnMegaMenu from './two-column-mega-menu';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 // HistoryListItem é usado por MainNav quando renderiza o conteúdo do Histórico
@@ -72,6 +73,7 @@ export const HistoryListItem = forwardRef<
 HistoryListItem.displayName = "HistoryListItem";
 
 export default function Header() {
+  const [isLoading, setIsLoading] = useState(true);
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
   const [searchCategories, setSearchCategories] = useState<LotCategory[]>([]);
   const [allLots, setAllLots] = useState<Lot[]>([]); // New state for search
@@ -117,6 +119,7 @@ export default function Header() {
     });
 
     async function fetchInitialData() {
+      setIsLoading(true);
       console.log('[Header fetchInitialData] Iniciando busca de dados...');
       try {
         const [settings, categories, allFetchedLots, fetchedAuctioneers, fetchedSellers] = await Promise.all([
@@ -165,6 +168,8 @@ export default function Header() {
 
       } catch (error) {
         console.error("Error fetching data for header:", error);
+      } finally {
+        setIsLoading(false);
       }
     }
     fetchInitialData();
@@ -317,6 +322,17 @@ export default function Header() {
     { href: '/contact', label: 'Fale Conosco', icon: Phone },
   ];
 
+  const HeaderSkeleton = () => (
+      <div className="container mx-auto px-4 flex h-12 items-center justify-between animate-pulse">
+        <Skeleton className="h-6 w-32 rounded-md" />
+        <div className="flex-grow flex justify-start pl-4 gap-4">
+            <Skeleton className="h-6 w-24 rounded-md" />
+            <Skeleton className="h-6 w-24 rounded-md" />
+            <Skeleton className="h-6 w-24 rounded-md" />
+        </div>
+      </div>
+  );
+
 
   return (
     <header className="sticky top-0 z-50 w-full shadow-md">
@@ -337,7 +353,7 @@ export default function Header() {
       <div className="bg-secondary text-secondary-foreground text-xs border-b">
         <div className="container mx-auto px-4 h-10 flex items-center justify-between">
           <div className="hidden sm:block">
-            Bem-vindo ao {siteTitle}! Sua plataforma de leilões online.
+            {isLoading ? <Skeleton className="h-4 w-64" /> : `Bem-vindo ao ${siteTitle}! Sua plataforma de leilões online.`}
           </div>
           <nav className="flex items-center space-x-3 sm:space-x-4">
             <Link href="/faq" className="hover:text-primary transition-colors flex items-center gap-1">
@@ -372,6 +388,7 @@ export default function Header() {
                     </SheetTitle>
                   </SheetHeader>
                   <nav className="flex flex-col gap-1 p-4">
+                    {isLoading ? <p>Carregando...</p> : 
                     <MainNav
                         items={allNavItemsForMobile}
                         onLinkClick={handleLinkOrMobileMenuCloseClick}
@@ -382,6 +399,7 @@ export default function Header() {
                         recentlyViewedItems={recentlyViewedItems}
                         HistoryListItemComponent={HistoryListItem}
                     />
+                    }
                     <div className="mt-auto pt-4 border-t">
                       <UserNav />
                     </div>
@@ -393,12 +411,12 @@ export default function Header() {
               <div className="flex items-center space-x-2 sm:space-x-3">
                 <Coins className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
                 <span className="font-bold text-xl sm:text-3xl">
-                  {siteTitle}
+                  {isLoading ? <Skeleton className="h-8 w-32" /> : siteTitle}
                 </span>
               </div>
               {siteTagline && (
                 <span className="text-xs sm:text-sm text-muted-foreground mt-0 sm:mt-1 hidden md:block">
-                  {siteTagline}
+                   {isLoading ? <Skeleton className="h-4 w-48" /> : siteTagline}
                 </span>
               )}
             </Link>
@@ -534,44 +552,46 @@ export default function Header() {
 
       {/* Main Navigation Bar - Desktop */}
       <div className="border-b bg-background text-foreground hidden md:block">
-        <div className="container mx-auto px-4 flex h-12 items-center justify-between">
-            {/* Categorias Megamenu (à esquerda) */}
-            {firstNavItem && firstNavItem.isMegaMenu && (
-            <NavigationMenu className="relative z-10 flex items-center justify-start">
-                <NavigationMenuList>
-                <NavigationMenuItem value={firstNavItem.label}>
-                    <NavigationMenuTrigger
-                        className={cn(
-                            navigationMenuTriggerStyle(),
-                            (pathname?.startsWith('/category') || (pathname === '/search' && (searchParamsHook.get('type') === 'lots' || searchParamsHook.get('tab') === 'categories'))) && 'bg-accent text-primary font-semibold',
-                            'font-semibold'
-                        )}
-                    >
-                    {firstNavItem.icon && <firstNavItem.icon className="mr-1.5 h-4 w-4" /> }
-                    {firstNavItem.label}
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent align={firstNavItem.megaMenuAlign || "start"}>
-                     {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={handleLinkOrMobileMenuCloseClick} />}
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-                </NavigationMenuList>
-            </NavigationMenu>
-            )}
+        {isLoading ? <HeaderSkeleton /> : (
+            <div className="container mx-auto px-4 flex h-12 items-center justify-between">
+                {/* Categorias Megamenu (à esquerda) */}
+                {firstNavItem && firstNavItem.isMegaMenu && (
+                <NavigationMenu className="relative z-10 flex items-center justify-start">
+                    <NavigationMenuList>
+                    <NavigationMenuItem value={firstNavItem.label}>
+                        <NavigationMenuTrigger
+                            className={cn(
+                                navigationMenuTriggerStyle(),
+                                (pathname?.startsWith('/category') || (pathname === '/search' && (searchParamsHook.get('type') === 'lots' || searchParamsHook.get('tab') === 'categories'))) && 'bg-accent text-primary font-semibold',
+                                'font-semibold'
+                            )}
+                        >
+                        {firstNavItem.icon && <firstNavItem.icon className="mr-1.5 h-4 w-4" /> }
+                        {firstNavItem.label}
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent align={firstNavItem.megaMenuAlign || "start"}>
+                        {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={handleLinkOrMobileMenuCloseClick} />}
+                    </NavigationMenuContent>
+                    </NavigationMenuItem>
+                    </NavigationMenuList>
+                </NavigationMenu>
+                )}
 
-            {/* Itens Centrais de Navegação */}
-            <div className="flex-grow flex justify-start pl-4">
-                <MainNav
-                    items={centralNavItems}
-                    onLinkClick={handleLinkOrMobileMenuCloseClick}
-                    className="hidden md:flex"
-                    searchCategories={searchCategories}
-                    auctioneers={auctioneers}
-                    consignorMegaMenuGroups={consignorMegaMenuGroups}
-                    recentlyViewedItems={recentlyViewedItems}
-                    HistoryListItemComponent={HistoryListItem}
-                />
+                {/* Itens Centrais de Navegação */}
+                <div className="flex-grow flex justify-start pl-4">
+                    <MainNav
+                        items={centralNavItems}
+                        onLinkClick={handleLinkOrMobileMenuCloseClick}
+                        className="hidden md:flex"
+                        searchCategories={searchCategories}
+                        auctioneers={auctioneers}
+                        consignorMegaMenuGroups={consignorMegaMenuGroups}
+                        recentlyViewedItems={recentlyViewedItems}
+                        HistoryListItemComponent={HistoryListItem}
+                    />
+                </div>
             </div>
-        </div>
+        )}
       </div>
 
       {/* Breadcrumbs Bar */}
@@ -590,6 +610,7 @@ export default function Header() {
     
 
     
+
 
 
 

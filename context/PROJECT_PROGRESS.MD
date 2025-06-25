@@ -1,51 +1,78 @@
-# Project Progress - BidExpert
+# Project Roadmap - BidExpert
 
-## DONE
-- **Admin Panel Foundation:** CRUDs for Lot Categories, States, Cities, Auctioneers, Sellers, Auctions, Lots, Roles, Users, Media Items.
-- **Database System:**
-    - Adapter pattern for Firestore, MySQL, PostgreSQL.
-    - SQL schema initialization (`initialize-db.ts`) and admin user setup (`setup-admin-user.ts`) scripts created/refined.
-- **Header & Navigation:** Implemented dynamic multi-level megamenus for categories, modalities, consignors, and auctioneers.
-- **Platform Customization (Admin Settings):** Core settings management page implemented.
-- **Lot Card & Detail Enhancements:** Implemented "Mental Triggers" (badges), conditional legal info tab, and improved countdown timers.
-- **User Authentication:** Registration form updated; basic AuthContext implemented.
-- **`SearchResultsFrame` Component:** Created and integrated for consistent listing displays.
-- **Subcategory Management (Items 16, 17, 18):** Full CRUD and display functionality for subcategories completed.
-- **Lot Dates & Status Derivation (Item 13):** Logic to derive lot status from the parent auction implemented and verified across components.
-- **Admin User Login/Permissions:** Resolved login issues by abstracting data source access via adapters.
-- **Search Page UI (Item 2):** Fixed minor UI issue on search hero banner.
-- **Media Library Integration (Partial):** Replaced URL inputs with media selection buttons in Category, Auctioneer, Seller, and Auction forms.
-- **Auction Stages Timeline (Item 19):** Implemented a visual timeline in the auction edit form.
-- **Advanced Lot Fields (GAP 4.2.1, 4.2.2):** Added `reservePrice`, `evaluationValue`, `debtAmount`, `itbiValue` to `Lot` type, database schemas, and forms.
-- **Lot Detail Transparency (GAP 4.2.1, 4.2.2):** Implemented display for new legal/financial fields on the lot detail page.
-- **Reserve Price Logic (GAP 4.1.1):** Implemented logic in `sample-data.ts` to determine lot status based on `reservePrice`.
-- **Lot Detail Page Accessibility (GAP 4.1):** Fixed critical 404 error by implementing a redirect from `/lots/[lotId]` to the full canonical URL.
-- **Q&A System (GAP 4.1.2):** Added data models, database tables, server actions, and UI components for a per-lot Question & Answer feature.
-- **Inconsistent Search Behavior (GAP 4.1):** Refactored search logic and centralized sample data into `sample-data.local.json`, resolving client-side build errors.
-- **Proxy Bidding / Lance por Procuração (GAP 4.2.5 - Part 1):** Implemented the foundational data model (`UserLotMaxBid`), database schema, and database adapter methods for storing users' maximum confidential bids.
+Este documento acompanha o progresso do desenvolvimento com base na especificação funcional.
 
-## DOING
-- **Proxy Bidding / Lance por Procuração (GAP 4.2.5 - Part 2):** Implementing the server actions and UI for placing and managing maximum confidential bids.
+---
 
-## NEXT
-- **Item 20:** Develop Virtual Auditorium (`/auctions/[auctionId]/live`) with current lot display, bidding panel, upcoming lots, and chat.
-- **Item 21:** Gantt chart for auctions on the auction dashboard (`/admin/auctions/page.tsx`).
-- **Complete SQL Adapter Implementation:**
-    *   Thoroughly test and complete all `IDatabaseAdapter` methods for MySQL and PostgreSQL for all entities.
-- **Auction Theory Enhancements:**
-    *   **Soft-Close/Anti-Sniping (GAP 4.1.1):** Implement logic to extend auction end times based on last-minute bids.
-    *   **Proxy Bidding (GAP 4.2.5):** Implement secure backend logic (in `placeBidOnLot`) and UI for automatic proxy bidding based on the new `UserLotMaxBid` entity.
-    *   **Configurable Bid Increments (GAP 4.1.3):** Add `Auction.bidIncrementRule` and display it clearly.
-- **User Authentication & Authorization (Enhancements):**
-    *   Implement robust, granular permission checks in all Server Actions.
-    *   Complete `habilitationStatus` workflow for users.
-- **AI Flow Integration (Deepen):**
-    *   Improve UI for AI interaction (e.g., applying suggestions in forms).
-- **Dashboard Pages (User & Consignor):**
-    *   Implement backend logic and data display for "My Bids", "My Wins", "My Lots" (Consignor), Financials (Consignor).
-- **Implement Remaining PRD Core Features:**
-    *   Full Auction Catalog functionality on Home Page (with live DB filters, sorting).
-    *   User Profile management (public view, full editing).
-- **Refine UI/UX & Mobile Responsiveness.**
-- **Comprehensive Testing & Performance Optimization.**
-- **Error Handling & Logging (User-friendly messages, server-side logging).**
+### 1. Otimização da Experiência do Usuário (UI/UX)
+
+- **1.1. Apresentação Clara e Consistente de Dados**
+  - **[DOING]** Corrigir/Garantir que "Total de Lotes" seja preciso em todos os componentes.
+  - **[TODO]** Implementar atualização em tempo real para volume de ofertas.
+
+- **1.2. Detalhamento Abrangente dos Lotes**
+  - **[DONE]** Estrutura inicial dos cards de lote e pré-visualização.
+  - **[TODO]** Expandir modal de pré-visualização com mais detalhes (laudos, histórico).
+  - **[DONE]** Galeria de imagens na página de detalhes do lote.
+
+- **1.3. Acessibilidade da Documentação Associada**
+  - **[DONE]** Seção de "Documentos" (Edital) na página de detalhes do leilão.
+  - **[TODO]** Criar biblioteca central de documentos no menu principal.
+
+---
+
+### 2. Transparência e Credibilidade
+
+- **2.1. Perfis Detalhados de Comitentes e Leiloeiros**
+  - **[DONE]** Páginas de perfil dedicadas para comitentes e leiloeiros.
+  - **[DOING]** Incluir mais detalhes nos perfis (histórico de transações, avaliações).
+
+- **2.2. Processo de Gestão de Lances Claro**
+  - **[DONE]** Exibição do status do lance na interface.
+  - **[DONE]** Seção "Meus Arremates" e "Favoritos" no painel do usuário.
+  - **[TODO]** Melhorar a seção "Meus Lances" com histórico detalhado.
+  - **[DONE]** Funcionalidade de "lance automático" (Proxy Bidding).
+
+- **2.3. Resolução de Disputas**
+  - **[DONE]** Página "Fale Conosco" como canal inicial.
+  - **[TODO]** Criar seção formal de "Resolução de Disputas" (FAQ/Ajuda).
+  - **[TODO]** Integrar sistema de tickets ou chat online para suporte.
+
+---
+
+### 3. Engajamento e Alcance
+
+- **3.1. Marketing de Conteúdo (Blog)**
+  - **[TODO]** Integrar um módulo de blog na plataforma.
+
+- **3.2. Presença em Mídias Sociais**
+  - **[DONE]** Ícones e links para redes sociais no rodapé.
+  - **[DONE]** Botões de compartilhamento social na página de detalhes do lote.
+
+- **3.3. Programas de Aquisição e Retenção**
+  - **[TODO]** Criar sistema de pontos/recompensas.
+  - **[TODO]** Desenvolver módulo para gerenciar promoções.
+  - **[DONE]** Exibição do volume de ofertas (indireta, através da listagem).
+
+- **3.4. Parcerias Estratégicas**
+  - **[TODO]** Criar seção de "Parceiros" no site.
+  - **[TODO]** Integrar APIs de parceiros (simulação de frete/financiamento).
+
+- **3.5. Otimização para Motores de Busca (SEO)**
+  - **[DOING]** Implementação de meta tags e URLs amigáveis (padrão Next.js).
+  - **[DOING]** Otimização contínua de velocidade e responsividade.
+
+---
+
+### 4. Melhorias Adicionais
+
+- **4.1. Funcionalidades de Conveniência**
+  - **[TODO]** Desenvolver módulo de simulação de frete.
+  - **[TODO]** Criar sistema de notificações (Push/Email).
+
+- **4.2. Canais de Feedback do Usuário**
+  - **[DONE]** Sistema de Avaliações na página de lotes.
+  - **[TODO]** Integrar formulário de feedback direto na interface.
+
+- **4.3. Credibilidade e Segurança (Blockchain)**
+  - **[TODO]** Pesquisar e implementar certificação blockchain.
