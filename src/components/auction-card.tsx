@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -10,7 +11,6 @@ import type { Auction, AuctionStage as AuctionStageType } from '@/types';
 import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Pencil, Clock, Users, Star, ListChecks, CheckSquare } from 'lucide-react';
 import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useState, useEffect, useMemo } from 'react';
 import AuctionPreviewModal from './auction-preview-modal';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import {
@@ -29,9 +29,9 @@ interface AuctionStageItemProps {
 }
 
 const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, auctionId, index }) => {
-  const [clientTimeData, setClientTimeData] = useState<{ formattedDate: string; isPast: boolean } | null>(null);
+  const [clientTimeData, setClientTimeData] = React.useState<{ formattedDate: string; isPast: boolean } | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const now = new Date();
     let stageEndDateObj: Date | null = null;
     let isValidDate = false;
@@ -103,16 +103,16 @@ interface AuctionCardProps {
 }
 
 export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
-  const [isFavorite, setIsFavorite] = useState(auction.isFavorite || false);
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [auctionFullUrl, setAuctionFullUrl] = useState<string>(`/auctions/${auction.publicId || auction.id}`);
+  const [isFavorite, setIsFavorite] = React.useState(auction.isFavorite || false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = React.useState(false);
+  const [auctionFullUrl, setAuctionFullUrl] = React.useState<string>(`/auctions/${auction.publicId || auction.id}`);
 
   const soldLotsCount = React.useMemo(() => {
     if (!auction.lots || auction.lots.length === 0) return 0;
     return auction.lots.filter(lot => lot.status === 'VENDIDO').length;
   }, [auction.lots]);
 
-  const mentalTriggers = useMemo(() => {
+  const mentalTriggers = React.useMemo(() => {
     const triggers: string[] = [];
     const now = new Date();
 
@@ -141,7 +141,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   }, [auction.endDate, auction.totalHabilitatedUsers, auction.isFeaturedOnMarketplace, auction.additionalTriggers]);
 
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (typeof window !== 'undefined') {
       setAuctionFullUrl(`${window.location.origin}/auctions/${auction.publicId || auction.id}`);
     }
