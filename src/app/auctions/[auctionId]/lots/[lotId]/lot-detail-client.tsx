@@ -30,7 +30,7 @@ import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdF
 import { useAuth } from '@/contexts/auth-context';
 import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data-helpers';
 
-import { getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot } from './actions';
+import { getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, getActiveUserLotMaxBid, placeBidOnLot } from './actions';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LotDescriptionTab from '@/components/auction/lot-description-tab';
@@ -405,7 +405,7 @@ export default function LotDetailClientContent({
                 </div>
             </div>
             {platformSettings.showRelatedLotsOnLotDetail !== false && relatedLots.length > 0 && (
-            <section className="mt-12">
+            <section className="mt-12 relative z-10">
                 <Separator className="my-8" />
                 <h2 className="text-2xl font-bold mb-6 font-headline">Outros Lotes Deste Leilão</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
