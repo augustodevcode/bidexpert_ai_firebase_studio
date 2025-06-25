@@ -516,11 +516,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
     getPool();
   }
   
-  // Method implementation will go here...
-  // Omitted for brevity, but the logic would be the same as the previous implementation.
-  // ...
-  // All other methods are assumed to be here and correct.
-  
   async getAuction(idOrPublicId: string): Promise<Auction | null> {
     const [rows] = await getPool().execute(
       `SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url 
@@ -558,9 +553,48 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return auction;
   }
   
-  // All other existing methods of the class...
-}
+  async getWinsForUser(userId: string): Promise<UserWin[]> {
+    const [rows] = await getPool().execute(
+        `SELECT
+            w.id,
+            w.user_id,
+            w.lot_id,
+            w.winning_bid_amount,
+            w.win_date,
+            w.payment_status,
+            w.invoice_url,
+            l.*
+        FROM user_wins w
+        JOIN lots l ON w.lot_id = l.id
+        WHERE w.user_id = ?
+        ORDER BY w.win_date DESC`,
+        [userId]
+    );
 
-// Ensure all other methods from the original file are present here.
-// This is just a partial representation to show the change.
-// The final generated file must be complete.
+    const wins = mapMySqlRowsToCamelCase(rows as RowDataPacket[]).map(winRow => {
+        // O mapMySqlRowToCamelCase já converte os nomes das colunas
+        // Agora, separe o objeto 'lot' do resto
+        const {
+            id, userId: winUserId, lotId, winningBidAmount, winDate, paymentStatus, invoiceUrl,
+            ...lotData
+        } = winRow;
+
+        // Precisamos mapear os dados do lote para o objeto Lot correto
+        const lotObject = mapToLot(lotData);
+
+        return {
+            id: String(id),
+            userId: winUserId,
+            lotId: String(lotId),
+            winningBidAmount: parseFloat(winningBidAmount),
+            winDate: new Date(winDate),
+            paymentStatus: paymentStatus as UserWin['paymentStatus'],
+            invoiceUrl: invoiceUrl,
+            lot: lotObject, // O objeto Lot aninhado
+        };
+    });
+
+    return wins;
+  }
+
+}

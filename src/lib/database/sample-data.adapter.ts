@@ -108,8 +108,17 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async getWinsForUser(userId: string): Promise<UserWin[]> {
     await delay(20);
     const wins = this.data.sampleUserWins.filter((w: UserWin) => w.userId === userId);
-    return Promise.resolve(JSON.parse(JSON.stringify(wins)));
+    // Populate the lot data for each win, as the type requires it.
+    const populatedWins = wins.map(win => {
+        const lotForWin = this.data.sampleLots.find(l => l.id === win.lot.id || l.publicId === win.lot.id);
+        return {
+            ...win,
+            lot: lotForWin || win.lot // Fallback to potentially partial data if full lot not found
+        };
+    });
+    return Promise.resolve(JSON.parse(JSON.stringify(populatedWins)));
   }
+
 
   async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
     await delay(20);
@@ -244,7 +253,6 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   // --- Auctioneers & Sellers ---
   async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleAuctioneers))); }
   async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> { await delay(20); const item = this.data.sampleAuctioneers.find((a: AuctioneerProfileInfo) => a.id === idOrPublicId || a.publicId === idOrPublicId || a.slug === idOrPublicId); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
-  async getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null> { return this.getAuctioneer(slugOrPublicId); }
   async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> { await delay(20); const item = this.data.sampleAuctioneers.find((a: AuctioneerProfileInfo) => a.name.toLowerCase() === name.toLowerCase()); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
   async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> { const slug = slugify(data.name); const newAuct: AuctioneerProfileInfo = {...data, id: `auct-${slug}`, publicId: `AUCT-PUB-${uuidv4().substring(0, 8)}`, slug, createdAt: new Date(), updatedAt: new Date()}; this.data.sampleAuctioneers.push(newAuct); this._persistData(); return {success: true, message: 'Leiloeiro criado!', auctioneerId: newAuct.id, auctioneerPublicId: newAuct.publicId}; }
   async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleAuctioneers.findIndex((a: AuctioneerProfileInfo) => a.id === id || a.publicId === id); if(index === -1) return {success: false, message: 'Leiloeiro não encontrado.'}; this.data.sampleAuctioneers[index] = {...this.data.sampleAuctioneers[index], ...data, slug: data.name ? slugify(data.name) : this.data.sampleAuctioneers[index].slug, updatedAt: new Date()}; this._persistData(); return {success: true, message: 'Leiloeiro atualizado!'}; }
@@ -252,7 +260,6 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   
   async getSellers(): Promise<SellerProfileInfo[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleSellers))); }
   async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> { await delay(20); const item = this.data.sampleSellers.find((s: SellerProfileInfo) => s.id === idOrPublicId || s.publicId === idOrPublicId || s.slug === idOrPublicId); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
-  async getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null> { return this.getSeller(slugOrPublicId); }
   async getSellerByName(name: string): Promise<SellerProfileInfo | null> { await delay(20); const item = this.data.sampleSellers.find((s: SellerProfileInfo) => s.name.toLowerCase() === name.toLowerCase()); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> { const slug = slugify(data.name); const newSeller: SellerProfileInfo = {...data, id: `seller-${slug}`, publicId: `SELL-PUB-${uuidv4().substring(0,8)}`, slug, createdAt: new Date(), updatedAt: new Date()}; this.data.sampleSellers.push(newSeller); this._persistData(); return {success: true, message: 'Comitente criado!', sellerId: newSeller.id, sellerPublicId: newSeller.publicId}; }
   async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleSellers.findIndex((s: SellerProfileInfo) => s.id === id || s.publicId === id); if(index === -1) return {success: false, message: 'Comitente não encontrado.'}; this.data.sampleSellers[index] = {...this.data.sampleSellers[index], ...data, slug: data.name ? slugify(data.name) : this.data.sampleSellers[index].slug, updatedAt: new Date()}; this._persistData(); return {success: true, message: 'Comitente atualizado!'}; }

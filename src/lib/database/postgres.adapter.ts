@@ -478,11 +478,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
   constructor() {
     getPool();
   }
-
-  // Method implementation will go here...
-  // Omitted for brevity, but the logic would be the same as the previous implementation.
-  // ...
-  // All other methods are assumed to be here and correct.
   
   async getAuction(idOrPublicId: string): Promise<Auction | null> {
     const res = await getPool().query(
@@ -491,7 +486,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
        LEFT JOIN lot_categories cat ON a.category_id = cat.id
        LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
        LEFT JOIN sellers s ON a.seller_id = s.id
-       WHERE a.id = $1 OR a.public_id = $1 
+       WHERE a.id = $1 OR a.public_id = $2 
        LIMIT 1`,
       [isNaN(parseInt(idOrPublicId, 10)) ? -1 : parseInt(idOrPublicId, 10), idOrPublicId]
     );
@@ -521,9 +516,67 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return auction;
   }
   
-  // All other existing methods of the class...
-}
+  async getWinsForUser(userId: string): Promise<UserWin[]> {
+    const { rows } = await getPool().query(
+        `SELECT
+            w.id,
+            w.user_id,
+            w.lot_id,
+            w.winning_bid_amount,
+            w.win_date,
+            w.payment_status,
+            w.invoice_url,
+            
+            -- Prefixo "l_" para todas as colunas de lote para evitar ambiguidade
+            l.id as l_id,
+            l.public_id as l_public_id,
+            l.auction_id as l_auction_id,
+            l.title as l_title,
+            l.number as l_number,
+            l.image_url as l_image_url,
+            l.data_ai_hint as l_data_ai_hint
+            -- Adicione outras colunas de "lots" necessárias aqui, prefixadas com "l_"
+            
+        FROM user_wins w
+        -- Garantir que a junção seja com a tabela de lotes
+        JOIN lots l ON w.lot_id = l.id
+        WHERE w.user_id = $1
+        ORDER BY w.win_date DESC`,
+        [userId]
+    );
 
-// Ensure all other methods from the original file are present here.
-// This is just a partial representation to show the change.
-// The final generated file must be complete.
+    const wins = rows.map(winRow => {
+        // Separar os dados do arremate dos dados do lote
+        const {
+            id, user_id, lot_id, winning_bid_amount, win_date, payment_status, invoice_url,
+            ...lotData
+        } = winRow;
+
+        // Construir um objeto de lote a partir das colunas prefixadas
+        const lotObjectData: { [key: string]: any } = {};
+        for (const key in lotData) {
+            if (key.startsWith('l_')) {
+                // Remover o prefixo "l_" para obter o nome original da coluna
+                const originalKey = key.substring(2);
+                lotObjectData[originalKey] = lotData[key];
+            }
+        }
+        
+        const lotObject = mapToLot(lotObjectData);
+
+        return {
+            id: String(id),
+            userId: user_id,
+            lotId: String(lot_id),
+            winningBidAmount: parseFloat(winning_bid_amount),
+            winDate: new Date(win_date),
+            paymentStatus: payment_status as UserWin['paymentStatus'],
+            invoiceUrl: invoice_url,
+            lot: lotObject,
+        };
+    });
+
+    return wins;
+  }
+
+}

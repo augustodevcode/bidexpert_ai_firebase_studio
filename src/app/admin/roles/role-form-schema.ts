@@ -52,6 +52,7 @@ export const predefinedPermissions = [
   { id: 'users:update', label: 'Usuários: Editar', group: 'Usuários e Perfis' },
   { id: 'users:delete', label: 'Usuários: Excluir', group: 'Usuários e Perfis' },
   { id: 'users:assign_roles', label: 'Usuários: Atribuir Perfis', group: 'Usuários e Perfis' },
+  { id: 'users:manage_habilitation', label: 'Usuários: Gerenciar Habilitação', group: 'Usuários e Perfis' },
   // Roles
   { id: 'roles:create', label: 'Perfis: Criar', group: 'Usuários e Perfis' },
   { id: 'roles:read', label: 'Perfis: Ver', group: 'Usuários e Perfis' },
@@ -60,14 +61,19 @@ export const predefinedPermissions = [
   // Settings
   { id: 'settings:read', label: 'Configurações: Ver', group: 'Configurações' },
   { id: 'settings:update', label: 'Configurações: Editar', group: 'Configurações' },
+  // User-facing Permissions
+  { id: 'view_auctions', label: 'Público: Ver Leilões', group: 'Usuário Final' },
+  { id: 'view_lots', label: 'Público: Ver Lotes', group: 'Usuário Final' },
+  { id: 'place_bids', label: 'Público: Fazer Lances', group: 'Usuário Final' },
+  // Winner-specific Permissions
+  { id: 'view_wins', label: 'Arrematante: Ver Arremates', group: 'Arrematante' },
+  { id: 'manage_payments', label: 'Arrematante: Gerenciar Pagamentos', group: 'Arrematante' },
+  { id: 'schedule_retrieval', label: 'Arrematante: Agendar Retirada', group: 'Arrematante' },
+  // Role-specific groups
+  { id: 'view_reports', label: 'Comitente: Ver Relatórios', group: 'Comitente'},
+  { id: 'conduct_auctions', label: 'Leiloeiro: Conduzir Leilões (Auditório)', group: 'Leiloeiro'},
   // Generic Admin / All Access
   { id: 'manage_all', label: 'Acesso Total (Administrador)', group: 'Geral'},
-  // Public viewing permissions
-  { id: 'view_auctions', label: 'Público: Ver Leilões', group: 'Público' },
-  { id: 'view_lots', label: 'Público: Ver Lotes', group: 'Público' },
-  { id: 'place_bids', label: 'Público: Fazer Lances', group: 'Público' },
-  { id: 'view_reports', label: 'Comitente: Ver Relatórios', group: 'Comitente'},
-  { id: 'conduct_auctions', label: 'Leiloeiro: Conduzir Leilões (Auditório)', group: 'Leiloeiro'}
 ] as const;
 
 
@@ -84,5 +90,3 @@ export const roleFormSchema = z.object({
 });
 
 export type RoleFormValues = z.infer<typeof roleFormSchema>;
-
-    
