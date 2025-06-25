@@ -244,7 +244,7 @@ function mapToAuction(row: QueryResultRow): Auction {
         imageUrl: row.image_url,
         dataAiHint: row.data_ai_hint,
         documentsUrl: row.documents_url,
-        totalLots: Number(row.total_lots || 0),
+        totalLots: Number(row.total_lots_count || 0),
         visits: Number(row.visits || 0),
         initialOffer: row.initial_offer !== null ? Number(row.initial_offer) : undefined,
         isFavorite: row.is_favorite,
@@ -476,6 +476,27 @@ const defaultRolesData: RoleFormData[] = [
 export class PostgresAdapter implements IDatabaseAdapter {
   constructor() {
     getPool();
+  }
+
+  async getAuctions(): Promise<Auction[]> {
+    const res = await getPool().query(
+      `SELECT 
+        a.*, 
+        cat.name as category_name, 
+        auct.name as auctioneer_name, 
+        s.name as seller_name, 
+        auct.logo_url as auctioneer_logo_url,
+        COUNT(l.id) as total_lots_count
+       FROM auctions a
+       LEFT JOIN lot_categories cat ON a.category_id = cat.id
+       LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
+       LEFT JOIN sellers s ON a.seller_id = s.id
+       LEFT JOIN lots l ON l.auction_id = a.id
+       GROUP BY a.id, cat.name, auct.name, s.name, auct.logo_url
+       ORDER BY a.auction_date DESC`
+    );
+    const auctions = res.rows.map(mapToAuction);
+    return auctions;
   }
 
   async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status">>; newBid?: BidInfo }> {

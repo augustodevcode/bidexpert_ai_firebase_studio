@@ -280,7 +280,7 @@ function mapToAuction(row: any): Auction {
         imageUrl: row.imageUrl,
         dataAiHint: row.dataAiHint,
         documentsUrl: row.documentsUrl,
-        totalLots: Number(row.totalLots || 0),
+        totalLots: Number(row.totalLotsCount || 0),
         visits: Number(row.visits || 0),
         initialOffer: row.initialOffer !== null ? Number(row.initialOffer) : undefined,
         isFavorite: Boolean(row.isFavorite),
@@ -514,6 +514,30 @@ export class MySqlAdapter implements IDatabaseAdapter {
   constructor() {
     getPool();
   }
+  
+  async getAuctions(): Promise<Auction[]> {
+    const [rows] = await getPool().execute(
+      `SELECT
+        a.*,
+        cat.name as category_name,
+        auct.name as auctioneer_name,
+        s.name as seller_name,
+        auct.logo_url as auctioneer_logo_url,
+        COUNT(l.id) as total_lots_count
+       FROM auctions a
+       LEFT JOIN lot_categories cat ON a.category_id = cat.id
+       LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
+       LEFT JOIN sellers s ON a.seller_id = s.id
+       LEFT JOIN lots l ON l.auction_id = a.id
+       GROUP BY a.id, cat.name, auct.name, s.name, auct.logo_url
+       ORDER BY a.auction_date DESC`
+    );
+    const auctions = mapMySqlRowsToCamelCase(rows as RowDataPacket[]).map(mapToAuction);
+    return auctions;
+  }
+  
+  // Omitted for brevity - all other methods remain unchanged.
+  // ...
   
   async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status">>; newBid?: BidInfo }> {
     const connection = await getPool().getConnection();

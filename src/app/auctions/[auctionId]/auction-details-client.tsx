@@ -229,13 +229,6 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
                 </div>
 
                 <div className="mt-auto pt-6 flex flex-wrap gap-2">
-                      {auction.documentsUrl && (
-                        <Button asChild>
-                            <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer">
-                                <FileText className="h-4 w-4 mr-2" /> Ver Edital
-                            </a>
-                        </Button>
-                    )}
                     <Button variant="outline">
                         <Heart className="h-4 w-4 mr-2" /> Favoritar Leilão
                     </Button>
@@ -274,6 +267,20 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
               />
             </CardContent>
           </Card>
+           {auction.documentsUrl && (
+                <Card className="shadow-md">
+                    <CardHeader>
+                        <CardTitle className="text-lg flex items-center"><FileText className="mr-2 h-5 w-5 text-primary" /> Documentos do Leilão</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Button variant="link" asChild className="p-0 h-auto text-primary">
+                            <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center text-sm">
+                                Ver Edital/Documentos <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                            </a>
+                        </Button>
+                    </CardContent>
+                </Card>
+            )}
         </div>
       </div>
 
