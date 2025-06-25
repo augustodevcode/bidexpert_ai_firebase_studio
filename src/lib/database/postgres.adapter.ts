@@ -1,3 +1,4 @@
+
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -592,5 +593,29 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async getActiveUserLotMaxBid(userId: string, lotId: string): Promise<UserLotMaxBid | null> {
     console.warn("[PostgresAdapter] getActiveUserLotMaxBid is not yet implemented for PostgreSQL.");
     return null;
+  }
+  
+  async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> {
+    const { rows } = await getPool().query('SELECT * FROM auctioneers WHERE name = $1 LIMIT 1', [name]);
+    if (rows.length === 0) return null;
+    return mapToAuctioneerProfileInfo(rows[0]);
+  }
+
+  async getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null> {
+    const { rows } = await getPool().query('SELECT * FROM auctioneers WHERE slug = $1 OR public_id = $1 LIMIT 1', [slug]);
+    if (rows.length === 0) return null;
+    return mapToAuctioneerProfileInfo(rows[0]);
+  }
+
+  async getSellerByName(name: string): Promise<SellerProfileInfo | null> {
+    const { rows } = await getPool().query('SELECT * FROM sellers WHERE name = $1 LIMIT 1', [name]);
+    if (rows.length === 0) return null;
+    return mapToSellerProfileInfo(rows[0]);
+  }
+
+  async getSellerBySlug(slug: string): Promise<SellerProfileInfo | null> {
+    const { rows } = await getPool().query('SELECT * FROM sellers WHERE slug = $1 OR public_id = $1 LIMIT 1', [slug]);
+    if (rows.length === 0) return null;
+    return mapToSellerProfileInfo(rows[0]);
   }
 }

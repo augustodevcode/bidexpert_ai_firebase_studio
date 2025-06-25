@@ -1,3 +1,4 @@
+
 // src/lib/database/mysql.adapter.ts
 import mysql, { type RowDataPacket, type Pool } from 'mysql2/promise';
 import type {
@@ -554,7 +555,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
   
   async getWinsForUser(userId: string): Promise<UserWin[]> {
-    const [rows] = await getPool().execute(
+    const [rows] = await getPool().execute<RowDataPacket[]>(
         `SELECT
             w.id as win_id,
             w.user_id,
@@ -607,5 +608,29 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async getActiveUserLotMaxBid(userId: string, lotId: string): Promise<UserLotMaxBid | null> {
     console.warn("[MySqlAdapter] getActiveUserLotMaxBid is not yet implemented for MySQL.");
     return null;
+  }
+
+  async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> {
+    const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM auctioneers WHERE name = ? LIMIT 1', [name]);
+    if (rows.length === 0) return null;
+    return mapToAuctioneerProfileInfo(mapMySqlRowToCamelCase(rows[0]));
+  }
+  
+  async getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null> {
+    const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM auctioneers WHERE slug = ? OR public_id = ? LIMIT 1', [slug, slug]);
+    if (rows.length === 0) return null;
+    return mapToAuctioneerProfileInfo(mapMySqlRowToCamelCase(rows[0]));
+  }
+
+  async getSellerByName(name: string): Promise<SellerProfileInfo | null> {
+    const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM sellers WHERE name = ? LIMIT 1', [name]);
+    if (rows.length === 0) return null;
+    return mapToSellerProfileInfo(mapMySqlRowToCamelCase(rows[0]));
+  }
+
+  async getSellerBySlug(slug: string): Promise<SellerProfileInfo | null> {
+    const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM sellers WHERE slug = ? OR public_id = ? LIMIT 1', [slug, slug]);
+    if (rows.length === 0) return null;
+    return mapToSellerProfileInfo(mapMySqlRowToCamelCase(rows[0]));
   }
 }
