@@ -1,13 +1,23 @@
 // src/lib/database/sample-data.adapter.ts
-import type {
-  IDatabaseAdapter, LotCategory, StateInfo, StateFormData, CityInfo, CityFormData,
-  AuctioneerProfileInfo, AuctioneerFormData, SellerProfileInfo, SellerFormData,
-  Auction, AuctionFormData, AuctionDbData, Lot, LotFormData, LotDbData,
-  BidInfo, Review, LotQuestion, UserProfileData, EditableUserProfileData,
-  UserProfileWithPermissions, Role, RoleFormData, MediaItem, PlatformSettings,
-  PlatformSettingsFormData, Subcategory, SubcategoryFormData, DirectSaleOffer, UserLotMaxBid, UserWin
+import type { 
+  IDatabaseAdapter, 
+  LotCategory, StateInfo, StateFormData,
+  CityInfo, CityFormData,
+  AuctioneerProfileInfo, AuctioneerFormData,
+  SellerProfileInfo, SellerFormData,
+  Auction, AuctionFormData, AuctionDbData,
+  Lot, LotFormData, LotDbData,
+  BidInfo, Review, LotQuestion,
+  UserProfileData, EditableUserProfileData, UserHabilitationStatus, UserProfileWithPermissions,
+  Role, RoleFormData,
+  MediaItem,
+  PlatformSettings, PlatformSettingsFormData, Theme,
+  Subcategory, SubcategoryFormData,
+  DirectSaleOffer,
+  UserLotMaxBid,
+  UserWin
 } from '@/types';
-import { slugify } from '@/lib/sample-data-helpers';
+import { slugify, getAuctionStatusText } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 import * as sampleData from '@/lib/sample-data'; // Import all exports from the new sample-data.ts
@@ -35,6 +45,64 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async initializeSchema(): Promise<{ success: boolean; message:string; rolesProcessed?: number }> {
     console.log('[SampleDataAdapter] Schema initialization is not required for sample data.');
     return Promise.resolve({ success: true, message: 'Sample data adapter ready.', rolesProcessed: this.data.sampleRoles.length });
+  }
+
+  async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }> {
+    await delay(50);
+    const lotIndex = this.data.sampleLots.findIndex((l: Lot) => l.id === lotIdOrPublicId || l.publicId === lotIdOrPublicId);
+    if (lotIndex === -1) {
+      return { success: false, message: 'Lote não encontrado.' };
+    }
+    const lot = this.data.sampleLots[lotIndex];
+
+    if (bidAmount <= lot.price) {
+      return { success: false, message: `Seu lance de R$ ${bidAmount.toLocaleString('pt-BR')} deve ser maior que o lance atual de R$ ${lot.price.toLocaleString('pt-BR')}.` };
+    }
+    if (lot.status !== 'ABERTO_PARA_LANCES') {
+      return { success: false, message: 'Lances para este lote não estão abertos.' };
+    }
+
+    const auction = this.data.sampleAuctions.find(a => a.id === lot.auctionId);
+
+    // Update lot data
+    lot.price = bidAmount;
+    lot.bidsCount = (lot.bidsCount || 0) + 1;
+
+    // Soft-close logic
+    let updatedEndDate = lot.endDate;
+    if (auction?.softCloseEnabled && auction.softCloseMinutes && lot.endDate) {
+        const now = new Date();
+        const endDate = new Date(lot.endDate as string);
+        const diffSeconds = (endDate.getTime() - now.getTime()) / 1000;
+        const softCloseSeconds = auction.softCloseMinutes * 60;
+        if (diffSeconds > 0 && diffSeconds <= softCloseSeconds) {
+            const newEndDate = new Date(now.getTime() + softCloseSeconds * 1000);
+            lot.endDate = newEndDate;
+            updatedEndDate = newEndDate;
+            console.log(`[SampleDataAdapter - placeBidOnLot] Soft-close triggered. New end date: ${newEndDate.toISOString()}`);
+        }
+    }
+
+    // Create new bid info
+    const newBid: BidInfo = {
+      id: `bid-${uuidv4()}`,
+      lotId: lot.id,
+      auctionId: lot.auctionId,
+      bidderId: userId,
+      bidderDisplay: userDisplayName,
+      amount: bidAmount,
+      timestamp: new Date(),
+    };
+    this.data.sampleBids.unshift(newBid);
+
+    this._persistData();
+
+    return { 
+      success: true, 
+      message: 'Lance registrado com sucesso!',
+      updatedLot: { price: lot.price, bidsCount: lot.bidsCount, endDate: updatedEndDate },
+      newBid,
+    };
   }
 
   async getWinsForUser(userId: string): Promise<UserWin[]> {
@@ -263,6 +331,42 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async getPlatformSettings(): Promise<PlatformSettings> { await delay(10); return Promise.resolve(JSON.parse(JSON.stringify(this.data.samplePlatformSettings))); }
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> { await delay(50); const currentSettings = this.data.samplePlatformSettings || {}; const newSettings = { ...currentSettings, ...data, platformPublicIdMasks: { ...(currentSettings.platformPublicIdMasks || {}), ...(data.platformPublicIdMasks || {}), }, mapSettings: { ...(currentSettings.mapSettings || {}), ...(data.mapSettings || {}), }, mentalTriggerSettings: { ...(currentSettings.mentalTriggerSettings || {}), ...(data.mentalTriggerSettings || {}), }, sectionBadgeVisibility: { ...(currentSettings.sectionBadgeVisibility || {}), ...(data.sectionBadgeVisibility || {}), }, id: 'global', updatedAt: new Date() }; this.data.samplePlatformSettings = newSettings; this._persistData(); return { success: true, message: "Configurações da plataforma atualizadas (Sample Data)!" }; }
 
+  // --- Reviews ---
+  async getReviewsForLot(lotId: string): Promise<Review[]> {
+    await delay(20); 
+    const reviews = this.data.sampleLotReviews.filter((r: Review) => r.lotId === lotId);
+    return Promise.resolve(JSON.parse(JSON.stringify(reviews))); 
+  }
+
+  async createReview(reviewData: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; reviewId?: string; }> { 
+    const newReview: Review = {...reviewData, id: `rev-${uuidv4()}`, createdAt: new Date()}; 
+    this.data.sampleLotReviews.unshift(newReview); 
+    this._persistData(); 
+    return { success: true, message: "Avaliação adicionada!", reviewId: newReview.id }; 
+  }
+
+  // --- Questions ---
+  async getQuestionsForLot(lotId: string): Promise<LotQuestion[]> { 
+    await delay(20); 
+    const questions = this.data.sampleLotQuestions.filter((q: LotQuestion) => q.lotId === lotId);
+    return Promise.resolve(JSON.parse(JSON.stringify(questions))); 
+  }
+
+  async createQuestion(questionData: Omit<LotQuestion, "id" | "createdAt" | "answeredAt" | "answeredByUserId" | "answeredByUserDisplayName" | "isPublic">): Promise<{ success: boolean; message: string; questionId?: string | undefined; }> { 
+    const newQuestion: LotQuestion = {...questionData, id: `qst-${uuidv4()}`, createdAt: new Date(), isPublic: true}; 
+    this.data.sampleLotQuestions.unshift(newQuestion); 
+    this._persistData(); 
+    return { success: true, message: "Pergunta enviada!", questionId: newQuestion.id }; 
+  }
+
+  async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> { 
+    const index = this.data.sampleLotQuestions.findIndex((q: LotQuestion) => q.id === questionId); 
+    if(index === -1) return {success: false, message: 'Pergunta não encontrada.'}; 
+    this.data.sampleLotQuestions[index] = {...this.data.sampleLotQuestions[index], answerText, answeredByUserId, answeredByUserDisplayName, answeredAt: new Date()}; 
+    this._persistData(); 
+    return {success: true, message: 'Pergunta respondida!'}; 
+  }
+  
   // --- Direct Sale Offers ---
   async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
     await delay(20);
