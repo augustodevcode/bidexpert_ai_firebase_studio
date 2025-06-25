@@ -24,14 +24,14 @@ const ESSENTIAL_ADAPTER_METHODS: (keyof IDatabaseAdapter)[] = [
   // Lots
   'createLot', 'getLots', 'getLot', 'updateLot', 'deleteLot', 'getLotsByIds',
   // Bids & Proxy
-  'getBidsForLot', 'placeBidOnLot', 'createUserLotMaxBid', 'getActiveUserLotMaxBid',
+  'getBidsForLot', 'placeBidOnLot', 'createUserLotMaxBid', 'getActiveUserLotMaxBid', 'getWinsForUser',
   // Reviews & Questions
   'getReviewsForLot', 'createReview', 'getQuestionsForLot', 'createQuestion', 'answerQuestion',
   // Users & Roles
   'getUserProfileData', 'updateUserProfile', 'ensureUserRole', 'getUsersWithRoles', 'updateUserRole', 'deleteUserProfile', 'getUserByEmail',
   'createRole', 'getRoles', 'getRole', 'getRoleByName', 'updateRole', 'deleteRole', 'ensureDefaultRolesExist',
   // Media
-  'createMediaItem', 'getMediaItems', 'updateMediaItemMetadata', 'deleteMediaItemFromDb', 'linkMediaItemsToLot', 'unlinkMediaItemFromLot',
+  'createMediaItem', 'getMediaItems', 'getMediaItem', 'updateMediaItemMetadata', 'deleteMediaItemFromDb', 'linkMediaItemsToLot', 'unlinkMediaItemFromLot',
   // Platform Settings
   'getPlatformSettings', 'updatePlatformSettings',
   // Direct Sales

@@ -23,7 +23,8 @@ import type {
   HomepageSectionConfig,
   AuctionStage,
   DirectSaleOffer,
-  UserLotMaxBid
+  UserLotMaxBid,
+  UserWin
 } from '@/types';
 import { slugify, samplePlatformSettings } from '@/lib/sample-data-helpers';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
@@ -514,6 +515,12 @@ const defaultRolesData: RoleFormData[] = [
 export class MySqlAdapter implements IDatabaseAdapter {
   constructor() {
     getPool();
+  }
+  
+  async getWinsForUser(userId: string): Promise<UserWin[]> {
+    // This is a placeholder implementation. A real implementation would need
+    // to determine wins based on auction status and highest bids.
+    return Promise.resolve([]);
   }
   
   async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {

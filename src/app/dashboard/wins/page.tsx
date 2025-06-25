@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Link from 'next/link';
@@ -7,12 +6,15 @@ import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingBag, FileText, CreditCard, CalendarDays, Eye, AlertCircle, Truck, CalendarCheck, HandCoins } from 'lucide-react';
-import { sampleUserWins } from '@/lib/sample-data.local.json';
-import { getPaymentStatusText, getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { ShoppingBag, FileText, CreditCard, CalendarDays, Eye, AlertCircle, Truck, CalendarCheck, HandCoins, Loader2 } from 'lucide-react';
+import { getPaymentStatusText } from '@/lib/sample-data-helpers';
 import type { UserWin } from '@/types';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useAuth } from '@/contexts/auth-context';
+import { useEffect, useState, useCallback } from 'react';
+import { getWins } from './actions';
+import { useToast } from '@/hooks/use-toast';
 
 const getPaymentStatusColor = (status: string) => {
   switch (status) {
@@ -28,9 +30,46 @@ const getPaymentStatusColor = (status: string) => {
   }
 };
 
-
 export default function MyWinsPage() {
-  const wins: UserWin[] = sampleUserWins; // Em um aplicativo real, isso viria do usuário logado
+  const { user, userProfileWithPermissions } = useAuth();
+  const { toast } = useToast();
+  const [wins, setWins] = useState<UserWin[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchWins = useCallback(async (userId: string) => {
+    setIsLoading(true);
+    try {
+      const userWins = await getWins(userId);
+      setWins(userWins);
+    } catch (error) {
+      console.error("Error fetching user wins:", error);
+      toast({
+        title: "Erro ao buscar arremates",
+        description: "Não foi possível carregar seus lotes arrematados.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    const currentUserId = user?.uid || userProfileWithPermissions?.uid;
+    if (currentUserId) {
+      fetchWins(currentUserId);
+    } else {
+      setIsLoading(false); // No user, stop loading
+    }
+  }, [user, userProfileWithPermissions, fetchWins]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="ml-3 text-muted-foreground">Carregando seus arremates...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -74,12 +113,12 @@ export default function MyWinsPage() {
                     </div>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg leading-tight hover:text-primary">
-                          <Link href={`/auctions/${win.lot.auctionId}/lots/${win.lot.id}`}>
+                          <Link href={`/auctions/${win.lot.auctionId}/lots/${win.lot.publicId || win.lot.id}`}>
                               {win.lot.title}
                           </Link>
                       </CardTitle>
                        <CardDescription className="text-xs pt-0.5">
-                          Leilão: {win.lot.auctionName} (Lote: {win.lot.id})
+                          Leilão: {win.lot.auctionName} (Lote: {win.lot.number || win.lot.id})
                        </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2.5 text-sm flex-grow">
@@ -117,7 +156,7 @@ export default function MyWinsPage() {
                     </CardContent>
                     <CardFooter className="border-t pt-4 flex flex-col sm:flex-row flex-wrap gap-2">
                       <Button size="sm" className="flex-1 min-w-[calc(50%-0.25rem)]" asChild>
-                          <Link href={`/auctions/${win.lot.auctionId}/lots/${win.lot.id}`}>
+                          <Link href={`/auctions/${win.lot.auctionId}/lots/${win.lot.publicId || win.lot.id}`}>
                               <Eye className="mr-2 h-4 w-4" /> Ver Lote
                           </Link>
                       </Button>

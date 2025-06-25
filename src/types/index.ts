@@ -775,6 +775,7 @@ export interface IDatabaseAdapter {
 
   getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]>;
   placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status' | 'endDate'>>; newBid?: BidInfo }>;
+  getWinsForUser(userId: string): Promise<UserWin[]>;
   
   // Proxy Bidding
   createUserLotMaxBid(userId: string, lotId: string, maxAmount: number): Promise<{ success: boolean; message: string; maxBidId?: string; }>;
@@ -812,6 +813,7 @@ export interface IDatabaseAdapter {
 
   createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }>;
   getMediaItems(): Promise<MediaItem[]>;
+  getMediaItem(id: string): Promise<MediaItem | null>;
   updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }>;
   deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }>;
   linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }>;

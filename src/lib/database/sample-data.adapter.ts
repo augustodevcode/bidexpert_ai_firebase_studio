@@ -6,7 +6,7 @@ import type {
   Auction, AuctionFormData, AuctionDbData, Lot, LotFormData, LotDbData,
   BidInfo, Review, LotQuestion, UserProfileData, EditableUserProfileData,
   UserProfileWithPermissions, Role, RoleFormData, MediaItem, PlatformSettings,
-  PlatformSettingsFormData, Subcategory, SubcategoryFormData, DirectSaleOffer, UserLotMaxBid
+  PlatformSettingsFormData, Subcategory, SubcategoryFormData, DirectSaleOffer, UserLotMaxBid, UserWin
 } from '@/types';
 import {
   slugify,
@@ -105,6 +105,13 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   constructor() {
     this.data = getSampleData();
     console.log("[SampleDataAdapter] Instance created and data loaded.");
+  }
+  
+  async getWinsForUser(userId: string): Promise<UserWin[]> {
+    await delay(20);
+    // In sample data, assume all wins belong to the main user for demonstration
+    const wins = this.data.sampleUserWins;
+    return Promise.resolve(JSON.parse(JSON.stringify(wins)));
   }
 
   async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
