@@ -1,3 +1,4 @@
+
 // src/app/auctions/[auctionId]/lots/[lotId]/page.tsx
 import type { Lot, Auction, PlatformSettings, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import LotDetailClientContent from './lot-detail-client';
@@ -6,7 +7,7 @@ import Link from 'next/link';
 import { getAuction } from '@/app/admin/auctions/actions';
 import { getLot, getLots } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import { getSellerBySlug } from '@/app/admin/sellers/actions';
+import { getSellerBySlug, getSellers } from '@/app/admin/sellers/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSampleData } from '@/lib/sample-data-helpers';
