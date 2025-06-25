@@ -478,7 +478,6 @@ export interface UserProfileData {
   neighborhood?: string | null;
   city?: string | null;
   state?: string | null;
-  status?: string; 
   optInMarketing?: boolean;
   createdAt?: AnyTimestamp;
   updatedAt?: AnyTimestamp;
@@ -787,7 +786,7 @@ export interface IDatabaseAdapter {
   createQuestion(question: Omit<LotQuestion, 'id' | 'createdAt' | 'answeredAt' | 'answeredByUserId' | 'answeredByUserDisplayName' | 'isPublic'>): Promise<{ success: boolean; message: string; questionId?: string }>;
   answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string }>;
 
-  getUserProfileData(userId: string): Promise<UserProfileData | null>;
+  getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null>;
   updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }>;
   ensureUserRole(
     userId: string,
@@ -796,11 +795,11 @@ export interface IDatabaseAdapter {
     targetRoleName: string,
     additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>,
     roleIdToAssign?: string
-  ): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }>;
+  ): Promise<{ success: boolean; message: string; userProfile?: UserProfileWithPermissions; }>;
   getUsersWithRoles(): Promise<UserProfileData[]>;
   updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }>;
   deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }>;
-  getUserByEmail(email: string): Promise<UserProfileData | null>;
+  getUserByEmail(email: string): Promise<UserProfileWithPermissions | null>;
   
   createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string }>;
   getRoles(): Promise<Role[]>;

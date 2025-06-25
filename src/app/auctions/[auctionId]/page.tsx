@@ -5,12 +5,12 @@ import type { Auction, PlatformSettings, LotCategory, SellerProfileInfo, Auction
 import AuctionDetailsClient from './auction-details-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { getAuction, getAuctions } from '@/app/admin/auctions/actions';
+import { getAuction } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
-import { getAuctioneers } from '@/app/admin/auctioneers/actions'; // Importar getAuctioneers
+import { getAuctioneers } from '@/app/admin/auctioneers/actions'; 
 
 async function getAuctionPageData(id: string): Promise<{ 
   auction?: Auction; 

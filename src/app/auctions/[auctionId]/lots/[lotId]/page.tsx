@@ -1,14 +1,16 @@
 
 
 // src/app/auctions/[auctionId]/lots/[lotId]/page.tsx
-import type { Lot, Auction, PlatformSettings } from '@/types';
+import type { Lot, Auction, PlatformSettings, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import LotDetailClientContent from './lot-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { getAuction, getAuctions } from '@/app/admin/auctions/actions';
+import { getAuction } from '@/app/admin/auctions/actions';
 import { getLot, getLots } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getSellerBySlug } from '@/app/admin/sellers/actions';
+import { getLotCategories } from '@/app/admin/categories/actions';
+import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSampleData } from '@/lib/sample-data-helpers';
 
 async function getLotPageData(currentAuctionId: string, currentLotId: string): Promise<{
@@ -19,20 +21,29 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   lotIndex?: number,
   previousLotId?: string,
   nextLotId?: string,
-  totalLotsInAuction?: number
+  totalLotsInAuction?: number,
+  allCategories?: LotCategory[],
+  allSellers?: SellerProfileInfo[],
 }> {
   console.log(`[getLotPageData] Buscando leilão: ${currentAuctionId}, lote: ${currentLotId}`);
 
-  const { samplePlatformSettings } = getSampleData();
-
-  const [auctionFromDb, lotFromDb] = await Promise.all([
+  const [
+    platformSettings,
+    auctionFromDb,
+    lotFromDb,
+    allCategories,
+    allSellers
+  ] = await Promise.all([
+    getPlatformSettings(),
     getAuction(currentAuctionId),
-    getLot(currentLotId)
+    getLot(currentLotId),
+    getLotCategories(),
+    getSellers()
   ]);
   
   if (!auctionFromDb || !lotFromDb) {
     console.warn(`[getLotPageData] Leilão ou Lote não encontrado. Auction found: ${!!auctionFromDb}, Lot found: ${!!lotFromDb}`);
-    return { lot: lotFromDb, auction: auctionFromDb, platformSettings: samplePlatformSettings };
+    return { lot: lotFromDb, auction: auctionFromDb, platformSettings, allCategories, allSellers };
   }
 
   const lotsForThisAuction = await getLots(auctionFromDb.id);
@@ -53,12 +64,14 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   return { 
     lot: lotFromDb, 
     auction: auctionToReturn, 
-    platformSettings: samplePlatformSettings, 
+    platformSettings, 
     sellerName, 
     lotIndex, 
     previousLotId, 
     nextLotId, 
-    totalLotsInAuction 
+    totalLotsInAuction,
+    allCategories,
+    allSellers
   };
 }
 
@@ -71,7 +84,9 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
     lotIndex, 
     previousLotId, 
     nextLotId, 
-    totalLotsInAuction
+    totalLotsInAuction,
+    allCategories,
+    allSellers
   } = await getLotPageData(params.auctionId, params.lotId);
 
   if (!lot || !auction) {
@@ -107,8 +122,9 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
 }
 
 export async function generateStaticParams() {
-  const allLots = await getLots(); 
-  const paths = allLots.map(lot => ({
+  const lots = await getLots(); 
+  // Limit to a reasonable number for build time
+  const paths = lots.slice(0, 50).map(lot => ({
       auctionId: lot.auctionId,
       lotId: lot.publicId || lot.id,
     }));

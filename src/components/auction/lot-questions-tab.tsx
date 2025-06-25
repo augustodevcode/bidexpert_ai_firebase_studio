@@ -55,14 +55,14 @@ export default function LotQuestionsTab({ lot, questions, isLoading, onNewQuesti
               <div key={qa.id} className="p-3 border rounded-md bg-secondary/30">
                 <div className="mb-1.5">
                   <p className="text-xs text-muted-foreground">
-                    <span className="font-semibold text-foreground">{qa.userDisplayName || 'Usuário'}</span> perguntou em {qa.createdAt ? format(new Date(qa.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : 'Data indisponível'}:
+                    <span className="font-semibold text-foreground">{qa.userDisplayName || 'Usuário'}</span> perguntou em {qa.createdAt ? format(new Date(qa.createdAt as string), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : 'Data indisponível'}:
                   </p>
                   <p className="text-sm text-foreground mt-0.5 whitespace-pre-line">{qa.questionText}</p>
                 </div>
                 {qa.answerText && (
                   <div className="mt-2 pt-2 border-t border-border/50 pl-4">
                      <p className="text-xs text-muted-foreground">
-                        <span className="font-semibold text-primary">Resposta de {qa.answeredByUserDisplayName || 'Vendedor'}</span> (em {qa.answeredAt ? format(new Date(qa.answeredAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : ''}):
+                        <span className="font-semibold text-primary">Resposta de {qa.answeredByUserDisplayName || 'Vendedor'}</span> (em {qa.answeredAt ? format(new Date(qa.answeredAt as string), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : ''}):
                     </p>
                     <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-line">{qa.answerText}</p>
                   </div>

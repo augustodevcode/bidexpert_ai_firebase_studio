@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Briefcase, Mail, Phone, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { slugify } from '@/lib/sample-data';
+import { slugify } from '@/lib/sample-data-helpers';
 import { useEffect, useState } from 'react';
 import { getSellerBySlug } from '@/app/admin/sellers/actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

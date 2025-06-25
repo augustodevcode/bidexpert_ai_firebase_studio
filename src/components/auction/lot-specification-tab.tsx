@@ -74,4 +74,3 @@ export default function LotSpecificationTab({ lot }: LotSpecificationTabProps) {
     </Card>
   );
 }
-

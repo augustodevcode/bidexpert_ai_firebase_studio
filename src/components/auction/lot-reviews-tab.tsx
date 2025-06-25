@@ -65,7 +65,7 @@ export default function LotReviewsTab({ lot, reviews, isLoading, onNewReview, ca
                     ))}
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground mb-1.5">{review.createdAt ? format(new Date(review.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : 'Data indisponível'}</p>
+                <p className="text-xs text-muted-foreground mb-1.5">{review.createdAt ? format(new Date(review.createdAt as string), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : 'Data indisponível'}</p>
                 <p className="text-sm text-muted-foreground whitespace-pre-line">{review.comment}</p>
               </div>
             ))}
