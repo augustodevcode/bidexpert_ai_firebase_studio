@@ -6,8 +6,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { getAuctionsBySellerSlug } from '@/app/admin/auctions/actions';
-import { samplePlatformSettings } from '@/lib/sample-data';
-import type { Auction, Lot, PlatformSettings } from '@/types';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import type { Auction, Lot, PlatformSettings, SellerProfileInfo } from '@/types';
 import AuctionCard from '@/components/auction-card';
 import AuctionListItem from '@/components/auction-list-item';
 import SearchResultsFrame from '@/components/search-results-frame';
@@ -28,7 +28,6 @@ import { getSellerBySlug } from '@/app/admin/sellers/actions';
 import { getLots } from '@/app/admin/lots/actions';
 import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
-import type { SellerProfileInfo } from '@/types';
 
 const sortOptionsLots = [
   { value: 'relevance', label: 'Relevância' },
@@ -90,16 +89,10 @@ export default function SellerDetailsPage() {
   const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
 
-  const platformSettings = samplePlatformSettings as PlatformSettings;
-  const {
-    searchPaginationType = 'loadMore',
-    searchItemsPerPage = 6,
-    searchLoadMoreCount = 6
-  } = platformSettings;
-
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [lotSortBy, setLotSortBy] = useState<string>('endDate_asc');
   const [currentLotPage, setCurrentLotPage] = useState(1);
-  const [visibleLotCount, setVisibleLotCount] = useState(searchLoadMoreCount);
+  const [visibleLotCount, setVisibleLotCount] = useState(6);
 
   useEffect(() => {
     async function fetchSellerDetails() {
@@ -107,7 +100,13 @@ export default function SellerDetailsPage() {
         setIsLoading(true);
         setError(null);
         try {
-          const foundSeller = await getSellerBySlug(sellerIdSlug);
+          const [foundSeller, auctions, allLots, settings] = await Promise.all([
+              getSellerBySlug(sellerIdSlug),
+              getAuctionsBySellerSlug(sellerIdSlug),
+              getLots(),
+              getPlatformSettings()
+          ]);
+          setPlatformSettings(settings);
 
           if (!foundSeller) {
             setError(`Comitente com slug/publicId "${sellerIdSlug}" não encontrado.`);
@@ -118,19 +117,13 @@ export default function SellerDetailsPage() {
             return;
           }
           setSellerProfile(foundSeller);
-          
-          const auctions = await getAuctionsBySellerSlug(sellerIdSlug);
           setRelatedAuctions(auctions);
 
-          let lotsByThisSeller: Lot[] = [];
-          for (const auction of auctions) {
-            const lots = await getLots(auction.id);
-            lotsByThisSeller = lotsByThisSeller.concat(lots);
-          }
-          setRelatedLots(lotsByThisSeller);
+          const lotsFromThisSeller = allLots.filter(lot => lot.sellerId === foundSeller.id || lot.sellerName === foundSeller.name);
+          setRelatedLots(lotsFromThisSeller);
 
           setCurrentLotPage(1);
-          setVisibleLotCount(searchLoadMoreCount);
+          setVisibleLotCount(settings?.searchLoadMoreCount || 6);
         } catch (e) {
           console.error("Error fetching seller data:", e);
           setError("Erro ao carregar dados do comitente.");
@@ -143,7 +136,7 @@ export default function SellerDetailsPage() {
       }
     }
     fetchSellerDetails();
-  }, [sellerIdSlug, searchLoadMoreCount]);
+  }, [sellerIdSlug]);
 
   const sortedLots = useMemo(() => {
     return [...relatedLots].sort((a, b) => {
@@ -168,18 +161,18 @@ export default function SellerDetailsPage() {
   }, [relatedLots, lotSortBy]);
 
   const paginatedLots = useMemo(() => {
-    if (searchPaginationType === 'numberedPages') {
-      const startIndex = (currentLotPage - 1) * searchItemsPerPage;
-      const endIndex = startIndex + searchItemsPerPage;
+    if (platformSettings?.searchPaginationType === 'numberedPages') {
+      const startIndex = (currentLotPage - 1) * (platformSettings?.searchItemsPerPage || 6);
+      const endIndex = startIndex + (platformSettings?.searchItemsPerPage || 6);
       return sortedLots.slice(startIndex, endIndex);
     }
     return sortedLots.slice(0, visibleLotCount);
-  }, [sortedLots, currentLotPage, visibleLotCount, searchPaginationType, searchItemsPerPage]);
+  }, [sortedLots, currentLotPage, visibleLotCount, platformSettings]);
 
   const handleLotSortChange = (newSortBy: string) => {
     setLotSortBy(newSortBy);
     setCurrentLotPage(1);
-    setVisibleLotCount(searchLoadMoreCount);
+    setVisibleLotCount(platformSettings?.searchLoadMoreCount || 6);
   };
 
   const handleLotPageChange = (newPage: number) => {
@@ -187,13 +180,13 @@ export default function SellerDetailsPage() {
   };
 
   const handleLoadMoreLots = () => {
-    setVisibleLotCount(prev => Math.min(prev + searchLoadMoreCount, sortedLots.length));
+    setVisibleLotCount(prev => Math.min(prev + (platformSettings?.searchLoadMoreCount || 6), sortedLots.length));
   };
   
-  const renderLotGridItemForSellerPage = (lot: Lot) => <LotCard key={lot.id} lot={lot} platformSettings={platformSettings} />;
-  const renderLotListItemForSellerPage = (lot: Lot) => <LotListItem key={lot.id} lot={lot} platformSettings={platformSettings} />;
+  const renderLotGridItemForSellerPage = (lot: Lot) => <LotCard key={lot.id} lot={lot} platformSettings={platformSettings!} />;
+  const renderLotListItemForSellerPage = (lot: Lot) => <LotListItem key={lot.id} lot={lot} platformSettings={platformSettings!} />;
 
-  if (isLoading) {
+  if (isLoading || !platformSettings) {
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-4 min-h-[calc(100vh-20rem)]">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -355,3 +348,4 @@ export default function SellerDetailsPage() {
     </TooltipProvider>
   );
 }
+
