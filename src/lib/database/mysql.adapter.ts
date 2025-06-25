@@ -543,6 +543,12 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return items.length > 0 ? mapToAuctioneerProfileInfo(items[0]) : null;
   }
   
+  async getSellerByName(name: string): Promise<SellerProfileInfo | null> {
+    const [rows] = await getPool().execute('SELECT * FROM sellers WHERE name = ? LIMIT 1', [name]);
+    const items = mapMySqlRowsToCamelCase(rows as RowDataPacket[]);
+    return items.length > 0 ? mapToSellerProfileInfo(items[0]) : null;
+  }
+
   async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }> {
     const connection = await getPool().getConnection();
     try {

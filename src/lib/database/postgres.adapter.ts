@@ -505,6 +505,11 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return res.rows.length > 0 ? mapToAuctioneerProfileInfo(res.rows[0]) : null;
   }
 
+  async getSellerByName(name: string): Promise<SellerProfileInfo | null> {
+    const res = await getPool().query('SELECT * FROM sellers WHERE name = $1 LIMIT 1', [name]);
+    return res.rows.length > 0 ? mapToSellerProfileInfo(res.rows[0]) : null;
+  }
+
   async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }> {
     const client = await getPool().connect();
     try {
