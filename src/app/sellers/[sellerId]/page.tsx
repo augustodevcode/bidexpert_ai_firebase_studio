@@ -8,8 +8,8 @@ import { useParams } from 'next/navigation';
 import { getAuctionsBySellerSlug } from '@/app/admin/auctions/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import type { Auction, Lot, PlatformSettings, SellerProfileInfo } from '@/types';
-import AuctionCard from '@/components/auction-card';
-import AuctionListItem from '@/components/auction-list-item';
+import LotCard from '@/components/lot-card';
+import LotListItem from '@/components/lot-list-item';
 import SearchResultsFrame from '@/components/search-results-frame';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -20,14 +20,10 @@ import { format, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getSellerBySlug } from '@/app/admin/sellers/actions';
 import { getLots } from '@/app/admin/lots/actions';
-import LotCard from '@/components/lot-card';
-import LotListItem from '@/components/lot-list-item';
+
 
 const sortOptionsLots = [
   { value: 'relevance', label: 'Relevância' },
@@ -37,7 +33,6 @@ const sortOptionsLots = [
   { value: 'price_desc', label: 'Preço: Maior para Menor' },
   { value: 'views_desc', label: 'Mais Visitados' },
 ];
-
 
 function RecentAuctionCarouselItem({ auction }: { auction: Auction }) {
   const auctionEndDate = auction.endDate || (auction.auctionStages && auction.auctionStages.length > 0 ? auction.auctionStages[auction.auctionStages.length - 1].endDate : auction.auctionDate);
@@ -183,8 +178,8 @@ export default function SellerDetailsPage() {
     setVisibleLotCount(prev => Math.min(prev + (platformSettings?.searchLoadMoreCount || 6), sortedLots.length));
   };
   
-  const renderLotGridItemForSellerPage = (lot: Lot) => <LotCard key={lot.id} lot={lot} platformSettings={platformSettings!} />;
-  const renderLotListItemForSellerPage = (lot: Lot) => <LotListItem key={lot.id} lot={lot} platformSettings={platformSettings!} />;
+  const renderLotGridItemForSellerPage = (lot: Lot) => <LotCard key={lot.id} lot={lot} platformSettings={platformSettings!} auction={relatedAuctions.find(a => a.id === lot.auctionId)} />;
+  const renderLotListItemForSellerPage = (lot: Lot) => <LotListItem key={lot.id} lot={lot} platformSettings={platformSettings!} auction={relatedAuctions.find(a => a.id === lot.auctionId)} />;
 
   if (isLoading || !platformSettings) {
     return (
@@ -220,9 +215,7 @@ export default function SellerDetailsPage() {
   const sellerInitial = sellerProfile.name ? sellerProfile.name.charAt(0).toUpperCase() : 'S';
   const recentAuctionsForCarousel = relatedAuctions.slice(0, 5);
 
-  const placeholderTeamReviews = Math.floor(Math.random() * 500 + 50);
   const placeholderAveragePrice = ((Math.random() * 500 + 100) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '');
-  const placeholderPriceRange = `${((Math.random() * 50 + 10) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '')} - ${((Math.random() * 2000 + 500) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '')}`;
 
   return (
     <TooltipProvider>
@@ -253,22 +246,8 @@ export default function SellerDetailsPage() {
               </div>
               {recentAuctionsForCarousel.length > 1 && (
                 <div className="flex gap-2 print:hidden">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" size="icon" onClick={scrollPrev} className="h-8 w-8 rounded-full bg-background/70 hover:bg-background" aria-label="Slide Anterior">
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>Anterior</p></TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" size="icon" onClick={scrollNext} className="h-8 w-8 rounded-full bg-background/70 hover:bg-background" aria-label="Próximo Slide">
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>Próximo</p></TooltipContent>
-                  </Tooltip>
+                  <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" onClick={scrollPrev} className="h-8 w-8 rounded-full bg-background/70 hover:bg-background" aria-label="Slide Anterior"><ChevronLeft className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>Anterior</p></TooltipContent></Tooltip>
+                  <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" onClick={scrollNext} className="h-8 w-8 rounded-full bg-background/70 hover:bg-background" aria-label="Próximo Slide"><ChevronRight className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>Próximo</p></TooltipContent></Tooltip>
                 </div>
               )}
             </div>
@@ -283,32 +262,16 @@ export default function SellerDetailsPage() {
                 </div>
               </div>
             ) : (
-              <Card className="shadow-sm">
-                <CardContent className="p-6 text-center text-muted-foreground">
-                  Nenhum leilão recente para exibir no momento.
-                </CardContent>
-              </Card>
+              <Card className="shadow-sm"><CardContent className="p-6 text-center text-muted-foreground">Nenhum leilão recente para exibir no momento.</CardContent></Card>
             )}
           </div>
         </section>
 
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center py-6">
-          <div>
-            <p className="text-3xl font-bold text-primary">{sellerProfile.auctionsFacilitatedCount || 0}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Leilões Realizados</p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-primary">{sellerProfile.activeLotsCount || 0}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Lotes Ativos</p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-primary">R$ {(sellerProfile.totalSalesValue || 0).toLocaleString('pt-BR')}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Valor Total Vendido</p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-primary">{placeholderAveragePrice}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Preço Médio por Lote</p>
-          </div>
+          <div><p className="text-3xl font-bold text-primary">{sellerProfile.auctionsFacilitatedCount || 0}</p><p className="text-xs text-muted-foreground uppercase tracking-wider">Leilões Realizados</p></div>
+          <div><p className="text-3xl font-bold text-primary">{sellerProfile.activeLotsCount || 0}</p><p className="text-xs text-muted-foreground uppercase tracking-wider">Lotes Ativos</p></div>
+          <div><p className="text-3xl font-bold text-primary">R$ {(sellerProfile.totalSalesValue || 0).toLocaleString('pt-BR')}</p><p className="text-xs text-muted-foreground uppercase tracking-wider">Valor Total Vendido</p></div>
+          <div><p className="text-3xl font-bold text-primary">{placeholderAveragePrice}</p><p className="text-xs text-muted-foreground uppercase tracking-wider">Preço Médio por Lote</p></div>
         </section>
 
         <Separator className="print:hidden"/>
@@ -338,14 +301,11 @@ export default function SellerDetailsPage() {
         )}
 
         {relatedLots.length === 0 && !isLoading && (
-          <Card className="shadow-sm mt-8">
-            <CardContent className="text-center py-10">
-              <p className="text-muted-foreground">Nenhum lote encontrado para este comitente no momento.</p>
-            </CardContent>
-          </Card>
+          <Card className="shadow-sm mt-8"><CardContent className="text-center py-10"><p className="text-muted-foreground">Nenhum lote encontrado para este comitente no momento.</p></CardContent></Card>
         )}
       </div>
     </TooltipProvider>
   );
 }
 
+    
