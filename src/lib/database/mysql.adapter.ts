@@ -556,7 +556,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async getWinsForUser(userId: string): Promise<UserWin[]> {
     const [rows] = await getPool().execute(
         `SELECT
-            w.id,
+            w.id as win_id,
             w.user_id,
             w.lot_id,
             w.winning_bid_amount,
@@ -572,25 +572,22 @@ export class MySqlAdapter implements IDatabaseAdapter {
     );
 
     const wins = mapMySqlRowsToCamelCase(rows as RowDataPacket[]).map(winRow => {
-        // O mapMySqlRowToCamelCase já converte os nomes das colunas
-        // Agora, separe o objeto 'lot' do resto
         const {
-            id, userId: winUserId, lotId, winningBidAmount, winDate, paymentStatus, invoiceUrl,
+            winId, userId: winUserId, lotId, winningBidAmount, winDate, paymentStatus, invoiceUrl,
             ...lotData
         } = winRow;
-
-        // Precisamos mapear os dados do lote para o objeto Lot correto
+        
         const lotObject = mapToLot(lotData);
 
         return {
-            id: String(id),
+            id: String(winId),
             userId: winUserId,
             lotId: String(lotId),
             winningBidAmount: parseFloat(winningBidAmount),
             winDate: new Date(winDate),
             paymentStatus: paymentStatus as UserWin['paymentStatus'],
             invoiceUrl: invoiceUrl,
-            lot: lotObject, // O objeto Lot aninhado
+            lot: lotObject,
         };
     });
 

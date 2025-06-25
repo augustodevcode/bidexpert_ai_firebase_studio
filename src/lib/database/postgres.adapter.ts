@@ -519,7 +519,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async getWinsForUser(userId: string): Promise<UserWin[]> {
     const { rows } = await getPool().query(
         `SELECT
-            w.id,
+            w.id as win_id,
             w.user_id,
             w.lot_id,
             w.winning_bid_amount,
@@ -548,24 +548,24 @@ export class PostgresAdapter implements IDatabaseAdapter {
     const wins = rows.map(winRow => {
         // Separar os dados do arremate dos dados do lote
         const {
-            id, user_id, lot_id, winning_bid_amount, win_date, payment_status, invoice_url,
-            ...lotData
+            win_id, user_id, lot_id, winning_bid_amount, win_date, payment_status, invoice_url,
+            ...lotDataWithPrefix
         } = winRow;
 
         // Construir um objeto de lote a partir das colunas prefixadas
         const lotObjectData: { [key: string]: any } = {};
-        for (const key in lotData) {
+        for (const key in lotDataWithPrefix) {
             if (key.startsWith('l_')) {
                 // Remover o prefixo "l_" para obter o nome original da coluna
                 const originalKey = key.substring(2);
-                lotObjectData[originalKey] = lotData[key];
+                lotObjectData[originalKey] = lotDataWithPrefix[key];
             }
         }
         
         const lotObject = mapToLot(lotObjectData);
 
         return {
-            id: String(id),
+            id: String(win_id),
             userId: user_id,
             lotId: String(lot_id),
             winningBidAmount: parseFloat(winning_bid_amount),
