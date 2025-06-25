@@ -599,4 +599,13 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada para MySQL." };
   }
 
+  async createUserLotMaxBid(userId: string, lotId: string, maxAmount: number): Promise<{ success: boolean; message: string; maxBidId?: string; }> {
+    console.warn("[MySqlAdapter] createUserLotMaxBid is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada para MySQL." };
+  }
+
+  async getActiveUserLotMaxBid(userId: string, lotId: string): Promise<UserLotMaxBid | null> {
+    console.warn("[MySqlAdapter] getActiveUserLotMaxBid is not yet implemented for MySQL.");
+    return null;
+  }
 }

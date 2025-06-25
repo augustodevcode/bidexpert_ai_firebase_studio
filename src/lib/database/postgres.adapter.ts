@@ -584,4 +584,13 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada para PostgreSQL." };
   }
 
+  async createUserLotMaxBid(userId: string, lotId: string, maxAmount: number): Promise<{ success: boolean; message: string; maxBidId?: string; }> {
+    console.warn("[PostgresAdapter] createUserLotMaxBid is not yet implemented for PostgreSQL.");
+    return { success: false, message: "Funcionalidade não implementada para PostgreSQL." };
+  }
+
+  async getActiveUserLotMaxBid(userId: string, lotId: string): Promise<UserLotMaxBid | null> {
+    console.warn("[PostgresAdapter] getActiveUserLotMaxBid is not yet implemented for PostgreSQL.");
+    return null;
+  }
 }
