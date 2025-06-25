@@ -311,7 +311,16 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string; }> { this.data.sampleLots = this.data.sampleLots.filter((l: Lot) => l.id !== id && l.publicId !== id); this._persistData(); return {success: true, message: 'Lote excluído!'}; }
 
   // --- Bids, Reviews, Questions ---
-  async getBidsForLot(lotId: string): Promise<BidInfo[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleBids.filter((b: BidInfo) => b.lotId === lotId)))); }
+  async getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> {
+    await delay(20);
+    const lot = this.data.sampleLots.find((l) => l.id === lotIdOrPublicId || l.publicId === lotIdOrPublicId);
+    if (!lot) {
+      console.warn(`[getBidsForLot - SampleData] Lot not found for ID/PublicID: ${lotIdOrPublicId}`);
+      return Promise.resolve([]);
+    }
+    const bids = this.data.sampleBids.filter((b: BidInfo) => b.lotId === lot.id);
+    return Promise.resolve(JSON.parse(JSON.stringify(bids)));
+  }
   async getReviewsForLot(lotId: string): Promise<Review[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleLotReviews.filter((r: Review) => r.lotId === lotId)))); }
   async createReview(reviewData: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<{ success: boolean; message: string; reviewId?: string | undefined; }> { const newReview: Review = {...reviewData, id: `rev-${uuidv4()}`, createdAt: new Date()}; this.data.sampleLotReviews.unshift(newReview); this._persistData(); return { success: true, message: "Avaliação adicionada!", reviewId: newReview.id }; }
   async getQuestionsForLot(lotId: string): Promise<LotQuestion[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleLotQuestions.filter((q: LotQuestion) => q.lotId === lotId)))); }

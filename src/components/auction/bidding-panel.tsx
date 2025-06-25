@@ -217,7 +217,7 @@ export default function BiddingPanel({ currentLot, onBidSuccess }: BiddingPanelP
                 </Button>
               )}
             </div>
-            <ScrollArea className="flex-grow border rounded-md bg-secondary/20">
+            <ScrollArea className="flex-grow border rounded-md bg-secondary/20 min-h-40">
               <div className="p-2 space-y-1.5 text-xs">
                 {isLoadingHistory ? (
                   <div className="flex items-center justify-center p-4">
