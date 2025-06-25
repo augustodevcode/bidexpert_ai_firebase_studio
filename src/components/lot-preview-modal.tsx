@@ -18,7 +18,7 @@ import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Separator } from './ui/separator';
 
 interface LotPreviewModalProps {
-  lot: Lot;
+  lot: Lot | null;
   auction?: Auction; // Auction context is optional, but useful
   isOpen: boolean;
   onClose: () => void;

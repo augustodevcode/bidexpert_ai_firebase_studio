@@ -1,46 +1,61 @@
 
+
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import Image from 'next/image';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { History, AlertCircle, Loader2, XCircle } from 'lucide-react';
-import { getLots } from '@/app/admin/lots/actions';
-import { getAuctions } from '@/app/admin/auctions/actions';
-import type { Lot, PlatformSettings, Auction } from '@/types';
-import { getRecentlyViewedIds, removeRecentlyViewedId } from '@/lib/recently-viewed-store';
-import LotCard from '@/components/lot-card';
-import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { Badge } from '@/components/ui/badge';
+import { History, Eye, XCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { getLotStatusColor, getAuctionStatusText } from '@/lib/sample-data-helpers';
+import type { Lot, Auction, PlatformSettings } from '@/types';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { getRecentlyViewedIds, removeRecentlyViewedId } from '@/lib/recently-viewed-store';
+import { getLotsByIds } from '@/app/admin/lots/actions';
+import { getAuctionsByIds } from '@/app/admin/auctions/actions';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import LotCard from '@/components/lot-card';
+
 
 export default function BrowsingHistoryPage() {
   const [viewedLots, setViewedLots] = useState<Lot[]>([]);
-  const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [auctionsMap, setAuctionsMap] = useState<Map<string, Auction>>(new Map());
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const loadHistory = async () => {
-      setIsLoading(true);
-      const [settings, auctions, allLotsData] = await Promise.all([
-        getPlatformSettings(),
-        getAuctions(),
-        getLots(),
-      ]);
-      
-      setPlatformSettings(settings);
-      setAllAuctions(auctions);
+  const loadHistory = useCallback(async () => {
+    setIsLoading(true);
+    const settings = await getPlatformSettings();
+    setPlatformSettings(settings);
 
-      const ids = getRecentlyViewedIds();
-      const lotsFromHistory = ids.map(id => allLotsData.find(lot => lot.id === id)).filter(lot => lot !== undefined) as Lot[];
-      setViewedLots(lotsFromHistory);
-      setIsLoading(false);
-  };
-  
+    const viewedIds = getRecentlyViewedIds();
+    if (viewedIds.length > 0) {
+      const viewedLotsData = await getLotsByIds(viewedIds);
+      
+      const sortedViewedLots = viewedIds
+        .map(id => viewedLotsData.find(lot => lot.id === id))
+        .filter((lot): lot is Lot => !!lot);
+        
+      setViewedLots(sortedViewedLots);
+      
+      const auctionIds = Array.from(new Set(viewedLotsData.map(lot => lot.auctionId)));
+      if (auctionIds.length > 0) {
+        const auctionsData = await getAuctionsByIds(auctionIds);
+        setAuctionsMap(new Map(auctionsData.map(a => [a.id, a])));
+      }
+    } else {
+      setViewedLots([]);
+      setAuctionsMap(new Map());
+    }
+    setIsLoading(false);
+  }, []);
+
   useEffect(() => {
     loadHistory();
-  }, []);
+  }, [loadHistory]);
 
   const handleRemoveFromHistory = (lotId: string, lotTitle: string) => {
     removeRecentlyViewedId(lotId);
@@ -87,10 +102,15 @@ export default function BrowsingHistoryPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {viewedLots.map((lot) => {
-                const parentAuction = allAuctions.find(a => a.id === lot.auctionId);
+                const parentAuction = auctionsMap.get(lot.auctionId);
                 return (
                   <div key={lot.id} className="relative group/history">
-                    <LotCard lot={lot} auction={parentAuction} platformSettings={platformSettings} />
+                    <LotCard 
+                      lot={lot} 
+                      auction={parentAuction} 
+                      platformSettings={platformSettings} 
+                      onUpdate={loadHistory}
+                    />
                     <Button 
                       variant="destructive" 
                       size="icon" 

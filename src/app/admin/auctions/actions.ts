@@ -80,6 +80,12 @@ export async function getAuctions(): Promise<Auction[]> {
   return db.getAuctions();
 }
 
+export async function getAuctionsByIds(ids: string[]): Promise<Auction[]> {
+  if (!ids || ids.length === 0) return [];
+  const db = await getDatabaseAdapter();
+  return db.getAuctionsByIds(ids);
+}
+
 export async function getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
   const db = await getDatabaseAdapter();
   return db.getAuctionsBySellerSlug(sellerSlugOrPublicId);

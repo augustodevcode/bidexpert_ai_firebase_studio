@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react'; // Adicionado import do React
@@ -298,7 +299,7 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                   </h3>
                 </Link>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate" title={`Leilão: ${lot.auctionName}`}>
-                  Leilão: {lot.auctionName}
+                  Leilão: {lot.auctionName || 'Não especificado'}
                 </p>
               </div>
               <div className="flex-shrink-0 flex items-center space-x-0.5">
@@ -408,4 +409,3 @@ export default function LotListItem({ lot, auction, badgeVisibilityConfig, platf
 
     return <LotListItemClientContent lot={lot} auction={auction} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} onUpdate={onUpdate} />;
   }
-

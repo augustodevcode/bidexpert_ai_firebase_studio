@@ -7,32 +7,51 @@ import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Eye, XCircle, AlertCircle } from 'lucide-react';
+import { Heart, Eye, XCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { getLotStatusColor, getAuctionStatusText } from '@/lib/sample-data-helpers';
-import type { Lot } from '@/types';
-import { useState, useEffect } from 'react';
+import type { Lot, Auction, PlatformSettings } from '@/types';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getFavoriteLotIdsFromStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store'; // Nova importação
-import { getLots } from '@/app/admin/lots/actions';
+import { getFavoriteLotIdsFromStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store'; 
+import { getLotsByIds } from '@/app/admin/lots/actions';
+import { getAuctionsByIds } from '@/app/admin/auctions/actions';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import LotCard from '@/components/lot-card';
+
 
 export default function FavoriteLotsPage() {
   const [favoriteLots, setFavoriteLots] = useState<Lot[]>([]);
-  const [isClient, setIsClient] = useState(false);
+  const [auctionsMap, setAuctionsMap] = useState<Map<string, Auction>>(new Map());
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    setIsClient(true);
-    async function loadFavorites() {
-        const favoriteIds = getFavoriteLotIdsFromStorage();
-        if (favoriteIds.length > 0) {
-            // This assumes getLots can fetch by multiple IDs. If not, this needs a new action getLotsByIds
-            const allLots = await getLots(); 
-            const currentlyFavoriteLots = allLots.filter(lot => favoriteIds.includes(lot.id));
-            setFavoriteLots(currentlyFavoriteLots);
-        }
+  const loadFavorites = useCallback(async () => {
+    setIsLoading(true);
+    const [settings] = await Promise.all([getPlatformSettings()]);
+    setPlatformSettings(settings);
+
+    const favoriteIds = getFavoriteLotIdsFromStorage();
+    if (favoriteIds.length > 0) {
+      const favoritedLotsData = await getLotsByIds(favoriteIds);
+      setFavoriteLots(favoritedLotsData);
+      
+      const auctionIds = Array.from(new Set(favoritedLotsData.map(lot => lot.auctionId)));
+      if (auctionIds.length > 0) {
+        const auctionsData = await getAuctionsByIds(auctionIds);
+        setAuctionsMap(new Map(auctionsData.map(a => [a.id, a])));
+      }
+
+    } else {
+      setFavoriteLots([]);
+      setAuctionsMap(new Map());
     }
-    loadFavorites();
+    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    loadFavorites();
+  }, [loadFavorites]);
 
   const handleRemoveFavorite = (lotId: string) => {
     const lotToRemove = favoriteLots.find(lot => lot.id === lotId);
@@ -46,7 +65,7 @@ export default function FavoriteLotsPage() {
     });
   };
 
-  if (!isClient) {
+  if (isLoading || !platformSettings) {
     return (
         <div className="space-y-8">
         <Card className="shadow-lg">
@@ -106,52 +125,27 @@ export default function FavoriteLotsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {favoriteLots.map((lot) => (
-                <Card key={lot.id} className="overflow-hidden shadow-md flex flex-col">
-                  <div className="relative aspect-[16/10]">
-                    <Image 
-                        src={lot.imageUrl || 'https://placehold.co/600x400.png'} 
-                        alt={lot.title} 
-                        fill 
-                        className="object-cover"
-                        data-ai-hint={lot.dataAiHint || 'imagem lote favorito'}
-                    />
-                     <Badge className={`absolute top-2 left-2 text-xs px-2 py-1 ${getLotStatusColor(lot.status)}`}>
-                        {getAuctionStatusText(lot.status)}
-                    </Badge>
+              {favoriteLots.map((lot) => {
+                const parentAuction = auctionsMap.get(lot.auctionId);
+                return (
+                  <div key={lot.id} className="relative group/fav">
+                      <LotCard 
+                          lot={lot} 
+                          auction={parentAuction}
+                          platformSettings={platformSettings!} 
+                      />
+                       <Button 
+                        variant="destructive" 
+                        size="icon" 
+                        className="absolute top-3 right-3 h-7 w-7 rounded-full opacity-0 group-hover/fav:opacity-100 transition-opacity z-20"
+                        onClick={() => handleRemoveFavorite(lot.id)}
+                        aria-label="Remover dos Favoritos"
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </Button>
                   </div>
-                  <CardContent className="p-4 flex-grow">
-                    <h4 className="font-semibold text-md mb-1 truncate hover:text-primary">
-                        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
-                            {lot.title}
-                        </Link>
-                    </h4>
-                    <p className="text-xs text-muted-foreground mb-0.5">Leilão: {lot.auctionName}</p>
-                    <p className="text-xs text-muted-foreground">Local: {lot.cityName} - {lot.stateUf}</p>
-                    <p className="text-sm text-muted-foreground mt-1.5">
-                        {lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE' ? 'Lance Inicial:' : 'Valor:'}
-                        <span className="text-primary font-bold ml-1 text-md">
-                            R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </span>
-                    </p>
-                  </CardContent>
-                  <CardFooter className="p-4 border-t flex flex-col sm:flex-row gap-2">
-                    <Button size="sm" className="flex-1" asChild>
-                      <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
-                        <Eye className="mr-2 h-4 w-4" /> Ver Lote
-                      </Link>
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="text-red-500 hover:text-red-600 hover:border-red-500 flex-1" 
-                      onClick={() => handleRemoveFavorite(lot.id)}
-                    >
-                      <XCircle className="mr-2 h-4 w-4" /> Remover
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

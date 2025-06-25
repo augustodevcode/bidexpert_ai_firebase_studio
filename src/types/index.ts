@@ -756,6 +756,7 @@ export interface IDatabaseAdapter {
 
   createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }>;
   getAuctions(): Promise<Auction[]>;
+  getAuctionsByIds(ids: string[]): Promise<Auction[]>;
   getAuction(idOrPublicId: string): Promise<Auction | null>;
   updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string }>;
   deleteAuction(idOrPublicId: string): Promise<{ success: boolean; message: string }>;

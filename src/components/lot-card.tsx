@@ -315,7 +315,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
         <div className="flex justify-between items-center text-xs text-muted-foreground">
             <div className="flex items-center gap-1 truncate" title={`Leilão: ${lot.auctionName}`}>
                 <ListChecks className="h-3 w-3" />
-                <span className="truncate">{lot.auctionName}</span>
+                <span className="truncate">{lot.auctionName || 'Leilão não especificado'}</span>
             </div>
             <div className="flex items-center gap-1">
                 <Eye className="h-3 w-3" />
