@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown, Tag, ChevronRight, Layers } from 'lucide-react';
+import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, X, Facebook, MessageSquareText, Mail, Percent, Zap, TrendingUp, Crown, Tag, ChevronRight, Layers, Pencil } from 'lucide-react';
 import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
@@ -28,7 +28,7 @@ import EntityEditMenu from './entity-edit-menu';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 
 interface TimeRemainingBadgeProps {
-  endDate: Date | string;
+  endDate: Date | string | undefined | null;
   status: Lot['status'];
   showUrgencyTimer?: boolean;
   urgencyThresholdDays?: number;
@@ -46,9 +46,15 @@ const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({
   const [isUrgent, setIsUrgent] = useState(false);
 
   useEffect(() => {
+    if (!endDate) {
+      setTimeRemaining(getAuctionStatusText(status));
+      setIsUrgent(false);
+      return;
+    }
+
     const calculateTime = () => {
       const now = new Date();
-      const end = endDate instanceof Date ? endDate : new Date(endDate);
+      const end = endDate instanceof Date ? endDate : new Date(endDate as string);
 
       if (isPast(end) || status !== 'ABERTO_PARA_LANCES') {
         setTimeRemaining(getAuctionStatusText(status === 'ABERTO_PARA_LANCES' && isPast(end) ? 'ENCERRADO' : status));
@@ -107,14 +113,15 @@ interface LotListItemProps {
   auction?: Auction;
   badgeVisibilityConfig?: BadgeVisibilitySettings;
   platformSettings: PlatformSettings;
+  onUpdate?: () => void;
 }
 
-function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platformSettings }: LotListItemProps) {
-  const [isFavorite, setIsFavorite] = useState(lot.isFavorite || false);
+function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platformSettings, onUpdate }: LotListItemProps) {
+  const [isFavorite, setIsFavorite] = useState(false);
   const [isViewed, setIsViewed] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
-  const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.id}`);
+  const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
   const { toast } = useToast();
 
   const mentalTriggersGlobalSettings = platformSettings.mentalTriggerSettings || {};
@@ -204,13 +211,7 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
   };
 
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
-  const displayAuctionDate = lot.auctionDate && !isNaN(new Date(lot.auctionDate as string).getTime())
-    ? format(new Date(lot.auctionDate as string), "dd/MM - HH:mm", { locale: ptBR })
-    : 'N/D';
-  const displaySecondAuctionDate = lot.secondAuctionDate && !isNaN(new Date(lot.secondAuctionDate as string).getTime())
-    ? format(new Date(lot.secondAuctionDate as string), "dd/MM - HH:mm", { locale: ptBR })
-    : 'N/D';
-
+  
   const discountPercentage = useMemo(() => {
     if (lot.initialPrice && lot.secondInitialPrice && lot.secondInitialPrice < lot.initialPrice && (lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE')) {
       return Math.round(((lot.initialPrice - lot.secondInitialPrice) / lot.initialPrice) * 100);
@@ -293,11 +294,11 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
               <div className="flex-grow min-w-0">
                  <Link href={lotDetailUrl}>
                   <h3 className="text-base font-semibold hover:text-primary transition-colors leading-tight line-clamp-2 mr-2" title={lot.title}>
-                    {lot.title}
+                    Lote {lot.number || lot.id.replace('LOTE','')} - {lot.title}
                   </h3>
                 </Link>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate" title={`Lote ${lot.number || lot.id.replace('LOTE','')} | Leilão: ${lot.auctionName}`}>
-                  Lote {lot.number || lot.id.replace('LOTE','')} | Leilão: {lot.auctionName}
+                <p className="text-xs text-muted-foreground mt-0.5 truncate" title={`Leilão: ${lot.auctionName}`}>
+                  Leilão: {lot.auctionName}
                 </p>
               </div>
               <div className="flex-shrink-0 flex items-center space-x-0.5">
@@ -306,24 +307,14 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                 {(lot.latitude || lot.longitude || lot.mapAddress || lot.mapEmbedUrl) && (
                     <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleMapPreviewOpen}><MapPin className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Ver Mapa</p></TooltipContent></Tooltip>
                 )}
-                <DropdownMenu>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Compartilhar">
-                            <Share2 className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        </TooltipTrigger>
-                        <TooltipContent><p>Compartilhar</p></TooltipContent>
-                    </Tooltip>
-                    <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild><a href={getSocialLink('x', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><X className="h-3.5 w-3.5" /> X (Twitter)</a></DropdownMenuItem>
-                    <DropdownMenuItem asChild><a href={getSocialLink('facebook', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><Facebook className="h-3.5 w-3.5" /> Facebook</a></DropdownMenuItem>
-                    <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><MessageSquareText className="h-3.5 w-3.5" /> WhatsApp</a></DropdownMenuItem>
-                    <DropdownMenuItem asChild><a href={getSocialLink('email', lotDetailUrl, lot.title)} className="flex items-center gap-2 text-xs"><Mail className="h-3.5 w-3.5" /> Email</a></DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <EntityEditMenu
+                  entityType="lot"
+                  entityId={lot.id}
+                  publicId={lot.publicId}
+                  currentTitle={lot.title}
+                  isFeatured={lot.isFeatured || false}
+                  onUpdate={onUpdate}
+                />
               </div>
             </div>
             
@@ -350,15 +341,19 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                 <p className={`text-2xl font-bold ${lot.endDate && isPast(new Date(lot.endDate as string)) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
                   R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
-                {lot.bidIncrementStep && (
-                    <p className="text-xs text-muted-foreground">
-                    Incremento: R$ {lot.bidIncrementStep.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
+                {showCountdownOnThisCard && lot.endDate && (
+                  <TimeRemainingBadge
+                    endDate={lot.endDate}
+                    status={lot.status}
+                    showUrgencyTimer={sectionBadges.showUrgencyTimer !== false && mentalTriggersGlobalSettings.showUrgencyTimer}
+                    urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays}
+                    urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
+                  />
                 )}
               </div>
                <Button asChild size="sm" className="w-full md:w-auto mt-2 md:mt-0">
                     <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
-                        <Eye className="mr-2 h-4 w-4" /> Ver Detalhes do Lote
+                        Ver Detalhes do Lote
                     </Link>
                 </Button>
             </div>
@@ -381,7 +376,8 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
   );
 }
 
-export default function LotListItem({ lot, auction, badgeVisibilityConfig, platformSettings }: LotListItemProps) {
+
+export default function LotListItem({ lot, auction, badgeVisibilityConfig, platformSettings, onUpdate }: LotListItemProps & {onUpdate?: () => void}) {
     const [isClient, setIsClient] = useState(false);
     useEffect(() => {
       setIsClient(true);
@@ -410,5 +406,6 @@ export default function LotListItem({ lot, auction, badgeVisibilityConfig, platf
       );
     }
 
-    return <LotListItemClientContent lot={lot} auction={auction} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} />;
+    return <LotListItemClientContent lot={lot} auction={auction} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} onUpdate={onUpdate} />;
   }
+
