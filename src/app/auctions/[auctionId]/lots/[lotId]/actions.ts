@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import type { Lot, BidInfo, Review, LotQuestion, SellerProfileInfo, UserLotMaxBid } from '@/types';
@@ -25,6 +26,8 @@ export async function placeBidOnLot(
   
   if (result.success) {
     revalidatePath(`/auctions/${auctionIdOrPublicId}/lots/${lotIdOrPublicId}`);
+    revalidatePath(`/auctions/${auctionIdOrPublicId}/live`);
+    revalidatePath(`/live-dashboard`);
     console.log(`[Action - placeBidOnLot] Bid successful for ${lotIdOrPublicId}.`);
   } else {
     console.error(`[Action - placeBidOnLot] Bid failed for ${lotIdOrPublicId}: ${result.message}`);

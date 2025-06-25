@@ -77,7 +77,7 @@ async function fetchAuctionData(auctionId: string, targetLotId?: string | null):
     auction.lots = lotsArray;
     return { auction, currentLot, upcomingLots };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error(`[LiveAuctionPage] Critical error in fetchAuctionData for auctionId ${auctionId}:`, error);
     return { auction: null, currentLot: undefined, upcomingLots: [] }; 
   }
