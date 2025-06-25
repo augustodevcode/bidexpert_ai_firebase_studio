@@ -1,5 +1,3 @@
-
-
 // src/app/auctions/[auctionId]/lots/[lotId]/page.tsx
 import type { Lot, Auction, PlatformSettings, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import LotDetailClientContent from './lot-detail-client';
@@ -8,7 +6,7 @@ import Link from 'next/link';
 import { getAuction } from '@/app/admin/auctions/actions';
 import { getLot, getLots } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import { getSellerBySlug, getSellers } from '@/app/admin/sellers/actions';
+import { getSellerBySlug } from '@/app/admin/sellers/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSampleData } from '@/lib/sample-data-helpers';
@@ -46,16 +44,16 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
     return { lot: lotFromDb, auction: auctionFromDb, platformSettings, allCategories, allSellers };
   }
 
-  const lotsForThisAuction = await getLots(auctionFromDb.id);
-  const auctionToReturn: Auction = { ...auctionFromDb, lots: lotsForThisAuction, totalLots: lotsForThisAuction.length };
-
-  const lotIndex = lotsForThisAuction?.findIndex(l => l.id === lotFromDb.id || l.publicId === lotFromDb.publicId) ?? -1;
-  const totalLotsInAuction = lotsForThisAuction?.length ?? 0;
-  const previousLotId = (lotsForThisAuction && lotIndex > 0) ? (lotsForThisAuction[lotIndex - 1].publicId || lotsForThisAuction[lotIndex - 1].id) : undefined;
-  const nextLotId = (lotsForThisAuction && lotIndex > -1 && lotIndex < totalLotsInAuction - 1) ? (lotsForThisAuction[lotIndex + 1].publicId || lotsForThisAuction[lotIndex + 1].id) : undefined;
+  // A função getAuction já popula a lista de lotes, então não precisamos chamar getLots() novamente.
+  const lotsForThisAuction = auctionFromDb.lots || [];
+  const lotIndex = lotsForThisAuction.findIndex(l => l.id === lotFromDb.id || (l.publicId && l.publicId === lotFromDb.publicId));
+  const totalLotsInAuction = lotsForThisAuction.length;
   
-  let sellerName = lotFromDb.sellerName || auctionToReturn.seller;
-  const sellerIdToFetch = lotFromDb.sellerId || auctionToReturn.sellerId;
+  const previousLotId = lotIndex > 0 ? (lotsForThisAuction[lotIndex - 1].publicId || lotsForThisAuction[lotIndex - 1].id) : undefined;
+  const nextLotId = (lotIndex > -1 && lotIndex < totalLotsInAuction - 1) ? (lotsForThisAuction[lotIndex + 1].publicId || lotsForThisAuction[lotIndex + 1].id) : undefined;
+  
+  let sellerName = lotFromDb.sellerName || auctionFromDb.seller;
+  const sellerIdToFetch = lotFromDb.sellerId || auctionFromDb.sellerId;
   if (!sellerName && sellerIdToFetch) {
     const seller = await getSellerBySlug(sellerIdToFetch);
     sellerName = seller?.name;
@@ -63,7 +61,7 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   
   return { 
     lot: lotFromDb, 
-    auction: auctionToReturn, 
+    auction: auctionFromDb, 
     platformSettings, 
     sellerName, 
     lotIndex, 
@@ -122,11 +120,16 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
 }
 
 export async function generateStaticParams() {
-  const lots = await getLots(); 
-  // Limit to a reasonable number for build time
-  const paths = lots.slice(0, 50).map(lot => ({
-      auctionId: lot.auctionId,
-      lotId: lot.publicId || lot.id,
-    }));
-  return paths;
+  try {
+    const lots = await getLots(); 
+    // Limit to a reasonable number for build time
+    const paths = lots.slice(0, 50).map(lot => ({
+        auctionId: lot.auctionId,
+        lotId: lot.publicId || lot.id,
+      }));
+    return paths;
+  } catch (error) {
+    console.error("Error generating static params for lot detail pages:", error);
+    return [];
+  }
 }

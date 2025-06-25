@@ -268,12 +268,42 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     const items = this.data.sampleAuctions.filter((a: Auction) => ids.includes(a.id) || (a.publicId && ids.includes(a.publicId)));
     return Promise.resolve(JSON.parse(JSON.stringify(items)));
   }
-  async getAuction(idOrPublicId: string): Promise<Auction | null> { await delay(20); const item = this.data.sampleAuctions.find((a: Auction) => a.id === idOrPublicId || a.publicId === idOrPublicId); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
+  async getAuction(idOrPublicId: string): Promise<Auction | null> {
+    await delay(20);
+    const auction = this.data.sampleAuctions.find((a: Auction) => a.id === idOrPublicId || a.publicId === idOrPublicId);
+    if (!auction) {
+        return Promise.resolve(null);
+    }
+    // New logic: populate lots for this auction to ensure consistency
+    const lotsForThisAuction = this.data.sampleLots.filter((l: Lot) => l.auctionId === auction.id);
+    const auctionWithLots = { ...auction, lots: lotsForThisAuction, totalLots: lotsForThisAuction.length };
+    return Promise.resolve(JSON.parse(JSON.stringify(auctionWithLots)));
+  }
   async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> { const newAuction: Auction = {...(data as any), id: `auc-${uuidv4()}`, publicId: `AUC-PUB-${uuidv4()}`, createdAt: new Date(), updatedAt: new Date(), lots:[], totalLots:0}; this.data.sampleAuctions.push(newAuction); this._persistData(); return {success: true, message: 'Leilão criado!', auctionId: newAuction.id, auctionPublicId: newAuction.publicId}; }
   async updateAuction(id: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleAuctions.findIndex((a: Auction) => a.id === id || a.publicId === id); if(index === -1) return {success: false, message: 'Leilão não encontrado.'}; this.data.sampleAuctions[index] = {...this.data.sampleAuctions[index], ...data, updatedAt: new Date()}; this._persistData(); return {success: true, message: 'Leilão atualizado!'}; }
   async deleteAuction(id: string): Promise<{ success: boolean; message: string; }> { this.data.sampleAuctions = this.data.sampleAuctions.filter((a: Auction) => a.id !== id && a.publicId !== id); this.data.sampleLots = this.data.sampleLots.filter((l: Lot) => l.auctionId !== id); this._persistData(); return {success: true, message: 'Leilão excluído!'}; }
   
-  async getLots(auctionIdParam?: string): Promise<Lot[]> { await delay(20); let lots = this.data.sampleLots; if (auctionIdParam) { const auction = await this.getAuction(auctionIdParam); if (auction) { lots = lots.filter((l: Lot) => l.auctionId === auction.id || l.auctionId === auction.publicId); } else { return Promise.resolve([]); } } return Promise.resolve(JSON.parse(JSON.stringify(lots))); }
+  async getLots(auctionIdParam?: string): Promise<Lot[]> {
+    await delay(20);
+    let lots = this.data.sampleLots;
+    if (auctionIdParam) {
+        const auction = await this.getAuction(auctionIdParam);
+        if (auction) {
+            lots = lots.filter((l: Lot) => l.auctionId === auction.id || l.auctionId === auction.publicId);
+        } else {
+            return Promise.resolve([]);
+        }
+    }
+    // Add auctionName to each lot for consistency
+    const lotsWithAuctionName = lots.map(lot => {
+        const parentAuction = this.data.sampleAuctions.find(a => a.id === lot.auctionId);
+        return {
+            ...lot,
+            auctionName: lot.auctionName || parentAuction?.title || 'Leilão não encontrado'
+        };
+    });
+    return Promise.resolve(JSON.parse(JSON.stringify(lotsWithAuctionName)));
+  }
   async getLotsByIds(ids: string[]): Promise<Lot[]> { await delay(20); if (!ids || ids.length === 0) { return Promise.resolve([]); } const lots = this.data.sampleLots.filter((l: Lot) => ids.includes(l.id)); return Promise.resolve(JSON.parse(JSON.stringify(lots))); }
   async getLot(idOrPublicId: string): Promise<Lot | null> { await delay(20); const item = this.data.sampleLots.find((l: Lot) => l.id === idOrPublicId || l.publicId === idOrPublicId); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
   async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> { const newLot: Lot = {...(data as any), id: `lot-${uuidv4()}`, publicId: `LOT-PUB-${uuidv4()}`, createdAt: new Date(), updatedAt: new Date()}; this.data.sampleLots.push(newLot); this._persistData(); return {success: true, message: 'Lote criado!', lotId: newLot.id, lotPublicId: newLot.publicId}; }
