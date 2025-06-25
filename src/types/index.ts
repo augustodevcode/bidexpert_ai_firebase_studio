@@ -292,11 +292,6 @@ export interface Lot {
   auctioneerName?: string;
   auctioneerId?: string; 
   condition?: string;
-  createdAt?: AnyTimestamp;
-  updatedAt?: AnyTimestamp;
-  discountPercentage?: number;
-  additionalTriggers?: string[];
-  isExclusive?: boolean;
   allowInstallmentBids?: boolean; 
   latitude?: number | null;
   longitude?: number | null;
@@ -319,6 +314,11 @@ export interface Lot {
   evaluationValue?: number | null; // Valor de avaliação oficial
   debtAmount?: number | null; // Montante da dívida (Alienação Fiduciária)
   itbiValue?: number | null; // Valor de ITBI (Alienação Fiduciária)
+  createdAt?: AnyTimestamp;
+  updatedAt?: AnyTimestamp;
+  discountPercentage?: number;
+  additionalTriggers?: string[];
+  isExclusive?: boolean;
 }
 
 export type LotFormData = Omit<Lot,
@@ -441,6 +441,7 @@ export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'RE
 export interface UserWin {
   id: string;
   lot: Lot; 
+  userId: string;
   winningBidAmount: number;
   winDate: AnyTimestamp;
   paymentStatus: PaymentStatus;
@@ -759,7 +760,7 @@ export interface IDatabaseAdapter {
   getAuctionsByIds(ids: string[]): Promise<Auction[]>;
   getAuction(idOrPublicId: string): Promise<Auction | null>;
   updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string }>;
-  deleteAuction(idOrPublicId: string): Promise<{ success: boolean; message: string }>;
+  deleteAuction(idOrPublicId: string): Promise<{ success: boolean; message: string; }>;
   getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]>;
   getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]>;
 

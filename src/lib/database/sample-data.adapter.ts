@@ -109,15 +109,8 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async getWinsForUser(userId: string): Promise<UserWin[]> {
     await delay(20);
     const wins = this.data.sampleUserWins.filter((w: UserWin) => w.userId === userId);
-    // Populate the lot data for each win, as the type requires it.
-    const populatedWins = wins.map(win => {
-        const lotForWin = this.data.sampleLots.find(l => l.id === win.lot.id || l.publicId === win.lot.id);
-        return {
-            ...win,
-            lot: lotForWin || win.lot // Fallback to potentially partial data if full lot not found
-        };
-    });
-    return Promise.resolve(JSON.parse(JSON.stringify(populatedWins)));
+    // The data is already populated in sample-data.ts, no need to re-map.
+    return Promise.resolve(JSON.parse(JSON.stringify(wins)));
   }
 
 
