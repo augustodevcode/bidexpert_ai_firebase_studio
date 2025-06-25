@@ -45,7 +45,7 @@ function TimeRemaining({ endDate, status }: { endDate: Date; status: Lot['status
     };
 
     calculate();
-    const interval = setInterval(calculate, 1000 * 30); // Update every 30 seconds
+    const interval = setInterval(calculate, 60000); // Update every 30 seconds
     return () => clearInterval(interval);
   }, [endDate, status]);
 
