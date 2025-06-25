@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef } from 'react';
 import L, { type LatLngBounds } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Lot, Auction } from '@/types';
@@ -38,37 +38,28 @@ export default function MapSearchComponent({
 }: MapSearchComponentProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
-  const markersRef = useRef<L.LayerGroup | null>(null);
-  const programmaticMoveRef = useRef(false);
+  const markersLayerRef = useRef<L.LayerGroup | null>(null);
+  const isProgrammaticMove = useRef(false);
 
-  // Initialize map only once
+  // Initialize map
   useEffect(() => {
     if (mapContainerRef.current && !mapRef.current) {
-      mapRef.current = L.map(mapContainerRef.current, {
-        center: mapCenter,
-        zoom: mapZoom,
-        scrollWheelZoom: true,
-      });
-
+      mapRef.current = L.map(mapContainerRef.current).setView(mapCenter, mapZoom);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        attribution: '&copy; OpenStreetMap contributors'
       }).addTo(mapRef.current);
       
-      markersRef.current = L.layerGroup().addTo(mapRef.current);
-
-      const onMapMoveEnd = () => {
-        if (programmaticMoveRef.current) {
-          programmaticMoveRef.current = false; 
-          return;
-        }
-        if (mapRef.current) {
+      markersLayerRef.current = L.layerGroup().addTo(mapRef.current);
+      
+      mapRef.current.on('moveend', () => {
+        if (mapRef.current && !isProgrammaticMove.current) {
           onBoundsChange(mapRef.current.getBounds());
         }
-      };
-
-      mapRef.current.on('moveend', onMapMoveEnd);
+        // Reset the flag after any moveend event
+        isProgrammaticMove.current = false;
+      });
     }
-    
+
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
@@ -76,19 +67,29 @@ export default function MapSearchComponent({
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // Only run once on mount
 
-  // Effect to update markers when items change
+  // Update markers and view
   useEffect(() => {
-    if (markersRef.current) {
-      markersRef.current.clearLayers();
-      items.forEach(item => {
-        if (item.latitude && item.longitude) {
-          const url = itemType === 'lots'
-            ? `/auctions/${(item as Lot).auctionId}/lots/${item.publicId || item.id}`
-            : `/auctions/${item.publicId || item.id}`;
-          
-          const popupContent = `
+    if (!mapRef.current || !markersLayerRef.current) return;
+    
+    markersLayerRef.current.clearLayers();
+    
+    const validPoints: [number, number][] = [];
+    
+    items.forEach(item => {
+      if (item.latitude && item.longitude) {
+        validPoints.push([item.latitude, item.longitude]);
+        
+        const url = itemType === 'lots'
+          ? `/auctions/${(item as Lot).auctionId}/lots/${item.publicId || item.id}`
+          : `/auctions/${item.publicId || item.id}`;
+        
+        const priceOrLots = itemType === 'lots'
+          ? `Preço: R$ ${((item as Lot).price || 0).toLocaleString('pt-BR')}`
+          : `Lotes: ${(item as Auction).totalLots || 0}`;
+
+        const popupContent = `
             <div style="font-family: sans-serif; font-size: 14px;">
               <strong>
                 <a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #1a73e8; text-decoration: none;">
@@ -96,39 +97,25 @@ export default function MapSearchComponent({
                 </a>
               </strong>
               <p style="margin: 4px 0 0;">
-                ${itemType === 'lots' 
-                  ? `Preço: R$ ${((item as Lot).price || 0).toLocaleString('pt-BR')}` 
-                  : `Lotes: ${(item as Auction).totalLots || 0}`
-                }
+                ${priceOrLots}
               </p>
             </div>
           `;
-          
-          L.marker([item.latitude!, item.longitude!], { icon: defaultIcon })
-            .addTo(markersRef.current!)
-            .bindPopup(popupContent);
-        }
-      });
-    }
-  }, [items, itemType]);
 
-  // Effect to fit bounds when a search is triggered
-  useEffect(() => {
-    if (mapRef.current && shouldFitBounds) {
-      const points = items
-        .filter(item => item.latitude && item.longitude)
-        .map(item => [item.latitude!, item.longitude!] as [number, number]);
-      
-      if (points.length > 0) {
-        programmaticMoveRef.current = true;
-        const bounds = L.latLngBounds(points);
-        mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
-      } else {
-         programmaticMoveRef.current = true;
-         mapRef.current.setView(mapCenter, mapZoom);
+        L.marker([item.latitude, item.longitude], { icon: defaultIcon })
+          .addTo(markersLayerRef.current!)
+          .bindPopup(popupContent);
       }
+    });
+
+    if (shouldFitBounds && validPoints.length > 0) {
+      isProgrammaticMove.current = true;
+      const bounds = L.latLngBounds(validPoints);
+      mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+    } else if (!shouldFitBounds) {
+      // User is controlling the map, so we don't change the view.
     }
-  }, [items, shouldFitBounds, mapCenter, mapZoom]);
+  }, [items, itemType, shouldFitBounds]);
 
   return <div ref={mapContainerRef} className="w-full h-full rounded-lg" style={{zIndex: 0}}></div>;
 }

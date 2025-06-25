@@ -335,13 +335,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
             R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
-        {lot.endDate && (
-          <div className={`flex items-center text-xs text-muted-foreground ${isPast(new Date(lot.endDate as string)) ? 'line-through' : ''}`}>
-            <CalendarDays className="h-3 w-3 mr-1" />
-            <span>{format(new Date(lot.endDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
-          </div>
-        )}
-
+        
         <div className="w-full flex justify-between items-center text-xs">
             {showCountdownOnThisCard && lot.endDate && (
               <TimeRemainingBadge
@@ -352,24 +346,16 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
                 urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
               />
             )}
-           {!showCountdownOnThisCard && lot.endDate && lot.status === 'ABERTO_PARA_LANCES' && !isPast(new Date(lot.endDate)) && (
-              <Badge variant="outline" className="text-xs font-medium">
-                  <Clock className="h-3 w-3 mr-1" />
-                  Aberto
-              </Badge>
-           )}
-           {!showCountdownOnThisCard && lot.endDate && (lot.status !== 'ABERTO_PARA_LANCES' || isPast(new Date(lot.endDate))) && (
-              <Badge variant="outline" className="text-xs font-medium">
-                  <Clock className="h-3 w-3 mr-1" />
-                  {getAuctionStatusText(lot.status)}
-              </Badge>
-           )}
-            <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate as string)) ? 'line-through' : ''}`}>
-                <Gavel className="h-3 w-3" />
-                <span>{lot.bidsCount || 0} Lances</span>
+            
+            <div className="flex items-center gap-2 ml-auto">
+                <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate || '')) ? 'line-through' : ''}`}>
+                    <Gavel className="h-3 w-3" />
+                    <span>{lot.bidsCount || 0} Lances</span>
+                </div>
+                <span className={`font-semibold ${isPast(new Date(lot.endDate || '')) ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.number || lot.id.replace('LOTE', '')}</span>
             </div>
-            <span className={`font-semibold ${isPast(new Date(lot.endDate as string)) ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.number || lot.id.replace('LOTE', '')}</span>
         </div>
+
          <Button asChild className="w-full mt-2" size="sm">
             <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>Ver Detalhes do Lote</Link>
         </Button>

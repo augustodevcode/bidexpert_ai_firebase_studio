@@ -1,3 +1,4 @@
+
 // src/app/auctions/[auctionId]/page.tsx
 import type { Auction, PlatformSettings, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import AuctionDetailsClient from './auction-details-client';
@@ -9,6 +10,9 @@ import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions'; 
+import { getSampleData } from '@/lib/sample-data-helpers';
+
+export const dynamic = 'force-dynamic';
 
 async function getAuctionPageData(id: string): Promise<{ 
   auction?: Auction; 
