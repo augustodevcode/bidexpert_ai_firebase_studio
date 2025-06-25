@@ -12,7 +12,7 @@ import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
 import AuctionPreviewModal from './auction-preview-modal';
-import { getAuctionStatusText } from '@/lib/sample-data';
+import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import {
   DropdownMenu,
   DropdownMenuContent,
