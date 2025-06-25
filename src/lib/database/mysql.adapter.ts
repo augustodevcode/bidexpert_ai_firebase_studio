@@ -1,4 +1,3 @@
-
 // src/lib/database/mysql.adapter.ts
 import mysql, { type RowDataPacket, type Pool } from 'mysql2/promise';
 import type {
@@ -686,6 +685,36 @@ export class MySqlAdapter implements IDatabaseAdapter {
         connection.release();
     }
 }
+
+  async getAuctionsByIds(ids: string[]): Promise<Auction[]> {
+    if (!ids || ids.length === 0) return [];
+    const placeholders = ids.map(() => '?').join(',');
+    const [rows] = await getPool().execute(`
+        SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url
+        FROM auctions a
+        LEFT JOIN lot_categories cat ON a.category_id = cat.id
+        LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
+        LEFT JOIN sellers s ON a.seller_id = s.id
+        WHERE a.id IN (${placeholders})
+    `, ids);
+    return mapMySqlRowsToCamelCase(rows as RowDataPacket[]).map(mapToAuction);
+  }
+
+  async getLotsByIds(ids: string[]): Promise<Lot[]> {
+    if (!ids || ids.length === 0) return [];
+    const placeholders = ids.map(() => '?').join(',');
+    const [rows] = await getPool().execute(`
+      SELECT l.*, c.name as category_name, s.name as subcategory_name, st.uf as state_uf, city.name as city_name, a.title as auction_name
+      FROM lots l
+      LEFT JOIN lot_categories c ON l.category_id = c.id
+      LEFT JOIN subcategories s ON l.subcategory_id = s.id
+      LEFT JOIN states st ON l.state_id = st.id
+      LEFT JOIN cities city ON l.city_id = city.id
+      LEFT JOIN auctions a ON l.auction_id = a.id
+      WHERE l.id IN (${placeholders})
+    `, ids);
+    return mapMySqlRowsToCamelCase(rows as RowDataPacket[]).map(mapToLot);
+  }
 
 
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[]; rolesProcessed?: number }> {

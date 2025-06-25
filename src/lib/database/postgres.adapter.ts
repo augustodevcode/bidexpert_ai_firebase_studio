@@ -1,4 +1,3 @@
-
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -645,6 +644,35 @@ export class PostgresAdapter implements IDatabaseAdapter {
     } finally {
       client.release();
     }
+  }
+
+  async getAuctionsByIds(ids: string[]): Promise<Auction[]> {
+    if (!ids || ids.length === 0) return [];
+    const res = await getPool().query(
+        `SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url
+         FROM auctions a
+         LEFT JOIN lot_categories cat ON a.category_id = cat.id
+         LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
+         LEFT JOIN sellers s ON a.seller_id = s.id
+         WHERE a.id = ANY($1::int[])`, 
+        [ids.map(id => parseInt(id, 10))] // Convert string IDs to int for query
+    );
+    return res.rows.map(mapToAuction);
+  }
+
+  async getLotsByIds(ids: string[]): Promise<Lot[]> {
+    if (!ids || ids.length === 0) return [];
+    const res = await getPool().query(`
+      SELECT l.*, c.name as category_name, s.name as subcategory_name, st.uf as state_uf, city.name as city_name, a.title as auction_name
+      FROM lots l
+      LEFT JOIN lot_categories c ON l.category_id = c.id
+      LEFT JOIN subcategories s ON l.subcategory_id = s.id
+      LEFT JOIN states st ON l.state_id = st.id
+      LEFT JOIN cities city ON l.city_id = city.id
+      LEFT JOIN auctions a ON l.auction_id = a.id
+      WHERE l.id = ANY($1::int[])
+    `, [ids.map(id => parseInt(id, 10))]);
+    return res.rows.map(mapToLot);
   }
 
 

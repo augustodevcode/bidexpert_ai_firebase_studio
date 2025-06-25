@@ -260,7 +260,14 @@ export class SampleDataAdapter implements IDatabaseAdapter {
 
   // --- Auctions & Lots ---
   async getAuctions(): Promise<Auction[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleAuctions))); }
-  async getAuctionsByIds(ids: string[]): Promise<Auction[]> { await delay(20); if (!ids || ids.length === 0) { return Promise.resolve([]); } const items = this.data.sampleAuctions.filter((a: Auction) => ids.includes(a.id) || (a.publicId && ids.includes(a.publicId))); return Promise.resolve(JSON.parse(JSON.stringify(items))); }
+  async getAuctionsByIds(ids: string[]): Promise<Auction[]> {
+    await delay(20);
+    if (!ids || ids.length === 0) {
+      return Promise.resolve([]);
+    }
+    const items = this.data.sampleAuctions.filter((a: Auction) => ids.includes(a.id) || (a.publicId && ids.includes(a.publicId)));
+    return Promise.resolve(JSON.parse(JSON.stringify(items)));
+  }
   async getAuction(idOrPublicId: string): Promise<Auction | null> { await delay(20); const item = this.data.sampleAuctions.find((a: Auction) => a.id === idOrPublicId || a.publicId === idOrPublicId); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
   async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> { const newAuction: Auction = {...(data as any), id: `auc-${uuidv4()}`, publicId: `AUC-PUB-${uuidv4()}`, createdAt: new Date(), updatedAt: new Date(), lots:[], totalLots:0}; this.data.sampleAuctions.push(newAuction); this._persistData(); return {success: true, message: 'Leilão criado!', auctionId: newAuction.id, auctionPublicId: newAuction.publicId}; }
   async updateAuction(id: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleAuctions.findIndex((a: Auction) => a.id === id || a.publicId === id); if(index === -1) return {success: false, message: 'Leilão não encontrado.'}; this.data.sampleAuctions[index] = {...this.data.sampleAuctions[index], ...data, updatedAt: new Date()}; this._persistData(); return {success: true, message: 'Leilão atualizado!'}; }
