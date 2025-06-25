@@ -107,6 +107,16 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     console.log("[SampleDataAdapter] Instance created and data loaded.");
   }
 
+  async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
+    await delay(20);
+    const seller = this.data.sampleSellers.find((s: SellerProfileInfo) => s.slug === sellerSlugOrPublicId || s.publicId === sellerSlugOrPublicId);
+    if (!seller) return Promise.resolve([]);
+    // Filter by either sellerId or the seller name for flexibility with sample data structure
+    const items = this.data.sampleAuctions.filter((a: Auction) => a.sellerId === seller.id || a.seller === seller.name);
+    const resolved = items.map((auc: Auction) => ({ ...auc, imageUrl: this.resolveMediaUrl(auc.imageMediaId) || 'https://placehold.co/600x400.png' }));
+    return Promise.resolve(JSON.parse(JSON.stringify(resolved)));
+  }
+
   async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {
     await delay(20);
     const auctioneer = this.data.sampleAuctioneers.find((a: AuctioneerProfileInfo) => a.slug === auctioneerSlugOrPublicId || a.publicId === auctioneerSlugOrPublicId);

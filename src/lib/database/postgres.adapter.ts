@@ -510,6 +510,24 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return res.rows.length > 0 ? mapToSellerProfileInfo(res.rows[0]) : null;
   }
 
+  async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
+    const res = await getPool().query(
+      `SELECT
+        a.*,
+        cat.name as category_name,
+        auct.name as auctioneer_name,
+        s.name as seller_name
+       FROM auctions a
+       JOIN sellers s ON a.seller_id = s.id
+       LEFT JOIN lot_categories cat ON a.category_id = cat.id
+       LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
+       WHERE s.slug = $1 OR s.public_id = $1
+       ORDER BY a.auction_date DESC`,
+      [sellerSlugOrPublicId]
+    );
+    return res.rows.map(mapToAuction);
+  }
+
   async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }> {
     const client = await getPool().connect();
     try {

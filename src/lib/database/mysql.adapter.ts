@@ -549,6 +549,24 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return items.length > 0 ? mapToSellerProfileInfo(items[0]) : null;
   }
 
+  async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
+    const [rows] = await getPool().execute(
+      `SELECT
+        a.*,
+        cat.name as category_name,
+        auct.name as auctioneer_name,
+        s.name as seller_name
+       FROM auctions a
+       JOIN sellers s ON a.seller_id = s.id
+       LEFT JOIN lot_categories cat ON a.category_id = cat.id
+       LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
+       WHERE s.slug = ? OR s.public_id = ?
+       ORDER BY a.auction_date DESC`,
+      [sellerSlugOrPublicId, sellerSlugOrPublicId]
+    );
+    return mapMySqlRowsToCamelCase(rows as RowDataPacket[]).map(mapToAuction);
+  }
+
   async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }> {
     const connection = await getPool().getConnection();
     try {
