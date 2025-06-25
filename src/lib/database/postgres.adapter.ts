@@ -578,5 +578,10 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
     return wins;
   }
+  
+  async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[PostgresAdapter] answerQuestion is not yet implemented for PostgreSQL.");
+    return { success: false, message: "Funcionalidade não implementada para PostgreSQL." };
+  }
 
 }

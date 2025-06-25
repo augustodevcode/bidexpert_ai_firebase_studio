@@ -332,7 +332,14 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async createReview(reviewData: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<{ success: boolean; message: string; reviewId?: string | undefined; }> { const newReview: Review = {...reviewData, id: `rev-${uuidv4()}`, createdAt: new Date()}; this.data.sampleLotReviews.unshift(newReview); this._persistData(); return { success: true, message: "Avaliação adicionada!", reviewId: newReview.id }; }
   async getQuestionsForLot(lotId: string): Promise<LotQuestion[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleLotQuestions.filter((q: LotQuestion) => q.lotId === lotId)))); }
   async createQuestion(questionData: Omit<LotQuestion, "id" | "createdAt" | "answeredAt" | "answeredByUserId" | "answeredByUserDisplayName" | "isPublic">): Promise<{ success: boolean; message: string; questionId?: string | undefined; }> { const newQuestion: LotQuestion = {...questionData, id: `qst-${uuidv4()}`, createdAt: new Date(), isPublic: true}; this.data.sampleLotQuestions.unshift(newQuestion); this._persistData(); return { success: true, message: "Pergunta enviada!", questionId: newQuestion.id }; }
-  async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleLotQuestions.findIndex((q: LotQuestion) => q.id === questionId); if(index === -1) return {success: false, message: 'Pergunta não encontrada.'}; this.data.sampleLotQuestions[index] = {...this.data.sampleLotQuestions[index], answerText, answeredByUserId, answeredByUserDisplayName, answeredAt: new Date()}; this._persistData(); return {success: true, message: 'Pergunta respondida!'}; }
+  async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> { 
+    await delay(50);
+    const index = this.data.sampleLotQuestions.findIndex((q: LotQuestion) => q.id === questionId && q.lotId === lotId); 
+    if(index === -1) return {success: false, message: 'Pergunta não encontrada para este lote.'}; 
+    this.data.sampleLotQuestions[index] = {...this.data.sampleLotQuestions[index], answerText, answeredByUserId, answeredByUserDisplayName, answeredAt: new Date()}; 
+    this._persistData(); 
+    return {success: true, message: 'Pergunta respondida!'}; 
+  }
   
   // --- Proxy Bidding ---
   async createUserLotMaxBid(userId: string, lotId: string, maxAmount: number): Promise<{ success: boolean; message: string; maxBidId?: string; }> {
