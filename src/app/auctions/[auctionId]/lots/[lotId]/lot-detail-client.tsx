@@ -30,7 +30,7 @@ import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdF
 import { useAuth } from '@/contexts/auth-context';
 import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data-helpers';
 
-import { getBidsForLot, getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, placeBidOnLot, getActiveMaxBid, placeMaxBid } from './actions';
+import { getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot } from './actions';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LotDescriptionTab from '@/components/auction/lot-description-tab';
@@ -47,12 +47,7 @@ import LotCard from '@/components/lot-card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
-
-const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'admin@bidexpert.com.br'.toLowerCase();
-const SUPER_TEST_USER_UID_FOR_BYPASS = 'SUPER_TEST_USER_UID_PLACEHOLDER_AUG';
-const SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS = 'Administrador BidExpert (Super Test)';
-
+import BiddingPanel from '@/components/auction/bidding-panel';
 
 interface DetailTimeRemainingProps {
   effectiveEndDate: Date | null;
@@ -211,19 +206,11 @@ export default function LotDetailClientContent({
   const { toast } = useToast();
   const [currentUrl, setCurrentUrl] = useState('');
   const { userProfileWithPermissions, loading: authLoading } = useAuth();
-  const [lotBids, setLotBids] = useState<BidInfo[]>([]);
   const [lotReviews, setLotReviews] = useState<Review[]>([]);
   const [lotQuestions, setLotQuestions] = useState<LotQuestion[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [bidAmountInput, setBidAmountInput] = useState<string>('');
-  const [isPlacingBid, setIsPlacingBid] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [isAllBidsModalOpen, setIsAllBidsModalOpen] = useState(false);
-  
-  const [maxBidAmountInput, setMaxBidAmountInput] = useState('');
-  const [isSettingMaxBid, setIsSettingMaxBid] = useState(false);
-  const [activeMaxBid, setActiveMaxBid] = useState<UserLotMaxBid | null>(null);
   
   const gallery = useMemo(() => {
     if (!lot) return [];
@@ -277,19 +264,12 @@ export default function LotDetailClientContent({
         setIsLoadingData(true);
         try {
           console.log(`[LotDetailClient] Fetching data for lot ID: ${lot.id}`);
-          const promises: [Promise<BidInfo[]>, Promise<Review[]>, Promise<LotQuestion[]>, Promise<UserLotMaxBid | null>] = [
-            getBidsForLot(lot.publicId || lot.id),
+          const [reviews, questions] = await Promise.all([
             getReviewsForLot(lot.publicId || lot.id),
             getQuestionsForLot(lot.publicId || lot.id),
-            getActiveMaxBid(lot.publicId || lot.id, userProfileWithPermissions?.uid || '')
-          ];
-
-          const [bids, reviews, questions, maxBid] = await Promise.all(promises);
-
-          setLotBids(bids.sort((a, b) => new Date(b.timestamp as string).getTime() - new Date(a.timestamp as string).getTime()));
+          ]);
           setLotReviews(reviews);
           setLotQuestions(questions);
-          setActiveMaxBid(maxBid);
         } catch (error: any) {
           console.error("[LotDetailClient] Error fetching data:", error);
           toast({ title: "Erro", description: "Não foi possível carregar todos os dados do lote.", variant: "destructive" });
@@ -299,17 +279,21 @@ export default function LotDetailClientContent({
       };
       fetchData();
     }
-  }, [lot?.id, lot.publicId, toast, userProfileWithPermissions?.uid]);
+  }, [lot?.id, lot.publicId, toast]);
+
+  const handleBidSuccess = (updatedLotData: Partial<Lot>, newBid?: BidInfo) => {
+    setLot(prevLot => ({...prevLot!, ...updatedLotData}));
+    // Future: Could also update a local bid history state here to be even faster
+  };
 
 
   const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.series || ''} ${lot?.title || ''}`.trim();
   const lotLocation = lot?.cityName && lot?.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot?.stateUf || lot?.cityName || 'Não informado';
 
-  const isEffectivelySuperTestUser = userProfileWithPermissions?.email?.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS;
+  const isEffectivelySuperTestUser = userProfileWithPermissions?.email?.toLowerCase() === 'admin@bidexpert.com.br'.toLowerCase();
   const hasAdminRights = userProfileWithPermissions && hasPermission(userProfileWithPermissions, 'manage_all');
   const isUserHabilitado = userProfileWithPermissions?.habilitationStatus === 'HABILITADO';
 
-  const canUserBid = (isEffectivelySuperTestUser || hasAdminRights || (userProfileWithPermissions && isUserHabilitado)) && lot?.status === 'ABERTO_PARA_LANCES';
   const canUserReview = !!userProfileWithPermissions;
   const canUserAskQuestion = isEffectivelySuperTestUser || hasAdminRights || (userProfileWithPermissions && isUserHabilitado);
 
@@ -336,85 +320,6 @@ export default function LotDetailClientContent({
     }
   };
 
-  const bidIncrement = lot?.bidIncrementStep || ((lot?.price || 0) > 10000 ? 500 : ((lot?.price || 0) > 1000 ? 100 : 50));
-  const nextMinimumBid = (lot?.price || 0) + bidIncrement;
-
-  const handlePlaceBid = async () => {
-    setIsPlacingBid(true);
-    let userIdForBid: string | undefined = userProfileWithPermissions?.uid;
-    let displayNameForBid: string | undefined = userProfileWithPermissions?.fullName || userProfileWithPermissions?.email?.split('@')[0];
-    if (isEffectivelySuperTestUser && !userIdForBid) {
-        userIdForBid = userProfileWithPermissions?.uid || SUPER_TEST_USER_UID_FOR_BYPASS;
-        displayNameForBid = userProfileWithPermissions?.fullName || SUPER_TEST_USER_DISPLAYNAME_FOR_BYPASS;
-    }
-    if (!userIdForBid) {
-      toast({ title: "Ação Requerida", description: "Você precisa estar logado e com perfil carregado para dar um lance.", variant: "destructive" });
-      setIsPlacingBid(false);
-      return;
-    }
-    if (!displayNameForBid) displayNameForBid = 'Usuário Anônimo';
-
-    const amountToBid = parseFloat(bidAmountInput);
-    if (isNaN(amountToBid) || amountToBid <= 0) {
-      toast({ title: "Erro no Lance", description: "Por favor, insira um valor de lance válido.", variant: "destructive" });
-      setIsPlacingBid(false);
-      return;
-    }
-    if (amountToBid < nextMinimumBid) {
-        toast({ title: "Erro no Lance", description: `Seu lance deve ser de pelo menos R$ ${nextMinimumBid.toLocaleString('pt-BR')}.`, variant: "destructive" });
-        setIsPlacingBid(false);
-        return;
-    }
-
-    try {
-      const result = await placeBidOnLot(lot.publicId || lot.id, lot.auctionId, userIdForBid!, displayNameForBid!, amountToBid);
-      if (result.success && result.updatedLot && result.newBid) {
-        setLot(prevLot => ({ ...prevLot!, ...result.updatedLot }));
-        setLotBids(prevBids => [result.newBid!, ...prevBids].sort((a, b) => new Date(b.timestamp as string).getTime() - new Date(a.timestamp as string).getTime()));
-        setBidAmountInput('');
-        toast({ title: "Lance Enviado!", description: result.message });
-      } else {
-        toast({ title: "Erro ao Dar Lance", description: result.message, variant: "destructive" });
-      }
-    } catch (error: any) {
-      toast({ title: "Erro Inesperado", description: error.message || "Ocorreu um erro ao processar seu lance.", variant: "destructive" });
-    } finally {
-      setIsPlacingBid(false);
-    }
-  };
-
-  const handleSetMaxBid = async () => {
-    setIsSettingMaxBid(true);
-    const userIdForBid = userProfileWithPermissions?.uid;
-    if (!userIdForBid) {
-      toast({ title: "Ação Requerida", description: "Você precisa estar logado para definir um lance máximo.", variant: "destructive" });
-      setIsSettingMaxBid(false);
-      return;
-    }
-    const amount = parseFloat(maxBidAmountInput);
-    if (isNaN(amount) || amount <= 0) {
-      toast({ title: "Valor Inválido", description: "Por favor, insira um valor de lance máximo válido.", variant: "destructive" });
-      setIsSettingMaxBid(false);
-      return;
-    }
-    try {
-        const result = await placeMaxBid(lot.publicId || lot.id, userIdForBid, amount);
-        if (result.success) {
-            toast({ title: "Lance Máximo Definido!", description: result.message });
-            const newActiveMaxBid = await getActiveMaxBid(lot.publicId || lot.id, userIdForBid);
-            setActiveMaxBid(newActiveMaxBid);
-        } else {
-            toast({ title: "Erro ao Definir Lance Máximo", description: result.message, variant: "destructive" });
-        }
-    } catch (error: any) {
-         toast({ title: "Erro Inesperado", description: error.message || "Ocorreu um erro.", variant: "destructive" });
-    } finally {
-        setIsSettingMaxBid(false);
-    }
-  };
-
-  const currentBidLabel = lot?.bidsCount && lot.bidsCount > 0 ? "Último lance:" : "Lance Inicial:";
-  const currentBidValue = lot?.price || 0;
   const mentalTriggersGlobalSettings = platformSettings.mentalTriggerSettings || {};
   const sectionBadgesLotDetail = platformSettings.sectionBadgeVisibility?.lotDetail || {
     showStatusBadge: true, showDiscountBadge: true, showUrgencyTimer: true,
@@ -452,8 +357,6 @@ export default function LotDetailClientContent({
   const currentLotHasProcessInfo = hasProcessInfo(lot);
   const showLegalProcessTab = isJudicialAuction && currentLotHasProcessInfo;
   const legalTabTitle = showLegalProcessTab ? "Documentos e Processo" : "Documentos";
-  const displayBidAmount = parseFloat(bidAmountInput) >= nextMinimumBid ? parseFloat(bidAmountInput) : nextMinimumBid;
-  const bidButtonLabel = `Dar Lance (R$ ${displayBidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;
 
  return (
     <>
@@ -496,76 +399,7 @@ export default function LotDetailClientContent({
                 </div>
 
                 <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
-                    <Card className="shadow-md">
-                      <Tabs defaultValue="manual_bid">
-                        <CardHeader className="pb-0 px-4 pt-4">
-                           <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="manual_bid">Lance Manual</TabsTrigger>
-                            <TabsTrigger value="proxy_bid"><Bot className="h-4 w-4 mr-1.5"/>Lance Máximo</TabsTrigger>
-                          </TabsList>
-                        </CardHeader>
-                        <CardContent className="p-4 space-y-3">
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-muted-foreground">Visitas: {lot.views || 0}</span>
-                                <span className="text-muted-foreground">Lances: {lot.bidsCount || 0}</span>
-                            </div>
-                            <Separator />
-                            <div className="text-sm">
-                                <p className="text-muted-foreground">{currentBidLabel}</p>
-                                <p className="text-3xl font-bold text-primary">R$ {currentBidValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                                <p className="text-xs text-muted-foreground">(BRL)</p>
-                            </div>
-                            
-                            <TabsContent value="manual_bid" className="space-y-2 pt-2">
-                                {canUserBid ? (
-                                    <>
-                                        <div className="relative">
-                                            <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                            <Input type="number" placeholder={`Próximo lance R$ ${nextMinimumBid.toLocaleString('pt-BR')}`} value={bidAmountInput} onChange={(e) => setBidAmountInput(e.target.value)} className="pl-9 h-11 text-base" min={nextMinimumBid} step={bidIncrement} disabled={isPlacingBid} />
-                                            <Button size="sm" variant="ghost" className="absolute right-2 top-1/2 -translate-y-1/2 h-7 text-primary" onClick={() => setBidAmountInput(String(nextMinimumBid))}>+</Button>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground text-center">Incremento: R$ {bidIncrement.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                                        <Button onClick={handlePlaceBid} disabled={isPlacingBid || !bidAmountInput} className="w-full h-11 text-base bg-accent text-accent-foreground hover:bg-accent/90">{isPlacingBid ? <Loader2 className="animate-spin" /> : bidButtonLabel}</Button>
-                                    </>
-                                ) : (
-                                    <div className="text-sm text-center p-3 bg-destructive/10 text-destructive rounded-md">
-                                        <p>{lot.status !== 'ABERTO_PARA_LANCES' ? `Lances para este lote estão ${getAuctionStatusText(lot.status).toLowerCase()}.` : (userProfileWithPermissions ? 'Para dar lances, habilite-se.' : 'Para dar lances, efetue o login.')}</p>
-                                    </div>
-                                )}
-                            </TabsContent>
-                            
-                            <TabsContent value="proxy_bid" className="space-y-3 pt-2">
-                               {canUserBid ? (
-                                    <>
-                                        {activeMaxBid && (
-                                            <div className="p-2 text-center bg-blue-50 border border-blue-200 rounded-md text-xs text-blue-800">
-                                                <p>Seu lance máximo atual é de <strong>R$ {activeMaxBid.maxAmount.toLocaleString('pt-BR')}</strong>.</p>
-                                                <p>O sistema dará lances por você até este valor.</p>
-                                            </div>
-                                        )}
-                                        <div className="relative">
-                                            <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                            <Input type="number" placeholder="Definir lance máximo confidencial" value={maxBidAmountInput} onChange={(e) => setMaxBidAmountInput(e.target.value)} className="pl-9 h-11 text-base" disabled={isSettingMaxBid}/>
-                                        </div>
-                                        <Button onClick={handleSetMaxBid} disabled={isSettingMaxBid || !maxBidAmountInput} className="w-full h-11 text-base">
-                                            {isSettingMaxBid ? <Loader2 className="animate-spin mr-2" /> : "Salvar Lance Máximo"}
-                                        </Button>
-                                        <p className="text-xs text-muted-foreground text-center">Seu lance máximo é secreto e usado para cobrir outros lances automaticamente.</p>
-                                    </>
-                                ) : (
-                                     <div className="text-sm text-center p-3 bg-destructive/10 text-destructive rounded-md">
-                                        <p>A definição de lances por procuração não está disponível no momento.</p>
-                                    </div>
-                                )}
-                            </TabsContent>
-                             <Button variant="outline" className="w-full" onClick={handleToggleFavorite}>
-                                <Heart className={`mr-2 h-4 w-4 ${isLotFavorite ? 'fill-red-500 text-red-500' : ''}`} />
-                                {isLotFavorite ? 'Remover da Minha Lista' : 'Adicionar à Minha Lista'}
-                            </Button>
-                        </CardContent>
-                      </Tabs>
-                    </Card>
-                    <Card className="shadow-md"><CardHeader className="flex flex-row items-center justify-between p-4"><CardTitle className="text-lg flex items-center">Histórico de Lances</CardTitle>{lotBids.length > 2 && (<Button variant="outline" size="sm" onClick={() => setIsAllBidsModalOpen(true)}>Ver Todos ({lotBids.length})</Button>)}</CardHeader><CardContent className="p-4 pt-0">{isLoadingData ? (<div className="flex items-center justify-center h-20"> <Loader2 className="h-6 w-6 animate-spin text-primary" /></div>) : lotBids.length > 0 ? (<ul className="space-y-1.5 text-xs">{lotBids.slice(0, 2).map(bid => (<li key={bid.id} className="flex justify-between items-center p-1.5 bg-secondary/40 rounded-md"><div><span className="font-medium text-foreground text-xs">{bid.bidderDisplay}</span><span className="text-[0.65rem] text-muted-foreground ml-1.5">({bid.timestamp ? format(new Date(bid.timestamp as string), "dd/MM HH:mm:ss", { locale: ptBR }) : 'Data Indisponível'})</span></div><span className="font-semibold text-primary text-xs">R$ {bid.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></li>))}</ul>) : (<p className="text-xs text-muted-foreground text-center py-3">Nenhum lance registrado para este lote ainda.</p>)}</CardContent></Card>
+                    <BiddingPanel currentLot={lot} onBidSuccess={handleBidSuccess} />
                     <Card className="shadow-md"><CardHeader><CardTitle className="text-lg font-semibold flex items-center"><Scale className="h-5 w-5 mr-2 text-muted-foreground"/>Valores e Condições Legais</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{lot.evaluationValue && <div className="flex justify-between"><span className="text-muted-foreground">Valor de Avaliação:</span> <span className="font-semibold text-foreground">R$ {lot.evaluationValue.toLocaleString('pt-BR')}</span></div>}{lot.reservePrice && <div className="flex justify-between"><span className="text-muted-foreground">Preço de Reserva:</span> <span className="font-semibold text-foreground">(Confidencial)</span></div>}{lot.debtAmount && <div className="flex justify-between"><span className="text-muted-foreground">Montante da Dívida:</span> <span className="font-semibold text-foreground">R$ {lot.debtAmount.toLocaleString('pt-BR')}</span></div>}{lot.itbiValue && <div className="flex justify-between"><span className="text-muted-foreground">Valor de ITBI:</span> <span className="font-semibold text-foreground">R$ {lot.itbiValue.toLocaleString('pt-BR')}</span></div>}{(!lot.evaluationValue && !lot.reservePrice && !lot.debtAmount && !lot.itbiValue) && <p className="text-muted-foreground text-center text-xs py-2">Nenhuma condição de valor especial para este lote.</p>}</CardContent></Card>
                     <div className="w-full aspect-square"><LotMapDisplay lot={lot} platformSettings={platformSettings} /></div>
                 </div>
@@ -583,7 +417,6 @@ export default function LotDetailClientContent({
             )}
         </div>
         <LotPreviewModal lot={lot} auction={auction} isOpen={isPreviewModalOpen} onClose={() => setIsPreviewModalOpen(false)} />
-        <LotAllBidsModal isOpen={isAllBidsModalOpen} onClose={() => setIsAllBidsModalOpen(false)} lotBids={lotBids} lotTitle={lot.title} />
     </>
     );
 }

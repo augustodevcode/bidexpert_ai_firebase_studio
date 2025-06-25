@@ -1,3 +1,4 @@
+
 // src/lib/database/sample-data.adapter.ts
 import type {
   IDatabaseAdapter, LotCategory, StateInfo, StateFormData, CityInfo, CityFormData,
@@ -115,7 +116,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return Promise.resolve(JSON.parse(JSON.stringify(resolved)));
   }
 
-  async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status">>; newBid?: BidInfo; }> {
+  async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo; }> {
     const lotIndex = this.data.sampleLots.findIndex((l: Lot) => l.id === lotId || l.publicId === lotId);
     if (lotIndex === -1) return { success: false, message: "Lote não encontrado." };
     const lot = this.data.sampleLots[lotIndex];
@@ -168,6 +169,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     this.data.sampleLots[lotIndex].bidsCount = bidsCount;
     
     // Soft-Close Logic
+    let updatedEndDate = this.data.sampleLots[lotIndex].endDate;
     if (auction.softCloseEnabled && auction.softCloseMinutes && this.data.sampleLots[lotIndex].endDate) {
         const now = new Date();
         const endDate = new Date(this.data.sampleLots[lotIndex].endDate!);
@@ -177,11 +179,12 @@ export class SampleDataAdapter implements IDatabaseAdapter {
         if (diffSeconds > 0 && diffSeconds <= softCloseSeconds) {
             const newEndDate = new Date(now.getTime() + softCloseSeconds * 1000);
             this.data.sampleLots[lotIndex].endDate = newEndDate;
+            updatedEndDate = newEndDate;
             console.log(`[SampleDataAdapter - placeBidOnLot] Soft-close triggered for lot ${lot.id}. New end date: ${newEndDate.toISOString()}`);
         }
     }
     
-    return { success: true, message: "Lance registrado e lances automáticos processados!", updatedLot: { price: currentPrice, bidsCount: bidsCount }, newBid };
+    return { success: true, message: "Lance registrado e lances automáticos processados!", updatedLot: { price: currentPrice, bidsCount: bidsCount, endDate: updatedEndDate }, newBid };
 }
   
   private async _persistData(): Promise<void> {
@@ -346,8 +349,8 @@ export class SampleDataAdapter implements IDatabaseAdapter {
 
   // --- Auctions & Lots ---
   async getAuctions(): Promise<Auction[]> { await delay(20); const resolved = this.data.sampleAuctions.map((auc: Auction) => ({ ...auc, imageUrl: this.resolveMediaUrl(auc.imageMediaId) || 'https://placehold.co/600x400.png', auctioneerLogoUrl: this.resolveMediaUrl(this.data.sampleAuctioneers.find((a: AuctioneerProfileInfo) => a.id === auc.auctioneerId)?.logoMediaId) })); return Promise.resolve(JSON.parse(JSON.stringify(resolved))); }
+  async getAuctionsByIds(ids: string[]): Promise<Auction[]> { await delay(20); if (!ids || ids.length === 0) { return Promise.resolve([]); } const items = this.data.sampleAuctions.filter((a: Auction) => ids.includes(a.id) || (a.publicId && ids.includes(a.publicId))); const resolved = items.map((auc: Auction) => ({ ...auc, imageUrl: this.resolveMediaUrl(auc.imageMediaId) || 'https://placehold.co/600x400.png' })); return Promise.resolve(JSON.parse(JSON.stringify(resolved))); }
   async getAuction(idOrPublicId: string): Promise<Auction | null> { await delay(20); const item = this.data.sampleAuctions.find((a: Auction) => a.id === idOrPublicId || a.publicId === idOrPublicId); if (!item) return null; const resolved = { ...item, imageUrl: this.resolveMediaUrl(item.imageMediaId) || 'https://placehold.co/600x400.png', auctioneerLogoUrl: this.resolveMediaUrl(this.data.sampleAuctioneers.find((a: AuctioneerProfileInfo) => a.id === item.auctioneerId)?.logoMediaId) }; return Promise.resolve(JSON.parse(JSON.stringify(resolved))); }
-  async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> { const seller = await this.getSellerBySlug(sellerSlugOrPublicId); if (!seller) return Promise.resolve([]); const items = this.data.sampleAuctions.filter((a: Auction) => a.sellerId === seller.id || a.seller === seller.name); const resolved = items.map((auc: Auction) => ({...auc, imageUrl: this.resolveMediaUrl(auc.imageMediaId) || 'https://placehold.co/600x400.png'})); return Promise.resolve(JSON.parse(JSON.stringify(resolved))); }
   async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> { const newAuction: Auction = {...(data as any), id: `auc-${uuidv4()}`, publicId: `AUC-PUB-${uuidv4()}`, createdAt: new Date(), updatedAt: new Date(), lots:[], totalLots:0}; this.data.sampleAuctions.push(newAuction); return {success: true, message: 'Leilão criado!', auctionId: newAuction.id, auctionPublicId: newAuction.publicId}; }
   async updateAuction(id: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleAuctions.findIndex((a: Auction) => a.id === id || a.publicId === id); if(index === -1) return {success: false, message: 'Leilão não encontrado.'}; this.data.sampleAuctions[index] = {...this.data.sampleAuctions[index], ...data, updatedAt: new Date()}; return {success: true, message: 'Leilão atualizado!'}; }
   async deleteAuction(id: string): Promise<{ success: boolean; message: string; }> { this.data.sampleAuctions = this.data.sampleAuctions.filter((a: Auction) => a.id !== id && a.publicId !== id); this.data.sampleLots = this.data.sampleLots.filter((l: Lot) => l.auctionId !== id); return {success: true, message: 'Leilão excluído!'}; }

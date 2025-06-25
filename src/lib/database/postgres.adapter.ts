@@ -1,3 +1,4 @@
+
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -499,7 +500,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return auctions;
   }
 
-  async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status">>; newBid?: BidInfo }> {
+  async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }> {
     const client = await getPool().connect();
     try {
       await client.query('BEGIN');
@@ -517,10 +518,11 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
       // 1. Insert the initial manual bid
       const bidRes = await client.query(
-          'INSERT INTO bids (lot_id, auction_id, bidder_id, bidder_display_name, amount) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+          'INSERT INTO bids (lot_id, auction_id, bidder_id, bidder_display_name, amount) VALUES ($1, $2, $3, $4, $5) RETURNING id, "timestamp"',
           [lot.id, lot.auctionId, userId, userDisplayName, bidAmount]
       );
-      const newBidId = bidRes.rows[0].id;
+      const { id: newBidId, timestamp: newBidTimestamp } = bidRes.rows[0];
+
       await client.query('UPDATE lots SET price = $1, bids_count = bids_count + 1, updated_at = NOW() WHERE id = $2', [bidAmount, lot.id]);
 
       let currentPrice = bidAmount;
@@ -555,7 +557,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
           bidsCount++;
           lastBidderId = topProxy.userId;
 
-          await client.query('UPDATE lots SET price = $1, bids_count = $2 WHERE id = $3', [currentPrice, bidsCount, lot.id]);
+          await client.query('UPDATE lots SET price = $1, bids_count = $2, updated_at = NOW() WHERE id = $3', [currentPrice, bidsCount, lot.id]);
 
           if (currentPrice >= topProxy.maxAmount) {
                await client.query('UPDATE user_lot_max_bids SET is_active = FALSE WHERE id = $1', [topProxy.id]);
@@ -563,6 +565,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       }
 
       // 3. Soft-Close Logic
+      let updatedEndDate = lot.endDate;
       if (auction.softCloseEnabled && auction.softCloseMinutes && lot.endDate) {
           const now = new Date();
           const endDate = new Date(lot.endDate);
@@ -571,16 +574,17 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
           if (diffSeconds > 0 && diffSeconds <= softCloseSeconds) {
               const newEndDate = new Date(now.getTime() + softCloseSeconds * 1000);
-              await client.query('UPDATE lots SET end_date = $1 WHERE id = $2', [newEndDate, lot.id]);
+              await client.query('UPDATE lots SET end_date = $1 WHERE id = $2', [newEndDate]);
+              updatedEndDate = newEndDate;
               console.log(`[PostgresAdapter - placeBidOnLot] Soft-close triggered for lot ${lot.id}. New end date: ${newEndDate.toISOString()}`);
           }
       }
 
       await client.query('COMMIT');
       
-      const newBid: BidInfo = { id: String(newBidId), lotId: lot.id, auctionId: lot.auctionId, bidderId: userId, bidderDisplay: userDisplayName, amount: bidAmount, timestamp: new Date() };
+      const newBid: BidInfo = { id: String(newBidId), lotId: lot.id, auctionId: lot.auctionId, bidderId: userId, bidderDisplay: userDisplayName, amount: bidAmount, timestamp: newBidTimestamp };
 
-      return { success: true, message: 'Lance registrado! Lances automáticos foram processados.', updatedLot: { price: currentPrice, bidsCount: bidsCount }, newBid };
+      return { success: true, message: 'Lance registrado! Lances automáticos foram processados.', updatedLot: { price: currentPrice, bidsCount: bidsCount, endDate: updatedEndDate }, newBid };
     } catch (error: any) {
       await client.query('ROLLBACK');
       console.error("[PostgresAdapter - placeBidOnLot] Transaction Error:", error);
@@ -597,7 +601,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.log('[PostgresAdapter] Iniciando criação/verificação de tabelas...');
 
     const queries = [
-      `DROP TABLE IF EXISTS user_lot_max_bids, bids, lot_reviews, lot_questions, lots, media_items, subcategories, auctions, cities, sellers, auctioneers, users, states, lot_categories, platform_settings, direct_sale_offers CASCADE;`,
+      `DROP TABLE IF EXISTS user_lot_max_bids, bids, lot_reviews, lot_questions, lots, media_items, subcategories, auctions, cities, sellers, auctioneers, users, roles, states, lot_categories, platform_settings, direct_sale_offers CASCADE;`,
 
       `CREATE TABLE IF NOT EXISTS roles (
         id SERIAL PRIMARY KEY,

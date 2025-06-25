@@ -1,3 +1,4 @@
+
 // src/lib/database/mysql.adapter.ts
 import mysql, { type RowDataPacket, type Pool } from 'mysql2/promise';
 import type {
@@ -539,7 +540,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
   // Omitted for brevity - all other methods remain unchanged.
   // ...
   
-  async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status">>; newBid?: BidInfo }> {
+  async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }> {
     const connection = await getPool().getConnection();
     try {
         await connection.beginTransaction();
@@ -605,6 +606,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         }
         
         // 3. Soft-Close Logic
+        let updatedEndDate = lot.endDate;
         if (auction.softCloseEnabled && auction.softCloseMinutes && lot.endDate) {
             const now = new Date();
             const endDate = new Date(lot.endDate);
@@ -614,6 +616,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
             if (diffSeconds > 0 && diffSeconds <= softCloseSeconds) {
                 const newEndDate = new Date(now.getTime() + softCloseSeconds * 1000);
                 await connection.execute('UPDATE lots SET end_date = ? WHERE id = ?', [newEndDate.toISOString().slice(0, 19).replace('T', ' '), lot.id]);
+                updatedEndDate = newEndDate;
                 console.log(`[MySqlAdapter - placeBidOnLot] Soft-close triggered for lot ${lot.id}. New end date: ${newEndDate.toISOString()}`);
             }
         }
@@ -622,7 +625,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         
         const newBid: BidInfo = { id: String(newBidId), lotId: lot.id, auctionId: lot.auctionId, bidderId: userId, bidderDisplay: userDisplayName, amount: bidAmount, timestamp: new Date() };
 
-        return { success: true, message: 'Lance registrado! Lances automáticos foram processados.', updatedLot: { price: currentPrice, bidsCount: bidsCount }, newBid };
+        return { success: true, message: 'Lance registrado! Lances automáticos foram processados.', updatedLot: { price: currentPrice, bidsCount, endDate: updatedEndDate }, newBid };
     } catch (error: any) {
         await connection.rollback();
         console.error("[MySqlAdapter - placeBidOnLot] Transaction Error:", error);
@@ -640,7 +643,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
 
     const queries = [
       `SET FOREIGN_KEY_CHECKS = 0;`,
-      `DROP TABLE IF EXISTS user_lot_max_bids, bids, lot_reviews, lot_questions, lots, media_items, subcategories, auctions, cities, sellers, auctioneers, users, states, lot_categories, platform_settings, direct_sale_offers;`,
+      `DROP TABLE IF EXISTS user_lot_max_bids, bids, lot_reviews, lot_questions, lots, media_items, subcategories, auctions, cities, sellers, auctioneers, users, roles, states, lot_categories, platform_settings, direct_sale_offers;`,
 
       `CREATE TABLE IF NOT EXISTS roles (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

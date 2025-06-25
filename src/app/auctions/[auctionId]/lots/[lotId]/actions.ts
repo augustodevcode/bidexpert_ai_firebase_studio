@@ -9,7 +9,7 @@ import { getDatabaseAdapter } from '@/lib/database';
 interface PlaceBidResult {
   success: boolean;
   message: string;
-  updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status'>>;
+  updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status' | 'endDate'>>;
   newBid?: BidInfo;
 }
 
@@ -22,7 +22,7 @@ export async function placeBidOnLot(
 ): Promise<PlaceBidResult> {
   console.log(`[Action - placeBidOnLot] Calling DB adapter for lot: ${lotIdOrPublicId}, amount: ${bidAmount}`);
   const db = await getDatabaseAdapter();
-  const result = await db.placeBidOnLot(lotIdOrPublicgId, auctionIdOrPublicId, userId, userDisplayName, bidAmount);
+  const result = await db.placeBidOnLot(lotIdOrPublicId, auctionIdOrPublicId, userId, userDisplayName, bidAmount);
   
   if (result.success) {
     revalidatePath(`/auctions/${auctionIdOrPublicId}/lots/${lotIdOrPublicId}`);

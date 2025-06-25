@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Auction, Lot } from '@/types';
+import type { Auction, Lot, BidInfo } from '@/types';
 import CurrentLotDisplay from '@/components/auction/current-lot-display';
 import BiddingPanel from '@/components/auction/bidding-panel';
 import UpcomingLotsPanel from '@/components/auction/upcoming-lots-panel';
@@ -48,6 +48,11 @@ export default function VirtualAuditoriumClient({
     document.addEventListener('fullscreenchange', handleFullScreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullScreenChange);
   }, []);
+  
+  const handleBidSuccess = (updatedLotData: Partial<Lot>, newBid?: BidInfo) => {
+    setCurrentLot(prevLot => ({ ...prevLot, ...updatedLotData }));
+    // Here you would also update the bid history panel in a real-time app
+  };
 
   return (
     <TooltipProvider>
@@ -85,7 +90,7 @@ export default function VirtualAuditoriumClient({
               <CurrentLotDisplay lot={currentLot} auctionStatus={auction.status} />
             </div>
             <div className="flex-grow-[1] overflow-hidden">
-              <BiddingPanel currentLot={currentLot} />
+              <BiddingPanel currentLot={currentLot} onBidSuccess={handleBidSuccess} />
             </div>
           </main>
 

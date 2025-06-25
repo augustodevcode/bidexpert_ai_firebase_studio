@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState } from 'react';
-import type { Lot } from '@/types';
+import { useState, useEffect, useCallback } from 'react';
+import type { Lot, UserLotMaxBid, BidInfo } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,145 +11,241 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAuth } from '@/contexts/auth-context';
+import { placeBidOnLot, placeMaxBid, getActiveUserLotMaxBid, getBidsForLot } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
+import { hasPermission } from '@/lib/permissions';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import LotAllBidsModal from './lot-all-bids-modal';
+import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+
 
 interface BiddingPanelProps {
   currentLot: Lot;
+  onBidSuccess: (updatedLotData: Partial<Lot>, newBid?: BidInfo) => void;
 }
 
-// Placeholder bid history
-const sampleBidHistory = [
-  { bidder: 'Usuário A...', amount: 5200, time: '10:35:12' },
-  { bidder: 'Usuário B...', amount: 5100, time: '10:34:50' },
-  { bidder: 'Usuário C...', amount: 5000, time: '10:33:05' },
-  { bidder: 'Usuário D...', amount: 4900, time: '10:32:11' },
-  { bidder: 'Usuário E...', amount: 4800, time: '10:31:00' },
-];
+const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'admin@bidexpert.com.br'.toLowerCase();
 
-export default function BiddingPanel({ currentLot }: BiddingPanelProps) {
+export default function BiddingPanel({ currentLot, onBidSuccess }: BiddingPanelProps) {
   const { toast } = useToast();
-  const [bidAmount, setBidAmount] = useState<string>('');
-  const [autoBidEnabled, setAutoBidEnabled] = useState(false);
-  const [autoBidMax, setAutoBidMax] = useState<string>('');
-  const [isPlacingBid, setIsPlacingBid] = useState(false);
-
-  const currentBid = currentLot.price;
-  const bidIncrement = currentLot.bidIncrementStep || ((currentLot.price || 0) > 10000 ? 500 : ((currentLot.price || 0) > 1000 ? 100 : 50));
-  const nextMinimumBid = currentBid + bidIncrement;
+  const { userProfileWithPermissions } = useAuth();
   
-  const displayBidAmount = parseFloat(bidAmount || '0');
-  const finalBidAmount = displayBidAmount >= nextMinimumBid ? displayBidAmount : nextMinimumBid;
-  const bidButtonLabel = `Dar Lance (R$ ${finalBidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;
+  const [bidAmountInput, setBidAmountInput] = useState<string>('');
+  const [isPlacingBid, setIsPlacingBid] = useState(false);
+  const [maxBidAmountInput, setMaxBidAmountInput] = useState('');
+  const [isSettingMaxBid, setIsSettingMaxBid] = useState(false);
+  const [activeMaxBid, setActiveMaxBid] = useState<UserLotMaxBid | null>(null);
+  const [bidHistory, setBidHistory] = useState<BidInfo[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [isAllBidsModalOpen, setIsAllBidsModalOpen] = useState(false);
 
+  const bidIncrement = currentLot?.bidIncrementStep || ((currentLot?.price || 0) > 10000 ? 500 : ((currentLot?.price || 0) > 1000 ? 100 : 50));
+  const nextMinimumBid = (currentLot?.price || 0) + bidIncrement;
 
-  const handlePlaceBid = () => {
+  const isEffectivelySuperTestUser = userProfileWithPermissions?.email?.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS;
+  const hasAdminRights = userProfileWithPermissions && hasPermission(userProfileWithPermissions, 'manage_all');
+  const isUserHabilitado = userProfileWithPermissions?.habilitationStatus === 'HABILITADO';
+  const canUserBid = (isEffectivelySuperTestUser || hasAdminRights || (userProfileWithPermissions && isUserHabilitado)) && currentLot?.status === 'ABERTO_PARA_LANCES';
+
+  const fetchBidData = useCallback(async () => {
+    if (!currentLot) return;
+    setIsLoadingHistory(true);
+    try {
+      const [history, maxBid] = await Promise.all([
+        getBidsForLot(currentLot.publicId || currentLot.id),
+        getActiveMaxBid(currentLot.publicId || currentLot.id, userProfileWithPermissions?.uid || '')
+      ]);
+      setBidHistory(history);
+      setActiveMaxBid(maxBid);
+    } catch (error) {
+      console.error("Error fetching bid data for panel:", error);
+      toast({ title: "Erro ao carregar lances", variant: "destructive"});
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, [currentLot, userProfileWithPermissions?.uid, toast]);
+
+  useEffect(() => {
+    fetchBidData();
+  }, [fetchBidData]);
+
+  const handlePlaceBid = async () => {
+    if (!canUserBid) return;
     setIsPlacingBid(true);
-    // Simulate API call
-    setTimeout(() => {
-      toast({
-        title: "Lance Enviado (Simulação)",
-        description: `Seu lance de R$ ${finalBidAmount.toLocaleString('pt-BR')} para "${currentLot.title}" foi registrado.`,
-      });
-      setBidAmount('');
+    
+    const userIdForBid = userProfileWithPermissions?.uid;
+    let displayNameForBid = userProfileWithPermissions?.fullName || userProfileWithPermissions?.email?.split('@')[0];
+    if (!userIdForBid) {
+      toast({ title: "Ação Requerida", description: "Você precisa estar logado para dar um lance.", variant: "destructive" });
       setIsPlacingBid(false);
-    }, 1000);
+      return;
+    }
+    if (!displayNameForBid) displayNameForBid = 'Usuário Anônimo';
+
+    const amountToBid = parseFloat(bidAmountInput);
+    if (isNaN(amountToBid) || amountToBid <= 0 || amountToBid < nextMinimumBid) {
+      toast({ title: "Erro no Lance", description: `Seu lance deve ser de pelo menos R$ ${nextMinimumBid.toLocaleString('pt-BR')}.`, variant: "destructive" });
+      setIsPlacingBid(false);
+      return;
+    }
+    
+    try {
+      const result = await placeBidOnLot(currentLot.publicId || currentLot.id, currentLot.auctionId, userIdForBid, displayNameForBid, amountToBid);
+      if (result.success && result.updatedLot) {
+        toast({ title: "Lance Enviado!", description: result.message });
+        setBidAmountInput('');
+        onBidSuccess(result.updatedLot, result.newBid);
+        fetchBidData(); // Re-fetch history after successful bid
+      } else {
+        toast({ title: "Erro ao Dar Lance", description: result.message, variant: "destructive" });
+      }
+    } catch (error: any) {
+      toast({ title: "Erro Inesperado", description: error.message || "Ocorreu um erro ao processar seu lance.", variant: "destructive" });
+    } finally {
+      setIsPlacingBid(false);
+    }
   };
 
-  const canBid = currentLot.status === 'ABERTO_PARA_LANCES';
+  const handleSetMaxBid = async () => {
+    if (!canUserBid) return;
+    setIsSettingMaxBid(true);
+    const userIdForBid = userProfileWithPermissions?.uid;
+    if (!userIdForBid) {
+      toast({ title: "Ação Requerida", description: "Você precisa estar logado para definir um lance máximo.", variant: "destructive" });
+      setIsSettingMaxBid(false);
+      return;
+    }
+    const amount = parseFloat(maxBidAmountInput);
+    if (isNaN(amount) || amount <= 0 || amount <= (currentLot.price || 0)) {
+      toast({ title: "Valor Inválido", description: `Seu lance máximo deve ser maior que o lance atual de R$ ${(currentLot.price || 0).toLocaleString('pt-BR')}.`, variant: "destructive" });
+      setIsSettingMaxBid(false);
+      return;
+    }
+    try {
+        const result = await placeMaxBid(currentLot.publicId || currentLot.id, userIdForBid, amount);
+        if (result.success) {
+            toast({ title: "Lance Máximo Definido!", description: result.message });
+            setMaxBidAmountInput('');
+            fetchBidData();
+        } else {
+            toast({ title: "Erro ao Definir Lance Máximo", description: result.message, variant: "destructive" });
+        }
+    } catch (error: any) {
+         toast({ title: "Erro Inesperado", description: error.message || "Ocorreu um erro.", variant: "destructive" });
+    } finally {
+        setIsSettingMaxBid(false);
+    }
+  };
+
+  const displayBidAmount = parseFloat(bidAmountInput) >= nextMinimumBid ? parseFloat(bidAmountInput) : nextMinimumBid;
+  const bidButtonLabel = `Dar Lance (R$ ${displayBidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;
 
   return (
-    <Card className="h-full flex flex-col shadow-lg rounded-lg">
-      <CardHeader className="p-3 md:p-4 border-b">
-        <CardTitle className="text-lg md:text-xl font-bold flex items-center">
-          <Gavel className="h-5 w-5 mr-2 text-primary" /> Painel de Lances
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-3 md:p-4 flex-1 flex flex-col gap-3 md:gap-4 overflow-y-auto">
-        <div className="grid grid-cols-2 gap-3 md:gap-4">
-          <div className="bg-secondary/50 p-2 md:p-3 rounded-md text-center">
-            <p className="text-xs text-muted-foreground">Lance Atual</p>
-            <p className="text-xl md:text-2xl font-bold text-primary">
-              R$ {currentBid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </p>
-          </div>
-          <div className="bg-secondary/50 p-2 md:p-3 rounded-md text-center">
-            <p className="text-xs text-muted-foreground">Próximo Lance Mínimo</p>
-            <p className="text-lg md:text-xl font-semibold text-foreground">
-              R$ {nextMinimumBid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </p>
-          </div>
-        </div>
-
-        {canBid ? (
-          <>
-            <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="number"
-                placeholder={`Ou seu lance (mín. R$ ${nextMinimumBid.toLocaleString('pt-BR')})`}
-                value={bidAmount}
-                onChange={(e) => setBidAmount(e.target.value)}
-                className="pl-9 h-11 text-base"
-                min={nextMinimumBid}
-                step={bidIncrement}
-              />
-            </div>
-            <p className="text-xs text-center text-muted-foreground -mt-2">
-                Incremento mínimo: R$ {bidIncrement.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </p>
-            <Button onClick={handlePlaceBid} disabled={isPlacingBid} className="w-full h-11 text-base">
-              {isPlacingBid ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : bidButtonLabel}
-            </Button>
-
-            <div className="flex items-center justify-between space-x-2 p-3 border rounded-md bg-muted/20">
-              <div className="flex items-center space-x-2">
-                <Zap className="h-4 w-4 text-amber-500" />
-                <Label htmlFor="autobid-switch" className="text-sm font-medium">Lance Automático</Label>
-              </div>
-              <Switch
-                id="autobid-switch"
-                checked={autoBidEnabled}
-                onCheckedChange={setAutoBidEnabled}
-              />
-            </div>
-            {autoBidEnabled && (
+    <>
+      <Card className="h-full flex flex-col shadow-lg rounded-lg">
+        <CardHeader className="p-3 md:p-4 border-b">
+          <CardTitle className="text-lg md:text-xl font-bold flex items-center">
+            <Gavel className="h-5 w-5 mr-2 text-primary" /> Painel de Lances
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 md:p-4 flex-1 flex flex-col gap-3 md:gap-4 overflow-y-auto">
+          {canUserBid ? (
+            <>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   type="number"
-                  placeholder="Seu lance máximo"
-                  value={autoBidMax}
-                  onChange={(e) => setAutoBidMax(e.target.value)}
-                  className="pl-9 h-10 text-sm"
+                  placeholder={`Próximo lance R$ ${nextMinimumBid.toLocaleString('pt-BR')}`}
+                  value={bidAmountInput}
+                  onChange={(e) => setBidAmountInput(e.target.value)}
+                  className="pl-9 h-11 text-base"
+                  min={nextMinimumBid}
+                  step={bidIncrement}
+                  disabled={isPlacingBid}
                 />
               </div>
-            )}
-          </>
-        ) : (
-          <div className="text-center p-4 bg-destructive/10 text-destructive rounded-md">
-            <Info className="h-5 w-5 mx-auto mb-1" />
-            <p className="text-sm font-medium">Os lances para este lote estão encerrados ou ainda não iniciaram.</p>
-          </div>
-        )}
-        
-        <div className="flex-1 flex flex-col min-h-0">
-          <h4 className="text-sm font-semibold text-muted-foreground mb-1.5 flex items-center">
-            <Clock className="h-4 w-4 mr-1.5" /> Histórico Recente de Lances
-          </h4>
-          <ScrollArea className="flex-grow border rounded-md bg-secondary/20">
-            <div className="p-2 space-y-1.5 text-xs">
-              {sampleBidHistory.map((bid, index) => (
-                <div key={index} className={`flex justify-between items-center p-1.5 rounded ${index === 0 ? 'bg-green-100 dark:bg-green-800/30 font-semibold' : ''}`}>
-                  <span>{bid.bidder}</span>
-                  <span className="text-right">
-                    R$ {bid.amount.toLocaleString('pt-BR')} <span className="text-muted-foreground/70">({bid.time})</span>
-                  </span>
+              <Button onClick={handlePlaceBid} disabled={isPlacingBid || !bidAmountInput} className="w-full h-11 text-base">
+                {isPlacingBid ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : bidButtonLabel}
+              </Button>
+
+              <div className="flex items-center justify-between space-x-2 p-3 border rounded-md bg-muted/20">
+                <div className="flex items-center space-x-2">
+                  <Zap className="h-4 w-4 text-amber-500" />
+                  <Label htmlFor="autobid-switch" className="text-sm font-medium">Lance Automático</Label>
                 </div>
-              ))}
-               {sampleBidHistory.length === 0 && <p className="text-center text-muted-foreground p-2">Nenhum lance ainda.</p>}
+                <div className="relative">
+                  <Input
+                    type="number"
+                    placeholder="Definir lance máximo"
+                    value={maxBidAmountInput}
+                    onChange={(e) => setMaxBidAmountInput(e.target.value)}
+                    className="h-8 text-sm pr-20"
+                    disabled={isSettingMaxBid}
+                  />
+                  <Button size="sm" className="absolute right-1 top-1/2 -translate-y-1/2 h-6 px-2 text-xs" onClick={handleSetMaxBid} disabled={isSettingMaxBid || !maxBidAmountInput}>
+                    {isSettingMaxBid ? <Loader2 className="h-3 w-3 animate-spin"/> : 'Salvar'}
+                  </Button>
+                </div>
+              </div>
+              {activeMaxBid && (
+                <div className="p-2 text-center bg-blue-50 border border-blue-200 rounded-md text-xs text-blue-800">
+                    <p>Seu lance máximo atual é de <strong>R$ {activeMaxBid.maxAmount.toLocaleString('pt-BR')}</strong>.</p>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-sm text-center p-3 bg-destructive/10 text-destructive rounded-md">
+              <Info className="h-5 w-5 mx-auto mb-1" />
+              <p className="font-medium">
+                  {currentLot.status !== 'ABERTO_PARA_LANCES'
+                  ? `Lances para este lote estão ${getAuctionStatusText(currentLot.status).toLowerCase()}.`
+                  : userProfileWithPermissions ? 'Para dar lances, seu cadastro precisa estar habilitado.' : 'Para dar lances, faça login em sua conta.'
+                  }
+              </p>
             </div>
-          </ScrollArea>
-        </div>
-      </CardContent>
-    </Card>
+          )}
+
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex justify-between items-center mb-1.5">
+              <h4 className="text-sm font-semibold text-muted-foreground flex items-center">
+                <Clock className="h-4 w-4 mr-1.5" /> Histórico Recente
+              </h4>
+              {bidHistory.length > 3 && (
+                <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setIsAllBidsModalOpen(true)}>
+                  Ver Todos
+                </Button>
+              )}
+            </div>
+            <ScrollArea className="flex-grow border rounded-md bg-secondary/20">
+              <div className="p-2 space-y-1.5 text-xs">
+                {isLoadingHistory ? (
+                  <div className="flex items-center justify-center p-4">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  </div>
+                ) : bidHistory.length > 0 ? (
+                  bidHistory.slice(0, 5).map((bid, index) => (
+                    <div key={bid.id} className={`flex justify-between items-center p-1.5 rounded ${index === 0 ? 'bg-green-100 dark:bg-green-800/30 font-semibold' : ''}`}>
+                      <span>{bid.bidderDisplay}</span>
+                      <span className="text-right">
+                        R$ {bid.amount.toLocaleString('pt-BR')} <span className="text-muted-foreground/70">({bid.timestamp ? format(new Date(bid.timestamp as string), 'HH:mm:ss') : ''})</span>
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center text-muted-foreground p-2">Nenhum lance ainda.</p>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+        </CardContent>
+      </Card>
+      <LotAllBidsModal
+        isOpen={isAllBidsModalOpen}
+        onClose={() => setIsAllBidsModalOpen(false)}
+        lotBids={bidHistory}
+        lotTitle={currentLot.title}
+      />
+    </>
   );
 }
