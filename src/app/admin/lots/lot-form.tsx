@@ -29,7 +29,6 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data-helpers';
-import { sampleMediaItems } from '@/lib/sample-data.local.json';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { Separator } from '@/components/ui/separator';
@@ -80,27 +79,22 @@ export default function LotForm({
   const [isGalleryDialogOpen, setIsGalleryDialogOpen] = React.useState(false);
 
   const [selectedMediaForGallery, setSelectedMediaForGallery] = React.useState<Partial<MediaItem>[]>(() => {
+    // This function needs to be safe from undefined initialData
+    if (!initialData) return [];
+  
     const itemsMap = new Map<string, Partial<MediaItem>>();
     
-    (initialData?.mediaItemIds || []).forEach(mediaId => {
-        const existingMediaItem = sampleMediaItems.find(mi => mi.id === mediaId); 
-        if (existingMediaItem) {
-            itemsMap.set(mediaId, { 
-                id: existingMediaItem.id,
-                urlOriginal: existingMediaItem.urlOriginal,
-                title: existingMediaItem.title || existingMediaItem.fileName,
-                dataAiHint: existingMediaItem.dataAiHint
-            });
-        } else {
-            itemsMap.set(mediaId, {
-                id: mediaId,
-                urlOriginal: `https://placehold.co/100x100.png?text=ID:${mediaId.substring(0,4)}`,
-                title: `Item de Mídia ${mediaId.substring(0,4)}`
-            });
-        }
+    (initialData.mediaItemIds || []).forEach(mediaId => {
+        // You need access to a list of media items here, for this example we'll assume it's passed or available somehow
+        // Since we can't fetch here, let's create a placeholder
+        itemsMap.set(mediaId, {
+            id: mediaId,
+            urlOriginal: `https://placehold.co/100x100.png?text=ID:${mediaId.substring(0,4)}`,
+            title: `Item de Mídia ${mediaId.substring(0,4)}`
+        });
     });
 
-    (initialData?.galleryImageUrls || []).forEach((url, index) => {
+    (initialData.galleryImageUrls || []).forEach((url, index) => {
         const urlExistsInMap = Array.from(itemsMap.values()).some(item => item.urlOriginal === url);
         if (!urlExistsInMap) {
             const uniqueUrlId = `gallery-url-${uuidv4()}`; 
@@ -236,7 +230,7 @@ export default function LotForm({
   const handleSelectMainImageFromDialog = (selectedItems: Partial<MediaItem>[]) => {
     if (selectedItems.length > 0) {
       const selectedMediaItem = selectedItems[0];
-      if (selectedMediaItem.urlOriginal) {
+      if (selectedMediaItem?.urlOriginal) {
         setMainImagePreviewUrl(selectedMediaItem.urlOriginal);
         form.setValue('imageUrl', selectedMediaItem.urlOriginal); 
       } else {
@@ -274,11 +268,8 @@ export default function LotForm({
         imageUrl: mainImagePreviewUrl || values.imageUrl, 
         galleryImageUrls: selectedMediaForGallery.map(item => item.urlOriginal || '').filter(Boolean),
         mediaItemIds: selectedMediaForGallery.map(item => item.id || '').filter(itemid => !itemid.startsWith('gallery-url-')).filter(Boolean),
-        categoryId: values.type, 
       };
-      delete (dataToSubmit as any).type;
 
-      
       const result = await onSubmitAction(dataToSubmit);
       if (result.success) {
         toast({
@@ -382,7 +373,7 @@ export default function LotForm({
         </Form>
       </Card>
       
-      <ChooseMediaDialog isOpen={isMainImageDialogOpen} onOpenChange={setIsMainImageDialogOpen} onMediaSelect={handleSelectMainImageFromDialog} />
+      <ChooseMediaDialog isOpen={isMainImageDialogOpen} onOpenChange={setIsMainImageDialogOpen} onMediaSelect={handleSelectMainImageFromDialog} allowMultiple={false} />
       <ChooseMediaDialog isOpen={isGalleryDialogOpen} onOpenChange={setIsGalleryDialogOpen} onMediaSelect={handleSelectMediaForGallery} allowMultiple={true} />
     </>
   );
