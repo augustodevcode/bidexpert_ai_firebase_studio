@@ -1,3 +1,4 @@
+
 // src/lib/sample-data.ts
 import type { 
   Lot, LotCategory, Auction, AuctioneerProfileInfo, SellerProfileInfo, 
@@ -90,7 +91,7 @@ export const sampleSubcategories: Subcategory[] = [
 // ==================================
 // DATA GENERATION HELPERS
 // ==================================
-const randomItem = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+const randomItem = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const randomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
 const randomDate = (start: Date, end: Date): Date => new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 
@@ -197,7 +198,7 @@ for (const type of auctionTypes) {
                     questionText: `Qual o estado de conservação real deste item?`, createdAt: new Date(), isPublic: true,
                     ...(Math.random() > 0.5 && {
                         answerText: `O item está em bom estado, com marcas de uso normais.`, answeredAt: new Date(),
-                        answeredByUserId: auctioneers[0].userId!, answeredByUserDisplayName: auctioneers[0].name
+                        answeredByUserId: sampleAuctioneers[0].userId!, answeredByUserDisplayName: sampleAuctioneers[0].name
                     })
                 });
             }
