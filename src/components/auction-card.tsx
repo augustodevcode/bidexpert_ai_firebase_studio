@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Auction, AuctionStage as AuctionStageType } from '@/types';
-import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Pencil, Clock, Users, Star } from 'lucide-react';
+import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Pencil, Clock, Users, Star, ListChecks, CheckSquare } from 'lucide-react';
 import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
@@ -106,6 +106,11 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   const [isFavorite, setIsFavorite] = useState(auction.isFavorite || false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [auctionFullUrl, setAuctionFullUrl] = useState<string>(`/auctions/${auction.publicId || auction.id}`);
+
+  const soldLotsCount = React.useMemo(() => {
+    if (!auction.lots || auction.lots.length === 0) return 0;
+    return auction.lots.filter(lot => lot.status === 'VENDIDO').length;
+  }, [auction.lots]);
 
   const mentalTriggers = useMemo(() => {
     const triggers: string[] = [];
@@ -303,15 +308,25 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
               </h3>
             </Link>
             
+            { (auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO') ? (
+              <div className="text-xs text-muted-foreground mb-2 flex items-center">
+                <CheckSquare className="h-3 w-3 mr-1.5 flex-shrink-0 text-green-600" />
+                <span>{soldLotsCount > 0 ? `${soldLotsCount} de ${auction.totalLots} lotes vendidos.` : 'Nenhum lote vendido.'}</span>
+              </div>
+            ) : (
+              <div className="text-xs text-muted-foreground mb-2 flex items-center">
+                 <ListChecks className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                 <span>{auction.totalLots || 0} Lotes no total</span>
+              </div>
+            )}
+            
             {auction.auctionStages && auction.auctionStages.length > 0 ? (
               <div className="space-y-2 mb-3">
                 {auction.auctionStages.map((stage, index) => (
                   <AuctionStageItem key={`${auction.id}-stage-${index}`} stage={stage} auctionId={auction.id} index={index} />
                 ))}
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground mb-3">Total de Lotes: {auction.totalLots}</p>
-            )}
+            ) : null}
 
 
           </CardContent>

@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers } from 'lucide-react'; // Added Layers
+import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers, Gavel } from 'lucide-react'; // Added Gavel
 import { format, differenceInDays, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText, slugify } from '@/lib/sample-data-helpers';
@@ -341,6 +341,9 @@ export default function EditAuctionPage() {
           </div>
           <div className="flex-shrink-0 text-right">
             <p className="text-sm font-semibold">R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            <p className="text-xs text-muted-foreground flex items-center justify-end gap-1">
+              <Gavel className="h-3 w-3"/> {lot.bidsCount || 0}
+            </p>
             <p className="text-xs text-muted-foreground">
               {lot.endDate ? format(new Date(lot.endDate as string), 'dd/MM/yy HH:mm', { locale: ptBR }) : 'N/A'}
             </p>
@@ -384,6 +387,7 @@ export default function EditAuctionPage() {
                 {getAuctionStatusText(lot.status)}
             </Badge>
             <p className="font-medium">R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            <p className="text-muted-foreground flex items-center gap-1"><Gavel className="h-3 w-3"/> {lot.bidsCount || 0} lances</p>
             <p className="text-muted-foreground">
               Fim: {lot.endDate ? format(new Date(lot.endDate as string), 'dd/MM HH:mm', { locale: ptBR }) : 'N/A'}
             </p>

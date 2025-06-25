@@ -319,19 +319,24 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
               </div>
             </div>
             
-            <div className="flex items-center text-xs text-muted-foreground mb-1">
-                <MapPin className="h-3 w-3 mr-1 text-primary/80 flex-shrink-0" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
+              <div className="flex items-center" title={`Leilão: ${lot.auctionName}`}>
+                <ListChecks className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
+                <span className="truncate">{lot.auctionName}</span>
+              </div>
+              <div className="flex items-center">
+                <Gavel className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
+                <span>{lot.bidsCount || 0} Lances</span>
+              </div>
+              <div className="flex items-center">
+                <Tag className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
+                <span className="truncate" title={lot.type}>{lot.type}
+                {lot.subcategoryName && ` / ${lot.subcategoryName}`}</span>
+              </div>
+              <div className="flex items-center">
+                <MapPin className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
                 <span className="truncate" title={displayLocation}>{displayLocation}</span>
-                <span className="mx-1.5 text-muted-foreground/50">|</span>
-                <Tag className="h-3 w-3 mr-1 text-primary/80 flex-shrink-0" />
-                <span className="truncate" title={lot.type}>{lot.type}</span>
-                {lot.subcategoryName && (
-                  <>
-                    <ChevronRight className="h-3 w-3 mx-0.5 text-muted-foreground/70 flex-shrink-0" />
-                    <Layers className="h-3 w-3 mr-1 text-primary/70 flex-shrink-0" />
-                    <span className="truncate" title={lot.subcategoryName}>{lot.subcategoryName}</span>
-                  </>
-                )}
+              </div>
             </div>
 
             <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{lot.description}</p>
@@ -353,7 +358,7 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                 )}
               </div>
                <Button asChild size="sm" className="w-full md:w-auto mt-2 md:mt-0">
-                    <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
+                    <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>
                         Ver Detalhes do Lote
                     </Link>
                 </Button>
