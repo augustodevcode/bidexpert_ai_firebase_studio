@@ -14,8 +14,7 @@ import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 const randomItem = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const randomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
 const randomDate = (start: Date, end: Date): Date => new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-const randomCoord = (min: number, max: number): number => min + Math.random() * (max - min);
-
+const randomCoord = (base: number, range: number): number => base + (Math.random() - 0.5) * range;
 
 // ==================================
 // BASE STATIC DATA
@@ -43,28 +42,35 @@ export const sampleCities: CityInfo[] = [
 ];
 
 const CITY_COORDS: Record<string, { lat: number; lon: number }> = {
-  'sao-paulo': { lat: -23.5505, lon: -46.6333 },
-  'campinas': { lat: -22.9099, lon: -47.0626 },
-  'salvador': { lat: -12.9777, lon: -38.5016 },
-  'rio-de-janeiro': { lat: -22.9068, lon: -43.1729 },
+  'sao-paulo': { lat: -23.5505, lon: -46.6333 }, 'campinas': { lat: -22.9099, lon: -47.0626 },
+  'salvador': { lat: -12.9777, lon: -38.5016 }, 'rio-de-janeiro': { lat: -22.9068, lon: -43.1729 },
   'belo-horizonte': { lat: -19.9167, lon: -43.9345 },
 };
 
 export const sampleAuctioneers: AuctioneerProfileInfo[] = [
-  { id: 'auct-augusto-leiloeiro', publicId: 'AUCT-PUB-1', name: 'Augusto Leiloeiro', slug: 'augusto-leiloeiro', logoUrl: 'https://placehold.co/100x100.png?text=A', city: 'São Paulo', state: 'SP', createdAt: new Date(), updatedAt: new Date(), userId: 'admin-bidexpert-platform-001' },
-  { id: 'auct-sodre-santoro', publicId: 'AUCT-PUB-2', name: 'Sodré Santoro', slug: 'sodre-santoro', logoUrl: 'https://placehold.co/100x100.png?text=SS', city: 'São Paulo', state: 'SP', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'auct-augusto-leiloeiro', publicId: 'AUCT-PUB-1', name: 'Augusto Leiloeiro Oficial', slug: 'augusto-leiloeiro', logoUrl: 'https://placehold.co/100x100/f97316/ffffff/png?text=AL', city: 'São Paulo', state: 'SP', createdAt: new Date(), updatedAt: new Date(), userId: 'admin-bidexpert-platform-001' },
+  { id: 'auct-sodre-santoro', publicId: 'AUCT-PUB-2', name: 'Sodré Santoro Leilões', slug: 'sodre-santoro', logoUrl: 'https://placehold.co/100x100/1e40af/ffffff/png?text=SS', city: 'Guarulhos', state: 'SP', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'auct-freitas-leiloeiro', publicId: 'AUCT-PUB-3', name: 'Freitas Leiloeiro Oficial', slug: 'freitas-leiloeiro', logoUrl: 'https://placehold.co/100x100/166534/ffffff/png?text=FL', city: 'Curitiba', state: 'PR', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'auct-zukerman-leiloes', publicId: 'AUCT-PUB-4', name: 'Zukerman Leilões', slug: 'zukerman-leiloes', logoUrl: 'https://placehold.co/100x100/be123c/ffffff/png?text=ZK', city: 'São Paulo', state: 'SP', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'auct-pestana-leiloes', publicId: 'AUCT-PUB-5', name: 'Pestana Leilões', slug: 'pestana-leiloes', logoUrl: 'https://placehold.co/100x100/ca8a04/ffffff/png?text=PL', city: 'Porto Alegre', state: 'RS', createdAt: new Date(), updatedAt: new Date() },
 ];
 
 export const sampleSellers: SellerProfileInfo[] = [
-  { id: 'seller-banco-bradesco-s-a', publicId: 'SELL-PUB-1', name: 'Banco Bradesco S.A.', slug: 'banco-bradesco-s-a', logoUrl: 'https://placehold.co/100x100.png?text=B', city: 'São Paulo', state: 'SP', createdAt: new Date(), updatedAt: new Date() },
-  { id: 'seller-itau-unibanco', publicId: 'SELL-PUB-2', name: 'Itaú Unibanco', slug: 'itau-unibanco', logoUrl: 'https://placehold.co/100x100.png?text=I', city: 'São Paulo', state: 'SP', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'seller-banco-bradesco', publicId: 'SELL-PUB-1', name: 'Banco Bradesco S.A.', slug: 'banco-bradesco-s-a', logoUrl: 'https://placehold.co/100x100/dc2626/ffffff/png?text=B', city: 'Osasco', state: 'SP', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'seller-itau-unibanco', publicId: 'SELL-PUB-2', name: 'Itaú Unibanco S.A.', slug: 'itau-unibanco', logoUrl: 'https://placehold.co/100x100/ea580c/ffffff/png?text=I', city: 'São Paulo', state: 'SP', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'seller-construtora-mrv', publicId: 'SELL-PUB-3', name: 'Construtora MRV', slug: 'construtora-mrv', logoUrl: 'https://placehold.co/100x100/16a34a/ffffff/png?text=MRV', city: 'Belo Horizonte', state: 'MG', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'seller-tribunal-justica', publicId: 'SELL-PUB-4', name: 'Tribunal de Justiça do Estado de São Paulo', slug: 'tjsp', logoUrl: 'https://placehold.co/100x100/7c3aed/ffffff/png?text=TJ', city: 'São Paulo', state: 'SP', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'seller-receita-federal', publicId: 'SELL-PUB-5', name: 'Receita Federal', slug: 'receita-federal', logoUrl: 'https://placehold.co/100x100/047857/ffffff/png?text=RF', city: 'Brasília', state: 'DF', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'seller-vale', publicId: 'SELL-PUB-6', name: 'Vale S.A.', slug: 'vale-sa', logoUrl: 'https://placehold.co/100x100/0369a1/ffffff/png?text=V', city: 'Rio de Janeiro', state: 'RJ', createdAt: new Date(), updatedAt: new Date() }
 ];
 
 export const sampleLotCategories: LotCategory[] = [
   { id: 'cat-imoveis', name: 'Imóveis', slug: 'imoveis', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'cat-veiculos', name: 'Veículos', slug: 'veiculos', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'cat-maquinas', name: 'Máquinas e Equipamentos', slug: 'maquinas-e-equipamentos', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'cat-eletronicos', name: 'Eletrônicos e Tecnologia', slug: 'eletronicos-e-tecnologia', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'cat-arte', name: 'Arte e Antiguidades', slug: 'arte-e-antiguidades', hasSubcategories: false, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'cat-bens-diversos', name: 'Bens Diversos', slug: 'bens-diversos', hasSubcategories: false, itemCount: 0, createdAt: new Date(), updatedAt: new Date() }
 ];
 
 export const sampleSubcategories: Subcategory[] = [
@@ -73,93 +79,41 @@ export const sampleSubcategories: Subcategory[] = [
   { id: 'subcat-veiculos-carros', name: 'Carros', slug: 'carros', parentCategoryId: 'cat-veiculos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'subcat-veiculos-motos', name: 'Motos', slug: 'motos', parentCategoryId: 'cat-veiculos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'subcat-maquinas-agricolas', name: 'Máquinas Agrícolas', slug: 'maquinas-agricolas', parentCategoryId: 'cat-maquinas', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-eletronicos-celulares', name: 'Celulares e Smartphones', slug: 'celulares-e-smartphones', parentCategoryId: 'cat-eletronicos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
 ];
 
 export const sampleMediaItems: MediaItem[] = [
-  { id: 'media-car-1', fileName: 'ford-ka.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 120000, urlOriginal: 'https://placehold.co/800x600.png?text=Ford+Ka', dataAiHint: 'carro ford ka' },
-  { id: 'media-moto-1', fileName: 'honda-cg.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 110000, urlOriginal: 'https://placehold.co/800x600.png?text=Honda+CG', dataAiHint: 'moto honda' },
-  { id: 'media-apt-1', fileName: 'apartamento-sp.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 150000, urlOriginal: 'https://placehold.co/800x600.png?text=Apto+SP', dataAiHint: 'apartamento sao paulo' },
-  { id: 'media-house-1', fileName: 'casa-salvador.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 160000, urlOriginal: 'https://placehold.co/800x600.png?text=Casa+Salvador', dataAiHint: 'casa salvador' },
+  { id: 'media-car-1', fileName: 'ford-ka.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 120000, urlOriginal: 'https://placehold.co/800x600/f87171/ffffff/png?text=Ford+Ka', dataAiHint: 'carro ford ka' },
+  { id: 'media-moto-1', fileName: 'honda-cg.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 110000, urlOriginal: 'https://placehold.co/800x600/fb923c/ffffff/png?text=Honda+CG', dataAiHint: 'moto honda' },
+  { id: 'media-apt-1', fileName: 'apartamento-sp.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 150000, urlOriginal: 'https://placehold.co/800x600/60a5fa/ffffff/png?text=Apto+SP', dataAiHint: 'apartamento sao paulo' },
+  { id: 'media-house-1', fileName: 'casa-salvador.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 160000, urlOriginal: 'https://placehold.co/800x600/34d399/ffffff/png?text=Casa+Salvador', dataAiHint: 'casa salvador' },
+  { id: 'media-trator-1', fileName: 'trator-jd.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 180000, urlOriginal: 'https://placehold.co/800x600/a3e635/ffffff/png?text=Trator+JD', dataAiHint: 'trator john deere' },
+  { id: 'media-iphone-1', fileName: 'iphone-15.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 95000, urlOriginal: 'https://placehold.co/800x600/c084fc/ffffff/png?text=iPhone', dataAiHint: 'celular iphone' },
+  { id: 'media-quadro-1', fileName: 'quadro-abstrato.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 130000, urlOriginal: 'https://placehold.co/800x600/facc15/ffffff/png?text=Arte', dataAiHint: 'arte quadro' },
+  { id: 'media-escavadeira-1', fileName: 'escavadeira.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 190000, urlOriginal: 'https://placehold.co/800x600/fdba74/ffffff/png?text=Escavadeira', dataAiHint: 'maquina escavadeira' },
+  { id: 'media-macbook-1', fileName: 'macbook.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 140000, urlOriginal: 'https://placehold.co/800x600/94a3b8/ffffff/png?text=MacBook', dataAiHint: 'laptop macbook' },
+  { id: 'media-relogio-1', fileName: 'relogio-luxo.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 105000, urlOriginal: 'https://placehold.co/800x600/fde047/ffffff/png?text=Relogio', dataAiHint: 'relogio luxo' },
 ];
-
-export const sampleBids: BidInfo[] = [];
-
-const fictionalBidders: UserProfileWithPermissions[] = Array.from({ length: 15 }, (_, i) => {
-    const userRole = sampleRoles.find(r => r.name === 'USER');
-    return {
-        uid: `bidder-${i + 1}`,
-        email: `licitante${i + 1}@bidexpert.com.br`,
-        fullName: `Licitante Fictício ${i + 1}`,
-        roleId: userRole?.id || 'role-user',
-        roleName: userRole?.name || 'USER',
-        permissions: userRole?.permissions || [],
-        habilitationStatus: 'HABILITADO',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    };
-});
-
-export const sampleUserProfiles: UserProfileWithPermissions[] = [
-  { uid: 'admin-bidexpert-platform-001', email: 'admin@bidexpert.com.br', fullName: 'Admin BidExpert', roleId: 'role-admin', roleName: 'ADMINISTRATOR', permissions: ['manage_all'], habilitationStatus: 'HABILITADO', createdAt: new Date(), updatedAt: new Date(), password: '@dmin2025' },
-  { uid: 'consignor-user-001', email: 'consignor@bidexpert.com', fullName: 'Comitente Exemplo', roleId: 'role-consignor', roleName: 'CONSIGNOR', permissions: ['auctions:manage_own', 'lots:manage_own'], habilitationStatus: 'HABILITADO', createdAt: new Date(), updatedAt: new Date(), sellerProfileId: 'seller-banco-bradesco-s-a' },
-  ...fictionalBidders
-];
-
-const vehicleMakes: Record<string, string[]> = {
-  'Carros': ['Ford', 'Chevrolet', 'Volkswagen', 'Fiat', 'Honda', 'Toyota', 'Hyundai'],
-  'Motos': ['Honda', 'Yamaha', 'Suzuki', 'Kawasaki', 'Harley-Davidson'],
-  'Caminhões e Ônibus': ['Mercedes-Benz', 'Scania', 'Volvo', 'MAN'],
-  'Veículos Pesados': ['Caterpillar', 'Komatsu', 'Liebherr'],
-  'Embarcações': ['Yamaha Marine', 'Mercury Marine', 'Sea-Doo'],
-  'Aeronaves': ['Cessna', 'Embraer', 'Boeing'],
-};
-
-const vehicleModels: Record<string, string[]> = {
-  'Ford': ['Ka', 'Fiesta', 'Focus', 'Ranger'],
-  'Chevrolet': ['Onix', 'Prisma', 'Cruze', 'S10'],
-  'Volkswagen': ['Gol', 'Polo', 'Virtus', 'Amarok'],
-  'Fiat': ['Mobi', 'Argo', 'Toro', 'Strada'],
-  'Honda': ['Fit', 'City', 'Civic', 'HR-V', 'CG 160', 'Biz'],
-  'Toyota': ['Corolla', 'Hilux', 'Yaris'],
-  'Hyundai': ['HB20', 'Creta'],
-  'Yamaha': ['Factor 150', 'Fazer 250', 'NMAX'],
-  'Suzuki': ['GSX-S750', 'V-Strom 650'],
-  'Kawasaki': ['Ninja 400', 'Z400'],
-  'Harley-Davidson': ['Iron 883', 'Fat Boy'],
-  'Mercedes-Benz': ['Actros', 'Sprinter'],
-  'Scania': ['R450', 'S540'],
-  'Volvo': ['FH', 'VM'],
-  'MAN': ['TGX'],
-  'Caterpillar': ['D6', '320'],
-  'Komatsu': ['PC200', 'D61EX'],
-  'Liebherr': ['LTM 11200'],
-  'Yamaha Marine': ['VMAX', 'F250'],
-  'Mercury Marine': ['Verado', 'FourStroke'],
-  'Sea-Doo': ['Spark', 'GTX'],
-  'Cessna': ['172 Skyhawk', 'Citation Longitude'],
-  'Embraer': ['Phenom 300', 'Praetor 600'],
-  'Boeing': ['737', '787 Dreamliner'],
-};
-
-const machineTypes = ['Trator', 'Colheitadeira', 'Escavadeira', 'Retroescavadeira', 'Motoniveladora'];
-const machineMakes = ['John Deere', 'Massey Ferguson', 'Valtra', 'Caterpillar', 'Komatsu'];
-
-const artTypes = ['Pintura a óleo', 'Escultura em bronze', 'Aquarela', 'Gravura'];
-const artistNames = ['Artista Desconhecido', 'Atribuído a Tarsila do Amaral', 'Cândido Portinari (Estilo)', 'Aleijadinho (Estilo)'];
 
 // ==================================
 // DYNAMIC DATA GENERATION
 // ==================================
 const generatedAuctions: Auction[] = [];
 const generatedLots: Lot[] = [];
+const generatedBids: BidInfo[] = [];
 const generatedUserWins: UserWin[] = [];
+const generatedDirectSales: DirectSaleOffer[] = [];
+const generatedQuestions: LotQuestion[] = [];
+const generatedReviews: Review[] = [];
+
 let auctionCounter = 1;
 let lotCounter = 1;
 
 const auctionTypes: Auction['auctionType'][] = ['JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS'];
 
+// Main generation loop for Auctions
 auctionTypes.forEach(type => {
-  for (let i = 1; i <= 10; i++) {
+  for (let i = 1; i <= 5; i++) { // Create 5 auctions of each type
     const auctionStartDate = new Date(Date.now() + randomInt(-20, 20) * 24 * 60 * 60 * 1000);
     const firstStageEndDate = new Date(auctionStartDate.getTime() + randomInt(5, 10) * 24 * 60 * 60 * 1000);
     const secondStageEndDate = new Date(firstStageEndDate.getTime() + randomInt(2, 5) * 24 * 60 * 60 * 1000);
@@ -171,181 +125,106 @@ auctionTypes.forEach(type => {
 
     const selectedCategory = randomItem(sampleLotCategories);
     const auctioneer = randomItem(sampleAuctioneers);
-    const seller = randomItem(sampleSellers);
+    const seller = type === 'JUDICIAL' ? sampleSellers.find(s => s.slug === 'tjsp')! : randomItem(sampleSellers);
     const auctionId = `auc-${auctionCounter++}`;
     const city = randomItem(sampleCities);
     const cityCoords = CITY_COORDS[city.slug as keyof typeof CITY_COORDS] || { lat: -15.78, lon: -47.92 };
 
     const auction: Auction = {
       id: auctionId, publicId: `AUC-PUB-${auctionId}`,
-      title: `Leilão ${type.replace(/_/g, ' ')} de ${selectedCategory.name} #${i}`,
-      status: 'EM_BREVE', // Will be updated below
-      auctionType: type, categoryId: selectedCategory.id, category: selectedCategory.name,
+      title: `Leilão ${type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} de ${selectedCategory.name} #${i}`,
+      status: 'EM_BREVE', auctionType: type, categoryId: selectedCategory.id, category: selectedCategory.name,
       auctioneerId: auctioneer.id, auctioneer: auctioneer.name, sellerId: seller.id, seller: seller.name,
       city: city.name, state: city.stateUf, auctionDate: auctionStartDate, endDate: secondStageEndDate,
       auctionStages: auctionStages,
-      latitude: cityCoords.lat + (Math.random() - 0.5) * 0.1,
-      longitude: cityCoords.lon + (Math.random() - 0.5) * 0.1,
+      latitude: cityCoords.lat, longitude: cityCoords.lon,
       createdAt: new Date(), updatedAt: new Date(), totalLots: 0,
-      initialOffer: randomInt(50000, 200000), visits: randomInt(100, 2000),
+      initialOffer: randomInt(10000, 100000), visits: randomInt(50, 1500),
       isFeaturedOnMarketplace: Math.random() > 0.8, lots: []
     };
 
-    const numLots = randomInt(2, 10);
+    const numLots = randomInt(2, 5);
     auction.totalLots = numLots;
 
     for (let j = 1; j <= numLots; j++) {
       const lotId = `lot-${lotCounter++}`;
-      const possibleSubcats = sampleSubcategories.filter(sc => sc.parentCategoryId === auction.categoryId);
-      const selectedSubcat = possibleSubcats.length > 0 ? randomItem(possibleSubcats) : null;
       const media = randomItem(sampleMediaItems);
       
       const now = new Date();
       let lotStatus: LotStatus;
-      let lotEndDate: Date;
-      let initialPrice = randomInt(1000, 50000);
-      let secondInitialPrice = initialPrice * (randomInt(50,80) / 100);
-
-      if (now < auctionStartDate) {
-          lotStatus = 'EM_BREVE';
-          lotEndDate = firstStageEndDate;
-      } else if (now >= auctionStartDate && now < firstStageEndDate) {
-          lotStatus = 'ABERTO_PARA_LANCES';
-          lotEndDate = firstStageEndDate;
-      } else if (now >= firstStageEndDate && now < secondStageEndDate) {
-          lotStatus = 'ABERTO_PARA_LANCES';
-          lotEndDate = secondStageEndDate;
-          initialPrice = secondInitialPrice; // Price drops in the second stage
-      } else { // now >= secondStageEndDate
-          lotStatus = 'ENCERRADO';
-          lotEndDate = secondStageEndDate;
-          initialPrice = secondInitialPrice;
-      }
+      let lotEndDate: Date = firstStageEndDate;
+      if (now < auctionStartDate) lotStatus = 'EM_BREVE';
+      else if (now >= auctionStartDate && now < secondStageEndDate) lotStatus = 'ABERTO_PARA_LANCES';
+      else lotStatus = 'ENCERRADO';
       
-      let currentPrice = initialPrice;
-      let bidsCount = 0;
-      let winner: UserProfileWithPermissions | null = null;
-      
-      let lotTitle = `Item ${selectedSubcat ? selectedSubcat.name : selectedCategory.name} - Lote ${j}`;
-      let lotDetails: Partial<Lot> = {};
-
-      if (selectedCategory.slug === 'veiculos' && selectedSubcat) {
-        const makes = vehicleMakes[selectedSubcat.name as keyof typeof vehicleMakes];
-        if (makes) {
-          const make = randomItem(makes);
-          const model = randomItem(vehicleModels[make as keyof typeof vehicleModels]);
-          const year = randomInt(2015, 2023);
-          lotTitle = `${make} ${model} 1.6 Flex - Lote ${j}`;
-          lotDetails = { make, model, year };
-        }
-      } else if (selectedCategory.slug === 'imoveis' && selectedSubcat) {
-          const cityForLot = randomItem(sampleCities);
-          lotTitle = `${selectedSubcat.name} em ${cityForLot.name} - ${cityForLot.stateUf} - Lote ${j}`;
-      } else if (selectedCategory.slug === 'maquinas-e-equipamentos' && selectedSubcat) {
-          const type = randomItem(machineTypes);
-          const make = randomItem(machineMakes);
-          lotTitle = `${type} ${make} - Lote ${j}`;
-          lotDetails = { make, model: type };
-      } else if (selectedCategory.slug === 'arte-e-antiguidades') {
-          const type = randomItem(artTypes);
-          const artist = randomItem(artistNames);
-          lotTitle = `${type} por ${artist} - Lote ${j}`;
-      }
-
-      if (lotStatus === 'ABERTO_PARA_LANCES' || lotStatus === 'ENCERRADO') {
-        const numBids = lotStatus === 'ABERTO_PARA_LANCES' ? randomInt(0, 15) : randomInt(5, 25);
-        for (let k = 0; k < numBids; k++) {
-          const bidder = randomItem(fictionalBidders);
-          currentPrice += randomInt(100, 1000);
-          sampleBids.push({ id: `bid-${lotId}-${k}`, lotId: lotId, auctionId: auction.id, bidderId: bidder.uid, bidderDisplay: bidder.fullName!, amount: currentPrice, timestamp: new Date(lotEndDate.getTime() - randomInt(10, 300) * 60 * 1000) });
-          winner = bidder;
-        }
-        bidsCount = numBids;
-      }
-
-      const finalLotStatus = lotStatus === 'ENCERRADO' && bidsCount > 0 ? 'VENDIDO' : (lotStatus === 'ENCERRADO' ? 'NAO_VENDIDO' : lotStatus);
-      if (finalLotStatus === 'VENDIDO' && winner) {
-        const arrematanteRole = sampleRoles.find(r => r.name === 'ARREMATANTE');
-        generatedUserWins.push({ id: `win-${lotId}`, userId: winner.uid, lot: {} as Lot, winningBidAmount: currentPrice, winDate: lotEndDate, paymentStatus: 'PENDENTE' });
-        const winnerIndex = sampleUserProfiles.findIndex(u => u.uid === winner!.uid);
-        if (winnerIndex > -1 && arrematanteRole) {
-            sampleUserProfiles[winnerIndex].roleId = arrematanteRole.id;
-            sampleUserProfiles[winnerIndex].roleName = arrematanteRole.name;
-            sampleUserProfiles[winnerIndex].permissions = arrematanteRole.permissions;
-        }
-      }
+      if (lotStatus === 'ABERTO_PARA_LANCES' && now >= firstStageEndDate) lotEndDate = secondStageEndDate;
 
       const lot: Lot = {
         id: lotId, publicId: `LOT-PUB-${lotId}`, auctionId: auction.id,
-        title: lotTitle,
-        ...lotDetails,
-        number: `${j}`, imageUrl: media.urlOriginal, imageMediaId: media.id,
-        status: finalLotStatus, categoryId: selectedCategory.id, type: selectedCategory.name,
-        subcategoryId: selectedSubcat?.id, subcategoryName: selectedSubcat?.name,
-        price: currentPrice, bidsCount: bidsCount, endDate: lotEndDate,
-        lotSpecificAuctionDate: auctionStartDate, 
-        secondAuctionDate: firstStageEndDate,
-        initialPrice: initialPrice,
-        secondInitialPrice: secondInitialPrice,
-        latitude: (auction.latitude || 0) + (Math.random() - 0.5) * 0.05,
-        longitude: (auction.longitude || 0) + (Math.random() - 0.5) * 0.05,
-        mapAddress: `Rua Exemplo, ${randomInt(100, 2000)}, ${city.name}, ${city.stateUf}`,
-        views: randomInt(50, 1000), cityName: city.name, stateUf: city.stateUf,
-        isFeatured: Math.random() > 0.85, 
-        auctionName: auction.title,
+        title: `Item de ${selectedCategory.name} - ${lotId}`,
+        number: `${lotCounter}`, imageUrl: media.urlOriginal, imageMediaId: media.id,
+        status: lotStatus, categoryId: selectedCategory.id, type: selectedCategory.name,
+        price: randomInt(500, 25000), bidsCount: 0, endDate: lotEndDate,
+        latitude: randomCoord(cityCoords.lat, 0.05), longitude: randomCoord(cityCoords.lon, 0.05),
+        mapAddress: `Rua Fictícia, ${randomInt(10, 500)}, ${city.name}`,
+        views: randomInt(10, 500), isFeatured: Math.random() > 0.9, auctionName: auction.title,
+        cityName: city.name, stateUf: city.stateUf
       };
+
+      if (lot.status === 'ABERTO_PARA_LANCES') {
+        const numBids = randomInt(0, 10);
+        lot.bidsCount = numBids;
+        for (let k = 0; k < numBids; k++) {
+          lot.price += randomInt(50, 500);
+          generatedBids.push({ id: `bid-${lotId}-${k}`, lotId: lotId, auctionId: auction.id, bidderId: `bidder-${k+1}`, bidderDisplay: `Licitante ${k+1}`, amount: lot.price, timestamp: new Date() });
+        }
+      }
+
+      if (Math.random() > 0.7) { // 30% chance of having questions/reviews
+        generatedQuestions.push({id: `q-${lotId}`, lotId: lotId, auctionId: auction.id, userId: 'user-2', userDisplayName: 'Joana S.', questionText: 'O produto vem na caixa original?', createdAt: new Date(), answerText: 'Sim, acompanha caixa e todos os acessórios originais.', answeredAt: new Date(), answeredByUserId: 'admin-1', answeredByUserDisplayName: seller.name});
+        generatedReviews.push({id: `r-${lotId}`, lotId: lotId, auctionId: auction.id, userId: 'user-3', userDisplayName: 'Carlos P.', rating: 5, comment: 'Excelente estado, como descrito. Recomendo!', createdAt: new Date()});
+      }
+
       generatedLots.push(lot);
       auction.lots!.push(lot);
     }
 
-    // Determine overall auction status based on its stages and current date
-    const now = new Date();
-    if (now < auctionStartDate) {
-        auction.status = 'EM_BREVE';
-    } else if (now >= auctionStartDate && now < secondStageEndDate) {
-        auction.status = 'ABERTO_PARA_LANCES';
-    } else {
-        auction.status = 'ENCERRADO';
-    }
+    if (now >= secondStageEndDate) auction.status = 'ENCERRADO';
+    else if (now >= auctionStartDate) auction.status = 'ABERTO_PARA_LANCES';
     
     generatedAuctions.push(auction);
   }
 });
 
-// Post-process UserWins to include full lot object
-generatedUserWins.forEach(win => {
-    const lotData = generatedLots.find(l => l.id === win.id.replace('win-', ''));
-    if (lotData) {
-        win.lot = lotData;
-    }
-});
-
+// Direct Sales Generation
+for (let i = 1; i <= 8; i++) {
+    const seller = randomItem(sampleSellers);
+    const category = randomItem(sampleLotCategories);
+    const media = randomItem(sampleMediaItems);
+    const offer: DirectSaleOffer = {
+        id: `dso-${i}`, publicId: `DSO-PUB-${i}`, title: `Oferta Direta: ${category.name} em Perfeito Estado`,
+        description: `Descrição detalhada para a oferta de ${category.name}. Item de alta qualidade, diretamente do nosso parceiro ${seller.name}.`,
+        imageUrl: media.urlOriginal, dataAiHint: media.dataAiHint,
+        offerType: Math.random() > 0.5 ? 'BUY_NOW' : 'ACCEPTS_PROPOSALS',
+        price: randomInt(100, 5000), minimumOfferPrice: randomInt(80, 4800),
+        category: category.name, locationCity: randomItem(sampleCities).name, locationState: randomItem(sampleStates).uf,
+        sellerName: seller.name, sellerId: seller.id, sellerLogoUrl: seller.logoUrl, dataAiHintSellerLogo: seller.dataAiHintLogo,
+        status: 'ACTIVE', createdAt: new Date(), updatedAt: new Date(),
+    };
+    generatedDirectSales.push(offer);
+}
 
 // ==================================
 // EXPORT FINAL DATA
 // ==================================
 export const sampleAuctions: Auction[] = generatedAuctions;
 export const sampleLots: Lot[] = generatedLots;
+export const sampleBids: BidInfo[] = generatedBids;
 export const sampleUserWins: UserWin[] = generatedUserWins;
-export const sampleLotQuestions: LotQuestion[] = [];
-export const sampleLotReviews: Review[] = [];
+export const sampleDirectSaleOffers: DirectSaleOffer[] = generatedDirectSales;
+export const sampleLotQuestions: LotQuestion[] = generatedQuestions;
+export const sampleLotReviews: Review[] = generatedReviews;
 export const sampleUserLotMaxBids: UserLotMaxBid[] = [];
-export const sampleDirectSaleOffers: DirectSaleOffer[] = [];
-export const samplePlatformSettings: PlatformSettings = {
-  id: 'global', siteTitle: 'BidExpert', siteTagline: 'Sua Plataforma de Leilões Especializada',
-  galleryImageBasePath: '/media/gallery/', storageProvider: 'local', updatedAt: new Date(),
-  mapSettings: { defaultProvider: 'openstreetmap' }, searchPaginationType: 'loadMore',
-  searchItemsPerPage: 12, searchLoadMoreCount: 12,
-  showCountdownOnCards: true, showCountdownOnLotDetail: true,
-  showRelatedLotsOnLotDetail: true, relatedLotsCount: 5,
-  mentalTriggerSettings: {
-    showDiscountBadge: true, showUrgencyTimer: true, urgencyTimerThresholdDays: 2, urgencyTimerThresholdHours: 0,
-    showPopularityBadge: true, popularityViewThreshold: 100, showHotBidBadge: true, hotBidThreshold: 10, showExclusiveBadge: true
-  },
-  sectionBadgeVisibility: {
-    featuredLots: { showDiscountBadge: true, showPopularityBadge: true },
-    searchGrid: { showDiscountBadge: true, showUrgencyTimer: true },
-    searchList: { showDiscountBadge: true, showUrgencyTimer: true, showPopularityBadge: true, showHotBidBadge: true },
-    lotDetail: { showDiscountBadge: true, showUrgencyTimer: true, showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true },
-  }
-};
+export { samplePlatformSettings } from './sample-data-helpers';
+
+    

@@ -253,6 +253,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
             alt={`Banner ${currentCategory.name}`} 
             fill 
             className="object-cover"
+            sizes="100vw"
             data-ai-hint={bannerAiHint}
             priority
           />
