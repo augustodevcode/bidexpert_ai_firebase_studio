@@ -12,7 +12,7 @@ import { Heart, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users,
 import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
-import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate } from '@/lib/sample-data-helpers';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import LotPreviewModal from './lot-preview-modal';
@@ -130,6 +130,8 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
   };
 
   const showCountdownOnThisCard = platformSettings.showCountdownOnCards !== false;
+  
+  const effectiveEndDate = useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -331,16 +333,16 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
       <CardFooter className="p-3 border-t flex-col items-start space-y-1.5">
         <div className="w-full">
           <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
-          <p className={`text-xl font-bold ${lot.endDate && isPast(new Date(lot.endDate as string)) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
+          <p className={`text-xl font-bold ${effectiveEndDate && isPast(effectiveEndDate) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
             R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
         
         <div className="w-full flex justify-between items-center text-xs">
             <div>
-              {showCountdownOnThisCard && lot.endDate && (
+              {showCountdownOnThisCard && (
                 <TimeRemainingBadge
-                  endDate={lot.endDate}
+                  endDate={effectiveEndDate}
                   status={lot.status}
                   showUrgencyTimer={sectionBadges.showUrgencyTimer !== false && mentalTriggersGlobalSettings.showUrgencyTimer}
                   urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays}
@@ -349,11 +351,11 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
               )}
             </div>
             <div className="flex items-center gap-2">
-                <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate || '')) ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                <div className={`flex items-center gap-1 ${effectiveEndDate && isPast(effectiveEndDate) ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                     <Gavel className="h-3 w-3" />
                     <span>{lot.bidsCount || 0}</span>
                 </div>
-                <span className={`font-semibold ${isPast(new Date(lot.endDate || '')) ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.number || lot.id.replace('LOTE', '')}</span>
+                <span className={`font-semibold ${effectiveEndDate && isPast(effectiveEndDate) ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.number || lot.id.replace('LOTE', '')}</span>
             </div>
         </div>
 
@@ -406,4 +408,3 @@ export default function LotCard({ lot, auction, badgeVisibilityConfig, platformS
 
     return <LotCardClientContent lot={lot} auction={auction} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} onUpdate={onUpdate} />;
   }
-
