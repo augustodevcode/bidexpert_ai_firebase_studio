@@ -25,7 +25,8 @@ import type {
   UserLotMaxBid,
   UserWin
 } from '@/types';
-import { slugify, samplePlatformSettings } from '@/lib/sample-data-helpers';
+import { slugify } from '@/lib/sample-data-helpers';
+import { samplePlatformSettings } from '@/lib/sample-data';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
