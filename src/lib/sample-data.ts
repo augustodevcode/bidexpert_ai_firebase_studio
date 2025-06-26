@@ -1,9 +1,8 @@
-
 // src/lib/sample-data.ts
 import type {
   Lot, LotCategory, Auction, AuctioneerProfileInfo, SellerProfileInfo,
   StateInfo, CityInfo, UserProfileWithPermissions, Role, MediaItem, Subcategory,
-  PlatformSettings, DirectSaleOffer, UserWin, UserBid, LotQuestion, Review, UserLotMaxBid, AuctionStage
+  PlatformSettings, DirectSaleOffer, UserWin, BidInfo, LotQuestion, Review, UserLotMaxBid, AuctionStage
 } from '@/types';
 import { slugify } from './sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
@@ -21,21 +20,21 @@ const randomCoord = (min: number, max: number): number => min + Math.random() * 
 // ==================================
 // BASE STATIC DATA
 // ==================================
-const sampleRolesData: Role[] = [
+export const sampleRoles: Role[] = [
   { id: 'role-admin', name: 'ADMINISTRATOR', name_normalized: 'ADMINISTRATOR', description: 'Acesso total.', permissions: ['manage_all'], createdAt: new Date(), updatedAt: new Date() },
   { id: 'role-user', name: 'USER', name_normalized: 'USER', description: 'Usuário padrão.', permissions: ['view_auctions', 'place_bids', 'view_lots'], createdAt: new Date(), updatedAt: new Date() },
   { id: 'role-consignor', name: 'CONSIGNOR', name_normalized: 'CONSIGNOR', description: 'Comitente.', permissions: ['auctions:manage_own', 'lots:manage_own'], createdAt: new Date(), updatedAt: new Date() },
   { id: 'role-arrematante', name: 'ARREMATANTE', name_normalized: 'ARREMATANTE', description: 'Usuário que arrematou lotes.', permissions: ['view_wins', 'manage_payments', 'schedule_retrieval'], createdAt: new Date(), updatedAt: new Date() }
 ];
 
-const sampleStatesData: StateInfo[] = [
+export const sampleStates: StateInfo[] = [
   { id: 'state-sp', name: 'São Paulo', uf: 'SP', slug: 'sao-paulo', cityCount: 2, createdAt: new Date(), updatedAt: new Date() },
   { id: 'state-ba', name: 'Bahia', uf: 'BA', slug: 'bahia', cityCount: 1, createdAt: new Date(), updatedAt: new Date() },
   { id: 'state-rj', name: 'Rio de Janeiro', uf: 'RJ', slug: 'rio-de-janeiro', cityCount: 1, createdAt: new Date(), updatedAt: new Date() },
   { id: 'state-mg', name: 'Minas Gerais', uf: 'MG', slug: 'minas-gerais', cityCount: 1, createdAt: new Date(), updatedAt: new Date() },
 ];
 
-const sampleCitiesData: CityInfo[] = [
+export const sampleCities: CityInfo[] = [
   { id: 'city-sp-sao-paulo', name: 'São Paulo', slug: 'sao-paulo', stateId: 'state-sp', stateUf: 'SP', lotCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'city-sp-campinas', name: 'Campinas', slug: 'campinas', stateId: 'state-sp', stateUf: 'SP', lotCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'city-ba-salvador', name: 'Salvador', slug: 'salvador', stateId: 'state-ba', stateUf: 'BA', lotCount: 0, createdAt: new Date(), updatedAt: new Date() },
@@ -51,24 +50,24 @@ const CITY_COORDS: Record<string, { lat: number; lon: number }> = {
   'belo-horizonte': { lat: -19.9167, lon: -43.9345 },
 };
 
-const sampleAuctioneersData: AuctioneerProfileInfo[] = [
+export const sampleAuctioneers: AuctioneerProfileInfo[] = [
   { id: 'auct-augusto-leiloeiro', publicId: 'AUCT-PUB-1', name: 'Augusto Leiloeiro', slug: 'augusto-leiloeiro', logoUrl: 'https://placehold.co/100x100.png?text=A', city: 'São Paulo', state: 'SP', createdAt: new Date(), updatedAt: new Date(), userId: 'admin-bidexpert-platform-001' },
   { id: 'auct-sodre-santoro', publicId: 'AUCT-PUB-2', name: 'Sodré Santoro', slug: 'sodre-santoro', logoUrl: 'https://placehold.co/100x100.png?text=SS', city: 'São Paulo', state: 'SP', createdAt: new Date(), updatedAt: new Date() },
 ];
 
-const sampleSellersData: SellerProfileInfo[] = [
+export const sampleSellers: SellerProfileInfo[] = [
   { id: 'seller-banco-bradesco-s-a', publicId: 'SELL-PUB-1', name: 'Banco Bradesco S.A.', slug: 'banco-bradesco-s-a', logoUrl: 'https://placehold.co/100x100.png?text=B', city: 'São Paulo', state: 'SP', createdAt: new Date(), updatedAt: new Date() },
   { id: 'seller-itau-unibanco', publicId: 'SELL-PUB-2', name: 'Itaú Unibanco', slug: 'itau-unibanco', logoUrl: 'https://placehold.co/100x100.png?text=I', city: 'São Paulo', state: 'SP', createdAt: new Date(), updatedAt: new Date() },
 ];
 
-const sampleLotCategoriesData: LotCategory[] = [
+export const sampleLotCategories: LotCategory[] = [
   { id: 'cat-imoveis', name: 'Imóveis', slug: 'imoveis', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'cat-veiculos', name: 'Veículos', slug: 'veiculos', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'cat-maquinas', name: 'Máquinas e Equipamentos', slug: 'maquinas-e-equipamentos', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'cat-arte', name: 'Arte e Antiguidades', slug: 'arte-e-antiguidades', hasSubcategories: false, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
 ];
 
-const sampleSubcategoriesData: Subcategory[] = [
+export const sampleSubcategories: Subcategory[] = [
   { id: 'subcat-imoveis-apartamentos', name: 'Apartamentos', slug: 'apartamentos', parentCategoryId: 'cat-imoveis', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'subcat-imoveis-casas', name: 'Casas', slug: 'casas', parentCategoryId: 'cat-imoveis', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'subcat-veiculos-carros', name: 'Carros', slug: 'carros', parentCategoryId: 'cat-veiculos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
@@ -76,15 +75,17 @@ const sampleSubcategoriesData: Subcategory[] = [
   { id: 'subcat-maquinas-agricolas', name: 'Máquinas Agrícolas', slug: 'maquinas-agricolas', parentCategoryId: 'cat-maquinas', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
 ];
 
-const sampleMediaItemsData: MediaItem[] = [
+export const sampleMediaItems: MediaItem[] = [
   { id: 'media-car-1', fileName: 'ford-ka.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 120000, urlOriginal: 'https://placehold.co/800x600.png?text=Ford+Ka', dataAiHint: 'carro ford ka' },
   { id: 'media-moto-1', fileName: 'honda-cg.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 110000, urlOriginal: 'https://placehold.co/800x600.png?text=Honda+CG', dataAiHint: 'moto honda' },
   { id: 'media-apt-1', fileName: 'apartamento-sp.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 150000, urlOriginal: 'https://placehold.co/800x600.png?text=Apto+SP', dataAiHint: 'apartamento sao paulo' },
   { id: 'media-house-1', fileName: 'casa-salvador.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 160000, urlOriginal: 'https://placehold.co/800x600.png?text=Casa+Salvador', dataAiHint: 'casa salvador' },
 ];
 
+export const sampleBids: BidInfo[] = [];
+
 const fictionalBidders: UserProfileWithPermissions[] = Array.from({ length: 15 }, (_, i) => {
-    const userRole = sampleRolesData.find(r => r.name === 'USER');
+    const userRole = sampleRoles.find(r => r.name === 'USER');
     return {
         uid: `bidder-${i + 1}`,
         email: `licitante${i + 1}@bidexpert.com.br`,
@@ -98,7 +99,7 @@ const fictionalBidders: UserProfileWithPermissions[] = Array.from({ length: 15 }
     };
 });
 
-const sampleUserProfilesData: UserProfileWithPermissions[] = [
+export const sampleUserProfiles: UserProfileWithPermissions[] = [
   { uid: 'admin-bidexpert-platform-001', email: 'admin@bidexpert.com.br', fullName: 'Admin BidExpert', roleId: 'role-admin', roleName: 'ADMINISTRATOR', permissions: ['manage_all'], habilitationStatus: 'HABILITADO', createdAt: new Date(), updatedAt: new Date(), password: '@dmin2025' },
   { uid: 'consignor-user-001', email: 'consignor@bidexpert.com', fullName: 'Comitente Exemplo', roleId: 'role-consignor', roleName: 'CONSIGNOR', permissions: ['auctions:manage_own', 'lots:manage_own'], habilitationStatus: 'HABILITADO', createdAt: new Date(), updatedAt: new Date(), sellerProfileId: 'seller-banco-bradesco-s-a' },
   ...fictionalBidders
@@ -151,7 +152,6 @@ const artistNames = ['Artista Desconhecido', 'Atribuído a Tarsila do Amaral', '
 // ==================================
 const generatedAuctions: Auction[] = [];
 const generatedLots: Lot[] = [];
-const generatedBids: BidInfo[] = [];
 const generatedUserWins: UserWin[] = [];
 let auctionCounter = 1;
 let lotCounter = 1;
@@ -169,11 +169,11 @@ auctionTypes.forEach(type => {
         { name: '2ª Praça', endDate: secondStageEndDate, statusText: 'Encerramento' }
     ];
 
-    const selectedCategory = randomItem(sampleLotCategoriesData);
-    const auctioneer = randomItem(sampleAuctioneersData);
-    const seller = randomItem(sampleSellersData);
+    const selectedCategory = randomItem(sampleLotCategories);
+    const auctioneer = randomItem(sampleAuctioneers);
+    const seller = randomItem(sampleSellers);
     const auctionId = `auc-${auctionCounter++}`;
-    const city = randomItem(sampleCitiesData);
+    const city = randomItem(sampleCities);
     const cityCoords = CITY_COORDS[city.slug as keyof typeof CITY_COORDS] || { lat: -15.78, lon: -47.92 };
 
     const auction: Auction = {
@@ -196,9 +196,9 @@ auctionTypes.forEach(type => {
 
     for (let j = 1; j <= numLots; j++) {
       const lotId = `lot-${lotCounter++}`;
-      const possibleSubcats = sampleSubcategoriesData.filter(sc => sc.parentCategoryId === auction.categoryId);
+      const possibleSubcats = sampleSubcategories.filter(sc => sc.parentCategoryId === auction.categoryId);
       const selectedSubcat = possibleSubcats.length > 0 ? randomItem(possibleSubcats) : null;
-      const media = randomItem(sampleMediaItemsData);
+      const media = randomItem(sampleMediaItems);
       
       const now = new Date();
       let lotStatus: LotStatus;
@@ -239,7 +239,7 @@ auctionTypes.forEach(type => {
           lotDetails = { make, model, year };
         }
       } else if (selectedCategory.slug === 'imoveis' && selectedSubcat) {
-          const cityForLot = randomItem(sampleCitiesData);
+          const cityForLot = randomItem(sampleCities);
           lotTitle = `${selectedSubcat.name} em ${cityForLot.name} - ${cityForLot.stateUf} - Lote ${j}`;
       } else if (selectedCategory.slug === 'maquinas-e-equipamentos' && selectedSubcat) {
           const type = randomItem(machineTypes);
@@ -257,7 +257,7 @@ auctionTypes.forEach(type => {
         for (let k = 0; k < numBids; k++) {
           const bidder = randomItem(fictionalBidders);
           currentPrice += randomInt(100, 1000);
-          generatedBids.push({ id: `bid-${lotId}-${k}`, lotId: lotId, auctionId: auction.id, bidderId: bidder.uid, bidderDisplay: bidder.fullName!, amount: currentPrice, timestamp: new Date(lotEndDate.getTime() - randomInt(10, 300) * 60 * 1000) });
+          sampleBids.push({ id: `bid-${lotId}-${k}`, lotId: lotId, auctionId: auction.id, bidderId: bidder.uid, bidderDisplay: bidder.fullName!, amount: currentPrice, timestamp: new Date(lotEndDate.getTime() - randomInt(10, 300) * 60 * 1000) });
           winner = bidder;
         }
         bidsCount = numBids;
@@ -265,13 +265,13 @@ auctionTypes.forEach(type => {
 
       const finalLotStatus = lotStatus === 'ENCERRADO' && bidsCount > 0 ? 'VENDIDO' : (lotStatus === 'ENCERRADO' ? 'NAO_VENDIDO' : lotStatus);
       if (finalLotStatus === 'VENDIDO' && winner) {
-        const arrematanteRole = sampleRolesData.find(r => r.name === 'ARREMATANTE');
+        const arrematanteRole = sampleRoles.find(r => r.name === 'ARREMATANTE');
         generatedUserWins.push({ id: `win-${lotId}`, userId: winner.uid, lot: {} as Lot, winningBidAmount: currentPrice, winDate: lotEndDate, paymentStatus: 'PENDENTE' });
-        const winnerIndex = sampleUserProfilesData.findIndex(u => u.uid === winner!.uid);
+        const winnerIndex = sampleUserProfiles.findIndex(u => u.uid === winner!.uid);
         if (winnerIndex > -1 && arrematanteRole) {
-            sampleUserProfilesData[winnerIndex].roleId = arrematanteRole.id;
-            sampleUserProfilesData[winnerIndex].roleName = arrematanteRole.name;
-            sampleUserProfilesData[winnerIndex].permissions = arrematanteRole.permissions;
+            sampleUserProfiles[winnerIndex].roleId = arrematanteRole.id;
+            sampleUserProfiles[winnerIndex].roleName = arrematanteRole.name;
+            sampleUserProfiles[winnerIndex].permissions = arrematanteRole.permissions;
         }
       }
 
@@ -324,22 +324,12 @@ generatedUserWins.forEach(win => {
 // ==================================
 // EXPORT FINAL DATA
 // ==================================
-export const sampleRoles: Role[] = sampleRolesData;
-export const sampleStates: StateInfo[] = sampleStatesData;
-export const sampleCities: CityInfo[] = sampleCitiesData;
-export const sampleAuctioneers: AuctioneerProfileInfo[] = sampleAuctioneersData;
-export const sampleSellers: SellerProfileInfo[] = sampleSellersData;
-export const sampleLotCategories: LotCategory[] = sampleLotCategoriesData;
-export const sampleSubcategories: Subcategory[] = sampleSubcategoriesData;
-export const sampleMediaItems: MediaItem[] = sampleMediaItemsData;
 export const sampleAuctions: Auction[] = generatedAuctions;
 export const sampleLots: Lot[] = generatedLots;
 export const sampleUserWins: UserWin[] = generatedUserWins;
-export const sampleBids: BidInfo[] = generatedBids; // Corrected Export
 export const sampleLotQuestions: LotQuestion[] = [];
 export const sampleLotReviews: Review[] = [];
 export const sampleUserLotMaxBids: UserLotMaxBid[] = [];
-export const sampleUserProfiles: UserProfileWithPermissions[] = sampleUserProfilesData;
 export const sampleDirectSaleOffers: DirectSaleOffer[] = [];
 export const samplePlatformSettings: PlatformSettings = {
   id: 'global', siteTitle: 'BidExpert', siteTagline: 'Sua Plataforma de Leilões Especializada',

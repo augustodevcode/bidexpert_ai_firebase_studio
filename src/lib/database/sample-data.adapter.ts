@@ -1,4 +1,3 @@
-
 // src/lib/database/sample-data.adapter.ts
 import type { 
   IDatabaseAdapter, 
@@ -321,9 +320,12 @@ export class SampleDataAdapter implements IDatabaseAdapter {
       console.warn(`[getBidsForLot - SampleData] Lot not found for ID/PublicID: ${lotIdOrPublicId}`);
       return Promise.resolve([]);
     }
-    const bids = this.data.sampleBids.filter((b: BidInfo) => b.lotId === lot.id);
+    const bids = this.data.sampleBids
+      .filter((b: BidInfo) => b.lotId === lot.id)
+      .sort((a, b) => new Date(b.timestamp as string).getTime() - new Date(a.timestamp as string).getTime());
     return Promise.resolve(JSON.parse(JSON.stringify(bids)));
   }
+  
   async getReviewsForLot(lotId: string): Promise<Review[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleLotReviews.filter((r: Review) => r.lotId === lotId)))); }
   async createReview(reviewData: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<{ success: boolean; message: string; reviewId?: string | undefined; }> { const newReview: Review = {...reviewData, id: `rev-${uuidv4()}`, createdAt: new Date()}; this.data.sampleLotReviews.unshift(newReview); this._persistData(); return { success: true, message: "Avaliação adicionada!", reviewId: newReview.id }; }
   async getQuestionsForLot(lotId: string): Promise<LotQuestion[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleLotQuestions.filter((q: LotQuestion) => q.lotId === lotId)))); }
