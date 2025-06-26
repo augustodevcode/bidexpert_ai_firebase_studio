@@ -124,8 +124,7 @@ export default function AdvancedMediaUploadPage() {
         if (response.ok && result.success) {
             toast({ title: 'Upload Concluído', description: result.message });
             setFiles([]);
-            router.push('/admin/media');
-            router.refresh();
+            router.push('/admin/media?refresh=' + new Date().getTime());
         } else if (response.ok && !result.success && result.errors) {
             toast({ title: 'Upload Parcial', description: result.message, variant: 'default' });
             const successfulFileNames = new Set((result.items || []).map(item => item.fileName));
@@ -175,7 +174,7 @@ export default function AdvancedMediaUploadPage() {
             <Label htmlFor="file-upload" className={cn("font-semibold text-primary underline-offset-4 hover:underline cursor-pointer", isLoading && "pointer-events-none")}>
               selecione do seu computador
             </Label>
-            <p className="text-xs text-muted-foreground">Máx. {MAX_FILE_SIZE_MB}MB por arquivo. Tipos suportados: JPG, PNG, WEBP, GIF, PDF, SVG</p>
+            <p className="text-xs text-muted-foreground">Máx. ${MAX_FILE_SIZE_MB}MB por arquivo. Tipos suportados: JPG, PNG, WEBP, GIF, PDF, SVG</p>
           </div>
         </CardContent>
       </Card>
