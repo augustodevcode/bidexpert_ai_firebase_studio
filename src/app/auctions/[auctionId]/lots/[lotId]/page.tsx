@@ -45,7 +45,12 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
     return { lot: lotFromDb, auction: auctionFromDb, platformSettings, allCategories, allSellers };
   }
 
-  // A função getAuction já popula a lista de lotes, então não precisamos chamar getLots() novamente.
+  // Verify that the lot actually belongs to the auction requested in the URL.
+  if (lotFromDb.auctionId !== auctionFromDb.id) {
+    console.warn(`[getLotPageData] Mismatch: Lot '${lotFromDb.id}' belongs to auction '${lotFromDb.auctionId}', not '${auctionFromDb.id}'. Returning not found.`);
+    return { lot: undefined, auction: auctionFromDb, platformSettings, allCategories, allSellers };
+  }
+
   const lotsForThisAuction = auctionFromDb.lots || [];
   const lotIndex = lotsForThisAuction.findIndex(l => l.id === lotFromDb.id || (l.publicId && l.publicId === lotFromDb.publicId));
   const totalLotsInAuction = lotsForThisAuction.length;
@@ -84,8 +89,6 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
     previousLotId, 
     nextLotId, 
     totalLotsInAuction,
-    allCategories,
-    allSellers
   } = await getLotPageData(params.auctionId, params.lotId);
 
   if (!lot || !auction) {
@@ -103,6 +106,9 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
       </div>
     );
   }
+
+  // This part is now safe because we've validated the lot belongs to the auction.
+  const auctioneerDetails = await getAuctioneers().then(list => list.find(a => a.id === auction.auctioneerId));
 
   return (
     <div className="container mx-auto px-0 sm:px-4 py-2 sm:py-8"> 

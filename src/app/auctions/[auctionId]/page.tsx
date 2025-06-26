@@ -42,12 +42,19 @@ async function getAuctionPageData(id: string): Promise<{
     return { platformSettings: platformSettingsData, allCategories: allCategoriesData, allSellers: allSellersData };
   }
 
-  const lotsForAuction = await getLots(auctionFromDb.id);
+  // The getAuction adapter now populates lots, so this call is redundant but safe.
+  const lotsForAuction = auctionFromDb.lots && auctionFromDb.lots.length > 0 
+    ? auctionFromDb.lots 
+    : await getLots(auctionFromDb.id);
+    
   const auction = { ...auctionFromDb, lots: lotsForAuction, totalLots: lotsForAuction.length };
 
   let auctioneer: AuctioneerProfileInfo | null = null;
   if (auction.auctioneerId) {
       const found = allAuctioneersData.find(a => a.id === auction.auctioneerId);
+      auctioneer = found || null;
+  } else if (auction.auctioneer) {
+      const found = allAuctioneersData.find(a => a.name === auction.auctioneer);
       auctioneer = found || null;
   }
 
@@ -101,8 +108,13 @@ export default async function AuctionDetailPage({ params }: { params: { auctionI
 }
 
 export async function generateStaticParams() {
-  const auctions = await getAuctions();
-  return auctions.map((auction) => ({
-    auctionId: auction.publicId || auction.id,
-  }));
+  try {
+    const auctions = await getAuctions();
+    return auctions.map((auction) => ({
+      auctionId: auction.publicId || auction.id,
+    }));
+  } catch (error) {
+     console.error("Error generating static params for auctions:", error);
+     return [];
+  }
 }
