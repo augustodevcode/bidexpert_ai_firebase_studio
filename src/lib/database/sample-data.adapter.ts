@@ -386,7 +386,13 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> { const lotIndex = this.data.sampleLots.findIndex((l: Lot) => l.id === lotId || l.publicId === lotId); if(lotIndex > -1) { this.data.sampleLots[lotIndex].mediaItemIds = (this.data.sampleLots[lotIndex].mediaItemIds || []).filter(id => id !== mediaItemId); } const mediaIndex = this.data.sampleMediaItems.findIndex((m: MediaItem) => m.id === mediaItemId); if(mediaIndex > -1) { this.data.sampleMediaItems[mediaIndex].linkedLotIds = (this.data.sampleMediaItems[mediaIndex].linkedLotIds || []).filter(id => id !== lotId); } this._persistData(); return {success: true, message: 'Mídia desvinculada!'}; }
   
   // --- Platform Settings ---
-  async getPlatformSettings(): Promise<PlatformSettings> { await delay(10); return Promise.resolve(JSON.parse(JSON.stringify(this.data.samplePlatformSettings))); }
+  async getPlatformSettings(): Promise<PlatformSettings> {
+    await delay(10);
+    if (!this.data.samplePlatformSettings) {
+      return Promise.resolve({} as PlatformSettings); // Return an empty object if settings are undefined
+    }
+    return Promise.resolve(JSON.parse(JSON.stringify(this.data.samplePlatformSettings)));
+  }
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> { await delay(50); const currentSettings = this.data.samplePlatformSettings || {}; const newSettings = { ...currentSettings, ...data, platformPublicIdMasks: { ...(currentSettings.platformPublicIdMasks || {}), ...(data.platformPublicIdMasks || {}), }, mapSettings: { ...(currentSettings.mapSettings || {}), ...(data.mapSettings || {}), }, mentalTriggerSettings: { ...(currentSettings.mentalTriggerSettings || {}), ...(data.mentalTriggerSettings || {}), }, sectionBadgeVisibility: { ...(currentSettings.sectionBadgeVisibility || {}), ...(data.sectionBadgeVisibility || {}), }, id: 'global', updatedAt: new Date() }; this.data.samplePlatformSettings = newSettings; this._persistData(); return { success: true, message: "Configurações da plataforma atualizadas (Sample Data)!" }; }
 
   async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {

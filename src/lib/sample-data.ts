@@ -1,3 +1,4 @@
+
 // src/lib/sample-data.ts
 import type {
   Lot, LotCategory, Auction, AuctioneerProfileInfo, SellerProfileInfo,
@@ -53,24 +54,28 @@ export const sampleAuctioneers: AuctioneerProfileInfo[] = [
   { id: 'auct-freitas-leiloeiro', publicId: 'AUCT-PUB-3', name: 'Freitas Leiloeiro Oficial', slug: 'freitas-leiloeiro', logoUrl: 'https://placehold.co/100x100/166534/ffffff/png?text=FL', city: 'Curitiba', state: 'PR', createdAt: new Date(), updatedAt: new Date() },
   { id: 'auct-zukerman-leiloes', publicId: 'AUCT-PUB-4', name: 'Zukerman Leilões', slug: 'zukerman-leiloes', logoUrl: 'https://placehold.co/100x100/be123c/ffffff/png?text=ZK', city: 'São Paulo', state: 'SP', createdAt: new Date(), updatedAt: new Date() },
   { id: 'auct-pestana-leiloes', publicId: 'AUCT-PUB-5', name: 'Pestana Leilões', slug: 'pestana-leiloes', logoUrl: 'https://placehold.co/100x100/ca8a04/ffffff/png?text=PL', city: 'Porto Alegre', state: 'RS', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'auct-lance-certo', publicId: 'AUCT-PUB-6', name: 'Lance Certo Leilões', slug: 'lance-certo-leiloes', logoUrl: 'https://placehold.co/100x100/6d28d9/ffffff/png?text=LC', city: 'Belo Horizonte', state: 'MG', createdAt: new Date(), updatedAt: new Date() }
 ];
 
 export const sampleSellers: SellerProfileInfo[] = [
   { id: 'seller-banco-bradesco', publicId: 'SELL-PUB-1', name: 'Banco Bradesco S.A.', slug: 'banco-bradesco-s-a', logoUrl: 'https://placehold.co/100x100/dc2626/ffffff/png?text=B', city: 'Osasco', state: 'SP', createdAt: new Date(), updatedAt: new Date() },
   { id: 'seller-itau-unibanco', publicId: 'SELL-PUB-2', name: 'Itaú Unibanco S.A.', slug: 'itau-unibanco', logoUrl: 'https://placehold.co/100x100/ea580c/ffffff/png?text=I', city: 'São Paulo', state: 'SP', createdAt: new Date(), updatedAt: new Date() },
   { id: 'seller-construtora-mrv', publicId: 'SELL-PUB-3', name: 'Construtora MRV', slug: 'construtora-mrv', logoUrl: 'https://placehold.co/100x100/16a34a/ffffff/png?text=MRV', city: 'Belo Horizonte', state: 'MG', createdAt: new Date(), updatedAt: new Date() },
-  { id: 'seller-tribunal-justica', publicId: 'SELL-PUB-4', name: 'Tribunal de Justiça do Estado de São Paulo', slug: 'tjsp', logoUrl: 'https://placehold.co/100x100/7c3aed/ffffff/png?text=TJ', city: 'São Paulo', state: 'SP', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'seller-tjsp', publicId: 'SELL-PUB-4', name: 'Tribunal de Justiça do Estado de São Paulo', slug: 'tjsp', logoUrl: 'https://placehold.co/100x100/7c3aed/ffffff/png?text=TJ', city: 'São Paulo', state: 'SP', createdAt: new Date(), updatedAt: new Date() },
   { id: 'seller-receita-federal', publicId: 'SELL-PUB-5', name: 'Receita Federal', slug: 'receita-federal', logoUrl: 'https://placehold.co/100x100/047857/ffffff/png?text=RF', city: 'Brasília', state: 'DF', createdAt: new Date(), updatedAt: new Date() },
-  { id: 'seller-vale', publicId: 'SELL-PUB-6', name: 'Vale S.A.', slug: 'vale-sa', logoUrl: 'https://placehold.co/100x100/0369a1/ffffff/png?text=V', city: 'Rio de Janeiro', state: 'RJ', createdAt: new Date(), updatedAt: new Date() }
+  { id: 'seller-vale', publicId: 'SELL-PUB-6', name: 'Vale S.A.', slug: 'vale-sa', logoUrl: 'https://placehold.co/100x100/0369a1/ffffff/png?text=V', city: 'Rio de Janeiro', state: 'RJ', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'seller-prefeitura-campinas', publicId: 'SELL-PUB-7', name: 'Prefeitura de Campinas', slug: 'prefeitura-campinas', logoUrl: 'https://placehold.co/100x100/065f46/ffffff/png?text=PC', city: 'Campinas', state: 'SP', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'seller-agro-brasil', publicId: 'SELL-PUB-8', name: 'Fazenda Agro Brasil', slug: 'fazenda-agro-brasil', logoUrl: 'https://placehold.co/100x100/84cc16/ffffff/png?text=AB', city: 'Rondonópolis', state: 'MT', createdAt: new Date(), updatedAt: new Date() }
 ];
 
 export const sampleLotCategories: LotCategory[] = [
   { id: 'cat-imoveis', name: 'Imóveis', slug: 'imoveis', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'cat-veiculos', name: 'Veículos', slug: 'veiculos', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'cat-maquinas', name: 'Máquinas e Equipamentos', slug: 'maquinas-e-equipamentos', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'cat-eletronicos', name: 'Eletrônicos e Tecnologia', slug: 'eletronicos-e-tecnologia', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'cat-arte', name: 'Arte e Antiguidades', slug: 'arte-e-antiguidades', hasSubcategories: false, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'cat-bens-diversos', name: 'Bens Diversos', slug: 'bens-diversos', hasSubcategories: false, itemCount: 0, createdAt: new Date(), updatedAt: new Date() }
+  { id: 'cat-maquinas-equipamentos', name: 'Máquinas e Equipamentos', slug: 'maquinas-e-equipamentos', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'cat-eletronicos-tecnologia', name: 'Eletrônicos e Tecnologia', slug: 'eletronicos-e-tecnologia', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'cat-arte-antiguidades', name: 'Arte e Antiguidades', slug: 'arte-e-antiguidades', hasSubcategories: false, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'cat-bens-diversos', name: 'Bens Diversos', slug: 'bens-diversos', hasSubcategories: false, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'cat-veiculos-pesados', name: 'Veículos Pesados e Utilitários', slug: 'veiculos-pesados-e-utilitarios', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() }
 ];
 
 export const sampleSubcategories: Subcategory[] = [
@@ -78,8 +83,11 @@ export const sampleSubcategories: Subcategory[] = [
   { id: 'subcat-imoveis-casas', name: 'Casas', slug: 'casas', parentCategoryId: 'cat-imoveis', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'subcat-veiculos-carros', name: 'Carros', slug: 'carros', parentCategoryId: 'cat-veiculos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'subcat-veiculos-motos', name: 'Motos', slug: 'motos', parentCategoryId: 'cat-veiculos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'subcat-maquinas-agricolas', name: 'Máquinas Agrícolas', slug: 'maquinas-agricolas', parentCategoryId: 'cat-maquinas', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'subcat-eletronicos-celulares', name: 'Celulares e Smartphones', slug: 'celulares-e-smartphones', parentCategoryId: 'cat-eletronicos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-maquinas-agricolas', name: 'Máquinas Agrícolas', slug: 'maquinas-agricolas', parentCategoryId: 'cat-maquinas-equipamentos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-maquinas-construcao', name: 'Equipamentos de Construção', slug: 'equipamentos-construcao', parentCategoryId: 'cat-maquinas-equipamentos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-eletronicos-celulares', name: 'Celulares e Smartphones', slug: 'celulares-e-smartphones', parentCategoryId: 'cat-eletronicos-tecnologia', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-pesados-caminhoes', name: 'Caminhões', slug: 'caminhoes', parentCategoryId: 'cat-veiculos-pesados', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-pesados-onibus', name: 'Ônibus', slug: 'onibus', parentCategoryId: 'cat-veiculos-pesados', itemCount: 0, createdAt: new Date(), updatedAt: new Date() }
 ];
 
 export const sampleMediaItems: MediaItem[] = [
@@ -93,6 +101,9 @@ export const sampleMediaItems: MediaItem[] = [
   { id: 'media-escavadeira-1', fileName: 'escavadeira.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 190000, urlOriginal: 'https://placehold.co/800x600/fdba74/ffffff/png?text=Escavadeira', dataAiHint: 'maquina escavadeira' },
   { id: 'media-macbook-1', fileName: 'macbook.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 140000, urlOriginal: 'https://placehold.co/800x600/94a3b8/ffffff/png?text=MacBook', dataAiHint: 'laptop macbook' },
   { id: 'media-relogio-1', fileName: 'relogio-luxo.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 105000, urlOriginal: 'https://placehold.co/800x600/fde047/ffffff/png?text=Relogio', dataAiHint: 'relogio luxo' },
+  { id: 'media-caminhao-1', fileName: 'caminhao-volvo.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 210000, urlOriginal: 'https://placehold.co/800x600/3b82f6/ffffff/png?text=Caminhao', dataAiHint: 'caminhao carga' },
+  { id: 'media-retroescavadeira-1', fileName: 'retroescavadeira-case.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 220000, urlOriginal: 'https://placehold.co/800x600/f59e0b/ffffff/png?text=Retroescavadeira', dataAiHint: 'retroescavadeira amarela' },
+  { id: 'media-colheitadeira-1', fileName: 'colheitadeira-jd.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 250000, urlOriginal: 'https://placehold.co/800x600/4d7c0f/ffffff/png?text=Colheitadeira', dataAiHint: 'colheitadeira agricola' },
 ];
 
 // ==================================
@@ -100,17 +111,17 @@ export const sampleMediaItems: MediaItem[] = [
 // ==================================
 const generatedAuctions: Auction[] = [];
 const generatedLots: Lot[] = [];
-const sampleBids: BidInfo[] = []; // Changed from generatedBids to sampleBids to match export
+export const sampleBids: BidInfo[] = []; // Changed from generatedBids to sampleBids to match export
 const generatedUserWins: UserWin[] = [];
 const generatedDirectSales: DirectSaleOffer[] = [];
 const generatedQuestions: LotQuestion[] = [];
 const generatedReviews: Review[] = [];
+const now = new Date(); 
 
 let auctionCounter = 1;
 let lotCounter = 1;
 
 const auctionTypes: Auction['auctionType'][] = ['JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS'];
-const now = new Date(); // DEFINE 'now' HERE, ONCE!
 
 // Main generation loop for Auctions
 auctionTypes.forEach(type => {
@@ -181,7 +192,7 @@ auctionTypes.forEach(type => {
       }
 
       if (Math.random() > 0.7) { // 30% chance of having questions/reviews
-        generatedQuestions.push({id: `q-${lotId}`, lotId: lotId, auctionId: auction.id, userId: 'user-2', userDisplayName: 'Joana S.', questionText: 'O produto vem na caixa original?', createdAt: new Date(), answerText: 'Sim, acompanha caixa e todos os acessórios originais.', answeredAt: new Date(), answeredByUserId: 'admin-1', answeredByUserDisplayName: seller.name});
+        generatedQuestions.push({id: `q-${lotId}`, lotId: lotId, auctionId: auction.id, userId: 'user-2', userDisplayName: 'Joana S.', questionText: 'O produto vem na caixa original?', createdAt: new Date(), answerText: 'Sim, acompanha caixa e todos os acessórios originais.', answeredAt: new Date(), answeredByUserId: 'admin-1', answeredByUserDisplayName: seller.name, isPublic: true});
         generatedReviews.push({id: `r-${lotId}`, lotId: lotId, auctionId: auction.id, userId: 'user-3', userDisplayName: 'Carlos P.', rating: 5, comment: 'Excelente estado, como descrito. Recomendo!', createdAt: new Date()});
       }
 
@@ -222,7 +233,6 @@ for (let i = 1; i <= 8; i++) {
 // ==================================
 export const sampleAuctions: Auction[] = generatedAuctions;
 export const sampleLots: Lot[] = generatedLots;
-export { sampleBids };
 export const sampleUserWins: UserWin[] = generatedUserWins;
 export const sampleDirectSaleOffers: DirectSaleOffer[] = generatedDirectSales;
 export const sampleLotQuestions: LotQuestion[] = generatedQuestions;
