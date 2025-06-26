@@ -1,3 +1,4 @@
+
 // src/lib/sample-data.ts
 import type {
   Lot, LotCategory, Auction, AuctioneerProfileInfo, SellerProfileInfo,
