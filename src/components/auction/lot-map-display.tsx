@@ -1,183 +1,71 @@
 
 'use client';
 
-import type { Lot, PlatformSettings, MapSettings } from '@/types';
-import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'; 
+import type { Lot, PlatformSettings } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { MapPin, Info, ExternalLink } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default Leaflet icon paths
+// @ts-ignore
+delete L.Icon.Default.prototype._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
 
 interface LotMapDisplayProps {
   lot: Lot;
   platformSettings?: PlatformSettings;
 }
 
-// Helper function para extrair o parâmetro 'q' de uma URL de embed do Google Maps
-function extractQueryFromGoogleEmbed(embedUrl: string): string | null {
-  try {
-    const url = new URL(embedUrl);
-    if (url.hostname === "www.google.com" && url.pathname.includes("/maps/embed")) {
-      return url.searchParams.get("q");
-    }
-  } catch (e) {
-    // URL inválida ou não é possível parsear
-    console.warn("Could not parse embed URL:", embedUrl, e);
-  }
-  return null;
-}
-
-const hardcodedDefaultMapSettings: MapSettings = {
-    defaultProvider: 'openstreetmap',
-    googleMapsApiKey: '',
-    staticImageMapZoom: 15,
-    staticImageMapMarkerColor: 'blue',
-};
-
-
-export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayProps) {
-  const settings = platformSettings;
-  const mapSettings = settings?.mapSettings || hardcodedDefaultMapSettings;
-  const { latitude, longitude, mapEmbedUrl, mapStaticImageUrl, mapAddress, title } = lot;
+export default function LotMapDisplay({ lot }: LotMapDisplayProps) {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const { latitude, longitude, mapAddress, title } = lot;
 
   const displayAddressTextForLink = mapAddress || (lot.cityName && lot.stateUf ? `${lot.cityName}, ${lot.stateUf}` : "Localização do Lote");
 
-  let mapContent = null;
-  let mapProviderUsedForDisplay: string = 'Configuração Pendente';
+  const hasCoords = latitude !== undefined && latitude !== null && longitude !== undefined && longitude !== null;
 
-  // 1. Determinar o conteúdo do mapa (mapContent)
-  if (mapEmbedUrl) {
-    mapContent = (
-      <iframe
-        src={mapEmbedUrl}
-        width="100%"
-        height="100%"
-        style={{ border: 0 }}
-        allowFullScreen={true}
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-        title={`Mapa para ${title}`}
-      ></iframe>
-    );
-    mapProviderUsedForDisplay = mapEmbedUrl.includes("google.com/maps/embed") ? 'Google Maps (Embed Fornecido)' : 'Embed Personalizado';
-  } else if (mapSettings?.defaultProvider === 'google' && mapSettings?.googleMapsApiKey && (latitude || longitude || mapAddress)) {
-    const query = latitude && longitude ? `${latitude},${longitude}` : encodeURIComponent(mapAddress || '');
-    const embedUrl = `https://www.google.com/maps/embed/v1/place?key=${mapSettings.googleMapsApiKey}&q=${query}&zoom=${mapSettings.staticImageMapZoom || 15}`;
-    mapContent = (
-      <iframe
-        src={embedUrl}
-        width="100%"
-        height="100%"
-        style={{ border: 0 }}
-        allowFullScreen={true}
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-        title={`Mapa Google para ${title}`}
-      ></iframe>
-    );
-    mapProviderUsedForDisplay = 'Google Maps API (Plataforma)';
-  } else if (mapSettings?.defaultProvider === 'openstreetmap' && (latitude || longitude || mapAddress)) {
-    const bboxDelta = 0.005;
-    let embedUrl = '';
-    if (latitude && longitude) {
-        embedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${longitude - bboxDelta},${latitude - bboxDelta},${longitude + bboxDelta},${latitude + bboxDelta}&layer=mapnik&marker=${latitude},${longitude}`;
-        mapContent = (
-          <iframe
-            src={embedUrl}
-            width="100%"
-            height="100%"
-            style={{ border: 0 }}
-            loading="lazy"
-            title={`Mapa OpenStreetMap para ${title}`}
-          ></iframe>
-        );
-    } else if (mapAddress) {
-        const staticMapUrl = `https://placehold.co/600x400.png?text=Mapa+(${encodeURIComponent(mapAddress)})&font=roboto`;
-        mapContent = (
-            <Image
-                src={staticMapUrl}
-                alt={`Mapa placeholder para ${mapAddress}`}
-                fill
-                className="object-cover"
-                data-ai-hint="mapa placeholder endereco"
-            />
-        );
+  useEffect(() => {
+    // Only initialize map if we have coordinates and a container
+    if (hasCoords && mapContainerRef.current && !mapRef.current) {
+      mapRef.current = L.map(mapContainerRef.current).setView([latitude, longitude], 15);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(mapRef.current);
+
+      // Add the blue marker
+      L.marker([latitude, longitude]).addTo(mapRef.current)
+        .bindPopup(`<b>${title}</b><br>${displayAddressTextForLink}`);
     }
-    mapProviderUsedForDisplay = 'OpenStreetMap (Plataforma)';
-  } else if (mapStaticImageUrl) {
-    mapContent = (
-        <Image
-          src={mapStaticImageUrl}
-          alt={`Mapa estático para ${title}`}
-          fill
-          className="object-cover"
-          data-ai-hint="mapa localizacao estatico"
-        />
-    );
-     mapProviderUsedForDisplay = 'Imagem Estática (Fornecida)';
-  } else if (latitude && longitude) {
-    const staticMapUrl = `https://placehold.co/600x400.png?text=Mapa+(${latitude.toFixed(2)},${longitude.toFixed(2)})&font=roboto`;
-    mapContent = (
-        <Image
-            src={staticMapUrl}
-            alt={`Mapa placeholder para ${title}`}
-            fill
-            className="object-cover"
-            data-ai-hint="mapa placeholder coordenadas"
-        />
-    );
-    mapProviderUsedForDisplay = 'Placeholder (Coordenadas)';
-  } else if (mapAddress) {
-    const staticMapUrl = `https://placehold.co/600x400.png?text=Mapa+(${encodeURIComponent(mapAddress)})&font=roboto`;
-    mapContent = (
-        <Image
-            src={staticMapUrl}
-            alt={`Mapa placeholder para ${mapAddress}`}
-            fill
-            className="object-cover"
-            data-ai-hint="mapa placeholder endereco"
-        />
-    );
-    mapProviderUsedForDisplay = 'Placeholder (Endereço)';
-  } else {
-    mapContent = (
-      <div className="flex flex-col items-center justify-center h-full bg-muted text-muted-foreground p-4">
-        <Info className="h-12 w-12 mb-2" />
-        <p>Informações do mapa não disponíveis para este lote.</p>
-      </div>
-    );
-    mapProviderUsedForDisplay = 'Indisponível';
-  }
 
-  // 2. Determinar o link externo (finalExternalMapLink)
+    // Cleanup function
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  // The dependencies should ensure the map re-initializes if the lot changes
+  }, [latitude, longitude, hasCoords, title, displayAddressTextForLink]);
+
   let finalExternalMapLink: string | null = null;
   if (latitude && longitude) {
-    // Prioridade máxima: usar coordenadas para um link de busca universal do Google Maps
     finalExternalMapLink = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
   } else if (mapAddress) {
-    // Segunda prioridade: usar o endereço para um link de busca
     finalExternalMapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapAddress)}`;
-  } else if (mapEmbedUrl) {
-    // Terceira prioridade: se houver URL de embed
-    if (mapEmbedUrl.includes("google.com/maps/embed")) {
-      const queryFromEmbed = extractQueryFromGoogleEmbed(mapEmbedUrl);
-      if (queryFromEmbed) {
-        finalExternalMapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(queryFromEmbed)}`;
-      } else {
-        // Se é um embed do Google mas não conseguimos extrair 'q',
-        // não é seguro usar o mapEmbedUrl diretamente como link externo, pois pode dar erro.
-        // Poderia até tentar um link genérico com o título do lote se nada mais estiver disponível.
-        // Para agora, deixaremos nulo se não puder ser convertido para um link de busca.
-        console.warn("Não foi possível gerar um link externo de busca a partir do Google Maps Embed URL fornecido:", mapEmbedUrl);
-        finalExternalMapLink = null; 
-      }
-    } else {
-      // Para embeds não-Google, assumimos que a URL é clicável diretamente.
-      finalExternalMapLink = mapEmbedUrl;
-    }
-  } else if (mapStaticImageUrl) {
-    // Se só temos imagem estática, tentamos um link de busca com o endereço de display
-    finalExternalMapLink = `https://www.google.com/maps?q=${encodeURIComponent(displayAddressTextForLink)}`;
   }
-  // Se finalExternalMapLink ainda for null, o link não será renderizado.
 
   return (
     <Card className="shadow-md w-full">
@@ -199,11 +87,18 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
             </a>
           )}
         </div>
-         <CardDescription className="text-xs mt-0.5">Provedor do mapa: {mapProviderUsedForDisplay}</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         <div className="aspect-square w-full rounded-b-md overflow-hidden border-t relative">
-          {mapContent}
+          {hasCoords ? (
+            <div ref={mapContainerRef} className="w-full h-full" style={{zIndex: 0}}></div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full bg-muted text-muted-foreground p-4 text-center">
+              <Info className="h-12 w-12 mb-2" />
+              <p>Mapa indisponível para este lote.</p>
+              <p className="text-xs">Não foram fornecidas coordenadas de localização.</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
