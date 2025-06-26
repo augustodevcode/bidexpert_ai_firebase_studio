@@ -25,9 +25,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  serverActions: {
-    bodySizeLimit: '1000000mb',
-  },
   serverExternalPackages: ['firebase-admin'],
   experimental: {
   },
