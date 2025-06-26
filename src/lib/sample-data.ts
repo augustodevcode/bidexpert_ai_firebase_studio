@@ -100,7 +100,7 @@ export const sampleMediaItems: MediaItem[] = [
 // ==================================
 const generatedAuctions: Auction[] = [];
 const generatedLots: Lot[] = [];
-const generatedBids: BidInfo[] = [];
+const sampleBids: BidInfo[] = []; // Changed from generatedBids to sampleBids to match export
 const generatedUserWins: UserWin[] = [];
 const generatedDirectSales: DirectSaleOffer[] = [];
 const generatedQuestions: LotQuestion[] = [];
@@ -110,6 +110,7 @@ let auctionCounter = 1;
 let lotCounter = 1;
 
 const auctionTypes: Auction['auctionType'][] = ['JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS'];
+const now = new Date(); // DEFINE 'now' HERE, ONCE!
 
 // Main generation loop for Auctions
 auctionTypes.forEach(type => {
@@ -150,7 +151,6 @@ auctionTypes.forEach(type => {
       const lotId = `lot-${lotCounter++}`;
       const media = randomItem(sampleMediaItems);
       
-      const now = new Date();
       let lotStatus: LotStatus;
       let lotEndDate: Date = firstStageEndDate;
       if (now < auctionStartDate) lotStatus = 'EM_BREVE';
@@ -176,7 +176,7 @@ auctionTypes.forEach(type => {
         lot.bidsCount = numBids;
         for (let k = 0; k < numBids; k++) {
           lot.price += randomInt(50, 500);
-          generatedBids.push({ id: `bid-${lotId}-${k}`, lotId: lotId, auctionId: auction.id, bidderId: `bidder-${k+1}`, bidderDisplay: `Licitante ${k+1}`, amount: lot.price, timestamp: new Date() });
+          sampleBids.push({ id: `bid-${lotId}-${k}`, lotId: lotId, auctionId: auction.id, bidderId: `bidder-${k+1}`, bidderDisplay: `Licitante ${k+1}`, amount: lot.price, timestamp: new Date() });
         }
       }
 
@@ -189,8 +189,11 @@ auctionTypes.forEach(type => {
       auction.lots!.push(lot);
     }
 
-    if (now >= secondStageEndDate) auction.status = 'ENCERRADO';
-    else if (now >= auctionStartDate) auction.status = 'ABERTO_PARA_LANCES';
+    if (now >= secondStageEndDate) {
+        auction.status = 'ENCERRADO';
+    } else if (now >= auctionStartDate) {
+        auction.status = 'ABERTO_PARA_LANCES';
+    }
     
     generatedAuctions.push(auction);
   }
@@ -219,12 +222,11 @@ for (let i = 1; i <= 8; i++) {
 // ==================================
 export const sampleAuctions: Auction[] = generatedAuctions;
 export const sampleLots: Lot[] = generatedLots;
-export const sampleBids: BidInfo[] = generatedBids;
+export { sampleBids };
 export const sampleUserWins: UserWin[] = generatedUserWins;
 export const sampleDirectSaleOffers: DirectSaleOffer[] = generatedDirectSales;
 export const sampleLotQuestions: LotQuestion[] = generatedQuestions;
 export const sampleLotReviews: Review[] = generatedReviews;
 export const sampleUserLotMaxBids: UserLotMaxBid[] = [];
 export { samplePlatformSettings } from './sample-data-helpers';
-
-    
+export const sampleUserProfiles: UserProfileWithPermissions[] = [];
