@@ -38,7 +38,7 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
   const mapSettings = settings?.mapSettings || hardcodedDefaultMapSettings;
   const { latitude, longitude, mapEmbedUrl, mapStaticImageUrl, mapAddress, title } = lot;
 
-  const displayAddressText = mapAddress || (latitude && longitude ? `${latitude.toFixed(4)}, ${longitude.toFixed(4)}` : "Localização do Lote");
+  const displayAddressTextForLink = mapAddress || (lot.cityName && lot.stateUf ? `${lot.cityName}, ${lot.stateUf}` : "Localização do Lote");
 
   let mapContent = null;
   let mapProviderUsedForDisplay: string = 'Configuração Pendente';
@@ -175,7 +175,7 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
     }
   } else if (mapStaticImageUrl) {
     // Se só temos imagem estática, tentamos um link de busca com o endereço de display
-    finalExternalMapLink = `https://www.google.com/maps?q=${encodeURIComponent(displayAddressText)}`;
+    finalExternalMapLink = `https://www.google.com/maps?q=${encodeURIComponent(displayAddressTextForLink)}`;
   }
   // Se finalExternalMapLink ainda for null, o link não será renderizado.
 
@@ -193,7 +193,7 @@ export default function LotMapDisplay({ lot, platformSettings }: LotMapDisplayPr
               rel="noopener noreferrer"
               className="text-xs text-primary hover:underline flex items-center group"
             >
-              <span className="truncate max-w-[180px] sm:max-w-xs">{displayAddressText}</span>
+              <span className="truncate max-w-[180px] sm:max-w-xs">{displayAddressTextForLink}</span>
               <ExternalLink className="h-3 w-3 ml-1.5 flex-shrink-0 transition-transform group-hover:translate-x-0.5" />
               <span className="sr-only">(Abrir mapa em nova aba)</span>
             </a>

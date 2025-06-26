@@ -14,7 +14,6 @@ import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 const randomItem = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const randomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
 const randomDate = (start: Date, end: Date): Date => new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-const BRAZIL_BOUNDS = { latMin: -33.7, latMax: 5.2, lonMin: -73.9, lonMax: -34.8 };
 const randomCoord = (min: number, max: number): number => min + Math.random() * (max - min);
 
 
@@ -42,6 +41,14 @@ const sampleCitiesData: CityInfo[] = [
   { id: 'city-rj-rio', name: 'Rio de Janeiro', slug: 'rio-de-janeiro', stateId: 'state-rj', stateUf: 'RJ', lotCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'city-mg-bh', name: 'Belo Horizonte', slug: 'belo-horizonte', stateId: 'state-mg', stateUf: 'MG', lotCount: 0, createdAt: new Date(), updatedAt: new Date() },
 ];
+
+const CITY_COORDS: Record<string, { lat: number; lon: number }> = {
+  'sao-paulo': { lat: -23.5505, lon: -46.6333 },
+  'campinas': { lat: -22.9099, lon: -47.0626 },
+  'salvador': { lat: -12.9777, lon: -38.5016 },
+  'rio-de-janeiro': { lat: -22.9068, lon: -43.1729 },
+  'belo-horizonte': { lat: -19.9167, lon: -43.9345 },
+};
 
 const sampleAuctioneersData: AuctioneerProfileInfo[] = [
   { id: 'auct-augusto-leiloeiro', publicId: 'AUCT-PUB-1', name: 'Augusto Leiloeiro', slug: 'augusto-leiloeiro', logoUrl: 'https://placehold.co/100x100.png?text=A', city: 'São Paulo', state: 'SP', createdAt: new Date(), updatedAt: new Date(), userId: 'admin-bidexpert-platform-001' },
@@ -166,6 +173,7 @@ auctionTypes.forEach(type => {
     const seller = randomItem(sampleSellersData);
     const auctionId = `auc-${auctionCounter++}`;
     const city = randomItem(sampleCitiesData);
+    const cityCoords = CITY_COORDS[city.slug as keyof typeof CITY_COORDS] || { lat: -15.78, lon: -47.92 };
 
     const auction: Auction = {
       id: auctionId, publicId: `AUC-PUB-${auctionId}`,
@@ -175,8 +183,8 @@ auctionTypes.forEach(type => {
       auctioneerId: auctioneer.id, auctioneer: auctioneer.name, sellerId: seller.id, seller: seller.name,
       city: city.name, state: city.stateUf, auctionDate: auctionStartDate, endDate: secondStageEndDate,
       auctionStages: auctionStages,
-      latitude: randomCoord(BRAZIL_BOUNDS.latMin, BRAZIL_BOUNDS.latMax),
-      longitude: randomCoord(BRAZIL_BOUNDS.lonMin, BRAZIL_BOUNDS.lonMax),
+      latitude: cityCoords.lat + (Math.random() - 0.5) * 0.1,
+      longitude: cityCoords.lon + (Math.random() - 0.5) * 0.1,
       createdAt: new Date(), updatedAt: new Date(), totalLots: 0,
       initialOffer: randomInt(50000, 200000), visits: randomInt(100, 2000),
       isFeaturedOnMarketplace: Math.random() > 0.8, lots: []
@@ -278,8 +286,9 @@ auctionTypes.forEach(type => {
         secondAuctionDate: firstStageEndDate,
         initialPrice: initialPrice,
         secondInitialPrice: secondInitialPrice,
-        latitude: (auction.latitude || 0) + (Math.random() - 0.5) * 0.5,
-        longitude: (auction.longitude || 0) + (Math.random() - 0.5) * 0.5,
+        latitude: (auction.latitude || 0) + (Math.random() - 0.5) * 0.05,
+        longitude: (auction.longitude || 0) + (Math.random() - 0.5) * 0.05,
+        mapAddress: `Rua Exemplo, ${randomInt(100, 2000)}, ${city.name}, ${city.stateUf}`,
         views: randomInt(50, 1000), cityName: city.name, stateUf: city.stateUf,
         isFeatured: Math.random() > 0.85, 
         auctionName: auction.title,
