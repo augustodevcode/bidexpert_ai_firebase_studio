@@ -55,9 +55,13 @@ export default function MapSearchComponent({
         if (mapRef.current && !isProgrammaticMove.current) {
           onBoundsChange(mapRef.current.getBounds());
         }
-        // Reset the flag after any moveend event
         isProgrammaticMove.current = false;
       });
+
+      // Invalidate size after a short delay to ensure container is sized correctly
+      setTimeout(() => {
+        mapRef.current?.invalidateSize();
+      }, 100);
     }
 
     return () => {

@@ -48,6 +48,11 @@ export default function LotMapDisplay({ lot }: LotMapDisplayProps) {
       // Add the blue marker
       L.marker([latitude, longitude]).addTo(mapRef.current)
         .bindPopup(`<b>${title}</b><br>${displayAddressTextForLink}`);
+
+      // Invalidate size after a short delay to ensure container is sized and centered correctly
+      setTimeout(() => {
+          mapRef.current?.invalidateSize();
+      }, 100);
     }
 
     // Cleanup function
