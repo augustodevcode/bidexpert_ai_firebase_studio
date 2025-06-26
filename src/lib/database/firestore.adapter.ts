@@ -1,3 +1,4 @@
+
 // src/lib/database/firestore.adapter.ts
 import type { 
   Firestore, 
@@ -13,14 +14,27 @@ import type {
   SellerProfileInfo, SellerFormData,
   Auction, AuctionFormData, AuctionDbData,
   Lot, LotFormData, LotDbData,
-  BidInfo, Review, LotQuestion, // Adicionado Review e LotQuestion
-  UserProfileData, EditableUserProfileData, UserHabilitationStatus,
+  BidInfo, Review, LotQuestion,
+  UserProfileData, EditableUserProfileData, UserHabilitationStatus, UserProfileWithPermissions,
   Role, RoleFormData,
   MediaItem,
-  PlatformSettings, PlatformSettingsFormData, Theme
+  PlatformSettings, PlatformSettingsFormData, Theme,
+  Subcategory, SubcategoryFormData,
+  MapSettings,
+  SearchPaginationType,
+  MentalTriggerSettings,
+  BadgeVisibilitySettings,
+  SectionBadgeConfig,
+  HomepageSectionConfig,
+  AuctionStage,
+  DirectSaleOffer,
+  UserLotMaxBid,
+  UserWin
 } from '@/types';
-import { slugify } from '@/lib/sample-data';
+import { slugify, samplePlatformSettings } from '@/lib/sample-data-helpers';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
+import { v4 as uuidv4 } from 'uuid';
+import { format } from 'date-fns';
 
 const AdminFieldValue = FirebaseAdminFieldValueType;
 const ServerTimestamp = FirebaseAdminTimestampType;
@@ -266,10 +280,17 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToDate(doc.data().createdAt), updatedAt: safeConvertToDate(doc.data().updatedAt), memberSince: safeConvertOptionalDate(doc.data().memberSince) } as AuctioneerProfileInfo));
     } catch (e: any) { return []; }
   }
-  async getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {
+  async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
     try {
-      const docSnap = await this.db.collection('auctioneers').doc(id).get();
-      if (!docSnap.exists) return null;
+      let docSnap = await this.db.collection('auctioneers').doc(idOrPublicId).get();
+      if (!docSnap.exists) {
+        const querySnapshot = await this.db.collection('auctioneers').where('publicId', '==', idOrPublicId).limit(1).get();
+        if (!querySnapshot.empty) {
+          docSnap = querySnapshot.docs[0];
+        } else {
+          return null;
+        }
+      }
       const data = docSnap.data()!;
       return { id: docSnap.id, ...data, createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt), memberSince: safeConvertOptionalDate(data.memberSince) } as AuctioneerProfileInfo;
     } catch (e: any) { return null; }
@@ -311,10 +332,17 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToDate(doc.data().createdAt), updatedAt: safeConvertToDate(doc.data().updatedAt), memberSince: safeConvertOptionalDate(doc.data().memberSince) } as SellerProfileInfo));
     } catch (e: any) { return []; }
   }
-  async getSeller(id: string): Promise<SellerProfileInfo | null> {
+  async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> {
     try {
-      const docSnap = await this.db.collection('sellers').doc(id).get();
-      if (!docSnap.exists) return null;
+      let docSnap = await this.db.collection('sellers').doc(idOrPublicId).get();
+      if (!docSnap.exists) {
+        const querySnapshot = await this.db.collection('sellers').where('publicId', '==', idOrPublicId).limit(1).get();
+        if (!querySnapshot.empty) {
+          docSnap = querySnapshot.docs[0];
+        } else {
+          return null;
+        }
+      }
       const data = docSnap.data()!;
       return { id: docSnap.id, ...data, createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt), memberSince: safeConvertOptionalDate(data.memberSince) } as SellerProfileInfo;
     } catch (e: any) { return null; }
@@ -401,10 +429,21 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     } catch (e: any) { return []; }
   }
 
-  async getAuction(id: string): Promise<Auction | null> {
+  async getAuction(idOrPublicId: string): Promise<Auction | null> {
     try {
-      const docSnap = await this.db.collection('auctions').doc(id).get();
-      if (!docSnap.exists) return null;
+      let docSnap: FirebaseFirestore.DocumentSnapshot | undefined;
+      const docById = await this.db.collection('auctions').doc(idOrPublicId).get();
+      if (docById.exists) {
+        docSnap = docById;
+      } else {
+        const queryByPublicId = await this.db.collection('auctions').where('publicId', '==', idOrPublicId).limit(1).get();
+        if (!queryByPublicId.empty) {
+          docSnap = queryByPublicId.docs[0];
+        } else {
+          return null;
+        }
+      }
+      
       const data = docSnap.data()!;
       
       let categoryName = data.category;
@@ -424,7 +463,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
           if(selDoc.exists) sellerName = selDoc.data()?.name || data.seller;
       }
 
-      return { 
+      const auction = { 
           id: docSnap.id, 
           ...data, 
           category: categoryName,
@@ -435,8 +474,15 @@ export class FirestoreAdapter implements IDatabaseAdapter {
           auctionStages: data.auctionStages?.map((stage: any) => ({...stage, endDate: safeConvertToDate(stage.endDate) })) || [],
           createdAt: safeConvertToDate(data.createdAt), 
           updatedAt: safeConvertToDate(data.updatedAt), 
-          lots: data.lots || [] 
+          lots: [] // Initialize empty
         } as Auction;
+      
+      const lotsSnapshot = await this.db.collection('lots').where('auctionId', '==', docSnap.id).get();
+      auction.lots = await Promise.all(lotsSnapshot.docs.map(lotDoc => this.mapLotDocument(lotDoc)));
+      auction.totalLots = auction.lots.length;
+
+      return auction;
+
     } catch (e: any) { return null; }
   }
 
@@ -520,81 +566,30 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Lote criado!', lotId: docRef.id };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
-
-  async getLots(auctionIdParam?: string): Promise<Lot[]> {
-    try {
-      let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = this.db.collection('lots');
-      if (auctionIdParam) {
-        query = query.where('auctionId', '==', auctionIdParam);
-      }
-      const snapshot = await query.orderBy('title').get(); 
-      
-      return Promise.all(snapshot.docs.map(async docSnap => {
-        const data = docSnap.data();
-        let typeName = data.type; 
-        if (data.categoryId) {
-            const catSnap = await this.db.collection('lotCategories').doc(data.categoryId).get();
-            if (catSnap.exists) typeName = catSnap.data()?.name || typeName;
-        }
-        let auctionTitle = data.auctionName;
-        if (data.auctionId && !auctionTitle) {
-            const aucSnap = await this.db.collection('auctions').doc(data.auctionId).get();
-            if (aucSnap.exists) auctionTitle = aucSnap.data()?.title || auctionTitle;
-        }
-        let stateName = data.stateUf;
-        if (data.stateId && !stateName) {
-            const stateSnap = await this.db.collection('states').doc(data.stateId).get();
-            if (stateSnap.exists) stateName = stateSnap.data()?.uf || stateName;
-        }
-        let cityName = data.cityName;
-        if (data.cityId && !cityName) {
-            const citySnap = await this.db.collection('cities').doc(data.cityId).get();
-            if (citySnap.exists) cityName = citySnap.data()?.name || cityName;
-        }
-
-        return { 
-            id: docSnap.id, ...data, 
-            type: typeName,
-            auctionName: auctionTitle,
-            stateUf: stateName,
-            cityName: cityName,
-            endDate: safeConvertToDate(data.endDate), 
-            lotSpecificAuctionDate: safeConvertOptionalDate(data.lotSpecificAuctionDate), 
-            secondAuctionDate: safeConvertOptionalDate(data.secondAuctionDate), 
-            createdAt: safeConvertToDate(data.createdAt), 
-            updatedAt: safeConvertToDate(data.updatedAt) 
-        } as Lot;
-      }));
-    } catch (e: any) { console.error("[FirestoreAdapter - getLots] Error:", e); return []; }
-  }
-
-  async getLot(id: string): Promise<Lot | null> {
-    try {
-      const docSnap = await this.db.collection('lots').doc(id).get();
-      if (!docSnap.exists) return null;
+  
+  private async mapLotDocument(docSnap: FirebaseFirestore.DocumentSnapshot): Promise<Lot> {
       const data = docSnap.data()!;
+      let typeName = data.type; 
+      if (data.categoryId) {
+          const catSnap = await this.db.collection('lotCategories').doc(data.categoryId).get();
+          if (catSnap.exists) typeName = catSnap.data()?.name || typeName;
+      }
+      let auctionTitle = data.auctionName;
+      if (data.auctionId && !auctionTitle) {
+          const aucSnap = await this.db.collection('auctions').doc(data.auctionId).get();
+          if (aucSnap.exists) auctionTitle = aucSnap.data()?.title || auctionTitle;
+      }
+      let stateName = data.stateUf;
+      if (data.stateId && !stateName) {
+          const stateSnap = await this.db.collection('states').doc(data.stateId).get();
+          if (stateSnap.exists) stateName = stateSnap.data()?.uf || stateName;
+      }
+      let cityName = data.cityName;
+      if (data.cityId && !cityName) {
+          const citySnap = await this.db.collection('cities').doc(data.cityId).get();
+          if (citySnap.exists) cityName = citySnap.data()?.name || cityName;
+      }
 
-        let typeName = data.type; 
-        if (data.categoryId) {
-            const catSnap = await this.db.collection('lotCategories').doc(data.categoryId).get();
-            if (catSnap.exists) typeName = catSnap.data()?.name || typeName;
-        }
-        let auctionTitle = data.auctionName;
-        if (data.auctionId && !auctionTitle) {
-            const aucSnap = await this.db.collection('auctions').doc(data.auctionId).get();
-            if (aucSnap.exists) auctionTitle = aucSnap.data()?.title || auctionTitle;
-        }
-        let stateName = data.stateUf;
-        if (data.stateId && !stateName) {
-            const stateSnap = await this.db.collection('states').doc(data.stateId).get();
-            if (stateSnap.exists) stateName = stateSnap.data()?.uf || stateName;
-        }
-        let cityName = data.cityName;
-        if (data.cityId && !cityName) {
-            const citySnap = await this.db.collection('cities').doc(data.cityId).get();
-            if (citySnap.exists) cityName = citySnap.data()?.name || cityName;
-        }
-        
       return { 
           id: docSnap.id, ...data, 
           type: typeName,
@@ -606,7 +601,38 @@ export class FirestoreAdapter implements IDatabaseAdapter {
           secondAuctionDate: safeConvertOptionalDate(data.secondAuctionDate), 
           createdAt: safeConvertToDate(data.createdAt), 
           updatedAt: safeConvertToDate(data.updatedAt) 
-        } as Lot;
+      } as Lot;
+  }
+
+
+  async getLots(auctionIdParam?: string): Promise<Lot[]> {
+    try {
+      let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = this.db.collection('lots');
+      if (auctionIdParam) {
+        query = query.where('auctionId', '==', auctionIdParam);
+      }
+      const snapshot = await query.orderBy('title').get(); 
+      
+      return Promise.all(snapshot.docs.map(docSnap => this.mapLotDocument(docSnap)));
+    } catch (e: any) { console.error("[FirestoreAdapter - getLots] Error:", e); return []; }
+  }
+
+  async getLot(idOrPublicId: string): Promise<Lot | null> {
+    try {
+      let docSnap: FirebaseFirestore.DocumentSnapshot | undefined;
+      const docById = await this.db.collection('lots').doc(idOrPublicId).get();
+      if (docById.exists) {
+        docSnap = docById;
+      } else {
+        const querySnapshot = await this.db.collection('lots').where('publicId', '==', idOrPublicId).limit(1).get();
+        if (!querySnapshot.empty) {
+          docSnap = querySnapshot.docs[0];
+        } else {
+          return null; // Not found by ID or publicId
+        }
+      }
+        
+      return this.mapLotDocument(docSnap);
     } catch (e: any) { return null; }
   }
 
@@ -957,7 +983,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   }
   
   // --- Media Items ---
-  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> {
+  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> {
     try {
         const newMediaItemData = { ...data, urlOriginal: filePublicUrl, urlThumbnail: filePublicUrl, urlMedium: filePublicUrl, urlLarge: filePublicUrl, uploadedBy: uploadedBy || 'system', uploadedAt: AdminFieldValue.serverTimestamp(), linkedLotIds: [] };
         const docRef = await this.db.collection('mediaItems').add(newMediaItemData);
@@ -973,6 +999,14 @@ export class FirestoreAdapter implements IDatabaseAdapter {
         console.warn("[FirestoreAdapter - getMediaItems] Error (falling back to empty array):", e);
         return []; 
     }
+  }
+  async getMediaItem(id: string): Promise<MediaItem | null> {
+    try {
+        const docSnap = await this.db.collection('mediaItems').doc(id).get();
+        if (!docSnap.exists) return null;
+        const data = docSnap.data()!;
+        return { id: docSnap.id, ...data, uploadedAt: safeConvertToDate(data.uploadedAt) } as MediaItem;
+    } catch (e: any) { return null; }
   }
   async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> {
     try {
@@ -1062,7 +1096,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
         updatedAt: AdminFieldValue.serverTimestamp(),
       };
       const docRef = await this.db.collection('lots').doc(reviewData.lotId).collection('reviews').add(newReview);
-      return { success: true, message: 'Avaliação adicionada com sucesso!', reviewId: docRef.id };
+      return { success: true, message: "Avaliação adicionada com sucesso!", reviewId: docRef.id };
     } catch (error: any) {
       console.error(`[FirestoreAdapter - createReview for lot ${reviewData.lotId}] Error:`, error);
       return { success: false, message: 'Falha ao adicionar avaliação.' };
@@ -1105,11 +1139,6 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     // ou que questionId já é o caminho completo ou uma forma de buscar o documento.
     // Se questionId é apenas o ID, precisaria de uma subcollectionGroup query ou lotId.
     // Para simplificar, vamos assumir que a action ou camada superior resolve o lotId.
-    // const questionRef = this.db.collection('questions').doc(questionId); // Exemplo simplista
-
-    // Como o `questionId` é apenas o ID do documento na subcoleção, precisamos do `lotId`.
-    // Esta função, no nível do adapter, deveria receber `lotId`.
-    // A action que chama esta função deveria fornecer o `lotId`.
     // Por ora, vou logar um aviso e retornar falha se o lotId não for obtido de alguma forma.
     console.warn("[FirestoreAdapter.answerQuestion] - Implementação requer que a action resolva o lotId para construir o caminho correto para a subcoleção 'questions'.");
     // Exemplo de como seria se lotId fosse passado:

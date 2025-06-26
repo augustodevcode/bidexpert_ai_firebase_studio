@@ -7,22 +7,20 @@ import Link from 'next/link';
 import { getAuction } from '@/app/admin/auctions/actions';
 import { getLot, getLots } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import { getSellerBySlug, getSellers } from '@/app/admin/sellers/actions';
-import { getLotCategories } from '@/app/admin/categories/actions';
+import { getSellerBySlug } from '@/app/admin/sellers/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
-import { getSampleData } from '@/lib/sample-data-helpers';
+import { notFound } from 'next/navigation';
+
 
 async function getLotPageData(currentAuctionId: string, currentLotId: string): Promise<{
-  lot: Lot | undefined,
-  auction: Auction | undefined,
+  lot: Lot | null,
+  auction: Auction | null,
   platformSettings: PlatformSettings,
   sellerName?: string | null, 
   lotIndex?: number,
   previousLotId?: string,
   nextLotId?: string,
   totalLotsInAuction?: number,
-  allCategories?: LotCategory[],
-  allSellers?: SellerProfileInfo[],
 }> {
   console.log(`[getLotPageData] Buscando leilão: ${currentAuctionId}, lote: ${currentLotId}`);
 
@@ -30,25 +28,21 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
     platformSettings,
     auctionFromDb,
     lotFromDb,
-    allCategories,
-    allSellers
   ] = await Promise.all([
     getPlatformSettings(),
     getAuction(currentAuctionId),
     getLot(currentLotId),
-    getLotCategories(),
-    getSellers()
   ]);
   
   if (!auctionFromDb || !lotFromDb) {
     console.warn(`[getLotPageData] Leilão ou Lote não encontrado. Auction found: ${!!auctionFromDb}, Lot found: ${!!lotFromDb}`);
-    return { lot: lotFromDb, auction: auctionFromDb, platformSettings, allCategories, allSellers };
+    return { lot: lotFromDb, auction: auctionFromDb, platformSettings };
   }
 
   // Verify that the lot actually belongs to the auction requested in the URL.
   if (lotFromDb.auctionId !== auctionFromDb.id) {
     console.warn(`[getLotPageData] Mismatch: Lot '${lotFromDb.id}' belongs to auction '${lotFromDb.auctionId}', not '${auctionFromDb.id}'. Returning not found.`);
-    return { lot: undefined, auction: auctionFromDb, platformSettings, allCategories, allSellers };
+    return { lot: null, auction: auctionFromDb, platformSettings };
   }
 
   const lotsForThisAuction = auctionFromDb.lots || [];
@@ -74,8 +68,6 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
     previousLotId, 
     nextLotId, 
     totalLotsInAuction,
-    allCategories,
-    allSellers
   };
 }
 
@@ -106,9 +98,6 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
       </div>
     );
   }
-
-  // This part is now safe because we've validated the lot belongs to the auction.
-  const auctioneerDetails = await getAuctioneers().then(list => list.find(a => a.id === auction.auctioneerId));
 
   return (
     <div className="container mx-auto px-0 sm:px-4 py-2 sm:py-8"> 
