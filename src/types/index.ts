@@ -157,7 +157,7 @@ export interface Auction {
   title: string;
   description?: string;
   status: AuctionStatus;
-  auctionType?: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS';
+  auctionType?: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS' | 'DUTCH' | 'SILENT';
   category: string; 
   categoryId?: string; 
   auctioneer: string; 
@@ -189,15 +189,18 @@ export interface Auction {
   auctioneerName?: string;
   automaticBiddingEnabled?: boolean;
   allowInstallmentBids?: boolean;
-  softCloseEnabled?: boolean; // NEW
-  softCloseMinutes?: number; // NEW
+  softCloseEnabled?: boolean;
+  softCloseMinutes?: number;
   estimatedRevenue?: number;
   achievedRevenue?: number;
   totalHabilitatedUsers?: number;
   isFeaturedOnMarketplace?: boolean;
   marketplaceAnnouncementTitle?: string;
   additionalTriggers?: string[];
-  lots?: Lot[]; 
+  lots?: Lot[];
+  decrementAmount?: number;
+  decrementIntervalSeconds?: number;
+  floorPrice?: number;
 }
 
 export type AuctionFormData = Omit<Auction,
@@ -222,6 +225,9 @@ export type AuctionDbData = Omit<AuctionFormData, 'category' | 'auctioneer' | 's
   auctionStages?: AuctionStage[];
   latitude?: number | null;
   longitude?: number | null;
+  decrementAmount?: number | null;
+  decrementIntervalSeconds?: number | null;
+  floorPrice?: number | null;
 };
 
 
@@ -812,7 +818,7 @@ export interface IDatabaseAdapter {
   getRoles(): Promise<Role[]>;
   getRole(id: string): Promise<Role | null>;
   getRoleByName(name: string): Promise<Role | null>;
-  updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string }>;
+  updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }>;
   deleteRole(id: string): Promise<{ success: boolean; message: string; }>;
   ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }>;
 

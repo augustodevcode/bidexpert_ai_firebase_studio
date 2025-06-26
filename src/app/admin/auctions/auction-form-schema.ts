@@ -19,6 +19,8 @@ const auctionTypeValues: [Auction['auctionType'], ...(Exclude<Auction['auctionTy
   'EXTRAJUDICIAL',
   'PARTICULAR',
   'TOMADA_DE_PRECOS',
+  'DUTCH',
+  'SILENT',
 ];
 
 
@@ -52,8 +54,8 @@ export const auctionFormSchema = z.object({
   sellingBranch: z.string().max(100).optional(),
   automaticBiddingEnabled: z.boolean().optional().default(false),
   allowInstallmentBids: z.boolean().optional().default(false),
-  softCloseEnabled: z.boolean().optional().default(false), // NEW
-  softCloseMinutes: z.coerce.number().int().min(1, "Mínimo de 1 minuto").max(30, "Máximo de 30 minutos").optional().default(2), // NEW
+  softCloseEnabled: z.boolean().optional().default(false), 
+  softCloseMinutes: z.coerce.number().int().min(1, "Mínimo de 1 minuto").max(30, "Máximo de 30 minutos").optional().default(2), 
   estimatedRevenue: z.coerce.number().positive({message: "Estimativa deve ser positiva."}).optional().nullable(),
   isFeaturedOnMarketplace: z.boolean().optional().default(false),
   marketplaceAnnouncementTitle: z.string().max(150, {message: "Título do anúncio muito longo."}).optional().nullable(),
@@ -65,10 +67,20 @@ export const auctionFormSchema = z.object({
       initialPrice: z.coerce.number().positive("Lance inicial da praça deve ser positivo").optional(),
     })
   ).optional().default([]),
+  decrementAmount: z.coerce.number().positive("O valor do decremento deve ser positivo.").optional().nullable(),
+  decrementIntervalSeconds: z.coerce.number().int().min(1, "O intervalo deve ser de no mínimo 1 segundo.").optional().nullable(),
+  floorPrice: z.coerce.number().positive("O preço mínimo deve ser positivo.").optional().nullable(),
+}).refine(data => {
+    // If it's a Dutch auction, the specific fields are required.
+    if (data.auctionType === 'DUTCH') {
+        return !!data.decrementAmount && !!data.decrementIntervalSeconds && !!data.floorPrice;
+    }
+    return true;
+}, {
+    message: "Para Leilões Holandeses, o Valor do Decremento, Intervalo e Preço Mínimo são obrigatórios.",
+    path: ["decrementAmount"],
 });
 
+
 export type AuctionFormValues = z.infer<typeof auctionFormSchema>;
-
-    
-
     

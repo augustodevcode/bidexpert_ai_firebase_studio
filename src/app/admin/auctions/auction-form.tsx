@@ -24,7 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
 import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem } from '@/types';
-import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap } from 'lucide-react';
+import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -64,6 +64,8 @@ const auctionTypeOptions = [
   { value: 'EXTRAJUDICIAL', label: 'Extrajudicial' },
   { value: 'PARTICULAR', label: 'Particular' },
   { value: 'TOMADA_DE_PRECOS', label: 'Tomada de Preços' },
+  { value: 'DUTCH', label: 'Holandês (Reverso)' },
+  { value: 'SILENT', label: 'Silencioso (Lance Fechado)' },
 ];
 
 export default function AuctionForm({
@@ -106,11 +108,15 @@ export default function AuctionForm({
       isFeaturedOnMarketplace: initialData?.isFeaturedOnMarketplace || false,
       marketplaceAnnouncementTitle: initialData?.marketplaceAnnouncementTitle || '',
       auctionStages: initialData?.auctionStages?.map(stage => ({ ...stage, endDate: new Date(stage.endDate as Date), initialPrice: stage.initialPrice || undefined })) || [{ name: '1ª Praça', endDate: new Date(), initialPrice: undefined }],
+      decrementAmount: initialData?.decrementAmount || undefined,
+      decrementIntervalSeconds: initialData?.decrementIntervalSeconds || undefined,
+      floorPrice: initialData?.floorPrice || undefined,
     },
   });
   
   const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
   const softCloseEnabled = useWatch({ control: form.control, name: 'softCloseEnabled' });
+  const watchedAuctionType = useWatch({ control: form.control, name: 'auctionType' });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -244,6 +250,25 @@ export default function AuctionForm({
                 )}
               />
             </div>
+            {watchedAuctionType === 'DUTCH' && (
+              <>
+                  <Separator />
+                  <h3 className="text-md font-semibold text-muted-foreground pt-2 flex items-center gap-2">
+                      <TrendingDown className="h-5 w-5" /> Configurações do Leilão Holandês
+                  </h3>
+                  <div className="grid md:grid-cols-3 gap-6 p-4 border rounded-lg bg-secondary/30">
+                      <FormField control={form.control} name="floorPrice" render={({ field }) => (
+                          <FormItem><FormLabel>Preço Mínimo (R$)</FormLabel><FormControl><Input type="number" placeholder="1000.00" {...field} value={field.value ?? ''} /></FormControl><FormDescription className="text-xs">O preço não cairá abaixo disso.</FormDescription><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={form.control} name="decrementAmount" render={({ field }) => (
+                          <FormItem><FormLabel>Decremento (R$)</FormLabel><FormControl><Input type="number" placeholder="50.00" {...field} value={field.value ?? ''} /></FormControl><FormDescription className="text-xs">Valor a ser subtraído a cada intervalo.</FormDescription><FormMessage /></FormItem>
+                      )} />
+                      <FormField control={form.control} name="decrementIntervalSeconds" render={({ field }) => (
+                          <FormItem><FormLabel>Intervalo (Segundos)</FormLabel><FormControl><Input type="number" placeholder="10" {...field} value={field.value ?? ''} /></FormControl><FormDescription className="text-xs">Tempo entre cada decremento.</FormDescription><FormMessage /></FormItem>
+                      )} />
+                  </div>
+              </>
+            )}
             <div className="grid md:grid-cols-2 gap-6">
                 <FormField
                 control={form.control}
