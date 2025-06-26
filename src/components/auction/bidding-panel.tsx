@@ -143,7 +143,7 @@ export default function BiddingPanel({ currentLot, onBidSuccess }: BiddingPanelP
 
   return (
     <>
-      <Card className="h-full flex flex-col shadow-lg rounded-lg">
+      <Card className="flex flex-col shadow-lg rounded-lg">
         <CardHeader className="p-3 md:p-4 border-b">
           <CardTitle className="text-lg md:text-xl font-bold flex items-center">
             <Gavel className="h-5 w-5 mr-2 text-primary" /> Painel de Lances
@@ -217,7 +217,7 @@ export default function BiddingPanel({ currentLot, onBidSuccess }: BiddingPanelP
                 </Button>
               )}
             </div>
-            <ScrollArea className="flex-grow border rounded-md bg-secondary/20">
+            <ScrollArea className="border rounded-md bg-secondary/20">
               <div className="p-2 space-y-1.5 text-xs">
                 {isLoadingHistory ? (
                   <div className="flex items-center justify-center p-4">
