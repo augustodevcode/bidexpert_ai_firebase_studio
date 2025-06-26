@@ -1,4 +1,5 @@
 
+
 // src/app/auctions/[auctionId]/page.tsx
 import type { Auction, PlatformSettings, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import AuctionDetailsClient from './auction-details-client';
@@ -94,11 +95,14 @@ export default async function AuctionDetailPage({ params }: { params: { auctionI
     );
   }
 
+  // This part is now safe because we've validated the lot belongs to the auction.
+  const auctioneerDetails = await getAuctioneers().then(list => list.find(a => a.id === auction.auctioneerId));
+
   return (
     <div className="container mx-auto px-0 sm:px-4 py-2 sm:py-8"> 
         <AuctionDetailsClient 
           auction={auction} 
-          auctioneer={auctioneer}
+          auctioneer={auctioneerDetails || null}
           platformSettings={platformSettings}
           allCategories={allCategories}
           allSellers={allSellers}
@@ -110,7 +114,7 @@ export default async function AuctionDetailPage({ params }: { params: { auctionI
 export async function generateStaticParams() {
   try {
     const auctions = await getAuctions();
-    return auctions.map((auction) => ({
+    return auctions.slice(0, 50).map((auction) => ({
       auctionId: auction.publicId || auction.id,
     }));
   } catch (error) {

@@ -337,27 +337,28 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
         </div>
         
         <div className="w-full flex justify-between items-center text-xs">
-            {showCountdownOnThisCard && lot.endDate && (
-              <TimeRemainingBadge
-                endDate={lot.endDate}
-                status={lot.status}
-                showUrgencyTimer={sectionBadges.showUrgencyTimer !== false && mentalTriggersGlobalSettings.showUrgencyTimer}
-                urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays}
-                urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
-              />
-            )}
-            
-            <div className="flex items-center gap-2 ml-auto">
-                <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate || '')) ? 'line-through' : ''}`}>
+            <div>
+              {showCountdownOnThisCard && lot.endDate && (
+                <TimeRemainingBadge
+                  endDate={lot.endDate}
+                  status={lot.status}
+                  showUrgencyTimer={sectionBadges.showUrgencyTimer !== false && mentalTriggersGlobalSettings.showUrgencyTimer}
+                  urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays}
+                  urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
+                />
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+                <div className={`flex items-center gap-1 ${isPast(new Date(lot.endDate || '')) ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                     <Gavel className="h-3 w-3" />
-                    <span>{lot.bidsCount || 0} Lances</span>
+                    <span>{lot.bidsCount || 0}</span>
                 </div>
                 <span className={`font-semibold ${isPast(new Date(lot.endDate || '')) ? 'text-muted-foreground line-through' : 'text-foreground'}`}>Lote {lot.number || lot.id.replace('LOTE', '')}</span>
             </div>
         </div>
 
          <Button asChild className="w-full mt-2" size="sm">
-            <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>Ver Detalhes do Lote</Link>
+            <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>Ver Detalhes do Lote</Link>
         </Button>
       </CardFooter>
     </Card>

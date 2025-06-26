@@ -22,7 +22,6 @@ export default function MapSearchPage() {
   const router = useRouter();
   const searchParamsHook = useSearchParams();
 
-  // Memoize the dynamically imported map component to prevent re-initialization on re-renders
   const MapSearchComponent = useMemo(() => dynamic(() => import('@/components/map-search-component'), {
     ssr: false,
     loading: () => (
@@ -47,24 +46,29 @@ export default function MapSearchPage() {
   const [isUserInteraction, setIsUserInteraction] = useState(false);
 
   useEffect(() => {
-    // Determine initial map center and zoom
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setMapCenter([position.coords.latitude, position.coords.longitude]);
-          setMapZoom(13); // Zoom in on user
+          if (!mapCenter) { // Set only if not already set, to avoid overriding
+            setMapCenter([position.coords.latitude, position.coords.longitude]);
+            setMapZoom(13);
+          }
         },
         () => {
-          console.warn("Geolocation permission denied. Defaulting to center of Brazil.");
-          setMapCenter([-14.235, -51.9253]); // Brazil center
-          setMapZoom(4);
+          if (!mapCenter) {
+            console.warn("Geolocation permission denied. Defaulting to center of Brazil.");
+            setMapCenter([-14.235, -51.9253]);
+            setMapZoom(4);
+          }
         },
         { timeout: 5000 }
       );
     } else {
-        console.warn("Geolocation is not supported. Defaulting to center of Brazil.");
-        setMapCenter([-14.235, -51.9253]); // Brazil center
-        setMapZoom(4);
+        if (!mapCenter) {
+            console.warn("Geolocation is not supported. Defaulting to center of Brazil.");
+            setMapCenter([-14.235, -51.9253]);
+            setMapZoom(4);
+        }
     }
 
     async function fetchData() {
@@ -86,45 +90,46 @@ export default function MapSearchPage() {
         }
     }
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsUserInteraction(false);
-    setMapBounds(null);
+    setIsUserInteraction(false); // Reset to fit bounds on new search
+    // The filter logic will re-run automatically due to state change
   };
 
   const handleBoundsChange = useCallback((bounds: LatLngBounds) => {
     setMapBounds(bounds);
-    setIsUserInteraction(true);
-  }, []);
+    if (!isUserInteraction) {
+        setIsUserInteraction(true);
+    }
+  }, [isUserInteraction]);
   
   const filteredItems = useMemo(() => {
     if (isLoading) return [];
     
-    const baseItems = searchType === 'lots' ? allLots : allAuctions;
+    let baseItems = searchType === 'lots' ? allLots : allAuctions;
     
-    return baseItems.filter(item => {
-        const term = searchTerm.toLowerCase();
-        if (term) {
+    let searchedItems = baseItems;
+    const term = searchTerm.toLowerCase();
+    if (term) {
+         searchedItems = baseItems.filter(item => {
              const searchableText = `${item.title} ${item.description || ''} ${'city' in item ? item.city : ''} ${'state' in item ? item.state : ''} ${'cityName' in item ? item.cityName : ''} ${'stateUf' in item ? item.stateUf : ''}`;
-             if (!searchableText.toLowerCase().includes(term)) {
-                 return false;
-             }
-        }
+             return searchableText.toLowerCase().includes(term);
+         });
+    }
 
-        if (isUserInteraction && mapBounds) {
-            if ('latitude' in item && 'longitude' in item && item.latitude && item.longitude) {
-                if (!mapBounds.contains([item.latitude, item.longitude])) {
-                    return false;
-                }
-            } else {
-                return false; 
+    if (isUserInteraction && mapBounds) {
+        return searchedItems.filter(item => {
+            if (item.latitude && item.longitude) {
+                return mapBounds.contains([item.latitude, item.longitude]);
             }
-        }
+            return false;
+        });
+    }
 
-        return true;
-    });
+    return searchedItems;
 
   }, [searchTerm, searchType, allLots, allAuctions, isLoading, mapBounds, isUserInteraction]);
   
@@ -184,7 +189,7 @@ export default function MapSearchPage() {
                 {!isLoading && !error && platformSettings && displayedItems.length > 0 && (
                     displayedItems.map(item => 
                     searchType === 'lots' 
-                        ? <LotCard key={`lot-${item.id}`} lot={item as Lot} platformSettings={platformSettings} /> 
+                        ? <LotCard key={`lot-${item.id}`} lot={item as Lot} platformSettings={platformSettings} auction={allAuctions.find(a => a.id === (item as Lot).auctionId)} /> 
                         : <AuctionCard key={`auction-${item.id}`} auction={item as Auction} />
                     )
                 )}
