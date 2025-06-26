@@ -15,7 +15,8 @@
     "seed:lotes-data": "tsx ./scripts/seed-lotes-data.ts",
     "rename:lotes-to-lots": "tsx /home/user/studio/scripts/rename-lotes-to-lots.ts",
     "seed:lotes-images": "tsx ./scripts/seed-lotes-with-images.ts",
-    "db:init": "tsx ./scripts/initialize-db.ts"
+    "db:init": "tsx ./scripts/initialize-db.ts",
+    "seed:media": "tsx ./scripts/seed-media-library.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.8.0",
