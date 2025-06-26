@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react'; // Adicionado import do React
@@ -295,14 +294,17 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
           <div className="flex flex-col flex-grow p-4">
             <div className="flex justify-between items-start mb-1.5">
               <div className="flex-grow min-w-0">
-                 <Link href={lotDetailUrl}>
+                <Link href={lotDetailUrl}>
                   <h3 className="text-base font-semibold hover:text-primary transition-colors leading-tight line-clamp-2 mr-2" title={lot.title}>
                     Lote {lot.number || lot.id.replace('LOTE','')} - {lot.title}
                   </h3>
                 </Link>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate" title={`Leilão: ${lot.auctionName}`}>
-                  Leilão: {lot.auctionName || 'Não especificado'}
-                </p>
+                {effectiveEndDate && (
+                  <div className="flex items-center text-xs text-muted-foreground mt-1" title={`Encerramento: ${format(effectiveEndDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`}>
+                      <CalendarDays className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                      <span className="truncate">Encerra: {format(effectiveEndDate, "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+                  </div>
+                )}
               </div>
               <div className="flex-shrink-0 flex items-center space-x-0.5">
                 <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleFavoriteToggle}><Heart className={`h-4 w-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
@@ -340,8 +342,6 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                 <span className="truncate" title={displayLocation}>{displayLocation}</span>
               </div>
             </div>
-
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{lot.description}</p>
 
             <div className="mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2 border-t border-dashed">
               <div>

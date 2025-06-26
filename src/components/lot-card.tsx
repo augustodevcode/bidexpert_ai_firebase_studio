@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import type { Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings, Auction } from '@/types';
@@ -294,14 +293,19 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
       </div>
 
       <CardContent className="p-3 flex-grow space-y-1.5">
-        <Link href={lotDetailUrl} className="block mt-2">
+        <Link href={lotDetailUrl} className="block">
           <h3 className="text-sm font-semibold hover:text-primary transition-colors leading-tight min-h-[2.2em] line-clamp-2">
             {lot.title}
           </h3>
-          <p className="text-xs text-muted-foreground line-clamp-2 mt-1 h-8 group-hover:text-primary/90">
-            {lot.description || ''}
-          </p>
         </Link>
+
+        {effectiveEndDate && (
+          <div className="flex items-center text-xs text-muted-foreground" title={`Encerramento: ${format(effectiveEndDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`}>
+              <CalendarDays className="h-3 w-3 mr-1.5 flex-shrink-0" />
+              <span className="truncate">Encerra: {format(effectiveEndDate, "dd/MM/yy HH:mm", { locale: ptBR })}</span>
+          </div>
+        )}
+
         <div className="flex items-center text-xs text-muted-foreground">
             {getTypeIcon(lot.type)}
             <span className="truncate ml-1" title={lot.type}>{lot.type}</span>
