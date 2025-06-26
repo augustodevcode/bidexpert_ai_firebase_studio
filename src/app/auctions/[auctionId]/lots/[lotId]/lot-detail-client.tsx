@@ -40,6 +40,7 @@ import LotReviewsTab from '@/components/auction/lot-reviews-tab';
 import LotQuestionsTab from '@/components/auction/lot-questions-tab';
 import LotMapDisplay from '@/components/auction/lot-map-display';
 import LotPreviewModal from '@/components/lot-preview-modal';
+import LotMapPreviewModal from '@/components/lot-map-preview-modal';
 import { hasPermission } from '@/lib/permissions';
 import { cn } from '@/lib/utils';
 import LotAllBidsModal from '@/components/auction/lot-all-bids-modal';
@@ -284,7 +285,7 @@ export default function LotDetailClientContent({
 
   const handleBidSuccess = (updatedLotData: Partial<Lot>, newBid?: BidInfo) => {
     setLot(prevLot => ({...prevLot!, ...updatedLotData}));
-    // Future: Could also update a local bid history state here to be even faster
+    // Future: Could also update a local bid history state to be even faster
   };
 
 
@@ -404,7 +405,7 @@ export default function LotDetailClientContent({
             </div>
           </div>
         </section>
-
+        
         {platformSettings.showRelatedLotsOnLotDetail !== false && relatedLots.length > 0 && (
           <section className="pt-8 border-t">
             <h2 className="text-2xl font-bold mb-6 font-headline text-center">Outros Lotes Deste Leilão</h2>
