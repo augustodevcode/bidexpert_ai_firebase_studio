@@ -1,4 +1,3 @@
-
 // src/lib/sample-data.ts
 import type {
   Lot, LotCategory, Auction, AuctioneerProfileInfo, SellerProfileInfo,
@@ -96,6 +95,48 @@ const sampleUserProfilesData: UserProfileWithPermissions[] = [
   { uid: 'consignor-user-001', email: 'consignor@bidexpert.com', fullName: 'Comitente Exemplo', roleId: 'role-consignor', roleName: 'CONSIGNOR', permissions: ['auctions:manage_own', 'lots:manage_own'], habilitationStatus: 'HABILITADO', createdAt: new Date(), updatedAt: new Date(), sellerProfileId: 'seller-banco-bradesco-s-a' },
   ...fictionalBidders
 ];
+
+const vehicleMakes: Record<string, string[]> = {
+  'Carros': ['Ford', 'Chevrolet', 'Volkswagen', 'Fiat', 'Honda', 'Toyota', 'Hyundai'],
+  'Motos': ['Honda', 'Yamaha', 'Suzuki', 'Kawasaki', 'Harley-Davidson'],
+  'Caminhões e Ônibus': ['Mercedes-Benz', 'Scania', 'Volvo', 'MAN'],
+  'Veículos Pesados': ['Caterpillar', 'Komatsu', 'Liebherr'],
+  'Embarcações': ['Yamaha Marine', 'Mercury Marine', 'Sea-Doo'],
+  'Aeronaves': ['Cessna', 'Embraer', 'Boeing'],
+};
+
+const vehicleModels: Record<string, string[]> = {
+  'Ford': ['Ka', 'Fiesta', 'Focus', 'Ranger'],
+  'Chevrolet': ['Onix', 'Prisma', 'Cruze', 'S10'],
+  'Volkswagen': ['Gol', 'Polo', 'Virtus', 'Amarok'],
+  'Fiat': ['Mobi', 'Argo', 'Toro', 'Strada'],
+  'Honda': ['Fit', 'City', 'Civic', 'HR-V', 'CG 160', 'Biz'],
+  'Toyota': ['Corolla', 'Hilux', 'Yaris'],
+  'Hyundai': ['HB20', 'Creta'],
+  'Yamaha': ['Factor 150', 'Fazer 250', 'NMAX'],
+  'Suzuki': ['GSX-S750', 'V-Strom 650'],
+  'Kawasaki': ['Ninja 400', 'Z400'],
+  'Harley-Davidson': ['Iron 883', 'Fat Boy'],
+  'Mercedes-Benz': ['Actros', 'Sprinter'],
+  'Scania': ['R450', 'S540'],
+  'Volvo': ['FH', 'VM'],
+  'MAN': ['TGX'],
+  'Caterpillar': ['D6', '320'],
+  'Komatsu': ['PC200', 'D61EX'],
+  'Liebherr': ['LTM 11200'],
+  'Yamaha Marine': ['VMAX', 'F250'],
+  'Mercury Marine': ['Verado', 'FourStroke'],
+  'Sea-Doo': ['Spark', 'GTX'],
+  'Cessna': ['172 Skyhawk', 'Citation Longitude'],
+  'Embraer': ['Phenom 300', 'Praetor 600'],
+  'Boeing': ['737', '787 Dreamliner'],
+};
+
+const machineTypes = ['Trator', 'Colheitadeira', 'Escavadeira', 'Retroescavadeira', 'Motoniveladora'];
+const machineMakes = ['John Deere', 'Massey Ferguson', 'Valtra', 'Caterpillar', 'Komatsu'];
+
+const artTypes = ['Pintura a óleo', 'Escultura em bronze', 'Aquarela', 'Gravura'];
+const artistNames = ['Artista Desconhecido', 'Atribuído a Tarsila do Amaral', 'Cândido Portinari (Estilo)', 'Aleijadinho (Estilo)'];
 
 // ==================================
 // DYNAMIC DATA GENERATION
