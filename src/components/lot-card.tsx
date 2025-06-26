@@ -406,3 +406,4 @@ export default function LotCard({ lot, auction, badgeVisibilityConfig, platformS
 
     return <LotCardClientContent lot={lot} auction={auction} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} onUpdate={onUpdate} />;
   }
+

@@ -3,7 +3,7 @@
 import type {
   Lot, LotCategory, Auction, AuctioneerProfileInfo, SellerProfileInfo,
   StateInfo, CityInfo, UserProfileWithPermissions, Role, MediaItem, Subcategory,
-  PlatformSettings, DirectSaleOffer, UserWin, UserBid, LotQuestion, Review, UserLotMaxBid
+  PlatformSettings, DirectSaleOffer, UserWin, UserBid, LotQuestion, Review, UserLotMaxBid, AuctionStage
 } from '@/types';
 import { slugify } from './sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,7 +13,7 @@ import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 // PURE HELPER FUNCTIONS
 // ==================================
 const randomItem = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-const randomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - 1 - min + 1)) + min;
+const randomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
 const randomDate = (start: Date, end: Date): Date => new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 const BRAZIL_BOUNDS = { latMin: -33.7, latMax: 5.2, lonMin: -73.9, lonMax: -34.8 };
 const randomCoord = (min: number, max: number): number => min + Math.random() * (max - min);
@@ -100,34 +100,6 @@ const sampleUserProfilesData: UserProfileWithPermissions[] = [
 // ==================================
 // DYNAMIC DATA GENERATION
 // ==================================
-const vehicleMakes: { [key: string]: string[] } = {
-  Carros: ['Ford', 'Chevrolet', 'Volkswagen', 'Fiat', 'Honda', 'Toyota', 'Hyundai', 'BMW', 'Mercedes-Benz', 'Audi'],
-  Motos: ['Honda', 'Yamaha', 'Kawasaki', 'Suzuki', 'Harley-Davidson', 'Ducati'],
-};
-const vehicleModels: { [key: string]: string[] } = {
-  'Ford': ['Ka', 'Fiesta', 'Focus', 'Ranger', 'Mustang'],
-  'Chevrolet': ['Onix', 'Prisma', 'S10', 'Cruze', 'Camaro'],
-  'Volkswagen': ['Gol', 'Polo', 'Virtus', 'T-Cross', 'Jetta'],
-  'Fiat': ['Mobi', 'Argo', 'Strada', 'Toro', 'Pulse'],
-  'Honda': ['Civic', 'Fit', 'HR-V', 'City', 'CB 500F'],
-  'Toyota': ['Corolla', 'Hilux', 'Yaris', 'RAV4'],
-  'Hyundai': ['HB20', 'Creta', 'Tucson', 'Santa Fe'],
-  'BMW': ['320i', 'X1', 'GS 1250'],
-  'Mercedes-Benz': ['Classe C', 'GLA', 'Classe A'],
-  'Audi': ['A3', 'Q3', 'A4'],
-  'Yamaha': ['Factor 150', 'Fazer 250', 'MT-03'],
-  'Kawasaki': ['Ninja 400', 'Z400'],
-  'Suzuki': ['GSX-S750'],
-  'Harley-Davidson': ['Iron 883', 'Fat Boy'],
-  'Ducati': ['Monster', 'Panigale']
-};
-
-const machineTypes = ['Trator', 'Escavadeira', 'Retroescavadeira', 'Motoniveladora'];
-const machineMakes = ['John Deere', 'Caterpillar', 'Komatsu', 'Volvo', 'Case'];
-const artTypes = ['Pintura a Óleo', 'Escultura em Bronze', 'Aquarela', 'Fotografia Vintage'];
-const artistNames = ['Silva', 'Santos', 'Oliveira', 'Pereira', 'Lima'];
-
-
 const generatedAuctions: Auction[] = [];
 const generatedLots: Lot[] = [];
 const generatedBids: BidInfo[] = [];
@@ -139,10 +111,15 @@ const auctionTypes: Auction['auctionType'][] = ['JUDICIAL', 'EXTRAJUDICIAL', 'PA
 
 auctionTypes.forEach(type => {
   for (let i = 1; i <= 10; i++) {
-    const startOffsetDays = randomInt(-20, 20);
-    const startDate = new Date(Date.now() + startOffsetDays * 24 * 60 * 60 * 1000);
-    const endDate = new Date(startDate.getTime() + randomInt(5, 15) * 24 * 60 * 60 * 1000);
-    const status = startDate > new Date() ? 'EM_BREVE' : (endDate < new Date() ? 'ENCERRADO' : 'ABERTO_PARA_LANCES');
+    const auctionStartDate = new Date(Date.now() + randomInt(-20, 20) * 24 * 60 * 60 * 1000);
+    const firstStageEndDate = new Date(auctionStartDate.getTime() + randomInt(5, 10) * 24 * 60 * 60 * 1000);
+    const secondStageEndDate = new Date(firstStageEndDate.getTime() + randomInt(2, 5) * 24 * 60 * 60 * 1000);
+    
+    const auctionStages: AuctionStage[] = [
+        { name: '1ª Praça', endDate: firstStageEndDate, statusText: 'Encerramento' },
+        { name: '2ª Praça', endDate: secondStageEndDate, statusText: 'Encerramento' }
+    ];
+
     const selectedCategory = randomItem(sampleLotCategoriesData);
     const auctioneer = randomItem(sampleAuctioneersData);
     const seller = randomItem(sampleSellersData);
@@ -152,27 +129,49 @@ auctionTypes.forEach(type => {
     const auction: Auction = {
       id: auctionId, publicId: `AUC-PUB-${auctionId}`,
       title: `Leilão ${type.replace(/_/g, ' ')} de ${selectedCategory.name} #${i}`,
-      status: status, auctionType: type, categoryId: selectedCategory.id, category: selectedCategory.name,
+      status: 'EM_BREVE', // Will be updated below
+      auctionType: type, categoryId: selectedCategory.id, category: selectedCategory.name,
       auctioneerId: auctioneer.id, auctioneer: auctioneer.name, sellerId: seller.id, seller: seller.name,
-      city: city.name, state: city.stateUf, auctionDate: startDate, endDate: endDate,
+      city: city.name, state: city.stateUf, auctionDate: auctionStartDate, endDate: secondStageEndDate,
+      auctionStages: auctionStages,
       latitude: randomCoord(BRAZIL_BOUNDS.latMin, BRAZIL_BOUNDS.latMax),
       longitude: randomCoord(BRAZIL_BOUNDS.lonMin, BRAZIL_BOUNDS.lonMax),
       createdAt: new Date(), updatedAt: new Date(), totalLots: 0,
       initialOffer: randomInt(50000, 200000), visits: randomInt(100, 2000),
       isFeaturedOnMarketplace: Math.random() > 0.8, lots: []
     };
-    generatedAuctions.push(auction);
 
     const numLots = randomInt(2, 10);
     auction.totalLots = numLots;
+
     for (let j = 1; j <= numLots; j++) {
       const lotId = `lot-${lotCounter++}`;
       const possibleSubcats = sampleSubcategoriesData.filter(sc => sc.parentCategoryId === auction.categoryId);
       const selectedSubcat = possibleSubcats.length > 0 ? randomItem(possibleSubcats) : null;
       const media = randomItem(sampleMediaItemsData);
-      const lotEndDate = new Date(auction.endDate!.getTime() - randomInt(0, 2) * 24 * 60 * 60 * 1000);
-      const lotStatus = auction.status === 'EM_BREVE' ? 'EM_BREVE' : (lotEndDate < new Date() ? 'ENCERRADO' : 'ABERTO_PARA_LANCES');
-      const initialPrice = randomInt(1000, 50000);
+      
+      const now = new Date();
+      let lotStatus: LotStatus;
+      let lotEndDate: Date;
+      let initialPrice = randomInt(1000, 50000);
+      let secondInitialPrice = initialPrice * (randomInt(50,80) / 100);
+
+      if (now < auctionStartDate) {
+          lotStatus = 'EM_BREVE';
+          lotEndDate = firstStageEndDate;
+      } else if (now >= auctionStartDate && now < firstStageEndDate) {
+          lotStatus = 'ABERTO_PARA_LANCES';
+          lotEndDate = firstStageEndDate;
+      } else if (now >= firstStageEndDate && now < secondStageEndDate) {
+          lotStatus = 'ABERTO_PARA_LANCES';
+          lotEndDate = secondStageEndDate;
+          initialPrice = secondInitialPrice; // Price drops in the second stage
+      } else { // now >= secondStageEndDate
+          lotStatus = 'ENCERRADO';
+          lotEndDate = secondStageEndDate;
+          initialPrice = secondInitialPrice;
+      }
+      
       let currentPrice = initialPrice;
       let bidsCount = 0;
       let winner: UserProfileWithPermissions | null = null;
@@ -203,14 +202,13 @@ auctionTypes.forEach(type => {
           lotTitle = `${type} por ${artist} - Lote ${j}`;
       }
 
-
-      if (lotStatus !== 'EM_BREVE') {
-        const numBids = randomInt(0, 25);
+      if (lotStatus === 'ABERTO_PARA_LANCES' || lotStatus === 'ENCERRADO') {
+        const numBids = lotStatus === 'ABERTO_PARA_LANCES' ? randomInt(0, 15) : randomInt(5, 25);
         for (let k = 0; k < numBids; k++) {
           const bidder = randomItem(fictionalBidders);
           currentPrice += randomInt(100, 1000);
           generatedBids.push({ id: `bid-${lotId}-${k}`, lotId: lotId, auctionId: auction.id, bidderId: bidder.uid, bidderDisplay: bidder.fullName!, amount: currentPrice, timestamp: new Date(lotEndDate.getTime() - randomInt(10, 300) * 60 * 1000) });
-          winner = bidder; // Last bidder is potential winner
+          winner = bidder;
         }
         bidsCount = numBids;
       }
@@ -218,10 +216,7 @@ auctionTypes.forEach(type => {
       const finalLotStatus = lotStatus === 'ENCERRADO' && bidsCount > 0 ? 'VENDIDO' : (lotStatus === 'ENCERRADO' ? 'NAO_VENDIDO' : lotStatus);
       if (finalLotStatus === 'VENDIDO' && winner) {
         const arrematanteRole = sampleRolesData.find(r => r.name === 'ARREMATANTE');
-        generatedUserWins.push({ id: `win-${lotId}`, lot: {} as Lot, // Will be populated later
-            userId: winner.uid, winningBidAmount: currentPrice, winDate: lotEndDate, paymentStatus: 'PENDENTE'
-        });
-        // Update user role in main list
+        generatedUserWins.push({ id: `win-${lotId}`, userId: winner.uid, lot: {} as Lot, winningBidAmount: currentPrice, winDate: lotEndDate, paymentStatus: 'PENDENTE' });
         const winnerIndex = sampleUserProfilesData.findIndex(u => u.uid === winner!.uid);
         if (winnerIndex > -1 && arrematanteRole) {
             sampleUserProfilesData[winnerIndex].roleId = arrematanteRole.id;
@@ -238,15 +233,31 @@ auctionTypes.forEach(type => {
         status: finalLotStatus, categoryId: selectedCategory.id, type: selectedCategory.name,
         subcategoryId: selectedSubcat?.id, subcategoryName: selectedSubcat?.name,
         price: currentPrice, bidsCount: bidsCount, endDate: lotEndDate,
+        lotSpecificAuctionDate: auctionStartDate, 
+        secondAuctionDate: firstStageEndDate,
+        initialPrice: initialPrice,
+        secondInitialPrice: secondInitialPrice,
         latitude: (auction.latitude || 0) + (Math.random() - 0.5) * 0.5,
         longitude: (auction.longitude || 0) + (Math.random() - 0.5) * 0.5,
         views: randomInt(50, 1000), cityName: city.name, stateUf: city.stateUf,
-        isFeatured: Math.random() > 0.85, initialPrice: initialPrice,
+        isFeatured: Math.random() > 0.85, 
         auctionName: auction.title,
       };
       generatedLots.push(lot);
       auction.lots!.push(lot);
     }
+
+    // Determine overall auction status based on its stages and current date
+    const now = new Date();
+    if (now < auctionStartDate) {
+        auction.status = 'EM_BREVE';
+    } else if (now >= auctionStartDate && now < secondStageEndDate) {
+        auction.status = 'ABERTO_PARA_LANCES';
+    } else {
+        auction.status = 'ENCERRADO';
+    }
+    
+    generatedAuctions.push(auction);
   }
 });
 
