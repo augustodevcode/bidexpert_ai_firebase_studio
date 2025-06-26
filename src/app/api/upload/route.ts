@@ -1,4 +1,3 @@
-
 // src/app/api/upload/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getStorageAdapter } from '@/lib/storage';
@@ -6,6 +5,7 @@ import { getDatabaseAdapter } from '@/lib/database';
 import type { MediaItem } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
+import { revalidatePath } from 'next/cache';
 
 const MAX_FILE_SIZE_MB = 100000;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -110,6 +110,8 @@ export async function POST(request: NextRequest) {
     let message = '';
     if (uploadedItems.length > 0) {
       message += `${uploadedItems.length} arquivo(s) enviado(s) com sucesso. `;
+      revalidatePath('/admin/media');
+      console.log("[API Upload] Revalidated path /admin/media");
     }
     if (uploadErrors.length > 0) {
       message += `${uploadErrors.length} arquivo(s) falharam.`;

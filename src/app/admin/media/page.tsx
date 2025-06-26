@@ -14,7 +14,6 @@ import { ptBR } from 'date-fns/locale';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'; // Adicionado SelectItem
 import { useEffect, useState, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +37,6 @@ export default function MediaLibraryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table'); 
-  const searchParams = useSearchParams();
 
   const fetchItems = useCallback(async () => {
     setIsLoading(true);
@@ -54,7 +52,7 @@ export default function MediaLibraryPage() {
 
   useEffect(() => {
     fetchItems();
-  }, [fetchItems, searchParams]);
+  }, [fetchItems]);
 
   const handleEditMetadata = (itemId: string) => {
     toast({
