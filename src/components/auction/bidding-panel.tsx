@@ -217,14 +217,14 @@ export default function BiddingPanel({ currentLot, onBidSuccess }: BiddingPanelP
                 </Button>
               )}
             </div>
-            <ScrollArea className="flex-grow border rounded-md bg-secondary/20 min-h-40">
+            <ScrollArea className="flex-grow border rounded-md bg-secondary/20">
               <div className="p-2 space-y-1.5 text-xs">
                 {isLoadingHistory ? (
                   <div className="flex items-center justify-center p-4">
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
                   </div>
                 ) : bidHistory.length > 0 ? (
-                  bidHistory.slice(0, 5).map((bid, index) => (
+                  bidHistory.slice(0, 3).map((bid, index) => (
                     <div key={bid.id} className={`flex justify-between items-center p-1.5 rounded ${index === 0 ? 'bg-green-100 dark:bg-green-800/30 font-semibold' : ''}`}>
                       <span>{bid.bidderDisplay}</span>
                       <span className="text-right">
