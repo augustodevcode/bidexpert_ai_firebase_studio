@@ -25,3 +25,9 @@
 ./binlog.000029
 ./binlog.000030
 ./binlog.000031
+<<<<<<< Updated upstream
+=======
+./binlog.000032
+./binlog.000033
+./binlog.000034
+>>>>>>> Stashed changes
