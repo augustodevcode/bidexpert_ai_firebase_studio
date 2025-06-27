@@ -24,7 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
 import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem } from '@/types';
-import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat } from 'lucide-react';
+import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat, MicOff } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -102,6 +102,8 @@ export default function AuctionForm({
       documentsUrl: initialData?.documentsUrl || '',
       sellingBranch: initialData?.sellingBranch || '',
       automaticBiddingEnabled: initialData?.automaticBiddingEnabled || false,
+      silentBiddingEnabled: initialData?.silentBiddingEnabled || false,
+      allowMultipleBidsPerUser: initialData?.allowMultipleBidsPerUser === false ? false : true,
       allowInstallmentBids: initialData?.allowInstallmentBids || false,
       softCloseEnabled: initialData?.softCloseEnabled || false,
       softCloseMinutes: initialData?.softCloseMinutes || 2,
@@ -130,6 +132,7 @@ export default function AuctionForm({
   const softCloseEnabled = useWatch({ control: form.control, name: 'softCloseEnabled' });
   const watchedAuctionType = useWatch({ control: form.control, name: 'auctionType' });
   const watchedAutoRelist = useWatch({ control: form.control, name: 'autoRelistSettings' });
+  const watchedSilentBidding = form.watch('silentBiddingEnabled');
 
 
   const { fields, append, remove } = useFieldArray({
@@ -600,7 +603,7 @@ export default function AuctionForm({
                 )}
             />
             <Separator />
-            <h3 className="text-md font-semibold text-muted-foreground flex items-center"><Bot className="h-4 w-4 mr-2"/> Configurações de Automação</h3>
+            <h3 className="text-md font-semibold text-muted-foreground flex items-center"><Bot className="h-4 w-4 mr-2"/> Configurações de Automação e Lances</h3>
             <FormField
                 control={form.control}
                 name="automaticBiddingEnabled"
@@ -614,6 +617,34 @@ export default function AuctionForm({
                     </FormItem>
                 )}
             />
+             <FormField
+                control={form.control}
+                name="silentBiddingEnabled"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                        <FormLabel className="flex items-center gap-2"><MicOff className="h-4 w-4 text-purple-500"/> Ativar Lances Silenciosos</FormLabel>
+                        <FormDescription>Os lances são ocultos. O maior lance vence no final.</FormDescription>
+                    </div>
+                    <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                    </FormItem>
+                )}
+            />
+            {watchedSilentBidding && (
+                <FormField
+                    control={form.control}
+                    name="allowMultipleBidsPerUser"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm ml-4 bg-secondary/50">
+                        <div className="space-y-0.5">
+                            <FormLabel>Permitir Múltiplos Lances Silenciosos</FormLabel>
+                            <FormDescription>Se desativado, cada usuário pode dar apenas um lance.</FormDescription>
+                        </div>
+                        <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                        </FormItem>
+                    )}
+                />
+            )}
             <FormField
                 control={form.control}
                 name="softCloseEnabled"

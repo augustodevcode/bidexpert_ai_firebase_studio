@@ -201,6 +201,8 @@ export interface Auction {
   auctioneerLogoUrl?: string;
   auctioneerName?: string;
   automaticBiddingEnabled?: boolean;
+  silentBiddingEnabled?: boolean;
+  allowMultipleBidsPerUser?: boolean;
   allowInstallmentBids?: boolean;
   softCloseEnabled?: boolean;
   softCloseMinutes?: number;
@@ -679,9 +681,17 @@ export interface PlatformSettings {
   showCountdownOnCards?: boolean;
   showRelatedLotsOnLotDetail?: boolean;
   relatedLotsCount?: number;
+  variableIncrementTable?: VariableIncrementRule[];
 
   updatedAt: AnyTimestamp;
 }
+
+export interface VariableIncrementRule {
+  from: number;
+  to: number | null;
+  increment: number;
+}
+
 
 export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'> & {
     homepageSections?: HomepageSectionConfig[]; 
@@ -695,6 +705,7 @@ export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'
     showCountdownOnCards?: boolean;
     showRelatedLotsOnLotDetail?: boolean;
     relatedLotsCount?: number;
+    variableIncrementTable?: VariableIncrementRule[];
 };
 
 

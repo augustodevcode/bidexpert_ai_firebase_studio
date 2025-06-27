@@ -170,6 +170,11 @@ auctionTypes.forEach(type => {
         auction.floorPrice = 50000;
     }
 
+    if (type === 'SILENT') {
+      auction.silentBiddingEnabled = true;
+      auction.allowMultipleBidsPerUser = Math.random() > 0.5; // Randomize this setting
+    }
+
 
     const numLots = randomInt(2, 5);
     auction.totalLots = numLots;
