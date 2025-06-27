@@ -909,4 +909,14 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] updatePlatformSettings is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
+  
+  async getRoleByName(name: string): Promise<Role | null> {
+    console.warn("[MySqlAdapter] getRoleByName is not yet implemented for MySQL.");
+    return null;
+  }
+  
+  async getUserByEmail(email: string): Promise<UserProfileWithPermissions | null> {
+    console.warn("[MySqlAdapter] getUserByEmail is not yet implemented for MySQL.");
+    return null;
+  }
 }
