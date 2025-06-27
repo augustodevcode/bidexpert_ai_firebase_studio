@@ -10,7 +10,7 @@ import type { Auction } from '@/types';
 import { PlusCircle, Gavel } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
-import { columns as createColumns } from './columns';
+import { createColumns } from './columns';
 
 export default function AdminAuctionsPage() {
   const [auctions, setAuctions] = useState<Auction[]>([]);
