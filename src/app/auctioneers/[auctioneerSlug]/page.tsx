@@ -87,7 +87,7 @@ export default function AuctioneerDetailsPage() {
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [auctionSortBy, setAuctionSortBy] = useState<string>('endDate_asc');
   const [currentAuctionPage, setCurrentAuctionPage] = useState(1);
-  const [visibleAuctionCount, setVisibleAuctionCount] = useState(6);
+  const [auctionItemsPerPage, setAuctionItemsPerPage] = useState(6);
 
   useEffect(() => {
     async function fetchAuctioneerDetails() {
@@ -101,6 +101,7 @@ export default function AuctioneerDetailsPage() {
             getPlatformSettings(),
           ]);
           setPlatformSettings(settings);
+          setAuctionItemsPerPage(settings.searchItemsPerPage || 6);
 
           if (!foundAuctioneer) {
             setError(`Leiloeiro com slug/publicId "${auctioneerSlug}" não encontrado.`);
@@ -113,7 +114,6 @@ export default function AuctioneerDetailsPage() {
           setRelatedAuctions(auctions);
 
           setCurrentAuctionPage(1);
-          setVisibleAuctionCount(settings?.searchLoadMoreCount || 6);
 
         } catch (e) {
           console.error("Error fetching auctioneer data:", e);
@@ -154,27 +154,24 @@ export default function AuctioneerDetailsPage() {
 
   const paginatedAuctions = useMemo(() => {
     if (!platformSettings) return [];
-    if (platformSettings.searchPaginationType === 'numberedPages') {
-      const startIndex = (currentAuctionPage - 1) * (platformSettings.searchItemsPerPage || 6);
-      const endIndex = startIndex + (platformSettings.searchItemsPerPage || 6);
-      return sortedAuctions.slice(startIndex, endIndex);
-    }
-    return sortedAuctions.slice(0, visibleAuctionCount);
-  }, [sortedAuctions, currentAuctionPage, visibleAuctionCount, platformSettings]);
+    const startIndex = (currentAuctionPage - 1) * auctionItemsPerPage;
+    const endIndex = startIndex + auctionItemsPerPage;
+    return sortedAuctions.slice(startIndex, endIndex);
+  }, [sortedAuctions, currentAuctionPage, auctionItemsPerPage, platformSettings]);
 
   const handleAuctionSortChange = (newSortBy: string) => {
     setAuctionSortBy(newSortBy);
     setCurrentAuctionPage(1);
-    setVisibleAuctionCount(platformSettings?.searchLoadMoreCount || 6);
   };
 
   const handleAuctionPageChange = (newPage: number) => {
     setCurrentAuctionPage(newPage);
   };
-
-  const handleLoadMoreAuctions = () => {
-    setVisibleAuctionCount(prev => Math.min(prev + (platformSettings?.searchLoadMoreCount || 6), sortedAuctions.length));
-  };
+  
+  const handleAuctionItemsPerPageChange = (newSize: number) => {
+      setAuctionItemsPerPage(newSize);
+      setCurrentAuctionPage(1);
+  }
   
   const renderAuctionGridItem = (auction: Auction) => <AuctionCard auction={auction} />;
   const renderAuctionListItem = (auction: Auction) => <AuctionListItem auction={auction} />;
@@ -336,9 +333,9 @@ export default function AuctioneerDetailsPage() {
                 isLoading={isLoading}
                 searchTypeLabel="leilões"
                 currentPage={currentAuctionPage}
-                visibleItemCount={visibleAuctionCount}
+                itemsPerPage={auctionItemsPerPage}
                 onPageChange={handleAuctionPageChange}
-                onLoadMore={handleLoadMoreAuctions}
+                onItemsPerPageChange={handleAuctionItemsPerPageChange}
             />
           </section>
         )}

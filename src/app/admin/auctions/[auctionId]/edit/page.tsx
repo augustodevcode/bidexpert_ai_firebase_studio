@@ -8,7 +8,6 @@ import { getLots, deleteLot } from '@/app/admin/lots/actions';
 import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
 import { notFound, useRouter, useParams } from 'next/navigation'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers, Gavel } from 'lucide-react'; // Added Gavel
@@ -205,34 +204,37 @@ export default function EditAuctionPage() {
   const router = useRouter();
   const { toast } = useToast();
   
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings>(samplePlatformSettings as PlatformSettings);
   const [lotSortBy, setLotSortBy] = useState<string>('number_asc');
   const [lotCurrentPage, setLotCurrentPage] = useState(1);
-  const [lotVisibleItemCount, setLotVisibleItemCount] = useState(samplePlatformSettings.searchLoadMoreCount || 10);
-  const platformSettings = samplePlatformSettings as PlatformSettings;
+  const [lotItemsPerPage, setLotItemsPerPage] = useState(platformSettings.searchItemsPerPage || 12);
+  
 
   const fetchPageData = useCallback(async () => {
     if (!auctionId) return;
     setIsLoading(true);
     try {
-        const [fetchedAuction, fetchedCategories, fetchedLots, fetchedAuctioneers, fetchedSellers] = await Promise.all([
+        const [fetchedAuction, fetchedCategories, fetchedLots, fetchedAuctioneers, fetchedSellers, settings] = await Promise.all([
             getAuction(auctionId),
             getLotCategories(),
             getLots(auctionId),
             getAuctioneers(),
-            getSellers()
+            getSellers(),
+            getPlatformSettings(),
         ]);
 
         if (!fetchedAuction) {
             notFound();
             return;
         }
+        setPlatformSettings(settings);
+        setLotItemsPerPage(settings.searchItemsPerPage || 12);
         setAuction(fetchedAuction);
         setCategories(fetchedCategories);
         setLotsInAuction(fetchedLots);
         setAuctioneersList(fetchedAuctioneers);
         setSellersList(fetchedSellers);
         setLotCurrentPage(1); 
-        setLotVisibleItemCount(platformSettings.searchLoadMoreCount || 10);
     } catch (error) {
         console.error("Error fetching data for edit auction page:", error);
         toast({ title: "Erro ao carregar dados", description: "Não foi possível buscar os dados do leilão.", variant: "destructive"});
@@ -240,7 +242,7 @@ export default function EditAuctionPage() {
         setIsLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auctionId, toast, platformSettings.searchLoadMoreCount]);
+  }, [auctionId, toast]);
 
 
   useEffect(() => {
@@ -249,17 +251,6 @@ export default function EditAuctionPage() {
 
   async function handleUpdateAuction(data: Partial<AuctionFormData>) {
     return updateAuction(auctionId, data);
-  }
-
-  async function handleDeleteLotAction(lotId: string, currentAuctionId: string) {
-    const result = await deleteLot(lotId, currentAuctionId); 
-    if (!result.success) {
-        console.error("Failed to delete lot:", result.message);
-        toast({ title: "Erro ao Excluir Lote", description: result.message, variant: "destructive" });
-    } else {
-        toast({ title: "Sucesso", description: "Lote excluído com sucesso." });
-        fetchPageData(); 
-    }
   }
 
   const lotSortOptions = [
@@ -294,29 +285,26 @@ export default function EditAuctionPage() {
       }
     });
   }, [lotsInAuction, lotSortBy]);
-
+  
   const paginatedLots = useMemo(() => {
-    if (platformSettings.searchPaginationType === 'numberedPages') {
-      const startIndex = (lotCurrentPage - 1) * (platformSettings.searchItemsPerPage || 10);
-      const endIndex = startIndex + (platformSettings.searchItemsPerPage || 10);
-      return sortedLots.slice(startIndex, endIndex);
-    }
-    return sortedLots.slice(0, lotVisibleItemCount);
-  }, [sortedLots, lotCurrentPage, lotVisibleItemCount, platformSettings]);
+    const startIndex = (lotCurrentPage - 1) * lotItemsPerPage;
+    const endIndex = startIndex + lotItemsPerPage;
+    return sortedLots.slice(startIndex, endIndex);
+  }, [sortedLots, lotCurrentPage, lotItemsPerPage]);
 
   const handleLotSortChange = (newSortBy: string) => {
     setLotSortBy(newSortBy);
     setLotCurrentPage(1);
-    setLotVisibleItemCount(platformSettings.searchLoadMoreCount || 10);
   };
 
   const handleLotPageChange = (newPage: number) => {
     setLotCurrentPage(newPage);
   };
-
-  const handleLoadMoreLots = () => {
-    setLotVisibleItemCount(prev => Math.min(prev + (platformSettings.searchLoadMoreCount || 10), sortedLots.length));
-  };
+  
+  const handleLotItemsPerPageChange = (newSize: number) => {
+      setLotItemsPerPage(newSize);
+      setLotCurrentPage(1); // Reset to first page
+  }
 
   const renderLotListItemForAdmin = (lot: Lot) => (
     <Card key={lot.id} className="mb-2 shadow-sm hover:shadow-md transition-shadow">
@@ -457,9 +445,9 @@ export default function EditAuctionPage() {
             isLoading={isLoading}
             searchTypeLabel="lotes"
             currentPage={lotCurrentPage}
-            visibleItemCount={lotVisibleItemCount}
+            itemsPerPage={lotItemsPerPage}
             onPageChange={handleLotPageChange}
-            onLoadMore={handleLoadMoreLots}
+            onItemsPerPageChange={handleLotItemsPerPageChange}
           />
         </CardContent>
       </Card>

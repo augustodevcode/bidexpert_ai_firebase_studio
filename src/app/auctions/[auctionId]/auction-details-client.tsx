@@ -72,7 +72,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>(initialFiltersState);
   const [sortBy, setSortBy] = useState('relevance');
   const [currentPage, setCurrentPage] = useState(1);
-  const [visibleItemCount, setVisibleItemCount] = useState(platformSettings.searchLoadMoreCount || 12);
+  const [itemsPerPage, setItemsPerPage] = useState(platformSettings.searchItemsPerPage || 12);
   
   const uniqueLocationsForFilter = useMemo(() => getUniqueLotLocations(auction.lots || []), [auction.lots]);
   const sellersForFilter = useMemo(() => allSellers.filter(seller => seller.name === auction.seller), [allSellers, auction.seller]);
@@ -86,14 +86,12 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
     setActiveFilters(filters);
     setIsFilterSheetOpen(false); 
     setCurrentPage(1);
-    setVisibleItemCount(platformSettings.searchLoadMoreCount || 12);
   };
   
   const handleFilterReset = () => {
     setActiveFilters(initialFiltersState);
     setIsFilterSheetOpen(false);
     setCurrentPage(1);
-    setVisibleItemCount(platformSettings.searchLoadMoreCount || 12);
   };
 
   const filteredAndSortedLots = useMemo(() => {
@@ -158,21 +156,22 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
   }, [auction.lots, sortBy, lotSearchTerm, activeFilters, allCategories]);
   
   const paginatedLots = useMemo(() => {
-    if (platformSettings.searchPaginationType === 'numberedPages') {
-      const startIndex = (currentPage - 1) * (platformSettings.searchItemsPerPage || 12);
-      const endIndex = startIndex + (platformSettings.searchItemsPerPage || 12);
-      return filteredAndSortedLots.slice(startIndex, endIndex);
-    }
-    return filteredAndSortedLots.slice(0, visibleItemCount);
-  }, [filteredAndSortedLots, currentPage, visibleItemCount, platformSettings]);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredAndSortedLots.slice(startIndex, endIndex);
+  }, [filteredAndSortedLots, currentPage, itemsPerPage]);
+
 
   const handleSortChange = (newSortBy: string) => {
     setSortBy(newSortBy);
     setCurrentPage(1);
-    setVisibleItemCount(platformSettings.searchLoadMoreCount || 12);
   };
   const handlePageChange = (newPage: number) => setCurrentPage(newPage);
-  const handleLoadMore = () => setVisibleItemCount(prev => Math.min(prev + (platformSettings.searchLoadMoreCount || 12), filteredAndSortedLots.length));
+  const handleItemsPerPageChange = (newSize: number) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1);
+  };
+  
 
   const renderGridItem = (lot: Lot) => <LotCard lot={lot} auction={auction} platformSettings={platformSettings} />;
   const renderListItem = (lot: Lot) => <LotListItem lot={lot} auction={auction} platformSettings={platformSettings} />;
@@ -339,9 +338,9 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
               searchTypeLabel="lotes"
               emptyStateMessage={`Nenhum lote encontrado para o leilão "${auction.title}" com os filtros aplicados.`}
               currentPage={currentPage}
-              visibleItemCount={visibleItemCount}
+              itemsPerPage={itemsPerPage}
               onPageChange={handlePageChange}
-              onLoadMore={handleLoadMore}
+              onItemsPerPageChange={handleItemsPerPageChange}
           />
          </main>
       </div>

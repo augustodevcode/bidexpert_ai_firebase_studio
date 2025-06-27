@@ -87,7 +87,7 @@ export default function SellerDetailsPage() {
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [lotSortBy, setLotSortBy] = useState<string>('endDate_asc');
   const [currentLotPage, setCurrentLotPage] = useState(1);
-  const [visibleLotCount, setVisibleLotCount] = useState(6);
+  const [lotItemsPerPage, setLotItemsPerPage] = useState(6);
 
   useEffect(() => {
     async function fetchSellerDetails() {
@@ -102,6 +102,7 @@ export default function SellerDetailsPage() {
               getPlatformSettings()
           ]);
           setPlatformSettings(settings);
+          setLotItemsPerPage(settings.searchItemsPerPage || 6);
 
           if (!foundSeller) {
             setError(`Comitente com slug/publicId "${sellerIdSlug}" não encontrado.`);
@@ -118,7 +119,6 @@ export default function SellerDetailsPage() {
           setRelatedLots(lotsFromThisSeller);
 
           setCurrentLotPage(1);
-          setVisibleLotCount(settings?.searchLoadMoreCount || 6);
         } catch (e) {
           console.error("Error fetching seller data:", e);
           setError("Erro ao carregar dados do comitente.");
@@ -154,29 +154,27 @@ export default function SellerDetailsPage() {
       }
     });
   }, [relatedLots, lotSortBy]);
-
+  
   const paginatedLots = useMemo(() => {
-    if (platformSettings?.searchPaginationType === 'numberedPages') {
-      const startIndex = (currentLotPage - 1) * (platformSettings?.searchItemsPerPage || 6);
-      const endIndex = startIndex + (platformSettings?.searchItemsPerPage || 6);
-      return sortedLots.slice(startIndex, endIndex);
-    }
-    return sortedLots.slice(0, visibleLotCount);
-  }, [sortedLots, currentLotPage, visibleLotCount, platformSettings]);
+    if (!platformSettings) return [];
+    const startIndex = (currentLotPage - 1) * lotItemsPerPage;
+    const endIndex = startIndex + lotItemsPerPage;
+    return sortedLots.slice(startIndex, endIndex);
+  }, [sortedLots, currentLotPage, lotItemsPerPage, platformSettings]);
 
   const handleLotSortChange = (newSortBy: string) => {
     setLotSortBy(newSortBy);
     setCurrentLotPage(1);
-    setVisibleLotCount(platformSettings?.searchLoadMoreCount || 6);
   };
 
   const handleLotPageChange = (newPage: number) => {
     setCurrentLotPage(newPage);
   };
 
-  const handleLoadMoreLots = () => {
-    setVisibleLotCount(prev => Math.min(prev + (platformSettings?.searchLoadMoreCount || 6), sortedLots.length));
-  };
+  const handleLotItemsPerPageChange = (newSize: number) => {
+      setLotItemsPerPage(newSize);
+      setCurrentLotPage(1);
+  }
   
   const renderLotGridItemForSellerPage = (lot: Lot) => <LotCard key={lot.id} lot={lot} platformSettings={platformSettings!} auction={relatedAuctions.find(a => a.id === lot.auctionId)} />;
   const renderLotListItemForSellerPage = (lot: Lot) => <LotListItem key={lot.id} lot={lot} platformSettings={platformSettings!} auction={relatedAuctions.find(a => a.id === lot.auctionId)} />;
@@ -293,9 +291,9 @@ export default function SellerDetailsPage() {
                 isLoading={isLoading}
                 searchTypeLabel="lotes"
                 currentPage={currentLotPage}
-                visibleItemCount={visibleLotCount}
+                itemsPerPage={lotItemsPerPage}
                 onPageChange={handleLotPageChange}
-                onLoadMore={handleLoadMoreLots}
+                onItemsPerPageChange={handleLotItemsPerPageChange}
             />
           </section>
         )}
@@ -307,5 +305,3 @@ export default function SellerDetailsPage() {
     </TooltipProvider>
   );
 }
-
-    

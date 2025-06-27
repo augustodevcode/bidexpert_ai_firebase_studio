@@ -86,7 +86,7 @@ const initialFiltersState: ActiveFilters & { offerType?: DirectSaleOfferType | '
 export default function SearchPage() {
   const router = useRouter();
   const searchParamsHook = useSearchParams();
-
+  
   // State for fetched data
   const [allData, setAllData] = useState<{
       allAuctions: Auction[];
@@ -106,13 +106,9 @@ export default function SearchPage() {
   const [sortByState, setSortByState] = useState<string>('relevance');
   
   const [isLoading, setIsLoading] = useState(true);
-  
-  const searchItemsPerPage = allData?.platformSettings?.searchItemsPerPage || 12;
-  const searchLoadMoreCount = allData?.platformSettings?.searchLoadMoreCount || 12;
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [visibleItemCount, setVisibleItemCount] = useState(searchLoadMoreCount);
-
+  const [itemsPerPage, setItemsPerPage] = useState(12);
 
   useEffect(() => {
     async function fetchData() {
@@ -136,6 +132,8 @@ export default function SearchPage() {
                 else if ('cityName' in item && 'stateUf' in item && item.cityName && item.stateUf) locations.add(`${item.cityName} - ${item.stateUf}`);
             });
             const sellerNames = new Set(sellers.map(s => s.name));
+            
+            setItemsPerPage(platformSettings.searchItemsPerPage || 12);
 
             setAllData({
               allAuctions: auctions,
@@ -206,8 +204,8 @@ export default function SearchPage() {
     }
     setCurrentSearchType(newSearchType);
     setCurrentPage(1);
-    setVisibleItemCount(searchLoadMoreCount);
-  }, [searchParamsHook, searchLoadMoreCount]);
+    setItemsPerPage(allData?.platformSettings?.searchItemsPerPage || 12);
+  }, [searchParamsHook, allData]);
 
 
   const handleSearchTypeChange = (type: 'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos') => {
@@ -256,7 +254,6 @@ export default function SearchPage() {
     }
     router.push(`/search?${currentParams.toString()}`);
     setCurrentPage(1); 
-    setVisibleItemCount(searchLoadMoreCount);
   };
 
   const handleFilterReset = () => {
@@ -281,7 +278,6 @@ export default function SearchPage() {
     router.push(`/search?${currentParams.toString()}`);
     setIsFilterSheetOpen(false);
     setCurrentPage(1); 
-    setVisibleItemCount(searchLoadMoreCount);
   };
 
   const filteredAndSortedItems = useMemo(() => {
@@ -379,28 +375,26 @@ export default function SearchPage() {
 
   const paginatedItems = useMemo(() => {
     if (!allData) return [];
-    if (allData.platformSettings?.searchPaginationType === 'numberedPages') {
-      const startIndex = (currentPage - 1) * searchItemsPerPage;
-      const endIndex = startIndex + searchItemsPerPage;
-      return filteredAndSortedItems.slice(startIndex, endIndex);
-    } else { 
-      return filteredAndSortedItems.slice(0, visibleItemCount);
-    }
-  }, [filteredAndSortedItems, allData, currentPage, searchItemsPerPage, visibleItemCount]);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredAndSortedItems.slice(startIndex, endIndex);
+  }, [filteredAndSortedItems, allData, currentPage, itemsPerPage]);
 
-
-  const handleLoadMore = () => {
-    setVisibleItemCount(prev => Math.min(prev + searchLoadMoreCount, filteredAndSortedItems.length));
-  };
 
   const handlePageChange = (newPage: number) => {
     if (!allData) return;
-    const totalPages = searchItemsPerPage > 0 ? Math.ceil(filteredAndSortedItems.length / searchItemsPerPage) : 1;
+    const totalPages = itemsPerPage > 0 ? Math.ceil(filteredAndSortedItems.length / itemsPerPage) : 1;
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
-       window.scrollTo(0, 0);
+      window.scrollTo(0, 0);
     }
   };
+  
+  const handleItemsPerPageChange = (newSize: number) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1);
+  };
+
 
   const currentSortOptions =
     currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? sortOptionsAuctions :
@@ -420,7 +414,6 @@ export default function SearchPage() {
     }
     router.push(`/search?${currentParams.toString()}`);
     setCurrentPage(1); 
-    setVisibleItemCount(searchLoadMoreCount);
   };
 
   const renderGridItem = (item: any, index: number): React.ReactNode => {
@@ -553,9 +546,9 @@ export default function SearchPage() {
               isLoading={isLoading}
               searchTypeLabel={getSearchTypeLabel()}
               currentPage={currentPage}
-              visibleItemCount={visibleItemCount}
+              itemsPerPage={itemsPerPage}
               onPageChange={handlePageChange}
-              onLoadMore={handleLoadMore}
+              onItemsPerPageChange={handleItemsPerPageChange}
             />
             </Tabs>
         </main>
@@ -563,5 +556,3 @@ export default function SearchPage() {
     </div>
   );
 }
-
-
