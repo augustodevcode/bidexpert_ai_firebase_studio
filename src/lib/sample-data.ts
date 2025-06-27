@@ -326,5 +326,23 @@ export const sampleDirectSaleOffers: DirectSaleOffer[] = generatedDirectSales;
 export const sampleLotQuestions: LotQuestion[] = generatedQuestions;
 export const sampleLotReviews: Review[] = generatedReviews;
 export const sampleUserLotMaxBids: UserLotMaxBid[] = [];
-export const sampleUserProfiles: UserProfileWithPermissions[] = [];
+export const sampleUserProfiles: UserProfileWithPermissions[] = [
+  {
+    uid: 'admin-bidexpert-platform-001',
+    email: 'admin@bidexpert.com.br',
+    fullName: 'Administrador BidExpert',
+    password: '@dmin2025',
+    roleId: 'role-admin',
+    roleName: 'ADMINISTRATOR',
+    permissions: ['manage_all'],
+    status: 'ATIVO',
+    habilitationStatus: 'HABILITADO',
+    cpf: '000.000.000-00',
+    cellPhone: '(11) 99999-9999',
+    dateOfBirth: new Date('1990-01-01T00:00:00Z'),
+    createdAt: new Date('2023-01-01T12:00:00Z'),
+    updatedAt: new Date(),
+    accountType: 'PHYSICAL',
+  }
+];
 export { sampleBids };
