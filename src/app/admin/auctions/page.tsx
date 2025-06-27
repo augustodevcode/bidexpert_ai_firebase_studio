@@ -1,3 +1,4 @@
+
 // src/app/admin/auctions/page.tsx
 'use client';
 
@@ -18,38 +19,52 @@ export default function AdminAuctionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-
-  const fetchAuctions = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const fetchedAuctions = await getAuctions();
-      setAuctions(fetchedAuctions);
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar leilões.";
-      console.error("Error fetching auctions:", e);
-      setError(errorMessage);
-      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
+    let isMounted = true;
+    
+    const fetchAuctions = async () => {
+      if (!isMounted) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        const fetchedAuctions = await getAuctions();
+        if (isMounted) {
+          setAuctions(fetchedAuctions);
+        }
+      } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar leilões.";
+        console.error("Error fetching auctions:", e);
+        if (isMounted) {
+          setError(errorMessage);
+          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+    
     fetchAuctions();
-  }, [fetchAuctions]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [toast, refetchTrigger]);
 
   const handleDelete = useCallback(
     async (id: string) => {
       const result = await deleteAuction(id);
       if (result.success) {
         toast({ title: "Sucesso!", description: result.message });
-        fetchAuctions();
+        setRefetchTrigger(c => c + 1);
       } else {
         toast({ title: 'Erro ao Excluir', description: result.message, variant: 'destructive' });
       }
     },
-    [fetchAuctions, toast]
+    [toast]
   );
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);

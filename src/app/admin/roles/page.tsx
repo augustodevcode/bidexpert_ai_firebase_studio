@@ -1,3 +1,4 @@
+
 // src/app/admin/roles/page.tsx
 'use client';
 
@@ -17,38 +18,52 @@ export default function AdminRolesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-
-  const fetchRoles = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const fetchedRoles = await getRoles();
-      setRoles(fetchedRoles);
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar perfis.";
-      console.error("Error fetching roles:", e);
-      setError(errorMessage);
-      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
+    let isMounted = true;
+    
+    const fetchRoles = async () => {
+      if (!isMounted) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        const fetchedRoles = await getRoles();
+        if (isMounted) {
+          setRoles(fetchedRoles);
+        }
+      } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar perfis.";
+        console.error("Error fetching roles:", e);
+        if (isMounted) {
+          setError(errorMessage);
+          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+    
     fetchRoles();
-  }, [fetchRoles]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [toast, refetchTrigger]);
 
   const handleDelete = useCallback(
     async (id: string) => {
       const result = await deleteRole(id);
       if (result.success) {
         toast({ title: 'Sucesso!', description: result.message });
-        fetchRoles();
+        setRefetchTrigger(c => c + 1);
       } else {
         toast({ title: 'Erro ao Excluir', description: result.message, variant: 'destructive' });
       }
     },
-    [fetchRoles, toast]
+    [toast]
   );
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);

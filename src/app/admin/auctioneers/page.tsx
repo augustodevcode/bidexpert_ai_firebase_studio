@@ -1,3 +1,4 @@
+
 // src/app/admin/auctioneers/page.tsx
 'use client';
 
@@ -17,38 +18,52 @@ export default function AdminAuctioneersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-
-  const fetchAuctioneers = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const fetchedAuctioneers = await getAuctioneers();
-      setAuctioneers(fetchedAuctioneers);
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar leiloeiros.";
-      console.error("Error fetching auctioneers:", e);
-      setError(errorMessage);
-      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
+    let isMounted = true;
+    
+    const fetchAuctioneers = async () => {
+      if (!isMounted) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        const fetchedAuctioneers = await getAuctioneers();
+        if (isMounted) {
+          setAuctioneers(fetchedAuctioneers);
+        }
+      } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar leiloeiros.";
+        console.error("Error fetching auctioneers:", e);
+        if (isMounted) {
+          setError(errorMessage);
+          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
     fetchAuctioneers();
-  }, [fetchAuctioneers]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [toast, refetchTrigger]);
 
   const handleDelete = useCallback(
     async (id: string) => {
       const result = await deleteAuctioneer(id);
       if (result.success) {
         toast({ title: "Sucesso", description: result.message });
-        fetchAuctioneers();
+        setRefetchTrigger(c => c + 1);
       } else {
         toast({ title: "Erro", description: result.message, variant: "destructive" });
       }
     },
-    [fetchAuctioneers, toast]
+    [toast]
   );
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);

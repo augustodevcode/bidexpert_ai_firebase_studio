@@ -1,3 +1,4 @@
+
 // src/app/admin/categories/page.tsx
 'use client';
 
@@ -17,38 +18,52 @@ export default function AdminCategoriesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-
-  const fetchCategories = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const fetchedCategories = await getLotCategories();
-      setCategories(fetchedCategories);
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar categorias.";
-      console.error("Error fetching categories:", e);
-      setError(errorMessage);
-      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
+    let isMounted = true;
+    
+    const fetchCategories = async () => {
+      if (!isMounted) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        const fetchedCategories = await getLotCategories();
+        if (isMounted) {
+          setCategories(fetchedCategories);
+        }
+      } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar categorias.";
+        console.error("Error fetching categories:", e);
+        if (isMounted) {
+          setError(errorMessage);
+          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+    
     fetchCategories();
-  }, [fetchCategories]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [toast, refetchTrigger]);
 
   const handleDelete = useCallback(
     async (id: string) => {
       const result = await deleteLotCategory(id);
       if (result.success) {
         toast({ title: "Sucesso", description: result.message });
-        fetchCategories();
+        setRefetchTrigger(c => c + 1);
       } else {
         toast({ title: "Erro", description: result.message, variant: "destructive" });
       }
     },
-    [fetchCategories, toast]
+    [toast]
   );
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);

@@ -1,3 +1,4 @@
+
 // src/app/admin/states/page.tsx
 'use client';
 
@@ -18,38 +19,52 @@ export default function AdminStatesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-
-  const fetchStates = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const fetchedStates = await getStates();
-      setStates(fetchedStates);
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar estados.";
-      console.error("Error fetching states:", e);
-      setError(errorMessage);
-      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
+    let isMounted = true;
+    
+    const fetchStates = async () => {
+      if (!isMounted) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        const fetchedStates = await getStates();
+        if (isMounted) {
+          setStates(fetchedStates);
+        }
+      } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar estados.";
+        console.error("Error fetching states:", e);
+        if (isMounted) {
+          setError(errorMessage);
+          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
     fetchStates();
-  }, [fetchStates]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [toast, refetchTrigger]);
 
   const handleDelete = useCallback(
     async (id: string) => {
       const result = await deleteState(id);
       if (result.success) {
         toast({ title: "Sucesso!", description: result.message });
-        fetchStates();
+        setRefetchTrigger(c => c + 1);
       } else {
         toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
       }
     },
-    [fetchStates, toast]
+    [toast]
   );
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);

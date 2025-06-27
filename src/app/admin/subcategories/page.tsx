@@ -1,3 +1,4 @@
+
 // src/app/admin/subcategories/page.tsx
 'use client';
 
@@ -21,56 +22,71 @@ export default function AdminSubcategoriesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-  const fetchPageData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const fetchedCategories = await getLotCategories();
-      setAllParentCategories(fetchedCategories);
-      if (fetchedCategories.length > 0 && !selectedParentCategoryId) {
-        const firstCatId = fetchedCategories[0].id;
-        setSelectedParentCategoryId(firstCatId);
+  useEffect(() => {
+    let isMounted = true;
+    const fetchPageData = async () => {
+      if (!isMounted) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        const fetchedCategories = await getLotCategories();
+        if (isMounted) {
+          setAllParentCategories(fetchedCategories);
+          if (fetchedCategories.length > 0 && !selectedParentCategoryId) {
+            setSelectedParentCategoryId(fetchedCategories[0].id);
+          }
+        }
+      } catch (e) {
+        console.error("Error fetching parent categories:", e);
+        if (isMounted) {
+          setError("Falha ao buscar categorias principais.");
+          toast({ title: "Erro", description: "Falha ao buscar categorias principais.", variant: "destructive" });
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
-    } catch (e) {
-      console.error("Error fetching parent categories:", e);
-      setError("Falha ao buscar categorias principais.");
-      toast({ title: "Erro", description: "Falha ao buscar categorias principais.", variant: "destructive" });
-    } finally {
-        setIsLoading(false);
-    }
-  }, [toast, selectedParentCategoryId]);
-
-
-  useEffect(() => {
+    };
     fetchPageData();
-  }, [fetchPageData]);
-
+    return () => { isMounted = false; };
+  }, [toast, refetchTrigger, selectedParentCategoryId]);
 
   useEffect(() => {
+    let isMounted = true;
     async function fetchSubcategories() {
         if (!selectedParentCategoryId) {
             setSubcategories([]);
             return;
         }
+        if (!isMounted) return;
         setIsLoading(true);
         setError(null);
         try {
             const fetchedSubcategories = await getSubcategoriesByParentIdAction(selectedParentCategoryId);
             const parentName = allParentCategories.find(c => c.id === selectedParentCategoryId)?.name || '';
-            setSubcategories(fetchedSubcategories.map(s => ({...s, parentCategoryName: parentName})));
+            if (isMounted) {
+              setSubcategories(fetchedSubcategories.map(s => ({...s, parentCategoryName: parentName})));
+            }
         } catch (e) {
             console.error(`Error fetching subcategories for ${selectedParentCategoryId}:`, e);
-            setError("Falha ao buscar subcategorias.");
-            toast({ title: "Erro", description: "Falha ao buscar subcategorias.", variant: "destructive" });
-            setSubcategories([]);
+            if(isMounted) {
+              setError("Falha ao buscar subcategorias.");
+              toast({ title: "Erro", description: "Falha ao buscar subcategorias.", variant: "destructive" });
+              setSubcategories([]);
+            }
         } finally {
-            setIsLoading(false);
+            if(isMounted) {
+              setIsLoading(false);
+            }
         }
     }
     if (allParentCategories.length > 0) {
       fetchSubcategories();
     }
+    return () => { isMounted = false; };
   }, [selectedParentCategoryId, toast, allParentCategories]);
 
 
@@ -79,16 +95,12 @@ export default function AdminSubcategoriesPage() {
       const result = await deleteSubcategoryAction(id);
       if (result.success) {
         toast({ title: "Sucesso", description: result.message });
-        if(selectedParentCategoryId) {
-            const fetchedSubcategories = await getSubcategoriesByParentIdAction(selectedParentCategoryId);
-            const parentName = allParentCategories.find(c => c.id === selectedParentCategoryId)?.name || '';
-            setSubcategories(fetchedSubcategories.map(s => ({...s, parentCategoryName: parentName})));
-        }
+        setRefetchTrigger(c => c + 1);
       } else {
         toast({ title: "Erro", description: result.message, variant: "destructive" });
       }
     },
-    [selectedParentCategoryId, toast, allParentCategories]
+    [toast]
   );
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);

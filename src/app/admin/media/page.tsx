@@ -1,3 +1,4 @@
+
 // src/app/admin/media/page.tsx
 'use client';
 
@@ -18,41 +19,55 @@ export default function MediaLibraryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
   
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MediaItem | null>(null);
 
-  const fetchItems = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const items = await getMediaItems();
-      setMediaItems(items);
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar itens de mídia.";
-      console.error("Error fetching media items:", e);
-      setError(errorMessage);
-      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-
   useEffect(() => {
+    let isMounted = true;
+    
+    const fetchItems = async () => {
+      if (!isMounted) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        const items = await getMediaItems();
+        if (isMounted) {
+          setMediaItems(items);
+        }
+      } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar itens de mídia.";
+        console.error("Error fetching media items:", e);
+        if (isMounted) {
+          setError(errorMessage);
+          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
     fetchItems();
-  }, [fetchItems]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [toast, refetchTrigger]);
 
   const handleDelete = useCallback(
     async (id: string) => {
       const result = await deleteMediaItem(id);
       if (result.success) {
         toast({ title: "Sucesso", description: result.message });
-        fetchItems();
+        setRefetchTrigger(c => c + 1);
       } else {
         toast({ title: "Erro", description: result.message, variant: "destructive" });
       }
     },
-    [fetchItems, toast]
+    [toast]
   );
   
   const handleEdit = (item: MediaItem) => {
@@ -66,7 +81,7 @@ export default function MediaLibraryPage() {
       toast({ title: 'Sucesso', description: 'Metadados atualizados.'});
       setIsEditDialogOpen(false);
       setEditingItem(null);
-      fetchItems();
+      setRefetchTrigger(c => c + 1);
     } else {
       toast({ title: 'Erro', description: result.message, variant: 'destructive'});
     }

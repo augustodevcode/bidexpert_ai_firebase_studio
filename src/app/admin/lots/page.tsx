@@ -1,3 +1,4 @@
+
 // src/app/admin/lots/page.tsx
 'use client';
 
@@ -18,38 +19,52 @@ export default function AdminLotsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-
-  const fetchLots = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const fetchedLots = await getLots();
-      setLots(fetchedLots);
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar lotes.";
-      console.error("Error fetching lots:", e);
-      setError(errorMessage);
-      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
+    let isMounted = true;
+    
+    const fetchLots = async () => {
+      if (!isMounted) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        const fetchedLots = await getLots();
+        if (isMounted) {
+          setLots(fetchedLots);
+        }
+      } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar lotes.";
+        console.error("Error fetching lots:", e);
+        if (isMounted) {
+          setError(errorMessage);
+          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+    
     fetchLots();
-  }, [fetchLots]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [toast, refetchTrigger]);
 
   const handleDelete = useCallback(
     async (id: string, auctionId?: string) => {
       const result = await deleteLot(id, auctionId);
       if (result.success) {
         toast({ title: "Sucesso", description: result.message });
-        fetchLots();
+        setRefetchTrigger(c => c + 1);
       } else {
         toast({ title: "Erro", description: result.message, variant: "destructive" });
       }
     },
-    [fetchLots, toast]
+    [toast]
   );
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
