@@ -1,8 +1,7 @@
-
 // scripts/setup-admin-user.ts
-import dotenv from 'dotenv';
-import path from 'path';
-import fs from 'fs';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+import * as fs from 'fs';
 import { getDatabaseAdapter } from '../lib/database/index';
 
 // ============================================================================
@@ -17,8 +16,9 @@ const ADMIN_UID_FOR_SQL = 'admin-bidexpert-platform-001';
 // ============================================================================
 
 async function setupAdminUser() {
-    const activeSystem = process.env.ACTIVE_DATABASE_SYSTEM?.toUpperCase() || 'MYSQL';
-    console.log(`[Admin Script] Configurando usuário ${ADMIN_EMAIL} como ${ADMIN_TARGET_ROLE_NAME} para sistema: ${activeSystem}`);
+    // A fonte da verdade para o sistema ativo é o `getDatabaseAdapter`. Não definimos um default aqui.
+    const envSystem = process.env.ACTIVE_DATABASE_SYSTEM?.toUpperCase();
+    console.log(`[Admin Script] Configurando usuário ${ADMIN_EMAIL} como ${ADMIN_TARGET_ROLE_NAME}. Sistema de DB (do .env): ${envSystem || 'Não definido, usará default do adapter'}`);
 
     try {
         const dbAdapter = await getDatabaseAdapter();
@@ -37,10 +37,11 @@ async function setupAdminUser() {
         }
 
         // 2. Criar ou atualizar o usuário administrador no banco de dados.
-        console.log(`[Admin Script] Garantindo perfil de usuário no banco de dados para UID: ${ADMIN_UID_FOR_SQL}, Email: ${ADMIN_EMAIL}, Role: ${ADMIN_TARGET_ROLE_NAME}`);
+        const uidToUse = envSystem === 'FIRESTORE' ? `auth-uid-placeholder-for-${ADMIN_EMAIL}` : ADMIN_UID_FOR_SQL;
+        console.log(`[Admin Script] Garantindo perfil de usuário no banco de dados para UID: ${uidToUse}, Email: ${ADMIN_EMAIL}, Role: ${ADMIN_TARGET_ROLE_NAME}`);
         
         const profileResult = await dbAdapter.ensureUserRole(
-            ADMIN_UID_FOR_SQL,
+            uidToUse,
             ADMIN_EMAIL,
             ADMIN_FULL_NAME,
             ADMIN_TARGET_ROLE_NAME, 
@@ -51,7 +52,7 @@ async function setupAdminUser() {
         );
 
         if (profileResult.success) {
-            console.log(`[Admin Script] Perfil para ${ADMIN_EMAIL} (UID: ${ADMIN_UID_FOR_SQL}) configurado com sucesso no banco de dados com o perfil ${ADMIN_TARGET_ROLE_NAME}.`);
+            console.log(`[Admin Script] Perfil para ${ADMIN_EMAIL} (UID: ${uidToUse}) configurado com sucesso no banco de dados com o perfil ${ADMIN_TARGET_ROLE_NAME}.`);
         } else {
             console.error(`[Admin Script] Falha ao configurar perfil no banco de dados para ${ADMIN_EMAIL}: ${profileResult.message}`);
         }

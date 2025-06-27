@@ -1,8 +1,8 @@
 // src/lib/database/firestore.adapter.ts
-import type { 
-  Firestore, 
-  FieldValue as FirebaseAdminFieldValueType, 
-  Timestamp as FirebaseAdminTimestampType 
+import { 
+  type Firestore, 
+  FieldValue, 
+  Timestamp
 } from 'firebase-admin/firestore';
 
 import type { 
@@ -37,8 +37,8 @@ import { format } from 'date-fns';
 import { samplePlatformSettings } from '@/lib/sample-data';
 
 
-const AdminFieldValue = FirebaseAdminFieldValueType;
-const ServerTimestamp = FirebaseAdminTimestampType;
+const AdminFieldValue = FieldValue;
+const ServerTimestamp = Timestamp;
 
 function safeConvertToDate(timestampField: any): Date {
   if (!timestampField) return new Date(); 
@@ -718,7 +718,6 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     // This placeholder will assume the update is on a top-level 'questions' collection if lotId is not accessible here.
     // IDEALLY: you'd pass lotId to this adapter method or the question document contains lotId.
     // For this example, let's assume questionId is the full path segment or we can't implement this fully here.
-    // This will likely fail if questionId is just the ID and not a path.
     
     // Let's refine this: The action should pass the lotId to locate the question.
     // This function signature in the interface should be:
@@ -843,7 +842,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
         updateData.permissions = AdminFieldValue.delete();
       }
       await this.db.collection('users').doc(userId).update(updateData);
-      return { success: true, message: 'Perfil atualizado!'};
+      return { success: true, message: 'Perfil do usuário atualizado!'};
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> {
@@ -969,7 +968,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       }
       await batch.commit();
       return { success: true, message: 'Perfis padrão verificados/criados (Firestore).', rolesProcessed: rolesProcessedCount };
-    } catch (e: any) { return { success: false, message: e.message, rolesProcessed }; }
+    } catch (e: any) { return { success: false, message: e.message, rolesProcessed: rolesProcessedCount }; }
   }
   
   // --- Media Items ---
@@ -1023,8 +1022,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
         return { success: true, message: 'Mídias vinculadas.'};
     } catch (e: any) { return { success: false, message: e.message }; }
   }
-  async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> {
-    const batch = this.db.batch();
+  async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> { const batch = this.db.batch();
     try {
         const lotRef = this.db.collection('lots').doc(lotId);
         batch.update(lotRef, { mediaItemIds: AdminFieldValue.arrayRemove(mediaItemId), updatedAt: AdminFieldValue.serverTimestamp() });
