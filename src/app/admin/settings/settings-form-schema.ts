@@ -17,6 +17,12 @@ const variableIncrementRuleSchema = z.object({
   increment: z.coerce.number().positive("O incremento deve ser positivo."),
 });
 
+const biddingSettingsSchema = z.object({
+  instantBiddingEnabled: z.boolean().optional().default(true),
+  getBidInfoInstantly: z.boolean().optional().default(true),
+  biddingInfoCheckIntervalSeconds: z.coerce.number().min(1, "O intervalo deve ser de no mínimo 1 segundo.").max(60, "O intervalo não pode ser maior que 60 segundos.").optional().default(1),
+}).optional();
+
 export const platformSettingsFormSchema = z.object({
   siteTitle: z.string().min(3, { message: "O título do site deve ter pelo menos 3 caracteres."}).max(100, { message: "O título do site não pode exceder 100 caracteres."}).optional(),
   siteTagline: z.string().max(200, { message: "O tagline não pode exceder 200 caracteres."}).optional(),
@@ -56,6 +62,7 @@ export const platformSettingsFormSchema = z.object({
   showRelatedLotsOnLotDetail: z.boolean().optional().default(true),
   relatedLotsCount: z.coerce.number().min(1, {message: "Deve ser pelo menos 1."}).max(20, {message: "Não pode exceder 20."}).optional().default(5),
   variableIncrementTable: z.array(variableIncrementRuleSchema).optional().default([]),
+  biddingSettings: biddingSettingsSchema,
 }).refine(data => {
   const table = data.variableIncrementTable;
   if (!table || table.length === 0) return true;

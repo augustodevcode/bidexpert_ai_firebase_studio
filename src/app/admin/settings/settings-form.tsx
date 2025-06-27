@@ -18,8 +18,8 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { platformSettingsFormSchema, type PlatformSettingsFormValues } from './settings-form-schema';
-import type { PlatformSettings, MapSettings, SearchPaginationType, StorageProviderType, VariableIncrementRule } from '@/types';
-import { Loader2, Save, Palette, Fingerprint, Wrench, MapPin as MapIcon, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database, PlusCircle, Trash2, ArrowUpDown } from 'lucide-react';
+import type { PlatformSettings, MapSettings, SearchPaginationType, StorageProviderType, VariableIncrementRule, BiddingSettings } from '@/types';
+import { Loader2, Save, Palette, Fingerprint, Wrench, MapPin as MapIcon, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database, PlusCircle, Trash2, ArrowUpDown, Zap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea'; 
@@ -41,6 +41,12 @@ const defaultMapSettings: MapSettings = {
     staticImageMapMarkerColor: 'blue',
 };
 
+const defaultBiddingSettings: BiddingSettings = {
+  instantBiddingEnabled: true,
+  getBidInfoInstantly: true,
+  biddingInfoCheckIntervalSeconds: 1,
+};
+
 
 export default function SettingsForm({ initialData, activeSection, onUpdateSuccess }: SettingsFormProps) {
   const { toast } = useToast();
@@ -59,6 +65,7 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
       themes: initialData?.themes || [],
       platformPublicIdMasks: initialData?.platformPublicIdMasks || { auctions: '', lots: '', auctioneers: '', sellers: ''},
       mapSettings: initialData?.mapSettings || defaultMapSettings,
+      biddingSettings: initialData?.biddingSettings || defaultBiddingSettings,
       searchPaginationType: initialData?.searchPaginationType || 'loadMore',
       searchItemsPerPage: initialData?.searchItemsPerPage || 12,
       searchLoadMoreCount: initialData?.searchLoadMoreCount || 12,
@@ -86,6 +93,7 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
         themes: initialData?.themes || [],
         platformPublicIdMasks: initialData?.platformPublicIdMasks || { auctions: '', lots: '', auctioneers: '', sellers: ''},
         mapSettings: initialData?.mapSettings || defaultMapSettings,
+        biddingSettings: initialData?.biddingSettings || defaultBiddingSettings,
         searchPaginationType: initialData?.searchPaginationType || 'loadMore',
         searchItemsPerPage: initialData?.searchItemsPerPage || 12,
         searchLoadMoreCount: initialData?.searchLoadMoreCount || 12,
@@ -106,6 +114,7 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
         ...values,
         platformPublicIdMasks: values.platformPublicIdMasks || {},
         mapSettings: values.mapSettings || defaultMapSettings,
+        biddingSettings: values.biddingSettings || defaultBiddingSettings,
         variableIncrementTable: values.variableIncrementTable || [],
       };
       const result = await updatePlatformSettings(dataToSubmit);
@@ -416,6 +425,51 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
                 A seção de Temas de Cores está em desenvolvimento.
               </p>
             </div>
+          </section>
+        )}
+
+        {activeSection === 'bidding' && (
+          <section className="space-y-6">
+            <FormField
+              control={form.control}
+              name="biddingSettings.instantBiddingEnabled"
+              render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                          <FormLabel>Ativar Lances Instantâneos (AJAX)</FormLabel>
+                          <FormDescription>Permite que os lances sejam enviados sem recarregar a página.</FormDescription>
+                      </div>
+                      <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                  </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="biddingSettings.getBidInfoInstantly"
+              render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                          <FormLabel>Atualizar Informações de Lance Instantaneamente</FormLabel>
+                          <FormDescription>Busca por novos lances de outros usuários em tempo real (polling).</FormDescription>
+                      </div>
+                      <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                  </FormItem>
+              )}
+            />
+            {form.watch('biddingSettings.getBidInfoInstantly') && (
+              <FormField
+                control={form.control}
+                name="biddingSettings.biddingInfoCheckIntervalSeconds"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Verificar Novos Lances a Cada (Segundos)</FormLabel>
+                    <FormControl><Input type="number" min="1" max="60" {...field} value={field.value ?? 1} onChange={e => field.onChange(parseInt(e.target.value, 10))} /></FormControl>
+                    <FormDescription>Intervalo para verificar novos lances. Valores muito baixos podem sobrecarregar o servidor.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </section>
         )}
 

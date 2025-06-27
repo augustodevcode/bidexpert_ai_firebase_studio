@@ -654,6 +654,12 @@ export type SearchPaginationType = 'loadMore' | 'numberedPages';
 
 export type StorageProviderType = 'local' | 'firebase';
 
+export interface BiddingSettings {
+  instantBiddingEnabled?: boolean;
+  getBidInfoInstantly?: boolean;
+  biddingInfoCheckIntervalSeconds?: number;
+}
+
 export interface PlatformSettings {
   id: 'global'; 
   siteTitle?: string;
@@ -673,6 +679,7 @@ export interface PlatformSettings {
   mentalTriggerSettings?: MentalTriggerSettings;
   sectionBadgeVisibility?: SectionBadgeConfig;
   mapSettings?: MapSettings;
+  biddingSettings?: BiddingSettings;
   
   searchPaginationType?: SearchPaginationType;
   searchItemsPerPage?: number;
@@ -698,6 +705,7 @@ export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'
     mentalTriggerSettings?: MentalTriggerSettings;
     sectionBadgeVisibility?: SectionBadgeConfig;
     mapSettings?: MapSettings;
+    biddingSettings?: BiddingSettings;
     searchPaginationType?: SearchPaginationType;
     searchItemsPerPage?: number;
     searchLoadMoreCount?: number;
