@@ -24,7 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
 import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem } from '@/types';
-import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown } from 'lucide-react';
+import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -34,6 +34,7 @@ import { Separator } from '@/components/ui/separator';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 interface AuctionFormProps {
@@ -111,12 +112,25 @@ export default function AuctionForm({
       decrementAmount: initialData?.decrementAmount || undefined,
       decrementIntervalSeconds: initialData?.decrementIntervalSeconds || undefined,
       floorPrice: initialData?.floorPrice || undefined,
+      autoRelistSettings: initialData?.autoRelistSettings || {
+        enableAutoRelist: false,
+        recurringAutoRelist: false,
+        relistIfWinnerNotPaid: false,
+        relistIfWinnerNotPaidAfterHours: 2,
+        relistIfNoBids: false,
+        relistIfNoBidsAfterHours: 2,
+        relistIfReserveNotMet: false,
+        relistIfReserveNotMetAfterHours: 2,
+        relistDurationInHours: 150,
+      }
     },
   });
   
   const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
   const softCloseEnabled = useWatch({ control: form.control, name: 'softCloseEnabled' });
   const watchedAuctionType = useWatch({ control: form.control, name: 'auctionType' });
+  const watchedAutoRelist = useWatch({ control: form.control, name: 'autoRelistSettings' });
+
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -169,7 +183,13 @@ export default function AuctionForm({
   }
 
   return (
-    <>
+    <TooltipProvider>
+    <ChooseMediaDialog
+      isOpen={isMediaDialogOpen}
+      onOpenChange={setIsMediaDialogOpen}
+      onMediaSelect={handleMediaSelect}
+      allowMultiple={false}
+    />
     <Card className="max-w-3xl mx-auto shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><Gavel className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
@@ -674,6 +694,30 @@ export default function AuctionForm({
                 )}
             />
 
+            <Separator />
+            <h3 className="text-md font-semibold text-muted-foreground flex items-center"><Repeat className="h-4 w-4 mr-2"/> Configurações de Relançamento Automático</h3>
+            <FormField control={form.control} name="autoRelistSettings.enableAutoRelist" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Ativar Relançamento Automático</FormLabel><FormDescription>Permitir que leilões não vendidos sejam relançados automaticamente.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+            {watchedAutoRelist?.enableAutoRelist && (
+              <div className="space-y-4 p-4 border rounded-lg bg-secondary/30">
+                <FormField control={form.control} name="autoRelistSettings.recurringAutoRelist" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel>Relançamento Recorrente</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                <Separator />
+                <div className="space-y-3">
+                  <FormField control={form.control} name="autoRelistSettings.relistIfWinnerNotPaid" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel>Relançar se vencedor não pagar</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                  {watchedAutoRelist.relistIfWinnerNotPaid && (<FormField control={form.control} name="autoRelistSettings.relistIfWinnerNotPaidAfterHours" render={({ field }) => (<FormItem><FormLabel className="text-xs">Relançar após (horas)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />)}
+                </div>
+                <div className="space-y-3">
+                  <FormField control={form.control} name="autoRelistSettings.relistIfNoBids" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel>Relançar se não houver lances</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                  {watchedAutoRelist.relistIfNoBids && (<FormField control={form.control} name="autoRelistSettings.relistIfNoBidsAfterHours" render={({ field }) => (<FormItem><FormLabel className="text-xs">Relançar após (horas)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />)}
+                </div>
+                 <div className="space-y-3">
+                  <FormField control={form.control} name="autoRelistSettings.relistIfReserveNotMet" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel>Relançar se preço de reserva não for atingido</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                  {watchedAutoRelist.relistIfReserveNotMet && (<FormField control={form.control} name="autoRelistSettings.relistIfReserveNotMetAfterHours" render={({ field }) => (<FormItem><FormLabel className="text-xs">Relançar após (horas)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />)}
+                </div>
+                <Separator />
+                <FormField control={form.control} name="autoRelistSettings.relistDurationInHours" render={({ field }) => (<FormItem><FormLabel>Duração do Novo Leilão (em horas)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+              </div>
+            )}
+
 
           </CardContent>
           <CardFooter className="flex justify-end gap-2">
@@ -688,12 +732,6 @@ export default function AuctionForm({
         </form>
       </Form>
     </Card>
-    <ChooseMediaDialog
-      isOpen={isMediaDialogOpen}
-      onOpenChange={setIsMediaDialogOpen}
-      onMediaSelect={handleMediaSelect}
-      allowMultiple={false}
-    />
-    </>
+    </TooltipProvider>
   );
 }

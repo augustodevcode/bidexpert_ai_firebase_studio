@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -151,6 +152,18 @@ export interface AuctionStage {
 export type AuctionStatus = 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO' | 'RASCUNHO' | 'EM_PREPARACAO';
 export type LotStatus = 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'VENDIDO' | 'NAO_VENDIDO';
 
+export interface AutoRelistSettings {
+  enableAutoRelist?: boolean;
+  recurringAutoRelist?: boolean;
+  relistIfWinnerNotPaid?: boolean;
+  relistIfWinnerNotPaidAfterHours?: number | null;
+  relistIfNoBids?: boolean;
+  relistIfNoBidsAfterHours?: number | null;
+  relistIfReserveNotMet?: boolean;
+  relistIfReserveNotMetAfterHours?: number | null;
+  relistDurationInHours?: number | null;
+}
+
 export interface Auction {
   id: string;
   publicId: string;
@@ -201,6 +214,9 @@ export interface Auction {
   decrementAmount?: number;
   decrementIntervalSeconds?: number;
   floorPrice?: number;
+  autoRelistSettings?: AutoRelistSettings;
+  originalAuctionId?: string | null;
+  relistCount?: number;
 }
 
 export type AuctionFormData = Omit<Auction,
@@ -208,7 +224,7 @@ export type AuctionFormData = Omit<Auction,
   'lots' | 'totalLots' | 'visits' | 'isFavorite' |
   'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' |
   'categoryId' | 'auctioneerId' | 'sellerId' | 'achievedRevenue' | 'totalHabilitatedUsers' |
-  'latitude' | 'longitude' 
+  'latitude' | 'longitude' | 'originalAuctionId' | 'relistCount'
 > & {
   auctionDate: Date; 
   endDate?: Date | null; 
@@ -228,6 +244,8 @@ export type AuctionDbData = Omit<AuctionFormData, 'category' | 'auctioneer' | 's
   decrementAmount?: number | null;
   decrementIntervalSeconds?: number | null;
   floorPrice?: number | null;
+  originalAuctionId?: string | null;
+  relistCount?: number;
 };
 
 

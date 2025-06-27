@@ -1,3 +1,4 @@
+
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -269,6 +270,9 @@ function mapToAuction(row: QueryResultRow): Auction {
         totalHabilitatedUsers: Number(row.total_habilitated_users || 0),
         isFeaturedOnMarketplace: row.is_featured_on_marketplace,
         marketplaceAnnouncementTitle: row.marketplace_announcement_title,
+        autoRelistSettings: row.auto_relist_settings || {},
+        originalAuctionId: row.original_auction_id ? String(row.original_auction_id) : undefined,
+        relistCount: Number(row.relist_count || 0),
     };
 }
 

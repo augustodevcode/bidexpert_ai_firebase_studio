@@ -71,9 +71,9 @@ export const sampleSellers: SellerProfileInfo[] = [
 export const sampleLotCategories: LotCategory[] = [
   { id: 'cat-imoveis', name: 'Imóveis', slug: 'imoveis', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'cat-veiculos', name: 'Veículos', slug: 'veiculos', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'cat-maquinas-equipamentos', name: 'Máquinas e Equipamentos', slug: 'maquinas-e-equipamentos', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'cat-eletronicos-tecnologia', name: 'Eletrônicos e Tecnologia', slug: 'eletronicos-e-tecnologia', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'cat-arte-antiguidades', name: 'Arte e Antiguidades', slug: 'arte-e-antiguidades', hasSubcategories: false, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'cat-maquinas-e-equipamentos', name: 'Máquinas e Equipamentos', slug: 'maquinas-e-equipamentos', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'cat-eletronicos-e-tecnologia', name: 'Eletrônicos e Tecnologia', slug: 'eletronicos-e-tecnologia', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'cat-arte-e-antiguidades', name: 'Arte e Antiguidades', slug: 'arte-e-antiguidades', hasSubcategories: false, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'cat-bens-diversos', name: 'Bens Diversos', slug: 'bens-diversos', hasSubcategories: false, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'cat-veiculos-pesados', name: 'Veículos Pesados e Utilitários', slug: 'veiculos-pesados-e-utilitarios', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() }
 ];
@@ -83,9 +83,9 @@ export const sampleSubcategories: Subcategory[] = [
   { id: 'subcat-imoveis-casas', name: 'Casas', slug: 'casas', parentCategoryId: 'cat-imoveis', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'subcat-veiculos-carros', name: 'Carros', slug: 'carros', parentCategoryId: 'cat-veiculos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'subcat-veiculos-motos', name: 'Motos', slug: 'motos', parentCategoryId: 'cat-veiculos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'subcat-maquinas-agricolas', name: 'Máquinas Agrícolas', slug: 'maquinas-agricolas', parentCategoryId: 'cat-maquinas-equipamentos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'subcat-maquinas-construcao', name: 'Equipamentos de Construção', slug: 'equipamentos-construcao', parentCategoryId: 'cat-maquinas-equipamentos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'subcat-eletronicos-celulares', name: 'Celulares e Smartphones', slug: 'celulares-e-smartphones', parentCategoryId: 'cat-eletronicos-tecnologia', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-maquinas-agricolas', name: 'Máquinas Agrícolas', slug: 'maquinas-agricolas', parentCategoryId: 'cat-maquinas-e-equipamentos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-maquinas-construcao', name: 'Equipamentos de Construção', slug: 'equipamentos-construcao', parentCategoryId: 'cat-maquinas-e-equipamentos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-eletronicos-celulares', name: 'Celulares e Smartphones', slug: 'celulares-e-smartphones', parentCategoryId: 'cat-eletronicos-e-tecnologia', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'subcat-pesados-caminhoes', name: 'Caminhões', slug: 'caminhoes', parentCategoryId: 'cat-veiculos-pesados', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'subcat-pesados-onibus', name: 'Ônibus', slug: 'onibus', parentCategoryId: 'cat-veiculos-pesados', itemCount: 0, createdAt: new Date(), updatedAt: new Date() }
 ];
@@ -111,7 +111,7 @@ export const sampleMediaItems: MediaItem[] = [
 // ==================================
 const generatedAuctions: Auction[] = [];
 const generatedLots: Lot[] = [];
-export const sampleBids: BidInfo[] = []; // Changed from generatedBids to sampleBids to match export
+const sampleBids: BidInfo[] = []; // This will be populated and exported
 const generatedUserWins: UserWin[] = [];
 const generatedDirectSales: DirectSaleOffer[] = [];
 const generatedQuestions: LotQuestion[] = [];
@@ -121,11 +121,11 @@ const now = new Date();
 let auctionCounter = 1;
 let lotCounter = 1;
 
-const auctionTypes: Auction['auctionType'][] = ['JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS'];
+const auctionTypes: Auction['auctionType'][] = ['JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS', 'DUTCH', 'SILENT'];
 
 // Main generation loop for Auctions
 auctionTypes.forEach(type => {
-  for (let i = 1; i <= 5; i++) { // Create 5 auctions of each type
+  for (let i = 1; i <= 3; i++) { // Create 3 auctions of each type
     const auctionStartDate = new Date(Date.now() + randomInt(-20, 20) * 24 * 60 * 60 * 1000);
     const firstStageEndDate = new Date(auctionStartDate.getTime() + randomInt(5, 10) * 24 * 60 * 60 * 1000);
     const secondStageEndDate = new Date(firstStageEndDate.getTime() + randomInt(2, 5) * 24 * 60 * 60 * 1000);
@@ -152,8 +152,24 @@ auctionTypes.forEach(type => {
       latitude: cityCoords.lat, longitude: cityCoords.lon,
       createdAt: new Date(), updatedAt: new Date(), totalLots: 0,
       initialOffer: randomInt(10000, 100000), visits: randomInt(50, 1500),
-      isFeaturedOnMarketplace: Math.random() > 0.8, lots: []
+      isFeaturedOnMarketplace: Math.random() > 0.8, lots: [],
+      automaticBiddingEnabled: true,
+      softCloseEnabled: true,
+      softCloseMinutes: 2,
+      autoRelistSettings: {
+        enableAutoRelist: true,
+        relistIfNoBids: true,
+        relistIfNoBidsAfterHours: 2,
+        relistDurationInHours: 72,
+      },
     };
+    
+    if (type === 'DUTCH') {
+        auction.decrementAmount = 1000;
+        auction.decrementIntervalSeconds = 60;
+        auction.floorPrice = 50000;
+    }
+
 
     const numLots = randomInt(2, 5);
     auction.totalLots = numLots;
@@ -240,3 +256,4 @@ export const sampleLotReviews: Review[] = generatedReviews;
 export const sampleUserLotMaxBids: UserLotMaxBid[] = [];
 export { samplePlatformSettings } from './sample-data-helpers';
 export const sampleUserProfiles: UserProfileWithPermissions[] = [];
+export { sampleBids };

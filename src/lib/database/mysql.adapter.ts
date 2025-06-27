@@ -1,3 +1,4 @@
+
 // src/lib/database/mysql.adapter.ts
 import mysql, { type RowDataPacket, type Pool } from 'mysql2/promise';
 import type {
@@ -305,6 +306,9 @@ function mapToAuction(row: any): Auction {
         totalHabilitatedUsers: Number(row.totalHabilitatedUsers || 0),
         isFeaturedOnMarketplace: Boolean(row.isFeaturedOnMarketplace),
         marketplaceAnnouncementTitle: row.marketplaceAnnouncementTitle,
+        autoRelistSettings: parseJsonColumn(row.autoRelistSettings, {}),
+        originalAuctionId: row.originalAuctionId ? String(row.originalAuctionId) : undefined,
+        relistCount: Number(row.relistCount || 0),
     };
 }
 

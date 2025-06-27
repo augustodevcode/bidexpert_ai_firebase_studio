@@ -23,6 +23,18 @@ const auctionTypeValues: [Auction['auctionType'], ...(Exclude<Auction['auctionTy
   'SILENT',
 ];
 
+const autoRelistSettingsSchema = z.object({
+  enableAutoRelist: z.boolean().optional().default(false),
+  recurringAutoRelist: z.boolean().optional().default(false),
+  relistIfWinnerNotPaid: z.boolean().optional().default(false),
+  relistIfWinnerNotPaidAfterHours: z.coerce.number().int().min(1).optional().nullable(),
+  relistIfNoBids: z.boolean().optional().default(false),
+  relistIfNoBidsAfterHours: z.coerce.number().int().min(1).optional().nullable(),
+  relistIfReserveNotMet: z.boolean().optional().default(false),
+  relistIfReserveNotMetAfterHours: z.coerce.number().int().min(1).optional().nullable(),
+  relistDurationInHours: z.coerce.number().int().min(1).optional().nullable(),
+}).optional();
+
 
 export const auctionFormSchema = z.object({
   title: z.string().min(5, {
@@ -70,6 +82,7 @@ export const auctionFormSchema = z.object({
   decrementAmount: z.coerce.number().positive("O valor do decremento deve ser positivo.").optional().nullable(),
   decrementIntervalSeconds: z.coerce.number().int().min(1, "O intervalo deve ser de no mínimo 1 segundo.").optional().nullable(),
   floorPrice: z.coerce.number().positive("O preço mínimo deve ser positivo.").optional().nullable(),
+  autoRelistSettings: autoRelistSettingsSchema,
 }).refine(data => {
     // If it's a Dutch auction, the specific fields are required.
     if (data.auctionType === 'DUTCH') {
