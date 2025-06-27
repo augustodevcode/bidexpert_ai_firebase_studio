@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -343,7 +342,7 @@ export interface Lot {
   reservePrice?: number | null; // Preço de reserva confidencial
   evaluationValue?: number | null; // Valor de avaliação oficial
   debtAmount?: number | null; // Montante da dívida (Alienação Fiduciária)
-  itbiValue?: number | null; // Valor de ITBI (Alienação Fiduciária)
+  itbiValue?: number | null; // Valor do ITBI (Alienação Fiduciária)
   createdAt?: AnyTimestamp;
   updatedAt?: AnyTimestamp;
   discountPercentage?: number;
@@ -556,8 +555,10 @@ export interface DirectSaleOffer {
     title: string;
     description: string;
     imageUrl: string;
+    imageMediaId?: string | null;
     dataAiHint?: string;
     galleryImageUrls?: string[];
+    mediaItemIds?: string[];
     offerType: DirectSaleOfferType;
     price?: number; 
     minimumOfferPrice?: number; 
@@ -585,6 +586,8 @@ export interface DirectSaleOffer {
 
 export type DirectSaleOfferFormData = Omit<DirectSaleOffer, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'views' | 'proposalsCount' | 'galleryImageUrls' | 'itemsIncluded' | 'tags' | 'sellerId' | 'sellerLogoUrl' | 'dataAiHintSellerLogo' | 'latitude' | 'longitude' | 'mapAddress' | 'mapEmbedUrl' | 'mapStaticImageUrl'> & {
     expiresAt?: Date | null;
+    mediaItemIds?: string[];
+    galleryImageUrls?: string[];
 };
 
 export interface ThemeColors {
@@ -762,6 +765,7 @@ export interface IStorageAdapter {
 
 export interface IDatabaseAdapter {
   initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[], rolesProcessed?: number }>;
+  disconnect?(): Promise<void>;
 
   createLotCategory(data: { name: string; description?: string }): Promise<{ success: boolean; message: string; categoryId?: string }>;
   getLotCategories(): Promise<LotCategory[]>;

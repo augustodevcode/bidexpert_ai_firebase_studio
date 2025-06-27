@@ -13,12 +13,16 @@ import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { directSaleOfferFormSchema, type DirectSaleOfferFormData } from './direct-sale-form-schema';
-import type { DirectSaleOffer, LotCategory, SellerProfileInfo } from '@/types';
-import { Loader2, Save, ShoppingCart, CalendarIcon, DollarSign } from 'lucide-react';
+import type { DirectSaleOffer, LotCategory, SellerProfileInfo, MediaItem } from '@/types';
+import { Loader2, Save, ShoppingCart, CalendarIcon, DollarSign, ImagePlus, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import Image from 'next/image';
+import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
+import { Separator } from '@/components/ui/separator';
+import { v4 as uuidv4 } from 'uuid';
 
 interface DirectSaleFormProps {
   initialData?: DirectSaleOffer | null;
@@ -43,6 +47,25 @@ export default function DirectSaleForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
+  const [isMainImageDialogOpen, setIsMainImageDialogOpen] = React.useState(false);
+  const [isGalleryDialogOpen, setIsGalleryDialogOpen] = React.useState(false);
+  const [mainImagePreviewUrl, setMainImagePreviewUrl] = React.useState<string | null>(initialData?.imageUrl || null);
+  const [selectedMediaForGallery, setSelectedMediaForGallery] = React.useState<Partial<MediaItem>[]>(() => {
+    if (!initialData) return [];
+    const itemsMap = new Map<string, Partial<MediaItem>>();
+    (initialData.mediaItemIds || []).forEach(mediaId => {
+      itemsMap.set(mediaId, { id: mediaId, urlOriginal: `https://placehold.co/100x100.png?text=ID:${mediaId.substring(0, 4)}`, title: `Item de Mídia ${mediaId.substring(0, 4)}` });
+    });
+    (initialData.galleryImageUrls || []).forEach((url, index) => {
+      const urlExistsInMap = Array.from(itemsMap.values()).some(item => item.urlOriginal === url);
+      if (!urlExistsInMap) {
+        const uniqueUrlId = `gallery-url-${uuidv4()}`;
+        itemsMap.set(uniqueUrlId, { id: uniqueUrlId, urlOriginal: url, title: `Imagem da Galeria (URL) ${index + 1}` });
+      }
+    });
+    return Array.from(itemsMap.values());
+  });
+
   const form = useForm<DirectSaleOfferFormData>({
     resolver: zodResolver(directSaleOfferFormSchema),
     defaultValues: {
@@ -57,12 +80,52 @@ export default function DirectSaleForm({
       locationCity: initialData?.locationCity || '',
       locationState: initialData?.locationState || '',
       imageUrl: initialData?.imageUrl || '',
+      imageMediaId: initialData?.imageMediaId || null,
       dataAiHint: initialData?.dataAiHint || '',
       expiresAt: initialData?.expiresAt ? new Date(initialData.expiresAt as string) : undefined,
+      galleryImageUrls: initialData?.galleryImageUrls || [],
+      mediaItemIds: initialData?.mediaItemIds || [],
     },
   });
   
   const offerType = useWatch({ control: form.control, name: 'offerType' });
+  
+  React.useEffect(() => {
+    form.setValue('galleryImageUrls', selectedMediaForGallery.map(item => item.urlOriginal || '').filter(Boolean));
+    form.setValue('mediaItemIds', selectedMediaForGallery.map(item => item.id || '').filter(itemid => !itemid.startsWith('gallery-url-')).filter(Boolean));
+  }, [selectedMediaForGallery, form]);
+  
+  const handleSelectMainImageFromDialog = (selectedItems: Partial<MediaItem>[]) => {
+    if (selectedItems.length > 0) {
+      const selectedMediaItem = selectedItems[0];
+      if (selectedMediaItem?.urlOriginal) {
+        setMainImagePreviewUrl(selectedMediaItem.urlOriginal);
+        form.setValue('imageUrl', selectedMediaItem.urlOriginal);
+        form.setValue('imageMediaId', selectedMediaItem.id || null);
+      } else {
+        toast({ title: "Seleção Inválida", description: "O item de mídia selecionado não possui uma URL válida.", variant: "destructive" });
+      }
+    }
+  };
+
+  const handleSelectMediaForGallery = (newlySelectedItems: Partial<MediaItem>[]) => {
+    setSelectedMediaForGallery(prev => {
+      const currentMediaMap = new Map(prev.map(item => [item.id || item.urlOriginal, item]));
+      newlySelectedItems.forEach(newItem => {
+        if (newItem.id || newItem.urlOriginal) {
+          currentMediaMap.set(newItem.id || newItem.urlOriginal!, newItem);
+        }
+      });
+      return Array.from(currentMediaMap.values());
+    });
+    toast({ title: "Mídia Adicionada à Galeria", description: `${newlySelectedItems.length} item(ns) adicionado(s) à galeria.` });
+  };
+  
+  const handleRemoveFromGallery = (itemIdToRemove?: string) => {
+    if (!itemIdToRemove) return;
+    setSelectedMediaForGallery(prev => prev.filter(item => (item.id || item.urlOriginal) !== itemIdToRemove));
+  };
+
 
   async function onSubmit(values: DirectSaleOfferFormData) {
     setIsSubmitting(true);
@@ -83,6 +146,7 @@ export default function DirectSaleForm({
   }
 
   return (
+    <>
     <Card className="max-w-2xl mx-auto shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><ShoppingCart className="h-6 w-6 text-primary"/> {formTitle}</CardTitle>
@@ -115,10 +179,48 @@ export default function DirectSaleForm({
               <FormField control={form.control} name="locationCity" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input placeholder="São Paulo" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="locationState" render={({ field }) => (<FormItem><FormLabel>Estado (UF)</FormLabel><FormControl><Input placeholder="SP" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
             </div>
+            
+            <Separator />
+            <h3 className="text-md font-semibold text-muted-foreground pt-2">Imagens da Oferta</h3>
 
-            <FormField control={form.control} name="imageUrl" render={({ field }) => (<FormItem><FormLabel>URL da Imagem Principal</FormLabel><FormControl><Input type="url" placeholder="https://..." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+            <FormItem>
+              <FormLabel>Imagem Principal da Oferta</FormLabel>
+              <Card className="mt-2">
+                <CardContent className="p-4 flex flex-col items-center gap-3">
+                  <div className="relative w-full aspect-video bg-muted rounded-md overflow-hidden max-w-md mx-auto">
+                    {mainImagePreviewUrl ? <Image src={mainImagePreviewUrl} alt="Prévia da Imagem Principal" fill className="object-contain" data-ai-hint="previa imagem principal" /> : <div className="flex flex-col items-center justify-center h-full text-muted-foreground"><ImagePlus className="h-12 w-12 mb-2" /><span>Nenhuma imagem selecionada</span></div>}
+                  </div>
+                  <Button type="button" variant="outline" onClick={() => setIsMainImageDialogOpen(true)}>
+                    <ImagePlus className="mr-2 h-4 w-4" />{mainImagePreviewUrl ? "Alterar Imagem Principal" : "Escolher Imagem Principal"}
+                  </Button>
+                </CardContent>
+              </Card>
+              <FormField control={form.control} name="imageUrl" render={({ field }) => (<FormItem className="hidden"><FormControl><Input type="text" {...field} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="imageMediaId" render={({ field }) => (<FormItem className="hidden"><FormControl><Input type="text" {...field} /></FormControl></FormItem>)} />
+            </FormItem>
 
-             <FormField
+            <div className="space-y-2">
+              <FormLabel>Galeria de Imagens da Oferta</FormLabel>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2 border rounded-md min-h-[80px]">
+                {selectedMediaForGallery.map((item) => (
+                  <div key={item.id || item.urlOriginal} className="relative aspect-square bg-muted rounded overflow-hidden">
+                    <Image src={item.urlOriginal || 'https://placehold.co/100x100.png'} alt={item.title || 'Imagem da galeria'} fill className="object-cover" data-ai-hint={item.dataAiHint || "miniatura galeria"} />
+                    <Button type="button" size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6 opacity-80 hover:opacity-100 p-0" onClick={() => handleRemoveFromGallery(item.id || item.urlOriginal)} title="Remover da galeria">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+                {selectedMediaForGallery.length < 10 && (
+                  <Button type="button" variant="outline" className="aspect-square flex flex-col items-center justify-center text-muted-foreground hover:text-primary h-full" onClick={() => setIsGalleryDialogOpen(true)}>
+                    <ImagePlus className="h-6 w-6 mb-1" /><span className="text-xs">Adicionar</span>
+                  </Button>
+                )}
+              </div>
+              <FormDescription>Adicione mais imagens para esta oferta. Máximo de 10 imagens.</FormDescription>
+            </div>
+            
+            <Separator />
+            <FormField
                 control={form.control}
                 name="expiresAt"
                 render={({ field }) => (
@@ -154,5 +256,18 @@ export default function DirectSaleForm({
         </form>
       </Form>
     </Card>
+     <ChooseMediaDialog
+        isOpen={isMainImageDialogOpen}
+        onOpenChange={setIsMainImageDialogOpen}
+        onMediaSelect={handleSelectMainImageFromDialog}
+        allowMultiple={false}
+      />
+      <ChooseMediaDialog
+        isOpen={isGalleryDialogOpen}
+        onOpenChange={setIsGalleryDialogOpen}
+        onMediaSelect={handleSelectMediaForGallery}
+        allowMultiple={true}
+      />
+    </>
   );
 }

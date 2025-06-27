@@ -20,7 +20,10 @@ export const directSaleOfferFormSchema = z.object({
   locationCity: z.string().max(100).optional(),
   locationState: z.string().max(100).optional(),
   imageUrl: z.string().url("URL da imagem inválida.").optional().or(z.literal('')),
+  imageMediaId: z.string().optional().nullable(),
   dataAiHint: z.string().max(50).optional(),
+  galleryImageUrls: z.array(z.string().url()).optional(),
+  mediaItemIds: z.array(z.string()).optional(),
   expiresAt: z.date().optional().nullable(),
 }).refine(data => {
     if (data.offerType === 'BUY_NOW' && !data.price) {

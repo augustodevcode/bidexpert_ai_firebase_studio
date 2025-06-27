@@ -613,26 +613,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] getAuctionsByAuctioneerSlug is not yet implemented for MySQL.");
     return Promise.resolve([]);
   }
-  
-  async getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null> {
-    console.warn("[MySqlAdapter] getDirectSaleOffer is not yet implemented for MySQL.");
-    return null;
-  }
-  
-  async createDirectSaleOffer(data: DirectSaleOfferFormData): Promise<{ success: boolean; message: string; offerId?: string; }> {
-    console.warn("[MySqlAdapter] createDirectSaleOffer is not yet implemented for MySQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  
-  async updateDirectSaleOffer(id: string, data: Partial<DirectSaleOfferFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[MySqlAdapter] updateDirectSaleOffer is not yet implemented for MySQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  
-  async deleteDirectSaleOffer(id: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[MySqlAdapter] deleteDirectSaleOffer is not yet implemented for MySQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
 
   async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
     console.warn("[MySqlAdapter] getDirectSaleOffers is not yet implemented for MySQL.");

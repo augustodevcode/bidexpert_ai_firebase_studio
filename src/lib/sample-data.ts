@@ -352,11 +352,13 @@ for (let i = 1; i <= 8; i++) {
     const offer: DirectSaleOffer = {
         id: `dso-${i}`, publicId: `DSO-PUB-${i}`, title: `Oferta Direta: ${category.name} em Perfeito Estado`,
         description: `Descrição detalhada para a oferta de ${category.name}. Item de alta qualidade, diretamente do nosso parceiro ${seller.name}.`,
-        imageUrl: media.urlOriginal, dataAiHint: media.dataAiHint,
+        imageUrl: media.urlOriginal, dataAiHint: media.dataAiHint, imageMediaId: media.id,
+        galleryImageUrls: [randomItem(sampleMediaItems).urlOriginal, randomItem(sampleMediaItems).urlOriginal],
+        mediaItemIds: [randomItem(sampleMediaItems).id, randomItem(sampleMediaItems).id],
         offerType: Math.random() > 0.5 ? 'BUY_NOW' : 'ACCEPTS_PROPOSALS',
         price: randomInt(100, 5000), minimumOfferPrice: randomInt(80, 4800),
         category: category.name, locationCity: randomItem(sampleCities).name, locationState: randomItem(sampleStates).uf,
-        sellerName: seller.name, sellerId: seller.id, sellerLogoUrl: seller.logoUrl, dataAiHintSellerLogo: seller.dataAiHintSellerLogo,
+        sellerName: seller.name, sellerId: seller.id, sellerLogoUrl: seller.logoUrl, dataAiHintSellerLogo: seller.dataAiHintLogo,
         status: 'ACTIVE', createdAt: new Date(), updatedAt: new Date(),
     };
     generatedDirectSales.push(offer);

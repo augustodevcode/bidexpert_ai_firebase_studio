@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { ChevronRight, Tag, MapPin, DollarSign, ShoppingCart, Edit, MessageSquare, UserCircle, CalendarDays, Clock, AlertCircle, Loader2, CheckCircle, Info } from 'lucide-react';
+import { ChevronRight, Tag, MapPin, DollarSign, ShoppingCart, Edit, MessageSquare, UserCircle, CalendarDays, Clock, AlertCircle, Loader2, CheckCircle, Info, ImageOff } from 'lucide-react';
 import type { DirectSaleOffer } from '@/types';
 import { getLotStatusColor, getAuctionStatusText, slugify } from '@/lib/sample-data-helpers';
 import { format } from 'date-fns';
@@ -45,6 +45,9 @@ export default function OfferDetailClient({ offer }: OfferDetailClientProps) {
   const displayLocation = offer.locationCity && offer.locationState
     ? `${offer.locationCity} - ${offer.locationState}`
     : offer.locationState || offer.locationCity || 'Não informado';
+
+  const nextImage = (e: React.MouseEvent) => { e.stopPropagation(); setCurrentImageIndex((prev) => (prev + 1) % galleryImages.length); };
+  const prevImage = (e: React.MouseEvent) => { e.stopPropagation(); setCurrentImageIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length); };
 
 
   const handleBuyNow = () => {
@@ -94,14 +97,27 @@ export default function OfferDetailClient({ offer }: OfferDetailClientProps) {
           <Card className="shadow-lg">
             <CardContent className="p-4">
               <div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden mb-3">
-                <Image 
-                    src={galleryImages[currentImageIndex]} 
-                    alt={`${offer.title} - Imagem ${currentImageIndex + 1}`} 
-                    fill 
-                    className="object-contain"
-                    data-ai-hint={offer.dataAiHint || 'imagem principal oferta'}
-                    priority={currentImageIndex === 0}
-                />
+                {galleryImages.length > 0 && galleryImages[currentImageIndex] ? (
+                  <Image 
+                      src={galleryImages[currentImageIndex]} 
+                      alt={`${offer.title} - Imagem ${currentImageIndex + 1}`} 
+                      fill 
+                      className="object-contain"
+                      data-ai-hint={offer.dataAiHint || 'imagem principal oferta'}
+                      priority={currentImageIndex === 0}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                    <ImageOff className="h-16 w-16 mb-2" />
+                    <span>Imagem indisponível</span>
+                  </div>
+                )}
+                 {galleryImages.length > 1 && (
+                  <>
+                    <Button variant="outline" size="icon" onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Imagem Anterior"><ChevronRight className="h-5 w-5" /></Button>
+                    <Button variant="outline" size="icon" onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-9 w-9 rounded-full shadow-md" aria-label="Próxima Imagem"><ChevronRight className="h-5 w-5" /></Button>
+                  </>
+                )}
               </div>
               {galleryImages.length > 1 && (
                 <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
@@ -153,7 +169,7 @@ export default function OfferDetailClient({ offer }: OfferDetailClientProps) {
                     {getAuctionStatusText(offer.status)}
                 </Badge>
                 <Badge variant="secondary" className="text-xs">
-                    {offer.offerType === 'BUY_NOW' ? 'Compra Imediata' : 'Aceita Propostas'}
+                    {offer.offerType === 'BUY_NOW' ? 'Compra Imediata' : 'Aceita Proposta'}
                 </Badge>
               </div>
             </CardHeader>

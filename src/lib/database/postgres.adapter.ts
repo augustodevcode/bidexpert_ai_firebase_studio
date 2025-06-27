@@ -487,7 +487,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
   constructor() {
     getPool();
   }
-
+  
   async getWinsForUser(userId: string): Promise<UserWin[]> {
     const { rows } = await getPool().query(
         `SELECT
@@ -584,24 +584,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.warn("[PostgresAdapter] getAuctionsByAuctioneerSlug is not yet implemented for PostgreSQL.");
     return Promise.resolve([]);
   }
-  
-  async getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null> {
-    console.warn("[PostgresAdapter] getDirectSaleOffer is not yet implemented for PostgreSQL.");
-    return null;
-  }
-  async createDirectSaleOffer(data: DirectSaleOfferFormData): Promise<{ success: boolean; message: string; offerId?: string; }> {
-    console.warn("[PostgresAdapter] createDirectSaleOffer is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async updateDirectSaleOffer(id: string, data: Partial<DirectSaleOfferFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] updateDirectSaleOffer is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async deleteDirectSaleOffer(id: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] deleteDirectSaleOffer is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-
 
   async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
     console.warn("[PostgresAdapter] getDirectSaleOffers is not yet implemented for PostgreSQL.");
