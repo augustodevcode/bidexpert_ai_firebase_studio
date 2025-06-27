@@ -2,7 +2,7 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -58,6 +58,7 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
         <Link href={`/admin/direct-sales/${row.original.id}/edit`} className="hover:text-primary">
           {row.getValue("title")}
         </Link>
+        <p className="text-xs text-muted-foreground">ID: {row.original.publicId || row.original.id}</p>
       </div>
     ),
   },
@@ -121,7 +122,9 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Ações</DropdownMenuLabel>
             <DropdownMenuItem asChild>
-              <Link href={`/direct-sales/${offer.id}`} target="_blank">Ver Oferta</Link>
+              <Link href={`/direct-sales/${offer.id}`} target="_blank">
+                <Eye className="mr-2 h-4 w-4" /> Ver Oferta
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href={`/admin/direct-sales/${offer.id}/edit`}>Editar</Link>
