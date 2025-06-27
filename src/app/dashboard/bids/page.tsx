@@ -33,6 +33,7 @@ export default function MyBidsPage() {
               <ul className="list-disc list-inside text-sm space-y-1 pl-4 text-muted-foreground">
                 <li><strong>ID do Lote e Nome do Item:</strong> Para fácil identificação.</li>
                 <li><strong>Valor do Seu Lance:</strong> O montante que você ofertou.</li>
+                <li><strong>Seu Lance Máximo (Automático):</strong> O valor máximo que você configurou para o robô.</li>
                 <li><strong>Lance Atual do Lote:</strong> O maior lance no momento.</li>
                 <li><strong>Status da Disputa:</strong> Informações como "Ganhando", "Perdendo", "Superado" ou "Arrematado".</li>
                 <li><strong>Tempo Restante:</strong> Para lotes ainda em aberto.</li>
