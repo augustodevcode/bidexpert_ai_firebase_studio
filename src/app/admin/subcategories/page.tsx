@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { getSubcategoriesByParentIdAction, deleteSubcategoryAction } from './actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import type { Subcategory, LotCategory } from '@/types';
-import { PlusCircle, Edit, Trash2, Layers, AlertTriangle, ChevronDown } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Layers, AlertTriangle, ChevronDown, Loader2 } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +26,6 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import React, { useEffect, useState, useCallback } from 'react';
-import { Loader2 } from 'lucide-react';
 
 function DeleteSubcategoryButtonClient({ subcategoryId, subcategoryName, onDeleteSuccess }: { subcategoryId: string; subcategoryName: string; onDeleteSuccess: () => void }) {
   const { toast } = useToast();
