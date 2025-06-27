@@ -1,6 +1,6 @@
 // src/lib/database/mysql.adapter.ts
 import * as mysql from 'mysql2/promise';
-import type { RowDataPacket, Pool } from 'mysql2/promise';
+import type { RowDataPacket, Pool, PoolConnection } from 'mysql2/promise';
 import type {
   IDatabaseAdapter,
   LotCategory, StateInfo, StateFormData,
@@ -22,10 +22,12 @@ import type {
   AuctionStatus, LotStatus
 } from '@/types';
 import { samplePlatformSettings } from '@/lib/sample-data';
+import { slugify } from '@/lib/sample-data-helpers';
+import { v4 as uuidv4 } from 'uuid';
 
-let pool: Pool;
+let pool: Pool | undefined;
 
-function getPool() {
+function getPool(): Pool {
   if (!pool) {
     const connectionString = process.env.MYSQL_CONNECTION_STRING;
     if (!connectionString) {
@@ -353,7 +355,7 @@ function mapToLot(row: any): Lot {
     titleInfo: row.titleInfo,
     titleBrand: row.titleBrand,
     startCode: row.startCode,
-    hasKey: Boolean(row.hasKey),
+    hasKey: row.hasKey,
     odometer: row.odometer,
     airbagsStatus: row.airbagsStatus,
     bodyStyle: row.bodyStyle,
@@ -518,6 +520,14 @@ export class MySqlAdapter implements IDatabaseAdapter {
     getPool();
   }
   
+  async disconnect(): Promise<void> {
+    if (pool) {
+        await pool.end();
+        pool = undefined;
+        console.log('[MySqlAdapter] Pool de conexões MySQL encerrado.');
+    }
+  }
+
   async getAuction(idOrPublicId: string): Promise<Auction | null> {
     const [rows] = await getPool().execute<RowDataPacket[]>(
       `SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url 
@@ -619,10 +629,95 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return Promise.resolve([]);
   }
   
-  async initializeSchema(): Promise<{ success: boolean; message: string; }> {
-    console.warn("[MySqlAdapter] initializeSchema is not yet implemented for MySQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
+  async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[], rolesProcessed?: number }> {
+    const connection = await getPool().getConnection();
+    const errors: any[] = [];
+    
+    // Lista de todas as queries de criação de tabela
+    const queries = [
+        `CREATE TABLE IF NOT EXISTS roles ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100) NOT NULL UNIQUE, name_normalized VARCHAR(100) NOT NULL UNIQUE, description TEXT, permissions JSON, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
+        `CREATE TABLE IF NOT EXISTS users ( uid VARCHAR(255) PRIMARY KEY, email VARCHAR(255) NOT NULL UNIQUE, full_name VARCHAR(255), password_text VARCHAR(255), role_id INT, status VARCHAR(50), habilitation_status VARCHAR(50), cpf VARCHAR(20), rg_number VARCHAR(20), rg_issuer VARCHAR(50), rg_issue_date DATE, rg_state VARCHAR(2), date_of_birth DATE, cell_phone VARCHAR(20), home_phone VARCHAR(20), gender VARCHAR(50), profession VARCHAR(100), nationality VARCHAR(100), marital_status VARCHAR(50), property_regime VARCHAR(50), spouse_name VARCHAR(255), spouse_cpf VARCHAR(20), zip_code VARCHAR(10), street VARCHAR(255), number VARCHAR(20), complement VARCHAR(100), neighborhood VARCHAR(100), city VARCHAR(100), state VARCHAR(100), opt_in_marketing BOOLEAN DEFAULT FALSE, avatar_url TEXT, data_ai_hint VARCHAR(255), account_type VARCHAR(50), razao_social VARCHAR(255), cnpj VARCHAR(20), inscricao_estadual VARCHAR(50), website_comitente VARCHAR(255), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE SET NULL );`,
+        `CREATE TABLE IF NOT EXISTS lot_categories ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, slug VARCHAR(255) NOT NULL UNIQUE, description TEXT, item_count INT DEFAULT 0, has_subcategories BOOLEAN DEFAULT FALSE, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
+        `CREATE TABLE IF NOT EXISTS subcategories ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, slug VARCHAR(255) NOT NULL, parent_category_id INT NOT NULL, description TEXT, item_count INT DEFAULT 0, display_order INT DEFAULT 0, icon_url TEXT, data_ai_hint_icon VARCHAR(255), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (parent_category_id) REFERENCES lot_categories(id) ON DELETE CASCADE, UNIQUE (parent_category_id, slug) );`,
+        `CREATE TABLE IF NOT EXISTS states ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100) NOT NULL, uf VARCHAR(2) NOT NULL UNIQUE, slug VARCHAR(100) NOT NULL UNIQUE, city_count INT DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
+        `CREATE TABLE IF NOT EXISTS cities ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, state_id INT NOT NULL, state_uf VARCHAR(2), ibge_code VARCHAR(10), lot_count INT DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (state_id) REFERENCES states(id) ON DELETE CASCADE );`,
+        `CREATE TABLE IF NOT EXISTS auctioneers ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, registration_number VARCHAR(50), contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since DATETIME, rating DECIMAL(3, 2), auctions_conducted_count INT DEFAULT 0, total_value_sold DECIMAL(15, 2) DEFAULT 0, user_id VARCHAR(255), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
+        `CREATE TABLE IF NOT EXISTS sellers ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since DATETIME, rating DECIMAL(3, 2), active_lots_count INT, total_sales_value DECIMAL(15, 2), auctions_facilitated_count INT, user_id VARCHAR(255), cnpj VARCHAR(20), razao_social VARCHAR(255), inscricao_estadual VARCHAR(50), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
+        `CREATE TABLE IF NOT EXISTS auctions ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), auction_type VARCHAR(50), category_id INT, auctioneer_id INT, seller_id INT, auction_date DATETIME NOT NULL, end_date DATETIME, city VARCHAR(100), state VARCHAR(2), image_url TEXT, data_ai_hint VARCHAR(255), documents_url TEXT, visits INT DEFAULT 0, initial_offer DECIMAL(15, 2), soft_close_enabled BOOLEAN DEFAULT FALSE, soft_close_minutes INT, automatic_bidding_enabled BOOLEAN DEFAULT FALSE, silent_bidding_enabled BOOLEAN DEFAULT FALSE, allow_multiple_bids_per_user BOOLEAN DEFAULT TRUE, allow_installment_bids BOOLEAN, estimated_revenue DECIMAL(15, 2), achieved_revenue DECIMAL(15, 2), total_habilitated_users INT, is_featured_on_marketplace BOOLEAN, marketplace_announcement_title VARCHAR(150), auction_stages JSON, auto_relist_settings JSON, decrement_amount DECIMAL(15, 2), decrement_interval_seconds INT, floor_price DECIMAL(15, 2), original_auction_id INT, relist_count INT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (category_id) REFERENCES lot_categories(id), FOREIGN KEY (auctioneer_id) REFERENCES auctioneers(id), FOREIGN KEY (seller_id) REFERENCES sellers(id), FOREIGN KEY (original_auction_id) REFERENCES auctions(id) );`,
+        `CREATE TABLE IF NOT EXISTS lots ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, auction_id INT NOT NULL, title VARCHAR(255) NOT NULL, number VARCHAR(50), image_url TEXT, data_ai_hint VARCHAR(255), gallery_image_urls JSON, media_item_ids JSON, status VARCHAR(50), state_id INT, city_id INT, category_id INT NOT NULL, subcategory_id INT, views INT DEFAULT 0, price DECIMAL(15, 2) NOT NULL, initial_price DECIMAL(15, 2), lot_specific_auction_date DATETIME, second_auction_date DATETIME, second_initial_price DECIMAL(15, 2), end_date DATETIME, bids_count INT DEFAULT 0, is_featured BOOLEAN DEFAULT FALSE, description TEXT, year INT, make VARCHAR(100), model VARCHAR(100), series VARCHAR(100), stock_number VARCHAR(100), selling_branch VARCHAR(100), vin VARCHAR(100), vin_status VARCHAR(100), loss_type VARCHAR(100), primary_damage VARCHAR(100), title_info VARCHAR(255), title_brand VARCHAR(100), start_code VARCHAR(100), has_key BOOLEAN, odometer VARCHAR(100), airbags_status VARCHAR(100), body_style VARCHAR(100), engine_details VARCHAR(255), transmission_type VARCHAR(100), drive_line_type VARCHAR(100), fuel_type VARCHAR(50), cylinders VARCHAR(20), restraint_system VARCHAR(100), exterior_interior_color VARCHAR(100), options TEXT, manufactured_in VARCHAR(100), vehicle_class VARCHAR(100), vehicle_location_in_branch VARCHAR(100), lane_run_number VARCHAR(50), aisle_stall VARCHAR(50), actual_cash_value VARCHAR(100), estimated_repair_cost VARCHAR(100), seller_id INT, auctioneer_id INT, condition_report TEXT, bid_increment_step DECIMAL(10, 2), allow_installment_bids BOOLEAN, judicial_process_number VARCHAR(100), court_district VARCHAR(100), court_name VARCHAR(100), public_process_url TEXT, property_registration_number VARCHAR(100), property_liens TEXT, known_debts TEXT, additional_documents_info TEXT, latitude DECIMAL(10, 8), longitude DECIMAL(11, 8), map_address VARCHAR(255), map_embed_url TEXT, map_static_image_url TEXT, reserve_price DECIMAL(15, 2), evaluation_value DECIMAL(15, 2), debt_amount DECIMAL(15, 2), itbi_value DECIMAL(15, 2), createdAt DATETIME DEFAULT CURRENT_TIMESTAMP, updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE, FOREIGN KEY (category_id) REFERENCES lot_categories(id), FOREIGN KEY (state_id) REFERENCES states(id), FOREIGN KEY (city_id) REFERENCES cities(id) );`,
+        `CREATE TABLE IF NOT EXISTS platform_settings ( id INT AUTO_INCREMENT PRIMARY KEY, site_title VARCHAR(255), site_tagline TEXT, gallery_image_base_path VARCHAR(255), storage_provider VARCHAR(50), firebase_storage_bucket VARCHAR(255), active_theme_name VARCHAR(100), themes JSON, platform_public_id_masks JSON, map_settings JSON, search_pagination_type VARCHAR(50), search_items_per_page INT, search_load_more_count INT, show_countdown_on_lot_detail BOOLEAN, show_countdown_on_cards BOOLEAN, show_related_lots_on_lot_detail BOOLEAN, related_lots_count INT, mental_trigger_settings JSON, section_badge_visibility JSON, homepage_sections JSON, variable_increment_table JSON, bidding_settings JSON, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
+    ];
+
+    try {
+        await connection.beginTransaction();
+        console.log('[MySqlAdapter] Executing schema creation queries...');
+        for (const [index, query] of queries.entries()) {
+            try {
+                // Remove trailing semicolon if exists
+                const cleanQuery = query.trim().endsWith(';') ? query.trim().slice(0, -1) : query.trim();
+                await connection.execute(cleanQuery);
+                console.log(`  - Query ${index + 1}/${queries.length} executed successfully.`);
+            } catch (err: any) {
+                console.error(`  - FAILED to execute Query ${index + 1}: ${err.message}`);
+                errors.push({ query: query.substring(0, 50) + '...', error: err.message });
+            }
+        }
+
+        if (errors.length > 0) {
+            await connection.rollback();
+            return { success: false, message: 'Falha ao criar uma ou mais tabelas.', errors };
+        }
+        
+        console.log('[MySqlAdapter] Tables created. Ensuring default roles...');
+        const rolesResult = await this.ensureDefaultRolesExist(connection);
+        
+        if (!rolesResult.success) {
+            await connection.rollback();
+            return { success: false, message: rolesResult.message, errors: rolesResult.errors };
+        }
+        
+        await connection.commit();
+        return { success: true, message: `Esquema MySQL inicializado ou verificado com sucesso.`, rolesProcessed: rolesResult.rolesProcessed };
+    } catch (error: any) {
+        await connection.rollback();
+        console.error('[MySqlAdapter - initializeSchema] Erro de transação:', error);
+        return { success: false, message: `Erro na transação do banco de dados: ${error.message}`, errors: [error] };
+    } finally {
+        connection.release();
+    }
   }
+
+  async ensureDefaultRolesExist(connection: PoolConnection | Pool): Promise<{ success: boolean; message: string; errors?: any[], rolesProcessed?: number }> {
+    let rolesProcessed = 0;
+    const errors: any[] = [];
+    for (const roleData of defaultRolesData) {
+      try {
+        const [rows] = await connection.execute<RowDataPacket[]>('SELECT id FROM roles WHERE name_normalized = ?', [roleData.name]);
+        if (rows.length === 0) {
+          const permissionsJson = JSON.stringify(roleData.permissions);
+          await connection.execute(
+            'INSERT INTO roles (name, name_normalized, description, permissions) VALUES (?, ?, ?, ?)',
+            [roleData.name, roleData.name, roleData.description, permissionsJson]
+          );
+          rolesProcessed++;
+        } else {
+          const permissionsJson = JSON.stringify(roleData.permissions);
+          await connection.execute(
+            'UPDATE roles SET description = ?, permissions = ? WHERE id = ?',
+            [roleData.description, permissionsJson, rows[0].id]
+          );
+        }
+      } catch(err: any) {
+        errors.push({ role: roleData.name, error: err.message });
+      }
+    }
+    if (errors.length > 0) {
+      return { success: false, message: "Erro ao processar perfis padrão.", errors, rolesProcessed };
+    }
+    return { success: true, message: 'Perfis padrão garantidos.', rolesProcessed };
+  }
+  
+  // Stubs for other methods
   async createLotCategory(data: { name: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> {
     console.warn("[MySqlAdapter] createLotCategory is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
@@ -767,10 +862,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] deleteAuction is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
-  async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
-    console.warn("[MySqlAdapter] getAuctionsBySellerSlug is not yet implemented for MySQL.");
-    return [];
-  }
   async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> {
     console.warn("[MySqlAdapter] createLot is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
@@ -857,10 +948,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
   async deleteRole(id: string): Promise<{ success: boolean; message: string; }> {
     console.warn("[MySqlAdapter] deleteRole is not yet implemented for MySQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number; }> {
-    console.warn("[MySqlAdapter] ensureDefaultRolesExist is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async createMediaItem(data: Omit<MediaItem, "id" | "uploadedAt" | "urlOriginal" | "urlThumbnail" | "urlMedium" | "urlLarge" | "storagePath">, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> {
