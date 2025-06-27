@@ -27,8 +27,8 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ['firebase-admin'],
   experimental: {
+    allowedDevOrigins: ['https://6000-firebase-studio-1748711833657.cluster-ve345ymguzcd6qqzuko2qbxtfe.cloudworkstations.dev'],
   },
-  allowedDevOrigins: ['https://6000-firebase-studio-1748711833657.cluster-ve345ymguzcd6qqzuko2qbxtfe.cloudworkstations.dev'],
 };
 
 export default nextConfig;
