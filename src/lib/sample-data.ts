@@ -2,7 +2,8 @@
 import type {
   Lot, LotCategory, Auction, AuctioneerProfileInfo, SellerProfileInfo,
   StateInfo, CityInfo, UserProfileWithPermissions, Role, MediaItem, Subcategory,
-  PlatformSettings, DirectSaleOffer, UserWin, BidInfo, LotQuestion, Review, UserLotMaxBid, AuctionStage
+  PlatformSettings, DirectSaleOffer, UserWin, BidInfo, LotQuestion, Review, UserLotMaxBid, AuctionStage,
+  UserDocument, DocumentType
 } from '@/types';
 import { slugify } from './sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
@@ -171,6 +172,51 @@ export const samplePlatformSettings: PlatformSettings = {
   },
   updatedAt: new Date(),
 };
+
+// Document Types
+export const sampleDocumentTypes: DocumentType[] = [
+  { id: 'doc-type-1', name: 'Documento de Identidade (Frente)', description: 'RG ou CNH (frente)', isRequired: true, displayOrder: 1 },
+  { id: 'doc-type-2', name: 'Documento de Identidade (Verso)', description: 'RG ou CNH (verso)', isRequired: true, displayOrder: 2 },
+  { id: 'doc-type-3', name: 'Comprovante de Residência', description: 'Conta de água, luz ou telefone recente', isRequired: true, displayOrder: 3 },
+  { id: 'doc-type-4', name: 'Selfie com Documento', description: 'Uma foto sua segurando o documento de identidade', isRequired: true, displayOrder: 4 },
+  { id: 'doc-type-5', name: 'Contrato Social / MEI', description: 'Para Pessoas Jurídicas', isRequired: false, displayOrder: 5 },
+];
+
+// User Documents
+export const sampleUserDocuments: UserDocument[] = [
+  {
+    id: 'user-doc-1',
+    documentTypeId: 'doc-type-1',
+    userId: 'user123', // Corresponds to the mock userId in the page
+    status: 'APPROVED',
+    fileUrl: 'https://placehold.co/600x400.png?text=Frente+Aprovada',
+    uploadDate: new Date('2024-05-10T10:00:00Z'),
+    analysisDate: new Date('2024-05-10T14:00:00Z'),
+    documentType: sampleDocumentTypes[0]!
+  },
+  {
+    id: 'user-doc-2',
+    documentTypeId: 'doc-type-2',
+    userId: 'user123',
+    status: 'REJECTED',
+    fileUrl: 'https://placehold.co/600x400.png?text=Verso+Ilegivel',
+    uploadDate: new Date('2024-05-10T10:01:00Z'),
+    analysisDate: new Date('2024-05-10T14:05:00Z'),
+    rejectionReason: 'A imagem do verso do documento está ilegível. Por favor, envie uma foto mais nítida.',
+    documentType: sampleDocumentTypes[1]!
+  },
+  {
+    id: 'user-doc-3',
+    documentTypeId: 'doc-type-3',
+    userId: 'user123',
+    status: 'PENDING_ANALYSIS',
+    fileUrl: 'https://placehold.co/600x400.png?text=Comprovante',
+    uploadDate: new Date('2024-05-11T09:30:00Z'),
+    analysisDate: undefined,
+    rejectionReason: undefined,
+    documentType: sampleDocumentTypes[2]!
+  },
+];
 
 
 // ==================================

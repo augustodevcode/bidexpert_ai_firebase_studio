@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from '@/components/ui/separator';
 import { UploadCloud, Eye, AlertCircle, CheckCircle2, FileText, ShieldCheck, FileWarning, Clock } from 'lucide-react';
-import { sampleUserDocuments, sampleDocumentTypes } from '@/lib/sample-data.local.json';
+import { sampleUserDocuments, sampleDocumentTypes } from '@/lib/sample-data';
 import { getUserHabilitationStatusInfo, getUserDocumentStatusColor, getAuctionStatusText } from '@/lib/sample-data-helpers';
 import type { UserDocument, DocumentType, UserHabilitationStatus, UserDocumentStatus } from '@/types';
 
@@ -72,7 +72,7 @@ export default function UserDocumentsPage() {
     if (!aIsRequiredAndNeedsAction && bIsRequiredAndNeedsAction) return 1;
     
     if (a.documentType.isRequired && !b.documentType.isRequired) return -1;
-    if (!a.documentType.isRequired && b.documentType.isRequired) return 1;
+    if (!b.documentType.isRequired && a.documentType.isRequired) return 1;
     
     // Ordenar por displayOrder dentro dos grupos de 'required' e 'not required'
     const orderA = a.documentType.displayOrder || 999;
