@@ -583,6 +583,10 @@ export interface DirectSaleOffer {
     mapStaticImageUrl?: string | null; 
 }
 
+export type DirectSaleOfferFormData = Omit<DirectSaleOffer, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'views' | 'proposalsCount' | 'galleryImageUrls' | 'itemsIncluded' | 'tags' | 'sellerId' | 'sellerLogoUrl' | 'dataAiHintSellerLogo' | 'latitude' | 'longitude' | 'mapAddress' | 'mapEmbedUrl' | 'mapStaticImageUrl'> & {
+    expiresAt?: Date | null;
+};
+
 export interface ThemeColors {
   [colorVariable: string]: string; 
 }
@@ -820,6 +824,10 @@ export interface IDatabaseAdapter {
   deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }>;
   
   getDirectSaleOffers(): Promise<DirectSaleOffer[]>;
+  getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null>;
+  createDirectSaleOffer(data: DirectSaleOfferFormData): Promise<{ success: boolean; message: string; offerId?: string; }>;
+  updateDirectSaleOffer(id: string, data: Partial<DirectSaleOfferFormData>): Promise<{ success: boolean; message: string; }>;
+  deleteDirectSaleOffer(id: string): Promise<{ success: boolean; message: string; }>;
 
   getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]>;
   placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status' | 'endDate'>>; newBid?: BidInfo }>;

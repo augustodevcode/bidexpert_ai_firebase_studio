@@ -13,7 +13,7 @@ import type {
   MediaItem,
   PlatformSettings, PlatformSettingsFormData, Theme,
   Subcategory, SubcategoryFormData,
-  DirectSaleOffer,
+  DirectSaleOffer, DirectSaleOfferFormData,
   UserLotMaxBid,
   UserWin
 } from '@/types';
@@ -47,7 +47,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return Promise.resolve({ success: true, message: 'Sample data adapter ready.', rolesProcessed: this.data.sampleRoles.length });
   }
 
-  async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }> {
+  async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status' | 'endDate'>>; newBid?: BidInfo }> {
     await delay(50);
     const lotIndex = this.data.sampleLots.findIndex((l: Lot) => l.id === lotIdOrPublicId || l.publicId === lotIdOrPublicId);
     if (lotIndex === -1) {
@@ -311,6 +311,14 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> { const newLot: Lot = {...(data as any), id: `lot-${uuidv4()}`, publicId: `LOT-PUB-${uuidv4()}`, createdAt: new Date(), updatedAt: new Date()}; this.data.sampleLots.push(newLot); this._persistData(); return {success: true, message: 'Lote criado!', lotId: newLot.id, lotPublicId: newLot.publicId}; }
   async updateLot(id: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleLots.findIndex((l: Lot) => l.id === id || l.publicId === id); if(index === -1) return {success: false, message: 'Lote não encontrado.'}; this.data.sampleLots[index] = {...this.data.sampleLots[index], ...data, updatedAt: new Date()}; this._persistData(); return {success: true, message: 'Lote atualizado!'}; }
   async deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string; }> { this.data.sampleLots = this.data.sampleLots.filter((l: Lot) => l.id !== id && l.publicId !== id); this._persistData(); return {success: true, message: 'Lote excluído!'}; }
+  
+  // Direct Sales
+  async getDirectSaleOffers(): Promise<DirectSaleOffer[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleDirectSaleOffers))); }
+  async getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null> { await delay(20); const offer = this.data.sampleDirectSaleOffers.find((o: DirectSaleOffer) => o.id === id || o.publicId === id); return Promise.resolve(offer ? JSON.parse(JSON.stringify(offer)) : null); }
+  async createDirectSaleOffer(data: DirectSaleOfferFormData): Promise<{ success: boolean; message: string; offerId?: string; }> { const newOffer: DirectSaleOffer = { ...data, id: `dso-${uuidv4()}`, publicId: `DSO-PUB-${uuidv4()}`, createdAt: new Date(), updatedAt: new Date(), price: data.price || undefined, minimumOfferPrice: data.minimumOfferPrice || undefined }; this.data.sampleDirectSaleOffers.push(newOffer); this._persistData(); return { success: true, message: 'Oferta criada!', offerId: newOffer.id }; }
+  async updateDirectSaleOffer(id: string, data: Partial<DirectSaleOfferFormData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleDirectSaleOffers.findIndex((o: DirectSaleOffer) => o.id === id); if (index === -1) return { success: false, message: 'Oferta não encontrada.' }; this.data.sampleDirectSaleOffers[index] = { ...this.data.sampleDirectSaleOffers[index], ...data, updatedAt: new Date() }; this._persistData(); return { success: true, message: 'Oferta atualizada!' }; }
+  async deleteDirectSaleOffer(id: string): Promise<{ success: boolean; message: string; }> { this.data.sampleDirectSaleOffers = this.data.sampleDirectSaleOffers.filter((o: DirectSaleOffer) => o.id !== id); this._persistData(); return { success: true, message: 'Oferta excluída!' }; }
+
 
   // --- Bids, Reviews, Questions ---
   async getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> {
@@ -394,9 +402,5 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return Promise.resolve(JSON.parse(JSON.stringify(this.data.samplePlatformSettings)));
   }
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> { await delay(50); const currentSettings = this.data.samplePlatformSettings || {}; const newSettings = { ...currentSettings, ...data, platformPublicIdMasks: { ...(currentSettings.platformPublicIdMasks || {}), ...(data.platformPublicIdMasks || {}), }, mapSettings: { ...(currentSettings.mapSettings || {}), ...(data.mapSettings || {}), }, mentalTriggerSettings: { ...(currentSettings.mentalTriggerSettings || {}), ...(data.mentalTriggerSettings || {}), }, sectionBadgeVisibility: { ...(currentSettings.sectionBadgeVisibility || {}), ...(data.sectionBadgeVisibility || {}), }, id: 'global', updatedAt: new Date() }; this.data.samplePlatformSettings = newSettings; this._persistData(); return { success: true, message: "Configurações da plataforma atualizadas (Sample Data)!" }; }
-
-  async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
-    await delay(20);
-    return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleDirectSaleOffers)));
-  }
+  
 }

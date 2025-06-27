@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv } from 'lucide-react'; // Added Layers, Tv
+import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart } from 'lucide-react'; // Added Layers, Tv, ShoppingCart
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -30,6 +30,12 @@ const sidebarNavItems = [
     title: 'Lotes',
     href: '/admin/lots',
     icon: Package,
+    disabled: false,
+  },
+  {
+    title: 'Venda Direta',
+    href: '/admin/direct-sales',
+    icon: ShoppingCart,
     disabled: false,
   },
   {

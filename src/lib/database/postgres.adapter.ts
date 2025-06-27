@@ -15,7 +15,7 @@ import type {
   PlatformSettings, PlatformSettingsFormData, Theme,
   Subcategory, SubcategoryFormData,
   MapSettings, SearchPaginationType, MentalTriggerSettings, SectionBadgeConfig, HomepageSectionConfig, AuctionStage,
-  DirectSaleOffer,
+  DirectSaleOffer, DirectSaleOfferFormData,
   UserLotMaxBid,
   UserWin,
   AuctionStatus, LotStatus
@@ -183,7 +183,7 @@ function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProf
         password: row.password_text,
         roleId: row.role_id ? String(row.role_id) : undefined,
         roleName: role?.name || row.role_name_from_join || row.role_name,
-        permissions: role?.permissions && role.permissions.length > 0 ? role.permissions : (row.permissions || row.role_permissions_from_join || []),
+        permissions: (role?.permissions && role.permissions.length > 0 ? role.permissions : (row.permissions || row.role_permissions_from_join || [])),
         status: row.status,
         habilitationStatus: row.habilitation_status as UserHabilitationStatus,
         cpf: row.cpf,
@@ -487,51 +487,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
   constructor() {
     getPool();
   }
-  
-  async disconnect(): Promise<void> {
-    if (pool) {
-        await pool.end();
-        pool = undefined;
-        console.log('[PostgresAdapter] Pool de conexões PostgreSQL encerrado.');
-    }
-  }
 
-  async getAuction(idOrPublicId: string): Promise<Auction | null> {
-    const res = await getPool().query(
-      `SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url 
-       FROM auctions a
-       LEFT JOIN lot_categories cat ON a.category_id = cat.id
-       LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
-       LEFT JOIN sellers s ON a.seller_id = s.id
-       WHERE a.id = $1 OR a.public_id = $2 
-       LIMIT 1`,
-      [isNaN(parseInt(idOrPublicId, 10)) ? -1 : parseInt(idOrPublicId, 10), idOrPublicId]
-    );
-
-    if (res.rows.length === 0) return null;
-    const auctionData = res.rows[0];
-    
-    const lotRes = await getPool().query(
-      `SELECT l.*, c.name as category_name, s.name as subcategory_name, st.uf as state_uf, city.name as city_name, a.title as auction_name
-       FROM lots l
-       LEFT JOIN auctions a ON l.auction_id = a.id
-       LEFT JOIN lot_categories c ON l.category_id = c.id
-       LEFT JOIN subcategories s ON l.subcategory_id = s.id
-       LEFT JOIN states st ON l.state_id = st.id
-       LEFT JOIN cities city ON l.city_id = city.id
-       WHERE l.auction_id = $1`,
-      [auctionData.id]
-    );
-
-    const lots = lotRes.rows.map(mapToLot);
-    
-    const auction = mapToAuction(auctionData);
-    auction.lots = lots;
-    auction.totalLots = lots.length;
-
-    return auction;
-  }
-  
   async getWinsForUser(userId: string): Promise<UserWin[]> {
     const { rows } = await getPool().query(
         `SELECT
@@ -542,7 +498,15 @@ export class PostgresAdapter implements IDatabaseAdapter {
             w.win_date,
             w.payment_status,
             w.invoice_url,
-            l.* 
+            
+            l.id as l_id,
+            l.public_id as l_public_id,
+            l.auction_id as l_auction_id,
+            l.title as l_title,
+            l.number as l_number,
+            l.image_url as l_image_url,
+            l.data_ai_hint as l_data_ai_hint
+            
         FROM user_wins w
         JOIN lots l ON w.lot_id = l.id
         WHERE w.user_id = $1
@@ -550,9 +514,19 @@ export class PostgresAdapter implements IDatabaseAdapter {
         [userId]
     );
 
-    return rows.map(winRow => {
-        const { win_id, user_id, lot_id, winning_bid_amount, win_date, payment_status, invoice_url, ...lotData } = winRow;
-        const lotObject = mapToLot(lotData);
+    const wins: UserWin[] = rows.map(winRow => {
+        const { win_id, user_id, lot_id, winning_bid_amount, win_date, payment_status, invoice_url, ...lotDataWithPrefix } = winRow;
+        
+        const lotObjectData: { [key: string]: any } = {};
+        for (const key in lotDataWithPrefix) {
+            if (key.startsWith('l_')) {
+                const originalKey = key.substring(2);
+                lotObjectData[originalKey] = lotDataWithPrefix[key];
+            }
+        }
+        
+        const lotObject = mapToLot(lotObjectData);
+
         return {
             id: String(win_id),
             userId: user_id,
@@ -564,6 +538,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
             lot: lotObject,
         };
     });
+    return wins;
   }
   
   async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> {
@@ -609,6 +584,24 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.warn("[PostgresAdapter] getAuctionsByAuctioneerSlug is not yet implemented for PostgreSQL.");
     return Promise.resolve([]);
   }
+  
+  async getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null> {
+    console.warn("[PostgresAdapter] getDirectSaleOffer is not yet implemented for PostgreSQL.");
+    return null;
+  }
+  async createDirectSaleOffer(data: DirectSaleOfferFormData): Promise<{ success: boolean; message: string; offerId?: string; }> {
+    console.warn("[PostgresAdapter] createDirectSaleOffer is not yet implemented for PostgreSQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async updateDirectSaleOffer(id: string, data: Partial<DirectSaleOfferFormData>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[PostgresAdapter] updateDirectSaleOffer is not yet implemented for PostgreSQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteDirectSaleOffer(id: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[PostgresAdapter] deleteDirectSaleOffer is not yet implemented for PostgreSQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+
 
   async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
     console.warn("[PostgresAdapter] getDirectSaleOffers is not yet implemented for PostgreSQL.");
@@ -853,6 +846,10 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async deleteAuction(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
     console.warn("[PostgresAdapter] deleteAuction is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
+    console.warn("[PostgresAdapter] getAuctionsBySellerSlug is not yet implemented for PostgreSQL.");
+    return [];
   }
   async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> {
     console.warn("[PostgresAdapter] createLot is not yet implemented for PostgreSQL.");
