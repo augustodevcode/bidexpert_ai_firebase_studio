@@ -1,4 +1,3 @@
-
 // src/lib/database/firestore.adapter.ts
 import type { 
   Firestore, 
@@ -31,10 +30,12 @@ import type {
   UserLotMaxBid,
   UserWin
 } from '@/types';
-import { slugify, samplePlatformSettings } from '@/lib/sample-data-helpers';
+import { slugify } from '@/lib/sample-data-helpers';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
+import { samplePlatformSettings } from '@/lib/sample-data';
+
 
 const AdminFieldValue = FirebaseAdminFieldValueType;
 const ServerTimestamp = FirebaseAdminTimestampType;
@@ -716,31 +717,20 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     // For now, assuming the question document structure allows finding lotId, or actions.ts handles it.
     // This placeholder will assume the update is on a top-level 'questions' collection if lotId is not accessible here.
     // IDEALLY: you'd pass lotId to this adapter method or the question document contains lotId.
-    // For this example, let's assume the calling action handles finding the correct path or the question doc has lotId.
-    // As a simple placeholder, we will log a warning if we cannot determine the lotId.
-    // console.warn("[FirestoreAdapter.answerQuestion] Lot ID not directly available. Update might fail if path is incorrect.");
-    try {
-      // This is a conceptual update. The actual path would be /lots/{lotId}/questions/{questionId}
-      // The action layer (actions.ts) should resolve the full path.
-      // If actions.ts calls this with a direct reference to the question doc, this is fine.
-      // Otherwise, lotId would need to be passed in.
-      const questionRef = this.db.collectionGroup('questions').where('id_placeholder_field_for_questionId', '==', questionId).limit(1); // This is not efficient.
-      // A better way would be for the action to get the full path or the LotQuestion object to update.
-      // For now, let's assume questionId is the full path segment or we can't implement this fully here.
-      // This will likely fail if questionId is just the ID and not a path.
-      
-      // Let's refine this: The action should pass the lotId to locate the question.
-      // This function signature in the interface should be:
-      // answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string)
-      // For now, we'll just log the limitation
-      console.error("[FirestoreAdapter.answerQuestion] - Placeholder: Cannot fully implement without lotId or different lookup strategy.");
-      return { success: false, message: "Placeholder: Lógica de resposta não implementada completamente no adapter Firestore sem lotId." };
-      // Actual implementation would be:
-      // await this.db.collection('lots').doc(lotId).collection('questions').doc(questionId).update({
-      //   answerText, answeredAt: AdminFieldValue.serverTimestamp(), answeredByUserId, answeredByUserDisplayName
-      // });
-      // return { success: true, message: "Pergunta respondida." };
-    } catch (e: any) { return { success: false, message: e.message }; }
+    // For this example, let's assume questionId is the full path segment or we can't implement this fully here.
+    // This will likely fail if questionId is just the ID and not a path.
+    
+    // Let's refine this: The action should pass the lotId to locate the question.
+    // This function signature in the interface should be:
+    // answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string)
+    // For now, we'll just log the limitation
+    console.error("[FirestoreAdapter.answerQuestion] - Placeholder: Cannot fully implement without lotId or different lookup strategy.");
+    return { success: false, message: "Placeholder: Lógica de resposta não implementada completamente no adapter Firestore sem lotId." };
+    // Actual implementation would be:
+    // await this.db.collection('lots').doc(lotId).collection('questions').doc(questionId).update({
+    //   answerText, answeredAt: AdminFieldValue.serverTimestamp(), answeredByUserId, answeredByUserDisplayName
+    // });
+    // return { success: true, message: "Pergunta respondida." };
   }
 
 
@@ -1058,7 +1048,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
         return { id: 'global', ...defaultSettings, updatedAt: new Date() } as PlatformSettings;
     } catch (e: any) { 
         console.error("[FirestoreAdapter - getPlatformSettings] Error, returning default:", e);
-        return { id: 'global', siteTitle: 'BidExpert', siteTagline: 'Leilões Online Especializados', galleryImageBasePath: '/media/gallery/', activeThemeName: null, themes: [], platformPublicIdMasks: {}, updatedAt: new Date() }; 
+        return { id: 'global', ...samplePlatformSettings };
     }
   }
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
@@ -1134,7 +1124,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     }
   }
 
-  async answerQuestion(questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> {
+  async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> {
     // Esta implementação assume que você tem o lotId para construir o caminho,
     // ou que questionId já é o caminho completo ou uma forma de buscar o documento.
     // Se questionId é apenas o ID, precisaria de uma subcollectionGroup query ou lotId.

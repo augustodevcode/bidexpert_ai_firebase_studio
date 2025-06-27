@@ -1,4 +1,3 @@
-
 // src/lib/sample-data.ts
 import type {
   Lot, LotCategory, Auction, AuctioneerProfileInfo, SellerProfileInfo,
@@ -105,6 +104,74 @@ export const sampleMediaItems: MediaItem[] = [
   { id: 'media-retroescavadeira-1', fileName: 'retroescavadeira-case.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 220000, urlOriginal: 'https://placehold.co/800x600/f59e0b/ffffff/png?text=Retroescavadeira', dataAiHint: 'retroescavadeira amarela' },
   { id: 'media-colheitadeira-1', fileName: 'colheitadeira-jd.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 250000, urlOriginal: 'https://placehold.co/800x600/4d7c0f/ffffff/png?text=Colheitadeira', dataAiHint: 'colheitadeira agricola' },
 ];
+
+export const samplePlatformSettings: PlatformSettings = {
+  id: 'global',
+  siteTitle: 'BidExpert',
+  siteTagline: 'Sua plataforma especialista em leilões online.',
+  galleryImageBasePath: '/uploads/media/',
+  storageProvider: 'local',
+  firebaseStorageBucket: null,
+  activeThemeName: 'default',
+  themes: [],
+  platformPublicIdMasks: {
+    auctions: 'LEIL-',
+    lots: 'LOTE-',
+    auctioneers: 'LEILOE-',
+    sellers: 'COMI-'
+  },
+  mapSettings: {
+    defaultProvider: 'openstreetmap',
+    googleMapsApiKey: '',
+    staticImageMapZoom: 15,
+    staticImageMapMarkerColor: 'blue'
+  },
+  searchPaginationType: 'loadMore',
+  searchItemsPerPage: 12,
+  searchLoadMoreCount: 12,
+  showCountdownOnLotDetail: true,
+  showCountdownOnCards: true,
+  showRelatedLotsOnLotDetail: true,
+  relatedLotsCount: 4,
+  mentalTriggerSettings: {
+    showDiscountBadge: true,
+    showUrgencyTimer: true,
+    urgencyTimerThresholdDays: 1,
+    urgencyTimerThresholdHours: 0,
+    showPopularityBadge: true,
+    popularityViewThreshold: 500,
+    showHotBidBadge: true,
+    hotBidThreshold: 10,
+    showExclusiveBadge: true
+  },
+  sectionBadgeVisibility: {
+    featuredLots: { showStatusBadge: true, showDiscountBadge: true, showUrgencyTimer: true, showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true },
+    searchGrid: { showStatusBadge: true, showDiscountBadge: true, showUrgencyTimer: true, showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true },
+    searchList: { showStatusBadge: true, showDiscountBadge: true, showUrgencyTimer: true, showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true },
+    lotDetail: { showStatusBadge: true, showDiscountBadge: true, showUrgencyTimer: true, showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true }
+  },
+  homepageSections: [
+    { id: 'hero', type: 'hero_carousel', visible: true, order: 1 },
+    { id: 'filter_links', type: 'filter_links', title: 'Explorar por Tipo', visible: true, order: 2 },
+    { id: 'featured_lots', type: 'featured_lots', title: 'Lotes em Destaque', visible: true, order: 3 },
+    { id: 'active_auctions', type: 'active_auctions', title: 'Leilões Ativos', visible: true, order: 4 },
+  ],
+  variableIncrementTable: [
+    { from: 0, to: 100, increment: 5 },
+    { from: 100, to: 500, increment: 10 },
+    { from: 500, to: 1000, increment: 25 },
+    { from: 1000, to: 5000, increment: 50 },
+    { from: 5000, to: 10000, increment: 100 },
+    { from: 10000, to: null, increment: 250 },
+  ],
+  biddingSettings: {
+    instantBiddingEnabled: true,
+    getBidInfoInstantly: true,
+    biddingInfoCheckIntervalSeconds: 2,
+  },
+  updatedAt: new Date(),
+};
+
 
 // ==================================
 // DYNAMIC DATA GENERATION
@@ -243,7 +310,7 @@ for (let i = 1; i <= 8; i++) {
         offerType: Math.random() > 0.5 ? 'BUY_NOW' : 'ACCEPTS_PROPOSALS',
         price: randomInt(100, 5000), minimumOfferPrice: randomInt(80, 4800),
         category: category.name, locationCity: randomItem(sampleCities).name, locationState: randomItem(sampleStates).uf,
-        sellerName: seller.name, sellerId: seller.id, sellerLogoUrl: seller.logoUrl, dataAiHintSellerLogo: seller.dataAiHintLogo,
+        sellerName: seller.name, sellerId: seller.id, sellerLogoUrl: seller.logoUrl, dataAiHintSellerLogo: seller.dataAiHintSellerLogo,
         status: 'ACTIVE', createdAt: new Date(), updatedAt: new Date(),
     };
     generatedDirectSales.push(offer);
@@ -259,6 +326,5 @@ export const sampleDirectSaleOffers: DirectSaleOffer[] = generatedDirectSales;
 export const sampleLotQuestions: LotQuestion[] = generatedQuestions;
 export const sampleLotReviews: Review[] = generatedReviews;
 export const sampleUserLotMaxBids: UserLotMaxBid[] = [];
-export { samplePlatformSettings } from './sample-data-helpers';
 export const sampleUserProfiles: UserProfileWithPermissions[] = [];
 export { sampleBids };
