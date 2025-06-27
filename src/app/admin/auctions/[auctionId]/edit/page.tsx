@@ -1,5 +1,4 @@
 
-
 'use client'; 
 
 import AuctionForm from '../../auction-form';
@@ -35,7 +34,7 @@ import React, { useEffect, useCallback, useMemo, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import SearchResultsFrame from '@/components/search-results-frame';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
-import { samplePlatformSettings } from '@/lib/sample-data.local.json'; 
+import { samplePlatformSettings } from '@/lib/sample-data';
 
 function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotId: string; lotTitle: string; auctionId: string; onDeleteSuccess: () => void }) {
   const [isDeleting, setIsDeleting] = React.useState(false);
@@ -108,8 +107,7 @@ function AuctionInfoDisplay({ auction }: { auction: Auction }) {
                     <CardTitle className="text-lg flex items-center"><Info className="mr-2 h-5 w-5 text-primary" /> Resumo do Leilão</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
-                    <p><strong>ID do Leilão:</strong> {auction.id}</p>
-                    <p><strong>ID Público:</strong> {auction.publicId}</p>
+                    <p><strong>ID do Leilão:</strong> {auction.publicId}</p>
                     <div className="flex items-center"><strong>Status:</strong><Badge variant="outline" className={`ml-2 ${auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'border-green-500 text-green-600' : 'border-gray-400'}`}>{getAuctionStatusText(auction.status)}</Badge></div>
                     <p><strong>Data Início:</strong> {auction.auctionDate ? format(new Date(auction.auctionDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'N/A'}</p>
                     <p><strong>Data Fim (Estimada):</strong> {auction.endDate ? format(new Date(auction.endDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'Não definida'}</p>
@@ -468,4 +466,3 @@ export default function EditAuctionPage() {
     </div>
   );
 }
-    

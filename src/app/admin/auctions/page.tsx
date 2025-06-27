@@ -1,5 +1,4 @@
 
-
 'use client'; // Adicionado para permitir que DeleteAuctionButton seja um Client Component aqui
 
 import Link from 'next/link';
@@ -154,7 +153,7 @@ export default function AdminAuctionsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[80px]">ID Leilão</TableHead>
+                      <TableHead>ID Público</TableHead>
                       <TableHead className="min-w-[250px]">Título</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Data</TableHead>
@@ -166,7 +165,7 @@ export default function AdminAuctionsPage() {
                   <TableBody>
                     {auctions.map((auction) => (
                       <TableRow key={auction.id}>
-                        <TableCell className="font-mono text-xs">{auction.id.substring(0,10)}{auction.id.length > 10 ? '...' : ''}</TableCell>
+                        <TableCell className="font-mono text-xs">{auction.publicId}</TableCell>
                         <TableCell className="font-medium">{auction.title}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className={`text-xs ${auction.status === 'ABERTO' || auction.status === 'ABERTO_PARA_LANCES' ? 'border-green-500 text-green-600' : auction.status === 'EM_BREVE' ? 'border-blue-500 text-blue-600' : 'border-gray-500 text-gray-600'}`}>
@@ -182,7 +181,7 @@ export default function AdminAuctionsPage() {
                            <Tooltip>
                              <TooltipTrigger asChild>
                                <Button variant="ghost" size="icon" asChild className="text-sky-600 hover:text-sky-700" aria-label="Ver Leilão">
-                                <Link href={`/auctions/${auction.id}`} target="_blank">
+                                <Link href={`/auctions/${auction.publicId || auction.id}`} target="_blank">
                                   <ExternalLink className="h-4 w-4" />
                                 </Link>
                               </Button>
@@ -213,5 +212,3 @@ export default function AdminAuctionsPage() {
     </TooltipProvider>
   );
 }
-
-

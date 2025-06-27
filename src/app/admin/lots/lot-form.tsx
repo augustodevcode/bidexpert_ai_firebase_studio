@@ -121,7 +121,6 @@ export default function LotForm({
       description: initialData?.description || '',
       price: initialData?.price || 0,
       initialPrice: initialData?.initialPrice || undefined,
-      bidIncrementStep: initialData?.bidIncrementStep || undefined,
       status: initialData?.status || 'EM_BREVE',
       stateId: initialData?.stateId || undefined,
       cityId: initialData?.cityId || undefined,
@@ -321,10 +320,9 @@ export default function LotForm({
               
               <Separator />
               <h3 className="text-md font-semibold text-muted-foreground pt-2 flex items-center gap-2"><DollarSignIcon className="h-5 w-5" /> Valores Principais</h3>
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-2 gap-6">
                 <FormField control={form.control} name="price" render={({ field }) => (<FormItem><FormLabel>Preço (Lance Inicial/Atual)</FormLabel><FormControl><Input type="number" placeholder="Ex: 15000.00" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="initialPrice" render={({ field }) => (<FormItem><FormLabel>Lance Inicial Base (Opcional)</FormLabel><FormControl><Input type="number" placeholder="Ex: 14500.00" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="bidIncrementStep" render={({ field }) => (<FormItem><FormLabel>Incremento Mín. Lance (R$)</FormLabel><FormControl><Input type="number" placeholder="Ex: 100.00" {...field} value={field.value ?? ''}/></FormControl><FormDescription className="text-xs">Valor que cada lance deve superar o anterior.</FormDescription><FormMessage /></FormItem>)} />
               </div>
 
                <Separator />

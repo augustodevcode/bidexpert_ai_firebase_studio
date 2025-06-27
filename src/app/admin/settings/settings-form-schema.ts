@@ -11,6 +11,12 @@ const themeSchema = z.object({
     colors: themeColorSchema,
 });
 
+const variableIncrementRuleSchema = z.object({
+  from: z.coerce.number().min(0, "O valor 'De' deve ser no mínimo 0."),
+  to: z.coerce.number().positive("O valor 'Até' deve ser positivo.").nullable(),
+  increment: z.coerce.number().positive("O incremento deve ser positivo."),
+});
+
 export const platformSettingsFormSchema = z.object({
   siteTitle: z.string().min(3, { message: "O título do site deve ter pelo menos 3 caracteres."}).max(100, { message: "O título do site não pode exceder 100 caracteres."}).optional(),
   siteTagline: z.string().max(200, { message: "O tagline não pode exceder 200 caracteres."}).optional(),
@@ -49,7 +55,38 @@ export const platformSettingsFormSchema = z.object({
   showCountdownOnCards: z.boolean().optional().default(true),
   showRelatedLotsOnLotDetail: z.boolean().optional().default(true),
   relatedLotsCount: z.coerce.number().min(1, {message: "Deve ser pelo menos 1."}).max(20, {message: "Não pode exceder 20."}).optional().default(5),
+  variableIncrementTable: z.array(variableIncrementRuleSchema).optional().default([]),
+}).refine(data => {
+  const table = data.variableIncrementTable;
+  if (!table || table.length === 0) return true;
+
+  for (let i = 0; i < table.length; i++) {
+    const current = table[i];
+    // O valor 'De' deve ser menor que o valor 'Até'
+    if (current.to !== null && current.from >= current.to) {
+      return false;
+    }
+    // O valor 'De' da linha atual deve ser igual ao valor 'Até' da linha anterior
+    if (i > 0) {
+      const prev = table[i - 1];
+      if (prev.to !== current.from) {
+        return false;
+      }
+    }
+    // A última linha não pode ter um valor 'Até'
+    if (i === table.length - 1 && current.to !== null) {
+      return false;
+    }
+    // Todas as linhas, exceto a última, devem ter um valor 'Até'
+    if (i < table.length - 1 && current.to === null) {
+        return false;
+    }
+  }
+
+  return true;
+}, {
+  message: "As faixas de incremento são inválidas. Verifique se não há sobreposições, se os valores 'De' e 'Até' são sequenciais e se a última faixa termina em 'em diante'.",
+  path: ['variableIncrementTable'], // Associa o erro à tabela inteira
 });
 
 export type PlatformSettingsFormValues = z.infer<typeof platformSettingsFormSchema>;
-

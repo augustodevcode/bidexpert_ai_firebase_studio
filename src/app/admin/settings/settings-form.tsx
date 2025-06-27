@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -18,8 +18,8 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { platformSettingsFormSchema, type PlatformSettingsFormValues } from './settings-form-schema';
-import type { PlatformSettings, MapSettings, SearchPaginationType, StorageProviderType } from '@/types';
-import { Loader2, Save, Palette, Fingerprint, Wrench, MapPin as MapIcon, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database } from 'lucide-react'; // Renomeado Map para MapIcon para evitar conflito
+import type { PlatformSettings, MapSettings, SearchPaginationType, StorageProviderType, VariableIncrementRule } from '@/types';
+import { Loader2, Save, Palette, Fingerprint, Wrench, MapPin as MapIcon, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database, PlusCircle, Trash2, ArrowUpDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea'; 
@@ -66,7 +66,13 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
       showCountdownOnCards: initialData?.showCountdownOnCards === undefined ? true : initialData.showCountdownOnCards,
       showRelatedLotsOnLotDetail: initialData?.showRelatedLotsOnLotDetail === undefined ? true : initialData.showRelatedLotsOnLotDetail,
       relatedLotsCount: initialData?.relatedLotsCount || 5,
+      variableIncrementTable: initialData?.variableIncrementTable || [],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'variableIncrementTable',
   });
 
   React.useEffect(() => {
@@ -87,6 +93,7 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
         showCountdownOnCards: initialData?.showCountdownOnCards === undefined ? true : initialData.showCountdownOnCards,
         showRelatedLotsOnLotDetail: initialData?.showRelatedLotsOnLotDetail === undefined ? true : initialData.showRelatedLotsOnLotDetail,
         relatedLotsCount: initialData?.relatedLotsCount || 5,
+        variableIncrementTable: initialData?.variableIncrementTable || [],
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData, form.reset]);
@@ -99,6 +106,7 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
         ...values,
         platformPublicIdMasks: values.platformPublicIdMasks || {},
         mapSettings: values.mapSettings || defaultMapSettings,
+        variableIncrementTable: values.variableIncrementTable || [],
       };
       const result = await updatePlatformSettings(dataToSubmit);
       if (result.success) {
@@ -408,6 +416,62 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
                 A seção de Temas de Cores está em desenvolvimento.
               </p>
             </div>
+          </section>
+        )}
+
+        {activeSection === 'variableIncrements' && (
+          <section className="space-y-4">
+            <FormItem>
+              <FormLabel className="text-base font-semibold">Tabela de Incremento Variável de Lances</FormLabel>
+              <FormDescription>Defina valores de incremento diferentes para faixas de preço de lance. O valor 'Até' de uma linha deve ser igual ao valor 'De' da linha seguinte.</FormDescription>
+              {form.formState.errors.variableIncrementTable && (
+                  <p className="text-sm font-medium text-destructive">{form.formState.errors.variableIncrementTable.message}</p>
+              )}
+            </FormItem>
+
+            <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-x-2 gap-y-3 items-center text-xs text-muted-foreground font-medium px-2">
+              <span>De (R$)</span>
+              <span>Até (R$)</span>
+              <span>Incremento (R$)</span>
+              <span className="w-9"></span>
+            </div>
+
+            {fields.map((field, index) => (
+              <div key={field.id} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-x-2 items-start">
+                <FormField
+                  control={form.control}
+                  name={`variableIncrementTable.${index}.from`}
+                  render={({ field }) => <FormItem><FormControl><Input type="number" {...field} disabled={index > 0} /></FormControl><FormMessage className="text-xs" /></FormItem>}
+                />
+                <FormField
+                  control={form.control}
+                  name={`variableIncrementTable.${index}.to`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input type="number" {...field} value={field.value ?? ""} disabled={index === fields.length - 1} placeholder={index === fields.length - 1 ? 'Em diante' : ''} />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name={`variableIncrementTable.${index}.increment`}
+                  render={({ field }) => <FormItem><FormControl><Input type="number" {...field} /></FormControl><FormMessage className="text-xs" /></FormItem>}
+                />
+                <Button type="button" variant="ghost" size="icon" className="h-10 w-10 text-destructive hover:text-destructive" onClick={() => remove(index)} disabled={fields.length === 1}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            
+            <Button type="button" variant="outline" size="sm" onClick={() => {
+                const lastValue = fields.length > 0 ? fields[fields.length - 1].to : 0;
+                append({ from: lastValue || 0, to: null, increment: 0 })
+              }}>
+              <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Nova Faixa
+            </Button>
           </section>
         )}
 

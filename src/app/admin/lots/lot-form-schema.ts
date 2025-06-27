@@ -25,7 +25,6 @@ export const lotFormSchema = z.object({
     message: "O preço (lance inicial) deve ser um número positivo.",
   }),
   initialPrice: z.coerce.number().positive().optional().nullable(),
-  bidIncrementStep: z.coerce.number().positive({ message: "Incremento deve ser positivo."}).optional().nullable(),
   status: z.enum(lotStatusValues, {
     required_error: "O status do lote é obrigatório.",
   }),
@@ -69,4 +68,3 @@ export const lotFormSchema = z.object({
 
 export type LotFormValues = z.infer<typeof lotFormSchema>;
     
-
