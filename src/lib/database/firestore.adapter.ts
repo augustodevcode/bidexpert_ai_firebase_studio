@@ -1,3 +1,4 @@
+
 // src/lib/database/firestore.adapter.ts
 import { 
   type Firestore, 
@@ -119,6 +120,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
           slug: data.slug,
           description: data.description || '',
           itemCount: data.itemCount || 0,
+          hasSubcategories: data.hasSubcategories || false,
           createdAt: safeConvertToDate(data.createdAt),
           updatedAt: safeConvertToDate(data.updatedAt),
         } as LotCategory;
@@ -140,6 +142,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
             slug: data.slug,
             description: data.description || '',
             itemCount: data.itemCount || 0,
+            hasSubcategories: data.hasSubcategories || false,
             createdAt: safeConvertToDate(data.createdAt),
             updatedAt: safeConvertToDate(data.updatedAt),
         } as LotCategory;
@@ -151,7 +154,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     }
   }
 
-  async updateLotCategory(id: string, data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; }> {
+  async updateLotCategory(id: string, data: { name: string; description?: string; hasSubcategories?: boolean; }): Promise<{ success: boolean; message: string; }> {
     if (!data.name || data.name.trim() === '') {
       return { success: false, message: 'O nome da categoria é obrigatório.' };
     }
@@ -163,6 +166,9 @@ export class FirestoreAdapter implements IDatabaseAdapter {
         description: data.description?.trim() || '',
         updatedAt: AdminFieldValue.serverTimestamp(),
       };
+      if (data.hasSubcategories !== undefined) {
+          updateData.hasSubcategories = data.hasSubcategories;
+      }
       await categoryDocRef.update(updateData);
       return { success: true, message: 'Categoria atualizada com sucesso!' };
     } catch (error: any) {
@@ -179,6 +185,36 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       console.error("[FirestoreAdapter - deleteLotCategory] Error:", error);
       return { success: false, message: error.message || 'Falha ao excluir categoria.' };
     }
+  }
+  
+  async getLotCategoryByName(name: string): Promise<LotCategory | null> {
+    console.warn("[FirestoreAdapter] getLotCategoryByName not implemented.");
+    return null;
+  }
+  
+  async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> {
+      console.warn("[FirestoreAdapter] createSubcategory not implemented.");
+      return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getSubcategories(parentCategoryId: string): Promise<Subcategory[]> {
+      console.warn("[FirestoreAdapter] getSubcategories not implemented.");
+      return [];
+  }
+  async getSubcategory(id: string): Promise<Subcategory | null> {
+      console.warn("[FirestoreAdapter] getSubcategory not implemented.");
+      return null;
+  }
+  async getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null> {
+      console.warn("[FirestoreAdapter] getSubcategoryBySlug not implemented.");
+      return null;
+  }
+  async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> {
+      console.warn("[FirestoreAdapter] updateSubcategory not implemented.");
+      return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> {
+      console.warn("[FirestoreAdapter] deleteSubcategory not implemented.");
+      return { success: false, message: "Funcionalidade não implementada." };
   }
 
   async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> {
@@ -319,6 +355,11 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Leiloeiro excluído!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
+  
+  async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> {
+    console.warn("[FirestoreAdapter] getAuctioneerByName not implemented.");
+    return null;
+  }
 
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
     try {
@@ -370,6 +411,11 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       await this.db.collection('sellers').doc(id).delete();
       return { success: true, message: 'Comitente excluído!' };
     } catch (e: any) { return { success: false, message: e.message }; }
+  }
+  
+  async getSellerByName(name: string): Promise<SellerProfileInfo | null> {
+    console.warn("[FirestoreAdapter] getSellerByName not implemented.");
+    return null;
   }
 
   async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; }> {
@@ -544,6 +590,16 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Leilão excluído!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
+  
+  async getAuctionsByIds(ids: string[]): Promise<Auction[]> {
+    console.warn("[FirestoreAdapter] getAuctionsByIds not implemented.");
+    return [];
+  }
+  
+  async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {
+    console.warn("[FirestoreAdapter] getAuctionsByAuctioneerSlug not implemented.");
+    return [];
+  }
 
   async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; }> {
     try {
@@ -617,6 +673,11 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       return Promise.all(snapshot.docs.map(docSnap => this.mapLotDocument(docSnap)));
     } catch (e: any) { console.error("[FirestoreAdapter - getLots] Error:", e); return []; }
   }
+  
+  async getLotsByIds(ids: string[]): Promise<Lot[]> {
+      console.warn("[FirestoreAdapter] getLotsByIds not implemented.");
+      return [];
+  }
 
   async getLot(idOrPublicId: string): Promise<Lot | null> {
     try {
@@ -677,20 +738,51 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       return { success: true, message: "Lance registrado!", updatedLot: { price: bidAmount, bidsCount: (lotData.bidsCount || 0) + 1 }, newBid: { id: bidRef.id, ...newBidData, timestamp: new Date() } as BidInfo };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
+  
+  async createUserLotMaxBid(userId: string, lotId: string, maxAmount: number): Promise<{ success: boolean; message: string; maxBidId?: string; }> {
+    console.warn("[FirestoreAdapter] createUserLotMaxBid not implemented.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+
+  async getActiveUserLotMaxBid(userId: string, lotId: string): Promise<UserLotMaxBid | null> {
+    console.warn("[FirestoreAdapter] getActiveUserLotMaxBid not implemented.");
+    return null;
+  }
+  
+  async getWinsForUser(userId: string): Promise<UserWin[]> {
+    console.warn("[FirestoreAdapter] getWinsForUser not implemented.");
+    return [];
+  }
 
   // --- Reviews ---
   async getReviewsForLot(lotId: string): Promise<Review[]> {
     try {
       const snapshot = await this.db.collection('lots').doc(lotId).collection('reviews').orderBy('createdAt', 'desc').get();
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToDate(doc.data().createdAt) } as Review));
-    } catch (e: any) { console.error(`[getReviewsForLot ${lotId}]`, e); return []; }
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: safeConvertToDate(doc.data().createdAt),
+        updatedAt: safeConvertOptionalDate(doc.data().updatedAt)
+      } as Review));
+    } catch (error: any) {
+      console.error(`[FirestoreAdapter - getReviewsForLot(${lotId})] Error:`, error);
+      return [];
+    }
   }
+
   async createReview(reviewData: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; reviewId?: string; }> {
     try {
-      const newReview = { ...reviewData, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
+      const newReview = {
+        ...reviewData,
+        createdAt: AdminFieldValue.serverTimestamp(),
+        updatedAt: AdminFieldValue.serverTimestamp(),
+      };
       const docRef = await this.db.collection('lots').doc(reviewData.lotId).collection('reviews').add(newReview);
-      return { success: true, message: "Avaliação adicionada.", reviewId: docRef.id };
-    } catch (e: any) { return { success: false, message: e.message }; }
+      return { success: true, message: "Avaliação adicionada com sucesso!", reviewId: docRef.id };
+    } catch (error: any) {
+      console.error(`[FirestoreAdapter - createReview for lot ${reviewData.lotId}] Error:`, error);
+      return { success: false, message: 'Falha ao adicionar avaliação.' };
+    }
   }
 
   // --- Questions ---
@@ -704,32 +796,16 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       } as LotQuestion));
     } catch (e: any) { console.error(`[getQuestionsForLot ${lotId}]`, e); return []; }
   }
-  async createQuestion(questionData: Omit<LotQuestion, 'id' | 'createdAt' | 'answeredAt' | 'answeredByUserId' | 'answeredByUserDisplayName' | 'isPublic'>): Promise<{ success: boolean; message: string; questionId?: string; }> {
+  async createQuestion(questionData: Omit<LotQuestion, "id" | "createdAt" | "answeredAt" | "answeredByUserId" | "answeredByUserDisplayName" | "isPublic">): Promise<{ success: boolean; message: string; questionId?: string; }> {
     try {
       const newQuestion = { ...questionData, isPublic: true, createdAt: AdminFieldValue.serverTimestamp() };
       const docRef = await this.db.collection('lots').doc(questionData.lotId).collection('questions').add(newQuestion);
       return { success: true, message: "Pergunta enviada.", questionId: docRef.id };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
-  async answerQuestion(questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> {
-    // Firestore does not have a single "parent" collection concept for subcollections.
-    // To update a question, we need the lotId. This should be passed to the action, or retrieved if question doc contains lotId.
-    // For now, assuming the question document structure allows finding lotId, or actions.ts handles it.
-    // This placeholder will assume the update is on a top-level 'questions' collection if lotId is not accessible here.
-    // IDEALLY: you'd pass lotId to this adapter method or the question document contains lotId.
-    // For this example, let's assume questionId is the full path segment or we can't implement this fully here.
-    
-    // Let's refine this: The action should pass the lotId to locate the question.
-    // This function signature in the interface should be:
-    // answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string)
-    // For now, we'll just log the limitation
+  async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> { 
     console.error("[FirestoreAdapter.answerQuestion] - Placeholder: Cannot fully implement without lotId or different lookup strategy.");
     return { success: false, message: "Placeholder: Lógica de resposta não implementada completamente no adapter Firestore sem lotId." };
-    // Actual implementation would be:
-    // await this.db.collection('lots').doc(lotId).collection('questions').doc(questionId).update({
-    //   answerText, answeredAt: AdminFieldValue.serverTimestamp(), answeredByUserId, answeredByUserDisplayName
-    // });
-    // return { success: true, message: "Pergunta respondida." };
   }
 
 
@@ -852,7 +928,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     } catch (e: any) { return { success: false, message: e.message }; }
   }
 
-  async getUserByEmail(email: string): Promise<UserProfileData | null> {
+  async getUserByEmail(email: string): Promise<UserProfileWithPermissions | null> {
     try {
       const snapshot = await this.db.collection('users').where('email', '==', email.toLowerCase()).limit(1).get();
       if (snapshot.empty) return null;
@@ -866,7 +942,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
           profile.roleName = role.name;
           profile.permissions = role.permissions;
       }
-      return profile;
+      return profile as UserProfileWithPermissions;
 
     } catch (e: any) {
       console.error(`[FirestoreAdapter - getUserByEmail(${email})] Error:`, e);
@@ -1039,7 +1115,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
         const settingsDoc = await this.db.collection('platformSettings').doc('global').get();
         if (settingsDoc.exists) {
             const data = settingsDoc.data()!;
-            return { id: 'global', siteTitle: data.siteTitle, siteTagline: data.siteTagline, galleryImageBasePath: data.galleryImageBasePath || '/media/gallery/', activeThemeName: data.activeThemeName || null, themes: data.themes || [], platformPublicIdMasks: data.platformPublicIdMasks || {}, updatedAt: safeConvertToDate(data.updatedAt) };
+            return { id: 'global', siteTitle: data.siteTitle, siteTagline: data.siteTagline, galleryImageBasePath: data.galleryImageBasePath || '/media/gallery/', activeThemeName: data.activeThemeName || null, themes: data.themes || [], platformPublicIdMasks: data.platformPublicIdMasks || {}, updatedAt: safeConvertToDate(data.updatedAt) } as PlatformSettings;
         }
         const defaultSettings = { siteTitle: 'BidExpert', siteTagline: 'Leilões Online Especializados', galleryImageBasePath: '/media/gallery/', activeThemeName: null, themes: [], platformPublicIdMasks: {}, updatedAt: AdminFieldValue.serverTimestamp()};
         await this.db.collection('platformSettings').doc('global').set(defaultSettings);
@@ -1059,90 +1135,10 @@ export class FirestoreAdapter implements IDatabaseAdapter {
         return { success: true, message: 'Configurações atualizadas (Firestore)!' };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
-
-  // --- Reviews ---
-  async getReviewsForLot(lotId: string): Promise<Review[]> {
-    try {
-      const snapshot = await this.db.collection('lots').doc(lotId).collection('reviews').orderBy('createdAt', 'desc').get();
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: safeConvertToDate(doc.data().createdAt),
-        updatedAt: safeConvertOptionalDate(doc.data().updatedAt)
-      } as Review));
-    } catch (error: any) {
-      console.error(`[FirestoreAdapter - getReviewsForLot(${lotId})] Error:`, error);
-      return [];
-    }
-  }
-
-  async createReview(reviewData: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; reviewId?: string; }> {
-    try {
-      const newReview = {
-        ...reviewData,
-        createdAt: AdminFieldValue.serverTimestamp(),
-        updatedAt: AdminFieldValue.serverTimestamp(),
-      };
-      const docRef = await this.db.collection('lots').doc(reviewData.lotId).collection('reviews').add(newReview);
-      return { success: true, message: "Avaliação adicionada com sucesso!", reviewId: docRef.id };
-    } catch (error: any) {
-      console.error(`[FirestoreAdapter - createReview for lot ${reviewData.lotId}] Error:`, error);
-      return { success: false, message: 'Falha ao adicionar avaliação.' };
-    }
-  }
-
-  // --- Questions ---
-  async getQuestionsForLot(lotId: string): Promise<LotQuestion[]> {
-    try {
-      const snapshot = await this.db.collection('lots').doc(lotId).collection('questions').orderBy('createdAt', 'desc').get();
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: safeConvertToDate(doc.data().createdAt),
-        answeredAt: safeConvertOptionalDate(doc.data().answeredAt)
-      } as LotQuestion));
-    } catch (error: any) {
-      console.error(`[FirestoreAdapter - getQuestionsForLot(${lotId})] Error:`, error);
-      return [];
-    }
-  }
-
-  async createQuestion(questionData: Omit<LotQuestion, 'id' | 'createdAt' | 'answeredAt' | 'answeredByUserId' | 'answeredByUserDisplayName' | 'isPublic'>): Promise<{ success: boolean; message: string; questionId?: string; }> {
-    try {
-      const newQuestion = {
-        ...questionData,
-        isPublic: true, // Default
-        createdAt: AdminFieldValue.serverTimestamp(),
-      };
-      const docRef = await this.db.collection('lots').doc(questionData.lotId).collection('questions').add(newQuestion);
-      return { success: true, message: 'Pergunta enviada com sucesso!', questionId: docRef.id };
-    } catch (error: any) {
-      console.error(`[FirestoreAdapter - createQuestion for lot ${questionData.lotId}] Error:`, error);
-      return { success: false, message: 'Falha ao enviar pergunta.' };
-    }
-  }
-
-  async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> {
-    // Esta implementação assume que você tem o lotId para construir o caminho,
-    // ou que questionId já é o caminho completo ou uma forma de buscar o documento.
-    // Se questionId é apenas o ID, precisaria de uma subcollectionGroup query ou lotId.
-    // Para simplificar, vamos assumir que a action ou camada superior resolve o lotId.
-    // Por ora, vou logar um aviso e retornar falha se o lotId não for obtido de alguma forma.
-    console.warn("[FirestoreAdapter.answerQuestion] - Implementação requer que a action resolva o lotId para construir o caminho correto para a subcoleção 'questions'.");
-    // Exemplo de como seria se lotId fosse passado:
-    // const questionRef = this.db.collection('lots').doc(lotId).collection('questions').doc(questionId);
-    // try {
-    //   await questionRef.update({
-    //     answerText,
-    //     answeredAt: AdminFieldValue.serverTimestamp(),
-    //     answeredByUserId,
-    //     answeredByUserDisplayName,
-    //   });
-    //   return { success: true, message: 'Pergunta respondida.' };
-    // } catch (e: any) {
-    //   return { success: false, message: e.message };
-    // }
-    return { success: false, message: 'Funcionalidade de responder pergunta não implementada completamente no adapter (requer lotId).' };
+  
+  async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
+    console.warn("[FirestoreAdapter] getDirectSaleOffers not implemented.");
+    return [];
   }
 
 }

@@ -1,3 +1,4 @@
+
 // scripts/setup-admin-user.ts
 import * as dotenv from 'dotenv';
 import * as path from 'path';
@@ -16,12 +17,10 @@ const ADMIN_UID_FOR_SQL = 'admin-bidexpert-platform-001';
 // ============================================================================
 
 async function setupAdminUser() {
-    // A fonte da verdade para o sistema ativo é o `getDatabaseAdapter`. Não definimos um default aqui.
-    const envSystem = process.env.ACTIVE_DATABASE_SYSTEM?.toUpperCase();
-    console.log(`[Admin Script] Configurando usuário ${ADMIN_EMAIL} como ${ADMIN_TARGET_ROLE_NAME}. Sistema de DB (do .env): ${envSystem || 'Não definido, usará default do adapter'}`);
-
     try {
         const dbAdapter = await getDatabaseAdapter();
+        const activeSystem = (await dbAdapter.constructor.name).replace('Adapter','');
+        console.log(`[Admin Script] Configurando usuário ${ADMIN_EMAIL} como ${ADMIN_TARGET_ROLE_NAME} para sistema: ${activeSystem}`);
 
         // 1. Garantir que os perfis padrão existam, especialmente o de Administrador.
         let adminRole = await dbAdapter.getRoleByName(ADMIN_TARGET_ROLE_NAME);
@@ -37,7 +36,7 @@ async function setupAdminUser() {
         }
 
         // 2. Criar ou atualizar o usuário administrador no banco de dados.
-        const uidToUse = envSystem === 'FIRESTORE' ? `auth-uid-placeholder-for-${ADMIN_EMAIL}` : ADMIN_UID_FOR_SQL;
+        const uidToUse = activeSystem === 'FIRESTORE' ? `auth-uid-placeholder-for-${ADMIN_EMAIL}` : ADMIN_UID_FOR_SQL;
         console.log(`[Admin Script] Garantindo perfil de usuário no banco de dados para UID: ${uidToUse}, Email: ${ADMIN_EMAIL}, Role: ${ADMIN_TARGET_ROLE_NAME}`);
         
         const profileResult = await dbAdapter.ensureUserRole(
