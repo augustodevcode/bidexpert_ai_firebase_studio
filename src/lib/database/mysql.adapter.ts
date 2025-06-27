@@ -1,4 +1,3 @@
-
 // src/lib/database/mysql.adapter.ts
 import mysql, { type RowDataPacket, type Pool } from 'mysql2/promise';
 import type {
@@ -15,22 +14,13 @@ import type {
   MediaItem,
   PlatformSettings, PlatformSettingsFormData, Theme,
   Subcategory, SubcategoryFormData,
-  MapSettings,
-  SearchPaginationType,
-  MentalTriggerSettings,
-  BadgeVisibilitySettings,
-  SectionBadgeConfig,
-  HomepageSectionConfig,
-  AuctionStage,
+  MapSettings, SearchPaginationType, MentalTriggerSettings, SectionBadgeConfig, HomepageSectionConfig, AuctionStage,
   DirectSaleOffer,
   UserLotMaxBid,
-  UserWin
+  UserWin,
+  AuctionStatus, LotStatus
 } from '@/types';
-import { slugify } from '@/lib/sample-data-helpers';
 import { samplePlatformSettings } from '@/lib/sample-data';
-import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
-import { v4 as uuidv4 } from 'uuid';
-import { format } from 'date-fns';
 
 let pool: Pool;
 
@@ -440,6 +430,7 @@ function mapToMediaItem(row: any): MediaItem {
     fileName: row.fileName,
     uploadedAt: new Date(row.uploadedAt),
     uploadedBy: row.uploadedBy,
+    storagePath: row.storagePath,
     title: row.title,
     altText: row.altText,
     caption: row.caption,
@@ -453,7 +444,6 @@ function mapToMediaItem(row: any): MediaItem {
     urlLarge: row.urlLarge,
     linkedLotIds: parseJsonColumn<string[]>(row.linkedLotIds, []),
     dataAiHint: row.dataAiHint,
-    storagePath: row.storagePath
   };
 }
 
@@ -513,7 +503,6 @@ function mapToLotQuestion(row: any): LotQuestion {
     isPublic: Boolean(row.isPublic),
   };
 }
-
 
 const defaultRolesData: RoleFormData[] = [
   { name: 'ADMINISTRATOR', description: 'Acesso total à plataforma.', permissions: ['manage_all'] },

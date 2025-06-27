@@ -1,4 +1,3 @@
-
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -18,14 +17,10 @@ import type {
   MapSettings, SearchPaginationType, MentalTriggerSettings, SectionBadgeConfig, HomepageSectionConfig, AuctionStage,
   DirectSaleOffer,
   UserLotMaxBid,
-  UserWin
+  UserWin,
+  AuctionStatus, LotStatus
 } from '@/types';
-import { slugify } from '@/lib/sample-data-helpers';
 import { samplePlatformSettings } from '@/lib/sample-data';
-import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
-import { v4 as uuidv4 } from 'uuid';
-import { format } from 'date-fns';
-
 
 let pool: Pool;
 
@@ -214,7 +209,7 @@ function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProf
         optInMarketing: row.opt_in_marketing,
         avatarUrl: row.avatar_url,
         dataAiHint: row.data_ai_hint,
-        accountType: row.account_type,
+        accountType: row.account_type as UserProfileData['accountType'],
         razaoSocial: row.razao_social,
         cnpj: row.cnpj,
         inscricaoEstadual: row.inscricao_estadual,

@@ -78,7 +78,7 @@ This document summarizes the BidExpert project, including its purpose, core feat
     *   **Item 13 (Partial - Dates Derived from Auction):** Countdown timer (`DetailTimeRemaining`) logic significantly updated to prioritize auction stages, then auction end/start dates, before falling back to lot-specific dates. This ensures consistent timing.
     *   Responsiveness of `TabsList` for lot details (Description, Specs, etc.) corrected.
     *   **Item 15 (Conditional Legal Tab):** "Documentos e Processo" tab implemented: appears if auction is judicial AND lot has specific legal info. Otherwise, shows as "Documentos".
-    *   Display of "Permite Lance Parcelado" and "Incremento Mínimo de Lance" added.
+    *   Display of "Permite Lance Parcelado" e "Incremento Mínimo de Lance" adicionado.
 
 7.  **User Authentication & Authorization:**
     *   User registration form (`/auth/register`) updated to include fields for Pessoa Jurídica and Comitente Venda Direta.
