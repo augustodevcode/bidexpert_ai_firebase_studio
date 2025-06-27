@@ -432,6 +432,7 @@ function mapToMediaItem(row) {
         fileName: row.fileName,
         uploadedAt: new Date(row.uploadedAt),
         uploadedBy: row.uploadedBy,
+        storagePath: row.storagePath,
         title: row.title,
         altText: row.altText,
         caption: row.caption,
@@ -445,7 +446,6 @@ function mapToMediaItem(row) {
         urlLarge: row.urlLarge,
         linkedLotIds: parseJsonColumn(row.linkedLotIds, []),
         dataAiHint: row.dataAiHint,
-        storagePath: row.storagePath
     };
 }
 function mapToPlatformSettings(row) {

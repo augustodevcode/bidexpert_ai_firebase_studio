@@ -1,5 +1,6 @@
 // src/lib/database/mysql.adapter.ts
-import mysql, { type RowDataPacket, type Pool } from 'mysql2/promise';
+import * as mysql from 'mysql2/promise';
+import type { RowDataPacket, Pool } from 'mysql2/promise';
 import type {
   IDatabaseAdapter,
   LotCategory, StateInfo, StateFormData,

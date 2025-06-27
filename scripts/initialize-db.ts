@@ -1,8 +1,8 @@
 
 // scripts/initialize-db.ts
-import dotenv from 'dotenv';
-import path from 'path';
-import fs from 'fs';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+import * as fs from 'fs';
 import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
 import { PostgresAdapter } from '../src/lib/database/postgres.adapter';
@@ -106,5 +106,3 @@ main().catch(error => {
   console.error("Erro inesperado no script initialize-db:", error);
   process.exit(1);
 });
-
-    
