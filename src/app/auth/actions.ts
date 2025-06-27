@@ -1,3 +1,4 @@
+
 'use server';
 import { getDatabaseAdapter } from '@/lib/database';
 import type { SqlAuthResult, UserProfileWithPermissions } from '@/types';
@@ -8,15 +9,19 @@ export async function authenticateUserSql(
   passwordAttempt: string
 ): Promise<SqlAuthResult> {
   try {
-    console.log(`[authenticateUserSql] Attempting to authenticate ${email} via user actions adapter.`);
+    console.log(`[authenticateUserSql] Attempting to authenticate ${email.toLowerCase()} via adapter.`);
     const userProfile = await getUserByEmail(email.toLowerCase());
 
     if (!userProfile) {
+      console.warn(`[authenticateUserSql] User profile not found for email: ${email.toLowerCase()}`);
       return { success: false, message: 'Usuário não encontrado.' };
     }
     
     console.log(`[authenticateUserSql] Profile found for ${email}. Checking password.`);
+
+    // userProfile.password contains the plain text password from the DB
     if (userProfile.password === passwordAttempt) {
+      // IMPORTANT: Do not send the password hash/text back to the client.
       const { password, ...userToReturn } = userProfile;
       console.log(`[authenticateUserSql] Password match for ${email}. Login successful.`);
       return {
