@@ -1,8 +1,8 @@
-
+// src/app/admin/auctions/columns.tsx
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, ArrowUpDown } from 'lucide-react';
+import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -57,17 +57,18 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     accessorKey: "status",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
     cell: ({ row }) => <Badge variant="outline">{getAuctionStatusText(row.getValue("status"))}</Badge>,
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id))
-    },
+    filterFn: (row, id, value) => value.includes(row.getValue(id)),
+    enableGrouping: true,
   },
   {
     accessorKey: "auctioneer",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Leiloeiro" />,
+    enableGrouping: true,
   },
   {
     accessorKey: "seller",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Comitente" />,
+    enableGrouping: true,
   },
   {
     accessorKey: "totalLots",
@@ -87,21 +88,10 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     }
   },
   {
-    accessorKey: "endDate",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Data de Fim" />,
-    cell: ({ row }) => {
-      const date = row.getValue("endDate");
-      try {
-        return date ? format(new Date(date as string), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'Não definida';
-      } catch {
-        return 'Data inválida';
-      }
-    }
-  },
-  {
     id: "actions",
     cell: ({ row }) => {
       const auction = row.original;
+      const canDelete = auction.status === 'RASCUNHO' || auction.status === 'CANCELADO';
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -113,13 +103,14 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Ações</DropdownMenuLabel>
             <DropdownMenuItem asChild>
-              <Link href={`/auctions/${auction.publicId || auction.id}`} target="_blank">Ver Leilão</Link>
+              <Link href={`/auctions/${auction.publicId || auction.id}`} target="_blank"><Eye className="mr-2 h-4 w-4" />Ver Leilão</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`/admin/auctions/${auction.id}/edit`}>Editar</Link>
+              <Link href={`/admin/auctions/${auction.id}/edit`}><Pencil className="mr-2 h-4 w-4" />Editar</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleDelete(auction.id)} className="text-destructive">
+            <DropdownMenuItem onClick={() => handleDelete(auction.id)} className="text-destructive" disabled={!canDelete}>
+              <Trash2 className="mr-2 h-4 w-4" />
               Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>

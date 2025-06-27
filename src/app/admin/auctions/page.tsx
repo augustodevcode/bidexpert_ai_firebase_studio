@@ -1,4 +1,3 @@
-
 // src/app/admin/auctions/page.tsx
 'use client';
 
@@ -7,15 +6,19 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAuctions, deleteAuction } from './actions';
-import type { Auction } from '@/types';
+import type { Auction, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import { PlusCircle, Gavel } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getSellers } from '../sellers/actions';
+import { getAuctioneers } from '../auctioneers/actions';
 
 export default function AdminAuctionsPage() {
   const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [allSellers, setAllSellers] = useState<SellerProfileInfo[]>([]);
+  const [allAuctioneers, setAllAuctioneers] = useState<AuctioneerProfileInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -29,13 +32,19 @@ export default function AdminAuctionsPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const fetchedAuctions = await getAuctions();
+        const [fetchedAuctions, fetchedSellers, fetchedAuctioneers] = await Promise.all([
+            getAuctions(),
+            getSellers(),
+            getAuctioneers()
+        ]);
         if (isMounted) {
           setAuctions(fetchedAuctions);
+          setAllSellers(fetchedSellers);
+          setAllAuctioneers(fetchedAuctioneers);
         }
       } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar leilões.";
-        console.error("Error fetching auctions:", e);
+        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar dados.";
+        console.error("Error fetching auctions data:", e);
         if (isMounted) {
           setError(errorMessage);
           toast({ title: "Erro", description: errorMessage, variant: "destructive" });
@@ -74,6 +83,13 @@ export default function AdminAuctionsPage() {
       .map(status => ({ value: status, label: getAuctionStatusText(status) })),
   [auctions]);
 
+  const sellerOptions = useMemo(() => 
+    allSellers.map(s => ({ value: s.name, label: s.name })),
+  [allSellers]);
+  
+  const auctioneerOptions = useMemo(() => 
+    allAuctioneers.map(a => ({ value: a.name, label: a.name })),
+  [allAuctioneers]);
 
   return (
     <div className="space-y-6">
@@ -103,11 +119,9 @@ export default function AdminAuctionsPage() {
             searchColumnId="title"
             searchPlaceholder="Buscar por título..."
             facetedFilterColumns={[
-              {
-                id: 'status',
-                title: 'Status',
-                options: statusOptions
-              }
+              { id: 'status', title: 'Status', options: statusOptions },
+              { id: 'seller', title: 'Comitente', options: sellerOptions },
+              { id: 'auctioneer', title: 'Leiloeiro', options: auctioneerOptions }
             ]}
           />
         </CardContent>

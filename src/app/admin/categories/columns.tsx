@@ -2,7 +2,7 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -56,6 +56,12 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     cell: ({ row }) => <div className="text-center">{row.getValue("itemCount") || 0}</div>
   },
   {
+    accessorKey: "hasSubcategories",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Subcategorias" />,
+    cell: ({ row }) => <div className="text-center">{row.getValue("hasSubcategories") ? 'Sim' : 'Não'}</div>,
+    enableGrouping: true,
+  },
+  {
     id: "actions",
     cell: ({ row }) => {
       const category = row.original;
@@ -70,10 +76,11 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Ações</DropdownMenuLabel>
             <DropdownMenuItem asChild>
-              <Link href={`/admin/categories/${category.id}/edit`}>Editar</Link>
+              <Link href={`/admin/categories/${category.id}/edit`}><Pencil className="mr-2 h-4 w-4"/>Editar</Link>
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => handleDelete(category.id)} className="text-destructive">
-              Excluir
+              <Trash2 className="mr-2 h-4 w-4" />Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -1,8 +1,8 @@
-// src/app/admin/subcategories/columns.tsx
+// src/app/admin/sellers/columns.tsx
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,10 +14,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { Subcategory } from '@/types';
+import type { SellerProfileInfo } from '@/types';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 
-export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<Subcategory>[] => [
+export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<SellerProfileInfo>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -39,31 +39,38 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
   },
   {
     accessorKey: "name",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Nome da Subcategoria" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Nome" />,
     cell: ({ row }) => (
-      <Link href={`/admin/subcategories/${row.original.id}/edit`} className="hover:text-primary font-medium">
-        {row.getValue("name")}
-      </Link>
+      <div className="font-medium">
+        <Link href={`/admin/sellers/${row.original.id}/edit`} className="hover:text-primary">
+          {row.getValue("name")}
+        </Link>
+         <p className="text-xs text-muted-foreground">ID: {row.original.publicId || row.original.id}</p>
+      </div>
     ),
   },
   {
-    accessorKey: "parentCategoryName",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Categoria Principal" />,
+    accessorKey: "email",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Email" />,
+  },
+  {
+    accessorKey: "phone",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Telefone" />,
+  },
+  {
+    accessorKey: "city",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Cidade" />,
     enableGrouping: true,
   },
   {
-    accessorKey: "slug",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Slug" />,
-  },
-  {
-    accessorKey: "itemCount",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Contagem de Itens" />,
-    cell: ({ row }) => <div className="text-center">{row.getValue("itemCount") || 0}</div>
+    accessorKey: "state",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Estado" />,
+    enableGrouping: true,
   },
   {
     id: "actions",
     cell: ({ row }) => {
-      const subcategory = row.original;
+      const seller = row.original;
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -75,11 +82,16 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Ações</DropdownMenuLabel>
             <DropdownMenuItem asChild>
-              <Link href={`/admin/subcategories/${subcategory.id}/edit`}><Pencil className="mr-2 h-4 w-4"/>Editar</Link>
+              <Link href={`/sellers/${seller.slug || seller.publicId || seller.id}`} target="_blank">
+                <Eye className="mr-2 h-4 w-4" />Ver Perfil Público
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/admin/sellers/${seller.id}/edit`}><Pencil className="mr-2 h-4 w-4" />Editar</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleDelete(subcategory.id)} className="text-destructive">
-              <Trash2 className="mr-2 h-4 w-4"/>Excluir
+            <DropdownMenuItem onClick={() => handleDelete(seller.id)} className="text-destructive">
+              <Trash2 className="mr-2 h-4 w-4" />Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

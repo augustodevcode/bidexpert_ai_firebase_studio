@@ -2,7 +2,7 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, ShieldCheck } from 'lucide-react';
+import { MoreHorizontal, ShieldCheck, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -64,6 +64,7 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id))
     },
+    enableGrouping: true,
   },
   {
     accessorKey: "habilitationStatus",
@@ -77,6 +78,7 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id))
     },
+    enableGrouping: true,
   },
   {
     accessorKey: "createdAt",
@@ -99,12 +101,12 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
             <DropdownMenuLabel>Ações</DropdownMenuLabel>
             <DropdownMenuItem asChild>
               <Link href={`/admin/users/${user.uid}/edit`}>
-                Editar Perfil/Habilitação
+                <Pencil className="mr-2 h-4 w-4" />Editar Perfil/Habilitação
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => handleDelete(user.uid)} className="text-destructive">
-              Excluir Usuário
+              <Trash2 className="mr-2 h-4 w-4" />Excluir Usuário
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

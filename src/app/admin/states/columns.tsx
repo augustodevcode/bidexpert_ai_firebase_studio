@@ -1,4 +1,4 @@
-// src/app/admin/subcategories/columns.tsx
+// src/app/admin/states/columns.tsx
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -14,10 +14,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { Subcategory } from '@/types';
+import type { StateInfo } from '@/types';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 
-export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<Subcategory>[] => [
+export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<StateInfo>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -39,31 +39,27 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
   },
   {
     accessorKey: "name",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Nome da Subcategoria" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Nome" />,
     cell: ({ row }) => (
-      <Link href={`/admin/subcategories/${row.original.id}/edit`} className="hover:text-primary font-medium">
+      <Link href={`/admin/states/${row.original.id}/edit`} className="hover:text-primary font-medium">
         {row.getValue("name")}
       </Link>
     ),
   },
   {
-    accessorKey: "parentCategoryName",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Categoria Principal" />,
+    accessorKey: "uf",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="UF" />,
     enableGrouping: true,
   },
   {
-    accessorKey: "slug",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Slug" />,
-  },
-  {
-    accessorKey: "itemCount",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Contagem de Itens" />,
-    cell: ({ row }) => <div className="text-center">{row.getValue("itemCount") || 0}</div>
+    accessorKey: "cityCount",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Cidades" />,
+    cell: ({ row }) => <div className="text-center">{row.getValue("cityCount") || 0}</div>
   },
   {
     id: "actions",
     cell: ({ row }) => {
-      const subcategory = row.original;
+      const state = row.original;
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -75,11 +71,11 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Ações</DropdownMenuLabel>
             <DropdownMenuItem asChild>
-              <Link href={`/admin/subcategories/${subcategory.id}/edit`}><Pencil className="mr-2 h-4 w-4"/>Editar</Link>
+              <Link href={`/admin/states/${state.id}/edit`}><Pencil className="mr-2 h-4 w-4"/>Editar</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleDelete(subcategory.id)} className="text-destructive">
-              <Trash2 className="mr-2 h-4 w-4"/>Excluir
+            <DropdownMenuItem onClick={() => handleDelete(state.id)} className="text-destructive">
+             <Trash2 className="mr-2 h-4 w-4"/> Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

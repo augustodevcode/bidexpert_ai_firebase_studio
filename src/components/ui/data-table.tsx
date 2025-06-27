@@ -5,6 +5,7 @@ import * as React from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
+  GroupingState,
   SortingState,
   VisibilityState,
   flexRender,
@@ -12,6 +13,7 @@ import {
   getFacetedRowModel,
   getFacetedUniqueValues,
   getFilteredRowModel,
+  getGroupedRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
@@ -25,9 +27,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import { DataTableToolbar } from "./data-table-toolbar";
 import { DataTablePagination } from "./data-table-pagination";
+import { Button } from "./button";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -62,6 +65,7 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] =
     React.useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [grouping, setGrouping] = React.useState<GroupingState>([]);
 
   const table = useReactTable({
     data,
@@ -71,18 +75,21 @@ export function DataTable<TData, TValue>({
       columnVisibility,
       rowSelection,
       columnFilters,
+      grouping,
     },
-    enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onGroupingChange: setGrouping,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getGroupedRowModel: getGroupedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    enableRowSelection: true,
   });
 
   return (
@@ -133,21 +140,50 @@ export function DataTable<TData, TValue>({
                     </TableCell>
                 </TableRow>
             ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                if (row.getIsGrouped()) {
+                  return (
+                     <TableRow key={row.id} className="bg-muted/50 hover:bg-muted/60 font-medium">
+                        <TableCell colSpan={columns.length}>
+                           <div className="flex items-center gap-2">
+                            <Button
+                                variant="ghost" size="icon" className="h-6 w-6"
+                                onClick={row.getToggleExpandedHandler()}
+                            >
+                                {row.getIsExpanded() ? (
+                                    <ChevronDown className="h-4 w-4" />
+                                ) : (
+                                    <ChevronRight className="h-4 w-4" />
+                                )}
+                            </Button>
+                            <span>
+                                {flexRender(
+                                  row.getVisibleCells()[0].column.columnDef.header,
+                                  row.getVisibleCells()[0].getContext()
+                                )}: {row.getVisibleCells()[0].getValue() as string}
+                            </span>
+                            <span className="text-xs font-normal text-muted-foreground">({row.subRows.length})</span>
+                           </div>
+                        </TableCell>
+                    </TableRow>
+                  );
+                }
+                return (
+                    <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    >
+                    {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                        {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                        )}
+                        </TableCell>
+                    ))}
+                    </TableRow>
+                )
+              })
             ) : (
               <TableRow>
                 <TableCell

@@ -1,4 +1,3 @@
-
 // src/app/admin/direct-sales/page.tsx
 'use client';
 
@@ -79,6 +78,10 @@ export default function AdminDirectSalesPage() {
     { value: 'ACCEPTS_PROPOSALS', label: 'Aceita Propostas'}
   ], []);
 
+  const sellerOptions = useMemo(() =>
+    [...new Set(offers.map(o => o.sellerName))]
+        .map(seller => ({ value: seller, label: seller })),
+  [offers]);
 
   return (
     <div className="space-y-6">
@@ -102,7 +105,8 @@ export default function AdminDirectSalesPage() {
             searchPlaceholder="Buscar por título..."
             facetedFilterColumns={[
               { id: 'status', title: 'Status', options: statusOptions },
-              { id: 'offerType', title: 'Tipo de Oferta', options: offerTypeOptions }
+              { id: 'offerType', title: 'Tipo de Oferta', options: offerTypeOptions },
+              { id: 'sellerName', title: 'Vendedor', options: sellerOptions },
             ]}
           />
         </CardContent>

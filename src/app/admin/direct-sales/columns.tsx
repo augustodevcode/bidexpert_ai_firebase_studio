@@ -2,7 +2,7 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Eye } from 'lucide-react';
+import { MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -66,17 +66,15 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     accessorKey: "status",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
     cell: ({ row }) => <Badge variant="outline">{getAuctionStatusText(row.getValue("status"))}</Badge>,
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id))
-    },
+    filterFn: (row, id, value) => value.includes(row.getValue(id)),
+    enableGrouping: true,
   },
   {
     accessorKey: "offerType",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Tipo de Oferta" />,
     cell: ({ row }) => <Badge variant="secondary">{getOfferTypeLabel(row.getValue("offerType"))}</Badge>,
-     filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id))
-    },
+    filterFn: (row, id, value) => value.includes(row.getValue(id)),
+    enableGrouping: true,
   },
   {
     accessorKey: "price",
@@ -94,6 +92,7 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
    {
     accessorKey: "sellerName",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Vendedor" />,
+    enableGrouping: true,
   },
   {
     accessorKey: "createdAt",
@@ -127,11 +126,11 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`/admin/direct-sales/${offer.id}/edit`}>Editar</Link>
+              <Link href={`/admin/direct-sales/${offer.id}/edit`}><Pencil className="mr-2 h-4 w-4" />Editar</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => handleDelete(offer.id)} className="text-destructive">
-              Excluir
+              <Trash2 className="mr-2 h-4 w-4" />Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
