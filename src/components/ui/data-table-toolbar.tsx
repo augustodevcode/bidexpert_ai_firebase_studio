@@ -67,14 +67,14 @@ export function DataTableToolbar<TData>({
           <div className="flex items-center gap-1">
             <ListTree className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             <Select
-              value={(groupingState[0] as string) ?? ""}
-              onValueChange={(value) => table.setGrouping(value ? [value] : [])}
+              value={(groupingState[0] as string) ?? "__NONE__"}
+              onValueChange={(value) => table.setGrouping(value === "__NONE__" ? [] : [value])}
             >
               <SelectTrigger className="h-8 w-auto min-w-[150px] text-xs" aria-label="Agrupar por">
                 <SelectValue placeholder="Agrupar por..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Nenhum grupo</SelectItem>
+                <SelectItem value="__NONE__">Nenhum grupo</SelectItem>
                 {groupableColumns.map((column) => {
                     const columnHeader = typeof column.columnDef.header === 'string' 
                         ? column.columnDef.header 
