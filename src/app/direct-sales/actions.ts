@@ -1,3 +1,4 @@
+
 'use server';
 
 import { getDatabaseAdapter } from '@/lib/database';
@@ -11,4 +12,15 @@ export async function getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
     console.error("[Action - getDirectSaleOffers] Error fetching direct sale offers:", error);
     return [];
   }
+}
+
+export async function getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null> {
+    if (!id) return null;
+    try {
+        const offers = await getDirectSaleOffers();
+        return offers.find(o => o.id === id) || null;
+    } catch (error) {
+        console.error(`[Action - getDirectSaleOffer] Error fetching offer ${id}:`, error);
+        return null;
+    }
 }
