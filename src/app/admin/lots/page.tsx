@@ -10,7 +10,7 @@ import type { Lot } from '@/types';
 import { PlusCircle, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
-import { columns as createColumns } from './columns';
+import { createColumns } from './columns';
 
 export default function AdminLotsPage() {
   const [lots, setLots] = useState<Lot[]>([]);
@@ -39,9 +39,8 @@ export default function AdminLotsPage() {
   }, [fetchLots]);
 
   const handleDelete = useCallback(
-    async (id: string) => {
-      const lotToDelete = lots.find(l => l.id === id || l.publicId === id);
-      const result = await deleteLot(id, lotToDelete?.auctionId);
+    async (id: string, auctionId?: string) => {
+      const result = await deleteLot(id, auctionId);
       if (result.success) {
         toast({ title: "Sucesso", description: result.message });
         fetchLots();
@@ -49,7 +48,7 @@ export default function AdminLotsPage() {
         toast({ title: "Erro", description: result.message, variant: "destructive" });
       }
     },
-    [lots, fetchLots, toast]
+    [fetchLots, toast]
   );
   
   const columns = createColumns({ handleDelete });
