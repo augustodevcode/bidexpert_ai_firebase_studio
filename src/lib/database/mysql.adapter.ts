@@ -309,6 +309,11 @@ function mapToAuction(row: any): Auction {
         autoRelistSettings: parseJsonColumn(row.autoRelistSettings, {}),
         originalAuctionId: row.originalAuctionId ? String(row.originalAuctionId) : undefined,
         relistCount: Number(row.relistCount || 0),
+        decrementAmount: row.decrementAmount !== null ? Number(row.decrementAmount) : undefined,
+        decrementIntervalSeconds: row.decrementIntervalSeconds !== null ? Number(row.decrementIntervalSeconds) : undefined,
+        floorPrice: row.floorPrice !== null ? Number(row.floorPrice) : undefined,
+        silentBiddingEnabled: Boolean(row.silentBiddingEnabled),
+        allowMultipleBidsPerUser: Boolean(row.allowMultipleBidsPerUser),
     };
 }
 
@@ -622,5 +627,286 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async getLotsByIds(ids: string[]): Promise<Lot[]> {
     console.warn("[MySqlAdapter] getLotsByIds is not yet implemented for MySQL.");
     return Promise.resolve([]);
+  }
+  
+  async initializeSchema(): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] initializeSchema is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async createLotCategory(data: { name: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> {
+    console.warn("[MySqlAdapter] createLotCategory is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getLotCategories(): Promise<LotCategory[]> {
+    console.warn("[MySqlAdapter] getLotCategories is not yet implemented for MySQL.");
+    return [];
+  }
+  async getLotCategory(idOrSlug: string): Promise<LotCategory | null> {
+    console.warn("[MySqlAdapter] getLotCategory is not yet implemented for MySQL.");
+    return null;
+  }
+  async getLotCategoryByName(name: string): Promise<LotCategory | null> {
+    console.warn("[MySqlAdapter] getLotCategoryByName is not yet implemented for MySQL.");
+    return null;
+  }
+  async updateLotCategory(id: string, data: Partial<{ name: string; description?: string; hasSubcategories?: boolean; }>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateLotCategory is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteLotCategory(id: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] deleteLotCategory is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> {
+    console.warn("[MySqlAdapter] createSubcategory is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getSubcategories(parentCategoryId: string): Promise<Subcategory[]> {
+    console.warn("[MySqlAdapter] getSubcategories is not yet implemented for MySQL.");
+    return [];
+  }
+  async getSubcategory(id: string): Promise<Subcategory | null> {
+    console.warn("[MySqlAdapter] getSubcategory is not yet implemented for MySQL.");
+    return null;
+  }
+  async getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null> {
+    console.warn("[MySqlAdapter] getSubcategoryBySlug is not yet implemented for MySQL.");
+    return null;
+  }
+  async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateSubcategory is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] deleteSubcategory is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> {
+    console.warn("[MySqlAdapter] createState is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getStates(): Promise<StateInfo[]> {
+    console.warn("[MySqlAdapter] getStates is not yet implemented for MySQL.");
+    return [];
+  }
+  async getState(idOrSlugOrUf: string): Promise<StateInfo | null> {
+    console.warn("[MySqlAdapter] getState is not yet implemented for MySQL.");
+    return null;
+  }
+  async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateState is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteState(id: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] deleteState is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> {
+    console.warn("[MySqlAdapter] createCity is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getCities(stateIdOrSlugFilter?: string): Promise<CityInfo[]> {
+    console.warn("[MySqlAdapter] getCities is not yet implemented for MySQL.");
+    return [];
+  }
+  async getCity(idOrCompositeSlug: string): Promise<CityInfo | null> {
+    console.warn("[MySqlAdapter] getCity is not yet implemented for MySQL.");
+    return null;
+  }
+  async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateCity is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteCity(id: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] deleteCity is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> {
+    console.warn("[MySqlAdapter] createAuctioneer is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
+    console.warn("[MySqlAdapter] getAuctioneers is not yet implemented for MySQL.");
+    return [];
+  }
+  async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
+    console.warn("[MySqlAdapter] getAuctioneer is not yet implemented for MySQL.");
+    return null;
+  }
+  async updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateAuctioneer is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] deleteAuctioneer is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> {
+    console.warn("[MySqlAdapter] createSeller is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getSellers(): Promise<SellerProfileInfo[]> {
+    console.warn("[MySqlAdapter] getSellers is not yet implemented for MySQL.");
+    return [];
+  }
+  async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> {
+    console.warn("[MySqlAdapter] getSeller is not yet implemented for MySQL.");
+    return null;
+  }
+  async updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateSeller is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] deleteSeller is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> {
+    console.warn("[MySqlAdapter] createAuction is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getAuctions(): Promise<Auction[]> {
+    console.warn("[MySqlAdapter] getAuctions is not yet implemented for MySQL.");
+    return [];
+  }
+  async updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateAuction is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteAuction(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] deleteAuction is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
+    console.warn("[MySqlAdapter] getAuctionsBySellerSlug is not yet implemented for MySQL.");
+    return [];
+  }
+  async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> {
+    console.warn("[MySqlAdapter] createLot is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getLots(auctionIdParam?: string): Promise<Lot[]> {
+    console.warn("[MySqlAdapter] getLots is not yet implemented for MySQL.");
+    return [];
+  }
+  async getLot(idOrPublicId: string): Promise<Lot | null> {
+    console.warn("[MySqlAdapter] getLot is not yet implemented for MySQL.");
+    return null;
+  }
+  async updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateLot is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] deleteLot is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> {
+    console.warn("[MySqlAdapter] getBidsForLot is not yet implemented for MySQL.");
+    return [];
+  }
+  async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo; }> {
+    console.warn("[MySqlAdapter] placeBidOnLot is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> {
+    console.warn("[MySqlAdapter] getReviewsForLot is not yet implemented for MySQL.");
+    return [];
+  }
+  async createReview(review: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<{ success: boolean; message: string; reviewId?: string; }> {
+    console.warn("[MySqlAdapter] createReview is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]> {
+    console.warn("[MySqlAdapter] getQuestionsForLot is not yet implemented for MySQL.");
+    return [];
+  }
+  async createQuestion(question: Omit<LotQuestion, "id" | "createdAt" | "answeredAt" | "answeredByUserId" | "answeredByUserDisplayName" | "isPublic">): Promise<{ success: boolean; message: string; questionId?: string; }> {
+    console.warn("[MySqlAdapter] createQuestion is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null> {
+    console.warn("[MySqlAdapter] getUserProfileData is not yet implemented for MySQL.");
+    return null;
+  }
+  async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateUserProfile is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, "cpf" | "cellPhone" | "dateOfBirth" | "password" | "accountType" | "razaoSocial" | "cnpj" | "inscricaoEstadual" | "websiteComitente" | "zipCode" | "street" | "number" | "complement" | "neighborhood" | "city" | "state" | "optInMarketing">>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileWithPermissions; }> {
+    console.warn("[MySqlAdapter] ensureUserRole is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getUsersWithRoles(): Promise<UserProfileData[]> {
+    console.warn("[MySqlAdapter] getUsersWithRoles is not yet implemented for MySQL.");
+    return [];
+  }
+  async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateUserRole is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] deleteUserProfile is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> {
+    console.warn("[MySqlAdapter] createRole is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getRoles(): Promise<Role[]> {
+    console.warn("[MySqlAdapter] getRoles is not yet implemented for MySQL.");
+    return [];
+  }
+  async getRole(id: string): Promise<Role | null> {
+    console.warn("[MySqlAdapter] getRole is not yet implemented for MySQL.");
+    return null;
+  }
+  async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateRole is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteRole(id: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] deleteRole is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number; }> {
+    console.warn("[MySqlAdapter] ensureDefaultRolesExist is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async createMediaItem(data: Omit<MediaItem, "id" | "uploadedAt" | "urlOriginal" | "urlThumbnail" | "urlMedium" | "urlLarge" | "storagePath">, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> {
+    console.warn("[MySqlAdapter] createMediaItem is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getMediaItems(): Promise<MediaItem[]> {
+    console.warn("[MySqlAdapter] getMediaItems is not yet implemented for MySQL.");
+    return [];
+  }
+  async getMediaItem(id: string): Promise<MediaItem | null> {
+    console.warn("[MySqlAdapter] getMediaItem is not yet implemented for MySQL.");
+    return null;
+  }
+  async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, "title" | "altText" | "caption" | "description">>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateMediaItemMetadata is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] deleteMediaItemFromDb is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] linkMediaItemsToLot is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] unlinkMediaItemFromLot is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getPlatformSettings(): Promise<PlatformSettings> {
+    console.warn("[MySqlAdapter] getPlatformSettings is not yet implemented for MySQL.");
+    return samplePlatformSettings;
+  }
+  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updatePlatformSettings is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
   }
 }
