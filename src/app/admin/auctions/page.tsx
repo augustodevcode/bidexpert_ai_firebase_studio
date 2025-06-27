@@ -1,7 +1,7 @@
-
+// src/app/admin/auctions/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { PlusCircle, Gavel } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
+import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 
 export default function AdminAuctionsPage() {
   const [auctions, setAuctions] = useState<Auction[]>([]);
@@ -51,7 +52,13 @@ export default function AdminAuctionsPage() {
     [fetchAuctions, toast]
   );
   
-  const columns = createColumns({ handleDelete });
+  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+
+  const statusOptions = useMemo(() => 
+    [...new Set(auctions.map(a => a.status))]
+      .map(status => ({ value: status, label: getAuctionStatusText(status) })),
+  [auctions]);
+
 
   return (
     <div className="space-y-6">
@@ -80,8 +87,13 @@ export default function AdminAuctionsPage() {
             error={error}
             searchColumnId="title"
             searchPlaceholder="Buscar por título..."
-            entityName="Leilão"
-            entityNamePlural="Leilões"
+            facetedFilterColumns={[
+              {
+                id: 'status',
+                title: 'Status',
+                options: statusOptions
+              }
+            ]}
           />
         </CardContent>
       </Card>

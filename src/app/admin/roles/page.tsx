@@ -1,7 +1,7 @@
-
+// src/app/admin/roles/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import type { Role } from '@/types';
 import { PlusCircle, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
-import { columns as createColumns } from './columns';
+import { createColumns } from './columns';
 
 export default function AdminRolesPage() {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -51,7 +51,7 @@ export default function AdminRolesPage() {
     [fetchRoles, toast]
   );
   
-  const columns = createColumns({ handleDelete });
+  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   return (
     <div className="space-y-6">
@@ -80,8 +80,6 @@ export default function AdminRolesPage() {
             error={error}
             searchColumnId="name"
             searchPlaceholder="Buscar por nome do perfil..."
-            entityName="Perfil"
-            entityNamePlural="Perfis"
           />
         </CardContent>
       </Card>

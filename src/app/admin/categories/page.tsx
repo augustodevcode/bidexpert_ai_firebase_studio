@@ -1,7 +1,7 @@
-
+// src/app/admin/categories/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import type { LotCategory } from '@/types';
 import { PlusCircle, ListChecks } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
-import { columns as createColumns } from './columns';
+import { createColumns } from './columns';
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<LotCategory[]>([]);
@@ -51,7 +51,7 @@ export default function AdminCategoriesPage() {
     [fetchCategories, toast]
   );
   
-  const columns = createColumns({ handleDelete });
+  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   return (
     <div className="space-y-6">
@@ -80,8 +80,6 @@ export default function AdminCategoriesPage() {
             error={error}
             searchColumnId="name"
             searchPlaceholder="Buscar por nome..."
-            entityName="Categoria"
-            entityNamePlural="Categorias"
           />
         </CardContent>
       </Card>

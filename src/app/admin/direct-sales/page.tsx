@@ -1,7 +1,7 @@
-
+// src/app/admin/direct-sales/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { PlusCircle, ShoppingCart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
-
+import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 
 export default function AdminDirectSalesPage() {
   const [offers, setOffers] = useState<DirectSaleOffer[]>([]);
@@ -52,7 +52,18 @@ export default function AdminDirectSalesPage() {
     [fetchOffers, toast]
   );
   
-  const columns = createColumns({ handleDelete });
+  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+
+  const statusOptions = useMemo(() => 
+    [...new Set(offers.map(o => o.status))]
+      .map(status => ({ value: status, label: getAuctionStatusText(status) })),
+  [offers]);
+
+  const offerTypeOptions = useMemo(() => [
+    { value: 'BUY_NOW', label: 'Compra Imediata'},
+    { value: 'ACCEPTS_PROPOSALS', label: 'Aceita Propostas'}
+  ], []);
+
 
   return (
     <div className="space-y-6">
@@ -74,8 +85,10 @@ export default function AdminDirectSalesPage() {
             error={error}
             searchColumnId="title"
             searchPlaceholder="Buscar por título..."
-            entityName="Oferta"
-            entityNamePlural="Ofertas"
+            facetedFilterColumns={[
+              { id: 'status', title: 'Status', options: statusOptions },
+              { id: 'offerType', title: 'Tipo de Oferta', options: offerTypeOptions }
+            ]}
           />
         </CardContent>
       </Card>

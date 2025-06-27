@@ -1,4 +1,4 @@
-
+// src/app/admin/settings/settings-form-schema.ts
 import * as z from 'zod';
 import type { MapSettings, SearchPaginationType, StorageProviderType } from '@/types'; // Import MapSettings, StorageProviderType
 
@@ -63,6 +63,7 @@ export const platformSettingsFormSchema = z.object({
   relatedLotsCount: z.coerce.number().min(1, {message: "Deve ser pelo menos 1."}).max(20, {message: "Não pode exceder 20."}).optional().default(5),
   variableIncrementTable: z.array(variableIncrementRuleSchema).optional().default([]),
   biddingSettings: biddingSettingsSchema,
+  defaultListItemsPerPage: z.coerce.number().min(5, "Mínimo de 5 itens por página").max(100, "Máximo de 100 itens por página").optional().default(10),
 }).refine(data => {
   const table = data.variableIncrementTable;
   if (!table || table.length === 0) return true;

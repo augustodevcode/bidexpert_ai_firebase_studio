@@ -1,7 +1,7 @@
-
+// src/app/admin/states/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import type { StateInfo } from '@/types';
 import { PlusCircle, Map } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
-import { columns as createColumns } from './columns';
+import { createColumns } from './columns';
 
 
 export default function AdminStatesPage() {
@@ -52,7 +52,7 @@ export default function AdminStatesPage() {
     [fetchStates, toast]
   );
   
-  const columns = createColumns({ handleDelete });
+  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   return (
     <div className="space-y-6">
@@ -81,8 +81,6 @@ export default function AdminStatesPage() {
             error={error}
             searchColumnId="name"
             searchPlaceholder="Buscar por nome ou UF..."
-            entityName="Estado"
-            entityNamePlural="Estados"
           />
         </CardContent>
       </Card>

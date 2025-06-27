@@ -1,7 +1,7 @@
-
+// src/app/admin/users/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,8 @@ import type { UserProfileData } from '@/types';
 import { PlusCircle, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
-import { columns as createColumns } from './columns';
+import { createColumns } from './columns';
+import { getUserHabilitationStatusInfo } from '@/lib/sample-data-helpers';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserProfileData[]>([]);
@@ -51,7 +52,19 @@ export default function AdminUsersPage() {
     [fetchUsers, toast]
   );
   
-  const columns = createColumns({ handleDelete });
+  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+  
+  const habilitationStatusOptions = useMemo(() => 
+    [...new Set(users.map(u => u.habilitationStatus))]
+      .filter(Boolean)
+      .map(status => ({ value: status!, label: getUserHabilitationStatusInfo(status).text })),
+  [users]);
+
+  const roleOptions = useMemo(() => 
+    [...new Set(users.map(u => u.roleName))]
+      .filter(Boolean)
+      .map(roleName => ({ value: roleName!, label: roleName! })),
+  [users]);
 
   return (
     <div className="space-y-6">
@@ -80,8 +93,10 @@ export default function AdminUsersPage() {
             error={error}
             searchColumnId="fullName"
             searchPlaceholder="Buscar por nome ou email..."
-            entityName="Usuário"
-            entityNamePlural="Usuários"
+            facetedFilterColumns={[
+              { id: 'roleName', title: 'Perfil', options: roleOptions },
+              { id: 'habilitationStatus', title: 'Habilitação', options: habilitationStatusOptions },
+            ]}
           />
         </CardContent>
       </Card>

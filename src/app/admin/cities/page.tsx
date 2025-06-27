@@ -1,7 +1,7 @@
-
+// src/app/admin/cities/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import type { CityInfo } from '@/types';
 import { PlusCircle, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
-import { columns as createColumns } from './columns';
+import { createColumns } from './columns';
 
 export default function AdminCitiesPage() {
   const [cities, setCities] = useState<CityInfo[]>([]);
@@ -51,7 +51,7 @@ export default function AdminCitiesPage() {
     [fetchCities, toast]
   );
   
-  const columns = createColumns({ handleDelete });
+  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   return (
     <div className="space-y-6">
@@ -80,8 +80,6 @@ export default function AdminCitiesPage() {
             error={error}
             searchColumnId="name"
             searchPlaceholder="Buscar por cidade..."
-            entityName="Cidade"
-            entityNamePlural="Cidades"
           />
         </CardContent>
       </Card>

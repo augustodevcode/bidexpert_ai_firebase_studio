@@ -1,7 +1,7 @@
-
+// src/app/admin/media/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -72,7 +72,7 @@ export default function MediaLibraryPage() {
     }
   };
   
-  const columns = createColumns({ handleDelete, onEdit: handleEdit });
+  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEdit }), [handleDelete]);
 
   return (
     <>
@@ -102,8 +102,6 @@ export default function MediaLibraryPage() {
               error={error}
               searchColumnId="title"
               searchPlaceholder="Buscar por título ou nome do arquivo..."
-              entityName="Mídia"
-              entityNamePlural="Mídias"
             />
           </CardContent>
         </Card>

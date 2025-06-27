@@ -1,7 +1,7 @@
-
+// src/app/admin/lots/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { PlusCircle, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
+import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 
 export default function AdminLotsPage() {
   const [lots, setLots] = useState<Lot[]>([]);
@@ -51,7 +52,12 @@ export default function AdminLotsPage() {
     [fetchLots, toast]
   );
   
-  const columns = createColumns({ handleDelete });
+  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+
+  const statusOptions = useMemo(() => 
+    [...new Set(lots.map(lot => lot.status))]
+      .map(status => ({ value: status, label: getAuctionStatusText(status) })),
+  [lots]);
 
   return (
     <div className="space-y-6">
@@ -80,8 +86,13 @@ export default function AdminLotsPage() {
             error={error}
             searchColumnId="title"
             searchPlaceholder="Buscar por título..."
-            entityName="Lote"
-            entityNamePlural="Lotes"
+            facetedFilterColumns={[
+              {
+                id: 'status',
+                title: 'Status',
+                options: statusOptions
+              }
+            ]}
           />
         </CardContent>
       </Card>

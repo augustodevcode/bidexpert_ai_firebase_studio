@@ -1,7 +1,7 @@
-
+// src/app/admin/sellers/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import type { SellerProfileInfo } from '@/types';
 import { PlusCircle, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
-import { columns as createColumns } from './columns';
+import { createColumns } from './columns';
 
 export default function AdminSellersPage() {
   const [sellers, setSellers] = useState<SellerProfileInfo[]>([]);
@@ -51,7 +51,7 @@ export default function AdminSellersPage() {
     [fetchSellers, toast]
   );
   
-  const columns = createColumns({ handleDelete });
+  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   return (
     <div className="space-y-6">
@@ -80,8 +80,6 @@ export default function AdminSellersPage() {
             error={error}
             searchColumnId="name"
             searchPlaceholder="Buscar por nome..."
-            entityName="Comitente"
-            entityNamePlural="Comitentes"
           />
         </CardContent>
       </Card>

@@ -1,4 +1,4 @@
-
+// src/app/admin/settings/settings-form.tsx
 'use client';
 
 import * as React from 'react';
@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { platformSettingsFormSchema, type PlatformSettingsFormValues } from './settings-form-schema';
 import type { PlatformSettings, MapSettings, SearchPaginationType, StorageProviderType, VariableIncrementRule, BiddingSettings } from '@/types';
-import { Loader2, Save, Palette, Fingerprint, Wrench, MapPin as MapIcon, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database, PlusCircle, Trash2, ArrowUpDown, Zap } from 'lucide-react';
+import { Loader2, Save, Palette, Fingerprint, Wrench, MapPin as MapIcon, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database, PlusCircle, Trash2, ArrowUpDown, Zap, Rows } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea'; 
@@ -74,6 +74,7 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
       showRelatedLotsOnLotDetail: initialData?.showRelatedLotsOnLotDetail === undefined ? true : initialData.showRelatedLotsOnLotDetail,
       relatedLotsCount: initialData?.relatedLotsCount || 5,
       variableIncrementTable: initialData?.variableIncrementTable || [],
+      defaultListItemsPerPage: initialData?.defaultListItemsPerPage || 10,
     },
   });
 
@@ -102,6 +103,7 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
         showRelatedLotsOnLotDetail: initialData?.showRelatedLotsOnLotDetail === undefined ? true : initialData.showRelatedLotsOnLotDetail,
         relatedLotsCount: initialData?.relatedLotsCount || 5,
         variableIncrementTable: initialData?.variableIncrementTable || [],
+        defaultListItemsPerPage: initialData?.defaultListItemsPerPage || 10,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData, form.reset]);
@@ -317,11 +319,24 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
         {activeSection === 'appearance' && (
           <section className="space-y-6">
             <FormField
+                control={form.control}
+                name="defaultListItemsPerPage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Itens por Página Padrão (Listas Admin)</FormLabel>
+                    <FormControl><Input type="number" min="5" max="100" {...field} value={field.value ?? 10} onChange={e => field.onChange(parseInt(e.target.value,10))} /></FormControl>
+                    <FormDescription>Número padrão de linhas exibidas nas tabelas do painel de administração.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            <Separator />
+            <FormField
               control={form.control}
               name="searchPaginationType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tipo de Paginação na Busca</FormLabel>
+                  <FormLabel>Tipo de Paginação na Busca Pública</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value || 'loadMore'}>
                     <FormControl>
                       <SelectTrigger>
@@ -333,7 +348,7 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
                       <SelectItem value="numberedPages">Páginas Numeradas</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormDescription>Como os resultados de busca serão paginados.</FormDescription>
+                  <FormDescription>Como os resultados de busca serão paginados para os usuários.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -344,7 +359,7 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
                 name="searchItemsPerPage"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Itens por Página (Busca)</FormLabel>
+                    <FormLabel>Itens por Página (Busca Pública)</FormLabel>
                     <FormControl><Input type="number" min="1" max="100" {...field} value={field.value ?? 12} onChange={e => field.onChange(parseInt(e.target.value,10))} /></FormControl>
                     <FormDescription>Número de itens por página para paginação numerada (1-100).</FormDescription>
                     <FormMessage />
@@ -358,7 +373,7 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
                 name="searchLoadMoreCount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contagem "Carregar Mais" (Busca)</FormLabel>
+                    <FormLabel>Contagem "Carregar Mais" (Busca Pública)</FormLabel>
                     <FormControl><Input type="number" min="1" max="100" {...field} value={field.value ?? 12} onChange={e => field.onChange(parseInt(e.target.value,10))} /></FormControl>
                     <FormDescription>Número de itens a carregar ao clicar em "Carregar Mais" (1-100).</FormDescription>
                     <FormMessage />
@@ -366,6 +381,7 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
                 )}
               />
             )}
+            <Separator />
             <FormField
                 control={form.control}
                 name="showCountdownOnCards"
