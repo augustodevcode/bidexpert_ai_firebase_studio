@@ -26,10 +26,9 @@ export default function AdminAuctionsPage() {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
-    let isMounted = true;
+    let isCancelled = false;
     
     const fetchAuctions = async () => {
-      if (!isMounted) return;
       setIsLoading(true);
       setError(null);
       try {
@@ -38,7 +37,7 @@ export default function AdminAuctionsPage() {
             getSellers(),
             getAuctioneers()
         ]);
-        if (isMounted) {
+        if (!isCancelled) {
           setAuctions(fetchedAuctions);
           setAllSellers(fetchedSellers);
           setAllAuctioneers(fetchedAuctioneers);
@@ -46,12 +45,12 @@ export default function AdminAuctionsPage() {
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : "Falha ao buscar dados.";
         console.error("Error fetching auctions data:", e);
-        if (isMounted) {
+        if (!isCancelled) {
           setError(errorMessage);
           toast({ title: "Erro", description: errorMessage, variant: "destructive" });
         }
       } finally {
-        if (isMounted) {
+        if (!isCancelled) {
           setIsLoading(false);
         }
       }
@@ -60,7 +59,7 @@ export default function AdminAuctionsPage() {
     fetchAuctions();
 
     return () => {
-      isMounted = false;
+      isCancelled = true;
     };
   }, [toast, refetchTrigger]);
 
