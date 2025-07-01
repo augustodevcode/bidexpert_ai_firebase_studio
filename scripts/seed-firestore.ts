@@ -2,7 +2,7 @@
 import admin from 'firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore'; 
 import { config } from 'dotenv'; 
-import { dbAdmin } from '../src/lib/firebase/admin'; // Importa a instância centralizada
+import { ensureAdminInitialized } from '../src/lib/firebase/admin'; // Importa a função de inicialização
 
 config(); 
 
@@ -68,8 +68,9 @@ const defaultRoles = [
 ];
 
 async function seedRoles() {
-  if (!dbAdmin) {
-    console.error("dbAdmin não inicializado no seedRoles. Verifique a inicialização centralizada.");
+  const { db: dbAdmin, error } = ensureAdminInitialized();
+  if (!dbAdmin || error) {
+    console.error("dbAdmin não inicializado no seedRoles.", error?.message);
     return;
   }
   console.log('Iniciando seed de Perfis Padrão...');
@@ -78,7 +79,7 @@ async function seedRoles() {
     const roleNameNormalized = roleData.name.toUpperCase();
     const roleQuery = await rolesCollection.where('name_normalized', '==', roleNameNormalized).limit(1).get();
     
-    const validPermissions = roleData.permissions.filter(p => predefinedPermissions.includes(p));
+    const validPermissions = roleData.permissions.filter(p => predefinedPermissions.some(item => item.id === p));
 
     if (roleQuery.empty) {
       await rolesCollection.add({
@@ -104,8 +105,9 @@ async function seedRoles() {
 }
 
 async function setupAdminUser() {
-  if (!dbAdmin) {
-    console.error("dbAdmin não inicializado no setupAdminUser. Verifique a inicialização centralizada.");
+  const { db: dbAdmin, error } = ensureAdminInitialized();
+  if (!dbAdmin || error) {
+    console.error("dbAdmin não inicializado no setupAdminUser.", error?.message);
     return;
   }
   console.log('Configurando usuário administrador principal...');
@@ -166,8 +168,9 @@ async function setupAdminUser() {
 
 
 async function seedStatesAndCities() {
-  if (!dbAdmin) {
-    console.error("dbAdmin não inicializado no seedStatesAndCities. Verifique a inicialização centralizada.");
+  const { db: dbAdmin, error } = ensureAdminInitialized();
+  if (!dbAdmin || error) {
+    console.error("dbAdmin não inicializado no seedStatesAndCities.", error?.message);
     return;
   }
   console.log('Iniciando o processo de seed de Estados e Cidades a partir do IBGE...');
@@ -233,8 +236,9 @@ async function seedStatesAndCities() {
 
 async function main() {
   console.log("Verificando dbAdmin antes de iniciar o seed...");
-  if (!dbAdmin) {
-    console.error("dbAdmin não está disponível no início do main. Saindo.");
+  const { db: dbAdmin, error } = ensureAdminInitialized();
+  if (!dbAdmin || error) {
+    console.error("dbAdmin não está disponível no início do main. Saindo.", error?.message);
     process.exit(1);
   }
   console.log("dbAdmin disponível. Prosseguindo com o seed.");

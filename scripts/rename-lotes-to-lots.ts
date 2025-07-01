@@ -1,5 +1,5 @@
 // scripts/rename-lotes-to-lots.ts
-import { dbAdmin } from '../src/lib/firebase/admin';
+import { ensureAdminInitialized } from '../src/lib/firebase/admin';
 
 // ===========================================================================
 // CONFIGURAÇÕES
@@ -15,9 +15,11 @@ const NEW_COLLECTION = 'lots';
 async function renameCollection() {
     console.log(`--- Iniciando processo de renomear a coleção '${OLD_COLLECTION}' para '${NEW_COLLECTION}' ---`);
 
-    if (!dbAdmin) {
-        console.error('Erro: Firebase Admin SDK (dbAdmin) não está inicializado.');
-        console.error('Verifique se o arquivo de chave de serviço existe e o caminho está correto em src/lib/firebase/admin.ts.');
+    const { db: dbAdmin, error } = ensureAdminInitialized();
+
+    if (!dbAdmin || error) {
+        console.error('Erro: Firebase Admin SDK (dbAdmin) não está inicializado.', error?.message);
+        console.error('Verifique se o arquivo de chave de serviço existe e o caminho está correto.');
         return;
     }
 

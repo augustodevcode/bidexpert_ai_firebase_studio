@@ -15,44 +15,27 @@ export type { FieldValue as AdminFieldValue, Timestamp as ServerTimestamp } from
 let adminApp: App | undefined;
 let initError: Error | null = null;
 
-// This function will run once when the module is first imported.
-function initialize() {
-    console.log('[Admin SDK] Initialize function called.');
+function _initializeAdminApp(): App {
     if (getApps().length > 0) {
         console.log('[Admin SDK] App already initialized. Getting default app.');
-        adminApp = getApp();
-        return;
+        return getApp();
     }
 
     const serviceAccountKeyFileName = 'bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json';
     const manualPath = path.join(process.cwd(), serviceAccountKeyFileName);
 
     if (!fs.existsSync(manualPath)) {
-        initError = new Error(`Service account key file not found at: ${manualPath}`);
-        console.error(`[Admin SDK] ${initError.message}`);
-        return;
+        throw new Error(`Service account key file not found at: ${manualPath}`);
     }
 
-    try {
-        const serviceAccount = JSON.parse(fs.readFileSync(manualPath, 'utf8'));
-        adminApp = initializeApp({
-            credential: cert(serviceAccount),
-            storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
-        });
-        console.log('[Admin SDK] Firebase Admin SDK initialized successfully.');
-    } catch (error: any) {
-        if (error.code === 'app/duplicate-app') {
-            console.warn('[Admin SDK] App already exists, getting instance.');
-            adminApp = getApp();
-        } else {
-            initError = new Error(`Failed to initialize Firebase Admin SDK: ${error.message}`);
-            console.error(`[Admin SDK] ${initError.message}`);
-        }
-    }
+    const serviceAccount = JSON.parse(fs.readFileSync(manualPath, 'utf8'));
+    const app = initializeApp({
+        credential: cert(serviceAccount),
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
+    });
+    console.log('[Admin SDK] Firebase Admin SDK initialized on-demand.');
+    return app;
 }
-
-// Initialize on module load
-initialize();
 
 export function ensureAdminInitialized(): {
   app?: App;
@@ -62,15 +45,27 @@ export function ensureAdminInitialized(): {
   error?: Error | null;
   alreadyInitialized: boolean;
 } {
+    // If there was a permanent error during the first attempt, return it.
     if (initError) {
-        return { error: initError, alreadyInitialized: false };
+        return { error: initError, alreadyInitialized: getApps().length > 0 };
     }
+
+    // If the app isn't initialized yet, try to initialize it.
     if (!adminApp) {
-        const noAppError = new Error("Firebase Admin App is not available after initialization attempt.");
-        return { error: noAppError, alreadyInitialized: false };
+        try {
+            adminApp = _initializeAdminApp();
+        } catch (error: any) {
+            initError = error; // Cache the initialization error
+            console.error(`[Admin SDK] Caching initialization error: ${initError.message}`);
+            return { error: initError, alreadyInitialized: getApps().length > 0 };
+        }
     }
     
-    const alreadyInitialized = getApps().length > 0;
+    // If adminApp is still not available after trying, something is wrong.
+    if (!adminApp) {
+      const finalError = new Error("Firebase Admin App is not available after initialization attempt.");
+      return { error: finalError, alreadyInitialized: false };
+    }
 
     return {
         app: adminApp,
@@ -78,11 +73,6 @@ export function ensureAdminInitialized(): {
         auth: getAuth(adminApp),
         storage: getStorage(adminApp),
         error: null,
-        alreadyInitialized: alreadyInitialized,
+        alreadyInitialized: true,
     };
 }
-
-// For direct, simpler access in scripts
-export const dbAdmin = adminApp ? getFirestore(adminApp) : undefined;
-export const authAdmin = adminApp ? getAuth(adminApp) : undefined;
-export const storageAdmin = adminApp ? getStorage(adminApp) : undefined;
