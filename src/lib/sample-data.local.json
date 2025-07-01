@@ -1,0 +1,73 @@
+
+{
+  "sampleLotCategories": [],
+  "sampleSubcategories": [],
+  "sampleStates": [],
+  "sampleCities": [],
+  "sampleAuctioneers": [],
+  "sampleSellers": [],
+  "sampleAuctions": [],
+  "sampleLots": [],
+  "sampleUserProfiles": [],
+  "sampleRoles": [],
+  "sampleMediaItems": [],
+  "sampleUserWins": [],
+  "sampleUserBids": [],
+  "sampleLotReviews": [],
+  "sampleLotQuestions": [],
+  "sampleDirectSaleOffers": [],
+  "sampleUserLotMaxBids": [],
+  "samplePlatformSettings": {
+    "id": "global",
+    "siteTitle": "BidExpert",
+    "siteTagline": "Leilões Online Especializados",
+    "galleryImageBasePath": "/uploads/media/",
+    "storageProvider": "local",
+    "firebaseStorageBucket": null,
+    "activeThemeName": "default",
+    "themes": [],
+    "platformPublicIdMasks": {
+      "auctions": "AUC-",
+      "lots": "LOT-",
+      "auctioneers": "AUCT-",
+      "sellers": "SELL-"
+    },
+    "mapSettings": {
+      "defaultProvider": "openstreetmap",
+      "googleMapsApiKey": null,
+      "staticImageMapZoom": 14,
+      "staticImageMapMarkerColor": "blue"
+    },
+    "searchPaginationType": "loadMore",
+    "searchItemsPerPage": 12,
+    "searchLoadMoreCount": 12,
+    "showCountdownOnLotDetail": true,
+    "showCountdownOnCards": true,
+    "showRelatedLotsOnLotDetail": true,
+    "relatedLotsCount": 5,
+    "mentalTriggerSettings": {
+      "showDiscountBadge": true,
+      "showUrgencyTimer": true,
+      "urgencyTimerThresholdDays": 1,
+      "urgencyTimerThresholdHours": 12,
+      "showPopularityBadge": true,
+      "popularityViewThreshold": 500,
+      "showHotBidBadge": true,
+      "hotBidThreshold": 10,
+      "showExclusiveBadge": true
+    },
+    "sectionBadgeVisibility": {
+      "featuredLots": { "showStatusBadge": true, "showDiscountBadge": true, "showUrgencyTimer": true, "showPopularityBadge": true, "showHotBidBadge": true, "showExclusiveBadge": true },
+      "searchGrid": { "showStatusBadge": true, "showDiscountBadge": true, "showUrgencyTimer": false, "showPopularityBadge": true, "showHotBidBadge": false, "showExclusiveBadge": true },
+      "searchList": { "showStatusBadge": true, "showDiscountBadge": true, "showUrgencyTimer": true, "showPopularityBadge": true, "showHotBidBadge": true, "showExclusiveBadge": true },
+      "lotDetail": { "showStatusBadge": true, "showDiscountBadge": true, "showUrgencyTimer": true, "showPopularityBadge": true, "showHotBidBadge": true, "showExclusiveBadge": true }
+    },
+    "homepageSections": [
+      { "id": "hero", "type": "hero_carousel", "visible": true, "order": 1 },
+      { "id": "filters", "type": "filter_links", "visible": true, "order": 2 },
+      { "id": "featured", "type": "featured_lots", "title": "Lotes em Destaque", "visible": true, "order": 3, "itemCount": 5 },
+      { "id": "active_auctions", "type": "active_auctions", "title": "Leilões Ativos", "visible": true, "order": 4, "itemCount": 10 }
+    ],
+    "updatedAt": "2023-10-27T10:00:00Z"
+  }
+}

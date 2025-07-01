@@ -37,7 +37,7 @@ function initialize() {
         const serviceAccount = JSON.parse(fs.readFileSync(manualPath, 'utf8'));
         adminApp = initializeApp({
             credential: cert(serviceAccount),
-            storageBucket: 'bidexpert-630df.appspot.com',
+            storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
         });
         console.log('[Admin SDK] Firebase Admin SDK initialized successfully.');
     } catch (error: any) {

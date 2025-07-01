@@ -36,13 +36,11 @@ firebase-debug.log
 tsconfig.tsbuildinfo
 
 # local env files
-.env*.local
-.env
+
 
 # Studio
 .studio
 studio.json
 *.studio.json
 
-# Local sample data
-sample-data.local.json
+
