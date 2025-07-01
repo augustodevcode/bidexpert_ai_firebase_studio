@@ -21,35 +21,34 @@ export default function AdminSellersPage() {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
-    let isMounted = true;
+    let isCancelled = false;
     
     const fetchSellers = async () => {
-      if (!isMounted) return;
       setIsLoading(true);
       setError(null);
       try {
         const fetchedSellers = await getSellers();
-        if (isMounted) {
+        if (!isCancelled) {
           setSellers(fetchedSellers);
         }
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : "Falha ao buscar comitentes.";
         console.error("Error fetching sellers:", e);
-        if (isMounted) {
+        if (!isCancelled) {
           setError(errorMessage);
           toast({ title: "Erro", description: errorMessage, variant: "destructive" });
         }
       } finally {
-        if (isMounted) {
+        if (!isCancelled) {
           setIsLoading(false);
         }
       }
     };
     
     fetchSellers();
-    
+
     return () => {
-      isMounted = false;
+      isCancelled = true;
     };
   }, [toast, refetchTrigger]);
 
