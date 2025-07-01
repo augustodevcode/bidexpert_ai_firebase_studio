@@ -7,18 +7,23 @@ import Footer from '@/components/layout/footer';
 import { Toaster } from "@/components/ui/toaster"
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/contexts/auth-context';
+import DevConfigProvider from '@/components/dev-config-provider'; // Import the provider
+import { getDatabaseAdapter } from '@/lib/database';
 
 export const metadata: Metadata = {
   title: 'BidExpert - Leilões Online',
   description: 'Seu parceiro especialista em leilões online.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const activeDatabaseSystem = process.env.ACTIVE_DATABASE_SYSTEM || 'FIRESTORE';
+  // We can call the adapter here to get the system name for display in the footer
+  const dbAdapter = await getDatabaseAdapter();
+  const activeDatabaseSystem = dbAdapter.constructor.name.replace('Adapter', '');
+
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
@@ -27,18 +32,19 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased flex flex-col min-h-screen bg-background dark:bg-background">
-        <AuthProvider>
-          <TooltipProvider delayDuration={0}> {/* Adicionado delayDuration={0} */}
-            <Header />
-            <main className="flex-grow container mx-auto px-4 py-8">
-              {children}
-            </main>
-            <Footer activeDatabaseSystem={activeDatabaseSystem} />
-          </TooltipProvider>
-          <Toaster />
-        </AuthProvider>
+        <DevConfigProvider>
+          <AuthProvider>
+            <TooltipProvider delayDuration={0}>
+              <Header />
+              <main className="flex-grow container mx-auto px-4 py-8">
+                {children}
+              </main>
+              <Footer activeDatabaseSystem={activeDatabaseSystem} />
+            </TooltipProvider>
+            <Toaster />
+          </AuthProvider>
+        </DevConfigProvider>
       </body>
     </html>
   );
 }
-
