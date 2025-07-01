@@ -10,7 +10,7 @@ import { getLots } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
-import { getAuctioneers } from '@/app/admin/auctioneers/actions'; 
+import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSampleData } from '@/lib/sample-data-helpers';
 
 export const dynamic = 'force-dynamic';
@@ -66,9 +66,7 @@ async function getAuctionPageData(id: string): Promise<{
 
 
 export default async function AuctionDetailPage({ params }: { params: { auctionId: string } }) {
-  const auctionIdParam = params.auctionId; 
-
-  if (!auctionIdParam) {
+  if (!params.auctionId) {
     console.error("[AuctionDetailPage] auctionId está undefined nos params.");
     return (
       <div className="text-center py-12">
@@ -81,13 +79,13 @@ export default async function AuctionDetailPage({ params }: { params: { auctionI
     );
   }
   
-  const { auction, auctioneer, platformSettings, allCategories, allSellers } = await getAuctionPageData(auctionIdParam);
+  const { auction, auctioneer, platformSettings, allCategories, allSellers } = await getAuctionPageData(params.auctionId);
 
   if (!auction) {
     return (
       <div className="text-center py-12">
         <h1 className="text-2xl font-bold">Leilão Não Encontrado</h1>
-        <p className="text-muted-foreground">O leilão que você está procurando (ID: {auctionIdParam}) não existe ou não pôde ser carregado.</p>
+        <p className="text-muted-foreground">O leilão que você está procurando (ID: {params.auctionId}) não existe ou não pôde ser carregado.</p>
         <Button asChild className="mt-4">
           <Link href="/">Voltar para Início</Link>
         </Button>
@@ -95,14 +93,11 @@ export default async function AuctionDetailPage({ params }: { params: { auctionI
     );
   }
 
-  // This part is now safe because we've validated the lot belongs to the auction.
-  const auctioneerDetails = await getAuctioneers().then(list => list.find(a => a.id === auction.auctioneerId));
-
   return (
     <div className="container mx-auto px-0 sm:px-4 py-2 sm:py-8"> 
         <AuctionDetailsClient 
           auction={auction} 
-          auctioneer={auctioneerDetails || null}
+          auctioneer={auctioneer || null}
           platformSettings={platformSettings}
           allCategories={allCategories}
           allSellers={allSellers}
