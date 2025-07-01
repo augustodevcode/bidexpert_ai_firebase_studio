@@ -138,7 +138,7 @@ export default function AdminSubcategoriesPage() {
                   {allParentCategories.map(cat => (
                     <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                   ))}
-                   {allParentCategories.length === 0 && <p className="p-2 text-xs text-muted-foreground">Cadastre categorias principais primeiro.</p>}
+                   {allParentCategories.length === 0 && <p className="text-xs text-muted-foreground p-2">Cadastre categorias principais primeiro.</p>}
                 </SelectContent>
               </Select>
             </div>
