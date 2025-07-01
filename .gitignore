@@ -26,7 +26,7 @@ yarn-debug.log*
 yarn-error.log*
 firebase-debug.log
 /genkit-debug.log
-.firebase/
+
 
 # vercel
 .vercel
