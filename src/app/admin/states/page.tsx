@@ -22,26 +22,25 @@ export default function AdminStatesPage() {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
-    let isMounted = true;
+    let isCancelled = false;
     
     const fetchStates = async () => {
-      if (!isMounted) return;
       setIsLoading(true);
       setError(null);
       try {
         const fetchedStates = await getStates();
-        if (isMounted) {
+        if (!isCancelled) {
           setStates(fetchedStates);
         }
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : "Falha ao buscar estados.";
         console.error("Error fetching states:", e);
-        if (isMounted) {
+        if (!isCancelled) {
           setError(errorMessage);
           toast({ title: "Erro", description: errorMessage, variant: "destructive" });
         }
       } finally {
-        if (isMounted) {
+        if (!isCancelled) {
           setIsLoading(false);
         }
       }
@@ -50,7 +49,7 @@ export default function AdminStatesPage() {
     fetchStates();
 
     return () => {
-      isMounted = false;
+      isCancelled = true;
     };
   }, [toast, refetchTrigger]);
 
