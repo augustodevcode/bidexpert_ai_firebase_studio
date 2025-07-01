@@ -21,26 +21,25 @@ export default function AdminAuctioneersPage() {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
-    let isMounted = true;
+    let isCancelled = false;
     
     const fetchAuctioneers = async () => {
-      if (!isMounted) return;
       setIsLoading(true);
       setError(null);
       try {
         const fetchedAuctioneers = await getAuctioneers();
-        if (isMounted) {
+        if (!isCancelled) {
           setAuctioneers(fetchedAuctioneers);
         }
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : "Falha ao buscar leiloeiros.";
         console.error("Error fetching auctioneers:", e);
-        if (isMounted) {
+        if (!isCancelled) {
           setError(errorMessage);
           toast({ title: "Erro", description: errorMessage, variant: "destructive" });
         }
       } finally {
-        if (isMounted) {
+        if (!isCancelled) {
           setIsLoading(false);
         }
       }
@@ -49,7 +48,7 @@ export default function AdminAuctioneersPage() {
     fetchAuctioneers();
 
     return () => {
-      isMounted = false;
+      isCancelled = true;
     };
   }, [toast, refetchTrigger]);
 
