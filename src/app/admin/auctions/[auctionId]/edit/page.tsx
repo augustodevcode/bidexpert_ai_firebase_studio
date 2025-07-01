@@ -1,4 +1,5 @@
 
+
 'use client'; 
 
 import AuctionForm from '../../auction-form';
@@ -34,6 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import SearchResultsFrame from '@/components/search-results-frame';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { samplePlatformSettings } from '@/lib/sample-data';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
 
 function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotId: string; lotTitle: string; auctionId: string; onDeleteSuccess: () => void }) {
   const [isDeleting, setIsDeleting] = React.useState(false);
