@@ -19,14 +19,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { sellerFormSchema, type SellerFormValues } from './seller-form-schema';
-import type { SellerProfileInfo, MediaItem } from '@/types';
-import { Loader2, Save, Users, Image as ImageIcon } from 'lucide-react';
+import type { SellerProfileInfo, MediaItem, JudicialBranch } from '@/types';
+import { Loader2, Save, Users, Image as ImageIcon, Scale } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface SellerFormProps {
   initialData?: SellerProfileInfo | null;
+  judicialBranches: JudicialBranch[];
   onSubmitAction: (data: SellerFormValues) => Promise<{ success: boolean; message: string; sellerId?: string }>;
   formTitle: string;
   formDescription: string;
@@ -35,6 +37,7 @@ interface SellerFormProps {
 
 export default function SellerForm({
   initialData,
+  judicialBranches,
   onSubmitAction,
   formTitle,
   formDescription,
@@ -60,6 +63,7 @@ export default function SellerForm({
       logoUrl: initialData?.logoUrl || '',
       dataAiHintLogo: initialData?.dataAiHintLogo || '',
       description: initialData?.description || '',
+      judicialBranchId: initialData?.judicialBranchId || null,
     },
   });
 
@@ -124,11 +128,35 @@ export default function SellerForm({
                 <FormItem>
                   <FormLabel>Nome do Comitente/Empresa</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Banco XYZ S.A., João da Silva (Espólio)" {...field} />
+                    <Input placeholder="Ex: Banco XYZ S.A., 1ª Vara Cível de Lagarto" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
+            />
+            <FormField
+                control={form.control}
+                name="judicialBranchId"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel className="flex items-center gap-2"><Scale className="h-4 w-4"/>Vara Judicial Vinculada (Opcional)</FormLabel>
+                    <Select onValueChange={(value) => field.onChange(value === 'none' ? null : value)} value={field.value ?? 'none'}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Nenhuma vara judicial vinculada" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhuma</SelectItem>
+                         {judicialBranches.map(branch => (
+                            <SelectItem key={branch.id} value={branch.id}>{branch.name} - {branch.districtName}</SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>Se este comitente representa uma entidade judicial, vincule-a aqui.</FormDescription>
+                    <FormMessage />
+                </FormItem>
+                )}
             />
             <div className="grid md:grid-cols-2 gap-6">
               <FormField

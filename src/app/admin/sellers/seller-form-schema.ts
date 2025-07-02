@@ -20,6 +20,7 @@ export const sellerFormSchema = z.object({
   description: z.string().max(2000, {
     message: "A descrição não pode exceder 2000 caracteres.",
   }).optional().nullable(),
+  judicialBranchId: z.string().optional().nullable(),
 });
 
 export type SellerFormValues = z.infer<typeof sellerFormSchema>;

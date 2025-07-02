@@ -133,6 +133,8 @@ export interface SellerProfileInfo {
   totalSalesValue?: number;
   auctionsFacilitatedCount?: number;
   userId?: string | null;
+  judicialBranchId?: string | null; // Link to JudicialBranch model
+  judicialBranchName?: string; // For display
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
   
@@ -141,7 +143,7 @@ export interface SellerProfileInfo {
   inscricaoEstadual?: string;
 }
 
-export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'activeLotsCount' | 'totalSalesValue' | 'auctionsFacilitatedCount' | 'userId' | 'logoMediaId'> & {
+export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'activeLotsCount' | 'totalSalesValue' | 'auctionsFacilitatedCount' | 'userId' | 'logoMediaId' | 'judicialBranchName'> & {
   userId?: string;
 };
 
