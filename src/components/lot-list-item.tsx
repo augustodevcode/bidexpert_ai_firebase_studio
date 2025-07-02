@@ -198,7 +198,10 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
     }
   }
 
-  const getTypeIcon = (type: string) => {
+  const getTypeIcon = (type?: string) => {
+    if (!type) {
+      return <Info className="h-3 w-3 text-muted-foreground" />;
+    }
     const upperType = type.toUpperCase();
     if (upperType.includes('CASA') || upperType.includes('IMÓVEL') || upperType.includes('APARTAMENTO')) {
         return <Building className="h-3 w-3 text-muted-foreground" />;
@@ -254,57 +257,41 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                 data-ai-hint={lot.dataAiHint || 'imagem lote lista'}
               />
             </Link>
-            <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10">
-              {sectionBadges.showStatusBadge !== false && (
-                <Badge className={`text-xs px-1.5 py-0.5 ${getLotStatusColor(lot.status)} border-current`}>
-                  {getAuctionStatusText(lot.status)}
-                </Badge>
-              )}
-              {isViewed && (
-                <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
-                  <Eye className="h-3 w-3 mr-0.5" /> Visto
-                </Badge>
-              )}
-            </div>
-            <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
-              {sectionBadges.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentage > 0 && (
-                <Badge variant="destructive" className="text-xs px-1.5 py-0.5 animate-pulse">
-                  <Percent className="h-3 w-3 mr-0.5" /> {discountPercentage}% OFF
-                </Badge>
-              )}
-              {mentalTriggers.map(trigger => {
-                let showThisTrigger = false;
-                if (trigger === 'MAIS VISITADO' && sectionBadges.showPopularityBadge !== false && mentalTriggersGlobalSettings.showPopularityBadge) showThisTrigger = true;
-                if (trigger === 'LANCE QUENTE' && sectionBadges.showHotBidBadge !== false && mentalTriggersGlobalSettings.showHotBidBadge) showThisTrigger = true;
-                if (trigger === 'EXCLUSIVO' && sectionBadges.showExclusiveBadge !== false && mentalTriggersGlobalSettings.showExclusiveBadge) showThisTrigger = true;
-                if (!showThisTrigger) return null;
-                return (
-                  <Badge key={trigger} variant="secondary" className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
-                    {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3 mr-0.5" />}
-                    {trigger === 'LANCE QUENTE' && <Zap className="h-3 w-3 mr-0.5 text-red-500 fill-red-500" />}
-                    {trigger === 'EXCLUSIVO' && <Crown className="h-3 w-3 mr-0.5 text-purple-600" />}
-                    {trigger}
-                  </Badge>
-                );
-              })}
-            </div>
+            {auction?.auctioneerLogoUrl && (
+              <div className="absolute bottom-1 right-1 bg-background/80 p-1 rounded-sm shadow max-w-[80px] max-h-[40px] overflow-hidden">
+                <Image
+                  src={auction.auctioneerLogoUrl}
+                  alt={auction.auctioneerName || 'Logo Comitente'}
+                  width={80}
+                  height={40}
+                  className="object-contain h-full w-full"
+                  data-ai-hint={auction.dataAiHint || "logo leiloeiro pequeno"}
+                />
+              </div>
+            )}
           </div>
 
           {/* Content Column */}
           <div className="flex flex-col flex-grow p-4">
             <div className="flex justify-between items-start mb-1.5">
               <div className="flex-grow min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  {sectionBadges.showStatusBadge !== false && (
+                    <Badge className={`text-xs px-1.5 py-0.5 ${getLotStatusColor(lot.status)} border-current`}>
+                      {getAuctionStatusText(lot.status)}
+                    </Badge>
+                  )}
+                  {isViewed && (
+                    <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
+                      <Eye className="h-3 w-3 mr-0.5" /> Visto
+                    </Badge>
+                  )}
+                </div>
                 <Link href={lotDetailUrl}>
                   <h3 className="text-base font-semibold hover:text-primary transition-colors leading-tight line-clamp-2 mr-2" title={lot.title}>
                     Lote {lot.number || lot.id.replace('LOTE','')} - {lot.title}
                   </h3>
                 </Link>
-                {effectiveEndDate && (
-                  <div className="flex items-center text-xs text-muted-foreground mt-1" title={`Encerramento: ${format(effectiveEndDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`}>
-                      <CalendarDays className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                      <span className="truncate">Encerra: {format(effectiveEndDate, "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
-                  </div>
-                )}
               </div>
               <div className="flex-shrink-0 flex items-center space-x-0.5">
                 <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleFavoriteToggle}><Heart className={`h-4 w-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
@@ -333,14 +320,27 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                 <span>{lot.bidsCount || 0} Lances</span>
               </div>
               <div className="flex items-center">
-                <Tag className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
-                <span className="truncate" title={lot.type}>{lot.type}
-                {lot.subcategoryName && ` / ${lot.subcategoryName}`}</span>
+                {getTypeIcon(lot.type)}
+                <span className="truncate ml-1" title={lot.type || ''}>{lot.type}</span>
               </div>
               <div className="flex items-center">
                 <MapPin className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
                 <span className="truncate" title={displayLocation}>{displayLocation}</span>
               </div>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5 my-2">
+                 {sectionBadges.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentage > 0 && (
+                    <Badge variant="destructive" className="text-xs animate-pulse"><Percent className="h-3 w-3 mr-1" /> {discountPercentage}% OFF</Badge>
+                )}
+                {mentalTriggers.map(trigger => (
+                    <Badge key={trigger} variant="secondary" className="text-xs bg-amber-100 text-amber-700 border-amber-300">
+                    {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3 mr-0.5" />}
+                    {trigger === 'LANCE QUENTE' && <Zap className="h-3 w-3 mr-0.5 text-red-500 fill-red-500" />}
+                    {trigger === 'EXCLUSIVO' && <Crown className="h-3 w-3 mr-0.5 text-purple-600" />}
+                    {trigger}
+                    </Badge>
+                ))}
             </div>
 
             <div className="mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2 border-t border-dashed">
@@ -416,3 +416,4 @@ export default function LotListItem({ lot, auction, badgeVisibilityConfig, platf
 
     return <LotListItemClientContent lot={lot} auction={auction} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} onUpdate={onUpdate} />;
   }
+

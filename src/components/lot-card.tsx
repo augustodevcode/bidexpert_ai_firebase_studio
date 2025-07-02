@@ -177,7 +177,10 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
     setIsMapModalOpen(true);
   };
 
-  const getTypeIcon = (type: string) => {
+  const getTypeIcon = (type?: string) => {
+    if (!type) {
+        return <Tag className="h-3 w-3 text-muted-foreground" />;
+    }
     const upperType = type.toUpperCase();
     if (upperType.includes('CASA') || upperType.includes('IMÓVEL') || upperType.includes('APARTAMENTO')) {
         return <Building className="h-3 w-3 text-muted-foreground" />;
@@ -308,7 +311,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
 
         <div className="flex items-center text-xs text-muted-foreground">
             {getTypeIcon(lot.type)}
-            <span className="truncate ml-1" title={lot.type}>{lot.type}</span>
+            <span className="truncate ml-1" title={lot.type || ''}>{lot.type}</span>
             {lot.subcategoryName && (
                 <>
                     <ChevronRight className="h-3 w-3 mx-0.5 text-muted-foreground/70 flex-shrink-0" />
@@ -412,3 +415,4 @@ export default function LotCard({ lot, auction, badgeVisibilityConfig, platformS
 
     return <LotCardClientContent lot={lot} auction={auction} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} onUpdate={onUpdate} />;
   }
+
