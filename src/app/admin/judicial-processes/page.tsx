@@ -65,6 +65,16 @@ export default function AdminJudicialProcessesPage() {
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
+  const facetedFilterOptions = useMemo(() => {
+    const courts = [...new Set(processes.map(p => p.courtName).filter(Boolean))] as string[];
+    const branches = [...new Set(processes.map(p => p.branchName).filter(Boolean))] as string[];
+    
+    return [
+      { id: 'courtName', title: 'Tribunal', options: courts.map(name => ({label: name, value: name})) },
+      { id: 'branchName', title: 'Vara', options: branches.map(name => ({label: name, value: name})) }
+    ];
+  }, [processes]);
+
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
@@ -92,10 +102,7 @@ export default function AdminJudicialProcessesPage() {
             error={error}
             searchColumnId="processNumber"
             searchPlaceholder="Buscar por nº do processo..."
-            facetedFilterColumns={[
-              { id: 'courtName', title: 'Tribunal', options: [...new Set(processes.map(p => p.courtName))].map(name => ({label: name!, value: name!})) },
-              { id: 'branchName', title: 'Vara', options: [...new Set(processes.map(p => p.branchName))].map(name => ({label: name!, value: name!})) }
-            ]}
+            facetedFilterColumns={facetedFilterOptions}
           />
         </CardContent>
       </Card>
