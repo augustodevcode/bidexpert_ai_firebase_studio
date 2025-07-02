@@ -29,8 +29,8 @@ export interface LotCategory {
     dataAiHintLogo?: string | null;
     dataAiHintCover?: string | null;
     dataAiHintMegaMenu?: string | null;
-    createdAt: AnyTimestamp; // Changed from Date
-    updatedAt: AnyTimestamp; // Changed from Date
+    createdAt: AnyTimestamp;
+    updatedAt: AnyTimestamp;
 }
 
 export interface Subcategory {
@@ -828,10 +828,13 @@ export interface JudicialProcess {
   districtId: string;
   branchId: string;
   parties: ProcessParty[];
+  courtName?: string;
+  districtName?: string;
+  branchName?: string;
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
 }
-export type JudicialProcessFormData = Omit<JudicialProcess, 'id' | 'publicId' | 'createdAt' | 'updatedAt'>;
+export type JudicialProcessFormData = Omit<JudicialProcess, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'courtName' | 'districtName' | 'branchName'>;
 
 // --- END NEW JUDICIAL ENTITIES ---
 
@@ -973,6 +976,12 @@ export interface IDatabaseAdapter {
   createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }>;
   updateJudicialBranch(id: string, data: Partial<JudicialBranchFormData>): Promise<{ success: boolean; message: string; }>;
   deleteJudicialBranch(id: string): Promise<{ success: boolean; message: string; }>;
+  
+  getJudicialProcesses(): Promise<JudicialProcess[]>;
+  getJudicialProcess(id: string): Promise<JudicialProcess | null>;
+  createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }>;
+  updateJudicialProcess(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }>;
+  deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string; }>;
 }
 
 export type UserCreationData = Pick<UserProfileData, 'fullName' | 'email' | 'cpf' | 'cellPhone' | 'dateOfBirth' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing'> & {

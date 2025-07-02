@@ -3,7 +3,7 @@ import type {
   Lot, LotCategory, Auction, AuctioneerProfileInfo, SellerProfileInfo,
   StateInfo, CityInfo, UserProfileWithPermissions, Role, MediaItem, Subcategory,
   PlatformSettings, DirectSaleOffer, UserWin, BidInfo, LotQuestion, Review, UserLotMaxBid, AuctionStage,
-  UserDocument, DocumentType, Court, JudicialDistrict, JudicialBranch
+  UserDocument, DocumentType, Court, JudicialDistrict, JudicialBranch, JudicialProcess, ProcessParty
 } from '@/types';
 import { slugify } from './sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
@@ -385,6 +385,28 @@ export const sampleJudicialBranches: JudicialBranch[] = [
     { id: 'branch-1', name: '1ª Vara Cível', slug: '1a-vara-civel', districtId: 'dist-sp-capital', contactName: 'José da Silva', phone: '11 1234-5678', email: 'vara1.sp@tj.jus.br', createdAt: new Date(), updatedAt: new Date() },
     { id: 'branch-2', name: '2ª Vara da Fazenda Pública', slug: '2a-vara-da-fazenda-publica', districtId: 'dist-rj-capital', contactName: 'Maria Oliveira', phone: '21 9876-5432', email: 'vara2.rj@tj.jus.br', createdAt: new Date(), updatedAt: new Date() },
     { id: 'branch-3', name: 'Vara Única de Lagarto', slug: 'vara-unica-lagarto', districtId: 'dist-se-lagarto', contactName: 'Ana Costa', phone: '79 3631-1111', email: 'vara.lagarto@tjse.jus.br', createdAt: new Date(), updatedAt: new Date() },
+];
+
+const sampleParties: ProcessParty[] = [
+    { id: 'party-1', name: 'João da Silva', documentNumber: '111.222.333-44', partyType: 'AUTOR' },
+    { id: 'party-2', name: 'Empresa X Ltda', documentNumber: '12.345.678/0001-99', partyType: 'REU' },
+    { id: 'party-3', name: 'Dr. Carlos Advogado', documentNumber: 'OAB/SP 12345', partyType: 'ADVOGADO_AUTOR' },
+    { id: 'party-4', name: 'Dra. Advogada Santos', documentNumber: 'OAB/RJ 54321', partyType: 'ADVOGADO_REU' },
+];
+
+export const sampleJudicialProcesses: JudicialProcess[] = [
+    { 
+        id: 'proc-1', publicId: 'PROC-12345-2024', processNumber: '0012345-67.2024.8.26.0001', isElectronic: true, 
+        courtId: 'court-tjsp', districtId: 'dist-sp-capital', branchId: 'branch-1', 
+        parties: [sampleParties[0], sampleParties[1], sampleParties[2]], 
+        createdAt: new Date(), updatedAt: new Date()
+    },
+    { 
+        id: 'proc-2', publicId: 'PROC-98765-2023', processNumber: '0098765-43.2023.8.19.0001', isElectronic: true,
+        courtId: 'court-tjrj', districtId: 'dist-rj-capital', branchId: 'branch-2',
+        parties: [sampleParties[0], sampleParties[3]],
+        createdAt: new Date(), updatedAt: new Date()
+    },
 ];
 
 // ==================================
