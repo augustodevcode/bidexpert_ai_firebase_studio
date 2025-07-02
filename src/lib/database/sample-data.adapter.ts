@@ -32,7 +32,6 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   private data: { [K in keyof typeof sampleData]: (typeof sampleData)[K] };
 
   constructor() {
-    // Create a deep, mutable copy of the imported data to work with
     this.data = JSON.parse(JSON.stringify(sampleData));
     console.log("[SampleDataAdapter] Instance created and data copied from module.");
   }
@@ -45,6 +44,45 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async initializeSchema(): Promise<{ success: boolean; message:string; rolesProcessed?: number }> {
     console.log('[SampleDataAdapter] Schema initialization is not required for sample data.');
     return Promise.resolve({ success: true, message: 'Sample data adapter ready.', rolesProcessed: this.data.sampleRoles.length });
+  }
+
+  async getLots(auctionIdParam?: string): Promise<Lot[]> {
+    await delay(20);
+    let lots = JSON.parse(JSON.stringify(this.data.sampleLots));
+    if (auctionIdParam) {
+      lots = lots.filter((lot: Lot) => lot.auctionId === auctionIdParam);
+    }
+    // Enrich with auction data
+    lots.forEach((lot: Lot) => {
+        const auction = this.data.sampleAuctions.find((a: Auction) => a.id === lot.auctionId);
+        if(auction) {
+            lot.auctionName = auction.title;
+            lot.auctionPublicId = auction.publicId;
+            if (!lot.endDate) lot.endDate = auction.endDate;
+        }
+        const category = this.data.sampleLotCategories.find((c: LotCategory) => c.id === lot.categoryId);
+        if (category) lot.type = category.name;
+    });
+    return Promise.resolve(lots);
+  }
+
+  async getLotsByIds(ids: string[]): Promise<Lot[]> {
+    await delay(20);
+    if (!ids || ids.length === 0) {
+      return Promise.resolve([]);
+    }
+    const idSet = new Set(ids);
+    const lots = this.data.sampleLots.filter((lot: Lot) => idSet.has(lot.id) || (lot.publicId && idSet.has(lot.publicId)));
+    // Enrich with auction data
+    lots.forEach((lot: Lot) => {
+        const auction = this.data.sampleAuctions.find((a: Auction) => a.id === lot.auctionId);
+        if(auction) {
+            lot.auctionName = auction.title;
+            lot.auctionPublicId = auction.publicId;
+             if (!lot.endDate) lot.endDate = auction.endDate;
+        }
+    });
+    return Promise.resolve(JSON.parse(JSON.stringify(lots)));
   }
 
   // --- Bids, Reviews, Questions ---
@@ -114,11 +152,10 @@ export class SampleDataAdapter implements IDatabaseAdapter {
 
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
     await delay(50);
-    // In a real scenario, you'd merge deeply. For sample data, a simple overwrite is fine.
     this.data.samplePlatformSettings = {
       ...this.data.samplePlatformSettings,
       ...data,
-      id: 'global', // ensure id is not lost
+      id: 'global',
       updatedAt: new Date(),
     };
     this._persistData();
@@ -127,8 +164,10 @@ export class SampleDataAdapter implements IDatabaseAdapter {
 
   // --- Stubs for now ---
   async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> { console.warn("[SampleDataAdapter] answerQuestion not implemented."); return { success: false, message: 'Not implemented.' }; }
-  async getAuctionsByIds(ids: string[]): Promise<Auction[]> { console.warn("[SampleDataAdapter] getAuctionsByIds not implemented."); return []; }
-  async getLotsByIds(ids: string[]): Promise<Lot[]> { console.warn("[SampleDataAdapter] getLotsByIds not implemented."); return []; }
+  async getAuctionsByIds(ids: string[]): Promise<Auction[]> { 
+    const auctions = this.data.sampleAuctions.filter(a => ids.includes(a.id) || ids.includes(a.publicId));
+    return Promise.resolve(JSON.parse(JSON.stringify(auctions)));
+  }
   async createReview(review: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<{ success: boolean; message: string; reviewId?: string; }> { console.warn("[SampleDataAdapter] createReview not implemented."); return { success: false, message: 'Not implemented.' }; }
   async getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> { console.warn("[SampleDataAdapter] getReviewsForLot not implemented."); return []; }
   async createQuestion(question: Omit<LotQuestion, "id" | "createdAt" | "answeredAt" | "answeredByUserId" | "answeredByUserDisplayName" | "isPublic">): Promise<{ success: boolean; message: string; questionId?: string; }> { console.warn("[SampleDataAdapter] createQuestion not implemented."); return { success: false, message: 'Not implemented.' }; }

@@ -658,11 +658,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return Promise.resolve([]);
   }
   
-  async getLotsByIds(ids: string[]): Promise<Lot[]> {
-    console.warn("[MySqlAdapter] getLotsByIds is not yet implemented for MySQL.");
-    return Promise.resolve([]);
-  }
-  
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[], rolesProcessed?: number }> {
     const connection = await getPool().getConnection();
     const errors: any[] = [];
@@ -907,9 +902,56 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async getLots(auctionIdParam?: string): Promise<Lot[]> {
-    console.warn("[MySqlAdapter] getLots is not yet implemented for MySQL.");
-    return [];
+    let query = `
+      SELECT 
+        l.*, 
+        a.title as auction_name, a.public_id as auction_public_id,
+        cat.name as category_name, 
+        sub.name as subcategory_name,
+        st.uf as state_uf, 
+        ct.name as city_name
+      FROM lots l
+      LEFT JOIN auctions a ON l.auction_id = a.id
+      LEFT JOIN lot_categories cat ON l.category_id = cat.id
+      LEFT JOIN subcategories sub ON l.subcategory_id = sub.id
+      LEFT JOIN states st ON l.state_id = st.id
+      LEFT JOIN cities ct ON l.city_id = ct.id
+    `;
+    const params = [];
+    if (auctionIdParam) {
+      query += ` WHERE l.auction_id = ?`;
+      params.push(auctionIdParam);
+    }
+    query += ' ORDER BY l.number ASC';
+    const [rows] = await getPool().execute<RowDataPacket[]>(query, params);
+    return mapMySqlRowsToCamelCase(rows).map(mapToLot);
   }
+  
+  async getLotsByIds(ids: string[]): Promise<Lot[]> {
+    if (!ids || ids.length === 0) return [];
+
+    const placeholders = ids.map(() => '?').join(',');
+    const query = `
+      SELECT 
+        l.*, 
+        a.title as auction_name, a.public_id as auction_public_id,
+        cat.name as category_name, 
+        sub.name as subcategory_name,
+        st.uf as state_uf, 
+        ct.name as city_name
+      FROM lots l
+      LEFT JOIN auctions a ON l.auction_id = a.id
+      LEFT JOIN lot_categories cat ON l.category_id = cat.id
+      LEFT JOIN subcategories sub ON l.subcategory_id = sub.id
+      LEFT JOIN states st ON l.state_id = st.id
+      LEFT JOIN cities ct ON l.city_id = ct.id
+      WHERE l.id IN (${placeholders}) OR l.public_id IN (${placeholders})
+    `;
+    const params = [...ids, ...ids];
+    const [rows] = await getPool().execute<RowDataPacket[]>(query, params);
+    return mapMySqlRowsToCamelCase(rows).map(mapToLot);
+  }
+  
   async getLot(idOrPublicId: string): Promise<Lot | null> {
     console.warn("[MySqlAdapter] getLot is not yet implemented for MySQL.");
     return null;
