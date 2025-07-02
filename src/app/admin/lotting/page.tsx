@@ -147,3 +147,6 @@ export default function LoteamentoPage() {
             </Card>
         </CardContent>
       </Card>
+    </div>
+  );
+}

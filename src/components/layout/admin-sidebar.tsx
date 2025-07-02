@@ -16,7 +16,7 @@ const topLevelNavItems = [
 
 const auctionManagementItems = [
   { title: 'Leilões', href: '/admin/auctions', icon: Gavel },
-  { title: 'Loteamento', href: '/admin/lotting', icon: Boxes, disabled: true },
+  { title: 'Loteamento', href: '/admin/lotting', icon: Boxes },
   { title: 'Lotes', href: '/admin/lots', icon: Package },
   { title: 'Bens', href: '/admin/bens', icon: Package },
   { title: 'Venda Direta', href: '/admin/direct-sales', icon: ShoppingCart },

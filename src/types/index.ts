@@ -282,26 +282,42 @@ export interface Lot {
   publicId: string;
   auctionId: string;
   auctionPublicId?: string;
-  title: string;
+  auctionName?: string;
   number?: string; 
+  title: string; 
+  description?: string; 
   status: LotStatus;
   bidsCount?: number;
   price: number; 
   initialPrice?: number;
   endDate?: AnyTimestamp;
-  createdAt?: AnyTimestamp;
-  updatedAt?: AnyTimestamp;
-  bemIds?: string[]; // Array of Bem IDs
-  // All descriptive fields are moved to Bem
+  lotSpecificAuctionDate?: AnyTimestamp; 
+  isFeatured?: boolean;
+  isFavorite?: boolean;
+  bemIds: string[]; // <-- This is the core change
+  // The following fields are now derived from the contained Bens
+  imageUrl?: string; // Often the image of the first or most important Bem
+  dataAiHint?: string;
+  views?: number;
+  type?: string; // Derived category
+  cityName?: string;
+  stateUf?: string;
+  subcategoryName?: string;
+  // ... and other derived fields as needed for display
+  createdAt: AnyTimestamp;
+  updatedAt: AnyTimestamp;
 }
 
 export type LotFormData = Omit<Lot,
-  'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'endDate' | 'bidsCount' | 'price'
+  'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'endDate' | 'bidsCount' | 'price' |
+  'auctionPublicId' | 'isFavorite' | 'imageUrl' | 'dataAiHint' | 'views' | 'type' | 'cityName' | 'stateUf' | 'subcategoryName' | 'auctionName'
 > & {
   endDate?: Date | null; 
+  lotSpecificAuctionDate?: Date | null; 
 };
 
-export type LotDbData = LotFormData;
+export type LotDbData = Omit<LotFormData, 'auctionName'>;
+
 
 export type BidInfo = {
   id: string;
@@ -515,7 +531,7 @@ export interface MentalTriggerSettings {
     showDiscountBadge?: boolean;
     showUrgencyTimer?: boolean;
     urgencyTimerThresholdDays?: number;
-    urgencyTimerThresholdHours?: number;
+    urgencyThresholdHours?: number;
     showPopularityBadge?: boolean;
     popularityViewThreshold?: number;
     showHotBidBadge?: boolean;
@@ -913,116 +929,51 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
-
 ```
   </change>
   <change>
-    <file>/src/components/layout/admin-sidebar.tsx</file>
-    <content><![CDATA[// src/components/layout/admin-sidebar.tsx
-'use client';
+    <file>/src/app/admin/bens/actions.ts</file>
+    <content><![CDATA[// src/app/admin/bens/actions.ts
+'use server';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, Boxes } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { revalidatePath } from 'next/cache';
+import { getDatabaseAdapter } from '@/lib/database';
+import type { Bem, BemFormData } from '@/types';
 
-const topLevelNavItems = [
-  { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-  { title: 'Auditório Virtual', href: '/live-dashboard', icon: Tv },
-];
+export async function createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
+  const db = await getDatabaseAdapter();
+  const result = await db.createBem(data);
+  if (result.success) {
+    revalidatePath('/admin/bens');
+  }
+  return result;
+}
 
-const auctionManagementItems = [
-  { title: 'Leilões', href: '/admin/auctions', icon: Gavel },
-  { title: 'Loteamento', href: '/admin/lotting', icon: Boxes, disabled: true },
-  { title: 'Lotes', href: '/admin/lots', icon: Package },
-  { title: 'Bens', href: '/admin/bens', icon: Package },
-  { title: 'Venda Direta', href: '/admin/direct-sales', icon: ShoppingCart },
-  { title: 'Categorias de Lotes', href: '/admin/categories', icon: ListChecks },
-  { title: 'Subcategorias', href: '/admin/subcategories', icon: Layers },
-];
+export async function getBens(judicialProcessId?: string): Promise<Bem[]> {
+  const db = await getDatabaseAdapter();
+  return db.getBens(judicialProcessId);
+}
 
-const judicialManagementItems = [
-    { title: 'Tribunais', href: '/admin/courts', icon: Scale },
-    { title: 'Comarcas', href: '/admin/judicial-districts', icon: Map, disabled: false },
-    { title: 'Varas', href: '/admin/judicial-branches', icon: Building2, disabled: false },
-    { title: 'Processos', href: '/admin/judicial-processes', icon: FileText, disabled: false },
-]
+export async function getBem(id: string): Promise<Bem | null> {
+  const db = await getDatabaseAdapter();
+  return db.getBem(id);
+}
 
-const platformManagementItems = [
-  { title: 'Biblioteca de Mídia', href: '/admin/media', icon: Library },
-  { title: 'Comitentes', href: '/admin/sellers', icon: Users },
-  { title: 'Leiloeiros', href: '/admin/auctioneers', icon: Landmark },
-  { title: 'Estados', href: '/admin/states', icon: Map },
-  { title: 'Cidades', href: '/admin/cities', icon: Building2 },
-  { title: 'Usuários', href: '/admin/users', icon: Users },
-  { title: 'Perfis (Roles)', href: '/admin/roles', icon: ShieldCheck },
-  { title: 'Configurações', href: '/admin/settings', icon: Settings },
-];
+export async function updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
+  const db = await getDatabaseAdapter();
+  const result = await db.updateBem(id, data);
+  if (result.success) {
+    revalidatePath('/admin/bens');
+    revalidatePath(`/admin/bens/${id}/edit`);
+  }
+  return result;
+}
 
-const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; title: string; icon: React.ElementType; disabled?: boolean }; pathname: string; onLinkClick?: () => void; }) => (
-  <Button
-    key={item.href}
-    variant={pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href) && !item.disabled) ? 'secondary' : 'ghost'}
-    className={cn(
-      'w-full justify-start',
-      (pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href)) && !item.disabled) && 'font-semibold text-primary hover:text-primary'
-    )}
-    asChild
-    disabled={item.disabled}
-    onClick={onLinkClick}
-  >
-    <Link href={item.disabled ? '#' : item.href}>
-      <item.icon className="mr-2 h-4 w-4" />
-      {item.title}
-    </Link>
-  </Button>
-);
-
-export default function AdminSidebar() {
-  const pathname = usePathname();
-
-  return (
-    <aside className="sticky top-0 h-screen w-64 bg-background border-r flex flex-col">
-      <div className="p-4 border-b">
-        <Link href="/admin/dashboard" className="flex items-center space-x-2">
-          <LayoutDashboard className="h-7 w-7 text-primary" />
-          <span className="font-bold text-xl text-primary">BidExpert Admin</span>
-        </Link>
-      </div>
-      <ScrollArea className="flex-1">
-        <nav className="p-2 space-y-1">
-          {topLevelNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-          
-          <Accordion type="multiple" className="w-full" defaultValue={['auction-management', 'judicial-management', 'platform-management']}>
-              <AccordionItem value="auction-management" className="border-b-0">
-                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão de Leilões</AccordionTrigger>
-                  <AccordionContent className="pt-1 space-y-1">
-                      {auctionManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-                  </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="judicial-management" className="border-b-0">
-                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão Judicial</AccordionTrigger>
-                  <AccordionContent className="pt-1 space-y-1">
-                      {judicialManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-                  </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="platform-management" className="border-b-0">
-                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão da Plataforma</AccordionTrigger>
-                  <AccordionContent className="pt-1 space-y-1">
-                      {platformManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-                  </AccordionContent>
-              </AccordionItem>
-          </Accordion>
-        </nav>
-      </ScrollArea>
-      <div className="p-4 border-t">
-        <Button variant="outline" className="w-full" asChild>
-            <Link href="/">Voltar ao Site</Link>
-        </Button>
-      </div>
-    </aside>
-  );
+export async function deleteBem(id: string): Promise<{ success: boolean; message: string; }> {
+  const db = await getDatabaseAdapter();
+  const result = await db.deleteBem(id);
+  if (result.success) {
+    revalidatePath('/admin/bens');
+  }
+  return result;
 }
