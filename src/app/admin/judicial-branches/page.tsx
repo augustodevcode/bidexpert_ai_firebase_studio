@@ -65,6 +65,14 @@ export default function AdminJudicialBranchesPage() {
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
+  const facetedFilterOptions = useMemo(() => {
+    const districts = [...new Set(branches.map(b => b.districtName).filter(Boolean))] as string[];
+    return [
+      { id: 'districtName', title: 'Comarca', options: districts.map(name => ({label: name!, value: name!})) }
+    ];
+  }, [branches]);
+
+
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
@@ -92,9 +100,7 @@ export default function AdminJudicialBranchesPage() {
             error={error}
             searchColumnId="name"
             searchPlaceholder="Buscar por nome da vara..."
-            facetedFilterColumns={[
-              { id: 'districtName', title: 'Comarca', options: [...new Set(branches.map(b => b.districtName))].map(name => ({label: name!, value: name!})) }
-            ]}
+            facetedFilterColumns={facetedFilterOptions}
           />
         </CardContent>
       </Card>
