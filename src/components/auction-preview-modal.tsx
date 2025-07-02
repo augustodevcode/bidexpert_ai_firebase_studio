@@ -27,7 +27,6 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
   const auctioneerInitial = auction.auctioneer ? auction.auctioneer.charAt(0).toUpperCase() : 'L';
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'Nacional';
 
-  // Memoize the calculation of dates to be highlighted on the calendar
   const auctionDates = useMemo(() => {
     const dates: Date[] = [];
     if (auction.auctionDate) dates.push(new Date(auction.auctionDate as string));
@@ -35,7 +34,6 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
     (auction.auctionStages || []).forEach(stage => {
         if (stage.endDate) dates.push(new Date(stage.endDate as string));
     });
-    // Remove duplicate dates
     const uniqueDates = Array.from(new Set(dates.map(d => d.toISOString()))).map(iso => new Date(iso));
     return uniqueDates;
   }, [auction]);
@@ -51,7 +49,6 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
         </DialogHeader>
 
         <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto px-4 sm:px-6">
-            {/* Left Column */}
             <div className="space-y-4">
                 <div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden">
                     <Image
@@ -86,7 +83,6 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
                 </Card>
             </div>
 
-            {/* Right Column */}
             <div className="space-y-4">
                 <Card>
                     <CardHeader className="p-3">
