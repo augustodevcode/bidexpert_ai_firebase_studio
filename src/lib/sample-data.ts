@@ -317,6 +317,19 @@ auctionTypes.forEach(type => {
         views: randomInt(10, 500), isFeatured: Math.random() > 0.9, auctionName: auction.title,
         cityName: city.name, stateUf: city.stateUf, auctionPublicId: auction.publicId
       };
+      
+      // Populate judicial and real estate fields for relevant lots
+      if (auction.auctionType === 'JUDICIAL') {
+        lot.judicialProcessNumber = `0012345-67.${new Date().getFullYear()}.8.26.${randomInt(1, 9999).toString().padStart(4, '0')}`;
+        lot.courtDistrict = "Comarca da Capital";
+        lot.courtName = "1ª Vara Cível";
+      }
+      if (selectedCategory.name === 'Imóveis') {
+        lot.propertyRegistrationNumber = `${randomInt(10000, 99999)}`;
+        lot.propertyLiens = "Consta hipoteca em favor do Banco Exemplo S.A.";
+        lot.knownDebts = `IPTU 2024 em aberto (R$ ${randomInt(500, 2000)}).`;
+      }
+
 
       if (lot.status === 'ABERTO_PARA_LANCES') {
         const numBids = randomInt(0, 10);

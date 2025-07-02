@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -23,17 +23,18 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
 import type { Lot, LotStatus, LotCategory, Auction, StateInfo, CityInfo, MediaItem, Subcategory } from '@/types';
-import { Loader2, Save, CalendarIcon, Package, ImagePlus, UploadCloud, Trash2, MapPin, FileText, Shield, Banknote, Link as LinkIcon, TrendingUp, Layers, Scale, ShieldQuestion, DollarSign as DollarSignIcon, Gavel, Eye } from 'lucide-react';
+import { Loader2, Save, CalendarIcon, Package, ImagePlus, UploadCloud, Trash2, MapPin, FileText, Shield, Banknote, Link as LinkIcon, TrendingUp, Layers, Scale, ShieldQuestion, DollarSign as DollarSignIcon, Gavel, Eye, Building } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
 import { getSubcategoriesByParentIdAction } from '@/app/admin/subcategories/actions';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 
 interface LotFormProps {
@@ -79,14 +80,11 @@ export default function LotForm({
   const [isGalleryDialogOpen, setIsGalleryDialogOpen] = React.useState(false);
 
   const [selectedMediaForGallery, setSelectedMediaForGallery] = React.useState<Partial<MediaItem>[]>(() => {
-    // This function needs to be safe from undefined initialData
     if (!initialData) return [];
   
     const itemsMap = new Map<string, Partial<MediaItem>>();
     
     (initialData.mediaItemIds || []).forEach(mediaId => {
-        // You need access to a list of media items here, for this example we'll assume it's passed or available somehow
-        // Since we can't fetch here, let's create a placeholder
         itemsMap.set(mediaId, {
             id: mediaId,
             urlOriginal: `https://placehold.co/100x100.png?text=ID:${mediaId.substring(0,4)}`,
@@ -129,8 +127,8 @@ export default function LotForm({
       imageUrl: initialData?.imageUrl || '',
       galleryImageUrls: initialData?.galleryImageUrls || [],
       mediaItemIds: initialData?.mediaItemIds || [],
-      lotSpecificAuctionDate: initialData?.lotSpecificAuctionDate ? new Date(initialData.lotSpecificAuctionDate as Date) : null,
-      secondAuctionDate: initialData?.secondAuctionDate ? new Date(initialData.secondAuctionDate as Date) : null,
+      lotSpecificAuctionDate: initialData?.lotSpecificAuctionDate ? new Date(initialData.lotSpecificAuctionDate as string) : null,
+      secondAuctionDate: initialData?.secondAuctionDate ? new Date(initialData.secondAuctionDate as string) : null,
       secondInitialPrice: initialData?.secondInitialPrice || null,
       views: initialData?.views || 0,
       bidsCount: initialData?.bidsCount || 0,
@@ -155,7 +153,14 @@ export default function LotForm({
   });
 
   const selectedStateId = form.watch('stateId');
-  const selectedParentCategoryId = form.watch('type');
+  const selectedCategoryId = form.watch('type');
+  const selectedAuctionId = form.watch('auctionId');
+
+  const selectedAuction = React.useMemo(() => auctions.find(a => a.id === selectedAuctionId || a.publicId === selectedAuctionId), [auctions, selectedAuctionId]);
+  const selectedCategory = React.useMemo(() => categories.find(c => c.id === selectedCategoryId || c.slug === selectedCategoryId), [categories, selectedCategoryId]);
+
+  const isJudicial = selectedAuction?.auctionType === 'JUDICIAL';
+  const isImovel = selectedCategory?.name === 'Imóveis';
 
   React.useEffect(() => {
     if (defaultAuctionId) {
@@ -217,14 +222,14 @@ export default function LotForm({
         }
     };
 
-    if (selectedParentCategoryId) {
-        fetchSubcats(selectedParentCategoryId);
+    if (selectedCategoryId) {
+        fetchSubcats(selectedCategoryId);
     } else {
         setAvailableSubcategories([]);
         form.setValue('subcategoryId', undefined);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedParentCategoryId, categories, form.setValue, toast]);
+  }, [selectedCategoryId, categories, form.setValue, toast]);
 
   const handleSelectMainImageFromDialog = (selectedItems: Partial<MediaItem>[]) => {
     if (selectedItems.length > 0) {
@@ -256,7 +261,7 @@ export default function LotForm({
 
   const handleRemoveFromGallery = (itemIdToRemove?: string) => {
     if (!itemIdToRemove) return;
-    setSelectedMediaForGallery(prev => prev.filter(item => item.id !== itemIdToRemove));
+    setSelectedMediaForGallery(prev => prev.filter(item => (item.id || item.urlOriginal) !== itemIdToRemove));
   };
 
   async function onSubmit(values: LotFormValues) {
@@ -301,8 +306,6 @@ export default function LotForm({
     }
   }
 
-  const selectedParentCategory = categories.find(cat => cat.id === selectedParentCategoryId || cat.slug === selectedParentCategoryId);
-
   return (
     <>
       <Card className="max-w-3xl mx-auto shadow-lg">
@@ -334,7 +337,6 @@ export default function LotForm({
                 <FormField control={form.control} name="itbiValue" render={({ field }) => (<FormItem><FormLabel>Valor de ITBI / Base</FormLabel><FormControl><Input type="number" placeholder="Ex: 95000.00" {...field} value={field.value ?? ''} /></FormControl><FormDescription className="text-xs">Base de cálculo para 1ª praça em leilões de imóveis.</FormDescription><FormMessage /></FormItem>)} />
               </div>
 
-
               <Separator />
               <h3 className="text-md font-semibold text-muted-foreground pt-2 flex items-center gap-2"><Gavel className="h-5 w-5" /> Classificação e Status</h3>
                  <div className="grid md:grid-cols-2 gap-6">
@@ -342,25 +344,40 @@ export default function LotForm({
                   <FormField control={form.control} name="type" render={({ field }) => (<FormItem><FormLabel>Tipo/Categoria do Lote</FormLabel><Select onValueChange={(value) => { field.onChange(value); form.setValue('subcategoryId', undefined); }} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o tipo/categoria" /></SelectTrigger></FormControl><SelectContent>{categories.length === 0 ? <p className="p-2 text-sm text-muted-foreground">Nenhuma categoria cadastrada</p> : categories.map(cat => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)}/>
               </div>
               
-              {selectedParentCategory && selectedParentCategory.hasSubcategories && (
+              {selectedCategory && selectedCategory.hasSubcategories && (
                  <FormField control={form.control} name="subcategoryId" render={({ field }) => (<FormItem><FormLabel>Subcategoria</FormLabel><Select onValueChange={field.onChange} value={field.value || undefined} disabled={isLoadingSubcategories || availableSubcategories.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={isLoadingSubcategories ? "Carregando..." : (availableSubcategories.length === 0 ? "Nenhuma subcategoria" : "Selecione a subcategoria")} /></SelectTrigger></FormControl><SelectContent>{availableSubcategories.map(subcat => (<SelectItem key={subcat.id} value={subcat.id}>{subcat.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)}/>
               )}
 
-
-              <div className="grid md:grid-cols-2 gap-6">
-                  <FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado (Opcional)</FormLabel><Select onValueChange={(value) => { const actualValue = value === "---NONE---" ? undefined : value; field.onChange(actualValue); form.setValue('cityId', undefined); }} value={field.value || undefined}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o estado" /></SelectTrigger></FormControl><SelectContent><SelectItem value="---NONE---">Nenhum</SelectItem>{states.filter(s => s.id && String(s.id).trim() !== "").map(state => (<SelectItem key={state.id} value={state.id}>{state.name} ({state.uf})</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)}/>
-                  <FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade (Opcional)</FormLabel><Select onValueChange={(value) => { const actualValue = value === "---NONE---" ? undefined : value; field.onChange(actualValue); }} value={field.value || undefined} disabled={!selectedStateId || filteredCities.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={!selectedStateId ? "Selecione um estado primeiro" : "Selecione a cidade"} /></SelectTrigger></FormControl><SelectContent><SelectItem value="---NONE---">Nenhuma</SelectItem>{filteredCities.filter(c => c.id && String(c.id).trim() !== "").map(city => (<SelectItem key={city.id} value={city.id}>{city.name}</SelectItem>))}</SelectContent></Select>{!selectedStateId && <FormDescription className="text-xs">Selecione um estado para ver as cidades.</FormDescription>}{selectedStateId && filteredCities.length === 0 && <FormDescription className="text-xs">Nenhuma cidade cadastrada para este estado.</FormDescription>}<FormMessage /></FormItem>)}/>
-              </div>
+              <Accordion type="multiple">
+                {isJudicial && (
+                   <AccordionItem value="judicial-info">
+                     <AccordionTrigger className="text-md font-semibold text-muted-foreground hover:no-underline">
+                       <ShieldQuestion className="mr-2 h-5 w-5 text-primary"/> Informações Judiciais (Leilão Judicial)
+                     </AccordionTrigger>
+                     <AccordionContent className="space-y-4 pt-4">
+                       <FormField control={form.control} name="judicialProcessNumber" render={({ field }) => (<FormItem><FormLabel>Nº Processo Judicial</FormLabel><FormControl><Input placeholder="0000000-00.0000.0.00.0000" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
+                       <div className="grid md:grid-cols-2 gap-6"><FormField control={form.control} name="courtDistrict" render={({ field }) => (<FormItem><FormLabel>Comarca</FormLabel><FormControl><Input placeholder="Ex: Comarca de São Paulo" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="courtName" render={({ field }) => (<FormItem><FormLabel>Vara Judicial</FormLabel><FormControl><Input placeholder="Ex: 1ª Vara Cível" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} /></div>
+                       <FormField control={form.control} name="publicProcessUrl" render={({ field }) => (<FormItem><FormLabel>Link Consulta Pública do Processo</FormLabel><FormControl><Input type="url" placeholder="https://esaj.tjsp.jus.br/..." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
+                     </AccordionContent>
+                   </AccordionItem>
+                )}
+                {isImovel && (
+                   <AccordionItem value="imovel-info">
+                     <AccordionTrigger className="text-md font-semibold text-muted-foreground hover:no-underline">
+                       <Building className="mr-2 h-5 w-5 text-primary"/> Dados do Imóvel
+                     </AccordionTrigger>
+                     <AccordionContent className="space-y-4 pt-4">
+                        <FormField control={form.control} name="propertyRegistrationNumber" render={({ field }) => (<FormItem><FormLabel>Nº Matrícula do Imóvel</FormLabel><FormControl><Input placeholder="Ex: 123.456 do 1º CRI" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="propertyLiens" render={({ field }) => (<FormItem><FormLabel>Ônus/Gravames Conhecidos</FormLabel><FormControl><Textarea placeholder="Descrever brevemente ou link para certidão de ônus." {...field} value={field.value ?? ""} rows={2} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="knownDebts" render={({ field }) => (<FormItem><FormLabel>Dívidas Conhecidas (IPTU, Condomínio, etc.)</FormLabel><FormControl><Textarea placeholder="Listar dívidas conhecidas sobre o bem." {...field} value={field.value ?? ""} rows={2} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="additionalDocumentsInfo" render={({ field }) => (<FormItem><FormLabel>Outras Informações/Links de Documentos</FormLabel><FormControl><Textarea placeholder="Espaço para links adicionais de documentos ou observações importantes." {...field} value={field.value ?? ""} rows={3} /></FormControl><FormMessage /></FormItem>)} />
+                     </AccordionContent>
+                   </AccordionItem>
+                )}
+              </Accordion>
 
               <FormItem><FormLabel>Imagem Principal do Lote</FormLabel><Card className="mt-2"><CardContent className="p-4 flex flex-col items-center gap-3"><div className="relative w-full aspect-video bg-muted rounded-md overflow-hidden max-w-md mx-auto">{mainImagePreviewUrl ? <Image src={mainImagePreviewUrl} alt="Prévia da Imagem Principal" fill className="object-contain" data-ai-hint="previa imagem principal" /> : <div className="flex flex-col items-center justify-center h-full text-muted-foreground"><ImagePlus className="h-12 w-12 mb-2" /><span>Nenhuma imagem selecionada</span></div>}<Button type="button" variant="outline" onClick={() => setIsMainImageDialogOpen(true)}><ImagePlus className="mr-2 h-4 w-4" />{mainImagePreviewUrl ? "Alterar Imagem Principal" : "Escolher Imagem Principal"}</Button></div></CardContent></Card><FormField control={form.control} name="imageUrl" render={({ field }) => (<FormItem className="hidden"><FormControl><Input type="text" {...field} /></FormControl><FormMessage /></FormItem>)} /><FormDescription>Selecione a imagem de capa para este lote.</FormDescription></FormItem>
-
               <div className="space-y-2"><FormLabel>Galeria de Imagens do Lote</FormLabel><div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2 border rounded-md min-h-[80px]">{selectedMediaForGallery.map((item, index) => (<div key={item.id || `gallery-item-${index}-${uuidv4()}`} className="relative aspect-square bg-muted rounded overflow-hidden"><Image src={item.urlOriginal || 'https://placehold.co/100x100.png'} alt={item.title || `Imagem ${index + 1}`} fill className="object-cover" data-ai-hint={item.dataAiHint || "miniatura galeria lote"} /><Button type="button" size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6 opacity-80 hover:opacity-100 p-0" onClick={() => handleRemoveFromGallery(item.id)} title="Remover da galeria do lote"><Trash2 className="h-3.5 w-3.5" /></Button></div>))}{selectedMediaForGallery.length < 10 && (<Button type="button" variant="outline" className="aspect-square flex flex-col items-center justify-center text-muted-foreground hover:text-primary h-full" onClick={() => setIsGalleryDialogOpen(true)}><ImagePlus className="h-6 w-6 mb-1" /><span className="text-xs">Adicionar</span></Button>)}</div><FormDescription>Adicione mais imagens para este lote clicando em "Adicionar". Máximo de 10 imagens.</FormDescription><FormField control={form.control} name="galleryImageUrls" render={({ field }) => (<FormItem className="hidden"><FormControl><Input type="text" {...field} value={Array.isArray(field.value) ? field.value.join(',') : ''} /></FormControl></FormItem>)} /><FormField control={form.control} name="mediaItemIds" render={({ field }) => (<FormItem className="hidden"><FormControl><Input type="text" {...field} value={Array.isArray(field.value) ? field.value.join(',') : ''} /></FormControl></FormItem>)} /></div>
-
-              <Separator /><h3 className="text-md font-semibold text-muted-foreground pt-2 flex items-center gap-2"><MapPin className="h-5 w-5" /> Localização e Mapa (Opcional)</h3><div className="grid md:grid-cols-2 gap-6"><FormField control={form.control} name="latitude" render={({ field }) => (<FormItem><FormLabel>Latitude</FormLabel><FormControl><Input type="number" step="any" placeholder="Ex: -23.550520" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)}/><FormField control={form.control} name="longitude" render={({ field }) => (<FormItem><FormLabel>Longitude</FormLabel><FormControl><Input type="number" step="any" placeholder="Ex: -46.633308" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)}/></div><FormField control={form.control} name="mapAddress" render={({ field }) => (<FormItem><FormLabel>Endereço para Mapa</FormLabel><FormControl><Input placeholder="Ex: Av. Paulista, 1578, São Paulo, SP" {...field} value={field.value ?? ''} /></FormControl><FormDescription>Se diferente do endereço principal do lote, ou para maior precisão no mapa.</FormDescription><FormMessage /></FormItem>)}/>
-              <FormField control={form.control} name="mapEmbedUrl" render={({ field }) => (<FormItem><FormLabel>URL de Incorporação do Mapa (Embed)</FormLabel><FormControl><Input type="url" placeholder="https://www.google.com/maps/embed?pb=..." {...field} value={field.value ?? ''} /></FormControl><FormDescription>URL para embutir um mapa interativo (iframe).</FormDescription><FormMessage /></FormItem>)}/>
-                 <FormField control={form.control} name="mapStaticImageUrl" render={({ field }) => (<FormItem><FormLabel>URL de Imagem Estática do Mapa</FormLabel><FormControl><Input type="url" placeholder="https://maps.googleapis.com/maps/api/staticmap?..." {...field} value={field.value ?? ''} /></FormControl><FormDescription>URL para uma imagem estática do mapa (ex: Google Static Maps API ou similar).</FormDescription><FormMessage /></FormItem>)}/>
-              <Separator /><h3 className="text-md font-semibold text-muted-foreground pt-2 flex items-center gap-2"><ShieldQuestion className="h-5 w-5" /> Informações Legais e Due Diligence (Opcional)</h3><FormField control={form.control} name="judicialProcessNumber" render={({ field }) => (<FormItem><FormLabel>Nº Processo Judicial</FormLabel><FormControl><Input placeholder="0000000-00.0000.0.00.0000" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} /><div className="grid md:grid-cols-2 gap-6"><FormField control={form.control} name="courtDistrict" render={({ field }) => (<FormItem><FormLabel>Comarca</FormLabel><FormControl><Input placeholder="Ex: Comarca de São Paulo" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="courtName" render={({ field }) => (<FormItem><FormLabel>Vara Judicial</FormLabel><FormControl><Input placeholder="Ex: 1ª Vara Cível" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} /></div><FormField control={form.control} name="publicProcessUrl" render={({ field }) => (<FormItem><FormLabel>Link Consulta Pública do Processo</FormLabel><FormControl><Input type="url" placeholder="https://esaj.tjsp.jus.br/..." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="propertyRegistrationNumber" render={({ field }) => (<FormItem><FormLabel>Nº Matrícula do Imóvel</FormLabel><FormControl><Input placeholder="Ex: 123.456 do 1º CRI" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="propertyLiens" render={({ field }) => (<FormItem><FormLabel>Ônus/Gravames Conhecidos</FormLabel><FormControl><Textarea placeholder="Descrever brevemente ou link para certidão de ônus." {...field} value={field.value ?? ""} rows={2} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="knownDebts" render={({ field }) => (<FormItem><FormLabel>Dívidas Conhecidas (IPTU, Condomínio, etc.)</FormLabel><FormControl><Textarea placeholder="Listar dívidas conhecidas sobre o bem." {...field} value={field.value ?? ""} rows={2} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="additionalDocumentsInfo" render={({ field }) => (<FormItem><FormLabel>Outras Informações/Links de Documentos</FormLabel><FormControl><Textarea placeholder="Espaço para links adicionais de documentos ou observações importantes." {...field} value={field.value ?? ""} rows={3} /></FormControl><FormMessage /></FormItem>)} />
-
               <Separator /><h3 className="text-md font-semibold text-muted-foreground pt-2 flex items-center gap-2"><TrendingUp className="h-5 w-5" /> Dados Adicionais (Opcional)</h3><div className="grid md:grid-cols-2 gap-6 pt-2"><FormField control={form.control} name="views" render={({ field }) => (<FormItem><FormLabel>Visualizações</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value ?? 0} onChange={e => field.onChange(parseInt(e.target.value,10))} /></FormControl><FormMessage /></FormItem>)}/><FormField control={form.control} name="bidsCount" render={({ field }) => (<FormItem><FormLabel>Contagem de Lances</FormLabel><FormControl><Input type="number" placeholder="0" {...field} value={field.value ?? 0} onChange={e => field.onChange(parseInt(e.target.value,10))} /></FormControl><FormMessage /></FormItem>)}/></div>
             </CardContent>
             <CardFooter className="flex justify-end gap-2">
