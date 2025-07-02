@@ -15,15 +15,10 @@ import type {
   PlatformSettings, PlatformSettingsFormData, Theme,
   Subcategory, SubcategoryFormData,
   MapSettings, SearchPaginationType, MentalTriggerSettings, SectionBadgeConfig, HomepageSectionConfig, AuctionStage,
-  DirectSaleOffer, DirectSaleOfferFormData,
+  DirectSaleOffer,
   UserLotMaxBid,
   UserWin,
-  AuctionStatus, LotStatus,
-  Court, CourtFormData,
-  JudicialDistrict, JudicialDistrictFormData,
-  JudicialBranch, JudicialBranchFormData,
-  JudicialProcess, JudicialProcessFormData,
-  Bem, BemFormData
+  AuctionStatus, LotStatus
 } from '@/types';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -64,8 +59,8 @@ function mapToLotCategory(row: QueryResultRow): LotCategory {
     description: row.description,
     itemCount: Number(row.item_count || 0),
     hasSubcategories: Boolean(row.has_subcategories || false),
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
   };
 }
 
@@ -80,8 +75,8 @@ function mapToSubcategory(row: QueryResultRow): Subcategory {
     displayOrder: Number(row.display_order || 0),
     iconUrl: row.icon_url,
     dataAiHintIcon: row.data_ai_hint_icon,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
   };
 }
 
@@ -92,8 +87,8 @@ function mapToStateInfo(row: QueryResultRow): StateInfo {
         uf: row.uf,
         slug: row.slug,
         cityCount: Number(row.city_count || 0),
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
     };
 }
 
@@ -106,8 +101,8 @@ function mapToCityInfo(row: QueryResultRow): CityInfo {
         stateUf: row.state_uf,
         ibgeCode: row.ibge_code,
         lotCount: Number(row.lot_count || 0),
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
     };
 }
 
@@ -129,13 +124,13 @@ function mapToAuctioneerProfileInfo(row: QueryResultRow): AuctioneerProfileInfo 
         logoUrl: row.logo_url,
         dataAiHintLogo: row.data_ai_hint_logo,
         description: row.description,
-        memberSince: row.member_since,
+        memberSince: row.member_since ? new Date(row.member_since) : undefined,
         rating: row.rating !== null ? Number(row.rating) : undefined,
         auctionsConductedCount: Number(row.auctions_conducted_count || 0),
         totalValueSold: Number(row.total_value_sold || 0),
         userId: row.user_id,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
     };
 }
 
@@ -156,14 +151,14 @@ function mapToSellerProfileInfo(row: QueryResultRow): SellerProfileInfo {
         logoUrl: row.logo_url,
         dataAiHintLogo: row.data_ai_hint_logo,
         description: row.description,
-        memberSince: row.member_since,
+        memberSince: row.member_since ? new Date(row.member_since) : undefined,
         rating: row.rating !== null ? Number(row.rating) : undefined,
         activeLotsCount: Number(row.active_lots_count || 0),
         totalSalesValue: Number(row.total_sales_value || 0),
         auctionsFacilitatedCount: Number(row.auctions_facilitated_count || 0),
         userId: row.user_id,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
     };
 }
 
@@ -175,8 +170,8 @@ function mapToRole(row: QueryResultRow): Role {
         name_normalized: row.name_normalized,
         description: row.description,
         permissions: row.permissions || [],
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
     };
 }
 
@@ -194,9 +189,9 @@ function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProf
         cpf: row.cpf,
         rgNumber: row.rg_number,
         rgIssuer: row.rg_issuer,
-        rgIssueDate: row.rg_issue_date,
+        rgIssueDate: row.rg_issue_date ? new Date(row.rg_issue_date) : undefined,
         rgState: row.rg_state,
-        dateOfBirth: row.date_of_birth,
+        dateOfBirth: row.date_of_birth ? new Date(row.date_of_birth) : undefined,
         cellPhone: row.cell_phone,
         homePhone: row.home_phone,
         gender: row.gender,
@@ -221,8 +216,8 @@ function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProf
         cnpj: row.cnpj,
         inscricaoEstadual: row.inscricao_estadual,
         websiteComitente: row.website_comitente,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
     };
     return profile;
 }
@@ -241,8 +236,8 @@ function mapToAuction(row: QueryResultRow): Auction {
         auctioneerId: row.auctioneer_id ? String(row.auctioneer_id) : undefined,
         seller: row.seller_name || row.seller,
         sellerId: row.seller_id ? String(row.seller_id) : undefined,
-        auctionDate: row.auction_date,
-        endDate: row.end_date,
+        auctionDate: new Date(row.auction_date),
+        endDate: row.end_date ? new Date(row.end_date) : null,
         auctionStages: row.auction_stages || [],
         city: row.city,
         state: row.state,
@@ -259,8 +254,8 @@ function mapToAuction(row: QueryResultRow): Auction {
         vehicleLocation: row.vehicle_location,
         latitude: row.latitude !== null ? parseFloat(row.latitude) : undefined,
         longitude: row.longitude !== null ? parseFloat(row.longitude) : undefined,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
         auctioneerLogoUrl: row.auctioneer_logo_url,
         lots: [],
         automaticBiddingEnabled: row.automatic_bidding_enabled,
@@ -288,10 +283,8 @@ function mapToLot(row: QueryResultRow): Lot {
     id: String(row.id),
     publicId: row.public_id,
     auctionId: String(row.auction_id),
-    auctionPublicId: row.auction_public_id,
     title: row.title,
     number: row.number,
-    bemIds: row.bem_ids || [],
     imageUrl: row.image_url,
     dataAiHint: row.data_ai_hint,
     galleryImageUrls: row.gallery_image_urls || [],
@@ -309,10 +302,10 @@ function mapToLot(row: QueryResultRow): Lot {
     auctionName: row.auction_name,
     price: Number(row.price),
     initialPrice: row.initial_price !== null ? Number(row.initial_price) : undefined,
-    lotSpecificAuctionDate: row.lot_specific_auction_date,
-    secondAuctionDate: row.second_auction_date,
+    lotSpecificAuctionDate: row.lot_specific_auction_date ? new Date(row.lot_specific_auction_date) : null,
+    secondAuctionDate: row.second_auction_date ? new Date(row.second_auction_date) : null,
     secondInitialPrice: row.second_initial_price !== null ? Number(row.second_initial_price) : undefined,
-    endDate: row.end_date,
+    endDate: row.end_date ? new Date(row.end_date) : undefined,
     bidsCount: Number(row.bids_count || 0),
     isFavorite: row.is_favorite,
     isFeatured: row.is_featured,
@@ -373,35 +366,8 @@ function mapToLot(row: QueryResultRow): Lot {
     evaluationValue: row.evaluation_value !== null ? Number(row.evaluation_value) : undefined,
     debtAmount: row.debt_amount !== null ? Number(row.debt_amount) : undefined,
     itbiValue: row.itbi_value !== null ? Number(row.itbi_value) : undefined,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}
-
-function mapToBem(row: QueryResultRow): Bem {
-  return {
-    id: String(row.id),
-    publicId: row.public_id,
-    title: row.title,
-    description: row.description,
-    judicialProcessId: row.judicial_process_id ? String(row.judicial_process_id) : undefined,
-    judicialProcessNumber: row.judicial_process_number,
-    status: row.status as Bem['status'],
-    categoryId: row.category_id ? String(row.category_id) : undefined,
-    categoryName: row.category_name,
-    subcategoryId: row.subcategory_id ? String(row.subcategory_id) : undefined,
-    subcategoryName: row.subcategory_name,
-    imageUrl: row.image_url,
-    imageMediaId: row.image_media_id,
-    dataAiHint: row.data_ai_hint,
-    evaluationValue: row.evaluation_value !== null ? Number(row.evaluation_value) : undefined,
-    locationCity: row.location_city,
-    locationState: row.location_state,
-    address: row.address,
-    latitude: row.latitude !== null ? parseFloat(row.latitude) : undefined,
-    longitude: row.longitude !== null ? parseFloat(row.longitude) : undefined,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
   };
 }
 
@@ -413,7 +379,7 @@ function mapToBidInfo(row: QueryResultRow): BidInfo {
         bidderId: row.bidder_id,
         bidderDisplay: row.bidder_display_name,
         amount: parseFloat(row.amount),
-        timestamp: row.timestamp,
+        timestamp: new Date(row.timestamp),
     };
 }
 
@@ -424,8 +390,8 @@ function mapToUserLotMaxBid(row: QueryResultRow): UserLotMaxBid {
         lotId: String(row.lot_id),
         maxAmount: parseFloat(row.max_amount),
         isActive: Boolean(row.is_active),
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
     };
 }
 
@@ -433,7 +399,7 @@ function mapToMediaItem(row: QueryResultRow): MediaItem {
   return {
     id: String(row.id),
     fileName: row.file_name,
-    uploadedAt: row.uploaded_at,
+    uploadedAt: new Date(row.uploaded_at),
     uploadedBy: row.uploaded_by,
     storagePath: row.storage_path,
     title: row.title,
@@ -474,7 +440,7 @@ function mapToPlatformSettings(row: QueryResultRow): PlatformSettings {
         mentalTriggerSettings: row.mental_trigger_settings || samplePlatformSettings.mentalTriggerSettings,
         sectionBadgeVisibility: row.section_badge_visibility || samplePlatformSettings.sectionBadgeVisibility,
         homepageSections: row.homepage_sections || samplePlatformSettings.homepageSections,
-        updatedAt: row.updated_at
+        updatedAt: new Date(row.updated_at)
     };
 }
 
@@ -487,8 +453,8 @@ function mapToReview(row: QueryResultRow): Review {
     userDisplayName: row.user_display_name,
     rating: Number(row.rating),
     comment: row.comment,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    createdAt: new Date(row.created_at),
+    updatedAt: row.updated_at ? new Date(row.updated_at) : undefined,
   };
 }
 
@@ -500,9 +466,9 @@ function mapToLotQuestion(row: QueryResultRow): LotQuestion {
     userId: row.user_id,
     userDisplayName: row.user_display_name,
     questionText: row.question_text,
-    createdAt: row.created_at,
+    createdAt: new Date(row.created_at),
     answerText: row.answer_text,
-    answeredAt: row.answered_at,
+    answeredAt: row.answered_at ? new Date(row.answered_at) : undefined,
     answeredByUserId: row.answered_by_user_id,
     answeredByUserDisplayName: row.answered_by_user_display_name,
     isPublic: row.is_public,
@@ -566,7 +532,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
             userId: user_id,
             lotId: String(lot_id),
             winningBidAmount: parseFloat(winning_bid_amount),
-            winDate: win_date,
+            winDate: new Date(win_date),
             paymentStatus: payment_status as UserWin['paymentStatus'],
             invoiceUrl: invoice_url,
             lot: lotObject,
@@ -626,6 +592,11 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
   async getAuctionsByIds(ids: string[]): Promise<Auction[]> {
     console.warn("[PostgresAdapter] getAuctionsByIds is not yet implemented for PostgreSQL.");
+    return Promise.resolve([]);
+  }
+
+  async getLotsByIds(ids: string[]): Promise<Lot[]> {
+    console.warn("[PostgresAdapter] getLotsByIds is not yet implemented for PostgreSQL.");
     return Promise.resolve([]);
   }
   
@@ -809,44 +780,197 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> {
-    console.warn("[PostgresAdapter] createAuctioneer is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const publicId = `AUCT-PUB-${uuidv4()}`;
+    const slug = slugify(data.name);
+    const query = `
+      INSERT INTO auctioneers (public_id, name, slug, registration_number, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, CURRENT_TIMESTAMP)
+      RETURNING id, public_id;
+    `;
+    const values = [
+      publicId, data.name, slug, data.registrationNumber, data.contactName, data.email,
+      data.phone, data.address, data.city, data.state, data.zipCode, data.website,
+      data.logoUrl, data.dataAiHintLogo, data.description
+    ];
+    try {
+      const result = await getPool().query(query, values);
+      return { success: true, message: 'Leiloeiro criado com sucesso.', auctioneerId: String(result.rows[0].id), auctioneerPublicId: result.rows[0].public_id };
+    } catch (error: any) {
+      console.error("[PostgresAdapter - createAuctioneer] Error:", error);
+      return { success: false, message: `Falha ao criar leiloeiro: ${error.message}` };
+    }
   }
   async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
-    console.warn("[PostgresAdapter] getAuctioneers is not yet implemented for PostgreSQL.");
-    return [];
+    try {
+      const { rows } = await getPool().query('SELECT * FROM auctioneers ORDER BY name ASC');
+      return rows.map(mapToAuctioneerProfileInfo);
+    } catch (error) {
+      console.error("[PostgresAdapter - getAuctioneers] Error:", error);
+      return [];
+    }
   }
   async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
-    console.warn("[PostgresAdapter] getAuctioneer is not yet implemented for PostgreSQL.");
-    return null;
+    try {
+      // Try to convert to int for ID, but also pass the original string for public_id
+      const idAsInt = parseInt(idOrPublicId, 10);
+      const query = 'SELECT * FROM auctioneers WHERE id = $1 OR public_id = $2 LIMIT 1';
+      const values = [isNaN(idAsInt) ? -1 : idAsInt, idOrPublicId];
+      const { rows } = await getPool().query(query, values);
+      if (rows.length === 0) return null;
+      return mapToAuctioneerProfileInfo(rows[0]);
+    } catch (error) {
+      console.error("[PostgresAdapter - getAuctioneer] Error:", error);
+      return null;
+    }
   }
   async updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] updateAuctioneer is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const fields: string[] = [];
+    const values: any[] = [];
+    let queryIndex = 1;
+
+    if (data.name) {
+      fields.push(`name = $${queryIndex++}`, `slug = $${queryIndex++}`);
+      values.push(data.name, slugify(data.name));
+    }
+    // Add other fields
+    for (const [key, value] of Object.entries(data)) {
+        if (key !== 'name' && value !== undefined) {
+            const snakeCaseKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+            fields.push(`${snakeCaseKey} = $${queryIndex++}`);
+            values.push(value);
+        }
+    }
+    
+    if (fields.length === 0) {
+        return { success: true, message: 'Nenhuma informação para atualizar.' };
+    }
+
+    const idAsInt = parseInt(idOrPublicId, 10);
+    const query = `UPDATE auctioneers SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $${queryIndex} OR public_id = $${queryIndex + 1}`;
+    values.push(isNaN(idAsInt) ? -1 : idAsInt, idOrPublicId);
+
+    try {
+        const result = await getPool().query(query, values);
+        if (result.rowCount === 0) {
+             return { success: false, message: 'Nenhum leiloeiro encontrado para atualizar.' };
+        }
+        return { success: true, message: 'Leiloeiro atualizado com sucesso.' };
+    } catch (error: any) {
+        console.error("[PostgresAdapter - updateAuctioneer] Error:", error);
+        return { success: false, message: `Falha ao atualizar leiloeiro: ${error.message}` };
+    }
   }
   async deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] deleteAuctioneer is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
+     try {
+        const idAsInt = parseInt(idOrPublicId, 10);
+        const result = await getPool().query('DELETE FROM auctioneers WHERE id = $1 OR public_id = $2', [isNaN(idAsInt) ? -1 : idAsInt, idOrPublicId]);
+        if (result.rowCount === 0) {
+             return { success: false, message: 'Nenhum leiloeiro encontrado para excluir.' };
+        }
+        return { success: true, message: 'Leiloeiro excluído com sucesso.' };
+    } catch (error: any) {
+        console.error("[PostgresAdapter - deleteAuctioneer] Error:", error);
+        if (error.code === '23503') { // PostgreSQL foreign key violation
+            return { success: false, message: 'Não é possível excluir este leiloeiro pois ele está associado a um ou mais leilões.' };
+        }
+        return { success: false, message: `Falha ao excluir leiloeiro: ${error.message}` };
+    }
   }
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> {
-    console.warn("[PostgresAdapter] createSeller is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const publicId = `SELL-PUB-${uuidv4()}`;
+    const slug = slugify(data.name);
+    const query = `
+      INSERT INTO sellers (public_id, name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since, user_id, cnpj, razao_social, inscricao_estadual)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP, $15, $16, $17, $18)
+      RETURNING id, public_id;
+    `;
+    const values = [
+      publicId, data.name, slug, data.contactName, data.email, data.phone,
+      data.address, data.city, data.state, data.zipCode, data.website,
+      data.logoUrl, data.dataAiHintLogo, data.description, data.userId, data.cnpj, data.razaoSocial, data.inscricaoEstadual
+    ];
+    try {
+      const result = await getPool().query(query, values);
+      return { success: true, message: 'Comitente criado com sucesso.', sellerId: String(result.rows[0].id), sellerPublicId: result.rows[0].public_id };
+    } catch (error: any) {
+      console.error("[PostgresAdapter - createSeller] Error:", error);
+      return { success: false, message: `Falha ao criar comitente: ${error.message}` };
+    }
   }
   async getSellers(): Promise<SellerProfileInfo[]> {
-    console.warn("[PostgresAdapter] getSellers is not yet implemented for PostgreSQL.");
-    return [];
+    try {
+      const { rows } = await getPool().query('SELECT * FROM sellers ORDER BY name ASC');
+      return rows.map(mapToSellerProfileInfo);
+    } catch (error) {
+      console.error("[PostgresAdapter - getSellers] Error:", error);
+      return [];
+    }
   }
   async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> {
-    console.warn("[PostgresAdapter] getSeller is not yet implemented for PostgreSQL.");
-    return null;
+    try {
+      const idAsInt = parseInt(idOrPublicId, 10);
+      const query = 'SELECT * FROM sellers WHERE id = $1 OR public_id = $2 LIMIT 1';
+      const values = [isNaN(idAsInt) ? -1 : idAsInt, idOrPublicId];
+      const { rows } = await getPool().query(query, values);
+      if (rows.length === 0) return null;
+      return mapToSellerProfileInfo(rows[0]);
+    } catch (error) {
+      console.error("[PostgresAdapter - getSeller] Error:", error);
+      return null;
+    }
   }
   async updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] updateSeller is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const fields: string[] = [];
+    const values: any[] = [];
+    let queryIndex = 1;
+
+    if (data.name) {
+      fields.push(`name = $${queryIndex++}`, `slug = $${queryIndex++}`);
+      values.push(data.name, slugify(data.name));
+    }
+    // Add other fields
+    for (const [key, value] of Object.entries(data)) {
+        if (key !== 'name' && value !== undefined) {
+            const snakeCaseKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+            fields.push(`${snakeCaseKey} = $${queryIndex++}`);
+            values.push(value);
+        }
+    }
+    
+    if (fields.length === 0) {
+        return { success: true, message: 'Nenhuma informação para atualizar.' };
+    }
+
+    const idAsInt = parseInt(idOrPublicId, 10);
+    const query = `UPDATE sellers SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $${queryIndex} OR public_id = $${queryIndex + 1}`;
+    values.push(isNaN(idAsInt) ? -1 : idAsInt, idOrPublicId);
+
+    try {
+        const result = await getPool().query(query, values);
+        if (result.rowCount === 0) {
+             return { success: false, message: 'Nenhum comitente encontrado para atualizar.' };
+        }
+        return { success: true, message: 'Comitente atualizado com sucesso.' };
+    } catch (error: any) {
+        console.error("[PostgresAdapter - updateSeller] Error:", error);
+        return { success: false, message: `Falha ao atualizar comitente: ${error.message}` };
+    }
   }
   async deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] deleteSeller is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    try {
+        const idAsInt = parseInt(idOrPublicId, 10);
+        const result = await getPool().query('DELETE FROM sellers WHERE id = $1 OR public_id = $2', [isNaN(idAsInt) ? -1 : idAsInt, idOrPublicId]);
+        if (result.rowCount === 0) {
+             return { success: false, message: 'Nenhum comitente encontrado para excluir.' };
+        }
+        return { success: true, message: 'Comitente excluído com sucesso.' };
+    } catch (error: any) {
+        console.error("[PostgresAdapter - deleteSeller] Error:", error);
+        if (error.code === '23503') { // PostgreSQL foreign key violation
+            return { success: false, message: 'Não é possível excluir este comitente pois ele está associado a um ou mais leilões.' };
+        }
+        return { success: false, message: `Falha ao excluir comitente: ${error.message}` };
+    }
   }
   async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> {
     console.warn("[PostgresAdapter] createAuction is not yet implemented for PostgreSQL.");
@@ -873,59 +997,9 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async getLots(auctionIdParam?: string): Promise<Lot[]> {
-    let query = `
-      SELECT 
-        l.*, 
-        a.title as auction_name, a.public_id as auction_public_id,
-        cat.name as category_name, 
-        sub.name as subcategory_name,
-        st.uf as state_uf, 
-        ct.name as city_name
-      FROM lots l
-      LEFT JOIN auctions a ON l.auction_id = a.id
-      LEFT JOIN lot_categories cat ON l.category_id = cat.id
-      LEFT JOIN subcategories sub ON l.subcategory_id = sub.id
-      LEFT JOIN states st ON l.state_id = st.id
-      LEFT JOIN cities ct ON l.city_id = ct.id
-    `;
-    const params = [];
-    if (auctionIdParam) {
-      query += ` WHERE l.auction_id = $1`;
-      params.push(parseInt(auctionIdParam, 10)); // Assuming auctionIdParam is numeric string
-    }
-    query += ' ORDER BY l.number ASC';
-
-    const { rows } = await getPool().query(query, params);
-    return rows.map(mapToLot);
+    console.warn("[PostgresAdapter] getLots is not yet implemented for PostgreSQL.");
+    return [];
   }
-
-  async getLotsByIds(ids: string[]): Promise<Lot[]> {
-    if (!ids || ids.length === 0) return [];
-    
-    // For Postgres, separate numeric and string IDs for correct query syntax
-    const numericIds = ids.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
-    const stringIds = ids.filter(id => isNaN(parseInt(id, 10)));
-
-    const query = `
-      SELECT 
-        l.*, 
-        a.title as auction_name, a.public_id as auction_public_id,
-        cat.name as category_name, 
-        sub.name as subcategory_name,
-        st.uf as state_uf, 
-        ct.name as city_name
-      FROM lots l
-      LEFT JOIN auctions a ON l.auction_id = a.id
-      LEFT JOIN lot_categories cat ON l.category_id = cat.id
-      LEFT JOIN subcategories sub ON l.subcategory_id = sub.id
-      LEFT JOIN states st ON l.state_id = st.id
-      LEFT JOIN cities ct ON l.city_id = ct.id
-      WHERE l.id = ANY($1::int[]) OR l.public_id = ANY($2::text[])
-    `;
-    const { rows } = await getPool().query(query, [numericIds, stringIds]);
-    return rows.map(mapToLot);
-  }
-
   async getLot(idOrPublicId: string): Promise<Lot | null> {
     console.warn("[PostgresAdapter] getLot is not yet implemented for PostgreSQL.");
     return null;
@@ -1042,130 +1116,12 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.warn("[PostgresAdapter] unlinkMediaItemFromLot is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
-  
   async getPlatformSettings(): Promise<PlatformSettings> {
-    try {
-      const { rows } = await getPool().query('SELECT * FROM platform_settings WHERE id = 1 LIMIT 1');
-      if (rows.length === 0) {
-        console.log('[PostgresAdapter] No platform settings found, returning sample data and attempting to insert it.');
-        await this.updatePlatformSettings(samplePlatformSettings);
-        return samplePlatformSettings as PlatformSettings;
-      }
-      return mapToPlatformSettings(rows[0]);
-    } catch (error) {
-      console.error("[PostgresAdapter - getPlatformSettings] Error fetching settings, returning sample data as fallback. Error:", error);
-      return samplePlatformSettings as PlatformSettings;
-    }
+    console.warn("[PostgresAdapter] getPlatformSettings is not yet implemented for PostgreSQL.");
+    return samplePlatformSettings;
   }
-
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
-    try {
-      const { rows } = await getPool().query('SELECT id FROM platform_settings WHERE id = 1 LIMIT 1');
-      
-      const values = [
-        data.siteTitle, data.siteTagline, data.galleryImageBasePath, data.storageProvider,
-        data.firebaseStorageBucket || null, data.activeThemeName || null, JSON.stringify(data.themes || []),
-        JSON.stringify(data.platformPublicIdMasks || {}), JSON.stringify(data.mapSettings || {}),
-        data.searchPaginationType, data.searchItemsPerPage, data.searchLoadMoreCount,
-        data.showCountdownOnLotDetail, data.showCountdownOnCards, data.showRelatedLotsOnLotDetail,
-        data.relatedLotsCount, JSON.stringify(data.mentalTriggerSettings || {}),
-        JSON.stringify(data.sectionBadgeVisibility || {}), JSON.stringify(data.homepageSections || []),
-        JSON.stringify(data.variableIncrementTable || []), JSON.stringify(data.biddingSettings || {}),
-        data.defaultListItemsPerPage
-      ];
-
-      if (rows.length === 0) {
-        const query = `
-          INSERT INTO platform_settings (
-            id, site_title, site_tagline, gallery_image_base_path, storage_provider, firebase_storage_bucket, 
-            active_theme_name, themes, platform_public_id_masks, map_settings, search_pagination_type, 
-            search_items_per_page, search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards, 
-            show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings, 
-            section_badge_visibility, homepage_sections, variable_increment_table, bidding_settings, default_list_items_per_page
-          ) VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)`;
-        await getPool().query(query, values);
-      } else {
-        const query = `
-          UPDATE platform_settings SET
-            site_title = $1, site_tagline = $2, gallery_image_base_path = $3, storage_provider = $4, 
-            firebase_storage_bucket = $5, active_theme_name = $6, themes = $7, platform_public_id_masks = $8, 
-            map_settings = $9, search_pagination_type = $10, search_items_per_page = $11, 
-            search_load_more_count = $12, show_countdown_on_lot_detail = $13, show_countdown_on_cards = $14, 
-            show_related_lots_on_lot_detail = $15, related_lots_count = $16, mental_trigger_settings = $17, 
-            section_badge_visibility = $18, homepage_sections = $19, variable_increment_table = $20,
-            bidding_settings = $21, default_list_items_per_page = $22, updated_at = CURRENT_TIMESTAMP
-          WHERE id = 1`;
-        await getPool().query(query, values);
-      }
-
-      return { success: true, message: 'Configurações atualizadas com sucesso!' };
-    } catch (error: any) {
-      console.error('[PostgresAdapter - updatePlatformSettings] Error:', error);
-      return { success: false, message: `Erro ao atualizar configurações: ${error.message}` };
-    }
+    console.warn("[PostgresAdapter] updatePlatformSettings is not yet implemented for PostgreSQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
   }
-
-  // Bem (Asset) CRUD methods
-  async getBens(judicialProcessId?: string): Promise<Bem[]> {
-    let query = `
-      SELECT b.*, cat.name as category_name, subcat.name as subcategory_name, proc.process_number as judicial_process_number
-      FROM bens b
-      LEFT JOIN lot_categories cat ON b.category_id = cat.id
-      LEFT JOIN subcategories subcat ON b.subcategory_id = subcat.id
-      LEFT JOIN judicial_processes proc ON b.judicial_process_id = proc.id
-    `;
-    const params: any[] = [];
-    if (judicialProcessId) {
-      query += ' WHERE b.judicial_process_id = $1';
-      params.push(judicialProcessId);
-    }
-    query += ' ORDER BY b.created_at DESC';
-    const { rows } = await getPool().query(query, params);
-    return rows.map(mapToBem);
-  }
-  
-  async getBem(id: string): Promise<Bem | null> {
-    console.warn("[PostgresAdapter] getBem not implemented.");
-    return null;
-  }
-
-  async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
-    console.warn("[PostgresAdapter] createBem not implemented.");
-    return { success: false, message: "Not implemented." };
-  }
-
-  async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] updateBem not implemented.");
-    return { success: false, message: "Not implemented." };
-  }
-
-  async deleteBem(id: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] deleteBem not implemented.");
-    return { success: false, message: "Not implemented." };
-  }
-  
-  // New Judicial CRUDs - Stubs
-  async getCourts(): Promise<Court[]> { console.warn("getCourts not implemented for PostgresAdapter."); return []; }
-  async getCourt(id: string): Promise<Court | null> { console.warn("getCourt not implemented for PostgresAdapter."); return null; }
-  async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> { console.warn("createCourt not implemented for PostgresAdapter."); return { success: false, message: "Not implemented." }; }
-  async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateCourt not implemented for PostgresAdapter."); return { success: false, message: "Not implemented." }; }
-  async deleteCourt(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteCourt not implemented for PostgresAdapter."); return { success: false, message: "Not implemented." }; }
-  
-  async getJudicialDistricts(): Promise<JudicialDistrict[]> { console.warn("getJudicialDistricts not implemented for PostgresAdapter."); return []; }
-  async getJudicialDistrict(id: string): Promise<JudicialDistrict | null> { console.warn("getJudicialDistrict not implemented for PostgresAdapter."); return null; }
-  async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> { console.warn("createJudicialDistrict not implemented for PostgresAdapter."); return { success: false, message: "Not implemented." }; }
-  async updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateJudicialDistrict not implemented for PostgresAdapter."); return { success: false, message: "Not implemented." }; }
-  async deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteJudicialDistrict not implemented for PostgresAdapter."); return { success: false, message: "Not implemented." }; }
-  
-  async getJudicialBranches(): Promise<JudicialBranch[]> { console.warn("getJudicialBranches not implemented for PostgresAdapter."); return []; }
-  async getJudicialBranch(id: string): Promise<JudicialBranch | null> { console.warn("getJudicialBranch not implemented for PostgresAdapter."); return null; }
-  async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }> { console.warn("createJudicialBranch not implemented for PostgresAdapter."); return { success: false, message: "Not implemented." }; }
-  async updateJudicialBranch(id: string, data: Partial<JudicialBranchFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateJudicialBranch not implemented for PostgresAdapter."); return { success: false, message: "Not implemented." }; }
-  async deleteJudicialBranch(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteJudicialBranch not implemented for PostgresAdapter."); return { success: false, message: "Not implemented." }; }
-  
-  async getJudicialProcesses(): Promise<JudicialProcess[]> { console.warn("getJudicialProcesses not implemented for PostgresAdapter."); return []; }
-  async getJudicialProcess(id: string): Promise<JudicialProcess | null> { console.warn("getJudicialProcess not implemented for PostgresAdapter."); return null; }
-  async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> { console.warn("createJudicialProcess not implemented for PostgresAdapter."); return { success: false, message: "Not implemented." }; }
-  async updateJudicialProcess(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateJudicialProcess not implemented for PostgresAdapter."); return { success: false, message: "Not implemented." }; }
-  async deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteJudicialProcess not implemented for PostgresAdapter."); return { success: false, message: "Not implemented." }; }
 }
