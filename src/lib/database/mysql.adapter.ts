@@ -16,10 +16,12 @@ import type {
   PlatformSettings, PlatformSettingsFormData, Theme,
   Subcategory, SubcategoryFormData,
   MapSettings, SearchPaginationType, MentalTriggerSettings, SectionBadgeConfig, HomepageSectionConfig, AuctionStage,
-  DirectSaleOffer,
+  DirectSaleOffer, DirectSaleOfferFormData,
   UserLotMaxBid,
   UserWin,
-  AuctionStatus, LotStatus
+  AuctionStatus, LotStatus,
+  Court, CourtFormData,
+  JudicialDistrict, JudicialDistrictFormData
 } from '@/types';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -997,4 +999,16 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] getUserByEmail is not yet implemented for MySQL.");
     return null;
   }
-}
+  
+  // New Judicial CRUDs - Stubs
+  async getCourts(): Promise<Court[]> { console.warn("getCourts not implemented for MySqlAdapter."); return []; }
+  async getCourt(id: string): Promise<Court | null> { console.warn("getCourt not implemented for MySqlAdapter."); return null; }
+  async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> { console.warn("createCourt not implemented for MySqlAdapter."); return { success: false, message: "Not implemented." }; }
+  async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateCourt not implemented for MySqlAdapter."); return { success: false, message: "Not implemented." }; }
+  async deleteCourt(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteCourt not implemented for MySqlAdapter."); return { success: false, message: "Not implemented." }; }
+  
+  async getJudicialDistricts(): Promise<JudicialDistrict[]> { console.warn("getJudicialDistricts not implemented for MySqlAdapter."); return []; }
+  async getJudicialDistrict(id: string): Promise<JudicialDistrict | null> { console.warn("getJudicialDistrict not implemented for MySqlAdapter."); return null; }
+  async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> { console.warn("createJudicialDistrict not implemented for MySqlAdapter."); return { success: false, message: "Not implemented." }; }
+  async updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateJudicialDistrict not implemented for MySqlAdapter."); return { success: false, message: "Not implemented." }; }
+  async deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteJudicialDistrict not implemented for MySqlAdapter."); return { success: false, message: "Not

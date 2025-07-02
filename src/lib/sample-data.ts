@@ -3,7 +3,7 @@ import type {
   Lot, LotCategory, Auction, AuctioneerProfileInfo, SellerProfileInfo,
   StateInfo, CityInfo, UserProfileWithPermissions, Role, MediaItem, Subcategory,
   PlatformSettings, DirectSaleOffer, UserWin, BidInfo, LotQuestion, Review, UserLotMaxBid, AuctionStage,
-  UserDocument, DocumentType
+  UserDocument, DocumentType, Court, JudicialDistrict
 } from '@/types';
 import { slugify } from './sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
@@ -313,7 +313,7 @@ auctionTypes.forEach(type => {
         latitude: randomCoord(cityCoords.lat, 0.05), longitude: randomCoord(cityCoords.lon, 0.05),
         mapAddress: `Rua Fictícia, ${randomInt(10, 500)}, ${city.name}`,
         views: randomInt(10, 500), isFeatured: Math.random() > 0.9, auctionName: auction.title,
-        cityName: city.name, stateUf: city.stateUf
+        cityName: city.name, stateUf: city.stateUf, auctionPublicId: auction.publicId
       };
 
       if (lot.status === 'ABERTO_PARA_LANCES') {
@@ -364,6 +364,19 @@ for (let i = 1; i <= 8; i++) {
     generatedDirectSales.push(offer);
 }
 
+// Judicial Data
+export const sampleCourts: Court[] = [
+  { id: 'court-tjsp', name: 'Tribunal de Justiça de São Paulo', slug: 'tjsp', stateUf: 'SP', website: 'https://www.tjsp.jus.br', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'court-tjrj', name: 'Tribunal de Justiça do Rio de Janeiro', slug: 'tjrj', stateUf: 'RJ', website: 'https://www.tjrj.jus.br', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'court-tjmg', name: 'Tribunal de Justiça de Minas Gerais', slug: 'tjmg', stateUf: 'MG', website: 'https://www.tjmg.jus.br', createdAt: new Date(), updatedAt: new Date() },
+];
+
+export const sampleJudicialDistricts: JudicialDistrict[] = [
+  { id: 'dist-sp-capital', name: 'Comarca da Capital', slug: 'sao-paulo-capital', courtId: 'court-tjsp', courtName: 'Tribunal de Justiça de São Paulo', stateId: 'state-sp', stateUf: 'SP', zipCode: '01010-000', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'dist-sp-campinas', name: 'Comarca de Campinas', slug: 'campinas', courtId: 'court-tjsp', courtName: 'Tribunal de Justiça de São Paulo', stateId: 'state-sp', stateUf: 'SP', zipCode: '13010-000', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'dist-rj-capital', name: 'Comarca da Capital', slug: 'rio-de-janeiro-capital', courtId: 'court-tjrj', courtName: 'Tribunal de Justiça do Rio de Janeiro', stateId: 'state-rj', stateUf: 'RJ', zipCode: '20010-000', createdAt: new Date(), updatedAt: new Date() },
+];
+
 // ==================================
 // EXPORT FINAL DATA
 // ==================================
@@ -378,8 +391,8 @@ export const sampleUserProfiles: UserProfileWithPermissions[] = [
   {
     uid: 'admin-bidexpert-platform-001',
     email: 'admin@bidexpert.com.br',
-    fullName: 'Administrador BidExpert',
     password: '@dmin2025',
+    fullName: 'Administrador BidExpert',
     roleId: 'role-admin',
     roleName: 'ADMINISTRATOR',
     permissions: ['manage_all'],

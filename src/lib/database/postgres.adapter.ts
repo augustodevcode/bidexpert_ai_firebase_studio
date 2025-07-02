@@ -18,7 +18,9 @@ import type {
   DirectSaleOffer, DirectSaleOfferFormData,
   UserLotMaxBid,
   UserWin,
-  AuctionStatus, LotStatus
+  AuctionStatus, LotStatus,
+  Court, CourtFormData,
+  JudicialDistrict, JudicialDistrictFormData
 } from '@/types';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -488,41 +490,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
   constructor() {
     getPool();
   }
-  
-  async getAuction(idOrPublicId: string): Promise<Auction | null> {
-    const res = await getPool().query(
-      `SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url 
-       FROM auctions a
-       LEFT JOIN lot_categories cat ON a.category_id = cat.id
-       LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
-       LEFT JOIN sellers s ON a.seller_id = s.id
-       WHERE a.id = $1 OR a.public_id = $2 
-       LIMIT 1`,
-      [isNaN(parseInt(idOrPublicId, 10)) ? -1 : parseInt(idOrPublicId, 10), idOrPublicId]
-    );
-
-    if (res.rows.length === 0) return null;
-    const auctionData = res.rows[0];
-
-    const lotRes = await getPool().query(
-      `SELECT l.*, c.name as category_name, s.name as subcategory_name, st.uf as state_uf, city.name as city_name, a.title as auction_name, a.public_id as auction_public_id
-       FROM lots l
-       LEFT JOIN auctions a ON l.auction_id = a.id
-       LEFT JOIN lot_categories c ON l.category_id = c.id
-       LEFT JOIN subcategories s ON l.subcategory_id = s.id
-       LEFT JOIN states st ON l.state_id = st.id
-       LEFT JOIN cities city ON l.city_id = city.id
-       WHERE l.auction_id = $1`,
-      [auctionData.id]
-    );
-    const lots = lotRes.rows.map(mapToLot);
-
-    const auction = mapToAuction(auctionData);
-    auction.lots = lots;
-    auction.totalLots = lots.length;
-
-    return auction;
-  }
 
   async getWinsForUser(userId: string): Promise<UserWin[]> {
     const { rows } = await getPool().query(
@@ -645,7 +612,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `CREATE TABLE IF NOT EXISTS users ( uid VARCHAR(255) PRIMARY KEY, email VARCHAR(255) NOT NULL UNIQUE, full_name VARCHAR(255), password_text VARCHAR(255), role_id INTEGER REFERENCES roles(id) ON DELETE SET NULL, status VARCHAR(50), habilitation_status VARCHAR(50), cpf VARCHAR(20), rg_number VARCHAR(20), rg_issuer VARCHAR(50), rg_issue_date DATE, rg_state VARCHAR(2), date_of_birth DATE, cell_phone VARCHAR(20), home_phone VARCHAR(20), gender VARCHAR(50), profession VARCHAR(100), nationality VARCHAR(100), marital_status VARCHAR(50), property_regime VARCHAR(50), spouse_name VARCHAR(255), spouse_cpf VARCHAR(20), zip_code VARCHAR(10), street VARCHAR(255), number VARCHAR(20), complement VARCHAR(100), neighborhood VARCHAR(100), city VARCHAR(100), state VARCHAR(100), opt_in_marketing BOOLEAN DEFAULT FALSE, avatar_url TEXT, data_ai_hint VARCHAR(255), account_type VARCHAR(50), razao_social VARCHAR(255), cnpj VARCHAR(20), inscricao_estadual VARCHAR(50), website_comitente VARCHAR(255), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS lot_categories ( id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL, slug VARCHAR(255) NOT NULL UNIQUE, description TEXT, item_count INTEGER DEFAULT 0, has_subcategories BOOLEAN DEFAULT FALSE, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS subcategories ( id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL, slug VARCHAR(255) NOT NULL, parent_category_id INTEGER NOT NULL REFERENCES lot_categories(id) ON DELETE CASCADE, description TEXT, item_count INTEGER DEFAULT 0, display_order INTEGER DEFAULT 0, icon_url TEXT, data_ai_hint_icon VARCHAR(255), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, UNIQUE (parent_category_id, slug) );`,
-      `CREATE TABLE IF NOT EXISTS states ( id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL, uf VARCHAR(2) NOT NULL UNIQUE, slug VARCHAR(100) NOT NULL UNIQUE, city_count INTEGER DEFAULT 0, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS states ( id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL, uf VARCHAR(2) NOT NULL UNIQUE, slug VARCHAR(100) NOT NULL UNIQUE, city_count INTEGER DEFAULT 0, created_at TIMESTAMptz DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS cities ( id SERIAL PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, state_id INTEGER NOT NULL REFERENCES states(id) ON DELETE CASCADE, state_uf VARCHAR(2), ibge_code VARCHAR(10), lot_count INTEGER DEFAULT 0, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS auctioneers ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, registration_number VARCHAR(50), contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since TIMESTAMPTZ, rating NUMERIC(3, 2), auctions_conducted_count INTEGER DEFAULT 0, total_value_sold NUMERIC(15, 2) DEFAULT 0, user_id VARCHAR(255), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS sellers ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since TIMESTAMPTZ, rating NUMERIC(3, 2), active_lots_count INTEGER, total_sales_value NUMERIC(15, 2), auctions_facilitated_count INTEGER, user_id VARCHAR(255), cnpj VARCHAR(20), razao_social VARCHAR(255), inscricao_estadual VARCHAR(50), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
@@ -1001,4 +968,17 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.warn("[PostgresAdapter] updatePlatformSettings is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
+  
+  // New Judicial CRUDs - Stubs
+  async getCourts(): Promise<Court[]> { console.warn("getCourts not implemented for PostgresAdapter."); return []; }
+  async getCourt(id: string): Promise<Court | null> { console.warn("getCourt not implemented for PostgresAdapter."); return null; }
+  async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> { console.warn("createCourt not implemented for PostgresAdapter."); return { success: false, message: "Not implemented." }; }
+  async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateCourt not implemented for PostgresAdapter."); return { success: false, message: "Not implemented." }; }
+  async deleteCourt(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteCourt not implemented for PostgresAdapter."); return { success: false, message: "Not implemented." }; }
+  
+  async getJudicialDistricts(): Promise<JudicialDistrict[]> { console.warn("getJudicialDistricts not implemented for PostgresAdapter."); return []; }
+  async getJudicialDistrict(id: string): Promise<JudicialDistrict | null> { console.warn("getJudicialDistrict not implemented for PostgresAdapter."); return null; }
+  async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> { console.warn("createJudicialDistrict not implemented for PostgresAdapter."); return { success: false, message: "Not implemented." }; }
+  async updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateJudicialDistrict not implemented for PostgresAdapter."); return { success: false, message: "Not implemented." }; }
+  async deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteJudicialDistrict not implemented for PostgresAdapter."); return { success: false, message: "Not implemented." }; }
 }

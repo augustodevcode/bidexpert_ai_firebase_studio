@@ -786,12 +786,14 @@ export interface JudicialDistrict {
   name: string;
   slug: string;
   courtId: string;
+  courtName?: string; // For display
   stateId: string;
+  stateUf?: string; // For display
   zipCode?: string | null;
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
 }
-export type JudicialDistrictFormData = Omit<JudicialDistrict, 'id' | 'slug' | 'createdAt' | 'updatedAt'>;
+export type JudicialDistrictFormData = Omit<JudicialDistrict, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'courtName' | 'stateUf'>;
 
 export interface JudicialBranch {
   id: string;
@@ -855,13 +857,13 @@ export interface IDatabaseAdapter {
   getStates(): Promise<StateInfo[]>;
   getState(idOrSlugOrUf: string): Promise<StateInfo | null>;
   updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string }>;
-  deleteState(id: string): Promise<{ success: boolean; message: string }>;
+  deleteState(id: string): Promise<{ success: boolean; message: string; }>;
 
   createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string }>;
   getCities(stateIdOrSlugFilter?: string): Promise<CityInfo[]>;
   getCity(idOrCompositeSlug: string): Promise<CityInfo | null>; 
   updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string }>;
-  deleteCity(id: string): Promise<{ success: boolean; message: string }>;
+  deleteCity(id: string): Promise<{ success: boolean; message: string; }>;
 
   createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }>;
   getAuctioneers(): Promise<AuctioneerProfileInfo[]>;
@@ -939,7 +941,7 @@ export interface IDatabaseAdapter {
   getRoleByName(name: string): Promise<Role | null>;
   updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }>;
   deleteRole(id: string): Promise<{ success: boolean; message: string; }>;
-  ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }>;
+  ensureDefaultRolesExist(connection?: any): Promise<{ success: boolean; message: string; rolesProcessed?: number }>;
 
   createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }>;
   getMediaItems(): Promise<MediaItem[]>;
@@ -958,6 +960,12 @@ export interface IDatabaseAdapter {
   createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string }>;
   updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string }>;
   deleteCourt(id: string): Promise<{ success: boolean; message: string }>;
+  
+  getJudicialDistricts(): Promise<JudicialDistrict[]>;
+  getJudicialDistrict(id: string): Promise<JudicialDistrict | null>;
+  createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }>;
+  updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }>;
+  deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }>;
 }
 
 export type UserCreationData = Pick<UserProfileData, 'fullName' | 'email' | 'cpf' | 'cellPhone' | 'dateOfBirth' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing'> & {
