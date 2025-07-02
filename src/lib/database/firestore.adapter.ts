@@ -30,7 +30,10 @@ import type {
   UserLotMaxBid,
   UserWin,
   Court, CourtFormData,
-  JudicialDistrict, JudicialDistrictFormData
+  JudicialDistrict, JudicialDistrictFormData,
+  JudicialBranch, JudicialBranchFormData,
+  JudicialProcess, JudicialProcessFormData,
+  Bem, BemFormData
 } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
@@ -996,7 +999,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
 
   async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> {
     try {
-      const newItemData = { ...data, uploadedAt: AdminFieldValue.serverTimestamp(), urlOriginal: filePublicUrl, urlThumbnail: filePublicUrl, urlMedium: filePublicUrl, urlLarge: filePublicUrl, storagePath: filePublicUrl, uploadedBy: uploadedBy || 'system' };
+      const newItemData = { ...data, uploadedAt: AdminFieldValue.serverTimestamp(), urlOriginal: filePublicUrl, urlThumbnail: filePublicUrl, urlMedium: filePublicUrl, urlLarge: filePublicUrl, storagePath: filePublicUrl, uploadedBy: uploadedBy || 'system', linkedLotIds:[]};
       const docRef = await this.db.collection('media').add(newItemData);
       return { success: true, message: 'Mídia criada!', item: { id: docRef.id, ...newItemData } as MediaItem };
     } catch (e: any) { return { success: false, message: e.message }; }
@@ -1034,6 +1037,27 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> {
     console.warn("[FirestoreAdapter] unlinkMediaItemFromLot not implemented.");
     return { success: false, message: "Funcionalidade não implementada." };
+  }
+  
+  async getBens(judicialProcessId?: string): Promise<Bem[]> {
+    console.warn("[FirestoreAdapter] getBens not implemented.");
+    return [];
+  }
+  async getBem(id: string): Promise<Bem | null> {
+    console.warn("[FirestoreAdapter] getBem not implemented.");
+    return null;
+  }
+  async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
+    console.warn("[FirestoreAdapter] createBem not implemented.");
+    return { success: false, message: "Not implemented." };
+  }
+  async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[FirestoreAdapter] updateBem not implemented.");
+    return { success: false, message: "Not implemented." };
+  }
+  async deleteBem(id: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[FirestoreAdapter] deleteBem not implemented.");
+    return { success: false, message: "Not implemented." };
   }
 
   async getPlatformSettings(): Promise<PlatformSettings> {
@@ -1124,4 +1148,16 @@ export class FirestoreAdapter implements IDatabaseAdapter {
     console.warn("[FirestoreAdapter] deleteJudicialDistrict not implemented.");
     return { success: false, message: "Not implemented" };
   }
+  
+  async getJudicialBranches(): Promise<JudicialBranch[]> { console.warn("[FirestoreAdapter] getJudicialBranches not implemented."); return []; }
+  async getJudicialBranch(id: string): Promise<JudicialBranch | null> { console.warn("[FirestoreAdapter] getJudicialBranch not implemented."); return null; }
+  async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }> { console.warn("[FirestoreAdapter] createJudicialBranch not implemented."); return { success: false, message: "Not implemented." }; }
+  async updateJudicialBranch(id: string, data: Partial<JudicialBranchFormData>): Promise<{ success: boolean; message: string; }> { console.warn("[FirestoreAdapter] updateJudicialBranch not implemented."); return { success: false, message: "Not implemented." }; }
+  async deleteJudicialBranch(id: string): Promise<{ success: boolean; message: string; }> { console.warn("[FirestoreAdapter] deleteJudicialBranch not implemented."); return { success: false, message: "Not implemented." }; }
+  
+  async getJudicialProcesses(): Promise<JudicialProcess[]> { console.warn("[FirestoreAdapter] getJudicialProcesses not implemented."); return []; }
+  async getJudicialProcess(id: string): Promise<JudicialProcess | null> { console.warn("[FirestoreAdapter] getJudicialProcess not implemented."); return null; }
+  async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> { console.warn("[FirestoreAdapter] createJudicialProcess not implemented."); return { success: false, message: "Not implemented." }; }
+  async updateJudicialProcess(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> { console.warn("[FirestoreAdapter] updateJudicialProcess not implemented."); return { success: false, message: "Not implemented." }; }
+  async deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string; }> { console.warn("[FirestoreAdapter] deleteJudicialProcess not implemented."); return { success: false, message: "Not implemented." }; }
 }

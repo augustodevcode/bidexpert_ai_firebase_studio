@@ -22,7 +22,8 @@ import type {
   Court, CourtFormData,
   JudicialDistrict, JudicialDistrictFormData,
   JudicialBranch, JudicialBranchFormData,
-  JudicialProcess, JudicialProcessFormData
+  JudicialProcess, JudicialProcessFormData,
+  Bem, BemFormData
 } from '@/types';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -290,6 +291,7 @@ function mapToLot(row: QueryResultRow): Lot {
     auctionPublicId: row.auction_public_id,
     title: row.title,
     number: row.number,
+    bemIds: row.bem_ids || [],
     imageUrl: row.image_url,
     dataAiHint: row.data_ai_hint,
     galleryImageUrls: row.gallery_image_urls || [],
@@ -371,6 +373,33 @@ function mapToLot(row: QueryResultRow): Lot {
     evaluationValue: row.evaluation_value !== null ? Number(row.evaluation_value) : undefined,
     debtAmount: row.debt_amount !== null ? Number(row.debt_amount) : undefined,
     itbiValue: row.itbi_value !== null ? Number(row.itbi_value) : undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapToBem(row: QueryResultRow): Bem {
+  return {
+    id: String(row.id),
+    publicId: row.public_id,
+    title: row.title,
+    description: row.description,
+    judicialProcessId: row.judicial_process_id ? String(row.judicial_process_id) : undefined,
+    judicialProcessNumber: row.judicial_process_number,
+    status: row.status as Bem['status'],
+    categoryId: row.category_id ? String(row.category_id) : undefined,
+    categoryName: row.category_name,
+    subcategoryId: row.subcategory_id ? String(row.subcategory_id) : undefined,
+    subcategoryName: row.subcategory_name,
+    imageUrl: row.image_url,
+    imageMediaId: row.image_media_id,
+    dataAiHint: row.data_ai_hint,
+    evaluationValue: row.evaluation_value !== null ? Number(row.evaluation_value) : undefined,
+    locationCity: row.location_city,
+    locationState: row.location_state,
+    address: row.address,
+    latitude: row.latitude !== null ? parseFloat(row.latitude) : undefined,
+    longitude: row.longitude !== null ? parseFloat(row.longitude) : undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -619,13 +648,14 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `CREATE TABLE IF NOT EXISTS auctioneers ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, registration_number VARCHAR(50), contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since TIMESTAMPTZ, rating NUMERIC(3, 2), auctions_conducted_count INTEGER DEFAULT 0, total_value_sold NUMERIC(15, 2) DEFAULT 0, user_id VARCHAR(255), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS sellers ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since TIMESTAMPTZ, rating NUMERIC(3, 2), active_lots_count INTEGER, total_sales_value NUMERIC(15, 2), auctions_facilitated_count INTEGER, user_id VARCHAR(255), cnpj VARCHAR(20), razao_social VARCHAR(255), inscricao_estadual VARCHAR(50), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS auctions ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), auction_type VARCHAR(50), category_id INTEGER REFERENCES lot_categories(id), auctioneer_id INTEGER REFERENCES auctioneers(id), seller_id INTEGER REFERENCES sellers(id), auction_date TIMESTAMPTZ NOT NULL, end_date TIMESTAMPTZ, city VARCHAR(100), state VARCHAR(2), image_url TEXT, data_ai_hint VARCHAR(255), documents_url TEXT, visits INTEGER DEFAULT 0, initial_offer NUMERIC(15, 2), soft_close_enabled BOOLEAN DEFAULT FALSE, soft_close_minutes INTEGER, automatic_bidding_enabled BOOLEAN DEFAULT FALSE, silent_bidding_enabled BOOLEAN DEFAULT FALSE, allow_multiple_bids_per_user BOOLEAN DEFAULT TRUE, allow_installment_bids BOOLEAN, estimated_revenue NUMERIC(15, 2), achieved_revenue NUMERIC(15, 2), total_habilitated_users INTEGER, is_featured_on_marketplace BOOLEAN, marketplace_announcement_title VARCHAR(150), auction_stages JSONB, auto_relist_settings JSONB, decrement_amount NUMERIC(15, 2), decrement_interval_seconds INTEGER, floor_price NUMERIC(15, 2), original_auction_id INTEGER REFERENCES auctions(id), relist_count INTEGER, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS lots ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, auction_id INTEGER NOT NULL REFERENCES auctions(id) ON DELETE CASCADE, title VARCHAR(255) NOT NULL, number VARCHAR(50), image_url TEXT, data_ai_hint VARCHAR(255), gallery_image_urls JSONB, media_item_ids JSONB, status VARCHAR(50), state_id INTEGER REFERENCES states(id), city_id INTEGER REFERENCES cities(id), category_id INTEGER NOT NULL REFERENCES lot_categories(id), subcategory_id INTEGER REFERENCES subcategories(id), views INTEGER DEFAULT 0, price NUMERIC(15, 2) NOT NULL, initial_price NUMERIC(15, 2), lot_specific_auction_date TIMESTAMPTZ, second_auction_date TIMESTAMPTZ, second_initial_price NUMERIC(15, 2), end_date TIMESTAMPTZ, bids_count INTEGER DEFAULT 0, is_featured BOOLEAN DEFAULT FALSE, description TEXT, year INTEGER, make VARCHAR(100), model VARCHAR(100), series VARCHAR(100), stock_number VARCHAR(100), selling_branch VARCHAR(100), vin VARCHAR(100), vin_status VARCHAR(100), loss_type VARCHAR(100), primary_damage VARCHAR(100), title_info VARCHAR(255), title_brand VARCHAR(100), start_code VARCHAR(100), has_key BOOLEAN, odometer VARCHAR(100), airbags_status VARCHAR(100), body_style VARCHAR(100), engine_details VARCHAR(255), transmission_type VARCHAR(100), drive_line_type VARCHAR(100), fuel_type VARCHAR(50), cylinders VARCHAR(20), restraint_system VARCHAR(100), exterior_interior_color VARCHAR(100), options TEXT, manufactured_in VARCHAR(100), vehicle_class VARCHAR(100), vehicle_location_in_branch VARCHAR(100), lane_run_number VARCHAR(50), aisle_stall VARCHAR(50), actual_cash_value VARCHAR(100), estimated_repair_cost VARCHAR(100), seller_id INTEGER REFERENCES sellers(id), auctioneer_id INTEGER REFERENCES auctioneers(id), condition_report TEXT, bid_increment_step NUMERIC(10, 2), allow_installment_bids BOOLEAN, judicial_process_number VARCHAR(100), court_district VARCHAR(100), court_name VARCHAR(100), public_process_url TEXT, property_registration_number VARCHAR(100), property_liens TEXT, known_debts TEXT, additional_documents_info TEXT, latitude NUMERIC(10, 8), longitude NUMERIC(11, 8), map_address VARCHAR(255), map_embed_url TEXT, map_static_image_url TEXT, reserve_price NUMERIC(15, 2), evaluation_value NUMERIC(15, 2), debt_amount NUMERIC(15, 2), itbi_value NUMERIC(15, 2), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS lots ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, auction_id INTEGER NOT NULL REFERENCES auctions(id) ON DELETE CASCADE, bem_ids JSONB, number VARCHAR(50), title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), price NUMERIC(15, 2) NOT NULL, initial_price NUMERIC(15, 2), bids_count INTEGER DEFAULT 0, is_featured BOOLEAN DEFAULT FALSE, reserve_price NUMERIC(15, 2), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS platform_settings ( id SERIAL PRIMARY KEY, site_title VARCHAR(255), site_tagline TEXT, gallery_image_base_path VARCHAR(255), storage_provider VARCHAR(50), firebase_storage_bucket VARCHAR(255), active_theme_name VARCHAR(100), themes JSONB, platform_public_id_masks JSONB, map_settings JSONB, search_pagination_type VARCHAR(50), search_items_per_page INTEGER, search_load_more_count INTEGER, show_countdown_on_lot_detail BOOLEAN, show_countdown_on_cards BOOLEAN, show_related_lots_on_lot_detail BOOLEAN, related_lots_count INTEGER, mental_trigger_settings JSONB, section_badge_visibility JSONB, homepage_sections JSONB, variable_increment_table JSONB, bidding_settings JSONB, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS courts ( id SERIAL PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, website TEXT, state_uf VARCHAR(2) NOT NULL, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS judicial_districts ( id SERIAL PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, court_id INTEGER NOT NULL REFERENCES courts(id) ON DELETE RESTRICT, state_id INTEGER NOT NULL REFERENCES states(id) ON DELETE RESTRICT, zip_code VARCHAR(10), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, UNIQUE (slug, state_id) );`,
       `CREATE TABLE IF NOT EXISTS judicial_branches ( id SERIAL PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, district_id INTEGER NOT NULL REFERENCES judicial_districts(id) ON DELETE CASCADE, contact_name VARCHAR(150), phone VARCHAR(20), email VARCHAR(150), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, UNIQUE (slug, district_id) );`,
       `CREATE TABLE IF NOT EXISTS judicial_processes ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, process_number VARCHAR(100) NOT NULL UNIQUE, old_process_number VARCHAR(100), is_electronic BOOLEAN DEFAULT true, court_id INTEGER NOT NULL REFERENCES courts(id), district_id INTEGER NOT NULL REFERENCES judicial_districts(id), branch_id INTEGER NOT NULL REFERENCES judicial_branches(id), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS process_parties ( id SERIAL PRIMARY KEY, process_id INTEGER NOT NULL REFERENCES judicial_processes(id) ON DELETE CASCADE, name VARCHAR(255) NOT NULL, document_number VARCHAR(50), party_type VARCHAR(50) NOT NULL, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS bens ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, title VARCHAR(255) NOT NULL, description TEXT, judicial_process_id INTEGER REFERENCES judicial_processes(id), status VARCHAR(50) DEFAULT 'DISPONIVEL', category_id INTEGER REFERENCES lot_categories(id), subcategory_id INTEGER REFERENCES subcategories(id), image_url TEXT, image_media_id VARCHAR(255), data_ai_hint VARCHAR(255), evaluation_value NUMERIC(15, 2), location_city VARCHAR(100), location_state VARCHAR(100), address VARCHAR(255), latitude NUMERIC(10, 8), longitude NUMERIC(11, 8), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
     ];
 
     try {
@@ -974,6 +1004,45 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
     console.warn("[PostgresAdapter] updatePlatformSettings is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
+  }
+  
+  // Bem (Asset) CRUD methods
+  async getBens(judicialProcessId?: string): Promise<Bem[]> {
+    let query = `
+      SELECT b.*, cat.name as category_name, subcat.name as subcategory_name, proc.process_number as judicial_process_number
+      FROM bens b
+      LEFT JOIN lot_categories cat ON b.category_id = cat.id
+      LEFT JOIN subcategories subcat ON b.subcategory_id = subcat.id
+      LEFT JOIN judicial_processes proc ON b.judicial_process_id = proc.id
+    `;
+    const params: any[] = [];
+    if (judicialProcessId) {
+      query += ' WHERE b.judicial_process_id = $1';
+      params.push(judicialProcessId);
+    }
+    query += ' ORDER BY b.created_at DESC';
+    const { rows } = await getPool().query(query, params);
+    return rows.map(mapToBem);
+  }
+  
+  async getBem(id: string): Promise<Bem | null> {
+    console.warn("[PostgresAdapter] getBem not implemented.");
+    return null;
+  }
+
+  async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
+    console.warn("[PostgresAdapter] createBem not implemented.");
+    return { success: false, message: "Not implemented." };
+  }
+
+  async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[PostgresAdapter] updateBem not implemented.");
+    return { success: false, message: "Not implemented." };
+  }
+
+  async deleteBem(id: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[PostgresAdapter] deleteBem not implemented.");
+    return { success: false, message: "Not implemented." };
   }
   
   // New Judicial CRUDs - Stubs

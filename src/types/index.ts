@@ -275,7 +275,8 @@ export interface Bem {
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
 }
-export type BemFormData = Omit<Bem, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber'>;
+export type BemFormData = Omit<Bem, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'galleryImageUrls' | 'mediaItemIds'>;
+
 
 export interface Lot {
   id: string;
@@ -294,8 +295,8 @@ export interface Lot {
   lotSpecificAuctionDate?: AnyTimestamp; 
   isFeatured?: boolean;
   isFavorite?: boolean;
-  bemIds: string[]; // <-- This is the core change
-  // The following fields are now derived from the contained Bens
+  bemIds?: string[]; // <-- This is the core change
+  // The following fields can be derived from the contained Bens
   imageUrl?: string; // Often the image of the first or most important Bem
   dataAiHint?: string;
   views?: number;
@@ -303,14 +304,81 @@ export interface Lot {
   cityName?: string;
   stateUf?: string;
   subcategoryName?: string;
-  // ... and other derived fields as needed for display
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
+  
+  // Fields that might still be on the lot itself
+  galleryImageUrls?: string[];
+  mediaItemIds?: string[];
+  
+  // Redundant fields to be removed or derived later
+  year?: number;
+  make?: string;
+  model?: string;
+  series?: string;
+  stockNumber?: string;
+  sellingBranch?: string;
+  vin?: string;
+  vinStatus?: string;
+  lossType?: string;
+  primaryDamage?: string;
+  titleInfo?: string;
+  titleBrand?: string;
+  startCode?: string;
+  hasKey?: boolean;
+  odometer?: string;
+  airbagsStatus?: string;
+  bodyStyle?: string;
+  engineDetails?: string;
+  transmissionType?: string;
+  driveLineType?: string;
+  fuelType?: string;
+  cylinders?: string;
+  restraintSystem?: string;
+  exteriorInteriorColor?: string;
+  options?: string;
+  manufacturedIn?: string;
+  vehicleClass?: string;
+  vehicleLocationInBranch?: string;
+  laneRunNumber?: string;
+  aisleStall?: string;
+  actualCashValue?: string;
+  estimatedRepairCost?: string;
+  sellerName?: string;
+  sellerId?: string;
+  auctioneerName?: string;
+  auctioneerId?: string;
+  condition?: string;
+  bidIncrementStep?: number;
+  allowInstallmentBids?: boolean;
+  judicialProcessNumber?: string;
+  courtDistrict?: string;
+  courtName?: string;
+  publicProcessUrl?: string;
+  propertyRegistrationNumber?: string;
+  propertyLiens?: string;
+  knownDebts?: string;
+  additionalDocumentsInfo?: string;
+  latitude?: number;
+  longitude?: number;
+  mapAddress?: string;
+  mapEmbedUrl?: string;
+  mapStaticImageUrl?: string;
+  reservePrice?: number;
+  evaluationValue?: number;
+  debtAmount?: number;
+  itbiValue?: number;
+  secondAuctionDate?: AnyTimestamp | null;
+  secondInitialPrice?: number | null;
+  categoryId?: string;
+  stateId?: string;
+  cityId?: string;
+  subcategoryId?: string;
 }
 
 export type LotFormData = Omit<Lot,
   'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'endDate' | 'bidsCount' | 'price' |
-  'auctionPublicId' | 'isFavorite' | 'imageUrl' | 'dataAiHint' | 'views' | 'type' | 'cityName' | 'stateUf' | 'subcategoryName' | 'auctionName'
+  'auctionPublicId' | 'isFavorite' | 'views' | 'auctionName'
 > & {
   endDate?: Date | null; 
   lotSpecificAuctionDate?: Date | null; 
@@ -531,7 +599,7 @@ export interface MentalTriggerSettings {
     showDiscountBadge?: boolean;
     showUrgencyTimer?: boolean;
     urgencyTimerThresholdDays?: number;
-    urgencyThresholdHours?: number;
+    urgencyTimerThresholdHours?: number;
     showPopularityBadge?: boolean;
     popularityViewThreshold?: number;
     showHotBidBadge?: boolean;
@@ -928,52 +996,4 @@ export interface RecentlyViewedLotInfo {
   imageUrl: string;
   auctionId: string;
   dataAiHint?: string;
-}
-```
-  </change>
-  <change>
-    <file>/src/app/admin/bens/actions.ts</file>
-    <content><![CDATA[// src/app/admin/bens/actions.ts
-'use server';
-
-import { revalidatePath } from 'next/cache';
-import { getDatabaseAdapter } from '@/lib/database';
-import type { Bem, BemFormData } from '@/types';
-
-export async function createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
-  const db = await getDatabaseAdapter();
-  const result = await db.createBem(data);
-  if (result.success) {
-    revalidatePath('/admin/bens');
-  }
-  return result;
-}
-
-export async function getBens(judicialProcessId?: string): Promise<Bem[]> {
-  const db = await getDatabaseAdapter();
-  return db.getBens(judicialProcessId);
-}
-
-export async function getBem(id: string): Promise<Bem | null> {
-  const db = await getDatabaseAdapter();
-  return db.getBem(id);
-}
-
-export async function updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
-  const db = await getDatabaseAdapter();
-  const result = await db.updateBem(id, data);
-  if (result.success) {
-    revalidatePath('/admin/bens');
-    revalidatePath(`/admin/bens/${id}/edit`);
-  }
-  return result;
-}
-
-export async function deleteBem(id: string): Promise<{ success: boolean; message: string; }> {
-  const db = await getDatabaseAdapter();
-  const result = await db.deleteBem(id);
-  if (result.success) {
-    revalidatePath('/admin/bens');
-  }
-  return result;
 }
