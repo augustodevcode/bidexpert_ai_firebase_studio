@@ -14,6 +14,7 @@ import AuctionStagesTimeline from './auction/auction-stages-timeline';
 import { useMemo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Separator } from './ui/separator';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 interface AuctionPreviewModalProps {
   auction: Auction;
