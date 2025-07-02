@@ -48,6 +48,8 @@ interface DataTableProps<TData, TValue> {
         icon?: React.ComponentType<{ className?: string }>;
     }[];
   }[];
+  rowSelection?: {};
+  setRowSelection?: React.Dispatch<React.SetStateAction<{}>>;
 }
 
 export function DataTable<TData, TValue>({
@@ -58,14 +60,22 @@ export function DataTable<TData, TValue>({
   searchColumnId,
   searchPlaceholder,
   facetedFilterColumns = [],
+  rowSelection: controlledRowSelection,
+  setRowSelection: setControlledRowSelection,
 }: DataTableProps<TData, TValue>) {
-  const [rowSelection, setRowSelection] = React.useState({});
+  const [uncontrolledRowSelection, setUncontrolledRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] =
     React.useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [grouping, setGrouping] = React.useState<GroupingState>([]);
+
+  // Determine if the component is controlled or uncontrolled
+  const isControlled = controlledRowSelection !== undefined && setControlledRowSelection !== undefined;
+  const rowSelection = isControlled ? controlledRowSelection : uncontrolledRowSelection;
+  const setRowSelection = isControlled ? setControlledRowSelection : setUncontrolledRowSelection;
+
 
   const table = useReactTable({
     data,
