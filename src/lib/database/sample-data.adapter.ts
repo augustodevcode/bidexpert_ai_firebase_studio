@@ -17,7 +17,8 @@ import type {
   UserLotMaxBid,
   UserWin,
   Court, CourtFormData,
-  JudicialDistrict, JudicialDistrictFormData
+  JudicialDistrict, JudicialDistrictFormData,
+  JudicialBranch, JudicialBranchFormData
 } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
@@ -463,5 +464,39 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     this.data.sampleJudicialDistricts = this.data.sampleJudicialDistricts.filter(d => d.id !== id);
     this._persistData();
     return { success: true, message: 'Comarca excluída!' };
+  }
+  
+  async getJudicialBranches(): Promise<JudicialBranch[]> {
+    await delay(20);
+    const branchesWithDetails = this.data.sampleJudicialBranches.map(b => {
+      const district = this.data.sampleJudicialDistricts.find(d => d.id === b.districtId);
+      return { ...b, districtName: district?.name || 'N/A' };
+    });
+    return Promise.resolve(JSON.parse(JSON.stringify(branchesWithDetails)));
+  }
+  async getJudicialBranch(id: string): Promise<JudicialBranch | null> {
+    await delay(20);
+    const branch = this.data.sampleJudicialBranches.find(b => b.id === id);
+    if (!branch) return null;
+    const district = this.data.sampleJudicialDistricts.find(d => d.id === branch.districtId);
+    return Promise.resolve(JSON.parse(JSON.stringify({ ...branch, districtName: district?.name })));
+  }
+  async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }> {
+    const newBranch: JudicialBranch = { ...data, id: `branch-${uuidv4().substring(0,8)}`, slug: slugify(data.name), createdAt: new Date(), updatedAt: new Date() };
+    this.data.sampleJudicialBranches.push(newBranch);
+    this._persistData();
+    return { success: true, message: 'Vara criada!', branchId: newBranch.id };
+  }
+  async updateJudicialBranch(id: string, data: Partial<JudicialBranchFormData>): Promise<{ success: boolean; message: string; }> {
+    const index = this.data.sampleJudicialBranches.findIndex(b => b.id === id);
+    if (index === -1) return { success: false, message: 'Vara não encontrada.' };
+    this.data.sampleJudicialBranches[index] = { ...this.data.sampleJudicialBranches[index], ...data, slug: data.name ? slugify(data.name) : this.data.sampleJudicialBranches[index].slug, updatedAt: new Date() };
+    this._persistData();
+    return { success: true, message: 'Vara atualizada!' };
+  }
+  async deleteJudicialBranch(id: string): Promise<{ success: boolean; message: string; }> {
+    this.data.sampleJudicialBranches = this.data.sampleJudicialBranches.filter(b => b.id !== id);
+    this._persistData();
+    return { success: true, message: 'Vara excluída!' };
   }
 }

@@ -800,13 +800,14 @@ export interface JudicialBranch {
   name: string;
   slug: string;
   districtId: string;
+  districtName?: string;
   contactName?: string | null;
   phone?: string | null;
   email?: string | null;
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
 }
-export type JudicialBranchFormData = Omit<JudicialBranch, 'id' | 'slug' | 'createdAt' | 'updatedAt'>;
+export type JudicialBranchFormData = Omit<JudicialBranch, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'districtName'>;
 
 export type ProcessPartyType = 'AUTOR' | 'REU' | 'ADVOGADO_AUTOR' | 'ADVOGADO_REU' | 'JUIZ' | 'PERITO' | 'ADMINISTRADOR_JUDICIAL' | 'ESCRIVAO' | 'TERCEIRO_INTERESSADO' | 'OUTRO';
 
@@ -844,7 +845,7 @@ export interface IDatabaseAdapter {
   getLotCategory(idOrSlug: string): Promise<LotCategory | null>; 
   getLotCategoryByName(name: string): Promise<LotCategory | null>;
   updateLotCategory(id: string, data: { name: string; description?: string, hasSubcategories?: boolean }): Promise<{ success: boolean; message: string }>;
-  deleteLotCategory(id: string): Promise<{ success: boolean; message: string }>;
+  deleteLotCategory(id: string): Promise<{ success: boolean; message: string; }>;
 
   createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }>;
   getSubcategories(parentCategoryId: string): Promise<Subcategory[]>;
@@ -957,15 +958,21 @@ export interface IDatabaseAdapter {
   // New Judicial CRUDs
   getCourts(): Promise<Court[]>;
   getCourt(id: string): Promise<Court | null>;
-  createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string }>;
-  updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string }>;
-  deleteCourt(id: string): Promise<{ success: boolean; message: string }>;
+  createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }>;
+  updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }>;
+  deleteCourt(id: string): Promise<{ success: boolean; message: string; }>;
   
   getJudicialDistricts(): Promise<JudicialDistrict[]>;
   getJudicialDistrict(id: string): Promise<JudicialDistrict | null>;
   createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }>;
   updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }>;
   deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }>;
+
+  getJudicialBranches(): Promise<JudicialBranch[]>;
+  getJudicialBranch(id: string): Promise<JudicialBranch | null>;
+  createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }>;
+  updateJudicialBranch(id: string, data: Partial<JudicialBranchFormData>): Promise<{ success: boolean; message: string; }>;
+  deleteJudicialBranch(id: string): Promise<{ success: boolean; message: string; }>;
 }
 
 export type UserCreationData = Pick<UserProfileData, 'fullName' | 'email' | 'cpf' | 'cellPhone' | 'dateOfBirth' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing'> & {

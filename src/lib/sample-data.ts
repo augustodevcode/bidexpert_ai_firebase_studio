@@ -3,7 +3,7 @@ import type {
   Lot, LotCategory, Auction, AuctioneerProfileInfo, SellerProfileInfo,
   StateInfo, CityInfo, UserProfileWithPermissions, Role, MediaItem, Subcategory,
   PlatformSettings, DirectSaleOffer, UserWin, BidInfo, LotQuestion, Review, UserLotMaxBid, AuctionStage,
-  UserDocument, DocumentType, Court, JudicialDistrict
+  UserDocument, DocumentType, Court, JudicialDistrict, JudicialBranch
 } from '@/types';
 import { slugify } from './sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
@@ -32,6 +32,7 @@ export const sampleStates: StateInfo[] = [
   { id: 'state-ba', name: 'Bahia', uf: 'BA', slug: 'bahia', cityCount: 1, createdAt: new Date(), updatedAt: new Date() },
   { id: 'state-rj', name: 'Rio de Janeiro', uf: 'RJ', slug: 'rio-de-janeiro', cityCount: 1, createdAt: new Date(), updatedAt: new Date() },
   { id: 'state-mg', name: 'Minas Gerais', uf: 'MG', slug: 'minas-gerais', cityCount: 1, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'state-se', name: 'Sergipe', uf: 'SE', slug: 'sergipe', cityCount: 1, createdAt: new Date(), updatedAt: new Date() },
 ];
 
 export const sampleCities: CityInfo[] = [
@@ -40,12 +41,13 @@ export const sampleCities: CityInfo[] = [
   { id: 'city-ba-salvador', name: 'Salvador', slug: 'salvador', stateId: 'state-ba', stateUf: 'BA', lotCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'city-rj-rio', name: 'Rio de Janeiro', slug: 'rio-de-janeiro', stateId: 'state-rj', stateUf: 'RJ', lotCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'city-mg-bh', name: 'Belo Horizonte', slug: 'belo-horizonte', stateId: 'state-mg', stateUf: 'MG', lotCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'city-se-lagarto', name: 'Lagarto', slug: 'lagarto', stateId: 'state-se', stateUf: 'SE', lotCount: 0, createdAt: new Date(), updatedAt: new Date() },
 ];
 
 const CITY_COORDS: Record<string, { lat: number; lon: number }> = {
   'sao-paulo': { lat: -23.5505, lon: -46.6333 }, 'campinas': { lat: -22.9099, lon: -47.0626 },
   'salvador': { lat: -12.9777, lon: -38.5016 }, 'rio-de-janeiro': { lat: -22.9068, lon: -43.1729 },
-  'belo-horizonte': { lat: -19.9167, lon: -43.9345 },
+  'belo-horizonte': { lat: -19.9167, lon: -43.9345 }, 'lagarto': { lat: -10.9167, lon: -37.65 },
 };
 
 export const sampleAuctioneers: AuctioneerProfileInfo[] = [
@@ -369,12 +371,20 @@ export const sampleCourts: Court[] = [
   { id: 'court-tjsp', name: 'Tribunal de Justiça de São Paulo', slug: 'tjsp', stateUf: 'SP', website: 'https://www.tjsp.jus.br', createdAt: new Date(), updatedAt: new Date() },
   { id: 'court-tjrj', name: 'Tribunal de Justiça do Rio de Janeiro', slug: 'tjrj', stateUf: 'RJ', website: 'https://www.tjrj.jus.br', createdAt: new Date(), updatedAt: new Date() },
   { id: 'court-tjmg', name: 'Tribunal de Justiça de Minas Gerais', slug: 'tjmg', stateUf: 'MG', website: 'https://www.tjmg.jus.br', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'court-tjse', name: 'Tribunal de Justiça de Sergipe', slug: 'tjse', stateUf: 'SE', website: 'https://www.tjse.jus.br', createdAt: new Date(), updatedAt: new Date() },
 ];
 
 export const sampleJudicialDistricts: JudicialDistrict[] = [
-  { id: 'dist-sp-capital', name: 'Comarca da Capital', slug: 'sao-paulo-capital', courtId: 'court-tjsp', courtName: 'Tribunal de Justiça de São Paulo', stateId: 'state-sp', stateUf: 'SP', zipCode: '01010-000', createdAt: new Date(), updatedAt: new Date() },
-  { id: 'dist-sp-campinas', name: 'Comarca de Campinas', slug: 'campinas', courtId: 'court-tjsp', courtName: 'Tribunal de Justiça de São Paulo', stateId: 'state-sp', stateUf: 'SP', zipCode: '13010-000', createdAt: new Date(), updatedAt: new Date() },
-  { id: 'dist-rj-capital', name: 'Comarca da Capital', slug: 'rio-de-janeiro-capital', courtId: 'court-tjrj', courtName: 'Tribunal de Justiça do Rio de Janeiro', stateId: 'state-rj', stateUf: 'RJ', zipCode: '20010-000', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'dist-sp-capital', name: 'Comarca da Capital', slug: 'sao-paulo-capital', courtId: 'court-tjsp', stateId: 'state-sp', zipCode: '01010-000', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'dist-sp-campinas', name: 'Comarca de Campinas', slug: 'campinas', courtId: 'court-tjsp', stateId: 'state-sp', zipCode: '13010-000', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'dist-rj-capital', name: 'Comarca da Capital', slug: 'rio-de-janeiro-capital', courtId: 'court-tjrj', stateId: 'state-rj', zipCode: '20010-000', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'dist-se-lagarto', name: 'Comarca de Lagarto', slug: 'lagarto', courtId: 'court-tjse', stateId: 'state-se', zipCode: '49400-000', createdAt: new Date(), updatedAt: new Date() },
+];
+
+export const sampleJudicialBranches: JudicialBranch[] = [
+    { id: 'branch-1', name: '1ª Vara Cível', slug: '1a-vara-civel', districtId: 'dist-sp-capital', contactName: 'José da Silva', phone: '11 1234-5678', email: 'vara1.sp@tj.jus.br', createdAt: new Date(), updatedAt: new Date() },
+    { id: 'branch-2', name: '2ª Vara da Fazenda Pública', slug: '2a-vara-da-fazenda-publica', districtId: 'dist-rj-capital', contactName: 'Maria Oliveira', phone: '21 9876-5432', email: 'vara2.rj@tj.jus.br', createdAt: new Date(), updatedAt: new Date() },
+    { id: 'branch-3', name: 'Vara Única de Lagarto', slug: 'vara-unica-lagarto', districtId: 'dist-se-lagarto', contactName: 'Ana Costa', phone: '79 3631-1111', email: 'vara.lagarto@tjse.jus.br', createdAt: new Date(), updatedAt: new Date() },
 ];
 
 // ==================================
