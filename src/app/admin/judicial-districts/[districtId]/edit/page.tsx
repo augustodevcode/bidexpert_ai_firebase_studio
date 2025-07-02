@@ -31,4 +31,7 @@ export default async function EditJudicialDistrictPage({ params }: { params: { d
       onSubmitAction={handleUpdateDistrict}
       formTitle="Editar Comarca"
       formDescription="Modifique os detalhes da comarca existente."
-      submitButtonText="Sal
+      submitButtonText="Salvar Alterações"
+    />
+  );
+}

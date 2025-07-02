@@ -26,7 +26,7 @@ const judicialManagementItems = [
     { title: 'Tribunais', href: '/admin/courts', icon: Scale },
     { title: 'Comarcas', href: '/admin/judicial-districts', icon: Map, disabled: false },
     { title: 'Varas', href: '/admin/judicial-branches', icon: Building2, disabled: false },
-    { title: 'Processos', href: '/admin/judicial-processes', icon: Gavel, disabled: true },
+    { title: 'Processos', href: '/admin/judicial-processes', icon: Gavel, disabled: false },
 ]
 
 const platformManagementItems = [
