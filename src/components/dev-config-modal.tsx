@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -53,7 +52,7 @@ export default function DevConfigModal({ onConfigSet }: DevConfigModalProps) {
             Configuração de Desenvolvimento
           </CardTitle>
           <CardDescription>
-            Selecione o banco de dados para esta sessão. A aplicação será recarregada.
+            Selecione a fonte de dados para esta sessão. As opções de banco de dados só funcionarão se as strings de conexão correspondentes estiverem definidas no arquivo `.env.local`.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

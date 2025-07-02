@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -10,10 +9,8 @@ export default function DevConfigProvider({ children }: { children: React.ReactN
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    // We can't check server-side cookies from the client, so we rely on a marker.
-    // If the modal sets a cookie and reloads, this provider will then render children.
-    // A simple client-side check is enough to decide if the modal should appear.
-    const configMarker = localStorage.getItem('dev-config-set');
+    // Use sessionStorage to ensure the modal appears on every new session (tab open).
+    const configMarker = sessionStorage.getItem('dev-config-set');
     if (configMarker === 'true') {
       setIsConfigured(true);
     }
@@ -21,8 +18,8 @@ export default function DevConfigProvider({ children }: { children: React.ReactN
   }, []);
 
   const handleConfigSet = () => {
-    // Set a marker in localStorage so the modal doesn't reappear after reload.
-    localStorage.setItem('dev-config-set', 'true');
+    // Set a marker in sessionStorage so the modal doesn't reappear on hot-reloads within the same session.
+    sessionStorage.setItem('dev-config-set', 'true');
     // Reload the page to apply the server-side cookie changes.
     window.location.reload();
   };
