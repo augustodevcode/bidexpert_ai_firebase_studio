@@ -4,6 +4,7 @@
 import { getCourts } from '../courts/actions';
 import { getJudicialDistricts } from '../judicial-districts/actions';
 import { getJudicialBranches } from '../judicial-branches/actions';
+import { getJudicialProcesses } from '../judicial-processes/actions';
 import { getAuctioneers } from '../auctioneers/actions';
 import { getSellers } from '../sellers/actions';
 import { getBens } from '../bens/actions';
@@ -16,6 +17,7 @@ export async function getWizardInitialData(processId?: string) {
       courts,
       districts,
       branches,
+      judicialProcesses,
       auctioneers,
       sellers,
       availableBens,
@@ -24,6 +26,7 @@ export async function getWizardInitialData(processId?: string) {
       getCourts(),
       getJudicialDistricts(),
       getJudicialBranches(),
+      getJudicialProcesses(),
       getAuctioneers(),
       getSellers(),
       getBens(processId), // Fetch bens for a specific process if provided
@@ -36,6 +39,7 @@ export async function getWizardInitialData(processId?: string) {
         courts,
         districts,
         branches,
+        judicialProcesses,
         auctioneers,
         sellers,
         availableBens,

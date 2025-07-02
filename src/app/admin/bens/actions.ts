@@ -1,3 +1,4 @@
+
 // src/app/admin/bens/actions.ts
 'use server';
 
@@ -30,6 +31,7 @@ export async function updateBem(id: string, data: Partial<BemFormData>): Promise
   if (result.success) {
     revalidatePath('/admin/bens');
     revalidatePath(`/admin/bens/${id}/edit`);
+    revalidatePath('/admin/lotting'); // Also refetch lotting page data
   }
   return result;
 }
@@ -39,6 +41,7 @@ export async function deleteBem(id: string): Promise<{ success: boolean; message
   const result = await db.deleteBem(id);
   if (result.success) {
     revalidatePath('/admin/bens');
+     revalidatePath('/admin/lotting');
   }
   return result;
 }

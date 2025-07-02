@@ -7,8 +7,9 @@ import WizardStepper from '@/components/admin/wizard/wizard-stepper';
 import Step1TypeSelection from '@/components/admin/wizard/steps/step-1-type-selection';
 import Step2JudicialSetup from '@/components/admin/wizard/steps/step-2-judicial-setup';
 import Step3AuctionDetails from '@/components/admin/wizard/steps/step-3-auction-details';
+import Step4Lotting from '@/components/admin/wizard/steps/step-4-lotting';
 import { getWizardInitialData } from './actions';
-import type { JudicialProcess, LotCategory, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
+import type { JudicialProcess, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, Bem, Auction } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Rocket, Loader2 } from 'lucide-react';
@@ -26,9 +27,10 @@ interface WizardDataForFetching {
     categories: LotCategory[];
     auctioneers: AuctioneerProfileInfo[];
     sellers: SellerProfileInfo[];
+    availableBens: Bem[];
 }
 
-function WizardContent({ fetchedData, isLoading }: { fetchedData: WizardDataForFetching | null, isLoading: boolean }) {
+function WizardContent({ fetchedData, isLoading, refetchData }: { fetchedData: WizardDataForFetching | null, isLoading: boolean, refetchData: () => void }) {
   const { currentStep, wizardData, nextStep, prevStep, goToStep } = useWizard();
   
   const stepsToUse = useMemo(() => {
@@ -51,6 +53,12 @@ function WizardContent({ fetchedData, isLoading }: { fetchedData: WizardDataForF
         return <Step2JudicialSetup processes={fetchedData.judicialProcesses} />;
       case 'auction':
         return <Step3AuctionDetails categories={fetchedData.categories} auctioneers={fetchedData.auctioneers} sellers={fetchedData.sellers} />;
+      case 'lotting':
+        return <Step4Lotting 
+                  availableBens={fetchedData.availableBens} 
+                  auctionData={wizardData.auctionDetails as Partial<Auction>}
+                  onLotCreated={refetchData} // Pass the refetch function
+                />;
       default:
         return (
           <div className="text-center py-10">
@@ -103,29 +111,24 @@ export default function WizardPage() {
     const [fetchedData, setFetchedData] = useState<WizardDataForFetching | null>(null);
     const [isLoadingData, setIsLoadingData] = useState(true);
 
-    useEffect(() => {
-        async function loadInitialData() {
-            setIsLoadingData(true);
-            const result = await getWizardInitialData();
-            if (result.success) {
-                setFetchedData({
-                    judicialProcesses: result.data.judicialProcesses,
-                    categories: result.data.categories,
-                    auctioneers: result.data.auctioneers,
-                    sellers: result.data.sellers
-                });
-            } else {
-                console.error("Failed to load wizard data:", result.message);
-                // Handle error state, maybe show a toast
-            }
-            setIsLoadingData(false);
+    const loadInitialData = async () => {
+        setIsLoadingData(true);
+        const result = await getWizardInitialData();
+        if (result.success) {
+            setFetchedData(result.data as WizardDataForFetching);
+        } else {
+            console.error("Failed to load wizard data:", result.message);
         }
+        setIsLoadingData(false);
+    }
+
+    useEffect(() => {
         loadInitialData();
     }, []);
 
   return (
     <WizardProvider>
-      <WizardContent fetchedData={fetchedData} isLoading={isLoadingData} />
+      <WizardContent fetchedData={fetchedData} isLoading={isLoadingData} refetchData={loadInitialData} />
     </WizardProvider>
   );
 }
