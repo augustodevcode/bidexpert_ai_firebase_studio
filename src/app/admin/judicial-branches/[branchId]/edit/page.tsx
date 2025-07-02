@@ -1,6 +1,6 @@
 // src/app/admin/judicial-branches/[branchId]/edit/page.tsx
 import JudicialBranchForm from '../../judicial-branch-form';
-import { getJudicialBranchAction, updateJudicialBranchAction } from '../../actions';
+import { getJudicialBranch, updateJudicialBranch } from '../../actions';
 import { getJudicialDistricts } from '@/app/admin/judicial-districts/actions';
 import { notFound } from 'next/navigation';
 import type { JudicialBranchFormData } from '../../judicial-branch-form-schema';
@@ -8,7 +8,7 @@ import type { JudicialBranchFormData } from '../../judicial-branch-form-schema';
 export default async function EditJudicialBranchPage({ params }: { params: { branchId: string } }) {
   const branchId = params.branchId;
   const [branch, districts] = await Promise.all([
-    getJudicialBranchAction(branchId),
+    getJudicialBranch(branchId),
     getJudicialDistricts()
   ]);
 
@@ -18,7 +18,7 @@ export default async function EditJudicialBranchPage({ params }: { params: { bra
 
   async function handleUpdateBranch(data: Partial<JudicialBranchFormData>) {
     'use server';
-    return updateJudicialBranchAction(branchId, data);
+    return updateJudicialBranch(branchId, data);
   }
 
   return (

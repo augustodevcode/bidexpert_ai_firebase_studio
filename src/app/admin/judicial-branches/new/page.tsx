@@ -1,6 +1,6 @@
 // src/app/admin/judicial-branches/new/page.tsx
 import JudicialBranchForm from '../judicial-branch-form';
-import { createJudicialBranchAction } from '../actions';
+import { createJudicialBranch } from '../actions';
 import { getJudicialDistricts } from '@/app/admin/judicial-districts/actions';
 import type { JudicialBranchFormData } from '../judicial-branch-form-schema';
 
@@ -9,7 +9,7 @@ export default async function NewJudicialBranchPage() {
   
   async function handleCreateBranch(data: JudicialBranchFormData) {
     'use server';
-    return createJudicialBranchAction(data);
+    return createJudicialBranch(data);
   }
 
   return (

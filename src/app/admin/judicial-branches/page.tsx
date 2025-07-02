@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getJudicialBranchesAction, deleteJudicialBranchAction } from './actions';
+import { getJudicialBranches, deleteJudicialBranch } from './actions';
 import type { JudicialBranch } from '@/types';
 import { PlusCircle, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -27,7 +27,7 @@ export default function AdminJudicialBranchesPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const fetchedItems = await getJudicialBranchesAction();
+        const fetchedItems = await getJudicialBranches();
         if (isMounted) {
           setBranches(fetchedItems);
         }
@@ -52,7 +52,7 @@ export default function AdminJudicialBranchesPage() {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      const result = await deleteJudicialBranchAction(id);
+      const result = await deleteJudicialBranch(id);
       if (result.success) {
         toast({ title: "Sucesso", description: result.message });
         setRefetchTrigger(c => c + 1);
