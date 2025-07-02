@@ -81,6 +81,11 @@ export default function AdminUsersPage() {
       .map(roleName => ({ value: roleName!, label: roleName! })),
   [users]);
 
+  const facetedFilterColumns = useMemo(() => [
+    { id: 'roleName', title: 'Perfil', options: roleOptions },
+    { id: 'habilitationStatus', title: 'Habilitação', options: habilitationStatusOptions },
+  ], [roleOptions, habilitationStatusOptions]);
+
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
@@ -108,10 +113,7 @@ export default function AdminUsersPage() {
             error={error}
             searchColumnId="fullName"
             searchPlaceholder="Buscar por nome ou email..."
-            facetedFilterColumns={[
-              { id: 'roleName', title: 'Perfil', options: roleOptions },
-              { id: 'habilitationStatus', title: 'Habilitação', options: habilitationStatusOptions },
-            ]}
+            facetedFilterColumns={facetedFilterColumns}
           />
         </CardContent>
       </Card>

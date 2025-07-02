@@ -22,25 +22,26 @@ export default function AdminLotsPage() {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
-    let isCancelled = false;
+    let isMounted = true;
     
     const fetchLots = async () => {
+      if (!isMounted) return;
       setIsLoading(true);
       setError(null);
       try {
         const fetchedLots = await getLots();
-        if (!isCancelled) {
+        if (isMounted) {
           setLots(fetchedLots);
         }
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : "Falha ao buscar lotes.";
         console.error("Error fetching lots:", e);
-        if (!isCancelled) {
+        if (isMounted) {
           setError(errorMessage);
           toast({ title: "Erro", description: errorMessage, variant: "destructive" });
         }
       } finally {
-        if (!isCancelled) {
+        if (isMounted) {
           setIsLoading(false);
         }
       }
@@ -49,7 +50,7 @@ export default function AdminLotsPage() {
     fetchLots();
 
     return () => {
-      isCancelled = true;
+      isMounted = false;
     };
   }, [toast, refetchTrigger]);
 
@@ -72,6 +73,14 @@ export default function AdminLotsPage() {
     [...new Set(lots.map(lot => lot.status))]
       .map(status => ({ value: status, label: getAuctionStatusText(status) })),
   [lots]);
+
+  const facetedFilterColumns = useMemo(() => [
+    {
+      id: 'status',
+      title: 'Status',
+      options: statusOptions
+    }
+  ], [statusOptions]);
 
   return (
     <div className="space-y-6">
@@ -100,13 +109,7 @@ export default function AdminLotsPage() {
             error={error}
             searchColumnId="title"
             searchPlaceholder="Buscar por título..."
-            facetedFilterColumns={[
-              {
-                id: 'status',
-                title: 'Status',
-                options: statusOptions
-              }
-            ]}
+            facetedFilterColumns={facetedFilterColumns}
           />
         </CardContent>
       </Card>

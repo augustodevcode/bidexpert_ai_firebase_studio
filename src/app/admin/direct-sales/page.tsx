@@ -84,6 +84,12 @@ export default function AdminDirectSalesPage() {
         .map(seller => ({ value: seller, label: seller })),
   [offers]);
 
+  const facetedFilterColumns = useMemo(() => [
+    { id: 'status', title: 'Status', options: statusOptions },
+    { id: 'offerType', title: 'Tipo de Oferta', options: offerTypeOptions },
+    { id: 'sellerName', title: 'Vendedor', options: sellerOptions },
+  ], [statusOptions, offerTypeOptions, sellerOptions]);
+
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
@@ -104,11 +110,7 @@ export default function AdminDirectSalesPage() {
             error={error}
             searchColumnId="title"
             searchPlaceholder="Buscar por título..."
-            facetedFilterColumns={[
-              { id: 'status', title: 'Status', options: statusOptions },
-              { id: 'offerType', title: 'Tipo de Oferta', options: offerTypeOptions },
-              { id: 'sellerName', title: 'Vendedor', options: sellerOptions },
-            ]}
+            facetedFilterColumns={facetedFilterColumns}
           />
         </CardContent>
       </Card>
