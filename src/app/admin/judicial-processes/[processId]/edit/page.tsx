@@ -1,0 +1,40 @@
+// src/app/admin/judicial-processes/[processId]/edit/page.tsx
+import JudicialProcessForm from '../../judicial-process-form';
+import { getJudicialProcess, updateJudicialProcessAction, type JudicialProcessFormValues } from '../../actions';
+import { getCourts } from '@/app/admin/courts/actions';
+import { getJudicialDistricts } from '@/app/admin/judicial-districts/actions';
+import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
+import { notFound } from 'next/navigation';
+
+export default async function EditJudicialProcessPage({ params }: { params: { processId: string } }) {
+  const processId = params.processId;
+  
+  const [process, courts, allDistricts, allBranches] = await Promise.all([
+    getJudicialProcess(processId),
+    getCourts(),
+    getJudicialDistricts(),
+    getJudicialBranches()
+  ]);
+
+  if (!process) {
+    notFound();
+  }
+
+  async function handleUpdateProcess(data: JudicialProcessFormValues) {
+    'use server';
+    return updateJudicialProcessAction(processId, data);
+  }
+
+  return (
+    <JudicialProcessForm
+      initialData={process}
+      courts={courts}
+      allDistricts={allDistricts}
+      allBranches={allBranches}
+      onSubmitAction={handleUpdateProcess}
+      formTitle="Editar Processo Judicial"
+      formDescription="Modifique os detalhes do processo e suas partes."
+      submitButtonText="Salvar Alterações"
+    />
+  );
+}

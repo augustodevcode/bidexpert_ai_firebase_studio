@@ -809,10 +809,10 @@ export interface JudicialBranch {
 }
 export type JudicialBranchFormData = Omit<JudicialBranch, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'districtName'>;
 
-export type ProcessPartyType = 'AUTOR' | 'REU' | 'ADVOGADO_AUTOR' | 'ADVOGADO_REU' | 'JUIZ' | 'PERITO' | 'ADMINISTRADOR_JUDICIAL' | 'ESCRIVAO' | 'TERCEIRO_INTERESSADO' | 'OUTRO';
+export type ProcessPartyType = 'AUTOR' | 'REU' | 'ADVOGADO_AUTOR' | 'ADVOGADO_REU' | 'JUIZ' | 'ESCRIVAO' | 'PERITO' | 'ADMINISTRADOR_JUDICIAL' | 'TERCEIRO_INTERESSADO' | 'OUTRO';
 
 export interface ProcessParty {
-  id: string;
+  id?: string; // Optional for new parties in form
   name: string;
   documentNumber?: string; // CPF ou CNPJ
   partyType: ProcessPartyType;
@@ -834,7 +834,9 @@ export interface JudicialProcess {
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
 }
-export type JudicialProcessFormData = Omit<JudicialProcess, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'courtName' | 'districtName' | 'branchName'>;
+export type JudicialProcessFormData = Omit<JudicialProcess, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'courtName' | 'districtName' | 'branchName' | 'parties'> & {
+  parties: Array<Partial<ProcessParty>>; // Parties in the form might not have an ID yet
+};
 
 // --- END NEW JUDICIAL ENTITIES ---
 

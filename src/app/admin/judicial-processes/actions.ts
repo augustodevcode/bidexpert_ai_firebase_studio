@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { getDatabaseAdapter } from '@/lib/database';
 import type { JudicialProcess, JudicialProcessFormData } from '@/types';
 
-export async function createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
+export async function createJudicialProcessAction(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
   const db = await getDatabaseAdapter();
   const result = await db.createJudicialProcess(data);
   if (result.success) {
@@ -24,7 +24,7 @@ export async function getJudicialProcess(id: string): Promise<JudicialProcess | 
   return db.getJudicialProcess(id);
 }
 
-export async function updateJudicialProcess(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> {
+export async function updateJudicialProcessAction(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> {
   const db = await getDatabaseAdapter();
   const result = await db.updateJudicialProcess(id, data);
   if (result.success) {

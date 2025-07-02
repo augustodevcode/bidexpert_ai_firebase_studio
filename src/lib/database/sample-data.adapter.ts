@@ -511,9 +511,17 @@ export class SampleDataAdapter implements IDatabaseAdapter {
       });
       return Promise.resolve(JSON.parse(JSON.stringify(processesWithDetails)));
   }
-  async getJudicialProcess(id: string): Promise<JudicialProcess | null> { await delay(20); const process = this.data.sampleJudicialProcesses.find(p => p.id === id); if(!process) return null; const court = this.data.sampleCourts.find(c => c.id === process.courtId); const district = this.data.sampleJudicialDistricts.find(d => d.id === process.districtId); const branch = this.data.sampleJudicialBranches.find(b => b.id === process.branchId); return Promise.resolve(JSON.parse(JSON.stringify({...process, courtName: court?.name, districtName: district?.name, branchName: branch?.name})));}
+  async getJudicialProcess(id: string): Promise<JudicialProcess | null> { 
+      await delay(20);
+      const process = this.data.sampleJudicialProcesses.find(p => p.id === id); 
+      if(!process) return null; 
+      const court = this.data.sampleCourts.find(c => c.id === process.courtId); 
+      const district = this.data.sampleJudicialDistricts.find(d => d.id === process.districtId); 
+      const branch = this.data.sampleJudicialBranches.find(b => b.id === process.branchId); 
+      return Promise.resolve(JSON.parse(JSON.stringify({...process, courtName: court?.name, districtName: district?.name, branchName: branch?.name})));
+  }
   async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
-    const newProcess: JudicialProcess = { ...data, id: `proc-${uuidv4()}`, publicId: `PROC-PUB-${uuidv4()}`, createdAt: new Date(), updatedAt: new Date() };
+    const newProcess: JudicialProcess = { ...data, id: `proc-${uuidv4()}`, publicId: `PROC-PUB-${uuidv4()}`, createdAt: new Date(), updatedAt: new Date(), parties: data.parties.map(p => ({...p, id: uuidv4()})) };
     this.data.sampleJudicialProcesses.push(newProcess);
     this._persistData();
     return { success: true, message: 'Processo criado!', processId: newProcess.id };
@@ -521,7 +529,10 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async updateJudicialProcess(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> {
     const index = this.data.sampleJudicialProcesses.findIndex(p => p.id === id);
     if (index === -1) return { success: false, message: 'Processo não encontrado.' };
-    this.data.sampleJudicialProcesses[index] = { ...this.data.sampleJudicialProcesses[index], ...data, updatedAt: new Date() };
+    
+    const updatedParties = data.parties?.map(p => ({...p, id: p.id || uuidv4()})) || this.data.sampleJudicialProcesses[index].parties;
+
+    this.data.sampleJudicialProcesses[index] = { ...this.data.sampleJudicialProcesses[index], ...data, parties: updatedParties, updatedAt: new Date() };
     this._persistData();
     return { success: true, message: 'Processo atualizado!' };
   }
