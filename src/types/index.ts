@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -32,6 +33,8 @@ export interface LotCategory {
     createdAt: AnyTimestamp;
     updatedAt: AnyTimestamp;
 }
+
+export type CategoryFormData = Omit<LotCategory, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'itemCount' | 'hasSubcategories'>;
 
 export interface Subcategory {
   id: string;
@@ -103,7 +106,7 @@ export interface AuctioneerProfileInfo {
   updatedAt: AnyTimestamp;
 }
 
-export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'auctionsConductedCount' | 'totalValueSold'>;
+export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'auctionsConductedCount' | 'totalValueSold' | 'logoMediaId'>;
 
 
 export interface SellerProfileInfo {
@@ -137,7 +140,7 @@ export interface SellerProfileInfo {
   inscricaoEstadual?: string;
 }
 
-export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'activeLotsCount' | 'totalSalesValue' | 'auctionsFacilitatedCount' | 'userId'> & {
+export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'memberSince' | 'rating' | 'activeLotsCount' | 'totalSalesValue' | 'auctionsFacilitatedCount' | 'userId' | 'logoMediaId'> & {
   userId?: string;
 };
 
@@ -149,7 +152,7 @@ export interface AuctionStage {
 }
 
 export type AuctionStatus = 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO' | 'RASCUNHO' | 'EM_PREPARACAO';
-export type LotStatus = 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'VENDIDO' | 'NAO_VENDIDO';
+export type LotStatus = 'RASCUNHO' | 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'VENDIDO' | 'NAO_VENDIDO' | 'CANCELADO';
 
 export interface AutoRelistSettings {
   enableAutoRelist?: boolean;
@@ -175,7 +178,7 @@ export interface Auction {
   auctioneer: string; 
   auctioneerId?: string; 
   seller?: string; 
-  sellerId?: string; 
+  sellerId?: string | null; 
   auctionDate: AnyTimestamp; 
   endDate?: AnyTimestamp | null; 
   auctionStages?: AuctionStage[];
@@ -225,7 +228,7 @@ export type AuctionFormData = Omit<Auction,
   'lots' | 'totalLots' | 'visits' | 'isFavorite' |
   'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' |
   'categoryId' | 'auctioneerId' | 'sellerId' | 'achievedRevenue' | 'totalHabilitatedUsers' |
-  'latitude' | 'longitude' | 'originalAuctionId' | 'relistCount'
+  'latitude' | 'longitude' | 'originalAuctionId' | 'relistCount' | 'imageMediaId'
 > & {
   auctionDate: Date; 
   endDate?: Date | null; 
@@ -236,6 +239,7 @@ export type AuctionDbData = Omit<AuctionFormData, 'category' | 'auctioneer' | 's
   categoryId?: string;
   auctioneerId?: string;
   sellerId?: string | null; 
+  imageMediaId?: string | null;
   achievedRevenue?: number;
   totalHabilitatedUsers?: number;
   auctionType?: Auction['auctionType'];
@@ -284,7 +288,8 @@ export interface Lot {
   auctionId: string;
   auctionPublicId?: string;
   auctionName?: string;
-  number?: string; 
+  number: string; 
+  order?: number; 
   title: string; 
   description?: string; 
   status: LotStatus;
@@ -292,32 +297,35 @@ export interface Lot {
   price: number; 
   initialPrice?: number;
   endDate?: AnyTimestamp;
-  lotSpecificAuctionDate?: AnyTimestamp; 
   isFeatured?: boolean;
   isFavorite?: boolean;
-  bemIds?: string[]; // <-- This is the core change
-  // The following fields can be derived from the contained Bens
-  imageUrl?: string; // Often the image of the first or most important Bem
+  bemIds?: string[];
+  imageUrl?: string; 
+  imageMediaId?: string | null;
   dataAiHint?: string;
   views?: number;
-  type?: string; // Derived category
+  type?: string; 
   cityName?: string;
   stateUf?: string;
   subcategoryName?: string;
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
-  
-  // Fields that might still be on the lot itself
   galleryImageUrls?: string[];
   mediaItemIds?: string[];
-  
-  // Redundant fields to be removed or derived later
-  year?: number;
-  make?: string;
-  model?: string;
-  series?: string;
-  stockNumber?: string;
-  sellingBranch?: string;
+  bidIncrementStep?: number;
+  judicialProcessNumber?: string;
+  latitude?: number;
+  longitude?: number;
+  categoryId?: string;
+  subcategoryId?: string;
+  sellerId?: string;
+  sellerName?: string;
+  lotSpecificAuctionDate?: AnyTimestamp | null;
+  secondAuctionDate?: AnyTimestamp | null;
+  secondInitialPrice?: number | null;
+  isExclusive?: boolean;
+  additionalTriggers?: string[];
+  discountPercentage?: number;
   vin?: string;
   vinStatus?: string;
   lossType?: string;
@@ -344,14 +352,10 @@ export interface Lot {
   aisleStall?: string;
   actualCashValue?: string;
   estimatedRepairCost?: string;
-  sellerName?: string;
-  sellerId?: string;
-  auctioneerName?: string;
-  auctioneerId?: string;
   condition?: string;
-  bidIncrementStep?: number;
+  auctioneerId?: string;
+  auctioneerName?: string;
   allowInstallmentBids?: boolean;
-  judicialProcessNumber?: string;
   courtDistrict?: string;
   courtName?: string;
   publicProcessUrl?: string;
@@ -359,8 +363,6 @@ export interface Lot {
   propertyLiens?: string;
   knownDebts?: string;
   additionalDocumentsInfo?: string;
-  latitude?: number;
-  longitude?: number;
   mapAddress?: string;
   mapEmbedUrl?: string;
   mapStaticImageUrl?: string;
@@ -368,23 +370,29 @@ export interface Lot {
   evaluationValue?: number;
   debtAmount?: number;
   itbiValue?: number;
-  secondAuctionDate?: AnyTimestamp | null;
-  secondInitialPrice?: number | null;
-  categoryId?: string;
-  stateId?: string;
-  cityId?: string;
-  subcategoryId?: string;
+  year?: number;
+  make?: string;
+  model?: string;
+  series?: string;
+  stockNumber?: string;
+  sellingBranch?: string;
+  auctionDate?: AnyTimestamp;
 }
 
 export type LotFormData = Omit<Lot,
   'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'endDate' | 'bidsCount' | 'price' |
-  'auctionPublicId' | 'isFavorite' | 'views' | 'auctionName'
+  'auctionPublicId' | 'isFavorite' | 'views' | 'auctionName' | 'cityName' | 'stateUf' | 'subcategoryName' | 'auctionDate'
 > & {
   endDate?: Date | null; 
   lotSpecificAuctionDate?: Date | null; 
+  secondAuctionDate?: Date | null; 
+  price: number;
+  type: string; // no form é o categoryId
 };
 
-export type LotDbData = Omit<LotFormData, 'auctionName'>;
+export type LotDbData = Omit<LotFormData, 'type'> & {
+  categoryId?: string;
+};
 
 
 export type BidInfo = {
@@ -581,10 +589,11 @@ export interface DirectSaleOffer {
     mapStaticImageUrl?: string | null; 
 }
 
-export type DirectSaleOfferFormData = Omit<DirectSaleOffer, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'views' | 'proposalsCount' | 'galleryImageUrls' | 'itemsIncluded' | 'tags' | 'sellerId' | 'sellerLogoUrl' | 'dataAiHintSellerLogo' | 'latitude' | 'longitude' | 'mapAddress' | 'mapEmbedUrl' | 'mapStaticImageUrl'> & {
+export type DirectSaleOfferFormData = Omit<DirectSaleOffer, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'views' | 'proposalsCount' | 'galleryImageUrls' | 'itemsIncluded' | 'tags' | 'sellerId' | 'sellerLogoUrl' | 'dataAiHintSellerLogo' | 'latitude' | 'longitude' | 'mapAddress' | 'mapEmbedUrl' | 'mapStaticImageUrl' | 'imageMediaId'> & {
     expiresAt?: Date | null;
     mediaItemIds?: string[];
     galleryImageUrls?: string[];
+    imageMediaId?: string | null;
 };
 
 export interface ThemeColors {
@@ -843,7 +852,7 @@ export interface IDatabaseAdapter {
   getLotCategories(): Promise<LotCategory[]>;
   getLotCategory(idOrSlug: string): Promise<LotCategory | null>; 
   getLotCategoryByName(name: string): Promise<LotCategory | null>;
-  updateLotCategory(id: string, data: { name: string; description?: string, hasSubcategories?: boolean }): Promise<{ success: boolean; message: string }>;
+  updateLotCategory(id: string, data: Partial<CategoryFormData>): Promise<{ success: boolean; message: string }>;
   deleteLotCategory(id: string): Promise<{ success: boolean; message: string; }>;
 
   createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }>;
@@ -893,6 +902,7 @@ export interface IDatabaseAdapter {
 
   // BENS
   getBens(judicialProcessId?: string): Promise<Bem[]>;
+  getBensByIds(ids: string[]): Promise<Bem[]>;
   getBem(id: string): Promise<Bem | null>;
   createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }>;
   updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }>;
@@ -913,7 +923,7 @@ export interface IDatabaseAdapter {
   deleteDirectSaleOffer(id: string): Promise<{ success: boolean; message: string; }>;
 
   getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]>;
-  placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status' | 'endDate'>>; newBid?: BidInfo }>;
+  placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }>;
   getWinsForUser(userId: string): Promise<UserWin[]>;
   
   // Proxy Bidding
