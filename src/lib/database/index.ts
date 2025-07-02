@@ -3,19 +3,18 @@
 import type { IDatabaseAdapter } from '@/types';
 import { cookies } from 'next/headers';
 
-let dbInstance: IDatabaseAdapter | undefined;
+// The singleton instance has been removed to ensure request-specific cookie data is always used.
+// let dbInstance: IDatabaseAdapter | undefined;
 
 export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
-  // If an instance already exists, reuse it immediately.
-  if (dbInstance) {
-    return dbInstance;
-  }
+  // The check for an existing instance has been removed. A new adapter will be created for each request.
 
   let dbFromCookie: string | undefined;
   try {
     const cookieStore = cookies();
     dbFromCookie = cookieStore.get('dev-config-db')?.value;
   } catch (e) {
+    // This can happen during build or in environments without request context. Fallback is safe.
     console.warn('[DB Factory] Could not access cookies. Falling back to environment variables.');
   }
   
@@ -60,7 +59,6 @@ export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
      throw new Error(criticalError);
   }
   
-  // Cache the instance for subsequent calls
-  dbInstance = newInstance;
-  return dbInstance;
+  // No longer caching the instance. Return the new one directly.
+  return newInstance;
 }
