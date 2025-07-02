@@ -1,4 +1,3 @@
-
 // src/lib/database/sample-data.adapter.ts
 import type { 
   IDatabaseAdapter, 
@@ -107,7 +106,26 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleSubcategories.findIndex((s: Subcategory) => s.id === id); if(index === -1) return { success: false, message: 'Subcategoria não encontrada.' }; this.data.sampleSubcategories[index] = { ...this.data.sampleSubcategories[index], ...data, slug: data.name ? slugify(data.name) : this.data.sampleSubcategories[index].slug, updatedAt: new Date() }; this._persistData(); return { success: true, message: 'Subcategoria atualizada!' }; }
   async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> { this.data.sampleSubcategories = this.data.sampleSubcategories.filter((s: Subcategory) => s.id !== id); this._persistData(); return { success: true, message: 'Subcategoria excluída!' }; }
   
-  // Stubs for now
+  // --- Platform Settings ---
+  async getPlatformSettings(): Promise<PlatformSettings> {
+    await delay(10);
+    return Promise.resolve(JSON.parse(JSON.stringify(this.data.samplePlatformSettings)));
+  }
+
+  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
+    await delay(50);
+    // In a real scenario, you'd merge deeply. For sample data, a simple overwrite is fine.
+    this.data.samplePlatformSettings = {
+      ...this.data.samplePlatformSettings,
+      ...data,
+      id: 'global', // ensure id is not lost
+      updatedAt: new Date(),
+    };
+    this._persistData();
+    return { success: true, message: 'Configurações atualizadas com sucesso (dados de exemplo).' };
+  }
+
+  // --- Stubs for now ---
   async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> { console.warn("[SampleDataAdapter] answerQuestion not implemented."); return { success: false, message: 'Not implemented.' }; }
   async getAuctionsByIds(ids: string[]): Promise<Auction[]> { console.warn("[SampleDataAdapter] getAuctionsByIds not implemented."); return []; }
   async getLotsByIds(ids: string[]): Promise<Lot[]> { console.warn("[SampleDataAdapter] getLotsByIds not implemented."); return []; }
@@ -122,5 +140,4 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async deleteDirectSaleOffer(id: string): Promise<{ success: boolean; message: string; }> { console.warn("[SampleDataAdapter] deleteDirectSaleOffer not implemented."); return { success: false, message: 'Not implemented.' }; }
   async createUserLotMaxBid(userId: string, lotId: string, maxAmount: number): Promise<{ success: boolean; message: string; maxBidId?: string; }> { console.warn("[SampleDataAdapter] createUserLotMaxBid not implemented."); return { success: false, message: 'Not implemented.' }; }
   async getActiveUserLotMaxBid(userId: string, lotId: string): Promise<UserLotMaxBid | null> { console.warn("[SampleDataAdapter] getActiveUserLotMaxBid not implemented."); return null; }
-
 }

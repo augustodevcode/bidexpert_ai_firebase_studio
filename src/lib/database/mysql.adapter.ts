@@ -926,10 +926,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] getBidsForLot is not yet implemented for MySQL.");
     return [];
   }
-  async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo; }> {
-    console.warn("[MySqlAdapter] placeBidOnLot is not yet implemented for MySQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
   async getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> {
     console.warn("[MySqlAdapter] getReviewsForLot is not yet implemented for MySQL.");
     return [];
@@ -1018,13 +1014,67 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] unlinkMediaItemFromLot is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
+  
   async getPlatformSettings(): Promise<PlatformSettings> {
-    console.warn("[MySqlAdapter] getPlatformSettings is not yet implemented for MySQL.");
-    return samplePlatformSettings;
+    try {
+      const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM platform_settings WHERE id = 1 LIMIT 1');
+      if (rows.length === 0) {
+        console.log('[MySqlAdapter] No platform settings found, returning sample data and attempting to insert it.');
+        await this.updatePlatformSettings(samplePlatformSettings);
+        return samplePlatformSettings as PlatformSettings;
+      }
+      return mapToPlatformSettings(mapMySqlRowToCamelCase(rows[0]));
+    } catch (error) {
+        console.error("[MySqlAdapter - getPlatformSettings] Error fetching settings, returning sample data as fallback. Error:", error);
+        return samplePlatformSettings as PlatformSettings;
+    }
   }
+
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
-    console.warn("[MySqlAdapter] updatePlatformSettings is not yet implemented for MySQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    try {
+      const [rows] = await getPool().execute<RowDataPacket[]>('SELECT id FROM platform_settings WHERE id = 1 LIMIT 1');
+      
+      const values = [
+        data.siteTitle, data.siteTagline, data.galleryImageBasePath, data.storageProvider,
+        data.firebaseStorageBucket || null, data.activeThemeName || null, JSON.stringify(data.themes || []),
+        JSON.stringify(data.platformPublicIdMasks || {}), JSON.stringify(data.mapSettings || {}),
+        data.searchPaginationType, data.searchItemsPerPage, data.searchLoadMoreCount,
+        data.showCountdownOnLotDetail, data.showCountdownOnCards, data.showRelatedLotsOnLotDetail,
+        data.relatedLotsCount, JSON.stringify(data.mentalTriggerSettings || {}),
+        JSON.stringify(data.sectionBadgeVisibility || {}), JSON.stringify(data.homepageSections || []),
+        JSON.stringify(data.variableIncrementTable || []), JSON.stringify(data.biddingSettings || {}),
+        data.defaultListItemsPerPage
+      ];
+
+      if (rows.length === 0) {
+        const query = `
+          INSERT INTO platform_settings (
+            id, site_title, site_tagline, gallery_image_base_path, storage_provider, firebase_storage_bucket, 
+            active_theme_name, themes, platform_public_id_masks, map_settings, search_pagination_type, 
+            search_items_per_page, search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards, 
+            show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings, 
+            section_badge_visibility, homepage_sections, variable_increment_table, bidding_settings, default_list_items_per_page
+          ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        await getPool().execute(query, values);
+      } else {
+        const query = `
+          UPDATE platform_settings SET
+            site_title = ?, site_tagline = ?, gallery_image_base_path = ?, storage_provider = ?, 
+            firebase_storage_bucket = ?, active_theme_name = ?, themes = ?, platform_public_id_masks = ?, 
+            map_settings = ?, search_pagination_type = ?, search_items_per_page = ?, 
+            search_load_more_count = ?, show_countdown_on_lot_detail = ?, show_countdown_on_cards = ?, 
+            show_related_lots_on_lot_detail = ?, related_lots_count = ?, mental_trigger_settings = ?, 
+            section_badge_visibility = ?, homepage_sections = ?, variable_increment_table = ?,
+            bidding_settings = ?, default_list_items_per_page = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE id = 1`;
+        await getPool().execute(query, values);
+      }
+
+      return { success: true, message: 'Configurações atualizadas com sucesso!' };
+    } catch (error: any) {
+      console.error('[MySqlAdapter - updatePlatformSettings] Error:', error);
+      return { success: false, message: `Erro ao atualizar configurações: ${error.message}` };
+    }
   }
   
   async getRoleByName(name: string): Promise<Role | null> {

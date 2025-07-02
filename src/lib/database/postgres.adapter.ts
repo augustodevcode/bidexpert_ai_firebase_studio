@@ -522,6 +522,42 @@ export class PostgresAdapter implements IDatabaseAdapter {
     getPool();
   }
 
+  async getAuction(idOrPublicId: string): Promise<Auction | null> {
+    const res = await getPool().query(
+      `SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url 
+       FROM auctions a
+       LEFT JOIN lot_categories cat ON a.category_id = cat.id
+       LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
+       LEFT JOIN sellers s ON a.seller_id = s.id
+       WHERE (a.id = $1) OR (a.public_id = $2)
+       LIMIT 1`,
+      [isNaN(parseInt(idOrPublicId, 10)) ? -1 : parseInt(idOrPublicId, 10), idOrPublicId]
+    );
+
+    if (res.rows.length === 0) return null;
+    const auctionData = res.rows[0];
+    
+    const lotRes = await getPool().query(
+      `SELECT l.*, c.name as category_name, s.name as subcategory_name, st.uf as state_uf, city.name as city_name, a.title as auction_name, a.public_id as auction_public_id
+       FROM lots l
+       LEFT JOIN auctions a ON l.auction_id = a.id
+       LEFT JOIN lot_categories c ON l.category_id = c.id
+       LEFT JOIN subcategories s ON l.subcategory_id = s.id
+       LEFT JOIN states st ON l.state_id = st.id
+       LEFT JOIN cities city ON l.city_id = city.id
+       WHERE l.auction_id = $1`,
+      [auctionData.id]
+    );
+
+    const lots = lotRes.rows.map(mapToLot);
+    
+    const auction = mapToAuction(auctionData);
+    auction.lots = lots;
+    auction.totalLots = lots.length;
+
+    return auction;
+  }
+
   async getWinsForUser(userId: string): Promise<UserWin[]> {
     const { rows } = await getPool().query(
         `SELECT
@@ -997,15 +1033,69 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.warn("[PostgresAdapter] unlinkMediaItemFromLot is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
-  async getPlatformSettings(): Promise<PlatformSettings> {
-    console.warn("[PostgresAdapter] getPlatformSettings is not yet implemented for PostgreSQL.");
-    return samplePlatformSettings;
-  }
-  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] updatePlatformSettings is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
   
+  async getPlatformSettings(): Promise<PlatformSettings> {
+    try {
+      const { rows } = await getPool().query('SELECT * FROM platform_settings WHERE id = 1 LIMIT 1');
+      if (rows.length === 0) {
+        console.log('[PostgresAdapter] No platform settings found, returning sample data and attempting to insert it.');
+        await this.updatePlatformSettings(samplePlatformSettings);
+        return samplePlatformSettings as PlatformSettings;
+      }
+      return mapToPlatformSettings(rows[0]);
+    } catch (error) {
+      console.error("[PostgresAdapter - getPlatformSettings] Error fetching settings, returning sample data as fallback. Error:", error);
+      return samplePlatformSettings as PlatformSettings;
+    }
+  }
+
+  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
+    try {
+      const { rows } = await getPool().query('SELECT id FROM platform_settings WHERE id = 1 LIMIT 1');
+      
+      const values = [
+        data.siteTitle, data.siteTagline, data.galleryImageBasePath, data.storageProvider,
+        data.firebaseStorageBucket || null, data.activeThemeName || null, JSON.stringify(data.themes || []),
+        JSON.stringify(data.platformPublicIdMasks || {}), JSON.stringify(data.mapSettings || {}),
+        data.searchPaginationType, data.searchItemsPerPage, data.searchLoadMoreCount,
+        data.showCountdownOnLotDetail, data.showCountdownOnCards, data.showRelatedLotsOnLotDetail,
+        data.relatedLotsCount, JSON.stringify(data.mentalTriggerSettings || {}),
+        JSON.stringify(data.sectionBadgeVisibility || {}), JSON.stringify(data.homepageSections || []),
+        JSON.stringify(data.variableIncrementTable || []), JSON.stringify(data.biddingSettings || {}),
+        data.defaultListItemsPerPage
+      ];
+
+      if (rows.length === 0) {
+        const query = `
+          INSERT INTO platform_settings (
+            id, site_title, site_tagline, gallery_image_base_path, storage_provider, firebase_storage_bucket, 
+            active_theme_name, themes, platform_public_id_masks, map_settings, search_pagination_type, 
+            search_items_per_page, search_load_more_count, show_countdown_on_lot_detail, show_countdown_on_cards, 
+            show_related_lots_on_lot_detail, related_lots_count, mental_trigger_settings, 
+            section_badge_visibility, homepage_sections, variable_increment_table, bidding_settings, default_list_items_per_page
+          ) VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)`;
+        await getPool().query(query, values);
+      } else {
+        const query = `
+          UPDATE platform_settings SET
+            site_title = $1, site_tagline = $2, gallery_image_base_path = $3, storage_provider = $4, 
+            firebase_storage_bucket = $5, active_theme_name = $6, themes = $7, platform_public_id_masks = $8, 
+            map_settings = $9, search_pagination_type = $10, search_items_per_page = $11, 
+            search_load_more_count = $12, show_countdown_on_lot_detail = $13, show_countdown_on_cards = $14, 
+            show_related_lots_on_lot_detail = $15, related_lots_count = $16, mental_trigger_settings = $17, 
+            section_badge_visibility = $18, homepage_sections = $19, variable_increment_table = $20,
+            bidding_settings = $21, default_list_items_per_page = $22, updated_at = CURRENT_TIMESTAMP
+          WHERE id = 1`;
+        await getPool().query(query, values);
+      }
+
+      return { success: true, message: 'Configurações atualizadas com sucesso!' };
+    } catch (error: any) {
+      console.error('[PostgresAdapter - updatePlatformSettings] Error:', error);
+      return { success: false, message: `Erro ao atualizar configurações: ${error.message}` };
+    }
+  }
+
   // Bem (Asset) CRUD methods
   async getBens(judicialProcessId?: string): Promise<Bem[]> {
     let query = `
