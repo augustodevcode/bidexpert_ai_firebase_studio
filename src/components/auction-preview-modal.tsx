@@ -5,11 +5,17 @@ import type { Auction } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { CalendarDays, MapPin, Tag, DollarSign, ShieldCheck, Info } from 'lucide-react';
+import { CalendarDays, MapPin, Tag, DollarSign, Eye, ChevronLeft, ChevronRight, ImageOff, FileText, SlidersHorizontal, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Link from 'next/link';
-import { getAuctionStatusText } from '@/lib/sample-data';
+import { getAuctionStatusText } from '@/lib/sample-data-helpers'; // CORRECTED IMPORT
+import { useState, useMemo } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import LotDescriptionTab from './auction/lot-description-tab';
+import LotSpecificationTab from './auction/lot-specification-tab';
+import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
+import { Separator } from './ui/separator';
 
 interface AuctionPreviewModalProps {
   auction: Auction;
@@ -119,4 +125,3 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
     </Dialog>
   );
 }
-
