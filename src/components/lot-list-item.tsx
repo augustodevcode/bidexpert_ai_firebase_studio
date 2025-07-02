@@ -12,7 +12,7 @@ import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock
 import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
-import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify } from '@/lib/sample-data-helpers';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -299,6 +299,24 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                 {(lot.latitude || lot.longitude || lot.mapAddress || lot.mapEmbedUrl) && (
                     <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleMapPreviewOpen}><MapPin className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Ver Mapa</p></TooltipContent></Tooltip>
                 )}
+                 <DropdownMenu>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Compartilhar">
+                                    <Share2 className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Compartilhar</p></TooltipContent>
+                    </Tooltip>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild><a href={getSocialLink('x', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs cursor-pointer"><X className="h-3.5 w-3.5" /> X (Twitter)</a></DropdownMenuItem>
+                        <DropdownMenuItem asChild><a href={getSocialLink('facebook', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs cursor-pointer"><Facebook className="h-3.5 w-3.5" /> Facebook</a></DropdownMenuItem>
+                        <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs cursor-pointer"><MessageSquareText className="h-3.5 w-3.5" /> WhatsApp</a></DropdownMenuItem>
+                        <DropdownMenuItem asChild><a href={getSocialLink('email', lotDetailUrl, lot.title)} className="flex items-center gap-2 text-xs cursor-pointer"><Mail className="h-3.5 w-3.5" /> Email</a></DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
                 <EntityEditMenu
                   entityType="lot"
                   entityId={lot.id}
@@ -313,15 +331,22 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
               <div className="flex items-center" title={`Leilão: ${lot.auctionName}`}>
                 <ListChecks className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
-                <span className="truncate">{lot.auctionName}</span>
+                <span className="truncate">{lot.auctionName || 'Leilão não especificado'}</span>
               </div>
               <div className="flex items-center">
                 <Gavel className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
                 <span>{lot.bidsCount || 0} Lances</span>
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center" title={`Categoria: ${lot.type}`}>
                 {getTypeIcon(lot.type)}
-                <span className="truncate ml-1" title={lot.type || ''}>{lot.type}</span>
+                <span className="truncate ml-1">{lot.type}</span>
+                 {lot.subcategoryName && (
+                    <>
+                        <ChevronRight className="h-3 w-3 mx-0.5 text-muted-foreground/70 flex-shrink-0" />
+                        <Layers className="h-3 w-3 mr-1 text-primary/70 flex-shrink-0" />
+                        <span className="truncate" title={lot.subcategoryName}>{lot.subcategoryName}</span>
+                    </>
+                )}
               </div>
               <div className="flex items-center">
                 <MapPin className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
@@ -342,7 +367,6 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                     </Badge>
                 ))}
             </div>
-
             <div className="mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2 border-t border-dashed">
               <div>
                 <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
@@ -361,7 +385,7 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
               </div>
                <Button asChild size="sm" className="w-full md:w-auto mt-2 md:mt-0">
                     <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>
-                        Ver Detalhes do Lote
+                        <Eye className="mr-2 h-4 w-4" /> Ver Detalhes
                     </Link>
                 </Button>
             </div>
@@ -416,4 +440,3 @@ export default function LotListItem({ lot, auction, badgeVisibilityConfig, platf
 
     return <LotListItemClientContent lot={lot} auction={auction} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} onUpdate={onUpdate} />;
   }
-
