@@ -241,6 +241,20 @@ export const sampleUserProfiles: UserProfileWithPermissions[] = [
     createdAt: new Date('2023-01-01T12:00:00Z'),
     updatedAt: new Date(),
     accountType: 'PHYSICAL',
+  },
+  {
+    uid: 'consignor@bidexpert.com',
+    email: 'consignor@bidexpert.com',
+    password: 'password123',
+    fullName: 'Bradesco Comitente',
+    roleId: 'role-consignor',
+    roleName: 'CONSIGNOR',
+    permissions: ['auctions:manage_own', 'lots:manage_own'],
+    status: 'ATIVO',
+    habilitationStatus: 'HABILITADO',
+    createdAt: new Date('2023-01-01T12:00:00Z'),
+    updatedAt: new Date(),
+    accountType: 'LEGAL',
   }
 ];
 
@@ -249,6 +263,7 @@ export const sampleCourts: Court[] = [
   { id: 'court-tjrj', name: 'Tribunal de Justiça do Rio de Janeiro', slug: 'tjrj', stateUf: 'RJ', website: 'https://www.tjrj.jus.br', createdAt: new Date(), updatedAt: new Date() },
   { id: 'court-tjmg', name: 'Tribunal de Justiça de Minas Gerais', slug: 'tjmg', stateUf: 'MG', website: 'https://www.tjmg.jus.br', createdAt: new Date(), updatedAt: new Date() },
   { id: 'court-tjse', name: 'Tribunal de Justiça de Sergipe', slug: 'tjse', stateUf: 'SE', website: 'https://www.tjse.jus.br', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'court-trt2', name: 'Tribunal Regional do Trabalho da 2ª Região', slug: 'trt2-sp', stateUf: 'SP', website: 'https://ww2.trt2.jus.br', createdAt: new Date(), updatedAt: new Date() },
 ];
 
 export const sampleJudicialDistricts: JudicialDistrict[] = [
@@ -256,12 +271,14 @@ export const sampleJudicialDistricts: JudicialDistrict[] = [
   { id: 'dist-sp-campinas', name: 'Comarca de Campinas', slug: 'campinas', courtId: 'court-tjsp', stateId: 'state-sp', zipCode: '13010-000', createdAt: new Date(), updatedAt: new Date() },
   { id: 'dist-rj-capital', name: 'Comarca da Capital', slug: 'rio-de-janeiro-capital', courtId: 'court-tjrj', stateId: 'state-rj', zipCode: '20010-000', createdAt: new Date(), updatedAt: new Date() },
   { id: 'dist-se-lagarto', name: 'Comarca de Lagarto', slug: 'lagarto', courtId: 'court-tjse', stateId: 'state-se', zipCode: '49400-000', createdAt: new Date(), updatedAt: new Date() },
+  { id: 'dist-sp-sao-paulo-trt', name: 'Comarca de São Paulo (TRT)', slug: 'sao-paulo-trt', courtId: 'court-trt2', stateId: 'state-sp', zipCode: '01139-003', createdAt: new Date(), updatedAt: new Date() },
 ];
 
 export const sampleJudicialBranches: JudicialBranch[] = [
     { id: 'branch-1', name: '1ª Vara Cível', slug: '1a-vara-civel', districtId: 'dist-sp-capital', contactName: 'José da Silva', phone: '11 1234-5678', email: 'vara1.sp@tj.jus.br', createdAt: new Date(), updatedAt: new Date() },
     { id: 'branch-2', name: '2ª Vara da Fazenda Pública', slug: '2a-vara-da-fazenda-publica', districtId: 'dist-rj-capital', contactName: 'Maria Oliveira', phone: '21 9876-5432', email: 'vara2.rj@tj.jus.br', createdAt: new Date(), updatedAt: new Date() },
     { id: 'branch-3', name: 'Vara Única de Lagarto', slug: 'vara-unica-lagarto', districtId: 'dist-se-lagarto', contactName: 'Ana Costa', phone: '79 3631-1111', email: 'vara.lagarto@tjse.jus.br', createdAt: new Date(), updatedAt: new Date() },
+    { id: 'branch-4', name: '15ª Vara do Trabalho de São Paulo', slug: '15-vara-trabalho-sp', districtId: 'dist-sp-sao-paulo-trt', contactName: 'Paulo Lima', phone: '11 3525-2015', email: 'vt15.sp@trt2.jus.br', createdAt: new Date(), updatedAt: new Date() },
 ];
 
 const sampleParties: ProcessParty[] = [
@@ -269,6 +286,8 @@ const sampleParties: ProcessParty[] = [
     { id: 'party-2', name: 'Empresa X Ltda', documentNumber: '12.345.678/0001-99', partyType: 'REU' },
     { id: 'party-3', name: 'Dr. Carlos Advogado', documentNumber: 'OAB/SP 12345', partyType: 'ADVOGADO_AUTOR' },
     { id: 'party-4', name: 'Dra. Advogada Santos', documentNumber: 'OAB/RJ 54321', partyType: 'ADVOGADO_REU' },
+    { id: 'party-5', name: 'Meta Metais Ltda', documentNumber: '98.765.432/0001-11', partyType: 'AUTOR' },
+    { id: 'party-6', name: 'Banco Fictício S.A.', documentNumber: '11.222.333/0001-44', partyType: 'REU' },
 ];
 
 export const sampleJudicialProcesses: JudicialProcess[] = [
@@ -284,57 +303,49 @@ export const sampleJudicialProcesses: JudicialProcess[] = [
         parties: [sampleParties[0]!, sampleParties[3]!],
         createdAt: new Date(), updatedAt: new Date()
     },
+     { 
+        id: 'proc-3', publicId: 'PROC-55555-2022', processNumber: '0055555-22.2022.2.02.0015', isElectronic: true,
+        courtId: 'court-trt2', districtId: 'dist-sp-sao-paulo-trt', branchId: 'branch-4',
+        parties: [sampleParties[4]!, sampleParties[5]!],
+        createdAt: new Date(), updatedAt: new Date()
+    }
 ];
 
-// Gera 5 Bens (Assets) e os associa aos processos judiciais
-export const sampleBens: Bem[] = Array.from({ length: 5 }, (_, i) => {
-    const randomProcess = randomItem(sampleJudicialProcesses);
-    const randomCategory = randomItem(sampleLotCategories);
-    const media = randomItem(sampleMediaItems);
-    const city = randomItem(sampleCities);
-    return {
-        id: `bem-${i + 1}`,
-        publicId: `BEM-PUB-${i + 1}`,
-        title: `Bem ${randomCategory.name} #B${i+1}`,
-        description: `Descrição detalhada do bem ${i + 1}, em excelente estado.`,
-        judicialProcessId: randomProcess.id,
-        judicialProcessNumber: randomProcess.processNumber,
-        status: 'DISPONIVEL',
-        categoryId: randomCategory.id,
-        categoryName: randomCategory.name,
-        evaluationValue: randomInt(1000, 50000),
-        imageUrl: media.urlOriginal,
-        imageMediaId: media.id,
-        locationCity: city.name,
-        locationState: city.stateUf,
-        address: `Rua dos Bens, ${i+1}`,
-        createdAt: new Date(),
-        updatedAt: new Date()
-    };
-});
-
+export const sampleBens: Bem[] = [
+    { id: `bem-1`, publicId: `BEM-PUB-1`, title: `Mesa de Escritório em L`, judicialProcessId: 'proc-3', judicialProcessNumber: '0055555-22.2022.2.02.0015', status: 'DISPONIVEL', categoryId: 'cat-bens-diversos', evaluationValue: 350, imageUrl: 'https://placehold.co/600x400.png?text=Mesa', imageMediaId: 'media-desk-1', createdAt: new Date(), updatedAt: new Date() },
+    { id: `bem-2`, publicId: `BEM-PUB-2`, title: `Cadeira de Escritório Giratória`, judicialProcessId: 'proc-3', judicialProcessNumber: '0055555-22.2022.2.02.0015', status: 'DISPONIVEL', categoryId: 'cat-bens-diversos', evaluationValue: 200, imageUrl: 'https://placehold.co/600x400.png?text=Cadeira', imageMediaId: 'media-chair-1', createdAt: new Date(), updatedAt: new Date() },
+    { id: `bem-3`, publicId: `BEM-PUB-3`, title: `Veículo Fiat Uno 2010`, judicialProcessId: 'proc-1', judicialProcessNumber: '0012345-67.2024.8.26.0001', status: 'DISPONIVEL', categoryId: 'cat-veiculos', subcategoryId: 'subcat-veiculos-carros', evaluationValue: 12000, imageUrl: 'https://placehold.co/600x400.png?text=Fiat+Uno', imageMediaId: 'media-uno-1', createdAt: new Date(), updatedAt: new Date() },
+    { id: `bem-4`, publicId: `BEM-PUB-4`, title: `Apartamento em Campinas`, judicialProcessId: 'proc-1', judicialProcessNumber: '0012345-67.2024.8.26.0001', status: 'DISPONIVEL', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-apartamentos', evaluationValue: 280000, imageUrl: 'https://placehold.co/600x400.png?text=Apto+Campinas', imageMediaId: 'media-apt-campinas', createdAt: new Date(), updatedAt: new Date() },
+    { id: `bem-5`, publicId: `BEM-PUB-5`, title: `Trator Valtra A950 4x4 2018`, judicialProcessId: undefined, status: 'DISPONIVEL', categoryId: 'cat-maquinas-e-equipamentos', subcategoryId: 'subcat-maquinas-agricolas', evaluationValue: 95000, imageUrl: 'https://placehold.co/600x400.png?text=Trator+Valtra', imageMediaId: 'media-trator-valtra', createdAt: new Date(), updatedAt: new Date() },
+];
 
 export const sampleLots: Lot[] = [
-  { id: 'lote-1', publicId: 'LOTE-PUB-1', auctionId: 'auc-1', title: 'Agrupamento de Móveis de Escritório', number: '001', status: 'ABERTO_PARA_LANCES', bemIds: ['bem-1', 'bem-2'], price: 1500, initialPrice: 1200, bidsCount: 3, endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) },
+  { id: 'lote-1', publicId: 'LOTE-PUB-1', auctionId: 'auc-3', title: 'Lote Agrupado: Mobiliário de Escritório', number: '001', status: 'ABERTO_PARA_LANCES', bemIds: ['bem-1', 'bem-2'], price: 400, initialPrice: 350, bidsCount: 3, endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) },
   { id: 'lote-2', publicId: 'LOTE-PUB-2', auctionId: 'auc-1', title: 'Veículo Fiat Uno do Processo X', number: '002', status: 'ABERTO_PARA_LANCES', bemIds: ['bem-3'], price: 7500, initialPrice: 7000, bidsCount: 8, endDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000) },
   { id: 'lote-3', publicId: 'LOTE-PUB-3', auctionId: 'auc-2', title: 'Imóvel Residencial em Campinas', number: '101', status: 'EM_BREVE', bemIds: ['bem-4'], price: 250000, initialPrice: 250000, bidsCount: 0, endDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000) },
+  { id: 'lote-4', publicId: 'LOTE-PUB-4', auctionId: 'auc-4', title: 'Frota de 5 veículos Fiat Cronos', number: 'TP01', status: 'ABERTO', bemIds: [], price: 150000, initialPrice: 150000, bidsCount: 0, endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000) },
+  { id: 'lote-5', publicId: 'LOTE-PUB-5', auctionId: 'auc-5', title: 'Trator Valtra Usado', number: '01', status: 'ABERTO_PARA_LANCES', bemIds: ['bem-5'], price: 85000, initialPrice: 80000, bidsCount: 2, endDate: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000) },
 ];
 
 
-const generatedAuctions: Auction[] = [
-  { id: 'auc-1', publicId: 'AUC-JUD-SP-1', title: 'Leilão Judicial da 1ª Vara Cível de SP', status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), auctionType: 'JUDICIAL', category: 'Bens Diversos', auctioneer: 'Augusto Leiloeiro Oficial', seller: 'Tribunal de Justiça do Estado de São Paulo', totalLots: 2, createdAt: new Date(), updatedAt: new Date(), lots: sampleLots.filter(l => l.auctionId === 'auc-1') },
+export const sampleAuctions: Auction[] = [
+  { id: 'auc-1', publicId: 'AUC-JUD-SP-1', title: 'Leilão Judicial da 1ª Vara Cível de SP', status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), auctionType: 'JUDICIAL', category: 'Bens Diversos', auctioneer: 'Augusto Leiloeiro Oficial', seller: 'Tribunal de Justiça do Estado de São Paulo', totalLots: 1, createdAt: new Date(), updatedAt: new Date(), lots: sampleLots.filter(l => l.auctionId === 'auc-1') },
   { id: 'auc-2', publicId: 'AUC-EXTRA-MRV-1', title: 'Leilão de Imóveis MRV Campinas', status: 'EM_BREVE', auctionDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000), auctionType: 'EXTRAJUDICIAL', category: 'Imóveis', auctioneer: 'Sodré Santoro Leilões', seller: 'Construtora MRV', totalLots: 1, createdAt: new Date(), updatedAt: new Date(), lots: sampleLots.filter(l => l.auctionId === 'auc-2') },
+  { id: 'auc-3', publicId: 'AUC-JUD-TRT-1', title: 'Leilão Trabalhista de Bens da Meta Metais', status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), endDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000), auctionType: 'JUDICIAL', category: 'Bens Diversos', auctioneer: 'Freitas Leiloeiro Oficial', seller: 'Tribunal Regional do Trabalho da 2ª Região', totalLots: 1, createdAt: new Date(), updatedAt: new Date(), lots: sampleLots.filter(l => l.auctionId === 'auc-3') },
+  { id: 'auc-4', publicId: 'AUC-TP-CAMPINAS-1', title: 'Tomada de Preços - Renovação de Frota', status: 'ABERTO', auctionDate: new Date(), endDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000), auctionType: 'TOMADA_DE_PRECOS', category: 'Veículos', auctioneer: 'Zukerman Leilões', seller: 'Prefeitura de Campinas', totalLots: 1, createdAt: new Date(), updatedAt: new Date(), lots: sampleLots.filter(l => l.auctionId === 'auc-4') },
+  { id: 'auc-5', publicId: 'AUC-EXTRA-AGRO-1', title: 'Leilão de Máquinas Agrícolas', status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), auctionType: 'EXTRAJUDICIAL', category: 'Máquinas e Equipamentos', auctioneer: 'Pestana Leilões', seller: 'Fazenda Agro Brasil', totalLots: 1, createdAt: new Date(), updatedAt: new Date(), lots: sampleLots.filter(l => l.auctionId === 'auc-5') }
+];
+
+export const sampleDirectSaleOffers: DirectSaleOffer[] = [
+    { id: 'ds-1', publicId: 'DS-PUB-1', title: 'Sofá Retrátil 3 Lugares', description: 'Sofá em suede cinza, em ótimo estado, pouco uso. Medidas: 2.20m x 1.10m.', imageUrl: 'https://placehold.co/800x600/64748b/ffffff/png?text=Sofa', offerType: 'BUY_NOW', price: 1200, category: 'Casa e Decoração', sellerName: 'João da Silva (Particular)', status: 'ACTIVE', createdAt: new Date(), updatedAt: new Date() },
+    { id: 'ds-2', publicId: 'DS-PUB-2', title: 'Geladeira Brastemp Frost Free 400L', description: 'Geladeira com freezer, funcionando perfeitamente. Algumas marcas de uso na porta.', imageUrl: 'https://placehold.co/800x600/e2e8f0/000000/png?text=Geladeira', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 800, category: 'Casa e Decoração', sellerName: 'Maria Oliveira (Particular)', status: 'ACTIVE', createdAt: new Date(), updatedAt: new Date() }
 ];
 
 // ==================================
-// EXPORT FINAL DATA
+// FINAL EXPORT OBJECT
 // ==================================
-export const sampleAuctions: Auction[] = generatedAuctions;
 export const sampleUserWins: UserWin[] = [];
-export const sampleDirectSaleOffers: DirectSaleOffer[] = [];
+export const sampleBids: BidInfo[] = [];
 export const sampleLotQuestions: LotQuestion[] = [];
 export const sampleLotReviews: Review[] = [];
 export const sampleUserLotMaxBids: UserLotMaxBid[] = [];
-export const sampleBids: BidInfo[] = [];
-
-
