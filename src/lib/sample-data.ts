@@ -1,6 +1,7 @@
+
 // src/lib/sample-data.ts
 import type {
-  Lot, LotCategory, Auction, AuctioneerProfileInfo, SellerProfileInfo,
+  Bem, Lot, LotCategory, Auction, AuctioneerProfileInfo, SellerProfileInfo,
   StateInfo, CityInfo, UserProfileWithPermissions, Role, MediaItem, Subcategory,
   PlatformSettings, DirectSaleOffer, UserWin, BidInfo, LotQuestion, Review, UserLotMaxBid, AuctionStage,
   UserDocument, DocumentType, Court, JudicialDistrict, JudicialBranch, JudicialProcess, ProcessParty
@@ -220,166 +221,29 @@ export const sampleUserDocuments: UserDocument[] = [
   },
 ];
 
-
 // ==================================
 // DYNAMIC DATA GENERATION
 // ==================================
-const generatedAuctions: Auction[] = [];
-const generatedLots: Lot[] = [];
-const sampleBids: BidInfo[] = []; // This will be populated and exported
-const generatedUserWins: UserWin[] = [];
-const generatedDirectSales: DirectSaleOffer[] = [];
-const generatedQuestions: LotQuestion[] = [];
-const generatedReviews: Review[] = [];
-const now = new Date(); 
-
-let auctionCounter = 1;
-let lotCounter = 1;
-
-const auctionTypes: Auction['auctionType'][] = ['JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS', 'DUTCH', 'SILENT'];
-
-// Main generation loop for Auctions
-auctionTypes.forEach(type => {
-  for (let i = 1; i <= 3; i++) { // Create 3 auctions of each type
-    const auctionStartDate = new Date(Date.now() + randomInt(-20, 20) * 24 * 60 * 60 * 1000);
-    const firstStageEndDate = new Date(auctionStartDate.getTime() + randomInt(5, 10) * 24 * 60 * 60 * 1000);
-    const secondStageEndDate = new Date(firstStageEndDate.getTime() + randomInt(2, 5) * 24 * 60 * 60 * 1000);
-    
-    const auctionStages: AuctionStage[] = [
-        { name: '1ª Praça', endDate: firstStageEndDate, statusText: 'Encerramento' },
-        { name: '2ª Praça', endDate: secondStageEndDate, statusText: 'Encerramento' }
-    ];
-
-    const selectedCategory = randomItem(sampleLotCategories);
-    const auctioneer = randomItem(sampleAuctioneers);
-    const seller = type === 'JUDICIAL' ? sampleSellers.find(s => s.slug === 'tjsp')! : randomItem(sampleSellers);
-    const auctionId = `auc-${auctionCounter++}`;
-    const city = randomItem(sampleCities);
-    const cityCoords = CITY_COORDS[city.slug as keyof typeof CITY_COORDS] || { lat: -15.78, lon: -47.92 };
-
-    const auction: Auction = {
-      id: auctionId, publicId: `AUC-PUB-${auctionId}`,
-      title: `Leilão ${type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} de ${selectedCategory.name} #${i}`,
-      status: 'EM_BREVE', auctionType: type, categoryId: selectedCategory.id, category: selectedCategory.name,
-      auctioneerId: auctioneer.id, auctioneer: auctioneer.name, sellerId: seller.id, seller: seller.name,
-      city: city.name, state: city.stateUf, auctionDate: auctionStartDate, endDate: secondStageEndDate,
-      auctionStages: auctionStages,
-      latitude: cityCoords.lat, longitude: cityCoords.lon,
-      createdAt: new Date(), updatedAt: new Date(), totalLots: 0,
-      initialOffer: randomInt(10000, 100000), visits: randomInt(50, 1500),
-      isFeaturedOnMarketplace: Math.random() > 0.8, lots: [],
-      automaticBiddingEnabled: true,
-      softCloseEnabled: true,
-      softCloseMinutes: 2,
-      autoRelistSettings: {
-        enableAutoRelist: true,
-        relistIfNoBids: true,
-        relistIfNoBidsAfterHours: 2,
-        relistDurationInHours: 72,
-      },
-    };
-    
-    if (type === 'DUTCH') {
-        auction.decrementAmount = 1000;
-        auction.decrementIntervalSeconds = 60;
-        auction.floorPrice = 50000;
-    }
-
-    if (type === 'SILENT') {
-      auction.silentBiddingEnabled = true;
-      auction.allowMultipleBidsPerUser = Math.random() > 0.5; // Randomize this setting
-    }
-
-
-    const numLots = randomInt(2, 5);
-    auction.totalLots = numLots;
-
-    for (let j = 1; j <= numLots; j++) {
-      const lotId = `lot-${lotCounter++}`;
-      const media = randomItem(sampleMediaItems);
-      
-      let lotStatus: LotStatus;
-      let lotEndDate: Date = firstStageEndDate;
-      if (now < auctionStartDate) lotStatus = 'EM_BREVE';
-      else if (now >= auctionStartDate && now < secondStageEndDate) lotStatus = 'ABERTO_PARA_LANCES';
-      else lotStatus = 'ENCERRADO';
-      
-      if (lotStatus === 'ABERTO_PARA_LANCES' && now >= firstStageEndDate) lotEndDate = secondStageEndDate;
-
-      const lot: Lot = {
-        id: lotId, publicId: `LOT-PUB-${lotId}`, auctionId: auction.id,
-        title: `Item de ${selectedCategory.name} - ${lotId}`,
-        number: `${lotCounter}`, imageUrl: media.urlOriginal, imageMediaId: media.id,
-        status: lotStatus, categoryId: selectedCategory.id, type: selectedCategory.name,
-        price: randomInt(500, 25000), bidsCount: 0, endDate: lotEndDate,
-        latitude: randomCoord(cityCoords.lat, 0.05), longitude: randomCoord(cityCoords.lon, 0.05),
-        mapAddress: `Rua Fictícia, ${randomInt(10, 500)}, ${city.name}`,
-        views: randomInt(10, 500), isFeatured: Math.random() > 0.9, auctionName: auction.title,
-        cityName: city.name, stateUf: city.stateUf, auctionPublicId: auction.publicId
-      };
-      
-      // Populate judicial and real estate fields for relevant lots
-      if (auction.auctionType === 'JUDICIAL') {
-        lot.judicialProcessNumber = `0012345-67.${new Date().getFullYear()}.8.26.${randomInt(1, 9999).toString().padStart(4, '0')}`;
-        lot.courtDistrict = "Comarca da Capital";
-        lot.courtName = "1ª Vara Cível";
-      }
-      if (selectedCategory.name === 'Imóveis') {
-        lot.propertyRegistrationNumber = `${randomInt(10000, 99999)}`;
-        lot.propertyLiens = "Consta hipoteca em favor do Banco Exemplo S.A.";
-        lot.knownDebts = `IPTU 2024 em aberto (R$ ${randomInt(500, 2000)}).`;
-      }
-
-
-      if (lot.status === 'ABERTO_PARA_LANCES') {
-        const numBids = randomInt(0, 10);
-        lot.bidsCount = numBids;
-        for (let k = 0; k < numBids; k++) {
-          lot.price += randomInt(50, 500);
-          sampleBids.push({ id: `bid-${lotId}-${k}`, lotId: lotId, auctionId: auction.id, bidderId: `bidder-${k+1}`, bidderDisplay: `Licitante ${k+1}`, amount: lot.price, timestamp: new Date() });
-        }
-      }
-
-      if (Math.random() > 0.7) { // 30% chance of having questions/reviews
-        generatedQuestions.push({id: `q-${lotId}`, lotId: lotId, auctionId: auction.id, userId: 'user-2', userDisplayName: 'Joana S.', questionText: 'O produto vem na caixa original?', createdAt: new Date(), answerText: 'Sim, acompanha caixa e todos os acessórios originais.', answeredAt: new Date(), answeredByUserId: 'admin-1', answeredByUserDisplayName: seller.name, isPublic: true});
-        generatedReviews.push({id: `r-${lotId}`, lotId: lotId, auctionId: auction.id, userId: 'user-3', userDisplayName: 'Carlos P.', rating: 5, comment: 'Excelente estado, como descrito. Recomendo!', createdAt: new Date()});
-      }
-
-      generatedLots.push(lot);
-      auction.lots!.push(lot);
-    }
-
-    if (now >= secondStageEndDate) {
-        auction.status = 'ENCERRADO';
-    } else if (now >= auctionStartDate) {
-        auction.status = 'ABERTO_PARA_LANCES';
-    }
-    
-    generatedAuctions.push(auction);
+export const sampleUserProfiles: UserProfileWithPermissions[] = [
+  {
+    uid: 'admin-bidexpert-platform-001',
+    email: 'admin@bidexpert.com.br',
+    password: '@dmin2025',
+    fullName: 'Administrador BidExpert',
+    roleId: 'role-admin',
+    roleName: 'ADMINISTRATOR',
+    permissions: ['manage_all'],
+    status: 'ATIVO',
+    habilitationStatus: 'HABILITADO',
+    cpf: '000.000.000-00',
+    cellPhone: '(11) 99999-9999',
+    dateOfBirth: new Date('1990-01-01T00:00:00Z'),
+    createdAt: new Date('2023-01-01T12:00:00Z'),
+    updatedAt: new Date(),
+    accountType: 'PHYSICAL',
   }
-});
+];
 
-// Direct Sales Generation
-for (let i = 1; i <= 8; i++) {
-    const seller = randomItem(sampleSellers);
-    const category = randomItem(sampleLotCategories);
-    const media = randomItem(sampleMediaItems);
-    const offer: DirectSaleOffer = {
-        id: `dso-${i}`, publicId: `DSO-PUB-${i}`, title: `Oferta Direta: ${category.name} em Perfeito Estado`,
-        description: `Descrição detalhada para a oferta de ${category.name}. Item de alta qualidade, diretamente do nosso parceiro ${seller.name}.`,
-        imageUrl: media.urlOriginal, dataAiHint: media.dataAiHint, imageMediaId: media.id,
-        galleryImageUrls: [randomItem(sampleMediaItems).urlOriginal, randomItem(sampleMediaItems).urlOriginal],
-        mediaItemIds: [randomItem(sampleMediaItems).id, randomItem(sampleMediaItems).id],
-        offerType: Math.random() > 0.5 ? 'BUY_NOW' : 'ACCEPTS_PROPOSALS',
-        price: randomInt(100, 5000), minimumOfferPrice: randomInt(80, 4800),
-        category: category.name, locationCity: randomItem(sampleCities).name, locationState: randomItem(sampleStates).uf,
-        sellerName: seller.name, sellerId: seller.id, sellerLogoUrl: seller.logoUrl, dataAiHintSellerLogo: seller.dataAiHintLogo,
-        status: 'ACTIVE', createdAt: new Date(), updatedAt: new Date(),
-    };
-    generatedDirectSales.push(offer);
-}
-
-// Judicial Data
 export const sampleCourts: Court[] = [
   { id: 'court-tjsp', name: 'Tribunal de Justiça de São Paulo', slug: 'tjsp', stateUf: 'SP', website: 'https://www.tjsp.jus.br', createdAt: new Date(), updatedAt: new Date() },
   { id: 'court-tjrj', name: 'Tribunal de Justiça do Rio de Janeiro', slug: 'tjrj', stateUf: 'RJ', website: 'https://www.tjrj.jus.br', createdAt: new Date(), updatedAt: new Date() },
@@ -411,44 +275,66 @@ export const sampleJudicialProcesses: JudicialProcess[] = [
     { 
         id: 'proc-1', publicId: 'PROC-12345-2024', processNumber: '0012345-67.2024.8.26.0001', isElectronic: true, 
         courtId: 'court-tjsp', districtId: 'dist-sp-capital', branchId: 'branch-1', 
-        parties: [sampleParties[0], sampleParties[1], sampleParties[2]], 
+        parties: [sampleParties[0]!, sampleParties[1]!, sampleParties[2]!], 
         createdAt: new Date(), updatedAt: new Date()
     },
     { 
         id: 'proc-2', publicId: 'PROC-98765-2023', processNumber: '0098765-43.2023.8.19.0001', isElectronic: true,
         courtId: 'court-tjrj', districtId: 'dist-rj-capital', branchId: 'branch-2',
-        parties: [sampleParties[0], sampleParties[3]],
+        parties: [sampleParties[0]!, sampleParties[3]!],
         createdAt: new Date(), updatedAt: new Date()
     },
+];
+
+// Gera 5 Bens (Assets) e os associa aos processos judiciais
+export const sampleBens: Bem[] = Array.from({ length: 5 }, (_, i) => {
+    const randomProcess = randomItem(sampleJudicialProcesses);
+    const randomCategory = randomItem(sampleLotCategories);
+    const media = randomItem(sampleMediaItems);
+    const city = randomItem(sampleCities);
+    return {
+        id: `bem-${i + 1}`,
+        publicId: `BEM-PUB-${i + 1}`,
+        title: `Bem ${randomCategory.name} #B${i+1}`,
+        description: `Descrição detalhada do bem ${i + 1}, em excelente estado.`,
+        judicialProcessId: randomProcess.id,
+        judicialProcessNumber: randomProcess.processNumber,
+        status: 'DISPONIVEL',
+        categoryId: randomCategory.id,
+        categoryName: randomCategory.name,
+        evaluationValue: randomInt(1000, 50000),
+        imageUrl: media.urlOriginal,
+        imageMediaId: media.id,
+        locationCity: city.name,
+        locationState: city.stateUf,
+        address: `Rua dos Bens, ${i+1}`,
+        createdAt: new Date(),
+        updatedAt: new Date()
+    };
+});
+
+
+export const sampleLots: Lot[] = [
+  { id: 'lote-1', publicId: 'LOTE-PUB-1', auctionId: 'auc-1', title: 'Agrupamento de Móveis de Escritório', number: '001', status: 'ABERTO_PARA_LANCES', bemIds: ['bem-1', 'bem-2'], price: 1500, initialPrice: 1200, bidsCount: 3, endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) },
+  { id: 'lote-2', publicId: 'LOTE-PUB-2', auctionId: 'auc-1', title: 'Veículo Fiat Uno do Processo X', number: '002', status: 'ABERTO_PARA_LANCES', bemIds: ['bem-3'], price: 7500, initialPrice: 7000, bidsCount: 8, endDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000) },
+  { id: 'lote-3', publicId: 'LOTE-PUB-3', auctionId: 'auc-2', title: 'Imóvel Residencial em Campinas', number: '101', status: 'EM_BREVE', bemIds: ['bem-4'], price: 250000, initialPrice: 250000, bidsCount: 0, endDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000) },
+];
+
+
+const generatedAuctions: Auction[] = [
+  { id: 'auc-1', publicId: 'AUC-JUD-SP-1', title: 'Leilão Judicial da 1ª Vara Cível de SP', status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), auctionType: 'JUDICIAL', category: 'Bens Diversos', auctioneer: 'Augusto Leiloeiro Oficial', seller: 'Tribunal de Justiça do Estado de São Paulo', totalLots: 2, createdAt: new Date(), updatedAt: new Date(), lots: sampleLots.filter(l => l.auctionId === 'auc-1') },
+  { id: 'auc-2', publicId: 'AUC-EXTRA-MRV-1', title: 'Leilão de Imóveis MRV Campinas', status: 'EM_BREVE', auctionDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000), auctionType: 'EXTRAJUDICIAL', category: 'Imóveis', auctioneer: 'Sodré Santoro Leilões', seller: 'Construtora MRV', totalLots: 1, createdAt: new Date(), updatedAt: new Date(), lots: sampleLots.filter(l => l.auctionId === 'auc-2') },
 ];
 
 // ==================================
 // EXPORT FINAL DATA
 // ==================================
 export const sampleAuctions: Auction[] = generatedAuctions;
-export const sampleLots: Lot[] = generatedLots;
-export const sampleUserWins: UserWin[] = generatedUserWins;
-export const sampleDirectSaleOffers: DirectSaleOffer[] = generatedDirectSales;
-export const sampleLotQuestions: LotQuestion[] = generatedQuestions;
-export const sampleLotReviews: Review[] = generatedReviews;
+export const sampleUserWins: UserWin[] = [];
+export const sampleDirectSaleOffers: DirectSaleOffer[] = [];
+export const sampleLotQuestions: LotQuestion[] = [];
+export const sampleLotReviews: Review[] = [];
 export const sampleUserLotMaxBids: UserLotMaxBid[] = [];
-export const sampleUserProfiles: UserProfileWithPermissions[] = [
-  {
-    uid: 'admin-bidexpert-platform-001',
-    email: 'admin@bidexpert.com.br',
-    password: '@dmin2025',
-    fullName: 'Administrador BidExpert',
-    roleId: 'role-admin',
-    roleName: 'ADMINISTRATOR',
-    permissions: ['manage_all'],
-    status: 'ATIVO',
-    habilitationStatus: 'HABILITADO',
-    cpf: '000.000.000-00',
-    cellPhone: '(11) 99999-9999',
-    dateOfBirth: new Date('1990-01-01T00:00:00Z'),
-    createdAt: new Date('2023-01-01T12:00:00Z'),
-    updatedAt: new Date(),
-    accountType: 'PHYSICAL',
-  }
-];
-export { sampleBids };
+export const sampleBids: BidInfo[] = [];
+
+

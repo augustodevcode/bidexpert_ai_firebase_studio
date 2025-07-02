@@ -249,6 +249,33 @@ export type AuctionDbData = Omit<AuctionFormData, 'category' | 'auctioneer' | 's
   relistCount?: number;
 };
 
+export interface Bem {
+  id: string;
+  publicId: string;
+  title: string;
+  description?: string;
+  judicialProcessId?: string;
+  judicialProcessNumber?: string;
+  status: 'DISPONIVEL' | 'LOTEADO' | 'VENDIDO' | 'REMOVIDO';
+  categoryId?: string;
+  categoryName?: string;
+  subcategoryId?: string;
+  subcategoryName?: string;
+  imageUrl?: string;
+  imageMediaId?: string | null;
+  dataAiHint?: string;
+  galleryImageUrls?: string[];
+  mediaItemIds?: string[];
+  evaluationValue?: number;
+  locationCity?: string;
+  locationState?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  createdAt: AnyTimestamp;
+  updatedAt: AnyTimestamp;
+}
+export type BemFormData = Omit<Bem, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber'>;
 
 export interface Lot {
   id: string;
@@ -257,142 +284,24 @@ export interface Lot {
   auctionPublicId?: string;
   title: string;
   number?: string; 
-  imageUrl: string;
-  imageMediaId?: string | null;
-  dataAiHint?: string;
-  galleryImageUrls?: string[];
-  mediaItemIds?: string[]; 
   status: LotStatus;
-  stateId?: string;
-  cityId?: string;
-  cityName?: string;
-  stateUf?: string;
-  type: string; // This will be the main category name
-  categoryId?: string; // ID of the main LotCategory
-  subcategoryId?: string; // ID of the Subcategory
-  subcategoryName?: string; // Name of the subcategory for display
-  views?: number;
-  auctionName?: string; 
-  price: number; 
-  initialPrice?: number; 
-  secondInitialPrice?: number | null; 
-  bidIncrementStep?: number; 
-  endDate?: AnyTimestamp; 
-  auctionDate?: AnyTimestamp; 
-  lotSpecificAuctionDate?: AnyTimestamp | null; 
-  secondAuctionDate?: AnyTimestamp | null; 
   bidsCount?: number;
-  isFavorite?: boolean;
-  isFeatured?: boolean;
-  description?: string;
-  year?: number;
-  make?: string; 
-  model?: string;
-  series?: string;
-  stockNumber?: string;
-  sellingBranch?: string; 
-  vin?: string; 
-  vinStatus?: string; 
-  lossType?: string; 
-  primaryDamage?: string; 
-  titleInfo?: string; 
-  titleBrand?: string; 
-  startCode?: string; 
-  hasKey?: boolean; 
-  odometer?: string; 
-  airbagsStatus?: string; 
-  bodyStyle?: string; 
-  engineDetails?: string; 
-  transmissionType?: string; 
-  driveLineType?: string; 
-  fuelType?: string; 
-  cylinders?: string; 
-  restraintSystem?: string; 
-  exteriorInteriorColor?: string; 
-  options?: string; 
-  manufacturedIn?: string; 
-  vehicleClass?: string; 
-  vehicleLocationInBranch?: string; 
-  laneRunNumber?: string; 
-  aisleStall?: string; 
-  actualCashValue?: string; 
-  estimatedRepairCost?: string; 
-  sellerName?: string;
-  sellerId?: string; 
-  auctioneerName?: string;
-  auctioneerId?: string; 
-  condition?: string;
-  allowInstallmentBids?: boolean; 
-  latitude?: number | null;
-  longitude?: number | null;
-  mapAddress?: string | null;
-  mapEmbedUrl?: string | null;
-  mapStaticImageUrl?: string | null;
-
-  // Campos de segurança e due diligence
-  judicialProcessIds?: string[]; // Multiple processes
-  judicialProcessNumber?: string | null; // Keep for simple display if needed
-  courtDistrict?: string | null; // Comarca
-  courtName?: string | null; // Vara
-  publicProcessUrl?: string | null;
-  propertyRegistrationNumber?: string | null; // Matrícula do Imóvel
-  propertyLiens?: string | null; // Ônus (descrição ou link)
-  knownDebts?: string | null; // Dívidas conhecidas (IPTU, Condomínio)
-  additionalDocumentsInfo?: string | null; // Campo de texto para outras infos/links de docs
-
-  // Novos campos para teoria dos leilões e conformidade
-  reservePrice?: number | null; // Preço de reserva confidencial
-  evaluationValue?: number | null; // Valor de avaliação oficial
-  debtAmount?: number | null; // Montante da dívida (Alienação Fiduciária)
-  itbiValue?: number | null; // Valor do ITBI (Alienação Fiduciária)
+  price: number; 
+  initialPrice?: number;
+  endDate?: AnyTimestamp;
   createdAt?: AnyTimestamp;
   updatedAt?: AnyTimestamp;
-  discountPercentage?: number;
-  additionalTriggers?: string[];
-  isExclusive?: boolean;
+  bemIds?: string[]; // Array of Bem IDs
+  // All descriptive fields are moved to Bem
 }
 
 export type LotFormData = Omit<Lot,
-  'id' |
-  'publicId' |
-  'createdAt' |
-  'updatedAt' |
-  'endDate' | 
-  'auctionDate' |
-  'isFavorite' |
-  'isFeatured' |
-  'views' |           
-  'bidsCount' |       
-  'galleryImageUrls' | 
-  'dataAiHint' |      
-  'cityName' |        
-  'stateUf' |         
-  'auctioneerName' |
-  'sellerName' |
-  'type' | 
-  'auctionName' |
-  'subcategoryName' |
-  'auctionPublicId'
+  'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'endDate' | 'bidsCount' | 'price'
 > & {
   endDate?: Date | null; 
-  auctionDate?: Date | null;
-  lotSpecificAuctionDate?: Date | null;
-  secondAuctionDate?: Date | null;
-  type: string; 
-  subcategoryId?: string | null;
-  views?: number;
-  bidsCount?: number;
-  mediaItemIds?: string[];
-  galleryImageUrls?: string[]; 
-  allowInstallmentBids?: boolean;
 };
 
-export type LotDbData = Omit<LotFormData, 'type' | 'auctionName' | 'sellerName' | 'auctioneerName' | 'subcategoryName' > & {
-  categoryId?: string;
-  auctioneerId?: string;
-  sellerId?: string;
-  subcategoryId?: string;
-};
+export type LotDbData = LotFormData;
 
 export type BidInfo = {
   id: string;
@@ -897,6 +806,12 @@ export interface IDatabaseAdapter {
   getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]>;
   getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]>;
 
+  // BENS
+  getBens(judicialProcessId?: string): Promise<Bem[]>;
+  getBem(id: string): Promise<Bem | null>;
+  createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }>;
+  updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }>;
+  deleteBem(id: string): Promise<{ success: boolean; message: string; }>;
 
   createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }>;
   getLots(auctionIdParam?: string): Promise<Lot[]>;
@@ -997,4 +912,117 @@ export interface RecentlyViewedLotInfo {
   imageUrl: string;
   auctionId: string;
   dataAiHint?: string;
+}
+
+```
+  </change>
+  <change>
+    <file>/src/components/layout/admin-sidebar.tsx</file>
+    <content><![CDATA[// src/components/layout/admin-sidebar.tsx
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, Boxes } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
+const topLevelNavItems = [
+  { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  { title: 'Auditório Virtual', href: '/live-dashboard', icon: Tv },
+];
+
+const auctionManagementItems = [
+  { title: 'Leilões', href: '/admin/auctions', icon: Gavel },
+  { title: 'Loteamento', href: '/admin/lotting', icon: Boxes, disabled: true },
+  { title: 'Lotes', href: '/admin/lots', icon: Package },
+  { title: 'Bens', href: '/admin/bens', icon: Package },
+  { title: 'Venda Direta', href: '/admin/direct-sales', icon: ShoppingCart },
+  { title: 'Categorias de Lotes', href: '/admin/categories', icon: ListChecks },
+  { title: 'Subcategorias', href: '/admin/subcategories', icon: Layers },
+];
+
+const judicialManagementItems = [
+    { title: 'Tribunais', href: '/admin/courts', icon: Scale },
+    { title: 'Comarcas', href: '/admin/judicial-districts', icon: Map, disabled: false },
+    { title: 'Varas', href: '/admin/judicial-branches', icon: Building2, disabled: false },
+    { title: 'Processos', href: '/admin/judicial-processes', icon: FileText, disabled: false },
+]
+
+const platformManagementItems = [
+  { title: 'Biblioteca de Mídia', href: '/admin/media', icon: Library },
+  { title: 'Comitentes', href: '/admin/sellers', icon: Users },
+  { title: 'Leiloeiros', href: '/admin/auctioneers', icon: Landmark },
+  { title: 'Estados', href: '/admin/states', icon: Map },
+  { title: 'Cidades', href: '/admin/cities', icon: Building2 },
+  { title: 'Usuários', href: '/admin/users', icon: Users },
+  { title: 'Perfis (Roles)', href: '/admin/roles', icon: ShieldCheck },
+  { title: 'Configurações', href: '/admin/settings', icon: Settings },
+];
+
+const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; title: string; icon: React.ElementType; disabled?: boolean }; pathname: string; onLinkClick?: () => void; }) => (
+  <Button
+    key={item.href}
+    variant={pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href) && !item.disabled) ? 'secondary' : 'ghost'}
+    className={cn(
+      'w-full justify-start',
+      (pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href)) && !item.disabled) && 'font-semibold text-primary hover:text-primary'
+    )}
+    asChild
+    disabled={item.disabled}
+    onClick={onLinkClick}
+  >
+    <Link href={item.disabled ? '#' : item.href}>
+      <item.icon className="mr-2 h-4 w-4" />
+      {item.title}
+    </Link>
+  </Button>
+);
+
+export default function AdminSidebar() {
+  const pathname = usePathname();
+
+  return (
+    <aside className="sticky top-0 h-screen w-64 bg-background border-r flex flex-col">
+      <div className="p-4 border-b">
+        <Link href="/admin/dashboard" className="flex items-center space-x-2">
+          <LayoutDashboard className="h-7 w-7 text-primary" />
+          <span className="font-bold text-xl text-primary">BidExpert Admin</span>
+        </Link>
+      </div>
+      <ScrollArea className="flex-1">
+        <nav className="p-2 space-y-1">
+          {topLevelNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+          
+          <Accordion type="multiple" className="w-full" defaultValue={['auction-management', 'judicial-management', 'platform-management']}>
+              <AccordionItem value="auction-management" className="border-b-0">
+                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão de Leilões</AccordionTrigger>
+                  <AccordionContent className="pt-1 space-y-1">
+                      {auctionManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                  </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="judicial-management" className="border-b-0">
+                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão Judicial</AccordionTrigger>
+                  <AccordionContent className="pt-1 space-y-1">
+                      {judicialManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                  </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="platform-management" className="border-b-0">
+                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão da Plataforma</AccordionTrigger>
+                  <AccordionContent className="pt-1 space-y-1">
+                      {platformManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                  </AccordionContent>
+              </AccordionItem>
+          </Accordion>
+        </nav>
+      </ScrollArea>
+      <div className="p-4 border-t">
+        <Button variant="outline" className="w-full" asChild>
+            <Link href="/">Voltar ao Site</Link>
+        </Button>
+      </div>
+    </aside>
+  );
 }

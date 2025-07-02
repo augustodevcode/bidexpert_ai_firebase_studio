@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale } from 'lucide-react';
+import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, Boxes } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -16,7 +16,9 @@ const topLevelNavItems = [
 
 const auctionManagementItems = [
   { title: 'Leilões', href: '/admin/auctions', icon: Gavel },
+  { title: 'Loteamento', href: '/admin/lotting', icon: Boxes, disabled: true },
   { title: 'Lotes', href: '/admin/lots', icon: Package },
+  { title: 'Bens', href: '/admin/bens', icon: Package },
   { title: 'Venda Direta', href: '/admin/direct-sales', icon: ShoppingCart },
   { title: 'Categorias de Lotes', href: '/admin/categories', icon: ListChecks },
   { title: 'Subcategorias', href: '/admin/subcategories', icon: Layers },
@@ -26,7 +28,7 @@ const judicialManagementItems = [
     { title: 'Tribunais', href: '/admin/courts', icon: Scale },
     { title: 'Comarcas', href: '/admin/judicial-districts', icon: Map, disabled: false },
     { title: 'Varas', href: '/admin/judicial-branches', icon: Building2, disabled: false },
-    { title: 'Processos', href: '/admin/judicial-processes', icon: Gavel, disabled: false },
+    { title: 'Processos', href: '/admin/judicial-processes', icon: FileText, disabled: false },
 ]
 
 const platformManagementItems = [
