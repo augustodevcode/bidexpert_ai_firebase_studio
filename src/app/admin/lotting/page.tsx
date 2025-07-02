@@ -15,6 +15,7 @@ import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
 import { useToast } from '@/hooks/use-toast';
 import CreateLotFromBensModal from '@/components/admin/lotting/create-lot-modal';
+import { Label } from '@/components/ui/label';
 
 export default function LoteamentoPage() {
   const [processes, setProcesses] = useState<JudicialProcess[]>([]);
