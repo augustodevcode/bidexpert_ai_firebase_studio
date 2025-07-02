@@ -1,103 +1,63 @@
-
+// src/components/layout/admin-sidebar.tsx
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart } from 'lucide-react'; // Added Layers, Tv, ShoppingCart
+import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
-const sidebarNavItems = [
-  {
-    title: 'Dashboard',
-    href: '/admin/dashboard', 
-    icon: LayoutDashboard,
-  },
-   {
-    title: 'Auditório Virtual',
-    href: '/live-dashboard', // Link para a página de dashboard dos leilões ao vivo
-    icon: Tv, 
-    disabled: false, 
-  },
-  {
-    title: 'Leilões',
-    href: '/admin/auctions',
-    icon: Gavel, 
-    disabled: false, 
-  },
-  {
-    title: 'Lotes',
-    href: '/admin/lots',
-    icon: Package,
-    disabled: false,
-  },
-  {
-    title: 'Venda Direta',
-    href: '/admin/direct-sales',
-    icon: ShoppingCart,
-    disabled: false,
-  },
-  {
-    title: 'Categorias de Lotes',
-    href: '/admin/categories',
-    icon: ListChecks,
-  },
-  {
-    title: 'Subcategorias', // New Item
-    href: '/admin/subcategories',
-    icon: Layers, // Using Layers icon for Subcategories
-    disabled: false,
-  },
-  {
-    title: 'Biblioteca de Mídia',
-    href: '/admin/media',
-    icon: Library,
-    disabled: false, 
-  },
-  {
-    title: 'Comitentes',
-    href: '/admin/sellers', 
-    icon: Users, 
-    disabled: false, 
-  },
-  {
-    title: 'Leiloeiros', 
-    href: '/admin/auctioneers', 
-    icon: Landmark, 
-    disabled: false,
-  },
-  {
-    title: 'Estados',
-    href: '/admin/states',
-    icon: Map, 
-    disabled: false, 
-  },
-  {
-    title: 'Cidades',
-    href: '/admin/cities',
-    icon: Building2,
-    disabled: false, 
-  },
-  {
-    title: 'Gerenciar Usuários',
-    href: '/admin/users',
-    icon: Users, 
-    disabled: false, 
-  },
-  {
-    title: 'Gerenciar Perfis',
-    href: '/admin/roles',
-    icon: ShieldCheck,
-    disabled: false,
-  },
-  {
-    title: 'Configurações',
-    href: '/admin/settings',
-    icon: Settings,
-    disabled: false,
-  },
+const topLevelNavItems = [
+  { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  { title: 'Auditório Virtual', href: '/live-dashboard', icon: Tv },
 ];
+
+const auctionManagementItems = [
+  { title: 'Leilões', href: '/admin/auctions', icon: Gavel },
+  { title: 'Lotes', href: '/admin/lots', icon: Package },
+  { title: 'Venda Direta', href: '/admin/direct-sales', icon: ShoppingCart },
+  { title: 'Categorias de Lotes', href: '/admin/categories', icon: ListChecks },
+  { title: 'Subcategorias', href: '/admin/subcategories', icon: Layers },
+];
+
+const judicialManagementItems = [
+    { title: 'Tribunais', href: '/admin/courts', icon: Scale },
+    { title: 'Comarcas', href: '/admin/judicial-districts', icon: Map, disabled: true },
+    { title: 'Varas', href: '/admin/judicial-branches', icon: Building2, disabled: true },
+    { title: 'Processos', href: '/admin/judicial-processes', icon: Gavel, disabled: true },
+]
+
+const platformManagementItems = [
+  { title: 'Biblioteca de Mídia', href: '/admin/media', icon: Library },
+  { title: 'Comitentes', href: '/admin/sellers', icon: Users },
+  { title: 'Leiloeiros', href: '/admin/auctioneers', icon: Landmark },
+  { title: 'Estados', href: '/admin/states', icon: Map },
+  { title: 'Cidades', href: '/admin/cities', icon: Building2 },
+  { title: 'Usuários', href: '/admin/users', icon: Users },
+  { title: 'Perfis (Roles)', href: '/admin/roles', icon: ShieldCheck },
+  { title: 'Configurações', href: '/admin/settings', icon: Settings },
+];
+
+const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; title: string; icon: React.ElementType; disabled?: boolean }; pathname: string; onLinkClick?: () => void; }) => (
+  <Button
+    key={item.href}
+    variant={pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href) && !item.disabled) ? 'secondary' : 'ghost'}
+    className={cn(
+      'w-full justify-start',
+      (pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href)) && !item.disabled) && 'font-semibold text-primary hover:text-primary'
+    )}
+    asChild
+    disabled={item.disabled}
+    onClick={onLinkClick}
+  >
+    <Link href={item.disabled ? '#' : item.href}>
+      <item.icon className="mr-2 h-4 w-4" />
+      {item.title}
+    </Link>
+  </Button>
+);
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -111,24 +71,29 @@ export default function AdminSidebar() {
         </Link>
       </div>
       <ScrollArea className="flex-1">
-        <nav className="p-4 space-y-1">
-          {sidebarNavItems.map((item) => (
-            <Button
-              key={item.title}
-              variant={pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href) && !item.disabled) ? 'secondary' : 'ghost'}
-              className={cn(
-                'w-full justify-start',
-                (pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href)) && !item.disabled) && 'font-semibold text-primary hover:text-primary'
-              )}
-              asChild
-              disabled={item.disabled}
-            >
-              <Link href={item.disabled ? '#' : item.href}>
-                <item.icon className="mr-2 h-4 w-4" />
-                {item.title}
-              </Link>
-            </Button>
-          ))}
+        <nav className="p-2 space-y-1">
+          {topLevelNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+          
+          <Accordion type="multiple" className="w-full" defaultValue={['auction-management', 'judicial-management', 'platform-management']}>
+              <AccordionItem value="auction-management" className="border-b-0">
+                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão de Leilões</AccordionTrigger>
+                  <AccordionContent className="pt-1 space-y-1">
+                      {auctionManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                  </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="judicial-management" className="border-b-0">
+                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão Judicial</AccordionTrigger>
+                  <AccordionContent className="pt-1 space-y-1">
+                      {judicialManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                  </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="platform-management" className="border-b-0">
+                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão da Plataforma</AccordionTrigger>
+                  <AccordionContent className="pt-1 space-y-1">
+                      {platformManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                  </AccordionContent>
+              </AccordionItem>
+          </Accordion>
         </nav>
       </ScrollArea>
       <div className="p-4 border-t">

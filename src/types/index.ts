@@ -330,7 +330,8 @@ export interface Lot {
   mapStaticImageUrl?: string | null;
 
   // Campos de segurança e due diligence
-  judicialProcessNumber?: string | null;
+  judicialProcessIds?: string[]; // Multiple processes
+  judicialProcessNumber?: string | null; // Keep for simple display if needed
   courtDistrict?: string | null; // Comarca
   courtName?: string | null; // Vara
   publicProcessUrl?: string | null;
@@ -767,6 +768,71 @@ export interface IStorageAdapter {
 }
 
 
+// +++ NEW JUDICIAL ENTITIES +++
+
+export interface Court {
+  id: string;
+  name: string;
+  slug: string;
+  website?: string | null;
+  stateUf: string; // e.g., 'SP', 'SE'
+  createdAt: AnyTimestamp;
+  updatedAt: AnyTimestamp;
+}
+export type CourtFormData = Omit<Court, 'id' | 'slug' | 'createdAt' | 'updatedAt'>;
+
+export interface JudicialDistrict {
+  id: string;
+  name: string;
+  slug: string;
+  courtId: string;
+  stateId: string;
+  zipCode?: string | null;
+  createdAt: AnyTimestamp;
+  updatedAt: AnyTimestamp;
+}
+export type JudicialDistrictFormData = Omit<JudicialDistrict, 'id' | 'slug' | 'createdAt' | 'updatedAt'>;
+
+export interface JudicialBranch {
+  id: string;
+  name: string;
+  slug: string;
+  districtId: string;
+  contactName?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  createdAt: AnyTimestamp;
+  updatedAt: AnyTimestamp;
+}
+export type JudicialBranchFormData = Omit<JudicialBranch, 'id' | 'slug' | 'createdAt' | 'updatedAt'>;
+
+export type ProcessPartyType = 'AUTOR' | 'REU' | 'ADVOGADO_AUTOR' | 'ADVOGADO_REU' | 'JUIZ' | 'PERITO' | 'ADMINISTRADOR_JUDICIAL' | 'ESCRIVAO' | 'TERCEIRO_INTERESSADO' | 'OUTRO';
+
+export interface ProcessParty {
+  id: string;
+  name: string;
+  documentNumber?: string; // CPF ou CNPJ
+  partyType: ProcessPartyType;
+}
+
+export interface JudicialProcess {
+  id: string;
+  publicId: string; // Masked number
+  processNumber: string; // Full, unmasked number
+  oldProcessNumber?: string | null;
+  isElectronic: boolean;
+  courtId: string;
+  districtId: string;
+  branchId: string;
+  parties: ProcessParty[];
+  createdAt: AnyTimestamp;
+  updatedAt: AnyTimestamp;
+}
+export type JudicialProcessFormData = Omit<JudicialProcess, 'id' | 'publicId' | 'createdAt' | 'updatedAt'>;
+
+// --- END NEW JUDICIAL ENTITIES ---
+
+
 export interface IDatabaseAdapter {
   initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[], rolesProcessed?: number }>;
   disconnect?(): Promise<void>;
@@ -801,7 +867,7 @@ export interface IDatabaseAdapter {
   getAuctioneers(): Promise<AuctioneerProfileInfo[]>;
   getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null>;
   updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string }>;
-  deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string }>;
+  deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }>;
   getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null>;
   getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null>;
 
@@ -810,7 +876,7 @@ export interface IDatabaseAdapter {
   getSellers(): Promise<SellerProfileInfo[]>;
   getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null>;
   updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string }>;
-  deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string }>;
+  deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }>;
   getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null>;
   getSellerByName(name: string): Promise<SellerProfileInfo | null>;
 
@@ -885,6 +951,13 @@ export interface IDatabaseAdapter {
   
   getPlatformSettings(): Promise<PlatformSettings>;
   updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }>;
+
+  // New Judicial CRUDs
+  getCourts(): Promise<Court[]>;
+  getCourt(id: string): Promise<Court | null>;
+  createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string }>;
+  updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string }>;
+  deleteCourt(id: string): Promise<{ success: boolean; message: string }>;
 }
 
 export type UserCreationData = Pick<UserProfileData, 'fullName' | 'email' | 'cpf' | 'cellPhone' | 'dateOfBirth' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing'> & {
