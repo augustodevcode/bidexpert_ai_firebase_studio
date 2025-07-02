@@ -283,6 +283,7 @@ function mapToLot(row: QueryResultRow): Lot {
     id: String(row.id),
     publicId: row.public_id,
     auctionId: String(row.auction_id),
+    auctionPublicId: row.auction_public_id,
     title: row.title,
     number: row.number,
     imageUrl: row.image_url,
@@ -488,6 +489,41 @@ export class PostgresAdapter implements IDatabaseAdapter {
     getPool();
   }
   
+  async getAuction(idOrPublicId: string): Promise<Auction | null> {
+    const res = await getPool().query(
+      `SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url 
+       FROM auctions a
+       LEFT JOIN lot_categories cat ON a.category_id = cat.id
+       LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
+       LEFT JOIN sellers s ON a.seller_id = s.id
+       WHERE a.id = $1 OR a.public_id = $2 
+       LIMIT 1`,
+      [isNaN(parseInt(idOrPublicId, 10)) ? -1 : parseInt(idOrPublicId, 10), idOrPublicId]
+    );
+
+    if (res.rows.length === 0) return null;
+    const auctionData = res.rows[0];
+
+    const lotRes = await getPool().query(
+      `SELECT l.*, c.name as category_name, s.name as subcategory_name, st.uf as state_uf, city.name as city_name, a.title as auction_name, a.public_id as auction_public_id
+       FROM lots l
+       LEFT JOIN auctions a ON l.auction_id = a.id
+       LEFT JOIN lot_categories c ON l.category_id = c.id
+       LEFT JOIN subcategories s ON l.subcategory_id = s.id
+       LEFT JOIN states st ON l.state_id = st.id
+       LEFT JOIN cities city ON l.city_id = city.id
+       WHERE l.auction_id = $1`,
+      [auctionData.id]
+    );
+    const lots = lotRes.rows.map(mapToLot);
+
+    const auction = mapToAuction(auctionData);
+    auction.lots = lots;
+    auction.totalLots = lots.length;
+
+    return auction;
+  }
+
   async getWinsForUser(userId: string): Promise<UserWin[]> {
     const { rows } = await getPool().query(
         `SELECT

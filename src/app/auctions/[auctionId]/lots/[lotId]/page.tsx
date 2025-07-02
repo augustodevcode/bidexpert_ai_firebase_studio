@@ -1,16 +1,16 @@
-
 // src/app/auctions/[auctionId]/lots/[lotId]/page.tsx
 import type { Lot, Auction, PlatformSettings, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import LotDetailClientContent from './lot-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { getAuction } from '@/app/admin/auctions/actions';
+import { getAuction, getAuctions } from '@/app/admin/auctions/actions';
 import { getLot, getLots } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getSellerBySlug } from '@/app/admin/sellers/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { notFound } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
 
 async function getLotPageData(currentAuctionId: string, currentLotId: string): Promise<{
   lot: Lot | null,
@@ -120,7 +120,7 @@ export async function generateStaticParams() {
     const lots = await getLots(); 
     // Limit to a reasonable number for build time
     const paths = lots.slice(0, 50).map(lot => ({
-        auctionId: lot.auctionId,
+        auctionId: lot.auctionPublicId || lot.auctionId, // Use publicId if available
         lotId: lot.publicId || lot.id,
       }));
     return paths;

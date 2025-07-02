@@ -181,20 +181,19 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     this._persistData();
     return { success: true, message: 'Categoria excluída com sucesso!' };
   }
-
-  // --- Subcategory ---
+  
   async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> {
-    await delay(50);
-    const parentCat = this.data.sampleLotCategories.find((c: LotCategory) => c.id === data.parentCategoryId);
-    if (!parentCat) return { success: false, message: "Categoria principal não encontrada." };
-    
-    const newSubcategory: Subcategory = {
-        ...data, id: `subcat-${parentCat.slug}-${slugify(data.name)}`, slug: slugify(data.name),
-        itemCount: 0, createdAt: new Date(), updatedAt: new Date(), parentCategoryName: parentCat.name,
-    };
-    this.data.sampleSubcategories.push(newSubcategory);
-    this._persistData();
-    return { success: true, message: 'Subcategoria criada!', subcategoryId: newSubcategory.id };
+      await delay(50);
+      const parentCat = this.data.sampleLotCategories.find((c: LotCategory) => c.id === data.parentCategoryId);
+      if (!parentCat) return { success: false, message: "Categoria principal não encontrada." };
+      
+      const newSubcategory: Subcategory = {
+          ...data, id: `subcat-${parentCat.slug}-${slugify(data.name)}`, slug: slugify(data.name),
+          itemCount: 0, createdAt: new Date(), updatedAt: new Date(), parentCategoryName: parentCat.name,
+      };
+      this.data.sampleSubcategories.push(newSubcategory);
+      this._persistData();
+      return { success: true, message: 'Subcategoria criada!', subcategoryId: newSubcategory.id };
   }
   
   async getSubcategories(parentCategoryId: string): Promise<Subcategory[]> {
@@ -237,11 +236,11 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async getCities(stateIdOrSlugFilter?: string): Promise<CityInfo[]> { await delay(20); let cities = this.data.sampleCities; if (stateIdOrSlugFilter) { const state = await this.getState(stateIdOrSlugFilter); if (state) { cities = cities.filter((c: CityInfo) => c.stateId === state.id); } else { return Promise.resolve([]); } } return Promise.resolve(JSON.parse(JSON.stringify(cities))); }
   async getCity(idOrCompositeSlug: string): Promise<CityInfo | null> { await delay(20); const city = this.data.sampleCities.find((c: CityInfo) => c.id === idOrCompositeSlug || `${c.stateId}-${c.slug}` === idOrCompositeSlug); return Promise.resolve(city ? JSON.parse(JSON.stringify(city)) : null); }
   async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string }> { await delay(50); const newState: StateInfo = { ...data, id: `state-${data.uf.toLowerCase()}`, slug: slugify(data.name), cityCount: 0, createdAt: new Date(), updatedAt: new Date() }; this.data.sampleStates.push(newState); this._persistData(); return { success: true, message: 'Estado criado!', stateId: newState.id }; }
-  async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string }> { await delay(50); const index = this.data.sampleStates.findIndex((s: StateInfo) => s.id === id); if(index === -1) return {success: false, message: 'Estado não encontrado.'}; this.data.sampleStates[index] = {...this.data.sampleStates[index], ...data, slug: data.name ? slugify(data.name) : this.data.sampleStates[index].name, updatedAt: new Date()}; this._persistData(); return {success: true, message: 'Estado atualizado!'}; }
-  async deleteState(id: string): Promise<{ success: boolean; message: string }> { await delay(50); this.data.sampleStates = this.data.sampleStates.filter((s: StateInfo) => s.id !== id); this._persistData(); return {success: true, message: 'Estado excluído!'}; }
+  async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> { await delay(50); const index = this.data.sampleStates.findIndex((s: StateInfo) => s.id === id); if(index === -1) return {success: false, message: 'Estado não encontrado.'}; this.data.sampleStates[index] = {...this.data.sampleStates[index], ...data, slug: data.name ? slugify(data.name) : this.data.sampleStates[index].name, updatedAt: new Date()}; this._persistData(); return {success: true, message: 'Estado atualizado!'}; }
+  async deleteState(id: string): Promise<{ success: boolean; message: string; }> { await delay(50); this.data.sampleStates = this.data.sampleStates.filter((s: StateInfo) => s.id !== id); this._persistData(); return {success: true, message: 'Estado excluído!'}; }
   async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string }> { const state = await this.getState(data.stateId); if (!state) return {success: false, message: 'Estado não encontrado.'}; const newCity: CityInfo = { ...data, id: `city-${slugify(data.name)}-${state.uf.toLowerCase()}`, slug: slugify(data.name), stateUf: state.uf, lotCount: 0, createdAt: new Date(), updatedAt: new Date() }; this.data.sampleCities.push(newCity); this._persistData(); return { success: true, message: 'Cidade criada!', cityId: newCity.id }; }
-  async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string }> { const index = this.data.sampleCities.findIndex((c: CityInfo) => c.id === id); if(index === -1) return {success: false, message: 'Cidade não encontrada.'}; this.data.sampleCities[index] = {...this.data.sampleCities[index], ...data, slug: data.name ? slugify(data.name) : this.data.sampleCities[index].slug, updatedAt: new Date()}; this._persistData(); return {success: true, message: 'Cidade atualizada!'}; }
-  async deleteCity(id: string): Promise<{ success: boolean; message: string }> { this.data.sampleCities = this.data.sampleCities.filter((c: CityInfo) => c.id !== id); this._persistData(); return {success: true, message: 'Cidade excluída!'}; }
+  async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleCities.findIndex((c: CityInfo) => c.id === id); if(index === -1) return {success: false, message: 'Cidade não encontrada.'}; this.data.sampleCities[index] = {...this.data.sampleCities[index], ...data, slug: data.name ? slugify(data.name) : this.data.sampleCities[index].slug, updatedAt: new Date()}; this._persistData(); return {success: true, message: 'Cidade atualizada!'}; }
+  async deleteCity(id: string): Promise<{ success: boolean; message: string; }> { this.data.sampleCities = this.data.sampleCities.filter((c: CityInfo) => c.id !== id); this._persistData(); return {success: true, message: 'Cidade excluída!'}; }
 
   // --- Auctioneers & Sellers ---
   async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { await delay(20); return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleAuctioneers))); }
@@ -296,15 +295,15 @@ export class SampleDataAdapter implements IDatabaseAdapter {
             return Promise.resolve([]);
         }
     }
-    // Add auctionName to each lot for consistency
-    const lotsWithAuctionName = lots.map(lot => {
+    const lotsWithDetails = lots.map(lot => {
         const parentAuction = this.data.sampleAuctions.find(a => a.id === lot.auctionId);
         return {
             ...lot,
-            auctionName: lot.auctionName || parentAuction?.title || 'Leilão não encontrado'
+            auctionName: lot.auctionName || parentAuction?.title || 'Leilão não encontrado',
+            auctionPublicId: parentAuction?.publicId,
         };
     });
-    return Promise.resolve(JSON.parse(JSON.stringify(lotsWithAuctionName)));
+    return Promise.resolve(JSON.parse(JSON.stringify(lotsWithDetails)));
   }
   async getLotsByIds(ids: string[]): Promise<Lot[]> { await delay(20); if (!ids || ids.length === 0) { return Promise.resolve([]); } const lots = this.data.sampleLots.filter((l: Lot) => ids.includes(l.id)); return Promise.resolve(JSON.parse(JSON.stringify(lots))); }
   async getLot(idOrPublicId: string): Promise<Lot | null> { await delay(20); const item = this.data.sampleLots.find((l: Lot) => l.id === idOrPublicId || l.publicId === idOrPublicId); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }

@@ -16,7 +16,7 @@ import type {
   PlatformSettings, PlatformSettingsFormData, Theme,
   Subcategory, SubcategoryFormData,
   MapSettings, SearchPaginationType, MentalTriggerSettings, SectionBadgeConfig, HomepageSectionConfig, AuctionStage,
-  DirectSaleOffer, DirectSaleOfferFormData,
+  DirectSaleOffer,
   UserLotMaxBid,
   UserWin,
   AuctionStatus, LotStatus
@@ -315,6 +315,7 @@ function mapToLot(row: any): Lot {
     id: String(row.id),
     publicId: row.publicId,
     auctionId: String(row.auctionId),
+    auctionPublicId: row.auctionPublicId,
     title: row.title,
     number: row.number,
     imageUrl: row.imageUrl,
@@ -545,7 +546,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
     
     // Now fetch the lots associated with this auction
     const [lotRows] = await getPool().execute<RowDataPacket[]>(
-      `SELECT l.*, c.name as category_name, s.name as subcategory_name, st.uf as state_uf, city.name as city_name, a.title as auction_name
+      `SELECT l.*, c.name as category_name, s.name as subcategory_name, st.uf as state_uf, city.name as city_name, a.title as auction_name, a.public_id as auction_public_id
        FROM lots l
        LEFT JOIN auctions a ON l.auction_id = a.id
        LEFT JOIN lot_categories c ON l.category_id = c.id

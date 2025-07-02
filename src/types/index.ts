@@ -254,6 +254,7 @@ export interface Lot {
   id: string;
   publicId: string;
   auctionId: string;
+  auctionPublicId?: string;
   title: string;
   number?: string; 
   imageUrl: string;
@@ -369,7 +370,8 @@ export type LotFormData = Omit<Lot,
   'sellerName' |
   'type' | 
   'auctionName' |
-  'subcategoryName'
+  'subcategoryName' |
+  'auctionPublicId'
 > & {
   endDate?: Date | null; 
   auctionDate?: Date | null;
@@ -696,6 +698,7 @@ export interface PlatformSettings {
   showRelatedLotsOnLotDetail?: boolean;
   relatedLotsCount?: number;
   variableIncrementTable?: VariableIncrementRule[];
+  defaultListItemsPerPage?: number;
 
   updatedAt: AnyTimestamp;
 }
@@ -721,6 +724,7 @@ export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'
     showRelatedLotsOnLotDetail?: boolean;
     relatedLotsCount?: number;
     variableIncrementTable?: VariableIncrementRule[];
+    defaultListItemsPerPage?: number;
 };
 
 
@@ -793,7 +797,7 @@ export interface IDatabaseAdapter {
   updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string }>;
   deleteCity(id: string): Promise<{ success: boolean; message: string }>;
 
-  createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string }>;
+  createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }>;
   getAuctioneers(): Promise<AuctioneerProfileInfo[]>;
   getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null>;
   updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string }>;
