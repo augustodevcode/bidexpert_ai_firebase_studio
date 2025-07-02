@@ -5,9 +5,8 @@ import type { Auction, AuctionStage } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { CalendarDays, FileText, Landmark, Eye } from 'lucide-react';
-import { format, isPast } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { CalendarDays, Landmark, Eye, Users, BarChart2 } from 'lucide-react';
+import { isPast } from 'date-fns';
 import Link from 'next/link';
 import { Calendar } from './ui/calendar';
 import AuctionStagesTimeline from './auction/auction-stages-timeline';
@@ -27,7 +26,8 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
 
   const auctioneerInitial = auction.auctioneer ? auction.auctioneer.charAt(0).toUpperCase() : 'L';
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'Nacional';
-  
+
+  // Memoize the calculation of dates to be highlighted on the calendar
   const auctionDates = useMemo(() => {
     const dates: Date[] = [];
     if (auction.auctionDate) dates.push(new Date(auction.auctionDate as string));
@@ -35,7 +35,9 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
     (auction.auctionStages || []).forEach(stage => {
         if (stage.endDate) dates.push(new Date(stage.endDate as string));
     });
-    return dates;
+    // Remove duplicate dates
+    const uniqueDates = Array.from(new Set(dates.map(d => d.toISOString()))).map(iso => new Date(iso));
+    return uniqueDates;
   }, [auction]);
 
   return (
@@ -44,11 +46,12 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
         <DialogHeader className="p-4 sm:p-6 pb-0">
           <DialogTitle className="text-xl sm:text-2xl font-bold font-headline">{auction.title}</DialogTitle>
           <DialogDescription>
-            {auction.description ? auction.description.substring(0,100) + '...' : `Leilão do tipo ${auction.auctionType} em ${displayLocation}`}
+            Leilão do tipo {auction.auctionType || 'Não especificado'} em {displayLocation}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto px-4 sm:px-6">
+            {/* Left Column */}
             <div className="space-y-4">
                 <div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden">
                     <Image
@@ -82,8 +85,25 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Right Column */}
             <div className="space-y-4">
-                <AuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages || []} />
+                <Card>
+                    <CardHeader className="p-3">
+                        <CardTitle className="text-md font-semibold flex items-center"><BarChart2 className="mr-2 h-4 w-4"/>Números do Leilão</CardTitle>
+                    </CardHeader>
+                     <CardContent className="p-3 pt-0 grid grid-cols-2 gap-2 text-center">
+                        <div className="bg-accent/40 p-2 rounded-md">
+                            <p className="text-xl font-bold">{auction.totalLots || 0}</p>
+                            <p className="text-xs text-muted-foreground">Lotes</p>
+                        </div>
+                         <div className="bg-accent/40 p-2 rounded-md">
+                            <p className="text-xl font-bold">{auction.visits || 0}</p>
+                            <p className="text-xs text-muted-foreground">Visitas</p>
+                        </div>
+                    </CardContent>
+                </Card>
+                 <AuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages || []} />
                  <Card>
                     <CardHeader className="p-3">
                         <CardTitle className="text-md font-semibold flex items-center"><CalendarDays className="mr-2 h-4 w-4" /> Calendário do Leilão</CardTitle>
