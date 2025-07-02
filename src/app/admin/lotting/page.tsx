@@ -1,6 +1,7 @@
 // src/app/admin/lotting/page.tsx
 'use client';
 
+import * as React from 'react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
