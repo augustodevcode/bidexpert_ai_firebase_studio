@@ -358,7 +358,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
             </Button>
           </CardFooter>
         </Card>
-        {isPreviewModalOpen && auction.auctionStages && auction.auctionStages.length > 0 && ( 
+        {isPreviewModalOpen && (
           <AuctionPreviewModal
             auction={auction}
             isOpen={isPreviewModalOpen}
