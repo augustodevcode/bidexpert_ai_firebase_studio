@@ -19,7 +19,8 @@ import type {
   Court, CourtFormData,
   JudicialDistrict, JudicialDistrictFormData,
   JudicialBranch, JudicialBranchFormData,
-  JudicialProcess, JudicialProcessFormData
+  JudicialProcess, JudicialProcessFormData,
+  Bem, BemFormData
 } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
@@ -541,4 +542,60 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     this._persistData();
     return { success: true, message: 'Processo excluído!' };
   }
+  
+  // Bem (Asset) CRUD methods
+  async getBens(judicialProcessId?: string): Promise<Bem[]> {
+    await delay(20);
+    let bens = this.data.sampleBens;
+    if (judicialProcessId) {
+      bens = bens.filter((b: Bem) => b.judicialProcessId === judicialProcessId);
+    }
+    const bensWithDetails = bens.map(b => {
+      const category = this.data.sampleLotCategories.find(c => c.id === b.categoryId);
+      const subcategory = this.data.sampleSubcategories.find(s => s.id === b.subcategoryId);
+      return { ...b, categoryName: category?.name, subcategoryName: subcategory?.name };
+    });
+    return Promise.resolve(JSON.parse(JSON.stringify(bensWithDetails)));
+  }
+
+  async getBem(id: string): Promise<Bem | null> {
+    await delay(20);
+    const bem = this.data.sampleBens.find((b: Bem) => b.id === id);
+    if (!bem) return null;
+    const category = this.data.sampleLotCategories.find(c => c.id === bem.categoryId);
+    const subcategory = this.data.sampleSubcategories.find(s => s.id === bem.subcategoryId);
+    const bemWithDetails = { ...bem, categoryName: category?.name, subcategoryName: subcategory?.name };
+    return Promise.resolve(JSON.parse(JSON.stringify(bemWithDetails)));
+  }
+
+  async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
+    await delay(50);
+    const newBem: Bem = {
+      ...data,
+      id: `bem-${uuidv4()}`,
+      publicId: `BEM-PUB-${uuidv4()}`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.data.sampleBens.push(newBem);
+    this._persistData();
+    return { success: true, message: 'Bem criado com sucesso!', bemId: newBem.id };
+  }
+
+  async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
+    await delay(50);
+    const index = this.data.sampleBens.findIndex((b: Bem) => b.id === id);
+    if (index === -1) return { success: false, message: 'Bem não encontrado.' };
+    this.data.sampleBens[index] = { ...this.data.sampleBens[index], ...data, updatedAt: new Date() };
+    this._persistData();
+    return { success: true, message: 'Bem atualizado com sucesso!' };
+  }
+
+  async deleteBem(id: string): Promise<{ success: boolean; message: string; }> {
+    await delay(50);
+    this.data.sampleBens = this.data.sampleBens.filter((b: Bem) => b.id !== id);
+    this._persistData();
+    return { success: true, message: 'Bem excluído com sucesso!' };
+  }
 }
+
