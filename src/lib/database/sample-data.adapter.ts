@@ -387,7 +387,25 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   
   // --- Media ---
   async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> { const newItem: MediaItem = {...data, id: `media-${uuidv4()}`, storagePath: filePublicUrl, uploadedAt: new Date(), urlOriginal: filePublicUrl, urlThumbnail: filePublicUrl, urlMedium: filePublicUrl, urlLarge: filePublicUrl, uploadedBy: uploadedBy || 'system', linkedLotIds:[]}; this.data.sampleMediaItems.unshift(newItem); this._persistData(); return {success: true, message: 'Mídia criada!', item: newItem}; }
-  async getMediaItems(): Promise<MediaItem[]> { await delay(20); const mediaItems: MediaItem[] = JSON.parse(JSON.stringify(this.data.sampleMediaItems)); const lots: Lot[] = this.data.sampleLots; mediaItems.forEach((mediaItem) => { mediaItem.linkedLotIds = []; lots.forEach((lot) => { const isMainImage = lot.imageMediaId === mediaItem.id; const isInGallery = lot.mediaItemIds?.includes(mediaItem.id); if (isMainImage || isInGallery) { const lotIdentifier = lot.publicId || lot.id; if (!mediaItem.linkedLotIds?.includes(lotIdentifier)) { mediaItem.linkedLotIds?.push(lotIdentifier); } } }); return Promise.resolve(mediaItems); }
+  async getMediaItems(): Promise<MediaItem[]> {
+    await delay(20);
+    const mediaItems: MediaItem[] = JSON.parse(JSON.stringify(this.data.sampleMediaItems));
+    const lots: Lot[] = this.data.sampleLots;
+    mediaItems.forEach((mediaItem) => {
+      mediaItem.linkedLotIds = [];
+      lots.forEach((lot) => {
+        const isMainImage = lot.imageMediaId === mediaItem.id;
+        const isInGallery = lot.mediaItemIds?.includes(mediaItem.id);
+        if (isMainImage || isInGallery) {
+          const lotIdentifier = lot.publicId || lot.id;
+          if (!mediaItem.linkedLotIds?.includes(lotIdentifier)) {
+            mediaItem.linkedLotIds?.push(lotIdentifier);
+          }
+        }
+      });
+    });
+    return Promise.resolve(mediaItems);
+  }
   async getMediaItem(id: string): Promise<MediaItem | null> { await delay(10); const item = this.data.sampleMediaItems.find((m: MediaItem) => m.id === id); return item ? Promise.resolve(JSON.parse(JSON.stringify(item))) : Promise.resolve(null); }
   async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleMediaItems.findIndex((m: MediaItem) => m.id === id); if(index === -1) return {success: false, message: 'Mídia não encontrada.'}; this.data.sampleMediaItems[index] = {...this.data.sampleMediaItems[index], ...metadata}; this._persistData(); return {success: true, message: 'Metadados da mídia atualizados!'}; }
   async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> { this.data.sampleMediaItems = this.data.sampleMediaItems.filter((m: MediaItem) => m.id !== id); this._persistData(); return {success: true, message: 'Mídia excluída!'}; }
