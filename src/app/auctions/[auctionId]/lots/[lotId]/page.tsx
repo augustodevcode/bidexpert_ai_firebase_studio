@@ -4,7 +4,7 @@ import LotDetailClientContent from './lot-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { getAuction, getAuctions } from '@/app/admin/auctions/actions';
-import { getLot, getLots } from '@/app/admin/lots/actions';
+import { getLot, getLots, getBensByIdsAction } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getSellerBySlug } from '@/app/admin/sellers/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
@@ -44,6 +44,12 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
     console.warn(`[getLotPageData] Mismatch: Lot '${lotFromDb.id}' belongs to auction '${lotFromDb.auctionId}', not '${auctionFromDb.id}'. Returning not found.`);
     return { lot: null, auction: auctionFromDb, platformSettings };
   }
+  
+  // Enrich lot with its assets
+  if (lotFromDb.bemIds && lotFromDb.bemIds.length > 0) {
+    lotFromDb.bens = await getBensByIdsAction(lotFromDb.bemIds);
+  }
+
 
   const lotsForThisAuction = auctionFromDb.lots || [];
   const lotIndex = lotsForThisAuction.findIndex(l => l.id === lotFromDb.id || (l.publicId && l.publicId === lotFromDb.publicId));

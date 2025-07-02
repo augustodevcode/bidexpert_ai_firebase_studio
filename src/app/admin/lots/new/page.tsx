@@ -1,4 +1,5 @@
 
+
 // src/app/admin/lots/new/page.tsx
 import LotForm from '../lot-form';
 import { createLot, type LotFormData } from '../actions';
@@ -31,6 +32,7 @@ function NewLotPageContent({ categories, auctions, states, allCities, auctionIdF
       auctions={auctions}
       states={states}
       allCities={allCities}
+      bens={[]} // No initial bens for a new lot
       formTitle="Novo Lote"
       formDescription="Preencha os detalhes para criar um novo lote."
       submitButtonText="Criar Lote"
