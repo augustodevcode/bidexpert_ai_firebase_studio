@@ -38,4 +38,7 @@ export async function deleteJudicialDistrict(id: string): Promise<{ success: boo
   const db = await getDatabaseAdapter();
   const result = await db.deleteJudicialDistrict(id);
   if (result.success) {
-    revalidatePath('/
+    revalidatePath('/admin/judicial-districts');
+  }
+  return result;
+}

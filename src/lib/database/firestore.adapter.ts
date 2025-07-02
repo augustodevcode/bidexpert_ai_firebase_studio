@@ -42,27 +42,30 @@ import { samplePlatformSettings } from '@/lib/sample-data';
 const AdminFieldValue = FieldValue;
 const ServerTimestamp = Timestamp;
 
-function safeConvertToDate(timestampField: any): Date {
-  if (!timestampField) return new Date(); 
+function safeConvertToISOString(timestampField: any): string {
+  if (!timestampField) return new Date().toISOString(); 
   if (timestampField && typeof timestampField.toDate === 'function') {
-    return timestampField.toDate();
+    return timestampField.toDate().toISOString();
   }
   if (typeof timestampField === 'object' && timestampField !== null &&
       typeof timestampField.seconds === 'number' && typeof timestampField.nanoseconds === 'number') {
-    return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000);
+    return new Date(timestampField.seconds * 1000 + timestampField.nanoseconds / 1000000).toISOString();
   }
-  if (timestampField instanceof Date) return timestampField;
+  if (timestampField instanceof Date) return timestampField.toISOString();
+  
   const parsedDate = new Date(timestampField);
-  if (!isNaN(parsedDate.getTime())) return parsedDate;
-  console.warn(`[FirestoreAdapter] Could not convert timestamp: ${JSON.stringify(timestampField)}. Returning current date.`);
-  return new Date();
+  if (!isNaN(parsedDate.getTime())) return parsedDate.toISOString();
+  
+  console.warn(`[FirestoreAdapter] Could not convert timestamp: ${JSON.stringify(timestampField)}. Returning current date as ISO string.`);
+  return new Date().toISOString();
 }
 
-function safeConvertOptionalDate(timestampField: any): Date | undefined | null {
+
+function safeConvertOptionalISOString(timestampField: any): string | undefined | null {
     if (timestampField === null || timestampField === undefined) {
       return null;
     }
-    return safeConvertToDate(timestampField);
+    return safeConvertToISOString(timestampField);
 }
 
 export class FirestoreAdapter implements IDatabaseAdapter {
@@ -122,8 +125,8 @@ export class FirestoreAdapter implements IDatabaseAdapter {
           description: data.description || '',
           itemCount: data.itemCount || 0,
           hasSubcategories: data.hasSubcategories || false,
-          createdAt: safeConvertToDate(data.createdAt),
-          updatedAt: safeConvertToDate(data.updatedAt),
+          createdAt: safeConvertToISOString(data.createdAt),
+          updatedAt: safeConvertToISOString(data.updatedAt),
         } as LotCategory;
       });
     } catch (error: any) {
@@ -144,8 +147,8 @@ export class FirestoreAdapter implements IDatabaseAdapter {
             description: data.description || '',
             itemCount: data.itemCount || 0,
             hasSubcategories: data.hasSubcategories || false,
-            createdAt: safeConvertToDate(data.createdAt),
-            updatedAt: safeConvertToDate(data.updatedAt),
+            createdAt: safeConvertToISOString(data.createdAt),
+            updatedAt: safeConvertToISOString(data.updatedAt),
         } as LotCategory;
       }
       return null;
@@ -229,7 +232,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   async getStates(): Promise<StateInfo[]> {
     try {
       const snapshot = await this.db.collection('states').orderBy('name').get();
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToDate(doc.data().createdAt), updatedAt: safeConvertToDate(doc.data().updatedAt) } as StateInfo));
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToISOString(doc.data().createdAt), updatedAt: safeConvertToISOString(doc.data().updatedAt) } as StateInfo));
     } catch (e: any) { return []; }
   }
   async getState(id: string): Promise<StateInfo | null> {
@@ -237,7 +240,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       const docSnap = await this.db.collection('states').doc(id).get();
       if (!docSnap.exists) return null;
       const data = docSnap.data()!;
-      return { id: docSnap.id, ...data, createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt) } as StateInfo;
+      return { id: docSnap.id, ...data, createdAt: safeConvertToISOString(data.createdAt), updatedAt: safeConvertToISOString(data.updatedAt) } as StateInfo;
     } catch (e: any) { return null; }
   }
   async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> {
@@ -274,7 +277,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
         query = query.where('stateId', '==', stateIdOrSlugFilter);
       }
       const snapshot = await query.orderBy('name').get();
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToDate(doc.data().createdAt), updatedAt: safeConvertToDate(doc.data().updatedAt) } as CityInfo));
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToISOString(doc.data().createdAt), updatedAt: safeConvertToISOString(doc.data().updatedAt) } as CityInfo));
     } catch (e: any) { return []; }
   }
   async getCity(id: string): Promise<CityInfo | null> {
@@ -282,7 +285,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       const docSnap = await this.db.collection('cities').doc(id).get();
       if (!docSnap.exists) return null;
       const data = docSnap.data()!;
-      return { id: docSnap.id, ...data, createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt) } as CityInfo;
+      return { id: docSnap.id, ...data, createdAt: safeConvertToISOString(data.createdAt), updatedAt: safeConvertToISOString(data.updatedAt) } as CityInfo;
     } catch (e: any) { return null; }
   }
   async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> {
@@ -315,7 +318,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
     try {
       const snapshot = await this.db.collection('auctioneers').orderBy('name').get();
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToDate(doc.data().createdAt), updatedAt: safeConvertToDate(doc.data().updatedAt), memberSince: safeConvertOptionalDate(doc.data().memberSince) } as AuctioneerProfileInfo));
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToISOString(doc.data().createdAt), updatedAt: safeConvertToISOString(doc.data().updatedAt), memberSince: safeConvertOptionalISOString(doc.data().memberSince) } as AuctioneerProfileInfo));
     } catch (e: any) { return []; }
   }
   async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
@@ -330,7 +333,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
         }
       }
       const data = docSnap.data()!;
-      return { id: docSnap.id, ...data, createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt), memberSince: safeConvertOptionalDate(data.memberSince) } as AuctioneerProfileInfo;
+      return { id: docSnap.id, ...data, createdAt: safeConvertToISOString(data.createdAt), updatedAt: safeConvertToISOString(data.updatedAt), memberSince: safeConvertOptionalISOString(data.memberSince) } as AuctioneerProfileInfo;
     } catch (e: any) { return null; }
   }
   async getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null> {
@@ -339,7 +342,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       if (snapshot.empty) return null;
       const docSnap = snapshot.docs[0];
       const data = docSnap.data()!;
-      return { id: docSnap.id, ...docSnap.data(), createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt), memberSince: safeConvertOptionalDate(data.memberSince) } as AuctioneerProfileInfo;
+      return { id: docSnap.id, ...docSnap.data(), createdAt: safeConvertToISOString(data.createdAt), updatedAt: safeConvertToISOString(data.updatedAt), memberSince: safeConvertOptionalISOString(data.memberSince) } as AuctioneerProfileInfo;
     } catch (e: any) { return null; }
   }
   async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
@@ -372,7 +375,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   async getSellers(): Promise<SellerProfileInfo[]> {
     try {
       const snapshot = await this.db.collection('sellers').orderBy('name').get();
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToDate(doc.data().createdAt), updatedAt: safeConvertToDate(doc.data().updatedAt), memberSince: safeConvertOptionalDate(doc.data().memberSince) } as SellerProfileInfo));
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToISOString(doc.data().createdAt), updatedAt: safeConvertToISOString(doc.data().updatedAt), memberSince: safeConvertOptionalISOString(doc.data().memberSince) } as SellerProfileInfo));
     } catch (e: any) { return []; }
   }
   async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> {
@@ -387,7 +390,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
         }
       }
       const data = docSnap.data()!;
-      return { id: docSnap.id, ...data, createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt), memberSince: safeConvertOptionalDate(data.memberSince) } as SellerProfileInfo;
+      return { id: docSnap.id, ...data, createdAt: safeConvertToISOString(data.createdAt), updatedAt: safeConvertToISOString(data.updatedAt), memberSince: safeConvertOptionalISOString(data.memberSince) } as SellerProfileInfo;
     } catch (e: any) { return null; }
   }
   async getSellerBySlug(slug: string): Promise<SellerProfileInfo | null> {
@@ -396,7 +399,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       if (snapshot.empty) return null;
       const docSnap = snapshot.docs[0];
       const data = docSnap.data()!;
-      return { id: docSnap.id, ...docSnap.data(), createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt), memberSince: safeConvertOptionalDate(data.memberSince) } as SellerProfileInfo;
+      return { id: docSnap.id, ...docSnap.data(), createdAt: safeConvertToISOString(data.createdAt), updatedAt: safeConvertToISOString(data.updatedAt), memberSince: safeConvertOptionalISOString(data.memberSince) } as SellerProfileInfo;
     } catch (e: any) { return null; }
   }
   async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
@@ -466,11 +469,11 @@ export class FirestoreAdapter implements IDatabaseAdapter {
             category: categoryName,
             auctioneer: auctioneerName,
             seller: sellerName,
-            auctionDate: safeConvertToDate(data.auctionDate), 
-            endDate: safeConvertOptionalDate(data.endDate), 
-            auctionStages: data.auctionStages?.map((stage: any) => ({...stage, endDate: safeConvertToDate(stage.endDate) })) || [],
-            createdAt: safeConvertToDate(data.createdAt), 
-            updatedAt: safeConvertToDate(data.updatedAt), 
+            auctionDate: safeConvertToISOString(data.auctionDate), 
+            endDate: safeConvertOptionalISOString(data.endDate), 
+            auctionStages: data.auctionStages?.map((stage: any) => ({...stage, endDate: safeConvertToISOString(stage.endDate) })) || [],
+            createdAt: safeConvertToISOString(data.createdAt), 
+            updatedAt: safeConvertToISOString(data.updatedAt), 
             lots: data.lots || [] 
         } as Auction;
       }));
@@ -517,11 +520,11 @@ export class FirestoreAdapter implements IDatabaseAdapter {
           category: categoryName,
           auctioneer: auctioneerName,
           seller: sellerName,
-          auctionDate: safeConvertToDate(data.auctionDate), 
-          endDate: safeConvertOptionalDate(data.endDate), 
-          auctionStages: data.auctionStages?.map((stage: any) => ({...stage, endDate: safeConvertToDate(stage.endDate) })) || [],
-          createdAt: safeConvertToDate(data.createdAt), 
-          updatedAt: safeConvertToDate(data.updatedAt), 
+          auctionDate: safeConvertToISOString(data.auctionDate), 
+          endDate: safeConvertOptionalISOString(data.endDate), 
+          auctionStages: data.auctionStages?.map((stage: any) => ({...stage, endDate: safeConvertToISOString(stage.endDate) })) || [],
+          createdAt: safeConvertToISOString(data.createdAt), 
+          updatedAt: safeConvertToISOString(data.updatedAt), 
           lots: [] // Initialize empty
         } as Auction;
       
@@ -562,10 +565,10 @@ export class FirestoreAdapter implements IDatabaseAdapter {
                 category: categoryName, 
                 auctioneer: auctioneerName, 
                 seller: sellerName, // Use fetched seller name
-                auctionDate: safeConvertToDate(data.auctionDate), 
-                endDate: safeConvertOptionalDate(data.endDate), 
-                createdAt: safeConvertToDate(data.createdAt), 
-                updatedAt: safeConvertToDate(data.updatedAt), 
+                auctionDate: safeConvertToISOString(data.auctionDate), 
+                endDate: safeConvertOptionalISOString(data.endDate), 
+                createdAt: safeConvertToISOString(data.createdAt), 
+                updatedAt: safeConvertToISOString(data.updatedAt), 
                 lots: data.lots || [] 
             } as Auction;
         }));
@@ -654,11 +657,11 @@ export class FirestoreAdapter implements IDatabaseAdapter {
           auctionName: auctionTitle,
           stateUf: stateName,
           cityName: cityName,
-          endDate: safeConvertToDate(data.endDate), 
-          lotSpecificAuctionDate: safeConvertOptionalDate(data.lotSpecificAuctionDate), 
-          secondAuctionDate: safeConvertOptionalDate(data.secondAuctionDate), 
-          createdAt: safeConvertToDate(data.createdAt), 
-          updatedAt: safeConvertToDate(data.updatedAt) 
+          endDate: safeConvertToISOString(data.endDate), 
+          lotSpecificAuctionDate: safeConvertOptionalISOString(data.lotSpecificAuctionDate), 
+          secondAuctionDate: safeConvertOptionalISOString(data.secondAuctionDate), 
+          createdAt: safeConvertToISOString(data.createdAt), 
+          updatedAt: safeConvertToISOString(data.updatedAt) 
       } as Lot;
   }
 
@@ -721,7 +724,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   async getBidsForLot(lotId: string): Promise<BidInfo[]> {
     try {
       const snapshot = await this.db.collection('lots').doc(lotId).collection('bids').orderBy('timestamp', 'desc').get();
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), timestamp: safeConvertToDate(doc.data().timestamp) } as BidInfo));
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), timestamp: safeConvertToISOString(doc.data().timestamp) } as BidInfo));
     } catch (e: any) { return []; }
   }
   async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status' | 'endDate'>>; newBid?: BidInfo }> {
@@ -736,7 +739,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       const bidRef = await this.db.collection('lots').doc(lotId).collection('bids').add(newBidData);
       await lotRef.update({ price: bidAmount, bidsCount: AdminFieldValue.increment(1), updatedAt: AdminFieldValue.serverTimestamp() });
       
-      return { success: true, message: "Lance registrado!", updatedLot: { price: bidAmount, bidsCount: (lotData.bidsCount || 0) + 1 }, newBid: { id: bidRef.id, ...newBidData, timestamp: new Date() } as BidInfo };
+      return { success: true, message: "Lance registrado!", updatedLot: { price: bidAmount, bidsCount: (lotData.bidsCount || 0) + 1 }, newBid: { id: bidRef.id, ...newBidData, timestamp: new Date().toISOString() } as BidInfo };
     } catch (e: any) { return { success: false, message: e.message }; }
   }
   
@@ -762,8 +765,8 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       return snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        createdAt: safeConvertToDate(doc.data().createdAt),
-        updatedAt: safeConvertOptionalDate(doc.data().updatedAt)
+        createdAt: safeConvertToISOString(doc.data().createdAt),
+        updatedAt: safeConvertOptionalISOString(doc.data().updatedAt)
       } as Review));
     } catch (error: any) {
       console.error(`[FirestoreAdapter - getReviewsForLot(${lotId})] Error:`, error);
@@ -792,8 +795,8 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       const snapshot = await this.db.collection('lots').doc(lotId).collection('questions').orderBy('createdAt', 'desc').get();
       return snapshot.docs.map(doc => ({ 
         id: doc.id, ...doc.data(), 
-        createdAt: safeConvertToDate(doc.data().createdAt),
-        answeredAt: safeConvertOptionalDate(doc.data().answeredAt)
+        createdAt: safeConvertToISOString(doc.data().createdAt),
+        answeredAt: safeConvertOptionalISOString(doc.data().answeredAt)
       } as LotQuestion));
     } catch (e: any) { console.error(`[getQuestionsForLot ${lotId}]`, e); return []; }
   }
@@ -816,7 +819,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       const docSnap = await this.db.collection('users').doc(userId).get();
       if (!docSnap.exists) return null;
       const data = docSnap.data()!;
-      return { uid: docSnap.id, ...data, createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt), dateOfBirth: safeConvertOptionalDate(data.dateOfBirth), rgIssueDate: safeConvertOptionalDate(data.rgIssueDate) } as UserProfileData;
+      return { uid: docSnap.id, ...data, createdAt: safeConvertToISOString(data.createdAt), updatedAt: safeConvertToISOString(data.updatedAt), dateOfBirth: safeConvertOptionalISOString(data.dateOfBirth), rgIssueDate: safeConvertOptionalISOString(data.rgIssueDate) } as UserProfileData;
     } catch (e: any) { return null; }
   }
   async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
@@ -895,7 +898,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   async getUsersWithRoles(): Promise<UserProfileWithPermissions[]> {
     try {
       const snapshot = await this.db.collection('users').get();
-      return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data(), createdAt: safeConvertToDate(doc.data().createdAt), updatedAt: safeConvertToDate(doc.data().updatedAt), dateOfBirth: safeConvertOptionalDate(doc.data().dateOfBirth), rgIssueDate: safeConvertOptionalDate(doc.data().rgIssueDate) } as UserProfileWithPermissions));
+      return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data(), createdAt: safeConvertToISOString(doc.data().createdAt), updatedAt: safeConvertToISOString(doc.data().updatedAt), dateOfBirth: safeConvertOptionalISOString(doc.data().dateOfBirth), rgIssueDate: safeConvertOptionalISOString(doc.data().rgIssueDate) } as UserProfileWithPermissions));
     } catch (e: any) { return []; }
   }
   async getUserByEmail(email: string): Promise<UserProfileWithPermissions | null> {
@@ -904,7 +907,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       if (snapshot.empty) return null;
       const doc = snapshot.docs[0];
       const data = doc.data();
-      return { uid: doc.id, ...data, createdAt: safeConvertToDate(data.createdAt), updatedAt: safeConvertToDate(data.updatedAt), dateOfBirth: safeConvertOptionalDate(data.dateOfBirth), rgIssueDate: safeConvertOptionalDate(data.rgIssueDate) } as UserProfileWithPermissions;
+      return { uid: doc.id, ...data, createdAt: safeConvertToISOString(data.createdAt), updatedAt: safeConvertToISOString(data.updatedAt), dateOfBirth: safeConvertOptionalISOString(data.dateOfBirth), rgIssueDate: safeConvertOptionalISOString(data.rgIssueDate) } as UserProfileWithPermissions;
     } catch (e: any) { console.error("[FirestoreAdapter - getUserByEmail] " + e.message); return null; }
   }
   async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
@@ -931,14 +934,14 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   async getRoles(): Promise<Role[]> {
     try {
       const snapshot = await this.db.collection('roles').orderBy('name').get();
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToDate(doc.data().createdAt), updatedAt: safeConvertToDate(doc.data().updatedAt) } as Role));
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), createdAt: safeConvertToISOString(doc.data().createdAt), updatedAt: safeConvertToISOString(doc.data().updatedAt) } as Role));
     } catch (e: any) { return []; }
   }
   async getRole(id: string): Promise<Role | null> {
     try {
       const docSnap = await this.db.collection('roles').doc(id).get();
       if (!docSnap.exists) return null;
-      return { id: docSnap.id, ...docSnap.data(), createdAt: safeConvertToDate(docSnap.data().createdAt), updatedAt: safeConvertToDate(docSnap.data().updatedAt) } as Role;
+      return { id: docSnap.id, ...docSnap.data(), createdAt: safeConvertToISOString(docSnap.data()!.createdAt), updatedAt: safeConvertToISOString(docSnap.data()!.updatedAt) } as Role;
     } catch (e: any) { return null; }
   }
    async getRoleByName(name: string): Promise<Role | null> {
@@ -946,7 +949,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       const snapshot = await this.db.collection('roles').where('name_normalized', '==', name.toUpperCase()).limit(1).get();
       if (snapshot.empty) return null;
       const docSnap = snapshot.docs[0];
-      return { id: docSnap.id, ...docSnap.data(), createdAt: safeConvertToDate(docSnap.data().createdAt), updatedAt: safeConvertToDate(docSnap.data().updatedAt) } as Role;
+      return { id: docSnap.id, ...docSnap.data(), createdAt: safeConvertToISOString(docSnap.data().createdAt), updatedAt: safeConvertToISOString(docSnap.data().updatedAt) } as Role;
     } catch (e: any) { console.error(`[getRoleByName] ${e.message}`); return null; }
   }
 
@@ -1001,14 +1004,14 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   async getMediaItems(): Promise<MediaItem[]> {
     try {
       const snapshot = await this.db.collection('media').get();
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), uploadedAt: safeConvertToDate(doc.data().uploadedAt) } as MediaItem));
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), uploadedAt: safeConvertToISOString(doc.data().uploadedAt) } as MediaItem));
     } catch (e: any) { return []; }
   }
   async getMediaItem(id: string): Promise<MediaItem | null> {
     try {
       const docSnap = await this.db.collection('media').doc(id).get();
       if (!docSnap.exists) return null;
-      return { id: docSnap.id, ...docSnap.data(), uploadedAt: safeConvertToDate(docSnap.data().uploadedAt) } as MediaItem;
+      return { id: docSnap.id, ...docSnap.data(), uploadedAt: safeConvertToISOString(docSnap.data().uploadedAt) } as MediaItem;
     } catch (e: any) { return null; }
   }
   async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> {
@@ -1068,7 +1071,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
             relatedLotsCount: data.relatedLotsCount,
             variableIncrementTable: data.variableIncrementTable,
             defaultListItemsPerPage: data.defaultListItemsPerPage,
-            updatedAt: safeConvertToDate(data.updatedAt)
+            updatedAt: safeConvertToISOString(data.updatedAt)
         } as PlatformSettings;
     } catch (e: any) {
         console.error("[FirestoreAdapter - getPlatformSettings] " + e.message);
@@ -1107,45 +1110,18 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   }
 
   // --- Judicial ---
-  async getCourts(): Promise<Court[]> {
-    console.warn("[FirestoreAdapter] getCourts not implemented.");
-    return [];
-  }
-  async getCourt(id: string): Promise<Court | null> {
-    console.warn("[FirestoreAdapter] getCourt not implemented.");
-    return null;
-  }
-  async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> {
-    console.warn("[FirestoreAdapter] createCourt not implemented.");
-    return { success: false, message: "Not implemented." };
-  }
-  async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[FirestoreAdapter] updateCourt not implemented.");
-    return { success: false, message: "Not implemented." };
-  }
-  async deleteCourt(id: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[FirestoreAdapter] deleteCourt not implemented.");
-    return { success: false, message: "Not implemented." };
-  }
+  async getCourts(): Promise<Court[]> { console.warn("[FirestoreAdapter] getCourts not implemented."); return []; }
+  async getCourt(id: string): Promise<Court | null> { console.warn("[FirestoreAdapter] getCourt not implemented."); return null; }
+  async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> { console.warn("[FirestoreAdapter] createCourt not implemented."); return { success: false, message: "Not implemented." }; }
+  async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> { console.warn("[FirestoreAdapter] updateCourt not implemented."); return { success: false, message: "Not implemented." }; }
+  async deleteCourt(id: string): Promise<{ success: boolean; message: string; }> { console.warn("[FirestoreAdapter] deleteCourt not implemented."); return { success: false, message: "Not implemented." }; }
   
-  async getJudicialDistricts(): Promise<JudicialDistrict[]> {
-    console.warn("[FirestoreAdapter] getJudicialDistricts not implemented.");
-    return [];
-  }
-  async getJudicialDistrict(id: string): Promise<JudicialDistrict | null> {
-    console.warn("[FirestoreAdapter] getJudicialDistrict not implemented.");
-    return null;
-  }
-  async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> {
-    console.warn("[FirestoreAdapter] createJudicialDistrict not implemented.");
-    return { success: false, message: "Not implemented." };
-  }
-  async updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[FirestoreAdapter] updateJudicialDistrict not implemented.");
-    return { success: false, message: "Not implemented." };
-  }
+  async getJudicialDistricts(): Promise<JudicialDistrict[]> { console.warn("[FirestoreAdapter] getJudicialDistricts not implemented."); return []; }
+  async getJudicialDistrict(id: string): Promise<JudicialDistrict | null> { console.warn("[FirestoreAdapter] getJudicialDistrict not implemented."); return null; }
+  async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> { console.warn("[FirestoreAdapter] createJudicialDistrict not implemented."); return { success: false, message: "Not implemented." }; }
+  async updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> { console.warn("[FirestoreAdapter] updateJudicialDistrict not implemented."); return { success: false, message: "Not implemented." }; }
   async deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> {
     console.warn("[FirestoreAdapter] deleteJudicialDistrict not implemented.");
-    return { success: false, message: "Not implemented." };
+    return { success: false, message: "Not implemented" };
   }
 }

@@ -93,8 +93,8 @@ function mapToLotCategory(row: any): LotCategory {
     description: row.description,
     itemCount: Number(row.itemCount || 0),
     hasSubcategories: Boolean(row.hasSubcategories || false),
-    createdAt: new Date(row.createdAt),
-    updatedAt: new Date(row.updatedAt),
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
   };
 }
 
@@ -109,8 +109,8 @@ function mapToSubcategory(row: any): Subcategory {
     displayOrder: Number(row.displayOrder || 0),
     iconUrl: row.iconUrl,
     dataAiHintIcon: row.dataAiHintIcon,
-    createdAt: new Date(row.createdAt),
-    updatedAt: new Date(row.updatedAt),
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
   };
 }
 
@@ -121,8 +121,8 @@ function mapToStateInfo(row: any): StateInfo {
         uf: row.uf,
         slug: row.slug,
         cityCount: Number(row.cityCount || 0),
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
     };
 }
 
@@ -135,8 +135,8 @@ function mapToCityInfo(row: any): CityInfo {
         stateUf: row.stateUf,
         ibgeCode: row.ibgeCode,
         lotCount: Number(row.lotCount || 0),
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
     };
 }
 
@@ -158,13 +158,13 @@ function mapToAuctioneerProfileInfo(row: any): AuctioneerProfileInfo {
         logoUrl: row.logoUrl,
         dataAiHintLogo: row.dataAiHintLogo,
         description: row.description,
-        memberSince: row.memberSince ? new Date(row.memberSince) : undefined,
+        memberSince: row.memberSince || undefined,
         rating: row.rating !== null ? Number(row.rating) : undefined,
         auctionsConductedCount: Number(row.auctionsConductedCount || 0),
         totalValueSold: Number(row.totalValueSold || 0),
         userId: row.userId,
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
     };
 }
 
@@ -185,14 +185,14 @@ function mapToSellerProfileInfo(row: any): SellerProfileInfo {
         logoUrl: row.logoUrl,
         dataAiHintLogo: row.dataAiHintLogo,
         description: row.description,
-        memberSince: row.memberSince ? new Date(row.memberSince) : undefined,
+        memberSince: row.memberSince || undefined,
         rating: row.rating !== null ? Number(row.rating) : undefined,
         activeLotsCount: Number(row.activeLotsCount || 0),
         totalSalesValue: Number(row.totalSalesValue || 0),
         auctionsFacilitatedCount: Number(row.auctionsFacilitatedCount || 0),
         userId: row.userId,
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
     };
 }
 
@@ -204,8 +204,8 @@ function mapToRole(row: any): Role {
         name_normalized: row.nameNormalized,
         description: row.description,
         permissions: parseJsonColumn<string[]>(row.permissions, []),
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
     };
 }
 
@@ -223,9 +223,9 @@ function mapToUserProfileData(row: any, role?: Role | null): UserProfileWithPerm
         cpf: row.cpf,
         rgNumber: row.rgNumber,
         rgIssuer: row.rgIssuer,
-        rgIssueDate: row.rgIssueDate ? new Date(row.rgIssueDate) : undefined,
+        rgIssueDate: row.rgIssueDate,
         rgState: row.rgState,
-        dateOfBirth: row.dateOfBirth ? new Date(row.dateOfBirth) : undefined,
+        dateOfBirth: row.dateOfBirth,
         cellPhone: row.cellPhone,
         homePhone: row.homePhone,
         gender: row.gender,
@@ -250,8 +250,8 @@ function mapToUserProfileData(row: any, role?: Role | null): UserProfileWithPerm
         cnpj: row.cnpj,
         inscricaoEstadual: row.inscricaoEstadual,
         websiteComitente: row.websiteComitente,
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
     };
     return profile;
 }
@@ -270,8 +270,8 @@ function mapToAuction(row: any): Auction {
         auctioneerId: row.auctioneerId ? String(row.auctioneerId) : undefined,
         seller: row.sellerName || row.seller,
         sellerId: row.sellerId ? String(row.sellerId) : undefined,
-        auctionDate: new Date(row.auctionDate),
-        endDate: row.endDate ? new Date(row.endDate) : null,
+        auctionDate: row.auctionDate,
+        endDate: row.endDate,
         auctionStages: parseJsonColumn<AuctionStage[]>(row.auctionStages, []),
         city: row.city,
         state: row.state,
@@ -288,8 +288,8 @@ function mapToAuction(row: any): Auction {
         vehicleLocation: row.vehicleLocation,
         latitude: row.latitude !== null ? parseFloat(row.latitude) : undefined,
         longitude: row.longitude !== null ? parseFloat(row.longitude) : undefined,
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
         auctioneerLogoUrl: row.auctioneerLogoUrl,
         lots: [],
         automaticBiddingEnabled: Boolean(row.automaticBiddingEnabled),
@@ -337,10 +337,10 @@ function mapToLot(row: any): Lot {
     auctionName: row.auctionName,
     price: Number(row.price),
     initialPrice: row.initialPrice !== null ? Number(row.initialPrice) : undefined,
-    lotSpecificAuctionDate: row.lotSpecificAuctionDate ? new Date(row.lotSpecificAuctionDate) : null,
-    secondAuctionDate: row.secondAuctionDate ? new Date(row.secondAuctionDate) : null,
+    lotSpecificAuctionDate: row.lotSpecificAuctionDate,
+    secondAuctionDate: row.secondAuctionDate,
     secondInitialPrice: row.secondInitialPrice !== null ? Number(row.secondInitialPrice) : undefined,
-    endDate: row.endDate ? new Date(row.endDate) : undefined,
+    endDate: row.endDate,
     bidsCount: Number(row.bidsCount || 0),
     isFavorite: Boolean(row.isFavorite),
     isFeatured: Boolean(row.isFeatured),
@@ -401,8 +401,8 @@ function mapToLot(row: any): Lot {
     evaluationValue: row.evaluationValue !== null ? Number(row.evaluationValue) : undefined,
     debtAmount: row.debtAmount !== null ? Number(row.debtAmount) : undefined,
     itbiValue: row.itbiValue !== null ? Number(row.itbiValue) : undefined,
-    createdAt: new Date(row.createdAt),
-    updatedAt: new Date(row.updatedAt),
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
   };
 }
 
@@ -414,7 +414,7 @@ function mapToBidInfo(row: any): BidInfo {
         bidderId: row.bidderId,
         bidderDisplay: row.bidderDisplayName,
         amount: parseFloat(row.amount),
-        timestamp: new Date(row.timestamp),
+        timestamp: row.timestamp,
     };
 }
 
@@ -425,8 +425,8 @@ function mapToUserLotMaxBid(row: any): UserLotMaxBid {
         lotId: String(row.lotId),
         maxAmount: parseFloat(row.maxAmount),
         isActive: Boolean(row.isActive),
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt)
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
     };
 }
 
@@ -434,7 +434,7 @@ function mapToMediaItem(row: any): MediaItem {
   return {
     id: String(row.id),
     fileName: row.fileName,
-    uploadedAt: new Date(row.uploadedAt),
+    uploadedAt: row.uploadedAt,
     uploadedBy: row.uploadedBy,
     storagePath: row.storagePath,
     title: row.title,
@@ -475,7 +475,7 @@ function mapToPlatformSettings(row: any): PlatformSettings {
         mentalTriggerSettings: parseJsonColumn<MentalTriggerSettings>(row.mentalTriggerSettings, samplePlatformSettings.mentalTriggerSettings),
         sectionBadgeVisibility: parseJsonColumn<SectionBadgeConfig>(row.sectionBadgeVisibility, samplePlatformSettings.sectionBadgeVisibility),
         homepageSections: parseJsonColumn<HomepageSectionConfig[]>(row.homepageSections, samplePlatformSettings.homepageSections),
-        updatedAt: new Date(row.updatedAt)
+        updatedAt: row.updatedAt
     };
 }
 
@@ -488,8 +488,8 @@ function mapToReview(row: any): Review {
     userDisplayName: row.userDisplayName,
     rating: Number(row.rating),
     comment: row.comment,
-    createdAt: new Date(row.createdAt),
-    updatedAt: row.updatedAt ? new Date(row.updatedAt) : undefined,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
   };
 }
 
@@ -501,9 +501,9 @@ function mapToLotQuestion(row: any): LotQuestion {
     userId: row.userId,
     userDisplayName: row.userDisplayName,
     questionText: row.questionText,
-    createdAt: new Date(row.createdAt),
+    createdAt: row.createdAt,
     answerText: row.answerText,
-    answeredAt: row.answeredAt ? new Date(row.answeredAt) : undefined,
+    answeredAt: row.answeredAt,
     answeredByUserId: row.answeredByUserId,
     answeredByUserDisplayName: row.answeredByUserDisplayName,
     isPublic: Boolean(row.isPublic),
@@ -1011,4 +1011,5 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async getJudicialDistrict(id: string): Promise<JudicialDistrict | null> { console.warn("getJudicialDistrict not implemented for MySqlAdapter."); return null; }
   async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> { console.warn("createJudicialDistrict not implemented for MySqlAdapter."); return { success: false, message: "Not implemented." }; }
   async updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> { console.warn("updateJudicialDistrict not implemented for MySqlAdapter."); return { success: false, message: "Not implemented." }; }
-  async deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteJudicialDistrict not implemented for MySqlAdapter."); return { success: false, message: "Not
+  async deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> { console.warn("deleteJudicialDistrict not implemented for MySqlAdapter."); return { success: false, message: "Not implemented." }; }
+}

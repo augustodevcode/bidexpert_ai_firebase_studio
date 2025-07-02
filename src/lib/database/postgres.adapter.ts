@@ -61,8 +61,8 @@ function mapToLotCategory(row: QueryResultRow): LotCategory {
     description: row.description,
     itemCount: Number(row.item_count || 0),
     hasSubcategories: Boolean(row.has_subcategories || false),
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -77,8 +77,8 @@ function mapToSubcategory(row: QueryResultRow): Subcategory {
     displayOrder: Number(row.display_order || 0),
     iconUrl: row.icon_url,
     dataAiHintIcon: row.data_ai_hint_icon,
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -89,8 +89,8 @@ function mapToStateInfo(row: QueryResultRow): StateInfo {
         uf: row.uf,
         slug: row.slug,
         cityCount: Number(row.city_count || 0),
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at),
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
     };
 }
 
@@ -103,8 +103,8 @@ function mapToCityInfo(row: QueryResultRow): CityInfo {
         stateUf: row.state_uf,
         ibgeCode: row.ibge_code,
         lotCount: Number(row.lot_count || 0),
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at),
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
     };
 }
 
@@ -126,13 +126,13 @@ function mapToAuctioneerProfileInfo(row: QueryResultRow): AuctioneerProfileInfo 
         logoUrl: row.logo_url,
         dataAiHintLogo: row.data_ai_hint_logo,
         description: row.description,
-        memberSince: row.member_since ? new Date(row.member_since) : undefined,
+        memberSince: row.member_since,
         rating: row.rating !== null ? Number(row.rating) : undefined,
         auctionsConductedCount: Number(row.auctions_conducted_count || 0),
         totalValueSold: Number(row.total_value_sold || 0),
         userId: row.user_id,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at),
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
     };
 }
 
@@ -153,14 +153,14 @@ function mapToSellerProfileInfo(row: QueryResultRow): SellerProfileInfo {
         logoUrl: row.logo_url,
         dataAiHintLogo: row.data_ai_hint_logo,
         description: row.description,
-        memberSince: row.member_since ? new Date(row.member_since) : undefined,
+        memberSince: row.member_since,
         rating: row.rating !== null ? Number(row.rating) : undefined,
         activeLotsCount: Number(row.active_lots_count || 0),
         totalSalesValue: Number(row.total_sales_value || 0),
         auctionsFacilitatedCount: Number(row.auctions_facilitated_count || 0),
         userId: row.user_id,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at),
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
     };
 }
 
@@ -172,8 +172,8 @@ function mapToRole(row: QueryResultRow): Role {
         name_normalized: row.name_normalized,
         description: row.description,
         permissions: row.permissions || [],
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at),
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
     };
 }
 
@@ -191,9 +191,9 @@ function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProf
         cpf: row.cpf,
         rgNumber: row.rg_number,
         rgIssuer: row.rg_issuer,
-        rgIssueDate: row.rg_issue_date ? new Date(row.rg_issue_date) : undefined,
+        rgIssueDate: row.rg_issue_date,
         rgState: row.rg_state,
-        dateOfBirth: row.date_of_birth ? new Date(row.date_of_birth) : undefined,
+        dateOfBirth: row.date_of_birth,
         cellPhone: row.cell_phone,
         homePhone: row.home_phone,
         gender: row.gender,
@@ -218,8 +218,8 @@ function mapToUserProfileData(row: QueryResultRow, role?: Role | null): UserProf
         cnpj: row.cnpj,
         inscricaoEstadual: row.inscricao_estadual,
         websiteComitente: row.website_comitente,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at),
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
     };
     return profile;
 }
@@ -238,8 +238,8 @@ function mapToAuction(row: QueryResultRow): Auction {
         auctioneerId: row.auctioneer_id ? String(row.auctioneer_id) : undefined,
         seller: row.seller_name || row.seller,
         sellerId: row.seller_id ? String(row.seller_id) : undefined,
-        auctionDate: new Date(row.auction_date),
-        endDate: row.end_date ? new Date(row.end_date) : null,
+        auctionDate: row.auction_date,
+        endDate: row.end_date,
         auctionStages: row.auction_stages || [],
         city: row.city,
         state: row.state,
@@ -256,8 +256,8 @@ function mapToAuction(row: QueryResultRow): Auction {
         vehicleLocation: row.vehicle_location,
         latitude: row.latitude !== null ? parseFloat(row.latitude) : undefined,
         longitude: row.longitude !== null ? parseFloat(row.longitude) : undefined,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at),
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
         auctioneerLogoUrl: row.auctioneer_logo_url,
         lots: [],
         automaticBiddingEnabled: row.automatic_bidding_enabled,
@@ -305,10 +305,10 @@ function mapToLot(row: QueryResultRow): Lot {
     auctionName: row.auction_name,
     price: Number(row.price),
     initialPrice: row.initial_price !== null ? Number(row.initial_price) : undefined,
-    lotSpecificAuctionDate: row.lot_specific_auction_date ? new Date(row.lot_specific_auction_date) : null,
-    secondAuctionDate: row.second_auction_date ? new Date(row.second_auction_date) : null,
+    lotSpecificAuctionDate: row.lot_specific_auction_date,
+    secondAuctionDate: row.second_auction_date,
     secondInitialPrice: row.second_initial_price !== null ? Number(row.second_initial_price) : undefined,
-    endDate: row.end_date ? new Date(row.end_date) : undefined,
+    endDate: row.end_date,
     bidsCount: Number(row.bids_count || 0),
     isFavorite: row.is_favorite,
     isFeatured: row.is_featured,
@@ -369,8 +369,8 @@ function mapToLot(row: QueryResultRow): Lot {
     evaluationValue: row.evaluation_value !== null ? Number(row.evaluation_value) : undefined,
     debtAmount: row.debt_amount !== null ? Number(row.debt_amount) : undefined,
     itbiValue: row.itbi_value !== null ? Number(row.itbi_value) : undefined,
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -382,7 +382,7 @@ function mapToBidInfo(row: QueryResultRow): BidInfo {
         bidderId: row.bidder_id,
         bidderDisplay: row.bidder_display_name,
         amount: parseFloat(row.amount),
-        timestamp: new Date(row.timestamp),
+        timestamp: row.timestamp,
     };
 }
 
@@ -393,8 +393,8 @@ function mapToUserLotMaxBid(row: QueryResultRow): UserLotMaxBid {
         lotId: String(row.lot_id),
         maxAmount: parseFloat(row.max_amount),
         isActive: Boolean(row.is_active),
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
     };
 }
 
@@ -402,7 +402,7 @@ function mapToMediaItem(row: QueryResultRow): MediaItem {
   return {
     id: String(row.id),
     fileName: row.file_name,
-    uploadedAt: new Date(row.uploaded_at),
+    uploadedAt: row.uploaded_at,
     uploadedBy: row.uploaded_by,
     storagePath: row.storage_path,
     title: row.title,
@@ -443,7 +443,7 @@ function mapToPlatformSettings(row: QueryResultRow): PlatformSettings {
         mentalTriggerSettings: row.mental_trigger_settings || samplePlatformSettings.mentalTriggerSettings,
         sectionBadgeVisibility: row.section_badge_visibility || samplePlatformSettings.sectionBadgeVisibility,
         homepageSections: row.homepage_sections || samplePlatformSettings.homepageSections,
-        updatedAt: new Date(row.updated_at)
+        updatedAt: row.updated_at
     };
 }
 
@@ -456,8 +456,8 @@ function mapToReview(row: QueryResultRow): Review {
     userDisplayName: row.user_display_name,
     rating: Number(row.rating),
     comment: row.comment,
-    createdAt: new Date(row.created_at),
-    updatedAt: row.updated_at ? new Date(row.updated_at) : undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -469,9 +469,9 @@ function mapToLotQuestion(row: QueryResultRow): LotQuestion {
     userId: row.user_id,
     userDisplayName: row.user_display_name,
     questionText: row.question_text,
-    createdAt: new Date(row.created_at),
+    createdAt: row.created_at,
     answerText: row.answer_text,
-    answeredAt: row.answered_at ? new Date(row.answered_at) : undefined,
+    answeredAt: row.answered_at,
     answeredByUserId: row.answered_by_user_id,
     answeredByUserDisplayName: row.answered_by_user_display_name,
     isPublic: row.is_public,
@@ -535,7 +535,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
             userId: user_id,
             lotId: String(lot_id),
             winningBidAmount: parseFloat(winning_bid_amount),
-            winDate: new Date(win_date),
+            winDate: win_date,
             paymentStatus: payment_status as UserWin['paymentStatus'],
             invoiceUrl: invoice_url,
             lot: lotObject,
@@ -612,7 +612,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `CREATE TABLE IF NOT EXISTS users ( uid VARCHAR(255) PRIMARY KEY, email VARCHAR(255) NOT NULL UNIQUE, full_name VARCHAR(255), password_text VARCHAR(255), role_id INTEGER REFERENCES roles(id) ON DELETE SET NULL, status VARCHAR(50), habilitation_status VARCHAR(50), cpf VARCHAR(20), rg_number VARCHAR(20), rg_issuer VARCHAR(50), rg_issue_date DATE, rg_state VARCHAR(2), date_of_birth DATE, cell_phone VARCHAR(20), home_phone VARCHAR(20), gender VARCHAR(50), profession VARCHAR(100), nationality VARCHAR(100), marital_status VARCHAR(50), property_regime VARCHAR(50), spouse_name VARCHAR(255), spouse_cpf VARCHAR(20), zip_code VARCHAR(10), street VARCHAR(255), number VARCHAR(20), complement VARCHAR(100), neighborhood VARCHAR(100), city VARCHAR(100), state VARCHAR(100), opt_in_marketing BOOLEAN DEFAULT FALSE, avatar_url TEXT, data_ai_hint VARCHAR(255), account_type VARCHAR(50), razao_social VARCHAR(255), cnpj VARCHAR(20), inscricao_estadual VARCHAR(50), website_comitente VARCHAR(255), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS lot_categories ( id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL, slug VARCHAR(255) NOT NULL UNIQUE, description TEXT, item_count INTEGER DEFAULT 0, has_subcategories BOOLEAN DEFAULT FALSE, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS subcategories ( id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL, slug VARCHAR(255) NOT NULL, parent_category_id INTEGER NOT NULL REFERENCES lot_categories(id) ON DELETE CASCADE, description TEXT, item_count INTEGER DEFAULT 0, display_order INTEGER DEFAULT 0, icon_url TEXT, data_ai_hint_icon VARCHAR(255), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, UNIQUE (parent_category_id, slug) );`,
-      `CREATE TABLE IF NOT EXISTS states ( id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL, uf VARCHAR(2) NOT NULL UNIQUE, slug VARCHAR(100) NOT NULL UNIQUE, city_count INTEGER DEFAULT 0, created_at TIMESTAMptz DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS states ( id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL, uf VARCHAR(2) NOT NULL UNIQUE, slug VARCHAR(100) NOT NULL UNIQUE, city_count INTEGER DEFAULT 0, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS cities ( id SERIAL PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, state_id INTEGER NOT NULL REFERENCES states(id) ON DELETE CASCADE, state_uf VARCHAR(2), ibge_code VARCHAR(10), lot_count INTEGER DEFAULT 0, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS auctioneers ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, registration_number VARCHAR(50), contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since TIMESTAMPTZ, rating NUMERIC(3, 2), auctions_conducted_count INTEGER DEFAULT 0, total_value_sold NUMERIC(15, 2) DEFAULT 0, user_id VARCHAR(255), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS sellers ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since TIMESTAMPTZ, rating NUMERIC(3, 2), active_lots_count INTEGER, total_sales_value NUMERIC(15, 2), auctions_facilitated_count INTEGER, user_id VARCHAR(255), cnpj VARCHAR(20), razao_social VARCHAR(255), inscricao_estadual VARCHAR(50), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
