@@ -7,6 +7,7 @@ import { getJudicialBranches } from '../judicial-branches/actions';
 import { getAuctioneers } from '../auctioneers/actions';
 import { getSellers } from '../sellers/actions';
 import { getBens } from '../bens/actions';
+import { getLotCategories } from '../categories/actions';
 
 // This action aggregates multiple data-fetching actions needed for the wizard.
 export async function getWizardInitialData(processId?: string) {
@@ -17,14 +18,16 @@ export async function getWizardInitialData(processId?: string) {
       branches,
       auctioneers,
       sellers,
-      availableBens
+      availableBens,
+      categories
     ] = await Promise.all([
       getCourts(),
       getJudicialDistricts(),
       getJudicialBranches(),
       getAuctioneers(),
       getSellers(),
-      getBens(processId) // Fetch bens for a specific process if provided
+      getBens(processId), // Fetch bens for a specific process if provided
+      getLotCategories(),
     ]);
 
     return {
@@ -36,6 +39,7 @@ export async function getWizardInitialData(processId?: string) {
         auctioneers,
         sellers,
         availableBens,
+        categories,
       },
     };
   } catch (error: any) {

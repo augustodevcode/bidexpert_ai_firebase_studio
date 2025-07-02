@@ -1,16 +1,19 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { WizardProvider, useWizard } from '@/components/admin/wizard/wizard-context';
 import WizardStepper from '@/components/admin/wizard/wizard-stepper';
 import Step1TypeSelection from '@/components/admin/wizard/steps/step-1-type-selection';
 import Step2JudicialSetup from '@/components/admin/wizard/steps/step-2-judicial-setup';
+import Step3AuctionDetails from '@/components/admin/wizard/steps/step-3-auction-details';
+import { getWizardInitialData } from './actions';
+import type { JudicialProcess, LotCategory, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Rocket } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Rocket, Loader2 } from 'lucide-react';
 
-const steps = [
+const allSteps = [
   { id: 'type', title: 'Tipo de Leilão', description: 'Selecione a modalidade.' },
   { id: 'judicial', title: 'Dados Judiciais', description: 'Informações do processo.' },
   { id: 'auction', title: 'Dados do Leilão', description: 'Detalhes e datas.' },
@@ -18,25 +21,36 @@ const steps = [
   { id: 'review', title: 'Revisão', description: 'Revise e publique.' },
 ];
 
-function WizardContent() {
+interface WizardDataForFetching {
+    judicialProcesses: JudicialProcess[];
+    categories: LotCategory[];
+    auctioneers: AuctioneerProfileInfo[];
+    sellers: SellerProfileInfo[];
+}
+
+function WizardContent({ fetchedData, isLoading }: { fetchedData: WizardDataForFetching | null, isLoading: boolean }) {
   const { currentStep, wizardData, nextStep, prevStep, goToStep } = useWizard();
   
-  // Determine which steps are applicable based on the selected auction type
   const stepsToUse = useMemo(() => {
     if (wizardData.auctionType === 'JUDICIAL') {
-      return steps;
+      return allSteps;
     }
-    // Filter out the judicial step if the type is not JUDICIAL
-    return steps.filter(step => step.id !== 'judicial');
+    return allSteps.filter(step => step.id !== 'judicial');
   }, [wizardData.auctionType]);
 
   const renderStep = () => {
+    if (isLoading || !fetchedData) {
+      return <div className="flex items-center justify-center h-full min-h-[250px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    }
+
     const currentStepId = stepsToUse[currentStep]?.id;
     switch (currentStepId) {
       case 'type':
         return <Step1TypeSelection />;
       case 'judicial':
-        return <Step2JudicialSetup />;
+        return <Step2JudicialSetup processes={fetchedData.judicialProcesses} />;
+      case 'auction':
+        return <Step3AuctionDetails categories={fetchedData.categories} auctioneers={fetchedData.auctioneers} sellers={fetchedData.sellers} />;
       default:
         return (
           <div className="text-center py-10">
@@ -48,12 +62,10 @@ function WizardContent() {
 
   const isNextDisabled = () => {
       const currentStepId = stepsToUse[currentStep]?.id;
-      if (currentStepId === 'type' && !wizardData.auctionType) {
-          return true;
-      }
-      if (currentStepId === 'judicial' && !wizardData.judicialProcess) {
-          return true;
-      }
+      if (isLoading) return true;
+      if (currentStepId === 'type' && !wizardData.auctionType) return true;
+      if (currentStepId === 'judicial' && !wizardData.judicialProcess) return true;
+      // Add more validation for future steps here
       return false;
   };
   
@@ -88,9 +100,32 @@ function WizardContent() {
 
 
 export default function WizardPage() {
+    const [fetchedData, setFetchedData] = useState<WizardDataForFetching | null>(null);
+    const [isLoadingData, setIsLoadingData] = useState(true);
+
+    useEffect(() => {
+        async function loadInitialData() {
+            setIsLoadingData(true);
+            const result = await getWizardInitialData();
+            if (result.success) {
+                setFetchedData({
+                    judicialProcesses: result.data.judicialProcesses,
+                    categories: result.data.categories,
+                    auctioneers: result.data.auctioneers,
+                    sellers: result.data.sellers
+                });
+            } else {
+                console.error("Failed to load wizard data:", result.message);
+                // Handle error state, maybe show a toast
+            }
+            setIsLoadingData(false);
+        }
+        loadInitialData();
+    }, []);
+
   return (
     <WizardProvider>
-      <WizardContent />
+      <WizardContent fetchedData={fetchedData} isLoading={isLoadingData} />
     </WizardProvider>
   );
 }

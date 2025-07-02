@@ -1,32 +1,23 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useWizard } from '../wizard-context';
-import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
 import type { JudicialProcess } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Check, ChevronsUpDown, Loader2, FileText, PlusCircle } from 'lucide-react';
+import { Check, ChevronsUpDown, FileText, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { useState } from 'react';
 
-export default function Step2JudicialSetup() {
+interface Step2JudicialSetupProps {
+  processes: JudicialProcess[];
+}
+
+export default function Step2JudicialSetup({ processes }: Step2JudicialSetupProps) {
   const { wizardData, setWizardData } = useWizard();
-  const [processes, setProcesses] = useState<JudicialProcess[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    async function fetchData() {
-      setIsLoading(true);
-      const fetchedProcesses = await getJudicialProcesses();
-      setProcesses(fetchedProcesses);
-      setIsLoading(false);
-    }
-    fetchData();
-  }, []);
 
   const selectedProcess = wizardData.judicialProcess;
 
@@ -41,11 +32,8 @@ export default function Step2JudicialSetup() {
               role="combobox"
               aria-expanded={open}
               className="w-full sm:w-[350px] justify-between"
-              disabled={isLoading}
             >
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : selectedProcess ? (
+              {selectedProcess ? (
                 <span className="truncate">{selectedProcess.processNumber}</span>
               ) : (
                 "Selecione um processo..."
@@ -97,7 +85,6 @@ export default function Step2JudicialSetup() {
             <p className="text-sm"><strong className="text-muted-foreground">Vara:</strong> {selectedProcess.branchName}</p>
             <p className="text-sm"><strong className="text-muted-foreground">Comarca:</strong> {selectedProcess.districtName}</p>
             <p className="text-sm"><strong className="text-muted-foreground">Partes:</strong> {selectedProcess.parties.map(p => p.name).join(', ')}</p>
-            <p className="text-sm"><strong className="text-muted-foreground">Bens no Processo:</strong> Em breve...</p>
         </div>
       )}
     </div>
