@@ -22,35 +22,34 @@ export default function AdminLotsPage() {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
-    let isMounted = true;
+    let isCancelled = false;
     
     const fetchLots = async () => {
-      if (!isMounted) return;
       setIsLoading(true);
       setError(null);
       try {
         const fetchedLots = await getLots();
-        if (isMounted) {
+        if (!isCancelled) {
           setLots(fetchedLots);
         }
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : "Falha ao buscar lotes.";
         console.error("Error fetching lots:", e);
-        if (isMounted) {
+        if (!isCancelled) {
           setError(errorMessage);
           toast({ title: "Erro", description: errorMessage, variant: "destructive" });
         }
       } finally {
-        if (isMounted) {
+        if (!isCancelled) {
           setIsLoading(false);
         }
       }
     };
     
     fetchLots();
-    
+
     return () => {
-      isMounted = false;
+      isCancelled = true;
     };
   }, [toast, refetchTrigger]);
 
