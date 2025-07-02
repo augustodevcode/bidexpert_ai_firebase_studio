@@ -37,7 +37,7 @@ const PaginationControls = <TItem,>({
     onItemsPerPageChange,
 }: Pick<SearchResultsFrameProps<TItem>, 'currentPage' | 'totalItemsCount' | 'itemsPerPage' | 'onPageChange' | 'onItemsPerPageChange'>) => {
 
-    const totalPages = Math.ceil(totalItemsCount / itemsPerPage);
+    const totalPages = itemsPerPage > 0 ? Math.ceil(totalItemsCount / itemsPerPage) : 1;
     if (totalPages <= 1) return null;
 
     const pageNumbers = [];
