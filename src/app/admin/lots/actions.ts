@@ -4,7 +4,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDatabaseAdapter } from '@/lib/database';
-import type { Lot, LotFormData, LotDbData } from '@/types';
+import type { Lot, LotFormData, LotDbData, Bem } from '@/types';
 import type { LotFromModalValues } from '@/components/admin/lotting/create-lot-modal'; // Import new type
 
 // The main update action that calls the adapter
@@ -149,6 +149,12 @@ export async function getLot(idOrPublicId: string): Promise<Lot | null> {
   return db.getLot(idOrPublicId);
 }
 
+export async function getBensByIdsAction(ids: string[]): Promise<Bem[]> {
+  if (!ids || ids.length === 0) return [];
+  const db = await getDatabaseAdapter();
+  return db.getBensByIds(ids);
+}
+
 export async function updateLotFeaturedStatus(
   idOrPublicId: string,
   newStatus: boolean
@@ -165,7 +171,7 @@ export async function updateLotFeaturedStatus(
 export async function deleteLot(
   idOrPublicId: string,
   auctionId?: string
-): Promise<{ success: boolean; message: string }> {
+): Promise<{ success: boolean; message: string; }> {
   const db = await getDatabaseAdapter();
   const lot = await db.getLot(idOrPublicId);
 
