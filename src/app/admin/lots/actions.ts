@@ -5,6 +5,7 @@
 import { revalidatePath } from 'next/cache';
 import { getDatabaseAdapter } from '@/lib/database';
 import type { Lot, LotFormData, LotDbData } from '@/types';
+import type { LotFromModalValues } from '@/components/admin/lotting/create-lot-modal'; // Import new type
 
 // The main update action that calls the adapter
 export async function updateLot(
@@ -30,6 +31,50 @@ export async function updateLot(
   }
   return result;
 }
+
+export async function createLotWithBens(
+  lotData: LotFromModalValues,
+  bemIds: string[],
+  auctionId: string,
+  sellerId?: string,
+  auctionName?: string,
+  sellerName?: string,
+  initialStatus?: Lot['status']
+): Promise<{ success: boolean; message: string; lotId?: string }> {
+    const db = await getDatabaseAdapter();
+
+    // 1. Mark bens as LOTEADO
+    const updateBensResult = await db.updateBensStatus(bemIds, 'LOTEADO');
+    if (!updateBensResult.success) {
+        return { success: false, message: `Falha ao atualizar status dos bens: ${updateBensResult.message}` };
+    }
+
+    // 2. Create the lot with bemIds
+    const dataForDb: LotDbData = {
+        ...lotData,
+        auctionId,
+        bemIds,
+        sellerId,
+        sellerName,
+        auctionName,
+        status: initialStatus || 'EM_BREVE', // Set status based on auction or default
+    };
+
+    const result = await db.createLot(dataForDb);
+
+    if (result.success) {
+        revalidatePath('/admin/lots');
+        revalidatePath('/admin/bens');
+        revalidatePath('/admin/lotting');
+        revalidatePath(`/admin/auctions/${auctionId}/edit`);
+    } else {
+        // Rollback bem status if lot creation fails
+        await db.updateBensStatus(bemIds, 'DISPONIVEL');
+    }
+
+    return result;
+}
+
 
 export async function updateLotTitle(
   idOrPublicId: string,
@@ -122,9 +167,18 @@ export async function deleteLot(
   auctionId?: string
 ): Promise<{ success: boolean; message: string }> {
   const db = await getDatabaseAdapter();
+  const lot = await db.getLot(idOrPublicId);
+
+  // Rollback bem status if lot is deleted
+  if(lot && lot.bemIds && lot.bemIds.length > 0) {
+    await db.updateBensStatus(lot.bemIds, 'DISPONIVEL');
+  }
+
   const result = await db.deleteLot(idOrPublicId, auctionId);
   if (result.success) {
     revalidatePath('/admin/lots');
+    revalidatePath('/admin/bens');
+    revalidatePath('/admin/lotting');
     if (auctionId) {
       revalidatePath(`/admin/auctions/${auctionId}/edit`);
     }

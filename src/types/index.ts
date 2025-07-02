@@ -465,6 +465,7 @@ export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'RE
 
 export interface UserWin {
   id: string;
+  lotId: string;
   lot: Lot; 
   userId: string;
   winningBidAmount: number;
@@ -895,6 +896,7 @@ export interface IDatabaseAdapter {
   getBem(id: string): Promise<Bem | null>;
   createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }>;
   updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }>;
+  updateBensStatus(bemIds: string[], status: Bem['status']): Promise<{ success: boolean; message: string }>;
   deleteBem(id: string): Promise<{ success: boolean; message: string; }>;
 
   createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }>;
