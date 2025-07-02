@@ -43,7 +43,7 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="p-4 sm:p-6 pb-0">
+        <DialogHeader className="p-4 sm:p-6 pb-0 flex-shrink-0">
           <DialogTitle className="text-xl sm:text-2xl font-bold font-headline">{auction.title}</DialogTitle>
           <DialogDescription>
             Leilão do tipo {auction.auctionType || 'Não especificado'} em {displayLocation}
@@ -125,7 +125,7 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
             </div>
         </div>
         
-        <DialogFooter className="p-4 sm:p-6 border-t bg-background sticky bottom-0 flex justify-between w-full">
+        <DialogFooter className="p-4 sm:p-6 border-t bg-background flex justify-between w-full flex-shrink-0">
             <Button variant="outline" onClick={onClose}> Fechar </Button>
             <Button asChild>
                 <Link href={`/auctions/${auction.publicId || auction.id}`}>
