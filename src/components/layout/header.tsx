@@ -27,6 +27,7 @@ import { getFavoriteLotIdsFromStorage } from '@/lib/favorite-store';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import DynamicBreadcrumbs from './dynamic-breadcrumbs';
 import {
   NavigationMenu,
@@ -377,33 +378,35 @@ export default function Header() {
                     <Menu className="h-6 w-6" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0 bg-card text-card-foreground">
-                  <SheetHeader className="p-4 border-b">
-                    <SheetTitle className="flex items-center space-x-2 text-lg font-semibold">
-                      <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
-                        <AvatarImage src="https://placehold.co/40x40.png?text=BE" alt={`${siteTitle} Logo Small`} data-ai-hint="logo initial" />
-                        <AvatarFallback>{siteTitle.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <span className="text-primary">{siteTitle}</span>
-                    </SheetTitle>
-                  </SheetHeader>
-                  <nav className="flex flex-col gap-1 p-4">
-                    {isLoading ? <p>Carregando...</p> : 
-                    <MainNav
-                        items={allNavItemsForMobile}
-                        onLinkClick={handleLinkOrMobileMenuCloseClick}
-                        isMobile={true}
-                        searchCategories={searchCategories}
-                        auctioneers={auctioneers}
-                        consignorMegaMenuGroups={consignorMegaMenuGroups}
-                        recentlyViewedItems={recentlyViewedItems}
-                        HistoryListItemComponent={HistoryListItem}
-                    />
-                    }
-                    <div className="mt-auto pt-4 border-t">
+                <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0 bg-card text-card-foreground flex flex-col">
+                    <SheetHeader className="p-4 border-b flex-shrink-0">
+                      <SheetTitle className="flex items-center space-x-2 text-lg font-semibold">
+                        <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
+                          <AvatarImage src="https://placehold.co/40x40.png?text=BE" alt={`${siteTitle} Logo Small`} data-ai-hint="logo initial" />
+                          <AvatarFallback>{siteTitle.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-primary">{siteTitle}</span>
+                      </SheetTitle>
+                    </SheetHeader>
+                    <ScrollArea className="flex-grow">
+                        <nav className="flex flex-col gap-1 p-4">
+                        {isLoading ? <p>Carregando...</p> : 
+                        <MainNav
+                            items={allNavItemsForMobile}
+                            onLinkClick={handleLinkOrMobileMenuCloseClick}
+                            isMobile={true}
+                            searchCategories={searchCategories}
+                            auctioneers={auctioneers}
+                            consignorMegaMenuGroups={consignorMegaMenuGroups}
+                            recentlyViewedItems={recentlyViewedItems}
+                            HistoryListItemComponent={HistoryListItem}
+                        />
+                        }
+                        </nav>
+                    </ScrollArea>
+                    <div className="p-4 border-t flex-shrink-0">
                       <UserNav />
                     </div>
-                  </nav>
                 </SheetContent>
               </Sheet>
             </div>
@@ -610,6 +613,7 @@ export default function Header() {
     
 
     
+
 
 
 
