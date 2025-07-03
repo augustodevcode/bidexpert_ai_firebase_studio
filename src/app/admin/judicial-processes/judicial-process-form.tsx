@@ -23,12 +23,12 @@ interface JudicialProcessFormProps {
   courts: Court[];
   allDistricts: JudicialDistrict[];
   allBranches: JudicialBranch[];
-  onSubmitAction?: (data: JudicialProcessFormValues) => Promise<{ success: boolean; message: string; processId?: string }>;
+  onSubmitAction: (data: JudicialProcessFormValues) => Promise<{ success: boolean; message: string; processId?: string }>;
   onSuccess?: (newProcessId?: string) => void;
   onCancel?: () => void;
-  formTitle?: string;
-  formDescription?: string;
-  submitButtonText?: string;
+  formTitle: string;
+  formDescription: string;
+  submitButtonText: string;
 }
 
 const partyTypeOptions: { value: ProcessPartyType; label: string }[] = [
@@ -41,12 +41,12 @@ const partyTypeOptions: { value: ProcessPartyType; label: string }[] = [
 
 export default function JudicialProcessForm({
   initialData, courts, allDistricts, allBranches, 
-  onSubmitAction = createJudicialProcessAction, 
+  onSubmitAction, 
   onSuccess,
   onCancel,
-  formTitle = "Novo Processo Judicial",
-  formDescription = "Cadastre um novo processo e suas partes para vincular a bens e lotes.",
-  submitButtonText = "Criar Processo"
+  formTitle,
+  formDescription,
+  submitButtonText,
 }: JudicialProcessFormProps) {
   const { toast } = useToast();
   const router = useRouter();
