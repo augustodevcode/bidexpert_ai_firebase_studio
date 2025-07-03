@@ -12,17 +12,17 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { judicialProcessFormSchema, type JudicialProcessFormValues } from './judicial-process-form-schema';
-import type { JudicialProcess, Court, JudicialDistrict, JudicialBranch, ProcessPartyType } from '@/types';
+import type { JudicialProcess, Court, JudicialDistrict, JudicialBranch, ProcessPartyType, SellerProfileInfo } from '@/types';
 import { Loader2, Save, Gavel, PlusCircle, Trash2, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { createJudicialProcessAction } from './actions';
 
 interface JudicialProcessFormProps {
   initialData?: JudicialProcess | null;
   courts: Court[];
   allDistricts: JudicialDistrict[];
   allBranches: JudicialBranch[];
+  sellers: SellerProfileInfo[];
   onSubmitAction: (data: JudicialProcessFormValues) => Promise<{ success: boolean; message: string; processId?: string }>;
   onSuccess?: (newProcessId?: string) => void;
   onCancel?: () => void;
@@ -40,7 +40,7 @@ const partyTypeOptions: { value: ProcessPartyType; label: string }[] = [
 ];
 
 export default function JudicialProcessForm({
-  initialData, courts, allDistricts, allBranches, 
+  initialData, courts, allDistricts, allBranches, sellers,
   onSubmitAction, 
   onSuccess,
   onCancel,
@@ -60,7 +60,8 @@ export default function JudicialProcessForm({
       courtId: initialData?.courtId || '',
       districtId: initialData?.districtId || '',
       branchId: initialData?.branchId || '',
-      parties: initialData?.parties || [{ name: '', partyType: 'AUTOR' }],
+      sellerId: initialData?.sellerId || null,
+      parties: initialData?.parties?.map(p => ({...p, id: p.id || `temp-${Math.random()}`})) || [{ name: '', partyType: 'AUTOR' }],
     },
   });
 
@@ -129,11 +130,20 @@ export default function JudicialProcessForm({
             <FormField control={form.control} name="isElectronic" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Processo Eletrônico</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
             
             <Separator />
-            <h3 className="text-md font-semibold text-muted-foreground pt-2">Localização do Processo</h3>
+            <h3 className="text-md font-semibold text-muted-foreground pt-2">Localização e Comitente</h3>
             <FormField control={form.control} name="courtId" render={({ field }) => (<FormItem><FormLabel>Tribunal*</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o Tribunal" /></SelectTrigger></FormControl><SelectContent>{courts.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)}/>
             <FormField control={form.control} name="districtId" render={({ field }) => (<FormItem><FormLabel>Comarca*</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!selectedCourtId}><FormControl><SelectTrigger><SelectValue placeholder={!selectedCourtId ? "Selecione um tribunal primeiro" : "Selecione a Comarca"} /></SelectTrigger></FormControl><SelectContent>{filteredDistricts.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)}/>
             <FormField control={form.control} name="branchId" render={({ field }) => (<FormItem><FormLabel>Vara*</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!selectedDistrictId}><FormControl><SelectTrigger><SelectValue placeholder={!selectedDistrictId ? "Selecione uma comarca primeiro" : "Selecione a Vara"} /></SelectTrigger></FormControl><SelectContent>{filteredBranches.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)}/>
-            
+            <FormField control={form.control} name="sellerId" render={({ field }) => (
+                <FormItem><FormLabel>Comitente Principal</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || undefined}><FormControl>
+                        <SelectTrigger><SelectValue placeholder="Selecione o comitente principal do processo" /></SelectTrigger>
+                    </FormControl><SelectContent>{sellers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select>
+                <FormDescription>Este será o vendedor padrão para o leilão e lotes criados a partir deste processo.</FormDescription>
+                <FormMessage />
+                </FormItem>
+            )}/>
+
             <Separator />
             <div className="flex justify-between items-center pt-2">
                 <h3 className="text-md font-semibold text-muted-foreground flex items-center gap-2"><Users className="h-5 w-5"/>Partes Envolvidas*</h3>

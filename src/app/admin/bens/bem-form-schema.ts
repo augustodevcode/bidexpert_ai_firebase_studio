@@ -17,6 +17,7 @@ export const bemFormSchema = z.object({
   categoryId: z.string().min(1, "A categoria é obrigatória."),
   subcategoryId: z.string().optional().nullable(),
   judicialProcessId: z.string().optional().nullable(),
+  sellerId: z.string().optional().nullable(),
   evaluationValue: z.coerce.number().positive("O valor de avaliação deve ser positivo.").optional().nullable(),
   imageUrl: z.string().url().optional().or(z.literal('')),
   imageMediaId: z.string().optional().nullable(),

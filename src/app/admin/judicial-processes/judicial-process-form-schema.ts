@@ -23,6 +23,7 @@ export const judicialProcessFormSchema = z.object({
   courtId: z.string().min(1, { message: "Selecione o tribunal."}),
   districtId: z.string().min(1, { message: "Selecione a comarca."}),
   branchId: z.string().min(1, { message: "Selecione a vara."}),
+  sellerId: z.string().optional().nullable(),
   parties: z.array(partySchema).min(1, "O processo deve ter pelo menos uma parte envolvida."),
 });
 

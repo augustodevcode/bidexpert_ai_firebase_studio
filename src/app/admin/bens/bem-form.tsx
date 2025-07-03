@@ -20,8 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { bemFormSchema, type BemFormData } from './bem-form-schema';
-import type { Bem, LotCategory, JudicialProcess, Subcategory, MediaItem } from '@/types';
-import { Loader2, Save, Package, Gavel, Image as ImageIcon } from 'lucide-react';
+import type { Bem, LotCategory, JudicialProcess, Subcategory, MediaItem, SellerProfileInfo } from '@/types';
+import { Loader2, Save, Package, Gavel, Image as ImageIcon, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { getSubcategoriesByParentIdAction } from '../subcategories/actions';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
@@ -31,6 +31,7 @@ interface BemFormProps {
   initialData?: Bem | null;
   processes: JudicialProcess[];
   categories: LotCategory[];
+  sellers: SellerProfileInfo[];
   onSubmitAction: (data: BemFormData) => Promise<{ success: boolean; message: string; bemId?: string }>;
   formTitle: string;
   formDescription: string;
@@ -48,6 +49,7 @@ export default function BemForm({
   initialData,
   processes,
   categories,
+  sellers,
   onSubmitAction,
   formTitle,
   formDescription,
@@ -69,6 +71,7 @@ export default function BemForm({
       categoryId: initialData?.categoryId || '',
       subcategoryId: initialData?.subcategoryId || undefined,
       judicialProcessId: initialData?.judicialProcessId || undefined,
+      sellerId: initialData?.sellerId || null,
       evaluationValue: initialData?.evaluationValue || undefined,
       imageUrl: initialData?.imageUrl || '',
       imageMediaId: initialData?.imageMediaId || null,
@@ -164,7 +167,18 @@ export default function BemForm({
                 <FormField name="categoryId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Categoria</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione a categoria" /></SelectTrigger></FormControl><SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField name="subcategoryId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Subcategoria (Opcional)</FormLabel><Select onValueChange={field.onChange} value={field.value ?? undefined} disabled={isLoadingSubcategories || availableSubcategories.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={isLoadingSubcategories ? 'Carregando...' : 'Selecione a subcategoria'} /></SelectTrigger></FormControl><SelectContent>{availableSubcategories.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
               </div>
-              <FormField name="judicialProcessId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Opcional)</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Vincule a um processo judicial" /></SelectTrigger></FormControl><SelectContent>{processes.map(p => <SelectItem key={p.id} value={p.id}>{p.processNumber}</SelectItem>)}</SelectContent></Select><FormDescription>Vincule este bem a um processo judicial previamente cadastrado.</FormDescription><FormMessage /></FormItem>)} />
+              <FormField name="judicialProcessId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Opcional)</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Vincule a um processo judicial" /></SelectTrigger></FormControl><SelectContent><SelectItem value="">Nenhum</SelectItem>{processes.map(p => <SelectItem key={p.id} value={p.id}>{p.processNumber}</SelectItem>)}</SelectContent></Select><FormDescription>Vincule este bem a um processo judicial previamente cadastrado.</FormDescription><FormMessage /></FormItem>)} />
+              <FormField name="sellerId" control={form.control} render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2"><Users className="h-4 w-4" /> Comitente do Bem (Opcional)</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Selecione um comitente" /></SelectTrigger></FormControl>
+                    <SelectContent><SelectItem value="">Comitente principal do processo/leilão</SelectItem>{sellers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                  <FormDescription>Selecione um comitente específico para este bem. Se deixado em branco, ele herdará o comitente do processo ou do leilão.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )} />
               <FormItem><FormLabel>Imagem Principal</FormLabel><div className="flex items-center gap-4"><div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{imageUrlPreview ? (<Image src={imageUrlPreview} alt="Prévia da Imagem" fill className="object-contain" data-ai-hint="previa imagem bem" />) : (<div className="flex items-center justify-center h-full text-muted-foreground"><ImageIcon className="h-8 w-8" /></div>)}</div><div className="flex-grow space-y-2"><Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{imageUrlPreview ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button><FormField control={form.control} name="imageUrl" render={({ field }) => (<FormControl><Input type="text" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} className="text-xs h-8" /></FormControl>)}/></div></div></FormItem>
             </CardContent>
             <CardFooter className="flex justify-end gap-2">

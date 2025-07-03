@@ -49,6 +49,7 @@ function WizardContent({
 }) {
   const { currentStep, wizardData, nextStep, prevStep, goToStep, setWizardData } = useWizard();
   const [wizardMode, setWizardMode] = useState<'main' | 'judicial_process'>('main');
+  const [isDataRefetching, setIsDataRefetching] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -75,10 +76,12 @@ function WizardContent({
     refetchData(wizardData.judicialProcess?.id); 
   };
   
-  const handleProcessCreated = (newProcessId?: string) => {
+  const handleProcessCreated = async (newProcessId?: string) => {
     toast({ title: "Sucesso!", description: "Processo judicial cadastrado." });
+    setIsDataRefetching(true);
+    await refetchData(newProcessId);
     setWizardMode('main');
-    refetchData(newProcessId);
+    setIsDataRefetching(false);
   }
 
   const renderStep = () => {
@@ -92,6 +95,7 @@ function WizardContent({
           courts={fetchedData.courts}
           allDistricts={fetchedData.districts}
           allBranches={fetchedData.branches}
+          sellers={fetchedData.sellers}
           onSubmitAction={createJudicialProcessAction}
           onSuccess={handleProcessCreated}
           onCancel={() => setWizardMode('main')}
@@ -134,12 +138,12 @@ function WizardContent({
             </div>
           </CardContent>
           <CardFooter className="mt-8 flex justify-between p-6 pt-0">
-            <Button variant="outline" onClick={prevStep} disabled={currentStep === 0 || isLoading}>
+            <Button variant="outline" onClick={prevStep} disabled={currentStep === 0 || isLoading || isDataRefetching}>
               <ChevronLeft className="mr-2 h-4 w-4" /> Anterior
             </Button>
             {currentStep < stepsToUse.length - 1 && (
-              <Button onClick={handleNextStep} disabled={isLoading}>
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : null}
+              <Button onClick={handleNextStep} disabled={isLoading || isDataRefetching}>
+                {isDataRefetching ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : null}
                 Próximo <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             )}
