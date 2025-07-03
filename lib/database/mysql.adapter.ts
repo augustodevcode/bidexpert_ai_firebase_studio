@@ -950,13 +950,81 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] unlinkMediaItemFromLot is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
-  async getPlatformSettings(): Promise<PlatformSettings> {
-    console.warn("[MySqlAdapter] getPlatformSettings is not yet implemented for MySQL.");
-    return samplePlatformSettings;
+  
+  private async insertDefaultSettings(connection: PoolConnection): Promise<{ success: boolean; message: string; }> {
+    const { id, updatedAt, ...defaults } = samplePlatformSettings as any;
+    const columns = Object.keys(defaults).map(key => key.replace(/([A-Z])/g, '_$1').toLowerCase());
+    const values = Object.values(defaults).map(val => typeof val === 'object' ? JSON.stringify(val) : val);
+    
+    const placeholders = values.map(() => '?').join(', ');
+    
+    const insertQuery = `INSERT INTO platform_settings (id, ${columns.join(', ')}) VALUES (?, ${placeholders})`;
+    
+    try {
+        await connection.execute(insertQuery, [1, ...values]);
+        return { success: true, message: "Default settings inserted." };
+    } catch(error: any) {
+        return { success: false, message: error.message };
+    }
   }
+
+  async getPlatformSettings(): Promise<PlatformSettings> {
+    const connection = await getPool().getConnection();
+    try {
+        const [rows] = await connection.execute<RowDataPacket[]>('SELECT * FROM platform_settings ORDER BY id LIMIT 1');
+        
+        if (rows.length > 0) {
+            return mapToPlatformSettings(mapMySqlRowToCamelCase(rows[0]));
+        } else {
+            console.log('[MySqlAdapter] No platform settings found, creating default settings...');
+            const result = await this.insertDefaultSettings(connection);
+            if (result.success) {
+                const [newRows] = await connection.execute<RowDataPacket[]>('SELECT * FROM platform_settings WHERE id = 1 LIMIT 1');
+                if (newRows.length > 0) {
+                    return mapToPlatformSettings(mapMySqlRowToCamelCase(newRows[0]));
+                }
+            }
+            console.error("[MySqlAdapter] Failed to insert or retrieve default settings:", result.message);
+            return samplePlatformSettings as PlatformSettings;
+        }
+    } catch (error: any) {
+        console.error("[MySqlAdapter - getPlatformSettings] Error:", error);
+        return samplePlatformSettings as PlatformSettings; // Fallback
+    } finally {
+        connection.release();
+    }
+  }
+
   async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
-    console.warn("[MySqlAdapter] updatePlatformSettings is not yet implemented for MySQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const connection = await getPool().getConnection();
+    try {
+        const setClauses: string[] = [];
+        const values: any[] = [];
+        for (const [key, value] of Object.entries(data)) {
+            const snakeCaseKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+            setClauses.push(`${snakeCaseKey} = ?`);
+            values.push(value === null ? null : typeof value === 'object' ? JSON.stringify(value) : value);
+        }
+        
+        if (setClauses.length === 0) {
+            return { success: true, message: 'Nenhuma alteração para salvar.' };
+        }
+        
+        const updateQuery = `UPDATE platform_settings SET ${setClauses.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = 1`;
+        
+        const [result] = await connection.execute(updateQuery, values);
+        
+        if ((result as any).affectedRows > 0) {
+            return { success: true, message: 'Configurações da plataforma atualizadas com sucesso!' };
+        } else {
+            return { success: false, message: 'Nenhuma configuração foi encontrada para atualizar. Verifique se as configurações iniciais existem.' };
+        }
+    } catch (error: any) {
+        console.error("[MySqlAdapter - updatePlatformSettings] Error:", error);
+        return { success: false, message: `Erro no banco de dados: ${error.message}` };
+    } finally {
+        connection.release();
+    }
   }
   
   async getRoleByName(name: string): Promise<Role | null> {
