@@ -1,4 +1,3 @@
-
 // src/app/admin/judicial-processes/page.tsx
 'use client';
 
@@ -21,26 +20,25 @@ export default function AdminJudicialProcessesPage() {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
-    let isMounted = true;
+    let ignore = false;
     
     const fetchItems = async () => {
-      if (!isMounted) return;
       setIsLoading(true);
       setError(null);
       try {
         const fetchedItems = await getJudicialProcesses();
-        if (isMounted) {
+        if (!ignore) {
           setProcesses(fetchedItems);
         }
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : "Falha ao buscar processos judiciais.";
         console.error("Error fetching judicial processes:", e);
-        if (isMounted) {
+        if (!ignore) {
           setError(errorMessage);
           toast({ title: "Erro", description: errorMessage, variant: "destructive" });
         }
       } finally {
-        if (isMounted) {
+        if (!ignore) {
           setIsLoading(false);
         }
       }
@@ -48,7 +46,9 @@ export default function AdminJudicialProcessesPage() {
     
     fetchItems();
 
-    return () => { isMounted = false; };
+    return () => {
+      ignore = true;
+    };
   }, [toast, refetchTrigger]);
 
   const handleDelete = useCallback(
@@ -71,8 +71,8 @@ export default function AdminJudicialProcessesPage() {
     const branches = [...new Set(processes.map(p => p.branchName).filter(Boolean))] as string[];
     
     return [
-      { id: 'courtName', title: 'Tribunal', options: courts.map(name => ({label: name, value: name})) },
-      { id: 'branchName', title: 'Vara', options: branches.map(name => ({label: name, value: name})) }
+      { id: 'courtName', title: 'Tribunal', options: courts.map(name => ({label: name!, value: name!})) },
+      { id: 'branchName', title: 'Vara', options: branches.map(name => ({label: name!, value: name!})) }
     ];
   }, [processes]);
 
