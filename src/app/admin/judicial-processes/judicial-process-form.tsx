@@ -1,3 +1,4 @@
+
 // src/app/admin/judicial-processes/judicial-process-form.tsx
 'use client';
 
@@ -16,16 +17,19 @@ import type { JudicialProcess, Court, JudicialDistrict, JudicialBranch, ProcessP
 import { Loader2, Save, Gavel, PlusCircle, Trash2, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { createJudicialProcessAction } from './actions';
 
 interface JudicialProcessFormProps {
   initialData?: JudicialProcess | null;
   courts: Court[];
   allDistricts: JudicialDistrict[];
   allBranches: JudicialBranch[];
-  onSubmitAction: (data: JudicialProcessFormValues) => Promise<{ success: boolean; message: string; processId?: string }>;
-  formTitle: string;
-  formDescription: string;
-  submitButtonText: string;
+  onSubmitAction?: (data: JudicialProcessFormValues) => Promise<{ success: boolean; message: string; processId?: string }>;
+  onSuccess?: (newProcessId?: string) => void;
+  onCancel?: () => void;
+  formTitle?: string;
+  formDescription?: string;
+  submitButtonText?: string;
 }
 
 const partyTypeOptions: { value: ProcessPartyType; label: string }[] = [
@@ -37,7 +41,13 @@ const partyTypeOptions: { value: ProcessPartyType; label: string }[] = [
 ];
 
 export default function JudicialProcessForm({
-  initialData, courts, allDistricts, allBranches, onSubmitAction, formTitle, formDescription, submitButtonText,
+  initialData, courts, allDistricts, allBranches, 
+  onSubmitAction = createJudicialProcessAction, 
+  onSuccess,
+  onCancel,
+  formTitle = "Novo Processo Judicial",
+  formDescription = "Cadastre um novo processo e suas partes para vincular a bens e lotes.",
+  submitButtonText = "Criar Processo"
 }: JudicialProcessFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -82,8 +92,12 @@ export default function JudicialProcessForm({
       const result = await onSubmitAction(values);
       if (result.success) {
         toast({ title: 'Sucesso!', description: result.message });
-        router.push('/admin/judicial-processes');
-        router.refresh();
+        if (onSuccess) {
+            onSuccess(result.processId);
+        } else {
+            router.push('/admin/judicial-processes');
+            router.refresh();
+        }
       } else {
         toast({ title: 'Erro', description: result.message, variant: 'destructive' });
       }
@@ -93,6 +107,15 @@ export default function JudicialProcessForm({
       setIsSubmitting(false);
     }
   }
+
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel();
+    } else {
+      router.push('/admin/judicial-processes');
+    }
+  };
+
 
   return (
     <Card className="max-w-3xl mx-auto shadow-lg">
@@ -128,7 +151,7 @@ export default function JudicialProcessForm({
             ))}
           </CardContent>
           <CardFooter className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/judicial-processes')} disabled={isSubmitting}>Cancelar</Button>
+            <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>Cancelar</Button>
             <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{submitButtonText}</Button>
           </CardFooter>
         </form>

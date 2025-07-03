@@ -1,6 +1,7 @@
 
 
 
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -38,9 +39,9 @@ export async function createLotWithBens(
   lotData: LotFromModalValues,
   bemIds: string[],
   auctionId: string,
-  sellerName?: string | null,
   sellerId?: string | null,
-  auctionName?: string
+  auctionName?: string,
+  sellerName?: string | null
 ): Promise<{ success: boolean; message: string; lot?: Lot }> {
     const db = await getDatabaseAdapter();
 
@@ -50,7 +51,7 @@ export async function createLotWithBens(
         return { success: false, message: `Falha ao atualizar status dos bens: ${updateBensResult.message}` };
     }
 
-    const firstBem = await db.getBem(bemIds[0]);
+    const firstBem = bemIds.length > 0 ? await db.getBem(bemIds[0]) : null;
 
     // Create the lot with bemIds
     const dataForDb: LotDbData = {
@@ -93,7 +94,6 @@ export async function createIndividualLotsAction(
     const db = await getDatabaseAdapter();
     const lotsToCreate: LotDbData[] = [];
     const bensToUpdate: string[] = [];
-    const createdLotsResult: Lot[] = [];
 
     const auctionData = await db.getAuction(auctionId);
     if (!auctionData) {
@@ -109,7 +109,7 @@ export async function createIndividualLotsAction(
 
         lotsToCreate.push({
             title: bem.title,
-            number: '', // O Adapter deve gerar o próximo número sequencial
+            number: '', // The Adapter should generate the next sequential number
             auctionId: auctionId,
             bemIds: [bem.id],
             price: bem.evaluationValue || 0,

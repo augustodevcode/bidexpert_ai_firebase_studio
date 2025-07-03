@@ -912,15 +912,16 @@ export interface IDatabaseAdapter {
   getBem(id: string): Promise<Bem | null>;
   createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }>;
   updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }>;
-  updateBensStatus(bemIds: string[], status: Bem['status']): Promise<{ success: boolean; message: string }>;
+  updateBensStatus(bemIds: string[], status: Bem['status']): Promise<{ success: boolean, message: string }>;
   deleteBem(id: string): Promise<{ success: boolean; message: string; }>;
 
   createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }>;
   getLots(auctionIdParam?: string): Promise<Lot[]>;
   getLotsByIds(ids: string[]): Promise<Lot[]>;
   getLot(idOrPublicId: string): Promise<Lot | null>;
-  updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string }>;
+  updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }>;
   deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }>;
+  createLotsFromBens(lotsToCreate: LotDbData[]): Promise<{ success: boolean, message: string, createdLots?: Lot[] }>;
   
   getDirectSaleOffers(): Promise<DirectSaleOffer[]>;
   getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null>;
@@ -1001,7 +1002,6 @@ export interface IDatabaseAdapter {
   createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }>;
   updateJudicialProcess(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }>;
   deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string; }>;
-  createLotsFromBens(lotsToCreate: LotDbData[]): Promise<{ success: boolean, message: string, createdLots?: Lot[] }>;
 }
 
 export type UserCreationData = Pick<UserProfileData, 'fullName' | 'email' | 'cpf' | 'cellPhone' | 'dateOfBirth' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing'> & {

@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { getCourts } from '../courts/actions';
@@ -29,7 +30,7 @@ export async function getWizardInitialData(processId?: string) {
       getJudicialProcesses(),
       getAuctioneers(),
       getSellers(),
-      getBens(processId), // Fetch bens for a specific process if provided
+      getBens(), // Fetch all initially
       getLotCategories(),
     ]);
 

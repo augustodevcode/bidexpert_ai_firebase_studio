@@ -1,3 +1,4 @@
+
 // src/lib/database/mysql.adapter.ts
 import * as mysql from 'mysql2/promise';
 import type { RowDataPacket, Pool, PoolConnection } from 'mysql2/promise';
@@ -818,186 +819,44 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> {
-    const publicId = `AUCT-PUB-${uuidv4()}`;
-    const slug = slugify(data.name);
-    const query = `
-      INSERT INTO auctioneers (public_id, name, slug, registration_number, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
-    `;
-    const values = [
-      publicId, data.name, slug, data.registrationNumber, data.contactName, data.email,
-      data.phone, data.address, data.city, data.state, data.zipCode, data.website,
-      data.logoUrl, data.dataAiHintLogo, data.description
-    ];
-    try {
-      const [result] = await getPool().execute(query, values);
-      const insertedId = (result as any).insertId;
-      return { success: true, message: 'Leiloeiro criado com sucesso.', auctioneerId: String(insertedId), auctioneerPublicId: publicId };
-    } catch (error: any) {
-      console.error("[MySqlAdapter - createAuctioneer] Error:", error);
-      return { success: false, message: `Falha ao criar leiloeiro: ${error.message}` };
-    }
+    console.warn("[MySqlAdapter] createAuctioneer is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
   }
   async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
-    try {
-      const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM auctioneers ORDER BY name ASC');
-      return mapMySqlRowsToCamelCase(rows).map(mapToAuctioneerProfileInfo);
-    } catch (error) {
-      console.error("[MySqlAdapter - getAuctioneers] Error:", error);
-      return [];
-    }
+    console.warn("[MySqlAdapter] getAuctioneers is not yet implemented for MySQL.");
+    return [];
   }
   async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
-    try {
-      const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM auctioneers WHERE id = ? OR public_id = ? LIMIT 1', [idOrPublicId, idOrPublicId]);
-      if (rows.length === 0) return null;
-      return mapToAuctioneerProfileInfo(mapMySqlRowToCamelCase(rows[0]));
-    } catch (error) {
-      console.error("[MySqlAdapter - getAuctioneer] Error:", error);
-      return null;
-    }
+    console.warn("[MySqlAdapter] getAuctioneer is not yet implemented for MySQL.");
+    return null;
   }
   async updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
-    const fields = [];
-    const values = [];
-
-    if (data.name) {
-      fields.push('name = ?', 'slug = ?');
-      values.push(data.name, slugify(data.name));
-    }
-    // Add other fields
-    for (const [key, value] of Object.entries(data)) {
-        if (key !== 'name' && value !== undefined) {
-            const snakeCaseKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-            fields.push(`${snakeCaseKey} = ?`);
-            values.push(value);
-        }
-    }
-    
-    if (fields.length === 0) {
-        return { success: true, message: 'Nenhuma informação para atualizar.' };
-    }
-
-    const query = `UPDATE auctioneers SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ? OR public_id = ?`;
-    values.push(idOrPublicId, idOrPublicId);
-
-    try {
-        const [result] = await getPool().execute(query, values);
-        if ((result as any).affectedRows === 0) {
-             return { success: false, message: 'Nenhum leiloeiro encontrado para atualizar.' };
-        }
-        return { success: true, message: 'Leiloeiro atualizado com sucesso.' };
-    } catch (error: any) {
-        console.error("[MySqlAdapter - updateAuctioneer] Error:", error);
-        return { success: false, message: `Falha ao atualizar leiloeiro: ${error.message}` };
-    }
+    console.warn("[MySqlAdapter] updateAuctioneer is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
   }
   async deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
-    try {
-        // Here you might add checks for related auctions before deleting
-        const [result] = await getPool().execute('DELETE FROM auctioneers WHERE id = ? OR public_id = ?', [idOrPublicId, idOrPublicId]);
-        if ((result as any).affectedRows === 0) {
-             return { success: false, message: 'Nenhum leiloeiro encontrado para excluir.' };
-        }
-        return { success: true, message: 'Leiloeiro excluído com sucesso.' };
-    } catch (error: any) {
-        console.error("[MySqlAdapter - deleteAuctioneer] Error:", error);
-        // Handle foreign key constraint errors, etc.
-        if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-            return { success: false, message: 'Não é possível excluir este leiloeiro pois ele está associado a um ou mais leilões.' };
-        }
-        return { success: false, message: `Falha ao excluir leiloeiro: ${error.message}` };
-    }
+    console.warn("[MySqlAdapter] deleteAuctioneer is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
   }
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> {
-    const publicId = `SELL-PUB-${uuidv4()}`;
-    const slug = slugify(data.name);
-    const query = `
-      INSERT INTO sellers (public_id, name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since, user_id, cnpj, razao_social, inscricao_estadual)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?)
-    `;
-    const values = [
-      publicId, data.name, slug, data.contactName, data.email, data.phone,
-      data.address, data.city, data.state, data.zipCode, data.website,
-      data.logoUrl, data.dataAiHintLogo, data.description, data.userId, data.cnpj, data.razaoSocial, data.inscricaoEstadual
-    ];
-    try {
-      const [result] = await getPool().execute(query, values);
-      const insertedId = (result as any).insertId;
-      return { success: true, message: 'Comitente criado com sucesso.', sellerId: String(insertedId), sellerPublicId: publicId };
-    } catch (error: any) {
-      console.error("[MySqlAdapter - createSeller] Error:", error);
-      return { success: false, message: `Falha ao criar comitente: ${error.message}` };
-    }
+    console.warn("[MySqlAdapter] createSeller is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
   }
   async getSellers(): Promise<SellerProfileInfo[]> {
-     try {
-      const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM sellers ORDER BY name ASC');
-      return mapMySqlRowsToCamelCase(rows).map(mapToSellerProfileInfo);
-    } catch (error) {
-      console.error("[MySqlAdapter - getSellers] Error:", error);
-      return [];
-    }
+    console.warn("[MySqlAdapter] getSellers is not yet implemented for MySQL.");
+    return [];
   }
   async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> {
-    try {
-      const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM sellers WHERE id = ? OR public_id = ? LIMIT 1', [idOrPublicId, idOrPublicId]);
-      if (rows.length === 0) return null;
-      return mapToSellerProfileInfo(mapMySqlRowToCamelCase(rows[0]));
-    } catch (error) {
-      console.error("[MySqlAdapter - getSeller] Error:", error);
-      return null;
-    }
+    console.warn("[MySqlAdapter] getSeller is not yet implemented for MySQL.");
+    return null;
   }
   async updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
-     const fields = [];
-    const values = [];
-
-    if (data.name) {
-      fields.push('name = ?', 'slug = ?');
-      values.push(data.name, slugify(data.name));
-    }
-    // Add other fields
-    for (const [key, value] of Object.entries(data)) {
-        if (key !== 'name' && value !== undefined) {
-            const snakeCaseKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-            fields.push(`${snakeCaseKey} = ?`);
-            values.push(value);
-        }
-    }
-    
-    if (fields.length === 0) {
-        return { success: true, message: 'Nenhuma informação para atualizar.' };
-    }
-
-    const query = `UPDATE sellers SET ${fields.join(', ')}, updated_at = NOW() WHERE id = ? OR public_id = ?`;
-    values.push(idOrPublicId, idOrPublicId);
-
-    try {
-        const [result] = await getPool().execute(query, values);
-        if ((result as any).affectedRows === 0) {
-             return { success: false, message: 'Nenhum comitente encontrado para atualizar.' };
-        }
-        return { success: true, message: 'Comitente atualizado com sucesso.' };
-    } catch (error: any) {
-        console.error("[MySqlAdapter - updateSeller] Error:", error);
-        return { success: false, message: `Falha ao atualizar comitente: ${error.message}` };
-    }
+    console.warn("[MySqlAdapter] updateSeller is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
   }
   async deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
-    try {
-        const [result] = await getPool().execute('DELETE FROM sellers WHERE id = ? OR public_id = ?', [idOrPublicId, idOrPublicId]);
-        if ((result as any).affectedRows === 0) {
-             return { success: false, message: 'Nenhum comitente encontrado para excluir.' };
-        }
-        return { success: true, message: 'Comitente excluído com sucesso.' };
-    } catch (error: any) {
-        console.error("[MySqlAdapter - deleteSeller] Error:", error);
-        if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-            return { success: false, message: 'Não é possível excluir este comitente pois ele está associado a um ou mais leilões.' };
-        }
-        return { success: false, message: `Falha ao excluir comitente: ${error.message}` };
-    }
+    console.warn("[MySqlAdapter] deleteSeller is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
   }
   async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> {
     console.warn("[MySqlAdapter] createAuction is not yet implemented for MySQL.");

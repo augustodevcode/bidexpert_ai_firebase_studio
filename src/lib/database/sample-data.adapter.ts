@@ -1,3 +1,4 @@
+
 // src/lib/database/sample-data.adapter.ts
 import type { 
   IDatabaseAdapter, 
@@ -20,7 +21,8 @@ import type {
   JudicialDistrict, JudicialDistrictFormData,
   JudicialBranch, JudicialBranchFormData,
   JudicialProcess, JudicialProcessFormData,
-  Bem, BemFormData
+  Bem, BemFormData,
+  ProcessParty
 } from '@/types';
 import { slugify, getEffectiveLotEndDate } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
@@ -178,6 +180,24 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return { success: true, message: 'Lote excluído com sucesso.'};
   }
 
+  async createLotsFromBens(lotsToCreate: LotDbData[]): Promise<{ success: boolean, message: string, createdLots?: Lot[] }> {
+    const createdLots: Lot[] = [];
+    for (const lotData of lotsToCreate) {
+        const publicId = `LOTE-PUB-${uuidv4()}`;
+        const newLot: Lot = {
+            ...lotData,
+            id: `lote-${uuidv4()}`,
+            publicId: publicId,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        };
+        this.data.sampleLots.push(newLot);
+        createdLots.push(newLot);
+    }
+    this._persistData();
+    return { success: true, message: `${createdLots.length} lotes criados com sucesso.`, createdLots };
+  }
+
   // --- Bids, Reviews, Questions ---
   async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status' | 'endDate'>>; newBid?: BidInfo }> {
     await delay(50);
@@ -210,7 +230,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     const newBid: BidInfo = { id: `bid-${uuidv4()}`, lotId: lot.id, auctionId: lot.auctionId, bidderId: userId, bidderDisplay: userDisplayName, amount: bidAmount, timestamp: new Date() };
     this.data.sampleBids.unshift(newBid);
     this._persistData();
-    return { success: true, message: 'Lance registrado com sucesso!', updatedLot: { price: lot.price, bidsCount: lot.bidsCount, endDate: updatedEndDate }, newBid };
+    return { success: true, message: 'Lance registrado com sucesso!', updatedLot: { price: lot.price, bidsCount: lot.bidsCount, endDate: updatedEndDate }, newBid: { id: newBid.id, ...newBid, timestamp: new Date() } };
   }
 
   async getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> {

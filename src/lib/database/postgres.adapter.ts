@@ -1,3 +1,4 @@
+
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -18,7 +19,12 @@ import type {
   DirectSaleOffer,
   UserLotMaxBid,
   UserWin,
-  AuctionStatus, LotStatus
+  AuctionStatus, LotStatus,
+  Court, CourtFormData,
+  JudicialDistrict, JudicialDistrictFormData,
+  JudicialBranch, JudicialBranchFormData,
+  JudicialProcess, JudicialProcessFormData,
+  Bem, BemFormData
 } from '@/types';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -780,197 +786,44 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> {
-    const publicId = `AUCT-PUB-${uuidv4()}`;
-    const slug = slugify(data.name);
-    const query = `
-      INSERT INTO auctioneers (public_id, name, slug, registration_number, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, CURRENT_TIMESTAMP)
-      RETURNING id, public_id;
-    `;
-    const values = [
-      publicId, data.name, slug, data.registrationNumber, data.contactName, data.email,
-      data.phone, data.address, data.city, data.state, data.zipCode, data.website,
-      data.logoUrl, data.dataAiHintLogo, data.description
-    ];
-    try {
-      const result = await getPool().query(query, values);
-      return { success: true, message: 'Leiloeiro criado com sucesso.', auctioneerId: String(result.rows[0].id), auctioneerPublicId: result.rows[0].public_id };
-    } catch (error: any) {
-      console.error("[PostgresAdapter - createAuctioneer] Error:", error);
-      return { success: false, message: `Falha ao criar leiloeiro: ${error.message}` };
-    }
+    console.warn("[PostgresAdapter] createAuctioneer is not yet implemented for PostgreSQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
   }
   async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
-    try {
-      const { rows } = await getPool().query('SELECT * FROM auctioneers ORDER BY name ASC');
-      return rows.map(mapToAuctioneerProfileInfo);
-    } catch (error) {
-      console.error("[PostgresAdapter - getAuctioneers] Error:", error);
-      return [];
-    }
+    console.warn("[PostgresAdapter] getAuctioneers is not yet implemented for PostgreSQL.");
+    return [];
   }
   async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
-    try {
-      // Try to convert to int for ID, but also pass the original string for public_id
-      const idAsInt = parseInt(idOrPublicId, 10);
-      const query = 'SELECT * FROM auctioneers WHERE id = $1 OR public_id = $2 LIMIT 1';
-      const values = [isNaN(idAsInt) ? -1 : idAsInt, idOrPublicId];
-      const { rows } = await getPool().query(query, values);
-      if (rows.length === 0) return null;
-      return mapToAuctioneerProfileInfo(rows[0]);
-    } catch (error) {
-      console.error("[PostgresAdapter - getAuctioneer] Error:", error);
-      return null;
-    }
+    console.warn("[PostgresAdapter] getAuctioneer is not yet implemented for PostgreSQL.");
+    return null;
   }
   async updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
-    const fields: string[] = [];
-    const values: any[] = [];
-    let queryIndex = 1;
-
-    if (data.name) {
-      fields.push(`name = $${queryIndex++}`, `slug = $${queryIndex++}`);
-      values.push(data.name, slugify(data.name));
-    }
-    // Add other fields
-    for (const [key, value] of Object.entries(data)) {
-        if (key !== 'name' && value !== undefined) {
-            const snakeCaseKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-            fields.push(`${snakeCaseKey} = $${queryIndex++}`);
-            values.push(value);
-        }
-    }
-    
-    if (fields.length === 0) {
-        return { success: true, message: 'Nenhuma informação para atualizar.' };
-    }
-
-    const idAsInt = parseInt(idOrPublicId, 10);
-    const query = `UPDATE auctioneers SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $${queryIndex} OR public_id = $${queryIndex + 1}`;
-    values.push(isNaN(idAsInt) ? -1 : idAsInt, idOrPublicId);
-
-    try {
-        const result = await getPool().query(query, values);
-        if (result.rowCount === 0) {
-             return { success: false, message: 'Nenhum leiloeiro encontrado para atualizar.' };
-        }
-        return { success: true, message: 'Leiloeiro atualizado com sucesso.' };
-    } catch (error: any) {
-        console.error("[PostgresAdapter - updateAuctioneer] Error:", error);
-        return { success: false, message: `Falha ao atualizar leiloeiro: ${error.message}` };
-    }
+    console.warn("[PostgresAdapter] updateAuctioneer is not yet implemented for PostgreSQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
   }
   async deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
-     try {
-        const idAsInt = parseInt(idOrPublicId, 10);
-        const result = await getPool().query('DELETE FROM auctioneers WHERE id = $1 OR public_id = $2', [isNaN(idAsInt) ? -1 : idAsInt, idOrPublicId]);
-        if (result.rowCount === 0) {
-             return { success: false, message: 'Nenhum leiloeiro encontrado para excluir.' };
-        }
-        return { success: true, message: 'Leiloeiro excluído com sucesso.' };
-    } catch (error: any) {
-        console.error("[PostgresAdapter - deleteAuctioneer] Error:", error);
-        if (error.code === '23503') { // PostgreSQL foreign key violation
-            return { success: false, message: 'Não é possível excluir este leiloeiro pois ele está associado a um ou mais leilões.' };
-        }
-        return { success: false, message: `Falha ao excluir leiloeiro: ${error.message}` };
-    }
+    console.warn("[PostgresAdapter] deleteAuctioneer is not yet implemented for PostgreSQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
   }
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> {
-    const publicId = `SELL-PUB-${uuidv4()}`;
-    const slug = slugify(data.name);
-    const query = `
-      INSERT INTO sellers (public_id, name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, member_since, user_id, cnpj, razao_social, inscricao_estadual)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP, $15, $16, $17, $18)
-      RETURNING id, public_id;
-    `;
-    const values = [
-      publicId, data.name, slug, data.contactName, data.email, data.phone,
-      data.address, data.city, data.state, data.zipCode, data.website,
-      data.logoUrl, data.dataAiHintLogo, data.description, data.userId, data.cnpj, data.razaoSocial, data.inscricaoEstadual
-    ];
-    try {
-      const result = await getPool().query(query, values);
-      return { success: true, message: 'Comitente criado com sucesso.', sellerId: String(result.rows[0].id), sellerPublicId: result.rows[0].public_id };
-    } catch (error: any) {
-      console.error("[PostgresAdapter - createSeller] Error:", error);
-      return { success: false, message: `Falha ao criar comitente: ${error.message}` };
-    }
+    console.warn("[PostgresAdapter] createSeller is not yet implemented for PostgreSQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
   }
   async getSellers(): Promise<SellerProfileInfo[]> {
-    try {
-      const { rows } = await getPool().query('SELECT * FROM sellers ORDER BY name ASC');
-      return rows.map(mapToSellerProfileInfo);
-    } catch (error) {
-      console.error("[PostgresAdapter - getSellers] Error:", error);
-      return [];
-    }
+    console.warn("[PostgresAdapter] getSellers is not yet implemented for PostgreSQL.");
+    return [];
   }
   async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> {
-    try {
-      const idAsInt = parseInt(idOrPublicId, 10);
-      const query = 'SELECT * FROM sellers WHERE id = $1 OR public_id = $2 LIMIT 1';
-      const values = [isNaN(idAsInt) ? -1 : idAsInt, idOrPublicId];
-      const { rows } = await getPool().query(query, values);
-      if (rows.length === 0) return null;
-      return mapToSellerProfileInfo(rows[0]);
-    } catch (error) {
-      console.error("[PostgresAdapter - getSeller] Error:", error);
-      return null;
-    }
+    console.warn("[PostgresAdapter] getSeller is not yet implemented for PostgreSQL.");
+    return null;
   }
   async updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
-    const fields: string[] = [];
-    const values: any[] = [];
-    let queryIndex = 1;
-
-    if (data.name) {
-      fields.push(`name = $${queryIndex++}`, `slug = $${queryIndex++}`);
-      values.push(data.name, slugify(data.name));
-    }
-    // Add other fields
-    for (const [key, value] of Object.entries(data)) {
-        if (key !== 'name' && value !== undefined) {
-            const snakeCaseKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-            fields.push(`${snakeCaseKey} = $${queryIndex++}`);
-            values.push(value);
-        }
-    }
-    
-    if (fields.length === 0) {
-        return { success: true, message: 'Nenhuma informação para atualizar.' };
-    }
-
-    const idAsInt = parseInt(idOrPublicId, 10);
-    const query = `UPDATE sellers SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $${queryIndex} OR public_id = $${queryIndex + 1}`;
-    values.push(isNaN(idAsInt) ? -1 : idAsInt, idOrPublicId);
-
-    try {
-        const result = await getPool().query(query, values);
-        if (result.rowCount === 0) {
-             return { success: false, message: 'Nenhum comitente encontrado para atualizar.' };
-        }
-        return { success: true, message: 'Comitente atualizado com sucesso.' };
-    } catch (error: any) {
-        console.error("[PostgresAdapter - updateSeller] Error:", error);
-        return { success: false, message: `Falha ao atualizar comitente: ${error.message}` };
-    }
+    console.warn("[PostgresAdapter] updateSeller is not yet implemented for PostgreSQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
   }
   async deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
-    try {
-        const idAsInt = parseInt(idOrPublicId, 10);
-        const result = await getPool().query('DELETE FROM sellers WHERE id = $1 OR public_id = $2', [isNaN(idAsInt) ? -1 : idAsInt, idOrPublicId]);
-        if (result.rowCount === 0) {
-             return { success: false, message: 'Nenhum comitente encontrado para excluir.' };
-        }
-        return { success: true, message: 'Comitente excluído com sucesso.' };
-    } catch (error: any) {
-        console.error("[PostgresAdapter - deleteSeller] Error:", error);
-        if (error.code === '23503') { // PostgreSQL foreign key violation
-            return { success: false, message: 'Não é possível excluir este comitente pois ele está associado a um ou mais leilões.' };
-        }
-        return { success: false, message: `Falha ao excluir comitente: ${error.message}` };
-    }
+    console.warn("[PostgresAdapter] deleteSeller is not yet implemented for PostgreSQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
   }
   async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> {
     console.warn("[PostgresAdapter] createAuction is not yet implemented for PostgreSQL.");

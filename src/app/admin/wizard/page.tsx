@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Rocket, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
+import JudicialProcessForm from '@/app/admin/judicial-processes/judicial-process-form';
 
 const allSteps = [
   { id: 'type', title: 'Tipo de Leilão', description: 'Selecione a modalidade.' },
@@ -36,9 +36,10 @@ interface WizardDataForFetching {
     branches: JudicialBranch[];
 }
 
-function WizardContent({ fetchedData, isLoading, refetchData }: { fetchedData: WizardDataForFetching | null, isLoading: boolean, refetchData: () => void }) {
+function WizardContent({ fetchedData, isLoading, refetchData }: { fetchedData: WizardDataForFetching | null, isLoading: boolean, refetchData: (processId?: string) => void }) {
   const { currentStep, wizardData, nextStep, prevStep, goToStep, setWizardData } = useWizard();
-  
+  const [wizardMode, setWizardMode] = useState<'main' | 'judicial_process'>('main');
+
   const stepsToUse = useMemo(() => {
     if (wizardData.auctionType === 'JUDICIAL') {
       return allSteps;
@@ -48,9 +49,14 @@ function WizardContent({ fetchedData, isLoading, refetchData }: { fetchedData: W
 
   const currentStepId = stepsToUse[currentStep]?.id;
   const { toast } = useToast();
+  
+  const handleProcessCreated = (newProcessId?: string) => {
+    toast({ title: "Sucesso!", description: "Processo judicial cadastrado." });
+    setWizardMode('main');
+    refetchData(newProcessId);
+  }
 
   const handleNextStep = () => {
-    // Adicionar validações antes de avançar
     if (currentStepId === 'auction') {
       if (!wizardData.auctionDetails?.title || !wizardData.auctionDetails.auctioneer || !wizardData.auctionDetails.seller) {
         toast({ title: "Campos Obrigatórios", description: "Por favor, preencha o título, leiloeiro e comitente do leilão.", variant: "destructive" });
@@ -60,12 +66,8 @@ function WizardContent({ fetchedData, isLoading, refetchData }: { fetchedData: W
     nextStep();
   }
 
-  const handleLotCreation = (createdLot: Lot) => {
-    setWizardData(prev => ({
-      ...prev,
-      createdLots: [...(prev.createdLots || []), createdLot]
-    }));
-    refetchData(); // To update the list of available 'bens'
+  const handleLotCreation = () => {
+    refetchData(wizardData.judicialProcess?.id); // Refetch bens for the current process
   };
 
 
@@ -78,7 +80,7 @@ function WizardContent({ fetchedData, isLoading, refetchData }: { fetchedData: W
       case 'type':
         return <Step1TypeSelection />;
       case 'judicial':
-        return <Step2JudicialSetup processes={fetchedData.judicialProcesses} />;
+        return <Step2JudicialSetup processes={fetchedData.judicialProcesses} onAddNewProcess={() => setWizardMode('judicial_process')} />;
       case 'auction':
         return <Step3AuctionDetails 
                     categories={fetchedData.categories} 
@@ -88,8 +90,11 @@ function WizardContent({ fetchedData, isLoading, refetchData }: { fetchedData: W
                     setWizardData={setWizardData}
                 />;
       case 'lotting':
+        const bensForProcess = wizardData.auctionType === 'JUDICIAL' 
+            ? fetchedData.availableBens.filter(bem => wizardData.judicialProcess ? bem.judicialProcessId === wizardData.judicialProcess.id : true)
+            : fetchedData.availableBens;
         return <Step4Lotting 
-                  availableBens={wizardData.auctionType === 'JUDICIAL' ? fetchedData.availableBens.filter(bem => wizardData.judicialProcess ? bem.judicialProcessId === wizardData.judicialProcess.id : true) : fetchedData.availableBens}
+                  availableBens={bensForProcess}
                   auctionData={wizardData.auctionDetails as Partial<Auction>}
                   onLotCreated={handleLotCreation}
                 />;
@@ -103,6 +108,26 @@ function WizardContent({ fetchedData, isLoading, refetchData }: { fetchedData: W
         );
     }
   };
+
+  if (wizardMode === 'judicial_process' && fetchedData) {
+      return (
+          <Card className="shadow-lg">
+              <CardHeader>
+                  <CardTitle>Passo a Passo: Novo Processo Judicial</CardTitle>
+                  <CardDescription>Cadastre as informações do processo judicial. Após salvar, você retornará ao assistente de leilão.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <JudicialProcessForm
+                    courts={fetchedData.courts}
+                    allDistricts={fetchedData.districts}
+                    allBranches={fetchedData.branches}
+                    onSuccess={handleProcessCreated}
+                    onCancel={() => setWizardMode('main')}
+                  />
+              </CardContent>
+          </Card>
+      )
+  }
 
   return (
     <Card className="shadow-lg">
@@ -138,24 +163,24 @@ export default function WizardPage() {
     const [fetchedData, setFetchedData] = useState<WizardDataForFetching | null>(null);
     const [isLoadingData, setIsLoadingData] = useState(true);
 
-    const loadInitialData = async () => {
+    const loadData = useCallback(async (processId?: string) => {
         setIsLoadingData(true);
-        const result = await getWizardInitialData();
+        const result = await getWizardInitialData(processId);
         if (result.success) {
             setFetchedData(result.data as WizardDataForFetching);
         } else {
             console.error("Failed to load wizard data:", result.message);
         }
         setIsLoadingData(false);
-    }
+    }, []);
 
     useEffect(() => {
-        loadInitialData();
-    }, []);
+        loadData();
+    }, [loadData]);
 
   return (
     <WizardProvider>
-      <WizardContent fetchedData={fetchedData} isLoading={isLoadingData} refetchData={loadInitialData} />
+      <WizardContent fetchedData={fetchedData} isLoading={isLoadingData} refetchData={loadData} />
     </WizardProvider>
   );
 }
