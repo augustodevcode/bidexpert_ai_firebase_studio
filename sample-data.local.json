@@ -1734,8 +1734,8 @@
       "id": "proc-dbd93e68-1036-435b-8891-19703f5bd9b3",
       "publicId": "PROC-PUB-875401bb",
       "createdAt": "2025-07-03T20:54:31.338Z",
-      "updatedAt": "2025-07-03T21:12:04.251Z",
-      "sellerId": "seller-vara-de-falencias-do-rio-de-janeiro-tjrj"
+      "updatedAt": "2025-07-03T21:42:07.224Z",
+      "sellerId": "seller-c787877a-dddf-4dfe-a0cf-7701bd20b149"
     }
   ],
   "sampleLotCategories": [
@@ -2011,11 +2011,12 @@
       "cityName": "Curitiba",
       "stateUf": "PR",
       "createdAt": "2025-07-02T18:34:27.765Z",
-      "updatedAt": "2025-06-22T22:38:18.850Z",
+      "updatedAt": "2025-07-03T21:40:21.880Z",
       "endDate": "2025-07-04T18:34:27.765Z",
       "auctionDate": "2025-06-21T18:34:27.765Z",
       "lotSpecificAuctionDate": "2025-06-21T18:34:27.765Z",
-      "secondAuctionDate": null
+      "secondAuctionDate": null,
+      "imageUrl": "https://images.unsplash.com/photo-1625604238425-05f1b2461f50?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHwxOTY3JTIwZm9yZCUyMG11c3RhbmclMjBmYXN0YmFja3xlbnwwfHx8fDE3NTA0Mzc0MjZ8MA&ixlib=rb-4.1.0&q=80&w=1080"
     }
   ],
   "sampleMediaItems": [
@@ -2773,6 +2774,16 @@
       "activeLotsCount": 34,
       "totalSalesValue": 2082365.4430116578,
       "auctionsFacilitatedCount": 17
+    },
+    {
+      "name": "2ª Vara da Fazenda Pública",
+      "isJudicial": true,
+      "judicialBranchId": "branch-2",
+      "id": "seller-c787877a-dddf-4dfe-a0cf-7701bd20b149",
+      "publicId": "SELL-PUB-4f5381a1",
+      "slug": "2-vara-da-fazenda-publica",
+      "createdAt": "2025-07-03T21:41:55.243Z",
+      "updatedAt": "2025-07-03T21:41:55.243Z"
     }
   ],
   "sampleStates": [

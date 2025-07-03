@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, JudicialProcess } from '@/types';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,7 +17,7 @@ import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 
 interface Step3AuctionDetailsProps {
   categories: LotCategory[];
@@ -51,34 +51,42 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
     }
   });
 
-  const defendant = wizardData.auctionType === 'JUDICIAL' && wizardData.judicialProcess 
-    ? wizardData.judicialProcess.parties.find(p => p.partyType === 'REU') 
+  const judicialProcessSellerName = wizardData.auctionType === 'JUDICIAL' && wizardData.judicialProcess 
+    ? wizardData.judicialProcess.sellerName 
     : null;
 
   useEffect(() => {
-    if (defendant && defendant.name) {
-      const existingSeller = sellers.find(s => s.name.toLowerCase() === defendant.name.toLowerCase());
-      const sellerNameToSet = existingSeller ? existingSeller.name : defendant.name;
-      
-      if (form.getValues('seller') !== sellerNameToSet) {
-        form.setValue('seller', sellerNameToSet);
-      }
+    // If we have a seller from the judicial process, set it as the auction's seller.
+    if (judicialProcessSellerName && form.getValues('seller') !== judicialProcessSellerName) {
+      form.setValue('seller', judicialProcessSellerName);
     }
-  }, [defendant, sellers, form]);
+  }, [judicialProcessSellerName, form]);
+
+  const availableSellers = useMemo(() => {
+    if (wizardData.auctionType === 'JUDICIAL') {
+      return sellers.filter(s => s.isJudicial);
+    }
+    return sellers;
+  }, [sellers, wizardData.auctionType]);
 
 
   useEffect(() => {
-    const subscription = form.watch((value) => {
+    const subscription = form.watch((value, { name }) => {
+      const auctioneerDetails = name === 'auctioneer' ? auctioneers.find(a => a.name === value.auctioneer) : null;
+      const sellerDetails = name === 'seller' ? sellers.find(s => s.name === value.seller) : null;
+
       setWizardData((prev: any) => ({
         ...prev,
         auctionDetails: {
           ...prev.auctionDetails,
-          ...value
+          ...value,
+          auctioneerId: auctioneerDetails ? auctioneerDetails.id : prev.auctionDetails?.auctioneerId,
+          sellerId: sellerDetails ? sellerDetails.id : prev.auctionDetails?.sellerId,
         }
       }));
     });
     return () => subscription.unsubscribe();
-  }, [form, setWizardData]);
+  }, [form, setWizardData, auctioneers, sellers]);
 
 
   return (
@@ -135,12 +143,21 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Comitente/Vendedor</FormLabel>
-                     <Select onValueChange={field.onChange} value={field.value || ''} disabled={!!defendant}>
-                      <FormControl><SelectTrigger><SelectValue placeholder={!!defendant ? 'Definido pelo Processo' : 'Selecione...'} /></SelectTrigger></FormControl>
+                     <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {sellers.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
+                        {availableSellers.length > 0 ? (
+                           availableSellers.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)
+                        ) : (
+                          <p className="p-2 text-xs text-muted-foreground">Nenhum comitente judicial encontrado.</p>
+                        )}
                       </SelectContent>
                     </Select>
+                     {judicialProcessSellerName && (
+                        <FormDescription className="text-xs">
+                            Sugerido: "{judicialProcessSellerName}" (do processo judicial).
+                        </FormDescription>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -177,7 +194,7 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
                           </Button>
                         </FormControl></PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} />
+                        <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} />
                       </PopoverContent>
                     </Popover><FormMessage />
                   </FormItem>
