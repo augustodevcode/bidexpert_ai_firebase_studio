@@ -1,5 +1,4 @@
-
-
+// src/app/admin/wizard/actions.ts
 'use server';
 
 import { getCourts } from '../courts/actions';
@@ -15,7 +14,7 @@ import { getDatabaseAdapter } from '@/lib/database';
 import { revalidatePath } from 'next/cache';
 
 // This action aggregates multiple data-fetching actions needed for the wizard.
-export async function getWizardInitialData(processId?: string) {
+export async function getWizardInitialData() {
   try {
     const [
       courts,
@@ -64,7 +63,7 @@ export async function createAuctionFromWizard(wizardData: WizardData): Promise<{
     const db = await getDatabaseAdapter();
 
     try {
-        const result = await db.createAuctionAndLinkLots(wizardData);
+        const result = await db.createAuctionWithLots(wizardData);
         if (result.success) {
             revalidatePath('/admin/auctions');
             revalidatePath('/admin/lots');

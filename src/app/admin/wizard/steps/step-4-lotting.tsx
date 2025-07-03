@@ -1,5 +1,3 @@
-
-
 // src/components/admin/wizard/steps/step-4-lotting.tsx
 'use client';
 
@@ -12,8 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Boxes, PackagePlus, Box } from 'lucide-react';
 import CreateLotFromBensModal from '@/components/admin/lotting/create-lot-modal';
 import { useToast } from '@/hooks/use-toast';
-import { createIndividualLotsAction } from '@/app/admin/lots/actions';
 import { Separator } from '@/components/ui/separator';
+import { v4 as uuidv4 } from 'uuid';
 
 interface Step4LottingProps {
   availableBens: Bem[];
@@ -53,31 +51,52 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
     setIsModalOpen(true);
   };
 
-  const handleCreateIndividualLotsClick = async () => {
+  const handleCreateIndividualLotsClick = () => {
     if (selectedBens.length === 0) {
       toast({ title: "Nenhum bem selecionado", variant: "destructive" });
       return;
     }
     setIsCreatingIndividualLots(true);
-    const bemIds = selectedBens.map(b => b.id);
-    const result = await createIndividualLotsAction(bemIds, auctionData.id!, auctionData.title);
-    if (result.success && result.createdLots) {
-        setWizardData(prev => ({
-            ...prev,
-            createdLots: [...(prev.createdLots || []), ...result.createdLots!]
-        }));
-        toast({ title: "Sucesso!", description: `${result.createdLots.length} lotes individuais criados.` });
-        onLotCreated();
-    } else {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
-    }
+    const newLots: Lot[] = selectedBens.map((bem, index) => {
+      // Logic for assigning lot numbers will be handled by the backend/adapter upon final creation
+      // For now, we can use a placeholder or index.
+      const lotNumber = (wizardData.createdLots?.length || 0) + index + 1;
+      return {
+        id: `temp-lot-${uuidv4()}`,
+        publicId: `temp-pub-${uuidv4().substring(0,8)}`,
+        title: bem.title,
+        number: String(lotNumber).padStart(3, '0'),
+        price: bem.evaluationValue || 0,
+        initialPrice: bem.evaluationValue || 0,
+        bemIds: [bem.id],
+        status: 'EM_BREVE',
+        categoryId: bem.categoryId,
+        subcategoryId: bem.subcategoryId,
+        auctionId: auctionData.id || 'TBD', // Placeholder, will be set on final creation
+      } as Lot;
+    });
+
+    setWizardData(prev => ({
+        ...prev,
+        createdLots: [...(prev.createdLots || []), ...newLots]
+    }));
+    toast({ title: "Sucesso!", description: `${newLots.length} lotes individuais preparados.` });
+    onLotCreated(); // Triggers a re-render and refetch to remove bens from the available list
+    setRowSelection({});
     setIsCreatingIndividualLots(false);
   };
   
-  const handleLotCreatedInModal = (newLot: Lot) => {
+  const handleLotCreatedInModal = (newLotData: Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt'>) => {
+    const newCompleteLot: Lot = {
+        ...(newLotData as Lot), // Cast since we are adding the missing properties
+        id: `temp-lot-${uuidv4()}`,
+        publicId: `temp-pub-${uuidv4().substring(0,8)}`,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+    };
     setWizardData(prev => ({
         ...prev,
-        createdLots: [...(prev.createdLots || []), newLot]
+        createdLots: [...(prev.createdLots || []), newCompleteLot]
     }));
     setRowSelection({}); // Clear selection after lot creation
     onLotCreated(); // Call parent to refetch data
@@ -114,7 +133,7 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
       {wizardData.createdLots && wizardData.createdLots.length > 0 && (
         <div className="mt-6">
             <Separator className="my-4" />
-            <h4 className="text-md font-semibold mb-2">Lotes Criados Nesta Sessão</h4>
+            <h4 className="text-md font-semibold mb-2">Lotes Preparados Nesta Sessão</h4>
             <div className="space-y-2 rounded-md border p-2 max-h-48 overflow-y-auto">
                 {wizardData.createdLots.map(lot => (
                     <div key={lot.id} className="text-sm p-2 bg-secondary/50 rounded-md">
@@ -132,9 +151,6 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         selectedBens={selectedBens}
-        auctionId={auctionData.id || ''}
-        sellerName={auctionData.seller}
-        sellerId={auctionData.sellerId}
         onLotCreated={handleLotCreatedInModal}
       />
     </>

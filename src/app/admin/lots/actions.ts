@@ -1,14 +1,9 @@
-
-
-
-
+// src/app/admin/lots/actions.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { getDatabaseAdapter } from '@/lib/database';
 import type { Lot, LotFormData, LotDbData, Bem } from '@/types';
-import type { LotFromModalValues } from '@/components/admin/lotting/create-lot-modal'; // Import new type
-import { slugify } from '@/lib/sample-data-helpers';
 
 // The main update action that calls the adapter
 export async function updateLot(
@@ -34,109 +29,6 @@ export async function updateLot(
   }
   return result;
 }
-
-export async function createLotWithBens(
-  lotData: LotFromModalValues,
-  bemIds: string[],
-  auctionId: string,
-  sellerId?: string | null,
-  auctionName?: string,
-  sellerName?: string | null
-): Promise<{ success: boolean; message: string; lot?: Lot }> {
-    const db = await getDatabaseAdapter();
-
-    // Mark bens as LOTEADO
-    const updateBensResult = await db.updateBensStatus(bemIds, 'LOTEADO');
-    if (!updateBensResult.success) {
-        return { success: false, message: `Falha ao atualizar status dos bens: ${updateBensResult.message}` };
-    }
-
-    const firstBem = bemIds.length > 0 ? await db.getBem(bemIds[0]) : null;
-
-    // Create the lot with bemIds
-    const dataForDb: LotDbData = {
-        ...lotData,
-        auctionId,
-        bemIds,
-        sellerId: sellerId || undefined,
-        sellerName: sellerName || undefined,
-        auctionName,
-        status: 'EM_BREVE',
-        categoryId: firstBem?.categoryId,
-        subcategoryId: firstBem?.subcategoryId,
-        stateId: firstBem?.locationState, // This assumes state name is the ID, needs adjustment for real DB
-        cityId: firstBem?.locationCity,
-        price: lotData.initialPrice || 0,
-    };
-
-    const result = await db.createLot(dataForDb);
-
-    if (result.success && result.lotId) {
-        revalidatePath('/admin/lots');
-        revalidatePath('/admin/bens');
-        revalidatePath('/admin/lotting');
-        revalidatePath(`/admin/auctions/${auctionId}/edit`);
-        const newLot = await db.getLot(result.lotId);
-        return { success: true, message: 'Lote criado com sucesso!', lot: newLot || undefined };
-    } else {
-        // Rollback bem status if lot creation fails
-        await db.updateBensStatus(bemIds, 'DISPONIVEL');
-        return { success: false, message: result.message };
-    }
-}
-
-
-export async function createIndividualLotsAction(
-    bemIds: string[],
-    auctionId: string,
-    auctionName?: string
-): Promise<{ success: boolean; message: string; createdLots?: Lot[] }> {
-    const db = await getDatabaseAdapter();
-    const lotsToCreate: LotDbData[] = [];
-    const bensToUpdate: string[] = [];
-
-    const auctionData = await db.getAuction(auctionId);
-    if (!auctionData) {
-        return { success: false, message: `Leilão com ID ${auctionId} não encontrado.` };
-    }
-
-    for (const bemId of bemIds) {
-        const bem = await db.getBem(bemId);
-        if (!bem || bem.status !== 'DISPONIVEL') {
-            console.warn(`Bem ${bemId} não encontrado ou não disponível, pulando.`);
-            continue;
-        }
-
-        lotsToCreate.push({
-            title: bem.title,
-            number: '', // The Adapter should generate the next sequential number
-            auctionId: auctionId,
-            bemIds: [bem.id],
-            price: bem.evaluationValue || 0,
-            initialPrice: bem.evaluationValue || 0,
-            status: 'EM_BREVE',
-            categoryId: bem.categoryId,
-            subcategoryId: bem.subcategoryId,
-            sellerId: auctionData.sellerId,
-            sellerName: auctionData.seller,
-        });
-        bensToUpdate.push(bem.id);
-    }
-
-    if (lotsToCreate.length === 0) {
-        return { success: false, message: 'Nenhum bem válido para criar lotes.' };
-    }
-
-    const result = await db.createLotsFromBens(lotsToCreate);
-    if (result.success) {
-        await db.updateBensStatus(bensToUpdate, 'LOTEADO');
-        revalidatePath('/admin/lotting');
-        revalidatePath(`/admin/auctions/${auctionId}/edit`);
-    }
-
-    return result;
-}
-
 
 
 export async function updateLotTitle(

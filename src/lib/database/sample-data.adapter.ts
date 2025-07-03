@@ -1,4 +1,3 @@
-
 // src/lib/database/sample-data.adapter.ts
 import * as fs from 'fs';
 import * as path from 'path';
@@ -87,6 +86,46 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async disconnect(): Promise<void> {
     console.log('[SampleDataAdapter] Disconnect not applicable for sample data.');
     return Promise.resolve();
+  }
+  
+   async createAuctionWithLots(wizardData: WizardData): Promise<{ success: boolean; message: string; auctionId?: string; }> {
+    const auctionDetails = wizardData.auctionDetails || {};
+    const newAuction: Auction = {
+      ...(auctionDetails as any),
+      id: `auc-${uuidv4()}`,
+      publicId: `AUC-PUB-${uuidv4().substring(0,8)}`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lots: [],
+      totalLots: wizardData.createdLots?.length || 0,
+      status: 'RASCUNHO' // Start as draft
+    };
+    this.localData.sampleAuctions.push(newAuction);
+    
+    const allBemIdsToUpdate = new Set<string>();
+
+    (wizardData.createdLots || []).forEach(lotDef => {
+      const newLot: Lot = {
+        ...(lotDef as Lot), // cast since it has most fields
+        id: `lot-${uuidv4()}`,
+        publicId: `LOT-PUB-${uuidv4().substring(0,8)}`,
+        auctionId: newAuction.id, // link to the new auction
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      this.localData.sampleLots.push(newLot);
+      newAuction.lots?.push(newLot);
+      (lotDef.bemIds || []).forEach(id => allBemIdsToUpdate.add(id));
+    });
+
+    this.localData.sampleBens.forEach(bem => {
+      if (allBemIdsToUpdate.has(bem.id)) {
+        bem.status = 'LOTEADO';
+      }
+    });
+
+    this._persistData();
+    return { success: true, message: 'Leilão e lotes criados com sucesso!', auctionId: newAuction.id };
   }
 
   // --- LotCategory ---
@@ -547,10 +586,6 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return { success: true, message: 'Leilão criado!', auctionId: newAuction.id, auctionPublicId: newAuction.publicId };
   }
   
-  async createAuctionAndLinkLots(wizardData: WizardData): Promise<{ success: boolean; message: string; auctionId?: string; }> {
-    console.warn("[SampleDataAdapter] createAuctionAndLinkLots not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
 
   async getAuctions(): Promise<Auction[]> {
     // Simulate joining lots to auctions
@@ -893,5 +928,3 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return { success: false, message: 'Processo não encontrado.'};
   }
 }
-
-    

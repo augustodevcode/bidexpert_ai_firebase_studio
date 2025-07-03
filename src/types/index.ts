@@ -1,5 +1,3 @@
-
-      
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -136,6 +134,7 @@ export interface SellerProfileInfo {
   userId?: string | null;
   judicialBranchId?: string | null; // Link to JudicialBranch model
   judicialBranchName?: string; // For display
+  isJudicial?: boolean;
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
   
@@ -903,7 +902,7 @@ export interface IDatabaseAdapter {
   getSellerByName(name: string): Promise<SellerProfileInfo | null>;
 
   createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }>;
-  createAuctionAndLinkLots(wizardData: WizardData): Promise<{ success: boolean; message: string; auctionId?: string; }>;
+  createAuctionWithLots(wizardData: WizardData): Promise<{ success: boolean; message: string; auctionId?: string; }>;
   getAuctions(): Promise<Auction[]>;
   getAuctionsByIds(ids: string[]): Promise<Auction[]>;
   getAuction(idOrPublicId: string): Promise<Auction | null>;
@@ -922,12 +921,12 @@ export interface IDatabaseAdapter {
   deleteBem(id: string): Promise<{ success: boolean; message: string; }>;
 
   createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }>;
+  createLotsFromBens(lotsToCreate: LotDbData[]): Promise<{ success: boolean, message: string, createdLots?: Lot[] }>;
   getLots(auctionIdParam?: string): Promise<Lot[]>;
   getLotsByIds(ids: string[]): Promise<Lot[]>;
   getLot(idOrPublicId: string): Promise<Lot | null>;
   updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }>;
   deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }>;
-  createLotsFromBens(lotsToCreate: LotDbData[]): Promise<{ success: boolean, message: string, createdLots?: Lot[] }>;
   
   getDirectSaleOffers(): Promise<DirectSaleOffer[]>;
   getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null>;
@@ -1022,6 +1021,3 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
-
-
-    
