@@ -13,11 +13,15 @@ import { getWizardInitialData } from './actions';
 import type { JudicialProcess, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, Bem, Auction, Court, JudicialDistrict, JudicialBranch, Lot } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Rocket, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Rocket, Loader2, Workflow, Eye, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import JudicialProcessForm from '@/app/admin/judicial-processes/judicial-process-form';
 import { createJudicialProcessAction } from '@/app/admin/judicial-processes/actions';
+import { Separator } from '@/components/ui/separator';
+import WizardFlow from '@/components/admin/wizard/WizardFlow';
+import WizardFlowModal from '@/components/admin/wizard/WizardFlowModal';
+
 
 const allSteps = [
   { id: 'type', title: 'Tipo de Leilão', description: 'Selecione a modalidade.' },
@@ -52,6 +56,8 @@ function WizardContent({
   const [isDataRefetching, setIsDataRefetching] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const [isFlowModalOpen, setIsFlowModalOpen] = useState(false);
+
 
   const stepsToUse = useMemo(() => {
     if (wizardData.auctionType === 'JUDICIAL') {
@@ -121,40 +127,59 @@ function WizardContent({
   };
 
   return (
-    <Card className="shadow-lg">
-       <CardHeader>
-          <CardTitle className="text-2xl font-bold font-headline flex items-center">
-            <Rocket className="h-7 w-7 mr-3 text-primary" />
-            Assistente de Criação de Leilão
-          </CardTitle>
-          <CardDescription>Siga os passos para criar um novo leilão de forma completa e guiada.</CardDescription>
-        </CardHeader>
-      {wizardMode === 'main' ? (
-        <>
-          <CardContent className="p-6">
-            <WizardStepper steps={stepsToUse} currentStep={currentStep} onStepClick={goToStep} />
-            <div className="mt-8 p-6 border rounded-lg bg-background min-h-[300px]">
-              {renderStep()}
-            </div>
-          </CardContent>
-          <CardFooter className="mt-8 flex justify-between p-6 pt-0">
-            <Button variant="outline" onClick={prevStep} disabled={currentStep === 0 || isLoading || isDataRefetching}>
-              <ChevronLeft className="mr-2 h-4 w-4" /> Anterior
-            </Button>
-            {currentStep < stepsToUse.length - 1 && (
-              <Button onClick={handleNextStep} disabled={isLoading || isDataRefetching}>
-                {isDataRefetching ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : null}
-                Próximo <ChevronRight className="ml-2 h-4 w-4" />
+    <>
+      <Card className="shadow-lg">
+        <CardHeader>
+            <CardTitle className="text-2xl font-bold font-headline flex items-center">
+              <Rocket className="h-7 w-7 mr-3 text-primary" />
+              Assistente de Criação de Leilão
+            </CardTitle>
+            <CardDescription>Siga os passos para criar um novo leilão de forma completa e guiada.</CardDescription>
+          </CardHeader>
+        {wizardMode === 'main' ? (
+          <>
+            <CardContent className="p-6">
+              <WizardStepper steps={stepsToUse} currentStep={currentStep} onStepClick={goToStep} />
+              <div className="mt-8 p-6 border rounded-lg bg-background min-h-[300px]">
+                {renderStep()}
+              </div>
+            </CardContent>
+            <CardFooter className="mt-8 flex justify-between p-6 pt-0">
+              <Button variant="outline" onClick={prevStep} disabled={currentStep === 0 || isLoading || isDataRefetching}>
+                <ChevronLeft className="mr-2 h-4 w-4" /> Anterior
               </Button>
-            )}
-          </CardFooter>
-        </>
-      ) : (
-        <CardContent className="p-6">
-          {renderStep()}
+              {currentStep < stepsToUse.length - 1 && (
+                <Button onClick={handleNextStep} disabled={isLoading || isDataRefetching}>
+                  {isDataRefetching ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : null}
+                  Próximo <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              )}
+            </CardFooter>
+          </>
+        ) : (
+          <CardContent className="p-6">
+            {renderStep()}
+          </CardContent>
+        )}
+      </Card>
+      
+      <Card className="shadow-lg mt-8">
+        <CardHeader className="flex flex-row justify-between items-center">
+          <div>
+            <CardTitle className="text-xl font-semibold flex items-center"><Workflow className="h-5 w-5 mr-2 text-primary" /> Visualização do Fluxo</CardTitle>
+            <CardDescription>Uma visão geral do progresso atual do seu cadastro.</CardDescription>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setIsFlowModalOpen(true)}>
+            <Search className="mr-2 h-4 w-4" /> Visão Ampliada
+          </Button>
+        </CardHeader>
+        <CardContent className="h-96 w-full p-0">
+          <WizardFlow />
         </CardContent>
-      )}
-    </Card>
+      </Card>
+      
+      <WizardFlowModal isOpen={isFlowModalOpen} onClose={() => setIsFlowModalOpen(false)} />
+    </>
   );
 }
 
