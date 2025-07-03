@@ -1,14 +1,11 @@
-
 // src/lib/database/index.ts
 import type { IDatabaseAdapter } from '@/types';
 import { cookies } from 'next/headers';
 
-// The singleton instance has been removed to ensure request-specific cookie data is always used.
-// let dbInstance: IDatabaseAdapter | undefined;
+// Singleton instance specifically for the SampleDataAdapter
+let sampleDbInstance: IDatabaseAdapter | undefined;
 
 export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
-  // The check for an existing instance has been removed. A new adapter will be created for each request.
-
   let dbFromCookie: string | undefined;
   try {
     const cookieStore = cookies();
@@ -23,13 +20,22 @@ export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
 
   console.log(`[DB Factory - Initializing] Active System: ${activeSystem} (Cookie: ${dbFromCookie || 'N/A'}, Env: ${activeSystemEnv || 'N/A'}).`);
 
-  let newInstance: IDatabaseAdapter | undefined;
+  // If the active system is SAMPLE_DATA, use a singleton pattern.
+  if (activeSystem === 'SAMPLE_DATA') {
+    if (!sampleDbInstance) {
+      const { SampleDataAdapter } = await import('./sample-data.adapter');
+      console.log('[DB Factory] Creating new singleton instance for SampleDataAdapter.');
+      sampleDbInstance = new SampleDataAdapter();
+    } else {
+      console.log('[DB Factory] Returning existing singleton instance of SampleDataAdapter.');
+    }
+    return sampleDbInstance;
+  }
+  
+  // For all other database types, create a new instance for each request (stateless).
+  let newInstance: IDatabaseAdapter;
 
   switch (activeSystem) {
-    case 'SAMPLE_DATA':
-      const { SampleDataAdapter } = await import('./sample-data.adapter');
-      newInstance = new SampleDataAdapter();
-      break;
     case 'POSTGRES':
       const { PostgresAdapter } = await import('./postgres.adapter');
       newInstance = new PostgresAdapter();
@@ -54,11 +60,5 @@ export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
       throw new Error(errorMessage);
   }
   
-  if (!newInstance) {
-     const criticalError = `[DB Factory] CRITICAL: FAILED to create a dbInstance for system: ${activeSystem}.`;
-     throw new Error(criticalError);
-  }
-  
-  // No longer caching the instance. Return the new one directly.
   return newInstance;
 }
