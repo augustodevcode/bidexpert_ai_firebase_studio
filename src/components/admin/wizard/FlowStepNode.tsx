@@ -2,14 +2,18 @@
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Check, Loader, Circle, Workflow, CircleDot } from 'lucide-react';
+import { Check, Loader, Circle, Workflow, CircleDot, Pencil } from 'lucide-react';
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 interface NodeData {
   title: string;
   status: 'todo' | 'in_progress' | 'done';
   details: { label: string; value?: string | number }[];
+  entityType?: 'judicial-processes';
+  entityId?: string;
 }
 
 const statusConfig = {
@@ -40,13 +44,24 @@ const statusConfig = {
 };
 
 const FlowStepNode = ({ data }: NodeProps<NodeData>) => {
-  const { title, status, details } = data;
+  const { title, status, details, entityType, entityId } = data;
   const config = statusConfig[status];
+  const hasLink = entityType && entityId;
 
   return (
     <>
       <Handle type="target" position={Position.Top} className="!bg-primary" />
-      <Card className={cn("w-64 shadow-md transition-all", config.cardBorder, config.opacity)}>
+      <Card className={cn("w-64 shadow-md transition-all group/nodestep relative", config.cardBorder, config.opacity)}>
+         {hasLink && (
+            <Link href={`/admin/${entityType}/${entityId}/edit`} passHref legacyBehavior>
+                <a target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="absolute top-2 right-2 z-10" aria-label={`Editar ${title}`}>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/nodestep:opacity-100 transition-opacity bg-background/50 hover:bg-accent">
+                        <Pencil className="h-3.5 w-3.5" />
+                        <span className="sr-only">Editar {title}</span>
+                    </Button>
+                </a>
+            </Link>
+        )}
         <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0 gap-2">
           <CardTitle className={cn("text-base font-semibold flex items-center gap-2 truncate", config.titleColor)}>
             {config.icon} <span className="truncate">{title}</span>

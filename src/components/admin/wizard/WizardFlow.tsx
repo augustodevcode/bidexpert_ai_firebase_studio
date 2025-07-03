@@ -30,8 +30,10 @@ const WizardFlow = () => {
     stepsDefinition.forEach((step, index) => {
         let status: 'done' | 'in_progress' | 'todo' = 'todo';
         let details: { label: string; value?: string | number }[] = [];
+        let entityType: 'judicial-processes' | undefined = undefined;
+        let entityId: string | undefined = undefined;
 
-        // Determine status based on data, then override if it's the current step
+        // Determine status and details based on data, then override if it's the current step
         switch(step.id) {
             case 'type':
                 if (wizardData.auctionType) {
@@ -43,10 +45,12 @@ const WizardFlow = () => {
                 if (wizardData.judicialProcess?.id) {
                     status = 'done';
                     details.push({ label: 'Processo', value: wizardData.judicialProcess.processNumber });
+                    entityType = 'judicial-processes';
+                    entityId = wizardData.judicialProcess.id;
                 }
                 break;
             case 'auction':
-                if (wizardData.auctionDetails?.title) {
+                if (wizardData.auctionDetails?.title && wizardData.auctionDetails.auctioneer && wizardData.auctionDetails.seller) {
                     status = 'done';
                     if (wizardData.auctionDetails.title) details.push({ label: 'Título', value: wizardData.auctionDetails.title });
                     if (wizardData.auctionDetails.auctioneer) details.push({ label: 'Leiloeiro', value: wizardData.auctionDetails.auctioneer });
@@ -60,7 +64,9 @@ const WizardFlow = () => {
                 }
                 break;
              case 'review':
-                details.push({ label: 'Pronto para finalizar' });
+                if (wizardData.createdLots && wizardData.createdLots.length > 0) {
+                    details.push({ label: 'Pronto para finalizar' });
+                }
                 break;
         }
         
@@ -76,7 +82,9 @@ const WizardFlow = () => {
             data: {
                 title: step.title,
                 status: status,
-                details: details.filter(d => d.value),
+                details: details.filter(d => d.value !== undefined && d.value !== null),
+                entityType: entityType,
+                entityId: entityId,
             },
         });
         
