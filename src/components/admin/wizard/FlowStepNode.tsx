@@ -47,11 +47,11 @@ const FlowStepNode = ({ data }: NodeProps<NodeData>) => {
     <>
       <Handle type="target" position={Position.Top} className="!bg-primary" />
       <Card className={cn("w-64 shadow-md transition-all", config.cardBorder, config.opacity)}>
-        <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0">
-          <CardTitle className={cn("text-base font-semibold flex items-center gap-2", config.titleColor)}>
-            {config.icon} {title}
+        <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0 gap-2">
+          <CardTitle className={cn("text-base font-semibold flex items-center gap-2 truncate", config.titleColor)}>
+            {config.icon} <span className="truncate">{title}</span>
           </CardTitle>
-          <Badge variant={config.badgeVariant} className="text-xs">{config.badgeText}</Badge>
+          <Badge variant={config.badgeVariant} className="text-xs shrink-0">{config.badgeText}</Badge>
         </CardHeader>
         <CardContent className="p-3 pt-0 text-xs text-muted-foreground space-y-1">
           {details && details.map((detail, index) => (
