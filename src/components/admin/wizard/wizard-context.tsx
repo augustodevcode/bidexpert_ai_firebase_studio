@@ -28,14 +28,14 @@ const WizardContext = createContext<WizardContextType | undefined>(undefined);
 
 export function WizardProvider({ children }: { children: ReactNode }) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [wizardData, setWizardData] = useState<WizardData>({});
+  const [wizardData, setWizardData] = useState<WizardData>({ createdLots: [] });
 
   const nextStep = () => setCurrentStep(prev => prev + 1);
   const prevStep = () => setCurrentStep(prev => (prev > 0 ? prev - 1 : 0));
   const goToStep = (step: number) => setCurrentStep(step);
   const resetWizard = () => {
     setCurrentStep(0);
-    setWizardData({});
+    setWizardData({ createdLots: [] });
   };
 
   return (

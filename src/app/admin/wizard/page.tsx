@@ -8,11 +8,14 @@ import Step1TypeSelection from '@/components/admin/wizard/steps/step-1-type-sele
 import Step2JudicialSetup from '@/components/admin/wizard/steps/step-2-judicial-setup';
 import Step3AuctionDetails from '@/components/admin/wizard/steps/step-3-auction-details';
 import Step4Lotting from '@/components/admin/wizard/steps/step-4-lotting';
+import Step5Review from '@/components/admin/wizard/steps/step-5-review'; // Import the new step
 import { getWizardInitialData } from './actions';
-import type { JudicialProcess, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, Bem, Auction } from '@/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import type { JudicialProcess, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, Bem, Auction, Court, JudicialDistrict, JudicialBranch } from '@/types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Rocket, Loader2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+
 
 const allSteps = [
   { id: 'type', title: 'Tipo de Leilão', description: 'Selecione a modalidade.' },
@@ -28,10 +31,13 @@ interface WizardDataForFetching {
     auctioneers: AuctioneerProfileInfo[];
     sellers: SellerProfileInfo[];
     availableBens: Bem[];
+    courts: Court[];
+    districts: JudicialDistrict[];
+    branches: JudicialBranch[];
 }
 
 function WizardContent({ fetchedData, isLoading, refetchData }: { fetchedData: WizardDataForFetching | null, isLoading: boolean, refetchData: () => void }) {
-  const { currentStep, wizardData, nextStep, prevStep, goToStep } = useWizard();
+  const { currentStep, wizardData, nextStep, prevStep, goToStep, setWizardData } = useWizard();
   
   const stepsToUse = useMemo(() => {
     if (wizardData.auctionType === 'JUDICIAL') {
@@ -40,25 +46,58 @@ function WizardContent({ fetchedData, isLoading, refetchData }: { fetchedData: W
     return allSteps.filter(step => step.id !== 'judicial');
   }, [wizardData.auctionType]);
 
+  const currentStepId = stepsToUse[currentStep]?.id;
+  const { toast } = useToast();
+
+  const handleNextStep = () => {
+    // Adicionar validações antes de avançar
+    if (currentStepId === 'auction') {
+      if (!wizardData.auctionDetails?.title || !wizardData.auctionDetails.auctioneer || !wizardData.auctionDetails.seller) {
+        toast({ title: "Campos Obrigatórios", description: "Por favor, preencha o título, leiloeiro e comitente do leilão.", variant: "destructive" });
+        return;
+      }
+    }
+    nextStep();
+  }
+
+  const handleLotCreation = (createdLot: Lot) => {
+    setWizardData(prev => ({
+      ...prev,
+      createdLots: [...(prev.createdLots || []), createdLot]
+    }));
+    refetchData(); // To update the list of available 'bens'
+  };
+
+
   const renderStep = () => {
     if (isLoading || !fetchedData) {
       return <div className="flex items-center justify-center h-full min-h-[250px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
     }
 
-    const currentStepId = stepsToUse[currentStep]?.id;
     switch (currentStepId) {
       case 'type':
         return <Step1TypeSelection />;
       case 'judicial':
         return <Step2JudicialSetup processes={fetchedData.judicialProcesses} />;
       case 'auction':
-        return <Step3AuctionDetails categories={fetchedData.categories} auctioneers={fetchedData.auctioneers} sellers={fetchedData.sellers} />;
+        return <Step3AuctionDetails 
+                    categories={fetchedData.categories} 
+                    auctioneers={fetchedData.auctioneers} 
+                    sellers={fetchedData.sellers} 
+                    wizardData={wizardData}
+                    setWizardData={setWizardData}
+                />;
       case 'lotting':
         return <Step4Lotting 
-                  availableBens={fetchedData.availableBens} 
+                  availableBens={fetchedData.availableBens.filter(bem => wizardData.judicialProcess ? bem.judicialProcessId === wizardData.judicialProcess.id : true)}
                   auctionData={wizardData.auctionDetails as Partial<Auction>}
-                  onLotCreated={refetchData} // Pass the refetch function
+                  onLotCreated={handleLotCreation}
+                  createdLots={wizardData.createdLots || []}
+                  wizardData={wizardData}
+                  setWizardData={setWizardData}
                 />;
+      case 'review':
+        return <Step5Review wizardData={wizardData} />;
       default:
         return (
           <div className="text-center py-10">
@@ -68,15 +107,6 @@ function WizardContent({ fetchedData, isLoading, refetchData }: { fetchedData: W
     }
   };
 
-  const isNextDisabled = () => {
-      const currentStepId = stepsToUse[currentStep]?.id;
-      if (isLoading) return true;
-      if (currentStepId === 'type' && !wizardData.auctionType) return true;
-      if (currentStepId === 'judicial' && !wizardData.judicialProcess) return true;
-      // Add more validation for future steps here
-      return false;
-  };
-  
   return (
     <Card className="shadow-lg">
        <CardHeader>
@@ -93,14 +123,14 @@ function WizardContent({ fetchedData, isLoading, refetchData }: { fetchedData: W
         <div className="mt-8 p-6 border rounded-lg bg-background min-h-[300px]">
           {renderStep()}
         </div>
-        <div className="mt-8 flex justify-between">
+        <CardFooter className="mt-8 flex justify-between p-0 pt-6">
           <Button variant="outline" onClick={prevStep} disabled={currentStep === 0}>
             <ChevronLeft className="mr-2 h-4 w-4" /> Anterior
           </Button>
-          <Button onClick={nextStep} disabled={currentStep === stepsToUse.length - 1 || isNextDisabled()}>
+          <Button onClick={handleNextStep} disabled={currentStep === stepsToUse.length - 1}>
             Próximo <ChevronRight className="ml-2 h-4 w-4" />
           </Button>
-        </div>
+        </CardFooter>
       </CardContent>
     </Card>
   );

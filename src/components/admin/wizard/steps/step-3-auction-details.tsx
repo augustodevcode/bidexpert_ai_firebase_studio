@@ -5,7 +5,7 @@ import { useWizard } from '../wizard-context';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
+import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, JudicialProcess } from '@/types';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,12 +17,14 @@ import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 interface Step3AuctionDetailsProps {
   categories: LotCategory[];
   auctioneers: AuctioneerProfileInfo[];
   sellers: SellerProfileInfo[];
+  wizardData: { judicialProcess?: JudicialProcess; auctionDetails?: any; }; // Simplified type for props
+  setWizardData: React.Dispatch<React.SetStateAction<any>>;
 }
 
 const auctionDetailsSchema = z.object({
@@ -36,31 +38,40 @@ const auctionDetailsSchema = z.object({
 
 type FormValues = z.infer<typeof auctionDetailsSchema>;
 
-export default function Step3AuctionDetails({ categories, auctioneers, sellers }: Step3AuctionDetailsProps) {
-  const { wizardData, setWizardData } = useWizard();
-
-  const defaultSellerName = wizardData.auctionType === 'JUDICIAL' 
-      ? wizardData.judicialProcess?.courtName || '' 
-      : wizardData.auctionDetails?.seller || '';
-
+export default function Step3AuctionDetails({ categories, auctioneers, sellers, wizardData, setWizardData }: Step3AuctionDetailsProps) {
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(auctionDetailsSchema),
     defaultValues: {
       title: wizardData.auctionDetails?.title || '',
       description: wizardData.auctionDetails?.description || '',
       auctioneer: wizardData.auctionDetails?.auctioneer || '',
-      seller: defaultSellerName,
+      seller: wizardData.auctionDetails?.seller || '',
       auctionDate: wizardData.auctionDetails?.auctionDate ? new Date(wizardData.auctionDetails.auctionDate) : new Date(),
       endDate: wizardData.auctionDetails?.endDate ? new Date(wizardData.auctionDetails.endDate) : undefined,
     }
   });
 
-  React.useEffect(() => {
-    // This effect will update the wizard context whenever the form state changes.
-    // We could also use `form.handleSubmit` with a dummy function and then update context,
-    // but this is simpler for a multi-step form where we just want to save progress.
+  // Auto-populate seller from judicial process when it changes
+  useEffect(() => {
+    if (wizardData.auctionType === 'JUDICIAL' && wizardData.judicialProcess) {
+      const defendant = wizardData.judicialProcess.parties.find(p => p.partyType === 'REU');
+      if (defendant && defendant.name) {
+        // Check if a seller with this name exists, if so, use it. Otherwise, just set the name.
+        const existingSeller = sellers.find(s => s.name.toLowerCase() === defendant.name.toLowerCase());
+        const sellerNameToSet = existingSeller ? existingSeller.name : defendant.name;
+        
+        if (form.getValues('seller') !== sellerNameToSet) {
+          form.setValue('seller', sellerNameToSet);
+        }
+      }
+    }
+  }, [wizardData.judicialProcess, wizardData.auctionType, sellers, form]);
+
+
+  useEffect(() => {
     const subscription = form.watch((value) => {
-      setWizardData(prev => ({
+      setWizardData((prev: any) => ({
         ...prev,
         auctionDetails: {
           ...prev.auctionDetails,
@@ -126,8 +137,8 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Comitente/Vendedor</FormLabel>
-                     <Select onValueChange={field.onChange} value={field.value || ''}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl>
+                     <Select onValueChange={field.onChange} value={field.value || ''} disabled={wizardData.auctionType === 'JUDICIAL' && !!wizardData.judicialProcess}>
+                      <FormControl><SelectTrigger><SelectValue placeholder={wizardData.auctionType === 'JUDICIAL' ? 'Definido pelo Processo' : 'Selecione...'} /></SelectTrigger></FormControl>
                       <SelectContent>
                         {sellers.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
                       </SelectContent>
