@@ -127,7 +127,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
       ...data,
       slug: data.name ? slugify(data.name) : this.localData.sampleLotCategories[index].slug,
       updatedAt: new Date()
-    };
+    } as LotCategory;
     this._persistData();
     return { success: true, message: 'Categoria atualizada com sucesso!' };
   }
@@ -492,8 +492,20 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   }
 
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> {
-    console.warn("[SampleDataAdapter] createSeller not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const newSeller: SellerProfileInfo = {
+      ...(data as any),
+      id: `seller-${uuidv4()}`,
+      publicId: `SELL-PUB-${uuidv4().substring(0, 8)}`,
+      slug: slugify(data.name),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    if (!this.localData.sampleSellers) {
+        this.localData.sampleSellers = [];
+    }
+    this.localData.sampleSellers.push(newSeller);
+    this._persistData();
+    return { success: true, message: 'Comitente criado com sucesso!', sellerId: newSeller.id, sellerPublicId: newSeller.publicId };
   }
   async getSellers(): Promise<SellerProfileInfo[]> {
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleSellers)));
@@ -735,11 +747,36 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   }
   
   // --- Judicial CRUDs
-  async getCourts(): Promise<Court[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleCourts || []))); }
-  async getCourt(id: string): Promise<Court | null> { const court = this.localData.sampleCourts.find(c => c.id === id); return Promise.resolve(court ? JSON.parse(JSON.stringify(court)) : null); }
-  async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> { const newCourt: Court = { ...data, id: `court-${slugify(data.name)}`, slug: slugify(data.name), createdAt: new Date(), updatedAt: new Date() }; this.localData.sampleCourts.push(newCourt); this._persistData(); return { success: true, message: 'Tribunal criado!', courtId: newCourt.id }; }
-  async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> { const index = this.localData.sampleCourts.findIndex(c => c.id === id); if (index === -1) return { success: false, message: 'Tribunal não encontrado.'}; this.localData.sampleCourts[index] = { ...this.localData.sampleCourts[index], ...data, slug: data.name ? slugify(data.name) : this.localData.sampleCourts[index].slug } as Court; this._persistData(); return { success: true, message: 'Tribunal atualizado.' }; }
-  async deleteCourt(id: string): Promise<{ success: boolean; message: string; }> { const initialLength = this.localData.sampleCourts.length; this.localData.sampleCourts = this.localData.sampleCourts.filter(c => c.id !== id); if (this.localData.sampleCourts.length < initialLength) { this._persistData(); return { success: true, message: 'Tribunal excluído.' }; } return { success: false, message: 'Tribunal não encontrado.'}; }
+  async getCourts(): Promise<Court[]> { 
+    return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleCourts || []))); 
+  }
+  async getCourt(id: string): Promise<Court | null> { 
+    const court = (this.localData.sampleCourts || []).find(c => c.id === id); 
+    return Promise.resolve(court ? JSON.parse(JSON.stringify(court)) : null); 
+  }
+  async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> { 
+    const newCourt: Court = { ...data, id: `court-${slugify(data.name)}`, slug: slugify(data.name), createdAt: new Date(), updatedAt: new Date() }; 
+    if (!this.localData.sampleCourts) this.localData.sampleCourts = [];
+    this.localData.sampleCourts.push(newCourt); 
+    this._persistData(); 
+    return { success: true, message: 'Tribunal criado!', courtId: newCourt.id }; 
+  }
+  async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> { 
+    const index = this.localData.sampleCourts.findIndex(c => c.id === id); 
+    if (index === -1) return { success: false, message: 'Tribunal não encontrado.'}; 
+    this.localData.sampleCourts[index] = { ...this.localData.sampleCourts[index], ...data, slug: data.name ? slugify(data.name) : this.localData.sampleCourts[index].slug, updatedAt: new Date() } as Court; 
+    this._persistData(); 
+    return { success: true, message: 'Tribunal atualizado.' }; 
+  }
+  async deleteCourt(id: string): Promise<{ success: boolean; message: string; }> { 
+    const initialLength = this.localData.sampleCourts.length; 
+    this.localData.sampleCourts = this.localData.sampleCourts.filter(c => c.id !== id); 
+    if (this.localData.sampleCourts.length < initialLength) { 
+        this._persistData(); 
+        return { success: true, message: 'Tribunal excluído.' }; 
+    } 
+    return { success: false, message: 'Tribunal não encontrado.'}; 
+  }
   
   async getJudicialDistricts(): Promise<JudicialDistrict[]> {
     const districts = this.localData.sampleJudicialDistricts || [];
@@ -750,40 +787,81 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     });
     return Promise.resolve(JSON.parse(JSON.stringify(enriched)));
   }
-  async getJudicialDistrict(id: string): Promise<JudicialDistrict | null> { const district = this.localData.sampleJudicialDistricts.find(d => d.id === id); return Promise.resolve(district ? JSON.parse(JSON.stringify(district)) : null); }
-  async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> { const newDistrict: JudicialDistrict = { ...data, id: `dist-${slugify(data.name)}`, slug: slugify(data.name), createdAt: new Date(), updatedAt: new Date() }; this.localData.sampleJudicialDistricts.push(newDistrict); this._persistData(); return { success: true, message: 'Comarca criada!', districtId: newDistrict.id }; }
-  async updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> { const index = this.localData.sampleJudicialDistricts.findIndex(d => d.id === id); if (index === -1) return { success: false, message: 'Comarca não encontrada.'}; this.localData.sampleJudicialDistricts[index] = { ...this.localData.sampleJudicialDistricts[index], ...data, slug: data.name ? slugify(data.name) : this.localData.sampleJudicialDistricts[index].slug } as JudicialDistrict; this._persistData(); return { success: true, message: 'Comarca atualizada.' }; }
-  async deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> { const initialLength = this.localData.sampleJudicialDistricts.length; this.localData.sampleJudicialDistricts = this.localData.sampleJudicialDistricts.filter(d => d.id !== id); if (this.localData.sampleJudicialDistricts.length < initialLength) { this._persistData(); return { success: true, message: 'Comarca excluída.' }; } return { success: false, message: 'Comarca não encontrada.' }; }
+  async getJudicialDistrict(id: string): Promise<JudicialDistrict | null> { 
+      const district = (this.localData.sampleJudicialDistricts || []).find(d => d.id === id); 
+      return Promise.resolve(district ? JSON.parse(JSON.stringify(district)) : null); 
+  }
+  async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> { 
+      const newDistrict: JudicialDistrict = { ...data, id: `dist-${slugify(data.name)}`, slug: slugify(data.name), createdAt: new Date(), updatedAt: new Date() }; 
+      if (!this.localData.sampleJudicialDistricts) this.localData.sampleJudicialDistricts = [];
+      this.localData.sampleJudicialDistricts.push(newDistrict); 
+      this._persistData(); return { success: true, message: 'Comarca criada!', districtId: newDistrict.id }; 
+  }
+  async updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> { 
+    const index = this.localData.sampleJudicialDistricts.findIndex(d => d.id === id); 
+    if (index === -1) return { success: false, message: 'Comarca não encontrada.'}; 
+    this.localData.sampleJudicialDistricts[index] = { ...this.localData.sampleJudicialDistricts[index], ...data, slug: data.name ? slugify(data.name) : this.localData.sampleJudicialDistricts[index].slug } as JudicialDistrict; 
+    this._persistData(); 
+    return { success: true, message: 'Comarca atualizada.' }; 
+  }
+  async deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> { 
+    const initialLength = this.localData.sampleJudicialDistricts.length; 
+    this.localData.sampleJudicialDistricts = this.localData.sampleJudicialDistricts.filter(d => d.id !== id); 
+    if (this.localData.sampleJudicialDistricts.length < initialLength) { this._persistData(); return { success: true, message: 'Comarca excluída.' }; } 
+    return { success: false, message: 'Comarca não encontrada.' }; 
+  }
   
   async getJudicialBranches(): Promise<JudicialBranch[]> { 
     const branches = this.localData.sampleJudicialBranches || [];
     const enriched = branches.map(b => {
-        const district = this.localData.sampleJudicialDistricts.find(d => d.id === b.districtId);
+        const district = (this.localData.sampleJudicialDistricts || []).find(d => d.id === b.districtId);
         return { ...b, districtName: district?.name };
     });
     return Promise.resolve(JSON.parse(JSON.stringify(enriched)));
   }
-  async getJudicialBranch(id: string): Promise<JudicialBranch | null> { const branch = this.localData.sampleJudicialBranches.find(b => b.id === id); return Promise.resolve(branch ? JSON.parse(JSON.stringify(branch)) : null); }
-  async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }> { const newBranch: JudicialBranch = { ...data, id: `branch-${uuidv4()}`, slug: slugify(data.name), createdAt: new Date(), updatedAt: new Date() }; this.localData.sampleJudicialBranches.push(newBranch); this._persistData(); return { success: true, message: 'Vara criada!', branchId: newBranch.id }; }
-  async updateJudicialBranch(id: string, data: Partial<JudicialBranchFormData>): Promise<{ success: boolean; message: string; }> { const index = this.localData.sampleJudicialBranches.findIndex(b => b.id === id); if (index === -1) return { success: false, message: 'Vara não encontrada.'}; this.localData.sampleJudicialBranches[index] = { ...this.localData.sampleJudicialBranches[index], ...data, slug: data.name ? slugify(data.name) : this.localData.sampleJudicialBranches[index].slug } as JudicialBranch; this._persistData(); return { success: true, message: 'Vara atualizada.' }; }
-  async deleteJudicialBranch(id: string): Promise<{ success: boolean; message: string; }> { const initialLength = this.localData.sampleJudicialBranches.length; this.localData.sampleJudicialBranches = this.localData.sampleJudicialBranches.filter(b => b.id !== id); if (this.localData.sampleJudicialBranches.length < initialLength) { this._persistData(); return { success: true, message: 'Vara excluída.' }; } return { success: false, message: 'Vara não encontrada.' }; }
+  async getJudicialBranch(id: string): Promise<JudicialBranch | null> { 
+      const branch = (this.localData.sampleJudicialBranches || []).find(b => b.id === id); 
+      return Promise.resolve(branch ? JSON.parse(JSON.stringify(branch)) : null); 
+  }
+  async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }> { 
+      const newBranch: JudicialBranch = { ...data, id: `branch-${uuidv4()}`, slug: slugify(data.name), createdAt: new Date(), updatedAt: new Date() }; 
+      if (!this.localData.sampleJudicialBranches) this.localData.sampleJudicialBranches = [];
+      this.localData.sampleJudicialBranches.push(newBranch); 
+      this._persistData(); 
+      return { success: true, message: 'Vara criada!', branchId: newBranch.id }; 
+  }
+  async updateJudicialBranch(id: string, data: Partial<JudicialBranchFormData>): Promise<{ success: boolean; message: string; }> { 
+      const index = this.localData.sampleJudicialBranches.findIndex(b => b.id === id); 
+      if (index === -1) return { success: false, message: 'Vara não encontrada.'}; 
+      this.localData.sampleJudicialBranches[index] = { ...this.localData.sampleJudicialBranches[index], ...data, slug: data.name ? slugify(data.name) : this.localData.sampleJudicialBranches[index].slug } as JudicialBranch; 
+      this._persistData(); 
+      return { success: true, message: 'Vara atualizada.' }; 
+  }
+  async deleteJudicialBranch(id: string): Promise<{ success: boolean; message: string; }> { 
+      const initialLength = this.localData.sampleJudicialBranches.length; 
+      this.localData.sampleJudicialBranches = this.localData.sampleJudicialBranches.filter(b => b.id !== id); 
+      if (this.localData.sampleJudicialBranches.length < initialLength) { this._persistData(); return { success: true, message: 'Vara excluída.' }; } 
+      return { success: false, message: 'Vara não encontrada.' }; 
+  }
   
   async getJudicialProcesses(): Promise<JudicialProcess[]> {
       const enriched = (this.localData.sampleJudicialProcesses || []).map(p => {
-        const court = this.localData.sampleCourts.find(c => c.id === p.courtId);
-        const district = this.localData.sampleJudicialDistricts.find(d => d.id === p.districtId);
-        const branch = this.localData.sampleJudicialBranches.find(b => b.id === p.branchId);
-        return {...p, courtName: court?.name, districtName: district?.name, branchName: branch?.name };
+        const court = (this.localData.sampleCourts || []).find(c => c.id === p.courtId);
+        const district = (this.localData.sampleJudicialDistricts || []).find(d => d.id === p.districtId);
+        const branch = (this.localData.sampleJudicialBranches || []).find(b => b.id === p.branchId);
+        const seller = (this.localData.sampleSellers || []).find(s => s.id === p.sellerId);
+        return {...p, courtName: court?.name, districtName: district?.name, branchName: branch?.name, sellerName: seller?.name };
       });
       return Promise.resolve(JSON.parse(JSON.stringify(enriched)));
   }
   async getJudicialProcess(id: string): Promise<JudicialProcess | null> { 
       const process = (this.localData.sampleJudicialProcesses || []).find(p => p.id === id || p.publicId === id);
       if(!process) return null;
-      const court = this.localData.sampleCourts.find(c => c.id === process.courtId);
-      const district = this.localData.sampleJudicialDistricts.find(d => d.id === process.districtId);
-      const branch = this.localData.sampleJudicialBranches.find(b => b.id === process.branchId);
-      return Promise.resolve(JSON.parse(JSON.stringify({...process, courtName: court?.name, districtName: district?.name, branchName: branch?.name })));
+      const court = (this.localData.sampleCourts || []).find(c => c.id === process.courtId);
+      const district = (this.localData.sampleJudicialDistricts || []).find(d => d.id === process.districtId);
+      const branch = (this.localData.sampleJudicialBranches || []).find(b => b.id === process.branchId);
+      const seller = (this.localData.sampleSellers || []).find(s => s.id === process.sellerId);
+      return Promise.resolve(JSON.parse(JSON.stringify({...process, courtName: court?.name, districtName: district?.name, branchName: branch?.name, sellerName: seller?.name })));
   }
   async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
     const newProcess: JudicialProcess = {
@@ -815,3 +893,5 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return { success: false, message: 'Processo não encontrado.'};
   }
 }
+
+    
