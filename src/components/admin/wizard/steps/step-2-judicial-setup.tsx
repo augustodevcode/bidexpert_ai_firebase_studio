@@ -1,4 +1,4 @@
-
+// src/components/admin/wizard/steps/step-2-judicial-setup.tsx
 'use client';
 
 import { useWizard } from '../wizard-context';
@@ -8,14 +8,14 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Check, ChevronsUpDown, FileText, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
 import { useState } from 'react';
 
 interface Step2JudicialSetupProps {
   processes: JudicialProcess[];
+  onAddNewProcess: () => void;
 }
 
-export default function Step2JudicialSetup({ processes }: Step2JudicialSetupProps) {
+export default function Step2JudicialSetup({ processes, onAddNewProcess }: Step2JudicialSetupProps) {
   const { wizardData, setWizardData } = useWizard();
   const [open, setOpen] = useState(false);
 
@@ -70,11 +70,9 @@ export default function Step2JudicialSetup({ processes }: Step2JudicialSetupProp
             </Command>
           </PopoverContent>
         </Popover>
-        <Button variant="secondary" asChild>
-            <Link href="/admin/judicial-processes/new" target="_blank">
-                <PlusCircle className="mr-2 h-4 w-4"/>
-                Cadastrar Novo Processo
-            </Link>
+        <Button variant="secondary" onClick={onAddNewProcess}>
+            <PlusCircle className="mr-2 h-4 w-4"/>
+            Cadastrar Novo Processo
         </Button>
       </div>
 

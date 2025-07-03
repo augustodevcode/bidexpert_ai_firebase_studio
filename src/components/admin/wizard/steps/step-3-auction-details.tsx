@@ -1,4 +1,4 @@
-
+// src/components/admin/wizard/steps/step-3-auction-details.tsx
 'use client';
 
 import { useWizard } from '../wizard-context';
@@ -23,8 +23,6 @@ interface Step3AuctionDetailsProps {
   categories: LotCategory[];
   auctioneers: AuctioneerProfileInfo[];
   sellers: SellerProfileInfo[];
-  wizardData: { judicialProcess?: JudicialProcess; auctionDetails?: any; }; // Simplified type for props
-  setWizardData: React.Dispatch<React.SetStateAction<any>>;
 }
 
 const auctionDetailsSchema = z.object({
@@ -38,8 +36,9 @@ const auctionDetailsSchema = z.object({
 
 type FormValues = z.infer<typeof auctionDetailsSchema>;
 
-export default function Step3AuctionDetails({ categories, auctioneers, sellers, wizardData, setWizardData }: Step3AuctionDetailsProps) {
-  
+export default function Step3AuctionDetails({ categories, auctioneers, sellers }: Step3AuctionDetailsProps) {
+  const { wizardData, setWizardData } = useWizard();
+
   const form = useForm<FormValues>({
     resolver: zodResolver(auctionDetailsSchema),
     defaultValues: {
@@ -52,21 +51,20 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers, 
     }
   });
 
-  // Auto-populate seller from judicial process when it changes
+  const defendant = wizardData.auctionType === 'JUDICIAL' && wizardData.judicialProcess 
+    ? wizardData.judicialProcess.parties.find(p => p.partyType === 'REU') 
+    : null;
+
   useEffect(() => {
-    if (wizardData.auctionType === 'JUDICIAL' && wizardData.judicialProcess) {
-      const defendant = wizardData.judicialProcess.parties.find(p => p.partyType === 'REU');
-      if (defendant && defendant.name) {
-        // Check if a seller with this name exists, if so, use it. Otherwise, just set the name.
-        const existingSeller = sellers.find(s => s.name.toLowerCase() === defendant.name.toLowerCase());
-        const sellerNameToSet = existingSeller ? existingSeller.name : defendant.name;
-        
-        if (form.getValues('seller') !== sellerNameToSet) {
-          form.setValue('seller', sellerNameToSet);
-        }
+    if (defendant && defendant.name) {
+      const existingSeller = sellers.find(s => s.name.toLowerCase() === defendant.name.toLowerCase());
+      const sellerNameToSet = existingSeller ? existingSeller.name : defendant.name;
+      
+      if (form.getValues('seller') !== sellerNameToSet) {
+        form.setValue('seller', sellerNameToSet);
       }
     }
-  }, [wizardData.judicialProcess, wizardData.auctionType, sellers, form]);
+  }, [defendant, sellers, form]);
 
 
   useEffect(() => {
@@ -137,8 +135,8 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers, 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Comitente/Vendedor</FormLabel>
-                     <Select onValueChange={field.onChange} value={field.value || ''} disabled={wizardData.auctionType === 'JUDICIAL' && !!wizardData.judicialProcess}>
-                      <FormControl><SelectTrigger><SelectValue placeholder={wizardData.auctionType === 'JUDICIAL' ? 'Definido pelo Processo' : 'Selecione...'} /></SelectTrigger></FormControl>
+                     <Select onValueChange={field.onChange} value={field.value || ''} disabled={!!defendant}>
+                      <FormControl><SelectTrigger><SelectValue placeholder={!!defendant ? 'Definido pelo Processo' : 'Selecione...'} /></SelectTrigger></FormControl>
                       <SelectContent>
                         {sellers.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
                       </SelectContent>

@@ -1,4 +1,3 @@
-
 // src/app/admin/judicial-processes/judicial-process-form.tsx
 'use client';
 
