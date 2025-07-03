@@ -1,4 +1,3 @@
-
 // src/app/admin/bens/actions.ts
 'use server';
 
@@ -11,6 +10,7 @@ export async function createBem(data: BemFormData): Promise<{ success: boolean; 
   const result = await db.createBem(data);
   if (result.success) {
     revalidatePath('/admin/bens');
+    revalidatePath('/admin/lotting');
   }
   return result;
 }
@@ -18,6 +18,12 @@ export async function createBem(data: BemFormData): Promise<{ success: boolean; 
 export async function getBens(judicialProcessId?: string): Promise<Bem[]> {
   const db = await getDatabaseAdapter();
   return db.getBens(judicialProcessId);
+}
+
+export async function getBensByIdsAction(ids: string[]): Promise<Bem[]> {
+  if (!ids || ids.length === 0) return [];
+  const db = await getDatabaseAdapter();
+  return db.getBensByIds(ids);
 }
 
 export async function getBem(id: string): Promise<Bem | null> {

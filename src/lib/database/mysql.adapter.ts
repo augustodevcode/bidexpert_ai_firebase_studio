@@ -1,4 +1,3 @@
-
 // src/lib/database/mysql.adapter.ts
 import * as mysql from 'mysql2/promise';
 import type { RowDataPacket, Pool, PoolConnection, ResultSetHeader } from 'mysql2/promise';
@@ -429,6 +428,34 @@ function mapToJudicialProcess(row: any, parties: ProcessParty[] = []): JudicialP
     updatedAt: new Date(row.updatedAt),
   };
 }
+
+function mapToBem(row: any): Bem {
+    return {
+        id: String(row.id),
+        publicId: row.publicId,
+        title: row.title,
+        description: row.description,
+        judicialProcessId: row.judicialProcessId ? String(row.judicialProcessId) : undefined,
+        judicialProcessNumber: row.judicialProcessNumber,
+        status: row.status,
+        categoryId: row.categoryId ? String(row.categoryId) : undefined,
+        subcategoryId: row.subcategoryId ? String(row.subcategoryId) : undefined,
+        categoryName: row.categoryName,
+        subcategoryName: row.subcategoryName,
+        imageUrl: row.imageUrl,
+        imageMediaId: row.imageMediaId,
+        dataAiHint: row.dataAiHint,
+        evaluationValue: row.evaluationValue !== null ? Number(row.evaluationValue) : undefined,
+        locationCity: row.locationCity,
+        locationState: row.locationState,
+        address: row.address,
+        latitude: row.latitude !== null ? Number(row.latitude) : undefined,
+        longitude: row.longitude !== null ? Number(row.longitude) : undefined,
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+    };
+}
+
 
 function mapToBidInfo(row: any): BidInfo {
     return {
