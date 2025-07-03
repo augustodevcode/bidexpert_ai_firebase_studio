@@ -1,20 +1,20 @@
 
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { WizardProvider, useWizard } from '@/components/admin/wizard/wizard-context';
 import WizardStepper from '@/components/admin/wizard/wizard-stepper';
 import Step1TypeSelection from '@/components/admin/wizard/steps/step-1-type-selection';
 import Step2JudicialSetup from '@/components/admin/wizard/steps/step-2-judicial-setup';
 import Step3AuctionDetails from '@/components/admin/wizard/steps/step-3-auction-details';
 import Step4Lotting from '@/components/admin/wizard/steps/step-4-lotting';
-import Step5Review from '@/components/admin/wizard/steps/step-5-review'; // Import the new step
+import Step5Review from '@/components/admin/wizard/steps/step-5-review';
 import { getWizardInitialData } from './actions';
-import type { JudicialProcess, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, Bem, Auction, Court, JudicialDistrict, JudicialBranch } from '@/types';
+import type { JudicialProcess, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, Bem, Auction, Court, JudicialDistrict, JudicialBranch, Lot } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Rocket, Loader2 } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 
 const allSteps = [
@@ -89,12 +89,9 @@ function WizardContent({ fetchedData, isLoading, refetchData }: { fetchedData: W
                 />;
       case 'lotting':
         return <Step4Lotting 
-                  availableBens={fetchedData.availableBens.filter(bem => wizardData.judicialProcess ? bem.judicialProcessId === wizardData.judicialProcess.id : true)}
+                  availableBens={wizardData.auctionType === 'JUDICIAL' ? fetchedData.availableBens.filter(bem => wizardData.judicialProcess ? bem.judicialProcessId === wizardData.judicialProcess.id : true) : fetchedData.availableBens}
                   auctionData={wizardData.auctionDetails as Partial<Auction>}
                   onLotCreated={handleLotCreation}
-                  createdLots={wizardData.createdLots || []}
-                  wizardData={wizardData}
-                  setWizardData={setWizardData}
                 />;
       case 'review':
         return <Step5Review wizardData={wizardData} />;
