@@ -70,10 +70,10 @@ export default function CreateLotFromBensModal({
         onClose();
       } else {
         toast({ title: 'Erro', description: result.message, variant: 'destructive' });
+        setIsSubmitting(false);
       }
     } catch (error) {
       toast({ title: 'Erro Inesperado', description: 'Ocorreu um erro ao criar o lote.', variant: 'destructive' });
-    } finally {
       setIsSubmitting(false);
     }
   }
@@ -104,7 +104,7 @@ export default function CreateLotFromBensModal({
                   <FormItem><FormLabel>Número do Lote</FormLabel><FormControl><Input placeholder="Ex: 001, A5" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="initialPrice" render={({ field }) => (
-                  <FormItem><FormLabel>Lance Inicial (R$)</FormLabel><FormControl><Input type="number" placeholder="Ex: 5000.00" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Lance Inicial (R$)</FormLabel><FormControl><Input type="number" placeholder="Ex: 5000.00" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
               <FormField control={form.control} name="bidIncrementStep" render={({ field }) => (
