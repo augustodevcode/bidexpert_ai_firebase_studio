@@ -1,3 +1,4 @@
+
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -22,7 +23,7 @@ import type {
   Court, CourtFormData,
   JudicialDistrict, JudicialDistrictFormData,
   JudicialBranch, JudicialBranchFormData,
-  JudicialProcess, JudicialProcessFormData,
+  JudicialProcess, JudicialProcessFormData, ProcessParty,
   Bem, BemFormData
 } from '@/types';
 import { samplePlatformSettings } from '@/lib/sample-data';
@@ -373,6 +374,25 @@ function mapToLot(row: QueryResultRow): Lot {
     evaluationValue: row.evaluation_value !== null ? Number(row.evaluation_value) : undefined,
     debtAmount: row.debt_amount !== null ? Number(row.debt_amount) : undefined,
     itbiValue: row.itbi_value !== null ? Number(row.itbi_value) : undefined,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
+}
+
+function mapToJudicialProcess(row: any, parties: ProcessParty[] = []): JudicialProcess {
+  return {
+    id: String(row.id),
+    publicId: row.public_id,
+    processNumber: row.process_number,
+    oldProcessNumber: row.old_process_number,
+    isElectronic: row.is_electronic,
+    courtId: String(row.court_id),
+    districtId: String(row.district_id),
+    branchId: String(row.branch_id),
+    courtName: row.court_name,
+    districtName: row.district_name,
+    branchName: row.branch_name,
+    parties,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };

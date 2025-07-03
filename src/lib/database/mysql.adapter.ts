@@ -1,3 +1,4 @@
+
 // src/lib/database/mysql.adapter.ts
 import * as mysql from 'mysql2/promise';
 import type { RowDataPacket, Pool, PoolConnection, ResultSetHeader } from 'mysql2/promise';
@@ -405,6 +406,25 @@ function mapToLot(row: any): Lot {
     evaluationValue: row.evaluationValue !== null ? Number(row.evaluationValue) : undefined,
     debtAmount: row.debtAmount !== null ? Number(row.debtAmount) : undefined,
     itbiValue: row.itbiValue !== null ? Number(row.itbiValue) : undefined,
+    createdAt: new Date(row.createdAt),
+    updatedAt: new Date(row.updatedAt),
+  };
+}
+
+function mapToJudicialProcess(row: any, parties: ProcessParty[] = []): JudicialProcess {
+  return {
+    id: String(row.id),
+    publicId: row.publicId,
+    processNumber: row.processNumber,
+    oldProcessNumber: row.oldProcessNumber,
+    isElectronic: Boolean(row.isElectronic),
+    courtId: String(row.courtId),
+    districtId: String(row.districtId),
+    branchId: String(row.branchId),
+    courtName: row.courtName,
+    districtName: row.districtName,
+    branchName: row.branchName,
+    parties,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
   };

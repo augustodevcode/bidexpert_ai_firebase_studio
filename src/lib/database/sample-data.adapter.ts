@@ -14,6 +14,13 @@ import type {
   MediaItem,
   PlatformSettings, PlatformSettingsFormData, Theme,
   Subcategory, SubcategoryFormData,
+  MapSettings,
+  SearchPaginationType,
+  MentalTriggerSettings,
+  BadgeVisibilitySettings,
+  SectionBadgeConfig,
+  HomepageSectionConfig,
+  AuctionStage,
   DirectSaleOffer, DirectSaleOfferFormData,
   UserLotMaxBid,
   UserWin,
@@ -27,6 +34,7 @@ import type {
 import { slugify, getEffectiveLotEndDate } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
 import * as sampleData from '@/lib/sample-data'; // Import all exports from the new sample-data.ts
+import type { WizardData } from '@/components/admin/wizard/wizard-context';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -230,7 +238,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     const newBid: BidInfo = { id: `bid-${uuidv4()}`, lotId: lot.id, auctionId: lot.auctionId, bidderId: userId, bidderDisplay: userDisplayName, amount: bidAmount, timestamp: new Date() };
     this.data.sampleBids.unshift(newBid);
     this._persistData();
-    return { success: true, message: 'Lance registrado com sucesso!', updatedLot: { price: lot.price, bidsCount: lot.bidsCount, endDate: updatedEndDate }, newBid: { id: newBid.id, ...newBid, timestamp: new Date() } };
+    return { success: true, message: 'Lance registrado com sucesso!', updatedLot: { price: lot.price, bidsCount: lot.bidsCount, endDate: updatedEndDate }, newBid: { id: newBid.id, ...newBid, timestamp: new Date() } as BidInfo };
   }
 
   async getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> {
@@ -370,9 +378,58 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async updateJudicialBranch(id: string, data: Partial<JudicialBranchFormData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleJudicialBranches.findIndex(i => i.id === id); if (index === -1) return { success: false, message: 'Vara não encontrada.'}; this.data.sampleJudicialBranches[index] = { ...this.data.sampleJudicialBranches[index], ...data, slug: data.name ? slugify(data.name) : this.data.sampleJudicialBranches[index].slug }; this._persistData(); return { success: true, message: 'Vara atualizada.' }; }
   async deleteJudicialBranch(id: string): Promise<{ success: boolean; message: string; }> { this.data.sampleJudicialBranches = this.data.sampleJudicialBranches.filter(i => i.id !== id); this._persistData(); return { success: true, message: 'Vara excluída.' }; }
   
-  async getJudicialProcesses(): Promise<JudicialProcess[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.sampleJudicialProcesses))); }
-  async getJudicialProcess(id: string): Promise<JudicialProcess | null> { const item = this.data.sampleJudicialProcesses.find(i => i.id === id); return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null); }
-  async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> { const newProcess: JudicialProcess = { ...data, id: `proc-${uuidv4()}`, publicId: `PROC-PUB-${uuidv4()}`, parties: data.parties as ProcessParty[], createdAt: new Date(), updatedAt: new Date() }; this.data.sampleJudicialProcesses.push(newProcess); this._persistData(); return { success: true, message: 'Processo criado!', processId: newProcess.id }; }
-  async updateJudicialProcess(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> { const index = this.data.sampleJudicialProcesses.findIndex(i => i.id === id); if (index === -1) return { success: false, message: 'Processo não encontrado.'}; this.data.sampleJudicialProcesses[index] = { ...this.data.sampleJudicialProcesses[index], ...data, parties: data.parties as ProcessParty[], updatedAt: new Date() }; this._persistData(); return { success: true, message: 'Processo atualizado.' }; }
-  async deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string; }> { this.data.sampleJudicialProcesses = this.data.sampleJudicialProcesses.filter(i => i.id !== id); this._persistData(); return { success: true, message: 'Processo excluído.' }; }
+  async getJudicialProcesses(): Promise<JudicialProcess[]> {
+    const processes = this.data.sampleJudicialProcesses.map((p: JudicialProcess) => {
+        const court = this.data.sampleCourts.find(c => c.id === p.courtId);
+        const district = this.data.sampleJudicialDistricts.find(d => d.id === p.districtId);
+        const branch = this.data.sampleJudicialBranches.find(b => b.id === p.branchId);
+        return {
+            ...p,
+            courtName: court?.name,
+            districtName: district?.name,
+            branchName: branch?.name,
+        };
+    });
+    return Promise.resolve(JSON.parse(JSON.stringify(processes)));
+  }
+  async getJudicialProcess(id: string): Promise<JudicialProcess | null> {
+    const process = this.data.sampleJudicialProcesses.find(i => i.id === id);
+    if (!process) return null;
+
+    const court = this.data.sampleCourts.find(c => c.id === process.courtId);
+    const district = this.data.sampleJudicialDistricts.find(d => d.id === process.districtId);
+    const branch = this.data.sampleJudicialBranches.find(b => b.id === process.branchId);
+    
+    return Promise.resolve(JSON.parse(JSON.stringify({
+        ...process,
+        courtName: court?.name,
+        districtName: district?.name,
+        branchName: branch?.name,
+    })));
+  }
+  async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
+    const newProcess: JudicialProcess = {
+        ...data,
+        id: `proc-${uuidv4()}`,
+        publicId: `PROC-PUB-${uuidv4()}`,
+        parties: data.parties as ProcessParty[],
+        createdAt: new Date(),
+        updatedAt: new Date()
+    };
+    this.data.sampleJudicialProcesses.push(newProcess);
+    this._persistData();
+    return { success: true, message: 'Processo criado!', processId: newProcess.id };
+  }
+  async updateJudicialProcess(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> {
+    const index = this.data.sampleJudicialProcesses.findIndex(i => i.id === id);
+    if (index === -1) return { success: false, message: 'Processo não encontrado.'};
+    this.data.sampleJudicialProcesses[index] = { ...this.data.sampleJudicialProcesses[index], ...data, parties: data.parties as ProcessParty[], updatedAt: new Date() };
+    this._persistData();
+    return { success: true, message: 'Processo atualizado.' };
+  }
+  async deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string; }> {
+    this.data.sampleJudicialProcesses = this.data.sampleJudicialProcesses.filter(i => i.id !== id);
+    this._persistData();
+    return { success: true, message: 'Processo excluído.' };
+  }
 }
