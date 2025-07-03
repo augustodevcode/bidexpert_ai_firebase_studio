@@ -1,423 +1,4 @@
 {
-  "sampleRoles": [
-    {
-      "id": "role-admin",
-      "name": "ADMINISTRATOR",
-      "name_normalized": "ADMINISTRATOR",
-      "description": "Acesso total à plataforma.",
-      "permissions": [
-        "manage_all"
-      ],
-      "createdAt": "2025-03-14T04:56:12.389Z",
-      "updatedAt": "2025-06-21T04:56:12.389Z"
-    },
-    {
-      "id": "role-user",
-      "name": "USER",
-      "name_normalized": "USER",
-      "description": "Usuário padrão com acesso básico.",
-      "permissions": [
-        "view_auctions",
-        "place_bids",
-        "view_lots"
-      ],
-      "createdAt": "2025-03-14T04:56:12.389Z",
-      "updatedAt": "2025-06-12T04:56:12.389Z"
-    },
-    {
-      "id": "role-consignor",
-      "name": "CONSIGNOR",
-      "name_normalized": "CONSIGNOR",
-      "description": "Comitente com permissões para gerenciar seus itens.",
-      "permissions": [
-        "auctions:manage_own",
-        "lots:manage_own",
-        "view_reports",
-        "media:upload"
-      ],
-      "createdAt": "2025-03-24T04:56:12.389Z",
-      "updatedAt": "2025-06-17T04:56:12.389Z"
-    }
-  ],
-  "sampleUserProfiles": [
-    {
-      "uid": "admin-bidexpert-platform-001",
-      "email": "admin@bidexpert.com.br",
-      "password": "@dmin2025",
-      "fullName": "Administrador BidExpert",
-      "roleId": "role-admin",
-      "roleName": "ADMINISTRATOR",
-      "permissions": [
-        "manage_all"
-      ],
-      "status": "ATIVO",
-      "habilitationStatus": "HABILITADO",
-      "createdAt": "2025-03-14T04:56:12.389Z",
-      "updatedAt": "2025-06-21T04:56:12.389Z"
-    },
-    {
-      "uid": "user-test-002",
-      "email": "testuser@example.com",
-      "password": "password123",
-      "fullName": "Usuário de Teste",
-      "roleId": "role-user",
-      "roleName": "USER",
-      "permissions": [
-        "view_auctions",
-        "place_bids",
-        "view_lots"
-      ],
-      "status": "ATIVO",
-      "habilitationStatus": "HABILITADO",
-      "createdAt": "2025-05-03T04:56:12.389Z",
-      "updatedAt": "2025-06-20T04:56:12.389Z"
-    },
-    {
-      "uid": "consignor-example-003",
-      "email": "consignor@bidexpert.com",
-      "password": "password123",
-      "fullName": "Comitente Exemplo (Bradesco)",
-      "roleId": "role-consignor",
-      "roleName": "CONSIGNOR",
-      "permissions": [
-        "auctions:manage_own",
-        "lots:manage_own",
-        "view_reports",
-        "media:upload"
-      ],
-      "status": "ATIVO",
-      "habilitationStatus": "HABILITADO",
-      "createdAt": "2025-05-13T04:56:12.389Z",
-      "updatedAt": "2025-06-19T04:56:12.389Z",
-      "sellerProfileId": "seller-banco-bradesco-s-a"
-    }
-  ],
-  "sampleLotCategories": [
-    {
-      "name": "Imóveis",
-      "slug": "imoveis",
-      "description": "Casas, apartamentos, terrenos, salas comerciais, galpões, fazendas, sítios e chácaras.",
-      "id": "cat-imoveis",
-      "itemCount": 5,
-      "hasSubcategories": true,
-      "logoMediaId": null,
-      "coverImageMediaId": "media-cat-imoveis-cover",
-      "megaMenuImageMediaId": null,
-      "dataAiHintLogo": "predio casa",
-      "dataAiHintCover": "imoveis cidade panorama",
-      "dataAiHintMegaMenu": null,
-      "createdAt": "2025-06-02T04:56:12.389Z",
-      "updatedAt": "2025-06-20T04:56:12.389Z"
-    },
-    {
-      "name": "Veículos",
-      "slug": "veiculos",
-      "description": "Carros, motos, caminhões, ônibus, utilitários e outros veículos terrestres.",
-      "id": "cat-veiculos",
-      "itemCount": 5,
-      "hasSubcategories": true,
-      "logoMediaId": null,
-      "coverImageMediaId": null,
-      "megaMenuImageMediaId": null,
-      "dataAiHintLogo": null,
-      "dataAiHintCover": "carros patio leilao",
-      "dataAiHintMegaMenu": null,
-      "createdAt": "2025-06-14T04:56:12.389Z",
-      "updatedAt": "2025-05-25T04:56:12.389Z"
-    },
-    {
-      "name": "Máquinas e Equipamentos",
-      "slug": "maquinas-e-equipamentos",
-      "description": "Máquinas pesadas, agrícolas, industriais, equipamentos de construção e diversos.",
-      "id": "cat-maquinas-e-equipamentos",
-      "itemCount": 3,
-      "hasSubcategories": false,
-      "logoMediaId": null,
-      "coverImageMediaId": null,
-      "megaMenuImageMediaId": null,
-      "dataAiHintLogo": null,
-      "dataAiHintCover": "maquinas pesadas industrial",
-      "dataAiHintMegaMenu": null,
-      "createdAt": "2025-06-12T04:56:12.389Z",
-      "updatedAt": "2025-05-27T04:56:12.389Z"
-    }
-  ],
-  "sampleSubcategories": [
-    {
-      "name": "Apartamentos",
-      "parentCategoryId": "cat-imoveis",
-      "description": "Apartamentos residenciais de diversos tamanhos.",
-      "displayOrder": 1,
-      "iconMediaId": "media-subcat-apartamentos-icon",
-      "dataAiHintIcon": "predio apartamento",
-      "id": "subcat-imoveis-apartamentos",
-      "slug": "apartamentos",
-      "itemCount": 2,
-      "createdAt": "2025-06-10T04:56:12.389Z",
-      "updatedAt": "2025-05-31T04:56:12.389Z"
-    },
-    {
-      "name": "Casas",
-      "parentCategoryId": "cat-imoveis",
-      "description": "Casas térreas, sobrados e condomínios.",
-      "displayOrder": 2,
-      "iconMediaId": "media-subcat-casas-icon",
-      "dataAiHintIcon": "casa residencial",
-      "id": "subcat-imoveis-casas",
-      "slug": "casas",
-      "itemCount": 3,
-      "createdAt": "2025-06-05T04:56:12.389Z",
-      "updatedAt": "2025-06-19T04:56:12.389Z"
-    }
-  ],
-  "sampleStates": [
-    {
-      "id": "state-al",
-      "name": "Alagoas",
-      "uf": "AL",
-      "slug": "alagoas",
-      "cityCount": 2,
-      "createdAt": "2025-05-29T18:34:27.765Z",
-      "updatedAt": "2025-05-28T18:34:27.765Z"
-    },
-    {
-      "id": "state-ba",
-      "name": "Bahia",
-      "uf": "BA",
-      "slug": "bahia",
-      "cityCount": 2,
-      "createdAt": "2025-06-04T18:34:27.765Z",
-      "updatedAt": "2025-06-03T18:34:27.765Z"
-    },
-    {
-      "id": "state-sp",
-      "name": "São Paulo",
-      "uf": "SP",
-      "slug": "sao-paulo",
-      "cityCount": 2,
-      "createdAt": "2025-05-25T18:34:27.765Z",
-      "updatedAt": "2025-06-07T18:34:27.765Z"
-    },
-    {
-      "id": "state-rj",
-      "name": "Rio de Janeiro",
-      "uf": "RJ",
-      "slug": "rio-de-janeiro",
-      "cityCount": 2,
-      "createdAt": "2025-06-01T18:34:27.765Z",
-      "updatedAt": "2025-06-05T18:34:27.765Z"
-    },
-    {
-      "id": "state-mg",
-      "name": "Minas Gerais",
-      "uf": "MG",
-      "slug": "minas-gerais",
-      "cityCount": 1,
-      "createdAt": "2025-05-23T18:34:27.765Z",
-      "updatedAt": "2025-06-21T18:34:27.765Z"
-    },
-    {
-      "id": "state-pr",
-      "name": "Paraná",
-      "uf": "PR",
-      "slug": "parana",
-      "cityCount": 1,
-      "createdAt": "2025-06-16T18:34:27.765Z",
-      "updatedAt": "2025-06-06T18:34:27.765Z"
-    },
-    {
-      "id": "state-rs",
-      "name": "Rio Grande do Sul",
-      "uf": "RS",
-      "slug": "rio-grande-do-sul",
-      "cityCount": 1,
-      "createdAt": "2025-05-27T18:34:27.765Z",
-      "updatedAt": "2025-06-19T18:34:27.765Z"
-    },
-    {
-      "id": "state-go",
-      "name": "Goiás",
-      "uf": "GO",
-      "slug": "goias",
-      "cityCount": 1,
-      "createdAt": "2025-05-28T18:34:27.765Z",
-      "updatedAt": "2025-06-15T18:34:27.765Z"
-    },
-    {
-      "id": "state-ms",
-      "name": "Mato Grosso do Sul",
-      "uf": "MS",
-      "slug": "mato-grosso-do-sul",
-      "cityCount": 1,
-      "createdAt": "2025-06-13T18:34:27.765Z",
-      "updatedAt": "2025-05-29T18:34:27.765Z"
-    },
-    {
-      "id": "state-ce",
-      "name": "Ceará",
-      "uf": "CE",
-      "slug": "ceara",
-      "cityCount": 1,
-      "createdAt": "2025-05-25T18:34:27.765Z",
-      "updatedAt": "2025-06-18T18:34:27.765Z"
-    }
-  ],
-  "sampleCities": [
-    {
-      "id": "city-maceio-al",
-      "name": "Maceió",
-      "slug": "maceio",
-      "stateId": "state-al",
-      "stateUf": "AL",
-      "ibgeCode": "2704302",
-      "lotCount": 0,
-      "createdAt": "2025-06-16T18:34:27.765Z",
-      "updatedAt": "2025-05-24T18:34:27.765Z"
-    },
-    {
-      "id": "city-salvador-ba",
-      "name": "Salvador",
-      "slug": "salvador",
-      "stateId": "state-ba",
-      "stateUf": "BA",
-      "ibgeCode": "2927408",
-      "lotCount": 3,
-      "createdAt": "2025-06-04T18:34:27.765Z",
-      "updatedAt": "2025-06-20T18:34:27.765Z"
-    },
-    {
-      "id": "city-sao-paulo-sp",
-      "name": "São Paulo",
-      "slug": "sao-paulo",
-      "stateId": "state-sp",
-      "stateUf": "SP",
-      "ibgeCode": "3550308",
-      "lotCount": 3,
-      "createdAt": "2025-05-28T18:34:27.765Z",
-      "updatedAt": "2025-06-21T18:34:27.765Z"
-    },
-    {
-      "id": "city-campinas-sp",
-      "name": "Campinas",
-      "slug": "campinas",
-      "stateId": "state-sp",
-      "stateUf": "SP",
-      "ibgeCode": "3509502",
-      "lotCount": 2,
-      "createdAt": "2025-05-29T18:34:27.765Z",
-      "updatedAt": "2025-06-10T18:34:27.765Z"
-    },
-    {
-      "id": "city-rio-de-janeiro-rj",
-      "name": "Rio de Janeiro",
-      "slug": "rio-de-janeiro",
-      "stateId": "state-rj",
-      "stateUf": "RJ",
-      "ibgeCode": "3304557",
-      "lotCount": 2,
-      "createdAt": "2025-06-06T18:34:27.765Z",
-      "updatedAt": "2025-05-28T18:34:27.765Z"
-    },
-    {
-      "id": "city-belo-horizonte-mg",
-      "name": "Belo Horizonte",
-      "slug": "belo-horizonte",
-      "stateId": "state-mg",
-      "stateUf": "MG",
-      "ibgeCode": "3106200",
-      "lotCount": 0,
-      "createdAt": "2025-06-10T18:34:27.765Z",
-      "updatedAt": "2025-06-01T18:34:27.765Z"
-    },
-    {
-      "id": "city-curitiba-pr",
-      "name": "Curitiba",
-      "slug": "curitiba",
-      "stateId": "state-pr",
-      "stateUf": "PR",
-      "ibgeCode": "4106902",
-      "lotCount": 2,
-      "createdAt": "2025-06-05T18:34:27.765Z",
-      "updatedAt": "2025-06-20T18:34:27.765Z"
-    },
-    {
-      "id": "city-porto-alegre-rs",
-      "name": "Porto Alegre",
-      "slug": "porto-alegre",
-      "stateId": "state-rs",
-      "stateUf": "RS",
-      "ibgeCode": "4314902",
-      "lotCount": 0,
-      "createdAt": "2025-06-21T18:34:27.765Z",
-      "updatedAt": "2025-06-03T18:34:27.765Z"
-    },
-    {
-      "id": "city-rio-verde-go",
-      "name": "Rio Verde",
-      "slug": "rio-verde",
-      "stateId": "state-go",
-      "stateUf": "GO",
-      "ibgeCode": "5218805",
-      "lotCount": 1,
-      "createdAt": "2025-06-01T18:34:27.765Z",
-      "updatedAt": "2025-05-30T18:34:27.765Z"
-    },
-    {
-      "id": "city-campo-grande-ms",
-      "name": "Campo Grande",
-      "slug": "campo-grande",
-      "stateId": "state-ms",
-      "stateUf": "MS",
-      "ibgeCode": "5002704",
-      "lotCount": 1,
-      "createdAt": "2025-06-09T18:34:27.765Z",
-      "updatedAt": "2025-06-11T18:34:27.765Z"
-    },
-    {
-      "id": "city-fortaleza-ce",
-      "name": "Fortaleza",
-      "slug": "fortaleza",
-      "stateId": "state-ce",
-      "stateUf": "CE",
-      "ibgeCode": "2304400",
-      "lotCount": 1,
-      "createdAt": "2025-06-15T18:34:27.765Z",
-      "updatedAt": "2025-06-15T18:34:27.765Z"
-    },
-    {
-      "id": "city-lauro-de-freitas-ba",
-      "name": "Lauro de Freitas",
-      "slug": "lauro-de-freitas",
-      "stateId": "state-ba",
-      "stateUf": "BA",
-      "ibgeCode": "2919207",
-      "lotCount": 1,
-      "createdAt": "2025-06-01T18:34:27.765Z",
-      "updatedAt": "2025-06-01T18:34:27.765Z"
-    },
-    {
-      "id": "city-niteroi-rj",
-      "name": "Niterói",
-      "slug": "niteroi",
-      "stateId": "state-rj",
-      "stateUf": "RJ",
-      "ibgeCode": "3303302",
-      "lotCount": 0,
-      "createdAt": "2025-05-24T18:34:27.765Z",
-      "updatedAt": "2025-06-15T18:34:27.765Z"
-    },
-    {
-      "id": "city-teotonio-vilela-al",
-      "name": "Teotônio Vilela",
-      "slug": "teotonio-vilela",
-      "stateId": "state-al",
-      "stateUf": "AL",
-      "ibgeCode": "2709152",
-      "lotCount": 1,
-      "createdAt": "2025-06-18T18:34:27.765Z",
-      "updatedAt": "2025-06-07T18:34:27.765Z"
-    }
-  ],
   "sampleAuctioneers": [
     {
       "name": "VICENTE PAULO - JUCEMA N° 12/96",
@@ -572,400 +153,6 @@
       "rating": 4.9,
       "auctionsConductedCount": 16,
       "totalValueSold": 620808.3256766407
-    }
-  ],
-  "sampleSellers": [
-    {
-      "name": "Banco Bradesco S.A.",
-      "logoMediaId": "media-seller-bradesco-logo",
-      "dataAiHintLogo": "banco logo",
-      "city": "São Paulo",
-      "state": "SP",
-      "userId": "consignor-example-003",
-      "id": "seller-banco-bradesco-sa",
-      "publicId": "SELL-PUB-BANCO-7f60",
-      "slug": "banco-bradesco-sa",
-      "createdAt": "2025-05-24T18:34:27.765Z",
-      "updatedAt": "2025-06-16T18:34:27.765Z",
-      "memberSince": "2024-06-22T18:34:27.765Z",
-      "rating": 4.5,
-      "activeLotsCount": 34,
-      "totalSalesValue": 1093550.4522492723,
-      "auctionsFacilitatedCount": 9
-    },
-    {
-      "name": "Proprietário Particular 1",
-      "city": "São Paulo",
-      "state": "SP",
-      "id": "seller-proprietario-particular-1",
-      "publicId": "SELL-PUB-PROPRI4f15",
-      "slug": "proprietario-particular-1",
-      "createdAt": "2025-06-01T18:34:27.765Z",
-      "updatedAt": "2025-06-18T18:34:27.765Z",
-      "memberSince": "2025-05-08T18:34:27.765Z",
-      "rating": 4.6,
-      "activeLotsCount": 61,
-      "totalSalesValue": 2235171.0958088175,
-      "auctionsFacilitatedCount": 14
-    },
-    {
-      "name": "Colecionadores RJ",
-      "city": "Rio de Janeiro",
-      "state": "RJ",
-      "id": "seller-colecionadores-rj",
-      "publicId": "SELL-PUB-COLECI3c85",
-      "slug": "colecionadores-rj",
-      "createdAt": "2025-04-22T18:34:27.765Z",
-      "updatedAt": "2025-06-18T18:34:27.765Z",
-      "memberSince": "2024-06-16T18:34:27.765Z",
-      "rating": 4.8,
-      "activeLotsCount": 82,
-      "totalSalesValue": 520629.5281089345,
-      "auctionsFacilitatedCount": 17
-    },
-    {
-      "name": "Colecionadores Clássicos PR",
-      "city": "Curitiba",
-      "state": "PR",
-      "id": "seller-colecionadores-classicos-pr",
-      "publicId": "SELL-PUB-COLECI4ccd",
-      "slug": "colecionadores-classicos-pr",
-      "createdAt": "2025-04-08T18:34:27.765Z",
-      "updatedAt": "2025-06-22T18:34:27.765Z",
-      "memberSince": "2024-08-17T18:34:27.765Z",
-      "rating": 4.8,
-      "activeLotsCount": 87,
-      "totalSalesValue": 3414458.1122039487,
-      "auctionsFacilitatedCount": 8
-    },
-    {
-      "name": "Fazenda Boa Esperança",
-      "city": "Rio Verde",
-      "state": "GO",
-      "id": "seller-fazenda-boa-esperanca",
-      "publicId": "SELL-PUB-FAZEND8558",
-      "slug": "fazenda-boa-esperanca",
-      "createdAt": "2025-03-31T18:34:27.765Z",
-      "updatedAt": "2025-06-16T18:34:27.765Z",
-      "memberSince": "2025-03-24T18:34:27.765Z",
-      "rating": 4.9,
-      "activeLotsCount": 108,
-      "totalSalesValue": 502308.92512622796,
-      "auctionsFacilitatedCount": 9
-    },
-    {
-      "name": "Produtores Rurais MS",
-      "city": "Campo Grande",
-      "state": "MS",
-      "id": "seller-produtores-rurais-ms",
-      "publicId": "SELL-PUB-PRODUT2580",
-      "slug": "produtores-rurais-ms",
-      "createdAt": "2025-04-20T18:34:27.765Z",
-      "updatedAt": "2025-06-19T18:34:27.765Z",
-      "memberSince": "2025-01-24T18:34:27.765Z",
-      "rating": 5,
-      "activeLotsCount": 68,
-      "totalSalesValue": 2638946.2216595714,
-      "auctionsFacilitatedCount": 16
-    },
-    {
-      "name": "Galeria de Arte SP",
-      "city": "São Paulo",
-      "state": "SP",
-      "id": "seller-galeria-de-arte-sp",
-      "publicId": "SELL-PUB-GALERI65ef",
-      "slug": "galeria-de-arte-sp",
-      "createdAt": "2025-04-13T18:34:27.765Z",
-      "updatedAt": "2025-06-15T18:34:27.765Z",
-      "memberSince": "2025-05-16T18:34:27.765Z",
-      "rating": 4.8,
-      "activeLotsCount": 35,
-      "totalSalesValue": 2226018.8079966903,
-      "auctionsFacilitatedCount": 4
-    },
-    {
-      "name": "Restauradores Clássicos MG",
-      "city": "Belo Horizonte",
-      "state": "MG",
-      "id": "seller-restauradores-classicos-mg",
-      "publicId": "SELL-PUB-RESTAUe765",
-      "slug": "restauradores-classicos-mg",
-      "createdAt": "2025-03-26T18:34:27.765Z",
-      "updatedAt": "2025-06-21T18:34:27.765Z",
-      "memberSince": "2024-07-20T18:34:27.765Z",
-      "rating": 4.6,
-      "activeLotsCount": 25,
-      "totalSalesValue": 1272316.216979783,
-      "auctionsFacilitatedCount": 4
-    },
-    {
-      "name": "Logística RS Ltda",
-      "city": "Porto Alegre",
-      "state": "RS",
-      "id": "seller-logistica-rs-ltda",
-      "publicId": "SELL-PUB-LOGISTec66",
-      "slug": "logistica-rs-ltda",
-      "createdAt": "2025-04-26T18:34:27.765Z",
-      "updatedAt": "2025-06-14T18:34:27.765Z",
-      "memberSince": "2024-11-14T18:34:27.765Z",
-      "rating": 4.5,
-      "activeLotsCount": 87,
-      "totalSalesValue": 3143373.404150285,
-      "auctionsFacilitatedCount": 16
-    },
-    {
-      "name": "Banco XYZ",
-      "city": "Rio de Janeiro",
-      "state": "RJ",
-      "logoMediaId": "media-seller-xyz-logo",
-      "dataAiHintLogo": "banco moderno",
-      "id": "seller-banco-xyz",
-      "publicId": "SELL-PUB-BANCO-aa47",
-      "slug": "banco-xyz",
-      "createdAt": "2025-04-09T18:34:27.765Z",
-      "updatedAt": "2025-06-19T18:34:27.765Z",
-      "memberSince": "2024-09-16T18:34:27.765Z",
-      "rating": 4.6,
-      "activeLotsCount": 92,
-      "totalSalesValue": 4154136.3607010995,
-      "auctionsFacilitatedCount": 5
-    },
-    {
-      "name": "Diversos Comitentes Agro",
-      "city": "Nacional",
-      "state": "BR",
-      "id": "seller-diversos-comitentes-agro",
-      "publicId": "SELL-PUB-DIVERS61e9",
-      "slug": "diversos-comitentes-agro",
-      "createdAt": "2025-05-19T18:34:27.765Z",
-      "updatedAt": "2025-06-15T18:34:27.765Z",
-      "memberSince": "2024-12-09T18:34:27.765Z",
-      "rating": 4.7,
-      "activeLotsCount": 107,
-      "totalSalesValue": 3737651.246629535,
-      "auctionsFacilitatedCount": 10
-    },
-    {
-      "name": "Diversos Proprietários e Financeiras",
-      "city": "Nacional",
-      "state": "BR",
-      "id": "seller-diversos-proprietarios-e-financeiras",
-      "publicId": "SELL-PUB-DIVERS5289",
-      "slug": "diversos-proprietarios-e-financeiras",
-      "createdAt": "2025-04-24T18:34:27.765Z",
-      "updatedAt": "2025-06-22T18:34:27.765Z",
-      "memberSince": "2024-08-02T18:34:27.765Z",
-      "rating": 5,
-      "activeLotsCount": 99,
-      "totalSalesValue": 3424149.6408172133,
-      "auctionsFacilitatedCount": 18
-    },
-    {
-      "name": "Vara Cível de São Paulo - TJSP",
-      "city": "São Paulo",
-      "state": "SP",
-      "logoMediaId": "media-seller-tjsp-logo",
-      "dataAiHint": "justica balanca",
-      "id": "seller-vara-civel-de-sao-paulo-tjsp",
-      "publicId": "SELL-PUB-VARA-C98d6",
-      "slug": "vara-civel-de-sao-paulo-tjsp",
-      "createdAt": "2025-04-17T18:34:27.765Z",
-      "updatedAt": "2025-06-17T18:34:27.765Z",
-      "memberSince": "2024-10-28T18:34:27.765Z",
-      "rating": 4.6,
-      "activeLotsCount": 65,
-      "totalSalesValue": 5047520.67035332,
-      "auctionsFacilitatedCount": 10
-    },
-    {
-      "name": "Vara de Falências do Rio de Janeiro - TJRJ",
-      "city": "Rio de Janeiro",
-      "state": "RJ",
-      "logoMediaId": "media-seller-tjrj-logo",
-      "dataAiHint": "tribunal justica martelo",
-      "id": "seller-vara-de-falencias-do-rio-de-janeiro-tjrj",
-      "publicId": "SELL-PUB-VARA-D7547",
-      "slug": "vara-de-falencias-do-rio-de-janeiro-tjrj",
-      "createdAt": "2025-04-26T18:34:27.765Z",
-      "updatedAt": "2025-06-17T18:34:27.765Z",
-      "memberSince": "2024-11-16T18:34:27.765Z",
-      "rating": 4.6,
-      "activeLotsCount": 64,
-      "totalSalesValue": 1219396.394416402,
-      "auctionsFacilitatedCount": 8
-    },
-    {
-      "name": "Vara do Trabalho de Curitiba - TRT9",
-      "city": "Curitiba",
-      "state": "PR",
-      "logoMediaId": "media-seller-trt9-logo",
-      "dataAiHint": "justica trabalho predio",
-      "id": "seller-vara-do-trabalho-de-curitiba-trt9",
-      "publicId": "SELL-PUB-VARA-D3b16",
-      "slug": "vara-do-trabalho-de-curitiba-trt9",
-      "createdAt": "2025-05-27T18:34:27.765Z",
-      "updatedAt": "2025-06-15T18:34:27.765Z",
-      "memberSince": "2025-03-23T18:34:27.765Z",
-      "rating": 4.7,
-      "activeLotsCount": 95,
-      "totalSalesValue": 169028.57557688048,
-      "auctionsFacilitatedCount": 3
-    },
-    {
-      "name": "Colecionadores Particulares",
-      "city": "Nacional",
-      "state": "BR",
-      "id": "seller-colecionadores-particulares",
-      "publicId": "SELL-PUB-COLECI2c66",
-      "slug": "colecionadores-particulares",
-      "createdAt": "2025-04-13T18:34:27.765Z",
-      "updatedAt": "2025-06-15T18:34:27.765Z",
-      "memberSince": "2025-03-27T18:34:27.765Z",
-      "rating": 4.7,
-      "activeLotsCount": 103,
-      "totalSalesValue": 2744521.629193771,
-      "auctionsFacilitatedCount": 9
-    },
-    {
-      "name": "Proprietários Diversos Clássicos",
-      "city": "Nacional",
-      "state": "BR",
-      "id": "seller-proprietarios-diversos-classicos",
-      "publicId": "SELL-PUB-PROPRI04dd",
-      "slug": "proprietarios-diversos-classicos",
-      "createdAt": "2025-06-04T18:34:27.765Z",
-      "updatedAt": "2025-06-16T18:34:27.765Z",
-      "memberSince": "2024-10-28T18:34:27.765Z",
-      "rating": 4.9,
-      "activeLotsCount": 64,
-      "totalSalesValue": 4876131.880288063,
-      "auctionsFacilitatedCount": 11
-    },
-    {
-      "name": "Antiguidades Imperial",
-      "city": "Rio de Janeiro",
-      "state": "RJ",
-      "logoMediaId": "media-seller-imperial-logo",
-      "dataAiHint": "antigo imperial",
-      "id": "seller-antiguidades-imperial",
-      "publicId": "SELL-PUB-ANTIGUa8eb",
-      "slug": "antiguidades-imperial",
-      "createdAt": "2025-04-10T18:34:27.765Z",
-      "updatedAt": "2025-06-15T18:34:27.765Z",
-      "memberSince": "2024-07-03T18:34:27.765Z",
-      "rating": 5,
-      "activeLotsCount": 88,
-      "totalSalesValue": 3766845.334527955,
-      "auctionsFacilitatedCount": 12
-    },
-    {
-      "name": "Tech Revenda SP",
-      "city": "São Paulo",
-      "state": "SP",
-      "id": "seller-tech-revenda-sp",
-      "publicId": "SELL-PUB-TECH-R06cc",
-      "slug": "tech-revenda-sp",
-      "createdAt": "2025-04-24T18:34:27.765Z",
-      "updatedAt": "2025-06-18T18:34:27.765Z",
-      "memberSince": "2024-10-28T18:34:27.765Z",
-      "rating": 4.7,
-      "activeLotsCount": 62,
-      "totalSalesValue": 3118447.332904268,
-      "auctionsFacilitatedCount": 11
-    },
-    {
-      "name": "Digital Boost Consultoria",
-      "city": "Remoto",
-      "state": "BR",
-      "id": "seller-digital-boost-consultoria",
-      "publicId": "SELL-PUB-DIGITAc5e8",
-      "slug": "digital-boost-consultoria",
-      "createdAt": "2025-03-20T18:34:27.765Z",
-      "updatedAt": "2025-06-17T18:34:27.765Z",
-      "memberSince": "2025-05-19T18:34:27.765Z",
-      "rating": 4.8,
-      "activeLotsCount": 43,
-      "totalSalesValue": 3615023.2673537973,
-      "auctionsFacilitatedCount": 7
-    },
-    {
-      "name": "Garagem Clássicos PR",
-      "city": "Curitiba",
-      "state": "PR",
-      "id": "seller-garagem-classicos-pr",
-      "publicId": "SELL-PUB-GARAGEec08",
-      "slug": "garagem-classicos-pr",
-      "createdAt": "2025-05-18T18:34:27.765Z",
-      "updatedAt": "2025-06-21T18:34:27.765Z",
-      "memberSince": "2024-06-03T18:34:27.765Z",
-      "rating": 4.8,
-      "activeLotsCount": 99,
-      "totalSalesValue": 1945229.2930165671,
-      "auctionsFacilitatedCount": 3
-    },
-    {
-      "name": "Fitness Total Equipamentos",
-      "city": "Belo Horizonte",
-      "state": "MG",
-      "id": "seller-fitness-total-equipamentos",
-      "publicId": "SELL-PUB-FITNES13fd",
-      "slug": "fitness-total-equipamentos",
-      "createdAt": "2025-04-25T18:34:27.765Z",
-      "updatedAt": "2025-06-16T18:34:27.765Z",
-      "memberSince": "2025-01-06T18:34:27.765Z",
-      "rating": 4.6,
-      "activeLotsCount": 26,
-      "totalSalesValue": 912604.7038727369,
-      "auctionsFacilitatedCount": 18
-    },
-    {
-      "name": "Galeria Pampa Arte",
-      "city": "Porto Alegre",
-      "state": "RS",
-      "id": "seller-galeria-pampa-arte",
-      "publicId": "SELL-PUB-GALERIe14a",
-      "slug": "galeria-pampa-arte",
-      "createdAt": "2025-05-09T18:34:27.765Z",
-      "updatedAt": "2025-06-20T18:34:27.765Z",
-      "memberSince": "2024-06-11T18:34:27.765Z",
-      "rating": 4.5,
-      "activeLotsCount": 97,
-      "totalSalesValue": 4699092.009727542,
-      "auctionsFacilitatedCount": 13
-    },
-    {
-      "name": "Prefeitura Municipal de Campinas",
-      "city": "Campinas",
-      "state": "SP",
-      "logoMediaId": "media-seller-pmc-logo",
-      "dataAiHint": "prefeitura brasao",
-      "id": "seller-prefeitura-municipal-de-campinas",
-      "publicId": "SELL-PUB-PREFEI916f",
-      "slug": "prefeitura-municipal-de-campinas",
-      "createdAt": "2025-05-08T18:34:27.765Z",
-      "updatedAt": "2025-06-20T18:34:27.765Z",
-      "memberSince": "2025-03-18T18:34:27.765Z",
-      "rating": 4.7,
-      "activeLotsCount": 38,
-      "totalSalesValue": 2941896.1388049014,
-      "auctionsFacilitatedCount": 8
-    },
-    {
-      "name": "Secretaria de Administração de Salvador",
-      "city": "Salvador",
-      "state": "BA",
-      "logoMediaId": "media-seller-pms-logo",
-      "dataAiHint": "governo edificio",
-      "id": "seller-secretaria-de-administracao-de-salvador",
-      "publicId": "SELL-PUB-SECRET6b49",
-      "slug": "secretaria-de-administracao-de-salvador",
-      "createdAt": "2025-05-08T18:34:27.765Z",
-      "updatedAt": "2025-06-19T18:34:27.765Z",
-      "memberSince": "2024-05-31T18:34:27.765Z",
-      "rating": 4.5,
-      "activeLotsCount": 34,
-      "totalSalesValue": 2082365.4430116578,
-      "auctionsFacilitatedCount": 17
     }
   ],
   "sampleAuctions": [
@@ -2039,6 +1226,569 @@
       ]
     }
   ],
+  "sampleBens": [
+    {
+      "id": "bem-1",
+      "publicId": "BEM-PUB-1",
+      "title": "Mesa de Escritório em L",
+      "judicialProcessId": "proc-3",
+      "judicialProcessNumber": "0055555-22.2022.2.02.0015",
+      "status": "DISPONIVEL",
+      "categoryId": "cat-bens-diversos",
+      "evaluationValue": 350,
+      "imageUrl": "https://placehold.co/600x400.png?text=Mesa",
+      "imageMediaId": "media-desk-1",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "bem-2",
+      "publicId": "BEM-PUB-2",
+      "title": "Cadeira de Escritório Giratória",
+      "judicialProcessId": "proc-3",
+      "judicialProcessNumber": "0055555-22.2022.2.02.0015",
+      "status": "DISPONIVEL",
+      "categoryId": "cat-bens-diversos",
+      "evaluationValue": 200,
+      "imageUrl": "https://placehold.co/600x400.png?text=Cadeira",
+      "imageMediaId": "media-chair-1",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "bem-3",
+      "publicId": "BEM-PUB-3",
+      "title": "Veículo Fiat Uno 2010",
+      "judicialProcessId": "proc-1",
+      "judicialProcessNumber": "0012345-67.2024.8.26.0001",
+      "status": "DISPONIVEL",
+      "categoryId": "cat-veiculos",
+      "subcategoryId": "subcat-veiculos-carros",
+      "evaluationValue": 12000,
+      "imageUrl": "https://placehold.co/600x400.png?text=Fiat+Uno",
+      "imageMediaId": "media-uno-1",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "bem-4",
+      "publicId": "BEM-PUB-4",
+      "title": "Apartamento em Campinas",
+      "judicialProcessId": "proc-1",
+      "judicialProcessNumber": "0012345-67.2024.8.26.0001",
+      "status": "DISPONIVEL",
+      "categoryId": "cat-imoveis",
+      "subcategoryId": "subcat-imoveis-apartamentos",
+      "evaluationValue": 280000,
+      "imageUrl": "https://placehold.co/600x400.png?text=Apto+Campinas",
+      "imageMediaId": "media-apt-campinas",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "bem-5",
+      "publicId": "BEM-PUB-5",
+      "title": "Trator Valtra A950 4x4 2018",
+      "status": "DISPONIVEL",
+      "categoryId": "cat-maquinas-e-equipamentos",
+      "subcategoryId": "subcat-maquinas-agricolas",
+      "evaluationValue": 95000,
+      "imageUrl": "https://placehold.co/600x400.png?text=Trator+Valtra",
+      "imageMediaId": "media-trator-valtra",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    }
+  ],
+  "sampleBids": [
+    {
+      "id": "bid-885a7146-59cd-4684-a60e-ab2968978139",
+      "lotId": "LOTE001",
+      "auctionId": "100625bra",
+      "bidderId": "admin-bidexpert-platform-001",
+      "bidderDisplay": "Administrador BidExpert",
+      "amount": 46000,
+      "timestamp": "2025-06-24T04:30:48.014Z"
+    },
+    {
+      "id": "BID-LOTETP002-UTIL1-a578024c",
+      "lotId": "LOTETP002-UTIL1",
+      "auctionId": "TP002-VEICULOS",
+      "bidderId": "userI954",
+      "bidderDisplay": "Usuário G****",
+      "amount": 25430,
+      "timestamp": "2025-06-06T15:40:27.765Z"
+    },
+    {
+      "id": "BID-LOTETP002-UTIL1-83f4a2b4",
+      "lotId": "LOTETP002-UTIL1",
+      "auctionId": "TP002-VEICULOS",
+      "bidderId": "userG961",
+      "bidderDisplay": "Usuário C****",
+      "amount": 25313,
+      "timestamp": "2025-06-06T08:59:27.765Z"
+    }
+  ],
+  "sampleCities": [
+    {
+      "id": "city-maceio-al",
+      "name": "Maceió",
+      "slug": "maceio",
+      "stateId": "state-al",
+      "stateUf": "AL",
+      "ibgeCode": "2704302",
+      "lotCount": 0,
+      "createdAt": "2025-06-16T18:34:27.765Z",
+      "updatedAt": "2025-05-24T18:34:27.765Z"
+    },
+    {
+      "id": "city-salvador-ba",
+      "name": "Salvador",
+      "slug": "salvador",
+      "stateId": "state-ba",
+      "stateUf": "BA",
+      "ibgeCode": "2927408",
+      "lotCount": 3,
+      "createdAt": "2025-06-04T18:34:27.765Z",
+      "updatedAt": "2025-06-20T18:34:27.765Z"
+    },
+    {
+      "id": "city-sao-paulo-sp",
+      "name": "São Paulo",
+      "slug": "sao-paulo",
+      "stateId": "state-sp",
+      "stateUf": "SP",
+      "ibgeCode": "3550308",
+      "lotCount": 3,
+      "createdAt": "2025-05-28T18:34:27.765Z",
+      "updatedAt": "2025-06-21T18:34:27.765Z"
+    },
+    {
+      "id": "city-campinas-sp",
+      "name": "Campinas",
+      "slug": "campinas",
+      "stateId": "state-sp",
+      "stateUf": "SP",
+      "ibgeCode": "3509502",
+      "lotCount": 2,
+      "createdAt": "2025-05-29T18:34:27.765Z",
+      "updatedAt": "2025-06-10T18:34:27.765Z"
+    },
+    {
+      "id": "city-rio-de-janeiro-rj",
+      "name": "Rio de Janeiro",
+      "slug": "rio-de-janeiro",
+      "stateId": "state-rj",
+      "stateUf": "RJ",
+      "ibgeCode": "3304557",
+      "lotCount": 2,
+      "createdAt": "2025-06-06T18:34:27.765Z",
+      "updatedAt": "2025-05-28T18:34:27.765Z"
+    },
+    {
+      "id": "city-belo-horizonte-mg",
+      "name": "Belo Horizonte",
+      "slug": "belo-horizonte",
+      "stateId": "state-mg",
+      "stateUf": "MG",
+      "ibgeCode": "3106200",
+      "lotCount": 0,
+      "createdAt": "2025-06-10T18:34:27.765Z",
+      "updatedAt": "2025-06-01T18:34:27.765Z"
+    },
+    {
+      "id": "city-curitiba-pr",
+      "name": "Curitiba",
+      "slug": "curitiba",
+      "stateId": "state-pr",
+      "stateUf": "PR",
+      "ibgeCode": "4106902",
+      "lotCount": 2,
+      "createdAt": "2025-06-05T18:34:27.765Z",
+      "updatedAt": "2025-06-20T18:34:27.765Z"
+    },
+    {
+      "id": "city-porto-alegre-rs",
+      "name": "Porto Alegre",
+      "slug": "porto-alegre",
+      "stateId": "state-rs",
+      "stateUf": "RS",
+      "ibgeCode": "4314902",
+      "lotCount": 0,
+      "createdAt": "2025-06-21T18:34:27.765Z",
+      "updatedAt": "2025-06-03T18:34:27.765Z"
+    },
+    {
+      "id": "city-rio-verde-go",
+      "name": "Rio Verde",
+      "slug": "rio-verde",
+      "stateId": "state-go",
+      "stateUf": "GO",
+      "ibgeCode": "5218805",
+      "lotCount": 1,
+      "createdAt": "2025-06-01T18:34:27.765Z",
+      "updatedAt": "2025-05-30T18:34:27.765Z"
+    },
+    {
+      "id": "city-campo-grande-ms",
+      "name": "Campo Grande",
+      "slug": "campo-grande",
+      "stateId": "state-ms",
+      "stateUf": "MS",
+      "ibgeCode": "5002704",
+      "lotCount": 1,
+      "createdAt": "2025-06-09T18:34:27.765Z",
+      "updatedAt": "2025-06-11T18:34:27.765Z"
+    },
+    {
+      "id": "city-fortaleza-ce",
+      "name": "Fortaleza",
+      "slug": "fortaleza",
+      "stateId": "state-ce",
+      "stateUf": "CE",
+      "ibgeCode": "2304400",
+      "lotCount": 1,
+      "createdAt": "2025-06-15T18:34:27.765Z",
+      "updatedAt": "2025-06-15T18:34:27.765Z"
+    },
+    {
+      "id": "city-lauro-de-freitas-ba",
+      "name": "Lauro de Freitas",
+      "slug": "lauro-de-freitas",
+      "stateId": "state-ba",
+      "stateUf": "BA",
+      "ibgeCode": "2919207",
+      "lotCount": 1,
+      "createdAt": "2025-06-01T18:34:27.765Z",
+      "updatedAt": "2025-06-01T18:34:27.765Z"
+    },
+    {
+      "id": "city-niteroi-rj",
+      "name": "Niterói",
+      "slug": "niteroi",
+      "stateId": "state-rj",
+      "stateUf": "RJ",
+      "ibgeCode": "3303302",
+      "lotCount": 0,
+      "createdAt": "2025-05-24T18:34:27.765Z",
+      "updatedAt": "2025-06-15T18:34:27.765Z"
+    },
+    {
+      "id": "city-teotonio-vilela-al",
+      "name": "Teotônio Vilela",
+      "slug": "teotonio-vilela",
+      "stateId": "state-al",
+      "stateUf": "AL",
+      "ibgeCode": "2709152",
+      "lotCount": 1,
+      "createdAt": "2025-06-18T18:34:27.765Z",
+      "updatedAt": "2025-06-07T18:34:27.765Z"
+    }
+  ],
+  "sampleCourts": [
+    {
+      "id": "court-tjsp",
+      "name": "Tribunal de Justiça de São Paulo",
+      "slug": "tjsp",
+      "stateUf": "SP",
+      "website": "https://www.tjsp.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "court-tjrj",
+      "name": "Tribunal de Justiça do Rio de Janeiro",
+      "slug": "tjrj",
+      "stateUf": "RJ",
+      "website": "https://www.tjrj.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "court-tjmg",
+      "name": "Tribunal de Justiça de Minas Gerais",
+      "slug": "tjmg",
+      "stateUf": "MG",
+      "website": "https://www.tjmg.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "court-tjse",
+      "name": "Tribunal de Justiça de Sergipe",
+      "slug": "tjse",
+      "stateUf": "SE",
+      "website": "https://www.tjse.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "court-trt2",
+      "name": "Tribunal Regional do Trabalho da 2ª Região",
+      "slug": "trt2-sp",
+      "stateUf": "SP",
+      "website": "https://ww2.trt2.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    }
+  ],
+  "sampleDirectSaleOffers": [],
+  "sampleDocumentTypes": [],
+  "sampleJudicialBranches": [
+    {
+      "id": "branch-1",
+      "name": "1ª Vara Cível",
+      "slug": "1a-vara-civel",
+      "districtId": "dist-sp-capital",
+      "contactName": "José da Silva",
+      "phone": "11 1234-5678",
+      "email": "vara1.sp@tj.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "branch-2",
+      "name": "2ª Vara da Fazenda Pública",
+      "slug": "2a-vara-da-fazenda-publica",
+      "districtId": "dist-rj-capital",
+      "contactName": "Maria Oliveira",
+      "phone": "21 9876-5432",
+      "email": "vara2.rj@tj.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "branch-3",
+      "name": "Vara Única de Lagarto",
+      "slug": "vara-unica-lagarto",
+      "districtId": "dist-se-lagarto",
+      "contactName": "Ana Costa",
+      "phone": "79 3631-1111",
+      "email": "vara.lagarto@tjse.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "branch-4",
+      "name": "15ª Vara do Trabalho de São Paulo",
+      "slug": "15-vara-trabalho-sp",
+      "districtId": "dist-sp-sao-paulo-trt",
+      "contactName": "Paulo Lima",
+      "phone": "11 3525-2015",
+      "email": "vt15.sp@trt2.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    }
+  ],
+  "sampleJudicialDistricts": [
+    {
+      "id": "dist-sp-capital",
+      "name": "Comarca da Capital",
+      "slug": "sao-paulo-capital",
+      "courtId": "court-tjsp",
+      "stateId": "state-sp",
+      "zipCode": "01010-000",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "dist-sp-campinas",
+      "name": "Comarca de Campinas",
+      "slug": "campinas",
+      "courtId": "court-tjsp",
+      "stateId": "state-sp",
+      "zipCode": "13010-000",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "dist-rj-capital",
+      "name": "Comarca da Capital",
+      "slug": "rio-de-janeiro-capital",
+      "courtId": "court-tjrj",
+      "stateId": "state-rj",
+      "zipCode": "20010-000",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "dist-se-lagarto",
+      "name": "Comarca de Lagarto",
+      "slug": "lagarto",
+      "courtId": "court-tjse",
+      "stateId": "state-se",
+      "zipCode": "49400-000",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "dist-sp-sao-paulo-trt",
+      "name": "Comarca de São Paulo (TRT)",
+      "slug": "sao-paulo-trt",
+      "courtId": "court-trt2",
+      "stateId": "state-sp",
+      "zipCode": "01139-003",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    }
+  ],
+  "sampleJudicialProcesses": [
+    {
+      "id": "proc-1",
+      "publicId": "PROC-12345-2024",
+      "processNumber": "0012345-67.2024.8.26.0001",
+      "isElectronic": true,
+      "courtId": "court-tjsp",
+      "districtId": "dist-sp-capital",
+      "branchId": "branch-1",
+      "parties": [
+        {
+          "id": "party-1",
+          "name": "João da Silva",
+          "documentNumber": "111.222.333-44",
+          "partyType": "AUTOR"
+        },
+        {
+          "id": "party-2",
+          "name": "Empresa X Ltda",
+          "documentNumber": "12.345.678/0001-99",
+          "partyType": "REU"
+        },
+        {
+          "id": "party-3",
+          "name": "Dr. Carlos Advogado",
+          "documentNumber": "OAB/SP 12345",
+          "partyType": "ADVOGADO_AUTOR"
+        }
+      ],
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "proc-2",
+      "publicId": "PROC-98765-2023",
+      "processNumber": "0098765-43.2023.8.19.0001",
+      "isElectronic": true,
+      "courtId": "court-tjrj",
+      "districtId": "dist-rj-capital",
+      "branchId": "branch-2",
+      "parties": [
+        {
+          "id": "party-1",
+          "name": "João da Silva",
+          "documentNumber": "111.222.333-44",
+          "partyType": "AUTOR"
+        },
+        {
+          "id": "party-4",
+          "name": "Dra. Advogada Santos",
+          "documentNumber": "OAB/RJ 54321",
+          "partyType": "ADVOGADO_REU"
+        }
+      ],
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "proc-3",
+      "publicId": "PROC-55555-2022",
+      "processNumber": "0055555-22.2022.2.02.0015",
+      "isElectronic": true,
+      "courtId": "court-trt2",
+      "districtId": "dist-sp-sao-paulo-trt",
+      "branchId": "branch-4",
+      "parties": [
+        {
+          "id": "party-5",
+          "name": "Meta Metais Ltda",
+          "documentNumber": "98.765.432/0001-11",
+          "partyType": "AUTOR"
+        },
+        {
+          "id": "party-6",
+          "name": "Banco Fictício S.A.",
+          "documentNumber": "11.222.333/0001-44",
+          "partyType": "REU"
+        }
+      ],
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "processNumber": "123223451231456312123131",
+      "isElectronic": true,
+      "courtId": "court-tjrj",
+      "districtId": "dist-rj-capital",
+      "branchId": "branch-2",
+      "parties": [
+        {
+          "name": "Augusto",
+          "partyType": "AUTOR",
+          "id": "party-5010fc65-c820-483a-a5ac-c475c0f5b7c0"
+        },
+        {
+          "name": "Joao",
+          "partyType": "REU",
+          "id": "party-29ed977e-9edb-4c62-99dd-493a6d112474"
+        }
+      ],
+      "id": "proc-dbd93e68-1036-435b-8891-19703f5bd9b3",
+      "publicId": "PROC-PUB-875401bb",
+      "createdAt": "2025-07-03T20:54:31.338Z",
+      "updatedAt": "2025-07-03T20:54:31.338Z"
+    }
+  ],
+  "sampleLotCategories": [
+    {
+      "name": "Imóveis",
+      "slug": "imoveis",
+      "description": "Casas, apartamentos, terrenos, salas comerciais, galpões, fazendas, sítios e chácaras.",
+      "id": "cat-imoveis",
+      "itemCount": 5,
+      "hasSubcategories": true,
+      "logoMediaId": null,
+      "coverImageMediaId": "media-cat-imoveis-cover",
+      "megaMenuImageMediaId": null,
+      "dataAiHintLogo": "predio casa",
+      "dataAiHintCover": "imoveis cidade panorama",
+      "dataAiHintMegaMenu": null,
+      "createdAt": "2025-06-02T04:56:12.389Z",
+      "updatedAt": "2025-06-20T04:56:12.389Z"
+    },
+    {
+      "name": "Veículos",
+      "slug": "veiculos",
+      "description": "Carros, motos, caminhões, ônibus, utilitários e outros veículos terrestres.",
+      "id": "cat-veiculos",
+      "itemCount": 5,
+      "hasSubcategories": true,
+      "logoMediaId": null,
+      "coverImageMediaId": null,
+      "megaMenuImageMediaId": null,
+      "dataAiHintLogo": null,
+      "dataAiHintCover": "carros patio leilao",
+      "dataAiHintMegaMenu": null,
+      "createdAt": "2025-06-14T04:56:12.389Z",
+      "updatedAt": "2025-05-25T04:56:12.389Z"
+    },
+    {
+      "name": "Máquinas e Equipamentos",
+      "slug": "maquinas-e-equipamentos",
+      "description": "Máquinas pesadas, agrícolas, industriais, equipamentos de construção e diversos.",
+      "id": "cat-maquinas-e-equipamentos",
+      "itemCount": 3,
+      "hasSubcategories": false,
+      "logoMediaId": null,
+      "coverImageMediaId": null,
+      "megaMenuImageMediaId": null,
+      "dataAiHintLogo": null,
+      "dataAiHintCover": "maquinas pesadas industrial",
+      "dataAiHintMegaMenu": null,
+      "createdAt": "2025-06-12T04:56:12.389Z",
+      "updatedAt": "2025-05-27T04:56:12.389Z"
+    }
+  ],
+  "sampleLotQuestions": [],
+  "sampleLotReviews": [],
   "sampleLots": [
     {
       "id": "LOTE001",
@@ -2267,38 +2017,6 @@
       "secondAuctionDate": null
     }
   ],
-  "sampleBids": [
-    {
-      "id": "bid-885a7146-59cd-4684-a60e-ab2968978139",
-      "lotId": "LOTE001",
-      "auctionId": "100625bra",
-      "bidderId": "admin-bidexpert-platform-001",
-      "bidderDisplay": "Administrador BidExpert",
-      "amount": 46000,
-      "timestamp": "2025-06-24T04:30:48.014Z"
-    },
-    {
-      "id": "BID-LOTETP002-UTIL1-a578024c",
-      "lotId": "LOTETP002-UTIL1",
-      "auctionId": "TP002-VEICULOS",
-      "bidderId": "userI954",
-      "bidderDisplay": "Usuário G****",
-      "amount": 25430,
-      "timestamp": "2025-06-06T15:40:27.765Z"
-    },
-    {
-      "id": "BID-LOTETP002-UTIL1-83f4a2b4",
-      "lotId": "LOTETP002-UTIL1",
-      "auctionId": "TP002-VEICULOS",
-      "bidderId": "userG961",
-      "bidderDisplay": "Usuário C****",
-      "amount": 25313,
-      "timestamp": "2025-06-06T08:59:27.765Z"
-    }
-  ],
-  "sampleLotReviews": [],
-  "sampleLotQuestions": [],
-  "sampleDirectSaleOffers": [],
   "sampleMediaItems": [
     {
       "fileName": "3d-rendering-loft-luxury-living-room-with-bookshelf.jpg",
@@ -2503,10 +2221,6 @@
       "uploadedAt": "2025-06-05T22:45:12.123Z"
     }
   ],
-  "sampleDocumentTypes": [],
-  "sampleUserDocuments": [],
-  "sampleUserWins": [],
-  "sampleUserBids": [],
   "samplePlatformSettings": {
     "id": "global",
     "siteTitle": "BidExpert Leilões",
@@ -2626,5 +2340,616 @@
     "relatedLotsCount": 5,
     "updatedAt": "2025-06-22T18:34:27.781Z"
   },
+  "sampleRoles": [
+    {
+      "id": "role-admin",
+      "name": "ADMINISTRATOR",
+      "name_normalized": "ADMINISTRATOR",
+      "description": "Acesso total à plataforma.",
+      "permissions": [
+        "manage_all"
+      ],
+      "createdAt": "2025-03-14T04:56:12.389Z",
+      "updatedAt": "2025-06-21T04:56:12.389Z"
+    },
+    {
+      "id": "role-user",
+      "name": "USER",
+      "name_normalized": "USER",
+      "description": "Usuário padrão com acesso básico.",
+      "permissions": [
+        "view_auctions",
+        "place_bids",
+        "view_lots"
+      ],
+      "createdAt": "2025-03-14T04:56:12.389Z",
+      "updatedAt": "2025-06-12T04:56:12.389Z"
+    },
+    {
+      "id": "role-consignor",
+      "name": "CONSIGNOR",
+      "name_normalized": "CONSIGNOR",
+      "description": "Comitente com permissões para gerenciar seus itens.",
+      "permissions": [
+        "auctions:manage_own",
+        "lots:manage_own",
+        "view_reports",
+        "media:upload"
+      ],
+      "createdAt": "2025-03-24T04:56:12.389Z",
+      "updatedAt": "2025-06-17T04:56:12.389Z"
+    }
+  ],
+  "sampleSellers": [
+    {
+      "name": "Banco Bradesco S.A.",
+      "logoMediaId": "media-seller-bradesco-logo",
+      "dataAiHintLogo": "banco logo",
+      "city": "São Paulo",
+      "state": "SP",
+      "userId": "consignor-example-003",
+      "id": "seller-banco-bradesco-sa",
+      "publicId": "SELL-PUB-BANCO-7f60",
+      "slug": "banco-bradesco-sa",
+      "createdAt": "2025-05-24T18:34:27.765Z",
+      "updatedAt": "2025-06-16T18:34:27.765Z",
+      "memberSince": "2024-06-22T18:34:27.765Z",
+      "rating": 4.5,
+      "activeLotsCount": 34,
+      "totalSalesValue": 1093550.4522492723,
+      "auctionsFacilitatedCount": 9
+    },
+    {
+      "name": "Proprietário Particular 1",
+      "city": "São Paulo",
+      "state": "SP",
+      "id": "seller-proprietario-particular-1",
+      "publicId": "SELL-PUB-PROPRI4f15",
+      "slug": "proprietario-particular-1",
+      "createdAt": "2025-06-01T18:34:27.765Z",
+      "updatedAt": "2025-06-18T18:34:27.765Z",
+      "memberSince": "2025-05-08T18:34:27.765Z",
+      "rating": 4.6,
+      "activeLotsCount": 61,
+      "totalSalesValue": 2235171.0958088175,
+      "auctionsFacilitatedCount": 14
+    },
+    {
+      "name": "Colecionadores RJ",
+      "city": "Rio de Janeiro",
+      "state": "RJ",
+      "id": "seller-colecionadores-rj",
+      "publicId": "SELL-PUB-COLECI3c85",
+      "slug": "colecionadores-rj",
+      "createdAt": "2025-04-22T18:34:27.765Z",
+      "updatedAt": "2025-06-18T18:34:27.765Z",
+      "memberSince": "2024-06-16T18:34:27.765Z",
+      "rating": 4.8,
+      "activeLotsCount": 82,
+      "totalSalesValue": 520629.5281089345,
+      "auctionsFacilitatedCount": 17
+    },
+    {
+      "name": "Colecionadores Clássicos PR",
+      "city": "Curitiba",
+      "state": "PR",
+      "id": "seller-colecionadores-classicos-pr",
+      "publicId": "SELL-PUB-COLECI4ccd",
+      "slug": "colecionadores-classicos-pr",
+      "createdAt": "2025-04-08T18:34:27.765Z",
+      "updatedAt": "2025-06-22T18:34:27.765Z",
+      "memberSince": "2024-08-17T18:34:27.765Z",
+      "rating": 4.8,
+      "activeLotsCount": 87,
+      "totalSalesValue": 3414458.1122039487,
+      "auctionsFacilitatedCount": 8
+    },
+    {
+      "name": "Fazenda Boa Esperança",
+      "city": "Rio Verde",
+      "state": "GO",
+      "id": "seller-fazenda-boa-esperanca",
+      "publicId": "SELL-PUB-FAZEND8558",
+      "slug": "fazenda-boa-esperanca",
+      "createdAt": "2025-03-31T18:34:27.765Z",
+      "updatedAt": "2025-06-16T18:34:27.765Z",
+      "memberSince": "2025-03-24T18:34:27.765Z",
+      "rating": 4.9,
+      "activeLotsCount": 108,
+      "totalSalesValue": 502308.92512622796,
+      "auctionsFacilitatedCount": 9
+    },
+    {
+      "name": "Produtores Rurais MS",
+      "city": "Campo Grande",
+      "state": "MS",
+      "id": "seller-produtores-rurais-ms",
+      "publicId": "SELL-PUB-PRODUT2580",
+      "slug": "produtores-rurais-ms",
+      "createdAt": "2025-04-20T18:34:27.765Z",
+      "updatedAt": "2025-06-19T18:34:27.765Z",
+      "memberSince": "2025-01-24T18:34:27.765Z",
+      "rating": 5,
+      "activeLotsCount": 68,
+      "totalSalesValue": 2638946.2216595714,
+      "auctionsFacilitatedCount": 16
+    },
+    {
+      "name": "Galeria de Arte SP",
+      "city": "São Paulo",
+      "state": "SP",
+      "id": "seller-galeria-de-arte-sp",
+      "publicId": "SELL-PUB-GALERI65ef",
+      "slug": "galeria-de-arte-sp",
+      "createdAt": "2025-04-13T18:34:27.765Z",
+      "updatedAt": "2025-06-15T18:34:27.765Z",
+      "memberSince": "2025-05-16T18:34:27.765Z",
+      "rating": 4.8,
+      "activeLotsCount": 35,
+      "totalSalesValue": 2226018.8079966903,
+      "auctionsFacilitatedCount": 4
+    },
+    {
+      "name": "Restauradores Clássicos MG",
+      "city": "Belo Horizonte",
+      "state": "MG",
+      "id": "seller-restauradores-classicos-mg",
+      "publicId": "SELL-PUB-RESTAUe765",
+      "slug": "restauradores-classicos-mg",
+      "createdAt": "2025-03-26T18:34:27.765Z",
+      "updatedAt": "2025-06-21T18:34:27.765Z",
+      "memberSince": "2024-07-20T18:34:27.765Z",
+      "rating": 4.6,
+      "activeLotsCount": 25,
+      "totalSalesValue": 1272316.216979783,
+      "auctionsFacilitatedCount": 4
+    },
+    {
+      "name": "Logística RS Ltda",
+      "city": "Porto Alegre",
+      "state": "RS",
+      "id": "seller-logistica-rs-ltda",
+      "publicId": "SELL-PUB-LOGISTec66",
+      "slug": "logistica-rs-ltda",
+      "createdAt": "2025-04-26T18:34:27.765Z",
+      "updatedAt": "2025-06-14T18:34:27.765Z",
+      "memberSince": "2024-11-14T18:34:27.765Z",
+      "rating": 4.5,
+      "activeLotsCount": 87,
+      "totalSalesValue": 3143373.404150285,
+      "auctionsFacilitatedCount": 16
+    },
+    {
+      "name": "Banco XYZ",
+      "city": "Rio de Janeiro",
+      "state": "RJ",
+      "logoMediaId": "media-seller-xyz-logo",
+      "dataAiHintLogo": "banco moderno",
+      "id": "seller-banco-xyz",
+      "publicId": "SELL-PUB-BANCO-aa47",
+      "slug": "banco-xyz",
+      "createdAt": "2025-04-09T18:34:27.765Z",
+      "updatedAt": "2025-06-19T18:34:27.765Z",
+      "memberSince": "2024-09-16T18:34:27.765Z",
+      "rating": 4.6,
+      "activeLotsCount": 92,
+      "totalSalesValue": 4154136.3607010995,
+      "auctionsFacilitatedCount": 5
+    },
+    {
+      "name": "Diversos Comitentes Agro",
+      "city": "Nacional",
+      "state": "BR",
+      "id": "seller-diversos-comitentes-agro",
+      "publicId": "SELL-PUB-DIVERS61e9",
+      "slug": "diversos-comitentes-agro",
+      "createdAt": "2025-05-19T18:34:27.765Z",
+      "updatedAt": "2025-06-15T18:34:27.765Z",
+      "memberSince": "2024-12-09T18:34:27.765Z",
+      "rating": 4.7,
+      "activeLotsCount": 107,
+      "totalSalesValue": 3737651.246629535,
+      "auctionsFacilitatedCount": 10
+    },
+    {
+      "name": "Diversos Proprietários e Financeiras",
+      "city": "Nacional",
+      "state": "BR",
+      "id": "seller-diversos-proprietarios-e-financeiras",
+      "publicId": "SELL-PUB-DIVERS5289",
+      "slug": "diversos-proprietarios-e-financeiras",
+      "createdAt": "2025-04-24T18:34:27.765Z",
+      "updatedAt": "2025-06-22T18:34:27.765Z",
+      "memberSince": "2024-08-02T18:34:27.765Z",
+      "rating": 5,
+      "activeLotsCount": 99,
+      "totalSalesValue": 3424149.6408172133,
+      "auctionsFacilitatedCount": 18
+    },
+    {
+      "name": "Vara Cível de São Paulo - TJSP",
+      "city": "São Paulo",
+      "state": "SP",
+      "logoMediaId": "media-seller-tjsp-logo",
+      "dataAiHint": "justica balanca",
+      "id": "seller-vara-civel-de-sao-paulo-tjsp",
+      "publicId": "SELL-PUB-VARA-C98d6",
+      "slug": "vara-civel-de-sao-paulo-tjsp",
+      "createdAt": "2025-04-17T18:34:27.765Z",
+      "updatedAt": "2025-06-17T18:34:27.765Z",
+      "memberSince": "2024-10-28T18:34:27.765Z",
+      "rating": 4.6,
+      "activeLotsCount": 65,
+      "totalSalesValue": 5047520.67035332,
+      "auctionsFacilitatedCount": 10
+    },
+    {
+      "name": "Vara de Falências do Rio de Janeiro - TJRJ",
+      "city": "Rio de Janeiro",
+      "state": "RJ",
+      "logoMediaId": "media-seller-tjrj-logo",
+      "dataAiHint": "tribunal justica martelo",
+      "id": "seller-vara-de-falencias-do-rio-de-janeiro-tjrj",
+      "publicId": "SELL-PUB-VARA-D7547",
+      "slug": "vara-de-falencias-do-rio-de-janeiro-tjrj",
+      "createdAt": "2025-04-26T18:34:27.765Z",
+      "updatedAt": "2025-06-17T18:34:27.765Z",
+      "memberSince": "2024-11-16T18:34:27.765Z",
+      "rating": 4.6,
+      "activeLotsCount": 64,
+      "totalSalesValue": 1219396.394416402,
+      "auctionsFacilitatedCount": 8
+    },
+    {
+      "name": "Vara do Trabalho de Curitiba - TRT9",
+      "city": "Curitiba",
+      "state": "PR",
+      "logoMediaId": "media-seller-trt9-logo",
+      "dataAiHint": "justica trabalho predio",
+      "id": "seller-vara-do-trabalho-de-curitiba-trt9",
+      "publicId": "SELL-PUB-VARA-D3b16",
+      "slug": "vara-do-trabalho-de-curitiba-trt9",
+      "createdAt": "2025-05-27T18:34:27.765Z",
+      "updatedAt": "2025-06-15T18:34:27.765Z",
+      "memberSince": "2025-03-23T18:34:27.765Z",
+      "rating": 4.7,
+      "activeLotsCount": 95,
+      "totalSalesValue": 169028.57557688048,
+      "auctionsFacilitatedCount": 3
+    },
+    {
+      "name": "Colecionadores Particulares",
+      "city": "Nacional",
+      "state": "BR",
+      "id": "seller-colecionadores-particulares",
+      "publicId": "SELL-PUB-COLECI2c66",
+      "slug": "colecionadores-particulares",
+      "createdAt": "2025-04-13T18:34:27.765Z",
+      "updatedAt": "2025-06-15T18:34:27.765Z",
+      "memberSince": "2025-03-27T18:34:27.765Z",
+      "rating": 4.7,
+      "activeLotsCount": 103,
+      "totalSalesValue": 2744521.629193771,
+      "auctionsFacilitatedCount": 9
+    },
+    {
+      "name": "Proprietários Diversos Clássicos",
+      "city": "Nacional",
+      "state": "BR",
+      "id": "seller-proprietarios-diversos-classicos",
+      "publicId": "SELL-PUB-PROPRI04dd",
+      "slug": "proprietarios-diversos-classicos",
+      "createdAt": "2025-06-04T18:34:27.765Z",
+      "updatedAt": "2025-06-16T18:34:27.765Z",
+      "memberSince": "2024-10-28T18:34:27.765Z",
+      "rating": 4.9,
+      "activeLotsCount": 64,
+      "totalSalesValue": 4876131.880288063,
+      "auctionsFacilitatedCount": 11
+    },
+    {
+      "name": "Antiguidades Imperial",
+      "city": "Rio de Janeiro",
+      "state": "RJ",
+      "logoMediaId": "media-seller-imperial-logo",
+      "dataAiHint": "antigo imperial",
+      "id": "seller-antiguidades-imperial",
+      "publicId": "SELL-PUB-ANTIGUa8eb",
+      "slug": "antiguidades-imperial",
+      "createdAt": "2025-04-10T18:34:27.765Z",
+      "updatedAt": "2025-06-15T18:34:27.765Z",
+      "memberSince": "2024-07-03T18:34:27.765Z",
+      "rating": 5,
+      "activeLotsCount": 88,
+      "totalSalesValue": 3766845.334527955,
+      "auctionsFacilitatedCount": 12
+    },
+    {
+      "name": "Tech Revenda SP",
+      "city": "São Paulo",
+      "state": "SP",
+      "id": "seller-tech-revenda-sp",
+      "publicId": "SELL-PUB-TECH-R06cc",
+      "slug": "tech-revenda-sp",
+      "createdAt": "2025-04-24T18:34:27.765Z",
+      "updatedAt": "2025-06-18T18:34:27.765Z",
+      "memberSince": "2024-10-28T18:34:27.765Z",
+      "rating": 4.7,
+      "activeLotsCount": 62,
+      "totalSalesValue": 3118447.332904268,
+      "auctionsFacilitatedCount": 11
+    },
+    {
+      "name": "Digital Boost Consultoria",
+      "city": "Remoto",
+      "state": "BR",
+      "id": "seller-digital-boost-consultoria",
+      "publicId": "SELL-PUB-DIGITAc5e8",
+      "slug": "digital-boost-consultoria",
+      "createdAt": "2025-03-20T18:34:27.765Z",
+      "updatedAt": "2025-06-17T18:34:27.765Z",
+      "memberSince": "2025-05-19T18:34:27.765Z",
+      "rating": 4.8,
+      "activeLotsCount": 43,
+      "totalSalesValue": 3615023.2673537973,
+      "auctionsFacilitatedCount": 7
+    },
+    {
+      "name": "Garagem Clássicos PR",
+      "city": "Curitiba",
+      "state": "PR",
+      "id": "seller-garagem-classicos-pr",
+      "publicId": "SELL-PUB-GARAGEec08",
+      "slug": "garagem-classicos-pr",
+      "createdAt": "2025-05-18T18:34:27.765Z",
+      "updatedAt": "2025-06-21T18:34:27.765Z",
+      "memberSince": "2024-06-03T18:34:27.765Z",
+      "rating": 4.8,
+      "activeLotsCount": 99,
+      "totalSalesValue": 1945229.2930165671,
+      "auctionsFacilitatedCount": 3
+    },
+    {
+      "name": "Fitness Total Equipamentos",
+      "city": "Belo Horizonte",
+      "state": "MG",
+      "id": "seller-fitness-total-equipamentos",
+      "publicId": "SELL-PUB-FITNES13fd",
+      "slug": "fitness-total-equipamentos",
+      "createdAt": "2025-04-25T18:34:27.765Z",
+      "updatedAt": "2025-06-16T18:34:27.765Z",
+      "memberSince": "2025-01-06T18:34:27.765Z",
+      "rating": 4.6,
+      "activeLotsCount": 26,
+      "totalSalesValue": 912604.7038727369,
+      "auctionsFacilitatedCount": 18
+    },
+    {
+      "name": "Galeria Pampa Arte",
+      "city": "Porto Alegre",
+      "state": "RS",
+      "id": "seller-galeria-pampa-arte",
+      "publicId": "SELL-PUB-GALERIe14a",
+      "slug": "galeria-pampa-arte",
+      "createdAt": "2025-05-09T18:34:27.765Z",
+      "updatedAt": "2025-06-20T18:34:27.765Z",
+      "memberSince": "2024-06-11T18:34:27.765Z",
+      "rating": 4.5,
+      "activeLotsCount": 97,
+      "totalSalesValue": 4699092.009727542,
+      "auctionsFacilitatedCount": 13
+    },
+    {
+      "name": "Prefeitura Municipal de Campinas",
+      "city": "Campinas",
+      "state": "SP",
+      "logoMediaId": "media-seller-pmc-logo",
+      "dataAiHint": "prefeitura brasao",
+      "id": "seller-prefeitura-municipal-de-campinas",
+      "publicId": "SELL-PUB-PREFEI916f",
+      "slug": "prefeitura-municipal-de-campinas",
+      "createdAt": "2025-05-08T18:34:27.765Z",
+      "updatedAt": "2025-06-20T18:34:27.765Z",
+      "memberSince": "2025-03-18T18:34:27.765Z",
+      "rating": 4.7,
+      "activeLotsCount": 38,
+      "totalSalesValue": 2941896.1388049014,
+      "auctionsFacilitatedCount": 8
+    },
+    {
+      "name": "Secretaria de Administração de Salvador",
+      "city": "Salvador",
+      "state": "BA",
+      "logoMediaId": "media-seller-pms-logo",
+      "dataAiHint": "governo edificio",
+      "id": "seller-secretaria-de-administracao-de-salvador",
+      "publicId": "SELL-PUB-SECRET6b49",
+      "slug": "secretaria-de-administracao-de-salvador",
+      "createdAt": "2025-05-08T18:34:27.765Z",
+      "updatedAt": "2025-06-19T18:34:27.765Z",
+      "memberSince": "2024-05-31T18:34:27.765Z",
+      "rating": 4.5,
+      "activeLotsCount": 34,
+      "totalSalesValue": 2082365.4430116578,
+      "auctionsFacilitatedCount": 17
+    }
+  ],
+  "sampleStates": [
+    {
+      "id": "state-al",
+      "name": "Alagoas",
+      "uf": "AL",
+      "slug": "alagoas",
+      "cityCount": 2,
+      "createdAt": "2025-05-29T18:34:27.765Z",
+      "updatedAt": "2025-05-28T18:34:27.765Z"
+    },
+    {
+      "id": "state-ba",
+      "name": "Bahia",
+      "uf": "BA",
+      "slug": "bahia",
+      "cityCount": 2,
+      "createdAt": "2025-06-04T18:34:27.765Z",
+      "updatedAt": "2025-06-03T18:34:27.765Z"
+    },
+    {
+      "id": "state-sp",
+      "name": "São Paulo",
+      "uf": "SP",
+      "slug": "sao-paulo",
+      "cityCount": 2,
+      "createdAt": "2025-05-25T18:34:27.765Z",
+      "updatedAt": "2025-06-07T18:34:27.765Z"
+    },
+    {
+      "id": "state-rj",
+      "name": "Rio de Janeiro",
+      "uf": "RJ",
+      "slug": "rio-de-janeiro",
+      "cityCount": 2,
+      "createdAt": "2025-06-01T18:34:27.765Z",
+      "updatedAt": "2025-06-05T18:34:27.765Z"
+    },
+    {
+      "id": "state-mg",
+      "name": "Minas Gerais",
+      "uf": "MG",
+      "slug": "minas-gerais",
+      "cityCount": 1,
+      "createdAt": "2025-05-23T18:34:27.765Z",
+      "updatedAt": "2025-06-21T18:34:27.765Z"
+    },
+    {
+      "id": "state-pr",
+      "name": "Paraná",
+      "uf": "PR",
+      "slug": "parana",
+      "cityCount": 1,
+      "createdAt": "2025-06-16T18:34:27.765Z",
+      "updatedAt": "2025-06-06T18:34:27.765Z"
+    },
+    {
+      "id": "state-rs",
+      "name": "Rio Grande do Sul",
+      "uf": "RS",
+      "slug": "rio-grande-do-sul",
+      "cityCount": 1,
+      "createdAt": "2025-05-27T18:34:27.765Z",
+      "updatedAt": "2025-06-19T18:34:27.765Z"
+    },
+    {
+      "id": "state-go",
+      "name": "Goiás",
+      "uf": "GO",
+      "slug": "goias",
+      "cityCount": 1,
+      "createdAt": "2025-05-28T18:34:27.765Z",
+      "updatedAt": "2025-06-15T18:34:27.765Z"
+    },
+    {
+      "id": "state-ms",
+      "name": "Mato Grosso do Sul",
+      "uf": "MS",
+      "slug": "mato-grosso-do-sul",
+      "cityCount": 1,
+      "createdAt": "2025-06-13T18:34:27.765Z",
+      "updatedAt": "2025-05-29T18:34:27.765Z"
+    },
+    {
+      "id": "state-ce",
+      "name": "Ceará",
+      "uf": "CE",
+      "slug": "ceara",
+      "cityCount": 1,
+      "createdAt": "2025-05-25T18:34:27.765Z",
+      "updatedAt": "2025-06-18T18:34:27.765Z"
+    }
+  ],
+  "sampleSubcategories": [
+    {
+      "name": "Apartamentos",
+      "parentCategoryId": "cat-imoveis",
+      "description": "Apartamentos residenciais de diversos tamanhos.",
+      "displayOrder": 1,
+      "iconMediaId": "media-subcat-apartamentos-icon",
+      "dataAiHintIcon": "predio apartamento",
+      "id": "subcat-imoveis-apartamentos",
+      "slug": "apartamentos",
+      "itemCount": 2,
+      "createdAt": "2025-06-10T04:56:12.389Z",
+      "updatedAt": "2025-05-31T04:56:12.389Z"
+    },
+    {
+      "name": "Casas",
+      "parentCategoryId": "cat-imoveis",
+      "description": "Casas térreas, sobrados e condomínios.",
+      "displayOrder": 2,
+      "iconMediaId": "media-subcat-casas-icon",
+      "dataAiHintIcon": "casa residencial",
+      "id": "subcat-imoveis-casas",
+      "slug": "casas",
+      "itemCount": 3,
+      "createdAt": "2025-06-05T04:56:12.389Z",
+      "updatedAt": "2025-06-19T04:56:12.389Z"
+    }
+  ],
+  "sampleUserDocuments": [],
+  "sampleUserLotMaxBids": [],
+  "sampleUserProfiles": [
+    {
+      "uid": "admin-bidexpert-platform-001",
+      "email": "admin@bidexpert.com.br",
+      "password": "@dmin2025",
+      "fullName": "Administrador BidExpert",
+      "roleId": "role-admin",
+      "roleName": "ADMINISTRATOR",
+      "permissions": [
+        "manage_all"
+      ],
+      "status": "ATIVO",
+      "habilitationStatus": "HABILITADO",
+      "createdAt": "2025-03-14T04:56:12.389Z",
+      "updatedAt": "2025-06-21T04:56:12.389Z"
+    },
+    {
+      "uid": "user-test-002",
+      "email": "testuser@example.com",
+      "password": "password123",
+      "fullName": "Usuário de Teste",
+      "roleId": "role-user",
+      "roleName": "USER",
+      "permissions": [
+        "view_auctions",
+        "place_bids",
+        "view_lots"
+      ],
+      "status": "ATIVO",
+      "habilitationStatus": "HABILITADO",
+      "createdAt": "2025-05-03T04:56:12.389Z",
+      "updatedAt": "2025-06-20T04:56:12.389Z"
+    },
+    {
+      "uid": "consignor-example-003",
+      "email": "consignor@bidexpert.com",
+      "password": "password123",
+      "fullName": "Comitente Exemplo (Bradesco)",
+      "roleId": "role-consignor",
+      "roleName": "CONSIGNOR",
+      "permissions": [
+        "auctions:manage_own",
+        "lots:manage_own",
+        "view_reports",
+        "media:upload"
+      ],
+      "status": "ATIVO",
+      "habilitationStatus": "HABILITADO",
+      "createdAt": "2025-05-13T04:56:12.389Z",
+      "updatedAt": "2025-06-19T04:56:12.389Z",
+      "sellerProfileId": "seller-banco-bradesco-s-a"
+    }
+  ],
+  "sampleUserWins": [],
+  "sampleUserBids": [],
   "sampleUserHabilitationStatus": "PENDING_DOCUMENTS"
 }

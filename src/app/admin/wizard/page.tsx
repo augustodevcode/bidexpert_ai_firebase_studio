@@ -134,11 +134,12 @@ function WizardContent({
             </div>
           </CardContent>
           <CardFooter className="mt-8 flex justify-between p-6 pt-0">
-            <Button variant="outline" onClick={prevStep} disabled={currentStep === 0}>
+            <Button variant="outline" onClick={prevStep} disabled={currentStep === 0 || isLoading}>
               <ChevronLeft className="mr-2 h-4 w-4" /> Anterior
             </Button>
             {currentStep < stepsToUse.length - 1 && (
-              <Button onClick={handleNextStep}>
+              <Button onClick={handleNextStep} disabled={isLoading}>
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : null}
                 Próximo <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             )}
