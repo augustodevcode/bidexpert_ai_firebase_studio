@@ -17,7 +17,9 @@
     "db:init": "echo \"Error: Please specify which database to initialize. Run 'npm run db:init:mysql' or 'npm run db:init:postgres'\" && exit 1",
     "db:init:mysql": "tsx ./scripts/initialize-db.ts --db=mysql",
     "db:init:postgres": "tsx ./scripts/initialize-db.ts --db=postgres",
-    "db:setup-admin": "tsx ./scripts/setup-admin-user.ts",
+    "db:setup-admin": "echo \"Error: Please specify which database to use. Run 'npm run db:setup-admin:mysql' or 'npm run db:setup-admin:postgres'\" && exit 1",
+    "db:setup-admin:mysql": "tsx ./scripts/setup-admin-user.ts --db=mysql",
+    "db:setup-admin:postgres": "tsx ./scripts/setup-admin-user.ts --db=postgres",
     "seed:media": "tsx ./scripts/seed-media-library.ts"
   },
   "dependencies": {

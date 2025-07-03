@@ -1,9 +1,12 @@
-
 // scripts/setup-admin-user.ts
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as fs from 'fs';
-import { getDatabaseAdapter } from '../lib/database/index';
+import yargs from 'yargs/yargs';
+import { hideBin } from 'yargs/helpers';
+import { PostgresAdapter } from '../lib/database/postgres.adapter';
+import { MySqlAdapter } from '../lib/database/mysql.adapter';
+import type { IDatabaseAdapter } from '../types';
 
 // ============================================================================
 // CONFIGURAÇÕES DO USUÁRIO ADMINISTRADOR
@@ -16,11 +19,9 @@ const ADMIN_TARGET_ROLE_NAME = 'ADMINISTRATOR';
 const ADMIN_UID_FOR_SQL = 'admin-bidexpert-platform-001';
 // ============================================================================
 
-async function setupAdminUser() {
+async function setupAdminUser(dbAdapter: IDatabaseAdapter, dbType: string) {
     try {
-        const dbAdapter = await getDatabaseAdapter();
-        const activeSystem = (await dbAdapter.constructor.name).replace('Adapter','');
-        console.log(`[Admin Script] Configurando usuário ${ADMIN_EMAIL} como ${ADMIN_TARGET_ROLE_NAME} para sistema: ${activeSystem}`);
+        console.log(`[Admin Script] Configurando usuário ${ADMIN_EMAIL} como ${ADMIN_TARGET_ROLE_NAME} para sistema: ${dbType.toUpperCase()}`);
 
         // 1. Garantir que os perfis padrão existam, especialmente o de Administrador.
         let adminRole = await dbAdapter.getRoleByName(ADMIN_TARGET_ROLE_NAME);
@@ -36,7 +37,7 @@ async function setupAdminUser() {
         }
 
         // 2. Criar ou atualizar o usuário administrador no banco de dados.
-        const uidToUse = activeSystem === 'FIRESTORE' ? `auth-uid-placeholder-for-${ADMIN_EMAIL}` : ADMIN_UID_FOR_SQL;
+        const uidToUse = ADMIN_UID_FOR_SQL;
         console.log(`[Admin Script] Garantindo perfil de usuário no banco de dados para UID: ${uidToUse}, Email: ${ADMIN_EMAIL}, Role: ${ADMIN_TARGET_ROLE_NAME}`);
         
         const profileResult = await dbAdapter.ensureUserRole(
@@ -69,11 +70,33 @@ async function main() {
     } else {
       dotenv.config();
     }
-    
-    await setupAdminUser();
 
-    // Desconectar o pool de banco de dados se a função existir no adaptador
-    const dbAdapter = await getDatabaseAdapter();
+    const argv = await yargs(hideBin(process.argv))
+      .option('db', {
+        alias: 'database',
+        type: 'string',
+        description: 'Specify the database type to set up (postgres or mysql)',
+        choices: ['postgres', 'mysql'],
+        demandOption: true,
+      })
+      .help()
+      .alias('help', 'h')
+      .argv;
+      
+    let dbAdapter: IDatabaseAdapter;
+    const dbType = argv.db as 'postgres' | 'mysql';
+    
+    if (dbType === 'postgres') {
+        dbAdapter = new PostgresAdapter();
+    } else if (dbType === 'mysql') {
+        dbAdapter = new MySqlAdapter();
+    } else {
+        console.error('Tipo de banco de dados inválido. Use "postgres" ou "mysql".');
+        process.exit(1);
+    }
+    
+    await setupAdminUser(dbAdapter, dbType);
+
     if (typeof (dbAdapter as any).disconnect === 'function') {
         await (dbAdapter as any).disconnect();
     }
