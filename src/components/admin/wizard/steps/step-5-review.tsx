@@ -5,12 +5,21 @@ import { useWizard } from '../wizard-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle, Gavel, FileText, Package, ListChecks, CalendarDays, User, Users } from 'lucide-react';
+import { CheckCircle, Gavel, FileText, Package, ListChecks, CalendarDays, User, Users, Rocket, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+import { createAuctionFromWizard } from '@/app/admin/wizard/actions';
 
 export default function Step5Review() {
-  const { wizardData } = useWizard();
+  const { wizardData, resetWizard } = useWizard();
+  const [isPublishing, setIsPublishing] = useState(false);
+  const { toast } = useToast();
+  const router = useRouter();
+
 
   const {
     auctionType,
@@ -26,6 +35,27 @@ export default function Step5Review() {
     TOMADA_DE_PRECOS: 'Tomada de Preços',
   };
 
+  const handlePublish = async () => {
+    setIsPublishing(true);
+    const result = await createAuctionFromWizard(wizardData);
+    if (result.success) {
+        toast({
+            title: "Leilão Publicado!",
+            description: "O leilão e seus lotes foram criados com sucesso.",
+        });
+        resetWizard();
+        router.push(result.auctionId ? `/admin/auctions/${result.auctionId}/edit` : '/admin/auctions');
+    } else {
+        toast({
+            title: "Erro ao Publicar",
+            description: result.message,
+            variant: "destructive",
+        });
+        setIsPublishing(false);
+    }
+  };
+
+
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold mb-4">Revise e Confirme as Informações</h3>
@@ -39,7 +69,7 @@ export default function Step5Review() {
           <p><strong>Título:</strong> <span className="text-muted-foreground">{auctionDetails?.title || 'Não definido'}</span></p>
           <p><strong>Descrição:</strong> <span className="text-muted-foreground">{auctionDetails?.description || 'Não definida'}</span></p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
-            <p><strong>Modalidade:</strong> <Badge variant="outline">{auctionTypeLabels[auctionType || ''] || 'Não definida'}</Badge></p>
+            <div className="flex items-center gap-2"><strong>Modalidade:</strong> <Badge variant="outline">{auctionTypeLabels[auctionType || ''] || 'Não definida'}</Badge></div>
             <p><strong>Leiloeiro:</strong> <span className="text-muted-foreground">{auctionDetails?.auctioneer || 'Não definido'}</span></p>
             <p><strong>Comitente:</strong> <span className="text-muted-foreground">{auctionDetails?.seller || 'Não definido'}</span></p>
             <p><strong>Data de Início:</strong> <span className="text-muted-foreground">{auctionDetails?.auctionDate ? format(new Date(auctionDetails.auctionDate), 'dd/MM/yyyy', {locale: ptBR}) : 'Não definida'}</span></p>
@@ -91,13 +121,17 @@ export default function Step5Review() {
           )}
         </CardContent>
       </Card>
-       <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 border border-dashed border-green-500 rounded-lg">
-            <CheckCircle className="mx-auto h-8 w-8 text-green-600 mb-2"/>
-            <h4 className="text-lg font-semibold text-green-800 dark:text-green-300">Tudo Pronto para Publicar!</h4>
-            <p className="text-sm text-muted-foreground mt-1">
-                A funcionalidade de publicação final será implementada em uma próxima etapa.
-            </p>
-        </div>
+      <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 border border-dashed border-green-500 rounded-lg">
+          <CheckCircle className="mx-auto h-8 w-8 text-green-600 mb-2"/>
+          <h4 className="text-lg font-semibold text-green-800 dark:text-green-300">Tudo Pronto para Publicar!</h4>
+          <p className="text-sm text-muted-foreground mt-1 mb-4">
+             Ao clicar em "Publicar Leilão", o leilão e todos os lotes criados serão salvos no banco de dados.
+          </p>
+          <Button size="lg" onClick={handlePublish} disabled={isPublishing}>
+            {isPublishing ? <Loader2 className="animate-spin mr-2" /> : <Rocket className="mr-2 h-5 w-5" />}
+            {isPublishing ? "Publicando..." : "Publicar Leilão"}
+          </Button>
+      </div>
     </div>
   );
 }
