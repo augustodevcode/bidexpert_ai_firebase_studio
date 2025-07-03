@@ -26,14 +26,18 @@ const WizardFlow = () => {
       { id: 'lotting', title: 'Loteamento' },
       { id: 'review', title: 'Revisão' },
     ];
-    
+
+    let yPos = 50;
+    const yGap = 220; // Increased gap to make space for entity nodes
+    const mainX = 150;
+    const entityX = 450;
+
     stepsDefinition.forEach((step, index) => {
         let status: 'done' | 'in_progress' | 'todo' = 'todo';
         let details: { label: string; value?: string | number }[] = [];
         let entityType: 'judicial-processes' | undefined = undefined;
         let entityId: string | undefined = undefined;
 
-        // Determine status and details based on data, then override if it's the current step
         switch(step.id) {
             case 'type':
                 if (wizardData.auctionType) {
@@ -47,20 +51,56 @@ const WizardFlow = () => {
                     details.push({ label: 'Processo', value: wizardData.judicialProcess.processNumber });
                     entityType = 'judicial-processes';
                     entityId = wizardData.judicialProcess.id;
+                    
+                    if (wizardData.judicialProcess.sellerName) {
+                        baseNodes.push({
+                            id: 'process-seller',
+                            type: 'customStep',
+                            position: { x: entityX, y: yPos },
+                            data: { title: 'Comitente do Processo', status: 'done', details: [{ label: 'Nome', value: wizardData.judicialProcess.sellerName }] }
+                        });
+                        baseEdges.push({ id: 'e-judicial-seller', source: 'judicial', target: 'process-seller', type: 'smoothstep' });
+                    }
                 }
                 break;
             case 'auction':
-                if (wizardData.auctionDetails?.title && wizardData.auctionDetails.auctioneer && wizardData.auctionDetails.seller) {
-                    status = 'done';
-                    if (wizardData.auctionDetails.title) details.push({ label: 'Título', value: wizardData.auctionDetails.title });
-                    if (wizardData.auctionDetails.auctioneer) details.push({ label: 'Leiloeiro', value: wizardData.auctionDetails.auctioneer });
-                    if (wizardData.auctionDetails.seller) details.push({ label: 'Comitente', value: wizardData.auctionDetails.seller });
+                if (wizardData.auctionDetails?.title) status = 'done';
+                if (wizardData.auctionDetails?.title) details.push({ label: 'Título', value: wizardData.auctionDetails.title });
+
+                if (wizardData.auctionDetails?.auctioneer) {
+                    baseNodes.push({
+                        id: 'auction-auctioneer',
+                        type: 'customStep',
+                        position: { x: entityX, y: yPos },
+                        data: { title: 'Leiloeiro', status: 'done', details: [{ label: 'Nome', value: wizardData.auctionDetails.auctioneer }] }
+                    });
+                    baseEdges.push({ id: 'e-auction-auctioneer', source: 'auction', target: 'auction-auctioneer', type: 'smoothstep' });
+                }
+                 if (wizardData.auctionDetails?.seller) {
+                    baseNodes.push({
+                        id: 'auction-seller',
+                        type: 'customStep',
+                        position: { x: entityX, y: yPos + 180 }, // Position below auctioneer
+                        data: { title: 'Comitente do Leilão', status: 'done', details: [{ label: 'Nome', value: wizardData.auctionDetails.seller }] }
+                    });
+                     baseEdges.push({ id: 'e-auction-seller', source: 'auction', target: 'auction-seller', type: 'smoothstep' });
                 }
                 break;
             case 'lotting':
                 if (wizardData.createdLots && wizardData.createdLots.length > 0) {
                     status = 'done';
                     details.push({ label: 'Lotes Criados', value: wizardData.createdLots.length });
+                }
+
+                if (isJudicial && wizardData.judicialProcess?.id) {
+                     baseNodes.push({
+                        id: 'bens-source',
+                        type: 'customStep',
+                        position: { x: entityX, y: yPos - yGap / 2 },
+                        data: { title: 'Bens do Processo', status: 'done', details: [{ label: 'Status', value: 'Pronto para lotear'}] }
+                    });
+                     baseEdges.push({ id: 'e-judicial-bens', source: 'judicial', target: 'bens-source', type: 'smoothstep' });
+                     baseEdges.push({ id: 'e-bens-lotting', source: 'bens-source', target: 'lotting', type: 'smoothstep' });
                 }
                 break;
              case 'review':
@@ -70,7 +110,6 @@ const WizardFlow = () => {
                 break;
         }
         
-        // The current step is always 'in_progress' regardless of data
         if (currentStep === index) {
             status = 'in_progress';
         }
@@ -78,25 +117,31 @@ const WizardFlow = () => {
         baseNodes.push({
             id: step.id,
             type: 'customStep',
-            position: { x: 50, y: 50 + (index * 180) },
+            position: { x: mainX, y: yPos },
             data: {
                 title: step.title,
                 status: status,
-                details: details.filter(d => d.value !== undefined && d.value !== null),
+                details: details.filter(d => d.value !== undefined && d.value !== null && d.value !== ''),
                 entityType: entityType,
                 entityId: entityId,
             },
         });
         
         if (index > 0) {
-            baseEdges.push({ 
-                id: `e-${stepsDefinition[index - 1].id}-${step.id}`, 
-                source: stepsDefinition[index - 1].id, 
-                target: step.id, 
-                type: 'smoothstep',
-                animated: currentStep === index,
-            });
+            const sourceId = stepsDefinition[index - 1].id;
+            // Avoid connecting from bens to lotting if the judicial step itself is the source
+            if (!(sourceId === 'judicial' && step.id === 'lotting' && isJudicial)) {
+                 baseEdges.push({ 
+                    id: `e-${sourceId}-${step.id}`, 
+                    source: sourceId, 
+                    target: step.id, 
+                    type: 'smoothstep',
+                    animated: currentStep === index,
+                });
+            }
         }
+
+        yPos += yGap;
     });
 
     return { nodes: baseNodes, edges: baseEdges };
