@@ -8,7 +8,6 @@ import { Toaster } from "@/components/ui/toaster"
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/contexts/auth-context';
 import DevConfigProvider from '@/components/dev-config-provider'; // Import the provider
-import { getDatabaseAdapter } from '@/lib/database';
 
 export const metadata: Metadata = {
   title: 'BidExpert - Leilões Online',
@@ -20,10 +19,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // We can call the adapter here to get the system name for display in the footer
-  const dbAdapter = await getDatabaseAdapter();
-  const activeDatabaseSystem = dbAdapter.constructor.name.replace('Adapter', '');
-
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
@@ -39,7 +34,7 @@ export default async function RootLayout({
               <main className="flex-grow container mx-auto px-4 py-8">
                 {children}
               </main>
-              <Footer activeDatabaseSystem={activeDatabaseSystem} />
+              <Footer />
             </TooltipProvider>
             <Toaster />
           </AuthProvider>

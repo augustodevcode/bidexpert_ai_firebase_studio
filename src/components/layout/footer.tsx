@@ -1,12 +1,11 @@
 
 import Link from 'next/link';
 import { Coins, Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck } from 'lucide-react';
+import { getDatabaseAdapter } from '@/lib/database';
 
-interface FooterProps {
-  activeDatabaseSystem?: string;
-}
-
-export default function Footer({ activeDatabaseSystem }: FooterProps) {
+export default async function Footer() {
+  const dbAdapter = await getDatabaseAdapter();
+  const activeDatabaseSystem = dbAdapter.constructor.name.replace('Adapter', '');
   const currentYear = new Date().getFullYear();
 
   const quickLinks = [
