@@ -185,7 +185,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }> {
     this.data.sampleLots = this.data.sampleLots.filter(l => l.id !== idOrPublicId && l.publicId !== idOrPublicId);
     this._persistData();
-    return { success: true, message: 'Lote excluído com sucesso.'};
+    return { success: true, message: 'Lote excluído com sucesso!'};
   }
 
   async createLotsFromBens(lotsToCreate: LotDbData[]): Promise<{ success: boolean, message: string, createdLots?: Lot[] }> {
@@ -431,5 +431,47 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     this.data.sampleJudicialProcesses = this.data.sampleJudicialProcesses.filter(i => i.id !== id);
     this._persistData();
     return { success: true, message: 'Processo excluído.' };
+  }
+
+  async createAuctionAndLinkLots(wizardData: WizardData): Promise<{ success: boolean; message: string; auctionId?: string; }> {
+    const auctionDetails = wizardData.auctionDetails;
+    if (!auctionDetails || !auctionDetails.title || !auctionDetails.auctioneer || !auctionDetails.seller) {
+      return { success: false, message: 'Detalhes insuficientes para criar o leilão.'};
+    }
+
+    const seller = await this.getSellerByName(auctionDetails.seller);
+    const auctioneer = await this.getAuctioneerByName(auctionDetails.auctioneer);
+    
+    // Find category by name, as forms often work with names
+    const category = this.data.sampleLotCategories.find(c => c.name === wizardData.createdLots?.[0]?.categoryId) || 
+                     this.data.sampleLotCategories[0]; // fallback
+
+    const newAuction: Auction = {
+      ...auctionDetails,
+      id: `auc-${uuidv4()}`,
+      publicId: `AUC-PUB-${uuidv4()}`,
+      status: 'EM_PREPARACAO',
+      auctionType: wizardData.auctionType,
+      sellerId: seller?.id,
+      auctioneerId: auctioneer?.id,
+      categoryId: category?.id,
+      category: category?.name,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lots: [],
+      totalLots: wizardData.createdLots?.length || 0,
+    };
+    this.data.sampleAuctions.push(newAuction);
+
+    // Link lots to the new auction
+    (wizardData.createdLots || []).forEach(lot => {
+      const lotIndex = this.data.sampleLots.findIndex(l => l.id === lot.id);
+      if (lotIndex !== -1) {
+        this.data.sampleLots[lotIndex].auctionId = newAuction.id;
+      }
+    });
+
+    this._persistData();
+    return { success: true, message: 'Leilão criado e lotes vinculados!', auctionId: newAuction.id };
   }
 }
