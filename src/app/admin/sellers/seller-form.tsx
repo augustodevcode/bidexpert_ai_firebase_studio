@@ -25,6 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 
 interface SellerFormProps {
   initialData?: SellerProfileInfo | null;
@@ -64,6 +65,7 @@ export default function SellerForm({
       dataAiHintLogo: initialData?.dataAiHintLogo || '',
       description: initialData?.description || '',
       judicialBranchId: initialData?.judicialBranchId || null,
+      isJudicial: initialData?.isJudicial || false,
     },
   });
 
@@ -131,6 +133,26 @@ export default function SellerForm({
                     <Input placeholder="Ex: Banco XYZ S.A., 1ª Vara Cível de Lagarto" {...field} />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="isJudicial"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel>É Comitente Judicial?</FormLabel>
+                    <FormDescription>
+                      Marque se este comitente é uma entidade judicial (Vara, Tribunal, etc).
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />

@@ -13,6 +13,10 @@ export async function createSeller(
   if (result.success) {
     revalidatePath('/admin/sellers');
     revalidatePath('/consignor-dashboard/overview');
+    // Also revalidate pages that might use the new seller
+    revalidatePath('/admin/judicial-processes/new');
+    revalidatePath('/admin/judicial-processes/edit'); 
+    revalidatePath('/admin/wizard');
   }
   return result;
 }
@@ -69,4 +73,3 @@ export async function deleteSeller(
   }
   return result;
 }
-    
