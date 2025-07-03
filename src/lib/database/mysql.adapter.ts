@@ -894,8 +894,20 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> {
-    console.warn("[MySqlAdapter] createSeller is not yet implemented for MySQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const publicId = `SELL-PUB-${uuidv4().substring(0, 12)}`;
+    const slug = slugify(data.name);
+    const query = `
+      INSERT INTO sellers (public_id, name, slug, contact_name, email, phone, judicial_branch_id) 
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+    try {
+        const [result] = await getPool().execute<ResultSetHeader>(query, [
+            publicId, data.name, slug, data.contactName, data.email, data.phone, data.judicialBranchId
+        ]);
+        return { success: true, message: "Comitente criado com sucesso.", sellerId: String(result.insertId), sellerPublicId: publicId };
+    } catch (e: any) {
+        return { success: false, message: `Erro de banco de dados: ${e.message}` };
+    }
   }
   async getSellers(): Promise<SellerProfileInfo[]> {
     console.warn("[MySqlAdapter] getSellers is not yet implemented for MySQL.");

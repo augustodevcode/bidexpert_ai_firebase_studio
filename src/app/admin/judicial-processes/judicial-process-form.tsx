@@ -1,3 +1,4 @@
+
 // src/app/admin/judicial-processes/judicial-process-form.tsx
 'use client';
 
@@ -211,7 +212,7 @@ export default function JudicialProcessForm({
                       </SelectContent>
                     </Select>
                     {showCreateSellerButton && (
-                      <Button type="button" variant="outline" onClick={handleAutoCreateSeller} disabled={isCreatingSeller}>
+                      <Button type="button" variant="secondary" onClick={handleAutoCreateSeller} disabled={isCreatingSeller}>
                         {isCreatingSeller ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Building className="mr-2 h-4 w-4" />}
                         Criar Comitente da Vara
                       </Button>

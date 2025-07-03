@@ -16,7 +16,7 @@ import type {
   PlatformSettings, PlatformSettingsFormData, Theme,
   Subcategory, SubcategoryFormData,
   MapSettings, SearchPaginationType, MentalTriggerSettings, SectionBadgeConfig, HomepageSectionConfig, AuctionStage,
-  DirectSaleOffer,
+  DirectSaleOffer, DirectSaleOfferFormData,
   UserLotMaxBid,
   UserWin,
   AuctionStatus, LotStatus,
@@ -899,8 +899,20 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> {
-    console.warn("[PostgresAdapter] createSeller is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const publicId = `SELL-PUB-${uuidv4().substring(0, 12)}`;
+    const slug = slugify(data.name);
+    const query = `
+      INSERT INTO sellers (public_id, name, slug, contact_name, email, phone, judicial_branch_id, is_judicial) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, public_id
+    `;
+    try {
+        const res = await getPool().query(query, [
+            publicId, data.name, slug, data.contactName, data.email, data.phone, data.judicialBranchId, data.isJudicial || false
+        ]);
+        return { success: true, message: "Comitente criado com sucesso.", sellerId: String(res.rows[0].id), sellerPublicId: res.rows[0].public_id };
+    } catch (e: any) {
+        return { success: false, message: `Erro de banco de dados: ${e.message}` };
+    }
   }
   async getSellers(): Promise<SellerProfileInfo[]> {
     console.warn("[PostgresAdapter] getSellers is not yet implemented for PostgreSQL.");
