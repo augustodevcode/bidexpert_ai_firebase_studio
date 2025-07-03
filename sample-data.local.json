@@ -1721,20 +1721,21 @@
       "branchId": "branch-2",
       "parties": [
         {
+          "id": "party-5010fc65-c820-483a-a5ac-c475c0f5b7c0",
           "name": "Augusto",
-          "partyType": "AUTOR",
-          "id": "party-5010fc65-c820-483a-a5ac-c475c0f5b7c0"
+          "partyType": "AUTOR"
         },
         {
+          "id": "party-29ed977e-9edb-4c62-99dd-493a6d112474",
           "name": "Joao",
-          "partyType": "REU",
-          "id": "party-29ed977e-9edb-4c62-99dd-493a6d112474"
+          "partyType": "REU"
         }
       ],
       "id": "proc-dbd93e68-1036-435b-8891-19703f5bd9b3",
       "publicId": "PROC-PUB-875401bb",
       "createdAt": "2025-07-03T20:54:31.338Z",
-      "updatedAt": "2025-07-03T20:54:31.338Z"
+      "updatedAt": "2025-07-03T21:12:04.251Z",
+      "sellerId": "seller-vara-de-falencias-do-rio-de-janeiro-tjrj"
     }
   ],
   "sampleLotCategories": [
