@@ -8,10 +8,15 @@ let sampleDbInstance: IDatabaseAdapter | undefined;
 export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
   // The cookies() function is a dynamic function that can only be used in a Server Component,
   // Route Handler, or Server Action. It will throw an error if used during build time
-  // or in standalone scripts. We've moved any such logic into separate scripts
-  // that do not call this factory function.
-  const cookieStore = cookies();
-  const dbFromCookie = cookieStore.get('dev-config-db')?.value;
+  // or in standalone scripts.
+  let dbFromCookie: string | undefined;
+  try {
+    const cookieStore = cookies();
+    dbFromCookie = cookieStore.get('dev-config-db')?.value;
+  } catch (e) {
+    // This can happen during build or in environments without request context. Fallback is safe.
+    console.warn('[DB Factory] Could not access cookies. Falling back to environment variables.');
+  }
   
   const activeSystemEnv = process.env.ACTIVE_DATABASE_SYSTEM;
   const activeSystem = dbFromCookie || activeSystemEnv?.toUpperCase() || 'SAMPLE_DATA';
