@@ -19,7 +19,12 @@ import type {
   DirectSaleOffer,
   UserLotMaxBid,
   UserWin,
-  AuctionStatus, LotStatus
+  AuctionStatus, LotStatus,
+  Court, CourtFormData,
+  JudicialDistrict, JudicialDistrictFormData,
+  JudicialBranch, JudicialBranchFormData,
+  JudicialProcess, JudicialProcessFormData, ProcessParty,
+  Bem, BemFormData
 } from '@/types';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -527,43 +532,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
         console.log('[MySqlAdapter] Pool de conexões MySQL encerrado.');
     }
   }
-
-  async getAuction(idOrPublicId: string): Promise<Auction | null> {
-    const [rows] = await getPool().execute<RowDataPacket[]>(
-      `SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url 
-       FROM auctions a
-       LEFT JOIN lot_categories cat ON a.category_id = cat.id
-       LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
-       LEFT JOIN sellers s ON a.seller_id = s.id
-       WHERE a.id = ? OR a.public_id = ? 
-       LIMIT 1`,
-      [idOrPublicId, idOrPublicId]
-    );
-
-    if (rows.length === 0) return null;
-    const auctionData = mapMySqlRowToCamelCase(rows[0]);
-    
-    // Now fetch the lots associated with this auction
-    const [lotRows] = await getPool().execute<RowDataPacket[]>(
-      `SELECT l.*, c.name as category_name, s.name as subcategory_name, st.uf as state_uf, city.name as city_name, a.title as auction_name
-       FROM lots l
-       LEFT JOIN auctions a ON l.auction_id = a.id
-       LEFT JOIN lot_categories c ON l.category_id = c.id
-       LEFT JOIN subcategories s ON l.subcategory_id = s.id
-       LEFT JOIN states st ON l.state_id = st.id
-       LEFT JOIN cities city ON l.city_id = city.id
-       WHERE l.auction_id = ?`,
-      [auctionData.id]
-    );
-
-    const lots = mapMySqlRowsToCamelCase(lotRows).map(mapToLot);
-    
-    const auction = mapToAuction(auctionData);
-    auction.lots = lots;
-    auction.totalLots = lots.length;
-
-    return auction;
-  }
   
   async getWinsForUser(userId: string): Promise<UserWin[]> {
     console.warn("[MySqlAdapter] getWinsForUser is not yet implemented for MySQL.");
@@ -642,10 +610,18 @@ export class MySqlAdapter implements IDatabaseAdapter {
         `CREATE TABLE IF NOT EXISTS states ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100) NOT NULL, uf VARCHAR(2) NOT NULL UNIQUE, slug VARCHAR(100) NOT NULL UNIQUE, city_count INT DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
         `CREATE TABLE IF NOT EXISTS cities ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, state_id INT NOT NULL, state_uf VARCHAR(2), ibge_code VARCHAR(10), lot_count INT DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (state_id) REFERENCES states(id) ON DELETE CASCADE );`,
         `CREATE TABLE IF NOT EXISTS auctioneers ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, registration_number VARCHAR(50), contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since DATETIME, rating DECIMAL(3, 2), auctions_conducted_count INT DEFAULT 0, total_value_sold DECIMAL(15, 2) DEFAULT 0, user_id VARCHAR(255), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
-        `CREATE TABLE IF NOT EXISTS sellers ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since DATETIME, rating DECIMAL(3, 2), active_lots_count INT, total_sales_value DECIMAL(15, 2), auctions_facilitated_count INT, user_id VARCHAR(255), cnpj VARCHAR(20), razao_social VARCHAR(255), inscricao_estadual VARCHAR(50), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
+        `CREATE TABLE IF NOT EXISTS sellers ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since DATETIME, rating DECIMAL(3, 2), active_lots_count INT, total_sales_value DECIMAL(15, 2), auctions_facilitated_count INT, user_id VARCHAR(255), cnpj VARCHAR(20), razao_social VARCHAR(255), inscricao_estadual VARCHAR(50), judicial_branch_id INT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
         `CREATE TABLE IF NOT EXISTS auctions ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), auction_type VARCHAR(50), category_id INT, auctioneer_id INT, seller_id INT, auction_date DATETIME NOT NULL, end_date DATETIME, city VARCHAR(100), state VARCHAR(2), image_url TEXT, data_ai_hint VARCHAR(255), documents_url TEXT, visits INT DEFAULT 0, initial_offer DECIMAL(15, 2), soft_close_enabled BOOLEAN DEFAULT FALSE, soft_close_minutes INT, automatic_bidding_enabled BOOLEAN DEFAULT FALSE, silent_bidding_enabled BOOLEAN DEFAULT FALSE, allow_multiple_bids_per_user BOOLEAN DEFAULT TRUE, allow_installment_bids BOOLEAN, estimated_revenue DECIMAL(15, 2), achieved_revenue DECIMAL(15, 2), total_habilitated_users INT, is_featured_on_marketplace BOOLEAN, marketplace_announcement_title VARCHAR(150), auction_stages JSON, auto_relist_settings JSON, decrement_amount DECIMAL(15, 2), decrement_interval_seconds INT, floor_price DECIMAL(15, 2), original_auction_id INT, relist_count INT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (category_id) REFERENCES lot_categories(id), FOREIGN KEY (auctioneer_id) REFERENCES auctioneers(id), FOREIGN KEY (seller_id) REFERENCES sellers(id), FOREIGN KEY (original_auction_id) REFERENCES auctions(id) );`,
-        `CREATE TABLE IF NOT EXISTS lots ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, auction_id INT NOT NULL, title VARCHAR(255) NOT NULL, number VARCHAR(50), image_url TEXT, data_ai_hint VARCHAR(255), gallery_image_urls JSON, media_item_ids JSON, status VARCHAR(50), state_id INT, city_id INT, category_id INT NOT NULL, subcategory_id INT, views INT DEFAULT 0, price DECIMAL(15, 2) NOT NULL, initial_price DECIMAL(15, 2), lot_specific_auction_date DATETIME, second_auction_date DATETIME, second_initial_price DECIMAL(15, 2), end_date DATETIME, bids_count INT DEFAULT 0, is_featured BOOLEAN DEFAULT FALSE, description TEXT, year INT, make VARCHAR(100), model VARCHAR(100), series VARCHAR(100), stock_number VARCHAR(100), selling_branch VARCHAR(100), vin VARCHAR(100), vin_status VARCHAR(100), loss_type VARCHAR(100), primary_damage VARCHAR(100), title_info VARCHAR(255), title_brand VARCHAR(100), start_code VARCHAR(100), has_key BOOLEAN, odometer VARCHAR(100), airbags_status VARCHAR(100), body_style VARCHAR(100), engine_details VARCHAR(255), transmission_type VARCHAR(100), drive_line_type VARCHAR(100), fuel_type VARCHAR(50), cylinders VARCHAR(20), restraint_system VARCHAR(100), exterior_interior_color VARCHAR(100), options TEXT, manufactured_in VARCHAR(100), vehicle_class VARCHAR(100), vehicle_location_in_branch VARCHAR(100), lane_run_number VARCHAR(50), aisle_stall VARCHAR(50), actual_cash_value VARCHAR(100), estimated_repair_cost VARCHAR(100), seller_id INT, auctioneer_id INT, condition_report TEXT, bid_increment_step DECIMAL(10, 2), allow_installment_bids BOOLEAN, judicial_process_number VARCHAR(100), court_district VARCHAR(100), court_name VARCHAR(100), public_process_url TEXT, property_registration_number VARCHAR(100), property_liens TEXT, known_debts TEXT, additional_documents_info TEXT, latitude DECIMAL(10, 8), longitude DECIMAL(11, 8), map_address VARCHAR(255), map_embed_url TEXT, map_static_image_url TEXT, reserve_price DECIMAL(15, 2), evaluation_value DECIMAL(15, 2), debt_amount DECIMAL(15, 2), itbi_value DECIMAL(15, 2), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE, FOREIGN KEY (category_id) REFERENCES lot_categories(id), FOREIGN KEY (state_id) REFERENCES states(id), FOREIGN KEY (city_id) REFERENCES cities(id) );`,
+        `CREATE TABLE IF NOT EXISTS lots ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, auction_id INT NOT NULL, bem_ids JSON, number VARCHAR(50), title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), price DECIMAL(15, 2), initial_price DECIMAL(15, 2), bids_count INT DEFAULT 0, is_featured BOOLEAN DEFAULT FALSE, reserve_price DECIMAL(15, 2), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE );`,
         `CREATE TABLE IF NOT EXISTS platform_settings ( id INT AUTO_INCREMENT PRIMARY KEY, site_title VARCHAR(255), site_tagline TEXT, gallery_image_base_path VARCHAR(255), storage_provider VARCHAR(50), firebase_storage_bucket VARCHAR(255), active_theme_name VARCHAR(100), themes JSON, platform_public_id_masks JSON, map_settings JSON, search_pagination_type VARCHAR(50), search_items_per_page INT, search_load_more_count INT, show_countdown_on_lot_detail BOOLEAN, show_countdown_on_cards BOOLEAN, show_related_lots_on_lot_detail BOOLEAN, related_lots_count INT, mental_trigger_settings JSON, section_badge_visibility JSON, homepage_sections JSON, variable_increment_table JSON, bidding_settings JSON, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
+        `CREATE TABLE IF NOT EXISTS courts ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, website TEXT, state_uf VARCHAR(2) NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
+        `CREATE TABLE IF NOT EXISTS judicial_districts ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, court_id INT NOT NULL, state_id INT NOT NULL, zip_code VARCHAR(10), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (court_id) REFERENCES courts(id), FOREIGN KEY (state_id) REFERENCES states(id), UNIQUE (slug, state_id) );`,
+        `CREATE TABLE IF NOT EXISTS judicial_branches ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, district_id INT NOT NULL, contact_name VARCHAR(150), phone VARCHAR(20), email VARCHAR(150), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (district_id) REFERENCES judicial_districts(id), UNIQUE (slug, district_id) );`,
+        `CREATE TABLE IF NOT EXISTS judicial_processes ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, process_number VARCHAR(100) NOT NULL UNIQUE, old_process_number VARCHAR(100), is_electronic BOOLEAN, court_id INT NOT NULL, district_id INT NOT NULL, branch_id INT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (court_id) REFERENCES courts(id), FOREIGN KEY (district_id) REFERENCES judicial_districts(id), FOREIGN KEY (branch_id) REFERENCES judicial_branches(id) );`,
+        `CREATE TABLE IF NOT EXISTS process_parties ( id INT AUTO_INCREMENT PRIMARY KEY, process_id INT NOT NULL, name VARCHAR(255) NOT NULL, document_number VARCHAR(50), party_type VARCHAR(50) NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (process_id) REFERENCES judicial_processes(id) ON DELETE CASCADE );`,
+        `CREATE TABLE IF NOT EXISTS bens ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, title VARCHAR(255) NOT NULL, description TEXT, judicial_process_id INT, status VARCHAR(50) DEFAULT 'DISPONIVEL', category_id INT, subcategory_id INT, image_url TEXT, image_media_id VARCHAR(255), data_ai_hint VARCHAR(255), evaluation_value DECIMAL(15, 2), location_city VARCHAR(100), location_state VARCHAR(100), address VARCHAR(255), latitude DECIMAL(10, 8), longitude DECIMAL(11, 8), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (judicial_process_id) REFERENCES judicial_processes(id), FOREIGN KEY (category_id) REFERENCES lot_categories(id), FOREIGN KEY (subcategory_id) REFERENCES subcategories(id) );`,
+        `CREATE TABLE IF NOT EXISTS user_wins ( id INT AUTO_INCREMENT PRIMARY KEY, user_id VARCHAR(255) NOT NULL, lot_id INT NOT NULL, winning_bid_amount DECIMAL(15, 2) NOT NULL, win_date DATETIME NOT NULL, payment_status VARCHAR(50) DEFAULT 'PENDENTE', invoice_url TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(uid), FOREIGN KEY (lot_id) REFERENCES lots(id) );`,
+        `CREATE TABLE IF NOT EXISTS bids ( id INT AUTO_INCREMENT PRIMARY KEY, lot_id INT NOT NULL, auction_id INT, bidder_id VARCHAR(255) NOT NULL, bidder_display_name VARCHAR(255), amount DECIMAL(15,2) NOT NULL, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (lot_id) REFERENCES lots(id) ON DELETE CASCADE );`
     ];
 
     try {
