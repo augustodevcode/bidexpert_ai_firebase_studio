@@ -74,4 +74,6 @@ export async function createAuctionFromWizard(wizardData: WizardData): Promise<{
         return result;
     } catch (error: any) {
         console.error("Error in createAuctionFromWizard action:", error);
-        return { success: false, message: error.message
+        return { success: false, message: error.message };
+    }
+}
