@@ -1,3 +1,4 @@
+
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -22,7 +23,7 @@ import type {
   Court, CourtFormData,
   JudicialDistrict, JudicialDistrictFormData,
   JudicialBranch, JudicialBranchFormData,
-  JudicialProcess, JudicialProcessFormData, ProcessParty,
+  JudicialProcess, JudicialProcessFormData,
   Bem, BemFormData
 } from '@/types';
 import { samplePlatformSettings } from '@/lib/sample-data';

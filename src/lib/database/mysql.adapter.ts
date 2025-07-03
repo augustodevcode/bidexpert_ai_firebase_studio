@@ -1,3 +1,4 @@
+
 // src/lib/database/mysql.adapter.ts
 import * as mysql from 'mysql2/promise';
 import type { RowDataPacket, Pool, PoolConnection, ResultSetHeader } from 'mysql2/promise';
