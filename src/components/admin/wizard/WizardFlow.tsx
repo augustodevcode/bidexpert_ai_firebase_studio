@@ -28,7 +28,7 @@ const WizardFlow = () => {
     ];
 
     let yPos = 50;
-    const yGap = 220; // Increased gap to make space for entity nodes
+    const yGap = 220; 
     const mainX = 150;
     const entityX = 450;
 
@@ -91,16 +91,29 @@ const WizardFlow = () => {
                     status = 'done';
                     details.push({ label: 'Lotes Criados', value: wizardData.createdLots.length });
                 }
-
-                if (isJudicial && wizardData.judicialProcess?.id) {
-                     baseNodes.push({
-                        id: 'bens-source',
-                        type: 'customStep',
-                        position: { x: entityX, y: yPos - yGap / 2 },
-                        data: { title: 'Bens do Processo', status: 'done', details: [{ label: 'Status', value: 'Pronto para lotear'}] }
-                    });
-                     baseEdges.push({ id: 'e-judicial-bens', source: 'judicial', target: 'bens-source', type: 'smoothstep' });
-                     baseEdges.push({ id: 'e-bens-lotting', source: 'bens-source', target: 'lotting', type: 'smoothstep' });
+                
+                if (isJudicial) {
+                    if (wizardData.judicialProcess?.id) {
+                        baseNodes.push({
+                            id: 'bens-source',
+                            type: 'customStep',
+                            position: { x: entityX, y: yPos - yGap / 2 },
+                            data: { title: 'Bens do Processo', status: 'done', details: [{ label: 'Status', value: 'Pronto para lotear' }] }
+                        });
+                        baseEdges.push({ id: 'e-judicial-bens', source: 'judicial', target: 'bens-source', type: 'smoothstep' });
+                        baseEdges.push({ id: 'e-bens-lotting', source: 'bens-source', target: 'lotting', type: 'smoothstep', animated: currentStep === index });
+                    }
+                } else {
+                    if (wizardData.auctionDetails?.title) {
+                        baseNodes.push({
+                           id: 'bens-source-generic',
+                           type: 'customStep',
+                           position: { x: entityX, y: yPos - yGap / 2 },
+                           data: { title: 'Bens Disponíveis', status: 'done', details: [{ label: 'Status', value: 'Pronto para lotear' }] }
+                       });
+                       baseEdges.push({ id: 'e-auction-bens', source: 'auction', target: 'bens-source-generic', type: 'smoothstep' });
+                       baseEdges.push({ id: 'e-bens-lotting-generic', source: 'bens-source-generic', target: 'lotting', type: 'smoothstep', animated: currentStep === index });
+                   }
                 }
                 break;
              case 'review':
@@ -129,9 +142,15 @@ const WizardFlow = () => {
         
         if (index > 0) {
             const sourceId = stepsDefinition[index - 1].id;
-            // Avoid connecting from bens to lotting if the judicial step itself is the source
-            if (!(sourceId === 'judicial' && step.id === 'lotting' && isJudicial)) {
-                 baseEdges.push({ 
+            let createDirectEdge = true;
+
+            // Don't create direct edges to lotting; they go through a 'bens' node now
+            if (step.id === 'lotting') {
+              createDirectEdge = false;
+            }
+
+            if (createDirectEdge) {
+                baseEdges.push({ 
                     id: `e-${sourceId}-${step.id}`, 
                     source: sourceId, 
                     target: step.id, 
