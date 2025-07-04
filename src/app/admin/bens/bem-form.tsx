@@ -167,15 +167,31 @@ export default function BemForm({
                 <FormField name="categoryId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Categoria</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione a categoria" /></SelectTrigger></FormControl><SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField name="subcategoryId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Subcategoria (Opcional)</FormLabel><Select onValueChange={field.onChange} value={field.value ?? undefined} disabled={isLoadingSubcategories || availableSubcategories.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={isLoadingSubcategories ? 'Carregando...' : 'Selecione a subcategoria'} /></SelectTrigger></FormControl><SelectContent>{availableSubcategories.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
               </div>
-              <FormField name="judicialProcessId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Opcional)</FormLabel><Select onValueChange={field.onChange} value={field.value ?? ''}><FormControl><SelectTrigger><SelectValue placeholder="Vincule a um processo judicial" /></SelectTrigger></FormControl><SelectContent><SelectItem value="">Nenhum</SelectItem>{processes.map(p => <SelectItem key={p.id} value={p.id}>{p.processNumber}</SelectItem>)}</SelectContent></Select><FormDescription>Vincule este bem a um processo judicial previamente cadastrado.</FormDescription><FormMessage /></FormItem>)} />
+              <FormField name="judicialProcessId" control={form.control} render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Processo Judicial (Opcional)</FormLabel>
+                  <Select onValueChange={(value) => field.onChange(value === 'none' ? null : value)} value={field.value ?? 'none'}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Vincule a um processo judicial" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhum</SelectItem>
+                      {processes.map(p => <SelectItem key={p.id} value={p.id}>{p.processNumber}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>Vincule este bem a um processo judicial previamente cadastrado.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )} />
               <FormField name="sellerId" control={form.control} render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2"><Users className="h-4 w-4" /> Comitente do Bem (Opcional)</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value ?? ''}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Selecione um comitente" /></SelectTrigger></FormControl>
-                    <SelectContent><SelectItem value="">Comitente principal do processo/leilão</SelectItem>{sellers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                   <Select onValueChange={(value) => field.onChange(value === 'none' ? null : value)} value={field.value || 'none'}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Padrão do Processo/Leilão" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">Padrão do Processo/Leilão</SelectItem>
+                      {sellers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                    </SelectContent>
                   </Select>
-                  <FormDescription>Selecione um comitente específico para este bem. Se deixado em branco, ele herdará o comitente do processo ou do leilão.</FormDescription>
+                  <FormDescription>Selecione um comitente específico para este bem. Se "Padrão" for selecionado, ele herdará o comitente do processo ou do leilão.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )} />
