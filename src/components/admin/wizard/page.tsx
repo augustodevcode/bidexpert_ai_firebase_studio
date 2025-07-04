@@ -28,7 +28,7 @@ const allSteps = [
   { id: 'judicial', title: 'Dados Judiciais', description: 'Informações do processo.' },
   { id: 'auction', title: 'Dados do Leilão', description: 'Detalhes e datas.' },
   { id: 'lotting', title: 'Loteamento', description: 'Agrupe bens em lotes.' },
-  { id: 'review', title: 'Revisão', description: 'Revise e publique.' },
+  { id: 'review', title: 'Revisão e Publicação', description: 'Revise e publique.' },
 ];
 
 interface WizardDataForFetching {
