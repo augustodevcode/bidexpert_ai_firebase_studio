@@ -1,4 +1,3 @@
-
 // src/components/admin/wizard/WizardFlow.tsx
 'use client';
 
@@ -30,7 +29,7 @@ export default function WizardFlow() {
     const allNodes: Node<FlowNodeData>[] = [];
     const allEdges: Edge[] = [];
     const xGap = 280;
-    const yGap = 180;
+    const yGap = 160;
 
     // --- Start Node ---
     allNodes.push({
@@ -52,7 +51,7 @@ export default function WizardFlow() {
       };
       const animatedEdge = isActivePath && currentStep > 0;
       
-      const typeNodeStatus: 'done' | 'in_progress' | 'todo' = selectedType ? (selectedType === type ? 'done' : 'done') : 'in_progress';
+      const typeNodeStatus: 'done' | 'in_progress' | 'todo' = selectedType ? 'done' : 'in_progress';
 
       // --- Node 1: Type Selection ---
       allNodes.push({
@@ -63,169 +62,144 @@ export default function WizardFlow() {
         }
       });
       allEdges.push({ id: `e-start-${type}`, source: 'start', target: `type-${type}`, type: 'smoothstep', style: edgeStyle, animated: animatedEdge && currentStep >= 0 });
+    });
 
-      // --- Build Judicial Path ---
-      if (type === 'JUDICIAL') {
-        const judicialNodes = [
-          { id: 'tribunal', title: 'Tribunal', icon: Scale },
-          { id: 'comarca', title: 'Comarca', icon: Building },
-          { id: 'vara', title: 'Vara', icon: Gavel },
-          { id: 'processo', title: 'Processo Judicial', icon: FileText, isEntity: true, entityType: 'process' },
-          { id: 'partes', title: 'Partes Envolvidas', icon: Users },
-        ];
-
-        let lastNodeId = `type-JUDICIAL`;
-        judicialNodes.forEach((node, i) => {
-          const nodeId = `judicial-${node.id}`;
-          let nodeStatus: 'done' | 'in_progress' | 'todo' = 'todo';
-          let entityId;
-
-          if (wizardData.judicialProcess) {
-             nodeStatus = 'done';
-             if (node.isEntity) entityId = wizardData.judicialProcess.id;
-          } else if (currentStep === 1) { 
-             nodeStatus = 'in_progress';
-          }
-
-          allNodes.push({
-            id: nodeId, type: 'customStep', position: { x: xGap * (2 + i), y: yBase },
-            data: { 
-              label: `#${nodeIdCounter++} - Dados do Processo`, 
-              title: node.title, 
-              status: nodeStatus, 
-              icon: node.icon, 
-              pathType: 'JUDICIAL', 
-              isActivePath,
-              isEntity: node.isEntity,
-              entityType: node.entityType,
-              entityId
-            }
-          });
-          allEdges.push({ id: `e-${lastNodeId}-${nodeId}`, source: lastNodeId, target: nodeId, type: 'smoothstep', style: edgeStyle, animated: animatedEdge && currentStep === 1 });
-          lastNodeId = nodeId;
-        });
-
-        const bensProcessoNodeId = 'judicial-bens';
-        allNodes.push({
-            id: bensProcessoNodeId, type: 'customStep', position: { x: xGap * (2 + judicialNodes.length), y: yBase},
-            data: { label: `#${nodeIdCounter++} - Fonte de Itens`, title: 'Bens do Processo', status: wizardData.judicialProcess ? 'done' : 'todo', icon: Package, pathType: 'JUDICIAL', isActivePath }
-        });
-        allEdges.push({ id: `e-${lastNodeId}-${bensProcessoNodeId}`, source: lastNodeId, target: bensProcessoNodeId, type: 'smoothstep', style: edgeStyle, animated: animatedEdge && currentStep >=1 });
-
-        // Connect Bens do Processo to Lotting
-        allEdges.push({ id: `e-${bensProcessoNodeId}-lotting`, source: bensProcessoNodeId, target: 'lotting', type: 'smoothstep', style: edgeStyle, animated: animatedEdge && currentStep >= 3 });
-
-      } else {
-        allEdges.push({ id: `e-type-${type}-auction-details`, source: `type-${type}`, target: 'auction-details', type: 'smoothstep', style: edgeStyle, animated: animatedEdge && currentStep === 1 && wizardData.auctionType === type });
-      }
+    // --- Judicial Path Specifics ---
+    const judicialPathIsActive = !selectedType || selectedType === 'JUDICIAL';
+    const judicialInputs = [
+      { id: 'tribunal', title: 'Tribunal', icon: Scale },
+      { id: 'comarca', title: 'Comarca', icon: Building },
+      { id: 'vara', title: 'Vara', icon: Gavel },
+    ];
+    
+    judicialInputs.forEach((node, i) => {
+      allNodes.push({
+        id: `judicial-input-${node.id}`,
+        type: 'customStep',
+        position: { x: xGap * 2, y: yGap * i },
+        data: {
+          label: `#${nodeIdCounter++} - Atributo`, title: node.title, status: wizardData.judicialProcess ? 'done' : 'todo', icon: node.icon,
+          pathType: 'JUDICIAL', isActivePath: judicialPathIsActive
+        }
+      });
+      allEdges.push({ id: `e-input-${node.id}-processo`, source: `judicial-input-${node.id}`, target: 'judicial-processo', type: 'smoothstep', style: { stroke: pathColors.JUDICIAL }, animated: judicialPathIsActive && currentStep === 1 });
     });
     
-    // --- Common Path (Auction Details, Lotting, Review, and beyond) ---
-    const commonYOffset = 1.5 * yGap;
+    allNodes.push({
+        id: 'judicial-processo',
+        type: 'customStep',
+        position: { x: xGap * 3, y: yGap },
+        data: {
+          label: `#${nodeIdCounter++} - Dados do Processo`, title: 'Processo Judicial', icon: FileText,
+          status: wizardData.judicialProcess ? 'done' : (currentStep === 1 && selectedType === 'JUDICIAL' ? 'in_progress' : 'todo'),
+          pathType: 'JUDICIAL', isActivePath: judicialPathIsActive,
+          isEntity: true, entityType: 'process', entityId: wizardData.judicialProcess?.id
+        }
+    });
+    allEdges.push({ id: `e-type-JUDICIAL-processo`, source: `type-JUDICIAL`, target: 'judicial-processo', type: 'smoothstep', style: { stroke: pathColors.JUDICIAL }, animated: judicialPathIsActive && currentStep === 1 });
+    
+
+    // --- Entities as Inputs for Auction ---
+    const sellerId = wizardData.auctionDetails?.sellerId;
+    const auctioneerId = wizardData.auctionDetails?.auctioneerId;
+
+    allNodes.push({
+        id: 'entity-comitente', type: 'customStep', position: { x: xGap * 3, y: 3.25 * yGap },
+        data: { label: '#10 - Entidade', title: 'Comitente', icon: Users, status: sellerId ? 'done' : 'todo', pathType: 'COMMON', isActivePath: !!selectedType, isEntity: true, entityId: sellerId, entityType: 'seller'}
+    });
+    allNodes.push({
+        id: 'entity-leiloeiro', type: 'customStep', position: { x: xGap * 3, y: 4.25 * yGap },
+        data: { label: '#11 - Entidade', title: 'Leiloeiro', icon: Gavel, status: auctioneerId ? 'done' : 'todo', pathType: 'COMMON', isActivePath: !!selectedType, isEntity: true, entityId: auctioneerId, entityType: 'auctioneer' }
+    });
+
+    // --- Common Path Nodes ---
+    const commonYOffset = 2.5 * yGap;
     const commonIsActive = !!selectedType;
     const commonEdgeStyle = { stroke: selectedType ? pathColors[selectedType] : pathColors.COMMON, strokeWidth: commonIsActive ? 2.5 : 1.5 };
     
-    const auctionDetailsX = xGap * 3;
+    const auctionDetailsNodeId = 'auction-details';
     allNodes.push({
-      id: 'auction-details', type: 'customStep', position: { x: auctionDetailsX, y: commonYOffset },
+      id: auctionDetailsNodeId, type: 'customStep', position: { x: xGap * 4, y: commonYOffset },
       data: {
-        label: `#${nodeIdCounter++} - Passo 2`, title: 'Dados do Leilão', status: wizardData.auctionDetails?.title ? 'done' : (currentStep >= 1 && currentStep <= 2) ? 'in_progress' : 'todo',
+        label: `#12 - Passo 2`, title: 'Dados do Leilão', status: wizardData.auctionDetails?.title ? 'done' : (currentStep >= 1 && currentStep <= 2) ? 'in_progress' : 'todo',
         icon: Gavel, pathType: selectedType || 'COMMON', isActivePath: commonIsActive
       }
     });
 
-    allNodes.push({
-      id: 'seller-entity', type: 'customStep', position: { x: auctionDetailsX, y: commonYOffset - yGap/2 },
-      data: { 
-        label: 'Entidade', title: 'Comitente', status: wizardData.auctionDetails?.seller ? 'done' : 'todo', icon: Users, pathType: selectedType || 'COMMON', isActivePath: commonIsActive,
-        isEntity: true, entityId: wizardData.auctionDetails?.sellerId, entityType: 'seller'
-      }
-    });
-    allEdges.push({ id: 'e-auction-seller', source: 'auction-details', target: 'seller-entity', type: 'smoothstep', style: commonEdgeStyle });
+    // Connect inputs to common path
+    allEdges.push({ id: `e-processo-auction`, source: 'judicial-processo', target: auctionDetailsNodeId, type: 'smoothstep', style: { stroke: pathColors.JUDICIAL }, animated: judicialPathIsActive && currentStep >= 2 });
+    allEdges.push({ id: `e-type-EXTRAJUDICIAL-auction`, source: 'type-EXTRAJUDICIAL', target: auctionDetailsNodeId, type: 'smoothstep', style: { stroke: pathColors.EXTRAJUDICIAL }, animated: selectedType === 'EXTRAJUDICIAL' && currentStep >= 1 });
+    allEdges.push({ id: `e-type-PARTICULAR-auction`, source: 'type-PARTICULAR', target: auctionDetailsNodeId, type: 'smoothstep', style: { stroke: pathColors.PARTICULAR }, animated: selectedType === 'PARTICULAR' && currentStep >= 1 });
+    allEdges.push({ id: `e-type-TOMADA_DE_PRECOS-auction`, source: 'type-TOMADA_DE_PRECOS', target: auctionDetailsNodeId, type: 'smoothstep', style: { stroke: pathColors.TOMADA_DE_PRECOS }, animated: selectedType === 'TOMADA_DE_PRECOS' && currentStep >= 1 });
+    
+    // Connect entity inputs
+    allEdges.push({ id: `e-seller-auction`, source: 'entity-comitente', target: auctionDetailsNodeId, type: 'smoothstep', style: { stroke: pathColors.COMMON, strokeWidth: 1.5 }, animated: commonIsActive && currentStep >=2 });
+    allEdges.push({ id: `e-auctioneer-auction`, source: 'entity-leiloeiro', target: auctionDetailsNodeId, type: 'smoothstep', style: { stroke: pathColors.COMMON, strokeWidth: 1.5 }, animated: commonIsActive && currentStep >=2 });
 
+    const bensDisponiveisNodeId = 'bens-disponiveis';
     allNodes.push({
-      id: 'auctioneer-entity', type: 'customStep', position: { x: auctionDetailsX, y: commonYOffset + yGap/2 },
-      data: { 
-        label: 'Entidade', title: 'Leiloeiro', status: wizardData.auctionDetails?.auctioneer ? 'done' : 'todo', icon: Gavel, pathType: selectedType || 'COMMON', isActivePath: commonIsActive,
-        isEntity: true, entityId: wizardData.auctionDetails?.auctioneerId, entityType: 'auctioneer'
-      }
-    });
-    allEdges.push({ id: 'e-auction-auctioneer', source: 'auction-details', target: 'auctioneer-entity', type: 'smoothstep', style: commonEdgeStyle });
-
-    const genericBensNodeId = 'generic-bens';
-    allNodes.push({
-      id: genericBensNodeId, type: 'customStep', position: { x: auctionDetailsX + xGap, y: commonYOffset + yGap },
+      id: bensDisponiveisNodeId, type: 'customStep', position: { x: xGap * 5, y: commonYOffset + yGap },
       data: {
-        label: `#${nodeIdCounter++} - Fonte de Itens`, title: 'Bens Disponíveis', status: wizardData.auctionDetails?.title ? 'done' : 'todo',
-        icon: Package, pathType: 'EXTRAJUDICIAL', isActivePath: selectedType !== 'JUDICIAL'
+        label: '#13 - Fonte de Itens', title: 'Bens Disponíveis', status: wizardData.auctionDetails?.title ? 'done' : 'todo',
+        icon: Package, pathType: selectedType || 'COMMON', isActivePath: commonIsActive
       }
     });
-    allEdges.push({ id: `e-auction-generic-bens`, source: 'auction-details', target: genericBensNodeId, type: 'smoothstep', style: { stroke: pathColors.EXTRAJUDICIAL }, animated: commonIsActive && wizardData.auctionType !== 'JUDICIAL' });
-    allEdges.push({ id: `e-generic-bens-lotting`, source: genericBensNodeId, target: 'lotting', type: 'smoothstep', style: { stroke: pathColors.EXTRAJUDICIAL }, animated: commonIsActive && wizardData.auctionType !== 'JUDICIAL' && currentStep >= 3 });
+    allEdges.push({ id: `e-auction-bens`, source: auctionDetailsNodeId, target: bensDisponiveisNodeId, type: 'smoothstep', style: commonEdgeStyle, animated: commonIsActive && currentStep >= 2 });
 
-    const lottingX = auctionDetailsX + xGap * 2;
+    const lottingNodeId = 'lotting';
     allNodes.push({
-      id: 'lotting', type: 'customStep', position: { x: lottingX, y: commonYOffset },
+      id: lottingNodeId, type: 'customStep', position: { x: xGap * 6, y: commonYOffset },
       data: {
-        label: `#${nodeIdCounter++} - Passo 3`, title: 'Criação de Lotes', status: wizardData.createdLots && wizardData.createdLots.length > 0 ? 'done' : currentStep === 3 ? 'in_progress' : 'todo',
+        label: '#14 - Passo 3', title: 'Criação de Lotes', status: wizardData.createdLots && wizardData.createdLots.length > 0 ? 'done' : currentStep === 3 ? 'in_progress' : 'todo',
         icon: Boxes, pathType: selectedType || 'COMMON', isActivePath: commonIsActive
       }
     });
-    allEdges.push({ id: `e-auction-details-lotting`, source: 'auction-details', target: 'lotting', type: 'straight', style: { strokeDasharray: 5, stroke: pathColors.COMMON, strokeWidth: 1 } });
+    allEdges.push({ id: `e-bens-lotting`, source: bensDisponiveisNodeId, target: lottingNodeId, type: 'smoothstep', style: commonEdgeStyle, animated: commonIsActive && currentStep >= 3 });
     
-    const reviewX = lottingX + xGap;
+    const reviewNodeId = 'review';
     allNodes.push({
-      id: 'review', type: 'customStep', position: { x: reviewX, y: commonYOffset },
+      id: reviewNodeId, type: 'customStep', position: { x: xGap * 7, y: commonYOffset },
       data: {
-        label: `#${nodeIdCounter++} - Passo Final`, title: 'Revisão e Publicação', status: currentStep === 4 ? 'in_progress' : 'todo',
+        label: '#15 - Passo Final', title: 'Revisão e Publicação', status: currentStep === 4 ? 'in_progress' : 'todo',
         icon: ListChecks, pathType: selectedType || 'COMMON', isActivePath: commonIsActive
       }
     });
-    allEdges.push({ id: `e-lotting-review`, source: 'lotting', target: 'review', type: 'smoothstep', style: commonEdgeStyle, animated: commonIsActive && currentStep >= 3 });
+    allEdges.push({ id: `e-lotting-review`, source: lottingNodeId, target: reviewNodeId, type: 'smoothstep', style: commonEdgeStyle, animated: commonIsActive && currentStep >= 3 });
     
     // --- Post-Creation Lifecycle Nodes ---
-    const postCreationX1 = reviewX + xGap;
+    const postCreationX1 = reviewNodeId + xGap;
     
-    const postNodesLine1 = [
-        { id: 'leilao-aberto', title: 'Leilão Ativo (Aberto para Lances)', icon: Gavel },
-        { id: 'pregao-auditorio', title: 'Pregão no Auditório', icon: Tv },
-    ];
+    allNodes.push({ id: 'leilao-ativo', type: 'customStep', position: {x: xGap * 8, y: commonYOffset},
+      data: { label: '#16 - Pregão', title: 'Leilão Ativo (Aberto para Lances)', status: 'todo', icon: Gavel, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
+    });
+    allEdges.push({ id: 'e-review-ativo', source: reviewNodeId, target: 'leilao-ativo', type: 'smoothstep', style: commonEdgeStyle, animated: false });
     
-    const postNodesLine2 = [
-        { id: 'pagamento-docs', title: 'Pagamento e Documentos', icon: FileText },
-        { id: 'comunicacao-arrematante', title: 'Comunicação c/ Arrematante', icon: Users },
-        { id: 'encerramento', title: 'Encerramento', icon: CalendarX },
-    ];
-
-    let lastPostNodeId = 'review';
-    postNodesLine1.forEach((node, i) => {
-        const nodeId = `post-${node.id}`;
-        allNodes.push({
-            id: nodeId, type: 'customStep', position: {x: postCreationX1 + (xGap * i), y: commonYOffset},
-            data: { label: `#${nodeIdCounter++} - Pós-Leilão`, title: node.title, status: 'todo', icon: node.icon, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
-        });
-        allEdges.push({ id: `e-${lastPostNodeId}-${nodeId}`, source: lastPostNodeId, target: nodeId, type: 'smoothstep', style: commonEdgeStyle, animated: false });
-        lastPostNodeId = nodeId;
+    allNodes.push({ id: 'pregao-auditorio', type: 'customStep', position: {x: xGap * 9, y: commonYOffset},
+        data: { label: '#17 - Pregão', title: 'Pregão no Auditório', status: 'todo', icon: Tv, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
     });
+    allEdges.push({ id: 'e-ativo-pregao', source: 'leilao-ativo', target: 'pregao-auditorio', type: 'smoothstep', style: commonEdgeStyle, animated: false });
 
-    let lastPostNodeIdLine2 = 'post-pregao-auditorio';
-    postNodesLine2.forEach((node, i) => {
-        const nodeId = `post-${node.id}`;
-        allNodes.push({
-            id: nodeId, type: 'customStep', position: {x: reviewX + (xGap * i), y: commonYOffset + yGap},
-            data: { label: `#${nodeIdCounter++} - Pós-Leilão`, title: node.title, status: 'todo', icon: node.icon, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
-        });
-        allEdges.push({ id: `e-${lastPostNodeIdLine2}-${nodeId}`, source: lastPostNodeIdLine2, target: nodeId, type: 'smoothstep', style: commonEdgeStyle, animated: false });
-        lastPostNodeIdLine2 = nodeId;
+    // --- Line 2 of Post-Creation ---
+    const postYLine2 = commonYOffset + yGap * 1.25;
+    allNodes.push({ id: 'comunicacao-arrematante', type: 'customStep', position: { x: xGap * 8, y: postYLine2 },
+        data: { label: '#18 - Pós-Leilão', title: 'Comunicação c/ Arrematante', status: 'todo', icon: Users, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
     });
+    allEdges.push({ id: 'e-pregao-comunicacao', source: 'pregao-auditorio', target: 'comunicacao-arrematante', type: 'smoothstep', style: commonEdgeStyle, animated: false });
 
-    const financeNodeId = 'fluxo-financeiro';
-    allNodes.push({
-        id: financeNodeId, type: 'customStep', position: {x: reviewX + (xGap * (postNodesLine2.length - 1)), y: commonYOffset + yGap * 2},
-        data: { label: `#${nodeIdCounter++} - Financeiro`, title: 'Fluxo Financeiro', status: 'todo', icon: DollarSign, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
+    allNodes.push({ id: 'pagamento-docs', type: 'customStep', position: { x: xGap * 9, y: postYLine2 },
+        data: { label: '#19 - Pós-Leilão', title: 'Pagamento e Documentos', status: 'todo', icon: FileText, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
     });
-    allEdges.push({ id: 'e-encerramento-financeiro', source: 'post-encerramento', target: financeNodeId, type: 'smoothstep', style: commonEdgeStyle, animated: false });
+    allEdges.push({ id: 'e-comunicacao-pagamento', source: 'comunicacao-arrematante', target: 'pagamento-docs', type: 'smoothstep', style: commonEdgeStyle, animated: false });
+    
+    allNodes.push({ id: 'encerramento', type: 'customStep', position: { x: xGap * 10, y: postYLine2 },
+        data: { label: '#20 - Pós-Leilão', title: 'Encerramento', status: 'todo', icon: CalendarX, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
+    });
+    allEdges.push({ id: 'e-pagamento-encerramento', source: 'pagamento-docs', target: 'encerramento', type: 'smoothstep', style: commonEdgeStyle, animated: false });
 
+    allNodes.push({ id: 'fluxo-financeiro', type: 'customStep', position: {x: xGap * 11, y: postYLine2},
+        data: { label: '#21 - Financeiro', title: 'Fluxo Financeiro', status: 'todo', icon: DollarSign, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
+    });
+    allEdges.push({ id: 'e-encerramento-financeiro', source: 'encerramento', target: 'fluxo-financeiro', type: 'smoothstep', style: commonEdgeStyle, animated: false });
 
     return { nodes: allNodes, edges: allEdges };
   }, [selectedType, currentStep, wizardData]);
