@@ -2,82 +2,60 @@
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Check, Loader, Circle, Workflow, CircleDot, Pencil } from 'lucide-react';
+import { Check, CircleDot, Circle, Plus, type LucideIcon } from 'lucide-react';
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 
-interface NodeData {
+export interface FlowNodeData {
+  label?: string; // e.g., "Parent Node"
   title: string;
   status: 'todo' | 'in_progress' | 'done';
-  details: { label: string; value?: string | number }[];
-  entityType?: 'judicial-processes';
-  entityId?: string;
+  icon?: LucideIcon;
+  pathType: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS' | 'COMMON';
+  isActivePath: boolean;
 }
 
-const statusConfig = {
-  done: {
-    icon: <Check className="h-4 w-4" />,
-    badgeVariant: 'secondary',
-    badgeText: 'Concluído',
-    cardBorder: 'border-green-500/50',
-    titleColor: 'text-muted-foreground',
-    opacity: 'opacity-70',
-  },
-  in_progress: {
-    icon: <CircleDot className="h-4 w-4 text-primary animate-pulse" />,
-    badgeVariant: 'default',
-    badgeText: 'Em Andamento',
-    cardBorder: 'border-primary ring-2 ring-primary/20',
-    titleColor: 'text-primary',
-    opacity: 'opacity-100',
-  },
-  todo: {
-    icon: <Circle className="h-4 w-4" />,
-    badgeVariant: 'outline',
-    badgeText: 'A Fazer',
-    cardBorder: 'border-border',
-    titleColor: 'text-muted-foreground',
-    opacity: 'opacity-50',
-  },
+const pathStyles: Record<string, { node: string, label: string }> = {
+    JUDICIAL: { node: "border-blue-500/80", label: "bg-blue-500/80 text-white" },
+    EXTRAJUDICIAL: { node: "border-emerald-500/80", label: "bg-emerald-500/80 text-white" },
+    PARTICULAR: { node: "border-orange-500/80", label: "bg-orange-500/80 text-white" },
+    TOMADA_DE_PRECOS: { node: "border-violet-500/80", label: "bg-violet-500/80 text-white" },
+    COMMON: { node: "border-slate-400/80", label: "bg-slate-400/80 text-white" }
 };
 
-const FlowStepNode = ({ data }: NodeProps<NodeData>) => {
-  const { title, status, details, entityType, entityId } = data;
-  const config = statusConfig[status];
-  const hasLink = entityType && entityId;
+const statusIcons = {
+  done: <Check className="h-4 w-4" />,
+  in_progress: <CircleDot className="h-4 w-4 animate-pulse" />,
+  todo: <Circle className="h-4 w-4" />,
+};
+
+const FlowStepNode = ({ data }: NodeProps<FlowNodeData>) => {
+  const { label, title, status, icon: Icon, pathType, isActivePath } = data;
+  
+  const styles = pathStyles[pathType] || pathStyles.COMMON;
+  const statusIcon = statusIcons[status];
+  const highlightClass = isActivePath ? 'opacity-100' : 'opacity-40 hover:opacity-100';
 
   return (
     <>
-      <Handle type="target" position={Position.Top} className="!bg-primary" />
-      <Card className={cn("w-64 shadow-md transition-all group/nodestep relative", config.cardBorder, config.opacity)}>
-         {hasLink && (
-            <Link href={`/admin/${entityType}/${entityId}/edit`} passHref legacyBehavior>
-                <a target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="absolute top-2 right-2 z-10" aria-label={`Editar ${title}`}>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover/nodestep:opacity-100 transition-opacity bg-background/50 hover:bg-accent">
-                        <Pencil className="h-3.5 w-3.5" />
-                        <span className="sr-only">Editar {title}</span>
-                    </Button>
-                </a>
-            </Link>
+      <Handle type="target" position={Position.Left} className="!bg-primary" />
+      <div className={cn("w-56 rounded-md bg-card border-2 shadow-sm p-0.5 transition-opacity", styles.node, highlightClass)}>
+        {label && (
+          <div className={cn("px-2 py-0.5 text-xs font-semibold rounded-t-sm", styles.label)}>
+            {label}
+          </div>
         )}
-        <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0 gap-2">
-          <CardTitle className={cn("text-base font-semibold flex items-center gap-2 truncate", config.titleColor)}>
-            {config.icon} <span className="truncate">{title}</span>
-          </CardTitle>
-          <Badge variant={config.badgeVariant} className="text-xs shrink-0">{config.badgeText}</Badge>
-        </CardHeader>
-        <CardContent className="p-3 pt-0 text-xs text-muted-foreground space-y-1">
-          {details && details.map((detail, index) => (
-            <div key={index} className="flex justify-between">
-              <span className="truncate">{detail.label}:</span>
-              <span className="font-medium text-foreground truncate pl-2">{detail.value}</span>
+        <div className="p-3 bg-card rounded-b-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {Icon && <Icon className="h-5 w-5 text-muted-foreground" />}
+              <p className="font-semibold text-sm truncate" title={title}>{title}</p>
             </div>
-          ))}
-        </CardContent>
-      </Card>
-      <Handle type="source" position={Position.Bottom} className="!bg-primary" />
+            <div className="text-muted-foreground">{statusIcon}</div>
+          </div>
+        </div>
+      </div>
+      <Handle type="source" position={Position.Right} className="!bg-primary" />
     </>
   );
 };
