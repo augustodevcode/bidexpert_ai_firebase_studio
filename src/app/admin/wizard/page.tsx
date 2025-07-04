@@ -13,7 +13,7 @@ import { getWizardInitialData } from './actions';
 import type { JudicialProcess, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, Bem, Auction, Court, JudicialDistrict, JudicialBranch, Lot } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Rocket, Loader2, Workflow, Eye, Search, Expand } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Rocket, Loader2, Workflow, Eye, Search, Expand, PackagePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import JudicialProcessForm from '@/app/admin/judicial-processes/judicial-process-form';
@@ -155,7 +155,6 @@ function WizardContent({
                   availableBens={bensForProcess} 
                   auctionData={wizardData.auctionDetails as Partial<Auction>} 
                   onLotCreated={handleLotCreation}
-                  onAddNewBem={() => setWizardMode('bem')}
                />;
       case 'review': return <Step5Review />;
       default: return <div className="text-center py-10"><p>Etapa "{stepsToUse[currentStep]?.title || 'Próxima'}" em desenvolvimento.</p></div>;
@@ -185,12 +184,20 @@ function WizardContent({
                 <Button variant="outline" onClick={prevStep} disabled={currentStep === 0 || isLoading || isDataRefetching}>
                   <ChevronLeft className="mr-2 h-4 w-4" /> Anterior
                 </Button>
-                {currentStep < stepsToUse.length - 1 && (
-                  <Button onClick={handleNextStep} disabled={isLoading || isDataRefetching}>
-                    {isDataRefetching ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : null}
-                    Próximo <ChevronRight className="ml-2 h-4 w-4" />
-                  </Button>
-                )}
+
+                <div className="flex items-center gap-2">
+                    {currentStepId === 'lotting' && (
+                        <Button variant="secondary" type="button" onClick={() => setWizardMode('bem')} disabled={isLoading || isDataRefetching}>
+                            <PackagePlus className="mr-2 h-4 w-4" /> Cadastrar Novo Bem
+                        </Button>
+                    )}
+                    {currentStep < stepsToUse.length - 1 && (
+                    <Button onClick={handleNextStep} disabled={isLoading || isDataRefetching}>
+                        {isDataRefetching ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : null}
+                        Próximo <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                    )}
+                </div>
               </CardFooter>
             </>
           ) : (

@@ -7,7 +7,7 @@ import { useState, useMemo } from 'react';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from '@/components/admin/lotting/columns';
 import { Button } from '@/components/ui/button';
-import { Boxes, PackagePlus, Box, Package as PackageIcon } from 'lucide-react';
+import { Boxes, Box } from 'lucide-react';
 import CreateLotFromBensModal from '@/components/admin/lotting/create-lot-modal';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -17,10 +17,9 @@ interface Step4LottingProps {
   availableBens: Bem[];
   auctionData: Partial<Auction>;
   onLotCreated: () => void;
-  onAddNewBem: () => void;
 }
 
-export default function Step4Lotting({ availableBens, auctionData, onLotCreated, onAddNewBem }: Step4LottingProps) {
+export default function Step4Lotting({ availableBens, auctionData, onLotCreated }: Step4LottingProps) {
   const { wizardData, setWizardData } = useWizard();
   const [rowSelection, setRowSelection] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -108,12 +107,9 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated,
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h3 className="text-lg font-semibold">Loteamento de Bens</h3>
-                <p className="text-sm text-muted-foreground">Selecione os bens disponíveis abaixo e loteie-os, ou cadastre um novo bem.</p>
+                <p className="text-sm text-muted-foreground">Selecione os bens disponíveis para criar lotes individuais ou agrupados.</p>
             </div>
             <div className="flex gap-2 w-full sm:w-auto flex-wrap justify-end">
-                <Button onClick={onAddNewBem} variant="secondary">
-                  <PackagePlus className="mr-2 h-4 w-4" /> Cadastrar Novo Bem
-                </Button>
                 <Button onClick={handleCreateIndividualLotsClick} variant="outline" className="flex-1" disabled={selectedBens.length === 0 || isCreatingIndividualLots}>
                     <Box className="mr-2 h-4 w-4" /> Lotear Individualmente
                 </Button>
