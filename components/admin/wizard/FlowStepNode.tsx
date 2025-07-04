@@ -1,0 +1,63 @@
+// src/components/admin/wizard/FlowStepNode.tsx
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Check, CircleDot, Circle, Plus, type LucideIcon } from 'lucide-react';
+import React, { memo } from 'react';
+import { Handle, Position, NodeProps } from 'reactflow';
+
+export interface FlowNodeData {
+  label?: string; // e.g., "Parent Node"
+  title: string;
+  status: 'todo' | 'in_progress' | 'done';
+  icon?: LucideIcon;
+  pathType: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS' | 'COMMON';
+  isActivePath: boolean;
+}
+
+const pathStyles: Record<string, { node: string, label: string }> = {
+    JUDICIAL: { node: "border-blue-500/80", label: "bg-blue-500/80 text-white" },
+    EXTRAJUDICIAL: { node: "border-emerald-500/80", label: "bg-emerald-500/80 text-white" },
+    PARTICULAR: { node: "border-orange-500/80", label: "bg-orange-500/80 text-white" },
+    TOMADA_DE_PRECOS: { node: "border-violet-500/80", label: "bg-violet-500/80 text-white" },
+    COMMON: { node: "border-slate-400/80", label: "bg-slate-400/80 text-white" }
+};
+
+const statusIcons = {
+  done: <Check className="h-4 w-4" />,
+  in_progress: <CircleDot className="h-4 w-4 animate-pulse" />,
+  todo: <Circle className="h-4 w-4" />,
+};
+
+const FlowStepNode = ({ data }: NodeProps<FlowNodeData>) => {
+  const { label, title, status, icon: Icon, pathType, isActivePath } = data;
+  
+  const styles = pathStyles[pathType] || pathStyles.COMMON;
+  const statusIcon = statusIcons[status];
+  const highlightClass = isActivePath ? 'opacity-100' : 'opacity-40 hover:opacity-100';
+
+  return (
+    <>
+      <Handle type="target" position={Position.Left} className="!bg-primary" />
+      <div className={cn("w-56 rounded-md bg-card border-2 shadow-sm p-0.5 transition-opacity", styles.node, highlightClass)}>
+        {label && (
+          <div className={cn("px-2 py-0.5 text-xs font-semibold rounded-t-sm", styles.label)}>
+            {label}
+          </div>
+        )}
+        <div className="p-3 bg-card rounded-b-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {Icon && <Icon className="h-5 w-5 text-muted-foreground" />}
+              <p className="font-semibold text-sm truncate" title={title}>{title}</p>
+            </div>
+            <div className="text-muted-foreground">{statusIcon}</div>
+          </div>
+        </div>
+      </div>
+      <Handle type="source" position={Position.Right} className="!bg-primary" />
+    </>
+  );
+};
+
+export default memo(FlowStepNode);
