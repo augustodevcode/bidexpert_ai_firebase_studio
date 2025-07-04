@@ -1,11 +1,9 @@
 
 import Link from 'next/link';
 import { Coins, Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck } from 'lucide-react';
-import { getDatabaseAdapter } from '@/lib/database';
+import DevDbIndicator from './dev-db-indicator'; // Import the new component
 
-export default async function Footer() {
-  const dbAdapter = await getDatabaseAdapter();
-  const activeDatabaseSystem = dbAdapter.constructor.name.replace('Adapter', '');
+export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   const quickLinks = [
@@ -90,11 +88,7 @@ export default async function Footer() {
           <p className="text-sm text-muted-foreground">
             &copy; {currentYear} BidExpert. Todos os direitos reservados.
           </p>
-          {process.env.NODE_ENV === 'development' && activeDatabaseSystem && (
-            <p className="text-xs text-muted-foreground mt-2">
-              Active DB System: <span className="font-semibold text-primary">{activeDatabaseSystem}</span> (Dev Only)
-            </p>
-          )}
+          <DevDbIndicator />
         </div>
       </div>
     </footer>
