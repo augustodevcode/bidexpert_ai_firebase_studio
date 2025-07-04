@@ -1,3 +1,4 @@
+
 // src/components/admin/wizard/steps/step-3-auction-details.tsx
 'use client';
 
@@ -28,6 +29,7 @@ interface Step3AuctionDetailsProps {
 const auctionDetailsSchema = z.object({
   title: z.string().min(10, 'O título deve ter pelo menos 10 caracteres.'),
   description: z.string().optional(),
+  categoryId: z.string().min(1, 'A categoria principal é obrigatória.'),
   auctioneer: z.string().min(1, 'Selecione um leiloeiro.'),
   seller: z.string().min(1, 'Selecione um comitente.'),
   auctionDate: z.date({ required_error: 'A data de início é obrigatória.' }),
@@ -44,6 +46,7 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
     defaultValues: {
       title: wizardData.auctionDetails?.title || '',
       description: wizardData.auctionDetails?.description || '',
+      categoryId: wizardData.auctionDetails?.categoryId || '',
       auctioneer: wizardData.auctionDetails?.auctioneer || '',
       seller: wizardData.auctionDetails?.seller || '',
       auctionDate: wizardData.auctionDetails?.auctionDate ? new Date(wizardData.auctionDetails.auctionDate) : new Date(),
@@ -71,11 +74,11 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
 
 
   useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      const auctioneerDetails = name === 'auctioneer' ? auctioneers.find(a => a.name === value.auctioneer) : null;
-      const sellerDetails = name === 'seller' ? sellers.find(s => s.name === value.seller) : null;
-
-      setWizardData((prev: any) => ({
+    const subscription = form.watch((value) => {
+      const auctioneerDetails = auctioneers.find(a => a.name === value.auctioneer);
+      const sellerDetails = sellers.find(s => s.name === value.seller);
+      
+      setWizardData(prev => ({
         ...prev,
         auctionDetails: {
           ...prev.auctionDetails,
@@ -120,6 +123,22 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
               </FormItem>
             )}
           />
+           <FormField
+              control={form.control}
+              name="categoryId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Categoria Principal do Leilão</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Selecione a categoria..." /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <FormField
                 control={form.control}

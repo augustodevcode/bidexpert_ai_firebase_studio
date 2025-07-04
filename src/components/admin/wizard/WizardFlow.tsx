@@ -1,4 +1,3 @@
-
 // src/components/admin/wizard/WizardFlow.tsx
 'use client';
 
@@ -156,6 +155,4 @@ export default function WizardFlow() {
       <Controls showInteractive={false} />
     </ReactFlow>
   );
-};
-
-export default WizardFlow;
+}

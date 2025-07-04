@@ -230,7 +230,7 @@ export type AuctionFormData = Omit<Auction,
   'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' |
   'lots' | 'totalLots' | 'visits' | 'isFavorite' |
   'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' |
-  'categoryId' | 'auctioneerId' | 'sellerId' | 'achievedRevenue' | 'totalHabilitatedUsers' |
+  'auctioneerId' | 'sellerId' | 'achievedRevenue' | 'totalHabilitatedUsers' |
   'latitude' | 'longitude' | 'originalAuctionId' | 'relistCount' | 'imageMediaId'
 > & {
   auctionDate: Date; 
@@ -917,7 +917,7 @@ export interface IDatabaseAdapter {
   getBem(id: string): Promise<Bem | null>;
   createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }>;
   updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }>;
-  updateBensStatus(bemIds: string[], status: Bem['status']): Promise<{ success: boolean, message: string }>;
+  updateBensStatus(bemIds: string[], status: Bem['status'], connection?: any): Promise<{ success: boolean, message: string }>;
   deleteBem(id: string): Promise<{ success: boolean; message: string; }>;
 
   createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }>;
@@ -946,7 +946,7 @@ export interface IDatabaseAdapter {
   createReview(review: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; reviewId?: string }>;
   
   getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]>;
-  createQuestion(question: Omit<LotQuestion, 'id' | 'createdAt' | 'answeredAt' | 'answeredByUserId' | 'answeredByUserDisplayName' | 'isPublic'>): Promise<{ success: boolean; message: string; questionId?: string }>;
+  createQuestion(question: Omit<LotQuestion, 'id' | 'createdAt' | 'answeredAt' | 'answeredByUserId' | 'answeredByUserDisplayName' | 'isPublic'>): Promise<{ success: boolean; message: string; questionId?: string; }>;
   answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string }>;
 
   getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null>;
