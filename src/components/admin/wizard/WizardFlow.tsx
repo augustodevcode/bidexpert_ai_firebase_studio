@@ -1,3 +1,4 @@
+
 // src/components/admin/wizard/WizardFlow.tsx
 'use client';
 
@@ -6,7 +7,7 @@ import ReactFlow, { Background, Controls, Edge, Node } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useWizard } from './wizard-context';
 import FlowStepNode, { type FlowNodeData } from './FlowStepNode';
-import { Gavel, Users, Building, FileText, Scale, Package, Boxes, ListChecks, Rocket } from 'lucide-react';
+import { Gavel, Users, Building, FileText, Scale, Package, Boxes, ListChecks, Rocket, DollarSign, Tv, CalendarX } from 'lucide-react';
 
 const nodeTypes = {
   customStep: FlowStepNode,
@@ -48,13 +49,15 @@ export default function WizardFlow() {
         stroke: pathColors[type],
         strokeWidth: isActivePath ? 2.5 : 1.5,
       };
-      const animatedEdge = isActivePath;
+      const animatedEdge = isActivePath && currentStep > 0;
+      
+      const typeNodeStatus: 'done' | 'in_progress' | 'todo' = selectedType ? (selectedType === type ? 'done' : 'done') : 'in_progress';
 
       // --- Node 1: Type Selection ---
       allNodes.push({
         id: `type-${type}`, type: 'customStep', position: { x: xGap, y: yBase },
         data: {
-          label: 'Passo 1', title: type.replace(/_/g, ' '), status: selectedType ? 'done' : 'in_progress',
+          label: 'Passo 1', title: type.replace(/_/g, ' '), status: typeNodeStatus,
           pathType: type, isActivePath
         }
       });
@@ -75,9 +78,9 @@ export default function WizardFlow() {
           const nodeId = `judicial-${node.id}`;
           let nodeStatus: 'done' | 'in_progress' | 'todo' = 'todo';
           
-          if(wizardData.judicialProcess) {
+          if (wizardData.judicialProcess) {
              nodeStatus = 'done';
-          } else if(currentStep === 1) { // Assuming judicial is step 1
+          } else if (currentStep === 1) { // Assuming judicial is step 1
              nodeStatus = 'in_progress';
           }
 
@@ -88,55 +91,100 @@ export default function WizardFlow() {
           allEdges.push({ id: `e-${lastNodeId}-${nodeId}`, source: lastNodeId, target: nodeId, type: 'smoothstep', style: edgeStyle, animated: animatedEdge && currentStep === 1 });
           lastNodeId = nodeId;
         });
-        
-        // --- Connect Judicial path to Auction Details ---
-        allEdges.push({ id: `e-${lastNodeId}-auction-details`, source: lastNodeId, target: 'auction-details', type: 'smoothstep', style: edgeStyle, animated: animatedEdge && currentStep === 2 });
+
+        // NEW: Bens do Processo node
+        const bensProcessoNodeId = 'judicial-bens';
+        allNodes.push({
+            id: bensProcessoNodeId, type: 'customStep', position: { x: xGap * (2 + judicialNodes.length), y: yBase},
+            data: { label: 'Fonte de Itens', title: 'Bens do Processo', status: wizardData.judicialProcess ? 'done' : 'todo', icon: Package, pathType: 'JUDICIAL', isActivePath }
+        });
+        allEdges.push({ id: `e-${lastNodeId}-${bensProcessoNodeId}`, source: lastNodeId, target: bensProcessoNodeId, type: 'smoothstep', style: edgeStyle, animated: animatedEdge && currentStep >=1 });
+
+        // Connect Bens do Processo to Lotting
+        allEdges.push({ id: `e-${bensProcessoNodeId}-lotting`, source: bensProcessoNodeId, target: 'lotting', type: 'smoothstep', style: edgeStyle, animated: animatedEdge && currentStep >= 3 });
 
       } else {
-        // --- Connect Non-Judicial paths to Auction Details ---
+        // For other types, they go to Auction Details, then to Generic Bens, then Lotting
         allEdges.push({ id: `e-type-${type}-auction-details`, source: `type-${type}`, target: 'auction-details', type: 'smoothstep', style: edgeStyle, animated: animatedEdge && currentStep === 1 && wizardData.auctionType === type });
       }
     });
     
-    // --- Common Nodes from Auction Details onwards ---
-    let commonYOffset = 1.5 * yGap; // Center the common path
+    // --- Common Path (Auction Details, Lotting, Review, and beyond) ---
+    const commonYOffset = 1.5 * yGap; // Center the common path
     const commonIsActive = !!selectedType;
     const commonEdgeStyle = { stroke: selectedType ? pathColors[selectedType] : pathColors.COMMON, strokeWidth: commonIsActive ? 2.5 : 1.5 };
-
+    
+    // Position of `auction-details` is now fixed and central for all paths
+    const auctionDetailsX = xGap * 2;
     allNodes.push({
-      id: 'auction-details', type: 'customStep', position: { x: xGap * 2, y: commonYOffset },
+      id: 'auction-details', type: 'customStep', position: { x: auctionDetailsX, y: commonYOffset },
       data: {
         label: 'Passo 2/3', title: 'Dados do Leilão', status: wizardData.auctionDetails?.title ? 'done' : (currentStep >= 1 && currentStep <= 2) ? 'in_progress' : 'todo',
         icon: Gavel, pathType: selectedType || 'COMMON', isActivePath: commonIsActive
       }
     });
-
+    
+    // GENERIC "Bens Disponíveis" for non-judicial paths
+    const genericBensNodeId = 'generic-bens';
     allNodes.push({
-      id: 'bens-disponiveis', type: 'customStep', position: { x: xGap * 3, y: commonYOffset },
+      id: genericBensNodeId, type: 'customStep', position: { x: auctionDetailsX + xGap, y: commonYOffset + yGap },
       data: {
         label: 'Fonte de Itens', title: 'Bens Disponíveis', status: wizardData.auctionDetails?.title ? 'done' : 'todo',
-        icon: Package, pathType: selectedType || 'COMMON', isActivePath: commonIsActive
+        icon: Package, pathType: 'EXTRAJUDICIAL', isActivePath: selectedType === 'EXTRAJUDICIAL' || selectedType === 'PARTICULAR' || selectedType === 'TOMADA_DE_PRECOS'
       }
     });
-    allEdges.push({ id: `e-auction-bens`, source: 'auction-details', target: 'bens-disponiveis', type: 'smoothstep', style: commonEdgeStyle, animated: commonIsActive && currentStep >= 2 });
+    allEdges.push({ id: `e-auction-generic-bens`, source: 'auction-details', target: genericBensNodeId, type: 'smoothstep', style: { stroke: pathColors.EXTRAJUDICIAL }, animated: commonIsActive && wizardData.auctionType !== 'JUDICIAL' });
+    allEdges.push({ id: `e-generic-bens-lotting`, source: genericBensNodeId, target: 'lotting', type: 'smoothstep', style: { stroke: pathColors.EXTRAJUDICIAL }, animated: commonIsActive && wizardData.auctionType !== 'JUDICIAL' && currentStep >= 3 });
 
+    const lottingX = auctionDetailsX + xGap * 2;
     allNodes.push({
-      id: 'lotting', type: 'customStep', position: { x: xGap * 4, y: commonYOffset },
+      id: 'lotting', type: 'customStep', position: { x: lottingX, y: commonYOffset },
       data: {
         label: 'Passo 3/4', title: 'Criação de Lotes', status: wizardData.createdLots && wizardData.createdLots.length > 0 ? 'done' : currentStep === 3 ? 'in_progress' : 'todo',
         icon: Boxes, pathType: selectedType || 'COMMON', isActivePath: commonIsActive
       }
     });
-    allEdges.push({ id: `e-bens-lotting`, source: 'bens-disponiveis', target: 'lotting', type: 'smoothstep', style: commonEdgeStyle, animated: commonIsActive && currentStep >= 3 });
+
+    // The edge from auction details to lotting is now more of a conceptual link for data, rather than a direct flow step for all types
+    allEdges.push({ id: `e-auction-details-lotting`, source: 'auction-details', target: 'lotting', type: 'straight', style: { strokeDasharray: 5, stroke: pathColors.COMMON, strokeWidth: 1 } });
     
+    const reviewX = lottingX + xGap;
     allNodes.push({
-      id: 'review', type: 'customStep', position: { x: xGap * 5, y: commonYOffset },
+      id: 'review', type: 'customStep', position: { x: reviewX, y: commonYOffset },
       data: {
         label: 'Passo Final', title: 'Revisão e Criação', status: currentStep === 4 ? 'in_progress' : 'todo',
         icon: ListChecks, pathType: selectedType || 'COMMON', isActivePath: commonIsActive
       }
     });
-    allEdges.push({ id: `e-lotting-review`, source: 'lotting', target: 'review', type: 'smoothstep', style: commonEdgeStyle, animated: commonIsActive && currentStep >= 4 });
+    allEdges.push({ id: `e-lotting-review`, source: 'lotting', target: 'review', type: 'smoothstep', style: commonEdgeStyle, animated: commonIsActive && currentStep >= 3 });
+    
+    // --- Post-Creation Lifecycle Nodes ---
+    const postCreationXBase = reviewX + xGap;
+    const postCreationNodes = [
+      { id: 'leilao-aberto', title: 'Leilão Aberto', icon: Gavel },
+      { id: 'pregao-auditorio', title: 'Pregão no Auditório', icon: Tv },
+      { id: 'encerramento', title: 'Encerramento', icon: CalendarX },
+      { id: 'comunicacao-arrematante', title: 'Comunicação c/ Arrematante', icon: Users },
+      { id: 'pagamento-docs', title: 'Pagamento e Documentos', icon: FileText }
+    ];
+
+    let lastPostNodeId = 'review';
+    postCreationNodes.forEach((node, i) => {
+        const nodeId = `post-${node.id}`;
+        allNodes.push({
+            id: nodeId, type: 'customStep', position: {x: postCreationXBase + (xGap * i), y: commonYOffset},
+            data: { label: 'Pós-Leilão', title: node.title, status: 'todo', icon: node.icon, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
+        });
+        allEdges.push({ id: `e-${lastPostNodeId}-${nodeId}`, source: lastPostNodeId, target: nodeId, type: 'smoothstep', style: commonEdgeStyle, animated: false });
+        lastPostNodeId = nodeId;
+    });
+
+    // Add 'Lances' node branching off 'Leilão Aberto'
+    allNodes.push({
+        id: 'post-lances', type: 'customStep', position: { x: postCreationXBase, y: commonYOffset + yGap },
+        data: { label: 'Atividade', title: 'Recebimento de Lances', status: 'todo', icon: DollarSign, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
+    });
+    allEdges.push({ id: `e-leilao-aberto-lances`, source: 'leilao-aberto', target: 'post-lances', type: 'smoothstep', style: commonEdgeStyle, animated: false });
 
 
     return { nodes: allNodes, edges: allEdges };
