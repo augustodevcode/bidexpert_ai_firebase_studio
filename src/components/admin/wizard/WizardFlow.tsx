@@ -92,7 +92,6 @@ export default function WizardFlow() {
           lastNodeId = nodeId;
         });
 
-        // NEW: Bens do Processo node
         const bensProcessoNodeId = 'judicial-bens';
         allNodes.push({
             id: bensProcessoNodeId, type: 'customStep', position: { x: xGap * (2 + judicialNodes.length), y: yBase},
@@ -159,32 +158,50 @@ export default function WizardFlow() {
     allEdges.push({ id: `e-lotting-review`, source: 'lotting', target: 'review', type: 'smoothstep', style: commonEdgeStyle, animated: commonIsActive && currentStep >= 3 });
     
     // --- Post-Creation Lifecycle Nodes ---
-    const postCreationXBase = reviewX + xGap;
-    const postCreationNodes = [
-      { id: 'leilao-aberto', title: 'Leilão Aberto', icon: Gavel },
-      { id: 'pregao-auditorio', title: 'Pregão no Auditório', icon: Tv },
-      { id: 'encerramento', title: 'Encerramento', icon: CalendarX },
-      { id: 'comunicacao-arrematante', title: 'Comunicação c/ Arrematante', icon: Users },
-      { id: 'pagamento-docs', title: 'Pagamento e Documentos', icon: FileText }
+    const postCreationX1 = reviewX + xGap;
+    const postCreationX2 = postCreationX1 + xGap;
+    
+    const postNodesLine1 = [
+        { id: 'leilao-aberto', title: 'Leilão Aberto', icon: Gavel },
+        { id: 'pregao-auditorio', title: 'Pregão no Auditório', icon: Tv },
+    ];
+    
+    const postNodesLine2 = [
+        { id: 'pagamento-docs', title: 'Pagamento e Documentos', icon: FileText },
+        { id: 'comunicacao-arrematante', title: 'Comunicação c/ Arrematante', icon: Users },
+        { id: 'encerramento', title: 'Encerramento', icon: CalendarX },
     ];
 
     let lastPostNodeId = 'review';
-    postCreationNodes.forEach((node, i) => {
+    postNodesLine1.forEach((node, i) => {
         const nodeId = `post-${node.id}`;
         allNodes.push({
-            id: nodeId, type: 'customStep', position: {x: postCreationXBase + (xGap * i), y: commonYOffset},
+            id: nodeId, type: 'customStep', position: {x: postCreationX1 + (xGap * i), y: commonYOffset},
             data: { label: 'Pós-Leilão', title: node.title, status: 'todo', icon: node.icon, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
         });
         allEdges.push({ id: `e-${lastPostNodeId}-${nodeId}`, source: lastPostNodeId, target: nodeId, type: 'smoothstep', style: commonEdgeStyle, animated: false });
         lastPostNodeId = nodeId;
     });
 
-    // Add 'Lances' node branching off 'Leilão Aberto'
-    allNodes.push({
-        id: 'post-lances', type: 'customStep', position: { x: postCreationXBase, y: commonYOffset + yGap },
-        data: { label: 'Atividade', title: 'Recebimento de Lances', status: 'todo', icon: DollarSign, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
+    let lastPostNodeIdLine2 = 'post-pregao-auditorio';
+    postNodesLine2.forEach((node, i) => {
+        const nodeId = `post-${node.id}`;
+        // Position reversed to flow from right to left on the second line
+        allNodes.push({
+            id: nodeId, type: 'customStep', position: {x: postCreationX2 - (xGap * i), y: commonYOffset + yGap},
+            data: { label: 'Pós-Leilão', title: node.title, status: 'todo', icon: node.icon, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
+        });
+        allEdges.push({ id: `e-${lastPostNodeIdLine2}-${nodeId}`, source: lastPostNodeIdLine2, target: nodeId, type: 'smoothstep', style: commonEdgeStyle, animated: false });
+        lastPostNodeIdLine2 = nodeId;
     });
-    allEdges.push({ id: `e-leilao-aberto-lances`, source: 'leilao-aberto', target: 'post-lances', type: 'smoothstep', style: commonEdgeStyle, animated: false });
+
+    // Add financial flow node
+    const financeNodeId = 'fluxo-financeiro';
+    allNodes.push({
+        id: financeNodeId, type: 'customStep', position: {x: postCreationX2 - (xGap * (postNodesLine2.length - 1)), y: commonYOffset + yGap * 2},
+        data: { label: 'Financeiro', title: 'Fluxo Financeiro', status: 'todo', icon: DollarSign, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
+    });
+    allEdges.push({ id: 'e-pagamento-financeiro', source: 'post-pagamento-docs', target: financeNodeId, type: 'smoothstep', style: commonEdgeStyle, animated: false });
 
 
     return { nodes: allNodes, edges: allEdges };
