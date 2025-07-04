@@ -7,7 +7,7 @@ import { useState, useMemo } from 'react';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from '@/components/admin/lotting/columns';
 import { Button } from '@/components/ui/button';
-import { Boxes, PackagePlus, Box, Package as PackageIcon, PlusCircle } from 'lucide-react';
+import { Boxes, PackagePlus, Box, Package as PackageIcon } from 'lucide-react';
 import CreateLotFromBensModal from '@/components/admin/lotting/create-lot-modal';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -35,7 +35,7 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated,
 
   const selectedBens = useMemo(() => {
     const selectedIndices = Object.keys(rowSelection).map(Number);
-    return selectedIndices.map(index => bensForLotting[index]).filter(Boolean);
+    return selectedIndices.map(index => bensForLotting[index]).filter(Boolean) as Bem[];
   }, [rowSelection, bensForLotting]);
 
   const columns = useMemo(() => createColumns(), []);
@@ -102,32 +102,18 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated,
     onLotCreated();
   }
 
-  if (bensForLotting.length === 0) {
-    return (
-      <div className="text-center py-10 space-y-4">
-        <PackageIcon className="mx-auto h-12 w-12 text-muted-foreground" />
-        <h3 className="text-lg font-medium">Nenhum bem disponível</h3>
-        <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          Não há bens disponíveis para este processo/leilão ou todos já foram loteados. Cadastre um novo bem para continuar.
-        </p>
-        <Button onClick={onAddNewBem} className="mt-2">
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Cadastrar Novo Bem
-        </Button>
-      </div>
-    );
-  }
-
-
   return (
     <>
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h3 className="text-lg font-semibold">Loteamento de Bens</h3>
-                <p className="text-sm text-muted-foreground">Selecione os bens disponíveis e escolha como loteá-los.</p>
+                <p className="text-sm text-muted-foreground">Selecione os bens disponíveis e loteie-os, ou cadastre um novo bem.</p>
             </div>
-            <div className="flex gap-2 w-full sm:w-auto">
+            <div className="flex gap-2 w-full sm:w-auto flex-wrap justify-end">
+                <Button onClick={onAddNewBem} variant="secondary">
+                  <PackagePlus className="mr-2 h-4 w-4" /> Cadastrar Novo Bem
+                </Button>
                 <Button onClick={handleCreateIndividualLotsClick} variant="outline" className="flex-1" disabled={selectedBens.length === 0 || isCreatingIndividualLots}>
                     <Box className="mr-2 h-4 w-4" /> Lotear Individualmente
                 </Button>
