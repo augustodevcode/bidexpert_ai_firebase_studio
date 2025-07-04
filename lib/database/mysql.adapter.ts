@@ -1,6 +1,5 @@
 // src/lib/database/mysql.adapter.ts
-import * as mysql from 'mysql2/promise';
-import type { RowDataPacket, Pool, PoolConnection } from 'mysql2/promise';
+import { createPool, type RowDataPacket, type Pool, type PoolConnection, type ResultSetHeader } from 'mysql2/promise';
 import type {
   IDatabaseAdapter,
   LotCategory, StateInfo, StateFormData,
@@ -16,7 +15,7 @@ import type {
   PlatformSettings, PlatformSettingsFormData, Theme,
   Subcategory, SubcategoryFormData,
   MapSettings, SearchPaginationType, MentalTriggerSettings, SectionBadgeConfig, HomepageSectionConfig, AuctionStage,
-  DirectSaleOffer,
+  DirectSaleOffer, DirectSaleOfferFormData,
   UserLotMaxBid,
   UserWin,
   AuctionStatus, LotStatus,
@@ -29,18 +28,19 @@ import type {
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
+import type { WizardData } from '@/components/admin/wizard/wizard-context';
 
 let pool: Pool | undefined;
 
 function getPool(): Pool {
   if (!pool) {
     const connectionString = process.env.MYSQL_CONNECTION_STRING;
-    if (!connectionString) {
-      throw new Error('MYSQL_CONNECTION_STRING não está definida nas variáveis de ambiente.');
+    if (!connectionString || connectionString.trim() === '') {
+      throw new Error('MYSQL_CONNECTION_STRING não está definida ou está vazia nas variáveis de ambiente.');
     }
     try {
       const url = new URL(connectionString);
-      pool = mysql.createPool({
+      pool = createPool({
         host: url.hostname,
         port: url.port ? parseInt(url.port, 10) : 3306,
         user: url.username,
@@ -194,6 +194,8 @@ function mapToSellerProfileInfo(row: any): SellerProfileInfo {
         totalSalesValue: Number(row.totalSalesValue || 0),
         auctionsFacilitatedCount: Number(row.auctionsFacilitatedCount || 0),
         userId: row.userId,
+        isJudicial: Boolean(row.isJudicial),
+        judicialBranchId: row.judicialBranchId ? String(row.judicialBranchId) : undefined,
         createdAt: new Date(row.createdAt),
         updatedAt: new Date(row.updatedAt),
     };
@@ -408,6 +410,53 @@ function mapToLot(row: any): Lot {
   };
 }
 
+function mapToJudicialProcess(row: any, parties: ProcessParty[] = []): JudicialProcess {
+  return {
+    id: String(row.id),
+    publicId: row.publicId,
+    processNumber: row.processNumber,
+    oldProcessNumber: row.oldProcessNumber,
+    isElectronic: Boolean(row.isElectronic),
+    courtId: String(row.courtId),
+    districtId: String(row.districtId),
+    branchId: String(row.branchId),
+    courtName: row.courtName,
+    districtName: row.districtName,
+    branchName: row.branchName,
+    parties,
+    createdAt: new Date(row.createdAt),
+    updatedAt: new Date(row.updatedAt),
+  };
+}
+
+function mapToBem(row: any): Bem {
+    return {
+        id: String(row.id),
+        publicId: row.publicId,
+        title: row.title,
+        description: row.description,
+        judicialProcessId: row.judicialProcessId ? String(row.judicialProcessId) : undefined,
+        judicialProcessNumber: row.judicialProcessNumber,
+        status: row.status,
+        categoryId: row.categoryId ? String(row.categoryId) : undefined,
+        subcategoryId: row.subcategoryId ? String(row.subcategoryId) : undefined,
+        categoryName: row.categoryName,
+        subcategoryName: row.subcategoryName,
+        imageUrl: row.imageUrl,
+        imageMediaId: row.imageMediaId,
+        dataAiHint: row.dataAiHint,
+        evaluationValue: row.evaluationValue !== null ? Number(row.evaluationValue) : undefined,
+        locationCity: row.locationCity,
+        locationState: row.locationState,
+        address: row.address,
+        latitude: row.latitude !== null ? Number(row.latitude) : undefined,
+        longitude: row.longitude !== null ? Number(row.longitude) : undefined,
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+    };
+}
+
+
 function mapToBidInfo(row: any): BidInfo {
     return {
         id: String(row.id),
@@ -525,6 +574,127 @@ export class MySqlAdapter implements IDatabaseAdapter {
     getPool();
   }
   
+  async createAuctionWithLots(wizardData: WizardData): Promise<{ success: boolean; message: string; auctionId?: string; }> {
+    console.warn("[MySqlAdapter] createAuctionWithLots is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async updateBensStatus(bemIds: string[], status: "DISPONIVEL" | "LOTEADO" | "VENDIDO" | "REMOVIDO", connection?: any): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateBensStatus is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async createLotsFromBens(lotsToCreate: LotDbData[]): Promise<{ success: boolean; message: string; createdLots?: Lot[]; }> {
+    console.warn("[MySqlAdapter] createLotsFromBens is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getAuction(idOrPublicId: string): Promise<Auction | null> {
+    console.warn("[MySqlAdapter] getAuction is not yet implemented for MySQL.");
+    return null;
+  }
+  async getBem(id: string): Promise<Bem | null> {
+    console.warn("[MySqlAdapter] getBem is not yet implemented for MySQL.");
+    return null;
+  }
+  async getBens(judicialProcessId?: string | undefined): Promise<Bem[]> {
+    console.warn("[MySqlAdapter] getBens is not yet implemented for MySQL.");
+    return [];
+  }
+  async getBensByIds(ids: string[]): Promise<Bem[]> {
+    console.warn("[MySqlAdapter] getBensByIds is not yet implemented for MySQL.");
+    return [];
+  }
+  async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
+    console.warn("[MySqlAdapter] createBem is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateBem is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteBem(id: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] deleteBem is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getCourts(): Promise<Court[]> {
+    console.warn("[MySqlAdapter] getCourts is not yet implemented for MySQL.");
+    return [];
+  }
+  async getCourt(id: string): Promise<Court | null> {
+    console.warn("[MySqlAdapter] getCourt is not yet implemented for MySQL.");
+    return null;
+  }
+  async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> {
+    console.warn("[MySqlAdapter] createCourt is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateCourt is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteCourt(id: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] deleteCourt is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getJudicialDistricts(): Promise<JudicialDistrict[]> {
+    console.warn("[MySqlAdapter] getJudicialDistricts is not yet implemented for MySQL.");
+    return [];
+  }
+  async getJudicialDistrict(id: string): Promise<JudicialDistrict | null> {
+    console.warn("[MySqlAdapter] getJudicialDistrict is not yet implemented for MySQL.");
+    return null;
+  }
+  async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> {
+    console.warn("[MySqlAdapter] createJudicialDistrict is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateJudicialDistrict is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] deleteJudicialDistrict is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getJudicialBranches(): Promise<JudicialBranch[]> {
+    console.warn("[MySqlAdapter] getJudicialBranches is not yet implemented for MySQL.");
+    return [];
+  }
+  async getJudicialBranch(id: string): Promise<JudicialBranch | null> {
+    console.warn("[MySqlAdapter] getJudicialBranch is not yet implemented for MySQL.");
+    return null;
+  }
+  async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }> {
+    console.warn("[MySqlAdapter] createJudicialBranch is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async updateJudicialBranch(id: string, data: Partial<JudicialBranchFormData>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateJudicialBranch is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteJudicialBranch(id: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] deleteJudicialBranch is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getJudicialProcesses(): Promise<JudicialProcess[]> {
+    console.warn("[MySqlAdapter] getJudicialProcesses is not yet implemented for MySQL.");
+    return [];
+  }
+  async getJudicialProcess(id: string): Promise<JudicialProcess | null> {
+    console.warn("[MySqlAdapter] getJudicialProcess is not yet implemented for MySQL.");
+    return null;
+  }
+  async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
+    console.warn("[MySqlAdapter] createJudicialProcess is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async updateJudicialProcess(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateJudicialProcess is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] deleteJudicialProcess is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  
   async disconnect(): Promise<void> {
     if (pool) {
         await pool.end();
@@ -586,6 +756,24 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] getDirectSaleOffers is not yet implemented for MySQL.");
     return Promise.resolve([]);
   }
+  
+  async getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null> {
+    console.warn("[MySqlAdapter] getDirectSaleOffer not implemented.");
+    return null;
+  }
+  
+  async createDirectSaleOffer(data: DirectSaleOfferFormData): Promise<{ success: boolean; message: string; offerId?: string; }> {
+    console.warn("[MySqlAdapter] createDirectSaleOffer not implemented.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async updateDirectSaleOffer(id: string, data: Partial<DirectSaleOfferFormData>): Promise<{ success: boolean; message: string; }> {
+      console.warn("[MySqlAdapter] updateDirectSaleOffer not implemented.");
+      return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteDirectSaleOffer(id: string): Promise<{ success: boolean; message: string; }> {
+      console.warn("[MySqlAdapter] deleteDirectSaleOffer not implemented.");
+      return { success: false, message: "Funcionalidade não implementada." };
+  }
 
   async getAuctionsByIds(ids: string[]): Promise<Auction[]> {
     console.warn("[MySqlAdapter] getAuctionsByIds is not yet implemented for MySQL.");
@@ -610,14 +798,14 @@ export class MySqlAdapter implements IDatabaseAdapter {
         `CREATE TABLE IF NOT EXISTS states ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100) NOT NULL, uf VARCHAR(2) NOT NULL UNIQUE, slug VARCHAR(100) NOT NULL UNIQUE, city_count INT DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
         `CREATE TABLE IF NOT EXISTS cities ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, state_id INT NOT NULL, state_uf VARCHAR(2), ibge_code VARCHAR(10), lot_count INT DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (state_id) REFERENCES states(id) ON DELETE CASCADE );`,
         `CREATE TABLE IF NOT EXISTS auctioneers ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, registration_number VARCHAR(50), contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since DATETIME, rating DECIMAL(3, 2), auctions_conducted_count INT DEFAULT 0, total_value_sold DECIMAL(15, 2) DEFAULT 0, user_id VARCHAR(255), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
-        `CREATE TABLE IF NOT EXISTS sellers ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since DATETIME, rating DECIMAL(3, 2), active_lots_count INT, total_sales_value DECIMAL(15, 2), auctions_facilitated_count INT, user_id VARCHAR(255), cnpj VARCHAR(20), razao_social VARCHAR(255), inscricao_estadual VARCHAR(50), judicial_branch_id INT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
-        `CREATE TABLE IF NOT EXISTS auctions ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), auction_type VARCHAR(50), category_id INT, auctioneer_id INT, seller_id INT, auction_date DATETIME NOT NULL, end_date DATETIME, city VARCHAR(100), state VARCHAR(2), image_url TEXT, data_ai_hint VARCHAR(255), documents_url TEXT, visits INT DEFAULT 0, initial_offer DECIMAL(15, 2), soft_close_enabled BOOLEAN DEFAULT FALSE, soft_close_minutes INT, automatic_bidding_enabled BOOLEAN DEFAULT FALSE, silent_bidding_enabled BOOLEAN DEFAULT FALSE, allow_multiple_bids_per_user BOOLEAN DEFAULT TRUE, allow_installment_bids BOOLEAN, estimated_revenue DECIMAL(15, 2), achieved_revenue DECIMAL(15, 2), total_habilitated_users INT, is_featured_on_marketplace BOOLEAN, marketplace_announcement_title VARCHAR(150), auction_stages JSON, auto_relist_settings JSON, decrement_amount DECIMAL(15, 2), decrement_interval_seconds INT, floor_price DECIMAL(15, 2), original_auction_id INT, relist_count INT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (category_id) REFERENCES lot_categories(id), FOREIGN KEY (auctioneer_id) REFERENCES auctioneers(id), FOREIGN KEY (seller_id) REFERENCES sellers(id), FOREIGN KEY (original_auction_id) REFERENCES auctions(id) );`,
-        `CREATE TABLE IF NOT EXISTS lots ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, auction_id INT NOT NULL, bem_ids JSON, number VARCHAR(50), title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), price DECIMAL(15, 2), initial_price DECIMAL(15, 2), bids_count INT DEFAULT 0, is_featured BOOLEAN DEFAULT FALSE, reserve_price DECIMAL(15, 2), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE );`,
-        `CREATE TABLE IF NOT EXISTS platform_settings ( id INT AUTO_INCREMENT PRIMARY KEY, site_title VARCHAR(255), site_tagline TEXT, gallery_image_base_path VARCHAR(255), storage_provider VARCHAR(50), firebase_storage_bucket VARCHAR(255), active_theme_name VARCHAR(100), themes JSON, platform_public_id_masks JSON, map_settings JSON, search_pagination_type VARCHAR(50), search_items_per_page INT, search_load_more_count INT, show_countdown_on_lot_detail BOOLEAN, show_countdown_on_cards BOOLEAN, show_related_lots_on_lot_detail BOOLEAN, related_lots_count INT, mental_trigger_settings JSON, section_badge_visibility JSON, homepage_sections JSON, variable_increment_table JSON, bidding_settings JSON, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
+        `CREATE TABLE IF NOT EXISTS sellers ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since DATETIME, rating DECIMAL(3, 2), active_lots_count INT, total_sales_value DECIMAL(15, 2), auctions_facilitated_count INT, user_id VARCHAR(255), is_judicial BOOLEAN DEFAULT FALSE, cnpj VARCHAR(20), razao_social VARCHAR(255), inscricao_estadual VARCHAR(50), judicial_branch_id INT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
+        `CREATE TABLE IF NOT EXISTS auctions ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), auction_type VARCHAR(50), category_id INT, auctioneer_id INT, seller_id INT, judicial_process_id INT, auction_date DATETIME NOT NULL, end_date DATETIME, city VARCHAR(100), state VARCHAR(2), image_url TEXT, data_ai_hint VARCHAR(255), documents_url TEXT, visits INT DEFAULT 0, initial_offer DECIMAL(15, 2), soft_close_enabled BOOLEAN DEFAULT FALSE, soft_close_minutes INT, automatic_bidding_enabled BOOLEAN DEFAULT FALSE, silent_bidding_enabled BOOLEAN DEFAULT FALSE, allow_multiple_bids_per_user BOOLEAN DEFAULT TRUE, allow_installment_bids BOOLEAN, estimated_revenue DECIMAL(15, 2), achieved_revenue DECIMAL(15, 2), total_habilitated_users INT, total_lots INT, is_featured_on_marketplace BOOLEAN, marketplace_announcement_title VARCHAR(150), auction_stages JSON, auto_relist_settings JSON, decrement_amount DECIMAL(15, 2), decrement_interval_seconds INT, floor_price DECIMAL(15, 2), original_auction_id INT, relist_count INT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (category_id) REFERENCES lot_categories(id), FOREIGN KEY (auctioneer_id) REFERENCES auctioneers(id), FOREIGN KEY (seller_id) REFERENCES sellers(id), FOREIGN KEY (original_auction_id) REFERENCES auctions(id) );`,
+        `CREATE TABLE IF NOT EXISTS lots ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, auction_id INT, bem_ids JSON, number VARCHAR(50), title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), price DECIMAL(15, 2), initial_price DECIMAL(15, 2), bid_increment_step DECIMAL(15,2), category_id INT, subcategory_id INT, bids_count INT DEFAULT 0, is_featured BOOLEAN DEFAULT FALSE, reserve_price DECIMAL(15, 2), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE SET NULL );`,
+        `CREATE TABLE IF NOT EXISTS platform_settings ( id INT AUTO_INCREMENT PRIMARY KEY, site_title VARCHAR(255), site_tagline TEXT, gallery_image_base_path VARCHAR(255), storage_provider VARCHAR(50), firebase_storage_bucket VARCHAR(255), active_theme_name VARCHAR(100), themes JSON, platform_public_id_masks JSON, map_settings JSON, search_pagination_type VARCHAR(50), search_items_per_page INT, search_load_more_count INT, show_countdown_on_lot_detail BOOLEAN, show_countdown_on_cards BOOLEAN, show_related_lots_on_lot_detail BOOLEAN, related_lots_count INT, mental_trigger_settings JSON, section_badge_visibility JSON, homepage_sections JSON, variable_increment_table JSON, bidding_settings JSON, default_list_items_per_page INT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
         `CREATE TABLE IF NOT EXISTS courts ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, website TEXT, state_uf VARCHAR(2) NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
         `CREATE TABLE IF NOT EXISTS judicial_districts ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, court_id INT NOT NULL, state_id INT NOT NULL, zip_code VARCHAR(10), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (court_id) REFERENCES courts(id), FOREIGN KEY (state_id) REFERENCES states(id), UNIQUE (slug, state_id) );`,
         `CREATE TABLE IF NOT EXISTS judicial_branches ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, district_id INT NOT NULL, contact_name VARCHAR(150), phone VARCHAR(20), email VARCHAR(150), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (district_id) REFERENCES judicial_districts(id), UNIQUE (slug, district_id) );`,
-        `CREATE TABLE IF NOT EXISTS judicial_processes ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, process_number VARCHAR(100) NOT NULL UNIQUE, old_process_number VARCHAR(100), is_electronic BOOLEAN, court_id INT NOT NULL, district_id INT NOT NULL, branch_id INT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (court_id) REFERENCES courts(id), FOREIGN KEY (district_id) REFERENCES judicial_districts(id), FOREIGN KEY (branch_id) REFERENCES judicial_branches(id) );`,
+        `CREATE TABLE IF NOT EXISTS judicial_processes ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, process_number VARCHAR(100) NOT NULL UNIQUE, old_process_number VARCHAR(100), is_electronic BOOLEAN, court_id INT NOT NULL, district_id INT NOT NULL, branch_id INT NOT NULL, seller_id INT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (court_id) REFERENCES courts(id), FOREIGN KEY (district_id) REFERENCES judicial_districts(id), FOREIGN KEY (branch_id) REFERENCES judicial_branches(id), FOREIGN KEY (seller_id) REFERENCES sellers(id) );`,
         `CREATE TABLE IF NOT EXISTS process_parties ( id INT AUTO_INCREMENT PRIMARY KEY, process_id INT NOT NULL, name VARCHAR(255) NOT NULL, document_number VARCHAR(50), party_type VARCHAR(50) NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (process_id) REFERENCES judicial_processes(id) ON DELETE CASCADE );`,
         `CREATE TABLE IF NOT EXISTS bens ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, title VARCHAR(255) NOT NULL, description TEXT, judicial_process_id INT, status VARCHAR(50) DEFAULT 'DISPONIVEL', category_id INT, subcategory_id INT, image_url TEXT, image_media_id VARCHAR(255), data_ai_hint VARCHAR(255), evaluation_value DECIMAL(15, 2), location_city VARCHAR(100), location_state VARCHAR(100), address VARCHAR(255), latitude DECIMAL(10, 8), longitude DECIMAL(11, 8), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (judicial_process_id) REFERENCES judicial_processes(id), FOREIGN KEY (category_id) REFERENCES lot_categories(id), FOREIGN KEY (subcategory_id) REFERENCES subcategories(id) );`,
         `CREATE TABLE IF NOT EXISTS user_wins ( id INT AUTO_INCREMENT PRIMARY KEY, user_id VARCHAR(255) NOT NULL, lot_id INT NOT NULL, winning_bid_amount DECIMAL(15, 2) NOT NULL, win_date DATETIME NOT NULL, payment_status VARCHAR(50) DEFAULT 'PENDENTE', invoice_url TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(uid), FOREIGN KEY (lot_id) REFERENCES lots(id) );`,
@@ -710,7 +898,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] getLotCategoryByName is not yet implemented for MySQL.");
     return null;
   }
-  async updateLotCategory(id: string, data: Partial<{ name: string; description?: string; hasSubcategories?: boolean; }>): Promise<{ success: boolean; message: string; }> {
+  async updateLotCategory(id: string, data: Partial<CategoryFormData>): Promise<{ success: boolean; message: string; }> {
     console.warn("[MySqlAdapter] updateLotCategory is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
@@ -861,6 +1049,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> {
     console.warn("[MySqlAdapter] getBidsForLot is not yet implemented for MySQL.");
     return [];
+  }
+  async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo; }> {
+    console.warn("[MySqlAdapter] placeBidOnLot is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
   }
   async getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> {
     console.warn("[MySqlAdapter] getReviewsForLot is not yet implemented for MySQL.");
