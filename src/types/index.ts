@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -779,7 +780,7 @@ export interface IStorageAdapter {
 }
 
 
-// +++ NEW JUDICIAL ENTITIES +++
+// +++ JUDICIAL & CNJ ENTITIES +++
 
 export interface Court {
   id: string;
@@ -851,18 +852,60 @@ export type JudicialProcessFormData = Omit<JudicialProcess, 'id' | 'publicId' | 
   parties: Array<Partial<ProcessParty>>; // Parties in the form might not have an ID yet
 };
 
-// --- END NEW JUDICIAL ENTITIES ---
+// Types for CNJ Datajud API Response
+export interface CnjProcessSource {
+  numeroProcesso: string;
+  classe: { codigo: number; nome: string };
+  sistema: { codigo: number; nome: string };
+  formato: { codigo: number; nome: string };
+  tribunal: string;
+  dataHoraUltimaAtualizacao: string;
+  grau: string;
+  dataAjuizamento: string;
+  movimentos: any[]; // Define more strictly if needed
+  id: string;
+  nivelSigilo: number;
+  orgaoJulgador: {
+    codigoMunicipioIBGE: number;
+    codigo: number;
+    nome: string;
+  };
+  assuntos: { codigo: number; nome: string }[][];
+}
+export interface CnjHit {
+  _index: string;
+  _type: string;
+  _id: string;
+  _score: number | null;
+  _source: CnjProcessSource;
+  sort?: (string | number)[];
+}
+export interface CnjSearchResponse {
+  took: number;
+  timed_out: boolean;
+  hits: {
+    total: {
+      value: number;
+      relation: string;
+    };
+    max_score: number | null;
+    hits: CnjHit[];
+  };
+}
+
+
+// --- END JUDICIAL & CNJ ENTITIES ---
 
 
 export interface IDatabaseAdapter {
   initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[], rolesProcessed?: number }>;
   disconnect?(): Promise<void>;
 
-  createLotCategory(data: { name: string; description?: string }): Promise<{ success: boolean; message: string; categoryId?: string }>;
+  createLotCategory(data: { name: string; description?: string }): Promise<{ success: boolean; message: string; categoryId?: string; }>;
   getLotCategories(): Promise<LotCategory[]>;
   getLotCategory(idOrSlug: string): Promise<LotCategory | null>; 
   getLotCategoryByName(name: string): Promise<LotCategory | null>;
-  updateLotCategory(id: string, data: Partial<CategoryFormData>): Promise<{ success: boolean; message: string }>;
+  updateLotCategory(id: string, data: Partial<CategoryFormData>): Promise<{ success: boolean; message: string; }>;
   deleteLotCategory(id: string): Promise<{ success: boolean; message: string; }>;
 
   createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }>;
@@ -896,7 +939,7 @@ export interface IDatabaseAdapter {
   createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }>;
   getSellers(): Promise<SellerProfileInfo[]>;
   getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null>;
-  updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string }>;
+  updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }>;
   deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }>;
   getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null>;
   getSellerByName(name: string): Promise<SellerProfileInfo | null>;
@@ -1021,3 +1064,5 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
+
+    
