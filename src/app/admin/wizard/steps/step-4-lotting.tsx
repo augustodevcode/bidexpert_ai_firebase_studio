@@ -108,7 +108,7 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated,
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h3 className="text-lg font-semibold">Loteamento de Bens</h3>
-                <p className="text-sm text-muted-foreground">Selecione os bens disponíveis e loteie-os, ou cadastre um novo bem.</p>
+                <p className="text-sm text-muted-foreground">Selecione os bens disponíveis abaixo e loteie-os, ou cadastre um novo bem.</p>
             </div>
             <div className="flex gap-2 w-full sm:w-auto flex-wrap justify-end">
                 <Button onClick={onAddNewBem} variant="secondary">

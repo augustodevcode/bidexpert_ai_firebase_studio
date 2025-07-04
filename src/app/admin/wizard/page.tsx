@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import JudicialProcessForm from '@/app/admin/judicial-processes/judicial-process-form';
 import { createJudicialProcessAction } from '@/app/admin/judicial-processes/actions';
-import { createBemAction } from '@/app/admin/bens/actions';
+import { createBem as createBemAction } from '@/app/admin/bens/actions';
 import { Separator } from '@/components/ui/separator';
 import WizardFlow from '@/components/admin/wizard/WizardFlow';
 import WizardFlowModal from '@/components/admin/wizard/WizardFlowModal';
