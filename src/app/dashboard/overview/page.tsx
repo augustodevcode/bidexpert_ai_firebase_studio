@@ -1,32 +1,39 @@
 
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UserCircle, Bell, ShoppingBag, Gavel, AlertCircle, Star, Settings, Loader2, CheckCircle2, Clock, FileText, FileWarning, ShieldAlert, HelpCircle } from 'lucide-react'; // Added more icons
+import { UserCircle, Bell, ShoppingBag, Gavel, AlertCircle, Star, Settings, Loader2, CheckCircle2, Clock, FileText, FileWarning, ShieldAlert, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { sampleLots, sampleUserWins, sampleUserBids } from '@/lib/sample-data.local.json';
+import sampleData from '@/lib/sample-data.local.json';
 import { getUserHabilitationStatusInfo } from '@/lib/sample-data-helpers';
 import type { Lot, UserWin, UserBid, UserHabilitationStatus } from '@/types';
 import { useEffect, useState } from 'react';
-import { format, differenceInHours, differenceInMinutes, isPast } from 'date-fns';
+import { format, differenceInHours, differenceInMinutes, isPast, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge'; 
 
-function TimeRemaining({ endDate }: { endDate: Date }) {
+const { sampleLots, sampleUserWins, sampleUserBids } = sampleData;
+
+function TimeRemaining({ endDate }: { endDate: Date | string }) {
   const [remaining, setRemaining] = useState('');
 
   useEffect(() => {
+    const end = new Date(endDate);
+    if (!isValid(end)) {
+        setRemaining('Data inválida');
+        return;
+    }
+
     const calculate = () => {
       const now = new Date();
-      if (isPast(endDate)) {
+      if (isPast(end)) {
         setRemaining('Encerrado');
         return;
       }
-      const hours = differenceInHours(endDate, now);
-      const minutes = differenceInMinutes(endDate, now) % 60;
+      const hours = differenceInHours(end, now);
+      const minutes = differenceInMinutes(end, now) % 60;
 
       if (hours > 24) {
         setRemaining(`${Math.floor(hours / 24)}d ${hours % 24}h`);
@@ -70,7 +77,7 @@ export default function DashboardOverviewPage() {
     setRecommendedLots(sampleLots.filter((lot: Lot) => lot.isFeatured).slice(0, 3));
 
     // Lances Ativos
-    const currentActiveBids = sampleUserBids.filter((bid: UserBid) => 
+    const currentActiveBids = (sampleUserBids || []).filter((bid: UserBid) => 
       bid.bidStatus === 'GANHANDO' || bid.bidStatus === 'PERDENDO' || bid.bidStatus === 'SUPERADO'
     ).length;
     setActiveBidsCount(currentActiveBids);
@@ -178,7 +185,7 @@ export default function DashboardOverviewPage() {
                     <div className="mt-2 flex justify-between items-center">
                         <p className="text-lg font-bold text-primary">R$ {lot.price.toLocaleString('pt-BR')}</p>
                         <Badge variant="outline" className="text-xs">
-                            <Clock className="h-3 w-3 mr-1" /> <TimeRemaining endDate={new Date(lot.endDate as string)} />
+                            <Clock className="h-3 w-3 mr-1" /> <TimeRemaining endDate={lot.endDate as string} />
                         </Badge>
                     </div>
                   </div>
