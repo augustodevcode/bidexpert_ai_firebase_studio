@@ -1,6 +1,5 @@
 // src/lib/database/index.ts
 import type { IDatabaseAdapter } from '@/types';
-import { cookies } from 'next/headers';
 
 // Singleton instance specifically for the SampleDataAdapter
 let sampleDbInstance: IDatabaseAdapter | undefined;
@@ -11,6 +10,8 @@ export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
   // or in standalone scripts.
   let dbFromCookie: string | undefined;
   try {
+    // Use dynamic import to avoid static analysis errors during build
+    const { cookies } = await import('next/headers');
     const cookieStore = cookies();
     dbFromCookie = cookieStore.get('dev-config-db')?.value;
   } catch (e) {

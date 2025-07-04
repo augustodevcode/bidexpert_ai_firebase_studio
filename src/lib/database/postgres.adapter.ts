@@ -35,8 +35,8 @@ let pool: Pool | undefined;
 function getPool(): Pool {
   if (!pool) {
     const connectionString = process.env.POSTGRES_CONNECTION_STRING;
-    if (!connectionString) {
-      throw new Error('POSTGRES_CONNECTION_STRING não está definida nas variáveis de ambiente.');
+    if (!connectionString || connectionString.trim() === '') {
+      throw new Error('POSTGRES_CONNECTION_STRING não está definida ou está vazia nas variáveis de ambiente.');
     }
     pool = new Pool({ connectionString });
     console.log('[PostgresAdapter] Pool de conexões PostgreSQL inicializado.');
