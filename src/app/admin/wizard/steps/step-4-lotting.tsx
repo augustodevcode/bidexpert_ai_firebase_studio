@@ -7,7 +7,7 @@ import { useState, useMemo } from 'react';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from '@/components/admin/lotting/columns';
 import { Button } from '@/components/ui/button';
-import { Boxes, PackagePlus, Box } from 'lucide-react';
+import { Boxes, PackagePlus, Box, Package as PackageIcon, PlusCircle } from 'lucide-react';
 import CreateLotFromBensModal from '@/components/admin/lotting/create-lot-modal';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -17,9 +17,10 @@ interface Step4LottingProps {
   availableBens: Bem[];
   auctionData: Partial<Auction>;
   onLotCreated: () => void;
+  onAddNewBem: () => void;
 }
 
-export default function Step4Lotting({ availableBens, auctionData, onLotCreated }: Step4LottingProps) {
+export default function Step4Lotting({ availableBens, auctionData, onLotCreated, onAddNewBem }: Step4LottingProps) {
   const { wizardData, setWizardData } = useWizard();
   const [rowSelection, setRowSelection] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -58,8 +59,6 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
     }
     setIsCreatingIndividualLots(true);
     const newLots: Lot[] = selectedBens.map((bem, index) => {
-      // Logic for assigning lot numbers will be handled by the backend/adapter upon final creation
-      // For now, we can use a placeholder or index.
       const lotNumber = (wizardData.createdLots?.length || 0) + index + 1;
       return {
         id: `temp-lot-${uuidv4()}`,
@@ -72,7 +71,7 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
         status: 'EM_BREVE',
         categoryId: bem.categoryId,
         subcategoryId: bem.subcategoryId,
-        auctionId: auctionData.id || 'TBD', // Placeholder, will be set on final creation
+        auctionId: auctionData.id || 'TBD',
       } as Lot;
     });
 
@@ -81,16 +80,17 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
         createdLots: [...(prev.createdLots || []), ...newLots]
     }));
     toast({ title: "Sucesso!", description: `${newLots.length} lotes individuais preparados.` });
-    onLotCreated(); // Triggers a re-render and refetch to remove bens from the available list
+    onLotCreated();
     setRowSelection({});
     setIsCreatingIndividualLots(false);
   };
   
-  const handleLotCreatedInModal = (newLotData: Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt'>) => {
+  const handleLotCreatedInModal = (newLotData: Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auctionId'>) => {
     const newCompleteLot: Lot = {
-        ...(newLotData as Lot), // Cast since we are adding the missing properties
+        ...(newLotData as Lot),
         id: `temp-lot-${uuidv4()}`,
         publicId: `temp-pub-${uuidv4().substring(0,8)}`,
+        auctionId: auctionData.id || 'TBD',
         createdAt: new Date(),
         updatedAt: new Date(),
     };
@@ -98,9 +98,26 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
         ...prev,
         createdLots: [...(prev.createdLots || []), newCompleteLot]
     }));
-    setRowSelection({}); // Clear selection after lot creation
-    onLotCreated(); // Call parent to refetch data
+    setRowSelection({});
+    onLotCreated();
   }
+
+  if (bensForLotting.length === 0) {
+    return (
+      <div className="text-center py-10 space-y-4">
+        <PackageIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+        <h3 className="text-lg font-medium">Nenhum bem disponível</h3>
+        <p className="text-sm text-muted-foreground max-w-md mx-auto">
+          Não há bens disponíveis para este processo/leilão ou todos já foram loteados. Cadastre um novo bem para continuar.
+        </p>
+        <Button onClick={onAddNewBem} className="mt-2">
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Cadastrar Novo Bem
+        </Button>
+      </div>
+    );
+  }
+
 
   return (
     <>
