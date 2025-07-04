@@ -1,4 +1,3 @@
-
 // src/components/admin/wizard/WizardFlow.tsx
 'use client';
 
@@ -26,17 +25,18 @@ export default function WizardFlow() {
   const selectedType = wizardData.auctionType;
 
   const { nodes, edges } = useMemo(() => {
+    let nodeIdCounter = 1;
     const allNodes: Node<FlowNodeData>[] = [];
     const allEdges: Edge[] = [];
     const xGap = 280;
-    const yGap = 160;
+    const yGap = 180; // Increased for more vertical space
 
     // --- Start Node ---
     allNodes.push({
       id: 'start', type: 'customStep', position: { x: 0, y: 350 },
       data: {
         title: 'Início do Cadastro', status: 'done',
-        icon: Rocket, pathType: 'COMMON', isActivePath: true, label: 'Ponto de Partida'
+        icon: Rocket, pathType: 'COMMON', isActivePath: true, label: `#${nodeIdCounter++} - Ponto de Partida`
       },
     });
 
@@ -57,7 +57,7 @@ export default function WizardFlow() {
       allNodes.push({
         id: `type-${type}`, type: 'customStep', position: { x: xGap, y: yBase },
         data: {
-          label: 'Passo 1', title: type.replace(/_/g, ' '), status: typeNodeStatus,
+          label: `#${nodeIdCounter++} - Modalidade`, title: type.replace(/_/g, ' '), status: typeNodeStatus,
           pathType: type, isActivePath
         }
       });
@@ -69,7 +69,7 @@ export default function WizardFlow() {
           { id: 'tribunal', title: 'Tribunal', icon: Scale },
           { id: 'comarca', title: 'Comarca', icon: Building },
           { id: 'vara', title: 'Vara', icon: Gavel },
-          { id: 'processo', title: 'Processo Judicial', icon: FileText },
+          { id: 'processo', title: 'Processo Judicial', icon: FileText, isEntity: true, entityType: 'process' },
           { id: 'partes', title: 'Partes Envolvidas', icon: Users },
         ];
 
@@ -77,16 +77,28 @@ export default function WizardFlow() {
         judicialNodes.forEach((node, i) => {
           const nodeId = `judicial-${node.id}`;
           let nodeStatus: 'done' | 'in_progress' | 'todo' = 'todo';
-          
+          let entityId;
+
           if (wizardData.judicialProcess) {
              nodeStatus = 'done';
+             if (node.isEntity) entityId = wizardData.judicialProcess.id;
           } else if (currentStep === 1) { // Assuming judicial is step 1
              nodeStatus = 'in_progress';
           }
 
           allNodes.push({
             id: nodeId, type: 'customStep', position: { x: xGap * (2 + i), y: yBase },
-            data: { label: 'Dados do Processo', title: node.title, status: nodeStatus, icon: node.icon, pathType: 'JUDICIAL', isActivePath }
+            data: { 
+              label: `#${nodeIdCounter++} - Dados do Processo`, 
+              title: node.title, 
+              status: nodeStatus, 
+              icon: node.icon, 
+              pathType: 'JUDICIAL', 
+              isActivePath,
+              isEntity: node.isEntity,
+              entityType: node.entityType,
+              entityId
+            }
           });
           allEdges.push({ id: `e-${lastNodeId}-${nodeId}`, source: lastNodeId, target: nodeId, type: 'smoothstep', style: edgeStyle, animated: animatedEdge && currentStep === 1 });
           lastNodeId = nodeId;
@@ -95,7 +107,7 @@ export default function WizardFlow() {
         const bensProcessoNodeId = 'judicial-bens';
         allNodes.push({
             id: bensProcessoNodeId, type: 'customStep', position: { x: xGap * (2 + judicialNodes.length), y: yBase},
-            data: { label: 'Fonte de Itens', title: 'Bens do Processo', status: wizardData.judicialProcess ? 'done' : 'todo', icon: Package, pathType: 'JUDICIAL', isActivePath }
+            data: { label: `#${nodeIdCounter++} - Fonte de Itens`, title: 'Bens do Processo', status: wizardData.judicialProcess ? 'done' : 'todo', icon: Package, pathType: 'JUDICIAL', isActivePath }
         });
         allEdges.push({ id: `e-${lastNodeId}-${bensProcessoNodeId}`, source: lastNodeId, target: bensProcessoNodeId, type: 'smoothstep', style: edgeStyle, animated: animatedEdge && currentStep >=1 });
 
@@ -103,7 +115,7 @@ export default function WizardFlow() {
         allEdges.push({ id: `e-${bensProcessoNodeId}-lotting`, source: bensProcessoNodeId, target: 'lotting', type: 'smoothstep', style: edgeStyle, animated: animatedEdge && currentStep >= 3 });
 
       } else {
-        // For other types, they go to Auction Details, then to Generic Bens, then Lotting
+        // For other types, they go to Auction Details
         allEdges.push({ id: `e-type-${type}-auction-details`, source: `type-${type}`, target: 'auction-details', type: 'smoothstep', style: edgeStyle, animated: animatedEdge && currentStep === 1 && wizardData.auctionType === type });
       }
     });
@@ -113,22 +125,41 @@ export default function WizardFlow() {
     const commonIsActive = !!selectedType;
     const commonEdgeStyle = { stroke: selectedType ? pathColors[selectedType] : pathColors.COMMON, strokeWidth: commonIsActive ? 2.5 : 1.5 };
     
-    // Position of `auction-details` is now fixed and central for all paths
-    const auctionDetailsX = xGap * 2;
+    const auctionDetailsX = xGap * 3;
     allNodes.push({
       id: 'auction-details', type: 'customStep', position: { x: auctionDetailsX, y: commonYOffset },
       data: {
-        label: 'Passo 2/3', title: 'Dados do Leilão', status: wizardData.auctionDetails?.title ? 'done' : (currentStep >= 1 && currentStep <= 2) ? 'in_progress' : 'todo',
+        label: `#${nodeIdCounter++} - Passo 2`, title: 'Dados do Leilão', status: wizardData.auctionDetails?.title ? 'done' : (currentStep >= 1 && currentStep <= 2) ? 'in_progress' : 'todo',
         icon: Gavel, pathType: selectedType || 'COMMON', isActivePath: commonIsActive
       }
     });
+
+    // Related Entities to Auction Details
+    allNodes.push({
+      id: 'seller-entity', type: 'customStep', position: { x: auctionDetailsX, y: commonYOffset - yGap/2 },
+      data: { 
+        label: 'Entidade', title: 'Comitente', status: wizardData.auctionDetails?.seller ? 'done' : 'todo', icon: Users, pathType: selectedType || 'COMMON', isActivePath: commonIsActive,
+        isEntity: true, entityId: wizardData.auctionDetails?.sellerId, entityType: 'seller'
+      }
+    });
+    allEdges.push({ id: 'e-auction-seller', source: 'auction-details', target: 'seller-entity', type: 'smoothstep', style: commonEdgeStyle });
+
+    allNodes.push({
+      id: 'auctioneer-entity', type: 'customStep', position: { x: auctionDetailsX, y: commonYOffset + yGap/2 },
+      data: { 
+        label: 'Entidade', title: 'Leiloeiro', status: wizardData.auctionDetails?.auctioneer ? 'done' : 'todo', icon: Gavel, pathType: selectedType || 'COMMON', isActivePath: commonIsActive,
+        isEntity: true, entityId: wizardData.auctionDetails?.auctioneerId, entityType: 'auctioneer'
+      }
+    });
+    allEdges.push({ id: 'e-auction-auctioneer', source: 'auction-details', target: 'auctioneer-entity', type: 'smoothstep', style: commonEdgeStyle });
+
     
     // GENERIC "Bens Disponíveis" for non-judicial paths
     const genericBensNodeId = 'generic-bens';
     allNodes.push({
       id: genericBensNodeId, type: 'customStep', position: { x: auctionDetailsX + xGap, y: commonYOffset + yGap },
       data: {
-        label: 'Fonte de Itens', title: 'Bens Disponíveis', status: wizardData.auctionDetails?.title ? 'done' : 'todo',
+        label: `#${nodeIdCounter++} - Fonte de Itens`, title: 'Bens Disponíveis', status: wizardData.auctionDetails?.title ? 'done' : 'todo',
         icon: Package, pathType: 'EXTRAJUDICIAL', isActivePath: selectedType === 'EXTRAJUDICIAL' || selectedType === 'PARTICULAR' || selectedType === 'TOMADA_DE_PRECOS'
       }
     });
@@ -139,19 +170,17 @@ export default function WizardFlow() {
     allNodes.push({
       id: 'lotting', type: 'customStep', position: { x: lottingX, y: commonYOffset },
       data: {
-        label: 'Passo 3/4', title: 'Criação de Lotes', status: wizardData.createdLots && wizardData.createdLots.length > 0 ? 'done' : currentStep === 3 ? 'in_progress' : 'todo',
+        label: `#${nodeIdCounter++} - Passo 3`, title: 'Criação de Lotes', status: wizardData.createdLots && wizardData.createdLots.length > 0 ? 'done' : currentStep === 3 ? 'in_progress' : 'todo',
         icon: Boxes, pathType: selectedType || 'COMMON', isActivePath: commonIsActive
       }
     });
-
-    // The edge from auction details to lotting is now more of a conceptual link for data, rather than a direct flow step for all types
     allEdges.push({ id: `e-auction-details-lotting`, source: 'auction-details', target: 'lotting', type: 'straight', style: { strokeDasharray: 5, stroke: pathColors.COMMON, strokeWidth: 1 } });
     
     const reviewX = lottingX + xGap;
     allNodes.push({
       id: 'review', type: 'customStep', position: { x: reviewX, y: commonYOffset },
       data: {
-        label: 'Passo Final', title: 'Revisão e Criação', status: currentStep === 4 ? 'in_progress' : 'todo',
+        label: `#${nodeIdCounter++} - Passo Final`, title: 'Revisão e Criação', status: currentStep === 4 ? 'in_progress' : 'todo',
         icon: ListChecks, pathType: selectedType || 'COMMON', isActivePath: commonIsActive
       }
     });
@@ -162,7 +191,7 @@ export default function WizardFlow() {
     const postCreationX2 = postCreationX1 + xGap;
     
     const postNodesLine1 = [
-        { id: 'leilao-aberto', title: 'Leilão Aberto', icon: Gavel },
+        { id: 'leilao-aberto', title: 'Leilão Ativo (Aberto para Lances)', icon: Gavel },
         { id: 'pregao-auditorio', title: 'Pregão no Auditório', icon: Tv },
     ];
     
@@ -177,7 +206,7 @@ export default function WizardFlow() {
         const nodeId = `post-${node.id}`;
         allNodes.push({
             id: nodeId, type: 'customStep', position: {x: postCreationX1 + (xGap * i), y: commonYOffset},
-            data: { label: 'Pós-Leilão', title: node.title, status: 'todo', icon: node.icon, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
+            data: { label: `#${nodeIdCounter++} - Pós-Leilão`, title: node.title, status: 'todo', icon: node.icon, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
         });
         allEdges.push({ id: `e-${lastPostNodeId}-${nodeId}`, source: lastPostNodeId, target: nodeId, type: 'smoothstep', style: commonEdgeStyle, animated: false });
         lastPostNodeId = nodeId;
@@ -186,20 +215,18 @@ export default function WizardFlow() {
     let lastPostNodeIdLine2 = 'post-pregao-auditorio';
     postNodesLine2.forEach((node, i) => {
         const nodeId = `post-${node.id}`;
-        // Position reversed to flow from right to left on the second line
         allNodes.push({
             id: nodeId, type: 'customStep', position: {x: postCreationX2 - (xGap * i), y: commonYOffset + yGap},
-            data: { label: 'Pós-Leilão', title: node.title, status: 'todo', icon: node.icon, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
+            data: { label: `#${nodeIdCounter++} - Pós-Leilão`, title: node.title, status: 'todo', icon: node.icon, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
         });
         allEdges.push({ id: `e-${lastPostNodeIdLine2}-${nodeId}`, source: lastPostNodeIdLine2, target: nodeId, type: 'smoothstep', style: commonEdgeStyle, animated: false });
         lastPostNodeIdLine2 = nodeId;
     });
 
-    // Add financial flow node
     const financeNodeId = 'fluxo-financeiro';
     allNodes.push({
         id: financeNodeId, type: 'customStep', position: {x: postCreationX2 - (xGap * (postNodesLine2.length - 1)), y: commonYOffset + yGap * 2},
-        data: { label: 'Financeiro', title: 'Fluxo Financeiro', status: 'todo', icon: DollarSign, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
+        data: { label: `#${nodeIdCounter++} - Financeiro`, title: 'Fluxo Financeiro', status: 'todo', icon: DollarSign, pathType: selectedType || 'COMMON', isActivePath: commonIsActive }
     });
     allEdges.push({ id: 'e-pagamento-financeiro', source: 'post-pagamento-docs', target: financeNodeId, type: 'smoothstep', style: commonEdgeStyle, animated: false });
 
