@@ -8,13 +8,10 @@ import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Fix for default Leaflet icon paths
-// @ts-ignore
-delete L.Icon.Default.prototype._getIconUrl;
-
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+// Fix for default Leaflet icon paths in Next.js
+const defaultIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -45,8 +42,8 @@ export default function LotMapDisplay({ lot }: LotMapDisplayProps) {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }).addTo(mapRef.current);
 
-      // Add the blue marker
-      L.marker([latitude, longitude]).addTo(mapRef.current)
+      // Add the blue marker using the safe, local icon instance
+      L.marker([latitude, longitude], { icon: defaultIcon }).addTo(mapRef.current)
         .bindPopup(`<b>${title}</b><br>${displayAddressTextForLink}`);
 
       // Invalidate size after a short delay to ensure container is sized and centered correctly
