@@ -1224,6 +1224,22 @@
           "secondAuctionDate": null
         }
       ]
+    },
+    {
+      "title": "Leilão Extrajudicial",
+      "description": "",
+      "auctioneer": "Leiloeiro XYZ Oficial",
+      "seller": "Banco Bradesco S.A.",
+      "auctionDate": "2025-07-04T00:23:25.219Z",
+      "auctioneerId": "auct-leiloeiro-xyz-oficial",
+      "sellerId": "seller-banco-bradesco-sa",
+      "id": "auc-846494cc-2613-4559-a03d-9d021f8ab719",
+      "publicId": "AUC-PUB-f6572383",
+      "createdAt": "2025-07-04T00:28:58.245Z",
+      "updatedAt": "2025-07-04T00:28:58.245Z",
+      "lots": [],
+      "totalLots": 0,
+      "status": "RASCUNHO"
     }
   ],
   "sampleBens": [
