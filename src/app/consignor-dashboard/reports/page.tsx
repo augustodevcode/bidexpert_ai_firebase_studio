@@ -1,3 +1,4 @@
+
 // src/app/consignor-dashboard/reports/page.tsx
 'use client';
 
@@ -22,7 +23,6 @@ import {
     Legend, 
     ResponsiveContainer, 
     Line, 
-    Pie, 
     Cell 
 } from 'recharts';
 import { useState, useEffect } from 'react';
