@@ -1312,7 +1312,14 @@
       "imageUrl": "https://placehold.co/600x400.png?text=Trator+Valtra",
       "imageMediaId": "media-trator-valtra",
       "createdAt": "2025-07-03T20:54:01.690Z",
-      "updatedAt": "2025-07-03T20:54:01.690Z"
+      "updatedAt": "2025-07-05T14:55:55.320Z",
+      "description": "",
+      "judicialProcessId": "proc-dbd93e68-1036-435b-8891-19703f5bd9b3",
+      "sellerId": null,
+      "dataAiHint": "",
+      "locationCity": "",
+      "locationState": "",
+      "address": ""
     }
   ],
   "sampleBids": [
@@ -1344,6 +1351,7 @@
       "timestamp": "2025-06-06T08:59:27.765Z"
     }
   ],
+  "sampleBlogPosts": [],
   "sampleCities": [
     {
       "id": "city-maceio-al",
@@ -2239,6 +2247,7 @@
       "uploadedAt": "2025-06-05T22:45:12.123Z"
     }
   ],
+  "sampleNotifications": [],
   "samplePlatformSettings": {
     "id": "global",
     "siteTitle": "BidExpert Leilões",
@@ -2922,7 +2931,9 @@
       "updatedAt": "2025-06-19T04:56:12.389Z"
     }
   ],
+  "sampleUserBids": [],
   "sampleUserDocuments": [],
+  "sampleUserHabilitationStatus": "PENDING_DOCUMENTS",
   "sampleUserLotMaxBids": [],
   "sampleUserProfiles": [
     {
@@ -2977,7 +2988,5 @@
       "sellerProfileId": "seller-banco-bradesco-s-a"
     }
   ],
-  "sampleUserWins": [],
-  "sampleUserBids": [],
-  "sampleUserHabilitationStatus": "PENDING_DOCUMENTS"
+  "sampleUserWins": []
 }

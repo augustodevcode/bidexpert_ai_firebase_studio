@@ -1010,7 +1010,7 @@ export interface IDatabaseAdapter {
   deleteDirectSaleOffer(id: string): Promise<{ success: boolean; message: string; }>;
 
   getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]>;
-  getBidsForUser(userId: string): Promise<UserBid[]>;
+  getBidsForUser?(userId: string): Promise<UserBid[]>;
   placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }>;
   getWinsForUser(userId: string): Promise<UserWin[]>;
   
@@ -1061,11 +1061,11 @@ export interface IDatabaseAdapter {
 
   getNotificationsForUser(userId: string): Promise<Notification[]>;
 
-  getBlogPosts(): Promise<BlogPost[]>;
-  getBlogPost(idOrSlug: string): Promise<BlogPost | null>;
-  createBlogPost(data: BlogPostFormData): Promise<{ success: boolean; message: string; postId?: string }>;
-  updateBlogPost(id: string, data: Partial<BlogPostFormData>): Promise<{ success: boolean; message: string }>;
-  deleteBlogPost(id: string): Promise<{ success: boolean; message: string; }>;
+  getBlogPosts?(): Promise<BlogPost[]>;
+  getBlogPost?(idOrSlug: string): Promise<BlogPost | null>;
+  createBlogPost?(data: BlogPostFormData): Promise<{ success: boolean; message: string; postId?: string }>;
+  updateBlogPost?(id: string, data: Partial<BlogPostFormData>): Promise<{ success: boolean; message: string }>;
+  deleteBlogPost?(id: string): Promise<{ success: boolean; message: string; }>;
   
   // New Judicial CRUDs
   getCourts(): Promise<Court[]>;
@@ -1105,3 +1105,9 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
+```
+- yarn.lock:
+```text
+This is a GENERATED file, do not edit.
+If you want to anually update your dependencies, look at your package.json file.
+```
