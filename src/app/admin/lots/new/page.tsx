@@ -1,4 +1,3 @@
-
 // src/app/admin/lots/new/page.tsx
 import LotForm from '../lot-form';
 import { createLot, type LotFormData } from '../actions';
@@ -6,19 +5,21 @@ import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
+import { getBens } from '@/app/admin/bens/actions';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
-import type { LotCategory, Auction, StateInfo, CityInfo } from '@/types';
+import type { LotCategory, Auction, StateInfo, CityInfo, Bem } from '@/types';
 
 interface NewLotPageContentProps {
   categories: LotCategory[];
   auctions: Auction[];
   states: StateInfo[];
   allCities: CityInfo[];
+  availableBens: Bem[];
   auctionIdFromQuery?: string;
 }
 
-function NewLotPageContent({ categories, auctions, states, allCities, auctionIdFromQuery }: NewLotPageContentProps) {
+function NewLotPageContent({ categories, auctions, states, allCities, availableBens, auctionIdFromQuery }: NewLotPageContentProps) {
   async function handleCreateLot(data: LotFormData) {
     'use server';
     return createLot(data);
@@ -31,7 +32,7 @@ function NewLotPageContent({ categories, auctions, states, allCities, auctionIdF
       auctions={auctions}
       states={states}
       allCities={allCities}
-      initialAvailableBens={[]} // Initially empty, will fetch on auction selection
+      initialAvailableBens={availableBens}
       formTitle="Novo Lote"
       formDescription="Preencha os detalhes para criar um novo lote."
       submitButtonText="Criar Lote"
@@ -43,11 +44,12 @@ function NewLotPageContent({ categories, auctions, states, allCities, auctionIdF
 export default async function NewLotPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
   const auctionIdFromQuery = (searchParams && typeof searchParams.auctionId === 'string') ? searchParams.auctionId : undefined;
   
-  const [categories, auctions, states, allCities] = await Promise.all([
+  const [categories, auctions, states, allCities, bens] = await Promise.all([
     getLotCategories(),
     getAuctions(),
     getStates(),
     getCities(),
+    getBens(), // Fetch all available bens initially
   ]);
 
   return (
@@ -57,6 +59,7 @@ export default async function NewLotPage({ searchParams }: { searchParams?: { [k
         auctions={auctions} 
         states={states}
         allCities={allCities}
+        availableBens={bens}
         auctionIdFromQuery={auctionIdFromQuery} 
       />
     </Suspense>

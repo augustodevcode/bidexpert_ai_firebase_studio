@@ -1,14 +1,13 @@
-
-
+// src/app/admin/lots/[lotId]/edit/page.tsx
 import LotForm from '../../lot-form';
-import { getLot, updateLot } from '../../actions';
+import { getLot, updateLot, type LotFormData } from '../../actions';
 import { getBens as getBensForLotting } from '@/app/admin/bens/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
-import { getAuctions } from '@/app/admin/auctions/actions';
+import { getAuctions, getAuction } from '@/app/admin/auctions/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
 import { notFound } from 'next/navigation';
-import type { LotCategory, Auction, Bem, LotFormData, StateInfo, CityInfo } from '@/types';
+import type { LotCategory, Auction, Bem, StateInfo, CityInfo } from '@/types';
 
 export default async function EditLotPage({ params }: { params: { lotId: string } }) {
   const lotId = params.lotId;
@@ -18,12 +17,21 @@ export default async function EditLotPage({ params }: { params: { lotId: string 
     notFound();
   }
   
-  const [categories, auctions, states, allCities, bens] = await Promise.all([
+  // Fetch the parent auction to determine the context for available bens
+  const auction = await getAuction(lot.auctionId);
+
+  // Determine the filter for bens based on the auction's context
+  const filterForBens = auction?.auctionType === 'JUDICIAL' && auction.judicialProcessId
+    ? { judicialProcessId: auction.judicialProcessId }
+    : (auction?.sellerId ? { sellerId: auction.sellerId } : {});
+
+  // Fetch all necessary data in parallel
+  const [categories, auctions, states, allCities, availableBens] = await Promise.all([
     getLotCategories(),
     getAuctions(),
     getStates(),
     getCities(),
-    lot.bemIds && lot.bemIds.length > 0 ? getBensForLotting({ judicialProcessId: lot.judicialProcessId, sellerId: lot.sellerId}) : Promise.resolve([])
+    getBensForLotting(filterForBens)
   ]);
 
   async function handleUpdateLot(data: Partial<LotFormData>) {
@@ -38,7 +46,7 @@ export default async function EditLotPage({ params }: { params: { lotId: string 
       auctions={auctions}
       states={states}
       allCities={allCities}
-      initialAvailableBens={bens}
+      initialAvailableBens={availableBens}
       onSubmitAction={handleUpdateLot}
       formTitle="Editar Lote"
       formDescription="Modifique os detalhes do lote existente."

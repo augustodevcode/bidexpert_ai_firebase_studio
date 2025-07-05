@@ -1,4 +1,3 @@
-
 // src/app/admin/lots/lot-form.tsx
 'use client';
 
@@ -22,12 +21,15 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
 import type { Lot, LotCategory, Auction, StateInfo, CityInfo, MediaItem, Subcategory, Bem } from '@/types';
-import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, ImageIcon, PackagePlus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { getSubcategoriesByParentIdAction } from '@/app/admin/subcategories/actions';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { DataTable } from '@/components/ui/data-table';
+import { createColumns as createBemColumns } from '@/app/admin/lotting/columns';
+import { Separator } from '@/components/ui/separator';
 
 interface LotFormProps {
   initialData?: Lot | null;
@@ -35,7 +37,7 @@ interface LotFormProps {
   auctions: Auction[];
   states: StateInfo[];
   allCities: CityInfo[];
-  initialAvailableBens: Bem[]; // Changed from `bens` prop to `initialAvailableBens`
+  initialAvailableBens: Bem[];
   onSubmitAction: (data: LotFormValues) => Promise<{ success: boolean; message: string; lotId?: string }>;
   formTitle: string;
   formDescription: string;
@@ -49,7 +51,7 @@ export default function LotForm({
   auctions,
   states,
   allCities,
-  initialAvailableBens, // Renamed prop
+  initialAvailableBens,
   onSubmitAction,
   formTitle,
   formDescription,
@@ -64,6 +66,7 @@ export default function LotForm({
   const [isMainImageDialogOpen, setIsMainImageDialogOpen] = React.useState(false);
   const [availableSubcategories, setAvailableSubcategories] = React.useState<Subcategory[]>([]);
   const [isLoadingSubcategories, setIsLoadingSubcategories] = React.useState(false);
+  const [bemRowSelection, setBemRowSelection] = React.useState({});
 
   const form = useForm<LotFormValues>({
     resolver: zodResolver(lotFormSchema),
@@ -78,6 +81,7 @@ export default function LotForm({
       type: initialData?.categoryId || initialData?.type || '',
       subcategoryId: initialData?.subcategoryId || undefined,
       imageUrl: initialData?.imageUrl || '',
+      bemIds: initialData?.bemIds || [],
       mediaItemIds: initialData?.mediaItemIds || [],
       galleryImageUrls: initialData?.galleryImageUrls || [],
       judicialProcessNumber: initialData?.judicialProcessNumber || '',
@@ -86,13 +90,25 @@ export default function LotForm({
       evaluationValue: initialData?.evaluationValue || null,
     },
   });
+  
+  const watchedBemIds = useWatch({ control: form.control, name: 'bemIds' });
+
+  React.useEffect(() => {
+    if (watchedBemIds?.length === 1 && !form.getValues('title')) {
+      const linkedBem = initialAvailableBens.find(b => b.id === watchedBemIds[0]) || initialData?.bens?.find(b => b.id === watchedBemIds[0]);
+      if (linkedBem) {
+        form.setValue('title', linkedBem.title);
+        if(!form.getValues('price') || form.getValues('price') === 0) {
+            form.setValue('price', linkedBem.evaluationValue || 0);
+        }
+      }
+    }
+  }, [watchedBemIds, initialAvailableBens, initialData?.bens, form]);
 
   const selectedStateId = useWatch({ control: form.control, name: 'stateId' });
   const selectedCategoryId = useWatch({ control: form.control, name: 'type' });
   const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
   
-  const hasSingleBem = initialAvailableBens?.length === 1 && initialData?.bemIds?.length === 1 && initialData.bemIds[0] === initialAvailableBens[0].id;
-
   React.useEffect(() => {
     if (defaultAuctionId) {
       form.setValue('auctionId', defaultAuctionId);
@@ -108,7 +124,6 @@ export default function LotForm({
       }
     } else {
       setFilteredCities([]);
-      form.setValue('cityId', undefined);
     }
   }, [selectedStateId, allCities, form]);
   
@@ -145,7 +160,6 @@ export default function LotForm({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategoryId, categories]);
 
-
   const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
     if (selectedItems.length > 0) {
       const selectedMediaItem = selectedItems[0];
@@ -178,22 +192,56 @@ export default function LotForm({
     }
   }
 
+  const bemColumns = React.useMemo(() => createBemColumns(), []);
+  
+  const availableBensForTable = React.useMemo(() => {
+    const linkedBemIds = new Set(watchedBemIds || []);
+    return initialAvailableBens.filter(bem => !linkedBemIds.has(bem.id) && bem.status === 'DISPONIVEL');
+  }, [initialAvailableBens, watchedBemIds]);
+
+  const handleLinkBens = () => {
+    const selectedBemIds = Object.keys(bemRowSelection)
+      .map(Number)
+      .map(index => availableBensForTable[index]?.id)
+      .filter(Boolean);
+
+    if (selectedBemIds.length > 0) {
+      const currentBemIds = form.getValues('bemIds') || [];
+      const newBemIds = Array.from(new Set([...currentBemIds, ...selectedBemIds]));
+      form.setValue('bemIds', newBemIds, { shouldDirty: true });
+      setBemRowSelection({}); 
+      toast({ title: `${selectedBemIds.length} bem(ns) vinculado(s).` });
+    }
+  };
+
+  const handleUnlinkBem = (bemIdToUnlink: string) => {
+    const currentBemIds = form.getValues('bemIds') || [];
+    const newBemIds = currentBemIds.filter(id => id !== bemIdToUnlink);
+    form.setValue('bemIds', newBemIds, { shouldDirty: true });
+    toast({ title: 'Bem desvinculado.' });
+  };
+  
+  const linkedBensDetails = React.useMemo(() => {
+    const allPossibleBens = [...initialAvailableBens, ...(initialData?.bens || [])];
+    const uniqueBens = Array.from(new Map(allPossibleBens.map(item => [item.id, item])).values());
+    return (watchedBemIds || []).map(id => uniqueBens.find(bem => bem.id === id)).filter((b): b is Bem => !!b);
+  }, [watchedBemIds, initialAvailableBens, initialData?.bens]);
+
+
   return (
     <>
-      <Card className="max-w-3xl mx-auto shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Package className="h-6 w-6 text-primary"/>{formTitle}</CardTitle>
-          <CardDescription>{formDescription}</CardDescription>
-        </CardHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Card className="max-w-3xl mx-auto shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Package className="h-6 w-6 text-primary"/>{formTitle}</CardTitle>
+              <CardDescription>{formDescription}</CardDescription>
+            </CardHeader>
             <CardContent className="space-y-6">
               <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Lote</FormLabel><FormControl><Input placeholder="Ex: Carro Ford Ka 2019" {...field} /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="auctionId" render={({ field }) => (<FormItem><FormLabel>Leilão Associado</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o leilão" /></SelectTrigger></FormControl><SelectContent>{auctions.map(auction => (<SelectItem key={auction.id} value={auction.id}>{auction.title} (ID: ...{auction.id.slice(-6)})</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea placeholder="Detalhes sobre o lote..." {...field} value={field.value ?? ""} rows={4} /></FormControl><FormMessage /></FormItem>)} />
-              
               <FormField control={form.control} name="price" render={({ field }) => (<FormItem><FormLabel>Preço (Lance Inicial/Atual)</FormLabel><FormControl><Input type="number" placeholder="Ex: 15000.00" {...field} /></FormControl><FormMessage /></FormItem>)} />
-
               <div className="grid md:grid-cols-2 gap-6">
                   {initialData?.status && (
                      <FormItem>
@@ -207,42 +255,69 @@ export default function LotForm({
                {availableSubcategories.length > 0 && (
                  <FormField control={form.control} name="subcategoryId" render={({ field }) => (<FormItem><FormLabel>Subcategoria</FormLabel><Select onValueChange={field.onChange} value={field.value || undefined} disabled={isLoadingSubcategories}><FormControl><SelectTrigger><SelectValue placeholder={isLoadingSubcategories ? "Carregando..." : "Selecione a subcategoria"} /></SelectTrigger></FormControl><SelectContent>{availableSubcategories.map(subcat => (<SelectItem key={subcat.id} value={subcat.id}>{subcat.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)}/>
               )}
-
-              {initialAvailableBens && initialAvailableBens.length > 0 && (
-                 <Card>
-                  <CardHeader><CardTitle className="text-md font-semibold">Bens Vinculados a este Lote</CardTitle></CardHeader>
-                  <CardContent>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                      {initialAvailableBens.map(bem => (
-                        <li key={bem.id}>
-                          <span className="font-medium text-foreground">{bem.title}</span> (ID: {bem.publicId})
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                 </Card>
-              )}
-
+              
               <FormItem>
-                <FormLabel>Imagens do Lote</FormLabel>
-                {hasSingleBem && <FormDescription className="text-xs">Este lote contém um único bem. As imagens são gerenciadas no cadastro do bem.</FormDescription>}
+                <FormLabel>Imagem Principal</FormLabel>
                 <div className="flex items-center gap-4">
                     <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{imageUrlPreview ? <Image src={imageUrlPreview} alt="Prévia" fill className="object-contain"/> : <ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>}</div>
                     <div className="space-y-2 flex-grow">
-                        <Button type="button" variant="outline" onClick={() => setIsMainImageDialogOpen(true)} disabled={hasSingleBem}>{imageUrlPreview ? 'Alterar Imagem Principal' : 'Escolher Imagem'}</Button>
-                        <FormField control={form.control} name="imageUrl" render={({ field }) => <FormControl><Input placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} disabled={hasSingleBem} /></FormControl>} />
+                        <Button type="button" variant="outline" onClick={() => setIsMainImageDialogOpen(true)}>{imageUrlPreview ? 'Alterar Imagem Principal' : 'Escolher Imagem'}</Button>
+                        <FormField control={form.control} name="imageUrl" render={({ field }) => <FormControl><Input placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} /></FormControl>} />
                     </div>
                 </div>
               </FormItem>
-              
             </CardContent>
-            <CardFooter className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
-              <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{submitButtonText}</Button>
+             <CardFooter className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
+                <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{submitButtonText}</Button>
             </CardFooter>
-          </form>
-        </Form>
-      </Card>
+          </Card>
+          
+          <Card className="max-w-3xl mx-auto shadow-lg mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Layers /> Bens do Lote</CardTitle>
+                <CardDescription>Vincule os bens que compõem este lote. O primeiro bem vinculado definirá o título e preço inicial, se não preenchidos.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Bens Vinculados ({linkedBensDetails.length})</h4>
+                  {linkedBensDetails.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Nenhum bem vinculado a este lote.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {linkedBensDetails.map(bem => (
+                        <div key={bem.id} className="flex items-center justify-between p-2 text-sm border rounded-md bg-secondary/50">
+                          <span>{bem.title}</span>
+                          <Button type="button" variant="ghost" size="sm" onClick={() => handleUnlinkBem(bem.id)}><Trash2 className="h-4 w-4 mr-1 text-destructive"/>Desvincular</Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+                
+                <div>
+                   <div className="flex justify-between items-center mb-2">
+                        <h4 className="text-sm font-semibold">Bens Disponíveis para Vincular</h4>
+                         <Button type="button" size="sm" onClick={handleLinkBens} disabled={Object.keys(bemRowSelection).length === 0}>
+                           <PackagePlus className="mr-2 h-4 w-4" /> Vincular Selecionado(s)
+                        </Button>
+                   </div>
+                    <DataTable
+                        columns={bemColumns}
+                        data={availableBensForTable}
+                        rowSelection={bemRowSelection}
+                        setRowSelection={setBemRowSelection}
+                        searchPlaceholder="Buscar bem disponível..."
+                        searchColumnId="title"
+                    />
+                </div>
+              </CardContent>
+          </Card>
+
+        </form>
+      </Form>
       
       <ChooseMediaDialog
         isOpen={isMainImageDialogOpen}

@@ -203,11 +203,11 @@ export default function BemForm({
                    <Select onValueChange={(value) => field.onChange(value === 'none' ? null : value)} value={field.value || 'none'}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Padrão do Processo/Leilão" /></SelectTrigger></FormControl>
                     <SelectContent>
-                      <SelectItem value="none">Padrão do Processo/Leilão</SelectItem>
+                      <SelectItem value="none">Nenhum</SelectItem>
                       {sellers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <FormDescription>Selecione um comitente específico para este bem. Se "Padrão" for selecionado, ele herdará o comitente do processo ou do leilão.</FormDescription>
+                  <FormDescription>Selecione um comitente específico para este bem. Se "Nenhum" for selecionado, ele herdará o comitente do processo ou do leilão.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )} />
