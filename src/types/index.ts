@@ -192,6 +192,7 @@ export interface Auction {
   auctioneerId?: string; 
   seller?: string; 
   sellerId?: string | null; 
+  judicialProcessId?: string | null;
   auctionDate: AnyTimestamp; 
   endDate?: AnyTimestamp | null; 
   auctionStages?: AuctionStage[];
@@ -240,7 +241,7 @@ export type AuctionFormData = Omit<Auction,
   'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auctionDate' | 'endDate' |
   'lots' | 'totalLots' | 'visits' | 'isFavorite' |
   'currentBid' | 'bidsCount' | 'auctioneerLogoUrl' | 'auctioneerName' |
-  'auctioneerId' | 'sellerId' | 'achievedRevenue' | 'totalHabilitatedUsers' |
+  'auctioneerId' | 'sellerId' | 'achievedRevenue' | 'totalHabilitatedUsers' | 'judicialProcessId' |
   'latitude' | 'longitude' | 'originalAuctionId' | 'relistCount' | 'imageMediaId'
 > & {
   auctionDate: Date; 
@@ -252,6 +253,7 @@ export type AuctionDbData = Omit<AuctionFormData, 'category' | 'auctioneer' | 's
   categoryId?: string;
   auctioneerId?: string;
   sellerId?: string | null; 
+  judicialProcessId?: string | null;
   imageMediaId?: string | null;
   achievedRevenue?: number;
   totalHabilitatedUsers?: number;
@@ -271,7 +273,7 @@ export interface Bem {
   publicId: string;
   title: string;
   description?: string;
-  judicialProcessId?: string;
+  judicialProcessId?: string | null;
   judicialProcessNumber?: string;
   sellerId?: string | null;
   sellerName?: string;
@@ -997,7 +999,7 @@ export interface IDatabaseAdapter {
   getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]>;
 
   // BENS
-  getBens(judicialProcessId?: string): Promise<Bem[]>;
+  getBens(filter?: { judicialProcessId?: string; sellerId?: string }): Promise<Bem[]>;
   getBensByIds(ids: string[]): Promise<Bem[]>;
   getBem(id: string): Promise<Bem | null>;
   createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }>;

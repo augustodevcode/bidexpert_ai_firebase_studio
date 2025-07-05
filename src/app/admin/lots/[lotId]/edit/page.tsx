@@ -1,13 +1,11 @@
 
 
 import LotForm from '../../lot-form';
-import { getLot, updateLot, type LotFormData, getBensByIdsAction } from '../../actions';
+import { getLot, updateLot, getBens as getBensForLotting } from '../../actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
-import { getStates } from '@/app/admin/states/actions'; // Importar getStates
-import { getCities } from '@/app/admin/cities/actions';   // Importar getCities
 import { notFound } from 'next/navigation';
-import type { LotCategory, Auction, StateInfo, CityInfo, Bem } from '@/types';
+import type { LotCategory, Auction, Bem, LotFormData } from '@/types';
 
 export default async function EditLotPage({ params }: { params: { lotId: string } }) {
   const lotId = params.lotId;
@@ -17,12 +15,10 @@ export default async function EditLotPage({ params }: { params: { lotId: string 
     notFound();
   }
   
-  const [categories, auctions, states, allCities, bens] = await Promise.all([
+  const [categories, auctions, bens] = await Promise.all([
     getLotCategories(),
     getAuctions(),
-    getStates(),
-    getCities(),
-    lot.bemIds && lot.bemIds.length > 0 ? getBensByIdsAction(lot.bemIds) : Promise.resolve([])
+    lot.bemIds && lot.bemIds.length > 0 ? getBensForLotting({ judicialProcessId: lot.judicialProcessId, sellerId: lot.sellerId}) : Promise.resolve([])
   ]);
 
   async function handleUpdateLot(data: Partial<LotFormData>) {
@@ -35,9 +31,7 @@ export default async function EditLotPage({ params }: { params: { lotId: string 
       initialData={lot}
       categories={categories}
       auctions={auctions}
-      states={states}
-      allCities={allCities}
-      bens={bens}
+      initialAvailableBens={bens}
       onSubmitAction={handleUpdateLot}
       formTitle="Editar Lote"
       formDescription="Modifique os detalhes do lote existente."

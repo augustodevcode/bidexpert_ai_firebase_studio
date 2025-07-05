@@ -1,4 +1,3 @@
-
 // src/lib/database/sample-data.adapter.ts
 import * as fs from 'fs';
 import * as path from 'path';
@@ -275,20 +274,26 @@ export class SampleDataAdapter implements IDatabaseAdapter {
 
   // --- CRUD Implementations ---
   
-  async getBens(judicialProcessId?: string): Promise<Bem[]> {
+  async getBens(filter?: { judicialProcessId?: string; sellerId?: string }): Promise<Bem[]> {
     let bens = this.localData.sampleBens || [];
-    if (judicialProcessId) {
-      bens = bens.filter(bem => bem.judicialProcessId === judicialProcessId);
+    if (filter?.judicialProcessId) {
+      bens = bens.filter(bem => bem.judicialProcessId === filter.judicialProcessId);
     }
+    if (filter?.sellerId) {
+      bens = bens.filter(bem => bem.sellerId === filter.sellerId);
+    }
+
     const enrichedBens = bens.map(bem => {
       const category = this.localData.sampleLotCategories.find(c => c.id === bem.categoryId);
       const subcategory = this.localData.sampleSubcategories.find(s => s.id === bem.subcategoryId);
       const process = this.localData.sampleJudicialProcesses.find(p => p.id === bem.judicialProcessId);
+      const seller = this.localData.sampleSellers.find(s => s.id === bem.sellerId);
       return {
         ...bem,
         categoryName: category?.name,
         subcategoryName: subcategory?.name,
-        judicialProcessNumber: process?.processNumber
+        judicialProcessNumber: process?.processNumber,
+        sellerName: seller?.name
       };
     });
     return Promise.resolve(JSON.parse(JSON.stringify(enrichedBens)));
@@ -659,6 +664,17 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     console.warn("[SampleDataAdapter] placeBidOnLot not implemented.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
+  
+  async createUserLotMaxBid(userId: string, lotId: string, maxAmount: number): Promise<{ success: boolean; message: string; maxBidId?: string; }> {
+    console.warn("[SampleDataAdapter] createUserLotMaxBid not implemented.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+
+  async getActiveUserLotMaxBid(userId: string, lotId: string): Promise<UserLotMaxBid | null> {
+    const bid = (this.localData.sampleUserLotMaxBids || []).find(b => b.userId === userId && b.lotId === lotId && b.isActive);
+    return Promise.resolve(bid ? JSON.parse(JSON.stringify(bid)) : null);
+  }
+  
   async getWinsForUser(userId: string): Promise<UserWin[]> {
     const wins = this.localData.sampleUserWins.filter(w => w.userId === userId);
     // Enrich with lot data
@@ -668,21 +684,18 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     });
     return Promise.resolve(JSON.parse(JSON.stringify(enrichedWins)));
   }
-  async createUserLotMaxBid(userId: string, lotId: string, maxAmount: number): Promise<{ success: boolean; message: string; maxBidId?: string; }> {
-    console.warn("[SampleDataAdapter] createUserLotMaxBid not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getActiveUserLotMaxBid(userId: string, lotId: string): Promise<UserLotMaxBid | null> {
-    const bid = (this.localData.sampleUserLotMaxBids || []).find(b => b.userId === userId && b.lotId === lotId && b.isActive);
-    return Promise.resolve(bid ? JSON.parse(JSON.stringify(bid)) : null);
-  }
+
+  // --- Reviews ---
   async getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> {
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleLotReviews.filter(r => r.lotId === lotIdOrPublicId))));
   }
+
   async createReview(review: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<{ success: boolean; message: string; reviewId?: string; }> {
     console.warn("[SampleDataAdapter] createReview not implemented.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
+
+  // --- Questions ---
   async getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]> {
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleLotQuestions.filter(q => q.lotId === lotIdOrPublicId))));
   }
@@ -694,6 +707,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     console.warn("[SampleDataAdapter] answerQuestion not implemented.");
     return { success: false, message: "Placeholder: Lógica de resposta não implementada completamente no adapter Firestore sem lotId." };
   }
+
 
   // --- Users ---
   async getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null> {
@@ -816,6 +830,9 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   
+  async getNotificationsForUser(userId: string): Promise<Notification[]> {
+      return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleNotifications.filter(n => n.userId === userId))));
+  }
 
   // --- Judicial CRUDs
   async getCourts(): Promise<Court[]> { 

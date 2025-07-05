@@ -11,13 +11,14 @@ export async function createBem(data: BemFormData): Promise<{ success: boolean; 
   if (result.success) {
     revalidatePath('/admin/bens');
     revalidatePath('/admin/wizard'); // Refetch data for wizard
+    revalidatePath('/admin/lots/new'); // Refetch for lot form
   }
   return result;
 }
 
-export async function getBens(judicialProcessId?: string): Promise<Bem[]> {
+export async function getBens(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Bem[]> {
   const db = await getDatabaseAdapter();
-  return db.getBens(judicialProcessId);
+  return db.getBens(filter);
 }
 
 export async function getBensByIdsAction(ids: string[]): Promise<Bem[]> {
@@ -38,6 +39,7 @@ export async function updateBem(id: string, data: Partial<BemFormData>): Promise
     revalidatePath('/admin/bens');
     revalidatePath(`/admin/bens/${id}/edit`);
     revalidatePath('/admin/wizard'); // Also refetch wizard page data
+    revalidatePath('/admin/lots');
   }
   return result;
 }
@@ -48,6 +50,7 @@ export async function deleteBem(id: string): Promise<{ success: boolean; message
   if (result.success) {
     revalidatePath('/admin/bens');
      revalidatePath('/admin/wizard');
+     revalidatePath('/admin/lots');
   }
   return result;
 }
