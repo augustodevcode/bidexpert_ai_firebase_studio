@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings, Auction } from '@/types';
@@ -14,7 +15,6 @@ import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugif
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import LotPreviewModal from './lot-preview-modal';
-import LotMapPreviewModal from './lot-map-preview-modal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EntityEditMenu from './entity-edit-menu';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
@@ -24,6 +24,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import dynamic from 'next/dynamic';
+import { Loader2 } from 'lucide-react';
+
+const LotMapPreviewModal = dynamic(() => import('./lot-map-preview-modal'), {
+  ssr: false,
+  loading: () => <div className="fixed inset-0 bg-background/50 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>,
+});
+
 
 interface TimeRemainingBadgeProps {
   endDate: Date | string | undefined | null;
@@ -215,7 +223,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
   };
 
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
-
+  
   const discountPercentage = useMemo(() => {
     if (lot.initialPrice && lot.secondInitialPrice && lot.secondInitialPrice < lot.initialPrice && (lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE')) {
       return Math.round(((lot.initialPrice - lot.secondInitialPrice) / lot.initialPrice) * 100);
@@ -276,7 +284,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
         <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
           
           {sectionBadges.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentage > 0 && (
-            <Badge variant="destructive" className="text-xs px-1.5 py-0.5 animate-pulse">
+            <Badge variant="destructive" className="text-xs animate-pulse">
               <Percent className="h-3 w-3 mr-1" /> {discountPercentage}% OFF
             </Badge>
           )}
@@ -288,7 +296,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
             if (!showThisTrigger) return null;
 
             return (
-                <Badge key={trigger} variant="secondary" className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
+                <Badge key={trigger} variant="secondary" className="text-xs bg-amber-100 text-amber-700 border-amber-300">
                 {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3 mr-0.5" />}
                 {trigger === 'LANCE QUENTE' && <Zap className="h-3 w-3 mr-0.5 text-red-500 fill-red-500" />}
                 {trigger === 'EXCLUSIVO' && <Crown className="h-3 w-3 mr-0.5 text-purple-600" />}
@@ -304,7 +312,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
           {(lot.latitude || lot.longitude || lot.mapAddress || lot.mapEmbedUrl) && (
             <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" onClick={handleMapPreviewOpen} aria-label="Ver no Mapa"><MapPin className="h-3.5 w-3.5 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Ver Mapa</p></TooltipContent></Tooltip>
           )}
-          <DropdownMenu>
+           <DropdownMenu>
             <Tooltip>
               <TooltipTrigger asChild><DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background" aria-label="Compartilhar"><Share2 className="h-3.5 w-3.5 text-muted-foreground" /></Button></DropdownMenuTrigger></TooltipTrigger>
               <TooltipContent><p>Compartilhar</p></TooltipContent>

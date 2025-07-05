@@ -110,16 +110,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserProfileWithPermissions(null);
     router.push('/'); 
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-2">Carregando sessão...</p>
-      </div>
-    );
-  }
-
+  
+  // This is the fix: Always render the provider and children.
+  // The consuming components will use the `loading` state to show their own loaders.
   return (
     <AuthContext.Provider value={{ user, userProfileWithPermissions, loading, setUser, setUserProfileWithPermissions, logoutSqlUser }}>
       {children}

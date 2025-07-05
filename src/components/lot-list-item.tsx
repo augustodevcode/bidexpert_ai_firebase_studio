@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react'; // Adicionado import do React
@@ -21,10 +22,17 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import LotPreviewModal from './lot-preview-modal';
-import LotMapPreviewModal from './lot-map-preview-modal';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EntityEditMenu from './entity-edit-menu';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
+import dynamic from 'next/dynamic';
+import { Loader2 } from 'lucide-react';
+
+const LotMapPreviewModal = dynamic(() => import('./lot-map-preview-modal'), {
+  ssr: false,
+  loading: () => <div className="fixed inset-0 bg-background/50 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>,
+});
+
 
 interface TimeRemainingBadgeProps {
   endDate: Date | string | undefined | null;
@@ -246,7 +254,7 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
       <Card className="w-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group overflow-hidden">
         <div className="flex flex-col md:flex-row">
           {/* Image Column */}
-          <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-auto bg-muted">
+          <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted">
             <Link href={lotDetailUrl} className="block h-full w-full">
               <Image
                 src={lot.imageUrl || 'https://placehold.co/600x400.png'}

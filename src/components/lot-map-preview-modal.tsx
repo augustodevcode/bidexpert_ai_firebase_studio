@@ -1,11 +1,17 @@
 
+
 'use client';
 
 import type { Lot, PlatformSettings } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { MapPin, X } from 'lucide-react';
-import LotMapDisplay from '@/components/auction/lot-map-display'; 
+import dynamic from 'next/dynamic';
+
+const LotMapDisplay = dynamic(() => import('@/components/auction/lot-map-display'), {
+  ssr: false,
+  loading: () => <div className="w-full h-full bg-muted rounded-md flex items-center justify-center"><p className="text-sm text-muted-foreground">Carregando mapa...</p></div>,
+});
 
 interface LotMapPreviewModalProps {
   lot: Lot | null;
