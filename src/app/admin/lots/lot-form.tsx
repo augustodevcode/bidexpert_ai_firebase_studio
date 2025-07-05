@@ -1,4 +1,4 @@
-
+// src/app/admin/lots/lot-form.tsx
 'use client';
 
 import * as React from 'react';
@@ -17,25 +17,16 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
-import type { Lot, LotStatus, LotCategory, Auction, StateInfo, CityInfo, MediaItem, Subcategory, Bem } from '@/types';
-import { Loader2, Save, CalendarIcon, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, Image as ImageIcon } from 'lucide-react';
+import type { Lot, LotCategory, Auction, StateInfo, CityInfo, MediaItem, Subcategory, Bem } from '@/types';
+import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, Image as ImageIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText } from '@/lib/sample-data-helpers';
-import Image from 'next/image';
-import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
-import { Separator } from '@/components/ui/separator';
-import { v4 as uuidv4 } from 'uuid';
 import { getSubcategoriesByParentIdAction } from '@/app/admin/subcategories/actions';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-
+import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
+import Image from 'next/image';
+import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 
 interface LotFormProps {
   initialData?: Lot | null;
@@ -50,14 +41,6 @@ interface LotFormProps {
   submitButtonText: string;
   defaultAuctionId?: string;
 }
-
-const lotStatusOptions: { value: LotStatus; label: string }[] = [
-  { value: 'EM_BREVE', label: getAuctionStatusText('EM_BREVE') },
-  { value: 'ABERTO_PARA_LANCES', label: getAuctionStatusText('ABERTO_PARA_LANCES') },
-  { value: 'ENCERRADO', label: getAuctionStatusText('ENCERRADO') },
-  { value: 'VENDIDO', label: getAuctionStatusText('VENDIDO') },
-  { value: 'NAO_VENDIDO', label: getAuctionStatusText('NAO_VENDIDO') },
-];
 
 export default function LotForm({
   initialData,
@@ -78,7 +61,6 @@ export default function LotForm({
   const [filteredCities, setFilteredCities] = React.useState<CityInfo[]>([]);
   
   const [isMainImageDialogOpen, setIsMainImageDialogOpen] = React.useState(false);
-  const [isGalleryDialogOpen, setIsGalleryDialogOpen] = React.useState(false);
   const [availableSubcategories, setAvailableSubcategories] = React.useState<Subcategory[]>([]);
   const [isLoadingSubcategories, setIsLoadingSubcategories] = React.useState(false);
 
@@ -90,7 +72,6 @@ export default function LotForm({
       description: initialData?.description || '',
       price: initialData?.price || 0,
       initialPrice: initialData?.initialPrice || undefined,
-      status: initialData?.status || 'EM_BREVE',
       stateId: initialData?.stateId || undefined,
       cityId: initialData?.cityId || undefined,
       type: initialData?.categoryId || initialData?.type || '',
@@ -98,8 +79,6 @@ export default function LotForm({
       imageUrl: initialData?.imageUrl || '',
       mediaItemIds: initialData?.mediaItemIds || [],
       galleryImageUrls: initialData?.galleryImageUrls || [],
-      endDate: initialData?.endDate ? new Date(initialData.endDate as string) : null,
-      lotSpecificAuctionDate: initialData?.lotSpecificAuctionDate ? new Date(initialData.lotSpecificAuctionDate as string) : null,
       judicialProcessNumber: initialData?.judicialProcessNumber || '',
       courtDistrict: initialData?.courtDistrict || '',
       courtName: initialData?.courtName || '',
@@ -109,14 +88,8 @@ export default function LotForm({
 
   const selectedStateId = useWatch({ control: form.control, name: 'stateId' });
   const selectedCategoryId = useWatch({ control: form.control, name: 'type' });
-  const selectedAuctionId = useWatch({ control: form.control, name: 'auctionId' });
+  const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
   
-  const mainImagePreviewUrl = useWatch({ control: form.control, name: 'imageUrl' });
-  
-  const selectedAuction = React.useMemo(() => auctions.find(a => a.id === selectedAuctionId || a.publicId === selectedAuctionId), [auctions, selectedAuctionId]);
-  const isJudicial = selectedAuction?.auctionType === 'JUDICIAL';
-  
-  const hasMultipleBens = initialData?.bemIds && initialData.bemIds.length > 1;
   const hasSingleBem = initialData?.bemIds && initialData.bemIds.length === 1;
 
   React.useEffect(() => {
@@ -221,7 +194,12 @@ export default function LotForm({
               <FormField control={form.control} name="price" render={({ field }) => (<FormItem><FormLabel>Preço (Lance Inicial/Atual)</FormLabel><FormControl><Input type="number" placeholder="Ex: 15000.00" {...field} /></FormControl><FormMessage /></FormItem>)} />
 
               <div className="grid md:grid-cols-2 gap-6">
-                  <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status do Lote</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{lotStatusOptions.map(option => (<SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)}/>
+                  {initialData?.status && (
+                     <FormItem>
+                      <FormLabel>Status (Derivado do Leilão)</FormLabel>
+                      <Input value={getAuctionStatusText(initialData.status)} readOnly disabled />
+                    </FormItem>
+                  )}
                   <FormField control={form.control} name="type" render={({ field }) => (<FormItem><FormLabel>Categoria do Lote</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o tipo/categoria" /></SelectTrigger></FormControl><SelectContent>{categories.map(cat => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)}/>
               </div>
 
@@ -248,9 +226,9 @@ export default function LotForm({
                 <FormLabel>Imagens do Lote</FormLabel>
                 {hasSingleBem && <FormDescription className="text-xs">Este lote contém um único bem. As imagens são gerenciadas no cadastro do bem.</FormDescription>}
                 <div className="flex items-center gap-4">
-                    <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{mainImagePreviewUrl ? <Image src={mainImagePreviewUrl} alt="Prévia" fill className="object-contain"/> : <ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>}</div>
+                    <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{imageUrlPreview ? <Image src={imageUrlPreview} alt="Prévia" fill className="object-contain"/> : <ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>}</div>
                     <div className="space-y-2 flex-grow">
-                        <Button type="button" variant="outline" onClick={() => setIsMainImageDialogOpen(true)} disabled={hasSingleBem}>{mainImagePreviewUrl ? 'Alterar Imagem Principal' : 'Escolher Imagem'}</Button>
+                        <Button type="button" variant="outline" onClick={() => setIsMainImageDialogOpen(true)} disabled={hasSingleBem}>{imageUrlPreview ? 'Alterar Imagem Principal' : 'Escolher Imagem'}</Button>
                         <FormField control={form.control} name="imageUrl" render={({ field }) => <FormControl><Input placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} disabled={hasSingleBem} /></FormControl>} />
                     </div>
                 </div>

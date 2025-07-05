@@ -1,18 +1,14 @@
-
 'use client';
 
-import type { Auction, AuctionStage } from '@/types';
+import type { Lot, Auction, AuctionStage } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { CalendarDays, Landmark, Eye, Users, BarChart2 } from 'lucide-react';
-import { isPast } from 'date-fns';
+import { CalendarDays, MapPin, Eye, ChevronLeft, ChevronRight, ImageOff, FileText, SlidersHorizontal, Info, ListChecks, Landmark } from 'lucide-react';
 import Link from 'next/link';
-import { Calendar } from './ui/calendar';
 import AuctionStagesTimeline from './auction/auction-stages-timeline';
 import { useMemo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Separator } from './ui/separator';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 interface AuctionPreviewModalProps {
@@ -74,7 +70,7 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
                             <p className="font-semibold">{auction.auctioneer}</p>
                            </div>
                         </div>
-                         <Separator />
+                         <div className="border-t border-dashed my-1"></div>
                         <div>
                             <p className="text-xs text-muted-foreground">Comitente/Vendedor</p>
                             <p className="font-semibold">{auction.seller}</p>
@@ -86,7 +82,7 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
             <div className="space-y-4">
                 <Card>
                     <CardHeader className="p-3">
-                        <CardTitle className="text-md font-semibold flex items-center"><BarChart2 className="mr-2 h-4 w-4"/>Números do Leilão</CardTitle>
+                        <CardTitle className="text-md font-semibold flex items-center"><ListChecks className="mr-2 h-4 w-4"/>Lotes e Visitas</CardTitle>
                     </CardHeader>
                      <CardContent className="p-3 pt-0 grid grid-cols-2 gap-2 text-center">
                         <div className="bg-accent/40 p-2 rounded-md">
@@ -102,7 +98,7 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
                  <AuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages || []} />
                  <Card>
                     <CardHeader className="p-3">
-                        <CardTitle className="text-md font-semibold flex items-center"><CalendarDays className="mr-2 h-4 w-4" /> Calendário do Leilão</CardTitle>
+                        <CardTitle className="text-md font-semibold flex items-center"><CalendarDays className="mr-2 h-4 w-4" /> Calendário</CardTitle>
                     </CardHeader>
                     <CardContent className="flex justify-center p-0">
                         <Calendar

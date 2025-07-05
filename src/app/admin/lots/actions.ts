@@ -3,7 +3,16 @@
 
 import { revalidatePath } from 'next/cache';
 import { getDatabaseAdapter } from '@/lib/database';
-import type { Lot, LotFormData, LotDbData, Bem } from '@/types';
+import type { Lot, LotFormData, LotDbData, Bem, Auction } from '@/types';
+
+async function recalculateLotCount(auctionId: string) {
+    const db = await getDatabaseAdapter();
+    const lots = await db.getLots(auctionId);
+    const auction = await db.getAuction(auctionId);
+    if(auction && auction.totalLots !== lots.length) {
+        await db.updateAuction(auctionId, { totalLots: lots.length });
+    }
+}
 
 // The main update action that calls the adapter
 export async function updateLot(
@@ -23,8 +32,9 @@ export async function updateLot(
   if (result.success) {
     revalidatePath('/admin/lots');
     revalidatePath(`/admin/lots/${idOrPublicId}/edit`);
-    if (data.auctionId) {
-      revalidatePath(`/admin/auctions/${data.auctionId}/edit`);
+    const lot = await getLot(idOrPublicId);
+    if (lot?.auctionId) {
+      revalidatePath(`/admin/auctions/${lot.auctionId}/edit`);
     }
   }
   return result;
@@ -82,6 +92,7 @@ export async function createLot(
   if (result.success) {
     revalidatePath('/admin/lots');
     if (data.auctionId) {
+      await recalculateLotCount(data.auctionId);
       revalidatePath(`/admin/auctions/${data.auctionId}/edit`);
     }
   }
@@ -141,6 +152,7 @@ export async function deleteLot(
     revalidatePath('/admin/bens');
     revalidatePath('/admin/lotting');
     if (auctionId) {
+      await recalculateLotCount(auctionId);
       revalidatePath(`/admin/auctions/${auctionId}/edit`);
     }
   }

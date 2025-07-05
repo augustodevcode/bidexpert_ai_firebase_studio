@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, type FormEvent } from 'react';
@@ -26,14 +25,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { updateUserProfile, type EditableUserProfileData } from './actions';
-import type { UserProfileData } from '@/types';
+import { updateUserProfile } from './actions';
+import type { UserProfileData, EditableUserProfileData } from '@/types';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Loader2, Save, CalendarIcon, UserCog } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { getUserProfileData as getUserProfileDataAction } from '@/app/admin/users/actions';
 
 const profileFormSchema = z.object({
   fullName: z.string().min(3, { message: 'Nome completo deve ter pelo menos 3 caracteres.' }),
@@ -70,7 +70,7 @@ const propertyRegimeOptions = ["Comunhão Parcial de Bens", "Comunhão Universal
 
 
 export default function EditProfilePage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, userProfileWithPermissions, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -113,19 +113,16 @@ export default function EditProfilePage() {
       setFetchError(null);
       console.log('Attempting to fetch profile for UID:', uid);
       try {
-        const userDocRef = doc(db, 'users', uid);
-        const docSnap = await getDoc(userDocRef);
-
-        if (docSnap.exists()) {
-          const data = docSnap.data() as UserProfileData;
+        const data = await getUserProfileDataAction(uid);
+        if (data) {
           form.reset({
             fullName: data.fullName || '',
             cpf: data.cpf || '',
             rgNumber: data.rgNumber || '',
             rgIssuer: data.rgIssuer || '',
-            rgIssueDate: data.rgIssueDate?.toDate ? data.rgIssueDate.toDate() : null,
+            rgIssueDate: data.rgIssueDate ? new Date(data.rgIssueDate as string) : null,
             rgState: data.rgState || '',
-            dateOfBirth: data.dateOfBirth?.toDate ? data.dateOfBirth.toDate() : null,
+            dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth as string) : null,
             cellPhone: data.cellPhone || '',
             homePhone: data.homePhone || '',
             gender: data.gender || '',
@@ -145,7 +142,7 @@ export default function EditProfilePage() {
             optInMarketing: data.optInMarketing || false,
           });
         } else {
-          console.error('Profile not found in Firestore for UID:', uid);
+          console.error('Profile not found in DB for UID:', uid);
           setFetchError("Perfil não encontrado no banco de dados.");
           toast({ title: "Erro", description: "Perfil não encontrado no banco de dados.", variant: "destructive" });
         }
@@ -162,29 +159,25 @@ export default function EditProfilePage() {
       setIsFetchingData(true); // Keep showing loader if auth is still loading
       return;
     }
+    
+    const userId = user?.uid || userProfileWithPermissions?.uid;
 
-    if (!user) {
+    if (!userId) {
       toast({ title: "Acesso Negado", description: "Você precisa estar logado para editar o perfil.", variant: "destructive" });
-      router.push('/auth/login');
-      setIsFetchingData(false); // Stop fetching if no user
+      router.push('/auth/login?redirect=/profile/edit');
+      setIsFetchingData(false);
       return;
     }
 
-    if (user && user.uid) {
-      fetchProfileData(user.uid);
-    } else {
-      // This case should ideally not be reached if authLoading is false and user is null (handled above)
-      // But as a safeguard:
-      console.error("User object or UID is not available after auth loading finished.");
-      setFetchError("Não foi possível obter informações do usuário.");
-      toast({ title: "Erro", description: "Não foi possível obter informações do usuário.", variant: "destructive" });
-      setIsFetchingData(false);
+    if (userId) {
+      fetchProfileData(userId);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, authLoading, router, form.reset, toast]); // form.reset added to dependencies
+  }, [user, userProfileWithPermissions, authLoading, router, form.reset, toast]);
 
   async function onSubmit(data: ProfileFormValues) {
-    if (!user) {
+    const userId = user?.uid || userProfileWithPermissions?.uid;
+    if (!userId) {
       toast({ title: "Erro", description: "Usuário não autenticado.", variant: "destructive" });
       return;
     }
@@ -196,12 +189,12 @@ export default function EditProfilePage() {
       rgIssueDate: data.rgIssueDate instanceof Date ? data.rgIssueDate : null,
     };
 
-    const result = await updateUserProfile(user.uid, dataToUpdate);
+    const result = await updateUserProfile(userId, dataToUpdate);
     setIsSubmitting(false);
 
     if (result.success) {
       toast({ title: "Sucesso!", description: result.message });
-      router.push('/profile'); 
+      router.push('/profile');
     } else {
       toast({ title: "Erro ao atualizar", description: result.message, variant: "destructive" });
     }
@@ -217,13 +210,14 @@ export default function EditProfilePage() {
   }
 
   if (fetchError && !form.formState.isDirty) { // Show error only if form hasn't been touched yet
+    const userId = user?.uid || userProfileWithPermissions?.uid;
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold text-destructive">{fetchError}</h2>
         <Button asChild className="mt-4">
           <Link href="/profile">Voltar ao Perfil</Link>
         </Button>
-         <Button variant="outline" onClick={() => user && user.uid && (form.reset(), useEffect(() => { /* re-trigger fetch */ }, [user, authLoading]))} className="mt-4 ml-2">
+         <Button variant="outline" onClick={() => userId && (form.reset(), useEffect(() => { /* re-trigger fetch */ }, [user, authLoading]))} className="mt-4 ml-2">
           Tentar Novamente
         </Button>
       </div>

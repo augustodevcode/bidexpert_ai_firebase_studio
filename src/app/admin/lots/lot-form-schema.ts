@@ -1,14 +1,14 @@
-
 import * as z from 'zod';
 import type { LotStatus } from '@/types';
 
-const lotStatusValues: [LotStatus, ...LotStatus[]] = [
-  'EM_BREVE',
-  'ABERTO_PARA_LANCES',
-  'ENCERRADO',
-  'VENDIDO',
-  'NAO_VENDIDO',
-];
+// Status is now derived, so it's not part of the form schema
+// export const lotStatusValues: [LotStatus, ...LotStatus[]] = [
+//   'EM_BREVE',
+//   'ABERTO_PARA_LANCES',
+//   'ENCERRADO',
+//   'VENDIDO',
+//   'NAO_VENDIDO',
+// ];
 
 export const lotFormSchema = z.object({
   title: z.string().min(5, {
@@ -25,9 +25,6 @@ export const lotFormSchema = z.object({
     message: "O preço (lance inicial) deve ser um número positivo.",
   }),
   initialPrice: z.coerce.number().positive().optional().nullable(),
-  status: z.enum(lotStatusValues, {
-    required_error: "O status do lote é obrigatório.",
-  }),
   stateId: z.string().optional().nullable(),
   cityId: z.string().optional().nullable(),
   type: z.string().min(1, { message: "O tipo/categoria do lote é obrigatório."}).max(100),
@@ -35,10 +32,6 @@ export const lotFormSchema = z.object({
   imageUrl: z.string().url({ message: "Por favor, insira uma URL de imagem válida." }).optional().or(z.literal('')),
   galleryImageUrls: z.array(z.string().url({ message: "Uma das URLs da galeria é inválida." })).optional(),
   mediaItemIds: z.array(z.string()).optional(),
-  endDate: z.date().optional().nullable(), 
-  lotSpecificAuctionDate: z.date().optional().nullable(), 
-  secondAuctionDate: z.date().optional().nullable(), 
-  secondInitialPrice: z.coerce.number().positive().optional().nullable(),
   views: z.coerce.number().int().nonnegative().optional(),
   bidsCount: z.coerce.number().int().nonnegative().optional(),
   
@@ -67,4 +60,3 @@ export const lotFormSchema = z.object({
 });
 
 export type LotFormValues = z.infer<typeof lotFormSchema>;
-    
