@@ -71,6 +71,8 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
         categoryId: bem.categoryId,
         subcategoryId: bem.subcategoryId,
         auctionId: auctionData.id || 'TBD',
+        imageUrl: bem.imageUrl,
+        dataAiHint: bem.dataAiHint,
       } as Lot;
     });
 

@@ -77,7 +77,13 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   // --- Schema ---
   async initializeSchema(): Promise<{ success: boolean; message:string; rolesProcessed?: number }> {
     console.log('[SampleDataAdapter] Schema initialization is not required for sample data.');
-    return Promise.resolve({ success: true, message: 'Sample data adapter ready.', rolesProcessed: this.localData.sampleRoles.length });
+    try {
+        await this.ensureDefaultRolesExist();
+        await this.getPlatformSettings(); 
+        return { success: true, message: 'Sample data adapter ready. Collections will be created on first document write. Default roles and settings ensured.' };
+    } catch (error: any) {
+        return { success: false, message: `Error during Firestore post-init checks: ${error.message}`, errors: [error] };
+    }
   }
 
   async disconnect(): Promise<void> {
@@ -206,6 +212,9 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     const subcategory = this.localData.sampleSubcategories.find(s => s.id === lot.subcategoryId);
     const city = this.localData.sampleCities.find(c => c.id === lot.cityId);
     const state = this.localData.sampleStates.find(s => s.id === lot.stateId);
+    
+    const firstBemId = lot.bemIds?.[0];
+    const firstBem = firstBemId ? (this.localData.sampleBens || []).find(b => b.id === firstBemId) : undefined;
 
     return {
         ...lot,
@@ -214,6 +223,9 @@ export class SampleDataAdapter implements IDatabaseAdapter {
         subcategoryName: subcategory?.name,
         cityName: city?.name,
         stateUf: state?.uf,
+        // Fallback logic for image and hint
+        imageUrl: lot.imageUrl || firstBem?.imageUrl,
+        dataAiHint: lot.dataAiHint || firstBem?.dataAiHint,
     };
   }
   
@@ -380,7 +392,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return { success: true, message: `${createdLots.length} lotes individuais criados.`, createdLots };
   }
 
-  // Stubs for other methods
+  // --- Stubs for other methods ---
   
   async getLotCategoryByName(name: string): Promise<LotCategory | null> {
     const category = this.localData.sampleLotCategories.find(c => c.name.toLowerCase() === name.toLowerCase());

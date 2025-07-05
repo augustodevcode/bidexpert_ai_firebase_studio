@@ -73,6 +73,8 @@ export default function CreateLotFromBensModal({
         price: values.initialPrice,
         categoryId: firstBem?.categoryId,
         subcategoryId: firstBem?.subcategoryId,
+        imageUrl: firstBem?.imageUrl,
+        dataAiHint: firstBem?.dataAiHint,
     };
 
     onLotCreated(newLotData);
