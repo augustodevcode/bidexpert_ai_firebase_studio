@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { ChevronLeft, ChevronRight, Star, Loader2, Mail, Phone, Globe, Landmark, Briefcase, Users, TrendingUp, ShieldCheck, MessageSquare } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Loader2, Mail, Phone, Globe, Landmark, Briefcase, Users, TrendingUp, ShieldCheck, MessageSquare, Pencil } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import useEmblaCarousel from 'embla-carousel-react';
@@ -25,6 +25,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAuth } from '@/contexts/auth-context';
+import { hasAnyPermission } from '@/lib/permissions';
 
 // Sort options for auctions (similar to search page)
 const sortOptionsAuctions = [
@@ -74,6 +76,7 @@ export default function AuctioneerDetailsPage() {
   const params = useParams();
   const auctioneerSlug = typeof params.auctioneerSlug === 'string' ? params.auctioneerSlug : '';
 
+  const { userProfileWithPermissions } = useAuth();
   const [auctioneerProfile, setAuctioneerProfile] = useState<AuctioneerProfileInfo | null>(null);
   const [relatedAuctions, setRelatedAuctions] = useState<Auction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -88,6 +91,11 @@ export default function AuctioneerDetailsPage() {
   const [auctionSortBy, setAuctionSortBy] = useState<string>('endDate_asc');
   const [currentAuctionPage, setCurrentAuctionPage] = useState(1);
   const [auctionItemsPerPage, setAuctionItemsPerPage] = useState(6);
+
+  const hasEditPermissions = useMemo(() => 
+    hasAnyPermission(userProfileWithPermissions, ['manage_all', 'auctioneers:update']),
+    [userProfileWithPermissions]
+  );
 
   useEffect(() => {
     async function fetchAuctioneerDetails() {
@@ -213,8 +221,10 @@ export default function AuctioneerDetailsPage() {
   const placeholderTeamReviews = Math.floor(Math.random() * 500 + 50);
   const placeholderAveragePrice = ((Math.random() * 500 + 100) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '');
   const placeholderPriceRange = `${((Math.random() * 50 + 10) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '')} - ${((Math.random() * 2000 + 500) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '')}`;
+  const editUrl = `/admin/auctioneers/${auctioneerProfile.id}/edit`;
 
   return (
+    <>
     <TooltipProvider>
       <div className="space-y-10 py-6">
         {/* Top Section: Auctioneer Info & Recent Auctions Carousel */}
@@ -345,7 +355,22 @@ export default function AuctioneerDetailsPage() {
         )}
       </div>
     </TooltipProvider>
+
+    {hasEditPermissions && (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button asChild className="fixed bottom-16 right-5 z-50 h-14 w-14 rounded-full shadow-lg" size="icon">
+            <Link href={editUrl}>
+              <Pencil className="h-6 w-6" />
+              <span className="sr-only">Editar Leiloeiro</span>
+            </Link>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="left">
+          <p>Editar Leiloeiro</p>
+        </TooltipContent>
+      </Tooltip>
+    )}
+  </>
   );
 }
-
-    

@@ -16,11 +16,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { Star, Loader2, Mail, Phone, Globe, Briefcase, Users, TrendingUp, MessageSquare } from 'lucide-react';
+import { Star, Loader2, Mail, Phone, Globe, Briefcase, Users, TrendingUp, MessageSquare, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getSellerBySlug } from '@/app/admin/sellers/actions';
+import { useAuth } from '@/contexts/auth-context';
+import { hasAnyPermission } from '@/lib/permissions';
 
 const sortOptionsLots = [
   { value: 'relevance', label: 'Relevância' },
@@ -35,6 +37,7 @@ export default function SellerDetailsPage() {
   const params = useParams();
   const sellerIdSlug = typeof params.sellerId === 'string' ? params.sellerId : '';
 
+  const { userProfileWithPermissions } = useAuth();
   const [sellerProfile, setSellerProfile] = useState<SellerProfileInfo | null>(null);
   const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
   const [relatedLots, setRelatedLots] = useState<Lot[]>([]);
@@ -46,6 +49,11 @@ export default function SellerDetailsPage() {
   const [currentLotPage, setCurrentLotPage] = useState(1);
   const [lotItemsPerPage, setLotItemsPerPage] = useState(6);
 
+  const hasEditPermissions = useMemo(() => 
+    hasAnyPermission(userProfileWithPermissions, ['manage_all', 'sellers:update']),
+    [userProfileWithPermissions]
+  );
+  
   useEffect(() => {
     async function fetchSellerDetails() {
       if (sellerIdSlug) {
@@ -172,69 +180,87 @@ export default function SellerDetailsPage() {
   }
 
   const sellerInitial = sellerProfile.name ? sellerProfile.name.charAt(0).toUpperCase() : 'S';
+  const editUrl = `/admin/sellers/${sellerProfile.id}/edit`;
 
   return (
-    <TooltipProvider>
-      <div className="space-y-10 py-6">
-        <section className="border-b pb-10">
-          <div className="flex flex-col md:flex-row items-center gap-6">
-            <Avatar className="h-28 w-28 md:h-32 md:w-32 border-4 border-primary/30 shadow-lg">
-              <AvatarImage src={sellerProfile.logoUrl || `https://placehold.co/128x128.png?text=${sellerInitial}`} alt={sellerProfile.name} data-ai-hint={sellerProfile.dataAiHintLogo || "logo comitente"} />
-              <AvatarFallback className="text-4xl">{sellerInitial}</AvatarFallback>
-            </Avatar>
-            <div className="flex-grow text-center md:text-left">
-              <h1 className="text-3xl font-bold font-headline">{sellerProfile.name}</h1>
-              <p className="text-sm text-muted-foreground">{sellerProfile.city && sellerProfile.state ? `${sellerProfile.city} - ${sellerProfile.state}` : 'Localização não informada'}</p>
-              {sellerProfile.rating !== undefined && sellerProfile.rating > 0 && (
-                <div className="flex items-center justify-center md:justify-start text-sm text-amber-600 mt-2">
-                  <Star className="h-5 w-5 fill-amber-500 text-amber-500 mr-1" />
-                  {sellerProfile.rating.toFixed(1)}
-                  <span className="text-muted-foreground ml-2 text-xs">({sellerProfile.auctionsFacilitatedCount || 0} leilões)</span>
-                </div>
-              )}
+    <>
+      <TooltipProvider>
+        <div className="space-y-10 py-6">
+          <section className="border-b pb-10">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <Avatar className="h-28 w-28 md:h-32 md:w-32 border-4 border-primary/30 shadow-lg">
+                <AvatarImage src={sellerProfile.logoUrl || `https://placehold.co/128x128.png?text=${sellerInitial}`} alt={sellerProfile.name} data-ai-hint={sellerProfile.dataAiHintLogo || "logo comitente"} />
+                <AvatarFallback className="text-4xl">{sellerInitial}</AvatarFallback>
+              </Avatar>
+              <div className="flex-grow text-center md:text-left">
+                <h1 className="text-3xl font-bold font-headline">{sellerProfile.name}</h1>
+                <p className="text-sm text-muted-foreground">{sellerProfile.city && sellerProfile.state ? `${sellerProfile.city} - ${sellerProfile.state}` : 'Localização não informada'}</p>
+                {sellerProfile.rating !== undefined && sellerProfile.rating > 0 && (
+                  <div className="flex items-center justify-center md:justify-start text-sm text-amber-600 mt-2">
+                    <Star className="h-5 w-5 fill-amber-500 text-amber-500 mr-1" />
+                    {sellerProfile.rating.toFixed(1)}
+                    <span className="text-muted-foreground ml-2 text-xs">({sellerProfile.auctionsFacilitatedCount || 0} leilões)</span>
+                  </div>
+                )}
+              </div>
+               <Card className="shadow-none border-dashed p-4 min-w-[280px]">
+                  <h4 className="text-sm font-semibold mb-2">Informações de Contato</h4>
+                  <div className="space-y-1.5 text-xs">
+                      {sellerProfile.phone && (<div className="flex items-center"><Phone className="h-3.5 w-3.5 mr-2 text-muted-foreground" /><a href={`tel:${sellerProfile.phone}`} className="hover:text-primary">{sellerProfile.phone}</a></div>)}
+                      {sellerProfile.email && (<div className="flex items-center"><Mail className="h-3.5 w-3.5 mr-2 text-muted-foreground" /><a href={`mailto:${sellerProfile.email}`} className="hover:text-primary">{sellerProfile.email}</a></div>)}
+                      {sellerProfile.website && (<div className="flex items-center"><Globe className="h-3.5 w-3.5 mr-2 text-muted-foreground" /><a href={sellerProfile.website.startsWith('http') ? sellerProfile.website : `https://${sellerProfile.website}`} target="_blank" rel="noopener noreferrer" className="hover:text-primary truncate">{sellerProfile.website.replace(/^https?:\/\//, '')}</a></div>)}
+                  </div>
+              </Card>
             </div>
-             <Card className="shadow-none border-dashed p-4 min-w-[280px]">
-                <h4 className="text-sm font-semibold mb-2">Informações de Contato</h4>
-                <div className="space-y-1.5 text-xs">
-                    {sellerProfile.phone && (<div className="flex items-center"><Phone className="h-3.5 w-3.5 mr-2 text-muted-foreground" /><a href={`tel:${sellerProfile.phone}`} className="hover:text-primary">{sellerProfile.phone}</a></div>)}
-                    {sellerProfile.email && (<div className="flex items-center"><Mail className="h-3.5 w-3.5 mr-2 text-muted-foreground" /><a href={`mailto:${sellerProfile.email}`} className="hover:text-primary">{sellerProfile.email}</a></div>)}
-                    {sellerProfile.website && (<div className="flex items-center"><Globe className="h-3.5 w-3.5 mr-2 text-muted-foreground" /><a href={sellerProfile.website.startsWith('http') ? sellerProfile.website : `https://${sellerProfile.website}`} target="_blank" rel="noopener noreferrer" className="hover:text-primary truncate">{sellerProfile.website.replace(/^https?:\/\//, '')}</a></div>)}
-                </div>
-            </Card>
-          </div>
-        </section>
-
-        {relatedLots.length > 0 && (
-          <section className="pt-6">
-            <h2 className="text-2xl font-bold mb-6 font-headline flex items-center">
-              <TrendingUp className="h-6 w-6 mr-2 text-primary" /> Lotes Ativos de {sellerProfile.name}
-            </h2>
-            <SearchResultsFrame
-                items={paginatedLots}
-                totalItemsCount={relatedLots.length}
-                renderGridItem={renderLotGridItemForSellerPage}
-                renderListItem={renderLotListItemForSellerPage}
-                sortOptions={sortOptionsLots}
-                initialSortBy={lotSortBy}
-                onSortChange={handleLotSortChange}
-                platformSettings={platformSettings}
-                isLoading={isLoading}
-                searchTypeLabel="lotes"
-                currentPage={currentLotPage}
-                itemsPerPage={lotItemsPerPage}
-                onPageChange={handleLotPageChange}
-                onItemsPerPageChange={handleLotItemsPerPageChange}
-            />
           </section>
-        )}
 
-        {relatedLots.length === 0 && !isLoading && (
-          <Card className="shadow-sm mt-8"><CardContent className="text-center py-10"><p className="text-muted-foreground">Nenhum lote ativo encontrado para este comitente no momento.</p></CardContent></Card>
-        )}
-      </div>
-    </TooltipProvider>
+          {relatedLots.length > 0 && (
+            <section className="pt-6">
+              <h2 className="text-2xl font-bold mb-6 font-headline flex items-center">
+                <TrendingUp className="h-6 w-6 mr-2 text-primary" /> Lotes Ativos de {sellerProfile.name}
+              </h2>
+              <SearchResultsFrame
+                  items={paginatedLots}
+                  totalItemsCount={relatedLots.length}
+                  renderGridItem={renderLotGridItemForSellerPage}
+                  renderListItem={renderLotListItemForSellerPage}
+                  sortOptions={sortOptionsLots}
+                  initialSortBy={lotSortBy}
+                  onSortChange={handleLotSortChange}
+                  platformSettings={platformSettings}
+                  isLoading={isLoading}
+                  searchTypeLabel="lotes"
+                  currentPage={currentLotPage}
+                  itemsPerPage={lotItemsPerPage}
+                  onPageChange={handleLotPageChange}
+                  onItemsPerPageChange={handleLotItemsPerPageChange}
+              />
+            </section>
+          )}
+
+          {relatedLots.length === 0 && !isLoading && (
+            <Card className="shadow-sm mt-8"><CardContent className="text-center py-10"><p className="text-muted-foreground">Nenhum lote ativo encontrado para este comitente no momento.</p></CardContent></Card>
+          )}
+        </div>
+      </TooltipProvider>
+
+      {hasEditPermissions && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button asChild className="fixed bottom-16 right-5 z-50 h-14 w-14 rounded-full shadow-lg" size="icon">
+                <Link href={editUrl}>
+                  <Pencil className="h-6 w-6" />
+                  <span className="sr-only">Editar Comitente</span>
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left">
+              <p>Editar Comitente</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+    </>
   );
 }
-
-
-    
