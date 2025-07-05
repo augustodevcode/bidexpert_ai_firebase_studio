@@ -28,6 +28,7 @@ interface AuctionStageItemProps {
   index: number; 
 }
 
+// Optimized AuctionStageItem component
 const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, auctionId, index }) => {
   const [clientTimeData, setClientTimeData] = React.useState<{ formattedDate: string; isPast: boolean } | null>(null);
 
@@ -45,7 +46,7 @@ const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, auctionId, i
 
     if (isValidDate && stageEndDateObj) {
         setClientTimeData({
-            formattedDate: format(stageEndDateObj, "dd/MM/yyyy HH:mm", { locale: ptBR }),
+            formattedDate: format(stageEndDateObj, "dd/MM/yyyy", { locale: ptBR }), // Format without time
             isPast: stageEndDateObj < now,
         });
     } else {
@@ -60,17 +61,12 @@ const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, auctionId, i
 
   if (!clientTimeData) {
     return (
-      <div key={`${auctionId}-stage-loading-${index}`} className="p-2 rounded-md text-sm bg-muted/30 text-muted-foreground animate-pulse">
-        <div className="flex justify-between items-center">
-          <span className="font-medium">{stage.name}</span>
-        </div>
-        <div className="flex items-center justify-between mt-0.5">
-          <div className="flex items-center text-xs">
+      <div key={`${auctionId}-stage-loading-${index}`} className="flex justify-between items-center text-xs py-1 text-muted-foreground animate-pulse">
+        <div className="flex items-center">
             <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
-            {stage.statusText || 'Encerramento'}:
-          </div>
-          <span className="text-xs font-semibold">Calculando...</span>
+            <span className="font-medium text-foreground/80">{stage.name}:</span>
         </div>
+        <span className="font-semibold">Calculando...</span>
       </div>
     );
   }
@@ -80,18 +76,13 @@ const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, auctionId, i
   return (
     <div
       key={`${auctionId}-stage-${index}`}
-      className={`p-2 rounded-md text-sm ${isPast ? 'bg-muted/30 text-muted-foreground line-through' : 'bg-accent/20'}`}
+      className={`flex justify-between items-center text-xs py-1 ${isPast ? 'text-muted-foreground/70 line-through' : 'text-muted-foreground'}`}
     >
-      <div className="flex justify-between items-center">
-        <span className={`font-medium ${isPast ? '' : 'text-accent-foreground/80'}`}>{stage.name}</span>
+      <div className="flex items-center">
+        <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
+        <span className="font-medium text-foreground/80">{stage.name}:</span>
       </div>
-      <div className="flex items-center justify-between mt-0.5">
-        <div className="flex items-center text-xs">
-            <CalendarDays className={`h-3.5 w-3.5 mr-1.5 ${isPast ? '' : 'text-accent-foreground/70'}`} />
-            {stage.statusText || 'Encerramento'}:
-        </div>
-        <span className={`text-xs font-semibold ${isPast ? '' : 'text-accent-foreground/90'}`}>{formattedDate}</span>
-      </div>
+      <span className="font-semibold text-foreground">{formattedDate}</span>
     </div>
   );
 };
@@ -270,7 +261,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                   </TooltipTrigger>
                   <TooltipContent><p>Compartilhar</p></TooltipContent>
                 </Tooltip>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuItem asChild>
                     <a href={getSocialLink('x', auctionFullUrl, auction.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
                       <X className="h-3.5 w-3.5" /> X (Twitter)
@@ -333,7 +324,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
             )}
             
             {auction.auctionStages && auction.auctionStages.length > 0 ? (
-              <div className="space-y-2 mb-3">
+              <div className="space-y-1 mb-3">
                 {auction.auctionStages.map((stage, index) => (
                   <AuctionStageItem key={`${auction.id}-stage-${index}`} stage={stage} auctionId={auction.id} index={index} />
                 ))}
