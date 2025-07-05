@@ -9,7 +9,7 @@ const createJestConfig = nextJest({
 // Add any custom config to be passed to Jest
 /** @type {import('jest').Config} */
 const customJestConfig = {
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'], // Opcional: para setup adicional
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'], // Atualizado para .ts
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
     // Handle CSS imports (e.g., if you use CSS Modules)
@@ -18,6 +18,8 @@ const customJestConfig = {
     '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$': '<rootDir>/__mocks__/fileMock.js',
     // Alias para caminhos (ajustar conforme tsconfig.json)
     '^@/(.*)$': '<rootDir>/src/$1',
+    // Mock para lucide-react para evitar problemas com ESM nos testes Jest
+    '^lucide-react$': '<rootDir>/__mocks__/lucideMock.js',
   },
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
@@ -28,7 +30,13 @@ const customJestConfig = {
   //   '^.+\\.(ts|tsx)?$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }],
   //   '^.+\\.(js|jsx)$': 'babel-jest',
   // },
-  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
+  testPathIgnorePatterns: [
+    '<rootDir>/.next/',
+    '<rootDir>/node_modules/',
+    '<rootDir>/e2e/' // Ignorar testes E2E do Playwright
+  ],
+  // next/jest já configura transformIgnorePatterns para compilar alguns módulos de node_modules.
+  // Não é necessário mais o transformIgnorePatterns customizado para lucide-react se usarmos moduleNameMapper.
   collectCoverage: true,
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
@@ -50,6 +58,10 @@ const customJestConfig = {
     '!<rootDir>/*.config.js',
     '!<rootDir>/*.config.ts',
     '!<rootDir>/*.config.mjs',
+    // Excluir arquivos de teste da coleta de cobertura
+    '!src/**/*.test.ts',
+    '!src/**/*.test.tsx',
+    '!e2e/**/*',
   ],
   coverageThreshold: { // Exemplo de configuração de threshold
     global: {

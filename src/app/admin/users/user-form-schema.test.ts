@@ -25,17 +25,38 @@ describe('userFormSchema', () => {
     optInMarketing: true,
   };
 
-  it('should validate with correct data', () => {
+  it('should validate with correct data and handle optInMarketing default', () => {
     const result = userFormSchema.safeParse(validInput);
     expect(result.success).toBe(true);
+
     if (result.success) {
-      // Checa se o default de optInMarketing está funcionando se não for passado
-      const dataWithoutOptIn = { ...validInput };
-      delete dataWithoutOptIn.optInMarketing;
-      const resultWithoutOptIn = userFormSchema.safeParse(dataWithoutOptIn);
-      expect(resultWithoutOptIn.success).toBe(true);
-      if(resultWithoutOptIn.success) {
-        expect(resultWithoutOptIn.data.optInMarketing).toBe(false);
+      // Caso 1: Chave 'optInMarketing' totalmente omitida do objeto de entrada
+      const dataKeyOmitted = { ...validInput };
+      delete dataKeyOmitted.optInMarketing;
+
+      // Teste com parse() quando a chave é omitida (default DEVE ser aplicado)
+      const parsedDataWhenKeyOmitted = userFormSchema.parse(dataKeyOmitted);
+      expect(parsedDataWhenKeyOmitted.optInMarketing).toBe(false);
+
+      // Teste com safeParse() quando a chave é omitida (default DEVE ser aplicado em .data)
+      const safeParsedWhenKeyOmitted = userFormSchema.safeParse(dataKeyOmitted);
+      expect(safeParsedWhenKeyOmitted.success).toBe(true);
+      if (safeParsedWhenKeyOmitted.success) {
+        expect(safeParsedWhenKeyOmitted.data.optInMarketing).toBe(false);
+      }
+
+      // Caso 2: Chave 'optInMarketing' presente com valor undefined
+      // Para z.boolean().default(false).optional(), Zod trata 'undefined' como um valor válido para opcional,
+      // e o default NÃO é aplicado sobre um 'undefined' explícito quando .optional() está presente. O campo permanece undefined.
+      const dataWithExplicitUndefined = { ...validInput, optInMarketing: undefined };
+
+      const parsedDataWhenUndefined = userFormSchema.parse(dataWithExplicitUndefined);
+      expect(parsedDataWhenUndefined.optInMarketing).toBeUndefined();
+
+      const safeParsedWhenUndefined = userFormSchema.safeParse(dataWithExplicitUndefined);
+      expect(safeParsedWhenUndefined.success).toBe(true);
+      if (safeParsedWhenUndefined.success) {
+        expect(safeParsedWhenUndefined.data.optInMarketing).toBeUndefined();
       }
     }
   });
@@ -62,7 +83,7 @@ describe('userFormSchema', () => {
   });
 
   it('should fail if fullName is not a string', () => {
-    const invalidData = { ...validInput, fullName: 123 };
+    const invalidData = { ...validInput, fullName: 123 as any }; // Cast para any para simular tipo errado
     const result = userFormSchema.safeParse(invalidData);
     expect(result.success).toBe(false);
     if (!result.success) {
@@ -130,7 +151,7 @@ describe('userFormSchema', () => {
 
   // Testes para accountType
   it('should fail if accountType is an invalid enum value', () => {
-    const invalidData = { ...validInput, accountType: 'INVALID_TYPE' };
+    const invalidData = { ...validInput, accountType: 'INVALID_TYPE' as any };
     const result = userFormSchema.safeParse(invalidData);
     expect(result.success).toBe(false);
     if (!result.success) {
@@ -170,4 +191,4 @@ describe('userFormSchema', () => {
   });
 });
 
-console.log('Arquivo de teste src/app/admin/users/user-form-schema.test.ts criado/atualizado.');
+console.log('Arquivo de teste src/app/admin/users/user-form-schema.test.ts corrigido (optInMarketing e duplicidade).');

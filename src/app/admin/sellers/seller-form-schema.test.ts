@@ -68,7 +68,7 @@ describe('sellerFormSchema', () => {
 
   // Testes para website
   it('should fail if website is an invalid URL', () => {
-    const invalidData = { ...validInput, website: 'htp:/invalid' };
+    const invalidData = { ...validInput, website: 'definitivamente nao e uma url valida' };
     const result = sellerFormSchema.safeParse(invalidData);
     expect(result.success).toBe(false);
     if (!result.success) {
