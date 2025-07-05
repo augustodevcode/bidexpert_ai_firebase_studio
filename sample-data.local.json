@@ -1385,6 +1385,30 @@
       "createdAt": "2025-07-03T20:54:31.338Z",
       "updatedAt": "2025-07-03T21:42:07.224Z",
       "sellerId": "seller-c787877a-dddf-4dfe-a0cf-7701bd20b149"
+    },
+    {
+      "processNumber": "00008323520184013202",
+      "isElectronic": true,
+      "courtId": "court-tjse",
+      "districtId": "dist-se-lagarto",
+      "branchId": "branch-3",
+      "sellerId": "seller-6ba096d2-d573-46aa-b5cb-006b794e6a38",
+      "parties": [
+        {
+          "name": "Augusto",
+          "partyType": "AUTOR",
+          "id": "party-dfa8b7c3-b8ee-429d-a500-4f459d02e03a"
+        },
+        {
+          "name": "Joao",
+          "partyType": "REU",
+          "id": "party-a3596fe4-f2ad-4113-a197-c5464c220c59"
+        }
+      ],
+      "id": "proc-e86d0018-b490-45a5-b83a-6a411cc0696a",
+      "publicId": "PROC-PUB-16624fbf",
+      "createdAt": "2025-07-05T20:47:31.654Z",
+      "updatedAt": "2025-07-05T20:47:31.654Z"
     }
   ],
   "sampleLotCategories": [
@@ -2642,6 +2666,16 @@
       "slug": "2-vara-da-fazenda-publica",
       "createdAt": "2025-07-03T21:41:55.243Z",
       "updatedAt": "2025-07-03T21:41:55.243Z"
+    },
+    {
+      "name": "Vara Única de Lagarto",
+      "isJudicial": true,
+      "judicialBranchId": "branch-3",
+      "id": "seller-6ba096d2-d573-46aa-b5cb-006b794e6a38",
+      "publicId": "SELL-PUB-1e565896",
+      "slug": "vara-unica-de-lagarto",
+      "createdAt": "2025-07-05T20:47:07.816Z",
+      "updatedAt": "2025-07-05T20:47:07.816Z"
     }
   ],
   "sampleStates": [
