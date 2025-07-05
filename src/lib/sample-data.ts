@@ -1,3 +1,4 @@
+
 // src/lib/sample-data.ts
 import type {
   Bem, Lot, LotCategory, Auction, AuctioneerProfileInfo, SellerProfileInfo,
@@ -12,7 +13,7 @@ import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 // ==================================
 // PURE HELPER FUNCTIONS
 // ==================================
-const randomItem = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)]);
+const randomItem = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const randomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
 const randomDate = (start: Date, end: Date): Date => new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 const randomCoord = (base: number, range: number): number => base + (Math.random() - 0.5) * range;
@@ -220,9 +221,6 @@ export const sampleUserDocuments: UserDocument[] = [
   },
 ];
 
-// ==================================
-// DYNAMIC DATA GENERATION
-// ==================================
 export const sampleUserProfiles: UserProfileWithPermissions[] = [
   {
     uid: 'admin-bidexpert-platform-001',
@@ -256,7 +254,6 @@ export const sampleUserProfiles: UserProfileWithPermissions[] = [
     accountType: 'LEGAL',
   }
 ];
-
 export const sampleCourts: Court[] = [
   { id: 'court-tjsp', name: 'Tribunal de Justiça de São Paulo', slug: 'tjsp', stateUf: 'SP', website: 'https://www.tjsp.jus.br', createdAt: new Date(), updatedAt: new Date() },
   { id: 'court-tjrj', name: 'Tribunal de Justiça do Rio de Janeiro', slug: 'tjrj', stateUf: 'RJ', website: 'https://www.tjrj.jus.br', createdAt: new Date(), updatedAt: new Date() },
@@ -264,7 +261,6 @@ export const sampleCourts: Court[] = [
   { id: 'court-tjse', name: 'Tribunal de Justiça de Sergipe', slug: 'tjse', stateUf: 'SE', website: 'https://www.tjse.jus.br', createdAt: new Date(), updatedAt: new Date() },
   { id: 'court-trt2', name: 'Tribunal Regional do Trabalho da 2ª Região', slug: 'trt2-sp', stateUf: 'SP', website: 'https://ww2.trt2.jus.br', createdAt: new Date(), updatedAt: new Date() },
 ];
-
 export const sampleJudicialDistricts: JudicialDistrict[] = [
   { id: 'dist-sp-capital', name: 'Comarca da Capital', slug: 'sao-paulo-capital', courtId: 'court-tjsp', stateId: 'state-sp', zipCode: '01010-000', createdAt: new Date(), updatedAt: new Date() },
   { id: 'dist-sp-campinas', name: 'Comarca de Campinas', slug: 'campinas', courtId: 'court-tjsp', stateId: 'state-sp', zipCode: '13010-000', createdAt: new Date(), updatedAt: new Date() },
@@ -272,14 +268,12 @@ export const sampleJudicialDistricts: JudicialDistrict[] = [
   { id: 'dist-se-lagarto', name: 'Comarca de Lagarto', slug: 'lagarto', courtId: 'court-tjse', stateId: 'state-se', zipCode: '49400-000', createdAt: new Date(), updatedAt: new Date() },
   { id: 'dist-sp-sao-paulo-trt', name: 'Comarca de São Paulo (TRT)', slug: 'sao-paulo-trt', courtId: 'court-trt2', stateId: 'state-sp', zipCode: '01139-003', createdAt: new Date(), updatedAt: new Date() },
 ];
-
 export const sampleJudicialBranches: JudicialBranch[] = [
     { id: 'branch-1', name: '1ª Vara Cível', slug: '1a-vara-civel', districtId: 'dist-sp-capital', contactName: 'José da Silva', phone: '11 1234-5678', email: 'vara1.sp@tj.jus.br', createdAt: new Date(), updatedAt: new Date() },
     { id: 'branch-2', name: '2ª Vara da Fazenda Pública', slug: '2a-vara-da-fazenda-publica', districtId: 'dist-rj-capital', contactName: 'Maria Oliveira', phone: '21 9876-5432', email: 'vara2.rj@tj.jus.br', createdAt: new Date(), updatedAt: new Date() },
     { id: 'branch-3', name: 'Vara Única de Lagarto', slug: 'vara-unica-lagarto', districtId: 'dist-se-lagarto', contactName: 'Ana Costa', phone: '79 3631-1111', email: 'vara.lagarto@tjse.jus.br', createdAt: new Date(), updatedAt: new Date() },
     { id: 'branch-4', name: '15ª Vara do Trabalho de São Paulo', slug: '15-vara-trabalho-sp', districtId: 'dist-sp-sao-paulo-trt', contactName: 'Paulo Lima', phone: '11 3525-2015', email: 'vt15.sp@trt2.jus.br', createdAt: new Date(), updatedAt: new Date() },
 ];
-
 const sampleParties: ProcessParty[] = [
     { id: 'party-1', name: 'João da Silva', documentNumber: '111.222.333-44', partyType: 'AUTOR' },
     { id: 'party-2', name: 'Empresa X Ltda', documentNumber: '12.345.678/0001-99', partyType: 'REU' },
@@ -288,7 +282,6 @@ const sampleParties: ProcessParty[] = [
     { id: 'party-5', name: 'Meta Metais Ltda', documentNumber: '98.765.432/0001-11', partyType: 'AUTOR' },
     { id: 'party-6', name: 'Banco Fictício S.A.', documentNumber: '11.222.333/0001-44', partyType: 'REU' },
 ];
-
 export const sampleJudicialProcesses: JudicialProcess[] = [
     { 
         id: 'proc-1', publicId: 'PROC-12345-2024', processNumber: '0012345-67.2024.8.26.0001', isElectronic: true, 
@@ -309,7 +302,6 @@ export const sampleJudicialProcesses: JudicialProcess[] = [
         createdAt: new Date(), updatedAt: new Date()
     }
 ];
-
 export const sampleBens: Bem[] = [
     { id: `bem-1`, publicId: `BEM-PUB-1`, title: `Mesa de Escritório em L`, judicialProcessId: 'proc-3', judicialProcessNumber: '0055555-22.2022.2.02.0015', status: 'DISPONIVEL', categoryId: 'cat-bens-diversos', evaluationValue: 350, imageUrl: 'https://placehold.co/600x400.png?text=Mesa', imageMediaId: 'media-desk-1', createdAt: new Date(), updatedAt: new Date() },
     { id: `bem-2`, publicId: `BEM-PUB-2`, title: `Cadeira de Escritório Giratória`, judicialProcessId: 'proc-3', judicialProcessNumber: '0055555-22.2022.2.02.0015', status: 'DISPONIVEL', categoryId: 'cat-bens-diversos', evaluationValue: 200, imageUrl: 'https://placehold.co/600x400.png?text=Cadeira', imageMediaId: 'media-chair-1', createdAt: new Date(), updatedAt: new Date() },
@@ -317,33 +309,16 @@ export const sampleBens: Bem[] = [
     { id: `bem-4`, publicId: `BEM-PUB-4`, title: `Apartamento em Campinas`, judicialProcessId: 'proc-1', judicialProcessNumber: '0012345-67.2024.8.26.0001', status: 'DISPONIVEL', categoryId: 'cat-imoveis', subcategoryId: 'subcat-imoveis-apartamentos', evaluationValue: 280000, imageUrl: 'https://placehold.co/600x400.png?text=Apto+Campinas', imageMediaId: 'media-apt-campinas', createdAt: new Date(), updatedAt: new Date() },
     { id: `bem-5`, publicId: `BEM-PUB-5`, title: `Trator Valtra A950 4x4 2018`, judicialProcessId: undefined, status: 'DISPONIVEL', categoryId: 'cat-maquinas-e-equipamentos', subcategoryId: 'subcat-maquinas-agricolas', evaluationValue: 95000, imageUrl: 'https://placehold.co/600x400.png?text=Trator+Valtra', imageMediaId: 'media-trator-valtra', createdAt: new Date(), updatedAt: new Date() },
 ];
-
 export const sampleLots: Lot[] = [];
 export const sampleAuctions: Auction[] = [];
-
-export const sampleDirectSaleOffers: DirectSaleOffer[] = [
-    { id: 'ds-1', publicId: 'DS-PUB-1', title: 'Sofá Retrátil 3 Lugares', description: 'Sofá em suede cinza, em ótimo estado, pouco uso. Medidas: 2.20m x 1.10m.', imageUrl: 'https://placehold.co/800x600/64748b/ffffff/png?text=Sofa', offerType: 'BUY_NOW', price: 1200, category: 'Casa e Decoração', sellerName: 'João da Silva (Particular)', status: 'ACTIVE', createdAt: new Date(), updatedAt: new Date() },
-    { id: 'ds-2', publicId: 'DS-PUB-2', title: 'Geladeira Brastemp Frost Free 400L', description: 'Geladeira com freezer, funcionando perfeitamente. Algumas marcas de uso na porta.', imageUrl: 'https://placehold.co/800x600/e2e8f0/000000/png?text=Geladeira', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 800, category: 'Casa e Decoração', sellerName: 'Maria Oliveira (Particular)', status: 'ACTIVE', createdAt: new Date(), updatedAt: new Date() }
-];
-
-export const sampleBlogPosts: BlogPost[] = [
-  { id: 'blog-1', slug: 'como-comprar-imovel-leilao', title: 'Guia Completo: Como Comprar seu Primeiro Imóvel em Leilão', content: '...', authorName: 'Equipe BidExpert', category: 'Dicas', isPublished: true, publishedAt: new Date(), createdAt: new Date(), updatedAt: new Date() },
-  { id: 'blog-2', slug: 'leiloes-judiciais-vs-extrajudiciais', title: 'Leilões Judiciais vs. Extrajudiciais: Entenda as Diferenças', content: '...', authorName: 'Equipe BidExpert', category: 'Mercado', isPublished: true, publishedAt: new Date(), createdAt: new Date(), updatedAt: new Date() },
-  { id: 'blog-3', slug: 'dicas-avaliar-veiculo-leilao', title: '5 Dicas para Avaliar um Veículo em Leilão', content: '...', authorName: 'Equipe BidExpert', category: 'Veículos', isPublished: true, publishedAt: new Date(), createdAt: new Date(), updatedAt: new Date() },
-];
-
-export const sampleNotifications: Notification[] = [
-  { id: 'notif-1', userId: 'admin-bidexpert-platform-001', message: 'Seu lance de R$ 5.200 no lote "Fiat Toro 2019" foi superado.', link: '/dashboard/bids', isRead: false, createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) },
-  { id: 'notif-2', userId: 'admin-bidexpert-platform-001', message: 'Parabéns! Você arrematou o lote "Apartamento em Moema". Pagamento pendente.', link: '/dashboard/wins', isRead: false, createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) },
-  { id: 'notif-3', userId: 'admin-bidexpert-platform-001', message: 'Sua documentação foi aprovada! Você já pode dar lances.', link: '/dashboard/documents', isRead: true, createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
-];
-
-
-// ==================================
-// FINAL EXPORT OBJECT
-// ==================================
+export const sampleUserHabilitationStatus: UserHabilitationStatus = 'PENDING_DOCUMENTS';
+export const sampleNotifications: Notification[] = [];
+export const sampleDirectSaleOffers: DirectSaleOffer[] = [];
+export const sampleUserBids: UserBid[] = [];
 export const sampleUserWins: UserWin[] = [];
 export const sampleBids: BidInfo[] = [];
 export const sampleLotQuestions: LotQuestion[] = [];
 export const sampleLotReviews: Review[] = [];
 export const sampleUserLotMaxBids: UserLotMaxBid[] = [];
+export const sampleBlogPosts: BlogPost[] = [];
+
