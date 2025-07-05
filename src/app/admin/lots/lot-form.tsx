@@ -1,4 +1,3 @@
-
 // src/app/admin/lots/lot-form.tsx
 'use client';
 
@@ -29,11 +28,11 @@ import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import { DataTable } from '@/components/ui/data-table';
-import { createColumns as createBemColumns } from '@/components/admin/lotting/columns';
+import { createColumns as createBemColumns } from '@/app/admin/bens/columns';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
 import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
-import { getBens as getBensForLotting } from '@/app/admin/bens/actions'; // Import the correct action
+import { getBens } from '@/app/admin/bens/actions';
 import { getAuction } from '@/app/admin/auctions/actions';
 
 interface LotFormProps {
@@ -118,7 +117,7 @@ export default function LotForm({
         ? { judicialProcessId: auction.judicialProcessId }
         : auction.sellerId ? { sellerId: auction.sellerId } : {};
         
-      const bens = await getBensForLotting(filterForBens);
+      const bens = await getBens(filterForBens);
       setCurrentAvailableBens(bens);
     };
 
@@ -231,7 +230,7 @@ export default function LotForm({
     setIsBemModalOpen(true);
   };
 
-  const bemColumns = React.useMemo(() => createBemColumns(), []);
+  const bemColumns = React.useMemo(() => createBemColumns({ onOpenDetails: handleViewBemDetails }), []);
   
   const availableBensForTable = React.useMemo(() => {
     const linkedBemIds = new Set(watchedBemIds || []);
@@ -347,7 +346,7 @@ export default function LotForm({
                    <div className="flex justify-between items-center mb-2">
                         <h4 className="text-sm font-semibold">Bens Disponíveis para Vincular</h4>
                          <Button type="button" size="sm" onClick={handleLinkBens} disabled={Object.keys(bemRowSelection).length === 0}>
-                           <PackagePlus className="mr-2 h-4 w-4" /> Vincular Selecionado(s)
+                           <PackagePlus className="mr-2 h-4 w-4" /> Vincular Bem
                         </Button>
                    </div>
                     <DataTable
