@@ -13,14 +13,16 @@ import { getWizardInitialData } from './actions';
 import type { JudicialProcess, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, Bem, Auction, Court, JudicialDistrict, JudicialBranch, Lot } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Rocket, Loader2, Workflow, Eye, Search, Expand } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Rocket, Loader2, Workflow, Eye, Search, Expand, PackagePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import JudicialProcessForm from '@/app/admin/judicial-processes/judicial-process-form';
 import { createJudicialProcessAction } from '@/app/admin/judicial-processes/actions';
+import { createBem as createBemAction } from '@/app/admin/bens/actions';
 import { Separator } from '@/components/ui/separator';
 import WizardFlow from '@/components/admin/wizard/WizardFlow';
 import WizardFlowModal from '@/components/admin/wizard/WizardFlowModal';
+import BemForm from '@/app/admin/bens/bem-form';
 
 
 const allSteps = [
@@ -52,7 +54,7 @@ function WizardContent({
     refetchData: (newProcessIdToSelect?: string) => void;
 }) {
   const { currentStep, wizardData, nextStep, prevStep, goToStep, setWizardData } = useWizard();
-  const [wizardMode, setWizardMode] = useState<'main' | 'judicial_process'>('main');
+  const [wizardMode, setWizardMode] = useState<'main' | 'judicial_process' | 'bem'>('main');
   const [isDataRefetching, setIsDataRefetching] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -79,13 +81,22 @@ function WizardContent({
   };
 
   const handleLotCreation = () => {
-    refetchData(wizardData.judicialProcess?.id); 
+    // This is called when lots are created, but we don't need a full refetch,
+    // as the state is handled on the client. We can keep this for potential future use.
   };
   
   const handleProcessCreated = async (newProcessId?: string) => {
     toast({ title: "Sucesso!", description: "Processo judicial cadastrado." });
     setIsDataRefetching(true);
     await refetchData(newProcessId);
+    setWizardMode('main');
+    setIsDataRefetching(false);
+  }
+  
+  const handleBemCreated = async () => {
+    toast({ title: "Sucesso!", description: "Bem cadastrado com sucesso." });
+    setIsDataRefetching(true);
+    await refetchData(wizardData.judicialProcess?.id);
     setWizardMode('main');
     setIsDataRefetching(false);
   }
@@ -111,6 +122,27 @@ function WizardContent({
         />
       );
     }
+    
+    if (wizardMode === 'bem') {
+      return (
+        <BemForm
+          initialData={{
+            judicialProcessId: wizardData.auctionType === 'JUDICIAL' ? wizardData.judicialProcess?.id : undefined,
+            sellerId: wizardData.auctionType !== 'JUDICIAL' ? wizardData.auctionDetails?.sellerId : undefined,
+            status: 'DISPONIVEL',
+          }}
+          processes={fetchedData.judicialProcesses}
+          categories={fetchedData.categories}
+          sellers={fetchedData.sellers}
+          onSubmitAction={createBemAction}
+          onSuccess={handleBemCreated}
+          onCancel={() => setWizardMode('main')}
+          formTitle="Novo Bem (Wizard)"
+          formDescription="Cadastre o bem. Ele ficará disponível para loteamento ao salvar."
+          submitButtonText="Criar e Voltar ao Loteamento"
+        />
+      );
+    }
 
     switch (currentStepId) {
       case 'type': return <Step1TypeSelection />;
@@ -120,7 +152,11 @@ function WizardContent({
         const bensForProcess = wizardData.auctionType === 'JUDICIAL' 
             ? fetchedData.availableBens.filter(bem => wizardData.judicialProcess ? bem.judicialProcessId === wizardData.judicialProcess.id : true)
             : fetchedData.availableBens;
-        return <Step4Lotting availableBens={bensForProcess} auctionData={wizardData.auctionDetails as Partial<Auction>} onLotCreated={handleLotCreation} />;
+        return <Step4Lotting 
+                  availableBens={bensForProcess} 
+                  auctionData={wizardData.auctionDetails as Partial<Auction>} 
+                  onLotCreated={handleLotCreation}
+               />;
       case 'review': return <Step5Review />;
       default: return <div className="text-center py-10"><p>Etapa "{stepsToUse[currentStep]?.title || 'Próxima'}" em desenvolvimento.</p></div>;
     }
@@ -149,12 +185,20 @@ function WizardContent({
                 <Button variant="outline" onClick={prevStep} disabled={currentStep === 0 || isLoading || isDataRefetching}>
                   <ChevronLeft className="mr-2 h-4 w-4" /> Anterior
                 </Button>
-                {currentStep < stepsToUse.length - 1 && (
-                  <Button onClick={handleNextStep} disabled={isLoading || isDataRefetching}>
-                    {isDataRefetching ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : null}
-                    Próximo <ChevronRight className="ml-2 h-4 w-4" />
-                  </Button>
-                )}
+
+                <div className="flex items-center gap-2">
+                    {currentStepId === 'lotting' && (
+                        <Button variant="secondary" type="button" onClick={() => setWizardMode('bem')} disabled={isLoading || isDataRefetching}>
+                            <PackagePlus className="mr-2 h-4 w-4" /> Cadastrar Novo Bem
+                        </Button>
+                    )}
+                    {currentStep < stepsToUse.length - 1 && (
+                    <Button onClick={handleNextStep} disabled={isLoading || isDataRefetching}>
+                        {isDataRefetching ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : null}
+                        Próximo <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                    )}
+                </div>
               </CardFooter>
             </>
           ) : (

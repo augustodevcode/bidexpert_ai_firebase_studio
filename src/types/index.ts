@@ -1,7 +1,6 @@
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
-import type { WizardData } from '@/components/admin/wizard/wizard-context';
 
 // For server-side logic (Admin SDK)
 export type ServerTimestamp = FirebaseAdminTimestamp;
@@ -154,6 +153,17 @@ export interface AuctionStage {
   initialPrice?: number; // Lance inicial para esta praça
 }
 
+export type AuctionType = 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS';
+
+export interface WizardData {
+  auctionType?: AuctionType;
+  judicialProcess?: JudicialProcess;
+  auctionDetails?: Partial<Auction>;
+  selectedBens?: Bem[];
+  createdLots?: Lot[];
+}
+
+
 export type AuctionStatus = 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO' | 'RASCUNHO' | 'EM_PREPARACAO';
 export type LotStatus = 'RASCUNHO' | 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'VENDIDO' | 'NAO_VENDIDO' | 'CANCELADO';
 
@@ -175,7 +185,7 @@ export interface Auction {
   title: string;
   description?: string;
   status: AuctionStatus;
-  auctionType?: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS' | 'DUTCH' | 'SILENT';
+  auctionType?: AuctionType | 'DUTCH' | 'SILENT';
   category: string; 
   categoryId?: string; 
   auctioneer: string; 
@@ -1105,9 +1115,3 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
-```
-- yarn.lock:
-```text
-This is a GENERATED file, do not edit.
-If you want to anually update your dependencies, look at your package.json file.
-```

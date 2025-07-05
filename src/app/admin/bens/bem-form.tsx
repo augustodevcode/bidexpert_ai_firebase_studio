@@ -28,11 +28,13 @@ import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
 
 interface BemFormProps {
-  initialData?: Bem | null;
+  initialData?: Partial<Bem> | null;
   processes: JudicialProcess[];
   categories: LotCategory[];
   sellers: SellerProfileInfo[];
   onSubmitAction: (data: BemFormData) => Promise<{ success: boolean; message: string; bemId?: string }>;
+  onSuccess?: () => void;
+  onCancel?: () => void;
   formTitle: string;
   formDescription: string;
   submitButtonText: string;
@@ -51,6 +53,8 @@ export default function BemForm({
   categories,
   sellers,
   onSubmitAction,
+  onSuccess,
+  onCancel,
   formTitle,
   formDescription,
   submitButtonText,
@@ -135,8 +139,12 @@ export default function BemForm({
       const result = await onSubmitAction(values);
       if (result.success) {
         toast({ title: 'Sucesso!', description: result.message });
-        router.push('/admin/bens');
-        router.refresh();
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          router.push('/admin/bens');
+          router.refresh();
+        }
       } else {
         toast({ title: 'Erro', description: result.message, variant: 'destructive' });
       }
@@ -146,6 +154,14 @@ export default function BemForm({
       setIsSubmitting(false);
     }
   }
+
+  const handleCancel = () => {
+    if (onCancel) {
+        onCancel();
+    } else {
+        router.push('/admin/bens');
+    }
+  };
 
   return (
     <>
@@ -198,7 +214,7 @@ export default function BemForm({
               <FormItem><FormLabel>Imagem Principal</FormLabel><div className="flex items-center gap-4"><div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{imageUrlPreview ? (<Image src={imageUrlPreview} alt="Prévia da Imagem" fill className="object-contain" data-ai-hint="previa imagem bem" />) : (<div className="flex items-center justify-center h-full text-muted-foreground"><ImageIcon className="h-8 w-8" /></div>)}</div><div className="flex-grow space-y-2"><Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{imageUrlPreview ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button><FormField control={form.control} name="imageUrl" render={({ field }) => (<FormControl><Input type="text" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} className="text-xs h-8" /></FormControl>)}/></div></div></FormItem>
             </CardContent>
             <CardFooter className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => router.push('/admin/bens')} disabled={isSubmitting}>Cancelar</Button>
+              <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>Cancelar</Button>
               <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{submitButtonText}</Button>
             </CardFooter>
           </form>
