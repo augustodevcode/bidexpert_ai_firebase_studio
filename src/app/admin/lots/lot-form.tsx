@@ -1,3 +1,4 @@
+
 // src/app/admin/lots/lot-form.tsx
 'use client';
 
@@ -28,7 +29,7 @@ import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import { DataTable } from '@/components/ui/data-table';
-import { createColumns as createBemColumns } from '@/app/admin/bens/columns'; // Renamed to avoid conflict
+import { createColumns as createBemColumns } from '@/components/admin/lotting/columns';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
 import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
@@ -46,6 +47,7 @@ interface LotFormProps {
   formTitle: string;
   formDescription: string;
   submitButtonText: string;
+  defaultAuctionId?: string;
 }
 
 export default function LotForm({
@@ -59,6 +61,7 @@ export default function LotForm({
   formTitle,
   formDescription,
   submitButtonText,
+  defaultAuctionId
 }: LotFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -79,7 +82,7 @@ export default function LotForm({
     resolver: zodResolver(lotFormSchema),
     defaultValues: {
       title: initialData?.title || '',
-      auctionId: initialData?.auctionId || searchParams.get('auctionId') || '',
+      auctionId: initialData?.auctionId || defaultAuctionId || searchParams.get('auctionId') || '',
       description: initialData?.description || '',
       price: initialData?.price || 0,
       initialPrice: initialData?.initialPrice || undefined,
@@ -129,8 +132,8 @@ export default function LotForm({
       if (linkedBem) {
         form.setValue('title', linkedBem.title);
         form.setValue('description', linkedBem.description);
-        form.setValue('categoryId', linkedBem.categoryId, { shouldValidate: true });
-        form.setValue('subcategoryId', linkedBem.subcategoryId, { shouldValidate: true });
+        form.setValue('categoryId', linkedBem.categoryId || '', { shouldValidate: true });
+        form.setValue('subcategoryId', linkedBem.subcategoryId || null, { shouldValidate: true });
         form.setValue('evaluationValue', linkedBem.evaluationValue);
         form.setValue('imageUrl', linkedBem.imageUrl);
         if(!form.getValues('price') || form.getValues('price') === 0) {
@@ -351,7 +354,7 @@ export default function LotForm({
                         columns={bemColumns}
                         data={availableBensForTable}
                         rowSelection={bemRowSelection}
-                        setRowSelection={setBemRowSelection}
+                        setRowSelection={setRowSelection}
                         searchPlaceholder="Buscar bem disponível..."
                         searchColumnId="title"
                     />
@@ -377,4 +380,3 @@ export default function LotForm({
     </>
   );
 }
-
