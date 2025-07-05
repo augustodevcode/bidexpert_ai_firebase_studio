@@ -21,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
 import type { Lot, LotCategory, Auction, StateInfo, CityInfo, MediaItem, Subcategory, Bem } from '@/types';
-import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, ImageIcon, PackagePlus } from 'lucide-react';
+import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, ImageIcon, PackagePlus, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { getSubcategoriesByParentIdAction } from '@/app/admin/subcategories/actions';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
@@ -30,6 +30,8 @@ import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns as createBemColumns } from '@/app/admin/lotting/columns';
 import { Separator } from '@/components/ui/separator';
+import { v4 as uuidv4 } from 'uuid';
+import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
 
 interface LotFormProps {
   initialData?: Lot | null;
@@ -67,6 +69,9 @@ export default function LotForm({
   const [availableSubcategories, setAvailableSubcategories] = React.useState<Subcategory[]>([]);
   const [isLoadingSubcategories, setIsLoadingSubcategories] = React.useState(false);
   const [bemRowSelection, setBemRowSelection] = React.useState({});
+
+  const [isBemModalOpen, setIsBemModalOpen] = React.useState(false);
+  const [selectedBemForModal, setSelectedBemForModal] = React.useState<Bem | null>(null);
 
   const form = useForm<LotFormValues>({
     resolver: zodResolver(lotFormSchema),
@@ -192,6 +197,11 @@ export default function LotForm({
     }
   }
 
+  const handleViewBemDetails = (bem: Bem) => {
+    setSelectedBemForModal(bem);
+    setIsBemModalOpen(true);
+  };
+
   const bemColumns = React.useMemo(() => createBemColumns(), []);
   
   const availableBensForTable = React.useMemo(() => {
@@ -287,8 +297,15 @@ export default function LotForm({
                     <div className="space-y-2">
                       {linkedBensDetails.map(bem => (
                         <div key={bem.id} className="flex items-center justify-between p-2 text-sm border rounded-md bg-secondary/50">
-                          <span>{bem.title}</span>
-                          <Button type="button" variant="ghost" size="sm" onClick={() => handleUnlinkBem(bem.id)}><Trash2 className="h-4 w-4 mr-1 text-destructive"/>Desvincular</Button>
+                          <span className="truncate" title={bem.title}>{bem.title}</span>
+                          <div className="flex items-center flex-shrink-0">
+                            <Button type="button" variant="ghost" size="sm" onClick={() => handleViewBemDetails(bem)}>
+                              <Eye className="h-4 w-4 mr-1 text-sky-600"/> Ver Detalhes
+                            </Button>
+                            <Button type="button" variant="ghost" size="sm" onClick={() => handleUnlinkBem(bem.id)}>
+                              <Trash2 className="h-4 w-4 mr-1 text-destructive"/>Desvincular
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -324,6 +341,12 @@ export default function LotForm({
         onOpenChange={setIsMainImageDialogOpen}
         onMediaSelect={handleMediaSelect}
         allowMultiple={false}
+      />
+      
+      <BemDetailsModal 
+        bem={selectedBemForModal} 
+        isOpen={isBemModalOpen} 
+        onClose={() => setIsBemModalOpen(false)} 
       />
     </>
   );
