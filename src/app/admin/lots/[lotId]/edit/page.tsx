@@ -4,8 +4,10 @@ import LotForm from '../../lot-form';
 import { getLot, updateLot, getBens as getBensForLotting } from '../../actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
+import { getStates } from '@/app/admin/states/actions';
+import { getCities } from '@/app/admin/cities/actions';
 import { notFound } from 'next/navigation';
-import type { LotCategory, Auction, Bem, LotFormData } from '@/types';
+import type { LotCategory, Auction, Bem, LotFormData, StateInfo, CityInfo } from '@/types';
 
 export default async function EditLotPage({ params }: { params: { lotId: string } }) {
   const lotId = params.lotId;
@@ -15,9 +17,11 @@ export default async function EditLotPage({ params }: { params: { lotId: string 
     notFound();
   }
   
-  const [categories, auctions, bens] = await Promise.all([
+  const [categories, auctions, states, allCities, bens] = await Promise.all([
     getLotCategories(),
     getAuctions(),
+    getStates(),
+    getCities(),
     lot.bemIds && lot.bemIds.length > 0 ? getBensForLotting({ judicialProcessId: lot.judicialProcessId, sellerId: lot.sellerId}) : Promise.resolve([])
   ]);
 
@@ -31,6 +35,8 @@ export default async function EditLotPage({ params }: { params: { lotId: string 
       initialData={lot}
       categories={categories}
       auctions={auctions}
+      states={states}
+      allCities={allCities}
       initialAvailableBens={bens}
       onSubmitAction={handleUpdateLot}
       formTitle="Editar Lote"

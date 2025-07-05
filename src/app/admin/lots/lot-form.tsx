@@ -1,3 +1,4 @@
+
 // src/app/admin/lots/lot-form.tsx
 'use client';
 
@@ -34,7 +35,7 @@ interface LotFormProps {
   auctions: Auction[];
   states: StateInfo[];
   allCities: CityInfo[];
-  bens: Bem[]; // Bens associados a este lote
+  initialAvailableBens: Bem[]; // Changed from `bens` prop to `initialAvailableBens`
   onSubmitAction: (data: LotFormValues) => Promise<{ success: boolean; message: string; lotId?: string }>;
   formTitle: string;
   formDescription: string;
@@ -48,7 +49,7 @@ export default function LotForm({
   auctions,
   states,
   allCities,
-  bens,
+  initialAvailableBens, // Renamed prop
   onSubmitAction,
   formTitle,
   formDescription,
@@ -90,7 +91,7 @@ export default function LotForm({
   const selectedCategoryId = useWatch({ control: form.control, name: 'type' });
   const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
   
-  const hasSingleBem = initialData?.bemIds && initialData.bemIds.length === 1;
+  const hasSingleBem = initialAvailableBens?.length === 1 && initialData?.bemIds?.length === 1 && initialData.bemIds[0] === initialAvailableBens[0].id;
 
   React.useEffect(() => {
     if (defaultAuctionId) {
@@ -99,7 +100,7 @@ export default function LotForm({
   }, [defaultAuctionId, form]);
 
   React.useEffect(() => {
-    if (selectedStateId) {
+    if (selectedStateId && allCities) {
       setFilteredCities(allCities.filter(city => city.stateId === selectedStateId));
       const currentCityId = form.getValues('cityId');
       if (currentCityId && !allCities.find(c => c.id === currentCityId && c.stateId === selectedStateId)) {
@@ -207,12 +208,12 @@ export default function LotForm({
                  <FormField control={form.control} name="subcategoryId" render={({ field }) => (<FormItem><FormLabel>Subcategoria</FormLabel><Select onValueChange={field.onChange} value={field.value || undefined} disabled={isLoadingSubcategories}><FormControl><SelectTrigger><SelectValue placeholder={isLoadingSubcategories ? "Carregando..." : "Selecione a subcategoria"} /></SelectTrigger></FormControl><SelectContent>{availableSubcategories.map(subcat => (<SelectItem key={subcat.id} value={subcat.id}>{subcat.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)}/>
               )}
 
-              {bens && bens.length > 0 && (
+              {initialAvailableBens && initialAvailableBens.length > 0 && (
                  <Card>
                   <CardHeader><CardTitle className="text-md font-semibold">Bens Vinculados a este Lote</CardTitle></CardHeader>
                   <CardContent>
                     <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                      {bens.map(bem => (
+                      {initialAvailableBens.map(bem => (
                         <li key={bem.id}>
                           <span className="font-medium text-foreground">{bem.title}</span> (ID: {bem.publicId})
                         </li>

@@ -1,19 +1,24 @@
+
 // src/app/admin/lots/new/page.tsx
 import LotForm from '../lot-form';
 import { createLot, type LotFormData } from '../actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
+import { getStates } from '@/app/admin/states/actions';
+import { getCities } from '@/app/admin/cities/actions';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
-import type { LotCategory, Auction } from '@/types';
+import type { LotCategory, Auction, StateInfo, CityInfo } from '@/types';
 
 interface NewLotPageContentProps {
   categories: LotCategory[];
   auctions: Auction[];
+  states: StateInfo[];
+  allCities: CityInfo[];
   auctionIdFromQuery?: string;
 }
 
-function NewLotPageContent({ categories, auctions, auctionIdFromQuery }: NewLotPageContentProps) {
+function NewLotPageContent({ categories, auctions, states, allCities, auctionIdFromQuery }: NewLotPageContentProps) {
   async function handleCreateLot(data: LotFormData) {
     'use server';
     return createLot(data);
@@ -24,6 +29,8 @@ function NewLotPageContent({ categories, auctions, auctionIdFromQuery }: NewLotP
       onSubmitAction={handleCreateLot}
       categories={categories}
       auctions={auctions}
+      states={states}
+      allCities={allCities}
       initialAvailableBens={[]} // Initially empty, will fetch on auction selection
       formTitle="Novo Lote"
       formDescription="Preencha os detalhes para criar um novo lote."
@@ -36,9 +43,11 @@ function NewLotPageContent({ categories, auctions, auctionIdFromQuery }: NewLotP
 export default async function NewLotPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
   const auctionIdFromQuery = (searchParams && typeof searchParams.auctionId === 'string') ? searchParams.auctionId : undefined;
   
-  const [categories, auctions] = await Promise.all([
+  const [categories, auctions, states, allCities] = await Promise.all([
     getLotCategories(),
-    getAuctions()
+    getAuctions(),
+    getStates(),
+    getCities(),
   ]);
 
   return (
@@ -46,6 +55,8 @@ export default async function NewLotPage({ searchParams }: { searchParams?: { [k
       <NewLotPageContent 
         categories={categories} 
         auctions={auctions} 
+        states={states}
+        allCities={allCities}
         auctionIdFromQuery={auctionIdFromQuery} 
       />
     </Suspense>
