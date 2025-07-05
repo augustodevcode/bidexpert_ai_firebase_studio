@@ -6,7 +6,7 @@ import type { Auction, Bem, JudicialProcess, Lot } from '@/types';
 
 type AuctionType = 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS';
 
-interface WizardData {
+export interface WizardData {
   auctionType?: AuctionType;
   judicialProcess?: JudicialProcess;
   auctionDetails?: Partial<Auction>;

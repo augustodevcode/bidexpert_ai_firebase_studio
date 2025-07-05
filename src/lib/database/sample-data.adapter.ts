@@ -1,9 +1,10 @@
+
 // src/lib/database/sample-data.adapter.ts
 import * as fs from 'fs';
 import * as path from 'path';
 import type { 
   IDatabaseAdapter, 
-  LotCategory, StateInfo, StateFormData,
+  LotCategory, StateInfo, StateFormData, CategoryFormData,
   CityInfo, CityFormData,
   AuctioneerProfileInfo, AuctioneerFormData,
   SellerProfileInfo, SellerFormData,
@@ -48,16 +49,13 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     try {
         if (fs.existsSync(DATA_FILE_PATH)) {
             const fileContents = fs.readFileSync(DATA_FILE_PATH, 'utf8');
-            // Safely initialize with defaults if file is missing keys
             const parsedData = JSON.parse(fileContents);
-            this.localData = { ...sampleData, ...parsedData };
-            // Ensure all array keys exist to prevent runtime errors
-            for (const key of Object.keys(sampleData)) {
-              if (Array.isArray((sampleData as any)[key]) && !Array.isArray((this.localData as any)[key])) {
-                (this.localData as any)[key] = [];
-              }
-            }
+            // Deep copy base data to make it mutable, then merge local data over it.
+            const baseData = JSON.parse(JSON.stringify(sampleData));
+            this.localData = { ...baseData, ...parsedData };
+            console.log(`[SampleDataAdapter] Loaded and merged data from ${DATA_FILE_PATH}`);
         } else {
+             // If no local file, just deep copy the base sample data to make it mutable
              this.localData = JSON.parse(JSON.stringify(sampleData));
              console.log("[SampleDataAdapter] sample-data.local.json not found, using initial data from module.");
         }
@@ -104,7 +102,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     
     const allBemIdsToUpdate = new Set<string>();
 
-    (wizardData.createdLots || []).forEach(lotDef => {
+    (wizardData.createdLots || []).forEach((lotDef: Lot) => {
       const newLot: Lot = {
         ...(lotDef as Lot), // cast since it has most fields
         id: `lot-${uuidv4()}`,
@@ -700,22 +698,59 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   // --- Users ---
   async getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null> {
     const profile = this.localData.sampleUserProfiles.find(p => p.uid === userId);
-    return Promise.resolve(profile ? JSON.parse(JSON.stringify(profile)) : null);
+    if (!profile) return null;
+    const finalProfile: UserProfileWithPermissions = {
+      ...profile,
+      permissions: profile.permissions || [],
+    };
+    return Promise.resolve(JSON.parse(JSON.stringify(finalProfile)));
   }
   async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
     console.warn("[SampleDataAdapter] updateUserProfile not implemented.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
-  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileData; }> {
-    console.warn("[SampleDataAdapter] ensureUserRole not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileWithPermissions; }> {
+      const existingUser = this.localData.sampleUserProfiles.find(u => u.uid === userId || u.email === email);
+      const role = this.localData.sampleRoles.find(r => r.id === roleIdToAssign || r.name === targetRoleName) || this.localData.sampleRoles.find(r => r.name === 'USER')!;
+
+      if (existingUser) {
+          existingUser.roleId = role.id;
+          existingUser.roleName = role.name;
+          existingUser.permissions = role.permissions;
+          existingUser.updatedAt = new Date();
+          this._persistData();
+          return { success: true, message: 'User role updated.', userProfile: existingUser as UserProfileWithPermissions };
+      } else {
+          const newUser: UserProfileWithPermissions = {
+              uid: userId,
+              email: email,
+              fullName: fullName || '',
+              roleId: role.id,
+              roleName: role.name,
+              permissions: role.permissions,
+              status: 'ATIVO',
+              habilitationStatus: 'PENDING_DOCUMENTS',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              ...(additionalProfileData as any)
+          };
+          this.localData.sampleUserProfiles.push(newUser);
+          this._persistData();
+          return { success: true, message: 'New user profile created.', userProfile: newUser };
+      }
   }
+
   async getUsersWithRoles(): Promise<UserProfileData[]> {
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleUserProfiles)));
   }
   async getUserByEmail(email: string): Promise<UserProfileWithPermissions | null> {
     const profile = this.localData.sampleUserProfiles.find(p => p.email.toLowerCase() === email.toLowerCase());
-    return Promise.resolve(profile ? JSON.parse(JSON.stringify(profile)) : null);
+    if (!profile) return null;
+    const finalProfile: UserProfileWithPermissions = {
+        ...profile,
+        permissions: profile.permissions || []
+    };
+    return Promise.resolve(JSON.parse(JSON.stringify(finalProfile)));
   }
   async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
     console.warn("[SampleDataAdapter] updateUserRole not implemented.");
@@ -753,7 +788,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     console.warn("[SampleDataAdapter] ensureDefaultRolesExist not implemented.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
-  async createMediaItem(data: Omit<MediaItem, "id" | "uploadedAt" | "urlOriginal" | "urlThumbnail" | "urlMedium" | "urlLarge" | "storagePath">, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> {
+  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> {
     console.warn("[SampleDataAdapter] createMediaItem not implemented.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
@@ -781,6 +816,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   
+
   // --- Judicial CRUDs
   async getCourts(): Promise<Court[]> { 
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleCourts || []))); 
