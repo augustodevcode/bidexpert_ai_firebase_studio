@@ -86,7 +86,7 @@ export default function Footer() {
 
         <div className="border-t border-border pt-8 text-center">
           <p className="text-sm text-muted-foreground">
-            &copy; {currentYear} BidExpert. Todos os direitos reservados.
+            &copy; {new Date().getFullYear()} BidExpert. Todos os direitos reservados.
           </p>
           <DevDbIndicator />
         </div>
