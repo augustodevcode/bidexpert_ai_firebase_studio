@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings, Auction } from '@/types';
@@ -262,13 +261,8 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
         {/* LEFT BADGES */}
         <div className="absolute top-2 left-2 flex flex-wrap items-start gap-1 z-10">
           {auction && sectionBadges.showStatusBadge !== false && (
-            <Badge className={`text-xs px-1.5 py-0.5 ${getAuctionStatusColor(auction.status)}`}>
+            <Badge className={`text-xs px-2 py-1 shadow-md ${getAuctionStatusColor(auction.status)}`}>
                 Leilão: {getAuctionStatusText(auction.status)}
-            </Badge>
-          )}
-          {sectionBadges.showStatusBadge !== false && (
-            <Badge variant="outline" className={`text-xs px-1.5 py-0.5 bg-background/80`}>
-                Lote: {getAuctionStatusText(lot.status)}
             </Badge>
           )}
           {isViewed && (
@@ -425,9 +419,10 @@ export default function LotCard({ lot, auction, badgeVisibilityConfig, platformS
         <Card className="flex flex-col overflow-hidden h-full shadow-md rounded-lg group">
              <div className="relative aspect-[16/10] bg-muted animate-pulse"></div>
              <CardContent className="p-3 flex-grow space-y-1.5">
-                <div className="h-4 bg-muted rounded w-3/4 animate-pulse mt-2"></div>
-                <div className="h-8 bg-muted rounded w-full animate-pulse mt-1"></div>
+                <div className="h-5 bg-muted rounded w-3/4 animate-pulse mt-2"></div>
                 <div className="h-4 bg-muted rounded w-1/2 animate-pulse mt-1"></div>
+                <div className="h-4 bg-muted rounded w-full animate-pulse mt-1"></div>
+                <div className="h-4 bg-muted rounded w-2/3 animate-pulse mt-1"></div>
              </CardContent>
              <CardFooter className="p-3 border-t flex-col items-start space-y-1.5">
                 <div className="h-6 bg-muted rounded w-1/3 animate-pulse"></div>

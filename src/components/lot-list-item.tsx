@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react'; // Adicionado import do React
@@ -259,7 +258,7 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
             </Link>
             <div className="absolute top-2 left-2 flex flex-wrap items-start gap-1 z-10">
                 {auction && sectionBadges.showStatusBadge !== false && (
-                    <Badge className={`text-xs px-1.5 py-0.5 ${getAuctionStatusColor(auction.status)}`}>
+                    <Badge className={`text-xs px-2 py-1 shadow-md ${getAuctionStatusColor(auction.status)}`}>
                         Leilão: {getAuctionStatusText(auction.status)}
                     </Badge>
                 )}
@@ -297,6 +296,9 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                     Lote {lot.number || lot.id.replace('LOTE','')} - {lot.title}
                   </h3>
                 </Link>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate" title={`ID: ${lot.publicId || lot.id}`}>
+                  ID: {lot.publicId || lot.id}
+                </p>
               </div>
               <div className="flex-shrink-0 flex items-center space-x-0.5">
                 <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleFavoriteToggle}><Heart className={`h-4 w-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
