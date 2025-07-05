@@ -1,3 +1,4 @@
+
 // src/app/admin/lots/lot-form.tsx
 'use client';
 
@@ -20,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
-import type { Lot, LotCategory, Auction, StateInfo, CityInfo, MediaItem, Subcategory, Bem } from '@/types';
+import type { Lot, LotCategory, Auction, Bem, StateInfo, CityInfo, MediaItem, Subcategory } from '@/types';
 import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, ImageIcon, PackagePlus, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { getSubcategoriesByParentIdAction } from '@/app/admin/subcategories/actions';
@@ -28,12 +29,14 @@ import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import { DataTable } from '@/components/ui/data-table';
-import { createColumns as createBemColumns } from '@/app/admin/bens/columns';
+import { createColumns as createBemColumns } from '@/components/admin/lotting/columns';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
 import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
 import { getBens } from '@/app/admin/bens/actions';
 import { getAuction } from '@/app/admin/auctions/actions';
+import SearchResultsFrame from '@/components/search-results-frame';
+import { Badge } from '@/components/ui/badge';
 
 interface LotFormProps {
   initialData?: Lot | null;
@@ -76,6 +79,12 @@ export default function LotForm({
 
   const [isBemModalOpen, setIsBemModalOpen] = React.useState(false);
   const [selectedBemForModal, setSelectedBemForModal] = React.useState<Bem | null>(null);
+
+  // State for linked bens display
+  const [linkedBensSortBy, setLinkedBensSortBy] = React.useState('title_asc');
+  const [linkedBensCurrentPage, setLinkedBensCurrentPage] = React.useState(1);
+  const [linkedBensItemsPerPage, setLinkedBensItemsPerPage] = React.useState(6);
+  const [platformSettings, setPlatformSettings] = React.useState<PlatformSettings | null>(null);
 
   const form = useForm<LotFormValues>({
     resolver: zodResolver(lotFormSchema),
@@ -131,7 +140,7 @@ export default function LotForm({
       if (linkedBem) {
         form.setValue('title', linkedBem.title);
         form.setValue('description', linkedBem.description);
-        form.setValue('categoryId', linkedBem.categoryId || '', { shouldValidate: true });
+        form.setValue('type', linkedBem.categoryId || '', { shouldValidate: true });
         form.setValue('subcategoryId', linkedBem.subcategoryId || null, { shouldValidate: true });
         form.setValue('evaluationValue', linkedBem.evaluationValue);
         form.setValue('imageUrl', linkedBem.imageUrl);
@@ -265,6 +274,73 @@ export default function LotForm({
     return (watchedBemIds || []).map(id => uniqueBens.find(bem => bem.id === id)).filter((b): b is Bem => !!b);
   }, [watchedBemIds, currentAvailableBens, initialData?.bens]);
 
+  const bemSortOptions = [
+    { value: 'title_asc', label: 'Título A-Z' },
+    { value: 'title_desc', label: 'Título Z-A' },
+    { value: 'evaluationValue_asc', label: 'Valor Crescente' },
+    { value: 'evaluationValue_desc', label: 'Valor Decrescente' },
+  ];
+
+  const sortedLinkedBens = React.useMemo(() => {
+    return [...linkedBensDetails].sort((a, b) => {
+      switch (linkedBensSortBy) {
+        case 'title_asc': return a.title.localeCompare(b.title);
+        case 'title_desc': return b.title.localeCompare(a.title);
+        case 'evaluationValue_asc': return (a.evaluationValue || 0) - (b.evaluationValue || 0);
+        case 'evaluationValue_desc': return (b.evaluationValue || 0) - (a.evaluationValue || 0);
+        default: return 0;
+      }
+    });
+  }, [linkedBensDetails, linkedBensSortBy]);
+
+  const paginatedLinkedBens = React.useMemo(() => {
+    const startIndex = (linkedBensCurrentPage - 1) * linkedBensItemsPerPage;
+    return sortedLinkedBens.slice(startIndex, startIndex + linkedBensItemsPerPage);
+  }, [sortedLinkedBens, linkedBensCurrentPage, linkedBensItemsPerPage]);
+
+  const renderBemGridItem = (bem: Bem) => (
+    <Card key={bem.id} className="flex flex-col shadow-sm hover:shadow-md transition-shadow">
+      <CardHeader className="p-3">
+        <div className="relative aspect-video bg-muted rounded-md overflow-hidden">
+          <Image src={bem.imageUrl || 'https://placehold.co/400x300.png'} alt={bem.title} fill className="object-cover" />
+        </div>
+        <CardTitle className="text-sm font-semibold line-clamp-2 leading-tight h-8 mt-2">{bem.title}</CardTitle>
+        <CardDescription className="text-xs">ID: {bem.publicId || bem.id}</CardDescription>
+      </CardHeader>
+      <CardContent className="p-3 flex-grow space-y-1 text-xs">
+        <Badge variant="outline" className={`border-current`}>{bem.status}</Badge>
+        <p className="font-medium">Avaliação: {bem.evaluationValue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'N/A'}</p>
+      </CardContent>
+      <CardFooter className="p-2 border-t flex justify-end items-center gap-1">
+        <Button variant="ghost" size="icon" onClick={() => handleViewBemDetails(bem)} className="h-7 w-7 text-sky-600"><Eye className="h-3.5 w-3.5" /></Button>
+        <Button variant="ghost" size="icon" onClick={() => handleUnlinkBem(bem.id)} className="h-7 w-7 text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
+      </CardFooter>
+    </Card>
+  );
+
+  const renderBemListItem = (bem: Bem) => (
+    <Card key={bem.id} className="shadow-sm hover:shadow-md transition-shadow">
+      <CardContent className="p-3 flex items-center gap-4">
+        <div className="relative w-24 h-16 bg-muted rounded-md overflow-hidden flex-shrink-0">
+          <Image src={bem.imageUrl || 'https://placehold.co/120x90.png'} alt={bem.title} fill className="object-cover" />
+        </div>
+        <div className="flex-grow">
+          <h4 className="font-semibold text-sm">{bem.title}</h4>
+          <p className="text-xs text-muted-foreground">ID: {bem.publicId || bem.id}</p>
+          <Badge variant="outline" className={`text-xs mt-1 border-current`}>{bem.status}</Badge>
+        </div>
+        <div className="flex-shrink-0 text-right">
+          <p className="text-sm font-semibold">{bem.evaluationValue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'N/A'}</p>
+          <p className="text-xs text-muted-foreground">Avaliação</p>
+        </div>
+         <div className="flex items-center flex-shrink-0 ml-4">
+          <Button variant="ghost" size="icon" onClick={() => handleViewBemDetails(bem)} className="h-8 w-8 text-sky-600"><Eye className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => handleUnlinkBem(bem.id)} className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
 
   return (
     <>
@@ -305,10 +381,6 @@ export default function LotForm({
                 </div>
               </FormItem>
             </CardContent>
-             <CardFooter className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
-                <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{submitButtonText}</Button>
-            </CardFooter>
           </Card>
           
           <Card className="max-w-3xl mx-auto shadow-lg mt-6">
@@ -317,28 +389,23 @@ export default function LotForm({
                 <CardDescription>Vincule os bens que compõem este lote. O primeiro bem vinculado definirá o título e preço inicial, se não preenchidos.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <h4 className="text-sm font-semibold mb-2">Bens Vinculados ({linkedBensDetails.length})</h4>
-                  {linkedBensDetails.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">Nenhum bem vinculado a este lote.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {linkedBensDetails.map(bem => (
-                        <div key={bem.id} className="flex items-center justify-between p-2 text-sm border rounded-md bg-secondary/50">
-                          <span className="truncate" title={bem.title}>{bem.title}</span>
-                          <div className="flex items-center flex-shrink-0">
-                            <Button type="button" variant="ghost" size="sm" onClick={() => handleViewBemDetails(bem)}>
-                              <Eye className="h-4 w-4 mr-1 text-sky-600"/> Ver Detalhes
-                            </Button>
-                            <Button type="button" variant="ghost" size="sm" onClick={() => handleUnlinkBem(bem.id)}>
-                              <Trash2 className="h-4 w-4 mr-1 text-destructive"/>Desvincular
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <SearchResultsFrame
+                    items={paginatedLinkedBens}
+                    totalItemsCount={linkedBensDetails.length}
+                    renderGridItem={renderBemGridItem}
+                    renderListItem={renderBemListItem}
+                    sortOptions={bemSortOptions}
+                    initialSortBy={linkedBensSortBy}
+                    onSortChange={setLinkedBensSortBy}
+                    platformSettings={platformSettings}
+                    isLoading={false}
+                    searchTypeLabel="bens vinculados"
+                    currentPage={linkedBensCurrentPage}
+                    itemsPerPage={linkedBensItemsPerPage}
+                    onPageChange={setLinkedBensCurrentPage}
+                    onItemsPerPageChange={setLinkedBensItemsPerPage}
+                    emptyStateMessage="Nenhum bem vinculado a este lote."
+                />
 
                 <Separator />
                 
@@ -359,6 +426,10 @@ export default function LotForm({
                     />
                 </div>
               </CardContent>
+              <CardFooter className="flex justify-end gap-2 border-t pt-6">
+                  <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
+                  <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{submitButtonText}</Button>
+              </CardFooter>
           </Card>
 
         </form>

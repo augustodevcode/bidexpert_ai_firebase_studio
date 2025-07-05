@@ -607,6 +607,54 @@
       "lots": [],
       "totalLots": 1,
       "status": "RASCUNHO"
+    },
+    {
+      "title": "leilao",
+      "description": "",
+      "categoryId": "cat-imoveis",
+      "auctioneer": "Leiloeiro XYZ Oficial",
+      "seller": "Vara Única de Lagarto",
+      "auctionDate": "2025-07-05T20:59:38.755Z",
+      "auctionStages": [
+        {
+          "name": "1ª Praça",
+          "endDate": "2025-07-11T13:00:00.000Z"
+        },
+        {
+          "name": "2ª Praça",
+          "endDate": "2025-07-18T13:00:00.000Z"
+        }
+      ],
+      "automaticBiddingEnabled": false,
+      "allowInstallmentBids": false,
+      "softCloseEnabled": true,
+      "softCloseMinutes": 2,
+      "auctioneerId": "auct-leiloeiro-xyz-oficial",
+      "sellerId": "seller-6ba096d2-d573-46aa-b5cb-006b794e6a38",
+      "id": "auc-eeaf31fc-e798-4be4-8297-8d962127c074",
+      "publicId": "AUC-PUB-42a5ca3b",
+      "createdAt": "2025-07-05T21:07:39.526Z",
+      "updatedAt": "2025-07-05T21:07:39.526Z",
+      "lots": [
+        {
+          "id": "lot-c8590bed-8bce-470f-a621-70fc4f3756b2",
+          "publicId": "LOT-PUB-55176a10",
+          "title": "Trator ",
+          "number": "001",
+          "price": 0,
+          "initialPrice": 0,
+          "bemIds": [
+            "bem-f828c663-bf81-43de-b092-89d5162d59a6"
+          ],
+          "status": "EM_BREVE",
+          "categoryId": "cat-maquinas-e-equipamentos",
+          "auctionId": "auc-eeaf31fc-e798-4be4-8297-8d962127c074",
+          "createdAt": "2025-07-05T21:07:39.526Z",
+          "updatedAt": "2025-07-05T21:07:39.526Z"
+        }
+      ],
+      "totalLots": 1,
+      "status": "RASCUNHO"
     }
   ],
   "sampleBens": [
@@ -819,6 +867,19 @@
       "imageUrl": "https://placehold.co/600x400.png?text=Ranger+2020",
       "createdAt": "2025-07-05T12:00:00Z",
       "updatedAt": "2025-07-05T12:00:00Z"
+    },
+    {
+      "title": "Trator ",
+      "status": "LOTEADO",
+      "categoryId": "cat-maquinas-e-equipamentos",
+      "judicialProcessId": "proc-e86d0018-b490-45a5-b83a-6a411cc0696a",
+      "sellerId": "seller-6ba096d2-d573-46aa-b5cb-006b794e6a38",
+      "hasKey": false,
+      "isOccupied": false,
+      "id": "bem-f828c663-bf81-43de-b092-89d5162d59a6",
+      "publicId": "BEM-PUB-0d28c81a",
+      "createdAt": "2025-07-05T21:06:50.729Z",
+      "updatedAt": "2025-07-05T21:06:50.729Z"
     }
   ],
   "sampleBids": [
@@ -1898,6 +1959,22 @@
       "endDate": "2025-07-01T03:52:47.479Z",
       "createdAt": "2025-07-05T12:10:00Z",
       "updatedAt": "2025-07-05T14:05:00Z"
+    },
+    {
+      "id": "lot-c8590bed-8bce-470f-a621-70fc4f3756b2",
+      "publicId": "LOT-PUB-55176a10",
+      "title": "Trator ",
+      "number": "001",
+      "price": 0,
+      "initialPrice": 0,
+      "bemIds": [
+        "bem-f828c663-bf81-43de-b092-89d5162d59a6"
+      ],
+      "status": "EM_BREVE",
+      "categoryId": "cat-maquinas-e-equipamentos",
+      "auctionId": "auc-eeaf31fc-e798-4be4-8297-8d962127c074",
+      "createdAt": "2025-07-05T21:07:39.526Z",
+      "updatedAt": "2025-07-05T21:07:39.526Z"
     }
   ],
   "sampleMediaItems": [
