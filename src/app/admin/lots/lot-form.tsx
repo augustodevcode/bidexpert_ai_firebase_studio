@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
 import type { Lot, LotCategory, Auction, StateInfo, CityInfo, MediaItem, Subcategory, Bem } from '@/types';
 import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, ImageIcon, PackagePlus, Eye } from 'lucide-react';
@@ -28,10 +28,12 @@ import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import { DataTable } from '@/components/ui/data-table';
-import { createColumns as createBemColumns } from '@/app/admin/lotting/columns';
+import { createColumns as createBemColumns } from '@/app/admin/bens/columns'; // Renamed to avoid conflict
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
 import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
+import { getBens as getBensForLotting } from '@/app/admin/bens/actions'; // Import the correct action
+import { getAuction } from '@/app/admin/auctions/actions';
 
 interface LotFormProps {
   initialData?: Lot | null;
@@ -44,7 +46,6 @@ interface LotFormProps {
   formTitle: string;
   formDescription: string;
   submitButtonText: string;
-  defaultAuctionId?: string;
 }
 
 export default function LotForm({
@@ -58,10 +59,10 @@ export default function LotForm({
   formTitle,
   formDescription,
   submitButtonText,
-  defaultAuctionId,
 }: LotFormProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [filteredCities, setFilteredCities] = React.useState<CityInfo[]>([]);
   
@@ -69,6 +70,7 @@ export default function LotForm({
   const [availableSubcategories, setAvailableSubcategories] = React.useState<Subcategory[]>([]);
   const [isLoadingSubcategories, setIsLoadingSubcategories] = React.useState(false);
   const [bemRowSelection, setBemRowSelection] = React.useState({});
+  const [currentAvailableBens, setCurrentAvailableBens] = React.useState<Bem[]>(initialAvailableBens);
 
   const [isBemModalOpen, setIsBemModalOpen] = React.useState(false);
   const [selectedBemForModal, setSelectedBemForModal] = React.useState<Bem | null>(null);
@@ -77,7 +79,7 @@ export default function LotForm({
     resolver: zodResolver(lotFormSchema),
     defaultValues: {
       title: initialData?.title || '',
-      auctionId: defaultAuctionId || initialData?.auctionId || '',
+      auctionId: initialData?.auctionId || searchParams.get('auctionId') || '',
       description: initialData?.description || '',
       price: initialData?.price || 0,
       initialPrice: initialData?.initialPrice || undefined,
@@ -96,30 +98,54 @@ export default function LotForm({
     },
   });
   
+  const watchedAuctionId = useWatch({ control: form.control, name: 'auctionId' });
   const watchedBemIds = useWatch({ control: form.control, name: 'bemIds' });
+  
+  React.useEffect(() => {
+    const fetchBensForAuction = async () => {
+      if (!watchedAuctionId) {
+        setCurrentAvailableBens([]);
+        return;
+      }
+      
+      const auction = await getAuction(watchedAuctionId);
+      if (!auction) return;
+      
+      const filterForBens = auction.auctionType === 'JUDICIAL' && auction.judicialProcessId
+        ? { judicialProcessId: auction.judicialProcessId }
+        : auction.sellerId ? { sellerId: auction.sellerId } : {};
+        
+      const bens = await getBensForLotting(filterForBens);
+      setCurrentAvailableBens(bens);
+    };
+
+    fetchBensForAuction();
+  }, [watchedAuctionId]);
+
 
   React.useEffect(() => {
     if (watchedBemIds?.length === 1 && !form.getValues('title')) {
-      const linkedBem = initialAvailableBens.find(b => b.id === watchedBemIds[0]) || initialData?.bens?.find(b => b.id === watchedBemIds[0]);
+      const linkedBem = currentAvailableBens.find(b => b.id === watchedBemIds[0]) || initialData?.bens?.find(b => b.id === watchedBemIds[0]);
       if (linkedBem) {
         form.setValue('title', linkedBem.title);
+        form.setValue('description', linkedBem.description);
+        form.setValue('categoryId', linkedBem.categoryId, { shouldValidate: true });
+        form.setValue('subcategoryId', linkedBem.subcategoryId, { shouldValidate: true });
+        form.setValue('evaluationValue', linkedBem.evaluationValue);
+        form.setValue('imageUrl', linkedBem.imageUrl);
         if(!form.getValues('price') || form.getValues('price') === 0) {
             form.setValue('price', linkedBem.evaluationValue || 0);
         }
       }
+    } else if (watchedBemIds && watchedBemIds.length > 1 && !form.getValues('title')) {
+      form.setValue('title', `Lote com ${watchedBemIds.length} bens`);
     }
-  }, [watchedBemIds, initialAvailableBens, initialData?.bens, form]);
+  }, [watchedBemIds, currentAvailableBens, initialData?.bens, form]);
 
   const selectedStateId = useWatch({ control: form.control, name: 'stateId' });
   const selectedCategoryId = useWatch({ control: form.control, name: 'type' });
   const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
   
-  React.useEffect(() => {
-    if (defaultAuctionId) {
-      form.setValue('auctionId', defaultAuctionId);
-    }
-  }, [defaultAuctionId, form]);
-
   React.useEffect(() => {
     if (selectedStateId && allCities) {
       setFilteredCities(allCities.filter(city => city.stateId === selectedStateId));
@@ -185,7 +211,7 @@ export default function LotForm({
       const result = await onSubmitAction(values);
       if (result.success) {
         toast({ title: 'Sucesso!', description: result.message });
-        router.push(defaultAuctionId ? `/admin/auctions/${defaultAuctionId}/edit` : '/admin/lots');
+        router.push(watchedAuctionId ? `/admin/auctions/${watchedAuctionId}/edit` : '/admin/lots');
         router.refresh();
       } else {
         toast({ title: 'Erro', description: result.message, variant: 'destructive' });
@@ -206,8 +232,8 @@ export default function LotForm({
   
   const availableBensForTable = React.useMemo(() => {
     const linkedBemIds = new Set(watchedBemIds || []);
-    return initialAvailableBens.filter(bem => !linkedBemIds.has(bem.id) && bem.status === 'DISPONIVEL');
-  }, [initialAvailableBens, watchedBemIds]);
+    return currentAvailableBens.filter(bem => !linkedBemIds.has(bem.id));
+  }, [currentAvailableBens, watchedBemIds]);
 
   const handleLinkBens = () => {
     const selectedBemIds = Object.keys(bemRowSelection)
@@ -232,10 +258,10 @@ export default function LotForm({
   };
   
   const linkedBensDetails = React.useMemo(() => {
-    const allPossibleBens = [...initialAvailableBens, ...(initialData?.bens || [])];
+    const allPossibleBens = [...currentAvailableBens, ...(initialData?.bens || [])];
     const uniqueBens = Array.from(new Map(allPossibleBens.map(item => [item.id, item])).values());
     return (watchedBemIds || []).map(id => uniqueBens.find(bem => bem.id === id)).filter((b): b is Bem => !!b);
-  }, [watchedBemIds, initialAvailableBens, initialData?.bens]);
+  }, [watchedBemIds, currentAvailableBens, initialData?.bens]);
 
 
   return (
@@ -351,3 +377,4 @@ export default function LotForm({
     </>
   );
 }
+

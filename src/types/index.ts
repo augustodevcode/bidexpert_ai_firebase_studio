@@ -295,6 +295,40 @@ export interface Bem {
   longitude?: number;
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
+
+  // Vehicle Specific
+  plate?: string;
+  make?: string;
+  model?: string;
+  year?: number;
+  modelYear?: number;
+  mileage?: number;
+  color?: string;
+  fuelType?: 'Gasolina' | 'Etanol' | 'Diesel' | 'Flex' | 'Elétrico' | 'Híbrido';
+  transmissionType?: 'Manual' | 'Automática' | 'CVT' | 'Automatizada';
+  vin?: string; // Vehicle Identification Number
+  hasKey?: boolean;
+  engineDetails?: string;
+
+  // Real Estate Specific
+  propertyRegistrationNumber?: string; // Matrícula do imóvel
+  isOccupied?: boolean;
+  area?: number; // m²
+  bedrooms?: number;
+  bathrooms?: number;
+  parkingSpaces?: number;
+  amenities?: string[]; // e.g., ['Piscina', 'Churrasqueira']
+  propertyType?: 'Apartamento' | 'Casa' | 'Terreno' | 'Comercial' | 'Rural';
+
+  // Machinery Specific
+  serialNumber?: string;
+  hoursUsed?: number;
+
+  // Livestock Specific
+  breed?: string; // Raça
+  sex?: 'Macho' | 'Fêmea';
+  age?: string; // e.g., "3 anos", "12 meses"
+  vaccinationStatus?: string;
 }
 export type BemFormData = Omit<Bem, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'galleryImageUrls' | 'mediaItemIds' | 'sellerName'>;
 
@@ -1117,3 +1151,4 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
+

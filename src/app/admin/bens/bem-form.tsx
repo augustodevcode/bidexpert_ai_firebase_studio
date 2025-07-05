@@ -21,11 +21,13 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { bemFormSchema, type BemFormData } from './bem-form-schema';
 import type { Bem, LotCategory, JudicialProcess, Subcategory, MediaItem, SellerProfileInfo } from '@/types';
-import { Loader2, Save, Package, Gavel, Image as ImageIcon, Users } from 'lucide-react';
+import { Loader2, Save, Package, Gavel, Image as ImageIcon, Users, Car, Building, Tractor, PawPrint, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { getSubcategoriesByParentIdAction } from '../subcategories/actions';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
+import { Switch } from '@/components/ui/switch';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface BemFormProps {
   initialData?: Partial<Bem> | null;
@@ -33,7 +35,7 @@ interface BemFormProps {
   categories: LotCategory[];
   sellers: SellerProfileInfo[];
   onSubmitAction: (data: BemFormData) => Promise<{ success: boolean; message: string; bemId?: string }>;
-  onSuccess?: () => void;
+  onSuccess?: (bemId?: string) => void;
   onCancel?: () => void;
   formTitle: string;
   formDescription: string;
@@ -69,27 +71,27 @@ export default function BemForm({
   const form = useForm<BemFormData>({
     resolver: zodResolver(bemFormSchema),
     defaultValues: {
-      title: initialData?.title || '',
-      description: initialData?.description || '',
+      ...initialData,
       status: initialData?.status || 'DISPONIVEL',
       categoryId: initialData?.categoryId || '',
-      subcategoryId: initialData?.subcategoryId || undefined,
-      judicialProcessId: initialData?.judicialProcessId || undefined,
-      sellerId: initialData?.sellerId || null,
       evaluationValue: initialData?.evaluationValue || undefined,
-      imageUrl: initialData?.imageUrl || '',
-      imageMediaId: initialData?.imageMediaId || null,
-      dataAiHint: initialData?.dataAiHint || '',
-      locationCity: initialData?.locationCity || '',
-      locationState: initialData?.locationState || '',
-      address: initialData?.address || '',
-      latitude: initialData?.latitude || undefined,
-      longitude: initialData?.longitude || undefined,
+      year: initialData?.year || undefined,
+      modelYear: initialData?.modelYear || undefined,
+      mileage: initialData?.mileage || undefined,
+      area: initialData?.area || undefined,
+      bedrooms: initialData?.bedrooms || undefined,
+      bathrooms: initialData?.bathrooms || undefined,
+      parkingSpaces: initialData?.parkingSpaces || undefined,
+      hoursUsed: initialData?.hoursUsed || undefined,
+      hasKey: initialData?.hasKey ?? false,
+      isOccupied: initialData?.isOccupied ?? false,
     },
   });
 
   const selectedCategoryId = useWatch({ control: form.control, name: 'categoryId' });
   const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
+
+  const selectedCategory = categories.find(c => c.id === selectedCategoryId);
 
   React.useEffect(() => {
     const fetchSubcats = async (parentId: string) => {
@@ -140,7 +142,7 @@ export default function BemForm({
       if (result.success) {
         toast({ title: 'Sucesso!', description: result.message });
         if (onSuccess) {
-          onSuccess();
+          onSuccess(result.bemId);
         } else {
           router.push('/admin/bens');
           router.refresh();
@@ -173,6 +175,7 @@ export default function BemForm({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-6">
+              {/* Core Info */}
               <FormField name="title" control={form.control} render={({ field }) => (<FormItem><FormLabel>Título/Nome do Bem</FormLabel><FormControl><Input placeholder="Ex: Apartamento 3 quartos, Trator Massey Ferguson" {...field} /></FormControl><FormMessage /></FormItem>)} />
               <FormField name="description" control={form.control} render={({ field }) => (<FormItem><FormLabel>Descrição Detalhada</FormLabel><FormControl><Textarea placeholder="Descreva todas as características, estado, etc." {...field} rows={5} /></FormControl><FormMessage /></FormItem>)} />
               <div className="grid md:grid-cols-2 gap-4">
@@ -183,34 +186,42 @@ export default function BemForm({
                 <FormField name="categoryId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Categoria</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione a categoria" /></SelectTrigger></FormControl><SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField name="subcategoryId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Subcategoria (Opcional)</FormLabel><Select onValueChange={field.onChange} value={field.value ?? undefined} disabled={isLoadingSubcategories || availableSubcategories.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={isLoadingSubcategories ? 'Carregando...' : 'Selecione a subcategoria'} /></SelectTrigger></FormControl><SelectContent>{availableSubcategories.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
               </div>
-              <FormField name="judicialProcessId" control={form.control} render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Processo Judicial (Opcional)</FormLabel>
-                  <Select onValueChange={(value) => field.onChange(value === 'none' ? null : value)} value={field.value ?? 'none'}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Vincule a um processo judicial" /></SelectTrigger></FormControl>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhum</SelectItem>
-                      {processes.map(p => <SelectItem key={p.id} value={p.id}>{p.processNumber}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>Vincule este bem a um processo judicial previamente cadastrado.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField name="sellerId" control={form.control} render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2"><Users className="h-4 w-4" /> Comitente do Bem (Opcional)</FormLabel>
-                   <Select onValueChange={(value) => field.onChange(value === 'none' ? null : value)} value={field.value || 'none'}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Padrão do Processo/Leilão" /></SelectTrigger></FormControl>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhum</SelectItem>
-                      {sellers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>Selecione um comitente específico para este bem. Se "Nenhum" for selecionado, ele herdará o comitente do processo ou do leilão.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )} />
+              
+              {/* Ownership Info */}
+              <Accordion type="single" collapsible defaultValue="item-1">
+                <AccordionItem value="item-1">
+                  <AccordionTrigger className="text-md font-medium">Origem / Proprietário</AccordionTrigger>
+                  <AccordionContent className="space-y-4 pt-2">
+                    <FormField name="judicialProcessId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Se aplicável)</FormLabel><Select onValueChange={(value) => field.onChange(value === 'none' ? null : value)} value={field.value ?? 'none'}><FormControl><SelectTrigger><SelectValue placeholder="Vincule a um processo judicial" /></SelectTrigger></FormControl><SelectContent><SelectItem value="none">Nenhum</SelectItem>{processes.map(p => <SelectItem key={p.id} value={p.id}>{p.processNumber}</SelectItem>)}</SelectContent></Select><FormDescription>Para bens de origem judicial.</FormDescription><FormMessage /></FormItem>)} />
+                    <FormField name="sellerId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor (Se aplicável)</FormLabel><Select onValueChange={(value) => field.onChange(value === 'none' ? null : value)} value={field.value || 'none'}><FormControl><SelectTrigger><SelectValue placeholder="Vincule a um comitente" /></SelectTrigger></FormControl><SelectContent><SelectItem value="none">Nenhum</SelectItem>{sellers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select><FormDescription>Para bens de venda direta, extrajudicial, etc.</FormDescription><FormMessage /></FormItem>)} />
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+              
+              {/* Category Specific Fields */}
+              {selectedCategory && (
+                <Accordion type="single" collapsible defaultValue="item-1">
+                  {/* Veículos */}
+                  {selectedCategory.slug.includes('veiculo') && (
+                    <AccordionItem value="vehicle-details"><AccordionTrigger><Car className="h-4 w-4 mr-2" /> Detalhes do Veículo</AccordionTrigger><AccordionContent className="space-y-4 pt-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3"><FormField control={form.control} name="year" render={({ field }) => (<FormItem><FormLabel>Ano Fab.</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField control={form.control} name="modelYear" render={({ field }) => (<FormItem><FormLabel>Ano Mod.</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField control={form.control} name="mileage" render={({ field }) => (<FormItem><FormLabel>KM</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField control={form.control} name="plate" render={({ field }) => (<FormItem><FormLabel>Placa</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /></div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3"><FormField control={form.control} name="make" render={({ field }) => (<FormItem><FormLabel>Marca</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField control={form.control} name="model" render={({ field }) => (<FormItem><FormLabel>Modelo</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField control={form.control} name="color" render={({ field }) => (<FormItem><FormLabel>Cor</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /></div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3"><FormField control={form.control} name="fuelType" render={({ field }) => (<FormItem><FormLabel>Combustível</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField control={form.control} name="transmissionType" render={({ field }) => (<FormItem><FormLabel>Transmissão</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField control={form.control} name="hasKey" render={({ field }) => (<FormItem className="flex flex-col pt-2"><FormLabel>Possui Chave?</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} /></div>
+                      <FormField control={form.control} name="vin" render={({ field }) => (<FormItem><FormLabel>VIN / Chassi</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+                    </AccordionContent></AccordionItem>
+                  )}
+                  {/* Imóveis */}
+                  {selectedCategory.slug.includes('imoveis') && (
+                     <AccordionItem value="real-estate-details"><AccordionTrigger><Building className="h-4 w-4 mr-2" /> Detalhes do Imóvel</AccordionTrigger><AccordionContent className="space-y-4 pt-4">
+                      <FormField control={form.control} name="propertyRegistrationNumber" render={({ field }) => (<FormItem><FormLabel>Nº Matrícula</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3"><FormField control={form.control} name="bedrooms" render={({ field }) => (<FormItem><FormLabel>Quartos</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField control={form.control} name="bathrooms" render={({ field }) => (<FormItem><FormLabel>Banheiros</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField control={form.control} name="parkingSpaces" render={({ field }) => (<FormItem><FormLabel>Vagas</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField control={form.control} name="area" render={({ field }) => (<FormItem><FormLabel>Área (m²)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /></div>
+                       <FormField control={form.control} name="isOccupied" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Imóvel Ocupado?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                     </AccordionContent></AccordionItem>
+                  )}
+                </Accordion>
+              )}
+
+
               <FormItem><FormLabel>Imagem Principal</FormLabel><div className="flex items-center gap-4"><div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{imageUrlPreview ? (<Image src={imageUrlPreview} alt="Prévia da Imagem" fill className="object-contain" data-ai-hint="previa imagem bem" />) : (<div className="flex items-center justify-center h-full text-muted-foreground"><ImageIcon className="h-8 w-8" /></div>)}</div><div className="flex-grow space-y-2"><Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{imageUrlPreview ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button><FormField control={form.control} name="imageUrl" render={({ field }) => (<FormControl><Input type="text" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} className="text-xs h-8" /></FormControl>)}/></div></div></FormItem>
             </CardContent>
             <CardFooter className="flex justify-end gap-2">
@@ -224,3 +235,4 @@ export default function BemForm({
     </>
   );
 }
+
