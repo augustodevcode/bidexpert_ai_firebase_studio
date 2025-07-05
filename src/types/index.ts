@@ -388,7 +388,7 @@ export interface Lot {
 }
 
 export type LotFormData = Omit<Lot,
-  'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'endDate' | 'bidsCount' | 'price' |
+  'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'endDate' | 'bidsCount' | 'price' | 'status' | 'lotSpecificAuctionDate' | 'secondAuctionDate' |
   'auctionPublicId' | 'isFavorite' | 'views' | 'auctionName' | 'cityName' | 'stateUf' | 'subcategoryName' | 'auctionDate' |
   'bens' // Bens are managed via lotting page, not directly in the form
 > & {
@@ -401,6 +401,7 @@ export type LotFormData = Omit<Lot,
 
 export type LotDbData = Omit<LotFormData, 'type'> & {
   categoryId?: string;
+  status: LotStatus;
 };
 
 
@@ -414,7 +415,25 @@ export type BidInfo = {
   timestamp: AnyTimestamp;
 };
 
-// GAP 4.2.5
+export type UserBidStatus = 'GANHANDO' | 'PERDENDO' | 'SUPERADO' | 'ARREMATADO' | 'NAO_ARREMATADO';
+export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO';
+
+export interface UserWin {
+  id: string;
+  lotId: string;
+  lot: Lot; 
+  userId: string;
+  winningBidAmount: number;
+  winDate: AnyTimestamp;
+  paymentStatus: PaymentStatus;
+  invoiceUrl?: string; 
+}
+
+export interface UserBid extends BidInfo {
+  lot: Lot;
+  bidStatus: UserBidStatus;
+}
+
 export interface UserLotMaxBid {
   id: string;
   userId: string;
@@ -476,26 +495,6 @@ export interface UserDocument {
   rejectionReason?: string;
   documentType: DocumentType; 
 }
-
-export type UserBidStatus = 'GANHANDO' | 'PERDENDO' | 'SUPERADO' | 'ARREMATADO' | 'NAO_ARREMATADO';
-export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO';
-
-export interface UserWin {
-  id: string;
-  lotId: string;
-  lot: Lot; 
-  userId: string;
-  winningBidAmount: number;
-  winDate: AnyTimestamp;
-  paymentStatus: PaymentStatus;
-  invoiceUrl?: string; 
-}
-
-export interface UserBid extends BidInfo {
-  lot: Lot;
-  bidStatus: UserBidStatus;
-}
-
 
 export interface UserProfileData {
   uid: string;
@@ -778,6 +777,35 @@ export interface Role {
 
 export type RoleFormData = Omit<Role, 'id' | 'name_normalized' | 'createdAt' | 'updatedAt'>;
 
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  content: string; // Markdown or HTML content
+  authorName: string;
+  authorId?: string;
+  category: string;
+  tags?: string[];
+  imageUrl?: string;
+  imageMediaId?: string;
+  dataAiHint?: string;
+  isPublished: boolean;
+  publishedAt?: AnyTimestamp;
+  createdAt: AnyTimestamp;
+  updatedAt: AnyTimestamp;
+}
+
+export type BlogPostFormData = Omit<BlogPost, 'id' | 'slug' | 'createdAt' | 'updatedAt' | 'publishedAt'>;
+
+export interface Notification {
+  id: string;
+  userId: string;
+  message: string;
+  link?: string;
+  isRead: boolean;
+  createdAt: AnyTimestamp;
+}
+
 export interface IStorageAdapter {
   upload(fileName: string, contentType: string, buffer: Buffer): Promise<{ publicUrl: string; storagePath: string; }>;
   delete(storagePath: string): Promise<{ success: boolean; message: string; }>;
@@ -1031,6 +1059,14 @@ export interface IDatabaseAdapter {
   getPlatformSettings(): Promise<PlatformSettings>;
   updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }>;
 
+  getNotificationsForUser(userId: string): Promise<Notification[]>;
+
+  getBlogPosts(): Promise<BlogPost[]>;
+  getBlogPost(idOrSlug: string): Promise<BlogPost | null>;
+  createBlogPost(data: BlogPostFormData): Promise<{ success: boolean; message: string; postId?: string }>;
+  updateBlogPost(id: string, data: Partial<BlogPostFormData>): Promise<{ success: boolean; message: string }>;
+  deleteBlogPost(id: string): Promise<{ success: boolean; message: string; }>;
+  
   // New Judicial CRUDs
   getCourts(): Promise<Court[]>;
   getCourt(id: string): Promise<Court | null>;
@@ -1069,170 +1105,3 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
-
-```
-- tailwind.config.js:
-```js
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  darkMode: ["class"],
-  content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    container: {
-      center: true,
-      padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
-    },
-    extend: {
-      colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
-      },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-      },
-      keyframes: {
-        "accordion-down": {
-          from: { height: 0 },
-          to: { height: "var(--radix-accordion-content-height)" },
-        },
-        "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: 0 },
-        },
-      },
-      animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
-      },
-    },
-  },
-  plugins: [require("tailwindcss-animate")],
-}
-```
-- tailwind.config.ts:
-```ts
-import type { Config } from 'tailwindcss';
-
-const config = {
-  darkMode: ['class'],
-  content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  prefix: '',
-  theme: {
-    container: {
-      center: true,
-      padding: '2rem',
-      screens: {
-        '2xl': '1400px',
-      },
-    },
-    extend: {
-      fontFamily: {
-        body: ['"Open Sans"', 'sans-serif'],
-        headline: ['"Open Sans"', 'sans-serif'],
-        code: ['monospace'],
-      },
-      colors: {
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
-        primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
-        },
-        secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
-        },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
-        },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
-        },
-        accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
-        },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
-        },
-        card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
-        },
-      },
-      borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
-      },
-      keyframes: {
-        'accordion-down': {
-          from: { height: '0' },
-          to: { height: 'var(--radix-accordion-content-height)' },
-        },
-        'accordion-up': {
-          from: { height: 'var(--radix-accordion-content-height)' },
-          to: { height: '0' },
-        },
-      },
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
-      },
-    },
-  },
-  plugins: [require('tailwindcss-animate')],
-} satisfies Config;
-
-export default config;
-```

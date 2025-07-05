@@ -1,9 +1,8 @@
-
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Briefcase, LayoutDashboard, ListChecks, DollarSign, ShoppingCart } from 'lucide-react';
+import { Briefcase, LayoutDashboard, ListChecks, DollarSign, ShoppingCart, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -31,6 +30,12 @@ const sidebarNavItems = [
     href: '/consignor-dashboard/direct-sales',
     icon: ShoppingCart,
     disabled: true, // Placeholder
+  },
+   {
+    title: 'Relatórios',
+    href: '/consignor-dashboard/reports',
+    icon: BarChart3,
+    disabled: false,
   },
   {
     title: 'Financeiro',

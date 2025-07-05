@@ -1,10 +1,9 @@
-
 // src/components/layout/admin-sidebar.tsx
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, Boxes, Rocket, FileUp } from 'lucide-react';
+import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, Boxes, Rocket, FileUp, BarChart, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -27,6 +26,11 @@ const auctionManagementItems = [
   { title: 'Subcategorias', href: '/admin/subcategories', icon: Layers },
 ];
 
+const contentManagementItems = [
+    { title: 'Blog', href: '/admin/blog', icon: BookOpen },
+    { title: 'Biblioteca de Mídia', href: '/admin/media', icon: Library },
+]
+
 const judicialManagementItems = [
     { title: 'Tribunais', href: '/admin/courts', icon: Scale },
     { title: 'Comarcas', href: '/admin/judicial-districts', icon: Map, disabled: false },
@@ -35,7 +39,6 @@ const judicialManagementItems = [
 ]
 
 const platformManagementItems = [
-  { title: 'Biblioteca de Mídia', href: '/admin/media', icon: Library },
   { title: 'Comitentes', href: '/admin/sellers', icon: Users },
   { title: 'Leiloeiros', href: '/admin/auctioneers', icon: Landmark },
   { title: 'Estados', href: '/admin/states', icon: Map },
@@ -43,6 +46,7 @@ const platformManagementItems = [
   { title: 'Usuários', href: '/admin/users', icon: Users },
   { title: 'Perfis (Roles)', href: '/admin/roles', icon: ShieldCheck },
   { title: 'Configurações', href: '/admin/settings', icon: Settings },
+  { title: 'Relatórios', href: '/admin/reports', icon: BarChart },
 ];
 
 const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; title: string; icon: React.ElementType; disabled?: boolean }; pathname: string; onLinkClick?: () => void; }) => (
@@ -79,11 +83,17 @@ export default function AdminSidebar() {
         <nav className="p-2 space-y-1">
           {topLevelNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
           
-          <Accordion type="multiple" className="w-full" defaultValue={['auction-management', 'judicial-management', 'platform-management']}>
+          <Accordion type="multiple" className="w-full" defaultValue={['auction-management', 'judicial-management', 'platform-management', 'content-management']}>
               <AccordionItem value="auction-management" className="border-b-0">
                   <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão de Leilões</AccordionTrigger>
                   <AccordionContent className="pt-1 space-y-1">
                       {auctionManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                  </AccordionContent>
+              </AccordionItem>
+               <AccordionItem value="content-management" className="border-b-0">
+                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Conteúdo e Mídia</AccordionTrigger>
+                  <AccordionContent className="pt-1 space-y-1">
+                      {contentManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
                   </AccordionContent>
               </AccordionItem>
               <AccordionItem value="judicial-management" className="border-b-0">

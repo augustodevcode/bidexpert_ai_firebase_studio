@@ -1,10 +1,9 @@
-
 // src/lib/sample-data.ts
 import type {
   Bem, Lot, LotCategory, Auction, AuctioneerProfileInfo, SellerProfileInfo,
   StateInfo, CityInfo, UserProfileWithPermissions, Role, MediaItem, Subcategory,
   PlatformSettings, DirectSaleOffer, UserWin, BidInfo, LotQuestion, Review, UserLotMaxBid, AuctionStage,
-  UserDocument, DocumentType, Court, JudicialDistrict, JudicialBranch, JudicialProcess, ProcessParty
+  UserDocument, DocumentType, Court, JudicialDistrict, JudicialBranch, JudicialProcess, ProcessParty, Notification, BlogPost
 } from '@/types';
 import { slugify } from './sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,7 +12,7 @@ import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 // ==================================
 // PURE HELPER FUNCTIONS
 // ==================================
-const randomItem = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+const randomItem = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)]);
 const randomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
 const randomDate = (start: Date, end: Date): Date => new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 const randomCoord = (base: number, range: number): number => base + (Math.random() - 0.5) * range;
@@ -319,27 +318,26 @@ export const sampleBens: Bem[] = [
     { id: `bem-5`, publicId: `BEM-PUB-5`, title: `Trator Valtra A950 4x4 2018`, judicialProcessId: undefined, status: 'DISPONIVEL', categoryId: 'cat-maquinas-e-equipamentos', subcategoryId: 'subcat-maquinas-agricolas', evaluationValue: 95000, imageUrl: 'https://placehold.co/600x400.png?text=Trator+Valtra', imageMediaId: 'media-trator-valtra', createdAt: new Date(), updatedAt: new Date() },
 ];
 
-export const sampleLots: Lot[] = [
-  { id: 'lote-1', publicId: 'LOTE-PUB-1', auctionId: 'auc-3', title: 'Lote Agrupado: Mobiliário de Escritório', number: '001', status: 'ABERTO_PARA_LANCES', bemIds: ['bem-1', 'bem-2'], price: 400, initialPrice: 350, bidsCount: 3, endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) },
-  { id: 'lote-2', publicId: 'LOTE-PUB-2', auctionId: 'auc-1', title: 'Veículo Fiat Uno do Processo X', number: '002', status: 'ABERTO_PARA_LANCES', bemIds: ['bem-3'], price: 7500, initialPrice: 7000, bidsCount: 8, endDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000) },
-  { id: 'lote-3', publicId: 'LOTE-PUB-3', auctionId: 'auc-2', title: 'Imóvel Residencial em Campinas', number: '101', status: 'EM_BREVE', bemIds: ['bem-4'], price: 250000, initialPrice: 250000, bidsCount: 0, endDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000) },
-  { id: 'lote-4', publicId: 'LOTE-PUB-4', auctionId: 'auc-4', title: 'Frota de 5 veículos Fiat Cronos', number: 'TP01', status: 'ABERTO', bemIds: [], price: 150000, initialPrice: 150000, bidsCount: 0, endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000) },
-  { id: 'lote-5', publicId: 'LOTE-PUB-5', auctionId: 'auc-5', title: 'Trator Valtra Usado', number: '01', status: 'ABERTO_PARA_LANCES', bemIds: ['bem-5'], price: 85000, initialPrice: 80000, bidsCount: 2, endDate: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000) },
-];
-
-
-export const sampleAuctions: Auction[] = [
-  { id: 'auc-1', publicId: 'AUC-JUD-SP-1', title: 'Leilão Judicial da 1ª Vara Cível de SP', status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), auctionType: 'JUDICIAL', category: 'Bens Diversos', auctioneer: 'Augusto Leiloeiro Oficial', seller: 'Tribunal de Justiça do Estado de São Paulo', totalLots: 1, createdAt: new Date(), updatedAt: new Date(), lots: sampleLots.filter(l => l.auctionId === 'auc-1') },
-  { id: 'auc-2', publicId: 'AUC-EXTRA-MRV-1', title: 'Leilão de Imóveis MRV Campinas', status: 'EM_BREVE', auctionDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000), auctionType: 'EXTRAJUDICIAL', category: 'Imóveis', auctioneer: 'Sodré Santoro Leilões', seller: 'Construtora MRV', totalLots: 1, createdAt: new Date(), updatedAt: new Date(), lots: sampleLots.filter(l => l.auctionId === 'auc-2') },
-  { id: 'auc-3', publicId: 'AUC-JUD-TRT-1', title: 'Leilão Trabalhista de Bens da Meta Metais', status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), endDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000), auctionType: 'JUDICIAL', category: 'Bens Diversos', auctioneer: 'Freitas Leiloeiro Oficial', seller: 'Tribunal Regional do Trabalho da 2ª Região', totalLots: 1, createdAt: new Date(), updatedAt: new Date(), lots: sampleLots.filter(l => l.auctionId === 'auc-3') },
-  { id: 'auc-4', publicId: 'AUC-TP-CAMPINAS-1', title: 'Tomada de Preços - Renovação de Frota', status: 'ABERTO', auctionDate: new Date(), endDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000), auctionType: 'TOMADA_DE_PRECOS', category: 'Veículos', auctioneer: 'Zukerman Leilões', seller: 'Prefeitura de Campinas', totalLots: 1, createdAt: new Date(), updatedAt: new Date(), lots: sampleLots.filter(l => l.auctionId === 'auc-4') },
-  { id: 'auc-5', publicId: 'AUC-EXTRA-AGRO-1', title: 'Leilão de Máquinas Agrícolas', status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), auctionType: 'EXTRAJUDICIAL', category: 'Máquinas e Equipamentos', auctioneer: 'Pestana Leilões', seller: 'Fazenda Agro Brasil', totalLots: 1, createdAt: new Date(), updatedAt: new Date(), lots: sampleLots.filter(l => l.auctionId === 'auc-5') }
-];
+export const sampleLots: Lot[] = [];
+export const sampleAuctions: Auction[] = [];
 
 export const sampleDirectSaleOffers: DirectSaleOffer[] = [
     { id: 'ds-1', publicId: 'DS-PUB-1', title: 'Sofá Retrátil 3 Lugares', description: 'Sofá em suede cinza, em ótimo estado, pouco uso. Medidas: 2.20m x 1.10m.', imageUrl: 'https://placehold.co/800x600/64748b/ffffff/png?text=Sofa', offerType: 'BUY_NOW', price: 1200, category: 'Casa e Decoração', sellerName: 'João da Silva (Particular)', status: 'ACTIVE', createdAt: new Date(), updatedAt: new Date() },
     { id: 'ds-2', publicId: 'DS-PUB-2', title: 'Geladeira Brastemp Frost Free 400L', description: 'Geladeira com freezer, funcionando perfeitamente. Algumas marcas de uso na porta.', imageUrl: 'https://placehold.co/800x600/e2e8f0/000000/png?text=Geladeira', offerType: 'ACCEPTS_PROPOSALS', minimumOfferPrice: 800, category: 'Casa e Decoração', sellerName: 'Maria Oliveira (Particular)', status: 'ACTIVE', createdAt: new Date(), updatedAt: new Date() }
 ];
+
+export const sampleBlogPosts: BlogPost[] = [
+  { id: 'blog-1', slug: 'como-comprar-imovel-leilao', title: 'Guia Completo: Como Comprar seu Primeiro Imóvel em Leilão', content: '...', authorName: 'Equipe BidExpert', category: 'Dicas', isPublished: true, publishedAt: new Date(), createdAt: new Date(), updatedAt: new Date() },
+  { id: 'blog-2', slug: 'leiloes-judiciais-vs-extrajudiciais', title: 'Leilões Judiciais vs. Extrajudiciais: Entenda as Diferenças', content: '...', authorName: 'Equipe BidExpert', category: 'Mercado', isPublished: true, publishedAt: new Date(), createdAt: new Date(), updatedAt: new Date() },
+  { id: 'blog-3', slug: 'dicas-avaliar-veiculo-leilao', title: '5 Dicas para Avaliar um Veículo em Leilão', content: '...', authorName: 'Equipe BidExpert', category: 'Veículos', isPublished: true, publishedAt: new Date(), createdAt: new Date(), updatedAt: new Date() },
+];
+
+export const sampleNotifications: Notification[] = [
+  { id: 'notif-1', userId: 'admin-bidexpert-platform-001', message: 'Seu lance de R$ 5.200 no lote "Fiat Toro 2019" foi superado.', link: '/dashboard/bids', isRead: false, createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) },
+  { id: 'notif-2', userId: 'admin-bidexpert-platform-001', message: 'Parabéns! Você arrematou o lote "Apartamento em Moema". Pagamento pendente.', link: '/dashboard/wins', isRead: false, createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) },
+  { id: 'notif-3', userId: 'admin-bidexpert-platform-001', message: 'Sua documentação foi aprovada! Você já pode dar lances.', link: '/dashboard/documents', isRead: true, createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
+];
+
 
 // ==================================
 // FINAL EXPORT OBJECT
