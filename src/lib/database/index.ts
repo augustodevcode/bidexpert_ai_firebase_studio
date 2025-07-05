@@ -5,24 +5,11 @@ import type { IDatabaseAdapter } from '@/types';
 let sampleDbInstance: IDatabaseAdapter | undefined;
 
 export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
-  // The cookies() function is a dynamic function that can only be used in a Server Component,
-  // Route Handler, or Server Action. It will throw an error if used during build time
-  // or in standalone scripts.
-  let dbFromCookie: string | undefined;
-  try {
-    // Use dynamic import to avoid static analysis errors during build
-    const { cookies } = await import('next/headers');
-    const cookieStore = cookies();
-    dbFromCookie = cookieStore.get('dev-config-db')?.value;
-  } catch (e) {
-    // This can happen during build or in environments without request context. Fallback is safe.
-    console.warn('[DB Factory] Could not access cookies. Falling back to environment variables.');
-  }
-  
-  const activeSystemEnv = process.env.ACTIVE_DATABASE_SYSTEM;
-  const activeSystem = dbFromCookie || activeSystemEnv?.toUpperCase() || 'SAMPLE_DATA';
+  // Server-side logic should ONLY rely on environment variables to avoid build-time errors
+  // with dynamic functions like `cookies()`. The cookie is for the client-side indicator only.
+  const activeSystem = (process.env.ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA').toUpperCase();
 
-  console.log(`[DB Factory - Initializing] Active System: ${activeSystem} (Cookie: ${dbFromCookie || 'N/A'}, Env: ${activeSystemEnv || 'N/A'}).`);
+  console.log(`[DB Factory - Initializing] Active System: ${activeSystem} (From Env).`);
 
   // If the active system is SAMPLE_DATA, use a singleton pattern.
   if (activeSystem === 'SAMPLE_DATA') {

@@ -12,11 +12,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Invalid database system specified.' }, { status: 400 });
     }
 
-    // Set the cookie that will be read by server components/actions
+    // Set the cookie that will be read by the client-side DevDbIndicator.
+    // httpOnly is set to false so client-side JavaScript can read it.
+    // This is acceptable for a dev-only, non-sensitive setting.
     cookies().set('dev-config-db', databaseSystem, {
       path: '/',
       maxAge: 60 * 60 * 24 * 7, // 1 week
-      httpOnly: true, // For security, not readable by client-side JS
+      httpOnly: false, 
       sameSite: 'lax',
     });
 
