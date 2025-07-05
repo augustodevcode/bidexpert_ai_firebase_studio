@@ -1,3 +1,5 @@
+
+      
 {
   "sampleRoles": [
     {
@@ -52,44 +54,29 @@
       ],
       "status": "ATIVO",
       "habilitationStatus": "HABILITADO",
-      "createdAt": "2025-03-14T04:56:12.389Z",
-      "updatedAt": "2025-06-21T04:56:12.389Z"
+      "cpf": "000.000.000-00",
+      "cellPhone": "(11) 99999-9999",
+      "dateOfBirth": "1990-01-01T00:00:00.000Z",
+      "createdAt": "2023-01-01T12:00:00.000Z",
+      "updatedAt": "2025-07-05T17:43:33.804Z",
+      "accountType": "PHYSICAL"
     },
     {
-      "uid": "user-test-002",
-      "email": "testuser@example.com",
-      "password": "password123",
-      "fullName": "Usuário de Teste",
-      "roleId": "role-user",
-      "roleName": "USER",
-      "permissions": [
-        "view_auctions",
-        "place_bids",
-        "view_lots"
-      ],
-      "status": "ATIVO",
-      "habilitationStatus": "HABILITADO",
-      "createdAt": "2025-05-03T04:56:12.389Z",
-      "updatedAt": "2025-06-20T04:56:12.389Z"
-    },
-    {
-      "uid": "consignor-example-003",
+      "uid": "consignor@bidexpert.com",
       "email": "consignor@bidexpert.com",
       "password": "password123",
-      "fullName": "Comitente Exemplo (Bradesco)",
+      "fullName": "Bradesco Comitente",
       "roleId": "role-consignor",
       "roleName": "CONSIGNOR",
       "permissions": [
         "auctions:manage_own",
-        "lots:manage_own",
-        "view_reports",
-        "media:upload"
+        "lots:manage_own"
       ],
       "status": "ATIVO",
       "habilitationStatus": "HABILITADO",
-      "createdAt": "2025-05-13T04:56:12.389Z",
-      "updatedAt": "2025-06-19T04:56:12.389Z",
-      "sellerProfileId": "seller-banco-bradesco-s-a"
+      "createdAt": "2023-01-01T12:00:00.000Z",
+      "updatedAt": "2025-07-05T17:43:33.804Z",
+      "accountType": "LEGAL"
     }
   ],
   "sampleLotCategories": [
@@ -100,12 +87,12 @@
       "id": "cat-imoveis",
       "itemCount": 5,
       "hasSubcategories": true,
-      "logoMediaId": "media-cat-imoveis-logo",
+      "logoMediaId": null,
       "coverImageMediaId": "media-cat-imoveis-cover",
-      "megaMenuImageMediaId": "media-cat-imoveis-megamenu",
+      "megaMenuImageMediaId": null,
       "dataAiHintLogo": "predio casa",
       "dataAiHintCover": "imoveis cidade panorama",
-      "dataAiHintMegaMenu": "familia casa nova",
+      "dataAiHintMegaMenu": null,
       "createdAt": "2025-06-02T04:56:12.389Z",
       "updatedAt": "2025-06-20T04:56:12.389Z"
     },
@@ -116,9 +103,12 @@
       "id": "cat-veiculos",
       "itemCount": 5,
       "hasSubcategories": true,
-      "logoMediaId": "media-cat-veiculos-logo",
-      "coverImageMediaId": "media-cat-veiculos-cover",
+      "logoMediaId": null,
+      "coverImageMediaId": null,
+      "megaMenuImageMediaId": null,
+      "dataAiHintLogo": null,
       "dataAiHintCover": "carros patio leilao",
+      "dataAiHintMegaMenu": null,
       "createdAt": "2025-06-14T04:56:12.389Z",
       "updatedAt": "2025-05-25T04:56:12.389Z"
     },
@@ -129,169 +119,280 @@
       "id": "cat-maquinas-e-equipamentos",
       "itemCount": 3,
       "hasSubcategories": false,
-      "logoMediaId": "media-cat-maquinas-logo",
-      "coverImageMediaId": "media-cat-maquinas-cover",
+      "logoMediaId": null,
+      "coverImageMediaId": null,
+      "megaMenuImageMediaId": null,
+      "dataAiHintLogo": null,
       "dataAiHintCover": "maquinas pesadas industrial",
+      "dataAiHintMegaMenu": null,
       "createdAt": "2025-06-12T04:56:12.389Z",
       "updatedAt": "2025-05-27T04:56:12.389Z"
     }
   ],
-  "sampleSubcategories": [
+  "sampleBids": [],
+  "sampleBlogPosts": [],
+  "sampleCities": [
     {
-      "name": "Apartamentos",
-      "parentCategoryId": "cat-imoveis",
-      "description": "Apartamentos residenciais de diversos tamanhos.",
-      "displayOrder": 1,
-      "iconMediaId": "media-subcat-apartamentos-icon",
-      "dataAiHintIcon": "predio apartamento",
-      "id": "subcat-imoveis-apartamentos",
-      "slug": "apartamentos",
-      "itemCount": 2,
-      "createdAt": "2025-06-10T04:56:12.389Z",
-      "updatedAt": "2025-05-31T04:56:12.389Z"
+      "id": "city-maceio-al",
+      "name": "Maceió",
+      "slug": "maceio",
+      "stateId": "state-al",
+      "stateUf": "AL",
+      "ibgeCode": "2704302",
+      "lotCount": 0,
+      "createdAt": "2025-06-16T18:34:27.765Z",
+      "updatedAt": "2025-05-24T18:34:27.765Z"
     },
     {
-      "name": "Casas",
-      "parentCategoryId": "cat-imoveis",
-      "description": "Casas térreas, sobrados e condomínios.",
-      "displayOrder": 2,
-      "iconMediaId": "media-subcat-casas-icon",
-      "dataAiHintIcon": "casa residencial",
-      "id": "subcat-imoveis-casas",
-      "slug": "casas",
-      "itemCount": 3,
-      "createdAt": "2025-06-05T04:56:12.389Z",
-      "updatedAt": "2025-06-19T04:56:12.389Z"
+      "id": "city-salvador-ba",
+      "name": "Salvador",
+      "slug": "salvador",
+      "stateId": "state-ba",
+      "stateUf": "BA",
+      "ibgeCode": "2927408",
+      "lotCount": 3,
+      "createdAt": "2025-06-04T18:34:27.765Z",
+      "updatedAt": "2025-06-20T18:34:27.765Z"
+    },
+    {
+      "id": "city-sao-paulo-sp",
+      "name": "São Paulo",
+      "slug": "sao-paulo",
+      "stateId": "state-sp",
+      "stateUf": "SP",
+      "ibgeCode": "3550308",
+      "lotCount": 3,
+      "createdAt": "2025-05-28T18:34:27.765Z",
+      "updatedAt": "2025-06-21T18:34:27.765Z"
+    },
+    {
+      "id": "city-campinas-sp",
+      "name": "Campinas",
+      "slug": "campinas",
+      "stateId": "state-sp",
+      "stateUf": "SP",
+      "ibgeCode": "3509502",
+      "lotCount": 2,
+      "createdAt": "2025-05-29T18:34:27.765Z",
+      "updatedAt": "2025-06-10T18:34:27.765Z"
+    },
+    {
+      "id": "city-rio-de-janeiro-rj",
+      "name": "Rio de Janeiro",
+      "slug": "rio-de-janeiro",
+      "stateId": "state-rj",
+      "stateUf": "RJ",
+      "ibgeCode": "3304557",
+      "lotCount": 2,
+      "createdAt": "2025-06-06T18:34:27.765Z",
+      "updatedAt": "2025-05-28T18:34:27.765Z"
+    },
+    {
+      "id": "city-belo-horizonte-mg",
+      "name": "Belo Horizonte",
+      "slug": "belo-horizonte",
+      "stateId": "state-mg",
+      "stateUf": "MG",
+      "ibgeCode": "3106200",
+      "lotCount": 0,
+      "createdAt": "2025-06-10T18:34:27.765Z",
+      "updatedAt": "2025-06-01T18:34:27.765Z"
+    },
+    {
+      "id": "city-curitiba-pr",
+      "name": "Curitiba",
+      "slug": "curitiba",
+      "stateId": "state-pr",
+      "stateUf": "PR",
+      "ibgeCode": "4106902",
+      "lotCount": 2,
+      "createdAt": "2025-06-05T18:34:27.765Z",
+      "updatedAt": "2025-06-20T18:34:27.765Z"
+    },
+    {
+      "id": "city-porto-alegre-rs",
+      "name": "Porto Alegre",
+      "slug": "porto-alegre",
+      "stateId": "state-rs",
+      "stateUf": "RS",
+      "ibgeCode": "4314902",
+      "lotCount": 0,
+      "createdAt": "2025-06-21T18:34:27.765Z",
+      "updatedAt": "2025-06-03T18:34:27.765Z"
+    },
+    {
+      "id": "city-rio-verde-go",
+      "name": "Rio Verde",
+      "slug": "rio-verde",
+      "stateId": "state-go",
+      "stateUf": "GO",
+      "ibgeCode": "5218805",
+      "lotCount": 1,
+      "createdAt": "2025-06-01T18:34:27.765Z",
+      "updatedAt": "2025-05-30T18:34:27.765Z"
+    },
+    {
+      "id": "city-campo-grande-ms",
+      "name": "Campo Grande",
+      "slug": "campo-grande",
+      "stateId": "state-ms",
+      "stateUf": "MS",
+      "ibgeCode": "5002704",
+      "lotCount": 1,
+      "createdAt": "2025-06-09T18:34:27.765Z",
+      "updatedAt": "2025-06-11T18:34:27.765Z"
+    },
+    {
+      "id": "city-fortaleza-ce",
+      "name": "Fortaleza",
+      "slug": "fortaleza",
+      "stateId": "state-ce",
+      "stateUf": "CE",
+      "ibgeCode": "2304400",
+      "lotCount": 1,
+      "createdAt": "2025-06-15T18:34:27.765Z",
+      "updatedAt": "2025-06-15T18:34:27.765Z"
+    },
+    {
+      "id": "city-lauro-de-freitas-ba",
+      "name": "Lauro de Freitas",
+      "slug": "lauro-de-freitas",
+      "stateId": "state-ba",
+      "stateUf": "BA",
+      "ibgeCode": "2919207",
+      "lotCount": 1,
+      "createdAt": "2025-06-01T18:34:27.765Z",
+      "updatedAt": "2025-06-01T18:34:27.765Z"
+    },
+    {
+      "id": "city-niteroi-rj",
+      "name": "Niterói",
+      "slug": "niteroi",
+      "stateId": "state-rj",
+      "stateUf": "RJ",
+      "ibgeCode": "3303302",
+      "lotCount": 0,
+      "createdAt": "2025-05-24T18:34:27.765Z",
+      "updatedAt": "2025-06-15T18:34:27.765Z"
+    },
+    {
+      "id": "city-teotonio-vilela-al",
+      "name": "Teotônio Vilela",
+      "slug": "teotonio-vilela",
+      "stateId": "state-al",
+      "stateUf": "AL",
+      "ibgeCode": "2709152",
+      "lotCount": 1,
+      "createdAt": "2025-06-18T18:34:27.765Z",
+      "updatedAt": "2025-06-07T18:34:27.765Z"
     }
   ],
-  "sampleLots": [],
-  "sampleBids": [],
-  "sampleLotReviews": [],
-  "sampleLotQuestions": [],
   "sampleDirectSaleOffers": [],
-  "sampleMediaItems": [],
   "sampleDocumentTypes": [],
-  "sampleUserDocuments": [],
-  "sampleUserWins": [],
+  "sampleJudicialBranches": [
+    {
+      "id": "branch-1",
+      "name": "1ª Vara Cível",
+      "slug": "1a-vara-civel",
+      "districtId": "dist-sp-capital",
+      "contactName": "José da Silva",
+      "phone": "11 1234-5678",
+      "email": "vara1.sp@tj.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "branch-2",
+      "name": "2ª Vara da Fazenda Pública",
+      "slug": "2a-vara-da-fazenda-publica",
+      "districtId": "dist-rj-capital",
+      "contactName": "Maria Oliveira",
+      "phone": "21 9876-5432",
+      "email": "vara2.rj@tj.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "branch-3",
+      "name": "Vara Única de Lagarto",
+      "slug": "vara-unica-lagarto",
+      "districtId": "dist-se-lagarto",
+      "contactName": "Ana Costa",
+      "phone": "79 3631-1111",
+      "email": "vara.lagarto@tjse.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "branch-4",
+      "name": "15ª Vara do Trabalho de São Paulo",
+      "slug": "15-vara-trabalho-sp",
+      "districtId": "dist-sp-sao-paulo-trt",
+      "contactName": "Paulo Lima",
+      "phone": "11 3525-2015",
+      "email": "vt15.sp@trt2.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    }
+  ],
+  "sampleJudicialDistricts": [
+    {
+      "id": "dist-sp-capital",
+      "name": "Comarca da Capital",
+      "slug": "sao-paulo-capital",
+      "courtId": "court-tjsp",
+      "stateId": "state-sp",
+      "zipCode": "01010-000",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "dist-sp-campinas",
+      "name": "Comarca de Campinas",
+      "slug": "campinas",
+      "courtId": "court-tjsp",
+      "stateId": "state-sp",
+      "zipCode": "13010-000",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "dist-rj-capital",
+      "name": "Comarca da Capital",
+      "slug": "rio-de-janeiro-capital",
+      "courtId": "court-tjrj",
+      "stateId": "state-rj",
+      "zipCode": "20010-000",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "dist-se-lagarto",
+      "name": "Comarca de Lagarto",
+      "slug": "lagarto",
+      "courtId": "court-tjse",
+      "stateId": "state-se",
+      "zipCode": "49400-000",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "dist-sp-sao-paulo-trt",
+      "name": "Comarca de São Paulo (TRT)",
+      "slug": "sao-paulo-trt",
+      "courtId": "court-trt2",
+      "stateId": "state-sp",
+      "zipCode": "01139-003",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    }
+  ],
+  "sampleLotQuestions": [],
+  "sampleNotifications": [],
   "sampleUserBids": [],
-  "samplePlatformSettings": {
-    "id": "global",
-    "siteTitle": "BidExpert Leilões",
-    "siteTagline": "Sua plataforma definitiva para leilões online.",
-    "galleryImageBasePath": "/uploads/media/",
-    "storageProvider": "local",
-    "firebaseStorageBucket": "bidexpert-630df.appspot.com",
-    "activeThemeName": "Padrão BidExpert",
-    "themes": [
-      {
-        "name": "Padrão BidExpert",
-        "colors": {
-          "--background": "hsl(0 0% 100%)",
-          "--foreground": "hsl(0 0% 3.9%)",
-          "--primary": "hsl(25 95% 53%)",
-          "--primary-foreground": "hsl(0 0% 100%)",
-          "--secondary": "hsl(0 0% 96.1%)",
-          "--accent": "hsl(25 95% 95%)"
-        }
-      }
-    ],
-    "platformPublicIdMasks": {
-      "auctions": "LEIL-",
-      "lots": "LOTE-",
-      "auctioneers": "LEILOE-",
-      "sellers": "COMIT-"
-    },
-    "homepageSections": [
-      {
-        "id": "hero",
-        "type": "hero_carousel",
-        "title": "Destaques Principais",
-        "visible": true,
-        "order": 1
-      },
-      {
-        "id": "filter_links",
-        "type": "filter_links",
-        "title": "Explorar por Tipo",
-        "visible": true,
-        "order": 2
-      },
-      {
-        "id": "featured_lots",
-        "type": "featured_lots",
-        "title": "Lotes em Destaque",
-        "visible": true,
-        "order": 3,
-        "itemCount": 10
-      },
-      {
-        "id": "active_auctions",
-        "type": "active_auctions",
-        "title": "Leilões Ativos",
-        "visible": true,
-        "order": 4,
-        "itemCount": 10
-      }
-    ],
-    "mentalTriggerSettings": {
-      "showDiscountBadge": true,
-      "showUrgencyTimer": true,
-      "urgencyTimerThresholdDays": 1,
-      "urgencyTimerThresholdHours": 12,
-      "showPopularityBadge": true,
-      "popularityViewThreshold": 500,
-      "showHotBidBadge": true,
-      "hotBidThreshold": 10,
-      "showExclusiveBadge": true
-    },
-    "sectionBadgeVisibility": {
-      "featuredLots": {
-        "showStatusBadge": false,
-        "showDiscountBadge": true,
-        "showUrgencyTimer": true,
-        "showPopularityBadge": true,
-        "showHotBidBadge": true,
-        "showExclusiveBadge": true
-      },
-      "searchGrid": {
-        "showStatusBadge": true,
-        "showDiscountBadge": true,
-        "showUrgencyTimer": true,
-        "showPopularityBadge": true,
-        "showHotBidBadge": true,
-        "showExclusiveBadge": true
-      },
-      "searchList": {
-        "showStatusBadge": true,
-        "showDiscountBadge": true,
-        "showUrgencyTimer": true,
-        "showPopularityBadge": true,
-        "showHotBidBadge": true,
-        "showExclusiveBadge": true
-      },
-      "lotDetail": {
-        "showStatusBadge": true,
-        "showDiscountBadge": true,
-        "showUrgencyTimer": true,
-        "showPopularityBadge": true,
-        "showHotBidBadge": true,
-        "showExclusiveBadge": true
-      }
-    },
-    "mapSettings": {
-      "defaultProvider": "openstreetmap",
-      "googleMapsApiKey": "",
-      "staticImageMapZoom": 15,
-      "staticImageMapMarkerColor": "blue"
-    },
-    "searchPaginationType": "loadMore",
-    "searchItemsPerPage": 12,
-    "searchLoadMoreCount": 12,
-    "showCountdownOnLotDetail": true,
-    "showCountdownOnCards": true,
-    "showRelatedLotsOnLotDetail": true,
-    "relatedLotsCount": 5,
-    "updatedAt": "2025-06-22T18:34:27.781Z"
-  },
-  "sampleUserHabilitationStatus": "PENDING_DOCUMENTS"
+  "sampleUserDocuments": [],
+  "sampleUserLotMaxBids": [],
+  "sampleUserWins": []
 }
+
+    
