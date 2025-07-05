@@ -11,7 +11,7 @@ import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock
 import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
-import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor } from '@/lib/sample-data-helpers';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import LotPreviewModal from './lot-preview-modal';
@@ -259,11 +259,16 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
           </div>
         </Link>
 
-        {/* LEFT BADGES (STATUS ONLY) */}
-        <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10">
+        {/* LEFT BADGES */}
+        <div className="absolute top-2 left-2 flex flex-wrap items-start gap-1 z-10">
+          {auction && sectionBadges.showStatusBadge !== false && (
+            <Badge className={`text-xs px-1.5 py-0.5 ${getAuctionStatusColor(auction.status)}`}>
+                Leilão: {getAuctionStatusText(auction.status)}
+            </Badge>
+          )}
           {sectionBadges.showStatusBadge !== false && (
-            <Badge className={`text-xs px-2 py-1 ${getLotStatusColor(lot.status)} border-current`}>
-              {getAuctionStatusText(lot.status)}
+            <Badge variant="outline" className={`text-xs px-1.5 py-0.5 bg-background/80`}>
+                Lote: {getAuctionStatusText(lot.status)}
             </Badge>
           )}
           {isViewed && (

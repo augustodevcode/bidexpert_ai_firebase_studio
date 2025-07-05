@@ -12,7 +12,7 @@ import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock
 import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
-import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor } from '@/lib/sample-data-helpers';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -257,6 +257,23 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                 data-ai-hint={lot.dataAiHint || 'imagem lote lista'}
               />
             </Link>
+            <div className="absolute top-2 left-2 flex flex-wrap items-start gap-1 z-10">
+                {auction && sectionBadges.showStatusBadge !== false && (
+                    <Badge className={`text-xs px-1.5 py-0.5 ${getAuctionStatusColor(auction.status)}`}>
+                        Leilão: {getAuctionStatusText(auction.status)}
+                    </Badge>
+                )}
+                 {sectionBadges.showStatusBadge !== false && (
+                    <Badge variant="outline" className={`text-xs px-1.5 py-0.5 bg-background/80`}>
+                        Lote: {getAuctionStatusText(lot.status)}
+                    </Badge>
+                )}
+                {isViewed && (
+                    <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
+                        <Eye className="h-3 w-3 mr-0.5" /> Visto
+                    </Badge>
+                )}
+            </div>
             {auction?.auctioneerLogoUrl && (
               <div className="absolute bottom-1 right-1 bg-background/80 p-1 rounded-sm shadow max-w-[80px] max-h-[40px] overflow-hidden">
                 <Image
@@ -275,18 +292,6 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
           <div className="flex flex-col flex-grow p-4">
             <div className="flex justify-between items-start mb-1.5">
               <div className="flex-grow min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  {sectionBadges.showStatusBadge !== false && (
-                    <Badge className={`text-xs px-1.5 py-0.5 ${getLotStatusColor(lot.status)} border-current`}>
-                      {getAuctionStatusText(lot.status)}
-                    </Badge>
-                  )}
-                  {isViewed && (
-                    <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
-                      <Eye className="h-3 w-3 mr-0.5" /> Visto
-                    </Badge>
-                  )}
-                </div>
                 <Link href={lotDetailUrl}>
                   <h3 className="text-base font-semibold hover:text-primary transition-colors leading-tight line-clamp-2 mr-2" title={lot.title}>
                     Lote {lot.number || lot.id.replace('LOTE','')} - {lot.title}
@@ -301,13 +306,7 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                 )}
                  <DropdownMenu>
                     <Tooltip>
-                        <TooltipTrigger asChild>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Compartilhar">
-                                    <Share2 className="h-4 w-4 text-muted-foreground" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                        </TooltipTrigger>
+                        <TooltipTrigger asChild><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Compartilhar"><Share2 className="h-4 w-4 text-muted-foreground" /></Button></DropdownMenuTrigger></TooltipTrigger>
                         <TooltipContent><p>Compartilhar</p></TooltipContent>
                     </Tooltip>
                     <DropdownMenuContent align="end">

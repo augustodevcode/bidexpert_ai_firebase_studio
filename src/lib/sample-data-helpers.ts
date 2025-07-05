@@ -79,6 +79,27 @@ export const getLotStatusColor = (status: LotStatus | DirectSaleOfferStatus): st
   }
 };
 
+export const getAuctionStatusColor = (status: AuctionStatus | undefined): string => {
+  if (!status) return 'bg-gray-400 text-gray-800';
+  switch (status) {
+    case 'ABERTO_PARA_LANCES':
+    case 'ABERTO':
+      return 'bg-green-600 text-white';
+    case 'EM_BREVE':
+      return 'bg-blue-500 text-white';
+    case 'ENCERRADO':
+    case 'FINALIZADO':
+    case 'CANCELADO':
+    case 'SUSPENSO':
+      return 'bg-gray-500 text-white';
+    case 'RASCUNHO':
+    case 'EM_PREPARACAO':
+      return 'bg-yellow-500 text-white';
+    default:
+      return 'bg-gray-300 text-gray-800';
+  }
+};
+
 export const getPaymentStatusText = (status: PaymentStatus): string => getAuctionStatusText(status);
 
 export const getUserDocumentStatusColor = (status: UserDocumentStatus): string => {

@@ -1240,6 +1240,41 @@
       "lots": [],
       "totalLots": 0,
       "status": "RASCUNHO"
+    },
+    {
+      "title": "Leilao",
+      "description": "",
+      "categoryId": "cat-imoveis",
+      "auctioneer": "Leiloeiro XYZ Oficial",
+      "seller": "2ª Vara da Fazenda Pública",
+      "auctionDate": "2025-07-05T15:28:04.140Z",
+      "auctioneerId": "auct-leiloeiro-xyz-oficial",
+      "sellerId": "seller-c787877a-dddf-4dfe-a0cf-7701bd20b149",
+      "id": "auc-b3f632ea-06a5-49e0-a9fc-fecfa6f70ae8",
+      "publicId": "AUC-PUB-c740bd1a",
+      "createdAt": "2025-07-05T15:29:58.373Z",
+      "updatedAt": "2025-07-05T15:29:58.373Z",
+      "lots": [
+        {
+          "id": "lot-49c17003-94ad-407c-9256-d3095198cc90",
+          "publicId": "LOT-PUB-f88a7bd6",
+          "title": "Trator Valtra A950 4x4 2018",
+          "number": "001",
+          "price": 95000,
+          "initialPrice": 95000,
+          "bemIds": [
+            "bem-5"
+          ],
+          "status": "EM_BREVE",
+          "categoryId": "cat-maquinas-e-equipamentos",
+          "subcategoryId": "subcat-maquinas-agricolas",
+          "auctionId": "auc-b3f632ea-06a5-49e0-a9fc-fecfa6f70ae8",
+          "createdAt": "2025-07-05T15:29:58.373Z",
+          "updatedAt": "2025-07-05T15:29:58.374Z"
+        }
+      ],
+      "totalLots": 1,
+      "status": "RASCUNHO"
     }
   ],
   "sampleBens": [
@@ -1305,7 +1340,7 @@
       "id": "bem-5",
       "publicId": "BEM-PUB-5",
       "title": "Trator Valtra A950 4x4 2018",
-      "status": "DISPONIVEL",
+      "status": "LOTEADO",
       "categoryId": "cat-maquinas-e-equipamentos",
       "subcategoryId": "subcat-maquinas-agricolas",
       "evaluationValue": 95000,
@@ -2041,6 +2076,23 @@
       "lotSpecificAuctionDate": "2025-06-21T18:34:27.765Z",
       "secondAuctionDate": null,
       "imageUrl": "https://images.unsplash.com/photo-1625604238425-05f1b2461f50?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHwxOTY3JTIwZm9yZCUyMG11c3RhbmclMjBmYXN0YmFja3xlbnwwfHx8fDE3NTA0Mzc0MjZ8MA&ixlib=rb-4.1.0&q=80&w=1080"
+    },
+    {
+      "id": "lot-49c17003-94ad-407c-9256-d3095198cc90",
+      "publicId": "LOT-PUB-f88a7bd6",
+      "title": "Trator Valtra A950 4x4 2018",
+      "number": "001",
+      "price": 95000,
+      "initialPrice": 95000,
+      "bemIds": [
+        "bem-5"
+      ],
+      "status": "EM_BREVE",
+      "categoryId": "cat-maquinas-e-equipamentos",
+      "subcategoryId": "subcat-maquinas-agricolas",
+      "auctionId": "auc-b3f632ea-06a5-49e0-a9fc-fecfa6f70ae8",
+      "createdAt": "2025-07-05T15:29:58.373Z",
+      "updatedAt": "2025-07-05T15:29:58.374Z"
     }
   ],
   "sampleMediaItems": [
