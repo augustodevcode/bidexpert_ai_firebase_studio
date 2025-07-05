@@ -2,22 +2,24 @@
 'use client';
 
 import type { Lot, PlatformSettings } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Info, ExternalLink } from 'lucide-react';
-import React, { useEffect, useRef } from 'react';
-import L from 'leaflet';
+import React from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
 // Fix for default Leaflet icon paths in Next.js
-const defaultIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+// This needs to be done once, outside the component render.
+// @ts-ignore
+delete L.Icon.Default.prototype._getIconUrl;
+
+L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
 });
+
 
 interface LotMapDisplayProps {
   lot: Lot;
@@ -25,42 +27,10 @@ interface LotMapDisplayProps {
 }
 
 export default function LotMapDisplay({ lot }: LotMapDisplayProps) {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<L.Map | null>(null);
   const { latitude, longitude, mapAddress, title } = lot;
 
   const displayAddressTextForLink = mapAddress || (lot.cityName && lot.stateUf ? `${lot.cityName}, ${lot.stateUf}` : "Localização do Lote");
-
   const hasCoords = latitude !== undefined && latitude !== null && longitude !== undefined && longitude !== null;
-
-  useEffect(() => {
-    // Only initialize map if we have coordinates and a container
-    if (hasCoords && mapContainerRef.current && !mapRef.current) {
-      mapRef.current = L.map(mapContainerRef.current).setView([latitude, longitude], 15);
-      
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(mapRef.current);
-
-      // Add the blue marker using the safe, local icon instance
-      L.marker([latitude, longitude], { icon: defaultIcon }).addTo(mapRef.current)
-        .bindPopup(`<b>${title}</b><br>${displayAddressTextForLink}`);
-
-      // Invalidate size after a short delay to ensure container is sized and centered correctly
-      setTimeout(() => {
-          mapRef.current?.invalidateSize();
-      }, 100);
-    }
-
-    // Cleanup function
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  // The dependencies should ensure the map re-initializes if the lot changes
-  }, [latitude, longitude, hasCoords, title, displayAddressTextForLink]);
 
   let finalExternalMapLink: string | null = null;
   if (latitude && longitude) {
@@ -68,7 +38,7 @@ export default function LotMapDisplay({ lot }: LotMapDisplayProps) {
   } else if (mapAddress) {
     finalExternalMapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapAddress)}`;
   }
-
+  
   return (
     <Card className="shadow-md w-full">
       <CardHeader className="p-3 sm:p-4">
@@ -93,7 +63,17 @@ export default function LotMapDisplay({ lot }: LotMapDisplayProps) {
       <CardContent className="p-0">
         <div className="aspect-square w-full rounded-b-md overflow-hidden border-t relative">
           {hasCoords ? (
-            <div ref={mapContainerRef} className="w-full h-full" style={{zIndex: 0}}></div>
+            <MapContainer center={[latitude, longitude]} zoom={15} scrollWheelZoom={false} className="w-full h-full z-0">
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <Marker position={[latitude, longitude]}>
+                <Popup>
+                  <b>{title}</b><br />{displayAddressTextForLink}
+                </Popup>
+              </Marker>
+            </MapContainer>
           ) : (
             <div className="flex flex-col items-center justify-center h-full bg-muted text-muted-foreground p-4 text-center">
               <Info className="h-12 w-12 mb-2" />
