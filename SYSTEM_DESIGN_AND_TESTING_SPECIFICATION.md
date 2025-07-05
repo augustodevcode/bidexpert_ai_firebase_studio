@@ -702,14 +702,158 @@
 
 *   [Exemplos: Vendas Diretas, Dashboard do Usuário, Busca e Filtros, Auditório Virtual (Live Bidding), etc.]
 
-### 3.6. Habilitação de Usuários e Gerenciamento de Documentos
+### 3.6. Biblioteca de Mídia (Gerenciamento)
 
 *   **3.6.1. Descrição Geral:**
-    *   A habilitação de usuários é um processo crucial para permitir que participem de leilões (especialmente para dar lances). Envolve a submissão de documentos comprobatórios que são então analisados pela equipe administrativa da plataforma. Este processo visa garantir a legitimidade dos participantes, aumentar a segurança das transações e cumprir requisitos legais ou específicos de determinados tipos de leilão. O status de habilitação de um usuário (`UserProfileData.habilitationStatus`) é dinâmico e reflete o progresso e o resultado dessa análise.
+    *   A Biblioteca de Mídia é um repositório centralizado para todos os arquivos de mídia (imagens como JPG, PNG, WEBP; documentos como PDF) utilizados na plataforma. Ela permite que administradores (ou usuários com permissão) façam upload, visualizem, gerenciem metadados e excluam esses arquivos. A biblioteca facilita a reutilização de mídias em diferentes contextos, como imagens de lotes, logotipos de leiloeiros/comitentes, ou documentos anexos a leilões.
 *   **3.6.2. Personas Envolvidas:**
+    *   **Administrador da Plataforma:** Acesso total para upload, gerenciamento e exclusão de mídias.
+    *   **Analista de Leilão/Conteúdo:** Pode ter permissões para fazer upload e gerenciar mídias relacionadas a leilões e lotes.
+    *   **Outros Papéis (Comitente, Leiloeiro - se permitido):** Poderiam ter permissão para fazer upload de mídias específicas para seus perfis ou itens, possivelmente com um fluxo de aprovação.
+*   **3.6.3. Cenários BDD (Gherkin):**
+    ```gherkin
+    Feature: Gerenciamento da Biblioteca de Mídia
+      Como um usuário com permissão de gerenciamento de mídia
+      Eu quero poder fazer upload, visualizar, editar e excluir arquivos de mídia
+      Para popular e manter os ativos visuais e documentais da plataforma.
+
+      Scenario: Upload bem-sucedido de uma nova imagem para a biblioteca
+        Given Estou logado como Administrador
+        And Estou na página de upload de mídia "/admin/media/upload"
+        When Eu seleciono o arquivo de imagem "produto_novo.jpg" (tipo "image/jpeg", tamanho 1MB)
+        And Eu preencho o campo "Título" com "Imagem do Produto Novo"
+        And Eu preencho o campo "Texto Alternativo" com "Foto de um produto novo em sua embalagem"
+        And Eu clico no botão "Fazer Upload"
+        Then Eu devo ver uma mensagem de sucesso "Arquivo enviado com sucesso!"
+        And O item "Imagem do Produto Novo" deve aparecer na lista de mídias em "/admin/media"
+        And Um registro `MediaItem` deve ser criado no banco de dados com as informações e URL do arquivo no storage.
+
+      Scenario: Tentativa de upload de arquivo com tipo não suportado
+        Given Estou logado como Administrador
+        And Estou na página de upload de mídia "/admin/media/upload"
+        When Eu seleciono o arquivo "documento_importante.docx" (tipo "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        Then Eu devo ver uma mensagem de erro "Tipo de arquivo não suportado. Formatos aceitos: JPG, PNG, WEBP, PDF."
+        And Nenhum arquivo deve ser enviado.
+
+      Scenario: Tentativa de upload de arquivo com tamanho excedido
+        Given Estou logado como Administrador
+        And Estou na página de upload de mídia "/admin/media/upload"
+        And O limite máximo de tamanho de arquivo é 5MB
+        When Eu seleciono o arquivo de imagem "imagem_muito_grande.jpg" (tamanho 10MB)
+        Then Eu devo ver uma mensagem de erro "Arquivo excede o limite de tamanho de 5MB."
+        And Nenhum arquivo deve ser enviado.
+
+      Scenario: Visualização da lista de mídias na biblioteca
+        Given Estou logado como Administrador
+        And Existem itens de mídia na biblioteca, incluindo "imagem_lote_carro.png" e "edital_leilao_123.pdf"
+        When Eu navego para a página "/admin/media"
+        Then Eu devo ver uma galeria ou lista de itens de mídia
+        And Eu devo ver uma miniatura para "imagem_lote_carro.png"
+        And Eu devo ver um ícone de PDF para "edital_leilao_123.pdf"
+        And Cada item deve exibir informações como nome do arquivo, tipo, data de upload e tamanho.
+
+      Scenario: Administrador edita metadados de um item de mídia
+        Given Estou logado como Administrador
+        And Existe um item de mídia "imagem_antiga.jpg" com título "Foto Antiga"
+        When Eu seleciono "imagem_antiga.jpg" na biblioteca e escolho "Editar Metadados"
+        And Eu altero o campo "Título" para "Imagem Detalhada do Vaso Antigo"
+        And Eu preencho o campo "Descrição" com "Vaso de cerâmica do século XVIII, com detalhes em ouro."
+        And Eu clico no botão "Salvar Metadados"
+        Then Eu devo ver uma mensagem de sucesso "Metadados atualizados."
+        And O título do item de mídia deve ser "Imagem Detalhada do Vaso Antigo".
+
+      Scenario: Administrador exclui um item de mídia
+        Given Estou logado como Administrador
+        And Existe um item de mídia "imagem_para_excluir.png" na biblioteca e no storage
+        When Eu seleciono "imagem_para_excluir.png" e clico em "Excluir"
+        And Eu confirmo a exclusão
+        Then Eu devo ver uma mensagem de sucesso "Item de mídia excluído com sucesso."
+        And "imagem_para_excluir.png" não deve mais aparecer na lista de mídias
+        And O arquivo correspondente deve ser removido do Firebase Storage.
+
+      Scenario: Usuário seleciona uma imagem da biblioteca para um lote
+        Given Estou logado como Administrador e editando o lote "LOTEABC"
+        When Eu clico no botão "Escolher Imagem Principal" (que abre o `ChooseMediaDialog`)
+        And Eu seleciono a imagem "imagem_do_lote.jpg" na aba "Biblioteca" do diálogo
+        And Eu clico em "Confirmar Seleção"
+        Then O campo "URL da Imagem Principal" do formulário do lote deve ser preenchido com a URL de "imagem_do_lote.jpg"
+        And O ID de "imagem_do_lote.jpg" deve ser adicionado a `Lot.mediaItemIds` (ou campo similar).
+    ```
+*   **3.6.4. Regras de Negócio e Validações:**
+    *   **Upload de Arquivos (`handleImageUpload` action):**
+        *   Tipos de arquivo permitidos (`MediaItem.mimeType`): `image/png`, `image/jpeg`, `image/webp`, `application/pdf`. A validação deve ocorrer no frontend (componente de upload) e ser reforçada no backend.
+        *   Limite de tamanho de arquivo: Ex: 5MB. Validação no frontend e backend.
+        *   Nomenclatura no Storage: Arquivos são renomeados para `uuidv4() + extname(originalFilename)` para garantir unicidade e evitar conflitos (lógica em `handleImageUpload`).
+        *   Armazenamento: Arquivos são enviados para o Firebase Storage no bucket configurado (caminho `galleryImageBasePath` de `PlatformSettings` pode ser relevante para a organização).
+        *   Criação de Registro `MediaItem`: Após upload bem-sucedido para o storage, um documento `MediaItem` é criado no banco de dados com metadados (nome original, novo nome no storage, URL pública, tipo MIME, tamanho, data de upload, `uploadedBy`, etc.).
+    *   **Metadados (`MediaItem`):**
+        *   Campos editáveis: `title`, `altText`, `caption`, `description`.
+        *   Action `updateMediaItemMetadata` atualiza esses campos e `updatedAt`.
+    *   **Exclusão (`deleteMediaItem` action):**
+        *   Remove o arquivo do Firebase Storage.
+        *   Remove o registro `MediaItem` do banco de dados.
+        *   (Consideração: O que acontece se a mídia estiver vinculada a lotes em `linkedLotIds`? A exclusão é impedida, ou os links são removidos, ou os lotes ficam com imagem/documento quebrado? Idealmente, a exclusão seria impedida ou um alerta seria emitido se houver vínculos ativos.)
+    *   **Vinculação com Lotes (`linkMediaItemsToLot`, `unlinkMediaItemFromLot` actions):**
+        *   `linkedLotIds` (array em `MediaItem`): Armazena os IDs dos lotes que utilizam esta mídia. É principalmente informativo e deve ser mantido sincronizado.
+        *   `Lot.mediaItemIds` e `Lot.galleryImageUrls`: Campos no lote que referenciam os `MediaItem.id` ou `MediaItem.urlOriginal` para a imagem principal e galeria.
+    *   **Permissões:**
+        *   `media:upload`: Permite fazer upload de novos arquivos.
+        *   `media:read`: Permite visualizar a biblioteca de mídia.
+        *   `media:update`: Permite editar metadados dos itens de mídia.
+        *   `media:delete`: Permite excluir itens de mídia.
+*   **3.6.5. Layout e Páginas Envolvidas:**
+    *   **Página da Biblioteca de Mídia (`/admin/media`):**
+        *   Exibição dos itens de mídia em formato de grade ou lista.
+        *   Miniaturas para imagens, ícones para PDFs.
+        *   Informações exibidas: nome do arquivo, título (se houver), tipo, tamanho, data de upload.
+        *   Opções por item: Editar Metadados, Excluir, Visualizar.
+        *   Botão/Link para a página de Upload (`/admin/media/upload`).
+        *   (Opcional) Funcionalidades de busca por nome/título e filtros por tipo de arquivo.
+    *   **Página de Upload de Mídia (`/admin/media/upload`):**
+        *   Interface para arrastar e soltar ou selecionar arquivos.
+        *   Exibição de prévia para imagens.
+        *   Campos para preenchimento de metadados iniciais (título, alt text).
+        *   Feedback de progresso do upload.
+        *   Exibição de mensagens de erro (tipo/tamanho inválido).
+    *   **Componente `ChooseMediaDialog` (em `src/components/admin/media/choose-media-dialog.tsx`):**
+        *   Usado em formulários (ex: `LotForm`) para permitir que o usuário selecione uma mídia existente da biblioteca ou faça upload de uma nova.
+        *   Abas: "Biblioteca" (para selecionar existentes) e "Fazer Upload" (interface de upload).
+        *   Funcionalidade de seleção e confirmação.
+    *   **Modal de Edição de Metadados:**
+        *   Aberto a partir da página da biblioteca.
+        *   Formulário com campos `title`, `altText`, `caption`, `description`.
+*   **3.6.6. Considerações sobre TDD:**
+    *   **Testes Unitários:**
+        *   Funções utilitárias para validação de tipo e tamanho de arquivo no frontend (se houver, antes do envio para a action).
+        *   Validação de metadados (ex: comprimento máximo de `dataAiHintLogo` no `sellerFormSchema` e `auctioneerFormSchema`).
+    *   **Testes de Integração (Server Actions - `src/app/admin/media/actions.ts`):**
+        *   `handleImageUpload`:
+            *   Mockar `storageAdmin.bucket().file().save()` e `file.makePublic()`.
+            *   Mockar `adapter.createMediaItem()`.
+            *   Testar com arquivo válido: verificar se os dados corretos são passados para `createMediaItem` e se a URL pública é retornada.
+            *   Testar com tipo de arquivo inválido (simular erro antes do upload ou na validação da action).
+            *   Testar com tamanho de arquivo excedido.
+        *   `getMediaItems`: Mockar `adapter.getMediaItems()` e verificar se os dados são retornados corretamente.
+        *   `updateMediaItemMetadata`: Mockar `adapter.updateMediaItemMetadata()` e verificar se é chamado com os dados corretos.
+        *   `deleteMediaItem`: Mockar `adapter.deleteMediaItemFromDb()` e `storageAdmin.bucket().file().delete()`. Verificar se ambos são chamados.
+        *   `linkMediaItemsToLot` e `unlinkMediaItemFromLot`: Mockar os métodos correspondentes do adapter e verificar as chamadas.
+    *   **Testes de UI (Componente):**
+        *   Página `/admin/media/page.tsx`: Testar a renderização da lista/grade de mídias, interação com botões de editar/excluir (mockando as actions).
+        *   Página `/admin/media/upload/page.tsx`: Testar a interface de upload, feedback de erro para tipo/tamanho inválido, submissão (mockando a action).
+        *   `ChooseMediaDialog`: Testar a navegação entre abas, seleção de mídia, upload de nova mídia, e a chamada da função de callback ao confirmar.
+    *   **Testes End-to-End (E2E):**
+        *   Fluxo completo: Upload de uma imagem, visualização na biblioteca, edição de seus metadados.
+        *   Vincular a imagem a um lote através do `LotForm` e `ChooseMediaDialog`.
+        *   Excluir a imagem da biblioteca e verificar se ela não está mais disponível (e se o link no lote foi removido ou tratado).
+
+### 3.7. Habilitação de Usuários e Gerenciamento de Documentos
+
+*   **3.7.1. Descrição Geral:**
+    *   A habilitação de usuários é um processo crucial para permitir que participem de leilões (especialmente para dar lances). Envolve a submissão de documentos comprobatórios que são então analisados pela equipe administrativa da plataforma. Este processo visa garantir a legitimidade dos participantes, aumentar a segurança das transações e cumprir requisitos legais ou específicos de determinados tipos de leilão. O status de habilitação de um usuário (`UserProfileData.habilitationStatus`) é dinâmico e reflete o progresso e o resultado dessa análise.
+*   **3.7.2. Personas Envolvidas:**
     *   **Usuário (Licitante/Comitente):** Pessoa que deseja se habilitar para participar plenamente da plataforma, submetendo seus documentos.
     *   **Administrador/Analista de Leilão:** Responsável por definir os tipos de documentos necessários, revisar os documentos enviados pelos usuários, e aprovar ou rejeitar a habilitação.
-*   **3.6.3. Cenários BDD (Gherkin):**
+*   **3.7.3. Cenários BDD (Gherkin):**
     ```gherkin
     Feature: Habilitação de Usuários e Gerenciamento de Documentos
 
@@ -781,7 +925,7 @@
         And Eu devo ver meu status geral de habilitação como "Documentos Rejeitados".
         And Eu devo ter a opção de reenviar o documento "RG/CNH Frente".
     ```
-*   **3.6.4. Regras de Negócio e Validações:**
+*   **3.7.4. Regras de Negócio e Validações:**
     *   **Tipos de Documento (`DocumentType`):**
         *   `isRequired` (boolean): Indica se o documento é mandatório para o processo de habilitação.
         *   `allowedFormats` (string[]): Lista de extensões de arquivo permitidas (ex: 'pdf', 'jpg', 'png'). A validação deve ocorrer no frontend e no backend.
@@ -808,7 +952,7 @@
             *   Sucesso/falha no upload de documentos.
             *   Aprovação ou rejeição de documentos (incluindo motivo).
             *   Mudança em seu `habilitationStatus` geral.
-*   **3.6.5. Layout e Páginas Envolvidas:**
+*   **3.7.5. Layout e Páginas Envolvidas:**
     *   **Dashboard do Usuário - Meus Documentos (`/dashboard/documents`):**
         *   Componente: `UserDocumentsPage` (em `src/app/dashboard/documents/page.tsx`).
         *   Lista os `DocumentType`s definidos.
@@ -832,7 +976,7 @@
     *   **Componentes de UI Reutilizáveis:**
         *   Upload de arquivo com barra de progresso e validação de tipo/tamanho.
         *   Exibição de status com cores/ícones (ex: `Badge` com cores diferentes para `APPROVED`, `REJECTED`, etc.).
-*   **3.6.6. Considerações sobre TDD:**
+*   **3.7.6. Considerações sobre TDD:**
     *   **Testes Unitários:**
         *   Funções utilitárias para determinar o `habilitationStatus` geral com base nos status dos `UserDocument`s individuais.
         *   Validações de frontend para o formulário de upload (tipo de arquivo, tamanho).
@@ -858,6 +1002,804 @@
             5.  `habilitationStatus` do usuário muda para `HABILITADO`.
             6.  Usuário agora pode realizar ações que exigem habilitação (ex: dar um lance).
         *   Cenário de rejeição de documento e reenvio pelo usuário.
+
+### 3.8. Gestão de Usuários e Papéis (Visão Administrativa)
+
+*   **3.8.1. Descrição Geral:**
+    *   Permite que Administradores da plataforma gerenciem todas as contas de usuário e seus respectivos níveis de acesso. Isso inclui visualizar detalhes de usuários, editar informações de perfil (exceto dados sensíveis como senha direta), atribuir papéis (Roles), gerenciar o status de habilitação, e excluir usuários. Adicionalmente, os Administradores podem criar, editar e excluir Papéis (Roles), definindo as permissões associadas a cada um, com exceção de papéis de sistema protegidos.
+*   **3.8.2. Personas Envolvidas:**
+    *   **Administrador da Plataforma:** Persona principal com plenos poderes sobre o gerenciamento de usuários e papéis.
+*   **3.8.3. Cenários BDD (Gherkin):**
+    ```gherkin
+    Feature: Gestão de Usuários e Papéis (Admin)
+
+      Scenario: Admin visualiza a lista de todos os usuários
+        Given Estou logado como Administrador
+        And Existem usuários cadastrados no sistema
+        When Eu navego para a página "/admin/users"
+        Then Eu devo ver uma tabela ou lista com os usuários
+        And As colunas devem incluir "Nome Completo", "Email", "Papel", "Status de Habilitação", "Data de Cadastro".
+        And Deve haver opções de filtro (ex: por papel, por status de habilitação) e busca (ex: por nome, por email).
+
+      Scenario: Admin visualiza os detalhes de um usuário específico
+        Given Estou logado como Administrador
+        And Existe um usuário "joana.silva@example.com"
+        When Eu clico em "Ver Detalhes" ou no nome do usuário "joana.silva@example.com" na lista
+        Then Eu sou redirecionado para a página de edição/visualização do usuário (ex: "/admin/users/joana_uid")
+        And Eu vejo todos os dados de perfil de "joana.silva@example.com".
+
+      Scenario: Admin edita dados de perfil de um usuário
+        Given Estou logado como Administrador na página de edição do usuário "pedro.santos@example.com"
+        And O campo "Nome Completo" do usuário é "Pedro Santos"
+        When Eu altero o campo "Nome Completo" para "Pedro Santos Almeida"
+        And Eu clico no botão "Salvar Alterações"
+        Then Eu devo ver uma mensagem de sucesso "Perfil do usuário atualizado."
+        And O nome completo do usuário deve ser "Pedro Santos Almeida".
+
+      Scenario: Admin atribui/altera o papel de um usuário
+        Given Estou logado como Administrador na página de edição do usuário "ana.costa@example.com"
+        And O papel atual de "ana.costa@example.com" é "USER"
+        And Existe um papel "LEILOEIRO" no sistema
+        When Eu seleciono o papel "LEILOEIRO" na lista de papéis disponíveis para o usuário
+        And Eu clico no botão "Atualizar Papel" (ou "Salvar Alterações")
+        Then Eu devo ver uma mensagem de sucesso "Papel do usuário atualizado."
+        And O papel de "ana.costa@example.com" deve ser "LEILOEIRO"
+        And As permissões de "ana.costa@example.com" devem corresponder às do papel "LEILOEIRO".
+
+      Scenario: Admin exclui um usuário
+        Given Estou logado como Administrador
+        And Existe um usuário "usuario_a_excluir@example.com"
+        When Eu encontro "usuario_a_excluir@example.com" na lista de usuários e clico em "Excluir"
+        And Eu confirmo a exclusão
+        Then Eu devo ver uma mensagem de sucesso "Usuário excluído com sucesso."
+        And "usuario_a_excluir@example.com" não deve mais aparecer na lista de usuários.
+        And A conta do usuário no Firebase Auth (se FIRESTORE) deve ser deletada.
+
+      Scenario: Admin altera manualmente o UserHabilitationStatus de um usuário
+        Given Estou logado como Administrador na página de edição do usuário "usuario_pendente@example.com"
+        And O `UserHabilitationStatus` do usuário é "PENDENTE_ANALYSIS"
+        When Eu altero o `UserHabilitationStatus` para "HABILITADO" (e possivelmente adiciono uma nota administrativa)
+        And Eu clico em "Salvar Status de Habilitação"
+        Then Eu devo ver uma mensagem "Status de habilitação atualizado."
+        And O `UserHabilitationStatus` do usuário deve ser "HABILITADO".
+
+      Scenario: Admin cria um novo papel com permissões específicas
+        Given Estou logado como Administrador
+        And Estou na página de criação de papéis "/admin/roles/new"
+        When Eu preencho o campo "Nome do Papel" com "Analista Financeiro"
+        And Eu preencho o campo "Descrição" com "Acesso a relatórios financeiros e de pagamentos."
+        And Eu seleciono as permissões "view_reports", "manage_payments" (permissões hipotéticas)
+        And Eu clico no botão "Salvar Papel"
+        Then Eu devo ver uma mensagem de sucesso "Papel 'Analista Financeiro' criado com sucesso."
+        And O papel "Analista Financeiro" deve aparecer na lista de papéis em "/admin/roles".
+
+      Scenario: Admin edita as permissões de um papel existente (customizado)
+        Given Estou logado como Administrador
+        And Existe um papel customizado "Suporte Nível 1" com permissão "tickets:view_basic"
+        When Eu navego para a página de edição do papel "Suporte Nível 1"
+        And Eu adiciono a permissão "tickets:edit_basic"
+        And Eu removo a permissão "old_permission_to_remove" (se existir)
+        And Eu clico no botão "Salvar Alterações"
+        Then Eu devo ver uma mensagem de sucesso "Papel atualizado."
+        And O papel "Suporte Nível 1" deve agora ter a permissão "tickets:edit_basic".
+
+      Scenario: Admin não consegue editar nome de papéis de sistema (ADMINISTRATOR, USER)
+        Given Estou logado como Administrador
+        When Eu tento editar o papel "ADMINISTRATOR"
+        Then O campo "Nome do Papel" deve estar desabilitado para edição.
+        And Eu posso alterar a descrição e permissões (com cautela).
+
+      Scenario: Admin exclui um papel customizado
+        Given Estou logado como Administrador
+        And Existe um papel customizado "Papel Obsoleto" que não está sendo usado por nenhum usuário
+        When Eu encontro "Papel Obsoleto" na lista de papéis e clico em "Excluir"
+        And Eu confirmo a exclusão
+        Then Eu devo ver uma mensagem de sucesso "Papel excluído."
+        And "Papel Obsoleto" não deve mais aparecer na lista.
+    ```
+*   **3.8.4. Regras de Negócio e Validações:**
+    *   **Gerenciamento de Usuários (`UserProfileData`):**
+        *   Campos editáveis por Admin (via `UserForm` ou interface similar): `fullName`, `email` (com ressalvas, pode impactar login no Auth), `cpf`, `cellPhone`, `dateOfBirth`, campos de endereço, `accountType`, `razaoSocial`, `cnpj`, etc. O tipo `EditableUserProfileData` define os campos que o próprio usuário pode editar; o admin pode ter um escopo similar ou maior.
+        *   Alteração de senha: Admin não deve poder definir/ver senhas diretamente. Deve haver um fluxo de "reset de senha" que o usuário completa.
+        *   `status` da conta (ex: 'ATIVO', 'SUSPENSO'): Admin pode alterar para bloquear/desbloquear acesso.
+        *   `habilitationStatus`: Admin pode alterar manualmente (com justificativa) ou é alterado automaticamente pelo fluxo de aprovação de documentos.
+    *   **Atribuição de Papéis (`Role`):**
+        *   Um usuário possui um `roleId` e `roleName` em seu `UserProfileData`.
+        *   Admin pode alterar o `roleId` de um usuário. Isso atualiza o `roleName` e as `permissions` do usuário para refletir o novo papel. (Action `updateUserRole`).
+    *   **Exclusão de Usuário (`deleteUser` action):**
+        *   Se `ACTIVE_DATABASE_SYSTEM === 'FIRESTORE'`, a exclusão deve remover o usuário do Firebase Authentication (`authAdmin.deleteUser(userId)`).
+        *   O perfil `UserProfileData` deve ser removido do banco de dados da aplicação (`adapter.deleteUserProfile(userId)`).
+        *   Considerar o que acontece com dados relacionados (leilões, lotes, lances feitos por este usuário). Soft delete ou anonimização podem ser necessários em vez de hard delete, dependendo dos requisitos de integridade de dados.
+    *   **Gerenciamento de Papéis (`Role`):**
+        *   Criação (`createRole` action): Nome do papel deve ser único (verificação por `name_normalized`). Permissões são selecionadas de uma lista predefinida (`predefinedPermissions`).
+        *   Edição (`updateRole` action): Nome, descrição e permissões podem ser alterados para papéis customizados.
+        *   Exclusão (`deleteRole` action): Papéis customizados podem ser excluídos, idealmente se não estiverem em uso.
+        *   Papéis de Sistema: Papéis como 'ADMINISTRATOR' e 'USER' são protegidos contra exclusão e, possivelmente, contra alteração de nome ou remoção de permissões essenciais.
+    *   **Permissões Administrativas:**
+        *   `users:read`, `users:create`, `users:update`, `users:delete`: Para gerenciamento de usuários.
+        *   `users:assign_roles`: Para alterar o papel de um usuário.
+        *   `roles:read`, `roles:create`, `roles:update`, `roles:delete`: Para gerenciamento de papéis.
+        *   `manage_all`: Concede todas as permissões acima.
+*   **3.8.5. Layout e Páginas Envolvidas:**
+    *   **Usuários:**
+        *   `/admin/users`: Listagem de usuários (`DataTable`) com colunas para Nome, Email, Papel, Status Habilitação, Data Cadastro. Funcionalidades de busca e filtro. Botões de ação por linha (Editar, Excluir). Botão "Novo Usuário".
+        *   `/admin/users/new`: Formulário (`UserForm` de `src/app/admin/users/user-form.tsx`) para criar novo usuário. Permite definir dados de perfil e, opcionalmente, o papel inicial.
+        *   `/admin/users/[userId]/edit`: Página de edição de usuário.
+            *   Usa `UserForm` para editar dados do `UserProfileData`.
+            *   Usa `UserRoleForm` (de `src/app/admin/users/user-role-form.tsx`) para alterar o `roleId` do usuário.
+            *   Pode ter abas/seções para visualizar documentos, histórico de lances, etc.
+    *   **Papéis:**
+        *   `/admin/roles`: Listagem de papéis (`DataTable`) com colunas para Nome, Descrição, Nº de Usuários (opcional). Botões de ação (Editar, Excluir - exceto para papéis de sistema). Botão "Novo Papel".
+        *   `/admin/roles/new`: Formulário (`RoleForm` de `src/app/admin/roles/role-form.tsx`) para criar novo papel, com seleção de permissões.
+        *   `/admin/roles/[roleId]/edit`: Formulário (`RoleForm`) para editar papel existente.
+*   **3.8.6. Considerações sobre TDD:**
+    *   **Testes Unitários:**
+        *   `userFormSchema.ts` e `roleFormSchema.ts`: Testar validações (já implementados).
+        *   Funções utilitárias para manipulação de permissões ou dados de usuário/papel.
+    *   **Testes de Integração (Server Actions):**
+        *   `getUsersWithRoles`, `getUserProfileData`: Mockar adapter e verificar retorno e formatação de dados.
+        *   `updateUserRole`: Mockar adapter, verificar se `adapter.updateUserRole` é chamado com os dados corretos e se `revalidatePath` é acionado.
+        *   `deleteUser`: Mockar `adapter.deleteUserProfile` e `authAdmin.deleteUser` (se FIRESTORE). Verificar `revalidatePath`.
+        *   `createUser` (contexto admin): Similar ao teste de registro público, mas pode envolver atribuição direta de papel diferente de 'USER'.
+        *   `createRole`, `getRoles`, `getRole`, `updateRole`, `deleteRole`: Mockar adapter, testar lógica de negócio (ex: não permitir exclusão de papel de sistema), verificar `revalidatePath`.
+    *   **Testes de UI (Componente):**
+        *   `UserForm`, `UserRoleForm`, `RoleForm`: Testar renderização, preenchimento, validações de cliente, submissão (mockando server actions).
+        *   Páginas de listagem (`/admin/users`, `/admin/roles`): Testar renderização da tabela, interações com filtros, paginação, botões de ação.
+    *   **Testes End-to-End (E2E):**
+        *   Fluxo completo de criação de um novo usuário por um admin.
+        *   Fluxo de edição de perfil e papel de um usuário.
+        *   Fluxo de exclusão de um usuário.
+        *   Fluxo completo de criação, edição e exclusão de um papel customizado.
+        *   Tentar editar/excluir um papel de sistema e verificar se a UI impede ou a action falha corretamente.
+
+### 3.9. Vendas Diretas (DirectSaleOffer)
+
+*   **3.9.1. Descrição Geral:**
+    *   Permite a comercialização de itens a um preço fixo ("Compre Agora") ou através da submissão de propostas por parte dos interessados ("Aceita Propostas"), funcionando como uma alternativa aos leilões tradicionais. Esta modalidade atende à necessidade de venda de itens que podem não se encaixar no formato de leilão ou para os quais o vendedor prefere uma negociação mais direta. As ofertas são gerenciadas por Comitentes/Vendedores ou Administradores, e os Compradores podem interagir de acordo com o tipo de oferta.
+
+*   **3.9.2. Personas Envolvidas:**
+    *   **Vendedor/Comitente:** Usuário (PF ou PJ) que cria e gerencia as ofertas de venda direta para seus itens. Define o tipo de oferta, preço (para "Compre Agora"), preço mínimo (opcional para "Aceita Propostas"), e gerencia as propostas recebidas.
+    *   **Comprador:** Usuário interessado em adquirir itens. Pode visualizar a lista de ofertas, filtrar por diversos critérios, visualizar detalhes da oferta, comprar diretamente um item "Compre Agora", ou submeter propostas para itens "Aceita Propostas".
+    *   **Administrador da Plataforma:** Pode criar/gerenciar ofertas em nome dos vendedores, moderar ofertas, e ter uma visão geral de todas as transações de venda direta.
+
+*   **3.9.3. Cenários BDD (Gherkin):**
+    ```gherkin
+    Feature: Vendas Diretas (DirectSaleOffer)
+      Como um usuário da plataforma
+      Eu quero poder participar de Vendas Diretas
+      Para comprar ou vender itens de forma direta.
+
+      Scenario: Vendedor cria uma nova oferta "Compre Agora"
+        Given Estou logado como Vendedor e na página de criação de Venda Direta
+        When Eu preencho o campo "Título da Oferta" com "Cadeira de Escritório Ergonômica Usada"
+        And Eu seleciono o tipo de oferta "Compre Agora"
+        And Eu preencho o campo "Preço" com "250.00"
+        And Eu preencho a "Descrição" com "Cadeira em bom estado, pouco uso, com ajuste de altura."
+        And Eu seleciono a "Categoria" como "Móveis de Escritório"
+        And Eu faço upload da imagem principal "cadeira.jpg"
+        And Eu clico em "Publicar Oferta"
+        Then Eu devo ver uma mensagem "Oferta publicada com sucesso!"
+        And A oferta "Cadeira de Escritório Ergonômica Usada" deve estar listada como "ATIVA" em meu painel de vendas.
+
+      Scenario: Vendedor cria uma nova oferta "Aceita Propostas" com preço mínimo
+        Given Estou logado como Vendedor e na página de criação de Venda Direta
+        When Eu preencho o campo "Título da Oferta" com "Coleção de Selos Raros"
+        And Eu seleciono o tipo de oferta "Aceita Propostas"
+        And Eu preencho o campo "Preço Mínimo para Proposta" com "500.00"
+        And Eu preencho a "Descrição" com "Coleção completa de selos da década de 50."
+        And Eu seleciono a "Categoria" como "Colecionáveis"
+        And Eu clico em "Publicar Oferta"
+        Then Eu devo ver uma mensagem "Oferta publicada com sucesso!"
+        And A oferta "Coleção de Selos Raros" deve estar listada como "ATIVA".
+
+      Scenario: Comprador visualiza lista de ofertas de venda direta
+        Given Estou logado como Comprador e na página "/direct-sales"
+        And Existem ofertas de venda direta publicadas
+        When Eu aplico o filtro de categoria "Eletrônicos"
+        And Eu ordeno por "Preço Menor para Maior"
+        Then Eu devo ver uma lista de ofertas de venda direta correspondentes aos filtros e ordenação.
+        And Cada oferta deve exibir título, imagem, preço (ou indicação de propostas) e nome do vendedor.
+
+      Scenario: Comprador compra um item "Compre Agora"
+        Given Estou logado como Comprador e visualizando a oferta "Cadeira de Escritório Ergonômica Usada" do tipo "Compre Agora" com preço "250.00"
+        When Eu clico no botão "Comprar Agora"
+        And Eu confirmo a intenção de compra
+        Then Eu devo ser redirecionado para a página de checkout (simulado)
+        And O status da oferta "Cadeira de Escritório Ergonômica Usada" deve mudar para "VENDIDO".
+        And Eu devo receber uma notificação de compra bem-sucedida.
+
+      Scenario: Comprador submete uma proposta válida para uma oferta "Aceita Propostas"
+        Given Estou logado como Comprador e visualizando a oferta "Coleção de Selos Raros" do tipo "Aceita Propostas"
+        And A oferta não possui preço mínimo ou o preço mínimo é "500.00"
+        When Eu preencho o campo "Valor da Proposta" com "550.00"
+        And Eu clico no botão "Enviar Proposta"
+        Then Eu devo ver uma mensagem "Proposta enviada com sucesso!"
+        And O vendedor deve ser notificado sobre a nova proposta.
+        And O contador `proposalsCount` da oferta deve ser incrementado.
+
+      Scenario: Comprador tenta submeter proposta abaixo do preço mínimo
+        Given Estou logado como Comprador e visualizando a oferta "Coleção de Selos Raros" com preço mínimo "500.00"
+        When Eu preencho o campo "Valor da Proposta" com "450.00"
+        And Eu clico no botão "Enviar Proposta"
+        Then Eu devo ver uma mensagem de erro "Sua proposta deve ser igual ou superior ao preço mínimo de R$ 500,00."
+
+      Scenario: Vendedor visualiza propostas recebidas
+        Given Estou logado como Vendedor da oferta "Coleção de Selos Raros"
+        And Foram recebidas propostas de "comprador1@example.com" (R$ 550) e "comprador2@example.com" (R$ 600)
+        When Eu acesso meu painel de vendas e seleciono a oferta "Coleção de Selos Raros"
+        Then Eu devo ver uma lista das propostas recebidas, incluindo o nome do proponente (ou identificador) e o valor.
+
+      Scenario: Vendedor aceita uma proposta
+        Given Estou logado como Vendedor e visualizando as propostas da oferta "Coleção de Selos Raros"
+        And A proposta de "comprador2@example.com" por "R$ 600,00" é a melhor
+        When Eu clico em "Aceitar Proposta" para a proposta de "comprador2@example.com"
+        Then O status da oferta "Coleção de Selos Raros" deve mudar para "VENDIDO"
+        And O Comprador "comprador2@example.com" deve ser notificado que sua proposta foi aceita.
+        And Outros proponentes podem ser notificados que suas propostas não foram aceitas.
+
+      Scenario: Vendedor rejeita uma proposta
+        Given Estou logado como Vendedor e visualizando a proposta de "comprador1@example.com" por "R$ 550,00" para a oferta "Coleção de Selos Raros"
+        When Eu clico em "Rejeitar Proposta"
+        Then A proposta de "comprador1@example.com" deve ser marcada como rejeitada.
+        And (Opcional) O Comprador "comprador1@example.com" é notificado.
+
+      Scenario: Oferta ativa atinge data de expiração
+        Given Existe uma oferta "Produto Antigo" com `expiresAt` definido para uma data passada
+        And O status da oferta é "ACTIVE"
+        When O sistema verifica as ofertas expiradas (ex: através de uma tarefa agendada ou na visualização)
+        Then O status da oferta "Produto Antigo" deve mudar para "EXPIRED".
+
+      Scenario: Contador de visualizações é incrementado
+        Given A oferta "Cadeira de Escritório Ergonômica Usada" tem 10 visualizações (`views: 10`)
+        When Um Comprador visualiza os detalhes da oferta "Cadeira de Escritório Ergonômica Usada"
+        Then O contador de visualizações (`views`) da oferta deve ser incrementado para 11.
+    ```
+
+*   **3.9.4. Regras de Negócio e Validações:**
+    *   **Criação/Edição de `DirectSaleOffer` (baseado no tipo `DirectSaleOffer` em `src/types/index.ts` e `BUSINESS_RULES.md`):**
+        *   Campos Obrigatórios: `title`, `description`, `imageUrl` (ou `mediaItemIds`), `offerType`, `category`, `sellerName` (geralmente o usuário logado, se comitente).
+        *   Se `offerType` for `BUY_NOW`, o campo `price` (numérico, positivo) é obrigatório.
+        *   Se `offerType` for `ACCEPTS_PROPOSALS`, o campo `minimumOfferPrice` (numérico, positivo) é opcional.
+        *   `sellerId` é o ID do usuário que cria a oferta.
+        *   `status` inicial geralmente é `ACTIVE` ou `PENDING_APPROVAL` (se houver fluxo de moderação).
+        *   `expiresAt` (opcional): Se definido, deve ser uma data futura.
+    *   **Transição de Status (`DirectSaleOfferStatus`):**
+        *   `PENDING_APPROVAL` -> `ACTIVE` (após aprovação do admin).
+        *   `ACTIVE` -> `SOLD` (após compra direta ou aceitação de proposta).
+        *   `ACTIVE` -> `EXPIRED` (se `expiresAt` for atingido).
+        *   Uma vez `SOLD` ou `EXPIRED`, a oferta não pode mais ser comprada ou receber propostas.
+    *   **Validação de Propostas:**
+        *   Valor da proposta deve ser positivo.
+        *   Se `minimumOfferPrice` estiver definido na oferta, a proposta deve ser maior ou igual a ele.
+        *   Um usuário não pode fazer proposta em sua própria oferta.
+    *   **Contadores:**
+        *   `views`: Incrementado a cada visualização da página de detalhes da oferta.
+        *   `proposalsCount`: Incrementado a cada nova proposta válida submetida.
+    *   **Permissões:**
+        *   Comitentes (`direct_sales:manage_own` ou similar): Criar, editar, excluir suas próprias ofertas. Visualizar e gerenciar propostas para suas ofertas.
+        *   Administradores (`direct_sales:manage_all` ou `manage_all`): Criar, editar, excluir qualquer oferta. Moderar ofertas.
+        *   Compradores (`direct_sales:place_proposal`, `direct_sales:buy_now`): Comprar itens "Compre Agora", submeter propostas.
+
+*   **3.9.5. Layout e Páginas Envolvidas:**
+    *   **Página de Listagem de Vendas Diretas (`/direct-sales` ou `src/app/direct-sales/page.tsx`):**
+        *   Galeria ou lista de `DirectSaleOfferCard`.
+        *   Filtros: Categoria, tipo de oferta (`BUY_NOW`, `ACCEPTS_PROPOSALS`), faixa de preço, localização (cidade/estado), nome do vendedor.
+        *   Ordenação: Data de publicação, preço, popularidade (visualizações).
+        *   Paginação.
+    *   **Página de Detalhes da Oferta (`/direct-sales/[offerId]` ou `src/app/direct-sales/[offerId]/page.tsx`):**
+        *   Exibição completa dos detalhes da `DirectSaleOffer`: título, descrição, galeria de imagens, preço (se `BUY_NOW`), informações do vendedor.
+        *   Se `offerType` for `BUY_NOW`: Botão "Comprar Agora".
+        *   Se `offerType` for `ACCEPTS_PROPOSALS`: Formulário para submissão de proposta (campo de valor, botão "Enviar Proposta"). Exibição do `minimumOfferPrice` se houver.
+        *   (Opcional) Seção de perguntas e respostas.
+    *   **Painel do Comitente/Vendedor (Interface Inferida, ex: `/consignor-dashboard/direct-sales`):**
+        *   Listagem das ofertas criadas pelo vendedor.
+        *   Opções para criar nova oferta, editar ou excluir ofertas existentes (se `status` permitir).
+        *   Para ofertas do tipo "Aceita Propostas": Interface para visualizar propostas recebidas, com opções para aceitar ou rejeitar cada proposta.
+    *   **Painel do Administrador (Interface Inferida, ex: `/admin/direct-sales`):**
+        *   Listagem de todas as ofertas de venda direta.
+        *   Filtros por status (`PENDING_APPROVAL`, `ACTIVE`, `SOLD`, `EXPIRED`).
+        *   Opções para aprovar, rejeitar (moderar), editar ou excluir qualquer oferta.
+    *   **Componentes Reutilizáveis:**
+        *   `DirectSaleOfferCard` (em `src/components/direct-sale-offer-card.tsx`): Card para exibir um resumo da oferta nas listagens.
+        *   Formulário de criação/edição de `DirectSaleOffer` (pode usar um schema Zod).
+        *   Formulário de submissão de proposta.
+
+*   **3.9.6. Considerações sobre TDD:**
+    *   **Testes Unitários:**
+        *   Schema Zod para o formulário de criação/edição de `DirectSaleOffer`: Validar campos obrigatórios, tipos, formatos (preço positivo, URL de imagem, etc.), lógica condicional (ex: `price` obrigatório se `offerType` for `BUY_NOW`).
+        *   Schema Zod para o formulário de submissão de proposta: Validar valor da proposta.
+        *   Funções utilitárias (ex: para verificar se uma oferta está expirada).
+    *   **Testes de Integração (Server Actions - a serem criadas/identificadas):**
+        *   `createDirectSaleOffer`: Mockar adapter, verificar criação correta no DB, `revalidatePath`.
+        *   `updateDirectSaleOffer`: Mockar adapter, verificar atualização no DB, `revalidatePath`.
+        *   `deleteDirectSaleOffer`: Mockar adapter, verificar exclusão no DB, `revalidatePath`.
+        *   `getDirectSaleOffer(s)`: Mockar adapter, verificar retorno dos dados.
+        *   `submitProposal`: Mockar adapter, verificar criação de registro de proposta, atualização de `proposalsCount`, notificações (se houver).
+        *   `acceptProposal`: Mockar adapter, verificar mudança de status da oferta para `SOLD`, notificação ao proponente vencedor e outros.
+        *   `rejectProposal`: Mockar adapter, verificar status da proposta, notificação (se houver).
+        *   (Admin) `approveDirectSaleOffer`, `rejectDirectSaleOffer`: Mockar adapter, verificar mudança de status da oferta.
+    *   **Testes de UI (Componente):**
+        *   Formulário de criação/edição de `DirectSaleOffer`: Testar renderização, preenchimento, validações de cliente, submissão (mockando a action).
+        *   `DirectSaleOfferCard`: Testar renderização de informações.
+        *   Página de detalhes da oferta: Testar exibição condicional de botões ("Comprar Agora" vs. formulário de proposta).
+        *   Formulário de proposta: Testar validação e submissão.
+        *   Interfaces de gerenciamento de propostas para o vendedor.
+    *   **Testes End-to-End (E2E):**
+        *   Fluxo 1: Vendedor cria oferta "Compre Agora" -> Comprador visualiza e compra o item.
+        *   Fluxo 2: Vendedor cria oferta "Aceita Propostas" -> Comprador A submete proposta -> Comprador B submete proposta maior -> Vendedor visualiza propostas e aceita a do Comprador B.
+        *   Fluxo 3: Oferta expira e seu status é atualizado.
+        *   Fluxo 4 (Admin): Moderar (aprovar/rejeitar) uma oferta pendente.
+
+### 3.10. Painel do Usuário (Dashboard)
+
+*   **3.10.1. Descrição Geral:**
+    *   O Painel do Usuário (Dashboard) é a área centralizada onde usuários registrados podem gerenciar suas atividades, informações pessoais e interações com a plataforma de leilões e vendas diretas. Ele fornece uma visão geral consolidada e acesso rápido a seções específicas como lances atuais, lotes arrematados, itens favoritos, status de documentos de habilitação, histórico de navegação, notificações e relatórios de atividades.
+    *   O objetivo é oferecer uma experiência de usuário organizada e eficiente, permitindo que acompanhem facilmente seus interesses e obrigações na plataforma.
+
+*   **3.10.2. Personas Envolvidas:**
+    *   **Usuário Registrado (Licitante/Comprador):** Principal persona. Utiliza o dashboard para acompanhar lances, arremates, gerenciar documentos, favoritos, notificações e visualizar seu histórico e relatórios de compras.
+    *   **Usuário Registrado (Comitente/Vendedor):** Embora possa ter um painel específico para gerenciamento de vendas (ex: `/consignor-dashboard`), algumas informações gerais ou notificações do dashboard principal podem ser relevantes. Esta especificação foca no dashboard do comprador/licitante, mas o layout de navegação deve permitir acesso a painéis específicos de vendedor, se aplicável.
+
+*   **3.10.3. Cenários BDD (Gherkin):**
+    ```gherkin
+    Feature: Painel do Usuário (Dashboard)
+      Como um usuário registrado
+      Eu quero acessar meu Painel (Dashboard)
+      Para visualizar e gerenciar minhas atividades e informações na plataforma.
+
+      Scenario: Usuário acessa a Visão Geral do Dashboard
+        Given Estou logado como "usuario_ativo@example.com"
+        When Eu navego para "/dashboard/overview"
+        Then Eu devo ver um resumo das minhas atividades recentes
+        And Eu devo ver uma seção de "Lances Ativos" com os principais lances que estou ganhando ou perdendo
+        And Eu devo ver uma seção de "Arremates Recentes" com os últimos lotes que ganhei
+        And Se eu tiver documentos pendentes, devo ver um alerta ou link para "/dashboard/documents".
+
+      Scenario: Usuário acessa Meus Lances
+        Given Estou logado como "licitante_frequente@example.com"
+        And Eu fiz lances em "LOTE_ABC" (status GANHANDO) e "LOTE_XYZ" (status PERDENDO)
+        When Eu navego para "/dashboard/bids"
+        Then Eu devo ver uma lista dos meus lances
+        And "LOTE_ABC" deve ser listado com status "GANHANDO" e valor do meu último lance
+        And "LOTE_XYZ" deve ser listado com status "PERDENDO", meu último lance e o lance atual do lote.
+        And Deve haver filtros para status do lance (Ganhando, Perdendo, Arrematado, Não Arrematado).
+
+      Scenario: Usuário acessa Meus Arremates
+        Given Estou logado como "comprador_sortudo@example.com"
+        And Eu arrematei "LOTE_VENCIDO_1" por R$500 (Pagamento PENDENTE) e "LOTE_VENCIDO_2" por R$300 (Pagamento PAGO)
+        When Eu navego para "/dashboard/wins"
+        Then Eu devo ver uma lista dos meus lotes arrematados
+        And "LOTE_VENCIDO_1" deve ser listado com valor R$500 e status de pagamento "PENDENTE"
+        And "LOTE_VENCIDO_2" deve ser listado com valor R$300 e status de pagamento "PAGO".
+        And Para cada arremate, deve haver um link para detalhes do lote e informações de pagamento.
+
+      Scenario: Usuário acessa e gerencia Favoritos
+        Given Estou logado como "usuario_planejador@example.com"
+        And Eu adicionei "LOTE_FAV_1" e "LOTE_FAV_2" aos meus favoritos
+        When Eu navego para "/dashboard/favorites"
+        Then Eu devo ver "LOTE_FAV_1" e "LOTE_FAV_2" listados com suas informações principais (imagem, título, preço atual).
+        When Eu clico em "Remover dos Favoritos" para "LOTE_FAV_1"
+        Then "LOTE_FAV_1" não deve mais aparecer na lista de favoritos.
+
+      Scenario: Usuário acessa Meus Documentos (referência à Seção 3.7)
+        Given Estou logado como "usuario_novo_docs@example.com" com status de habilitação "PENDENTE_DOCUMENTOS"
+        When Eu navego para "/dashboard/documents"
+        Then Eu sou direcionado para a funcionalidade de gerenciamento de documentos descrita na Seção 3.7
+        And Eu vejo a lista de documentos requeridos e seus status.
+
+      Scenario: Usuário acessa Histórico de Navegação
+        Given Estou logado como "usuario_navegador@example.com"
+        And Eu visitei os lotes "LOTE_RECENTE_A", "LOTE_RECENTE_B", "LOTE_RECENTE_C" (nesta ordem, C é o mais recente)
+        When Eu navego para "/dashboard/history"
+        Then Eu devo ver uma lista dos lotes que visitei recentemente
+        And "LOTE_RECENTE_C" deve aparecer primeiro na lista, seguido por "LOTE_RECENTE_B" e "LOTE_RECENTE_A".
+
+      Scenario: Usuário acessa Notificações
+        Given Estou logado como "usuario_informado@example.com"
+        And Eu recebi uma notificação "Seu lance no LOTE_XYZ foi coberto" (não lida)
+        And Eu recebi uma notificação "O leilão LEILAO_IMPORTANTE começa em 1 hora" (lida)
+        When Eu navego para "/dashboard/notifications"
+        Then Eu devo ver a notificação sobre "LOTE_XYZ" marcada como "não lida"
+        And Eu devo ver a notificação sobre "LEILAO_IMPORTANTE" marcada como "lida".
+        When Eu clico na notificação sobre "LOTE_XYZ"
+        Then A notificação sobre "LOTE_XYZ" deve ser marcada como "lida"
+        And (Opcional) Eu posso ser redirecionado para a página do "LOTE_XYZ".
+
+      Scenario: Usuário acessa Relatórios (Exemplo: Gastos)
+        Given Estou logado como "usuario_analitico@example.com"
+        And Eu arrematei 3 lotes no último mês, totalizando R$1250,00
+        When Eu navego para "/dashboard/reports"
+        And Eu seleciono o relatório de "Gastos Totais por Período"
+        And Eu defino o período como "Último Mês"
+        Then Eu devo ver um relatório indicando que meus gastos totais foram R$1250,00.
+    ```
+
+*   **3.10.4. Regras de Negócio e Validações:**
+    *   **Acesso:** Todas as seções do dashboard são restritas a usuários autenticados.
+    *   **Privacidade de Dados:** Um usuário só pode visualizar suas próprias informações (seus lances, seus arremates, seus favoritos, etc.). As queries de backend devem sempre filtrar os dados pelo `userId` do usuário logado.
+    *   **Visão Geral (`/dashboard/overview`):**
+        *   Exibe um número limitado de itens recentes (ex: últimos 5 lances ativos, últimos 3 arremates).
+        *   Alerta para documentos pendentes deve ser proeminente se `UserProfileData.habilitationStatus` for `PENDING_DOCUMENTS` ou `REJECTED_DOCUMENTS`.
+    *   **Meus Lances (`/dashboard/bids` - `UserBid`):**
+        *   Lista lances com informações do lote (`lotTitle`, `lotImageUrl`, `lotEndDate`), valor do lance do usuário (`userBidAmount`), preço atual do lote (`currentLotPrice`), e `bidStatus` (`GANHANDO`, `PERDENDO`, `SUPERADO_POR_OUTRO`, `SUPERADO_PELO_PROPRIO_MAXIMO`, `ARREMATADO`, `NAO_ARREMATADO`).
+        *   Permite filtrar por `bidStatus`.
+        *   Paginação para grande quantidade de lances.
+    *   **Meus Arremates (`/dashboard/wins` - `UserWin`):**
+        *   Lista lotes arrematados com informações do lote (`Lot`), valor do arremate (`winningBidAmount`), data do arremate (`winDate`), e status do pagamento (`paymentStatus` - `PENDENTE`, `PROCESSANDO`, `PAGO`, `FALHOU`).
+        *   Links para detalhes do lote e, se aplicável, para o sistema de pagamento.
+    *   **Favoritos (`/dashboard/favorites` - `Lot.isFavorite`):**
+        *   A funcionalidade de favoritar um lote (marcar/desmarcar `Lot.isFavorite = true/false`) ocorre nas páginas de listagem ou detalhes do lote.
+        *   O dashboard apenas exibe a lista de lotes onde `isFavorite` é `true` para o usuário logado.
+        *   A remoção de um favorito no dashboard deve atualizar o estado `isFavorite` do lote.
+    *   **Meus Documentos (`/dashboard/documents`):**
+        *   Redireciona ou integra a funcionalidade descrita na Seção `3.7. Habilitação de Usuários e Gerenciamento de Documentos`.
+    *   **Histórico de Navegação (`/dashboard/history` - `RecentlyViewedLotInfo`):**
+        *   Armazena uma lista dos últimos N lotes visualizados pelo usuário (ex: últimos 20).
+        *   Cada item deve conter ID do lote, título, imagem, e data da última visualização.
+        *   A lógica de registrar um lote como "visto recentemente" ocorre na página de detalhes do lote.
+    *   **Notificações (`/dashboard/notifications` - `UserNotification` - tipo hipotético):**
+        *   Lista de notificações geradas pelo sistema para o usuário (ex: lance coberto, leilão de interesse iniciando, documento aprovado/rejeitado, proposta recebida/aceita/rejeitada, etc.).
+        *   Cada notificação deve ter um status de `lida`/`não lida`.
+        *   Clicar em uma notificação deve marcá-la como `lida` e pode redirecionar para a página relevante.
+    *   **Relatórios (`/dashboard/reports`):**
+        *   A disponibilidade e tipos de relatórios podem variar. Exemplos:
+            *   Gastos totais em arremates por período.
+            *   Número de lances feitos por período.
+            *   Categorias de lotes mais arrematados.
+        *   Requerem agregação de dados do backend.
+
+*   **3.10.5. Layout e Páginas Envolvidas:**
+    *   **Layout Geral do Dashboard:**
+        *   Geralmente utiliza o layout principal da aplicação (Header e Footer globais).
+        *   Adiciona uma navegação secundária específica para o dashboard, que pode ser uma barra lateral (ex: `DashboardNav` em `src/components/layout/dashboard-nav.tsx`) ou abas no topo da área de conteúdo do dashboard.
+        *   Links de navegação: Visão Geral, Meus Lances, Meus Arremates, Favoritos, Documentos, Histórico, Notificações, Relatórios, Minha Conta (perfil).
+    *   **Páginas de Subseção:**
+        *   `/dashboard/overview`: (`src/app/dashboard/overview/page.tsx`)
+            *   Cards ou seções resumidas para "Lances Ativos", "Arremates Recentes", "Lotes Vistos Recentemente", "Alerta de Documentos".
+        *   `/dashboard/bids`: (`src/app/dashboard/bids/page.tsx`)
+            *   Tabela ou lista de `UserBidCard` (componente hipotético) ou linhas de tabela. Filtros de status.
+        *   `/dashboard/wins`: (`src/app/dashboard/wins/page.tsx`)
+            *   Tabela ou lista de `UserWinCard` (componente hipotético) ou linhas de tabela.
+        *   `/dashboard/favorites`: (`src/app/dashboard/favorites/page.tsx`)
+            *   Grade ou lista de `LotCard` para os lotes favoritados.
+        *   `/dashboard/documents`: (`src/app/dashboard/documents/page.tsx`)
+            *   Conforme descrito na Seção 3.7.5.
+        *   `/dashboard/history`: (`src/app/dashboard/history/page.tsx`)
+            *   Lista de `LotCard` ou similar para lotes vistos recentemente.
+        *   `/dashboard/notifications`: (`src/app/dashboard/notifications/page.tsx`)
+            *   Lista de itens de notificação, com distinção visual para lidas/não lidas.
+        *   `/dashboard/reports`: (`src/app/dashboard/reports/page.tsx`)
+            *   Interface para seleção de tipo de relatório e filtros (ex: período). Exibição dos dados em tabelas ou gráficos simples.
+    *   **Componentes Chave de Exibição:**
+        *   `DashboardNav`: Menu de navegação do dashboard.
+        *   Cards específicos para cada tipo de dado (lances, arremates, favoritos, notificações).
+        *   Tabelas (`DataTable`) para listagens mais densas.
+
+*   **3.10.6. Considerações sobre TDD:**
+    *   **Testes Unitários:**
+        *   Funções utilitárias para formatação de datas, valores monetários, ou cálculo de resumos para a Visão Geral.
+        *   Lógica de componentes de UI isolados (ex: um componente de filtro de relatório).
+    *   **Testes de Integração (Server Actions - a serem criadas/identificadas):**
+        *   `getUserDashboardOverview(userId: string)`: Action que busca os dados resumidos para a página de visão geral. Mockar chamadas ao DB adapter para `UserBid`, `UserWin`, `UserProfileData.habilitationStatus`.
+        *   `getUserBids(userId: string, filters?: any)`: Action para buscar os lances do usuário. Mockar adapter.
+        *   `getUserWins(userId: string, filters?: any)`: Action para buscar os arremates do usuário. Mockar adapter.
+        *   `getUserFavoriteLots(userId: string)`: Action para buscar os lotes favoritados. Mockar adapter.
+        *   `getUserRecentlyViewedLots(userId: string)`: Action para buscar o histórico de navegação. Mockar adapter.
+        *   `getUserNotifications(userId: string, filters?: any)`: Action para buscar as notificações. Mockar adapter.
+        *   `markNotificationAsRead(notificationId: string, userId: string)`: Action para atualizar o status de uma notificação.
+        *   `generateUserReport(userId: string, reportType: string, params: any)`: Action para gerar dados de relatório. Mockar adapter.
+    *   **Testes de UI (Componente - usando React Testing Library):**
+        *   Para cada página do dashboard (`overview/page.tsx`, `bids/page.tsx`, etc.):
+            *   Testar a renderização correta dos dados (usando dados mockados passados como props ou retornados por server actions mockadas).
+            *   Testar interações do usuário (filtros, paginação, marcar notificação como lida, remover favorito).
+            *   Verificar se os links de navegação no `DashboardNav` direcionam corretamente (simulando a navegação).
+    *   **Testes End-to-End (E2E - usando Playwright):**
+        *   Login de um usuário.
+        *   Navegar para cada seção do dashboard e verificar se os dados (consistentes com o estado do usuário mockado/semeado no DB de teste) são exibidos.
+        *   Fluxo: Adicionar um lote aos favoritos na página de um leilão -> navegar para `/dashboard/favorites` -> verificar se o lote aparece -> remover o lote dos favoritos -> verificar se ele some da lista.
+        *   Fluxo: Fazer um lance em um lote -> navegar para `/dashboard/bids` -> verificar se o lance aparece com status "GANHANDO".
+        *   Fluxo: (Simular) Arrematar um lote -> navegar para `/dashboard/wins` -> verificar se o arremate aparece.
+        *   Fluxo: Clicar em uma notificação não lida -> verificar se ela é marcada como lida.
+
+### 3.11. Painel do Comitente (Consignor Dashboard)
+
+*   **3.11.1. Descrição Geral:**
+    *   O Painel do Comitente é uma área dedicada para usuários que atuam como vendedores ou comitentes na plataforma. Seu propósito é fornecer ferramentas e informações para que possam gerenciar seus itens à venda (seja em leilão ou venda direta), acompanhar o desempenho de suas vendas, visualizar relatórios financeiros relacionados às suas transações e gerenciar seu perfil de vendedor.
+    *   Este painel visa simplificar o processo de venda, oferecendo uma visão clara do status dos itens, propostas recebidas, valores arrecadados e pendências.
+
+*   **3.11.2. Personas Envolvidas:**
+    *   **Comitente/Vendedor:** Usuário com papel `CONSIGNOR` ou com permissões apropriadas (ex: `auctions:manage_own`, `direct_sales:manage_own`, `consignor_dashboard:view`). Esta é a persona principal que interage com este painel para gerenciar suas atividades de venda.
+
+*   **3.11.3. Cenários BDD (Gherkin):**
+    ```gherkin
+    Feature: Painel do Comitente (Consignor Dashboard)
+      Como um Comitente/Vendedor registrado na plataforma
+      Eu quero acessar meu Painel de Comitente
+      Para gerenciar meus itens à venda, acompanhar meu desempenho e visualizar informações financeiras.
+
+      Scenario: Comitente acessa a Visão Geral do Painel
+        Given Estou logado como Comitente "vendedor_pro@example.com"
+        And Eu possuo leilões ativos e ofertas de venda direta
+        When Eu navego para "/consignor-dashboard/overview"
+        Then Eu devo ver um resumo das minhas atividades como comitente
+        And Eu devo ver estatísticas chave como "Total de Itens Ativos", "Vendas nos Últimos 30 dias", "Valor Pendente de Repasse".
+        And Eu devo ver links rápidos para criar novos leilões ou ofertas de venda direta.
+        And (Se `src/app/consignor-dashboard/overview/page.tsx` for um placeholder) Eu devo ver uma mensagem "Página em Desenvolvimento" ou similar, indicando que a visão geral completa ainda não está implementada.
+
+      Scenario: Comitente tenta acessar "Meus Leilões" (Funcionalidade Futura)
+        Given Estou logado como Comitente "vendedor_leiloes@example.com"
+        And Eu navego para o Painel do Comitente
+        When Eu clico no link "Meus Leilões" na barra lateral de navegação do painel do comitente
+        Then O link pode estar desabilitado, ou se clicável, serei direcionado para uma página placeholder (ex: "/consignor-dashboard/auctions")
+        And A página placeholder deve indicar "Funcionalidade em desenvolvimento: Gerenciamento de Leilões do Comitente".
+        And (Comportamento Esperado Futuro) Eu deverei ver uma lista dos meus leilões (criados por mim ou onde sou o comitente principal), com status, datas, número de lotes, e opções para visualizar detalhes, editar (se o status permitir) ou acompanhar o desempenho.
+
+      Scenario: Comitente tenta acessar "Meus Lotes" (Funcionalidade Futura)
+        Given Estou logado como Comitente "vendedor_lotes@example.com"
+        And Eu navego para o Painel do Comitente
+        When Eu clico no link "Meus Lotes" na barra lateral
+        Then O link pode estar desabilitado, ou serei direcionado para uma página placeholder (ex: "/consignor-dashboard/lots")
+        And A página placeholder deve indicar "Funcionalidade em desenvolvimento: Gerenciamento de Lotes do Comitente".
+        And (Comportamento Esperado Futuro) Eu deverei ver uma lista de todos os meus lotes (associados a leilões ou itens de venda direta), com status, preço, e opções para adicionar novos lotes (independentes ou para um leilão), editar detalhes, ou visualizar o desempenho individual.
+
+      Scenario: Comitente tenta acessar "Venda Direta" (Funcionalidade Futura)
+        Given Estou logado como Comitente "vendedor_direto_plus@example.com"
+        And Eu navego para o Painel do Comitente
+        When Eu clico no link "Venda Direta" na barra lateral
+        Then O link pode estar desabilitado, ou serei direcionado para uma página placeholder (ex: "/consignor-dashboard/direct-sales")
+        And A página placeholder deve indicar "Funcionalidade em desenvolvimento: Gerenciamento de Vendas Diretas do Comitente".
+        And (Comportamento Esperado Futuro) Eu deverei poder criar novas ofertas de Venda Direta (`DirectSaleOffer`), listar minhas ofertas ativas/inativas, editar ofertas existentes, visualizar e gerenciar propostas recebidas (conforme detalhado na Seção 3.9 para Vendedores).
+
+      Scenario: Comitente tenta acessar "Financeiro" (Funcionalidade Futura)
+        Given Estou logado como Comitente "vendedor_financeiro@example.com"
+        And Eu navego para o Painel do Comitente
+        When Eu clico no link "Financeiro" na barra lateral
+        Then O link pode estar desabilitado, ou serei direcionado para uma página placeholder (ex: "/consignor-dashboard/financials")
+        And A página placeholder deve indicar "Funcionalidade em desenvolvimento: Relatórios Financeiros do Comitente".
+        And (Comportamento Esperado Futuro) Eu deverei poder visualizar relatórios detalhados de vendas concluídas, valores totais vendidos, comissões da plataforma (se aplicável), status de repasses de pagamento, e extratos por período.
+    ```
+
+*   **3.11.4. Regras de Negócio e Validações:**
+    *   **Acesso ao Painel:**
+        *   Restrito a usuários com papel `CONSIGNOR` ou permissões específicas como `consignor_dashboard:view`.
+        *   O acesso pode ser um item de menu no `UserNav` ou um redirecionamento após login se o papel principal for `CONSIGNOR`.
+    *   **Visão Geral (`/consignor-dashboard/overview`):**
+        *   A página atual (`src/app/consignor-dashboard/overview/page.tsx`) parece ser um placeholder simples ("Consignor Overview Page").
+        *   **Futuramente, deveria exibir:**
+            *   Métricas chave: Total de leilões ativos, total de lotes ativos (em leilão e venda direta), total de vendas realizadas (últimos 30 dias/período selecionável), valor total pendente de repasse.
+            *   Lista de leilões recentes com status.
+            *   Lista de ofertas de venda direta recentes com status.
+            *   Alertas importantes (ex: propostas aguardando resposta, leilões encerrando em breve com itens não vendidos).
+    *   **Meus Leilões (Futuro):**
+        *   Listagem de leilões onde o usuário é o comitente principal.
+        *   Filtros por status do leilão.
+        *   Opção de criar novo leilão (pode redirecionar para `/auctions/create` ou interface administrativa de criação).
+        *   Visualização de detalhes do leilão, incluindo lotes associados e seu desempenho.
+    *   **Meus Lotes (Futuro):**
+        *   Listagem de todos os lotes do comitente, tanto os associados a leilões quanto os de Venda Direta.
+        *   Filtros por status, tipo (leilão/venda direta), categoria.
+        *   Opção de adicionar novo lote (para um leilão existente ou como um item solto que pode ser posteriormente adicionado a um leilão ou oferta de venda direta).
+        *   Edição de detalhes do lote (descrição, imagens, preço de reserva - se permitido antes do leilão iniciar).
+    *   **Venda Direta (Futuro):**
+        *   Interface completa para CRUD de `DirectSaleOffer` pertencentes ao comitente.
+        *   Gerenciamento de propostas (aceitar/rejeitar).
+        *   Acompanhamento de status das ofertas.
+    *   **Financeiro (Futuro):**
+        *   Relatórios de vendas: Detalhamento de itens vendidos, valor de venda, data da venda, comissão da plataforma, valor líquido a receber.
+        *   Status de Pagamento/Repasse: Indicação de quais vendas já foram pagas pelo comprador e quais valores já foram repassados ao comitente.
+        *   Filtros por período.
+
+*   **3.11.5. Layout e Páginas Envolvidas:**
+    *   **Layout Geral (`src/app/consignor-dashboard/layout.tsx`):**
+        *   Utiliza um layout específico para o painel do comitente.
+        *   Inclui uma barra lateral de navegação (`ConsignorSidebar` de `src/components/layout/consignor-sidebar.tsx`).
+        *   O `ConsignorSidebar` atualmente possui links para:
+            *   `Visão Geral` (`/consignor-dashboard/overview`) - Ativo.
+            *   `Meus Leilões` (`/consignor-dashboard/auctions`) - Desabilitado.
+            *   `Meus Lotes` (`/consignor-dashboard/lots`) - Desabilitado.
+            *   `Venda Direta` (`/consignor-dashboard/direct-sales`) - Desabilitado.
+            *   `Financeiro` (`/consignor-dashboard/financials`) - Desabilitado.
+            *   `Configurações` (`/consignor-dashboard/settings`) - Desabilitado.
+    *   **Página de Visão Geral (`/consignor-dashboard/overview/page.tsx`):**
+        *   Atualmente, exibe apenas um título "Consignor Overview Page".
+        *   **Futuramente, deveria conter:** Cards de métricas, listas resumidas de leilões/ofertas, alertas.
+    *   **Páginas Futuras (Esboço):**
+        *   `/consignor-dashboard/auctions`: Tabela/lista de leilões do comitente, com filtros e ações.
+        *   `/consignor-dashboard/lots`: Tabela/lista de lotes do comitente, com filtros e ações para adicionar/editar.
+        *   `/consignor-dashboard/direct-sales`: Interface para gerenciar `DirectSaleOffer` (similar ao que um admin faria, mas restrito aos itens do comitente).
+        *   `/consignor-dashboard/financials`: Seção com tabelas e gráficos para visualização de dados financeiros.
+        *   `/consignor-dashboard/settings`: Formulários para o comitente gerenciar informações do seu perfil de vendedor (`SellerProfileInfo`), como dados de contato, informações bancárias para repasse (se aplicável), etc.
+
+*   **3.11.6. Considerações sobre TDD:**
+    *   **Testes Unitários:**
+        *   Para a página de Visão Geral atual: Testar a renderização do conteúdo placeholder.
+        *   **Futuramente:**
+            *   Funções utilitárias para calcular métricas do comitente (ex: total de vendas, valor pendente).
+            *   Schemas Zod para quaisquer formulários específicos do painel do comitente (ex: configurações do perfil de vendedor).
+    *   **Testes de Integração (Server Actions - a serem criadas):**
+        *   `getConsignorOverviewData(consignorUserId: string)`: Buscar dados para a visão geral.
+        *   `getConsignorAuctions(consignorUserId: string, filters?: any)`: Buscar leilões do comitente.
+        *   `getConsignorLots(consignorUserId: string, filters?: any)`: Buscar lotes do comitente.
+        *   `getConsignorDirectSaleOffers(consignorUserId: string, filters?: any)`: Buscar ofertas de venda direta do comitente.
+        *   `getConsignorFinancialReport(consignorUserId: string, reportParams: any)`: Gerar dados financeiros.
+        *   Actions para CRUD de leilões/lotes/ofertas via painel do comitente, respeitando as permissões (`auctions:manage_own`, etc.).
+    *   **Testes de UI (Componente):**
+        *   Página `overview/page.tsx`: Testar a renderização do conteúdo atual.
+        *   **Futuramente:**
+            *   Testar a exibição correta das métricas e listas na Visão Geral (com dados mockados).
+            *   Testar as tabelas de listagem para "Meus Leilões", "Meus Lotes", "Venda Direta" (com dados mockados e interações de filtro/paginaçãso).
+            *   Testar os formulários de criação/edição (se houver interfaces dedicadas no painel do comitente que não reutilizem as de admin).
+            *   Testar a interface de relatórios financeiros.
+    *   **Testes End-to-End (E2E):**
+        *   **Futuramente:**
+            *   Login como Comitente -> Acessar o painel -> Verificar a Visão Geral.
+            *   Comitente cria um novo lote para um de seus leilões.
+            *   Comitente cria uma nova oferta de Venda Direta.
+            *   Comitente visualiza suas propostas recebidas e aceita/rejeita uma.
+            *   Comitente visualiza um relatório financeiro básico.
+
+### 3.12. Painel de Administração (Admin Dashboard e Listagens)
+
+*   **3.12.1. Descrição Geral:**
+    *   O Painel de Administração é o centro de controle da plataforma, acessível apenas por usuários com privilégios administrativos. Ele fornece uma visão geral do sistema e acesso a funcionalidades de gerenciamento de todas as entidades principais, como leilões, lotes, usuários, categorias, perfis de comitentes e leiloeiros, papéis de usuário, biblioteca de mídia e configurações da plataforma.
+    *   O objetivo é permitir que os administradores monitorem a saúde do sistema, gerenciem conteúdo, usuários e transações, configurem parâmetros da plataforma e garantam o bom funcionamento geral.
+
+*   **3.12.2. Personas Envolvidas:**
+    *   **Administrador da Plataforma:** Usuário com o papel `ADMINISTRATOR` ou que possua a permissão `manage_all` (ou um conjunto granular de permissões administrativas). Responsável por todas as operações de gerenciamento e configuração da plataforma.
+
+*   **3.12.3. Cenários BDD (Gherkin):**
+    ```gherkin
+    Feature: Painel de Administração (Admin Dashboard e Listagens)
+      Como um Administrador da Plataforma
+      Eu quero acessar e navegar pelo Painel de Administração
+      Para gerenciar e monitorar todos os aspectos do sistema.
+
+      Scenario: Admin acessa o Dashboard Principal do Admin
+        Given Estou logado como Administrador "admin_master@example.com"
+        When Eu navego para "/admin/dashboard"
+        Then Eu devo ver um painel com estatísticas chave da plataforma (ex: "Total de Usuários", "Leilões Ativos", "Vendas Recentes", "Lotes Cadastrados").
+        And Eu devo ver atalhos para as principais seções de gerenciamento (ex: "Gerenciar Leilões", "Gerenciar Usuários").
+        And (Se `src/app/admin/dashboard/page.tsx` for um placeholder) Eu devo ver uma mensagem "Página Principal do Admin em Desenvolvimento" ou similar.
+
+      Scenario: Admin navega para a listagem de Leilões
+        Given Estou logado como Administrador no Painel de Admin
+        When Eu clico em "Leilões" no menu lateral (`AdminSidebar`)
+        Then Eu sou direcionado para a página "/admin/auctions"
+        And Eu devo ver uma tabela (`DataTable`) listando os leilões com colunas como "Título", "Status", "Tipo", "Data de Início", "Nº de Lotes".
+        And Deve haver um botão "Novo Leilão" visível.
+
+      Scenario: Admin usa filtro na listagem de Leilões
+        Given Estou na página de listagem de Leilões "/admin/auctions"
+        And Existem leilões com status "EM_BREVE" e "ABERTO_PARA_LANCES"
+        When Eu aplico um filtro para exibir apenas leilões com status "EM_BREVE" (se a UI permitir)
+        Then A tabela de leilões deve ser atualizada para mostrar apenas os leilões "EM_BREVE".
+
+      Scenario: Admin clica em um Leilão para editar
+        Given Estou na página de listagem de Leilões "/admin/auctions"
+        And O leilão "Leilão de Arte Moderna" está listado
+        When Eu clico no título ou em um botão "Editar" para o "Leilão de Arte Moderna"
+        Then Eu sou direcionado para a página de edição do leilão (ex: "/admin/auctions/[auctionId]/edit").
+
+      Scenario: Admin navega para a listagem de Lotes
+        Given Estou logado como Administrador no Painel de Admin
+        When Eu clico em "Lotes" no menu lateral
+        Then Eu sou direcionado para a página "/admin/lots"
+        And Eu devo ver uma tabela listando os lotes com colunas como "Título", "Leilão Associado", "Status", "Preço Atual".
+        And Deve haver um botão "Novo Lote" visível.
+
+      Scenario: Admin navega para a listagem de Usuários
+        Given Estou logado como Administrador no Painel de Admin
+        When Eu clico em "Usuários" no menu lateral
+        Then Eu sou direcionado para a página "/admin/users"
+        And Eu devo ver uma tabela listando os usuários com colunas como "Nome Completo", "Email", "Papel", "Status Habilitação".
+        And Deve haver um botão "Novo Usuário" visível.
+
+      Scenario: Admin navega para a listagem de Categorias de Lote
+        Given Estou logado como Administrador no Painel de Admin
+        When Eu clico em "Categorias" no menu lateral
+        Then Eu sou direcionado para a página "/admin/categories"
+        And Eu devo ver uma tabela listando as categorias com colunas como "Nome", "Slug", "Contagem de Itens".
+        And Deve haver um botão "Nova Categoria" visível.
+
+      Scenario: Admin navega para a listagem de Perfis de Leiloeiro
+        Given Estou logado como Administrador no Painel de Admin
+        When Eu clico em "Leiloeiros" no menu lateral
+        Then Eu sou direcionado para a página "/admin/auctioneers"
+        And Eu devo ver uma tabela listando os perfis de leiloeiro com colunas como "Nome", "Email", "Nº Registro".
+        And Deve haver um botão "Novo Leiloeiro" visível.
+
+      Scenario: Admin navega para a listagem de Perfis de Comitente
+        Given Estou logado como Administrador no Painel de Admin
+        When Eu clico em "Comitentes" no menu lateral
+        Then Eu sou direcionado para a página "/admin/sellers"
+        And Eu devo ver uma tabela listando os perfis de comitente com colunas como "Nome", "Email", "CNPJ/CPF".
+        And Deve haver um botão "Novo Comitente" visível.
+
+      Scenario: Admin navega para a listagem de Papéis de Usuário
+        Given Estou logado como Administrador no Painel de Admin
+        When Eu clico em "Papéis" no menu lateral
+        Then Eu sou direcionado para a página "/admin/roles"
+        And Eu devo ver uma tabela listando os papéis com colunas como "Nome", "Descrição".
+        And Deve haver um botão "Novo Papel" visível.
+
+      Scenario: Admin navega para a Biblioteca de Mídia
+        Given Estou logado como Administrador no Painel de Admin
+        When Eu clico em "Mídia" no menu lateral
+        Then Eu sou direcionado para a página "/admin/media"
+        And Eu devo ver a interface da biblioteca de mídia.
+        And Deve haver um botão "Upload" visível.
+
+      Scenario: Admin navega para Configurações da Plataforma
+        Given Estou logado como Administrador no Painel de Admin
+        When Eu clico em "Configurações" no menu lateral
+        Then Eu sou direcionado para a página "/admin/settings"
+        And Eu devo ver campos para configurar parâmetros da plataforma (ex: máscaras de ID público, temas).
+
+      Scenario: Verificação de contador na listagem de Usuários
+        Given Estou na página de listagem de Usuários "/admin/users"
+        And Existem 50 usuários cadastrados que correspondem ao filtro atual (se houver)
+        Then Um totalizador na página deve exibir "50 usuários" (ou similar).
+    ```
+
+*   **3.12.4. Regras de Negócio e Validações (Foco na Interface de Admin):**
+    *   **Acesso ao Painel de Admin:**
+        *   Restrito a usuários com papel `ADMINISTRATOR` ou permissão `manage_all`. Acesso a subseções específicas pode ser granularizado por permissões (ex: `users:read`, `auctions:read`), mas geralmente o Admin tem acesso total.
+    *   **Dashboard Principal (`/admin/dashboard`):**
+        *   A página atual (`src/app/admin/dashboard/page.tsx`) é um placeholder.
+        *   **Futuramente, deveria exibir:**
+            *   Estatísticas chave: Total de usuários, total de leilões (ativos, encerrados), total de lotes, volume de vendas, novos registros.
+            *   Gráficos de tendência (ex: novos usuários por semana, volume de vendas por mês).
+            *   Atalhos para seções de gerenciamento mais usadas.
+            *   Lista de atividades recentes do sistema ou itens que requerem atenção (ex: documentos pendentes de aprovação).
+    *   **Listagens de Entidades (Geral):**
+        *   As páginas de listagem (ex: `/admin/auctions`, `/admin/users`) devem usar `DataTable` (ou componente similar) para apresentar os dados de forma organizada.
+        *   **Colunas Típicas:** Devem exibir os campos mais relevantes da entidade para identificação e status rápido.
+        *   **Busca:** Funcionalidade de busca por campos chave (ex: título de leilão, nome/email de usuário).
+        *   **Filtros:** Filtros por campos de status (ex: status do leilão, status de habilitação do usuário), tipo, categoria, etc.
+        *   **Ordenação:** Clicar nos cabeçalhos das colunas para ordenar os dados.
+        *   **Paginação:** Para lidar com grandes volumes de dados.
+        *   **Ações por Linha:** Botões ou menus para "Editar", "Excluir", "Ver Detalhes" para cada item da lista.
+        *   **Ações da Página:** Botão "Novo [Entidade]" para ir ao formulário de criação.
+    *   **Contadores e Totalizadores:** As listagens devem exibir contagem total de itens (respeitando filtros aplicados).
+
+*   **3.12.5. Layout e Páginas Envolvidas:**
+    *   **Layout Geral do Admin (`src/app/admin/layout.tsx`):**
+        *   Provê a estrutura base para todas as páginas do painel de administração.
+        *   Inclui a `AdminSidebar` para navegação entre as diferentes seções de gerenciamento.
+    *   **Barra Lateral de Administração (`AdminSidebar` em `src/components/layout/admin-sidebar.tsx`):**
+        *   Contém links de navegação para: Dashboard, Leilões, Lotes, Usuários, Categorias, Leiloeiros, Comitentes, Papéis, Mídia, Configurações, etc.
+    *   **Página Principal do Dashboard Admin (`/admin/dashboard/page.tsx`):**
+        *   Atualmente, um placeholder. Futuramente, conterá widgets de estatísticas e atalhos.
+    *   **Páginas de Listagem de Entidades (ex: `/admin/auctions/page.tsx`, `/admin/users/page.tsx`):**
+        *   Tipicamente contêm um título, um botão "Novo [Entidade]", e uma `DataTable` para exibir os registros.
+        *   A `DataTable` é configurada com colunas específicas para cada entidade e pode incluir funcionalidades de busca, filtro, ordenação e paginação.
+        *   As actions de CRUD (criar, editar, excluir) já foram detalhadas nas seções específicas de cada entidade (3.3 para Leilões, 3.4 para Lotes, 3.8 para Usuários, etc.) e são acessadas a partir dessas listagens.
+
+*   **3.12.6. Considerações sobre TDD:**
+    *   **Testes Unitários:**
+        *   Para quaisquer funções utilitárias usadas nas páginas de admin (ex: formatação de dados para exibição em tabelas).
+        *   Testes para componentes de UI específicos do admin que tenham lógica complexa (ex: um componente de filtro avançado, se existir).
+    *   **Testes de Integração (Server Actions):**
+        *   Testar as Server Actions que buscam dados para as listagens (ex: `getAuctions`, `getUsersWithRoles`, `getLots`, `getCategories`, etc.).
+            *   Mockar o DB adapter.
+            *   Verificar se os dados são retornados corretamente, incluindo a aplicação de filtros, ordenação e paginação (se implementados na action).
+            *   Testar a contagem total de registros para a paginação.
+    *   **Testes de UI (Componente - usando React Testing Library):**
+        *   Página `/admin/dashboard/page.tsx`: Testar a renderização do conteúdo atual (placeholder) e, futuramente, dos widgets de estatísticas.
+        *   Para cada página de listagem de entidade (ex: `/admin/auctions/page.tsx`):
+            *   Testar a renderização da `DataTable` com colunas e dados mockados.
+            *   Verificar se os botões de ação ("Novo", "Editar", "Excluir" por linha) estão presentes.
+            *   Testar interações com filtros, busca, ordenação e paginação (mockando as server actions de busca para retornar diferentes conjuntos de dados).
+        *   `AdminSidebar`: Testar se os links de navegação estão corretos.
+    *   **Testes End-to-End (E2E - usando Playwright):**
+        *   Login como Administrador.
+        *   Navegar para o Admin Dashboard (`/admin/dashboard`).
+        *   Navegar para cada uma das principais páginas de listagem (Leilões, Lotes, Usuários, etc.) através da `AdminSidebar`.
+        *   Em uma listagem (ex: Leilões):
+            *   Verificar se a tabela de dados é carregada.
+            *   Aplicar um filtro (se a UI permitir) e verificar se a lista é atualizada.
+            *   Clicar em um item para navegar para sua página de edição.
+            *   Voltar para a listagem e clicar no botão "Novo" para navegar para o formulário de criação.
 
 ## 4. Dicionário de Dados Global
 

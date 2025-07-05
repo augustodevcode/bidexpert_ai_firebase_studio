@@ -289,9 +289,39 @@ Este documento descreve as regras de negócio funcionais do sistema de leilões 
 ## 7. Lances
 
 ### Regras Funcionais:
-- **Processo:** Usuários habilitados podem dar lances em lotes abertos. O valor do lance deve superar o lance atual mais um incremento mínimo (regra de incremento não explicitamente detalhada, mas comum).
-- **Lance Automático (Proxy Bidding):** A UI sugere uma funcionalidade de "Lance Máximo", onde o sistema daria lances automaticamente até o limite do usuário. A implementação de backend para isso não foi confirmada nas análises de código de `actions`.
-- **Registro:** Cada lance válido é registrado em `BidInfo`. O `Lot.price` e `Lot.bidsCount` são atualizados.
+- **Processo:** Usuários habilitados (`UserHabilitationStatus = HABILITADO`) podem dar lances em lotes com status `ABERTO_PARA_LANCES`.
+- **Validações de Lance:**
+    - O usuário deve estar autenticado e habilitado.
+    - O leilão e o lote devem estar abertos para lances.
+    - O valor do lance (`amount`) deve ser superior ao lance atual do lote (`Lot.price`).
+    - O valor do lance deve respeitar um incremento mínimo sobre o lance atual.
+
+### 7.1. Incrementos de Lance
+- O sistema deve definir regras claras para o incremento mínimo de lance. Este incremento pode ser:
+    - **Global:** Um valor padrão ou percentual aplicado a todos os lotes.
+    - **Por Categoria:** Categorias específicas de lotes podem ter regras de incremento próprias.
+    - **Por Faixa de Valor:** O incremento pode variar de acordo com o valor atual do lance no lote (ex: lances até R$100 têm incremento de R$10, lances de R$100,01 a R$500 têm incremento de R$20, etc.).
+    - **Específico do Leilão/Lote:** Em casos raros, um leilão ou lote individual pode ter uma regra de incremento customizada.
+- A configuração destes incrementos deve ser gerenciável por administradores do sistema (potencialmente em `PlatformSettings` ou em uma seção dedicada de configuração de leilões).
+- O sistema deve sempre exibir claramente para o licitante qual o próximo lance mínimo aceitável.
+
+### 7.2. Lance Automático (Proxy Bidding / Lance Máximo)
+- **Funcionalidade:** Permite que um licitante insira o valor máximo que está disposto a pagar por um lote. Este valor máximo é mantido em sigilo pelo sistema.
+- **Operação:**
+    - Quando um lance máximo é registrado, o sistema automaticamente fará lances em nome do licitante, apenas o suficiente para cobrir o lance anterior de outro concorrente, respeitando o incremento mínimo configurado para o lote.
+    - Os lances automáticos só são acionados quando outro licitante faz um lance no mesmo lote.
+    - Se dois licitantes registrarem lances máximos, o sistema fará lances incrementais entre eles até que o lance máximo de um deles seja atingido.
+    - Em caso de lances máximos idênticos, o licitante que registrou seu valor máximo primeiro terá a prioridade (ou seja, seu lance será considerado o vigente pelo valor idêntico).
+    - Se um lance manual de outro licitante superar o lance máximo de um usuário que utiliza o proxy bidding, este último deixa de ser o licitante ganhador, a menos que aumente seu lance máximo.
+- **Interface:** O usuário deve ser informado se seu lance máximo foi superado e se ele ainda está ganhando o lote.
+- **Observação:** A efetiva implementação desta funcionalidade no backend (ações e lógica de servidor) não foi completamente confirmada durante a análise inicial do código (`actions.ts`), embora a interface do usuário possa sugerir sua existência. Uma validação completa da lógica de servidor é necessária.
+
+### 7.3. Registro de Lances
+- Cada lance válido (manual ou automático) é registrado na entidade `BidInfo`.
+- O campo `Lot.price` é atualizado com o valor do novo lance mais alto.
+- O campo `Lot.bidsCount` é incrementado.
+- O usuário que efetuou o lance é notificado da aceitação do seu lance.
+- Outros usuários interessados no lote (ex: que já deram lances ou marcaram como favorito) podem ser notificados sobre o novo lance.
 
 ### Entidade Principal: `BidInfo` (Registro de Lance)
 
@@ -321,12 +351,17 @@ Este documento descreve as regras de negócio funcionais do sistema de leilões 
 | `lotImageAiHint`  | `string` (opcional) | Hint de IA para a imagem do lote.                                       | Opcional.                                                                                                               |
 | `userBidAmount`   | `number`        | O valor do lance mais alto deste usuário para este lote.                    | Obrigatório.                                                                                                          |
 | `currentLotPrice` | `number`        | O preço atual do lote (lance mais alto de qualquer usuário).                | Obrigatório. Para o usuário comparar com seu lance.                                                                     |
-| `bidStatus`       | `UserBidStatus` | Status do lance do usuário em relação ao lote.                            | Obrigatório. Valores: `GANHANDO`, `PERDENDO`, `SUPERADO`, `ARREMATADO`, `NAO_ARREMATADO`.                                 |
+| `bidStatus`       | `UserBidStatus` | Status do lance do usuário em relação ao lote.                            | Obrigatório. Valores: `GANHANDO`, `PERDENDO`, `SUPERADO_POR_OUTRO`, `SUPERADO_PELO_PROPRIO_MAXIMO`, `ARREMATADO`, `NAO_ARREMATADO`. |
 | `bidDate`         | `AnyTimestamp`  | Data e hora do último lance deste usuário neste lote.                       | Obrigatório.                                                                                                          |
 | `lotEndDate`      | `AnyTimestamp`  | Data e hora de encerramento do lote (denormalizado).                        | Obrigatório. Para o usuário saber o prazo.                                                                              |
 
 **Status do Lance do Usuário (`UserBidStatus` - Enum):**
-`GANHANDO`, `PERDENDO`, `SUPERADO`, `ARREMATADO`, `NAO_ARREMATADO`.
+`GANHANDO` (Seu lance é o maior no momento),
+`PERDENDO` (Outro licitante tem um lance maior),
+`SUPERADO_POR_OUTRO` (Seu lance foi coberto por outro licitante),
+`SUPERADO_PELO_PROPRIO_MAXIMO` (Seu lance máximo cobriu um lance de outro, e seu lance máximo ainda é o maior, mas o valor exibido do lote aumentou),
+`ARREMATADO` (Você venceu o lote),
+`NAO_ARREMATADO` (O lote encerrou e você não venceu).
 
 ## 8. Pós-Arremate e Pagamentos
 
@@ -498,7 +533,26 @@ Este documento descreve as regras de negócio funcionais do sistema de leilões 
 | `linkedLotIds`   | `string[]` (opcional)                    | Lista de IDs de lotes (`Lot.id`) aos quais este item de mídia está vinculado. | Opcional.                                                                                                     |
 | `dataAiHint`     | `string` (opcional)                      | Hint de IA para o conteúdo da mídia (ex: para análise de imagem).            | Opcional.                                                                                                     |
 
-## 13. Configurações e Dados Geográficos
+## 13. Funcionalidades de IA
+
+Além dos campos `dataAiHint` presentes em diversas entidades (como `UserProfileData`, `Auction`, `Lot`, `SellerProfileInfo`, `AuctioneerProfileInfo`, `DirectSaleOffer`, `MediaItem`), que servem como entrada para processamentos de Inteligência Artificial, o sistema pode empregar IA para diversas finalidades:
+
+- **Assistência na Criação de Leilões e Lotes:**
+    - **Sugestão de Descrições:** Com base em títulos, categorias, e `dataAiHint` de itens, a IA pode gerar ou sugerir descrições detalhadas para leilões e lotes, otimizando o tempo de cadastro e melhorando a qualidade das informações.
+    - **Categorização Automática:** A IA pode sugerir a categoria (`LotCategory`) mais apropriada para um lote com base em sua descrição ou imagem.
+    - **Precificação Inteligente:** Analisando dados históricos de leilões, características do item (extraídas de `dataAiHint` ou descrições) e condições de mercado, a IA pode sugerir valores iniciais (`initialPrice`, `secondInitialPrice`) e até mesmo estimar o valor de arremate.
+    - **Otimização de Títulos:** Sugerir títulos mais atrativos e com palavras-chave relevantes para melhorar a encontrabilidade dos lotes.
+    - **Análise de Imagens:** Os campos `dataAiHint` associados a imagens (`imageUrl`, `logoUrl`, `galleryImageUrls`) podem ser usados para analisar o conteúdo das imagens, extrair características (ex: cor predominante, objetos presentes, estado de conservação aparente em veículos) que podem enriquecer a descrição do lote ou auxiliar em buscas.
+- **Recomendação Personalizada:**
+    - Sugerir leilões e lotes relevantes para usuários com base em seu histórico de navegação, lances, favoritos e `dataAiHint` do perfil.
+- **Detecção de Fraudes:**
+    - Analisar padrões de lances e comportamento de usuários para identificar atividades suspeitas.
+- **Suporte ao Cliente:**
+    - Chatbots com IA para responder perguntas frequentes e auxiliar usuários.
+
+A implementação específica e profundidade dessas funcionalidades de IA dependem da integração com modelos de IA e do desenvolvimento de fluxos específicos no sistema (ex: os fluxos em `src/ai/flows/`).
+
+## 14. Configurações e Dados Geográficos
 
 ### Entidades: `LotCategory`, `StateInfo`, `CityInfo`, `PlatformSettings`
 
