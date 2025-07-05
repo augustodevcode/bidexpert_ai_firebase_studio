@@ -2,8 +2,30 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, LineChart, PieChart, Users, DollarSign, Gavel, Tag, BarChart3, Loader2 } from 'lucide-react';
-import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line, Pie, Cell } from 'recharts';
+import { 
+    LineChart as LineChartIcon, 
+    PieChart as PieChartIcon, 
+    Users, 
+    DollarSign, 
+    Gavel, 
+    Tag, 
+    BarChart3, 
+    Loader2 
+} from 'lucide-react';
+import { 
+    LineChart, 
+    PieChart,
+    Bar, 
+    XAxis, 
+    YAxis, 
+    CartesianGrid, 
+    Tooltip, 
+    Legend, 
+    ResponsiveContainer, 
+    Line, 
+    Pie, 
+    Cell 
+} from 'recharts';
 import { useState, useEffect } from 'react';
 
 // Sample data - in a real app, this would be fetched from the server.
@@ -94,7 +116,7 @@ export default function AdminReportsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle className="flex items-center"><LineChart className="mr-2 h-5 w-5"/> Vendas Mensais</CardTitle>
+            <CardTitle className="flex items-center"><LineChartIcon className="mr-2 h-5 w-5"/> Vendas Mensais</CardTitle>
           </CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -111,7 +133,7 @@ export default function AdminReportsPage() {
         </Card>
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle className="flex items-center"><PieChart className="mr-2 h-5 w-5"/> Leilões por Categoria</CardTitle>
+            <CardTitle className="flex items-center"><PieChartIcon className="mr-2 h-5 w-5"/> Leilões por Categoria</CardTitle>
           </CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
