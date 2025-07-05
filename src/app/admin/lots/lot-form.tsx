@@ -354,7 +354,7 @@ export default function LotForm({
                         columns={bemColumns}
                         data={availableBensForTable}
                         rowSelection={bemRowSelection}
-                        setRowSelection={setRowSelection}
+                        setRowSelection={setBemRowSelection}
                         searchPlaceholder="Buscar bem disponível..."
                         searchColumnId="title"
                     />
