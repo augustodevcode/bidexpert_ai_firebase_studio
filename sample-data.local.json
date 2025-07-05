@@ -1,4 +1,3 @@
-
 {
   "sampleAuctioneers": [
     {
@@ -689,36 +688,293 @@
       "locationState": "",
       "address": ""
     },
-    { "id": "bem-6", "publicId": "BEM-PUB-6", "title": "Terreno Comercial na Barra da Tijuca", "judicialProcessId": "proc-2", "status": "LOTEADO", "categoryId": "cat-imoveis", "evaluationValue": 750000, "imageUrl": "https://placehold.co/600x400.png?text=Terreno+RJ", "createdAt": "2025-07-05T12:00:00Z", "updatedAt": "2025-07-05T12:00:00Z" },
-    { "id": "bem-7", "publicId": "BEM-PUB-7", "title": "Sala Comercial Ed. Central", "judicialProcessId": "proc-2", "status": "DISPONIVEL", "categoryId": "cat-imoveis", "evaluationValue": 120000, "imageUrl": "https://placehold.co/600x400.png?text=Sala+Comercial", "createdAt": "2025-07-05T12:00:00Z", "updatedAt": "2025-07-05T12:00:00Z" },
-    { "id": "bem-8", "publicId": "BEM-PUB-8", "title": "VW Nivus Highline 2022", "sellerId": "seller-banco-bradesco-s-a", "status": "LOTEADO", "categoryId": "cat-veiculos", "evaluationValue": 98000, "imageUrl": "https://placehold.co/600x400.png?text=Nivus+2022", "createdAt": "2025-07-05T12:00:00Z", "updatedAt": "2025-07-05T12:00:00Z" },
-    { "id": "bem-9", "publicId": "BEM-PUB-9", "title": "Jeep Compass Longitude 2021", "sellerId": "seller-banco-bradesco-s-a", "status": "LOTEADO", "categoryId": "cat-veiculos", "evaluationValue": 115000, "imageUrl": "https://placehold.co/600x400.png?text=Compass+2021", "createdAt": "2025-07-05T12:00:00Z", "updatedAt": "2025-07-05T12:00:00Z" },
-    { "id": "bem-10", "publicId": "BEM-PUB-10", "title": "Pulverizador Autopropelido Jacto", "sellerId": "seller-fazenda-boa-esperanca", "status": "LOTEADO", "categoryId": "cat-maquinas-e-equipamentos", "evaluationValue": 250000, "imageUrl": "https://placehold.co/600x400.png?text=Pulverizador", "createdAt": "2025-07-05T12:00:00Z", "updatedAt": "2025-07-05T12:00:00Z" },
-    { "id": "bem-11", "publicId": "BEM-PUB-11", "title": "Apple iPhone 14 Pro 256GB", "sellerId": "seller-colecionadores-rj", "status": "LOTEADO", "categoryId": "cat-eletronicos-e-tecnologia", "evaluationValue": 4500, "imageUrl": "https://placehold.co/600x400.png?text=iPhone+14+Pro", "createdAt": "2025-07-05T12:00:00Z", "updatedAt": "2025-07-05T12:00:00Z" },
-    { "id": "bem-12", "publicId": "BEM-PUB-12", "title": "Cadeira Gamer DT3 Sports", "sellerId": "seller-colecionadores-rj", "status": "LOTEADO", "categoryId": "cat-bens-diversos", "evaluationValue": 800, "imageUrl": "https://placehold.co/600x400.png?text=Cadeira+Gamer", "createdAt": "2025-07-05T12:00:00Z", "updatedAt": "2025-07-05T12:00:00Z" },
-    { "id": "bem-13", "publicId": "BEM-PUB-13", "title": "VW Gol 2015 (Frota)", "sellerId": "seller-secretaria-de-administracao-de-salvador", "status": "LOTEADO", "categoryId": "cat-veiculos", "evaluationValue": 22000, "imageUrl": "https://placehold.co/600x400.png?text=Gol+2015", "createdAt": "2025-07-05T12:00:00Z", "updatedAt": "2025-07-05T12:00:00Z" },
-    { "id": "bem-14", "publicId": "BEM-PUB-14", "title": "VW Gol 2016 (Frota)", "sellerId": "seller-secretaria-de-administracao-de-salvador", "status": "LOTEADO", "categoryId": "cat-veiculos", "evaluationValue": 24000, "imageUrl": "https://placehold.co/600x400.png?text=Gol+2016", "createdAt": "2025-07-05T12:00:00Z", "updatedAt": "2025-07-05T12:00:00Z" },
-    { "id": "bem-15", "publicId": "BEM-PUB-15", "title": "Relógio Rolex Submariner", "sellerId": "seller-galeria-de-arte-sp", "status": "LOTEADO", "categoryId": "cat-arte-e-antiguidades", "evaluationValue": 65000, "imageUrl": "https://placehold.co/600x400.png?text=Rolex", "createdAt": "2025-07-05T12:00:00Z", "updatedAt": "2025-07-05T12:00:00Z" },
-    { "id": "bem-16", "publicId": "BEM-PUB-16", "title": "Ford Ranger 2020 4x4", "sellerId": "seller-proprietario-particular-1", "status": "LOTEADO", "categoryId": "cat-veiculos", "evaluationValue": 130000, "imageUrl": "https://placehold.co/600x400.png?text=Ranger+2020", "createdAt": "2025-07-05T12:00:00Z", "updatedAt": "2025-07-05T12:00:00Z" }
+    {
+      "id": "bem-6",
+      "publicId": "BEM-PUB-6",
+      "title": "Terreno Comercial na Barra da Tijuca",
+      "judicialProcessId": "proc-2",
+      "status": "LOTEADO",
+      "categoryId": "cat-imoveis",
+      "evaluationValue": 750000,
+      "imageUrl": "https://placehold.co/600x400.png?text=Terreno+RJ",
+      "createdAt": "2025-07-05T12:00:00Z",
+      "updatedAt": "2025-07-05T12:00:00Z"
+    },
+    {
+      "id": "bem-7",
+      "publicId": "BEM-PUB-7",
+      "title": "Sala Comercial Ed. Central",
+      "judicialProcessId": "proc-2",
+      "status": "DISPONIVEL",
+      "categoryId": "cat-imoveis",
+      "evaluationValue": 120000,
+      "imageUrl": "https://placehold.co/600x400.png?text=Sala+Comercial",
+      "createdAt": "2025-07-05T12:00:00Z",
+      "updatedAt": "2025-07-05T12:00:00Z"
+    },
+    {
+      "id": "bem-8",
+      "publicId": "BEM-PUB-8",
+      "title": "VW Nivus Highline 2022",
+      "sellerId": "seller-banco-bradesco-s-a",
+      "status": "LOTEADO",
+      "categoryId": "cat-veiculos",
+      "evaluationValue": 98000,
+      "imageUrl": "https://placehold.co/600x400.png?text=Nivus+2022",
+      "createdAt": "2025-07-05T12:00:00Z",
+      "updatedAt": "2025-07-05T12:00:00Z"
+    },
+    {
+      "id": "bem-9",
+      "publicId": "BEM-PUB-9",
+      "title": "Jeep Compass Longitude 2021",
+      "sellerId": "seller-banco-bradesco-s-a",
+      "status": "LOTEADO",
+      "categoryId": "cat-veiculos",
+      "evaluationValue": 115000,
+      "imageUrl": "https://placehold.co/600x400.png?text=Compass+2021",
+      "createdAt": "2025-07-05T12:00:00Z",
+      "updatedAt": "2025-07-05T12:00:00Z"
+    },
+    {
+      "id": "bem-10",
+      "publicId": "BEM-PUB-10",
+      "title": "Pulverizador Autopropelido Jacto",
+      "sellerId": "seller-fazenda-boa-esperanca",
+      "status": "LOTEADO",
+      "categoryId": "cat-maquinas-e-equipamentos",
+      "evaluationValue": 250000,
+      "imageUrl": "https://placehold.co/600x400.png?text=Pulverizador",
+      "createdAt": "2025-07-05T12:00:00Z",
+      "updatedAt": "2025-07-05T12:00:00Z"
+    },
+    {
+      "id": "bem-11",
+      "publicId": "BEM-PUB-11",
+      "title": "Apple iPhone 14 Pro 256GB",
+      "sellerId": "seller-colecionadores-rj",
+      "status": "LOTEADO",
+      "categoryId": "cat-eletronicos-e-tecnologia",
+      "evaluationValue": 4500,
+      "imageUrl": "https://placehold.co/600x400.png?text=iPhone+14+Pro",
+      "createdAt": "2025-07-05T12:00:00Z",
+      "updatedAt": "2025-07-05T12:00:00Z"
+    },
+    {
+      "id": "bem-12",
+      "publicId": "BEM-PUB-12",
+      "title": "Cadeira Gamer DT3 Sports",
+      "sellerId": "seller-colecionadores-rj",
+      "status": "LOTEADO",
+      "categoryId": "cat-bens-diversos",
+      "evaluationValue": 800,
+      "imageUrl": "https://placehold.co/600x400.png?text=Cadeira+Gamer",
+      "createdAt": "2025-07-05T12:00:00Z",
+      "updatedAt": "2025-07-05T12:00:00Z"
+    },
+    {
+      "id": "bem-13",
+      "publicId": "BEM-PUB-13",
+      "title": "VW Gol 2015 (Frota)",
+      "sellerId": "seller-secretaria-de-administracao-de-salvador",
+      "status": "LOTEADO",
+      "categoryId": "cat-veiculos",
+      "evaluationValue": 22000,
+      "imageUrl": "https://placehold.co/600x400.png?text=Gol+2015",
+      "createdAt": "2025-07-05T12:00:00Z",
+      "updatedAt": "2025-07-05T12:00:00Z"
+    },
+    {
+      "id": "bem-14",
+      "publicId": "BEM-PUB-14",
+      "title": "VW Gol 2016 (Frota)",
+      "sellerId": "seller-secretaria-de-administracao-de-salvador",
+      "status": "LOTEADO",
+      "categoryId": "cat-veiculos",
+      "evaluationValue": 24000,
+      "imageUrl": "https://placehold.co/600x400.png?text=Gol+2016",
+      "createdAt": "2025-07-05T12:00:00Z",
+      "updatedAt": "2025-07-05T12:00:00Z"
+    },
+    {
+      "id": "bem-15",
+      "publicId": "BEM-PUB-15",
+      "title": "Relógio Rolex Submariner",
+      "sellerId": "seller-galeria-de-arte-sp",
+      "status": "LOTEADO",
+      "categoryId": "cat-arte-e-antiguidades",
+      "evaluationValue": 65000,
+      "imageUrl": "https://placehold.co/600x400.png?text=Rolex",
+      "createdAt": "2025-07-05T12:00:00Z",
+      "updatedAt": "2025-07-05T12:00:00Z"
+    },
+    {
+      "id": "bem-16",
+      "publicId": "BEM-PUB-16",
+      "title": "Ford Ranger 2020 4x4",
+      "sellerId": "seller-proprietario-particular-1",
+      "status": "LOTEADO",
+      "categoryId": "cat-veiculos",
+      "evaluationValue": 130000,
+      "imageUrl": "https://placehold.co/600x400.png?text=Ranger+2020",
+      "createdAt": "2025-07-05T12:00:00Z",
+      "updatedAt": "2025-07-05T12:00:00Z"
+    }
   ],
   "sampleBids": [
-    { "id": "bid-885a7146-59cd-4684-a60e-ab2968978139", "lotId": "LOTE001", "auctionId": "100625bra", "bidderId": "admin-bidexpert-platform-001", "bidderDisplay": "Administrador BidExpert", "amount": 46000, "timestamp": "2025-06-24T04:30:48.014Z" },
-    { "id": "BID-LOTETP002-UTIL1-a578024c", "lotId": "LOTETP002-UTIL1", "auctionId": "TP002-VEICULOS", "bidderId": "userI954", "bidderDisplay": "Usuário G****", "amount": 25430, "timestamp": "2025-06-06T15:40:27.765Z" },
-    { "id": "BID-LOTETP002-UTIL1-83f4a2b4", "lotId": "LOTETP002-UTIL1", "auctionId": "TP002-VEICULOS", "bidderId": "userG961", "bidderDisplay": "Usuário C****", "amount": 25313, "timestamp": "2025-06-06T08:59:27.765Z" },
-    { "id": "bid-1", "lotId": "LOTEJUD002", "auctionId": "JUD002VEI", "bidderId": "user-test-002", "bidderDisplay": "Usuário de Teste", "amount": 755000, "timestamp": "2025-07-05T13:00:00Z" },
-    { "id": "bid-2", "lotId": "LOTEJUD002", "auctionId": "JUD002VEI", "bidderId": "consignor-example-003", "bidderDisplay": "Bradesco Comitente", "amount": 760000, "timestamp": "2025-07-05T13:05:00Z" },
-    { "id": "bid-3", "lotId": "LOTEJUD002", "auctionId": "JUD002VEI", "bidderId": "user-test-002", "bidderDisplay": "Usuário de Teste", "amount": 765000, "timestamp": "2025-07-05T13:10:00Z" },
-    { "id": "bid-4", "lotId": "LOTEBRA05", "auctionId": "100625bra", "bidderId": "user-test-002", "bidderDisplay": "Usuário de Teste", "amount": 98500, "timestamp": "2025-07-05T13:15:00Z" },
-    { "id": "bid-5", "lotId": "LOTEBRA05", "auctionId": "100625bra", "bidderId": "admin-bidexpert-platform-001", "bidderDisplay": "Administrador", "amount": 99000, "timestamp": "2025-07-05T13:20:00Z" },
-    { "id": "bid-6", "lotId": "LOTEBRA05", "auctionId": "100625bra", "bidderId": "user-test-002", "bidderDisplay": "Usuário de Teste", "amount": 99500, "timestamp": "2025-07-05T13:25:00Z" },
-    { "id": "bid-7", "lotId": "LOTEBRA05", "auctionId": "100625bra", "bidderId": "admin-bidexpert-platform-001", "bidderDisplay": "Administrador", "amount": 100000, "timestamp": "2025-07-05T13:30:00Z" },
-    { "id": "bid-8", "lotId": "LOTEBRA05", "auctionId": "100625bra", "bidderId": "user-test-002", "bidderDisplay": "Usuário de Teste", "amount": 101000, "timestamp": "2025-07-05T13:35:00Z" },
-    { "id": "bid-9", "lotId": "LOTEBRA06", "auctionId": "100625bra", "bidderId": "user-test-002", "bidderDisplay": "Usuário de Teste", "amount": 116000, "timestamp": "2025-07-05T13:40:00Z" },
-    { "id": "bid-10", "lotId": "LOTEBRA06", "auctionId": "100625bra", "bidderId": "admin-bidexpert-platform-001", "bidderDisplay": "Administrador", "amount": 117500, "timestamp": "2025-07-05T13:45:00Z" },
-    { "id": "bid-11", "lotId": "LOTEAGRO03", "auctionId": "20301vei", "bidderId": "user-test-002", "bidderDisplay": "Usuário de Teste", "amount": 251000, "timestamp": "2025-07-05T13:50:00Z" },
-    { "id": "bid-12", "lotId": "LOTEART003", "auctionId": "ART001ANTIQ", "bidderId": "user-test-002", "bidderDisplay": "Usuário de Teste", "amount": 4800, "timestamp": "2025-07-05T13:55:00Z" },
-    { "id": "bid-13", "lotId": "LOTEART004", "auctionId": "ART001ANTIQ", "bidderId": "admin-bidexpert-platform-001", "bidderDisplay": "Administrador", "amount": 72000, "timestamp": "2025-07-05T14:00:00Z" },
-    { "id": "bid-14", "lotId": "LOTEVEI002", "auctionId": "300724car", "bidderId": "user-test-002", "bidderDisplay": "Usuário de Teste", "amount": 135000, "timestamp": "2025-07-05T14:05:00Z" }
+    {
+      "id": "bid-885a7146-59cd-4684-a60e-ab2968978139",
+      "lotId": "LOTE001",
+      "auctionId": "100625bra",
+      "bidderId": "admin-bidexpert-platform-001",
+      "bidderDisplay": "Administrador BidExpert",
+      "amount": 46000,
+      "timestamp": "2025-06-24T04:30:48.014Z"
+    },
+    {
+      "id": "BID-LOTETP002-UTIL1-a578024c",
+      "lotId": "LOTETP002-UTIL1",
+      "auctionId": "TP002-VEICULOS",
+      "bidderId": "userI954",
+      "bidderDisplay": "Usuário G****",
+      "amount": 25430,
+      "timestamp": "2025-06-06T15:40:27.765Z"
+    },
+    {
+      "id": "BID-LOTETP002-UTIL1-83f4a2b4",
+      "lotId": "LOTETP002-UTIL1",
+      "auctionId": "TP002-VEICULOS",
+      "bidderId": "userG961",
+      "bidderDisplay": "Usuário C****",
+      "amount": 25313,
+      "timestamp": "2025-06-06T08:59:27.765Z"
+    },
+    {
+      "id": "bid-1",
+      "lotId": "LOTEJUD002",
+      "auctionId": "JUD002VEI",
+      "bidderId": "user-test-002",
+      "bidderDisplay": "Usuário de Teste",
+      "amount": 755000,
+      "timestamp": "2025-07-05T13:00:00Z"
+    },
+    {
+      "id": "bid-2",
+      "lotId": "LOTEJUD002",
+      "auctionId": "JUD002VEI",
+      "bidderId": "consignor-example-003",
+      "bidderDisplay": "Bradesco Comitente",
+      "amount": 760000,
+      "timestamp": "2025-07-05T13:05:00Z"
+    },
+    {
+      "id": "bid-3",
+      "lotId": "LOTEJUD002",
+      "auctionId": "JUD002VEI",
+      "bidderId": "user-test-002",
+      "bidderDisplay": "Usuário de Teste",
+      "amount": 765000,
+      "timestamp": "2025-07-05T13:10:00Z"
+    },
+    {
+      "id": "bid-4",
+      "lotId": "LOTEBRA05",
+      "auctionId": "100625bra",
+      "bidderId": "user-test-002",
+      "bidderDisplay": "Usuário de Teste",
+      "amount": 98500,
+      "timestamp": "2025-07-05T13:15:00Z"
+    },
+    {
+      "id": "bid-5",
+      "lotId": "LOTEBRA05",
+      "auctionId": "100625bra",
+      "bidderId": "admin-bidexpert-platform-001",
+      "bidderDisplay": "Administrador",
+      "amount": 99000,
+      "timestamp": "2025-07-05T13:20:00Z"
+    },
+    {
+      "id": "bid-6",
+      "lotId": "LOTEBRA05",
+      "auctionId": "100625bra",
+      "bidderId": "user-test-002",
+      "bidderDisplay": "Usuário de Teste",
+      "amount": 99500,
+      "timestamp": "2025-07-05T13:25:00Z"
+    },
+    {
+      "id": "bid-7",
+      "lotId": "LOTEBRA05",
+      "auctionId": "100625bra",
+      "bidderId": "admin-bidexpert-platform-001",
+      "bidderDisplay": "Administrador",
+      "amount": 100000,
+      "timestamp": "2025-07-05T13:30:00Z"
+    },
+    {
+      "id": "bid-8",
+      "lotId": "LOTEBRA05",
+      "auctionId": "100625bra",
+      "bidderId": "user-test-002",
+      "bidderDisplay": "Usuário de Teste",
+      "amount": 101000,
+      "timestamp": "2025-07-05T13:35:00Z"
+    },
+    {
+      "id": "bid-9",
+      "lotId": "LOTEBRA06",
+      "auctionId": "100625bra",
+      "bidderId": "user-test-002",
+      "bidderDisplay": "Usuário de Teste",
+      "amount": 116000,
+      "timestamp": "2025-07-05T13:40:00Z"
+    },
+    {
+      "id": "bid-10",
+      "lotId": "LOTEBRA06",
+      "auctionId": "100625bra",
+      "bidderId": "admin-bidexpert-platform-001",
+      "bidderDisplay": "Administrador",
+      "amount": 117500,
+      "timestamp": "2025-07-05T13:45:00Z"
+    },
+    {
+      "id": "bid-11",
+      "lotId": "LOTEAGRO03",
+      "auctionId": "20301vei",
+      "bidderId": "user-test-002",
+      "bidderDisplay": "Usuário de Teste",
+      "amount": 251000,
+      "timestamp": "2025-07-05T13:50:00Z"
+    },
+    {
+      "id": "bid-12",
+      "lotId": "LOTEART003",
+      "auctionId": "ART001ANTIQ",
+      "bidderId": "user-test-002",
+      "bidderDisplay": "Usuário de Teste",
+      "amount": 4800,
+      "timestamp": "2025-07-05T13:55:00Z"
+    },
+    {
+      "id": "bid-13",
+      "lotId": "LOTEART004",
+      "auctionId": "ART001ANTIQ",
+      "bidderId": "admin-bidexpert-platform-001",
+      "bidderDisplay": "Administrador",
+      "amount": 72000,
+      "timestamp": "2025-07-05T14:00:00Z"
+    },
+    {
+      "id": "bid-14",
+      "lotId": "LOTEVEI002",
+      "auctionId": "300724car",
+      "bidderId": "user-test-002",
+      "bidderDisplay": "Usuário de Teste",
+      "amount": 135000,
+      "timestamp": "2025-07-05T14:05:00Z"
+    }
   ],
   "sampleBlogPosts": [],
   "sampleCities": [
@@ -1428,16 +1684,197 @@
       "createdAt": "2025-07-05T15:29:58.373Z",
       "updatedAt": "2025-07-05T15:29:58.374Z"
     },
-    { "id": "LOTEJUD002", "publicId": "LOT-PUB-JUD002", "auctionId": "JUD002VEI", "number": "001", "title": "Terreno Comercial na Barra da Tijuca", "description": "Terreno de 500m² em área nobre.", "price": 765000, "initialPrice": 750000, "status": "ABERTO_PARA_LANCES", "categoryId": "cat-imoveis", "bemIds": ["bem-6"], "bidsCount": 3, "endDate": "2025-07-14T03:52:47.479Z", "createdAt": "2025-07-05T12:10:00Z", "updatedAt": "2025-07-05T13:10:00Z" },
-    { "id": "LOTEBRA05", "publicId": "LOT-PUB-BRA05", "auctionId": "100625bra", "number": "005", "title": "VW Nivus Highline 2022", "description": "Veículo em excelente estado, baixa quilometragem.", "price": 101000, "initialPrice": 98000, "status": "ABERTO_PARA_LANCES", "categoryId": "cat-veiculos", "bemIds": ["bem-8"], "bidsCount": 5, "endDate": "2025-07-04T08:52:47.479Z", "createdAt": "2025-07-05T12:10:00Z", "updatedAt": "2025-07-05T13:35:00Z" },
-    { "id": "LOTEBRA06", "publicId": "LOT-PUB-BRA06", "auctionId": "100625bra", "number": "006", "title": "Jeep Compass Longitude 2021", "description": "SUV completo, único dono.", "price": 117500, "initialPrice": 115000, "status": "ABERTO_PARA_LANCES", "categoryId": "cat-veiculos", "bemIds": ["bem-9"], "bidsCount": 2, "endDate": "2025-07-04T08:52:47.479Z", "createdAt": "2025-07-05T12:10:00Z", "updatedAt": "2025-07-05T13:45:00Z" },
-    { "id": "LOTEAGRO03", "publicId": "LOT-PUB-AGRO03", "auctionId": "20301vei", "number": "003", "title": "Pulverizador Autopropelido Jacto", "description": "Equipamento revisado e pronto para o trabalho.", "price": 251000, "initialPrice": 250000, "status": "ABERTO_PARA_LANCES", "categoryId": "cat-maquinas-e-equipamentos", "bemIds": ["bem-10"], "bidsCount": 1, "endDate": "2025-06-29T03:52:47.479Z", "createdAt": "2025-07-05T12:10:00Z", "updatedAt": "2025-07-05T13:50:00Z" },
-    { "id": "LOTEART003", "publicId": "LOT-PUB-ART003", "auctionId": "ART001ANTIQ", "number": "003", "title": "Apple iPhone 14 Pro 256GB", "description": "Aparelho seminovo em perfeito estado.", "price": 4800, "initialPrice": 4500, "status": "ABERTO_PARA_LANCES", "categoryId": "cat-eletronicos-e-tecnologia", "bemIds": ["bem-11"], "bidsCount": 1, "endDate": "2025-07-02T03:52:47.479Z", "createdAt": "2025-07-05T12:10:00Z", "updatedAt": "2025-07-05T13:55:00Z" },
-    { "id": "LOTEART004", "publicId": "LOT-PUB-ART004", "auctionId": "ART001ANTIQ", "number": "004", "title": "Relógio Rolex Submariner", "description": "Modelo clássico, com caixa e documentos.", "price": 72000, "initialPrice": 65000, "status": "ABERTO_PARA_LANCES", "categoryId": "cat-arte-e-antiguidades", "bemIds": ["bem-15"], "bidsCount": 1, "endDate": "2025-07-02T03:52:47.479Z", "createdAt": "2025-07-05T12:10:00Z", "updatedAt": "2025-07-05T14:00:00Z" },
-    { "id": "LOTETP003", "publicId": "LOT-PUB-TP003", "auctionId": "TP001-NOTEBOOKS", "number": "003", "title": "Cadeira Gamer DT3 Sports", "description": "Cadeira ergonômica para longas sessões.", "price": 800, "initialPrice": 800, "status": "ABERTO_PARA_LANCES", "categoryId": "cat-bens-diversos", "bemIds": ["bem-12"], "bidsCount": 0, "endDate": "2025-07-09T20:52:47.479Z", "createdAt": "2025-07-05T12:10:00Z", "updatedAt": "2025-07-05T12:10:00Z" },
-    { "id": "LOTETP004", "publicId": "LOT-PUB-TP004", "auctionId": "TP002-VEICULOS", "number": "003", "title": "VW Gol 2015 (Frota)", "description": "Veículo de frota, vendido no estado.", "price": 22000, "initialPrice": 22000, "status": "ENCERRADO", "categoryId": "cat-veiculos", "bemIds": ["bem-13"], "bidsCount": 0, "endDate": "2025-06-08T10:52:47.479Z", "createdAt": "2025-07-05T12:10:00Z", "updatedAt": "2025-07-05T12:10:00Z" },
-    { "id": "LOTETP005", "publicId": "LOT-PUB-TP005", "auctionId": "TP002-VEICULOS", "number": "004", "title": "VW Gol 2016 (Frota)", "description": "Veículo de frota, vendido no estado.", "price": 24000, "initialPrice": 24000, "status": "ENCERRADO", "categoryId": "cat-veiculos", "bemIds": ["bem-14"], "bidsCount": 0, "endDate": "2025-06-08T10:52:47.479Z", "createdAt": "2025-07-05T12:10:00Z", "updatedAt": "2025-07-05T12:10:00Z" },
-    { "id": "LOTEVEI002", "publicId": "LOT-PUB-VEI002", "auctionId": "300724car", "number": "002", "title": "Ford Ranger 2020 4x4", "description": "Picape robusta e confiável.", "price": 135000, "initialPrice": 130000, "status": "EM_BREVE", "categoryId": "cat-veiculos", "bemIds": ["bem-16"], "bidsCount": 1, "endDate": "2025-07-01T03:52:47.479Z", "createdAt": "2025-07-05T12:10:00Z", "updatedAt": "2025-07-05T14:05:00Z" }
+    {
+      "id": "LOTEJUD002",
+      "publicId": "LOT-PUB-JUD002",
+      "auctionId": "JUD002VEI",
+      "number": "001",
+      "title": "Terreno Comercial na Barra da Tijuca",
+      "description": "Terreno de 500m² em área nobre.",
+      "price": 765000,
+      "initialPrice": 750000,
+      "status": "ABERTO_PARA_LANCES",
+      "categoryId": "cat-imoveis",
+      "bemIds": [
+        "bem-6"
+      ],
+      "bidsCount": 3,
+      "endDate": "2025-07-14T03:52:47.479Z",
+      "createdAt": "2025-07-05T12:10:00Z",
+      "updatedAt": "2025-07-05T13:10:00Z"
+    },
+    {
+      "id": "LOTEBRA05",
+      "publicId": "LOT-PUB-BRA05",
+      "auctionId": "100625bra",
+      "number": "005",
+      "title": "VW Nivus Highline 2022",
+      "description": "Veículo em excelente estado, baixa quilometragem.",
+      "price": 101000,
+      "initialPrice": 98000,
+      "status": "ABERTO_PARA_LANCES",
+      "categoryId": "cat-veiculos",
+      "bemIds": [
+        "bem-8"
+      ],
+      "bidsCount": 5,
+      "endDate": "2025-07-04T08:52:47.479Z",
+      "createdAt": "2025-07-05T12:10:00Z",
+      "updatedAt": "2025-07-05T13:35:00Z"
+    },
+    {
+      "id": "LOTEBRA06",
+      "publicId": "LOT-PUB-BRA06",
+      "auctionId": "100625bra",
+      "number": "006",
+      "title": "Jeep Compass Longitude 2021",
+      "description": "SUV completo, único dono.",
+      "price": 117500,
+      "initialPrice": 115000,
+      "status": "ABERTO_PARA_LANCES",
+      "categoryId": "cat-veiculos",
+      "bemIds": [
+        "bem-9"
+      ],
+      "bidsCount": 2,
+      "endDate": "2025-07-04T08:52:47.479Z",
+      "createdAt": "2025-07-05T12:10:00Z",
+      "updatedAt": "2025-07-05T13:45:00Z"
+    },
+    {
+      "id": "LOTEAGRO03",
+      "publicId": "LOT-PUB-AGRO03",
+      "auctionId": "20301vei",
+      "number": "003",
+      "title": "Pulverizador Autopropelido Jacto",
+      "description": "Equipamento revisado e pronto para o trabalho.",
+      "price": 251000,
+      "initialPrice": 250000,
+      "status": "ABERTO_PARA_LANCES",
+      "categoryId": "cat-maquinas-e-equipamentos",
+      "bemIds": [
+        "bem-10"
+      ],
+      "bidsCount": 1,
+      "endDate": "2025-06-29T03:52:47.479Z",
+      "createdAt": "2025-07-05T12:10:00Z",
+      "updatedAt": "2025-07-05T17:50:21.535Z",
+      "isFeatured": true
+    },
+    {
+      "id": "LOTEART003",
+      "publicId": "LOT-PUB-ART003",
+      "auctionId": "ART001ANTIQ",
+      "number": "003",
+      "title": "Apple iPhone 14 Pro 256GB",
+      "description": "Aparelho seminovo em perfeito estado.",
+      "price": 4800,
+      "initialPrice": 4500,
+      "status": "ABERTO_PARA_LANCES",
+      "categoryId": "cat-eletronicos-e-tecnologia",
+      "bemIds": [
+        "bem-11"
+      ],
+      "bidsCount": 1,
+      "endDate": "2025-07-02T03:52:47.479Z",
+      "createdAt": "2025-07-05T12:10:00Z",
+      "updatedAt": "2025-07-05T13:55:00Z"
+    },
+    {
+      "id": "LOTEART004",
+      "publicId": "LOT-PUB-ART004",
+      "auctionId": "ART001ANTIQ",
+      "number": "004",
+      "title": "Relógio Rolex Submariner",
+      "description": "Modelo clássico, com caixa e documentos.",
+      "price": 72000,
+      "initialPrice": 65000,
+      "status": "ABERTO_PARA_LANCES",
+      "categoryId": "cat-arte-e-antiguidades",
+      "bemIds": [
+        "bem-15"
+      ],
+      "bidsCount": 1,
+      "endDate": "2025-07-02T03:52:47.479Z",
+      "createdAt": "2025-07-05T12:10:00Z",
+      "updatedAt": "2025-07-05T14:00:00Z"
+    },
+    {
+      "id": "LOTETP003",
+      "publicId": "LOT-PUB-TP003",
+      "auctionId": "TP001-NOTEBOOKS",
+      "number": "003",
+      "title": "Cadeira Gamer DT3 Sports",
+      "description": "Cadeira ergonômica para longas sessões.",
+      "price": 800,
+      "initialPrice": 800,
+      "status": "ABERTO_PARA_LANCES",
+      "categoryId": "cat-bens-diversos",
+      "bemIds": [
+        "bem-12"
+      ],
+      "bidsCount": 0,
+      "endDate": "2025-07-09T20:52:47.479Z",
+      "createdAt": "2025-07-05T12:10:00Z",
+      "updatedAt": "2025-07-05T12:10:00Z"
+    },
+    {
+      "id": "LOTETP004",
+      "publicId": "LOT-PUB-TP004",
+      "auctionId": "TP002-VEICULOS",
+      "number": "003",
+      "title": "VW Gol 2015 (Frota)",
+      "description": "Veículo de frota, vendido no estado.",
+      "price": 22000,
+      "initialPrice": 22000,
+      "status": "ENCERRADO",
+      "categoryId": "cat-veiculos",
+      "bemIds": [
+        "bem-13"
+      ],
+      "bidsCount": 0,
+      "endDate": "2025-06-08T10:52:47.479Z",
+      "createdAt": "2025-07-05T12:10:00Z",
+      "updatedAt": "2025-07-05T12:10:00Z"
+    },
+    {
+      "id": "LOTETP005",
+      "publicId": "LOT-PUB-TP005",
+      "auctionId": "TP002-VEICULOS",
+      "number": "004",
+      "title": "VW Gol 2016 (Frota)",
+      "description": "Veículo de frota, vendido no estado.",
+      "price": 24000,
+      "initialPrice": 24000,
+      "status": "ENCERRADO",
+      "categoryId": "cat-veiculos",
+      "bemIds": [
+        "bem-14"
+      ],
+      "bidsCount": 0,
+      "endDate": "2025-06-08T10:52:47.479Z",
+      "createdAt": "2025-07-05T12:10:00Z",
+      "updatedAt": "2025-07-05T12:10:00Z"
+    },
+    {
+      "id": "LOTEVEI002",
+      "publicId": "LOT-PUB-VEI002",
+      "auctionId": "300724car",
+      "number": "002",
+      "title": "Ford Ranger 2020 4x4",
+      "description": "Picape robusta e confiável.",
+      "price": 135000,
+      "initialPrice": 130000,
+      "status": "EM_BREVE",
+      "categoryId": "cat-veiculos",
+      "bemIds": [
+        "bem-16"
+      ],
+      "bidsCount": 1,
+      "endDate": "2025-07-01T03:52:47.479Z",
+      "createdAt": "2025-07-05T12:10:00Z",
+      "updatedAt": "2025-07-05T14:05:00Z"
+    }
   ],
   "sampleMediaItems": [
     {
@@ -2331,7 +2768,43 @@
   "sampleUserDocuments": [],
   "sampleUserHabilitationStatus": "PENDING_DOCUMENTS",
   "sampleUserLotMaxBids": [],
+  "sampleUserProfiles": [
+    {
+      "uid": "admin-bidexpert-platform-001",
+      "email": "admin@bidexpert.com.br",
+      "password": "@dmin2025",
+      "fullName": "Administrador BidExpert",
+      "roleId": "role-admin",
+      "roleName": "ADMINISTRATOR",
+      "permissions": [
+        "manage_all"
+      ],
+      "status": "ATIVO",
+      "habilitationStatus": "HABILITADO",
+      "cpf": "000.000.000-00",
+      "cellPhone": "(11) 99999-9999",
+      "dateOfBirth": "1990-01-01T00:00:00.000Z",
+      "createdAt": "2023-01-01T12:00:00.000Z",
+      "updatedAt": "2025-07-05T17:43:33.804Z",
+      "accountType": "PHYSICAL"
+    },
+    {
+      "uid": "consignor@bidexpert.com",
+      "email": "consignor@bidexpert.com",
+      "password": "password123",
+      "fullName": "Bradesco Comitente",
+      "roleId": "role-consignor",
+      "roleName": "CONSIGNOR",
+      "permissions": [
+        "auctions:manage_own",
+        "lots:manage_own"
+      ],
+      "status": "ATIVO",
+      "habilitationStatus": "HABILITADO",
+      "createdAt": "2023-01-01T12:00:00.000Z",
+      "updatedAt": "2025-07-05T17:43:33.804Z",
+      "accountType": "LEGAL"
+    }
+  ],
   "sampleUserWins": []
 }
-
-    
