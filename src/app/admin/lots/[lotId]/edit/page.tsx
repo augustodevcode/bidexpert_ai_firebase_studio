@@ -1,7 +1,8 @@
 
 
 import LotForm from '../../lot-form';
-import { getLot, updateLot, getBens as getBensForLotting } from '../../actions';
+import { getLot, updateLot } from '../../actions';
+import { getBens as getBensForLotting } from '@/app/admin/bens/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getStates } from '@/app/admin/states/actions';
