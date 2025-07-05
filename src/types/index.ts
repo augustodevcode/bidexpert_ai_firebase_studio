@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -1152,3 +1153,6 @@ export interface RecentlyViewedLotInfo {
   dataAiHint?: string;
 }
 
+```
+- src/app/admin/bens/bem-form-schema.ts
+- src/app/admin/lots/lot-form.tsx
