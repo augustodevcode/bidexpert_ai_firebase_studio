@@ -64,7 +64,7 @@ export default function LotMapDisplay({ lot }: LotMapDisplayProps) {
         <div className="aspect-square w-full rounded-b-md overflow-hidden border-t relative">
           {hasCoords ? (
             <MapContainer
-              key={lot.id}
+              key={lot.id} 
               center={[latitude, longitude]}
               zoom={15}
               scrollWheelZoom={false}

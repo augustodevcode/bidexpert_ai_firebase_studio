@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L, { type LatLngBounds } from 'leaflet';
@@ -73,7 +73,7 @@ export default function MapSearchComponent({
 
   return (
     <MapContainer 
-      key={`${mapCenter[0]}-${mapCenter[1]}-${mapZoom}`}
+      key={`${mapCenter.join(',')}-${mapZoom}`}
       center={mapCenter} 
       zoom={mapZoom} 
       scrollWheelZoom={true} 
