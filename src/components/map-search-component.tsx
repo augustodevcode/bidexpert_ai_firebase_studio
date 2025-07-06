@@ -70,10 +70,14 @@ export default function MapSearchComponent({
   onBoundsChange,
   shouldFitBounds
 }: MapSearchComponentProps) {
+  // Using a ref to generate a stable, unique key for this component instance.
+  // This prevents the "Map container is already initialized" error during hot reloads
+  // or complex navigation scenarios by ensuring React creates a fresh DOM node for the map.
+  const mapKey = useRef(`map-instance-${Math.random()}`).current;
 
   return (
     <MapContainer
-      key={`${mapCenter.join(',')}-${mapZoom}`}
+      key={mapKey}
       center={mapCenter}
       zoom={mapZoom}
       scrollWheelZoom={true}
