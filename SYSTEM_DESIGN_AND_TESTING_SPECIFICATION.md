@@ -2,23 +2,23 @@
 
 ## 1. Introdução
 
-*   [Objetivo do Documento: Descrever as especificações funcionais, de design de interface (alto nível), e a estratégia de testes (BDD/TDD) para a plataforma de leilões.]
-*   [Escopo: Detalhar as principais funcionalidades, perfis de usuário, regras de negócio, layouts de página, e abordagens de teste.]
-*   [Público Alvo: Desenvolvedores, QAs, Product Owners, Designers.]
+*   **Objetivo do Documento:** Descrever as especificações funcionais, de design de interface (alto nível), e a estratégia de testes (BDD/TDD) para a plataforma de leilões. Este documento visa servir como referência central para as equipes de desenvolvimento, QA, produto e design.
+*   **Escopo:** Detalhar as principais funcionalidades da plataforma, incluindo autenticação, gerenciamento de leilões e lotes, processo de lances, perfis de usuário, painéis administrativos e de usuário, e funcionalidades de busca. Serão cobertas regras de negócio, layouts de página (conceitual), e abordagens de teste para cada funcionalidade.
+*   **Público Alvo:** Desenvolvedores, Engenheiros de QA, Product Owners, UI/UX Designers e outros stakeholders envolvidos no ciclo de vida do projeto.
 
 ## 2. Perfis de Usuário (Personas)
 
-*   [Descrever cada persona principal do sistema, suas necessidades, objetivos e como interagem com a plataforma. Ex: Administrador, Comprador/Licitante (Pessoa Física e Jurídica), Vendedor/Comitente, Leiloeiro, Visitante Não Autenticado.]
+*   [Esta seção deve descrever cada persona principal do sistema, suas necessidades, objetivos e como interagem com a plataforma. Incluir detalhes demográficos, técnicos e comportamentais relevantes. Exemplos de personas incluem: Administrador da Plataforma, Licitante (Comprador PF/PJ), Comitente (Vendedor PF/PJ), Leiloeiro, Visitante Não Autenticado.]
     *   **2.1. Administrador da Plataforma**
-        *   [Descrição, Objetivos, Tarefas Principais]
+        *   [Descrição detalhada: Responsabilidades, nível de conhecimento técnico, principais tarefas (ex: gerenciar usuários, configurar leilões, monitorar sistema), objetivos (ex: garantir integridade da plataforma, auxiliar usuários), frustrações (ex: processos manuais demorados).]
     *   **2.2. Licitante (Comprador)**
-        *   [Descrição, Objetivos, Tarefas Principais - PF e PJ]
+        *   [Descrição detalhada: Pode ser Pessoa Física ou Jurídica. Motivações (ex: encontrar bons negócios, itens raros), tarefas (ex: buscar lotes, dar lances, acompanhar leilões, pagar arremates), nível de familiaridade com leilões online, dispositivos usados.]
     *   **2.3. Comitente (Vendedor)**
-        *   [Descrição, Objetivos, Tarefas Principais]
+        *   [Descrição detalhada: Pode ser Pessoa Física ou Jurídica. Motivações (ex: vender itens rapidamente, alcançar bom preço), tarefas (ex: cadastrar itens/lotes, acompanhar vendas, receber pagamentos), necessidades (ex: interface fácil para cadastro, relatórios de vendas).]
     *   **2.4. Leiloeiro**
-        *   [Descrição, Objetivos, Tarefas Principais]
+        *   [Descrição detalhada: Profissional responsável pela condução dos leilões. Tarefas (ex: gerenciar leilões atribuídos, aprovar lances, conduzir pregão), necessidades (ex: ferramentas eficientes para gerenciamento do leilão em tempo real, comunicação com comitentes e licitantes).]
     *   **2.5. Visitante Não Autenticado**
-        *   [Descrição, Objetivos, Tarefas Principais]
+        *   [Descrição detalhada: Usuário que navega na plataforma sem login. Objetivos (ex: explorar leilões, conhecer a plataforma), limitações (ex: não pode dar lances ou acessar áreas restritas).]
 
 ## 3. Principais Funcionalidades e Especificações
 
@@ -700,7 +700,7 @@
 
 ### ... (Platzhalter für weitere Funktionen)
 
-*   [Exemplos: Vendas Diretas, Dashboard do Usuário, Busca e Filtros, Auditório Virtual (Live Bidding), etc.]
+*   [Esta seção pode ser usada para adicionar futuras funcionalidades que ainda não foram detalhadas, como por exemplo: Sistema de Notificações Avançado, Integração com Pagamentos para Depósitos de Caução, Perfis Detalhados de Leiloeiros e Comitentes com Reputação, etc.]
 
 ### 3.6. Biblioteca de Mídia (Gerenciamento)
 
@@ -1025,7 +1025,7 @@
         Given Estou logado como Administrador
         And Existe um usuário "joana.silva@example.com"
         When Eu clico em "Ver Detalhes" ou no nome do usuário "joana.silva@example.com" na lista
-        Then Eu sou redirecionado para a página de edição/visualização do usuário (ex: "/admin/users/joana_uid")
+        Then Eu sou direcionado para a página de edição/visualização do usuário (ex: "/admin/users/joana_uid")
         And Eu vejo todos os dados de perfil de "joana.silva@example.com".
 
       Scenario: Admin edita dados de perfil de um usuário
@@ -1801,49 +1801,483 @@
             *   Clicar em um item para navegar para sua página de edição.
             *   Voltar para a listagem e clicar no botão "Novo" para navegar para o formulário de criação.
 
+### 3.13. Páginas Públicas de Detalhes
+
+Esta seção descreve as páginas públicas que exibem informações detalhadas sobre entidades específicas como Categorias de Lotes, Leiloeiros e Vendedores/Comitentes. Essas páginas são importantes para SEO e para que os usuários explorem o conteúdo da plataforma de forma agrupada.
+
+*   **3.13.1. Página de Detalhes da Categoria (`/category/[categorySlug]`)**
+    *   **3.13.1.1. Descrição Geral:**
+        *   Exibe informações sobre uma categoria de lote específica e lista os leilões e/ou lotes (ou ofertas de venda direta) ativos pertencentes a essa categoria.
+        *   Permite aos usuários descobrir itens de interesse dentro de uma temática específica.
+        *   A página é acessada através de um slug da categoria (ex: `/category/veiculos-antigos`).
+    *   **3.13.1.2. Personas Envolvidas:**
+        *   **Visitante:** Pode visualizar a página para explorar itens em uma categoria.
+        *   **Usuário Registrado (Licitante/Comprador):** Mesmo que visitante, mas pode interagir com os lotes/leilões listados (ex: favoritar, dar lance).
+    *   **3.13.1.3. Cenários BDD (Gherkin):**
+        ```gherkin
+        Feature: Página de Detalhes da Categoria
+          Como um usuário da plataforma
+          Eu quero visualizar uma página dedicada a uma categoria específica
+          Para encontrar leilões e lotes de meu interesse agrupados tematicamente.
+
+          Scenario: Usuário acessa uma página de categoria válida
+            Given Existe uma categoria "Eletrônicos" com slug "eletronicos"
+            And A categoria "Eletrônicos" possui 2 leilões ativos e 5 lotes em venda direta ativos
+            When Eu navego para "/category/eletronicos"
+            Then Eu devo ver o título "Eletrônicos" como cabeçalho da página
+            And (Opcional) Eu devo ver uma descrição da categoria "Eletrônicos"
+            And Eu devo ver uma lista de leilões ativos contendo os 2 leilões da categoria "Eletrônicos"
+            And Eu devo ver uma lista de lotes/ofertas de venda direta ativos contendo os 5 itens da categoria "Eletrônicos"
+            And Cada item listado (leilão/lote) deve ser um card clicável para sua respectiva página de detalhes.
+
+          Scenario: Usuário acessa uma página de categoria com slug inválido/inexistente
+            Given Não existe uma categoria com slug "categoria-fantasma"
+            When Eu navego para "/category/categoria-fantasma"
+            Then Eu devo ver uma mensagem de erro "Categoria não encontrada"
+            And (Opcional) Eu posso ser redirecionado para uma página de erro 404 ou para a listagem principal de categorias.
+
+          Scenario: Página de categoria exibe contagem correta de itens
+            Given A categoria "Joias Raras" (slug "joias-raras") possui 10 lotes ativos associados
+            When Eu acesso a página "/category/joias-raras"
+            Then O título da seção de lotes pode indicar "10 itens encontrados em Joias Raras" (ou similar)
+            And A lista de lotes deve exibir 10 cards de lote.
+        ```
+    *   **3.13.1.4. Regras de Negócio e Validações (Foco na Exibição):**
+        *   A página é identificada pelo `categorySlug`. O backend (ex: `getLotCategoryBySlug` ou similar) busca a `LotCategory` correspondente.
+        *   **Informações da Categoria Exibidas:** `LotCategory.name`, `LotCategory.description` (se houver).
+        *   **Listagem de Itens Associados:**
+            *   A página deve listar leilões (`Auction`) e/ou lotes individuais (`Lot`) ou ofertas de venda direta (`DirectSaleOffer`) que pertencem à categoria.
+            *   Apenas itens com status apropriado (ex: `Auction.status = ABERTO_PARA_LANCES`, `Lot.status = ABERTO_PARA_LANCES`, `DirectSaleOffer.status = ACTIVE`) devem ser exibidos.
+            *   A listagem de itens associados pode ser paginada se o volume for grande.
+            *   Pode haver filtros básicos disponíveis para os itens listados (ex: tipo de item - leilão, venda direta; faixa de preço).
+            *   O componente `CategoryDisplay` (`src/components/category/category-display.tsx`) é usado para renderizar esta página, recebendo dados da categoria e dos itens.
+    *   **3.13.1.5. Layout e Páginas Envolvidas:**
+        *   Página: `/category/[categorySlug]` (ex: `src/app/category/[categorySlug]/page.tsx`).
+        *   Layout: Padrão da aplicação (Header, Footer, Navegação Principal).
+        *   Conteúdo:
+            *   Título da Categoria.
+            *   (Opcional) Descrição da Categoria.
+            *   Seção para Leilões da Categoria (lista de `AuctionCard`).
+            *   Seção para Lotes/Ofertas de Venda Direta da Categoria (lista de `LotCard` / `DirectSaleOfferCard`).
+            *   Paginação para as listas, se aplicável.
+    *   **3.13.1.6. Considerações sobre TDD:**
+        *   **Testes de Integração (Server Action/Data Fetching):**
+            *   Testar a função que busca a categoria pelo slug e seus itens associados (ex: `getCategoryWithItems(slug: string)`).
+            *   Mockar o DB adapter.
+            *   Cenário de sucesso: Categoria encontrada, retorna dados da categoria e lista de itens ativos filtrados corretamente.
+            *   Cenário de falha: Slug não encontrado, retorna erro ou nulo.
+        *   **Testes de UI (Componente):**
+            *   `CategoryDisplay` e a página `/category/[categorySlug]/page.tsx`:
+                *   Testar a renderização correta do nome e descrição da categoria (com dados mockados).
+                *   Testar a renderização das listas de `AuctionCard`, `LotCard`, `DirectSaleOfferCard` (com dados mockados).
+                *   Testar a exibição de mensagem de "categoria não encontrada" ou "nenhum item encontrado".
+                *   Testar interações com paginação e filtros (se houver).
+        *   **Testes End-to-End (E2E):**
+            *   Navegar para uma página de categoria existente a partir de um link na home ou em outra página.
+            *   Verificar se o título da categoria está correto e se os itens listados pertencem à categoria.
+            *   Tentar acessar uma URL de categoria com slug inválido e verificar a página de erro.
+
+*   **3.13.2. Página de Detalhes do Leiloeiro (`/auctioneers/[auctioneerSlug]`)**
+    *   **3.13.2.1. Descrição Geral:**
+        *   Apresenta informações públicas sobre um leiloeiro específico, incluindo seu nome, descrição, informações de contato (se públicas), e uma lista dos leilões (ativos e possivelmente passados) conduzidos por ele.
+        *   Permite que usuários conheçam mais sobre os leiloeiros atuantes na plataforma e acessem seus leilões.
+        *   A página é acessada via slug do leiloeiro (ex: `/auctioneers/leiloeiro-joao-silva`).
+    *   **3.13.2.2. Personas Envolvidas:**
+        *   **Visitante:** Pode visualizar a página para conhecer o leiloeiro e seus leilões.
+        *   **Usuário Registrado (Licitante/Comprador):** Mesmo que visitante, mas pode interagir com os leilões listados.
+    *   **3.13.2.3. Cenários BDD (Gherkin):**
+        ```gherkin
+        Feature: Página de Detalhes do Leiloeiro
+          Como um usuário da plataforma
+          Eu quero visualizar uma página dedicada a um leiloeiro específico
+          Para conhecer mais sobre ele e seus leilões.
+
+          Scenario: Usuário acessa uma página de leiloeiro válida
+            Given Existe um leiloeiro "João Silva Leiloeiro" com slug "joao-silva-leiloeiro"
+            And "João Silva Leiloeiro" possui 3 leilões ativos e 5 leilões encerrados
+            When Eu navego para "/auctioneers/joao-silva-leiloeiro"
+            Then Eu devo ver o nome "João Silva Leiloeiro" como título ou cabeçalho
+            And Eu devo ver a descrição, logo e informações de contato (se disponíveis) de "João Silva Leiloeiro"
+            And Eu devo ver uma lista de leilões ativos contendo os 3 leilões ativos de "João Silva Leiloeiro"
+            And (Opcional) Eu devo ver uma seção ou filtro para visualizar seus 5 leilões encerrados.
+
+          Scenario: Usuário acessa uma página de leiloeiro com slug inválido/inexistente
+            Given Não existe um leiloeiro com slug "leiloeiro-fantasma"
+            When Eu navego para "/auctioneers/leiloeiro-fantasma"
+            Then Eu devo ver uma mensagem de erro "Leiloeiro não encontrado"
+            And (Opcional) Eu posso ser redirecionado para uma página de erro 404 ou para a lista de leiloeiros.
+        ```
+    *   **3.13.2.4. Regras de Negócio e Validações (Foco na Exibição):**
+        *   A página é identificada pelo `auctioneerSlug`. O backend busca o `AuctioneerProfileInfo` correspondente.
+        *   **Informações do Leiloeiro Exibidas:** `AuctioneerProfileInfo.name`, `AuctioneerProfileInfo.description`, `AuctioneerProfileInfo.logoUrl`, `AuctioneerProfileInfo.contactName`, `AuctioneerProfileInfo.email`, `AuctioneerProfileInfo.phone`, `AuctioneerProfileInfo.website` (campos públicos).
+        *   **Listagem de Leilões Associados:**
+            *   Lista os leilões (`Auction`) onde `Auction.auctioneerId` corresponde ao ID do leiloeiro.
+            *   Pode haver abas ou filtros para separar leilões "Ativos/Em Breve" de "Encerrados".
+            *   A listagem deve ser paginada.
+    *   **3.13.2.5. Layout e Páginas Envolvidas:**
+        *   Página: `/auctioneers/[auctioneerSlug]` (ex: `src/app/auctioneers/[auctioneerSlug]/page.tsx`).
+        *   Layout: Padrão da aplicação.
+        *   Conteúdo:
+            *   Seção de Perfil do Leiloeiro (com nome, logo, descrição, contatos).
+            *   Seção de Listagem de Leilões (com `AuctionCard`), possivelmente com abas/filtros para status.
+            *   Paginação para a lista de leilões.
+    *   **3.13.2.6. Considerações sobre TDD:**
+        *   **Testes de Integração (Server Action/Data Fetching):**
+            *   Testar a função que busca o perfil do leiloeiro e seus leilões associados (ex: `getAuctioneerProfileWithAuctions(slug: string)`).
+            *   Mockar DB adapter.
+            *   Cenário de sucesso: Retorna dados do leiloeiro e lista de leilões (ativos/encerrados).
+            *   Cenário de falha: Slug não encontrado.
+        *   **Testes de UI (Componente):**
+            *   Página `/auctioneers/[auctioneerSlug]/page.tsx`:
+                *   Testar a renderização correta das informações do perfil do leiloeiro.
+                *   Testar a renderização da lista de `AuctionCard`.
+                *   Testar mensagem de "leiloeiro não encontrado".
+        *   **Testes End-to-End (E2E):**
+            *   Navegar para uma página de leiloeiro a partir de um link em um leilão.
+            *   Verificar se os dados do leiloeiro e a lista de seus leilões estão corretos.
+            *   Acessar URL de leiloeiro inválido.
+
+*   **3.13.3. Página de Detalhes do Vendedor/Comitente (`/sellers/[sellerSlugOrId]`)**
+    *   **3.13.3.1. Descrição Geral:**
+        *   Apresenta informações públicas sobre um vendedor/comitente específico, como nome, descrição (se houver), e uma lista dos leilões ou ofertas de venda direta associados a ele.
+        *   Permite que usuários conheçam os vendedores e explorem todos os itens que eles estão oferecendo na plataforma.
+        *   A página é acessada via slug ou ID público do vendedor (ex: `/sellers/grande-empresa-vendas` ou `/sellers/sellerPublicId123`). O uso de `sellerId` (que pode ser o `publicId`) é visto em `src/app/sellers/[sellerId]/page.tsx`.
+    *   **3.13.3.2. Personas Envolvidas:**
+        *   **Visitante:** Pode visualizar a página para conhecer o vendedor e seus itens.
+        *   **Usuário Registrado (Licitante/Comprador):** Mesmo que visitante, mas pode interagir com os itens listados.
+    *   **3.13.3.3. Cenários BDD (Gherkin):**
+        ```gherkin
+        Feature: Página de Detalhes do Vendedor/Comitente
+          Como um usuário da plataforma
+          Eu quero visualizar uma página dedicada a um vendedor/comitente específico
+          Para conhecer mais sobre ele e todos os itens que ele está vendendo.
+
+          Scenario: Usuário acessa uma página de vendedor válida
+            Given Existe um vendedor "Loja de Antiguidades XYZ" com ID público "sellerXYZ"
+            And "Loja de Antiguidades XYZ" possui 2 leilões ativos e 3 ofertas de venda direta ativas
+            When Eu navego para "/sellers/sellerXYZ"
+            Then Eu devo ver o nome "Loja de Antiguidades XYZ" como título ou cabeçalho
+            And Eu devo ver a descrição e logo (se disponíveis) de "Loja de Antiguidades XYZ"
+            And Eu devo ver uma lista de leilões ativos contendo os 2 leilões de "Loja de Antiguidades XYZ"
+            And Eu devo ver uma lista de ofertas de venda direta ativas contendo as 3 ofertas de "Loja de Antiguidades XYZ".
+
+          Scenario: Usuário acessa uma página de vendedor com ID inválido/inexistente
+            Given Não existe um vendedor com ID "vendedor-fantasma-id"
+            When Eu navego para "/sellers/vendedor-fantasma-id"
+            Then Eu devo ver uma mensagem de erro "Vendedor não encontrado"
+            And (Opcional) Eu posso ser redirecionado para uma página de erro 404.
+        ```
+    *   **3.13.3.4. Regras de Negócio e Validações (Foco na Exibição):**
+        *   A página é identificada pelo `sellerId` (que é o `publicId` do `SellerProfileInfo`). O backend busca o `SellerProfileInfo` correspondente.
+        *   **Informações do Vendedor Exibidas:** `SellerProfileInfo.name`, `SellerProfileInfo.description`, `SellerProfileInfo.logoUrl`, e outros campos públicos conforme definido em `BUSINESS_RULES.md`.
+        *   **Listagem de Itens Associados:**
+            *   Lista leilões (`Auction`) onde `Auction.sellerId` corresponde ao ID do vendedor.
+            *   Lista ofertas de venda direta (`DirectSaleOffer`) onde `DirectSaleOffer.sellerId` corresponde ao ID do vendedor.
+            *   Apenas itens com status apropriado (ativos) devem ser exibidos.
+            *   As listagens podem ser paginadas.
+    *   **3.13.3.5. Layout e Páginas Envolvidas:**
+        *   Página: `/sellers/[sellerId]` (ex: `src/app/sellers/[sellerId]/page.tsx`).
+        *   Layout: Padrão da aplicação.
+        *   Conteúdo:
+            *   Seção de Perfil do Vendedor (nome, logo, descrição, etc.).
+            *   Seção para Leilões do Vendedor (lista de `AuctionCard`).
+            *   Seção para Ofertas de Venda Direta do Vendedor (lista de `DirectSaleOfferCard`).
+            *   Paginação para as listas, se aplicável.
+    *   **3.13.3.6. Considerações sobre TDD:**
+        *   **Testes de Integração (Server Action/Data Fetching):**
+            *   Testar a função que busca o perfil do vendedor e seus itens associados (ex: `getSellerProfileWithItems(sellerId: string)`).
+            *   Mockar DB adapter.
+            *   Cenário de sucesso: Retorna dados do vendedor e listas de leilões/ofertas ativas.
+            *   Cenário de falha: ID não encontrado.
+        *   **Testes de UI (Componente):**
+            *   Página `/sellers/[sellerId]/page.tsx`:
+                *   Testar a renderização correta das informações do perfil do vendedor.
+                *   Testar a renderização das listas de `AuctionCard` e `DirectSaleOfferCard`.
+                *   Testar mensagem de "vendedor não encontrado".
+        *   **Testes End-to-End (E2E):**
+            *   Navegar para uma página de vendedor a partir de um link (ex: em um lote ou leilão).
+            *   Verificar se os dados do vendedor e a lista de seus itens estão corretos.
+            *   Acessar URL de vendedor inválido.
+
+### 3.14. Página Principal de Busca e Filtros (`/search`)
+
+*   **3.14.1. Descrição Geral:**
+    *   A página de Busca e Filtros (`/search`) é a principal interface para que os usuários encontrem leilões, lotes e ofertas de venda direta na plataforma. Ela permite a busca por termos textuais e a aplicação de múltiplos filtros combinados (categoria, tipo de item, status, faixa de preço, localização, etc.) para refinar os resultados. Os resultados são exibidos de forma paginada e podem ser ordenados por diferentes critérios.
+    *   O objetivo é fornecer uma ferramenta poderosa e flexível para que os usuários descubram rapidamente os itens de seu interesse entre todos os disponíveis na plataforma.
+
+*   **3.14.2. Personas Envolvidas:**
+    *   **Visitante:** Pode usar a página de busca para explorar os itens disponíveis publicamente.
+    *   **Usuário Registrado (Licitante/Comprador):** Mesma funcionalidade do visitante, mas com a capacidade de interagir com os resultados (ex: favoritar, ir para a página do lote para dar lance).
+
+*   **3.14.3. Cenários BDD (Gherkin):**
+    ```gherkin
+    Feature: Página Principal de Busca e Filtros
+      Como um usuário da plataforma
+      Eu quero poder buscar e filtrar itens (leilões, lotes, vendas diretas)
+      Para encontrar rapidamente o que me interessa.
+
+      Scenario: Usuário realiza uma busca por termo textual
+        Given Estou na página "/search"
+        And Existem itens (leilões, lotes) contendo o termo "raro" em seus títulos ou descrições
+        When Eu preencho o campo de busca principal com "raro"
+        And Eu clico no botão "Buscar" (ou a busca é automática ao digitar)
+        Then Eu devo ver uma lista de resultados contendo itens com o termo "raro"
+        And Os resultados podem ser uma mistura de `AuctionCard`, `LotCard` e `DirectSaleOfferCard`.
+
+      Scenario: Usuário aplica filtro de categoria
+        Given Estou na página "/search"
+        And Existem itens na categoria "Veículos" e "Móveis"
+        When Eu seleciono a categoria "Veículos" no filtro de categorias
+        Then A lista de resultados deve ser atualizada para mostrar apenas itens da categoria "Veículos".
+
+      Scenario: Usuário aplica filtro de tipo de item (Leilões)
+        Given Estou na página "/search"
+        And Existem leilões e ofertas de venda direta
+        When Eu seleciono o filtro "Tipo de Item" para "Leilões"
+        Then A lista de resultados deve mostrar apenas `AuctionCard` (ou `LotCard` de leilões).
+
+      Scenario: Usuário aplica filtro de tipo de item (Venda Direta)
+        Given Estou na página "/search"
+        When Eu seleciono o filtro "Tipo de Item" para "Venda Direta"
+        Then A lista de resultados deve mostrar apenas `DirectSaleOfferCard`.
+
+      Scenario: Usuário aplica filtro de status do item (Ex: "Abertos para Lances")
+        Given Estou na página "/search"
+        When Eu seleciono o filtro "Status" para "Abertos para Lances"
+        Then A lista de resultados deve mostrar apenas lotes/leilões com status "ABERTO_PARA_LANCES".
+
+      Scenario: Usuário aplica filtro de faixa de preço
+        Given Estou na página "/search"
+        When Eu defino o filtro de "Faixa de Preço" entre "R$ 100,00" e "R$ 500,00"
+        Then A lista de resultados deve mostrar apenas itens cujo preço atual (ou lance inicial) esteja entre R$ 100,00 e R$ 500,00.
+
+      Scenario: Usuário aplica filtro de localização (Estado e Cidade)
+        Given Estou na página "/search"
+        And Existem itens localizados em "São Paulo - SP" e "Rio de Janeiro - RJ"
+        When Eu seleciono "SP" no filtro de "Estado"
+        And Eu seleciono "São Paulo" no filtro de "Cidade" (após selecionar o estado)
+        Then A lista de resultados deve mostrar apenas itens localizados em "São Paulo - SP".
+
+      Scenario: Usuário combina múltiplos filtros (Termo, Categoria e Preço)
+        Given Estou na página "/search"
+        When Eu preencho o campo de busca com "notebook"
+        And Eu seleciono a categoria "Eletrônicos"
+        And Eu defino a faixa de preço até "R$ 3000,00"
+        Then A lista de resultados deve mostrar apenas notebooks eletrônicos com preço até R$ 3000,00.
+
+      Scenario: Usuário ordena os resultados por "Preço Crescente"
+        Given Estou na página "/search" com uma lista de resultados
+        When Eu seleciono a opção de ordenação "Preço: Menor para Maior"
+        Then A lista de resultados deve ser reordenada, mostrando os itens mais baratos primeiro.
+
+      Scenario: Usuário ordena os resultados por "Data de Encerramento Mais Próxima"
+        Given Estou na página "/search" com uma lista de resultados (lotes/leilões)
+        When Eu seleciono a opção de ordenação "Encerramento: Mais Próximo"
+        Then A lista de resultados deve ser reordenada, mostrando os itens com data de encerramento mais próxima primeiro.
+
+      Scenario: Paginação dos resultados da busca
+        Given Estou na página "/search"
+        And Minha busca/filtros retornaram 50 itens, e a página exibe 12 itens por página
+        Then Eu devo ver 12 itens na primeira página de resultados
+        And Eu devo ver controles de paginação (ex: "Página 1 de 5", "Próxima", "Anterior").
+        When Eu clico em "Próxima"
+        Then Eu devo ver os próximos 12 itens (da página 2).
+
+      Scenario: Busca sem resultados
+        Given Estou na página "/search"
+        When Eu busco pelo termo "termoinexistente123xyz" que não corresponde a nenhum item
+        Then Eu devo ver uma mensagem "Nenhum item encontrado para sua busca."
+        And (Opcional) Sugestões para refazer a busca podem ser exibidas.
+
+      Scenario: Filtros são mantidos na URL (para compartilhamento e recarga)
+        Given Estou na página "/search"
+        When Eu busco por "carro" e filtro pela categoria "Veículos" e estado "SP"
+        Then A URL deve ser atualizada para refletir esses parâmetros (ex: "/search?term=carro&category=veiculos&state=SP")
+        When Eu recarrego a página com essa URL
+        Then Os campos de busca e filtros devem ser preenchidos com "carro", "Veículos", "SP"
+        And Os resultados correspondentes devem ser exibidos.
+    ```
+
+*   **3.14.4. Regras de Negócio e Validações:**
+    *   **Parâmetros de Busca e Filtro (Query Params na URL, ex: `searchParams`):**
+        *   `term` (string): Termo de busca textual. A busca deve ser feita em campos relevantes como `Lot.title`, `Lot.description`, `Auction.title`, `Auction.description`, `DirectSaleOffer.title`, `DirectSaleOffer.description`.
+        *   `category` (string - slug ou ID): Filtra por `LotCategory`.
+        *   `itemType` (enum: 'auction', 'lot', 'direct_sale'): Filtra pelo tipo principal do item.
+        *   `status` (string ou enum: `AuctionStatus` / `LotStatus` / `DirectSaleOfferStatus`): Filtra pelo status do item (ex: 'ABERTO_PARA_LANCES', 'EM_BREVE', 'ACTIVE').
+        *   `minPrice`, `maxPrice` (number): Filtra pela faixa de preço atual do lote/oferta.
+        *   `state` (string - UF): Filtra por estado de localização do lote/leilão.
+        *   `city` (string): Filtra por cidade de localização.
+        *   `auctioneerId` (string): Filtra por leiloeiro.
+        *   `sellerId` (string): Filtra por comitente/vendedor.
+        *   `sortBy` (enum: 'relevance', 'price_asc', 'price_desc', 'end_date_asc', 'creation_date_desc'): Define a ordenação dos resultados.
+        *   `page` (number): Para paginação.
+    *   **Lógica de Busca no Backend (Server Action `searchItems`):**
+        *   A action recebe os `searchParams` e constrói uma query complexa para o banco de dados.
+        *   Deve ser capaz de buscar em múltiplas entidades (Leilões, Lotes, Ofertas de Venda Direta) ou em uma visão unificada, se existir.
+        *   A busca textual (`term`) deve usar funcionalidades de full-text search do banco de dados, se possível, ou `LIKE` com cuidado para performance.
+        *   A combinação de filtros deve ser feita com lógica `AND`.
+        *   Apenas itens "públicos" e com status apropriados (ex: não mostrar lotes 'VENDIDO' em uma busca padrão, a menos que um filtro específico seja aplicado).
+    *   **Resultados da Busca:**
+        *   A action retorna uma lista paginada de itens que podem ser uma mistura de `Auction`, `Lot`, `DirectSaleOffer` (ou um tipo unificado `SearchResultItem`).
+        *   Inclui informações de paginação (total de itens, total de páginas, página atual).
+    *   **Atualização da UI:** Os filtros selecionados na UI devem atualizar os `searchParams` na URL, e a mudança na URL (ou nos `searchParams` diretamente) deve disparar uma nova busca.
+
+*   **3.14.5. Layout e Páginas Envolvidas:**
+    *   **Página Principal (`/search` - ex: `src/app/search/page.tsx`):**
+        *   Layout: Padrão da aplicação.
+        *   **Elementos de UI Chave:**
+            *   **Barra de Busca Principal:** Campo de texto grande para o `term`.
+            *   **Painel de Filtros (Sidebar ou Dropdowns):**
+                *   Seleção de Categoria (lista de `LotCategory`).
+                *   Seleção de Tipo de Item (Leilões, Lotes, Venda Direta).
+                *   Seleção de Status (Abertos, Em Breve, Encerrados - dependendo do tipo de item).
+                *   Sliders ou campos de entrada para Faixa de Preço.
+                *   Selects para Estado e Cidade (cidade é dependente do estado).
+                *   (Opcional) Selects para Leiloeiro, Vendedor.
+                *   Botão "Aplicar Filtros" (ou aplicação automática ao mudar).
+                *   Botão "Limpar Filtros".
+            *   **Área de Resultados:**
+                *   Contagem de resultados encontrados.
+                *   Dropdown para Ordenação (`sortBy`).
+                *   Grade ou lista de cards (`AuctionCard`, `LotCard`, `DirectSaleOfferCard`).
+                *   Controles de Paginação.
+                *   Mensagem de "Nenhum item encontrado".
+    *   **Componentes Reutilizáveis:**
+        *   `AuctionCard`, `LotCard`, `DirectSaleOfferCard`.
+        *   Componentes de filtro (selects, sliders de preço).
+        *   Componente de paginação.
+
+*   **3.14.6. Considerações sobre TDD:**
+    *   **Testes Unitários:**
+        *   Funções utilitárias para construir query strings a partir de objetos de filtro.
+        *   Funções para validar ou normalizar parâmetros de busca (ex: `minPrice` não pode ser maior que `maxPrice`).
+        *   Lógica de componentes de filtro isolados.
+    *   **Testes de Integração (Server Action `searchItems`):**
+        *   Mockar o DB adapter.
+        *   Testar a action com diversos cenários de `searchParams`:
+            *   Apenas `term`.
+            *   Apenas filtros (categoria, preço, etc.).
+            *   Combinação de `term` e múltiplos filtros.
+            *   Diferentes opções de `sortBy`.
+            *   Paginação (pedir página 2, verificar offset/limit na query ao adapter).
+            *   Verificar se a estrutura de retorno (lista de itens, dados de paginação) está correta.
+            *   Testar com `searchParams` que não resultariam em nenhum item.
+    *   **Testes de UI (Componente - página `/search/page.tsx`):**
+        *   Testar a renderização inicial da página (filtros vazios, sem resultados ou resultados iniciais se houver uma busca padrão).
+        *   Interação com o campo de busca textual: digitar termo, submeter (mockando a action `searchItems` para retornar resultados esperados).
+        *   Interação com cada tipo de filtro:
+            *   Selecionar categoria -> verificar se a action `searchItems` é chamada com o parâmetro correto.
+            *   Ajustar faixa de preço -> verificar parâmetros.
+            *   Mudar ordenação -> verificar parâmetro.
+        *   Testar a exibição dos resultados (cards corretos) com base nos dados mockados retornados pela action.
+        *   Testar a paginação (clicar em "Próxima" e verificar se a action é chamada com o novo número de página).
+        *   Testar a exibição da mensagem "Nenhum item encontrado".
+        *   Verificar se a URL é atualizada corretamente ao aplicar filtros e busca.
+    *   **Testes End-to-End (E2E):**
+        *   Navegar para `/search`.
+        *   Realizar uma busca textual e verificar se os resultados são relevantes.
+        *   Aplicar um filtro de categoria e verificar se os resultados são filtrados.
+        *   Aplicar um filtro de faixa de preço.
+        *   Combinar termo e filtros.
+        *   Mudar a ordenação e verificar se a ordem dos resultados muda.
+        *   Navegar entre páginas de resultados.
+        *   Limpar os filtros e verificar se a busca é resetada.
+        *   Copiar a URL com filtros, abrir em nova aba e verificar se os filtros são restaurados.
+
 ## 4. Dicionário de Dados Global
 
-*   [Nota: Este documento pode referenciar extensivamente o `BUSINESS_RULES.md` que já contém dicionários de dados detalhados para cada entidade (`Auction`, `Lot`, `UserProfileData`, `Role`, `BidInfo`, `UserDocument`, `DocumentType`, `MediaItem`, `SellerProfileInfo`, `AuctioneerProfileInfo`, `DirectSaleOffer`, etc.).]
-*   [Opcionalmente, resumir aqui as entidades mais críticas ou adicionar links para as seções relevantes do `BUSINESS_RULES.md`.]
-*   [Exemplo:
-    *   **Entidade `Auction`:** Veja `BUSINESS_RULES.md#Entidade-Principal-Auction`
-    *   **Entidade `Lot`:** Veja `BUSINESS_RULES.md#Entidade-Principal-Lot`
-    *   ...]
+Para um dicionário de dados completo e detalhado de cada entidade mencionada neste documento, incluindo todos os campos, tipos de dados, descrições, regras de validação e observações relevantes, por favor, **consulte o arquivo `BUSINESS_RULES.md`**. Este arquivo é a fonte primária e mais atualizada para a estrutura de dados da plataforma.
+
+As principais entidades, cujos dicionários de dados podem ser encontrados no `BUSINESS_RULES.md`, incluem (mas não se limitam a):
+
+*   **`UserProfileData`**: Informações do perfil do usuário (Veja Seção 2 do `BUSINESS_RULES.md`).
+*   **`Role`**: Papéis de usuário e suas permissões (Veja Seção 3 do `BUSINESS_RULES.md`).
+*   **`UserDocument`** e **`DocumentType`**: Documentos de habilitação de usuário (Veja Seção 4 do `BUSINESS_RULES.md`).
+*   **`Auction`** e **`AuctionStage`**: Detalhes de leilões e seus estágios (Veja Seção 5 do `BUSINESS_RULES.md`).
+*   **`Lot`**: Detalhes de lotes dentro de um leilão (Veja Seção 6 do `BUSINESS_RULES.md`).
+*   **`BidInfo`** e **`UserBid`**: Informações sobre lances (Veja Seção 7 do `BUSINESS_RULES.md`).
+*   **`UserWin`**: Informações sobre arremates (Veja Seção 8 do `BUSINESS_RULES.md`).
+*   **`SellerProfileInfo`**: Perfis de comitentes/vendedores (Veja Seção 9 do `BUSINESS_RULES.md`).
+*   **`AuctioneerProfileInfo`**: Perfis de leiloeiros (Veja Seção 10 do `BUSINESS_RULES.md`).
+*   **`DirectSaleOffer`**: Ofertas de venda direta (Veja Seção 11 do `BUSINESS_RULES.md`).
+*   **`MediaItem`**: Itens da biblioteca de mídia (Veja Seção 12 do `BUSINESS_RULES.md`).
+*   **`LotCategory`**, **`StateInfo`**, **`CityInfo`**: Dados de categorização e geográficos (Veja Seção 14 do `BUSINESS_RULES.md`).
+*   **`PlatformSettings`**: Configurações globais da plataforma (Veja Seção 14 do `BUSINESS_RULES.md`).
+
+A consulta ao `BUSINESS_RULES.md` é essencial para um entendimento completo da modelagem de dados do sistema.
 
 ## 5. Arquitetura Geral da Interface (Layouts Globais e Navegação)
 
 *   **5.1. Layout Principal (App):**
-    *   [Descrição do layout base: Header, Footer, Navegação principal, área de conteúdo.]
-    *   [Wireframe/Mockup geral.]
-*   **5.2. Layout do Painel Administrativo:**
-    *   [Descrição: Sidebar de navegação administrativa, Header específico do admin, área de conteúdo.]
-    *   [Wireframe/Mockup.]
-*   **5.3. Layout do Dashboard do Usuário (Licitante/Comitente):**
-    *   [Descrição: Navegação específica do dashboard, seções comuns.]
-    *   [Wireframe/Mockup.]
+    *   [Esta seção deve descrever o layout base da aplicação que é compartilhado entre a maioria das páginas públicas e de usuário. Incluir:
+        *   **Header Global:** Com logo, campo de busca principal, links de navegação (ex: Leilões, Venda Direta, Como Funciona), e o componente `UserNav` para acesso ao perfil/login.
+        *   **Área de Conteúdo Principal:** Onde o conteúdo específico de cada página é renderizado.
+        *   **Footer Global:** Com links institucionais (ex: Sobre Nós, Termos de Uso, Política de Privacidade), informações de contato, e direitos autorais.
+        *   Considerar responsividade e como o layout se adapta a diferentes tamanhos de tela.]
+    *   [Um wireframe ou mockup de baixo/médio nível seria útil aqui para ilustrar a disposição dos elementos.]
+*   **5.2. Layout do Painel Administrativo (`/admin`):**
+    *   [Descrição do layout específico para a área administrativa:
+        *   **`AdminSidebar`:** Barra lateral persistente com links para todas as seções de gerenciamento (Dashboard Admin, Leilões, Lotes, Usuários, Categorias, etc.).
+        *   **Header do Admin (opcional):** Pode conter o nome do usuário administrador, notificações específicas do admin, ou um breadcrumb da seção atual. Se não houver header específico, o header global pode ser adaptado.
+        *   **Área de Conteúdo do Admin:** Onde as tabelas de dados, formulários de gerenciamento e dashboards específicos do admin são renderizados.]
+    *   [Wireframe/Mockup da estrutura do painel administrativo.]
+*   **5.3. Layout do Dashboard do Usuário (`/dashboard` e `/consignor-dashboard`):**
+    *   [Descrição da estrutura dos painéis de usuário:
+        *   **Navegação do Dashboard:** Geralmente uma barra lateral (`DashboardNav` para usuários, `ConsignorSidebar` para comitentes) com links para as subseções (Visão Geral, Meus Lances, Meus Documentos, etc.).
+        *   **Header:** Pode ser o header global da aplicação ou um header simplificado específico para o contexto do dashboard.
+        *   **Área de Conteúdo do Dashboard:** Onde o conteúdo de cada subseção do painel é exibido.]
+    *   [Wireframe/Mockup da estrutura dos dashboards de usuário.]
 *   **5.4. Navegação Principal:**
-    *   [Estrutura do menu principal para visitantes e usuários logados.]
+    *   [Detalhar a estrutura e os itens do menu de navegação principal (geralmente no Header Global):
+        *   **Visitantes Não Autenticados:** Links como "Leilões", "Vendas Diretas", "Categorias", "Como Funciona", "Login", "Cadastre-se".
+        *   **Usuários Autenticados:** Similar ao visitante, mas "Login" e "Cadastre-se" são substituídos pelo `UserNav` (menu do usuário com links para "Meu Painel", "Minha Conta", "Sair"). Links para painéis específicos (ex: "Painel do Comitente") podem aparecer aqui se o usuário tiver o papel correspondente.]
 *   **5.5. Componentes Reutilizáveis Chave:**
-    *   [Listar e descrever brevemente componentes UI globais (ex: Cards de Leilão/Lote, Tabelas de Dados, Modais, Botões Padrão, etc.). Referenciar biblioteca de componentes se existir.]
+    *   [Listar e descrever brevemente os principais componentes de UI que são reutilizados em várias partes da plataforma, promovendo consistência visual e funcional. Exemplos:
+        *   **`AuctionCard`**: Componente para exibir informações resumidas de um leilão em listagens.
+        *   **`LotCard`**: Componente para exibir informações resumidas de um lote.
+        *   **`DirectSaleOfferCard`**: Componente para exibir informações resumidas de uma oferta de venda direta.
+        *   **`DataTable`**: Componente genérico para exibir dados tabulares com funcionalidades de busca, filtro, ordenação e paginação (usado extensivamente no painel de admin).
+        *   **Modais Padrão:** Para confirmações, diálogos de seleção (ex: `ChooseMediaDialog`).
+        *   **Botões Padrão:** Estilos consistentes para botões de ação primária, secundária, etc.
+        *   **Campos de Formulário Padronizados:** Inputs, selects, checkboxes com estilização e validação consistentes (ShadCN UI).
+        *   **`BiddingPanel`**: Componente para entrada de lances.
+        *   **`UserNav`**: Menu de navegação do usuário no header.]
+    *   [Referenciar a biblioteca de componentes (ex: ShadCN UI) e quaisquer guias de estilo ou design systems internos, se existirem.]
 
 ## 6. Considerações Gerais sobre TDD na Plataforma
 
 *   **6.1. Testes Unitários:**
-    *   [Foco: Funções utilitárias, schemas de validação (Zod), lógica de componentes React isolados (hooks customizados, etc.).]
-    *   [Ferramentas: Jest, React Testing Library.]
-*   **6.2. Testes de Integração (Server Actions):**
-    *   [Foco: Testar server actions mockando o mínimo de dependências externas (ex: DB Adapters, Firebase Auth SDK).]
-    *   [Garantir que a lógica da action (validações, chamadas a serviços, formatação de dados) funcione como esperado.]
-    *   [Ferramentas: Jest, com mocks para serviços externos.]
+    *   **Foco:** Testar a menor unidade de código isoladamente. Ideal para funções puras, lógica de negócios complexa dentro de componentes ou serviços, schemas de validação (ex: Zod), e hooks customizados React.
+    *   **Objetivo:** Garantir que cada unidade funcione conforme esperado, independentemente de suas dependências.
+    *   **Ferramentas:** Jest, React Testing Library (para hooks e componentes simples).
+    *   **Exemplos:**
+        *   Validar um schema Zod para um formulário com entradas corretas e incorretas.
+        *   Testar uma função utilitária que formata datas ou calcula valores.
+        *   Testar um hook customizado que gerencia um estado local complexo.
+*   **6.2. Testes de Integração (Server Actions e Componentes Compostos):**
+    *   **Foco:** Testar a interação entre diferentes unidades de código. Para Server Actions, isso significa testar a action em si, mockando apenas as dependências mais externas (ex: o adaptador do banco de dados, SDKs de serviços externos como Firebase Auth). Para componentes, testar a interação entre um componente pai e seus filhos, ou um componente que utiliza server actions.
+    *   **Objetivo:** Verificar se as diferentes partes do sistema colaboram corretamente.
+    *   **Ferramentas:** Jest (para Server Actions), React Testing Library (para componentes que chamam actions).
+    *   **Exemplos:**
+        *   Testar uma Server Action que recebe dados, valida, chama o DB adapter para persistir os dados, e retorna uma resposta.
+        *   Testar um formulário React que, ao ser submetido, chama uma Server Action mockada e reage corretamente à resposta (sucesso ou erro).
 *   **6.3. Testes End-to-End (E2E):**
-    *   [Foco: Simular fluxos de usuário completos através da interface gráfica.]
-    *   [Validar a integração entre frontend, server actions, e (potencialmente) um ambiente de teste com banco de dados semeado.]
-    *   [Ferramentas: Playwright.]
+    *   **Foco:** Simular fluxos de usuário completos através da interface gráfica, como se um usuário real estivesse interagindo com a aplicação em um navegador.
+    *   **Objetivo:** Validar a integração de todas as camadas da aplicação (frontend, backend, banco de dados em ambiente de teste) e garantir que os principais fluxos de usuário funcionem de ponta a ponta.
+    *   **Ferramentas:** Playwright.
+    *   **Exemplos:**
+        *   Fluxo de registro de usuário: preencher formulário, submeter, verificar redirecionamento e (se possível) criação do usuário no DB de teste.
+        *   Fluxo de login: inserir credenciais válidas/inválidas e verificar comportamento.
+        *   Fluxo de criação de leilão: preencher formulário de leilão, adicionar lotes, publicar.
+        *   Fluxo de lance: encontrar um lote, dar um lance, verificar atualização do status.
 *   **6.4. Cobertura de Teste:**
-    *   [Metas de cobertura (ex: 80% para unitários em lógica crítica).]
-    *   [Estratégia para monitoramento e manutenção da cobertura.]
+    *   **Metas:** Definir metas de cobertura de código (ex: 80% para testes unitários em lógica de negócios crítica, 70% para testes de integração de Server Actions). As metas podem variar por tipo de teste e criticidade do módulo.
+    *   **Estratégia:** Focar em testar a lógica de negócios, validações, e os caminhos mais críticos e complexos. Não buscar 100% de cobertura cegamente, mas sim garantir que as partes mais importantes e propensas a erro estejam bem testadas.
+    *   **Monitoramento:** Usar ferramentas de cobertura de teste integradas ao processo de CI/CD para acompanhar o progresso e identificar áreas não testadas.
 *   **6.5. Ambiente de Teste:**
-    *   [Considerações sobre banco de dados de teste, dados de semente (seeding), e reset de ambiente para E2E.]
+    *   **Banco de Dados de Teste:** Utilizar um banco de dados separado para testes E2E e, possivelmente, para alguns testes de integração. Este banco deve ser resetável e poder ser semeado com dados consistentes (`seed data`) antes da execução dos testes.
+    *   **Mocking de Serviços Externos:** Para testes unitários e de integração, serviços externos (gateways de pagamento, APIs de terceiros) devem ser mockados para evitar dependência e instabilidade.
+    *   **CI/CD:** Integrar a execução de todos os tipos de testes no pipeline de Integração Contínua/Entrega Contínua para garantir que novas alterações não quebrem funcionalidades existentes.
 
 ---
 Este esqueleto servirá como base para o detalhamento das especificações.
