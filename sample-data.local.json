@@ -1,6 +1,73 @@
 {
   "sampleAuctioneers": [
     {
+      "id": "auct-augusto-leiloeiro",
+      "publicId": "AUCT-PUB-1",
+      "name": "Augusto Leiloeiro Oficial",
+      "slug": "augusto-leiloeiro",
+      "logoUrl": "https://placehold.co/100x100/f97316/ffffff/png?text=AL",
+      "city": "São Paulo",
+      "state": "SP",
+      "createdAt": "2025-07-06T23:49:05.525Z",
+      "updatedAt": "2025-07-06T23:49:05.525Z",
+      "userId": "admin-bidexpert-platform-001"
+    },
+    {
+      "id": "auct-sodre-santoro",
+      "publicId": "AUCT-PUB-2",
+      "name": "Sodré Santoro Leilões",
+      "slug": "sodre-santoro",
+      "logoUrl": "https://placehold.co/100x100/1e40af/ffffff/png?text=SS",
+      "city": "Guarulhos",
+      "state": "SP",
+      "createdAt": "2025-07-06T23:49:05.525Z",
+      "updatedAt": "2025-07-06T23:49:05.525Z"
+    },
+    {
+      "id": "auct-freitas-leiloeiro",
+      "publicId": "AUCT-PUB-3",
+      "name": "Freitas Leiloeiro Oficial",
+      "slug": "freitas-leiloeiro",
+      "logoUrl": "https://placehold.co/100x100/166534/ffffff/png?text=FL",
+      "city": "Curitiba",
+      "state": "PR",
+      "createdAt": "2025-07-06T23:49:05.525Z",
+      "updatedAt": "2025-07-06T23:49:05.525Z"
+    },
+    {
+      "id": "auct-zukerman-leiloes",
+      "publicId": "AUCT-PUB-4",
+      "name": "Zukerman Leilões",
+      "slug": "zukerman-leiloes",
+      "logoUrl": "https://placehold.co/100x100/be123c/ffffff/png?text=ZK",
+      "city": "São Paulo",
+      "state": "SP",
+      "createdAt": "2025-07-06T23:49:05.525Z",
+      "updatedAt": "2025-07-06T23:49:05.525Z"
+    },
+    {
+      "id": "auct-pestana-leiloes",
+      "publicId": "AUCT-PUB-5",
+      "name": "Pestana Leilões",
+      "slug": "pestana-leiloes",
+      "logoUrl": "https://placehold.co/100x100/ca8a04/ffffff/png?text=PL",
+      "city": "Porto Alegre",
+      "state": "RS",
+      "createdAt": "2025-07-06T23:49:05.525Z",
+      "updatedAt": "2025-07-06T23:49:05.525Z"
+    },
+    {
+      "id": "auct-lance-certo",
+      "publicId": "AUCT-PUB-6",
+      "name": "Lance Certo Leilões",
+      "slug": "lance-certo-leiloes",
+      "logoUrl": "https://placehold.co/100x100/6d28d9/ffffff/png?text=LC",
+      "city": "Belo Horizonte",
+      "state": "MG",
+      "createdAt": "2025-07-06T23:49:05.525Z",
+      "updatedAt": "2025-07-06T23:49:05.525Z"
+    },
+    {
       "name": "VICENTE PAULO - JUCEMA N° 12/96",
       "logoMediaId": "media-auct-vicente-logo",
       "dataAiHintLogo": "leiloeiro martelo",
@@ -1054,6 +1121,66 @@
   "sampleBlogPosts": [],
   "sampleCities": [
     {
+      "id": "city-sp-sao-paulo",
+      "name": "São Paulo",
+      "slug": "sao-paulo",
+      "stateId": "state-sp",
+      "stateUf": "SP",
+      "lotCount": 0,
+      "createdAt": "2025-07-06T23:49:05.525Z",
+      "updatedAt": "2025-07-06T23:49:05.525Z"
+    },
+    {
+      "id": "city-sp-campinas",
+      "name": "Campinas",
+      "slug": "campinas",
+      "stateId": "state-sp",
+      "stateUf": "SP",
+      "lotCount": 0,
+      "createdAt": "2025-07-06T23:49:05.525Z",
+      "updatedAt": "2025-07-06T23:49:05.525Z"
+    },
+    {
+      "id": "city-ba-salvador",
+      "name": "Salvador",
+      "slug": "salvador",
+      "stateId": "state-ba",
+      "stateUf": "BA",
+      "lotCount": 0,
+      "createdAt": "2025-07-06T23:49:05.525Z",
+      "updatedAt": "2025-07-06T23:49:05.525Z"
+    },
+    {
+      "id": "city-rj-rio",
+      "name": "Rio de Janeiro",
+      "slug": "rio-de-janeiro",
+      "stateId": "state-rj",
+      "stateUf": "RJ",
+      "lotCount": 0,
+      "createdAt": "2025-07-06T23:49:05.525Z",
+      "updatedAt": "2025-07-06T23:49:05.525Z"
+    },
+    {
+      "id": "city-mg-bh",
+      "name": "Belo Horizonte",
+      "slug": "belo-horizonte",
+      "stateId": "state-mg",
+      "stateUf": "MG",
+      "lotCount": 0,
+      "createdAt": "2025-07-06T23:49:05.525Z",
+      "updatedAt": "2025-07-06T23:49:05.525Z"
+    },
+    {
+      "id": "city-se-lagarto",
+      "name": "Lagarto",
+      "slug": "lagarto",
+      "stateId": "state-se",
+      "stateUf": "SE",
+      "lotCount": 0,
+      "createdAt": "2025-07-06T23:49:05.525Z",
+      "updatedAt": "2025-07-06T23:49:05.525Z"
+    },
+    {
       "id": "city-maceio-al",
       "name": "Maceió",
       "slug": "maceio",
@@ -1256,7 +1383,71 @@
     }
   ],
   "sampleDirectSaleOffers": [],
-  "sampleDocumentTypes": [],
+  "sampleDocumentTypes": [
+    {
+      "id": "doc-type-1",
+      "name": "Documento de Identidade (Frente)",
+      "description": "RG ou CNH (frente)",
+      "isRequired": true,
+      "displayOrder": 1,
+      "appliesTo": [
+        "PHYSICAL",
+        "LEGAL"
+      ]
+    },
+    {
+      "id": "doc-type-2",
+      "name": "Documento de Identidade (Verso)",
+      "description": "RG ou CNH (verso)",
+      "isRequired": true,
+      "displayOrder": 2,
+      "appliesTo": [
+        "PHYSICAL",
+        "LEGAL"
+      ]
+    },
+    {
+      "id": "doc-type-3",
+      "name": "Comprovante de Residência",
+      "description": "Conta de água, luz ou telefone recente",
+      "isRequired": true,
+      "displayOrder": 3,
+      "appliesTo": [
+        "PHYSICAL"
+      ]
+    },
+    {
+      "id": "doc-type-4",
+      "name": "Selfie com Documento",
+      "description": "Uma foto sua segurando o documento de identidade",
+      "isRequired": true,
+      "displayOrder": 4,
+      "appliesTo": [
+        "PHYSICAL",
+        "LEGAL"
+      ]
+    },
+    {
+      "id": "doc-type-5",
+      "name": "Contrato Social / MEI",
+      "description": "Para Pessoas Jurídicas",
+      "isRequired": true,
+      "displayOrder": 5,
+      "appliesTo": [
+        "LEGAL"
+      ]
+    },
+    {
+      "id": "doc-type-6",
+      "name": "Cartão CNPJ",
+      "description": "Para Pessoas Jurídicas",
+      "isRequired": true,
+      "displayOrder": 6,
+      "appliesTo": [
+        "LEGAL"
+      ]
+    }
+  ],
   "sampleJudicialBranches": [
     {
       "id": "branch-1",
@@ -1536,6 +1727,125 @@
       "updatedAt": "2025-05-27T04:56:12.389Z"
     },
     {
+      "id": "cat-eletronicos-e-tecnologia",
+      "name": "Eletrônicos e Tecnologia",
+      "slug": "eletronicos-e-tecnologia",
+      "description": "Celulares, notebooks, TVs, etc.",
+      "hasSubcategories": true,
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "cat-casa-e-decoracao",
+      "name": "Casa e Decoração",
+      "slug": "casa-e-decoracao",
+      "description": "Móveis, eletrodomésticos, decoração.",
+      "hasSubcategories": true,
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "cat-arte-e-antiguidades",
+      "name": "Arte e Antiguidades",
+      "slug": "arte-e-antiguidades",
+      "description": "Obras de arte, itens colecionáveis.",
+      "hasSubcategories": true,
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "cat-joias-e-acessorios",
+      "name": "Joias e Acessórios de Luxo",
+      "slug": "joias-e-acessorios",
+      "description": "Joias, relógios, bolsas de grife.",
+      "hasSubcategories": true,
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "cat-semoventes",
+      "name": "Semoventes",
+      "slug": "semoventes",
+      "description": "Bovinos, equinos, etc.",
+      "hasSubcategories": true,
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "cat-materiais-e-sucatas",
+      "name": "Materiais e Sucatas",
+      "slug": "materiais-e-sucatas",
+      "description": "Materiais de construção, sucatas.",
+      "hasSubcategories": true,
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "cat-industrial-geral",
+      "name": "Industrial Geral",
+      "slug": "industrial-geral",
+      "description": "Estoques, matéria-prima, mobiliário.",
+      "hasSubcategories": true,
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "cat-embarcacoes",
+      "name": "Embarcações",
+      "slug": "embarcacoes",
+      "description": "Lanchas, barcos, veleiros, jet skis.",
+      "hasSubcategories": true,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "cat-alimentos",
+      "name": "Alimentos",
+      "slug": "alimentos",
+      "description": "Produtos perecíveis e não perecíveis.",
+      "hasSubcategories": true,
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "cat-metais-pedras",
+      "name": "Metais e Pedras Preciosas",
+      "slug": "metais-e-pedras-preciosas",
+      "description": "Ouro, prata, diamantes brutos.",
+      "hasSubcategories": true,
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "cat-bens-florestais",
+      "name": "Bens Florestais e Ambientais",
+      "slug": "bens-florestais-e-ambientais",
+      "description": "Madeira, créditos de carbono, etc.",
+      "hasSubcategories": true,
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "cat-outros",
+      "name": "Outros Itens e Oportunidades",
+      "slug": "outros-itens-e-oportunidades",
+      "description": "Consórcios, direitos creditórios, etc.",
+      "hasSubcategories": true,
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
       "id": "cat-eletro-eletronicos-0e98",
       "name": "Eletro Eletrônicos",
       "slug": "eletro-eletronicos",
@@ -1810,7 +2120,15 @@
       "bidsCount": 3,
       "endDate": "2025-07-14T03:52:47.479Z",
       "createdAt": "2025-07-05T12:10:00Z",
-      "updatedAt": "2025-07-05T13:10:00Z"
+      "updatedAt": "2025-07-06T23:49:29.099Z",
+      "type": "cat-imoveis",
+      "imageUrl": "https://placehold.co/600x400.png?text=Terreno+RJ",
+      "galleryImageUrls": [],
+      "mediaItemIds": [],
+      "judicialProcessNumber": "",
+      "courtDistrict": "",
+      "courtName": "",
+      "evaluationValue": null
     },
     {
       "id": "LOTEBRA05",
@@ -2002,6 +2320,123 @@
     }
   ],
   "sampleMediaItems": [
+    {
+      "id": "media-car-1",
+      "fileName": "ford-ka.jpg",
+      "uploadedAt": "2025-07-06T23:49:05.526Z",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 120000,
+      "urlOriginal": "https://placehold.co/800x600/f87171/ffffff/png?text=Ford+Ka",
+      "dataAiHint": "carro ford ka"
+    },
+    {
+      "id": "media-moto-1",
+      "fileName": "honda-cg.jpg",
+      "uploadedAt": "2025-07-06T23:49:05.526Z",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 110000,
+      "urlOriginal": "https://placehold.co/800x600/fb923c/ffffff/png?text=Honda+CG",
+      "dataAiHint": "moto honda"
+    },
+    {
+      "id": "media-apt-1",
+      "fileName": "apartamento-sp.jpg",
+      "uploadedAt": "2025-07-06T23:49:05.526Z",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 150000,
+      "urlOriginal": "https://placehold.co/800x600/60a5fa/ffffff/png?text=Apto+SP",
+      "dataAiHint": "apartamento sao paulo"
+    },
+    {
+      "id": "media-house-1",
+      "fileName": "casa-salvador.jpg",
+      "uploadedAt": "2025-07-06T23:49:05.526Z",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 160000,
+      "urlOriginal": "https://placehold.co/800x600/34d399/ffffff/png?text=Casa+Salvador",
+      "dataAiHint": "casa salvador"
+    },
+    {
+      "id": "media-trator-1",
+      "fileName": "trator-jd.jpg",
+      "uploadedAt": "2025-07-06T23:49:05.526Z",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 180000,
+      "urlOriginal": "https://placehold.co/800x600/a3e635/ffffff/png?text=Trator+JD",
+      "dataAiHint": "trator john deere"
+    },
+    {
+      "id": "media-iphone-1",
+      "fileName": "iphone-15.jpg",
+      "uploadedAt": "2025-07-06T23:49:05.526Z",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 95000,
+      "urlOriginal": "https://placehold.co/800x600/c084fc/ffffff/png?text=iPhone",
+      "dataAiHint": "celular iphone"
+    },
+    {
+      "id": "media-quadro-1",
+      "fileName": "quadro-abstrato.jpg",
+      "uploadedAt": "2025-07-06T23:49:05.526Z",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 130000,
+      "urlOriginal": "https://placehold.co/800x600/facc15/ffffff/png?text=Arte",
+      "dataAiHint": "arte quadro"
+    },
+    {
+      "id": "media-escavadeira-1",
+      "fileName": "escavadeira.jpg",
+      "uploadedAt": "2025-07-06T23:49:05.526Z",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 190000,
+      "urlOriginal": "https://placehold.co/800x600/fdba74/ffffff/png?text=Escavadeira",
+      "dataAiHint": "maquina escavadeira"
+    },
+    {
+      "id": "media-macbook-1",
+      "fileName": "macbook.jpg",
+      "uploadedAt": "2025-07-06T23:49:05.526Z",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 140000,
+      "urlOriginal": "https://placehold.co/800x600/94a3b8/ffffff/png?text=MacBook",
+      "dataAiHint": "laptop macbook"
+    },
+    {
+      "id": "media-relogio-1",
+      "fileName": "relogio-luxo.jpg",
+      "uploadedAt": "2025-07-06T23:49:05.526Z",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 105000,
+      "urlOriginal": "https://placehold.co/800x600/fde047/ffffff/png?text=Relogio",
+      "dataAiHint": "relogio luxo"
+    },
+    {
+      "id": "media-caminhao-1",
+      "fileName": "caminhao-volvo.jpg",
+      "uploadedAt": "2025-07-06T23:49:05.526Z",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 210000,
+      "urlOriginal": "https://placehold.co/800x600/3b82f6/ffffff/png?text=Caminhao",
+      "dataAiHint": "caminhao carga"
+    },
+    {
+      "id": "media-retroescavadeira-1",
+      "fileName": "retroescavadeira-case.jpg",
+      "uploadedAt": "2025-07-06T23:49:05.526Z",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 220000,
+      "urlOriginal": "https://placehold.co/800x600/f59e0b/ffffff/png?text=Retroescavadeira",
+      "dataAiHint": "retroescavadeira amarela"
+    },
+    {
+      "id": "media-colheitadeira-1",
+      "fileName": "colheitadeira-jd.jpg",
+      "uploadedAt": "2025-07-06T23:49:05.526Z",
+      "mimeType": "image/jpeg",
+      "sizeBytes": 250000,
+      "urlOriginal": "https://placehold.co/800x600/4d7c0f/ffffff/png?text=Colheitadeira",
+      "dataAiHint": "colheitadeira agricola"
+    },
     {
       "fileName": "3d-rendering-loft-luxury-living-room-with-bookshelf.jpg",
       "storagePath": "/uploads/media/6caf929a-d9e0-4109-a64a-f47f2cbdbf12-3d-rendering-loft-luxury-living-room-with-bookshelf.jpg",
@@ -2363,9 +2798,110 @@
       ],
       "createdAt": "2025-03-24T04:56:12.389Z",
       "updatedAt": "2025-06-17T04:56:12.389Z"
+    },
+    {
+      "id": "role-arrematante",
+      "name": "ARREMATANTE",
+      "name_normalized": "ARREMATANTE",
+      "description": "Usuário que arrematou lotes.",
+      "permissions": [
+        "view_wins",
+        "manage_payments",
+        "schedule_retrieval"
+      ],
+      "createdAt": "2025-07-06T23:49:05.525Z",
+      "updatedAt": "2025-07-06T23:49:05.525Z"
     }
   ],
   "sampleSellers": [
+    {
+      "id": "seller-banco-bradesco",
+      "publicId": "SELL-PUB-1",
+      "name": "Banco Bradesco S.A.",
+      "slug": "banco-bradesco-s-a",
+      "logoUrl": "https://placehold.co/100x100/dc2626/ffffff/png?text=B",
+      "city": "Osasco",
+      "state": "SP",
+      "createdAt": "2025-07-06T23:49:05.525Z",
+      "updatedAt": "2025-07-06T23:49:05.525Z"
+    },
+    {
+      "id": "seller-itau-unibanco",
+      "publicId": "SELL-PUB-2",
+      "name": "Itaú Unibanco S.A.",
+      "slug": "itau-unibanco",
+      "logoUrl": "https://placehold.co/100x100/ea580c/ffffff/png?text=I",
+      "city": "São Paulo",
+      "state": "SP",
+      "createdAt": "2025-07-06T23:49:05.525Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "seller-construtora-mrv",
+      "publicId": "SELL-PUB-3",
+      "name": "Construtora MRV",
+      "slug": "construtora-mrv",
+      "logoUrl": "https://placehold.co/100x100/16a34a/ffffff/png?text=MRV",
+      "city": "Belo Horizonte",
+      "state": "MG",
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "seller-tjsp",
+      "publicId": "SELL-PUB-4",
+      "name": "Tribunal de Justiça do Estado de São Paulo",
+      "slug": "tjsp",
+      "logoUrl": "https://placehold.co/100x100/7c3aed/ffffff/png?text=TJ",
+      "city": "São Paulo",
+      "state": "SP",
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "seller-receita-federal",
+      "publicId": "SELL-PUB-5",
+      "name": "Receita Federal",
+      "slug": "receita-federal",
+      "logoUrl": "https://placehold.co/100x100/047857/ffffff/png?text=RF",
+      "city": "Brasília",
+      "state": "DF",
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "seller-vale",
+      "publicId": "SELL-PUB-6",
+      "name": "Vale S.A.",
+      "slug": "vale-sa",
+      "logoUrl": "https://placehold.co/100x100/0369a1/ffffff/png?text=V",
+      "city": "Rio de Janeiro",
+      "state": "RJ",
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "seller-prefeitura-campinas",
+      "publicId": "SELL-PUB-7",
+      "name": "Prefeitura de Campinas",
+      "slug": "prefeitura-campinas",
+      "logoUrl": "https://placehold.co/100x100/065f46/ffffff/png?text=PC",
+      "city": "Campinas",
+      "state": "SP",
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "seller-agro-brasil",
+      "publicId": "SELL-PUB-8",
+      "name": "Fazenda Agro Brasil",
+      "slug": "fazenda-agro-brasil",
+      "logoUrl": "https://placehold.co/100x100/84cc16/ffffff/png?text=AB",
+      "city": "Rondonópolis",
+      "state": "MT",
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
     {
       "name": "Banco Bradesco S.A.",
       "logoMediaId": "media-seller-bradesco-logo",
@@ -2781,13 +3317,13 @@
   ],
   "sampleStates": [
     {
-      "id": "state-al",
-      "name": "Alagoas",
-      "uf": "AL",
-      "slug": "alagoas",
+      "id": "state-sp",
+      "name": "São Paulo",
+      "uf": "SP",
+      "slug": "sao-paulo",
       "cityCount": 2,
-      "createdAt": "2025-05-29T18:34:27.765Z",
-      "updatedAt": "2025-05-28T18:34:27.765Z"
+      "createdAt": "2025-05-25T18:34:27.765Z",
+      "updatedAt": "2025-06-07T18:34:27.765Z"
     },
     {
       "id": "state-ba",
@@ -2797,15 +3333,6 @@
       "cityCount": 2,
       "createdAt": "2025-06-04T18:34:27.765Z",
       "updatedAt": "2025-06-03T18:34:27.765Z"
-    },
-    {
-      "id": "state-sp",
-      "name": "São Paulo",
-      "uf": "SP",
-      "slug": "sao-paulo",
-      "cityCount": 2,
-      "createdAt": "2025-05-25T18:34:27.765Z",
-      "updatedAt": "2025-06-07T18:34:27.765Z"
     },
     {
       "id": "state-rj",
@@ -2824,6 +3351,24 @@
       "cityCount": 1,
       "createdAt": "2025-05-23T18:34:27.765Z",
       "updatedAt": "2025-06-21T18:34:27.765Z"
+    },
+    {
+      "id": "state-se",
+      "name": "Sergipe",
+      "uf": "SE",
+      "slug": "sergipe",
+      "cityCount": 1,
+      "createdAt": "2025-07-06T23:49:05.525Z",
+      "updatedAt": "2025-07-06T23:49:05.525Z"
+    },
+    {
+      "id": "state-al",
+      "name": "Alagoas",
+      "uf": "AL",
+      "slug": "alagoas",
+      "cityCount": 2,
+      "createdAt": "2025-05-29T18:34:27.765Z",
+      "updatedAt": "2025-05-28T18:34:27.765Z"
     },
     {
       "id": "state-pr",
@@ -2899,6 +3444,222 @@
       "updatedAt": "2025-06-19T04:56:12.389Z"
     },
     {
+      "id": "subcat-imoveis-terrenos",
+      "name": "Terrenos e Lotes",
+      "slug": "terrenos-e-lotes",
+      "parentCategoryId": "cat-imoveis",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-imoveis-comerciais",
+      "name": "Salas e Prédios Comerciais",
+      "slug": "salas-e-predios-comerciais",
+      "parentCategoryId": "cat-imoveis",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-imoveis-rurais",
+      "name": "Imóveis Rurais",
+      "slug": "imoveis-rurais",
+      "parentCategoryId": "cat-imoveis",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-veiculos-carros",
+      "name": "Carros",
+      "slug": "carros",
+      "parentCategoryId": "cat-veiculos",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-veiculos-motos",
+      "name": "Motos",
+      "slug": "motos",
+      "parentCategoryId": "cat-veiculos",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-veiculos-caminhoes",
+      "name": "Caminhões e Ônibus",
+      "slug": "caminhoes-e-onibus",
+      "parentCategoryId": "cat-veiculos",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-maquinas-agricolas",
+      "name": "Máquinas Agrícolas",
+      "slug": "maquinas-agricolas",
+      "parentCategoryId": "cat-maquinas-e-equipamentos",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-maquinas-construcao",
+      "name": "Equipamentos de Construção",
+      "slug": "equipamentos-construcao",
+      "parentCategoryId": "cat-maquinas-e-equipamentos",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-maquinas-industriais",
+      "name": "Máquinas Industriais",
+      "slug": "maquinas-industriais",
+      "parentCategoryId": "cat-maquinas-e-equipamentos",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-eletronicos-celulares",
+      "name": "Celulares e Smartphones",
+      "slug": "celulares-e-smartphones",
+      "parentCategoryId": "cat-eletronicos-e-tecnologia",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-eletronicos-informatica",
+      "name": "Computadores e Notebooks",
+      "slug": "computadores-e-notebooks",
+      "parentCategoryId": "cat-eletronicos-e-tecnologia",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-casa-moveis",
+      "name": "Móveis",
+      "slug": "moveis",
+      "parentCategoryId": "cat-casa-e-decoracao",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-casa-eletrodomesticos",
+      "name": "Eletrodomésticos",
+      "slug": "eletrodomesticos",
+      "parentCategoryId": "cat-casa-e-decoracao",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-arte-pinturas",
+      "name": "Pinturas e Esculturas",
+      "slug": "pinturas-e-esculturas",
+      "parentCategoryId": "cat-arte-e-antiguidades",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-arte-colecionaveis",
+      "name": "Itens Colecionáveis",
+      "slug": "itens-colecionaveis",
+      "parentCategoryId": "cat-arte-e-antiguidades",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-joias-relogios",
+      "name": "Relógios de Luxo",
+      "slug": "relogios-de-luxo",
+      "parentCategoryId": "cat-joias-e-acessorios",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-joias-joias",
+      "name": "Joias (Anéis, Colares, etc.)",
+      "slug": "joias",
+      "parentCategoryId": "cat-joias-e-acessorios",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-semov-bovinos",
+      "name": "Bovinos",
+      "slug": "bovinos",
+      "parentCategoryId": "cat-semoventes",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-semov-equinos",
+      "name": "Equinos",
+      "slug": "equinos",
+      "parentCategoryId": "cat-semoventes",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-suc-metais",
+      "name": "Sucatas Metálicas",
+      "slug": "sucatas-metalicas",
+      "parentCategoryId": "cat-materiais-e-sucatas",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-suc-construcao",
+      "name": "Materiais de Construção",
+      "slug": "materiais-de-construcao",
+      "parentCategoryId": "cat-materiais-e-sucatas",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-ind-estoques",
+      "name": "Estoques Industriais",
+      "slug": "estoques-industriais",
+      "parentCategoryId": "cat-industrial-geral",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-embarcacoes-lanchas",
+      "name": "Lanchas e Iates",
+      "slug": "lanchas-e-iates",
+      "parentCategoryId": "cat-embarcacoes",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
+      "id": "subcat-embarcacoes-jetskis",
+      "name": "Jet Skis",
+      "slug": "jet-skis",
+      "parentCategoryId": "cat-embarcacoes",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T23:49:05.526Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z"
+    },
+    {
       "name": "Carros",
       "parentCategoryId": "cat-veiculos",
       "description": "",
@@ -2939,10 +3700,105 @@
     }
   ],
   "sampleUserBids": [],
-  "sampleUserDocuments": [],
-  "sampleUserHabilitationStatus": "PENDING_DOCUMENTS",
+  "sampleUserDocuments": [
+    {
+      "id": "user-doc-1",
+      "documentTypeId": "doc-type-1",
+      "userId": "user123",
+      "status": "APPROVED",
+      "fileUrl": "https://placehold.co/600x400.png?text=Frente+Aprovada",
+      "uploadDate": "2024-05-10T10:00:00.000Z",
+      "analysisDate": "2024-05-10T14:00:00.000Z",
+      "documentType": {
+        "id": "doc-type-1",
+        "name": "Documento de Identidade (Frente)",
+        "description": "RG ou CNH (frente)",
+        "isRequired": true,
+        "displayOrder": 1,
+        "appliesTo": [
+          "PHYSICAL",
+          "LEGAL"
+        ]
+      }
+    },
+    {
+      "id": "user-doc-2",
+      "documentTypeId": "doc-type-2",
+      "userId": "user123",
+      "status": "REJECTED",
+      "fileUrl": "https://placehold.co/600x400.png?text=Verso+Ilegivel",
+      "uploadDate": "2024-05-10T10:01:00.000Z",
+      "analysisDate": "2024-05-10T14:05:00.000Z",
+      "rejectionReason": "A imagem do verso do documento está ilegível. Por favor, envie uma foto mais nítida.",
+      "documentType": {
+        "id": "doc-type-2",
+        "name": "Documento de Identidade (Verso)",
+        "description": "RG ou CNH (verso)",
+        "isRequired": true,
+        "displayOrder": 2,
+        "appliesTo": [
+          "PHYSICAL",
+          "LEGAL"
+        ]
+      }
+    },
+    {
+      "id": "user-doc-3",
+      "documentTypeId": "doc-type-3",
+      "userId": "user123",
+      "status": "PENDING_ANALYSIS",
+      "fileUrl": "https://placehold.co/600x400.png?text=Comprovante",
+      "uploadDate": "2024-05-11T09:30:00.000Z",
+      "documentType": {
+        "id": "doc-type-3",
+        "name": "Comprovante de Residência",
+        "description": "Conta de água, luz ou telefone recente",
+        "isRequired": true,
+        "displayOrder": 3,
+        "appliesTo": [
+          "PHYSICAL"
+        ]
+      }
+    }
+  ],
   "sampleUserLotMaxBids": [],
   "sampleUserProfiles": [
+    {
+      "uid": "admin-bidexpert-platform-001",
+      "email": "admin@bidexpert.com.br",
+      "password": "@dmin2025",
+      "fullName": "Administrador BidExpert",
+      "roleId": "role-admin",
+      "roleName": "ADMINISTRATOR",
+      "permissions": [
+        "manage_all"
+      ],
+      "status": "ATIVO",
+      "habilitationStatus": "HABILITADO",
+      "cpf": "000.000.000-00",
+      "cellPhone": "(11) 99999-9999",
+      "dateOfBirth": "1990-01-01T00:00:00.000Z",
+      "createdAt": "2023-01-01T12:00:00.000Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z",
+      "accountType": "PHYSICAL"
+    },
+    {
+      "uid": "consignor@bidexpert.com",
+      "email": "consignor@bidexpert.com",
+      "password": "password123",
+      "fullName": "Bradesco Comitente",
+      "roleId": "role-consignor",
+      "roleName": "CONSIGNOR",
+      "permissions": [
+        "auctions:manage_own",
+        "lots:manage_own"
+      ],
+      "status": "ATIVO",
+      "habilitationStatus": "HABILITADO",
+      "createdAt": "2023-01-01T12:00:00.000Z",
+      "updatedAt": "2025-07-06T23:49:05.526Z",
+      "accountType": "LEGAL"
+    },
     {
       "uid": "admin-bidexpert-platform-001",
       "email": "admin@bidexpert.com.br",
@@ -2980,5 +3836,6 @@
       "accountType": "LEGAL"
     }
   ],
-  "sampleUserWins": []
+  "sampleUserWins": [],
+  "sampleUserHabilitationStatus": "PENDING_DOCUMENTS"
 }

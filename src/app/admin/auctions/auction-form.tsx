@@ -55,7 +55,7 @@ const auctionStatusOptions: { value: AuctionStatus; label: string }[] = [
   { value: 'ABERTO', label: getAuctionStatusText('ABERTO') }, 
   { value: 'ABERTO_PARA_LANCES', label: getAuctionStatusText('ABERTO_PARA_LANCES') },
   { value: 'ENCERRADO', label: getAuctionStatusText('ENCERRADO') },
-  { value: 'FINALIZADO', label: getAuctionStatusText('FINALIZADO') },
+  { value: 'FINALIZADO', label: getAuctionStatusText('FINALIZADO') }, 
   { value: 'CANCELADO', label: getAuctionStatusText('CANCELADO') },
   { value: 'SUSPENSO', label: getAuctionStatusText('SUSPENSO') },
 ];
@@ -133,6 +133,28 @@ export default function AuctionForm({
   const watchedAuctionType = useWatch({ control: form.control, name: 'auctionType' });
   const watchedAutoRelist = useWatch({ control: form.control, name: 'autoRelistSettings' });
   const watchedSilentBidding = form.watch('silentBiddingEnabled');
+
+  const uniqueAuctioneers = React.useMemo(() => {
+    const seenNames = new Set();
+    return auctioneers.filter(auc => {
+        if (seenNames.has(auc.name)) {
+            return false;
+        }
+        seenNames.add(auc.name);
+        return true;
+    });
+  }, [auctioneers]);
+
+  const uniqueSellers = React.useMemo(() => {
+    const seenNames = new Set();
+    return sellers.filter(sel => {
+        if (seenNames.has(sel.name)) {
+            return false;
+        }
+        seenNames.add(sel.name);
+        return true;
+    });
+  }, [sellers]);
 
 
   const { fields, append, remove } = useFieldArray({
@@ -332,10 +354,10 @@ export default function AuctionForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {auctioneers.length === 0 ? (
+                          {uniqueAuctioneers.length === 0 ? (
                             <p className="p-2 text-sm text-muted-foreground">Nenhum leiloeiro cadastrado</p>
                           ) : (
-                            auctioneers.map(auc => (
+                            uniqueAuctioneers.map(auc => (
                               <SelectItem key={auc.id} value={auc.name}>{auc.name}</SelectItem>
                             ))
                           )}
@@ -359,10 +381,10 @@ export default function AuctionForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                         {sellers.length === 0 ? (
+                         {uniqueSellers.length === 0 ? (
                             <p className="p-2 text-sm text-muted-foreground">Nenhum comitente cadastrado</p>
                           ) : (
-                           sellers.map(sel => (
+                           uniqueSellers.map(sel => (
                             <SelectItem key={sel.id} value={sel.name}>{sel.name}</SelectItem>
                           ))
                          )}
