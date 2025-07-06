@@ -109,7 +109,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
         await this.getPlatformSettings(); 
         return { success: true, message: 'Sample data adapter ready. Collections will be created on first document write. Default roles and settings ensured.' };
     } catch (error: any) {
-        return { success: false, message: `Error during Firestore post-init checks: ${error.message}` };
+        return { success: false, message: `Error during post-init checks: ${error.message}` };
     }
   }
 
@@ -240,19 +240,22 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     const city = this.localData.sampleCities.find(c => c.id === lot.cityId);
     const state = this.localData.sampleStates.find(s => s.id === lot.stateId);
     
-    const firstBemId = lot.bemIds?.[0];
-    const firstBem = firstBemId ? (this.localData.sampleBens || []).find(b => b.id === firstBemId) : undefined;
+    const bens = (lot.bemIds || []).map(bemId => 
+        (this.localData.sampleBens || []).find(b => b.id === bemId)
+    ).filter((b): b is Bem => !!b);
+
+    const firstBem = bens.length > 0 ? bens[0] : null;
 
     return {
         ...lot,
         auctionName: auction?.title,
-        type: category?.name, // 'type' is often used for category name display
+        type: category?.name,
         subcategoryName: subcategory?.name,
         cityName: city?.name,
         stateUf: state?.uf,
-        // Fallback logic for image and hint
         imageUrl: lot.imageUrl || firstBem?.imageUrl,
         dataAiHint: lot.dataAiHint || firstBem?.dataAiHint,
+        bens: bens, // Attach the full bem objects
     };
   }
   
@@ -352,7 +355,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
 
   async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
     const newBem: Bem = {
-      ...data,
+      ...(data as any), // Cast to avoid TS issues with missing optional fields
       id: `bem-${uuidv4()}`,
       publicId: `BEM-PUB-${uuidv4().substring(0, 8)}`,
       createdAt: new Date(),
@@ -420,6 +423,9 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   }
 
   // --- Stubs for other methods ---
+  
+  // All other methods from this point are placeholders as requested
+  // They return empty results or "not implemented" messages
   
   async getLotCategoryByName(name: string): Promise<LotCategory | null> {
     const category = this.localData.sampleLotCategories.find(c => c.name.toLowerCase() === name.toLowerCase());
@@ -635,7 +641,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
       const lotsForAuction = this.localData.sampleLots.filter(lot => lot.auctionId === auction.id);
       return {
         ...auction,
-        lots: lotsForAuction,
+        lots: lotsForAuction.map(l => this._enrichLotData(l)),
         totalLots: lotsForAuction.length,
       };
     });
@@ -744,7 +750,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   }
   async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> { 
     console.warn("[SampleDataAdapter] answerQuestion not implemented.");
-    return { success: false, message: "Placeholder: Lógica de resposta não implementada completamente no adapter Firestore sem lotId." };
+    return { success: false, message: "Funcionalidade não implementada." };
   }
 
 
@@ -813,6 +819,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     console.warn("[SampleDataAdapter] deleteUserProfile not implemented.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
+
   async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> {
     console.warn("[SampleDataAdapter] createRole not implemented.");
     return { success: false, message: "Funcionalidade não implementada." };
