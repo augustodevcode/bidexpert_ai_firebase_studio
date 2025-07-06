@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -50,18 +49,21 @@ CategoryListItem.displayName = 'CategoryListItem';
 
 // Mapa de subcategorias (slug da categoria principal => lista de nomes de subcategorias)
 const subcategoryMap: Record<string, string[]> = {
-  'imoveis': ['Apartamentos', 'Casas', 'Terrenos', 'Salas Comerciais', 'Galpões e Prédios', 'Imóveis Rurais', 'Vagas de Garagem', 'Glebas'],
+  'imoveis': ['Apartamentos', 'Casas', 'Terrenos', 'Salas Comerciais', 'Galpões e Prédios', 'Imóveis Rurais'],
   'veiculos': ['Carros', 'Motos', 'Caminhões e Ônibus', 'Veículos Pesados', 'Aeronaves'],
-  'maquinas-e-equipamentos': ['Máquinas Agrícolas', 'Máquinas Industriais', 'Equipamentos de Construção', 'Equipamentos de Mineração', 'Empilhadeiras e Transpaleteiras', 'Movimentação e Transporte'],
+  'maquinas-e-equipamentos': ['Máquinas Agrícolas', 'Máquinas Industriais', 'Equipamentos de Construção'],
   'eletronicos-e-tecnologia': ['Celulares e Tablets', 'Computadores e Notebooks', 'Televisores e Áudio', 'Componentes e Peças'],
-  'casa-e-decoracao': ['Móveis Residenciais', 'Eletrodomésticos', 'Utensílios de Cozinha', 'Decoração e Iluminação', 'Cama, Mesa e Banho'],
-  'arte-e-antiguidades': ['Obras de Arte (Pinturas, Esculturas)', 'Antiguidades', 'Itens Colecionáveis', 'Numismática'],
-  'joias-e-acessorios': ['Joias', 'Relógios de Luxo', 'Bolsas de Grife', 'Canetas Finas'],
-  'semoventes': ['Bovinos', 'Equinos', 'Ovinos e Caprinos', 'Aves', 'Outros Animais de Produção ou Estimação'],
-  'materiais-e-sucatas': ['Materiais de Construção Civil', 'Sucatas Metálicas (Ferrosas e Não Ferrosas)', 'Resíduos Industriais', 'Papel e Plástico Reciclável'],
-  'industrial-geral': ['Estoques Industriais', 'Matéria-prima', 'Equipamentos de Escritório (Empresarial)', 'Mobiliário Corporativo'],
-  'outros-itens-e-oportunidades': ['Consórcios', 'Energia Solar (Equipamentos)', 'Direitos Creditórios', 'Títulos e Valores Mobiliários', 'Vinhos e Bebidas Raras', 'Instrumentos Musicais', 'Bens Diversos'],
+  'casa-e-decoracao': ['Móveis Residenciais', 'Eletrodomésticos', 'Utensílios de Cozinha', 'Decoração e Iluminação'],
+  'arte-e-antiguidades': ['Obras de Arte', 'Antiguidades', 'Itens Colecionáveis', 'Numismática'],
+  'joias-e-acessorios': ['Joias', 'Relógios de Luxo', 'Bolsas de Grife'],
+  'semoventes': ['Bovinos', 'Equinos', 'Ovinos e Caprinos'],
+  'materiais-e-sucatas': ['Materiais de Construção', 'Sucatas Metálicas'],
+  'industrial-geral': ['Estoques Industriais', 'Matéria-prima', 'Mobiliário Corporativo'],
   'embarcacoes': ['Lanchas e Iates', 'Jet Skis', 'Veleiros', 'Barcos de Pesca'],
+  'alimentos': ['Não Perecíveis', 'Bebidas'],
+  'metais-e-pedras-preciosas': ['Ouro', 'Prata', 'Pedras Preciosas'],
+  'bens-florestais-e-ambientais': ['Madeira Legalizada', 'Créditos de Carbono'],
+  'outros-itens-e-oportunidades': ['Consórcios', 'Direitos Creditórios'],
 };
 
 function getSubcategoriesFor(categorySlug: string | undefined): string[] {
@@ -182,5 +184,3 @@ export default function MegaMenuCategories({ categories, onLinkClick }: MegaMenu
     </div>
   );
 }
-
-    

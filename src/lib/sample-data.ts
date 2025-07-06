@@ -1,4 +1,3 @@
-
 // src/lib/sample-data.ts
 import type {
   Bem, Lot, LotCategory, Auction, AuctioneerProfileInfo, SellerProfileInfo,
@@ -72,26 +71,63 @@ export const sampleSellers: SellerProfileInfo[] = [
 ];
 
 export const sampleLotCategories: LotCategory[] = [
-  { id: 'cat-imoveis', name: 'Imóveis', slug: 'imoveis', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'cat-veiculos', name: 'Veículos', slug: 'veiculos', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'cat-maquinas-e-equipamentos', name: 'Máquinas e Equipamentos', slug: 'maquinas-e-equipamentos', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'cat-eletronicos-e-tecnologia', name: 'Eletrônicos e Tecnologia', slug: 'eletronicos-e-tecnologia', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'cat-arte-e-antiguidades', name: 'Arte e Antiguidades', slug: 'arte-e-antiguidades', hasSubcategories: false, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'cat-bens-diversos', name: 'Bens Diversos', slug: 'bens-diversos', hasSubcategories: false, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'cat-veiculos-pesados', name: 'Veículos Pesados e Utilitários', slug: 'veiculos-pesados-e-utilitarios', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() }
+    { id: 'cat-imoveis', name: 'Imóveis', slug: 'imoveis', description: 'Casas, apartamentos, terrenos, etc.', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+    { id: 'cat-veiculos', name: 'Veículos', slug: 'veiculos', description: 'Carros, motos, caminhões, etc.', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+    { id: 'cat-maquinas-e-equipamentos', name: 'Máquinas e Equipamentos', slug: 'maquinas-e-equipamentos', description: 'Máquinas pesadas, agrícolas, industriais.', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+    { id: 'cat-eletronicos-e-tecnologia', name: 'Eletrônicos e Tecnologia', slug: 'eletronicos-e-tecnologia', description: 'Celulares, notebooks, TVs, etc.', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+    { id: 'cat-casa-e-decoracao', name: 'Casa e Decoração', slug: 'casa-e-decoracao', description: 'Móveis, eletrodomésticos, decoração.', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+    { id: 'cat-arte-e-antiguidades', name: 'Arte e Antiguidades', slug: 'arte-e-antiguidades', description: 'Obras de arte, itens colecionáveis.', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+    { id: 'cat-joias-e-acessorios', name: 'Joias e Acessórios de Luxo', slug: 'joias-e-acessorios', description: 'Joias, relógios, bolsas de grife.', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+    { id: 'cat-semoventes', name: 'Semoventes', slug: 'semoventes', description: 'Bovinos, equinos, etc.', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+    { id: 'cat-materiais-e-sucatas', name: 'Materiais e Sucatas', slug: 'materiais-e-sucatas', description: 'Materiais de construção, sucatas.', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+    { id: 'cat-industrial-geral', name: 'Industrial Geral', slug: 'industrial-geral', description: 'Estoques, matéria-prima, mobiliário.', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+    { id: 'cat-embarcacoes', name: 'Embarcações', slug: 'embarcacoes', description: 'Lanchas, barcos, veleiros, jet skis.', hasSubcategories: true, createdAt: new Date(), updatedAt: new Date() },
+    { id: 'cat-alimentos', name: 'Alimentos', slug: 'alimentos', description: 'Produtos perecíveis e não perecíveis.', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+    { id: 'cat-metais-pedras', name: 'Metais e Pedras Preciosas', slug: 'metais-e-pedras-preciosas', description: 'Ouro, prata, diamantes brutos.', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+    { id: 'cat-bens-florestais', name: 'Bens Florestais e Ambientais', slug: 'bens-florestais-e-ambientais', description: 'Madeira, créditos de carbono, etc.', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+    { id: 'cat-outros', name: 'Outros Itens e Oportunidades', slug: 'outros-itens-e-oportunidades', description: 'Consórcios, direitos creditórios, etc.', hasSubcategories: true, itemCount: 0, createdAt: new Date(), updatedAt: new Date() }
 ];
 
 export const sampleSubcategories: Subcategory[] = [
+  // Imóveis
   { id: 'subcat-imoveis-apartamentos', name: 'Apartamentos', slug: 'apartamentos', parentCategoryId: 'cat-imoveis', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'subcat-imoveis-casas', name: 'Casas', slug: 'casas', parentCategoryId: 'cat-imoveis', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-imoveis-terrenos', name: 'Terrenos e Lotes', slug: 'terrenos-e-lotes', parentCategoryId: 'cat-imoveis', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-imoveis-comerciais', name: 'Salas e Prédios Comerciais', slug: 'salas-e-predios-comerciais', parentCategoryId: 'cat-imoveis', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-imoveis-rurais', name: 'Imóveis Rurais', slug: 'imoveis-rurais', parentCategoryId: 'cat-imoveis', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  // Veículos
   { id: 'subcat-veiculos-carros', name: 'Carros', slug: 'carros', parentCategoryId: 'cat-veiculos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'subcat-veiculos-motos', name: 'Motos', slug: 'motos', parentCategoryId: 'cat-veiculos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-veiculos-caminhoes', name: 'Caminhões e Ônibus', slug: 'caminhoes-e-onibus', parentCategoryId: 'cat-veiculos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  // Máquinas e Equipamentos
   { id: 'subcat-maquinas-agricolas', name: 'Máquinas Agrícolas', slug: 'maquinas-agricolas', parentCategoryId: 'cat-maquinas-e-equipamentos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
   { id: 'subcat-maquinas-construcao', name: 'Equipamentos de Construção', slug: 'equipamentos-construcao', parentCategoryId: 'cat-maquinas-e-equipamentos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-maquinas-industriais', name: 'Máquinas Industriais', slug: 'maquinas-industriais', parentCategoryId: 'cat-maquinas-e-equipamentos', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  // Eletrônicos
   { id: 'subcat-eletronicos-celulares', name: 'Celulares e Smartphones', slug: 'celulares-e-smartphones', parentCategoryId: 'cat-eletronicos-e-tecnologia', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'subcat-pesados-caminhoes', name: 'Caminhões', slug: 'caminhoes', parentCategoryId: 'cat-veiculos-pesados', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'subcat-pesados-onibus', name: 'Ônibus', slug: 'onibus', parentCategoryId: 'cat-veiculos-pesados', itemCount: 0, createdAt: new Date(), updatedAt: new Date() }
+  { id: 'subcat-eletronicos-informatica', name: 'Computadores e Notebooks', slug: 'computadores-e-notebooks', parentCategoryId: 'cat-eletronicos-e-tecnologia', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  // Casa e Decoração
+  { id: 'subcat-casa-moveis', name: 'Móveis', slug: 'moveis', parentCategoryId: 'cat-casa-e-decoracao', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-casa-eletrodomesticos', name: 'Eletrodomésticos', slug: 'eletrodomesticos', parentCategoryId: 'cat-casa-e-decoracao', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  // Arte e Antiguidades
+  { id: 'subcat-arte-pinturas', name: 'Pinturas e Esculturas', slug: 'pinturas-e-esculturas', parentCategoryId: 'cat-arte-e-antiguidades', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-arte-colecionaveis', name: 'Itens Colecionáveis', slug: 'itens-colecionaveis', parentCategoryId: 'cat-arte-e-antiguidades', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  // Joias
+  { id: 'subcat-joias-relogios', name: 'Relógios de Luxo', slug: 'relogios-de-luxo', parentCategoryId: 'cat-joias-e-acessorios', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-joias-joias', name: 'Joias (Anéis, Colares, etc.)', slug: 'joias', parentCategoryId: 'cat-joias-e-acessorios', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  // Semoventes
+  { id: 'subcat-semov-bovinos', name: 'Bovinos', slug: 'bovinos', parentCategoryId: 'cat-semoventes', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-semov-equinos', name: 'Equinos', slug: 'equinos', parentCategoryId: 'cat-semoventes', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  // Sucatas
+  { id: 'subcat-suc-metais', name: 'Sucatas Metálicas', slug: 'sucatas-metalicas', parentCategoryId: 'cat-materiais-e-sucatas', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-suc-construcao', name: 'Materiais de Construção', slug: 'materiais-de-construcao', parentCategoryId: 'cat-materiais-e-sucatas', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  // Industrial Geral
+  { id: 'subcat-ind-estoques', name: 'Estoques Industriais', slug: 'estoques-industriais', parentCategoryId: 'cat-industrial-geral', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  // Embarcações
+  { id: 'subcat-embarcacoes-lanchas', name: 'Lanchas e Iates', slug: 'lanchas-e-iates', parentCategoryId: 'cat-embarcacoes', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'subcat-embarcacoes-jetskis', name: 'Jet Skis', slug: 'jet-skis', parentCategoryId: 'cat-embarcacoes', itemCount: 0, createdAt: new Date(), updatedAt: new Date() },
 ];
+
 
 export const sampleMediaItems: MediaItem[] = [
   { id: 'media-car-1', fileName: 'ford-ka.jpg', uploadedAt: new Date(), mimeType: 'image/jpeg', sizeBytes: 120000, urlOriginal: 'https://placehold.co/800x600/f87171/ffffff/png?text=Ford+Ka', dataAiHint: 'carro ford ka' },
@@ -178,11 +214,12 @@ export const samplePlatformSettings: PlatformSettings = {
 
 // Document Types
 export const sampleDocumentTypes: DocumentType[] = [
-  { id: 'doc-type-1', name: 'Documento de Identidade (Frente)', description: 'RG ou CNH (frente)', isRequired: true, displayOrder: 1 },
-  { id: 'doc-type-2', name: 'Documento de Identidade (Verso)', description: 'RG ou CNH (verso)', isRequired: true, displayOrder: 2 },
-  { id: 'doc-type-3', name: 'Comprovante de Residência', description: 'Conta de água, luz ou telefone recente', isRequired: true, displayOrder: 3 },
-  { id: 'doc-type-4', name: 'Selfie com Documento', description: 'Uma foto sua segurando o documento de identidade', isRequired: true, displayOrder: 4 },
-  { id: 'doc-type-5', name: 'Contrato Social / MEI', description: 'Para Pessoas Jurídicas', isRequired: false, displayOrder: 5 },
+  { id: 'doc-type-1', name: 'Documento de Identidade (Frente)', description: 'RG ou CNH (frente)', isRequired: true, displayOrder: 1, appliesTo: ['PHYSICAL', 'LEGAL'] },
+  { id: 'doc-type-2', name: 'Documento de Identidade (Verso)', description: 'RG ou CNH (verso)', isRequired: true, displayOrder: 2, appliesTo: ['PHYSICAL', 'LEGAL'] },
+  { id: 'doc-type-3', name: 'Comprovante de Residência', description: 'Conta de água, luz ou telefone recente', isRequired: true, displayOrder: 3, appliesTo: ['PHYSICAL'] },
+  { id: 'doc-type-4', name: 'Selfie com Documento', description: 'Uma foto sua segurando o documento de identidade', isRequired: true, displayOrder: 4, appliesTo: ['PHYSICAL', 'LEGAL'] },
+  { id: 'doc-type-5', name: 'Contrato Social / MEI', description: 'Para Pessoas Jurídicas', isRequired: true, displayOrder: 5, appliesTo: ['LEGAL'] },
+  { id: 'doc-type-6', name: 'Cartão CNPJ', description: 'Para Pessoas Jurídicas', isRequired: true, displayOrder: 6, appliesTo: ['LEGAL'] }
 ];
 
 // User Documents
@@ -311,7 +348,6 @@ export const sampleBens: Bem[] = [
 ];
 export const sampleLots: Lot[] = [];
 export const sampleAuctions: Auction[] = [];
-export const sampleUserHabilitationStatus: UserHabilitationStatus = 'PENDING_DOCUMENTS';
 export const sampleNotifications: Notification[] = [];
 export const sampleDirectSaleOffers: DirectSaleOffer[] = [];
 export const sampleUserBids: UserBid[] = [];
@@ -321,4 +357,3 @@ export const sampleLotQuestions: LotQuestion[] = [];
 export const sampleLotReviews: Review[] = [];
 export const sampleUserLotMaxBids: UserLotMaxBid[] = [];
 export const sampleBlogPosts: BlogPost[] = [];
-
