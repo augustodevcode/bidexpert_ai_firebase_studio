@@ -1,6 +1,6 @@
 // src/lib/sample-data-helpers.ts
 import type { Lot, LotCategory, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, AuctionStatus, PlatformSettings, Auction, AuctionStage } from '@/types';
-import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle } from 'lucide-react';
+import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle, FileUp, CheckCircle } from 'lucide-react';
 import { isPast } from 'date-fns';
 
 // ============================================================================
@@ -112,6 +112,22 @@ export const getUserDocumentStatusColor = (status: UserDocumentStatus): string =
     case 'NOT_SENT':
     default:
       return 'border-gray-400';
+  }
+};
+
+export const getUserDocumentStatusInfo = (status: UserDocumentStatus | undefined) => {
+  switch (status) {
+    case 'APPROVED':
+      return { text: 'Aprovado', icon: CheckCircle, badgeVariant: 'secondary', textColor: 'text-green-700' };
+    case 'REJECTED':
+      return { text: 'Rejeitado', icon: FileWarning, badgeVariant: 'destructive', textColor: 'text-destructive' };
+    case 'PENDING_ANALYSIS':
+      return { text: 'Em Análise', icon: Clock, badgeVariant: 'outline', textColor: 'text-yellow-600' };
+    case 'SUBMITTED':
+      return { text: 'Enviado', icon: Clock, badgeVariant: 'outline', textColor: 'text-yellow-600' };
+    case 'NOT_SENT':
+    default:
+      return { text: 'Não Enviado', icon: FileUp, badgeVariant: 'secondary', textColor: 'text-muted-foreground' };
   }
 };
 
