@@ -2,13 +2,12 @@
 // src/app/admin/subcategories/page.tsx
 'use client';
 
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getSubcategoriesByParentIdAction, deleteSubcategoryAction } from './actions';
+import { getSubcategoriesByParentIdAction } from './actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import type { Subcategory, LotCategory } from '@/types';
-import { PlusCircle, Layers, Loader2 } from 'lucide-react';
+import { Layers } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
@@ -22,7 +21,6 @@ export default function AdminSubcategoriesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -33,9 +31,10 @@ export default function AdminSubcategoriesPage() {
       try {
         const fetchedCategories = await getLotCategories();
         if (isMounted) {
-          setAllParentCategories(fetchedCategories);
-          if (fetchedCategories.length > 0 && !selectedParentCategoryId) {
-            setSelectedParentCategoryId(fetchedCategories[0].id);
+          const categoriesWithSubcats = fetchedCategories.filter(c => c.hasSubcategories);
+          setAllParentCategories(categoriesWithSubcats);
+          if (categoriesWithSubcats.length > 0 && !selectedParentCategoryId) {
+            setSelectedParentCategoryId(categoriesWithSubcats[0].id);
           }
         }
       } catch (e) {
@@ -52,7 +51,7 @@ export default function AdminSubcategoriesPage() {
     };
     fetchPageData();
     return () => { isMounted = false; };
-  }, [toast, refetchTrigger, selectedParentCategoryId]);
+  }, [toast, selectedParentCategoryId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -89,21 +88,8 @@ export default function AdminSubcategoriesPage() {
     return () => { isMounted = false; };
   }, [selectedParentCategoryId, toast, allParentCategories]);
 
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      const result = await deleteSubcategoryAction(id);
-      if (result.success) {
-        toast({ title: "Sucesso", description: result.message });
-        setRefetchTrigger(c => c + 1);
-      } else {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
-      }
-    },
-    [toast]
-  );
   
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+  const columns = useMemo(() => createColumns(), []);
 
   return (
     <div className="space-y-6">
@@ -112,17 +98,12 @@ export default function AdminSubcategoriesPage() {
           <div>
             <CardTitle className="text-2xl font-bold font-headline flex items-center">
               <Layers className="h-6 w-6 mr-2 text-primary" />
-              Gerenciar Subcategorias
+              Subcategorias
             </CardTitle>
             <CardDescription>
-              Adicione, edite ou remova subcategorias. Selecione uma categoria principal para ver suas subcategorias.
+              Visualize as subcategorias. A criação e edição foram desativadas.
             </CardDescription>
           </div>
-          <Button asChild>
-            <Link href="/admin/subcategories/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Nova Subcategoria
-            </Link>
-          </Button>
         </CardHeader>
         <CardContent>
             <div className="mb-4">
@@ -132,13 +113,13 @@ export default function AdminSubcategoriesPage() {
                 disabled={allParentCategories.length === 0 || isLoading}
               >
                 <SelectTrigger id="parentCategorySelect" className="w-full sm:w-auto sm:min-w-[250px]">
-                  <SelectValue placeholder={allParentCategories.length > 0 ? "Selecione uma categoria principal" : "Nenhuma categoria cadastrada"} />
+                  <SelectValue placeholder={allParentCategories.length > 0 ? "Selecione uma categoria principal" : "Nenhuma categoria com subcategorias"} />
                 </SelectTrigger>
                 <SelectContent>
                   {allParentCategories.map(cat => (
                     <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                   ))}
-                   {allParentCategories.length === 0 && <p className="text-xs text-muted-foreground p-2">Cadastre categorias principais primeiro.</p>}
+                   {allParentCategories.length === 0 && <p className="text-xs text-muted-foreground p-2">Nenhuma categoria com subcategorias encontrada.</p>}
                 </SelectContent>
               </Select>
             </div>
@@ -156,3 +137,5 @@ export default function AdminSubcategoriesPage() {
     </div>
   );
 }
+
+    

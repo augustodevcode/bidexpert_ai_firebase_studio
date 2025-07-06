@@ -3,12 +3,11 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getLotCategories, deleteLotCategory } from './actions';
+import { getLotCategories } from './actions';
 import type { LotCategory } from '@/types';
-import { PlusCircle, ListChecks } from 'lucide-react';
+import { ListChecks } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
@@ -18,7 +17,6 @@ export default function AdminCategoriesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -51,41 +49,21 @@ export default function AdminCategoriesPage() {
     return () => {
       isMounted = false;
     };
-  }, [toast, refetchTrigger]);
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      const result = await deleteLotCategory(id);
-      if (result.success) {
-        toast({ title: "Sucesso", description: result.message });
-        setRefetchTrigger(c => c + 1);
-      } else {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
-      }
-    },
-    [toast]
-  );
+  }, [toast]);
   
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+  const columns = useMemo(() => createColumns(), []);
 
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-2xl font-bold font-headline flex items-center">
-              <ListChecks className="h-6 w-6 mr-2 text-primary" />
-              Gerenciar Categorias de Lotes
-            </CardTitle>
-            <CardDescription>
-              Adicione, edite ou remova categorias para organizar os lotes no site.
-            </CardDescription>
-          </div>
-          <Button asChild>
-            <Link href="/admin/categories/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Nova Categoria
-            </Link>
-          </Button>
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold font-headline flex items-center">
+            <ListChecks className="h-6 w-6 mr-2 text-primary" />
+            Categorias de Lotes
+          </CardTitle>
+          <CardDescription>
+            Visualize as categorias fixas da plataforma. A criação e edição foram desativadas para manter a consistência dos dados.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <DataTable
@@ -101,3 +79,5 @@ export default function AdminCategoriesPage() {
     </div>
   );
 }
+
+    
