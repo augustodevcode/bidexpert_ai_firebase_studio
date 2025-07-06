@@ -11,6 +11,7 @@ import { Loader2, UserCog, Mail, Phone, Home, Building, Briefcase, Calendar, Shi
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Badge } from '@/components/ui/badge';
 
 const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType, label: string, value?: string | null, href?: string }) => {
   if (!value) return null;
@@ -105,7 +106,7 @@ export default function ProfilePage() {
               ) : (
                 <>
                   <InfoItem icon={FileText} label="CPF" value={cpf} />
-                  <InfoItem icon={Calendar} label="Data de Nascimento" value={dateOfBirth ? format(new Date(dateOfBirth), 'dd/MM/yyyy', { locale: ptBR }) : null} />
+                  <InfoItem icon={Calendar} label="Data de Nascimento" value={dateOfBirth ? format(new Date(dateOfBirth as string), 'dd/MM/yyyy', { locale: ptBR }) : null} />
                 </>
               )}
             </div>
