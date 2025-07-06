@@ -1,4 +1,3 @@
-
 // src/app/admin/lots/lot-form.tsx
 'use client';
 
@@ -310,7 +309,13 @@ export default function LotForm({
     <Card key={bem.id} className="flex flex-col shadow-sm hover:shadow-md transition-shadow">
       <CardHeader className="p-3">
         <div className="relative aspect-video bg-muted rounded-md overflow-hidden">
-          <Image src={bem.imageUrl || 'https://placehold.co/400x300.png'} alt={bem.title} fill className="object-cover" />
+          <Image
+            src={bem.imageUrl || 'https://placehold.co/400x300.png'}
+            alt={bem.title}
+            fill
+            className="object-cover"
+            data-ai-hint={bem.dataAiHint || bem.categoryName?.toLowerCase() || 'bem item'}
+          />
         </div>
         <CardTitle className="text-sm font-semibold line-clamp-2 leading-tight h-8 mt-2">{bem.title}</CardTitle>
         <CardDescription className="text-xs">ID: {bem.publicId || bem.id}</CardDescription>
@@ -330,7 +335,13 @@ export default function LotForm({
     <Card key={bem.id} className="shadow-sm hover:shadow-md transition-shadow">
       <CardContent className="p-3 flex items-center gap-4">
         <div className="relative w-24 h-16 bg-muted rounded-md overflow-hidden flex-shrink-0">
-          <Image src={bem.imageUrl || 'https://placehold.co/120x90.png'} alt={bem.title} fill className="object-cover" />
+          <Image
+            src={bem.imageUrl || 'https://placehold.co/120x90.png'}
+            alt={bem.title}
+            fill
+            className="object-cover"
+            data-ai-hint={bem.dataAiHint || bem.categoryName?.toLowerCase() || 'bem item'}
+          />
         </div>
         <div className="flex-grow">
           <h4 className="font-semibold text-sm">{bem.title}</h4>
