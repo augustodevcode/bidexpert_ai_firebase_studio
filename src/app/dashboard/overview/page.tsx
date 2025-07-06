@@ -14,7 +14,7 @@ import { format, differenceInHours, differenceInMinutes, isPast, isValid } from 
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge'; 
 
-const { sampleLots, sampleUserWins, sampleUserBids } = sampleData;
+const { sampleLots = [], sampleUserWins = [], sampleUserBids = [] } = sampleData;
 
 function TimeRemaining({ endDate }: { endDate: Date | string }) {
   const [remaining, setRemaining] = useState('');
