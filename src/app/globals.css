@@ -22,8 +22,8 @@
 
     --destructive: 0 84.2% 60.2%; /* Default red */
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%; /* Slightly darker gray for borders */
-    --input: 0 0% 95%; /* Slightly lighter for input background */
+    --border: 0 0% 85%; /* Adjusted for better visibility */
+    --input: 0 0% 89.8%; /* Adjusted to match old border color, used for switch bg */
     --ring: 25 95% 53%; /* Orange for focus rings */
     --chart-1: 25 95% 53%; /* Orange - kept for charts */
     --chart-2: 210 79% 46%; /* Blue */
@@ -60,7 +60,7 @@
     --accent-foreground: 25 95% 80%; /* Lighter Orange text on dark orange accent */
     --destructive: 0 62.8% 50.6%; /* Default red - kept for dark mode */
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
+    --border: 0 0% 20%; /* Adjusted for better visibility */
     --input: 0 0% 14.9%;
     --ring: 25 95% 60%; /* Orange for focus rings */
     --chart-1: 25 95% 60%;
@@ -88,4 +88,3 @@
     @apply bg-background text-foreground;
   }
 }
-
