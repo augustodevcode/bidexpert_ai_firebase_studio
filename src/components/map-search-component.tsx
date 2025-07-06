@@ -1,11 +1,12 @@
 // src/components/map-search-component.tsx
 'use client';
 
-import React, { useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useEffect, useMemo, useCallback, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L, { type LatLngBounds } from 'leaflet';
 import type { Lot, Auction } from '@/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Fix for default Leaflet icon paths in Next.js
 // @ts-ignore
@@ -70,10 +71,16 @@ export default function MapSearchComponent({
   onBoundsChange,
   shouldFitBounds
 }: MapSearchComponentProps) {
-  // Using a ref to generate a stable, unique key for this component instance.
-  // This prevents the "Map container is already initialized" error during hot reloads
-  // or complex navigation scenarios by ensuring React creates a fresh DOM node for the map.
   const mapKey = useRef(`map-instance-${Math.random()}`).current;
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return <Skeleton className="w-full h-full rounded-lg" />;
+  }
 
   return (
     <MapContainer
