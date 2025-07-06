@@ -1,3 +1,4 @@
+
 // src/app/admin/wizard/page.tsx
 'use client';
 
@@ -81,7 +82,8 @@ function WizardContent({
   };
 
   const handleLotCreation = () => {
-    refetchData(wizardData.judicialProcess?.id); 
+    // This is called when lots are created, but we don't need a full refetch,
+    // as the state is handled on the client. We can keep this for potential future use.
   };
   
   const handleProcessCreated = async (newProcessId?: string) => {
@@ -90,6 +92,7 @@ function WizardContent({
     await refetchData(newProcessId);
     setWizardMode('main');
     setIsDataRefetching(false);
+    router.refresh();
   }
   
   const handleBemCreated = async () => {
@@ -98,6 +101,7 @@ function WizardContent({
     await refetchData(wizardData.judicialProcess?.id);
     setWizardMode('main');
     setIsDataRefetching(false);
+    router.refresh();
   }
 
   const renderStep = () => {

@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { createAuctionFromWizard } from '@/app/admin/wizard/actions';
+import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 
 export default function Step5Review() {
   const { wizardData, resetWizard } = useWizard();
@@ -77,6 +78,8 @@ export default function Step5Review() {
                 <p><strong>Data de Fim:</strong> <span className="text-muted-foreground">{format(new Date(auctionDetails.endDate), 'dd/MM/yyyy', {locale: ptBR})}</span></p>
             )}
           </div>
+          <Separator className="my-3"/>
+          <AuctionStagesTimeline auctionOverallStartDate={new Date(auctionDetails?.auctionDate || Date.now())} stages={auctionDetails?.auctionStages || []} />
         </CardContent>
       </Card>
 

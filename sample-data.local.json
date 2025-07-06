@@ -892,7 +892,8 @@
       "id": "bem-dc7c6aeb-e504-4281-8816-e4fc486fe56d",
       "publicId": "BEM-PUB-14de5bc7",
       "createdAt": "2025-07-06T01:01:03.774Z",
-      "updatedAt": "2025-07-06T01:01:03.774Z"
+      "updatedAt": "2025-07-06T01:28:55.035Z",
+      "subcategoryId": "subcat-colheitadeira-a48b"
     }
   ],
   "sampleBids": [
@@ -1524,7 +1525,7 @@
       "description": "Máquinas pesadas, agrícolas, industriais, equipamentos de construção e diversos.",
       "id": "cat-maquinas-e-equipamentos",
       "itemCount": 3,
-      "hasSubcategories": false,
+      "hasSubcategories": true,
       "logoMediaId": null,
       "coverImageMediaId": null,
       "megaMenuImageMediaId": null,
@@ -1533,6 +1534,16 @@
       "dataAiHintMegaMenu": null,
       "createdAt": "2025-06-12T04:56:12.389Z",
       "updatedAt": "2025-05-27T04:56:12.389Z"
+    },
+    {
+      "id": "cat-eletro-eletronicos-0e98",
+      "name": "Eletro Eletrônicos",
+      "slug": "eletro-eletronicos",
+      "description": "",
+      "itemCount": 0,
+      "hasSubcategories": false,
+      "createdAt": "2025-07-06T01:04:46.498Z",
+      "updatedAt": "2025-07-06T01:04:46.498Z"
     }
   ],
   "sampleLotQuestions": [],
@@ -2886,6 +2897,45 @@
       "itemCount": 3,
       "createdAt": "2025-06-05T04:56:12.389Z",
       "updatedAt": "2025-06-19T04:56:12.389Z"
+    },
+    {
+      "name": "Carros",
+      "parentCategoryId": "cat-veiculos",
+      "description": "",
+      "displayOrder": 0,
+      "iconUrl": "",
+      "dataAiHintIcon": "",
+      "id": "subcat-carros-f13d",
+      "slug": "carros",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T01:07:50.708Z",
+      "updatedAt": "2025-07-06T01:07:50.708Z"
+    },
+    {
+      "name": "Trator",
+      "parentCategoryId": "cat-maquinas-e-equipamentos",
+      "description": "",
+      "displayOrder": 0,
+      "iconUrl": "",
+      "dataAiHintIcon": "",
+      "id": "subcat-trator-d05a",
+      "slug": "trator",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T01:10:08.678Z",
+      "updatedAt": "2025-07-06T01:10:08.678Z"
+    },
+    {
+      "name": "Colheitadeira",
+      "parentCategoryId": "cat-maquinas-e-equipamentos",
+      "description": "",
+      "displayOrder": 0,
+      "iconUrl": "",
+      "dataAiHintIcon": "",
+      "id": "subcat-colheitadeira-a48b",
+      "slug": "colheitadeira",
+      "itemCount": 0,
+      "createdAt": "2025-07-06T01:10:26.318Z",
+      "updatedAt": "2025-07-06T01:10:26.318Z"
     }
   ],
   "sampleUserBids": [],

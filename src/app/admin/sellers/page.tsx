@@ -10,6 +10,7 @@ import { getSellers, deleteSeller } from './actions';
 import type { SellerProfileInfo } from '@/types';
 import { PlusCircle, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
 
@@ -18,51 +19,40 @@ export default function AdminSellersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const router = useRouter();
+
+  const fetchSellers = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const fetchedSellers = await getSellers();
+      setSellers(fetchedSellers);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar comitentes.";
+      console.error("Error fetching sellers:", e);
+      setError(errorMessage);
+      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
-    let isCancelled = false;
-    
-    const fetchSellers = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const fetchedSellers = await getSellers();
-        if (!isCancelled) {
-          setSellers(fetchedSellers);
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar comitentes.";
-        console.error("Error fetching sellers:", e);
-        if (!isCancelled) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsLoading(false);
-        }
-      }
-    };
-    
     fetchSellers();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [toast, refetchTrigger]);
+  }, [fetchSellers]);
 
   const handleDelete = useCallback(
     async (id: string) => {
       const result = await deleteSeller(id);
       if (result.success) {
         toast({ title: "Sucesso", description: result.message });
-        setRefetchTrigger(c => c + 1);
+        fetchSellers(); // Refetch data
+        router.refresh();
       } else {
         toast({ title: "Erro", description: result.message, variant: "destructive" });
       }
     },
-    [toast]
+    [toast, fetchSellers, router]
   );
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);

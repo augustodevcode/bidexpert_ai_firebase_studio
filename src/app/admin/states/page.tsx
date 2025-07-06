@@ -12,58 +12,47 @@ import { PlusCircle, Map } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
-
+import { useRouter } from 'next/navigation';
 
 export default function AdminStatesPage() {
   const [states, setStates] = useState<StateInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const router = useRouter();
+
+  const fetchStates = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const fetchedStates = await getStates();
+      setStates(fetchedStates);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar estados.";
+      console.error("Error fetching states:", e);
+      setError(errorMessage);
+      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
-    let isCancelled = false;
-    
-    const fetchStates = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const fetchedStates = await getStates();
-        if (!isCancelled) {
-          setStates(fetchedStates);
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar estados.";
-        console.error("Error fetching states:", e);
-        if (!isCancelled) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsLoading(false);
-        }
-      }
-    };
-
     fetchStates();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [toast, refetchTrigger]);
+  }, [fetchStates]);
 
   const handleDelete = useCallback(
     async (id: string) => {
       const result = await deleteState(id);
       if (result.success) {
         toast({ title: "Sucesso!", description: result.message });
-        setRefetchTrigger(c => c + 1);
+        fetchStates(); // Refetch data
+        router.refresh();
       } else {
         toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
       }
     },
-    [toast]
+    [toast, fetchStates, router]
   );
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);

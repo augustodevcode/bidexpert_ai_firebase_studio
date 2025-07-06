@@ -13,58 +13,47 @@ import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
 import { getUserHabilitationStatusInfo } from '@/lib/sample-data-helpers';
+import { useRouter } from 'next/navigation';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserProfileData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const router = useRouter();
+
+  const fetchUsers = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const fetchedUsers = await getUsersWithRoles();
+      setUsers(fetchedUsers);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar usuários.";
+      console.error("Error fetching users:", e);
+      setError(errorMessage);
+      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
-    let isMounted = true;
-    
-    const fetchUsers = async () => {
-      if (!isMounted) return;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const fetchedUsers = await getUsersWithRoles();
-        if (isMounted) {
-          setUsers(fetchedUsers);
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar usuários.";
-        console.error("Error fetching users:", e);
-        if (isMounted) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    
     fetchUsers();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [toast, refetchTrigger]);
+  }, [fetchUsers]);
 
   const handleDelete = useCallback(
     async (id: string) => {
       const result = await deleteUser(id);
       if (result.success) {
         toast({ title: "Sucesso!", description: result.message });
-        setRefetchTrigger(c => c + 1);
+        fetchUsers();
+        router.refresh();
       } else {
         toast({ title: 'Erro ao Excluir', description: result.message, variant: 'destructive' });
       }
     },
-    [toast]
+    [toast, fetchUsers, router]
   );
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);

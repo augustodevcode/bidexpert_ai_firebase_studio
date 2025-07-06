@@ -1,3 +1,4 @@
+
 // src/lib/database/interface.ts
 // This file is now part of src/types/index.ts to avoid circular dependencies
 // with types used in the interface methods.
