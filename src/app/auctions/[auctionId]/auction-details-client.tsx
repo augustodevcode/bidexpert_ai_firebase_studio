@@ -313,7 +313,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
              />
            </aside>
 
-           <main>
+           <main className="min-w-0">
             <div className="md:hidden mb-4">
                 <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
                   <SheetTrigger asChild>

@@ -70,8 +70,8 @@ const sortOptionsDirectSales = [
 
 
 const initialFiltersState: ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; searchType?: 'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos' } = {
-  modality: 'TODAS',
-  category: 'TODAS',
+  modality: 'TODAS', 
+  category: 'TODAS', 
   priceRange: [0, 1000000],
   locations: [],
   sellers: [],
@@ -119,6 +119,7 @@ export default function SearchPage() {
           getSellers(),
           getPlatformSettings()
         ]);
+        
         setAllCategoriesForFilter(categories);
         setUniqueSellersForFilter(sellers.map(s => s.name).sort());
         setPlatformSettings(settings);
@@ -341,7 +342,9 @@ export default function SearchPage() {
         if (!itemCategoryName || !category || (item.categoryId !== category.id && slugify(itemCategoryName) !== category.slug)) return false;
       }
       const itemPrice = 'price' in item && typeof item.price === 'number' ? item.price : ('initialOffer' in item && typeof item.initialOffer === 'number' ? item.initialOffer : undefined);
-      if (itemPrice !== undefined && (itemPrice < activeFilters.priceRange[0] || itemPrice > activeFilters.priceRange[1])) return false;
+      if (itemPrice !== undefined && (itemPrice < activeFilters.priceRange[0] || itemPrice > activeFilters.priceRange[1])) {
+        return false;
+      }
       if (activeFilters.locations.length > 0) {
         const itemLocationString = ('locationCity' in item && 'locationState' in item && item.locationCity && item.locationState) ? `${item.locationCity} - ${item.locationState}` : ('city' in item && 'state' in item && item.city && item.state) ? `${item.city} - ${item.state}` : ('cityName' in item && 'stateUf' in item && item.cityName && item.stateUf) ? `${item.cityName} - ${item.stateUf}` : undefined;
         if (!itemLocationString || !activeFilters.locations.includes(itemLocationString)) return false;
@@ -352,7 +355,9 @@ export default function SearchPage() {
         else if ('seller' in item && (item as Auction).seller) sellerName = (item as Auction).seller!;
         if (!sellerName || !activeFilters.sellers.includes(sellerName)) return false;
       }
-      if (activeFilters.status && activeFilters.status.length > 0 && (!item.status || !activeFilters.status.includes(item.status as string))) return false;
+      if (activeFilters.status && activeFilters.status.length > 0) {
+          if (!item.status || !activeFilters.status.includes(item.status as string)) return false;
+      }
       if (itemTypeContext === 'auction' && activeFilters.modality !== 'TODAS' && (item as Auction).auctionType?.toUpperCase() !== activeFilters.modality) return false;
       if (itemTypeContext === 'direct_sale' && activeFilters.offerType && activeFilters.offerType !== 'ALL' && (item as DirectSaleOffer).offerType !== activeFilters.offerType) return false;
       return true;
@@ -527,7 +532,7 @@ export default function SearchPage() {
             />
         </aside>
         
-        <main className="space-y-6">
+        <main className="min-w-0 space-y-6">
             <Tabs value={currentSearchType} onValueChange={(value) => handleSearchTypeChange(value as any)} className="w-full">
             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6 gap-1 sm:gap-2">
                 <TabsTrigger value="auctions">Leilões ({currentSearchType === 'auctions' ? filteredAndSortedItems.length : allAuctions.filter(a=> a.auctionType !== 'TOMADA_DE_PRECOS').length})</TabsTrigger>

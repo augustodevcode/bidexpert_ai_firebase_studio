@@ -278,7 +278,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
           />
         </aside>
 
-        <main>
+        <main className="min-w-0">
           <SearchResultsFrame
             items={sortedLots}
             totalItemsCount={sortedLots.length}
