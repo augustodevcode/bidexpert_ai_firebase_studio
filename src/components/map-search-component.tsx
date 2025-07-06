@@ -72,7 +72,13 @@ export default function MapSearchComponent({
 }: MapSearchComponentProps) {
 
   return (
-    <MapContainer center={mapCenter} zoom={mapZoom} scrollWheelZoom={true} className="w-full h-full rounded-lg z-0">
+    <MapContainer 
+      key={`${mapCenter[0]}-${mapCenter[1]}-${mapZoom}`}
+      center={mapCenter} 
+      zoom={mapZoom} 
+      scrollWheelZoom={true} 
+      className="w-full h-full rounded-lg z-0"
+    >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
