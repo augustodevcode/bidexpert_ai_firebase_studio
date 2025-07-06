@@ -36,8 +36,8 @@ export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDoc
     case 'APPROVED': return 'Aprovado';
     case 'REJECTED': return 'Rejeitado';
     case 'PENDING_ANALYSIS': return 'Em Análise';
-    case 'PENDING_DOCUMENTS': return 'Documentação Pendente';
-    case 'HABILITADO': return 'Habilitado para Dar Lances'; 
+    case 'PENDING_DOCUMENTS': return 'Documentos Pendentes';
+    case 'HABILITADO': return 'Habilitado'; 
     case 'REJECTED_DOCUMENTS': return 'Documentos Rejeitados';
     case 'BLOCKED': return 'Conta Bloqueada';
     case 'ACTIVE': return 'Ativa'; 
@@ -104,34 +104,34 @@ export const getPaymentStatusText = (status: PaymentStatus): string => getAuctio
 
 export const getUserDocumentStatusColor = (status: UserDocumentStatus): string => {
   switch (status) {
-    case 'APPROVED': return 'border-green-500 text-green-700 bg-green-50';
-    case 'REJECTED': return 'border-red-500 text-red-700 bg-red-50';
+    case 'APPROVED': return 'border-green-500';
+    case 'REJECTED': return 'border-red-500';
     case 'PENDING_ANALYSIS':
     case 'SUBMITTED':
-      return 'border-yellow-500 text-yellow-700 bg-yellow-50';
+      return 'border-yellow-500';
     case 'NOT_SENT':
     default:
-      return 'border-gray-400 text-gray-600 bg-gray-50';
+      return 'border-gray-400';
   }
 };
 
 export const getUserHabilitationStatusInfo = (status: UserHabilitationStatus | undefined) => {
-  if (!status) return { text: 'Pendente', color: 'bg-orange-500', icon: FileWarning, progress: 25 };
   switch (status) {
     case 'HABILITADO':
-      return { text: 'Habilitado', color: 'bg-green-600', icon: CheckCircle2, progress: 100 };
+      return { text: 'Habilitado', description: 'Você está habilitado para dar lances!', color: 'text-green-600', icon: CheckCircle2, progress: 100 };
     case 'PENDING_ANALYSIS':
-      return { text: 'Em Análise', color: 'bg-yellow-500', icon: Clock, progress: 75 };
+      return { text: 'Em Análise', description: 'Nossa equipe está analisando seus documentos.', color: 'text-yellow-600', icon: Clock, progress: 75 };
     case 'PENDING_DOCUMENTS':
-      return { text: 'Documentos Pendentes', color: 'bg-orange-500', icon: FileWarning, progress: 25 };
+      return { text: 'Documentos Pendentes', description: 'Envie os documentos marcados como obrigatórios (*) para prosseguir.', color: 'text-orange-600', icon: FileWarning, progress: 25 };
     case 'REJECTED_DOCUMENTS':
-      return { text: 'Documentos Rejeitados', color: 'bg-red-600', icon: FileWarning, progress: 50 };
+      return { text: 'Documentos Rejeitados', description: 'Um ou mais documentos foram rejeitados. Verifique abaixo.', color: 'text-red-600', icon: FileWarning, progress: 50 };
     case 'BLOCKED':
-      return { text: 'Conta Bloqueada', color: 'bg-gray-700', icon: ShieldAlert, progress: 0 };
+      return { text: 'Conta Bloqueada', description: 'Sua conta está bloqueada. Entre em contato com o suporte.', color: 'text-gray-700', icon: ShieldAlert, progress: 0 };
     default:
-      return { text: 'Status Desconhecido', color: 'bg-gray-400', icon: HelpCircle, progress: 0 };
+      return { text: 'Pendente', description: 'Complete seu cadastro e envie os documentos.', color: 'text-muted-foreground', icon: HelpCircle, progress: 10 };
   }
 };
+
 
 export const getCategoryAssets = (categoryName: string): { bannerUrl: string, bannerAiHint: string } => {
   const assets: Record<string, { bannerUrl: string, bannerAiHint: string }> = {

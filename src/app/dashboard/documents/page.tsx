@@ -1,16 +1,15 @@
+// src/app/dashboard/documents/page.tsx
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from '@/components/ui/separator';
-import { UploadCloud, Eye, AlertCircle, CheckCircle2, FileText, ShieldCheck, FileWarning, Clock, Loader2 } from 'lucide-react';
+import { ShieldCheck, Loader2, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
-import { getUserHabilitationStatusInfo, getUserDocumentStatusColor, getAuctionStatusText } from '@/lib/sample-data-helpers';
-import type { UserDocument, DocumentType, UserHabilitationStatus, UserDocumentStatus } from '@/types';
+import { getUserHabilitationStatusInfo } from '@/lib/sample-data-helpers';
+import type { UserDocument, DocumentType } from '@/types';
 import { getDocumentTypes, getUserDocuments, saveUserDocument } from './actions';
 import { useToast } from '@/hooks/use-toast';
 import DocumentUploadCard from '@/components/document-upload-card';
@@ -59,17 +58,6 @@ export default function UserDocumentsPage() {
     }
   };
 
-  const getStatusIcon = (status: UserDocumentStatus) => {
-    switch (status) {
-      case 'APPROVED': return <CheckCircle2 className="h-5 w-5 text-green-600" />;
-      case 'REJECTED': return <FileWarning className="h-5 w-5 text-red-600" />;
-      case 'PENDING_ANALYSIS':
-      case 'SUBMITTED': return <Clock className="h-5 w-5 text-yellow-600" />;
-      case 'NOT_SENT':
-      default: return <FileText className="h-5 w-5 text-gray-500" />;
-    }
-  };
-  
   const relevantDocTypes = allDocTypes.filter(dt => {
       if (userProfileWithPermissions?.accountType === 'LEGAL' || userProfileWithPermissions?.accountType === 'DIRECT_SALE_CONSIGNOR') {
           return dt.appliesTo.includes('LEGAL');
@@ -114,26 +102,16 @@ export default function UserDocumentsPage() {
             Gerencie seus documentos para se habilitar a participar dos leilões.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <Card className="bg-secondary/30">
-            <CardHeader><CardTitle className="text-lg">Status da Sua Habilitação</CardTitle></CardHeader>
-            <CardContent>
-              <div className="flex items-center space-x-4 mb-2">
-                <div className={`p-2 rounded-full ${habilitationStatusInfo.color} text-white`}>
-                  <HabilitationIcon size={24} />
-                </div>
-                <div>
-                  <p className="text-xl font-semibold">{habilitationStatusInfo.text}</p>
-                   {userProfileWithPermissions?.habilitationStatus === 'REJECTED_DOCUMENTS' && <p className="text-sm text-red-600">Verifique os documentos abaixo e reenvie os necessários.</p>}
-                   {userProfileWithPermissions?.habilitationStatus === 'PENDING_DOCUMENTS' && <p className="text-sm text-orange-600">Envie os documentos marcados como obrigatórios (*) para prosseguir.</p>}
-                </div>
+        <CardContent className="space-y-8">
+          <div className="p-4 border rounded-lg bg-secondary/30">
+             <CardTitle className="text-lg mb-2">Status da Sua Habilitação</CardTitle>
+              <div className="space-y-1">
+                <p className={`font-semibold text-lg ${habilitationStatusInfo.textColor}`}>{habilitationStatusInfo.text}</p>
+                <p className="text-sm text-muted-foreground">{habilitationStatusInfo.description}</p>
               </div>
-              <Progress value={habilitationStatusInfo.progress} className="w-full h-3" />
+              <Progress value={habilitationStatusInfo.progress} className="w-full h-2 mt-3" />
               <p className="text-xs text-muted-foreground mt-1 text-right">{habilitationStatusInfo.progress}% completo</p>
-            </CardContent>
-          </Card>
-
-          <Separator />
+          </div>
 
           <div>
             <h3 className="text-xl font-semibold mb-1">Documentos Necessários</h3>
@@ -152,9 +130,19 @@ export default function UserDocumentsPage() {
               ))}
             </div>
           </div>
+          
+          <Separator />
+
+           <div>
+            <h3 className="text-xl font-semibold mb-2">Documentos Gerados</h3>
+            <div className="text-center py-10 bg-muted/50 rounded-lg">
+                <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
+                <p className="text-sm text-muted-foreground">Nenhum documento gerado automaticamente ainda.</p>
+                <p className="text-xs text-muted-foreground mt-1">Autos de arrematação e outros documentos aparecerão aqui após a conclusão dos leilões.</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
   );
 }
-
