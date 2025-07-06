@@ -1,7 +1,7 @@
-
+// src/components/map-search-component.tsx
 'use client';
 
-import React, { useEffect, useMemo, useCallback } from 'react';
+import React, { useEffect, useMemo, useCallback, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L, { type LatLngBounds } from 'leaflet';
@@ -72,11 +72,11 @@ export default function MapSearchComponent({
 }: MapSearchComponentProps) {
 
   return (
-    <MapContainer 
+    <MapContainer
       key={`${mapCenter.join(',')}-${mapZoom}`}
-      center={mapCenter} 
-      zoom={mapZoom} 
-      scrollWheelZoom={true} 
+      center={mapCenter}
+      zoom={mapZoom}
+      scrollWheelZoom={true}
       className="w-full h-full rounded-lg z-0"
     >
       <TileLayer

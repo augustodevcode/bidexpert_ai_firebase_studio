@@ -1,4 +1,3 @@
-
 // src/app/admin/wizard/page.tsx
 'use client';
 
@@ -92,7 +91,6 @@ function WizardContent({
     await refetchData(newProcessId);
     setWizardMode('main');
     setIsDataRefetching(false);
-    router.refresh();
   }
   
   const handleBemCreated = async () => {
@@ -101,7 +99,6 @@ function WizardContent({
     await refetchData(wizardData.judicialProcess?.id);
     setWizardMode('main');
     setIsDataRefetching(false);
-    router.refresh();
   }
 
   const renderStep = () => {

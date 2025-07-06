@@ -1,4 +1,3 @@
-
 // src/app/admin/subcategories/columns.tsx
 'use client';
 
@@ -31,5 +30,3 @@ export const createColumns = (): ColumnDef<Subcategory>[] => [
     cell: ({ row }) => <div className="text-center">{row.getValue("itemCount") || 0}</div>
   },
 ];
-
-    
