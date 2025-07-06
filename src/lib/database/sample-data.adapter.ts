@@ -30,7 +30,11 @@ import type {
   JudicialBranch, JudicialBranchFormData,
   JudicialProcess, JudicialProcessFormData,
   Bem, BemFormData,
-  ProcessParty
+  ProcessParty,
+  DocumentType,
+  UserDocument,
+  Notification,
+  BlogPost
 } from '@/types';
 import { slugify, getEffectiveLotEndDate } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
@@ -46,16 +50,39 @@ export class SampleDataAdapter implements IDatabaseAdapter {
 
   constructor() {
     try {
+        const baseData = JSON.parse(JSON.stringify(sampleData));
+        
         if (fs.existsSync(DATA_FILE_PATH)) {
             const fileContents = fs.readFileSync(DATA_FILE_PATH, 'utf8');
             const parsedData = JSON.parse(fileContents);
-            // Deep copy base data to make it mutable, then merge local data over it.
-            const baseData = JSON.parse(JSON.stringify(sampleData));
-            this.localData = { ...baseData, ...parsedData };
-            console.log(`[SampleDataAdapter] Loaded and merged data from ${DATA_FILE_PATH}`);
+            
+            // Merge arrays instead of overwriting them
+            for (const key in parsedData) {
+                if (Object.prototype.hasOwnProperty.call(parsedData, key)) {
+                    const baseValue = baseData[key as keyof typeof sampleData];
+                    const parsedValue = parsedData[key as keyof typeof sampleData];
+
+                    if (Array.isArray(baseValue) && Array.isArray(parsedValue)) {
+                        const combined = [...baseValue, ...parsedValue];
+                        const uniqueMap = new Map();
+                        // Use 'id' for objects, otherwise stringify for primitive uniqueness
+                        combined.forEach(item => {
+                            const mapKey = (item && typeof item === 'object' && 'id' in item && item.id) ? item.id : JSON.stringify(item);
+                            if (mapKey !== undefined && mapKey !== null) {
+                                uniqueMap.set(mapKey, item);
+                            }
+                        });
+                        baseData[key as keyof typeof sampleData] = Array.from(uniqueMap.values());
+                    } else {
+                        // For non-array properties, or if base doesn't have the key, just assign
+                        baseData[key as keyof typeof sampleData] = parsedValue;
+                    }
+                }
+            }
+            this.localData = baseData;
+            console.log(`[SampleDataAdapter] Loaded and MERGED data from ${DATA_FILE_PATH}`);
         } else {
-             // If no local file, just deep copy the base sample data to make it mutable
-             this.localData = JSON.parse(JSON.stringify(sampleData));
+             this.localData = baseData;
              console.log("[SampleDataAdapter] sample-data.local.json not found, using initial data from module.");
         }
     } catch (error) {
@@ -82,7 +109,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
         await this.getPlatformSettings(); 
         return { success: true, message: 'Sample data adapter ready. Collections will be created on first document write. Default roles and settings ensured.' };
     } catch (error: any) {
-        return { success: false, message: `Error during Firestore post-init checks: ${error.message}`, errors: [error] };
+        return { success: false, message: `Error during Firestore post-init checks: ${error.message}` };
     }
   }
 
@@ -625,7 +652,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     const lotsForAuction = this.localData.sampleLots.filter(lot => lot.auctionId === auction.id);
     return Promise.resolve(JSON.parse(JSON.stringify({
       ...auction,
-      lots: lotsForAuction,
+      lots: lotsForAuction.map(l => this._enrichLotData(l)),
       totalLots: lotsForAuction.length,
     })));
   }
@@ -991,5 +1018,46 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     this.localData.sampleJudicialProcesses = this.localData.sampleJudicialProcesses.filter(p => p.id !== id);
     if (this.localData.sampleJudicialProcesses.length < initialLength) { this._persistData(); return { success: true, message: 'Processo excluído.' }; }
     return { success: false, message: 'Processo não encontrado.'};
+  }
+
+  // Document Handling Stubs
+  async getDocumentTypes(): Promise<DocumentType[]> {
+    return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleDocumentTypes)));
+  }
+
+  async getUserDocuments(userId: string): Promise<UserDocument[]> {
+    return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleUserDocuments.filter(d => d.userId === userId))));
+  }
+
+  async saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean; message: string; }> {
+      const userDocIndex = this.localData.sampleUserDocuments.findIndex(d => d.userId === userId && d.documentTypeId === documentTypeId);
+      const now = new Date();
+      
+      const newDocData = {
+          userId,
+          documentTypeId,
+          fileUrl,
+          fileName,
+          status: 'PENDING_ANALYSIS' as 'PENDING_ANALYSIS',
+          uploadDate: now,
+          updatedAt: now,
+          documentType: this.localData.sampleDocumentTypes.find(dt => dt.id === documentTypeId)!
+      };
+
+      if (userDocIndex !== -1) {
+          this.localData.sampleUserDocuments[userDocIndex] = {
+              ...this.localData.sampleUserDocuments[userDocIndex],
+              ...newDocData,
+          };
+      } else {
+           this.localData.sampleUserDocuments.push({
+               ...newDocData,
+               id: `user-doc-${uuidv4()}`,
+               createdAt: now,
+           });
+      }
+      
+      this._persistData();
+      return { success: true, message: 'Documento salvo para análise.' };
   }
 }
