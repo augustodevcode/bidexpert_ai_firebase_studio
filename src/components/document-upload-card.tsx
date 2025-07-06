@@ -4,7 +4,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Card, CardContent } from '@/components/ui/card';
-import { FileUp, FileText, CheckCircle, X } from 'lucide-react';
+import { FileUp, FileText, CheckCircle, X, UploadCloud } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 import { Progress } from './ui/progress';
@@ -29,7 +29,6 @@ export default function DocumentUploadCard({
 }: DocumentUploadCardProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
     setError(null);
@@ -51,20 +50,19 @@ export default function DocumentUploadCard({
     }
   }, [onFileSelect, maxSizeMB]);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
     onDrop,
     accept: acceptedFileTypes.reduce((acc, type) => ({ ...acc, [type]: [] }), {}),
     maxSize: maxSizeMB * 1024 * 1024,
     multiple: false,
+    noClick: true, // Disable click on the dropzone itself, we'll trigger it with a button
+    noKeyboard: true,
   });
   
   const handleRemoveFile = () => {
     setSelectedFile(null);
     onFileSelect(null);
     setError(null);
-    if (inputRef.current) {
-      inputRef.current.value = "";
-    }
   }
   
   const formatFileSize = (bytes: number) => {
@@ -79,12 +77,11 @@ export default function DocumentUploadCard({
     <Card className="shadow-sm hover:shadow-md transition-shadow">
       <CardContent className="p-4">
         <div {...getRootProps()} className={cn(
-          "relative border-2 border-dashed rounded-lg p-6 text-center space-y-2 transition-colors cursor-pointer",
+          "relative border-2 border-dashed rounded-lg p-4 text-center space-y-2 transition-colors",
           isDragActive && "border-primary bg-primary/10",
-          !selectedFile && "hover:border-primary/70",
           error && "border-destructive bg-destructive/10"
         )}>
-          <input {...getInputProps({ ref: inputRef })} />
+          <input {...getInputProps()} />
           
           {selectedFile ? (
             <div className="flex flex-col items-center justify-center text-green-600">
@@ -94,28 +91,36 @@ export default function DocumentUploadCard({
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center text-muted-foreground">
-              <FileUp className="h-10 w-10 mb-2"/>
+              <UploadCloud className="h-10 w-10 mb-2"/>
               <p className="text-sm font-semibold text-foreground">{title}</p>
               <p className="text-xs mt-1">
-                {isDragActive ? "Solte o arquivo aqui..." : "Arraste ou clique para enviar"}
+                {isDragActive ? "Solte o arquivo aqui..." : "Arraste um arquivo ou clique no botão abaixo"}
               </p>
             </div>
           )}
-
-          {selectedFile && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="absolute top-1 right-1 h-6 w-6 rounded-full bg-background"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRemoveFile();
-              }}
-            >
-              <X className="h-4 w-4 text-destructive" />
-            </Button>
-          )}
+        </div>
+        <div className="mt-2 text-center">
+            {selectedFile ? (
+                <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="text-xs h-7"
+                    onClick={handleRemoveFile}
+                >
+                    <X className="h-3 w-3 mr-1" /> Remover
+                </Button>
+            ) : (
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-7"
+                    onClick={open} // Use the `open` function from react-dropzone
+                >
+                    Selecionar Arquivo
+                </Button>
+            )}
         </div>
         {error && <p className="text-xs text-destructive mt-1 text-center">{error}</p>}
       </CardContent>
