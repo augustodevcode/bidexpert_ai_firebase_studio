@@ -55,7 +55,7 @@ export default function DocumentUploadCard({
     accept: acceptedFileTypes.reduce((acc, type) => ({ ...acc, [type]: [] }), {}),
     maxSize: maxSizeMB * 1024 * 1024,
     multiple: false,
-    noClick: true, // Disable click on the dropzone itself, we'll trigger it with a button
+    noClick: true, 
     noKeyboard: true,
   });
   
@@ -96,6 +96,7 @@ export default function DocumentUploadCard({
               <p className="text-xs mt-1">
                 {isDragActive ? "Solte o arquivo aqui..." : "Arraste um arquivo ou clique no botão abaixo"}
               </p>
+              <p className="text-xs text-muted-foreground/80 mt-2">Tipos: PDF, JPG, PNG. Tamanho Máx: {maxSizeMB}MB</p>
             </div>
           )}
         </div>
@@ -116,7 +117,7 @@ export default function DocumentUploadCard({
                     variant="outline"
                     size="sm"
                     className="text-xs h-7"
-                    onClick={open} // Use the `open` function from react-dropzone
+                    onClick={open} 
                 >
                     Selecionar Arquivo
                 </Button>
