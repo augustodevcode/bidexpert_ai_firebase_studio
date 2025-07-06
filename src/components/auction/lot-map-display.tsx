@@ -63,7 +63,13 @@ export default function LotMapDisplay({ lot }: LotMapDisplayProps) {
       <CardContent className="p-0">
         <div className="aspect-square w-full rounded-b-md overflow-hidden border-t relative">
           {hasCoords ? (
-            <MapContainer center={[latitude, longitude]} zoom={15} scrollWheelZoom={false} className="w-full h-full z-0">
+            <MapContainer
+              key={lot.id} // Add key to force re-creation on lot change
+              center={[latitude, longitude]}
+              zoom={15}
+              scrollWheelZoom={false}
+              className="w-full h-full z-0"
+            >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
