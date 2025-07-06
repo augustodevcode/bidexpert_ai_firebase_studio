@@ -144,6 +144,8 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
   const showCountdownOnThisCard = platformSettings.showCountdownOnCards !== false;
   
   const effectiveEndDate = useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
+  
+  const [formattedEndDate, setFormattedEndDate] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -151,13 +153,12 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
       setIsFavorite(isLotFavoriteInStorage(lot.id));
       setIsViewed(getRecentlyViewedIds().includes(lot.id));
     }
-  }, [lot.id, lot.auctionId, lot.publicId]);
-
-   useEffect(() => {
-    if (lot && lot.id) {
-        setIsFavorite(isLotFavoriteInStorage(lot.id));
+    if (effectiveEndDate) {
+      setFormattedEndDate(format(effectiveEndDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }));
+    } else {
+      setFormattedEndDate(null);
     }
-  }, [lot?.id]);
+  }, [lot.id, lot.auctionId, lot.publicId, effectiveEndDate]);
 
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
@@ -356,10 +357,6 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
             <MapPin className="h-3 w-3 mr-1" />
             <span className="truncate" title={displayLocation}>{displayLocation}</span>
         </div>
-        <div className="flex items-center text-xs text-muted-foreground">
-            <ListChecks className="h-3 w-3 mr-1" />
-            <span className="truncate" title={`Leilão: ${lot.auctionName}`}>{lot.auctionName || 'Leilão não especificado'}</span>
-        </div>
       </CardContent>
 
       <CardFooter className="p-3 border-t flex-col items-start space-y-1.5">
@@ -393,10 +390,12 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
                 </div>
             </div>
         </div>
-
-         <Button asChild className="w-full mt-2" size="sm">
-            <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>Ver Detalhes do Lote</Link>
-        </Button>
+        {formattedEndDate && (
+          <div className="flex items-center text-xs text-muted-foreground pt-1">
+            <CalendarDays className="h-3 w-3 mr-1"/>
+            <span>Prazo: {formattedEndDate}</span>
+          </div>
+        )}
       </CardFooter>
     </Card>
     <LotPreviewModal

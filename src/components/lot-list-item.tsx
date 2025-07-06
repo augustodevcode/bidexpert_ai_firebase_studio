@@ -144,6 +144,8 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
   const showCountdownOnThisCard = platformSettings.showCountdownOnCards !== false;
   
   const effectiveEndDate = useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
+  
+  const [formattedEndDate, setFormattedEndDate] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -151,7 +153,12 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
       setIsFavorite(isLotFavoriteInStorage(lot.id));
       setIsViewed(getRecentlyViewedIds().includes(lot.id));
     }
-  }, [lot.id, lot.auctionId, lot.publicId]);
+     if (effectiveEndDate) {
+      setFormattedEndDate(format(effectiveEndDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }));
+    } else {
+      setFormattedEndDate(null);
+    }
+  }, [lot.id, lot.auctionId, lot.publicId, effectiveEndDate]);
 
   useEffect(() => {
     if (lot && lot.id) {
@@ -304,8 +311,8 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                     Lote {lot.number || lot.id.replace('LOTE','')} - {lot.title}
                   </h3>
                 </Link>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate" title={`ID: ${lot.publicId || lot.id}`}>
-                  ID: {lot.publicId || lot.id}
+                <p className="text-xs text-muted-foreground mt-0.5 truncate" title={`Leilão: ${lot.auctionName}`}>
+                  Leilão: {lot.auctionName || 'Não especificado'}
                 </p>
               </div>
               <div className="flex-shrink-0 flex items-center space-x-0.5">
@@ -314,18 +321,6 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                 {(lot.latitude || lot.longitude || lot.mapAddress || lot.mapEmbedUrl) && (
                     <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleMapPreviewOpen}><MapPin className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Ver Mapa</p></TooltipContent></Tooltip>
                 )}
-                 <DropdownMenu>
-                    <Tooltip>
-                        <TooltipTrigger asChild><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Compartilhar"><Share2 className="h-4 w-4 text-muted-foreground" /></Button></DropdownMenuTrigger></TooltipTrigger>
-                        <TooltipContent><p>Compartilhar</p></TooltipContent>
-                    </Tooltip>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild><a href={getSocialLink('x', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs cursor-pointer"><X className="h-3.5 w-3.5" /> X (Twitter)</a></DropdownMenuItem>
-                        <DropdownMenuItem asChild><a href={getSocialLink('facebook', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs cursor-pointer"><Facebook className="h-3.5 w-3.5" /> Facebook</a></DropdownMenuItem>
-                        <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', lotDetailUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs cursor-pointer"><MessageSquareText className="h-3.5 w-3.5" /> WhatsApp</a></DropdownMenuItem>
-                        <DropdownMenuItem asChild><a href={getSocialLink('email', lotDetailUrl, lot.title)} className="flex items-center gap-2 text-xs cursor-pointer"><Mail className="h-3.5 w-3.5" /> Email</a></DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
                 <EntityEditMenu
                   entityType="lot"
                   entityId={lot.id}
@@ -338,14 +333,6 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
-              <div className="flex items-center" title={`Leilão: ${lot.auctionName}`}>
-                <ListChecks className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
-                <span className="truncate">{lot.auctionName || 'Leilão não especificado'}</span>
-              </div>
-              <div className="flex items-center">
-                <Gavel className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
-                <span>{lot.bidsCount || 0} Lances</span>
-              </div>
               <div className="flex items-center" title={`Categoria: ${lot.type}`}>
                 {getTypeIcon(lot.type)}
                 <span className="truncate ml-1">{lot.type}</span>
@@ -382,18 +369,15 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                 <p className={`text-2xl font-bold ${effectiveEndDate && isPast(effectiveEndDate) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
                   R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
-                {showCountdownOnThisCard && (
-                  <TimeRemainingBadge
-                    endDate={effectiveEndDate}
-                    status={lot.status}
-                    showUrgencyTimer={sectionBadges.showUrgencyTimer !== false && mentalTriggersGlobalSettings.showUrgencyTimer}
-                    urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays}
-                    urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours}
-                  />
+                {formattedEndDate && (
+                  <div className="flex items-center text-xs text-muted-foreground pt-1">
+                    <CalendarDays className="h-3 w-3 mr-1"/>
+                    <span>Prazo: {formattedEndDate}</span>
+                  </div>
                 )}
               </div>
                <Button asChild size="sm" className="w-full md:w-auto mt-2 md:mt-0">
-                    <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>
+                    <Link href={lotDetailUrl}>
                         <Eye className="mr-2 h-4 w-4" /> Ver Detalhes
                     </Link>
                 </Button>

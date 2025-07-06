@@ -5,12 +5,13 @@ import type { Lot, Auction, PlatformSettings } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { Eye, ChevronLeft, ChevronRight, ImageOff, MapPin, Tag, Clock, Users, Gavel, Percent, Zap, TrendingUp, Crown, Building, Car, Truck, Info, Leaf } from 'lucide-react';
+import { Eye, ChevronLeft, ChevronRight, ImageOff, MapPin, Tag, Clock, Users, Gavel, Percent, Zap, TrendingUp, Crown, Building, Car, Truck, Info, Leaf, CalendarDays } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useMemo, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from './ui/separator';
-import { isPast, differenceInSeconds } from 'date-fns';
+import { isPast, differenceInSeconds, format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface LotPreviewModalProps {
   lot: Lot | null;
@@ -21,7 +22,7 @@ interface LotPreviewModalProps {
 }
 
 const InfoItem = ({ icon: Icon, value, label }: { icon: React.ElementType, value?: string | number | null, label: string }) => {
-    if (!value) return null;
+    if (!value && value !== 0) return null;
     return (
         <div className="flex items-center text-sm text-muted-foreground bg-secondary/30 p-2 rounded-md">
             <Icon className="h-5 w-5 mr-2 text-primary/80" />
@@ -109,6 +110,9 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
       { label: "Raça", value: lot.bens?.[0]?.breed, icon: Leaf },
   ].filter(spec => spec.value !== undefined && spec.value !== null);
 
+  const formattedEndDate = lot.endDate ? format(new Date(lot.endDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : 'Não definida';
+
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[850px] max-h-[90vh] flex flex-col p-0">
@@ -133,7 +137,7 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
                     <div className="grid grid-cols-5 gap-1.5">
                         {gallery.slice(0, 5).map((imgUrl, index) => (
                             <button key={index} onClick={() => setCurrentImageIndex(index)} className={`relative aspect-square bg-muted rounded-sm overflow-hidden border-2 flex-shrink-0 ${ index === currentImageIndex ? 'border-primary' : 'border-transparent' }`} >
-                                <Image src={imgUrl} alt={`Miniatura ${index + 1}`} fill className="object-cover" />
+                                <Image src={imgUrl} alt={`Thumbnail ${index + 1}`} fill className="object-cover" />
                             </button>
                         ))}
                     </div>
@@ -186,7 +190,10 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
         </div>
 
         <DialogFooter className="p-4 sm:p-6 border-t bg-background flex justify-between w-full flex-shrink-0">
-          <p className="text-xs text-muted-foreground hidden sm:block">ID do Lote: {lot.publicId || lot.id}</p>
+          <div className="text-xs text-muted-foreground hidden sm:flex items-center gap-1.5">
+              <CalendarDays className="h-4 w-4" />
+              <span>Prazo: {formattedEndDate}</span>
+          </div>
           <Button asChild size="lg" onClick={onClose}>
             <Link href={lotDetailUrl}>
                 <Eye className="mr-2 h-5 w-5" /> Ver Detalhes e Dar Lance
