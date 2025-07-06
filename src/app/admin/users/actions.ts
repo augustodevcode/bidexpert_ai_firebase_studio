@@ -1,3 +1,4 @@
+
 // src/app/admin/users/actions.ts
 'use server';
 
@@ -7,7 +8,7 @@ import type { UserProfileData, Role, UserHabilitationStatus, UserProfileWithPerm
 import type { UserFormValues } from './user-form-schema';
 
 export interface UserCreationData {
-  fullName: string;
+  fullName: string | null;
   email: string;
   password?: string;
   roleId?: string | null;
@@ -27,6 +28,7 @@ export interface UserCreationData {
   city?: string | null;
   state?: string | null;
   optInMarketing?: boolean;
+  documentUrls?: { [key: string]: string };
 }
 
 

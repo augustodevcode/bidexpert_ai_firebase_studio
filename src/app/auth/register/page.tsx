@@ -23,6 +23,7 @@ import { Separator } from '@/components/ui/separator';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { registrationFormSchema, type RegistrationFormValues } from './form-schema';
+import DocumentUploadCard from '@/components/document-upload-card';
 
 type PersonType = 'PHYSICAL' | 'LEGAL' | 'DIRECT_SALE_CONSIGNOR';
 
@@ -31,6 +32,13 @@ export default function RegisterPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // State to hold files selected by the user
+  const [documentFiles, setDocumentFiles] = useState<Record<string, File | null>>({});
+
+  const handleFileSelect = (docType: string, file: File | null) => {
+    setDocumentFiles(prev => ({ ...prev, [docType]: file }));
+  };
   
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(registrationFormSchema),
@@ -68,6 +76,42 @@ export default function RegisterPage() {
     name: 'accountType',
   });
 
+  async function uploadDocuments(userId: string): Promise<Record<string, string>> {
+      const uploadedDocumentUrls: Record<string, string> = {};
+      const filesToUpload = Object.entries(documentFiles).filter(([_, file]) => file !== null);
+
+      for (const [docType, file] of filesToUpload) {
+          if (file) {
+              const formData = new FormData();
+              formData.append('file', file);
+              formData.append('userId', userId);
+              formData.append('docType', docType);
+
+              try {
+                  const response = await fetch('/api/upload/document', {
+                      method: 'POST',
+                      body: formData,
+                  });
+                  const result = await response.json();
+                  if (response.ok && result.success) {
+                      uploadedDocumentUrls[docType] = result.publicUrl;
+                  } else {
+                      throw new Error(result.message || `Falha ao enviar ${docType}`);
+                  }
+              } catch (uploadError: any) {
+                  console.error(`Error uploading ${docType}:`, uploadError);
+                  toast({
+                      title: `Erro no Upload do Documento`,
+                      description: `Falha ao enviar o arquivo para ${docType}: ${uploadError.message}`,
+                      variant: "destructive",
+                  });
+                  // Continue to next file upload
+              }
+          }
+      }
+      return uploadedDocumentUrls;
+  }
+
   async function onSubmit(data: RegistrationFormValues) {
     setError(null);
     setIsLoading(true);
@@ -97,12 +141,22 @@ export default function RegisterPage() {
     try {
       const result = await createUser(creationData);
 
-      if (result.success) {
+      if (result.success && result.userId) {
         toast({
-          title: "Registro bem-sucedido!",
-          description: result.message || "Seu cadastro foi realizado. Você será redirecionado para o login.",
+          title: "Cadastro realizado!",
+          description: "Enviando seus documentos, por favor aguarde...",
         });
+        
+        await uploadDocuments(result.userId);
+        
+        toast({
+            title: "Tudo pronto!",
+            description: "Seu cadastro foi realizado com sucesso. Você será redirecionado para o login.",
+            variant: "default",
+        });
+
         router.push('/auth/login');
+
       } else {
         setError(result.message);
         toast({ title: "Erro no Registro", description: result.message, variant: "destructive" });
@@ -117,7 +171,7 @@ export default function RegisterPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen py-12">
-      <Card className="w-full max-w-2xl shadow-xl">
+      <Card className="w-full max-w-3xl shadow-xl">
         <CardHeader className="text-center">
           <UserPlus className="mx-auto h-12 w-12 text-primary mb-2" />
           <CardTitle className="text-2xl font-bold font-headline">Criar uma Conta</CardTitle>
@@ -155,16 +209,28 @@ export default function RegisterPage() {
 
               {accountType === 'PHYSICAL' && (
                 <>
+                  <Separator />
+                  <h3 className="text-md font-semibold text-muted-foreground">Dados Pessoais</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField control={form.control} name="fullName" render={({ field }) => (<FormItem><FormLabel>Nome Completo*</FormLabel><FormControl><Input placeholder="Nome Completo" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="cpf" render={({ field }) => (<FormItem><FormLabel>CPF*</FormLabel><FormControl><Input placeholder="000.000.000-00" {...field} /></FormControl><FormMessage /></FormItem>)} />
                   </div>
                   <FormField control={form.control} name="dateOfBirth" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Data de Nascimento*</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "dd/MM/yyyy", { locale: ptBR }) : <span>Selecione uma data</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus captionLayout="dropdown-buttons" fromYear={1900} toYear={new Date().getFullYear() - 18} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                  <Separator />
+                  <h3 className="text-md font-semibold text-muted-foreground">Anexar Documentos</h3>
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <DocumentUploadCard title="CPF" onFileSelect={(file) => handleFileSelect('cpf', file)} />
+                      <DocumentUploadCard title="RG Frente e Verso ou CNH" onFileSelect={(file) => handleFileSelect('rg_cnh', file)} />
+                      <DocumentUploadCard title="Comprovante de Residência" onFileSelect={(file) => handleFileSelect('comprovante_residencia', file)} />
+                      <DocumentUploadCard title="Comprovante de Estado Civil" onFileSelect={(file) => handleFileSelect('comprovante_estado_civil', file)} />
+                   </div>
                 </>
               )}
 
               {(accountType === 'LEGAL' || accountType === 'DIRECT_SALE_CONSIGNOR') && (
                 <>
+                  <Separator />
+                  <h3 className="text-md font-semibold text-muted-foreground">Dados da Empresa</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField control={form.control} name="razaoSocial" render={({ field }) => (<FormItem><FormLabel>Razão Social*</FormLabel><FormControl><Input placeholder="Nome da Empresa Ltda." {...field} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="cnpj" render={({ field }) => (<FormItem><FormLabel>CNPJ*</FormLabel><FormControl><Input placeholder="00.000.000/0001-00" {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -177,6 +243,16 @@ export default function RegisterPage() {
                      <FormField control={form.control} name="responsibleName" render={({ field }) => (<FormItem><FormLabel>Nome Completo*</FormLabel><FormControl><Input placeholder="Nome do responsável" {...field} /></FormControl><FormMessage /></FormItem>)} />
                      <FormField control={form.control} name="responsibleCpf" render={({ field }) => (<FormItem><FormLabel>CPF*</FormLabel><FormControl><Input placeholder="000.000.000-00" {...field} /></FormControl><FormMessage /></FormItem>)} />
                   </div>
+                   <Separator />
+                  <h3 className="text-md font-semibold text-muted-foreground">Anexar Comprovantes</h3>
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <DocumentUploadCard title="Cartão CNPJ" onFileSelect={(file) => handleFileSelect('cartao_cnpj', file)} />
+                      <DocumentUploadCard title="Inscrição Estadual" onFileSelect={(file) => handleFileSelect('inscricao_estadual', file)} />
+                      <DocumentUploadCard title="Última Alteração Contratual" onFileSelect={(file) => handleFileSelect('contrato_social', file)} />
+                      <DocumentUploadCard title="Comprovante de Endereço (PJ)" onFileSelect={(file) => handleFileSelect('comprovante_endereco_pj', file)} />
+                      <DocumentUploadCard title="CPF do Representante" onFileSelect={(file) => handleFileSelect('cpf_representante', file)} />
+                      <DocumentUploadCard title="RG do Representante" onFileSelect={(file) => handleFileSelect('rg_representante', file)} />
+                   </div>
                 </>
               )}
 

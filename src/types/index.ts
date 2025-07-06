@@ -507,7 +507,7 @@ export type BidInfo = {
   timestamp: AnyTimestamp;
 };
 
-export type UserBidStatus = 'GANHANDO' | 'PERDENDO' | 'SUPERADO' | 'ARREMATADO' | 'NAO_ARREMATADO';
+export type UserBidStatus = 'GANHANDO' | 'PERDENDO' | 'SUPERADO_POR_OUTRO' | 'SUPERADO_PELO_PROPRIO_MAXIMO' | 'ARREMATADO' | 'NAO_ARREMATADO';
 export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO';
 
 export interface UserWin {
@@ -633,6 +633,7 @@ export interface UserProfileData {
   cnpj?: string | null;
   inscricaoEstadual?: string | null;
   websiteComitente?: string | null;
+  documentUrls?: { [key: string]: string };
 }
 
 export type UserProfileWithPermissions = UserProfileData & {
@@ -1049,13 +1050,13 @@ export interface IDatabaseAdapter {
   createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string }>;
   getCities(stateIdOrSlugFilter?: string): Promise<CityInfo[]>;
   getCity(idOrCompositeSlug: string): Promise<CityInfo | null>; 
-  updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string }>;
+  updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }>;
   deleteCity(id: string): Promise<{ success: boolean; message: string; }>;
 
   createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }>;
   getAuctioneers(): Promise<AuctioneerProfileInfo[]>;
   getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null>;
-  updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string }>;
+  updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }>;
   deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }>;
   getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null>;
   getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null>;
@@ -1189,6 +1190,7 @@ export interface IDatabaseAdapter {
 export type UserCreationData = Pick<UserProfileData, 'fullName' | 'email' | 'cpf' | 'cellPhone' | 'dateOfBirth' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing'> & {
   password?: string;
   roleId?: string | null; 
+  documentUrls?: { [key: string]: string };
 };
 
 export interface RecentlyViewedLotInfo {
@@ -1198,177 +1200,3 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
-
-```
-- src/components/lot-map-preview-modal.tsx:
-```tsx
-
-'use client';
-
-import type { Lot, PlatformSettings } from '@/types';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { MapPin, X } from 'lucide-react';
-import dynamic from 'next/dynamic';
-
-const LotMapDisplay = dynamic(() => import('@/components/auction/lot-map-display'), {
-  ssr: false,
-  loading: () => <div className="w-full h-full bg-muted rounded-md flex items-center justify-center"><p className="text-sm text-muted-foreground">Carregando mapa...</p></div>,
-});
-
-interface LotMapPreviewModalProps {
-  lot: Lot | null;
-  platformSettings: PlatformSettings;
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export default function LotMapPreviewModal({ lot, platformSettings, isOpen, onClose }: LotMapPreviewModalProps) {
-  if (!isOpen || !lot) return null;
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-xl md:max-w-2xl lg:max-w-3xl p-0">
-        <DialogHeader className="p-4 border-b">
-          <DialogTitle className="text-lg font-semibold flex items-center">
-            <MapPin className="h-5 w-5 mr-2 text-primary" /> Localização do Lote: {lot.title}
-          </DialogTitle>
-          <DialogDescription>
-            {lot.mapAddress || (lot.latitude && lot.longitude ? `Coordenadas: ${lot.latitude}, ${lot.longitude}` : 'Detalhes da localização.')}
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="p-4 max-h-[60vh] overflow-y-auto">
-          <LotMapDisplay lot={lot} platformSettings={platformSettings} />
-        </div>
-
-        <DialogFooter className="p-4 border-t sm:justify-end">
-          <Button type="button" variant="outline" onClick={onClose}>
-            <X className="mr-2 h-4 w-4" /> Fechar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-```
-- src/components/map-search-component.tsx:
-```tsx
-
-'use client';
-
-import React, { useEffect, useMemo, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L, { type LatLngBounds } from 'leaflet';
-import type { Lot, Auction } from '@/types';
-
-// Fix for default Leaflet icon paths in Next.js
-// @ts-ignore
-delete L.Icon.Default.prototype._getIconUrl;
-
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
-
-
-// Helper component to handle map events and imperative calls
-function MapController({ items, onBoundsChange, shouldFitBounds }: {
-  items: (Lot | Auction)[],
-  onBoundsChange: (bounds: LatLngBounds) => void;
-  shouldFitBounds: boolean;
-}) {
-  const map = useMap();
-
-  useEffect(() => {
-    const handleMoveEnd = () => {
-      onBoundsChange(map.getBounds());
-    };
-    map.on('moveend', handleMoveEnd);
-    return () => {
-      map.off('moveend', handleMoveEnd);
-    };
-  }, [map, onBoundsChange]);
-
-  useEffect(() => {
-    if (shouldFitBounds) {
-      const validPoints: [number, number][] = items
-        .map(item => (item.latitude && item.longitude ? [item.latitude, item.longitude] : null))
-        .filter((p): p is [number, number] => p !== null);
-      
-      if (validPoints.length > 0) {
-        const bounds = L.latLngBounds(validPoints);
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
-      }
-    }
-  }, [map, items, shouldFitBounds]);
-
-  return null;
-}
-
-
-interface MapSearchComponentProps {
-  items: (Lot | Auction)[];
-  itemType: 'lots' | 'auctions';
-  mapCenter: [number, number];
-  mapZoom: number;
-  onBoundsChange: (bounds: LatLngBounds) => void;
-  shouldFitBounds: boolean;
-}
-
-export default function MapSearchComponent({
-  items,
-  itemType,
-  mapCenter,
-  mapZoom,
-  onBoundsChange,
-  shouldFitBounds
-}: MapSearchComponentProps) {
-
-  return (
-    <MapContainer 
-      key={`${mapCenter.join(',')}-${mapZoom}`}
-      center={mapCenter} 
-      zoom={mapZoom} 
-      scrollWheelZoom={true} 
-      className="w-full h-full rounded-lg z-0"
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      {items.map(item => {
-        if (item.latitude && item.longitude) {
-          const url = itemType === 'lots'
-            ? `/auctions/${(item as Lot).auctionId}/lots/${item.publicId || item.id}`
-            : `/auctions/${item.publicId || item.id}`;
-
-          const priceOrLots = itemType === 'lots'
-            ? `Lance: R$ ${((item as Lot).price || 0).toLocaleString('pt-BR')}`
-            : `Lotes: ${(item as Auction).totalLots || 0}`;
-
-          return (
-            <Marker key={item.id} position={[item.latitude, item.longitude]}>
-              <Popup>
-                <div style={{ fontFamily: 'sans-serif', fontSize: '14px' }}>
-                  <strong>
-                    <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#1a73e8', textDecoration: 'none' }}>
-                      {item.title}
-                    </a>
-                  </strong>
-                  <p style={{ margin: '4px 0 0' }}>{priceOrLots}</p>
-                </div>
-              </Popup>
-            </Marker>
-          );
-        }
-        return null;
-      })}
-      <MapController items={items} onBoundsChange={onBoundsChange} shouldFitBounds={shouldFitBounds} />
-    </MapContainer>
-  );
-}
-```
