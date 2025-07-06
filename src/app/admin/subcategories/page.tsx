@@ -1,4 +1,3 @@
-
 // src/app/admin/subcategories/page.tsx
 'use client';
 
@@ -137,5 +136,3 @@ export default function AdminSubcategoriesPage() {
     </div>
   );
 }
-
-    

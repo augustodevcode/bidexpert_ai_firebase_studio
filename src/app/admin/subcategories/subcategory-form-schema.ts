@@ -1,4 +1,4 @@
-
+// src/app/admin/subcategories/subcategory-form-schema.ts
 import * as z from 'zod';
 
 export const subcategoryFormSchema = z.object({
@@ -15,6 +15,7 @@ export const subcategoryFormSchema = z.object({
   }).optional().nullable(),
   displayOrder: z.coerce.number().int().optional().default(0),
   iconUrl: z.string().url({ message: "URL do ícone inválida." }).optional().nullable().or(z.literal('')),
+  iconMediaId: z.string().optional().nullable(),
   dataAiHintIcon: z.string().max(50, {message: "Dica de IA para ícone não pode exceder 50 caracteres."}).optional().nullable(),
 });
 

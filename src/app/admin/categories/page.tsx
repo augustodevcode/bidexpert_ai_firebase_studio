@@ -1,13 +1,13 @@
-
 // src/app/admin/categories/page.tsx
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getLotCategories } from './actions';
 import type { LotCategory } from '@/types';
-import { ListChecks } from 'lucide-react';
+import { ListChecks, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
@@ -56,14 +56,16 @@ export default function AdminCategoriesPage() {
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold font-headline flex items-center">
-            <ListChecks className="h-6 w-6 mr-2 text-primary" />
-            Categorias de Lotes
-          </CardTitle>
-          <CardDescription>
-            Visualize as categorias fixas da plataforma. A criação e edição foram desativadas para manter a consistência dos dados.
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-2xl font-bold font-headline flex items-center">
+              <ListChecks className="h-6 w-6 mr-2 text-primary" />
+              Categorias de Lotes
+            </CardTitle>
+            <CardDescription>
+              Visualize as categorias fixas da plataforma. A criação e edição foram desativadas para manter a consistência dos dados.
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <DataTable
@@ -79,5 +81,3 @@ export default function AdminCategoriesPage() {
     </div>
   );
 }
-
-    

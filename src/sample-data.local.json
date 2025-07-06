@@ -1,5 +1,4 @@
 
-      
 {
   "sampleRoles": [
     {
@@ -80,313 +79,69 @@
     }
   ],
   "sampleLotCategories": [
-    {
-      "name": "Imóveis",
-      "slug": "imoveis",
-      "description": "Casas, apartamentos, terrenos, salas comerciais, galpões, fazendas, sítios e chácaras.",
-      "id": "cat-imoveis",
-      "itemCount": 5,
-      "hasSubcategories": true,
-      "logoMediaId": null,
-      "coverImageMediaId": "media-cat-imoveis-cover",
-      "megaMenuImageMediaId": null,
-      "dataAiHintLogo": "predio casa",
-      "dataAiHintCover": "imoveis cidade panorama",
-      "dataAiHintMegaMenu": null,
-      "createdAt": "2025-06-02T04:56:12.389Z",
-      "updatedAt": "2025-06-20T04:56:12.389Z"
-    },
-    {
-      "name": "Veículos",
-      "slug": "veiculos",
-      "description": "Carros, motos, caminhões, ônibus, utilitários e outros veículos terrestres.",
-      "id": "cat-veiculos",
-      "itemCount": 5,
-      "hasSubcategories": true,
-      "logoMediaId": null,
-      "coverImageMediaId": null,
-      "megaMenuImageMediaId": null,
-      "dataAiHintLogo": null,
-      "dataAiHintCover": "carros patio leilao",
-      "dataAiHintMegaMenu": null,
-      "createdAt": "2025-06-14T04:56:12.389Z",
-      "updatedAt": "2025-05-25T04:56:12.389Z"
-    },
-    {
-      "name": "Máquinas e Equipamentos",
-      "slug": "maquinas-e-equipamentos",
-      "description": "Máquinas pesadas, agrícolas, industriais, equipamentos de construção e diversos.",
-      "id": "cat-maquinas-e-equipamentos",
-      "itemCount": 3,
-      "hasSubcategories": false,
-      "logoMediaId": null,
-      "coverImageMediaId": null,
-      "megaMenuImageMediaId": null,
-      "dataAiHintLogo": null,
-      "dataAiHintCover": "maquinas pesadas industrial",
-      "dataAiHintMegaMenu": null,
-      "createdAt": "2025-06-12T04:56:12.389Z",
-      "updatedAt": "2025-05-27T04:56:12.389Z"
-    }
+    {"id":"cat-veiculos","name":"Veículos","slug":"veiculos","description":"Carros, motos, caminhões, ônibus, etc.","hasSubcategories":true,"createdAt":"2025-01-01T00:00:00.000Z","updatedAt":"2025-01-01T00:00:00.000Z"},
+    {"id":"cat-imoveis","name":"Imóveis","slug":"imoveis","description":"Casas, apartamentos, terrenos, etc.","hasSubcategories":true,"createdAt":"2025-01-01T00:00:00.000Z","updatedAt":"2025-01-01T00:00:00.000Z"},
+    {"id":"cat-maquinas-e-equipamentos","name":"Máquinas e Equipamentos","slug":"maquinas-e-equipamentos","description":"Máquinas pesadas, agrícolas, industriais.","hasSubcategories":true,"createdAt":"2025-01-01T00:00:00.000Z","updatedAt":"2025-01-01T00:00:00.000Z"},
+    {"id":"cat-eletronicos-e-tecnologia","name":"Eletrônicos e Tecnologia","slug":"eletronicos-e-tecnologia","description":"Celulares, notebooks, TVs, etc.","hasSubcategories":true,"createdAt":"2025-01-01T00:00:00.000Z","updatedAt":"2025-01-01T00:00:00.000Z"},
+    {"id":"cat-casa-e-decoracao","name":"Casa e Decoração","slug":"casa-e-decoracao","description":"Móveis, eletrodomésticos, decoração.","hasSubcategories":true,"createdAt":"2025-01-01T00:00:00.000Z","updatedAt":"2025-01-01T00:00:00.000Z"},
+    {"id":"cat-arte-e-antiguidades","name":"Arte e Antiguidades","slug":"arte-e-antiguidades","description":"Obras de arte, itens colecionáveis.","hasSubcategories":true,"createdAt":"2025-01-01T00:00:00.000Z","updatedAt":"2025-01-01T00:00:00.000Z"},
+    {"id":"cat-joias-e-acessorios","name":"Joias e Acessórios de Luxo","slug":"joias-e-acessorios","description":"Joias, relógios, bolsas de grife.","hasSubcategories":true,"createdAt":"2025-01-01T00:00:00.000Z","updatedAt":"2025-01-01T00:00:00.000Z"},
+    {"id":"cat-semoventes","name":"Semoventes","slug":"semoventes","description":"Bovinos, equinos, etc.","hasSubcategories":true,"createdAt":"2025-01-01T00:00:00.000Z","updatedAt":"2025-01-01T00:00:00.000Z"},
+    {"id":"cat-materiais-e-sucatas","name":"Materiais e Sucatas","slug":"materiais-e-sucatas","description":"Materiais de construção, sucatas metálicas.","hasSubcategories":true,"createdAt":"2025-01-01T00:00:00.000Z","updatedAt":"2025-01-01T00:00:00.000Z"},
+    {"id":"cat-industrial-geral","name":"Industrial Geral","slug":"industrial-geral","description":"Estoques, matéria-prima, mobiliário.","hasSubcategories":true,"createdAt":"2025-01-01T00:00:00.000Z","updatedAt":"2025-01-01T00:00:00.000Z"},
+    {"id":"cat-embarcacoes","name":"Embarcações","slug":"embarcacoes","description":"Lanchas, barcos, veleiros, jet skis.","hasSubcategories":true,"createdAt":"2025-01-01T00:00:00.000Z","updatedAt":"2025-01-01T00:00:00.000Z"},
+    {"id":"cat-alimentos","name":"Alimentos","slug":"alimentos","description":"Produtos perecíveis e não perecíveis em lote.","hasSubcategories":true,"createdAt":"2025-01-01T00:00:00.000Z","updatedAt":"2025-01-01T00:00:00.000Z"},
+    {"id":"cat-metais-e-pedras","name":"Metais Preciosos e Pedras","slug":"metais-preciosos-e-pedras","description":"Ouro, prata, diamantes brutos.","hasSubcategories":true,"createdAt":"2025-01-01T00:00:00.000Z","updatedAt":"2025-01-01T00:00:00.000Z"},
+    {"id":"cat-bens-florestais","name":"Bens Florestais e Ambientais","slug":"bens-florestais-e-ambientais","description":"Madeira, créditos de carbono, etc.","hasSubcategories":true,"createdAt":"2025-01-01T00:00:00.000Z","updatedAt":"2025-01-01T00:00:00.000Z"},
+    {"id":"cat-outros","name":"Outros Itens e Oportunidades","slug":"outros-itens-e-oportunidades","description":"Consórcios, direitos creditórios, etc.","hasSubcategories":true,"createdAt":"2025-01-01T00:00:00.000Z","updatedAt":"2025-01-01T00:00:00.000Z"},
+    {"id":"cat-bens-diversos","name":"Bens Diversos","slug":"bens-diversos","hasSubcategories":false,"createdAt":"2025-01-01T00:00:00.000Z","updatedAt":"2025-01-01T00:00:00.000Z"}
+  ],
+  "sampleSubcategories": [
+    {"id":"subcat-vei-carros","name":"Carros","slug":"carros","parentCategoryId":"cat-veiculos"},
+    {"id":"subcat-vei-motos","name":"Motos","slug":"motos","parentCategoryId":"cat-veiculos"},
+    {"id":"subcat-vei-caminhoes","name":"Caminhões e Ônibus","slug":"caminhoes-e-onibus","parentCategoryId":"cat-veiculos"},
+    {"id":"subcat-vei-pesados","name":"Veículos Pesados","slug":"veiculos-pesados","parentCategoryId":"cat-veiculos"},
+    {"id":"subcat-imo-apartamentos","name":"Apartamentos","slug":"apartamentos","parentCategoryId":"cat-imoveis"},
+    {"id":"subcat-imo-casas","name":"Casas","slug":"casas","parentCategoryId":"cat-imoveis"},
+    {"id":"subcat-imo-terrenos","name":"Terrenos e Lotes","slug":"terrenos-e-lotes","parentCategoryId":"cat-imoveis"},
+    {"id":"subcat-imo-comerciais","name":"Salas e Prédios Comerciais","slug":"salas-e-predios-comerciais","parentCategoryId":"cat-imoveis"},
+    {"id":"subcat-imo-rurais","name":"Imóveis Rurais","slug":"imoveis-rurais","parentCategoryId":"cat-imoveis"},
+    {"id":"subcat-maq-agricolas","name":"Máquinas Agrícolas","slug":"maquinas-agricolas","parentCategoryId":"cat-maquinas-e-equipamentos"},
+    {"id":"subcat-maq-construcao","name":"Equipamentos de Construção","slug":"equipamentos-construcao","parentCategoryId":"cat-maquinas-e-equipamentos"},
+    {"id":"subcat-maq-industriais","name":"Máquinas Industriais","slug":"maquinas-industriais","parentCategoryId":"cat-maquinas-e-equipamentos"},
+    {"id":"subcat-eletro-celulares","name":"Celulares e Tablets","slug":"celulares-e-tablets","parentCategoryId":"cat-eletronicos-e-tecnologia"},
+    {"id":"subcat-eletro-informatica","name":"Computadores e Notebooks","slug":"computadores-e-notebooks","parentCategoryId":"cat-eletronicos-e-tecnologia"},
+    {"id":"subcat-eletro-audiovideo","name":"TVs, Áudio e Vídeo","slug":"tvs-audio-e-video","parentCategoryId":"cat-eletronicos-e-tecnologia"},
+    {"id":"subcat-casa-moveis","name":"Móveis Residenciais e Corporativos","slug":"moveis","parentCategoryId":"cat-casa-e-decoracao"},
+    {"id":"subcat-casa-eletrodomesticos","name":"Eletrodomésticos","slug":"eletrodomesticos","parentCategoryId":"cat-casa-e-decoracao"},
+    {"id":"subcat-arte-pinturas","name":"Pinturas e Esculturas","slug":"pinturas-e-esculturas","parentCategoryId":"cat-arte-e-antiguidades"},
+    {"id":"subcat-arte-colecionaveis","name":"Itens Colecionáveis","slug":"itens-colecionaveis","parentCategoryId":"cat-arte-e-antiguidades"},
+    {"id":"subcat-joias-relogios","name":"Relógios de Luxo","slug":"relogios-de-luxo","parentCategoryId":"cat-joias-e-acessorios"},
+    {"id":"subcat-joias-joias","name":"Joias (Anéis, Colares, etc.)","slug":"joias","parentCategoryId":"cat-joias-e-acessorios"},
+    {"id":"subcat-semov-bovinos","name":"Bovinos","slug":"bovinos","parentCategoryId":"cat-semoventes"},
+    {"id":"subcat-semov-equinos","name":"Equinos","slug":"equinos","parentCategoryId":"cat-semoventes"},
+    {"id":"subcat-suc-metais","name":"Sucatas Metálicas","slug":"sucatas-metalicas","parentCategoryId":"cat-materiais-e-sucatas"},
+    {"id":"subcat-suc-construcao","name":"Materiais de Construção","slug":"materiais-de-construcao","parentCategoryId":"cat-materiais-e-sucatas"},
+    {"id":"subcat-ind-estoques","name":"Estoques Industriais","slug":"estoques-industriais","parentCategoryId":"cat-industrial-geral"},
+    {"id":"subcat-ind-materia-prima","name":"Matéria-prima","slug":"materia-prima","parentCategoryId":"cat-industrial-geral"},
+    {"id":"subcat-embar-lanchas","name":"Lanchas e Iates","slug":"lanchas-e-iates","parentCategoryId":"cat-embarcacoes"},
+    {"id":"subcat-embar-jetskis","name":"Jet Skis","slug":"jet-skis","parentCategoryId":"cat-embarcacoes"},
+    {"id":"subcat-alim-nao-pereciveis","name":"Não Perecíveis","slug":"nao-pereciveis","parentCategoryId":"cat-alimentos"},
+    {"id":"subcat-alim-bebidas","name":"Bebidas","slug":"bebidas","parentCategoryId":"cat-alimentos"},
+    {"id":"subcat-metais-ouro","name":"Ouro","slug":"ouro","parentCategoryId":"cat-metais-e-pedras"},
+    {"id":"subcat-metais-pedras","name":"Pedras Preciosas","slug":"pedras-preciosas","parentCategoryId":"cat-metais-e-pedras"},
+    {"id":"subcat-flor-madeira","name":"Madeira Legalizada","slug":"madeira-legalizada","parentCategoryId":"cat-bens-florestais"},
+    {"id":"subcat-flor-creditos","name":"Créditos de Carbono","slug":"creditos-de-carbono","parentCategoryId":"cat-bens-florestais"},
+    {"id":"subcat-outros-consorcios","name":"Consórcios e Cotas","slug":"consorcios-e-cotas","parentCategoryId":"cat-outros"},
+    {"id":"subcat-outros-direitos","name":"Direitos Creditórios","slug":"direitos-creditorios","parentCategoryId":"cat-outros"}
   ],
   "sampleBids": [],
   "sampleBlogPosts": [],
-  "sampleCities": [
-    {
-      "id": "city-maceio-al",
-      "name": "Maceió",
-      "slug": "maceio",
-      "stateId": "state-al",
-      "stateUf": "AL",
-      "ibgeCode": "2704302",
-      "lotCount": 0,
-      "createdAt": "2025-06-16T18:34:27.765Z",
-      "updatedAt": "2025-05-24T18:34:27.765Z"
-    },
-    {
-      "id": "city-salvador-ba",
-      "name": "Salvador",
-      "slug": "salvador",
-      "stateId": "state-ba",
-      "stateUf": "BA",
-      "ibgeCode": "2927408",
-      "lotCount": 3,
-      "createdAt": "2025-06-04T18:34:27.765Z",
-      "updatedAt": "2025-06-20T18:34:27.765Z"
-    },
-    {
-      "id": "city-sao-paulo-sp",
-      "name": "São Paulo",
-      "slug": "sao-paulo",
-      "stateId": "state-sp",
-      "stateUf": "SP",
-      "ibgeCode": "3550308",
-      "lotCount": 3,
-      "createdAt": "2025-05-28T18:34:27.765Z",
-      "updatedAt": "2025-06-21T18:34:27.765Z"
-    },
-    {
-      "id": "city-campinas-sp",
-      "name": "Campinas",
-      "slug": "campinas",
-      "stateId": "state-sp",
-      "stateUf": "SP",
-      "ibgeCode": "3509502",
-      "lotCount": 2,
-      "createdAt": "2025-05-29T18:34:27.765Z",
-      "updatedAt": "2025-06-10T18:34:27.765Z"
-    },
-    {
-      "id": "city-rio-de-janeiro-rj",
-      "name": "Rio de Janeiro",
-      "slug": "rio-de-janeiro",
-      "stateId": "state-rj",
-      "stateUf": "RJ",
-      "ibgeCode": "3304557",
-      "lotCount": 2,
-      "createdAt": "2025-06-06T18:34:27.765Z",
-      "updatedAt": "2025-05-28T18:34:27.765Z"
-    },
-    {
-      "id": "city-belo-horizonte-mg",
-      "name": "Belo Horizonte",
-      "slug": "belo-horizonte",
-      "stateId": "state-mg",
-      "stateUf": "MG",
-      "ibgeCode": "3106200",
-      "lotCount": 0,
-      "createdAt": "2025-06-10T18:34:27.765Z",
-      "updatedAt": "2025-06-01T18:34:27.765Z"
-    },
-    {
-      "id": "city-curitiba-pr",
-      "name": "Curitiba",
-      "slug": "curitiba",
-      "stateId": "state-pr",
-      "stateUf": "PR",
-      "ibgeCode": "4106902",
-      "lotCount": 2,
-      "createdAt": "2025-06-05T18:34:27.765Z",
-      "updatedAt": "2025-06-20T18:34:27.765Z"
-    },
-    {
-      "id": "city-porto-alegre-rs",
-      "name": "Porto Alegre",
-      "slug": "porto-alegre",
-      "stateId": "state-rs",
-      "stateUf": "RS",
-      "ibgeCode": "4314902",
-      "lotCount": 0,
-      "createdAt": "2025-06-21T18:34:27.765Z",
-      "updatedAt": "2025-06-03T18:34:27.765Z"
-    },
-    {
-      "id": "city-rio-verde-go",
-      "name": "Rio Verde",
-      "slug": "rio-verde",
-      "stateId": "state-go",
-      "stateUf": "GO",
-      "ibgeCode": "5218805",
-      "lotCount": 1,
-      "createdAt": "2025-06-01T18:34:27.765Z",
-      "updatedAt": "2025-05-30T18:34:27.765Z"
-    },
-    {
-      "id": "city-campo-grande-ms",
-      "name": "Campo Grande",
-      "slug": "campo-grande",
-      "stateId": "state-ms",
-      "stateUf": "MS",
-      "ibgeCode": "5002704",
-      "lotCount": 1,
-      "createdAt": "2025-06-09T18:34:27.765Z",
-      "updatedAt": "2025-06-11T18:34:27.765Z"
-    },
-    {
-      "id": "city-fortaleza-ce",
-      "name": "Fortaleza",
-      "slug": "fortaleza",
-      "stateId": "state-ce",
-      "stateUf": "CE",
-      "ibgeCode": "2304400",
-      "lotCount": 1,
-      "createdAt": "2025-06-15T18:34:27.765Z",
-      "updatedAt": "2025-06-15T18:34:27.765Z"
-    },
-    {
-      "id": "city-lauro-de-freitas-ba",
-      "name": "Lauro de Freitas",
-      "slug": "lauro-de-freitas",
-      "stateId": "state-ba",
-      "stateUf": "BA",
-      "ibgeCode": "2919207",
-      "lotCount": 1,
-      "createdAt": "2025-06-01T18:34:27.765Z",
-      "updatedAt": "2025-06-01T18:34:27.765Z"
-    },
-    {
-      "id": "city-niteroi-rj",
-      "name": "Niterói",
-      "slug": "niteroi",
-      "stateId": "state-rj",
-      "stateUf": "RJ",
-      "ibgeCode": "3303302",
-      "lotCount": 0,
-      "createdAt": "2025-05-24T18:34:27.765Z",
-      "updatedAt": "2025-06-15T18:34:27.765Z"
-    },
-    {
-      "id": "city-teotonio-vilela-al",
-      "name": "Teotônio Vilela",
-      "slug": "teotonio-vilela",
-      "stateId": "state-al",
-      "stateUf": "AL",
-      "ibgeCode": "2709152",
-      "lotCount": 1,
-      "createdAt": "2025-06-18T18:34:27.765Z",
-      "updatedAt": "2025-06-07T18:34:27.765Z"
-    }
-  ],
+  "sampleCities": [],
   "sampleDirectSaleOffers": [],
   "sampleDocumentTypes": [],
-  "sampleJudicialBranches": [
-    {
-      "id": "branch-1",
-      "name": "1ª Vara Cível",
-      "slug": "1a-vara-civel",
-      "districtId": "dist-sp-capital",
-      "contactName": "José da Silva",
-      "phone": "11 1234-5678",
-      "email": "vara1.sp@tj.jus.br",
-      "createdAt": "2025-07-03T20:54:01.690Z",
-      "updatedAt": "2025-07-03T20:54:01.690Z"
-    },
-    {
-      "id": "branch-2",
-      "name": "2ª Vara da Fazenda Pública",
-      "slug": "2a-vara-da-fazenda-publica",
-      "districtId": "dist-rj-capital",
-      "contactName": "Maria Oliveira",
-      "phone": "21 9876-5432",
-      "email": "vara2.rj@tj.jus.br",
-      "createdAt": "2025-07-03T20:54:01.690Z",
-      "updatedAt": "2025-07-03T20:54:01.690Z"
-    },
-    {
-      "id": "branch-3",
-      "name": "Vara Única de Lagarto",
-      "slug": "vara-unica-lagarto",
-      "districtId": "dist-se-lagarto",
-      "contactName": "Ana Costa",
-      "phone": "79 3631-1111",
-      "email": "vara.lagarto@tjse.jus.br",
-      "createdAt": "2025-07-03T20:54:01.690Z",
-      "updatedAt": "2025-07-03T20:54:01.690Z"
-    },
-    {
-      "id": "branch-4",
-      "name": "15ª Vara do Trabalho de São Paulo",
-      "slug": "15-vara-trabalho-sp",
-      "districtId": "dist-sp-sao-paulo-trt",
-      "contactName": "Paulo Lima",
-      "phone": "11 3525-2015",
-      "email": "vt15.sp@trt2.jus.br",
-      "createdAt": "2025-07-03T20:54:01.690Z",
-      "updatedAt": "2025-07-03T20:54:01.690Z"
-    }
-  ],
-  "sampleJudicialDistricts": [
-    {
-      "id": "dist-sp-capital",
-      "name": "Comarca da Capital",
-      "slug": "sao-paulo-capital",
-      "courtId": "court-tjsp",
-      "stateId": "state-sp",
-      "zipCode": "01010-000",
-      "createdAt": "2025-07-03T20:54:01.690Z",
-      "updatedAt": "2025-07-03T20:54:01.690Z"
-    },
-    {
-      "id": "dist-sp-campinas",
-      "name": "Comarca de Campinas",
-      "slug": "campinas",
-      "courtId": "court-tjsp",
-      "stateId": "state-sp",
-      "zipCode": "13010-000",
-      "createdAt": "2025-07-03T20:54:01.690Z",
-      "updatedAt": "2025-07-03T20:54:01.690Z"
-    },
-    {
-      "id": "dist-rj-capital",
-      "name": "Comarca da Capital",
-      "slug": "rio-de-janeiro-capital",
-      "courtId": "court-tjrj",
-      "stateId": "state-rj",
-      "zipCode": "20010-000",
-      "createdAt": "2025-07-03T20:54:01.690Z",
-      "updatedAt": "2025-07-03T20:54:01.690Z"
-    },
-    {
-      "id": "dist-se-lagarto",
-      "name": "Comarca de Lagarto",
-      "slug": "lagarto",
-      "courtId": "court-tjse",
-      "stateId": "state-se",
-      "zipCode": "49400-000",
-      "createdAt": "2025-07-03T20:54:01.690Z",
-      "updatedAt": "2025-07-03T20:54:01.690Z"
-    },
-    {
-      "id": "dist-sp-sao-paulo-trt",
-      "name": "Comarca de São Paulo (TRT)",
-      "slug": "sao-paulo-trt",
-      "courtId": "court-trt2",
-      "stateId": "state-sp",
-      "zipCode": "01139-003",
-      "createdAt": "2025-07-03T20:54:01.690Z",
-      "updatedAt": "2025-07-03T20:54:01.690Z"
-    }
-  ],
+  "sampleJudicialBranches": [],
+  "sampleJudicialDistricts": [],
   "sampleLotQuestions": [],
   "sampleNotifications": [],
   "sampleUserBids": [],
@@ -394,5 +149,3 @@
   "sampleUserLotMaxBids": [],
   "sampleUserWins": []
 }
-
-    

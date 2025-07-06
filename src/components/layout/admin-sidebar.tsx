@@ -27,15 +27,15 @@ const auctionManagementItems = [
 ];
 
 const contentManagementItems = [
-    { title: 'Blog', href: '/admin/blog', icon: BookOpen },
+    { title: 'Blog', href: '/admin/blog', icon: BookOpen, disabled: true },
     { title: 'Biblioteca de Mídia', href: '/admin/media', icon: Library },
 ]
 
 const judicialManagementItems = [
     { title: 'Tribunais', href: '/admin/courts', icon: Scale },
-    { title: 'Comarcas', href: '/admin/judicial-districts', icon: Map, disabled: false },
-    { title: 'Varas', href: '/admin/judicial-branches', icon: Building2, disabled: false },
-    { title: 'Processos', href: '/admin/judicial-processes', icon: FileText, disabled: false },
+    { title: 'Comarcas', href: '/admin/judicial-districts', icon: Map },
+    { title: 'Varas', href: '/admin/judicial-branches', icon: Building2 },
+    { title: 'Processos', href: '/admin/judicial-processes', icon: FileText },
 ]
 
 const platformManagementItems = [
@@ -119,5 +119,3 @@ export default function AdminSidebar() {
     </aside>
   );
 }
-
-    
