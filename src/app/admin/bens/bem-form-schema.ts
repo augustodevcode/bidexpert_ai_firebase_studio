@@ -1,3 +1,4 @@
+
 // src/app/admin/bens/bem-form-schema.ts
 import * as z from 'zod';
 import type { Bem } from '@/types';
@@ -49,6 +50,7 @@ export const bemFormSchema = z.object({
   bathrooms: z.coerce.number().int().min(0).optional().nullable(),
   parkingSpaces: z.coerce.number().int().min(0).optional().nullable(),
   propertyType: z.string().optional().nullable(),
+  amenities: z.array(z.string()).optional().nullable(),
 
   // Machinery
   modelYear: z.coerce.number().int().min(1900).max(new Date().getFullYear() + 1).optional().nullable(),

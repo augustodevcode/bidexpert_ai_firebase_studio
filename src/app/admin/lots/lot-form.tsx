@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
-import type { Lot, LotCategory, Auction, Bem, StateInfo, CityInfo, MediaItem, Subcategory } from '@/types';
+import type { Lot, LotCategory, Auction, Bem, StateInfo, CityInfo, MediaItem, Subcategory, PlatformSettings } from '@/types';
 import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, ImageIcon, PackagePlus, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { getSubcategoriesByParentIdAction } from '@/app/admin/subcategories/actions';
@@ -37,6 +37,7 @@ import { getBens } from '@/app/admin/bens/actions';
 import { getAuction } from '@/app/admin/auctions/actions';
 import SearchResultsFrame from '@/components/search-results-frame';
 import { Badge } from '@/components/ui/badge';
+import { samplePlatformSettings } from '@/lib/sample-data';
 
 interface LotFormProps {
   initialData?: Lot | null;
@@ -84,7 +85,7 @@ export default function LotForm({
   const [linkedBensSortBy, setLinkedBensSortBy] = React.useState('title_asc');
   const [linkedBensCurrentPage, setLinkedBensCurrentPage] = React.useState(1);
   const [linkedBensItemsPerPage, setLinkedBensItemsPerPage] = React.useState(6);
-  const [platformSettings, setPlatformSettings] = React.useState<PlatformSettings | null>(null);
+  const [platformSettings, setPlatformSettings] = React.useState<PlatformSettings | null>(samplePlatformSettings as PlatformSettings);
 
   const form = useForm<LotFormValues>({
     resolver: zodResolver(lotFormSchema),
@@ -113,24 +114,31 @@ export default function LotForm({
   const watchedBemIds = useWatch({ control: form.control, name: 'bemIds' });
   
   React.useEffect(() => {
+    let isMounted = true;
     const fetchBensForAuction = async () => {
       if (!watchedAuctionId) {
-        setCurrentAvailableBens([]);
+        if (isMounted) setCurrentAvailableBens([]);
         return;
       }
       
       const auction = await getAuction(watchedAuctionId);
-      if (!auction) return;
+      if (!auction || !isMounted) return;
       
       const filterForBens = auction.auctionType === 'JUDICIAL' && auction.judicialProcessId
         ? { judicialProcessId: auction.judicialProcessId }
         : auction.sellerId ? { sellerId: auction.sellerId } : {};
         
       const bens = await getBens(filterForBens);
-      setCurrentAvailableBens(bens);
+      if (isMounted) {
+        setCurrentAvailableBens(bens);
+      }
     };
 
     fetchBensForAuction();
+
+    return () => {
+      isMounted = false;
+    };
   }, [watchedAuctionId]);
 
 
