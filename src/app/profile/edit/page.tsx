@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, type FormEvent } from 'react';
@@ -239,7 +240,7 @@ export default function EditProfilePage() {
         </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 bg-secondary/30 p-6">
               
               <section className="space-y-4">
                 <h3 className="text-lg font-semibold text-primary border-b pb-2">Informações Pessoais</h3>
@@ -277,7 +278,7 @@ export default function EditProfilePage() {
                             <FormControl>
                               <Button
                                 variant={"outline"}
-                                className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                                className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
                               >
                                 {field.value ? format(field.value, "dd/MM/yyyy", { locale: ptBR }) : <span>Selecione uma data</span>}
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
@@ -617,14 +618,14 @@ export default function EditProfilePage() {
               </section>
 
             </CardContent>
-            <CardFooter className="flex justify-between">
+            <CardFooter className="flex justify-between p-6 border-t">
+              <Button type="button" variant="outline" asChild>
+                  <Link href="/profile">Cancelar</Link>
+                </Button>
               <Button type="submit" disabled={isSubmitting || isFetchingData || authLoading} className="w-full md:w-auto">
                 {isSubmitting ? <Loader2 className="animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 Salvar Alterações
               </Button>
-               <Button variant="outline" asChild className="ml-auto">
-                  <Link href="/profile">Cancelar</Link>
-                </Button>
             </CardFooter>
           </form>
         </Form>

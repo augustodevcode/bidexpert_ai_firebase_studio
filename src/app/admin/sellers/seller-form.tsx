@@ -122,7 +122,7 @@ export default function SellerForm({
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 bg-secondary/30 p-6">
             <FormField
               control={form.control}
               name="name"
@@ -140,7 +140,7 @@ export default function SellerForm({
               control={form.control}
               name="isJudicial"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background">
                   <div className="space-y-0.5">
                     <FormLabel>É Comitente Judicial?</FormLabel>
                     <FormDescription>
@@ -349,7 +349,7 @@ export default function SellerForm({
               )}
             />
           </CardContent>
-          <CardFooter className="flex justify-end gap-2">
+          <CardFooter className="flex justify-end gap-2 p-6 border-t">
             <Button type="button" variant="outline" onClick={() => router.push('/admin/sellers')} disabled={isSubmitting}>
               Cancelar
             </Button>

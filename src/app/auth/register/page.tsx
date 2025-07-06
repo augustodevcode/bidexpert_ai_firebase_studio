@@ -179,7 +179,7 @@ export default function RegisterPage() {
         </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 bg-secondary/30 p-6">
               <FormField
                 control={form.control}
                 name="accountType"
@@ -269,31 +269,26 @@ export default function RegisterPage() {
                 <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>Estado (UF)</FormLabel><FormControl><Input placeholder="Ex: BA" maxLength={2} {...field} /></FormControl><FormMessage /></FormItem>)} />
               </div>
 
+              <Separator />
+              <h3 className="text-md font-semibold text-muted-foreground">Anexar Documentos</h3>
+              <p className="text-sm text-muted-foreground">Esses documentos são necessários para a habilitação do seu cadastro para dar lances.</p>
               {accountType === 'PHYSICAL' && (
-                <>
-                  <Separator />
-                  <h3 className="text-md font-semibold text-muted-foreground">Anexar Documentos</h3>
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <DocumentUploadCard title="CPF" onFileSelect={(file) => handleFileSelect('cpf', file)} />
-                      <DocumentUploadCard title="RG Frente e Verso ou CNH" onFileSelect={(file) => handleFileSelect('rg_cnh', file)} />
-                      <DocumentUploadCard title="Comprovante de Residência" onFileSelect={(file) => handleFileSelect('comprovante_residencia', file)} />
-                      <DocumentUploadCard title="Comprovante de Estado Civil" onFileSelect={(file) => handleFileSelect('comprovante_estado_civil', file)} />
-                   </div>
-                </>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                   <DocumentUploadCard title="CPF" onFileSelect={(file) => handleFileSelect('cpf', file)} status="NOT_SENT"/>
+                   <DocumentUploadCard title="RG Frente e Verso ou CNH" onFileSelect={(file) => handleFileSelect('rg_cnh', file)} status="NOT_SENT"/>
+                   <DocumentUploadCard title="Comprovante de Residência" onFileSelect={(file) => handleFileSelect('comprovante_residencia', file)} status="NOT_SENT"/>
+                   <DocumentUploadCard title="Comprovante de Estado Civil" onFileSelect={(file) => handleFileSelect('comprovante_estado_civil', file)} status="NOT_SENT"/>
+                </div>
               )}
               {(accountType === 'LEGAL' || accountType === 'DIRECT_SALE_CONSIGNOR') && (
-                <>
-                   <Separator />
-                  <h3 className="text-md font-semibold text-muted-foreground">Anexar Comprovantes</h3>
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <DocumentUploadCard title="Cartão CNPJ" onFileSelect={(file) => handleFileSelect('cartao_cnpj', file)} />
-                      <DocumentUploadCard title="Inscrição Estadual" onFileSelect={(file) => handleFileSelect('inscricao_estadual', file)} />
-                      <DocumentUploadCard title="Última Alteração Contratual" onFileSelect={(file) => handleFileSelect('contrato_social', file)} />
-                      <DocumentUploadCard title="Comprovante de Endereço (PJ)" onFileSelect={(file) => handleFileSelect('comprovante_endereco_pj', file)} />
-                      <DocumentUploadCard title="CPF do Representante" onFileSelect={(file) => handleFileSelect('cpf_representante', file)} />
-                      <DocumentUploadCard title="RG do Representante" onFileSelect={(file) => handleFileSelect('rg_representante', file)} />
-                   </div>
-                </>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                   <DocumentUploadCard title="Cartão CNPJ" onFileSelect={(file) => handleFileSelect('cartao_cnpj', file)} status="NOT_SENT"/>
+                   <DocumentUploadCard title="Inscrição Estadual" onFileSelect={(file) => handleFileSelect('inscricao_estadual', file)} status="NOT_SENT"/>
+                   <DocumentUploadCard title="Última Alteração Contratual" onFileSelect={(file) => handleFileSelect('contrato_social', file)} status="NOT_SENT"/>
+                   <DocumentUploadCard title="Comprovante de Endereço (PJ)" onFileSelect={(file) => handleFileSelect('comprovante_endereco_pj', file)} status="NOT_SENT"/>
+                   <DocumentUploadCard title="CPF do Representante" onFileSelect={(file) => handleFileSelect('cpf_representante', file)} status="NOT_SENT"/>
+                   <DocumentUploadCard title="RG do Representante" onFileSelect={(file) => handleFileSelect('rg_representante', file)} status="NOT_SENT"/>
+                </div>
               )}
 
               <Separator />
@@ -304,7 +299,7 @@ export default function RegisterPage() {
 
               {error && <p className="text-sm text-destructive text-center">{error}</p>}
             </CardContent>
-            <CardFooter className="flex flex-col space-y-4">
+            <CardFooter className="flex flex-col space-y-4 p-6 border-t">
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? <Loader2 className="animate-spin" /> : 'Registrar'}
               </Button>
