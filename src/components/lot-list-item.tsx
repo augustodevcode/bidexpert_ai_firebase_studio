@@ -404,6 +404,7 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
       <LotPreviewModal
         lot={lot}
         auction={auction}
+        platformSettings={platformSettings}
         isOpen={isPreviewModalOpen}
         onClose={() => setIsPreviewModalOpen(false)}
       />

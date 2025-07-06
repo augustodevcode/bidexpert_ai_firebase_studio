@@ -204,7 +204,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
         return `mailto:?subject=${encodedTitle}&body=${encodedUrl}`;
     }
   }
-
+  
   const getTypeIcon = (type?: string) => {
     if (!type) {
         return <Tag className="h-3 w-3 text-muted-foreground" />;
@@ -402,6 +402,7 @@ const LotCardClientContent: React.FC<LotCardProps> = ({ lot, auction, badgeVisib
     <LotPreviewModal
         lot={lot}
         auction={auction}
+        platformSettings={platformSettings}
         isOpen={isPreviewModalOpen}
         onClose={() => setIsPreviewModalOpen(false)}
       />
