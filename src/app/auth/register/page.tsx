@@ -216,14 +216,6 @@ export default function RegisterPage() {
                     <FormField control={form.control} name="cpf" render={({ field }) => (<FormItem><FormLabel>CPF*</FormLabel><FormControl><Input placeholder="000.000.000-00" {...field} /></FormControl><FormMessage /></FormItem>)} />
                   </div>
                   <FormField control={form.control} name="dateOfBirth" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Data de Nascimento*</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "dd/MM/yyyy", { locale: ptBR }) : <span>Selecione uma data</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus captionLayout="dropdown-buttons" fromYear={1900} toYear={new Date().getFullYear() - 18} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
-                  <Separator />
-                  <h3 className="text-md font-semibold text-muted-foreground">Anexar Documentos</h3>
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <DocumentUploadCard title="CPF" onFileSelect={(file) => handleFileSelect('cpf', file)} />
-                      <DocumentUploadCard title="RG Frente e Verso ou CNH" onFileSelect={(file) => handleFileSelect('rg_cnh', file)} />
-                      <DocumentUploadCard title="Comprovante de Residência" onFileSelect={(file) => handleFileSelect('comprovante_residencia', file)} />
-                      <DocumentUploadCard title="Comprovante de Estado Civil" onFileSelect={(file) => handleFileSelect('comprovante_estado_civil', file)} />
-                   </div>
                 </>
               )}
 
@@ -243,16 +235,6 @@ export default function RegisterPage() {
                      <FormField control={form.control} name="responsibleName" render={({ field }) => (<FormItem><FormLabel>Nome Completo*</FormLabel><FormControl><Input placeholder="Nome do responsável" {...field} /></FormControl><FormMessage /></FormItem>)} />
                      <FormField control={form.control} name="responsibleCpf" render={({ field }) => (<FormItem><FormLabel>CPF*</FormLabel><FormControl><Input placeholder="000.000.000-00" {...field} /></FormControl><FormMessage /></FormItem>)} />
                   </div>
-                   <Separator />
-                  <h3 className="text-md font-semibold text-muted-foreground">Anexar Comprovantes</h3>
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <DocumentUploadCard title="Cartão CNPJ" onFileSelect={(file) => handleFileSelect('cartao_cnpj', file)} />
-                      <DocumentUploadCard title="Inscrição Estadual" onFileSelect={(file) => handleFileSelect('inscricao_estadual', file)} />
-                      <DocumentUploadCard title="Última Alteração Contratual" onFileSelect={(file) => handleFileSelect('contrato_social', file)} />
-                      <DocumentUploadCard title="Comprovante de Endereço (PJ)" onFileSelect={(file) => handleFileSelect('comprovante_endereco_pj', file)} />
-                      <DocumentUploadCard title="CPF do Representante" onFileSelect={(file) => handleFileSelect('cpf_representante', file)} />
-                      <DocumentUploadCard title="RG do Representante" onFileSelect={(file) => handleFileSelect('rg_representante', file)} />
-                   </div>
                 </>
               )}
 
@@ -286,6 +268,33 @@ export default function RegisterPage() {
                 <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input placeholder="Ex: Salvador" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>Estado (UF)</FormLabel><FormControl><Input placeholder="Ex: BA" maxLength={2} {...field} /></FormControl><FormMessage /></FormItem>)} />
               </div>
+
+              {accountType === 'PHYSICAL' && (
+                <>
+                  <Separator />
+                  <h3 className="text-md font-semibold text-muted-foreground">Anexar Documentos</h3>
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <DocumentUploadCard title="CPF" onFileSelect={(file) => handleFileSelect('cpf', file)} />
+                      <DocumentUploadCard title="RG Frente e Verso ou CNH" onFileSelect={(file) => handleFileSelect('rg_cnh', file)} />
+                      <DocumentUploadCard title="Comprovante de Residência" onFileSelect={(file) => handleFileSelect('comprovante_residencia', file)} />
+                      <DocumentUploadCard title="Comprovante de Estado Civil" onFileSelect={(file) => handleFileSelect('comprovante_estado_civil', file)} />
+                   </div>
+                </>
+              )}
+              {(accountType === 'LEGAL' || accountType === 'DIRECT_SALE_CONSIGNOR') && (
+                <>
+                   <Separator />
+                  <h3 className="text-md font-semibold text-muted-foreground">Anexar Comprovantes</h3>
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <DocumentUploadCard title="Cartão CNPJ" onFileSelect={(file) => handleFileSelect('cartao_cnpj', file)} />
+                      <DocumentUploadCard title="Inscrição Estadual" onFileSelect={(file) => handleFileSelect('inscricao_estadual', file)} />
+                      <DocumentUploadCard title="Última Alteração Contratual" onFileSelect={(file) => handleFileSelect('contrato_social', file)} />
+                      <DocumentUploadCard title="Comprovante de Endereço (PJ)" onFileSelect={(file) => handleFileSelect('comprovante_endereco_pj', file)} />
+                      <DocumentUploadCard title="CPF do Representante" onFileSelect={(file) => handleFileSelect('cpf_representante', file)} />
+                      <DocumentUploadCard title="RG do Representante" onFileSelect={(file) => handleFileSelect('rg_representante', file)} />
+                   </div>
+                </>
+              )}
 
               <Separator />
               <div className="space-y-2 pt-4">
