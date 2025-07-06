@@ -80,6 +80,8 @@ export const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
 }) => {
   const [timeSegments, setTimeSegments] = useState<{days: string; hours: string; minutes: string; seconds: string} | null>(null);
   const [displayMessage, setDisplayMessage] = useState<string | null>(null);
+  const [formattedStartDate, setFormattedStartDate] = useState<string | null>(null);
+  const [formattedEndDate, setFormattedEndDate] = useState<string | null>(null);
 
   useEffect(() => {
     if (!effectiveEndDate) {
@@ -126,6 +128,16 @@ export const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
     return () => clearInterval(interval);
   }, [effectiveEndDate, lotStatus]);
 
+  // Client-side only date formatting to prevent hydration mismatch
+  useEffect(() => {
+    if (effectiveStartDate) {
+      setFormattedStartDate(format(new Date(effectiveStartDate), 'dd/MM/yy HH:mm', { locale: ptBR }));
+    }
+    if (effectiveEndDate) {
+      setFormattedEndDate(format(new Date(effectiveEndDate), 'dd/MM/yy HH:mm', { locale: ptBR }));
+    }
+  }, [effectiveStartDate, effectiveEndDate]);
+
 
   return (
     <div className={cn("absolute bottom-0 left-0 right-0 p-2 text-center text-white bg-gradient-to-t from-black/80 to-transparent", className)}>
@@ -164,12 +176,12 @@ export const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
        <div className="text-xs text-gray-300 mt-2 grid grid-cols-2 gap-x-2 px-2">
         {effectiveStartDate && (
            <div className="text-right">
-             <span className="font-medium text-gray-100">Abertura:</span> {format(new Date(effectiveStartDate), 'dd/MM/yy HH:mm', {locale: ptBR})}
+             <span className="font-medium text-gray-100">Abertura:</span> {formattedStartDate || '...'}
            </div>
         )}
         {effectiveEndDate && (
            <div className="text-left">
-             <span className="font-medium text-gray-100">Encerramento:</span> {format(new Date(effectiveEndDate), 'dd/MM/yy HH:mm', {locale: ptBR})}
+             <span className="font-medium text-gray-100">Encerramento:</span> {formattedEndDate || '...'}
            </div>
         )}
       </div>
