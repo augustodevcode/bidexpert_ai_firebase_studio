@@ -4,7 +4,7 @@
 import type { Lot, PlatformSettings } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Info, ExternalLink } from 'lucide-react';
-import React from 'react';
+import React, { useRef } from 'react'; // Import useRef
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -28,6 +28,8 @@ interface LotMapDisplayProps {
 
 export default function LotMapDisplay({ lot }: LotMapDisplayProps) {
   const { latitude, longitude, mapAddress, title } = lot;
+  // This stable key, unique per component instance and lot, prevents the re-initialization error.
+  const mapKey = useRef(`map-${lot.id}-${Math.random()}`).current;
 
   const displayAddressTextForLink = mapAddress || (lot.cityName && lot.stateUf ? `${lot.cityName}, ${lot.stateUf}` : "Localização do Lote");
   const hasCoords = latitude !== undefined && latitude !== null && longitude !== undefined && longitude !== null;
@@ -64,7 +66,7 @@ export default function LotMapDisplay({ lot }: LotMapDisplayProps) {
         <div className="aspect-square w-full rounded-b-md overflow-hidden border-t relative">
           {hasCoords ? (
             <MapContainer
-              key={lot.id} // Add key to force re-creation on lot change
+              key={mapKey} // Use the stable key here
               center={[latitude, longitude]}
               zoom={15}
               scrollWheelZoom={false}

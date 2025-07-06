@@ -102,7 +102,7 @@ export default function SearchPage() {
   const [searchTerm, setSearchTerm] = useState(searchParamsHook.get('term') || '');
   const [currentSearchType, setCurrentSearchType] = useState<'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos'>( (searchParamsHook.get('type') as any) || 'auctions');
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
-  const [sortByState, setSortByState] = useState<string>('relevance');
+  const [sortBy, setSortByState] = useState<string>('relevance');
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterDataLoading, setIsFilterDataLoading] = useState(true);
   
@@ -359,7 +359,7 @@ export default function SearchPage() {
     });
 
     // 3. Apply sorting
-    switch (sortByState) {
+    switch (sortBy) {
         case 'id_desc':
             filteredItems.sort((a,b) => String(b.id).localeCompare(String(a.id)));
             break;
@@ -389,7 +389,7 @@ export default function SearchPage() {
             break;
     }
     return filteredItems;
-  }, [searchTerm, activeFilters, sortByState, currentSearchType, allAuctions, allLots, allDirectSales, allCategoriesForFilter]);
+  }, [searchTerm, activeFilters, sortBy, currentSearchType, allAuctions, allLots, allDirectSales, allCategoriesForFilter]);
 
   const paginatedItems = useMemo(() => {
     if (!platformSettings) return [];
@@ -475,21 +475,6 @@ export default function SearchPage() {
         <ChevronRight className="h-4 w-4 mx-1" />
         <span className="text-foreground font-medium">Resultados da Busca</span>
       </div>
-
-      <Card className="shadow-lg overflow-hidden">
-        <div className="relative h-48 md:h-56 w-full">
-            <img 
-                src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxncmFkaWVudCUyMGJsdWV8ZW58MHx8fHwxNzUyMTEyMTYyfDA&ixlib=rb-4.1.0&q=80&w=1080" 
-                alt="Banner de Busca" 
-                className="object-cover w-full h-full"
-                data-ai-hint="gradiente abstrato"
-            />
-            <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
-                <h1 className="text-3xl md:text-4xl font-bold text-white font-headline mb-1">Resultados da Busca</h1>
-                <p className="text-md md:text-lg text-gray-200 max-w-xl">Encontre leilões, lotes e ofertas de venda direta.</p>
-            </div>
-        </div>
-      </Card>
       
       <form onSubmit={handleSearchFormSubmit} className="flex flex-col md:flex-row items-center gap-4 mb-6 max-w-3xl mx-auto">
         <div className="relative flex-grow w-full">
@@ -528,9 +513,9 @@ export default function SearchPage() {
           </Sheet>
         </div>
       </form>
-
-      <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
-        <div className="hidden md:block">
+      
+      <div className="grid md:grid-cols-[280px_1fr] gap-8 items-start">
+        <aside className="hidden md:block sticky top-24 h-fit">
              <SidebarFilters
                 categories={allCategoriesForFilter}
                 locations={uniqueLocationsForFilter}
@@ -540,8 +525,8 @@ export default function SearchPage() {
                 initialFilters={activeFilters as ActiveFilters}
                 filterContext={currentSearchType === 'tomada_de_precos' ? 'auctions' : (currentSearchType  as 'auctions' | 'directSales')}
             />
-        </div>
-
+        </aside>
+        
         <main className="space-y-6">
             <Tabs value={currentSearchType} onValueChange={(value) => handleSearchTypeChange(value as any)} className="w-full">
             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6 gap-1 sm:gap-2">
@@ -557,7 +542,7 @@ export default function SearchPage() {
               renderGridItem={renderGridItem}
               renderListItem={renderListItem}
               sortOptions={currentSortOptions}
-              initialSortBy={sortByState}
+              initialSortBy={sortBy}
               onSortChange={setSortByState}
               platformSettings={platformSettings}
               isLoading={isLoading}
@@ -573,4 +558,3 @@ export default function SearchPage() {
     </div>
   );
 }
-

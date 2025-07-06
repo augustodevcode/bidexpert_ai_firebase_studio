@@ -200,7 +200,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
                <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-0">
                 <div className="relative aspect-square md:aspect-[3/4] bg-muted">
                   <Image
-                      src={auction.imageUrl || 'https://placehold.co/400x533.png'}
+                      src={auction.imageUrl || 'https://images.unsplash.com/photo-1589307904488-7d60ff29c975?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxsZWlsJUMzJUEzbyUyMGp1ZGljaWFsfGVufDB8fHx8MTc1MTg0NDg4Mnww&ixlib=rb-4.1.0&q=80&w=1080'}
                       alt={auction.title}
                       fill
                       className="object-cover"
@@ -300,7 +300,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
         <h2 className="text-2xl font-bold font-headline">Lotes do Leilão ({auction.totalLots || auction.lots?.length || 0})</h2>
         
         <div className="grid md:grid-cols-[280px_1fr] gap-8 items-start">
-           <aside className="hidden md:block">
+           <aside className="hidden md:block sticky top-24 h-fit">
              <SidebarFilters
                categories={allCategories}
                locations={uniqueLocationsForFilter}
@@ -346,7 +346,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
                 initialSortBy={sortBy}
                 onSortChange={handleSortChange}
                 platformSettings={platformSettings}
-                isLoading={!isClient}
+                isLoading={isClient ? false : true}
                 searchTypeLabel="lotes"
                 emptyStateMessage={`Nenhum lote encontrado para o leilão "${auction.title}" com os filtros aplicados.`}
                 currentPage={currentPage}

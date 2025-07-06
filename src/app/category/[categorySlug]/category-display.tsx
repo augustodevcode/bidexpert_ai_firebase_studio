@@ -1,4 +1,5 @@
 
+
 'use client'; 
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -264,8 +265,8 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         </div>
       </Card>
 
-      <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
-        <aside className="hidden md:block">
+      <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8 items-start">
+        <aside className="hidden md:block sticky top-24 h-fit">
           <SidebarFilters 
             categories={allCategoriesForFilter}
             locations={uniqueLocationsForFilter}
