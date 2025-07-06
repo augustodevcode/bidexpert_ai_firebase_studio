@@ -1,3 +1,4 @@
+
 // src/app/admin/judicial-districts/judicial-district-form.tsx
 'use client';
 
@@ -74,7 +75,7 @@ export default function JudicialDistrictForm({
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 p-6 bg-secondary/30">
             <FormField control={form.control} name="name" render={({ field }) => (
               <FormItem>
                 <FormLabel>Nome da Comarca</FormLabel>
@@ -110,7 +111,7 @@ export default function JudicialDistrictForm({
               </FormItem>
             )} />
           </CardContent>
-          <CardFooter className="flex justify-end gap-2">
+          <CardFooter className="flex justify-end gap-2 p-6 border-t">
             <Button type="button" variant="outline" onClick={() => router.push('/admin/judicial-districts')} disabled={isSubmitting}>Cancelar</Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}

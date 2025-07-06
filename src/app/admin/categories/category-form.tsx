@@ -161,7 +161,7 @@ export default function CategoryForm({
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 p-6 bg-secondary/30">
             <FormField
               control={form.control}
               name="name"
@@ -204,7 +204,7 @@ export default function CategoryForm({
               <p className="text-sm text-muted-foreground">Forneça URLs para as imagens da categoria. Elas serão usadas em banners e menus.</p>
             </div>
             
-            <div className="space-y-6 rounded-md border p-4">
+            <div className="space-y-6 rounded-md border p-4 bg-background">
               {renderImageInput('coverImageUrl', 'Imagem de Capa (Banner)', 'Esta imagem será usada como banner principal na página da categoria.', coverImageUrlPreview, 'coverImageUrl')}
               <Separator />
               {renderImageInput('logoUrl', 'Logo da Categoria', 'Um ícone ou logo pequeno para representar a categoria.', logoUrlPreview, 'logoUrl')}
@@ -213,7 +213,7 @@ export default function CategoryForm({
             </div>
 
           </CardContent>
-          <CardFooter className="flex justify-end gap-2">
+          <CardFooter className="flex justify-end gap-2 p-6 border-t">
             <Button type="button" variant="outline" onClick={() => router.push('/admin/categories')} disabled={isSubmitting}>
               Cancelar
             </Button>

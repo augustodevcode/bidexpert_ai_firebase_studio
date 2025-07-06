@@ -52,7 +52,7 @@ const auctionStatusOptions: { value: AuctionStatus; label: string }[] = [
   { value: 'RASCUNHO', label: getAuctionStatusText('RASCUNHO') },
   { value: 'EM_PREPARACAO', label: getAuctionStatusText('EM_PREPARACAO') },
   { value: 'EM_BREVE', label: getAuctionStatusText('EM_BREVE') },
-  { value: 'ABERTO', label: getAuctionStatusText('ABERTO') },
+  { value: 'ABERTO', label: getAuctionStatusText('ABERTO') }, 
   { value: 'ABERTO_PARA_LANCES', label: getAuctionStatusText('ABERTO_PARA_LANCES') },
   { value: 'ENCERRADO', label: getAuctionStatusText('ENCERRADO') },
   { value: 'FINALIZADO', label: getAuctionStatusText('FINALIZADO') },
@@ -200,7 +200,7 @@ export default function AuctionForm({
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 p-6 bg-secondary/30">
             <FormField
               control={form.control}
               name="title"
@@ -279,7 +279,7 @@ export default function AuctionForm({
                   <h3 className="text-md font-semibold text-muted-foreground pt-2 flex items-center gap-2">
                       <TrendingDown className="h-5 w-5" /> Configurações do Leilão Holandês
                   </h3>
-                  <div className="grid md:grid-cols-3 gap-6 p-4 border rounded-lg bg-secondary/30">
+                  <div className="grid md:grid-cols-3 gap-6 p-4 border rounded-lg bg-background">
                       <FormField control={form.control} name="floorPrice" render={({ field }) => (
                           <FormItem><FormLabel>Preço Mínimo (R$)</FormLabel><FormControl><Input type="number" placeholder="1000.00" {...field} value={field.value ?? ''} /></FormControl><FormDescription className="text-xs">O preço não cairá abaixo disso.</FormDescription><FormMessage /></FormItem>
                       )} />
@@ -414,7 +414,7 @@ export default function AuctionForm({
             <Separator />
             <h3 className="text-md font-semibold text-muted-foreground flex items-center"><ClockIcon className="h-4 w-4 mr-2"/>Praças / Etapas do Leilão</h3>
             {fields.map((field, index) => (
-              <Card key={field.id} className="p-4 space-y-3 bg-secondary/30">
+              <Card key={field.id} className="p-4 space-y-3 bg-background">
                 <div className="flex justify-between items-center">
                   <h4 className="font-medium">Praça / Etapa {index + 1}</h4>
                   {fields.length > 1 && (
@@ -444,8 +444,8 @@ export default function AuctionForm({
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
-                              <Button variant="outline" className={cn("w-full pl-3 text-left font-normal", !stageField.value && "text-muted-foreground")}>
-                                {stageField.value ? format(stageField.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha data</span>}
+                              <Button variant="outline" className={cn("w-full pl-3 text-left font-normal bg-background", !stageField.value && "text-muted-foreground")}>
+                                {stageField.value ? format(stageField.value, "dd/MM/yy HH:mm", { locale: ptBR }) : <span>Escolha</span>}
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                               </Button>
                             </FormControl>
@@ -455,9 +455,9 @@ export default function AuctionForm({
                             <div className="p-2 border-t">
                                 <Input type="time" defaultValue={stageField.value ? format(stageField.value, "HH:mm") : "10:00"}
                                 onChange={(e) => {
-                                    const [hours, minutes] = e.target.value.split(':').map(Number);
+                                    const [hours, minutes] = e.target.value.split(':');
                                     const newDate = stageField.value ? new Date(stageField.value) : new Date();
-                                    newDate.setHours(hours, minutes);
+                                    newDate.setHours(Number(hours), Number(minutes));
                                     stageField.onChange(newDate);
                                 }} />
                             </div>
@@ -608,7 +608,7 @@ export default function AuctionForm({
                 control={form.control}
                 name="automaticBiddingEnabled"
                 render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background">
                     <div className="space-y-0.5">
                         <FormLabel>Robô de Lances (Global)</FormLabel>
                         <FormDescription>Permitir lances automáticos (robô) para este leilão?</FormDescription>
@@ -621,7 +621,7 @@ export default function AuctionForm({
                 control={form.control}
                 name="silentBiddingEnabled"
                 render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background">
                     <div className="space-y-0.5">
                         <FormLabel className="flex items-center gap-2"><MicOff className="h-4 w-4 text-purple-500"/> Ativar Lances Silenciosos</FormLabel>
                         <FormDescription>Os lances são ocultos. O maior lance vence no final.</FormDescription>
@@ -635,7 +635,7 @@ export default function AuctionForm({
                     control={form.control}
                     name="allowMultipleBidsPerUser"
                     render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm ml-4 bg-secondary/50">
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm ml-4 bg-background/70">
                         <div className="space-y-0.5">
                             <FormLabel>Permitir Múltiplos Lances Silenciosos</FormLabel>
                             <FormDescription>Se desativado, cada usuário pode dar apenas um lance.</FormDescription>
@@ -649,7 +649,7 @@ export default function AuctionForm({
                 control={form.control}
                 name="softCloseEnabled"
                 render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background">
                     <div className="space-y-0.5">
                         <FormLabel className="flex items-center gap-2"><Zap className="h-4 w-4 text-amber-500" /> Soft-Close (Anti-Sniping)</FormLabel>
                         <FormDescription>Estender o tempo final se houver lances nos últimos minutos?</FormDescription>
@@ -676,7 +676,7 @@ export default function AuctionForm({
                 control={form.control}
                 name="allowInstallmentBids"
                 render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background">
                     <div className="space-y-0.5">
                         <FormLabel>Permitir Lance Parcelado</FormLabel>
                         <FormDescription>Habilitar opção de lances parcelados para este leilão?</FormDescription>
@@ -703,7 +703,7 @@ export default function AuctionForm({
                 control={form.control}
                 name="isFeaturedOnMarketplace"
                 render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background">
                     <div className="space-y-0.5">
                         <FormLabel>Destaque no Marketplace</FormLabel>
                         <FormDescription>Marcar este leilão como destaque na plataforma?</FormDescription>
@@ -727,9 +727,9 @@ export default function AuctionForm({
 
             <Separator />
             <h3 className="text-md font-semibold text-muted-foreground flex items-center"><Repeat className="h-4 w-4 mr-2"/> Configurações de Relançamento Automático</h3>
-            <FormField control={form.control} name="autoRelistSettings.enableAutoRelist" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Ativar Relançamento Automático</FormLabel><FormDescription>Permitir que leilões não vendidos sejam relançados automaticamente.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+            <FormField control={form.control} name="autoRelistSettings.enableAutoRelist" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Ativar Relançamento Automático</FormLabel><FormDescription>Permitir que leilões não vendidos sejam relançados automaticamente.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
             {watchedAutoRelist?.enableAutoRelist && (
-              <div className="space-y-4 p-4 border rounded-lg bg-secondary/30">
+              <div className="space-y-4 p-4 border rounded-lg bg-background">
                 <FormField control={form.control} name="autoRelistSettings.recurringAutoRelist" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between"><FormLabel>Relançamento Recorrente</FormLabel><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                 <Separator />
                 <div className="space-y-3">
@@ -751,7 +751,7 @@ export default function AuctionForm({
 
 
           </CardContent>
-          <CardFooter className="flex justify-end gap-2">
+          <CardFooter className="flex justify-end gap-2 p-6 border-t">
             <Button type="button" variant="outline" onClick={() => router.push('/admin/auctions')} disabled={isSubmitting}>
               Cancelar
             </Button>

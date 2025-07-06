@@ -88,7 +88,7 @@ export default function StateForm({
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 p-6 bg-secondary/30">
             <FormField
               control={form.control}
               name="name"
@@ -117,7 +117,7 @@ export default function StateForm({
               )}
             />
           </CardContent>
-          <CardFooter className="flex justify-end gap-2">
+          <CardFooter className="flex justify-end gap-2 p-6 border-t">
             <Button type="button" variant="outline" onClick={() => router.push('/admin/states')} disabled={isSubmitting}>
               Cancelar
             </Button>
@@ -131,4 +131,3 @@ export default function StateForm({
     </Card>
   );
 }
-    

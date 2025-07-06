@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -154,7 +155,7 @@ export default function DirectSaleForm({
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 p-6 bg-secondary/30">
             <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título da Oferta</FormLabel><FormControl><Input placeholder="Ex: Sofá Retrátil 3 lugares" {...field} /></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea placeholder="Detalhes do item, condição, etc." {...field} rows={4} /></FormControl><FormMessage /></FormItem>)} />
             
@@ -185,7 +186,7 @@ export default function DirectSaleForm({
 
             <FormItem>
               <FormLabel>Imagem Principal da Oferta</FormLabel>
-              <Card className="mt-2">
+              <Card className="mt-2 bg-background">
                 <CardContent className="p-4 flex flex-col items-center gap-3">
                   <div className="relative w-full aspect-video bg-muted rounded-md overflow-hidden max-w-md mx-auto">
                     {mainImagePreviewUrl ? <Image src={mainImagePreviewUrl} alt="Prévia da Imagem Principal" fill className="object-contain" data-ai-hint="previa imagem principal" /> : <div className="flex flex-col items-center justify-center h-full text-muted-foreground"><ImagePlus className="h-12 w-12 mb-2" /><span>Nenhuma imagem selecionada</span></div>}
@@ -201,7 +202,7 @@ export default function DirectSaleForm({
 
             <div className="space-y-2">
               <FormLabel>Galeria de Imagens da Oferta</FormLabel>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2 border rounded-md min-h-[80px]">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2 border rounded-md min-h-[80px] bg-background">
                 {selectedMediaForGallery.map((item) => (
                   <div key={item.id || item.urlOriginal} className="relative aspect-square bg-muted rounded overflow-hidden">
                     <Image src={item.urlOriginal || 'https://placehold.co/100x100.png'} alt={item.title || 'Imagem da galeria'} fill className="object-cover" data-ai-hint={item.dataAiHint || "miniatura galeria"} />
@@ -229,14 +230,14 @@ export default function DirectSaleForm({
                     <Popover>
                         <PopoverTrigger asChild>
                         <FormControl>
-                            <Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")} >
+                            <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")} >
                                 {field.value ? format(field.value, "PPP", { locale: ptBR }) : <span>Escolha uma data</span>}
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                         </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                            <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus />
                         </PopoverContent>
                     </Popover>
                     <FormDescription>Deixe em branco se a oferta não tiver data de expiração.</FormDescription>
@@ -246,7 +247,7 @@ export default function DirectSaleForm({
                 />
 
           </CardContent>
-          <CardFooter className="flex justify-end gap-2">
+          <CardFooter className="flex justify-end gap-2 p-6 border-t">
             <Button type="button" variant="outline" onClick={() => router.push('/admin/direct-sales')} disabled={isSubmitting}>Cancelar</Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}

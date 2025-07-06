@@ -91,7 +91,7 @@ export default function CityForm({
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 p-6 bg-secondary/30">
             <FormField
               control={form.control}
               name="name"
@@ -141,7 +141,7 @@ export default function CityForm({
                 <FormItem>
                   <FormLabel>Código IBGE da Cidade (Opcional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: 2927408 (7 dígitos)" {...field} />
+                    <Input placeholder="Ex: 2927408 (7 dígitos)" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormDescription>Código numérico de 7 dígitos do IBGE para o município.</FormDescription>
                   <FormMessage />
@@ -149,7 +149,7 @@ export default function CityForm({
               )}
             />
           </CardContent>
-          <CardFooter className="flex justify-end gap-2">
+          <CardFooter className="flex justify-end gap-2 p-6 border-t">
             <Button type="button" variant="outline" onClick={() => router.push('/admin/cities')} disabled={isSubmitting}>
               Cancelar
             </Button>
@@ -163,4 +163,3 @@ export default function CityForm({
     </Card>
   );
 }
-    

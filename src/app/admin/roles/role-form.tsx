@@ -104,7 +104,7 @@ export default function RoleForm({
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 p-6 bg-secondary/30">
             <FormField
               control={form.control}
               name="name"
@@ -128,6 +128,7 @@ export default function RoleForm({
                     <Textarea
                       placeholder="Uma breve descrição sobre este perfil de usuário."
                       {...field}
+                      value={field.value ?? ""}
                       rows={3}
                     />
                   </FormControl>
@@ -144,7 +145,7 @@ export default function RoleForm({
                   <FormDescription>
                     Selecione as permissões que este perfil terá.
                   </FormDescription>
-                  <Accordion type="multiple" className="w-full">
+                  <Accordion type="multiple" className="w-full bg-background p-2 rounded-md border">
                     {Object.entries(groupedPermissions).map(([groupName, permissions]) => (
                       <AccordionItem value={groupName} key={groupName}>
                         <AccordionTrigger className="text-sm font-medium">{groupName}</AccordionTrigger>
@@ -182,7 +183,7 @@ export default function RoleForm({
             />
 
           </CardContent>
-          <CardFooter className="flex justify-end gap-2">
+          <CardFooter className="flex justify-end gap-2 p-6 border-t">
             <Button type="button" variant="outline" onClick={() => router.push('/admin/roles')} disabled={isSubmitting}>
               Cancelar
             </Button>
@@ -196,5 +197,3 @@ export default function RoleForm({
     </Card>
   );
 }
-
-    

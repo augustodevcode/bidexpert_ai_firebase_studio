@@ -1,3 +1,4 @@
+
 // src/app/admin/subcategories/subcategory-form.tsx
 'use client';
 
@@ -115,7 +116,7 @@ export default function SubcategoryForm({
         </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 p-6 bg-secondary/30">
               <FormField
                 control={form.control}
                 name="parentCategoryId"
@@ -231,7 +232,7 @@ export default function SubcategoryForm({
                 )}
               />
             </CardContent>
-            <CardFooter className="flex justify-end gap-2">
+            <CardFooter className="flex justify-end gap-2 p-6 border-t">
               <Button type="button" variant="outline" onClick={() => router.push('/admin/subcategories')} disabled={isSubmitting}>
                 Cancelar
               </Button>
