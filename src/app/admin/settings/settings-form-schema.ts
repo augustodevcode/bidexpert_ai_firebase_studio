@@ -61,6 +61,7 @@ export const platformSettingsFormSchema = z.object({
   showCountdownOnCards: z.boolean().optional().default(true),
   showRelatedLotsOnLotDetail: z.boolean().optional().default(true),
   relatedLotsCount: z.coerce.number().min(1, {message: "Deve ser pelo menos 1."}).max(20, {message: "Não pode exceder 20."}).optional().default(5),
+  defaultUrgencyTimerHours: z.coerce.number().min(1, {message: "O tempo de urgência deve ser de no mínimo 1 hora."}).optional(),
   variableIncrementTable: z.array(variableIncrementRuleSchema).optional().default([]),
   biddingSettings: biddingSettingsSchema,
   defaultListItemsPerPage: z.coerce.number().min(5, "Mínimo de 5 itens por página").max(100, "Máximo de 100 itens por página").optional().default(10),

@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -223,6 +222,7 @@ export interface Auction {
   allowInstallmentBids?: boolean;
   softCloseEnabled?: boolean;
   softCloseMinutes?: number;
+  urgencyTimerHours?: number | null;
   estimatedRevenue?: number;
   achievedRevenue?: number;
   totalHabilitatedUsers?: number;
@@ -269,6 +269,8 @@ export type AuctionDbData = Omit<AuctionFormData, 'category' | 'auctioneer' | 's
   relistCount?: number;
 };
 
+export type BemStatus = 'CADASTRO' | 'DISPONIVEL' | 'LOTEADO' | 'VENDIDO' | 'REMOVIDO' | 'INATIVADO';
+
 export interface Bem {
   id: string;
   publicId: string;
@@ -278,7 +280,7 @@ export interface Bem {
   judicialProcessNumber?: string;
   sellerId?: string | null;
   sellerName?: string;
-  status: 'DISPONIVEL' | 'LOTEADO' | 'VENDIDO' | 'REMOVIDO';
+  status: BemStatus;
   categoryId?: string;
   categoryName?: string;
   subcategoryId?: string;
@@ -297,42 +299,83 @@ export interface Bem {
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
 
-  // Vehicle Specific
-  plate?: string;
-  make?: string;
-  model?: string;
-  year?: number;
-  modelYear?: number;
-  mileage?: number;
-  color?: string;
-  fuelType?: 'Gasolina' | 'Etanol' | 'Diesel' | 'Flex' | 'Elétrico' | 'Híbrido';
-  transmissionType?: 'Manual' | 'Automática' | 'CVT' | 'Automatizada';
-  vin?: string; // Vehicle Identification Number
+  // Veículos
+  make?: string; model?: string; version?: string;
+  year?: number; modelYear?: number;
+  plate?: string; vin?: string; renavam?: string | null;
+  color?: string; fuelType?: string; mileage?: number;
+  enginePower?: string; transmissionType?: string;
+  bodyType?: string; numberOfDoors?: number; vehicleOptions?: string;
+  detranStatus?: string; debts?: string;
+  runningCondition?: string; bodyCondition?: string; tiresCondition?: string;
   hasKey?: boolean;
-  engineDetails?: string;
 
-  // Real Estate Specific
-  propertyRegistrationNumber?: string; // Matrícula do imóvel
-  isOccupied?: boolean;
-  area?: number; // m²
-  bedrooms?: number;
-  bathrooms?: number;
-  parkingSpaces?: number;
-  amenities?: string[]; // e.g., ['Piscina', 'Churrasqueira']
-  propertyType?: 'Apartamento' | 'Casa' | 'Terreno' | 'Comercial' | 'Rural';
+  // Imóveis
+  propertyRegistrationNumber?: string; iptuNumber?: string;
+  isOccupied?: boolean; hasHabiteSe?: boolean;
+  totalArea?: number; builtArea?: number;
+  bedrooms?: number; suites?: number; bathrooms?: number; parkingSpaces?: number;
+  constructionType?: string; finishes?: string; infrastructure?: string;
+  condoDetails?: string; improvements?: string; topography?: string;
+  liensAndEncumbrances?: string; propertyDebts?: string;
+  unregisteredRecords?: string; zoningRestrictions?: string;
+  amenities?: string[];
 
-  // Machinery Specific
-  serialNumber?: string;
-  hoursUsed?: number;
+  // Eletrônicos
+  brand?: string; serialNumber?: string;
+  itemCondition?: string; specifications?: string;
+  includedAccessories?: string; batteryCondition?: string;
+  hasInvoice?: boolean; hasWarranty?: boolean; repairHistory?: string;
 
-  // Livestock Specific
-  breed?: string; // Raça
-  sex?: 'Macho' | 'Fêmea';
-  age?: string; // e.g., "3 anos", "12 meses"
-  vaccinationStatus?: string;
+  // Eletrodomésticos
+  applianceCapacity?: string; voltage?: string; applianceType?: string;
+  additionalFunctions?: string;
+  
+  // Máquinas e Equipamentos
+  hoursUsed?: number; engineType?: string;
+  capacityOrPower?: string; maintenanceHistory?: string;
+  installationLocation?: string; compliesWithNR?: string;
+  operatingLicenses?: string;
+  
+  // Semoventes
+  breed?: string; age?: string; sex?: 'Macho' | 'Fêmea'; weight?: string;
+  individualId?: string; purpose?: string;
+  sanitaryCondition?: string; lineage?: string;
+  isPregnant?: boolean; specialSkills?: string;
+  gtaDocument?: string; breedRegistryDocument?: string;
+
+  // Móveis
+  furnitureType?: string; material?: string; style?: string;
+  dimensions?: string; pieceCount?: number;
+
+  // Joias
+  jewelryType?: string; metal?: string; gemstones?: string;
+  totalWeight?: string; jewelrySize?: string; authenticityCertificate?: string;
+
+  // Obras de Arte e Antiguidades
+  workType?: string; artist?: string; period?: string; technique?: string;
+  provenance?: string;
+  
+  // Embarcações
+  boatType?: string; boatLength?: string; hullMaterial?: string; onboardEquipment?: string;
+  
+  // Alimentos
+  productName?: string; quantity?: string; packagingType?: string;
+  expirationDate?: AnyTimestamp; storageConditions?: string;
+
+  // Metais Preciosos e Pedras
+  preciousMetalType?: string; purity?: string;
+  
+  // Bens Florestais
+  forestGoodsType?: string; volumeOrQuantity?: string; species?: string;
+  dofNumber?: string;
 }
-export type BemFormData = Omit<Bem, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'galleryImageUrls' | 'mediaItemIds' | 'sellerName'>;
 
+export type BemFormData = Omit<Bem, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName' | 'galleryImageUrls' | 'mediaItemIds' | 'amenities'> & {
+  amenities?: {value: string}[];
+  galleryImageUrls?: string[];
+  mediaItemIds?: string[];
+};
 
 export interface Lot {
   id: string;
@@ -376,6 +419,7 @@ export interface Lot {
   lotSpecificAuctionDate?: AnyTimestamp | null;
   secondAuctionDate?: AnyTimestamp | null;
   secondInitialPrice?: number | null;
+  urgencyTimerHours?: number | null;
   isExclusive?: boolean;
   additionalTriggers?: string[];
   discountPercentage?: number;
@@ -430,8 +474,8 @@ export interface Lot {
   stockNumber?: string;
   sellingBranch?: string;
   auctionDate?: AnyTimestamp;
-  stateId?: string; // Added from previous definition
-  cityId?: string; // Added from previous definition
+  stateId?: string;
+  cityId?: string;
 }
 
 export type LotFormData = Omit<Lot,
@@ -752,6 +796,7 @@ export interface PlatformSettings {
   sectionBadgeVisibility?: SectionBadgeConfig;
   mapSettings?: MapSettings;
   biddingSettings?: BiddingSettings;
+  defaultUrgencyTimerHours?: number;
   
   searchPaginationType?: SearchPaginationType;
   searchItemsPerPage?: number;
@@ -1152,7 +1197,3 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
-
-```
-- src/app/admin/bens/bem-form-schema.ts
-- src/app/admin/lots/lot-form.tsx
