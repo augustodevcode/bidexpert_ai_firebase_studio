@@ -53,6 +53,63 @@ function MapController({ items, onBoundsChange, shouldFitBounds }: {
   return null;
 }
 
+interface MapDisplayProps {
+    items: (Lot | Auction)[];
+    itemType: 'lots' | 'auctions';
+    mapCenter: [number, number];
+    mapZoom: number;
+    onBoundsChange: (bounds: LatLngBounds) => void;
+    shouldFitBounds: boolean;
+}
+
+// Define the map renderer as a separate component OUTSIDE the main component.
+// This prevents it from being re-created on every render.
+const MapDisplay = React.memo(({ items, itemType, mapCenter, mapZoom, onBoundsChange, shouldFitBounds }: MapDisplayProps) => {
+    return (
+        <MapContainer
+            key={`map-search-container-${mapCenter.join('-')}`} // Key to help with re-initialization if center drastically changes
+            center={mapCenter}
+            zoom={mapZoom}
+            scrollWheelZoom={true}
+            className="w-full h-full rounded-lg z-0"
+        >
+            <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            {items.map(item => {
+                if (item.latitude && item.longitude) {
+                    const url = itemType === 'lots'
+                        ? `/auctions/${(item as Lot).auctionId}/lots/${item.publicId || item.id}`
+                        : `/auctions/${item.publicId || item.id}`;
+
+                    const priceOrLots = itemType === 'lots'
+                        ? `Lance: R$ ${((item as Lot).price || 0).toLocaleString('pt-BR')}`
+                        : `Lotes: ${(item as Auction).totalLots || 0}`;
+
+                    return (
+                        <Marker key={item.id} position={[item.latitude, item.longitude]}>
+                            <Popup>
+                                <div style={{ fontFamily: 'sans-serif', fontSize: '14px' }}>
+                                    <strong>
+                                        <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#1a73e8', textDecoration: 'none' }}>
+                                            {item.title}
+                                        </a>
+                                    </strong>
+                                    <p style={{ margin: '4px 0 0' }}>{priceOrLots}</p>
+                                </div>
+                            </Popup>
+                        </Marker>
+                    );
+                }
+                return null;
+            })}
+            <MapController items={items} onBoundsChange={onBoundsChange} shouldFitBounds={shouldFitBounds} />
+        </MapContainer>
+    );
+});
+MapDisplay.displayName = 'MapDisplay';
+
 
 interface MapSearchComponentProps {
   items: (Lot | Auction)[];
@@ -72,7 +129,6 @@ export default function MapSearchComponent({
   shouldFitBounds
 }: MapSearchComponentProps) {
   const [isClient, setIsClient] = useState(false);
-  const mapKey = useRef(`map-search-${Date.now()}-${Math.random()}`).current; // Stable, unique key per instance
 
   useEffect(() => {
     setIsClient(true);
@@ -83,45 +139,13 @@ export default function MapSearchComponent({
   }
 
   return (
-    <MapContainer
-      key={mapKey} // Apply the unique, stable key
-      center={mapCenter}
-      zoom={mapZoom}
-      scrollWheelZoom={true}
-      className="w-full h-full rounded-lg z-0"
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      {items.map(item => {
-        if (item.latitude && item.longitude) {
-          const url = itemType === 'lots'
-            ? `/auctions/${(item as Lot).auctionId}/lots/${item.publicId || item.id}`
-            : `/auctions/${item.publicId || item.id}`;
-
-          const priceOrLots = itemType === 'lots'
-            ? `Lance: R$ ${((item as Lot).price || 0).toLocaleString('pt-BR')}`
-            : `Lotes: ${(item as Auction).totalLots || 0}`;
-
-          return (
-            <Marker key={item.id} position={[item.latitude, item.longitude]}>
-              <Popup>
-                <div style={{ fontFamily: 'sans-serif', fontSize: '14px' }}>
-                  <strong>
-                    <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#1a73e8', textDecoration: 'none' }}>
-                      {item.title}
-                    </a>
-                  </strong>
-                  <p style={{ margin: '4px 0 0' }}>{priceOrLots}</p>
-                </div>
-              </Popup>
-            </Marker>
-          );
-        }
-        return null;
-      })}
-      <MapController items={items} onBoundsChange={onBoundsChange} shouldFitBounds={shouldFitBounds} />
-    </MapContainer>
+    <MapDisplay 
+        items={items}
+        itemType={itemType}
+        mapCenter={mapCenter}
+        mapZoom={mapZoom}
+        onBoundsChange={onBoundsChange}
+        shouldFitBounds={shouldFitBounds}
+    />
   );
 }
