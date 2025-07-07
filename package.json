@@ -20,7 +20,10 @@
     "db:setup-admin": "echo \"Error: Please specify which database to use. Run 'npm run db:setup-admin:mysql' or 'npm run db:setup-admin:postgres'\" && exit 1",
     "db:setup-admin:mysql": "tsx ./scripts/setup-admin-user.ts --db=mysql",
     "db:setup-admin:postgres": "tsx ./scripts/setup-admin-user.ts --db=postgres",
-    "seed:media": "tsx ./scripts/seed-media-library.ts"
+    "seed:media": "tsx ./scripts/seed-media-library.ts",
+    "db:seed": "echo \"Error: Please specify which database to seed. Run 'npm run db:seed:mysql' or 'npm run db:seed:postgres'\" && exit 1",
+    "db:seed:mysql": "tsx ./scripts/seed-all.ts --db=mysql",
+    "db:seed:postgres": "tsx ./scripts/seed-all.ts --db=postgres"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.8.0",
