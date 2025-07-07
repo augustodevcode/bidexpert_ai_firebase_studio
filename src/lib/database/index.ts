@@ -1,15 +1,12 @@
 // src/lib/database/index.ts
 import type { IDatabaseAdapter } from '@/types';
 import { cookies } from 'next/headers'; // This is a dynamic function
-import { noStore } from 'next/cache'; // Import noStore
 
 // Singleton instance specifically for the SampleDataAdapter
 let sampleDbInstance: IDatabaseAdapter | undefined;
 
 export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
-  // Explicitly prevent this function's result from being cached.
-  // This ensures we re-evaluate the cookie on every request.
-  noStore();
+  // Reading cookies opts the request into dynamic rendering, so noStore() is not needed.
   
   let dbFromCookie: string | undefined;
   try {
