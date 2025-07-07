@@ -1,3 +1,4 @@
+
 // src/app/admin/settings/settings-form.tsx
 'use client';
 
@@ -19,12 +20,15 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { platformSettingsFormSchema, type PlatformSettingsFormValues } from './settings-form-schema';
 import type { PlatformSettings, MapSettings, SearchPaginationType, StorageProviderType, VariableIncrementRule, BiddingSettings } from '@/types';
-import { Loader2, Save, Palette, Fingerprint, Wrench, MapPin as MapIcon, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database, PlusCircle, Trash2, ArrowUpDown, Zap, Rows } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Loader2, Save, Palette, Fingerprint, Wrench, MapPin as MapIcon, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database, PlusCircle, Trash2, ArrowUpDown, Zap, Rows, RefreshCw } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea'; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+
 
 import { updatePlatformSettings } from './actions';
 
@@ -33,6 +37,8 @@ interface SettingsFormProps {
   activeSection: string;
   onUpdateSuccess?: () => void;
 }
+
+type DatabaseSystem = 'SAMPLE_DATA' | 'FIRESTORE' | 'MYSQL' | 'POSTGRES';
 
 const defaultMapSettings: MapSettings = {
     defaultProvider: 'openstreetmap',
@@ -52,6 +58,10 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const [isSubmittingDb, setIsSubmittingDb] = React.useState(false);
+  const [currentDb, setCurrentDb] = React.useState<DatabaseSystem>('SAMPLE_DATA');
+  const [selectedDb, setSelectedDb] = React.useState<DatabaseSystem>('SAMPLE_DATA');
 
   const form = useForm<PlatformSettingsFormValues>({
     resolver: zodResolver(platformSettingsFormSchema),
@@ -82,6 +92,20 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
     control: form.control,
     name: 'variableIncrementTable',
   });
+  
+  React.useEffect(() => {
+    function getCookie(name: string): string | undefined {
+      if (typeof document === 'undefined') return undefined;
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift();
+    }
+    const dbFromCookie = getCookie('dev-config-db') as DatabaseSystem | undefined;
+    const dbFromEnv = (process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA') as DatabaseSystem;
+    const initialDb = dbFromCookie || dbFromEnv;
+    setCurrentDb(initialDb);
+    setSelectedDb(initialDb);
+  }, []);
 
   React.useEffect(() => {
     form.reset({
@@ -107,6 +131,26 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData, form.reset]);
+  
+  const handleDatabaseChange = async () => {
+    setIsSubmittingDb(true);
+    try {
+      const response = await fetch('/api/set-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ database: selectedDb }),
+      });
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.message || 'Falha ao definir a configuração.');
+      }
+      toast({ title: "Configuração aplicada!", description: "A página será recarregada para usar a nova fonte de dados." });
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      setIsSubmittingDb(false);
+    }
+  };
 
 
   async function onSubmit(values: PlatformSettingsFormValues) {
@@ -203,23 +247,7 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
 
         {activeSection === 'general' && (
           <section className="space-y-6">
-            <FormField
-              control={form.control}
-              name="galleryImageBasePath"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Caminho Base para Imagens (Local Storage)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="/uploads/media_gallery/" {...field} value={field.value ?? ""} />
-                  </FormControl>
-                  <FormDescription>
-                    Caminho na pasta `public` onde as imagens serão armazenadas. Ex: <code>/media/gallery/</code>
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Card>
+             <Card>
               <CardHeader>
                   <CardTitle className="text-md">Máscaras de ID Público</CardTitle>
                   <CardDescription>Defina prefixos para IDs públicos (ex: LEIL- para leilões). Deixe em branco para usar IDs gerados automaticamente.</CardDescription>
@@ -273,9 +301,56 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
             </Card>
           </section>
         )}
+        
+        {activeSection === 'database' && process.env.NODE_ENV === 'development' && (
+          <section className="space-y-6">
+              <p className="text-sm text-muted-foreground">Esta configuração é apenas para desenvolvimento e permite alternar entre fontes de dados. A alteração recarregará a página. A configuração ativa é <strong>{currentDb}</strong>.</p>
+              <RadioGroup value={selectedDb} onValueChange={(value) => setSelectedDb(value as DatabaseSystem)} className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="SAMPLE_DATA" id="db-sample" />
+                      <Label htmlFor="db-sample">Dados de Exemplo (Rápido, sem persistência)</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="FIRESTORE" id="db-firestore" />
+                      <Label htmlFor="db-firestore">Firestore (Requer credenciais)</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="MYSQL" id="db-mysql" />
+                      <Label htmlFor="db-mysql">MySQL (Requer string de conexão)</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="POSTGRES" id="db-postgres" />
+                      <Label htmlFor="db-postgres">PostgreSQL (Requer string de conexão)</Label>
+                  </div>
+              </RadioGroup>
+              <div className="pt-4">
+                  <Button onClick={handleDatabaseChange} disabled={isSubmittingDb || currentDb === selectedDb} type="button">
+                    {isSubmittingDb ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4"/>}
+                    Aplicar e Recarregar
+                </Button>
+              </div>
+          </section>
+        )}
 
         {activeSection === 'storage' && (
           <section className="space-y-6">
+             <FormField
+              control={form.control}
+              name="galleryImageBasePath"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Caminho Base para Imagens (Local Storage)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="/uploads/media/" {...field} value={field.value ?? ""} />
+                  </FormControl>
+                  <FormDescription>
+                    Caminho na pasta `public` onde as imagens serão armazenadas. Ex: <code>/media/gallery/</code>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Separator />
             <FormField
               control={form.control}
               name="storageProvider"
@@ -318,70 +393,6 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
 
         {activeSection === 'appearance' && (
           <section className="space-y-6">
-            <FormField
-                control={form.control}
-                name="defaultListItemsPerPage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Itens por Página Padrão (Listas Admin)</FormLabel>
-                    <FormControl><Input type="number" min="5" max="100" {...field} value={field.value ?? 10} onChange={e => field.onChange(parseInt(e.target.value,10))} /></FormControl>
-                    <FormDescription>Número padrão de linhas exibidas nas tabelas do painel de administração.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            <Separator />
-            <FormField
-              control={form.control}
-              name="searchPaginationType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tipo de Paginação na Busca Pública</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || 'loadMore'}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo de paginação" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="loadMore">Botão "Carregar Mais"</SelectItem>
-                      <SelectItem value="numberedPages">Páginas Numeradas</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>Como os resultados de busca serão paginados para os usuários.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {form.watch('searchPaginationType') === 'numberedPages' && (
-              <FormField
-                control={form.control}
-                name="searchItemsPerPage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Itens por Página (Busca Pública)</FormLabel>
-                    <FormControl><Input type="number" min="1" max="100" {...field} value={field.value ?? 12} onChange={e => field.onChange(parseInt(e.target.value,10))} /></FormControl>
-                    <FormDescription>Número de itens por página para paginação numerada (1-100).</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-            {form.watch('searchPaginationType') === 'loadMore' && (
-              <FormField
-                control={form.control}
-                name="searchLoadMoreCount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contagem "Carregar Mais" (Busca Pública)</FormLabel>
-                    <FormControl><Input type="number" min="1" max="100" {...field} value={field.value ?? 12} onChange={e => field.onChange(parseInt(e.target.value,10))} /></FormControl>
-                    <FormDescription>Número de itens a carregar ao clicar em "Carregar Mais" (1-100).</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-            <Separator />
             <FormField
                 control={form.control}
                 name="showCountdownOnCards"
@@ -442,6 +453,74 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
               </p>
             </div>
           </section>
+        )}
+        
+        {activeSection === 'listDisplay' && (
+             <section className="space-y-6">
+                <FormField
+                    control={form.control}
+                    name="defaultListItemsPerPage"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Itens por Página Padrão (Listas Admin)</FormLabel>
+                        <FormControl><Input type="number" min="5" max="100" {...field} value={field.value ?? 10} onChange={e => field.onChange(parseInt(e.target.value,10))} /></FormControl>
+                        <FormDescription>Número padrão de linhas exibidas nas tabelas do painel de administração.</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <Separator />
+                <FormField
+                control={form.control}
+                name="searchPaginationType"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Tipo de Paginação na Busca Pública</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || 'loadMore'}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo de paginação" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        <SelectItem value="loadMore">Botão "Carregar Mais"</SelectItem>
+                        <SelectItem value="numberedPages">Páginas Numeradas</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormDescription>Como os resultados de busca serão paginados para os usuários.</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                {form.watch('searchPaginationType') === 'numberedPages' && (
+                <FormField
+                    control={form.control}
+                    name="searchItemsPerPage"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Itens por Página (Busca Pública)</FormLabel>
+                        <FormControl><Input type="number" min="1" max="100" {...field} value={field.value ?? 12} onChange={e => field.onChange(parseInt(e.target.value,10))} /></FormControl>
+                        <FormDescription>Número de itens por página para paginação numerada (1-100).</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                )}
+                {form.watch('searchPaginationType') === 'loadMore' && (
+                <FormField
+                    control={form.control}
+                    name="searchLoadMoreCount"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Contagem "Carregar Mais" (Busca Pública)</FormLabel>
+                        <FormControl><Input type="number" min="1" max="100" {...field} value={field.value ?? 12} onChange={e => field.onChange(parseInt(e.target.value,10))} /></FormControl>
+                        <FormDescription>Número de itens a carregar ao clicar em "Carregar Mais" (1-100).</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                )}
+            </section>
         )}
 
         {activeSection === 'bidding' && (
@@ -613,13 +692,14 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
           </section>
         )}
         
-        <Separator />
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Salvar Configurações
-          </Button>
-        </div>
+        {activeSection !== 'database' && (
+            <div className="flex justify-end pt-4 border-t">
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Salvar Configurações
+              </Button>
+            </div>
+        )}
       </form>
     </Form>
   );

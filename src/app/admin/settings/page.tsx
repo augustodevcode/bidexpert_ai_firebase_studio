@@ -1,3 +1,4 @@
+
 // src/app/admin/settings/page.tsx
 'use client';
 
@@ -15,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 const settingsSections = [
     { id: 'identity', label: 'Identidade do Site', icon: Fingerprint, description: 'Título, tagline, logo e favicon.' },
     { id: 'general', label: 'Configurações Gerais', icon: Wrench, description: 'Caminhos de mídia, máscaras de ID, etc.' },
+    { id: 'database', label: 'Fonte de Dados (Dev)', icon: Database, description: 'Altere a fonte de dados para desenvolvimento.' },
     { id: 'storage', label: 'Armazenamento', icon: Database, description: 'Configure onde os arquivos de mídia são salvos.' },
     { id: 'appearance', label: 'Aparência e Exibição', icon: Palette, description: 'Gerencie temas, paginação e cronômetros.' },
     { id: 'listDisplay', label: 'Listas de Cadastros', icon: Rows, description: 'Opções de exibição para as tabelas do admin.' },
