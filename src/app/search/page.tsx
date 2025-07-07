@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -28,7 +27,7 @@ import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
 // Server Actions
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
-import { getDirectSaleOffers } from '@/app/direct-sales/actions';
+import { getDirectSaleOffers } from './actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
@@ -532,7 +531,7 @@ export default function SearchPage() {
             />
         </aside>
         
-        <main className="min-w-0 space-y-6">
+        <main className="min-w-0 md:ml-4">
             <Tabs value={currentSearchType} onValueChange={(value) => handleSearchTypeChange(value as any)} className="w-full">
             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6 gap-1 sm:gap-2">
                 <TabsTrigger value="auctions">Leilões ({currentSearchType === 'auctions' ? filteredAndSortedItems.length : allAuctions.filter(a=> a.auctionType !== 'TOMADA_DE_PRECOS').length})</TabsTrigger>

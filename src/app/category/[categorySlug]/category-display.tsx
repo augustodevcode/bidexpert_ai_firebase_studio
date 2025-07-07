@@ -50,7 +50,7 @@ const sortOptions = [
 ];
 
 const initialFiltersState: ActiveFilters = {
-  modality: 'TODAS',
+  modality: 'TODAS', 
   category: 'TODAS', 
   priceRange: [0, 1000000],
   locations: [],
@@ -278,7 +278,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
           />
         </aside>
 
-        <main className="min-w-0">
+        <main className="min-w-0 md:ml-4">
           <SearchResultsFrame
             items={sortedLots}
             totalItemsCount={sortedLots.length}

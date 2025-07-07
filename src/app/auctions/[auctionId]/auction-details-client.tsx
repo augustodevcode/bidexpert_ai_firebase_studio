@@ -49,7 +49,7 @@ const sortOptionsLots = [
 
 const initialFiltersState: ActiveFilters = {
   modality: 'TODAS',
-  category: 'TODAS', 
+  category: 'TODAS',
   priceRange: [0, 1000000],
   locations: [],
   sellers: [],
@@ -313,7 +313,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
              />
            </aside>
 
-           <main className="min-w-0">
+           <main className="min-w-0 md:ml-4">
             <div className="md:hidden mb-4">
                 <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
                   <SheetTrigger asChild>
@@ -346,7 +346,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
                 initialSortBy={sortBy}
                 onSortChange={handleSortChange}
                 platformSettings={platformSettings}
-                isLoading={isClient ? false : true}
+                isLoading={!isClient}
                 searchTypeLabel="lotes"
                 emptyStateMessage={`Nenhum lote encontrado para o leilão "${auction.title}" com os filtros aplicados.`}
                 currentPage={currentPage}
