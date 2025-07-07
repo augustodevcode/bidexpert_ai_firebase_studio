@@ -5,13 +5,14 @@ import { useWizard } from '../wizard-context';
 import type { Bem, Auction, Lot } from '@/types';
 import { useState, useMemo } from 'react';
 import { DataTable } from '@/components/ui/data-table';
-import { createColumns } from '@/components/admin/lotting/columns';
+import { createColumns } from '@/app/admin/bens/columns'; // Using the main bem columns
 import { Button } from '@/components/ui/button';
-import { Boxes, Box } from 'lucide-react';
+import { Boxes, Box, Eye } from 'lucide-react';
 import CreateLotFromBensModal from '@/components/admin/lotting/create-lot-modal';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
+import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
 
 interface Step4LottingProps {
   availableBens: Bem[];
@@ -23,6 +24,8 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
   const { wizardData, setWizardData } = useWizard();
   const [rowSelection, setRowSelection] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBemModalOpen, setIsBemModalOpen] = useState(false);
+  const [selectedBemForModal, setSelectedBemForModal] = useState<Bem | null>(null);
   const { toast } = useToast();
   const [isCreatingIndividualLots, setIsCreatingIndividualLots] = useState(false);
 
@@ -36,8 +39,14 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
     const selectedIndices = Object.keys(rowSelection).map(Number);
     return selectedIndices.map(index => bensForLotting[index]).filter(Boolean) as Bem[];
   }, [rowSelection, bensForLotting]);
+  
+  const handleViewBemDetails = (bem: Bem) => {
+    setSelectedBemForModal(bem);
+    setIsBemModalOpen(true);
+  };
+  
+  const columns = useMemo(() => createColumns({ handleDelete: handleViewBemDetails }), [handleViewBemDetails]);
 
-  const columns = useMemo(() => createColumns(), []);
   
   const handleCreateGroupedLotClick = () => {
     if (selectedBens.length === 0) {
@@ -71,6 +80,8 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
         categoryId: bem.categoryId,
         subcategoryId: bem.subcategoryId,
         auctionId: auctionData.id || 'TBD',
+        imageUrl: bem.imageUrl,
+        dataAiHint: bem.dataAiHint,
       } as Lot;
     });
 
@@ -79,7 +90,6 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
         createdLots: [...(prev.createdLots || []), ...newLots]
     }));
     toast({ title: "Sucesso!", description: `${newLots.length} lotes individuais preparados.` });
-    onLotCreated();
     setRowSelection({});
     setIsCreatingIndividualLots(false);
   };
@@ -132,7 +142,7 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
       {wizardData.createdLots && wizardData.createdLots.length > 0 && (
         <div className="mt-6">
             <Separator className="my-4" />
-            <h4 className="text-md font-semibold mb-2">Lotes Preparados Nesta Sessão</h4>
+            <h4 className="text-md font-semibold mb-2">Lotes Preparados Nesta Sessão ({wizardData.createdLots.length})</h4>
             <div className="space-y-2 rounded-md border p-2 max-h-48 overflow-y-auto">
                 {wizardData.createdLots.map(lot => (
                     <div key={lot.id} className="text-sm p-2 bg-secondary/50 rounded-md">
@@ -146,11 +156,16 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
         </div>
       )}
 
-      <CreateLotFromBensModal
+      {isModalOpen && <CreateLotFromBensModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         selectedBens={selectedBens}
         onLotCreated={handleLotCreatedInModal}
+      />}
+       <BemDetailsModal 
+        bem={selectedBemForModal} 
+        isOpen={isBemModalOpen} 
+        onClose={() => setIsBemModalOpen(false)} 
       />
     </>
   );

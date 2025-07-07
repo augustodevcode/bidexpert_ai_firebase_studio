@@ -33,7 +33,7 @@ export default function WizardFlow() {
 
     // --- Start Node ---
     allNodes.push({
-      id: 'start', type: 'customStep', position: { x: 0, y: yGap * 2.5 },
+      id: 'start', type: 'customStep', position: { x: 0, y: yGap * 1.5 },
       data: {
         title: 'Início do Cadastro', status: 'done',
         icon: Rocket, pathType: 'COMMON', isActivePath: true, label: `#${nodeIdCounter++} - Ponto de Partida`

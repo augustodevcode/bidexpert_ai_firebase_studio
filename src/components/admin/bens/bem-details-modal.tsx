@@ -31,7 +31,7 @@ const InfoRow = ({ label, value, isBadge = false }: { label: string; value?: str
       {isBadge ? (
          <Badge variant="secondary">{String(value)}</Badge>
       ) : (
-        <p className="text-right text-foreground max-w-[60%] truncate" title={String(value)}>{value}</p>
+        <p className="text-right text-foreground max-w-[60%] truncate" title={String(value)}>{String(value)}</p>
       )}
     </div>
   );

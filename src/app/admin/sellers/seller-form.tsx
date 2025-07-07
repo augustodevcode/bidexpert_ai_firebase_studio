@@ -70,6 +70,7 @@ export default function SellerForm({
   });
 
   const logoUrlPreview = useWatch({ control: form.control, name: 'logoUrl' });
+  const isJudicial = useWatch({ control: form.control, name: 'isJudicial' });
 
   const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
     if (selectedItems.length > 0) {
@@ -156,30 +157,32 @@ export default function SellerForm({
                 </FormItem>
               )}
             />
-            <FormField
-                control={form.control}
-                name="judicialBranchId"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel className="flex items-center gap-2"><Scale className="h-4 w-4"/>Vara Judicial Vinculada (Opcional)</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(value === 'none' ? null : value)} value={field.value ?? 'none'}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Nenhuma vara judicial vinculada" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">Nenhuma</SelectItem>
-                         {judicialBranches.map(branch => (
-                            <SelectItem key={branch.id} value={branch.id}>{branch.name} - {branch.districtName}</SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>Se este comitente representa uma entidade judicial, vincule-a aqui.</FormDescription>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
+            {isJudicial && (
+                <FormField
+                    control={form.control}
+                    name="judicialBranchId"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel className="flex items-center gap-2"><Scale className="h-4 w-4"/>Vara Judicial Vinculada (Opcional)</FormLabel>
+                        <Select onValueChange={(value) => field.onChange(value === 'none' ? null : value)} value={field.value ?? 'none'}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Nenhuma vara judicial vinculada" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">Nenhuma</SelectItem>
+                             {judicialBranches.map(branch => (
+                                <SelectItem key={branch.id} value={branch.id}>{branch.name} - {branch.districtName}</SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>Se este comitente representa uma entidade judicial, vincule-a aqui.</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            )}
             <div className="grid md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
