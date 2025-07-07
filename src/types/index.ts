@@ -299,79 +299,22 @@ export interface Bem {
   longitude?: number;
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
-
-  // Veículos
+  area?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  parkingSpaces?: number;
+  propertyType?: string;
+  amenities?: string[];
   plate?: string;
-  make?: string; model?: string; version?: string;
+  make?: string; model?: string;
   year?: number; modelYear?: number;
   mileage?: number;
   color?: string; fuelType?: string; transmissionType?: string;
-  bodyType?: string; numberOfDoors?: number; vehicleOptions?: string;
-  vin?: string; renavam?: string | null;
-  enginePower?: string;
-  detranStatus?: string; debts?: string;
-  runningCondition?: string; bodyCondition?: string; tiresCondition?: string;
   hasKey?: boolean;
-
-  // Imóveis
-  propertyRegistrationNumber?: string; iptuNumber?: string;
-  isOccupied?: boolean; hasHabiteSe?: boolean;
-  totalArea?: number; builtArea?: number;
-  bedrooms?: number; suites?: number; bathrooms?: number; parkingSpaces?: number;
-  constructionType?: string; finishes?: string; infrastructure?: string;
-  condoDetails?: string; improvements?: string; topography?: string;
-  liensAndEncumbrances?: string; propertyDebts?: string;
-  unregisteredRecords?: string; zoningRestrictions?: string;
-  amenities?: string[];
-  
-  // Eletrônicos
-  brand?: string; serialNumber?: string;
-  itemCondition?: string; specifications?: string;
-  includedAccessories?: string; batteryCondition?: string;
-  hasInvoice?: boolean; hasWarranty?: boolean; repairHistory?: string;
-  
-  // Eletrodomésticos
-  applianceCapacity?: string; voltage?: string; applianceType?: string;
-  additionalFunctions?: string;
-  
-  // Máquinas e Equipamentos
-  hoursUsed?: number; engineType?: string;
-  capacityOrPower?: string; maintenanceHistory?: string;
-  installationLocation?: string; compliesWithNR?: string;
-  operatingLicenses?: string;
-  
-  // Semoventes (Livestock)
-  breed?: string; age?: string; sex?: 'Macho' | 'Fêmea'; weight?: string;
-  individualId?: string; purpose?: string;
-  sanitaryCondition?: string; lineage?: string;
-  isPregnant?: boolean; specialSkills?: string;
-  gtaDocument?: string; breedRegistryDocument?: string;
-
-  // Móveis
-  furnitureType?: string; material?: string; style?: string;
-  dimensions?: string; pieceCount?: number;
-  
-  // Joias
-  jewelryType?: string; metal?: string; gemstones?: string;
-  totalWeight?: string; jewelrySize?: string; authenticityCertificate?: string;
-  
-  // Obras de Arte e Antiguidades
-  workType?: string; artist?: string; period?: string; technique?: string;
-  provenance?: string;
-  
-  // Embarcações
-  boatType?: string; boatLength?: string; hullMaterial?: string; onboardEquipment?: string;
-  
-  // Alimentos
-  productName?: string; quantity?: string; packagingType?: string;
-  expirationDate?: AnyTimestamp; storageConditions?: string;
-  
-  // Metais Preciosos e Pedras
-  preciousMetalType?: string; purity?: string;
-  
-  // Bens Florestais
-  forestGoodsType?: string; volumeOrQuantity?: string; species?: string;
-  dofNumber?: string;
+  serialNumber?: string;
+  hoursUsed?: number;
+  breed?: string; age?: string; sex?: 'Macho' | 'Fêmea';
+  isOccupied?: boolean;
 }
 
 export type BemFormData = Omit<Bem, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName' | 'galleryImageUrls' | 'mediaItemIds' | 'amenities'> & {
@@ -1117,6 +1060,7 @@ export interface IDatabaseAdapter {
   
   getDirectSaleOffers(): Promise<DirectSaleOffer[]>;
   getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null>;
+  getDirectSaleOffersForSeller(sellerId: string): Promise<DirectSaleOffer[]>;
   createDirectSaleOffer(data: DirectSaleOfferFormData): Promise<{ success: boolean; message: string; offerId?: string; }>;
   updateDirectSaleOffer(id: string, data: Partial<DirectSaleOfferFormData>): Promise<{ success: boolean; message: string; }>;
   deleteDirectSaleOffer(id: string): Promise<{ success: boolean; message: string; }>;

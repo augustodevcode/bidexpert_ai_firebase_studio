@@ -1,8 +1,9 @@
+// src/app/consignor-dashboard/overview/page.tsx
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Briefcase, TrendingUp, ListChecks, BarChart3, DollarSign, Edit, Eye, ExternalLink } from 'lucide-react';
+import { Briefcase, TrendingUp, ListChecks, BarChart3, DollarSign, Edit, Eye, ExternalLink, PlusCircle, ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState, useMemo } from 'react';
@@ -125,14 +126,24 @@ export default function ConsignorOverviewPage() {
   return (
     <div className="space-y-8">
       <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold font-headline flex items-center">
-            <Briefcase className="h-7 w-7 mr-3 text-primary" />
-            Painel do Comitente: {sellerProfile.name}
-          </CardTitle>
-          <CardDescription>
-            Acompanhe a performance dos seus lotes e leilões.
-          </CardDescription>
+        <CardHeader className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+          <div>
+            <CardTitle className="text-2xl font-bold font-headline flex items-center">
+              <Briefcase className="h-7 w-7 mr-3 text-primary" />
+              Painel do Comitente: {sellerProfile.name}
+            </CardTitle>
+            <CardDescription>
+              Acompanhe a performance dos seus lotes e leilões.
+            </CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <Button asChild variant="outline">
+              <Link href="/admin/auctions/new"><PlusCircle className="mr-2 h-4 w-4" /> Novo Leilão</Link>
+            </Button>
+             <Button asChild>
+              <Link href="/consignor-dashboard/direct-sales/new"><ShoppingCart className="mr-2 h-4 w-4" /> Nova Venda Direta</Link>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

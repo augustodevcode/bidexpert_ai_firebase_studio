@@ -13,6 +13,8 @@ export async function createDirectSaleOffer(data: DirectSaleOfferFormData): Prom
   if (result.success) {
     revalidatePath('/admin/direct-sales');
     revalidatePath('/direct-sales'); // Revalidate public page
+    revalidatePath('/consignor-dashboard/direct-sales'); // Revalidate consignor page
+    revalidatePath('/consignor-dashboard/overview');
   }
   return result;
 }
@@ -27,6 +29,16 @@ export async function getDirectSaleOffer(id: string): Promise<DirectSaleOffer | 
   return db.getDirectSaleOffer(id);
 }
 
+export async function getDirectSaleOffersForSeller(sellerId: string): Promise<DirectSaleOffer[]> {
+  const db = await getDatabaseAdapter();
+  if (typeof db.getDirectSaleOffersForSeller !== 'function') {
+    console.warn(`[getDirectSaleOffersForSeller] Adapter ${db.constructor.name} does not implement this method. Filtering in memory.`);
+    const allOffers = await db.getDirectSaleOffers();
+    return allOffers.filter(o => o.sellerId === sellerId);
+  }
+  return db.getDirectSaleOffersForSeller(sellerId);
+}
+
 export async function updateDirectSaleOffer(id: string, data: Partial<DirectSaleOfferFormData>): Promise<{ success: boolean; message: string; }> {
   const db = await getDatabaseAdapter();
   const result = await db.updateDirectSaleOffer(id, data);
@@ -35,6 +47,8 @@ export async function updateDirectSaleOffer(id: string, data: Partial<DirectSale
     revalidatePath(`/admin/direct-sales/${id}/edit`);
     revalidatePath(`/direct-sales/${id}`);
     revalidatePath('/direct-sales');
+    revalidatePath('/consignor-dashboard/direct-sales');
+    revalidatePath('/consignor-dashboard/overview');
   }
   return result;
 }
@@ -45,6 +59,8 @@ export async function deleteDirectSaleOffer(id: string): Promise<{ success: bool
   if (result.success) {
     revalidatePath('/admin/direct-sales');
     revalidatePath('/direct-sales');
+    revalidatePath('/consignor-dashboard/direct-sales');
+    revalidatePath('/consignor-dashboard/overview');
   }
   return result;
 }

@@ -515,12 +515,29 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleDirectSaleOffers || [])));
   }
   async getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null> {
-    const offer = this.localData.sampleDirectSaleOffers.find(o => o.id === id);
+    const offer = (this.localData.sampleDirectSaleOffers || []).find(o => o.id === id);
     return Promise.resolve(offer ? JSON.parse(JSON.stringify(offer)) : null);
   }
+  async getDirectSaleOffersForSeller(sellerId: string): Promise<DirectSaleOffer[]> {
+    const offers = (this.localData.sampleDirectSaleOffers || []).filter(o => o.sellerId === sellerId);
+    return Promise.resolve(JSON.parse(JSON.stringify(offers)));
+  }
   async createDirectSaleOffer(data: DirectSaleOfferFormData): Promise<{ success: boolean; message: string; offerId?: string; }> {
-    console.warn("[SampleDataAdapter] createDirectSaleOffer not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const newOffer: DirectSaleOffer = {
+        ...data,
+        id: `dso-${uuidv4()}`,
+        publicId: `DSO-PUB-${uuidv4().substring(0,8)}`,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        views: 0,
+        proposalsCount: 0,
+    };
+    if (!this.localData.sampleDirectSaleOffers) {
+        this.localData.sampleDirectSaleOffers = [];
+    }
+    this.localData.sampleDirectSaleOffers.push(newOffer);
+    this._persistData();
+    return { success: true, message: 'Oferta de venda direta criada!', offerId: newOffer.id };
   }
   async updateDirectSaleOffer(id: string, data: Partial<DirectSaleOfferFormData>): Promise<{ success: boolean; message: string; }> {
     console.warn("[SampleDataAdapter] updateDirectSaleOffer not implemented.");
@@ -613,7 +630,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return { success: true, message: "Perfil atualizado com sucesso." };
   }
   async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileWithPermissions; }> {
-    const { auth: localAuthAdmin, error: sdkError } = ensureAdminInitialized();
+     const { auth: localAuthAdmin, error: sdkError } = ensureAdminInitialized();
     if (sdkError || !localAuthAdmin) {
       console.warn(`[FirestoreAdapter - ensureUserRole] Admin SDK Auth não disponível ou erro de inicialização: ${sdkError?.message}. Continuando sem interação Auth se possível.`);
     }
@@ -797,8 +814,39 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return { success: true, message: 'Mídia desvinculada.' };
   }
   
-  async getNotificationsForUser(userId: string): Promise<Notification[]> {
-      return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleNotifications.filter(n => n.userId === userId))));
+  async getBens(judicialProcessId?: string): Promise<Bem[]> {
+    console.warn("[FirestoreAdapter] getBens not implemented.");
+    return [];
+  }
+  async getBem(id: string): Promise<Bem | null> {
+    console.warn("[FirestoreAdapter] getBem not implemented.");
+    return null;
+  }
+  async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
+    console.warn("[FirestoreAdapter] createBem not implemented.");
+    return { success: false, message: "Not implemented." };
+  }
+  async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[FirestoreAdapter] updateBem not implemented.");
+    return { success: false, message: "Not implemented." };
+  }
+  async deleteBem(id: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[FirestoreAdapter] deleteBem not implemented.");
+    return { success: false, message: "Not implemented." };
+  }
+
+  async getPlatformSettings(): Promise<PlatformSettings> {
+    return Promise.resolve(JSON.parse(JSON.stringify(this.localData.samplePlatformSettings)));
+  }
+
+  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
+    this.localData.samplePlatformSettings = {
+        ...this.localData.samplePlatformSettings,
+        ...data,
+        updatedAt: new Date(),
+    } as PlatformSettings;
+    this._persistData();
+    return { success: true, message: "Configurações da plataforma atualizadas!" };
   }
 
   // --- Judicial CRUDs

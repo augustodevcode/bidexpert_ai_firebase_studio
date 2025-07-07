@@ -30,7 +30,7 @@ const sidebarNavItems = [
     title: 'Venda Direta',
     href: '/consignor-dashboard/direct-sales',
     icon: ShoppingCart,
-    disabled: true, // Placeholder
+    disabled: false, 
   },
    {
     title: 'Relatórios',
