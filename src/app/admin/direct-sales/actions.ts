@@ -1,3 +1,4 @@
+// src/app/admin/direct-sales/actions.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -6,10 +7,12 @@ import type { DirectSaleOffer, DirectSaleOfferFormData } from '@/types';
 
 export async function createDirectSaleOffer(data: DirectSaleOfferFormData): Promise<{ success: boolean; message: string; offerId?: string; }> {
   const db = await getDatabaseAdapter();
+  // Here, you would typically resolve category name and seller name to IDs
+  // For sample data, we can pass them as is. For SQL, the adapter needs to handle resolution.
   const result = await db.createDirectSaleOffer(data);
   if (result.success) {
     revalidatePath('/admin/direct-sales');
-    revalidatePath('/direct-sales');
+    revalidatePath('/direct-sales'); // Revalidate public page
   }
   return result;
 }

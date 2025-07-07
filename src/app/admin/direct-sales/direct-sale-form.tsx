@@ -1,4 +1,4 @@
-
+// src/app/admin/direct-sales/direct-sale-form.tsx
 'use client';
 
 import * as React from 'react';
@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { directSaleOfferFormSchema, type DirectSaleOfferFormData } from './direct-sale-form-schema';
 import type { DirectSaleOffer, LotCategory, SellerProfileInfo, MediaItem } from '@/types';
-import { Loader2, Save, ShoppingCart, CalendarIcon, DollarSign, ImagePlus, Trash2 } from 'lucide-react';
+import { Loader2, Save, ShoppingCart, CalendarIcon, DollarSign, ImagePlus, Trash2, Image as ImageIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -47,25 +47,7 @@ export default function DirectSaleForm({
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-
-  const [isMainImageDialogOpen, setIsMainImageDialogOpen] = React.useState(false);
-  const [isGalleryDialogOpen, setIsGalleryDialogOpen] = React.useState(false);
-  const [mainImagePreviewUrl, setMainImagePreviewUrl] = React.useState<string | null>(initialData?.imageUrl || null);
-  const [selectedMediaForGallery, setSelectedMediaForGallery] = React.useState<Partial<MediaItem>[]>(() => {
-    if (!initialData) return [];
-    const itemsMap = new Map<string, Partial<MediaItem>>();
-    (initialData.mediaItemIds || []).forEach(mediaId => {
-      itemsMap.set(mediaId, { id: mediaId, urlOriginal: `https://placehold.co/100x100.png?text=ID:${mediaId.substring(0, 4)}`, title: `Item de Mídia ${mediaId.substring(0, 4)}` });
-    });
-    (initialData.galleryImageUrls || []).forEach((url, index) => {
-      const urlExistsInMap = Array.from(itemsMap.values()).some(item => item.urlOriginal === url);
-      if (!urlExistsInMap) {
-        const uniqueUrlId = `gallery-url-${uuidv4()}`;
-        itemsMap.set(uniqueUrlId, { id: uniqueUrlId, urlOriginal: url, title: `Imagem da Galeria (URL) ${index + 1}` });
-      }
-    });
-    return Array.from(itemsMap.values());
-  });
+  const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
 
   const form = useForm<DirectSaleOfferFormData>({
     resolver: zodResolver(directSaleOfferFormSchema),
@@ -90,43 +72,20 @@ export default function DirectSaleForm({
   });
   
   const offerType = useWatch({ control: form.control, name: 'offerType' });
-  
-  React.useEffect(() => {
-    form.setValue('galleryImageUrls', selectedMediaForGallery.map(item => item.urlOriginal || '').filter(Boolean));
-    form.setValue('mediaItemIds', selectedMediaForGallery.map(item => item.id || '').filter(itemid => !itemid.startsWith('gallery-url-')).filter(Boolean));
-  }, [selectedMediaForGallery, form]);
-  
-  const handleSelectMainImageFromDialog = (selectedItems: Partial<MediaItem>[]) => {
+  const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
+
+  const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
     if (selectedItems.length > 0) {
       const selectedMediaItem = selectedItems[0];
       if (selectedMediaItem?.urlOriginal) {
-        setMainImagePreviewUrl(selectedMediaItem.urlOriginal);
         form.setValue('imageUrl', selectedMediaItem.urlOriginal);
         form.setValue('imageMediaId', selectedMediaItem.id || null);
       } else {
         toast({ title: "Seleção Inválida", description: "O item de mídia selecionado não possui uma URL válida.", variant: "destructive" });
       }
     }
+    setIsMediaDialogOpen(false);
   };
-
-  const handleSelectMediaForGallery = (newlySelectedItems: Partial<MediaItem>[]) => {
-    setSelectedMediaForGallery(prev => {
-      const currentMediaMap = new Map(prev.map(item => [item.id || item.urlOriginal, item]));
-      newlySelectedItems.forEach(newItem => {
-        if (newItem.id || newItem.urlOriginal) {
-          currentMediaMap.set(newItem.id || newItem.urlOriginal!, newItem);
-        }
-      });
-      return Array.from(currentMediaMap.values());
-    });
-    toast({ title: "Mídia Adicionada à Galeria", description: `${newlySelectedItems.length} item(ns) adicionado(s) à galeria.` });
-  };
-  
-  const handleRemoveFromGallery = (itemIdToRemove?: string) => {
-    if (!itemIdToRemove) return;
-    setSelectedMediaForGallery(prev => prev.filter(item => (item.id || item.urlOriginal) !== itemIdToRemove));
-  };
-
 
   async function onSubmit(values: DirectSaleOfferFormData) {
     setIsSubmitting(true);
@@ -157,7 +116,7 @@ export default function DirectSaleForm({
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-6 p-6 bg-secondary/30">
             <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título da Oferta</FormLabel><FormControl><Input placeholder="Ex: Sofá Retrátil 3 lugares" {...field} /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea placeholder="Detalhes do item, condição, etc." {...field} rows={4} /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea placeholder="Detalhes do item, condição, etc." {...field} value={field.value || ''} rows={4} /></FormControl><FormMessage /></FormItem>)} />
             
             <div className="grid md:grid-cols-2 gap-6">
               <FormField control={form.control} name="offerType" render={({ field }) => (<FormItem><FormLabel>Tipo de Oferta</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o tipo" /></SelectTrigger></FormControl><SelectContent><SelectItem value="BUY_NOW">Comprar Já (Preço Fixo)</SelectItem><SelectItem value="ACCEPTS_PROPOSALS">Aceita Propostas</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
@@ -177,68 +136,44 @@ export default function DirectSaleForm({
             </div>
             
             <div className="grid md:grid-cols-2 gap-6">
-              <FormField control={form.control} name="locationCity" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input placeholder="São Paulo" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="locationState" render={({ field }) => (<FormItem><FormLabel>Estado (UF)</FormLabel><FormControl><Input placeholder="SP" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="locationCity" render={({ field }) => (<FormItem><FormLabel>Cidade (Opcional)</FormLabel><FormControl><Input placeholder="São Paulo" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="locationState" render={({ field }) => (<FormItem><FormLabel>Estado (UF) (Opcional)</FormLabel><FormControl><Input placeholder="SP" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
             </div>
             
             <Separator />
-            <h3 className="text-md font-semibold text-muted-foreground pt-2">Imagens da Oferta</h3>
-
+            <h3 className="text-md font-semibold text-muted-foreground pt-2">Mídia e Expiração</h3>
+            
             <FormItem>
               <FormLabel>Imagem Principal da Oferta</FormLabel>
-              <Card className="mt-2 bg-background">
-                <CardContent className="p-4 flex flex-col items-center gap-3">
-                  <div className="relative w-full aspect-video bg-muted rounded-md overflow-hidden max-w-md mx-auto">
-                    {mainImagePreviewUrl ? <Image src={mainImagePreviewUrl} alt="Prévia da Imagem Principal" fill className="object-contain" data-ai-hint="previa imagem principal" /> : <div className="flex flex-col items-center justify-center h-full text-muted-foreground"><ImagePlus className="h-12 w-12 mb-2" /><span>Nenhuma imagem selecionada</span></div>}
-                  </div>
-                  <Button type="button" variant="outline" onClick={() => setIsMainImageDialogOpen(true)}>
-                    <ImagePlus className="mr-2 h-4 w-4" />{mainImagePreviewUrl ? "Alterar Imagem Principal" : "Escolher Imagem Principal"}
+              <div className="flex items-center gap-4">
+                <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">
+                  {imageUrlPreview ? (<Image src={imageUrlPreview} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}
+                </div>
+                <div className="flex-grow space-y-2">
+                  <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>
+                    {imageUrlPreview ? 'Alterar Imagem' : 'Escolher da Biblioteca'}
                   </Button>
-                </CardContent>
-              </Card>
-              <FormField control={form.control} name="imageUrl" render={({ field }) => (<FormItem className="hidden"><FormControl><Input type="text" {...field} /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="imageMediaId" render={({ field }) => (<FormItem className="hidden"><FormControl><Input type="text" {...field} /></FormControl></FormItem>)} />
-            </FormItem>
-
-            <div className="space-y-2">
-              <FormLabel>Galeria de Imagens da Oferta</FormLabel>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2 border rounded-md min-h-[80px] bg-background">
-                {selectedMediaForGallery.map((item) => (
-                  <div key={item.id || item.urlOriginal} className="relative aspect-square bg-muted rounded overflow-hidden">
-                    <Image src={item.urlOriginal || 'https://placehold.co/100x100.png'} alt={item.title || 'Imagem da galeria'} fill className="object-cover" data-ai-hint={item.dataAiHint || "miniatura galeria"} />
-                    <Button type="button" size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6 opacity-80 hover:opacity-100 p-0" onClick={() => handleRemoveFromGallery(item.id || item.urlOriginal)} title="Remover da galeria">
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                ))}
-                {selectedMediaForGallery.length < 10 && (
-                  <Button type="button" variant="outline" className="aspect-square flex flex-col items-center justify-center text-muted-foreground hover:text-primary h-full" onClick={() => setIsGalleryDialogOpen(true)}>
-                    <ImagePlus className="h-6 w-6 mb-1" /><span className="text-xs">Adicionar</span>
-                  </Button>
-                )}
+                   <FormField control={form.control} name="imageUrl" render={({ field }) => (<FormControl><Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} /></FormControl>)} />
+                   <FormMessage />
+                </div>
               </div>
-              <FormDescription>Adicione mais imagens para esta oferta. Máximo de 10 imagens.</FormDescription>
-            </div>
+            </FormItem>
             
-            <Separator />
             <FormField
                 control={form.control}
                 name="expiresAt"
                 render={({ field }) => (
                     <FormItem className="flex flex-col">
                     <FormLabel>Data de Expiração (Opcional)</FormLabel>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                        <FormControl>
-                            <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")} >
-                                {field.value ? format(field.value, "PPP", { locale: ptBR }) : <span>Escolha uma data</span>}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                        </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus />
-                        </PopoverContent>
+                    <Popover><PopoverTrigger asChild><FormControl>
+                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")} >
+                            {field.value ? format(field.value, "PPP", { locale: ptBR }) : <span>Escolha uma data</span>}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                    </FormControl></PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus />
+                    </PopoverContent>
                     </Popover>
                     <FormDescription>Deixe em branco se a oferta não tiver data de expiração.</FormDescription>
                     <FormMessage />
@@ -258,16 +193,10 @@ export default function DirectSaleForm({
       </Form>
     </Card>
      <ChooseMediaDialog
-        isOpen={isMainImageDialogOpen}
-        onOpenChange={setIsMainImageDialogOpen}
-        onMediaSelect={handleSelectMainImageFromDialog}
+        isOpen={isMediaDialogOpen}
+        onOpenChange={setIsMediaDialogOpen}
+        onMediaSelect={handleMediaSelect}
         allowMultiple={false}
-      />
-      <ChooseMediaDialog
-        isOpen={isGalleryDialogOpen}
-        onOpenChange={setIsGalleryDialogOpen}
-        onMediaSelect={handleSelectMediaForGallery}
-        allowMultiple={true}
       />
     </>
   );

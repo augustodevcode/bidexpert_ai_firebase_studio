@@ -1,3 +1,4 @@
+// src/app/admin/direct-sales/[offerId]/edit/page.tsx
 import DirectSaleForm from '../../direct-sale-form';
 import { getDirectSaleOffer, updateDirectSaleOffer, type DirectSaleOfferFormData } from '../../actions';
 import { getLotCategories } from '@/app/admin/categories/actions';

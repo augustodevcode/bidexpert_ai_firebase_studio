@@ -1,4 +1,4 @@
-
+// src/app/admin/direct-sales/columns.tsx
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

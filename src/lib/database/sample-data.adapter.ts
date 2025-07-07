@@ -42,6 +42,9 @@ import { slugify, getEffectiveLotEndDate } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
 import * as sampleData from '@/lib/sample-data'; // Import all exports from the new sample-data.ts
 import type { WizardData } from '@/components/admin/wizard/wizard-context';
+import { ensureAdminInitialized } from '@/lib/firebase/admin';
+import type { FieldValue as FirebaseAdminFieldValue, Timestamp as FirebaseAdminTimestamp } from 'firebase-admin/firestore';
+import { samplePlatformSettings } from './sample-data';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const DATA_FILE_PATH = path.resolve(process.cwd(), 'sample-data.local.json');
@@ -49,9 +52,16 @@ const DATA_FILE_PATH = path.resolve(process.cwd(), 'sample-data.local.json');
 
 export class SampleDataAdapter implements IDatabaseAdapter {
   private localData: { [K in keyof typeof sampleData]: (typeof sampleData)[K] };
+  private AdminFieldValue: typeof FirebaseAdminFieldValue;
+  private ServerTimestamp: typeof FirebaseAdminTimestamp;
+
 
   constructor() {
     try {
+        const { AdminFieldValue: FV, ServerTimestamp: ST } = ensureAdminInitialized();
+        this.AdminFieldValue = FV as typeof FirebaseAdminFieldValue;
+        this.ServerTimestamp = ST as typeof FirebaseAdminTimestamp;
+
         const baseData = JSON.parse(JSON.stringify(sampleData));
         
         if (fs.existsSync(DATA_FILE_PATH)) {
@@ -90,6 +100,9 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     } catch (error) {
         console.error("[SampleDataAdapter] Could not read or parse sample-data.local.json, falling back to initial import.", error);
         this.localData = JSON.parse(JSON.stringify(sampleData));
+        // Fallback for FieldValue and Timestamp if admin SDK fails
+        this.AdminFieldValue = { serverTimestamp: () => new Date() } as any; 
+        this.ServerTimestamp = { fromDate: (date: Date) => date } as any;
     }
   }
   
@@ -213,222 +226,6 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return { success: false, message: 'Categoria não encontrada.' };
   }
   
-  // --- Platform Settings ---
-  async getPlatformSettings(): Promise<PlatformSettings> {
-    await delay(10);
-    // Ensure default values are present if they don't exist on the loaded data
-    const loadedSettings = this.localData.samplePlatformSettings || {};
-    const settings = { ...sampleData.samplePlatformSettings, ...loadedSettings };
-    return Promise.resolve(settings as PlatformSettings);
-  }
-
-  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
-    await delay(10);
-    this.localData.samplePlatformSettings = {
-        ...this.localData.samplePlatformSettings,
-        ...data,
-        id: 'global',
-        updatedAt: new Date(),
-    };
-    this._persistData();
-    return { success: true, message: 'Configurações da plataforma atualizadas com sucesso!' };
-  }
-
-  private _enrichLotData(lot: Lot): Lot {
-    if (!lot) return lot;
-    const auction = this.localData.sampleAuctions.find(a => a.id === lot.auctionId);
-    const category = this.localData.sampleLotCategories.find(c => c.id === lot.categoryId);
-    const subcategory = this.localData.sampleSubcategories.find(s => s.id === lot.subcategoryId);
-    const city = this.localData.sampleCities.find(c => c.id === lot.cityId);
-    const state = this.localData.sampleStates.find(s => s.id === lot.stateId);
-    
-    const bens = (lot.bemIds || []).map(bemId => 
-        (this.localData.sampleBens || []).find(b => b.id === bemId)
-    ).filter((b): b is Bem => !!b);
-
-    const firstBem = bens.length > 0 ? bens[0] : null;
-
-    return {
-        ...lot,
-        auctionName: auction?.title,
-        type: category?.name,
-        subcategoryName: subcategory?.name,
-        cityName: city?.name,
-        stateUf: state?.uf,
-        imageUrl: lot.imageUrl || firstBem?.imageUrl,
-        dataAiHint: lot.dataAiHint || firstBem?.dataAiHint,
-        bens: bens, // Attach the full bem objects
-    };
-  }
-  
-  async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> {
-    const newLot: Lot = {
-      ...(data as any), // Cast to avoid TS issues with missing optional fields
-      id: `lot-${uuidv4()}`,
-      publicId: `LOT-PUB-${uuidv4().substring(0,8)}`,
-      bidsCount: 0,
-      views: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.localData.sampleLots.push(newLot);
-    this._persistData();
-    return { success: true, message: 'Lote criado!', lotId: newLot.id, lotPublicId: newLot.publicId };
-  }
-
-  async getLots(auctionIdParam?: string): Promise<Lot[]> {
-    let lots = [...this.localData.sampleLots];
-    if (auctionIdParam) {
-      lots = lots.filter(l => l.auctionId === auctionIdParam);
-    }
-    const enrichedLots = lots.map(lot => this._enrichLotData(lot));
-    return Promise.resolve(JSON.parse(JSON.stringify(enrichedLots)));
-  }
-
-  async getLotsByIds(ids: string[]): Promise<Lot[]> {
-      if (!ids || ids.length === 0) return Promise.resolve([]);
-      const lots = this.localData.sampleLots.filter(l => ids.includes(l.id));
-      const enrichedLots = lots.map(lot => this._enrichLotData(lot));
-      return Promise.resolve(JSON.parse(JSON.stringify(enrichedLots)));
-  }
-
-  async getLot(idOrPublicId: string): Promise<Lot | null> {
-    const lot = this.localData.sampleLots.find(l => l.id === idOrPublicId || l.publicId === idOrPublicId);
-    if (!lot) return null;
-    return Promise.resolve(JSON.parse(JSON.stringify(this._enrichLotData(lot))));
-  }
-
-  async updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> {
-    const index = this.localData.sampleLots.findIndex(l => l.id === idOrPublicId || l.publicId === idOrPublicId);
-    if (index === -1) return { success: false, message: 'Lote não encontrado.' };
-    this.localData.sampleLots[index] = { ...this.localData.sampleLots[index], ...data, updatedAt: new Date() } as Lot;
-    this._persistData();
-    return { success: true, message: 'Lote atualizado com sucesso!' };
-  }
-  
-  async deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }> {
-    const initialLength = this.localData.sampleLots.length;
-    this.localData.sampleLots = this.localData.sampleLots.filter(l => l.id !== idOrPublicId && l.publicId !== idOrPublicId);
-    if (this.localData.sampleLots.length < initialLength) {
-        this._persistData();
-        return { success: true, message: 'Lote excluído com sucesso!' };
-    }
-    return { success: false, message: 'Lote não encontrado.' };
-  }
-
-  // --- CRUD Implementations ---
-  
-  async getBens(filter?: { judicialProcessId?: string; sellerId?: string }): Promise<Bem[]> {
-    let bens = this.localData.sampleBens || [];
-    if (filter?.judicialProcessId) {
-      bens = bens.filter(bem => bem.judicialProcessId === filter.judicialProcessId);
-    }
-    if (filter?.sellerId) {
-      bens = bens.filter(bem => bem.sellerId === filter.sellerId);
-    }
-
-    const enrichedBens = bens.map(bem => {
-      const category = this.localData.sampleLotCategories.find(c => c.id === bem.categoryId);
-      const subcategory = this.localData.sampleSubcategories.find(s => s.id === bem.subcategoryId);
-      const process = this.localData.sampleJudicialProcesses.find(p => p.id === bem.judicialProcessId);
-      const seller = this.localData.sampleSellers.find(s => s.id === bem.sellerId);
-      return {
-        ...bem,
-        categoryName: category?.name,
-        subcategoryName: subcategory?.name,
-        judicialProcessNumber: process?.processNumber,
-        sellerName: seller?.name
-      };
-    });
-    return Promise.resolve(JSON.parse(JSON.stringify(enrichedBens)));
-  }
-  
-  async getBensByIds(ids: string[]): Promise<Bem[]> {
-    if (!ids || ids.length === 0) return Promise.resolve([]);
-    const foundBens = (this.localData.sampleBens || []).filter(b => ids.includes(b.id));
-    return Promise.resolve(JSON.parse(JSON.stringify(foundBens)));
-  }
-
-  async getBem(id: string): Promise<Bem | null> {
-    const bem = (this.localData.sampleBens || []).find(b => b.id === id);
-    if (!bem) return null;
-    return Promise.resolve(JSON.parse(JSON.stringify(bem)));
-  }
-
-  async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
-    const newBem: Bem = {
-      ...(data as any), // Cast to avoid TS issues with missing optional fields
-      id: `bem-${uuidv4()}`,
-      publicId: `BEM-PUB-${uuidv4().substring(0, 8)}`,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    if (!this.localData.sampleBens) {
-      this.localData.sampleBens = [];
-    }
-    this.localData.sampleBens.push(newBem);
-    this._persistData();
-    return { success: true, message: 'Bem criado com sucesso!', bemId: newBem.id };
-  }
-
-  async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
-    const index = this.localData.sampleBens.findIndex(b => b.id === id);
-    if (index === -1) {
-      return { success: false, message: "Bem não encontrado." };
-    }
-    this.localData.sampleBens[index] = { ...this.localData.sampleBens[index], ...data, updatedAt: new Date() } as Bem;
-    this._persistData();
-    return { success: true, message: 'Bem atualizado com sucesso!' };
-  }
-  
-  async updateBensStatus(bemIds: string[], status: Bem['status']): Promise<{ success: boolean, message: string }> {
-    let updatedCount = 0;
-    bemIds.forEach(id => {
-        const index = this.localData.sampleBens.findIndex(b => b.id === id);
-        if (index !== -1) {
-            this.localData.sampleBens[index].status = status;
-            this.localData.sampleBens[index].updatedAt = new Date();
-            updatedCount++;
-        }
-    });
-    if (updatedCount > 0) this._persistData();
-    return { success: true, message: `${updatedCount} bens tiveram seu status atualizado para ${status}.` };
-  }
-
-  async deleteBem(id: string): Promise<{ success: boolean; message: string; }> {
-    const initialLength = this.localData.sampleBens.length;
-    this.localData.sampleBens = this.localData.sampleBens.filter(b => b.id !== id);
-    if (this.localData.sampleBens.length < initialLength) {
-      this._persistData();
-      return { success: true, message: 'Bem excluído com sucesso!' };
-    }
-    return { success: false, message: 'Bem não encontrado.' };
-  }
-  
-  async createLotsFromBens(lotsToCreate: LotDbData[]): Promise<{ success: boolean, message: string, createdLots?: Lot[] }> {
-    const createdLots: Lot[] = [];
-    for (const lotData of lotsToCreate) {
-        const newLot: Lot = {
-            ...(lotData as any), // Cast to bypass strict type checking for DbData vs full Lot
-            id: `lot-${uuidv4()}`,
-            publicId: `LOT-PUB-${uuidv4().substring(0, 8)}`,
-            bidsCount: 0,
-            views: 0,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
-        this.localData.sampleLots.push(newLot);
-        createdLots.push(newLot);
-    }
-    this._persistData();
-    return { success: true, message: `${createdLots.length} lotes individuais criados.`, createdLots };
-  }
-
-  // --- Stubs for other methods ---
-  
-  // All other methods from this point are placeholders as requested
-  // They return empty results or "not implemented" messages
-  
   async getLotCategoryByName(name: string): Promise<LotCategory | null> {
     const category = this.localData.sampleLotCategories.find(c => c.name.toLowerCase() === name.toLowerCase());
     return Promise.resolve(category ? JSON.parse(JSON.stringify(category)) : null);
@@ -545,16 +342,31 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return Promise.resolve(city ? JSON.parse(JSON.stringify(city)) : null);
   }
   async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[SampleDataAdapter] updateCity not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const index = this.localData.sampleCities.findIndex(c => c.id === id);
+    if (index === -1) return { success: false, message: "Cidade não encontrada." };
+    this.localData.sampleCities[index] = { ...this.localData.sampleCities[index], ...data, slug: data.name ? slugify(data.name) : this.localData.sampleCities[index].slug } as CityInfo;
+    this._persistData();
+    return { success: true, message: 'Cidade atualizada.' };
   }
   async deleteCity(id: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[SampleDataAdapter] deleteCity not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    this.localData.sampleCities = this.localData.sampleCities.filter(c => c.id !== id);
+    this._persistData();
+    return { success: true, message: 'Cidade excluída.' };
   }
+  
   async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> {
-    console.warn("[SampleDataAdapter] createAuctioneer not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const newId = `auct-${slugify(data.name)}`;
+    const newAuctioneer: AuctioneerProfileInfo = {
+        ...data,
+        id: newId,
+        publicId: `AUCT-PUB-${newId.slice(-4)}${Math.floor(Math.random()*100)}`,
+        slug: slugify(data.name),
+        createdAt: new Date(),
+        updatedAt: new Date()
+    };
+    this.localData.sampleAuctioneers.push(newAuctioneer);
+    this._persistData();
+    return { success: true, message: 'Leiloeiro criado!', auctioneerId: newAuctioneer.id, auctioneerPublicId: newAuctioneer.publicId };
   }
   async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleAuctioneers)));
@@ -564,15 +376,19 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null);
   }
   async updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[SampleDataAdapter] updateAuctioneer not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const index = this.localData.sampleAuctioneers.findIndex(i => i.id === idOrPublicId || i.publicId === idOrPublicId);
+    if (index === -1) return { success: false, message: 'Leiloeiro não encontrado.' };
+    this.localData.sampleAuctioneers[index] = { ...this.localData.sampleAuctioneers[index], ...data, updatedAt: new Date() } as AuctioneerProfileInfo;
+    this._persistData();
+    return { success: true, message: 'Leiloeiro atualizado.' };
   }
   async deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[SampleDataAdapter] deleteAuctioneer not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    this.localData.sampleAuctioneers = this.localData.sampleAuctioneers.filter(i => i.id !== idOrPublicId && i.publicId !== idOrPublicId);
+    this._persistData();
+    return { success: true, message: 'Leiloeiro excluído.' };
   }
   async getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
-    const item = this.localData.sampleAuctioneers.find(i => i.slug === slugOrPublicId || i.publicId === slugOrPublicId);
+    const item = this.localData.sampleAuctioneers.find(i => i.slug === slugOrPublicId || i.publicId === slugOrPublicId || i.id === slugOrPublicId);
     return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null);
   }
   async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> {
@@ -604,12 +420,16 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null);
   }
   async updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[SampleDataAdapter] updateSeller not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+     const index = this.localData.sampleSellers.findIndex(i => i.id === idOrPublicId || i.publicId === idOrPublicId);
+    if (index === -1) return { success: false, message: 'Comitente não encontrado.' };
+    this.localData.sampleSellers[index] = { ...this.localData.sampleSellers[index], ...data, updatedAt: new Date() } as SellerProfileInfo;
+    this._persistData();
+    return { success: true, message: 'Comitente atualizado.' };
   }
   async deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[SampleDataAdapter] deleteSeller not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    this.localData.sampleSellers = this.localData.sampleSellers.filter(i => i.id !== idOrPublicId && i.publicId !== idOrPublicId);
+    this._persistData();
+    return { success: true, message: 'Comitente excluído.' };
   }
   async getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null> {
     const item = this.localData.sampleSellers.find(i => i.slug === slugOrPublicId || i.publicId === slugOrPublicId || i.id === slugOrPublicId);
@@ -665,23 +485,27 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     })));
   }
   async updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[SampleDataAdapter] updateAuction not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const index = this.localData.sampleAuctions.findIndex(a => a.id === idOrPublicId || a.publicId === idOrPublicId);
+    if (index === -1) return { success: false, message: "Leilão não encontrado."};
+    this.localData.sampleAuctions[index] = { ...this.localData.sampleAuctions[index], ...data, updatedAt: new Date() } as Auction;
+    this._persistData();
+    return { success: true, message: "Leilão atualizado."};
   }
   async deleteAuction(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[SampleDataAdapter] deleteAuction not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    this.localData.sampleAuctions = this.localData.sampleAuctions.filter(a => a.id !== idOrPublicId && a.publicId !== idOrPublicId);
+    this._persistData();
+    return { success: true, message: "Leilão excluído."};
   }
   
   async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
-      const seller = this.localData.sampleSellers.find(s => s.slug === sellerSlugOrPublicId || s.publicId === sellerSlugOrPublicId);
+      const seller = this.localData.sampleSellers.find(s => s.slug === sellerSlugOrPublicId || s.publicId === sellerSlugOrPublicId || s.id === sellerSlugOrPublicId);
       if(!seller) return [];
       const auctions = this.localData.sampleAuctions.filter(a => a.seller === seller.name || a.sellerId === seller.id);
       return Promise.resolve(JSON.parse(JSON.stringify(auctions)));
   }
   
   async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {
-     const auctioneer = this.localData.sampleAuctioneers.find(a => a.slug === auctioneerSlugOrPublicId || a.publicId === auctioneerSlugOrPublicId);
+     const auctioneer = this.localData.sampleAuctioneers.find(a => a.slug === auctioneerSlugOrPublicId || a.publicId === auctioneerSlugOrPublicId || a.id === auctioneerSlugOrPublicId);
      if(!auctioneer) return [];
      const auctions = this.localData.sampleAuctions.filter(a => a.auctioneer === auctioneer.name || a.auctioneerId === auctioneer.id);
      return Promise.resolve(JSON.parse(JSON.stringify(auctions)));
@@ -789,37 +613,69 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return { success: true, message: "Perfil atualizado com sucesso." };
   }
   async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileWithPermissions; }> {
-      const existingUser = this.localData.sampleUserProfiles.find(u => u.uid === userId || u.email === email);
-      const role = this.localData.sampleRoles.find(r => r.id === roleIdToAssign || r.name === targetRoleName) || this.localData.sampleRoles.find(r => r.name === 'USER')!;
+    const { auth: localAuthAdmin, error: sdkError } = ensureAdminInitialized();
+    if (sdkError || !localAuthAdmin) {
+      console.warn(`[FirestoreAdapter - ensureUserRole] Admin SDK Auth não disponível ou erro de inicialização: ${sdkError?.message}. Continuando sem interação Auth se possível.`);
+    }
+    try {
+        await this.ensureDefaultRolesExist(); // Ensure default roles are in Firestore
+        let targetRole: Role | null = null;
+        if (roleIdToAssign) {
+            console.log(`[FirestoreAdapter - ensureUserRole] Tentando buscar perfil por ID fornecido: ${roleIdToAssign}`);
+            targetRole = await this.getRole(roleIdToAssign);
+        }
+        if (!targetRole) {
+            console.log(`[FirestoreAdapter - ensureUserRole] Perfil por ID não encontrado ou ID não fornecido. Buscando por nome: ${targetRoleName}`);
+            targetRole = await this.getRoleByName(targetRoleName) || await this.getRoleByName('USER');
+        }
 
-      if (existingUser) {
-          existingUser.roleId = role.id;
-          existingUser.roleName = role.name;
-          existingUser.permissions = role.permissions;
-          existingUser.updatedAt = new Date();
-          this._persistData();
-          return { success: true, message: 'User role updated.', userProfile: existingUser as UserProfileWithPermissions };
-      } else {
-          const newUser: UserProfileWithPermissions = {
-              uid: userId,
-              email: email,
-              fullName: fullName || '',
-              roleId: role.id,
-              roleName: role.name,
-              permissions: role.permissions,
-              status: 'ATIVO',
-              habilitationStatus: 'PENDING_DOCUMENTS',
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              ...(additionalProfileData as any)
-          };
-          this.localData.sampleUserProfiles.push(newUser);
-          this._persistData();
-          return { success: true, message: 'New user profile created.', userProfile: newUser };
-      }
+        if (!targetRole || !targetRole.id) {
+            console.error(`[FirestoreAdapter - ensureUserRole] CRITICAL: Perfil '${targetRoleName}' ou 'USER' não encontrado ou sem ID.`);
+            return { success: false, message: `Perfil padrão '${targetRoleName}' ou 'USER' não encontrado ou sem ID.` };
+        }
+         console.log(`[FirestoreAdapter - ensureUserRole] Perfil alvo determinado: ${targetRole.name} (ID: ${targetRole.id})`);
+
+        const userDocRef = this.db.collection('users').doc(userId);
+        const userSnap = await userDocRef.get();
+        let finalProfileData: UserProfileData;
+
+        if (userSnap.exists) {
+            const userDataFromDB = userSnap.data() as UserProfileData;
+            const updatePayload: any = { updatedAt: this.AdminFieldValue.serverTimestamp() };
+            let needsUpdate = false;
+            if (userDataFromDB.roleId !== targetRole.id) { updatePayload.roleId = targetRole.id; needsUpdate = true; }
+            if (userDataFromDB.roleName !== targetRole.name) { updatePayload.roleName = targetRole.name; needsUpdate = true; }
+            if (JSON.stringify(userDataFromDB.permissions || []) !== JSON.stringify(targetRole.permissions || [])) {
+              updatePayload.permissions = targetRole.permissions; needsUpdate = true;
+            }
+
+            if (needsUpdate) {
+              console.log(`[FirestoreAdapter - ensureUserRole] ATUALIZANDO perfil existente ${userId} para role ${targetRole.name}`);
+               await userDocRef.update(updatePayload);
+            } else {
+                console.log(`[FirestoreAdapter - ensureUserRole] Perfil ${userId} já existe e está atualizado.`);
+            }
+             finalProfileData = { uid: userId, ...userDataFromDB, roleId: targetRole.id, roleName: targetRole.name, permissions: targetRole.permissions };
+
+        } else {
+            console.log(`[FirestoreAdapter - ensureUserRole] Criando novo perfil para ${userId} com role ${targetRole.name}`);
+            const creationPayload: any = { email, fullName, roleId: targetRole.id, roleName: targetRole.name, permissions: targetRole.permissions, createdAt: this.AdminFieldValue.serverTimestamp(), updatedAt: this.AdminFieldValue.serverTimestamp() };
+             if (additionalProfileData) {
+                    Object.assign(creationPayload, additionalProfileData);
+                    if (additionalProfileData.dateOfBirth) {
+                        creationPayload.dateOfBirth = this.ServerTimestamp.fromDate(new Date(additionalProfileData.dateOfBirth));
+                    }
+               }
+               await userDocRef.set(creationPayload);
+               finalProfileData = { uid: userId, email, fullName, roleId: targetRole.id, roleName: targetRole.name, permissions: targetRole.permissions } as UserProfileData;
+        }
+
+        return { success: true, message: "Perfil assegurado com sucesso.", userProfile: finalProfileData as UserProfileWithPermissions };
+
+    } catch (e: any) { console.error("[FirestoreAdapter - ensureUserRole] " + e.message); return { success: false, message: e.message }; }
   }
 
-  async getUsersWithRoles(): Promise<UserProfileData[]> {
+  async getUsersWithRoles(): Promise<UserProfileWithPermissions[]> {
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleUserProfiles)));
   }
   async getUserByEmail(email: string): Promise<UserProfileWithPermissions | null> {
@@ -832,17 +688,33 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return Promise.resolve(JSON.parse(JSON.stringify(finalProfile)));
   }
   async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
-    console.warn("[SampleDataAdapter] updateUserRole not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const userIndex = this.localData.sampleUserProfiles.findIndex(u => u.uid === userId);
+    if(userIndex === -1) return { success: false, message: "Usuário não encontrado." };
+    const role = this.localData.sampleRoles.find(r => r.id === roleId);
+    this.localData.sampleUserProfiles[userIndex].roleId = role?.id || null;
+    this.localData.sampleUserProfiles[userIndex].roleName = role?.name || undefined;
+    this.localData.sampleUserProfiles[userIndex].permissions = role?.permissions || [];
+    this.localData.sampleUserProfiles[userIndex].updatedAt = new Date();
+    this._persistData();
+    return { success: true, message: "Perfil do usuário atualizado." };
   }
   async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[SampleDataAdapter] deleteUserProfile not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    this.localData.sampleUserProfiles = this.localData.sampleUserProfiles.filter(u => u.uid !== userId);
+    this._persistData();
+    return { success: true, message: "Usuário excluído." };
   }
 
   async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> {
-    console.warn("[SampleDataAdapter] createRole not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const newRole: Role = {
+        ...data,
+        id: `role-${slugify(data.name)}`,
+        name_normalized: data.name.toUpperCase(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+    };
+    this.localData.sampleRoles.push(newRole);
+    this._persistData();
+    return { success: true, message: 'Perfil criado!', roleId: newRole.id };
   }
   async getRoles(): Promise<Role[]> {
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleRoles)));
@@ -857,43 +729,72 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   }
 
   async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[SampleDataAdapter] updateRole not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+     const index = this.localData.sampleRoles.findIndex(r => r.id === id);
+    if (index === -1) return { success: false, message: "Perfil não encontrado." };
+    this.localData.sampleRoles[index] = { ...this.localData.sampleRoles[index], ...data, name_normalized: data.name ? data.name.toUpperCase() : this.localData.sampleRoles[index].name_normalized, updatedAt: new Date() } as Role;
+    this._persistData();
+    return { success: true, message: 'Perfil atualizado.' };
   }
   async deleteRole(id: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[SampleDataAdapter] deleteRole not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    this.localData.sampleRoles = this.localData.sampleRoles.filter(r => r.id !== id);
+    this._persistData();
+    return { success: true, message: 'Perfil excluído.' };
   }
   async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }> {
-    console.warn("[SampleDataAdapter] ensureDefaultRolesExist not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    console.log('[SampleDataAdapter] ensureDefaultRolesExist is not needed, data is hardcoded.');
+    return { success: true, message: 'Default roles are part of sample data.', rolesProcessed: this.localData.sampleRoles.length };
   }
   async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> {
-    console.warn("[SampleDataAdapter] createMediaItem not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const newItem: MediaItem = {
+      id: `media-${uuidv4()}`,
+      ...data,
+      uploadedAt: new Date(),
+      urlOriginal: filePublicUrl,
+      urlThumbnail: filePublicUrl,
+      urlMedium: filePublicUrl,
+      urlLarge: filePublicUrl,
+      storagePath: filePublicUrl,
+      uploadedBy: uploadedBy || 'system',
+      linkedLotIds: [],
+    };
+    this.localData.sampleMediaItems.push(newItem);
+    this._persistData();
+    return { success: true, message: 'Mídia criada!', item: newItem };
   }
   async getMediaItems(): Promise<MediaItem[]> {
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleMediaItems)));
   }
   async getMediaItem(id: string): Promise<MediaItem | null> {
-    console.warn("[SampleDataAdapter] getMediaItem not implemented.");
-    return null;
+    const item = this.localData.sampleMediaItems.find(i => i.id === id);
+    return Promise.resolve(item ? JSON.parse(JSON.stringify(item)) : null);
   }
   async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[SampleDataAdapter] updateMediaItemMetadata not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const index = this.localData.sampleMediaItems.findIndex(i => i.id === id);
+    if (index === -1) return { success: false, message: 'Item de mídia não encontrado.' };
+    this.localData.sampleMediaItems[index] = { ...this.localData.sampleMediaItems[index], ...metadata } as MediaItem;
+    this._persistData();
+    return { success: true, message: 'Metadados atualizados.' };
   }
   async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[SampleDataAdapter] deleteMediaItemFromDb not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    this.localData.sampleMediaItems = this.localData.sampleMediaItems.filter(i => i.id !== id);
+    this._persistData();
+    return { success: true, message: 'Mídia excluída.' };
   }
   async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> {
-    console.warn("[SampleDataAdapter] linkMediaItemsToLot not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const lotIndex = this.localData.sampleLots.findIndex(l => l.id === lotId);
+    if(lotIndex === -1) return {success: false, message: "Lote não encontrado"};
+    const currentIds = new Set(this.localData.sampleLots[lotIndex].mediaItemIds || []);
+    mediaItemIds.forEach(id => currentIds.add(id));
+    this.localData.sampleLots[lotIndex].mediaItemIds = Array.from(currentIds);
+    this._persistData();
+    return { success: true, message: 'Mídia vinculada.' };
   }
   async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[SampleDataAdapter] unlinkMediaItemFromLot not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const lotIndex = this.localData.sampleLots.findIndex(l => l.id === lotId);
+    if(lotIndex === -1) return {success: false, message: "Lote não encontrado"};
+    this.localData.sampleLots[lotIndex].mediaItemIds = (this.localData.sampleLots[lotIndex].mediaItemIds || []).filter(id => id !== mediaItemId);
+    this._persistData();
+    return { success: true, message: 'Mídia desvinculada.' };
   }
   
   async getNotificationsForUser(userId: string): Promise<Notification[]> {
@@ -1088,185 +989,3 @@ export class SampleDataAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Documento salvo para análise.' };
   }
 }
-
-```
-- src/lib/storage.ts:
-```ts
-// src/lib/storage.ts
-import type { IStorageAdapter } from '@/types';
-import { LocalStorageAdapter } from './storage/local.adapter';
-import { FirebaseStorageAdapter } from './storage/firebase.adapter';
-import { getPlatformSettings } from './admin/settings/actions'; // Using the action to get settings
-
-let storageInstance: IStorageAdapter | undefined;
-
-export async function getStorageAdapter(): Promise<IStorageAdapter> {
-  // This logic now runs only on the server, ensuring process.env is reliable.
-  const provider = process.env.STORAGE_PROVIDER?.toUpperCase() || 'LOCAL';
-  
-  if (storageInstance && 
-      ( (provider === 'LOCAL' && storageInstance instanceof LocalStorageAdapter) ||
-        (provider === 'FIREBASE' && storageInstance instanceof FirebaseStorageAdapter) )
-     ) {
-    return storageInstance;
-  }
-
-  console.log(`[getStorageAdapter] Initializing storage adapter for provider: ${provider}`);
-
-  switch (provider) {
-    case 'FIREBASE':
-      storageInstance = new FirebaseStorageAdapter();
-      break;
-    case 'LOCAL':
-    default:
-      storageInstance = new LocalStorageAdapter();
-      break;
-  }
-
-  return storageInstance;
-}
-
-```
-- tailwind.config.ts:
-```ts
-import type { Config } from "tailwindcss"
-
-const config = {
-  darkMode: ["class"],
-  content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
-	],
-  prefix: "",
-  theme: {
-    container: {
-      center: true,
-      padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
-    },
-    extend: {
-      fontFamily: {
-        body: ['Open Sans', 'sans-serif'],
-        headline: ['Open Sans', 'sans-serif'], // Use a more distinct font for headlines if desired
-      },
-      colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
-        chart: {
-          '1': 'hsl(var(--chart-1))',
-          '2': 'hsl(var(--chart-2))',
-          '3': 'hsl(var(--chart-3))',
-          '4': 'hsl(var(--chart-4))',
-          '5': 'hsl(var(--chart-5))',
-        },
-      },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-      },
-      keyframes: {
-        "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
-        },
-        "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
-        },
-      },
-      animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
-      },
-    },
-  },
-  plugins: [require("tailwindcss-animate")],
-} satisfies Config
-
-export default config
-```
-- tsconfig.json:
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": false,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "paths": {
-      "@/*": [
-        "./src/*"
-      ]
-    }
-  },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    "src/lib/database/sample-data.adapter.js",
-    "src/lib/database/mysql.adapter.js",
-    "src/lib/database/postgres.adapter.js",
-    "scripts/initialize-db.js",
-    "scripts/setup-admin-user.js",
-    "scripts/copy-sample-images-to-public.js"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
-}
-```

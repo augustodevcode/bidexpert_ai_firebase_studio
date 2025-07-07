@@ -1,3 +1,4 @@
+// src/app/admin/direct-sales/new/page.tsx
 import DirectSaleForm from '../direct-sale-form';
 import { createDirectSaleOffer, type DirectSaleOfferFormData } from '../actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
