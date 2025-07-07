@@ -1,3 +1,4 @@
+
 // src/components/layout/admin-sidebar.tsx
 'use client';
 
@@ -45,8 +46,8 @@ const platformManagementItems = [
   { title: 'Cidades', href: '/admin/cities', icon: Building2 },
   { title: 'Usuários', href: '/admin/users', icon: Users },
   { title: 'Perfis (Roles)', href: '/admin/roles', icon: ShieldCheck },
-  { title: 'Configurações', href: '/admin/settings', icon: Settings },
   { title: 'Relatórios', href: '/admin/reports', icon: BarChart },
+  { title: 'Configurações', href: '/admin/settings', icon: Settings },
 ];
 
 const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; title: string; icon: React.ElementType; disabled?: boolean }; pathname: string; onLinkClick?: () => void; }) => (

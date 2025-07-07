@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { AuctioneerProfileInfo, AuctioneerFormData } from '@/types';
+import type { AuctioneerProfileInfo, AuctioneerFormData, Auction } from '@/types';
 import { getDatabaseAdapter } from '@/lib/database';
 
 export async function createAuctioneer(
@@ -34,6 +34,11 @@ export async function getAuctioneerBySlug(slugOrPublicId: string): Promise<Aucti
 export async function getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> {
   const db = await getDatabaseAdapter();
   return db.getAuctioneerByName(name);
+}
+
+export async function getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {
+    const db = await getDatabaseAdapter();
+    return db.getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId);
 }
 
 export async function updateAuctioneer(

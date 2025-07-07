@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LayoutDashboard, ListChecks, Settings, Database } from 'lucide-react';
+import { LayoutDashboard, Settings, Database, Gavel, Package, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useDevConfig } from '@/components/dev-config-provider';
 import { Button } from '@/components/ui/button';
@@ -36,44 +36,61 @@ export default function AdminDashboardPage() {
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Link href="/admin/categories" className="block hover:no-underline">
+            <Link href="/admin/auctions" className="block hover:no-underline">
               <Card className="hover:shadow-md transition-shadow h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Categorias de Lotes</CardTitle>
-                  <ListChecks className="h-5 w-5 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium">Gerenciar Leilões</CardTitle>
+                  <Gavel className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <p className="text-xs text-muted-foreground">
-                    Gerenciar as categorias utilizadas para classificar os lotes.
+                    Crie, edite e publique leilões e seus lotes.
                   </p>
                 </CardContent>
               </Card>
             </Link>
 
-            {/* Placeholder for future admin sections */}
-            <Card className="bg-muted/50 cursor-not-allowed">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Gerenciar Leilões (Em Breve)</CardTitle>
-                <Settings className="h-5 w-5 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground">
-                  Administrar leilões, lotes, e outras configurações.
-                </p>
-              </CardContent>
-            </Card>
+             <Link href="/admin/lots" className="block hover:no-underline">
+              <Card className="hover:shadow-md transition-shadow h-full">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Gerenciar Lotes</CardTitle>
+                  <Package className="h-5 w-5 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground">
+                    Visualize e edite todos os lotes da plataforma.
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
             
-            <Card className="bg-muted/50 cursor-not-allowed">
+            <Link href="/admin/users" className="block hover:no-underline">
+              <Card className="hover:shadow-md transition-shadow h-full">
                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Gerenciar Usuários (Em Breve)</CardTitle>
+                <CardTitle className="text-sm font-medium">Gerenciar Usuários</CardTitle>
+                <Users className="h-5 w-5 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  Visualize usuários, atribua perfis e gerencie acessos.
+                </p>
+              </CardContent>
+            </Card>
+            </Link>
+
+             <Link href="/admin/settings" className="block hover:no-underline">
+              <Card className="hover:shadow-md transition-shadow h-full">
+               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Configurações</CardTitle>
                 <Settings className="h-5 w-5 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-muted-foreground">
-                  Visualizar e gerenciar perfis de usuários.
+                  Ajuste parâmetros globais da plataforma.
                 </p>
               </CardContent>
             </Card>
+            </Link>
 
           </div>
 

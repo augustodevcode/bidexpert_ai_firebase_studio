@@ -127,7 +127,7 @@ export default function EntityEditMenu({
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setIsMediaModalOpen(true)}>
             <ImageIcon className="mr-2 h-4 w-4" />
-            <span>Editar Imagem</span>
+            <span>Editar Imagem Principal</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setIsTitleModalOpen(true)}>
             <TextCursorInput className="mr-2 h-4 w-4" />
@@ -135,7 +135,7 @@ export default function EntityEditMenu({
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleToggleFeatured}>
             <Star className="mr-2 h-4 w-4" />
-            <span>{isFeatured ? 'Tirar Destaque' : 'Destacar'}</span>
+            <span>{isFeatured ? 'Remover Destaque' : 'Destacar no Marketplace'}</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>

@@ -322,7 +322,7 @@ export interface Bem {
   condoDetails?: string; improvements?: string; topography?: string;
   liensAndEncumbrances?: string; propertyDebts?: string;
   unregisteredRecords?: string; zoningRestrictions?: string;
-  amenities?: { value: string }[];
+  amenities?: string[];
   
   // Eletrônicos
   brand?: string; serialNumber?: string;
@@ -512,7 +512,7 @@ export type BidInfo = {
   timestamp: AnyTimestamp;
 };
 
-export type UserBidStatus = 'GANHANDO' | 'PERDENDO' | 'ARREMATADO' | 'NAO_ARREMATADO' | 'ENCERRADO' | 'CANCELADO';
+export type UserBidStatus = 'GANHANDO' | 'PERDENDO' | 'ARREMATADO' | 'NAO_ARREMATADO' | 'ENCERRADO' | 'CANCELADO' | 'SUPERADO';
 export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO';
 
 export interface UserWin {
@@ -679,7 +679,7 @@ export type DirectSaleOfferStatus = 'ACTIVE' | 'SOLD' | 'EXPIRED' | 'PENDING_APP
 
 export interface DirectSaleOffer {
     id: string;
-    publicId: string;
+    publicId?: string;
     title: string;
     description: string;
     imageUrl: string;
@@ -1110,6 +1110,7 @@ export interface IDatabaseAdapter {
   createLotsFromBens(lotsToCreate: LotDbData[]): Promise<{ success: boolean, message: string, createdLots?: Lot[] }>;
   getLots(auctionIdParam?: string): Promise<Lot[]>;
   getLotsByIds(ids: string[]): Promise<Lot[]>;
+  getLotsBySellerSlug(sellerSlugOrPublicId: string): Promise<Lot[]>;
   getLot(idOrPublicId: string): Promise<Lot | null>;
   updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }>;
   deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }>;

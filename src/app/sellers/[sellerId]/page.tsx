@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { getAuctionsBySellerSlug } from '@/app/admin/auctions/actions';
-import { getLots } from '@/app/admin/lots/actions';
+import { getLotsBySellerSlug } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import type { Auction, Lot, PlatformSettings, SellerProfileInfo } from '@/types';
 import LotCard from '@/components/lot-card';
@@ -39,8 +39,8 @@ export default function SellerDetailsPage() {
 
   const { userProfileWithPermissions } = useAuth();
   const [sellerProfile, setSellerProfile] = useState<SellerProfileInfo | null>(null);
-  const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
   const [relatedLots, setRelatedLots] = useState<Lot[]>([]);
+  const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,10 +60,10 @@ export default function SellerDetailsPage() {
         setIsLoading(true);
         setError(null);
         try {
-          const [foundSeller, auctions, allLots, settings] = await Promise.all([
+          const [foundSeller, lots, auctions, settings] = await Promise.all([
               getSellerBySlug(sellerIdSlug),
+              getLotsBySellerSlug(sellerIdSlug),
               getAuctionsBySellerSlug(sellerIdSlug),
-              getLots(),
               getPlatformSettings()
           ]);
           setPlatformSettings(settings);
@@ -78,10 +78,7 @@ export default function SellerDetailsPage() {
             return;
           }
           setSellerProfile(foundSeller);
-          
-          const lotsFromThisSeller = allLots.filter(lot => lot.sellerId === foundSeller.id || lot.sellerName === foundSeller.name);
-          setRelatedLots(lotsFromThisSeller);
-
+          setRelatedLots(lots);
           setCurrentLotPage(1);
 
         } catch (e) {

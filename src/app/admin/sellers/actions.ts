@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { SellerProfileInfo, SellerFormData } from '@/types';
+import type { SellerProfileInfo, SellerFormData, Lot } from '@/types';
 import { getDatabaseAdapter } from '@/lib/database';
 
 export async function createSeller(
@@ -35,6 +35,19 @@ export async function getSellerBySlug(slugOrPublicId: string): Promise<SellerPro
   const db = await getDatabaseAdapter();
   return db.getSellerBySlug(slugOrPublicId);
 }
+
+export async function getLotsBySellerSlug(sellerSlugOrPublicId: string): Promise<Lot[]> {
+  const db = await getDatabaseAdapter();
+  if (typeof db.getLotsBySellerSlug === 'function') {
+    return db.getLotsBySellerSlug(sellerSlugOrPublicId);
+  }
+  console.warn(`[getLotsBySellerSlug] Adapter ${db.constructor.name} does not implement getLotsBySellerSlug. This may be inefficient.`);
+  const allLots = await db.getLots();
+  const seller = await getSellerBySlug(sellerSlugOrPublicId);
+  if (!seller) return [];
+  return allLots.filter(lot => lot.sellerId === seller.id || lot.sellerName === seller.name);
+}
+
 
 export async function getSellerByName(name: string): Promise<SellerProfileInfo | null> {
   const db = await getDatabaseAdapter();
