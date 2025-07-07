@@ -1,3 +1,4 @@
+
 // src/lib/database/index.ts
 import type { IDatabaseAdapter } from '@/types';
 import { cookies } from 'next/headers'; // This is a dynamic function

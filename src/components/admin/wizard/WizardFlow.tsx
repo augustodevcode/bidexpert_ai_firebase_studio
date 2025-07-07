@@ -1,3 +1,4 @@
+
 // src/components/admin/wizard/WizardFlow.tsx
 'use client';
 
@@ -29,11 +30,11 @@ export default function WizardFlow() {
     const allNodes: Node<FlowNodeData>[] = [];
     const allEdges: Edge[] = [];
     const xGap = 280;
-    const yGap = 120; // Reduced Y gap
+    const yGap = 120;
 
     // --- Start Node ---
     allNodes.push({
-      id: 'start', type: 'customStep', position: { x: 0, y: yGap * 1.5 },
+      id: 'start', type: 'customStep', position: { x: 0, y: yGap * 2.5 },
       data: {
         title: 'Início do Cadastro', status: 'done',
         icon: Rocket, pathType: 'COMMON', isActivePath: true, label: `#${nodeIdCounter++} - Ponto de Partida`
@@ -42,15 +43,11 @@ export default function WizardFlow() {
 
     // --- Type Selection Nodes ---
     const auctionTypes = ['JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS'] as const;
-    const judicialYPos = yGap * 1.5;
-
     auctionTypes.forEach((type, index) => {
-      // Adjust Y position for clarity
-      let yPos = (index === 0) ? judicialYPos : (yGap * (index + 2));
-      
+      const yBase = index * yGap * 1.5;
       const isActivePath = !selectedType || selectedType === type;
       allNodes.push({
-        id: `type-${type}`, type: 'customStep', position: { x: xGap, y: yPos },
+        id: `type-${type}`, type: 'customStep', position: { x: xGap, y: yBase },
         data: {
           label: `#${nodeIdCounter++} - Modalidade`, title: type.replace(/_/g, ' '), status: selectedType ? 'done' : 'in_progress',
           pathType: type, isActivePath
@@ -63,10 +60,10 @@ export default function WizardFlow() {
     const judicialPathIsActive = !selectedType || selectedType === 'JUDICIAL';
     const judicialEdgeStyle = { stroke: pathColors.JUDICIAL, strokeWidth: judicialPathIsActive ? 2.5 : 1.5 };
     const judicialInputs = [
-        { id: 'tribunal', title: 'Tribunal', icon: Scale, position: { x: xGap * 2.5, y: judicialYPos - yGap * 1.5 } }, // Above
-        { id: 'comarca', title: 'Comarca', icon: Building, position: { x: xGap * 2.5, y: judicialYPos - yGap * 0.75 } }, // Above
-        { id: 'vara', title: 'Vara', icon: Gavel, position: { x: xGap * 2.5, y: judicialYPos } }, // Aligned
-        { id: 'partes', title: 'Partes Envolvidas', icon: Users, position: { x: xGap * 2.5, y: judicialYPos + yGap * 0.75 } } // Below
+        { id: 'tribunal', title: 'Tribunal', icon: Scale, position: { x: xGap * 2.5, y: yGap * -0.5 } },
+        { id: 'comarca', title: 'Comarca', icon: Building, position: { x: xGap * 2.5, y: yGap * 0.5 } },
+        { id: 'vara', title: 'Vara', icon: Gavel, position: { x: xGap * 2.5, y: yGap * 1.5 } },
+        { id: 'partes', title: 'Partes Envolvidas', icon: Users, position: { x: xGap * 2.5, y: yGap * 2.5 } }
     ];
     judicialInputs.forEach(node => {
         allNodes.push({
@@ -78,39 +75,30 @@ export default function WizardFlow() {
     // --- JUDICIAL PROCESS NODE ---
     const judicialProcessNodeId = 'judicial-processo';
     allNodes.push({
-        id: judicialProcessNodeId, type: 'customStep', position: { x: xGap * 4, y: judicialYPos },
+        id: judicialProcessNodeId, type: 'customStep', position: { x: xGap * 4, y: yGap * 1 },
         data: {
             label: '#9 - Passo 1 (Judicial)', title: 'Processo Judicial', icon: FileText,
             status: wizardData.judicialProcess ? 'done' : (currentStep === 1 && selectedType === 'JUDICIAL' ? 'in_progress' : 'todo'),
             pathType: 'JUDICIAL', isActivePath: judicialPathIsActive, isEntity: true, entityType: 'process', entityId: wizardData.judicialProcess?.id
         }
     });
-    
-    // Generic "Cadastro de Bens" feeding into the process
-    allNodes.push({
-      id: `bens-cadastro`, type: 'customStep', position: { x: xGap * 4, y: judicialYPos - yGap },
-      data: { label: `Fonte de Itens`, title: 'Cadastro de Bens', icon: Package, status: 'todo', pathType: 'COMMON', isActivePath: judicialPathIsActive }
-    });
-    allEdges.push({ id: `e-cadastro-bens-processo`, source: `bens-cadastro`, target: judicialProcessNodeId, type: 'smoothstep', style: judicialEdgeStyle });
-
 
     allEdges.push({ id: `e-type-JUDICIAL-processo`, source: 'type-JUDICIAL', target: judicialProcessNodeId, type: 'smoothstep', style: judicialEdgeStyle, animated: judicialPathIsActive && currentStep >= 1 });
     judicialInputs.forEach(node => {
         allEdges.push({ id: `e-input-${node.id}-processo`, source: `judicial-input-${node.id}`, target: judicialProcessNodeId, type: 'smoothstep', style: judicialEdgeStyle });
     });
     
-    // --- AUCTION ENTITY PRE-REQUISITES (for all paths) ---
-    const auctionYBase = yGap * 3.5;
+    // --- AUCTION ENTITY PRE-REQUISITES ---
     const sellerId = wizardData.auctionDetails?.sellerId;
     const auctioneerId = wizardData.auctionDetails?.auctioneerId;
-    allNodes.push({ id: 'entity-comitente', type: 'customStep', position: { x: xGap * 4, y: auctionYBase + yGap }, data: { label: '#10 - Entidade', title: 'Comitente', icon: Users, status: sellerId ? 'done' : 'todo', pathType: 'COMMON', isActivePath: !!selectedType, isEntity: true, entityId: sellerId, entityType: 'seller'} });
-    allNodes.push({ id: 'entity-leiloeiro', type: 'customStep', position: { x: xGap * 4, y: auctionYBase + yGap * 2 }, data: { label: '#11 - Entidade', title: 'Leiloeiro', icon: Gavel, status: auctioneerId ? 'done' : 'todo', pathType: 'COMMON', isActivePath: !!selectedType, isEntity: true, entityId: auctioneerId, entityType: 'auctioneer' } });
+    allNodes.push({ id: 'entity-comitente', type: 'customStep', position: { x: xGap * 4, y: yGap * 4 }, data: { label: '#10 - Entidade', title: 'Comitente', icon: Users, status: sellerId ? 'done' : 'todo', pathType: 'COMMON', isActivePath: !!selectedType, isEntity: true, entityId: sellerId, entityType: 'seller'} });
+    allNodes.push({ id: 'entity-leiloeiro', type: 'customStep', position: { x: xGap * 4, y: yGap * 5 }, data: { label: '#11 - Entidade', title: 'Leiloeiro', icon: Gavel, status: auctioneerId ? 'done' : 'todo', pathType: 'COMMON', isActivePath: !!selectedType, isEntity: true, entityId: auctioneerId, entityType: 'auctioneer' } });
 
 
     // --- AUCTION DETAILS NODE ---
     const auctionDetailsNodeId = 'auction-details';
     allNodes.push({
-      id: auctionDetailsNodeId, type: 'customStep', position: { x: xGap * 5.5, y: auctionYBase },
+      id: auctionDetailsNodeId, type: 'customStep', position: { x: xGap * 5.5, y: yGap * 2.5 },
       data: {
         label: `#12 - Passo 2`, title: 'Dados do Leilão',
         status: wizardData.auctionDetails?.title ? 'done' : ((currentStep === 1 && selectedType !== 'JUDICIAL') || currentStep === 2 ? 'in_progress' : 'todo'),
@@ -126,21 +114,17 @@ export default function WizardFlow() {
 
 
     // --- BENS NODE (CENTRAL) ---
-    const bensProcessoNodeId = 'bens-do-processo';
-    const bensDisponiveisNodeId = 'bens-disponiveis';
-    const bensNodeStatus = wizardData.auctionDetails?.title ? 'done' : 'todo';
-    
-    allNodes.push({ // Judicial path for assets
-        id: bensProcessoNodeId, type: 'customStep', position: { x: xGap * 7, y: judicialYPos },
-        data: { label: `Fonte de Itens`, title: 'Bens do Processo', icon: Package, status: wizardData.judicialProcess ? 'done' : 'todo', pathType: 'JUDICIAL', isActivePath: judicialPathIsActive }
-    });
-    allNodes.push({ // Non-judicial path for assets
-      id: bensDisponiveisNodeId, type: 'customStep', position: { x: xGap * 7, y: auctionYBase },
-      data: { label: `Fonte de Itens`, title: 'Bens Disponíveis', icon: Package, status: bensNodeStatus, pathType: selectedType || 'COMMON', isActivePath: !!selectedType && selectedType !== 'JUDICIAL' }
+    const bensNodeId = 'bens-disponiveis';
+    const bensNodeStatus = (selectedType === 'JUDICIAL' && wizardData.judicialProcess) || (selectedType !== 'JUDICIAL' && wizardData.auctionDetails?.title) ? 'done' : 'todo';
+    allNodes.push({
+        id: bensNodeId, type: 'customStep', position: { x: xGap * 7, y: yGap * 1.5 },
+        data: {
+            label: `Fonte de Itens`, title: 'Bens Disponíveis', icon: Package, status: bensNodeStatus, pathType: selectedType || 'COMMON', isActivePath: !!selectedType
+        }
     });
 
-    allEdges.push({ id: 'e-processo-bens', source: judicialProcessNodeId, target: bensProcessoNodeId, type: 'smoothstep', style: judicialEdgeStyle, animated: judicialPathIsActive && currentStep >= 2 });
-    allEdges.push({ id: 'e-auction-bens', source: auctionDetailsNodeId, target: bensDisponiveisNodeId, type: 'smoothstep', style: { stroke: pathColors.COMMON }, animated: !!selectedType && selectedType !== 'JUDICIAL' && currentStep >= 2 });
+    allEdges.push({ id: 'e-processo-bens', source: judicialProcessNodeId, target: bensNodeId, type: 'smoothstep', style: judicialEdgeStyle, animated: judicialPathIsActive && currentStep >= 2 });
+    allEdges.push({ id: 'e-auction-bens', source: auctionDetailsNodeId, target: bensNodeId, type: 'smoothstep', style: { stroke: pathColors.COMMON }, animated: !!selectedType && selectedType !== 'JUDICIAL' && currentStep >= 2 });
 
 
     // --- LOTTING NODE ---
@@ -152,9 +136,8 @@ export default function WizardFlow() {
         icon: Boxes, pathType: selectedType || 'COMMON', isActivePath: !!selectedType
       }
     });
-    
-    allEdges.push({ id: `e-bens-processo-lotting`, source: bensProcessoNodeId, target: lottingNodeId, type: 'smoothstep', style: judicialEdgeStyle, animated: judicialPathIsActive && currentStep >= 3 });
-    allEdges.push({ id: `e-bens-disponiveis-lotting`, source: bensDisponiveisNodeId, target: lottingNodeId, type: 'smoothstep', style: { stroke: pathColors.COMMON }, animated: !!selectedType && selectedType !== 'JUDICIAL' && currentStep >= 3 });
+
+    allEdges.push({ id: `e-bens-lotting`, source: bensNodeId, target: lottingNodeId, type: 'smoothstep', style: { stroke: pathColors.COMMON }, animated: !!selectedType && currentStep >= 3 });
     allEdges.push({ id: `e-auction-lotting`, source: auctionDetailsNodeId, target: lottingNodeId, type: 'smoothstep', style: { stroke: pathColors.COMMON }, animated: !!selectedType && currentStep >= 3 });
 
 
@@ -167,31 +150,30 @@ export default function WizardFlow() {
         icon: ListChecks, pathType: selectedType || 'COMMON', isActivePath: !!selectedType
       }
     });
-    allEdges.push({ id: `e-lotting-review`, source: lottingNodeId, target: reviewNodeId, type: 'smoothstep', style: { stroke: selectedType ? pathColors[selectedType] : pathColors.COMMON }, animated: !!selectedType && currentStep >= 4 });
+    allEdges.push({ id: `e-lotting-review`, source: lottingNodeId, target: reviewNodeId, type: 'smoothstep', style: { stroke: selectedType ? pathColors[selectedType] : pathColors.COMMON }, animated: !!selectedType && currentStep >= 3 });
 
     // --- Post-Creation Lifecycle Nodes ---
-    const commonLifecycleIsActive = !!selectedType; // This might need refinement later
-    const commonLifecycleEdgeStyle = { stroke: pathColors.COMMON };
-    const postYLine1 = yGap * 1.5;
-    const postYLine2 = yGap * 3.5;
+    const commonLifecycleIsActive = !!selectedType;
+    const postYLine1 = yGap * 1;
+    const postYLine2 = yGap * 4;
     
-    allNodes.push({ id: 'leilao-ativo', type: 'customStep', position: {x: xGap * 11.5, y: postYLine1}, data: { label: '#16 - Pregão', title: 'Leilão Ativo (Aberto para Lances)', status: 'todo', icon: Gavel, pathType: 'COMMON', isActivePath: commonLifecycleIsActive }});
-    allEdges.push({ id: 'e-review-ativo', source: reviewNodeId, target: 'leilao-ativo', type: 'smoothstep', style: commonLifecycleEdgeStyle });
+    allNodes.push({ id: 'leilao-ativo', type: 'customStep', position: {x: xGap * 11, y: postYLine1}, data: { label: '#16 - Pregão', title: 'Leilão Ativo (Aberto para Lances)', status: 'todo', icon: Gavel, pathType: 'COMMON', isActivePath: commonLifecycleIsActive }});
+    allEdges.push({ id: 'e-review-ativo', source: reviewNodeId, target: 'leilao-ativo', type: 'smoothstep', style: { stroke: pathColors.COMMON } });
     
-    allNodes.push({ id: 'pregao-auditorio', type: 'customStep', position: {x: xGap * 13, y: postYLine1}, data: { label: '#17 - Pregão', title: 'Pregão no Auditório', status: 'todo', icon: Tv, pathType: 'COMMON', isActivePath: commonLifecycleIsActive }});
-    allEdges.push({ id: 'e-ativo-pregao', source: 'leilao-ativo', target: 'pregao-auditorio', type: 'smoothstep', style: commonLifecycleEdgeStyle });
+    allNodes.push({ id: 'pregao-auditorio', type: 'customStep', position: {x: xGap * 12, y: postYLine1}, data: { label: '#17 - Pregão', title: 'Pregão no Auditório', status: 'todo', icon: Tv, pathType: 'COMMON', isActivePath: commonLifecycleIsActive }});
+    allEdges.push({ id: 'e-ativo-pregao', source: 'leilao-ativo', target: 'pregao-auditorio', type: 'smoothstep', style: { stroke: pathColors.COMMON } });
 
-    allNodes.push({ id: 'comunicacao-arrematante', type: 'customStep', position: { x: xGap * 11.5, y: postYLine2 }, data: { label: '#18 - Pós-Leilão', title: 'Comunicação c/ Arrematante', status: 'todo', icon: Users, pathType: 'COMMON', isActivePath: commonLifecycleIsActive }});
-    allEdges.push({ id: 'e-pregao-comunicacao', source: 'pregao-auditorio', target: 'comunicacao-arrematante', type: 'smoothstep', style: commonLifecycleEdgeStyle });
+    allNodes.push({ id: 'comunicacao-arrematante', type: 'customStep', position: { x: xGap * 11, y: postYLine2 }, data: { label: '#18 - Pós-Leilão', title: 'Comunicação c/ Arrematante', status: 'todo', icon: Users, pathType: 'COMMON', isActivePath: commonLifecycleIsActive }});
+    allEdges.push({ id: 'e-pregao-comunicacao', source: 'pregao-auditorio', target: 'comunicacao-arrematante', type: 'smoothstep', style: { stroke: pathColors.COMMON } });
 
-    allNodes.push({ id: 'pagamento-docs', type: 'customStep', position: { x: xGap * 13, y: postYLine2 }, data: { label: '#19 - Pós-Leilão', title: 'Pagamento e Documentos', status: 'todo', icon: FileText, pathType: 'COMMON', isActivePath: commonLifecycleIsActive }});
-    allEdges.push({ id: 'e-comunicacao-pagamento', source: 'comunicacao-arrematante', target: 'pagamento-docs', type: 'smoothstep', style: commonLifecycleEdgeStyle });
+    allNodes.push({ id: 'pagamento-docs', type: 'customStep', position: { x: xGap * 12, y: postYLine2 }, data: { label: '#19 - Pós-Leilão', title: 'Pagamento e Documentos', status: 'todo', icon: FileText, pathType: 'COMMON', isActivePath: commonLifecycleIsActive }});
+    allEdges.push({ id: 'e-comunicacao-pagamento', source: 'comunicacao-arrematante', target: 'pagamento-docs', type: 'smoothstep', style: { stroke: pathColors.COMMON } });
     
-    allNodes.push({ id: 'encerramento', type: 'customStep', position: { x: xGap * 14.5, y: postYLine2 }, data: { label: '#20 - Pós-Leilão', title: 'Encerramento', status: 'todo', icon: CalendarX, pathType: 'COMMON', isActivePath: commonLifecycleIsActive }});
-    allEdges.push({ id: 'e-pagamento-encerramento', source: 'pagamento-docs', target: 'encerramento', type: 'smoothstep', style: commonLifecycleEdgeStyle });
+    allNodes.push({ id: 'encerramento', type: 'customStep', position: { x: xGap * 13, y: postYLine2 }, data: { label: '#20 - Pós-Leilão', title: 'Encerramento', status: 'todo', icon: CalendarX, pathType: 'COMMON', isActivePath: commonLifecycleIsActive }});
+    allEdges.push({ id: 'e-pagamento-encerramento', source: 'pagamento-docs', target: 'encerramento', type: 'smoothstep', style: { stroke: pathColors.COMMON } });
 
-    allNodes.push({ id: 'fluxo-financeiro', type: 'customStep', position: {x: xGap * 16, y: postYLine2}, data: { label: '#21 - Financeiro', title: 'Fluxo Financeiro', status: 'todo', icon: DollarSign, pathType: 'COMMON', isActivePath: commonLifecycleIsActive }});
-    allEdges.push({ id: 'e-encerramento-financeiro', source: 'encerramento', target: 'fluxo-financeiro', type: 'smoothstep', style: commonLifecycleEdgeStyle });
+    allNodes.push({ id: 'fluxo-financeiro', type: 'customStep', position: {x: xGap * 14, y: postYLine2}, data: { label: '#21 - Financeiro', title: 'Fluxo Financeiro', status: 'todo', icon: DollarSign, pathType: 'COMMON', isActivePath: commonLifecycleIsActive }});
+    allEdges.push({ id: 'e-encerramento-financeiro', source: 'encerramento', target: 'fluxo-financeiro', type: 'smoothstep', style: { stroke: pathColors.COMMON } });
 
 
     return { nodes: allNodes, edges: allEdges };

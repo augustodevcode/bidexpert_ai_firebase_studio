@@ -84,7 +84,7 @@ const NavigationMenuLink = NavigationMenuPrimitive.Link
 
 const NavigationMenuViewport = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Viewport>,
-  React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Viewport>
+  React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Viewport> & { align?: "start" | "center" | "end" }
 >(({ className, align = "start", ...props }, ref) => (
   <div className={cn("absolute top-full flex", {
     "justify-start": align === "start",

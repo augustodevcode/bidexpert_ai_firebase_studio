@@ -1,5 +1,4 @@
 
-
 'use client';
 import React from 'react';
 
@@ -15,7 +14,7 @@ import {
   FileText, Heart, Eye, ListChecks, MapPin, Gavel, Tag, CalendarDays, SlidersHorizontal, UserCircle, Briefcase, ExternalLink, Pencil
 } from 'lucide-react';
 import { isPast } from 'date-fns';
-import { getAuctionStatusText, slugify, getUniqueLotLocations } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText, slugify, getUniqueLotLocations, getAuctionStatusColor } from '@/lib/sample-data-helpers';
 import SearchResultsFrame from '@/components/search-results-frame';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -48,8 +47,8 @@ const sortOptionsLots = [
 ];
 
 const initialFiltersState: ActiveFilters = {
-  modality: 'TODAS',
-  category: 'TODAS',
+  modality: 'TODAS', 
+  category: 'TODAS', 
   priceRange: [0, 1000000],
   locations: [],
   sellers: [],
@@ -167,10 +166,11 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
   }, [auction.lots, sortBy, lotSearchTerm, activeFilters, allCategories]);
   
   const paginatedLots = useMemo(() => {
+    if (!platformSettings) return [];
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     return filteredAndSortedLots.slice(startIndex, endIndex);
-  }, [filteredAndSortedLots, currentPage, itemsPerPage]);
+  }, [filteredAndSortedLots, platformSettings, currentPage, itemsPerPage]);
 
 
   const handleSortChange = (newSortBy: string) => {
@@ -208,7 +208,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
                       data-ai-hint={auction.dataAiHint || 'imagem leilao'}
                   />
                   <div className="absolute top-2 left-2 flex flex-col items-start gap-1.5 z-10">
-                      <Badge variant="outline" className="bg-background/80 font-semibold">{getAuctionStatusText(auction.status)}</Badge>
+                      <Badge variant="outline" className={`bg-background/80 font-semibold ${getAuctionStatusColor(auction.status)}`}>{getAuctionStatusText(auction.status)}</Badge>
                       {auction.isFeaturedOnMarketplace && <Badge className="bg-amber-400 text-amber-900">DESTAQUE</Badge>}
                   </div>
                 </div>
@@ -314,29 +314,6 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
            </aside>
 
            <main className="min-w-0 md:ml-4">
-            <div className="md:hidden mb-4">
-                <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      <SlidersHorizontal className="mr-2 h-4 w-4" /> Filtros e Ordenação
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="left" className="p-0 w-[85vw] max-w-sm">
-                      <div className="p-4 h-full overflow-y-auto">
-                          <SidebarFilters
-                              categories={allCategories}
-                              locations={uniqueLocationsForFilter}
-                              sellers={sellersForFilter}
-                              onFilterSubmit={handleFilterSubmit}
-                              onFilterReset={handleFilterReset}
-                              initialFilters={activeFilters}
-                              filterContext="auctions"
-                              disableCategoryFilter={true}
-                          />
-                      </div>
-                  </SheetContent>
-                </Sheet>
-            </div>
             <SearchResultsFrame
                 items={paginatedLots}
                 totalItemsCount={filteredAndSortedLots.length}

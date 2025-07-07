@@ -23,18 +23,19 @@ export default function AdminLayout({
     profilePermissions: userProfileWithPermissions?.permissions
   });
 
+  const isAuthenticated = !!user || !!userProfileWithPermissions;
+
   useEffect(() => {
     console.log('[AdminLayout useEffect] Auth State Change:', { 
       loading, 
-      user: user?.email, 
-      profileEmail: userProfileWithPermissions?.email 
+      isAuthenticated 
     });
 
-    if (!loading && !user && !userProfileWithPermissions) { // Condição ajustada para SQL
-      console.log('[AdminLayout useEffect] User not authenticated (Firebase or SQL profile), redirecting to login.');
+    if (!loading && !isAuthenticated) {
+      console.log('[AdminLayout useEffect] User not authenticated, redirecting to login.');
       router.push('/auth/login?redirect=/admin/dashboard');
     }
-  }, [user, userProfileWithPermissions, loading, router]);
+  }, [isAuthenticated, loading, router]);
 
   if (loading) {
     console.log('[AdminLayout] Rendering: Auth Loading state.');
@@ -46,13 +47,8 @@ export default function AdminLayout({
     );
   }
 
-  const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM?.toUpperCase() || 'FIRESTORE';
-  const isAuthenticated = activeSystem === 'FIRESTORE' ? !!user : !!userProfileWithPermissions;
-
   if (!isAuthenticated) {
     console.log('[AdminLayout] Rendering: User not authenticated, redirect state or showing loader if redirect is about to happen.');
-    // Se o useEffect já disparou o redirect, este return pode não ser visto.
-    // Se o useEffect ainda não rodou (improvável mas possível), este loader é mostrado.
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -62,7 +58,7 @@ export default function AdminLayout({
   }
   
   if (!userProfileWithPermissions) {
-    console.log('[AdminLayout] Rendering: User authenticated (Firebase or determined via SQL flow), but profile with permissions not yet loaded. Showing loader...');
+    console.log('[AdminLayout] Rendering: User authenticated, but profile with permissions not yet loaded. Showing loader...');
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
