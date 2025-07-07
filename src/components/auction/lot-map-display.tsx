@@ -4,7 +4,7 @@
 import type { Lot, PlatformSettings } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Info, ExternalLink } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -12,7 +12,6 @@ import { Button } from '../ui/button';
 import { Skeleton } from '../ui/skeleton';
 
 // Fix for default Leaflet icon paths in Next.js
-// This needs to be done once, outside the component render.
 // @ts-ignore
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -32,6 +31,7 @@ interface LotMapDisplayProps {
 export default function LotMapDisplay({ lot, onOpenMapModal }: LotMapDisplayProps) {
   const { latitude, longitude, mapAddress, title } = lot;
   const [isMounted, setIsMounted] = useState(false);
+  const mapKey = useRef(`map-lot-${lot.id}-${Math.random()}`).current; // Create a stable, unique key
 
   useEffect(() => {
     setIsMounted(true);
@@ -52,7 +52,7 @@ export default function LotMapDisplay({ lot, onOpenMapModal }: LotMapDisplayProp
     <>
       {hasCoords ? (
         <MapContainer
-          key={lot.id} // Key to force re-creation when lot prop changes
+          key={mapKey} // Use the stable, unique key
           center={[latitude, longitude]}
           zoom={15}
           scrollWheelZoom={false}

@@ -1,4 +1,3 @@
-
 // src/components/map-search-component.tsx
 'use client';
 
@@ -73,7 +72,7 @@ export default function MapSearchComponent({
   shouldFitBounds
 }: MapSearchComponentProps) {
   const [isClient, setIsClient] = useState(false);
-  const mapKeyRef = useRef(`map-${Date.now()}-${Math.random()}`); // Stable key
+  const mapKey = useRef(`map-search-${Date.now()}-${Math.random()}`).current; // Stable, unique key per instance
 
   useEffect(() => {
     setIsClient(true);
@@ -85,7 +84,7 @@ export default function MapSearchComponent({
 
   return (
     <MapContainer
-      key={mapKeyRef.current} // Use a stable key
+      key={mapKey} // Apply the unique, stable key
       center={mapCenter}
       zoom={mapZoom}
       scrollWheelZoom={true}

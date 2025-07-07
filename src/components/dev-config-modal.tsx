@@ -47,7 +47,7 @@ export default function DevConfigModal({ onConfigSet, onClose }: DevConfigModalP
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-background/90 backdrop-blur-sm">
-      <Card className="w-full max-w-md shadow-2xl relative">
+      <Card id="seletor-database" className="w-full max-w-md shadow-2xl relative">
         <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground" onClick={onClose} aria-label="Fechar">
             <X className="h-5 w-5" />
         </Button>
