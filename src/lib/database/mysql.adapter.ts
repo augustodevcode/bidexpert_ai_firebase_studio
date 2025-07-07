@@ -601,9 +601,120 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async createAuctionWithLots(wizardData: WizardData): Promise<{ success: boolean; message: string; auctionId?: string; }> {
-    console.warn("[MySqlAdapter] createAuctionWithLots is not yet implemented for MySQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const connection = await getPool().getConnection();
+    try {
+      await connection.beginTransaction();
+
+      const { auctionDetails, createdLots, auctionType } = wizardData;
+      if (!auctionDetails || !auctionDetails.title) throw new Error("Auction details are incomplete.");
+
+      const auctionDbData: Partial<AuctionDbData> = { ...auctionDetails };
+      auctionDbData.publicId = `AUC-PUB-${uuidv4().substring(0, 8)}`;
+      auctionDbData.status = 'RASCUNHO';
+      
+      const [auctionResult] = await connection.execute(
+        'INSERT INTO auctions (public_id, title, description, status, auction_type, category_id, auctioneer_id, seller_id, judicial_process_id, auction_date, end_date, automatic_bidding_enabled, allow_installment_bids, soft_close_enabled, soft_close_minutes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+          auctionDbData.publicId, auctionDbData.title, auctionDbData.description, auctionDbData.status, auctionType,
+          auctionDbData.categoryId, auctionDbData.auctioneerId, auctionDbData.sellerId, wizardData.judicialProcess?.id,
+          auctionDbData.auctionDate, auctionDbData.endDate, auctionDbData.automaticBiddingEnabled, auctionDbData.allowInstallmentBids,
+          auctionDbData.softCloseEnabled, auctionDbData.softCloseMinutes
+        ]
+      );
+      const auctionId = (auctionResult as ResultSetHeader).insertId;
+
+      if (createdLots && createdLots.length > 0) {
+        const lotPromises = createdLots.map(lot => {
+          const lotDbData: Partial<LotDbData> = { ...lot, auctionId: String(auctionId), publicId: `LOT-PUB-${uuidv4().substring(0,8)}` };
+          return connection.execute(
+            'INSERT INTO lots (public_id, auction_id, number, title, price, initial_price, bid_increment_step, category_id, subcategory_id, status, bem_ids) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+              lotDbData.publicId, lotDbData.auctionId, lotDbData.number, lotDbData.title, lotDbData.price,
+              lotDbData.initialPrice, lotDbData.bidIncrementStep, lotDbData.categoryId, lotDbData.subcategoryId,
+              'EM_BREVE', JSON.stringify(lotDbData.bemIds || [])
+            ]
+          );
+        });
+        await Promise.all(lotPromises);
+
+        const allBemIds = createdLots.flatMap(l => l.bemIds || []);
+        if (allBemIds.length > 0) {
+          const placeholders = allBemIds.map(() => '?').join(',');
+          await connection.execute(`UPDATE bens SET status = 'LOTEADO' WHERE id IN (${placeholders})`, allBemIds);
+        }
+      }
+
+      await connection.execute('UPDATE auctions SET total_lots = ? WHERE id = ?', [createdLots?.length || 0, auctionId]);
+      
+      await connection.commit();
+      return { success: true, message: 'Leilão e lotes criados com sucesso!', auctionId: String(auctionId) };
+    } catch (error: any) {
+      await connection.rollback();
+      console.error('[MySqlAdapter] Error in createAuctionWithLots transaction:', error);
+      return { success: false, message: `Erro no banco de dados: ${error.message}` };
+    } finally {
+      connection.release();
+    }
   }
+
+  async getBidsForUser(userId: string): Promise<UserBid[]> {
+      const query = `
+        WITH UserLatestBids AS (
+            SELECT 
+                lot_id,
+                MAX(timestamp) as latest_timestamp
+            FROM bids
+            WHERE bidder_id = ?
+            GROUP BY lot_id
+        )
+        SELECT
+            b.id as bid_id,
+            b.amount,
+            b.timestamp,
+            l.*,
+            a.title as auction_name
+        FROM bids b
+        JOIN UserLatestBids ulb ON b.lot_id = ulb.lot_id AND b.timestamp = ulb.latest_timestamp
+        JOIN lots l ON b.lot_id = l.id
+        LEFT JOIN auctions a ON l.auction_id = a.id
+        WHERE b.bidder_id = ?
+        ORDER BY b.timestamp DESC;
+      `;
+      const [rows] = await getPool().execute<RowDataPacket[]>(query, [userId, userId]);
+      
+      const mappedRows = mapMySqlRowsToCamelCase(rows);
+
+      const userBids: UserBid[] = mappedRows.map(row => {
+          const lot = mapToLot(row);
+          const userBidAmount = parseFloat(row.amount);
+          
+          let bidStatus: UserBidStatus;
+          
+          if (lot.status === 'VENDIDO') {
+              bidStatus = lot.winningBidderId === userId ? 'ARREMATADO' : 'NAO_ARREMATADO';
+          } else if (['ENCERRADO', 'NAO_VENDIDO', 'CANCELADO'].includes(lot.status)) {
+              bidStatus = 'NAO_ARREMATADO';
+          } else { 
+              bidStatus = userBidAmount >= lot.price ? 'GANHANDO' : 'PERDENDO';
+          }
+
+          return {
+              id: String(row.bidId),
+              lot: lot,
+              bidStatus: bidStatus,
+              lotId: lot.id,
+              auctionId: lot.auctionId,
+              lotTitle: lot.title,
+              lotImageUrl: lot.imageUrl || '',
+              userBidAmount: userBidAmount,
+              currentLotPrice: lot.price,
+              bidDate: new Date(row.timestamp),
+              lotEndDate: lot.endDate || new Date(),
+          };
+      });
+      return userBids;
+  }
+
   async updateBensStatus(bemIds: string[], status: "DISPONIVEL" | "LOTEADO" | "VENDIDO" | "REMOVIDO", connection?: any): Promise<{ success: boolean; message: string; }> {
     console.warn("[MySqlAdapter] updateBensStatus is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
@@ -733,10 +844,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] getWinsForUser is not yet implemented for MySQL.");
     return Promise.resolve([]);
   }
-  async getBidsForUser(userId: string): Promise<UserBid[]> {
-    console.warn("[MySqlAdapter] getBidsForUser is not yet implemented for MySQL.");
-    return Promise.resolve([]);
-  }
   
   async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> {
     console.warn("[MySqlAdapter] answerQuestion is not yet implemented for MySQL.");
@@ -819,6 +926,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
     const connection = await getPool().getConnection();
     const errors: any[] = [];
     
+    // Lista de todas as queries de criação de tabela
     const queries = [
         `CREATE TABLE IF NOT EXISTS roles ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100) NOT NULL UNIQUE, name_normalized VARCHAR(100) NOT NULL UNIQUE, description TEXT, permissions JSON, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
         `CREATE TABLE IF NOT EXISTS users ( uid VARCHAR(255) PRIMARY KEY, email VARCHAR(255) NOT NULL UNIQUE, full_name VARCHAR(255), password_text VARCHAR(255), role_id INT, status VARCHAR(50), habilitation_status VARCHAR(50), cpf VARCHAR(20), rg_number VARCHAR(20), rg_issuer VARCHAR(50), rg_issue_date DATE, rg_state VARCHAR(2), date_of_birth DATE, cell_phone VARCHAR(20), home_phone VARCHAR(20), gender VARCHAR(50), profession VARCHAR(100), nationality VARCHAR(100), marital_status VARCHAR(50), property_regime VARCHAR(50), spouse_name VARCHAR(255), spouse_cpf VARCHAR(20), zip_code VARCHAR(10), street VARCHAR(255), number VARCHAR(20), complement VARCHAR(100), neighborhood VARCHAR(100), city VARCHAR(100), state VARCHAR(100), opt_in_marketing BOOLEAN DEFAULT FALSE, avatar_url TEXT, data_ai_hint VARCHAR(255), account_type VARCHAR(50), razao_social VARCHAR(255), cnpj VARCHAR(20), inscricao_estadual VARCHAR(50), website_comitente VARCHAR(255), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE SET NULL );`,
@@ -847,6 +955,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
         console.log('[MySqlAdapter] Executing schema creation queries...');
         for (const [index, query] of queries.entries()) {
             try {
+                // Remove trailing semicolon if exists
                 const cleanQuery = query.trim().endsWith(';') ? query.trim().slice(0, -1) : query.trim();
                 await connection.execute(cleanQuery);
                 console.log(`  - Query ${index + 1}/${queries.length} executed successfully.`);
@@ -1046,6 +1155,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }> {
     console.warn("[MySqlAdapter] deleteLot is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> {
+    console.warn("[MySqlAdapter] getBidsForLot is not yet implemented for MySQL.");
+    return [];
   }
   async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }> {
     console.warn("[MySqlAdapter] placeBidOnLot is not yet implemented for MySQL.");

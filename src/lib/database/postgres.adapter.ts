@@ -560,7 +560,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
   constructor() {
     getPool();
   }
-  
+
   async getNotificationsForUser(userId: string): Promise<Notification[]> {
     const { rows } = await getPool().query(
         `SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC`,
@@ -646,7 +646,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
         ORDER BY b.timestamp DESC;
       `;
       const { rows } = await getPool().query(query, [userId]);
-      const userBids = rows.map(row => {
+      
+      const userBids: UserBid[] = rows.map(row => {
           const lot = mapToLot(row);
           const userBidAmount = parseFloat(row.amount);
           
@@ -654,11 +655,9 @@ export class PostgresAdapter implements IDatabaseAdapter {
           
           if (lot.status === 'VENDIDO') {
               bidStatus = lot.winningBidderId === userId ? 'ARREMATADO' : 'NAO_ARREMATADO';
-          } else if (lot.status === 'NAO_VENDIDO' || lot.status === 'ENCERRADO') {
+          } else if (['ENCERRADO', 'NAO_VENDIDO', 'CANCELADO'].includes(lot.status)) {
               bidStatus = 'NAO_ARREMATADO';
-          } else if (lot.status === 'CANCELADO') {
-              bidStatus = 'CANCELADO';
-          } else { // ABERTO_PARA_LANCES or EM_BREVE
+          } else { 
               bidStatus = userBidAmount >= lot.price ? 'GANHANDO' : 'PERDENDO';
           }
 

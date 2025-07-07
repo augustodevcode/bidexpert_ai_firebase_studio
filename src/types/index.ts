@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -526,10 +525,16 @@ export interface UserWin {
 
 export interface UserBid {
   id: string;
-  amount: number;
-  timestamp: AnyTimestamp;
-  lot: Lot;
+  lotId: string;
+  auctionId: string;
+  lotTitle: string;
+  lotImageUrl: string;
+  userBidAmount: number;
+  currentLotPrice: number;
+  lotEndDate: AnyTimestamp;
+  bidDate: AnyTimestamp;
   bidStatus: UserBidStatus;
+  lot: Lot; 
 }
 
 export interface UserLotMaxBid {
@@ -1213,4 +1218,3 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
-
