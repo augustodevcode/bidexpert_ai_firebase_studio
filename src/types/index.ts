@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -300,12 +301,14 @@ export interface Bem {
   updatedAt: AnyTimestamp;
 
   // Veículos
+  plate?: string;
   make?: string; model?: string; version?: string;
   year?: number; modelYear?: number;
-  plate?: string; vin?: string; renavam?: string | null;
-  color?: string; fuelType?: string; mileage?: number;
-  enginePower?: string; transmissionType?: string;
+  mileage?: number;
+  color?: string; fuelType?: string; transmissionType?: string;
   bodyType?: string; numberOfDoors?: number; vehicleOptions?: string;
+  vin?: string; renavam?: string | null;
+  enginePower?: string;
   detranStatus?: string; debts?: string;
   runningCondition?: string; bodyCondition?: string; tiresCondition?: string;
   hasKey?: boolean;
@@ -319,8 +322,8 @@ export interface Bem {
   condoDetails?: string; improvements?: string; topography?: string;
   liensAndEncumbrances?: string; propertyDebts?: string;
   unregisteredRecords?: string; zoningRestrictions?: string;
-  amenities?: string[];
-
+  amenities?: { value: string }[];
+  
   // Eletrônicos
   brand?: string; serialNumber?: string;
   itemCondition?: string; specifications?: string;

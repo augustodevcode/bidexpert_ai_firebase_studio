@@ -28,7 +28,7 @@ import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import { DataTable } from '@/components/ui/data-table';
-import { createColumns as createBemColumns } from '@/components/admin/lotting/columns';
+import { createColumns as createBemColumns } from '@/app/admin/bens/columns';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
 import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
@@ -416,7 +416,7 @@ export default function LotForm({
                     sortOptions={bemSortOptions}
                     initialSortBy={linkedBensSortBy}
                     onSortChange={setLinkedBensSortBy}
-                    platformSettings={platformSettings}
+                    platformSettings={platformSettings!}
                     isLoading={false}
                     searchTypeLabel="bens vinculados"
                     currentPage={linkedBensCurrentPage}

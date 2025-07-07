@@ -2,7 +2,7 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -28,7 +28,7 @@ const getStatusVariant = (status: Bem['status']) => {
     }
 }
 
-export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<Bem>[] => [
+export const createColumns = ({ handleDelete, onOpenDetails }: { handleDelete: (id: string) => void, onOpenDetails?: (bem: Bem) => void }): ColumnDef<Bem>[] => [
   {
     accessorKey: "imageUrl",
     header: "Imagem",
@@ -36,7 +36,7 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
         const imageUrl = row.getValue("imageUrl") as string | undefined;
         return (
             <div className="w-16 h-12 bg-muted rounded-md flex items-center justify-center">
-                <Image src={imageUrl || "https://placehold.co/100x75.png"} alt={row.getValue("title")} width={64} height={48} className="object-contain rounded-sm" />
+                <Image src={imageUrl || "https://placehold.co/100x75.png"} alt={row.original.title} width={64} height={48} className="object-contain rounded-sm" />
             </div>
         )
     }
@@ -45,10 +45,10 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     accessorKey: "title",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Título do Bem" />,
     cell: ({ row }) => (
-      <Link href={`/admin/bens/${row.original.id}/edit`} className="hover:text-primary font-medium">
+      <div className="font-medium">
         <p className="line-clamp-2">{row.getValue("title")}</p>
         <span className="text-xs text-muted-foreground">{row.original.publicId}</span>
-      </Link>
+      </div>
     ),
   },
   {
@@ -83,6 +83,11 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Ações</DropdownMenuLabel>
+            {onOpenDetails && (
+                 <DropdownMenuItem onClick={() => onOpenDetails(bem)}>
+                    <Eye className="mr-2 h-4 w-4"/>Ver Detalhes
+                 </DropdownMenuItem>
+            )}
             <DropdownMenuItem asChild>
               <Link href={`/admin/bens/${bem.id}/edit`}><Pencil className="mr-2 h-4 w-4"/>Editar</Link>
             </DropdownMenuItem>

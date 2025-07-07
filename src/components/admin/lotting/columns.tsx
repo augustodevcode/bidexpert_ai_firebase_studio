@@ -1,4 +1,3 @@
-
 // src/components/admin/lotting/columns.tsx
 'use client';
 
@@ -8,8 +7,10 @@ import type { Bem } from '@/types';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import { Eye } from 'lucide-react';
 
-export const createColumns = (): ColumnDef<Bem>[] => [
+export const createColumns = ({ onOpenDetails }: { onOpenDetails?: (bem: Bem) => void }): ColumnDef<Bem>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -45,9 +46,13 @@ export const createColumns = (): ColumnDef<Bem>[] => [
     accessorKey: "title",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Título do Bem" />,
     cell: ({ row }) => (
-      <div>
+      <div className="flex items-center gap-2">
         <p className="font-medium line-clamp-2">{row.getValue("title")}</p>
-        <span className="text-xs text-muted-foreground">{row.original.publicId}</span>
+        {onOpenDetails && (
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onOpenDetails(row.original)}>
+                <Eye className="h-3.5 w-3.5 text-muted-foreground"/>
+            </Button>
+        )}
       </div>
     ),
   },
