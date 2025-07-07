@@ -240,7 +240,6 @@ export default function LotDetailClientContent({
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [formattedAuctionEndDate, setFormattedAuctionEndDate] = useState<string | null>(null);
-  const [isClient, setIsClient] = useState(false); // To ensure client-side rendering for map
 
   
   const hasEditPermissions = useMemo(() => 
@@ -290,7 +289,6 @@ export default function LotDetailClientContent({
 
 
   useEffect(() => {
-    setIsClient(true);
     if (typeof window !== 'undefined') setCurrentUrl(window.location.href);
     
     // Format the date here to avoid hydration mismatch
@@ -441,9 +439,9 @@ export default function LotDetailClientContent({
                 <Card className="shadow-lg"><CardHeader><CardTitle className="text-xl font-semibold flex items-center"><FileText className="h-5 w-5 mr-2 text-muted-foreground" />Detalhes do Lote</CardTitle></CardHeader><CardContent className="p-4 md:p-6 pt-0"><Tabs defaultValue="description" className="w-full"><TabsList className="flex w-full flex-wrap gap-1 mb-4"><TabsTrigger value="description">Descrição</TabsTrigger><TabsTrigger value="specification">Especificações</TabsTrigger><TabsTrigger value="legal">{legalTabTitle}</TabsTrigger><TabsTrigger value="seller">Comitente</TabsTrigger><TabsTrigger value="reviews">Avaliações</TabsTrigger><TabsTrigger value="questions">Perguntas</TabsTrigger></TabsList><TabsContent value="description"><LotDescriptionTab lot={lot} /></TabsContent><TabsContent value="specification"><LotSpecificationTab lot={lot} /></TabsContent><TabsContent value="legal"><Card className="shadow-none border-0"><CardHeader className="px-1 pt-0"><CardTitle className="text-xl font-semibold flex items-center"><FileText className="h-5 w-5 mr-2 text-muted-foreground" /> {legalTabTitle}</CardTitle></CardHeader><CardContent className="px-1 space-y-2 text-sm">{showLegalProcessTab && (<>{lot.judicialProcessNumber && <p><strong className="text-foreground">Nº Processo Judicial:</strong> <span className="text-muted-foreground">{lot.judicialProcessNumber}</span></p>}{lot.courtDistrict && <p><strong className="text-foreground">Comarca:</strong> <span className="text-muted-foreground">{lot.courtDistrict}</span></p>}{lot.courtName && <p><strong className="text-foreground">Vara:</strong> <span className="text-muted-foreground">{lot.courtName}</span></p>}{lot.publicProcessUrl && <p><strong className="text-foreground">Consulta Pública:</strong> <a href={lot.publicProcessUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Acessar Processo <LinkIcon className="h-3 w-3"/></a></p>}{lot.propertyRegistrationNumber && <p><strong className="text-foreground">Matrícula do Imóvel:</strong> <span className="text-muted-foreground">{lot.propertyRegistrationNumber}</span></p>}{lot.propertyLiens && <p><strong className="text-foreground">Ônus/Gravames:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.propertyLiens}</span></p>}{lot.knownDebts && <p><strong className="text-foreground">Dívidas Conhecidas:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.knownDebts}</span></p>}{lot.additionalDocumentsInfo && <p><strong className="text-foreground">Outras Informações/Links de Documentos:</strong> <span className="text-muted-foreground whitespace-pre-line">{lot.additionalDocumentsInfo}</span></p>}<Separator className="my-3" /></>)}{auction.documentsUrl && <p><strong className="text-foreground">Edital do Leilão:</strong> <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Ver Edital Completo <FileText className="h-3 w-3"/></a></p>}{!auction.documentsUrl && !showLegalProcessTab && (<p className="text-muted-foreground">Nenhuma informação legal ou documental adicional fornecida para este lote.</p>)}{auction.documentsUrl && !showLegalProcessTab && !currentLotHasProcessInfo && (<p className="text-muted-foreground mt-2 text-xs">Outras informações processuais específicas deste lote não foram fornecidas.</p>)}</CardContent></Card></TabsContent><TabsContent value="seller"><LotSellerTab sellerName={initialSellerName || auction.seller || "Não Informado"} sellerId={lot.sellerId} auctionSellerName={auction.seller} /></TabsContent><TabsContent value="reviews"><LotReviewsTab lot={lot} reviews={lotReviews} isLoading={isLoadingData} onNewReview={handleNewReview} canUserReview={canUserReview} /></TabsContent><TabsContent value="questions"><LotQuestionsTab lot={lot} questions={lotQuestions} isLoading={isLoadingData} onNewQuestion={handleNewQuestion} canUserAskQuestion={canUserAskQuestion} /></TabsContent></Tabs></CardContent></Card>
               </div>
               <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
-                  <BiddingPanel currentLot={lot} auction={auction} onBidSuccess={handleBidSuccess} />
+                  <BiddingPanel currentLot={lot} onBidSuccess={handleBidSuccess} />
                   <Card className="shadow-md"><CardHeader><CardTitle className="text-lg font-semibold flex items-center"><Scale className="h-5 w-5 mr-2 text-muted-foreground"/>Valores e Condições Legais</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{lot.evaluationValue && <div className="flex justify-between"><span className="text-muted-foreground">Valor de Avaliação:</span> <span className="font-semibold text-foreground">R$ {lot.evaluationValue.toLocaleString('pt-BR')}</span></div>}{lot.reservePrice && <div className="flex justify-between"><span className="text-muted-foreground">Preço de Reserva:</span> <span className="font-semibold text-foreground">(Confidencial)</span></div>}{lot.debtAmount && <div className="flex justify-between"><span className="text-muted-foreground">Montante da Dívida:</span> <span className="font-semibold text-foreground">R$ {lot.debtAmount.toLocaleString('pt-BR')}</span></div>}{lot.itbiValue && <div className="flex justify-between"><span className="text-muted-foreground">Valor de ITBI:</span> <span className="font-semibold text-foreground">R$ {lot.itbiValue.toLocaleString('pt-BR')}</span></div>}{(!lot.evaluationValue && !lot.reservePrice && !lot.debtAmount && !lot.itbiValue) && <p className="text-muted-foreground text-center text-xs py-2">Nenhuma condição de valor especial para este lote.</p>}</CardContent></Card>
-                  {isClient && <LotMapDisplay lot={lot} platformSettings={platformSettings} onOpenMapModal={() => setIsMapModalOpen(true)} />}
+                  <LotMapDisplay lot={lot} platformSettings={platformSettings} onOpenMapModal={() => setIsMapModalOpen(true)} />
               </div>
             </div>
           </section>
@@ -479,7 +477,11 @@ export default function LotDetailClientContent({
       </TooltipProvider>
 
       <LotPreviewModal lot={lot} auction={auction} platformSettings={platformSettings} isOpen={isPreviewModalOpen} onClose={() => setIsPreviewModalOpen(false)} />
-      {isClient && <LotMapPreviewModal lot={lot} platformSettings={platformSettings} isOpen={isMapModalOpen} onClose={() => setIsMapModalOpen(false)} />}
+      <LotMapPreviewModal lot={lot} platformSettings={platformSettings} isOpen={isMapModalOpen} onClose={() => setIsMapModalOpen(false)} />
     </>
     );
 }
+
+```
+- src/components/map-search-component.tsx
+- src/components/auction/lot-map-display.tsx
