@@ -1,15 +1,15 @@
-
 // src/components/auction/lot-map-display.tsx
 'use client';
 
 import type { Lot, PlatformSettings } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Info, ExternalLink } from 'lucide-react';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { Button } from '../ui/button';
+import { Skeleton } from '../ui/skeleton';
 
 // Fix for default Leaflet icon paths in Next.js
 // This needs to be done once, outside the component render.
@@ -31,6 +31,11 @@ interface LotMapDisplayProps {
 
 export default function LotMapDisplay({ lot, onOpenMapModal }: LotMapDisplayProps) {
   const { latitude, longitude, mapAddress, title } = lot;
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   const displayAddressTextForLink = mapAddress || (lot.cityName && lot.stateUf ? `${lot.cityName}, ${lot.stateUf}` : "Localização do Lote");
   const hasCoords = latitude !== undefined && latitude !== null && longitude !== undefined && longitude !== null;
@@ -41,6 +46,37 @@ export default function LotMapDisplay({ lot, onOpenMapModal }: LotMapDisplayProp
   } else if (mapAddress) {
     finalExternalMapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapAddress)}`;
   }
+
+  // This internal component will only be rendered when isMounted is true.
+  const MapContent = () => (
+    <>
+      {hasCoords ? (
+        <MapContainer
+          key={lot.id} // Key to force re-creation when lot prop changes
+          center={[latitude, longitude]}
+          zoom={15}
+          scrollWheelZoom={false}
+          className="w-full h-full z-0"
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <Marker position={[latitude, longitude]}>
+            <Popup>
+              <b>{title}</b><br />{displayAddressTextForLink}
+            </Popup>
+          </Marker>
+        </MapContainer>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full bg-muted text-muted-foreground p-4 text-center">
+          <Info className="h-12 w-12 mb-2" />
+          <p>Mapa indisponível para este lote.</p>
+          <p className="text-xs">Não foram fornecidas coordenadas de localização.</p>
+        </div>
+      )}
+    </>
+  );
   
   return (
     <Card className="shadow-md w-full">
@@ -65,31 +101,7 @@ export default function LotMapDisplay({ lot, onOpenMapModal }: LotMapDisplayProp
       </CardHeader>
       <CardContent className="p-0">
         <div className="aspect-square w-full rounded-b-md overflow-hidden border-t relative">
-          {hasCoords ? (
-            <MapContainer
-              key={lot.id} // Add key to force re-creation on lot change
-              center={[latitude, longitude]}
-              zoom={15}
-              scrollWheelZoom={false}
-              className="w-full h-full z-0"
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <Marker position={[latitude, longitude]}>
-                <Popup>
-                  <b>{title}</b><br />{displayAddressTextForLink}
-                </Popup>
-              </Marker>
-            </MapContainer>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full bg-muted text-muted-foreground p-4 text-center">
-              <Info className="h-12 w-12 mb-2" />
-              <p>Mapa indisponível para este lote.</p>
-              <p className="text-xs">Não foram fornecidas coordenadas de localização.</p>
-            </div>
-          )}
+          {isMounted ? <MapContent /> : <Skeleton className="w-full h-full" />}
            {hasCoords && onOpenMapModal && (
             <div className="absolute top-2 right-2 z-10">
               <Button size="sm" variant="secondary" onClick={onOpenMapModal} className="shadow-md">
