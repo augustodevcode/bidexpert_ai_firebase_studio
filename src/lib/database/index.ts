@@ -2,21 +2,16 @@
 import type { IDatabaseAdapter } from '@/types';
 import { cookies } from 'next/headers'; // This is a dynamic function
 
-// Singleton instance specifically for the SampleDataAdapter
-let sampleDbInstance: IDatabaseAdapter | undefined;
-
 export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
-  // Reading cookies opts the request into dynamic rendering, so noStore() is not needed.
+  // Reading cookies opts the request into dynamic rendering.
   
   let dbFromCookie: string | undefined;
   try {
     // cookies() is a dynamic function and will only work in a request context.
-    // During build or in non-request environments, it will throw an error.
     const cookieStore = cookies();
     dbFromCookie = cookieStore.get('dev-config-db')?.value;
   } catch (e) {
     // This is expected during build or in environments without a request context.
-    // The fallback logic will handle these cases.
     console.warn('[DB Factory] Could not access cookies. This is expected during build. Falling back to environment variables.');
   }
 
@@ -26,30 +21,26 @@ export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
 
   console.log(`[DB Factory - Initializing] Active System: ${activeSystem} (Cookie: ${dbFromCookie || 'N/A'}, Env: ${activeSystemEnv || 'N/A'}).`);
 
-  // If the active system is SAMPLE_DATA, use a singleton pattern.
-  if (activeSystem === 'SAMPLE_DATA') {
-    if (!sampleDbInstance) {
-      const { SampleDataAdapter } = await import('./sample-data.adapter');
-      console.log('[DB Factory] Creating new singleton instance for SampleDataAdapter.');
-      sampleDbInstance = new SampleDataAdapter();
-    } else {
-      console.log('[DB Factory] Returning existing singleton instance of SampleDataAdapter.');
-    }
-    return sampleDbInstance;
-  }
-  
-  // For all other database types, create a new instance for each request (stateless).
+  // Always create a new instance based on the determined active system.
+  // This removes the faulty singleton pattern for SampleData.
   let newInstance: IDatabaseAdapter;
 
   switch (activeSystem) {
-    case 'POSTGRES':
+    case 'SAMPLE_DATA': {
+      const { SampleDataAdapter } = await import('./sample-data.adapter');
+      newInstance = new SampleDataAdapter();
+      break;
+    }
+    case 'POSTGRES': {
       const { PostgresAdapter } = await import('./postgres.adapter');
       newInstance = new PostgresAdapter();
       break;
-    case 'MYSQL':
+    }
+    case 'MYSQL': {
       const { MySqlAdapter } = await import('./mysql.adapter');
       newInstance = new MySqlAdapter();
       break;
+    }
     case 'FIRESTORE': {
         const { ensureAdminInitialized } = await import('@/lib/firebase/admin');
         const { FirestoreAdapter } = await import('./firestore.adapter');
