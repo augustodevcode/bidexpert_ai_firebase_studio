@@ -108,7 +108,7 @@ export async function updateAuctionFeaturedStatus(
 ): Promise<{ success: boolean; message: string }> {
   const result = await updateAuction(idOrPublicId, { isFeaturedOnMarketplace: newStatus });
   if (result.success) {
-    revalidatePath('/');
+    revalidatePath('/'); // Revalidate homepage for featured lots section
     revalidatePath(`/auctions/${idOrPublicId}`);
     revalidatePath('/search');
   }

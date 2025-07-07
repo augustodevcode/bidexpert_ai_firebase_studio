@@ -381,8 +381,6 @@ function mapToLot(row: QueryResultRow): Lot {
     itbiValue: row.itbi_value !== null ? Number(row.itbi_value) : undefined,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
-    winningBidderId: row.winning_bidder_id || null,
-    winningBidAmount: row.winning_bid_amount !== null ? Number(row.winning_bid_amount) : null,
   };
 }
 
@@ -442,17 +440,6 @@ function mapToBidInfo(row: QueryResultRow): BidInfo {
         bidderDisplay: row.bidder_display_name,
         amount: parseFloat(row.amount),
         timestamp: new Date(row.timestamp),
-    };
-}
-
-function mapToNotification(row: QueryResultRow): Notification {
-    return {
-        id: String(row.id),
-        userId: row.user_id,
-        message: row.message,
-        link: row.link,
-        isRead: row.is_read,
-        createdAt: new Date(row.created_at),
     };
 }
 
@@ -561,14 +548,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
     getPool();
   }
 
-  async getNotificationsForUser(userId: string): Promise<Notification[]> {
-    const { rows } = await getPool().query(
-        `SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC`,
-        [userId]
-    );
-    return rows.map(mapToNotification);
-  }
-
   async getWinsForUser(userId: string): Promise<UserWin[]> {
     const { rows } = await getPool().query(
         `SELECT
@@ -620,64 +599,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
         };
     });
     return wins;
-  }
-  
-  async getBidsForUser(userId: string): Promise<UserBid[]> {
-      const query = `
-        WITH UserLatestBids AS (
-            SELECT 
-                lot_id,
-                MAX(timestamp) as latest_timestamp
-            FROM bids
-            WHERE bidder_id = $1
-            GROUP BY lot_id
-        )
-        SELECT
-            b.id as bid_id,
-            b.amount,
-            b.timestamp,
-            l.*, 
-            a.title as auction_name
-        FROM bids b
-        JOIN UserLatestBids ulb ON b.lot_id = ulb.lot_id AND b.timestamp = ulb.latest_timestamp
-        JOIN lots l ON b.lot_id = l.id
-        LEFT JOIN auctions a ON l.auction_id = a.id
-        WHERE b.bidder_id = $1
-        ORDER BY b.timestamp DESC;
-      `;
-      const { rows } = await getPool().query(query, [userId]);
-      
-      const userBids: UserBid[] = rows.map(row => {
-          const lot = mapToLot(row);
-          const userBidAmount = parseFloat(row.amount);
-          
-          let bidStatus: UserBidStatus;
-          
-          if (lot.status === 'VENDIDO') {
-              bidStatus = lot.winningBidderId === userId ? 'ARREMATADO' : 'NAO_ARREMATADO';
-          } else if (['ENCERRADO', 'NAO_VENDIDO', 'CANCELADO'].includes(lot.status)) {
-              bidStatus = 'NAO_ARREMATADO';
-          } else { 
-              bidStatus = userBidAmount >= lot.price ? 'GANHANDO' : 'PERDENDO';
-          }
-
-          return {
-              id: String(row.bid_id),
-              amount: userBidAmount,
-              timestamp: new Date(row.timestamp),
-              lot: lot,
-              bidStatus: bidStatus,
-              lotId: lot.id,
-              auctionId: lot.auctionId,
-              lotTitle: lot.title,
-              lotImageUrl: lot.imageUrl || '',
-              userBidAmount: userBidAmount,
-              currentLotPrice: lot.price,
-              bidDate: new Date(row.timestamp),
-              lotEndDate: lot.endDate || new Date(),
-          };
-      });
-      return userBids;
   }
   
   async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> {
@@ -977,10 +898,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async deleteAuction(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
     console.warn("[PostgresAdapter] deleteAuction is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
-    console.warn("[PostgresAdapter] getAuctionsBySellerSlug is not yet implemented for PostgreSQL.");
-    return [];
   }
   async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> {
     console.warn("[PostgresAdapter] createLot is not yet implemented for PostgreSQL.");
