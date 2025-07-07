@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { revalidatePath } from 'next/cache';
 
-const MAX_FILE_SIZE_MB = 100000;
+const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const ALLOWED_MIME_TYPES = [
   'image/jpeg', 
@@ -96,6 +96,7 @@ export async function POST(request: NextRequest) {
         if (dbResult.success && dbResult.item) {
           uploadedItems.push(dbResult.item);
         } else {
+          // Attempt to clean up orphaned file in storage if DB write fails
           await storage.delete(storagePath);
           throw new Error(dbResult.message || `Falha ao salvar ${file.name} no banco de dados.`);
         }
@@ -118,7 +119,7 @@ export async function POST(request: NextRequest) {
     }
 
     const success = uploadErrors.length === 0 && uploadedItems.length > 0;
-    const statusCode = success ? 200 : (uploadedItems.length > 0 ? 207 : 400);
+    const statusCode = success ? 200 : (uploadedItems.length > 0 ? 207 : 400); // 207 Multi-Status
 
     return NextResponse.json({
       success,
@@ -128,7 +129,7 @@ export async function POST(request: NextRequest) {
     }, { status: statusCode });
 
   } catch (error: any) {
-    console.error('[API Upload Rote Handler] Erro geral:', error);
+    console.error('[API Upload Route Handler] Erro geral:', error);
     return NextResponse.json(
       { 
         success: false, 
