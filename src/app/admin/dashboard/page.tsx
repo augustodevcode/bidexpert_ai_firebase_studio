@@ -1,20 +1,34 @@
 
+'use client';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LayoutDashboard, ListChecks, Settings } from 'lucide-react';
+import { LayoutDashboard, ListChecks, Settings, Database } from 'lucide-react';
 import Link from 'next/link';
+import { useDevConfig } from '@/components/dev-config-provider';
+import { Button } from '@/components/ui/button';
 
 export default function AdminDashboardPage() {
+  const { openConfigModal } = useDevConfig();
+
   return (
     <div className="space-y-8">
       <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold font-headline flex items-center">
-            <LayoutDashboard className="h-7 w-7 mr-3 text-primary" />
-            Painel de Administração
-          </CardTitle>
-          <CardDescription>
-            Bem-vindo à área de gerenciamento do BidExpert.
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-2xl font-bold font-headline flex items-center">
+              <LayoutDashboard className="h-7 w-7 mr-3 text-primary" />
+              Painel de Administração
+            </CardTitle>
+            <CardDescription>
+              Bem-vindo à área de gerenciamento do BidExpert.
+            </CardDescription>
+          </div>
+          {process.env.NODE_ENV === 'development' && (
+            <Button variant="outline" onClick={openConfigModal}>
+              <Database className="mr-2 h-4 w-4" />
+              Alterar Fonte de Dados
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-muted-foreground">

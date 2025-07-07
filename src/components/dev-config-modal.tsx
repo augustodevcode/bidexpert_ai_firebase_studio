@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -5,15 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Cog, Database, Loader2 } from 'lucide-react';
+import { Cog, Database, Loader2, X } from 'lucide-react';
 
 type DatabaseSystem = 'SAMPLE_DATA' | 'FIRESTORE' | 'MYSQL' | 'POSTGRES';
 
 interface DevConfigModalProps {
   onConfigSet: () => void;
+  onClose: () => void;
 }
 
-export default function DevConfigModal({ onConfigSet }: DevConfigModalProps) {
+export default function DevConfigModal({ onConfigSet, onClose }: DevConfigModalProps) {
   const [selectedDb, setSelectedDb] = useState<DatabaseSystem>('SAMPLE_DATA');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +47,10 @@ export default function DevConfigModal({ onConfigSet }: DevConfigModalProps) {
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-background/90 backdrop-blur-sm">
-      <Card className="w-full max-w-md shadow-2xl">
+      <Card className="w-full max-w-md shadow-2xl relative">
+        <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground" onClick={onClose} aria-label="Fechar">
+            <X className="h-5 w-5" />
+        </Button>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
             <Cog className="h-6 w-6 text-primary" />
