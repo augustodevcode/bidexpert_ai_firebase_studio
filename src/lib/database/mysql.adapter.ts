@@ -2,7 +2,7 @@
 import { createPool, type RowDataPacket, type Pool, type PoolConnection, type ResultSetHeader } from 'mysql2/promise';
 import type {
   IDatabaseAdapter,
-  LotCategory, StateInfo, StateFormData,
+  LotCategory, StateInfo, StateFormData, CategoryFormData,
   CityInfo, CityFormData,
   AuctioneerProfileInfo, AuctioneerFormData,
   SellerProfileInfo, SellerFormData,
@@ -23,7 +23,11 @@ import type {
   JudicialDistrict, JudicialDistrictFormData,
   JudicialBranch, JudicialBranchFormData,
   JudicialProcess, JudicialProcessFormData, ProcessParty,
-  Bem, BemFormData
+  Bem, BemFormData,
+  UserDocument,
+  DocumentType,
+  Notification,
+  BlogPost
 } from '@/types';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -594,7 +598,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] getBem is not yet implemented for MySQL.");
     return null;
   }
-  async getBens(judicialProcessId?: string | undefined): Promise<Bem[]> {
+  async getBens(filter?: { judicialProcessId?: string; sellerId?: string }): Promise<Bem[]> {
     console.warn("[MySqlAdapter] getBens is not yet implemented for MySQL.");
     return [];
   }
@@ -1229,3 +1233,4 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return null;
   }
 }
+```
