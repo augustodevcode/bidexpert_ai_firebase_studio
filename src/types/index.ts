@@ -450,6 +450,7 @@ export interface Lot {
   aisleStall?: string;
   actualCashValue?: string;
   estimatedRepairCost?: string;
+  seller?: SellerProfileInfo;
   condition?: string;
   auctioneerId?: string;
   auctioneerName?: string;

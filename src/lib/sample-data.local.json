@@ -1,152 +1,196 @@
 
 {
-  "sampleRoles": [
+  "sampleCourts": [
     {
-      "id": "role-admin",
-      "name": "ADMINISTRATOR",
-      "name_normalized": "ADMINISTRATOR",
-      "description": "Acesso total à plataforma.",
-      "permissions": [
-        "manage_all"
-      ],
-      "createdAt": "2025-03-14T04:56:12.389Z",
-      "updatedAt": "2025-06-21T04:56:12.389Z"
+      "id": "court-tjsp",
+      "name": "Tribunal de Justiça de São Paulo",
+      "slug": "tjsp",
+      "stateUf": "SP",
+      "website": "https://www.tjsp.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
     },
     {
-      "id": "role-user",
-      "name": "USER",
-      "name_normalized": "USER",
-      "description": "Usuário padrão com acesso básico.",
-      "permissions": [
-        "view_auctions",
-        "place_bids",
-        "view_lots"
-      ],
-      "createdAt": "2025-03-14T04:56:12.389Z",
-      "updatedAt": "2025-06-12T04:56:12.389Z"
+      "id": "court-tjrj",
+      "name": "Tribunal de Justiça do Rio de Janeiro",
+      "slug": "tjrj",
+      "stateUf": "RJ",
+      "website": "https://www.tjrj.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
     },
     {
-      "id": "role-consignor",
-      "name": "CONSIGNOR",
-      "name_normalized": "CONSIGNOR",
-      "description": "Comitente com permissões para gerenciar seus itens.",
-      "permissions": [
-        "auctions:manage_own",
-        "lots:manage_own",
-        "view_reports",
-        "media:upload"
-      ],
-      "createdAt": "2025-03-24T04:56:12.389Z",
-      "updatedAt": "2025-06-17T04:56:12.389Z"
+      "id": "court-tjmg",
+      "name": "Tribunal de Justiça de Minas Gerais",
+      "slug": "tjmg",
+      "stateUf": "MG",
+      "website": "https://www.tjmg.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "court-tjse",
+      "name": "Tribunal de Justiça de Sergipe",
+      "slug": "tjse",
+      "stateUf": "SE",
+      "website": "https://www.tjse.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "court-trt2",
+      "name": "Tribunal Regional do Trabalho da 2ª Região",
+      "slug": "trt2-sp",
+      "stateUf": "SP",
+      "website": "https://ww2.trt2.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
     }
   ],
-  "sampleUserProfiles": [
+  "sampleJudicialDistricts": [
     {
-      "uid": "admin-bidexpert-platform-001",
-      "email": "admin@bidexpert.com.br",
-      "password": "@dmin2025",
-      "fullName": "Administrador BidExpert",
-      "roleId": "role-admin",
-      "roleName": "ADMINISTRATOR",
-      "permissions": [
-        "manage_all"
-      ],
-      "status": "ATIVO",
-      "habilitationStatus": "HABILITADO",
-      "cpf": "000.000.000-00",
-      "cellPhone": "(11) 99999-9999",
-      "dateOfBirth": "1990-01-01T00:00:00.000Z",
-      "createdAt": "2023-01-01T12:00:00.000Z",
-      "updatedAt": "2025-07-05T17:43:33.804Z",
-      "accountType": "PHYSICAL"
+      "id": "dist-sp-capital",
+      "name": "Comarca da Capital",
+      "slug": "sao-paulo-capital",
+      "courtId": "court-tjsp",
+      "stateId": "state-sp",
+      "zipCode": "01010-000",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
     },
     {
-      "uid": "consignor@bidexpert.com",
-      "email": "consignor@bidexpert.com",
-      "password": "password123",
-      "fullName": "Bradesco Comitente",
-      "roleId": "role-consignor",
-      "roleName": "CONSIGNOR",
-      "permissions": [
-        "auctions:manage_own",
-        "lots:manage_own"
-      ],
-      "status": "ATIVO",
-      "habilitationStatus": "HABILITADO",
-      "createdAt": "2023-01-01T12:00:00.000Z",
-      "updatedAt": "2025-07-05T17:43:33.804Z",
-      "accountType": "LEGAL"
+      "id": "dist-sp-campinas",
+      "name": "Comarca de Campinas",
+      "slug": "campinas",
+      "courtId": "court-tjsp",
+      "stateId": "state-sp",
+      "zipCode": "13010-000",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "dist-rj-capital",
+      "name": "Comarca da Capital",
+      "slug": "rio-de-janeiro-capital",
+      "courtId": "court-tjrj",
+      "stateId": "state-rj",
+      "zipCode": "20010-000",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "dist-se-lagarto",
+      "name": "Comarca de Lagarto",
+      "slug": "lagarto",
+      "courtId": "court-tjse",
+      "stateId": "state-se",
+      "zipCode": "49400-000",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "dist-sp-sao-paulo-trt",
+      "name": "Comarca de São Paulo (TRT)",
+      "slug": "sao-paulo-trt",
+      "courtId": "court-trt2",
+      "stateId": "state-sp",
+      "zipCode": "01139-003",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
     }
   ],
-   "sampleLotCategories": [
-    {"id":"cat-veiculos","name":"Veículos","slug":"veiculos","description":"Carros, motos, caminhões, ônibus, etc.","hasSubcategories":true},
-    {"id":"cat-imoveis","name":"Imóveis","slug":"imoveis","description":"Casas, apartamentos, terrenos, etc.","hasSubcategories":true},
-    {"id":"cat-maquinas-equipamentos","name":"Máquinas e Equipamentos","slug":"maquinas-e-equipamentos","description":"Máquinas pesadas, agrícolas, industriais.","hasSubcategories":true},
-    {"id":"cat-eletronicos-tecnologia","name":"Eletrônicos e Tecnologia","slug":"eletronicos-e-tecnologia","description":"Celulares, notebooks, TVs, etc.","hasSubcategories":true},
-    {"id":"cat-casa-decoracao","name":"Casa e Decoração","slug":"casa-e-decoracao","description":"Móveis, eletrodomésticos, decoração.","hasSubcategories":true},
-    {"id":"cat-arte-antiguidades","name":"Arte e Antiguidades","slug":"arte-e-antiguidades","description":"Obras de arte, itens colecionáveis.","hasSubcategories":true},
-    {"id":"cat-joias-acessorios","name":"Joias e Acessórios de Luxo","slug":"joias-e-acessorios-de-luxo","description":"Joias, relógios, bolsas de grife.","hasSubcategories":true},
-    {"id":"cat-semoventes","name":"Semoventes","slug":"semoventes","description":"Bovinos, equinos, etc.","hasSubcategories":true},
-    {"id":"cat-materiais-sucatas","name":"Materiais e Sucatas","slug":"materiais-e-sucatas","description":"Materiais de construção, sucatas metálicas.","hasSubcategories":true},
-    {"id":"cat-industrial-geral","name":"Industrial Geral","slug":"industrial-geral","description":"Estoques, matéria-prima, mobiliário.","hasSubcategories":true},
-    {"id":"cat-embarcacoes","name":"Embarcações","slug":"embarcacoes","description":"Lanchas, barcos, veleiros, jet skis.","hasSubcategories":true},
-    {"id":"cat-alimentos","name":"Alimentos","slug":"alimentos","description":"Produtos perecíveis e não perecíveis em lote.","hasSubcategories":true},
-    {"id":"cat-metais-pedras","name":"Metais Preciosos e Pedras","slug":"metais-preciosos-e-pedras","description":"Ouro, prata, diamantes brutos.","hasSubcategories":true},
-    {"id":"cat-bens-florestais","name":"Bens Florestais e Ambientais","slug":"bens-florestais-e-ambientais","description":"Madeira, créditos de carbono, etc.","hasSubcategories":true},
-    {"id":"cat-outros","name":"Outros Itens e Oportunidades","slug":"outros-itens-e-oportunidades","description":"Consórcios, direitos creditórios, etc.","hasSubcategories":true}
+  "sampleJudicialBranches": [
+    {
+      "id": "branch-1",
+      "name": "1ª Vara Cível",
+      "slug": "1a-vara-civel",
+      "districtId": "dist-sp-capital",
+      "contactName": "José da Silva",
+      "phone": "11 1234-5678",
+      "email": "vara1.sp@tj.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "branch-2",
+      "name": "2ª Vara da Fazenda Pública",
+      "slug": "2a-vara-da-fazenda-publica",
+      "districtId": "dist-rj-capital",
+      "contactName": "Maria Oliveira",
+      "phone": "21 9876-5432",
+      "email": "vara2.rj@tj.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "branch-3",
+      "name": "Vara Única de Lagarto",
+      "slug": "vara-unica-lagarto",
+      "districtId": "dist-se-lagarto",
+      "contactName": "Ana Costa",
+      "phone": "79 3631-1111",
+      "email": "vara.lagarto@tjse.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "branch-4",
+      "name": "15ª Vara do Trabalho de São Paulo",
+      "slug": "15-vara-trabalho-sp",
+      "districtId": "dist-sp-sao-paulo-trt",
+      "contactName": "Paulo Lima",
+      "phone": "11 3525-2015",
+      "email": "vt15.sp@trt2.jus.br",
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    }
   ],
-  "sampleSubcategories": [
-    {"id":"subcat-vei-carros","name":"Carros","slug":"carros","parentCategoryId":"cat-veiculos"},
-    {"id":"subcat-vei-motos","name":"Motos","slug":"motos","parentCategoryId":"cat-veiculos"},
-    {"id":"subcat-vei-caminhoes","name":"Caminhões e Ônibus","slug":"caminhoes-e-onibus","parentCategoryId":"cat-veiculos"},
-    {"id":"subcat-vei-pesados","name":"Veículos Pesados","slug":"veiculos-pesados","parentCategoryId":"cat-veiculos"},
-    {"id":"subcat-imo-apartamentos","name":"Apartamentos","slug":"apartamentos","parentCategoryId":"cat-imoveis"},
-    {"id":"subcat-imo-casas","name":"Casas","slug":"casas","parentCategoryId":"cat-imoveis"},
-    {"id":"subcat-imo-terrenos","name":"Terrenos e Lotes","slug":"terrenos-e-lotes","parentCategoryId":"cat-imoveis"},
-    {"id":"subcat-imo-comerciais","name":"Salas e Prédios Comerciais","slug":"salas-e-predios-comerciais","parentCategoryId":"cat-imoveis"},
-    {"id":"subcat-imo-rurais","name":"Imóveis Rurais","slug":"imoveis-rurais","parentCategoryId":"cat-imoveis"},
-    {"id":"subcat-maq-agricolas","name":"Máquinas Agrícolas","slug":"maquinas-agricolas","parentCategoryId":"cat-maquinas-e-equipamentos"},
-    {"id":"subcat-maq-construcao","name":"Equipamentos de Construção","slug":"equipamentos-construcao","parentCategoryId":"cat-maquinas-e-equipamentos"},
-    {"id":"subcat-maq-industriais","name":"Máquinas Industriais","slug":"maquinas-industriais","parentCategoryId":"cat-maquinas-e-equipamentos"},
-    {"id":"subcat-eletro-celulares","name":"Celulares e Tablets","slug":"celulares-e-tablets","parentCategoryId":"cat-eletronicos-e-tecnologia"},
-    {"id":"subcat-eletro-informatica","name":"Computadores e Notebooks","slug":"computadores-e-notebooks","parentCategoryId":"cat-eletronicos-e-tecnologia"},
-    {"id":"subcat-eletro-audiovideo","name":"TVs, Áudio e Vídeo","slug":"tvs-audio-e-video","parentCategoryId":"cat-eletronicos-e-tecnologia"},
-    {"id":"subcat-casa-moveis","name":"Móveis Residenciais e Corporativos","slug":"moveis","parentCategoryId":"cat-casa-decoracao"},
-    {"id":"subcat-casa-eletrodomesticos","name":"Eletrodomésticos","slug":"eletrodomesticos","parentCategoryId":"cat-casa-decoracao"},
-    {"id":"subcat-arte-pinturas","name":"Pinturas e Esculturas","slug":"pinturas-e-esculturas","parentCategoryId":"cat-arte-antiguidades"},
-    {"id":"subcat-arte-colecionaveis","name":"Itens Colecionáveis","slug":"itens-colecionaveis","parentCategoryId":"cat-arte-antiguidades"},
-    {"id":"subcat-joias-relogios","name":"Relógios de Luxo","slug":"relogios-de-luxo","parentCategoryId":"cat-joias-acessorios"},
-    {"id":"subcat-joias-joias","name":"Joias (Anéis, Colares, etc.)","slug":"joias","parentCategoryId":"cat-joias-acessorios"},
-    {"id":"subcat-semov-bovinos","name":"Bovinos","slug":"bovinos","parentCategoryId":"cat-semoventes"},
-    {"id":"subcat-semov-equinos","name":"Equinos","slug":"equinos","parentCategoryId":"cat-semoventes"},
-    {"id":"subcat-suc-metais","name":"Sucatas Metálicas","slug":"sucatas-metalicas","parentCategoryId":"cat-materiais-sucatas"},
-    {"id":"subcat-suc-construcao","name":"Materiais de Construção","slug":"materiais-de-construcao","parentCategoryId":"cat-materiais-sucatas"},
-    {"id":"subcat-ind-estoques","name":"Estoques Industriais","slug":"estoques-industriais","parentCategoryId":"cat-industrial-geral"},
-    {"id":"subcat-ind-materia-prima","name":"Matéria-prima","slug":"materia-prima","parentCategoryId":"cat-industrial-geral"},
-    {"id":"subcat-embar-lanchas","name":"Lanchas e Iates","slug":"lanchas-e-iates","parentCategoryId":"cat-embarcacoes"},
-    {"id":"subcat-embar-jetskis","name":"Jet Skis","slug":"jet-skis","parentCategoryId":"cat-embarcacoes"},
-    {"id":"subcat-alim-nao-pereciveis","name":"Não Perecíveis","slug":"nao-pereciveis","parentCategoryId":"cat-alimentos"},
-    {"id":"subcat-alim-bebidas","name":"Bebidas","slug":"bebidas","parentCategoryId":"cat-alimentos"},
-    {"id":"subcat-metais-ouro","name":"Ouro","slug":"ouro","parentCategoryId":"cat-metais-pedras"},
-    {"id":"subcat-metais-pedras","name":"Pedras Preciosas","slug":"pedras-preciosas","parentCategoryId":"cat-metais-pedras"},
-    {"id":"subcat-flor-madeira","name":"Madeira Legalizada","slug":"madeira-legalizada","parentCategoryId":"cat-bens-florestais"},
-    {"id":"subcat-flor-creditos","name":"Créditos de Carbono","slug":"creditos-de-carbono","parentCategoryId":"cat-bens-florestais"},
-    {"id":"subcat-outros-consorcios","name":"Consórcios e Cotas","slug":"consorcios-e-cotas","parentCategoryId":"cat-outros"},
-    {"id":"subcat-outros-direitos","name":"Direitos Creditórios","slug":"direitos-creditorios","parentCategoryId":"cat-outros"}
-  ],
-  "sampleBids": [],
-  "sampleBlogPosts": [],
-  "sampleCities": [],
-  "sampleDirectSaleOffers": [],
-  "sampleDocumentTypes": [],
-  "sampleJudicialBranches": [],
-  "sampleJudicialDistricts": [],
-  "sampleLotQuestions": [],
-  "sampleNotifications": [],
-  "sampleUserBids": [],
-  "sampleUserDocuments": [],
-  "sampleUserLotMaxBids": [],
-  "sampleUserWins": []
+  "sampleJudicialProcesses": [
+    {
+      "id": "proc-1",
+      "publicId": "PROC-12345-2024",
+      "processNumber": "0012345-67.2024.8.26.0001",
+      "isElectronic": true,
+      "courtId": "court-tjsp",
+      "districtId": "dist-sp-capital",
+      "branchId": "branch-1",
+      "parties": [
+        { "id": "party-1", "name": "João da Silva", "documentNumber": "111.222.333-44", "partyType": "AUTOR" },
+        { "id": "party-2", "name": "Empresa X Ltda", "documentNumber": "12.345.678/0001-99", "partyType": "REU" },
+        { "id": "party-3", "name": "Dr. Carlos Advogado", "documentNumber": "OAB/SP 12345", "partyType": "ADVOGADO_AUTOR" }
+      ],
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "proc-2",
+      "publicId": "PROC-98765-2023",
+      "processNumber": "0098765-43.2023.8.19.0001",
+      "isElectronic": true,
+      "courtId": "court-tjrj",
+      "districtId": "dist-rj-capital",
+      "branchId": "branch-2",
+      "parties": [
+        { "id": "party-1", "name": "João da Silva", "documentNumber": "111.222.333-44", "partyType": "AUTOR" },
+        { "id": "party-4", "name": "Dra. Advogada Santos", "documentNumber": "OAB/RJ 54321", "partyType": "ADVOGADO_REU" }
+      ],
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    },
+    {
+      "id": "proc-3",
+      "publicId": "PROC-55555-2022",
+      "processNumber": "0055555-22.2022.2.02.0015",
+      "isElectronic": true,
+      "courtId": "court-trt2",
+      "districtId": "dist-sp-sao-paulo-trt",
+      "branchId": "branch-4",
+      "parties": [
+        { "id": "party-5", "name": "Meta Metais Ltda", "documentNumber": "98.765.432/0001-11", "partyType": "AUTOR" },
+        { "id": "party-6", "name": "Banco Fictício S.A.", "documentNumber": "11.222.333/0001-44", "partyType": "REU" }
+      ],
+      "createdAt": "2025-07-03T20:54:01.690Z",
+      "updatedAt": "2025-07-03T20:54:01.690Z"
+    }
+  ]
 }
-
-    
