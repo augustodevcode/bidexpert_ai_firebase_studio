@@ -1,3 +1,4 @@
+
 // src/lib/database/sample-data.adapter.ts
 import * as fs from 'fs';
 import * as path from 'path';
@@ -34,7 +35,8 @@ import type {
   DocumentType,
   UserDocument,
   Notification,
-  BlogPost
+  BlogPost,
+  UserBid
 } from '@/types';
 import { slugify, getEffectiveLotEndDate } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
@@ -670,12 +672,14 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     console.warn("[SampleDataAdapter] deleteAuction not implemented.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
+  
   async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
       const seller = this.localData.sampleSellers.find(s => s.slug === sellerSlugOrPublicId || s.publicId === sellerSlugOrPublicId);
       if(!seller) return [];
       const auctions = this.localData.sampleAuctions.filter(a => a.seller === seller.name || a.sellerId === seller.id);
       return Promise.resolve(JSON.parse(JSON.stringify(auctions)));
   }
+  
   async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {
      const auctioneer = this.localData.sampleAuctioneers.find(a => a.slug === auctioneerSlugOrPublicId || a.publicId === auctioneerSlugOrPublicId);
      if(!auctioneer) return [];
@@ -730,6 +734,19 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return Promise.resolve(JSON.parse(JSON.stringify(enrichedWins)));
   }
 
+  async getBidsForUser(userId: string): Promise<UserBid[]> {
+      const userBids = this.localData.sampleUserBids.filter(b => b.userId === userId);
+      // Simulate enrichment logic
+      const enrichedBids = userBids.map(ub => {
+          const lot = this.localData.sampleLots.find(l => l.id === ub.lotId);
+          return {
+              ...ub,
+              lot: lot ? this._enrichLotData(lot) : {},
+          }
+      });
+      return Promise.resolve(JSON.parse(JSON.stringify(enrichedBids)));
+  }
+
   // --- Reviews ---
   async getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> {
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleLotReviews.filter(r => r.lotId === lotIdOrPublicId))));
@@ -765,8 +782,11 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return Promise.resolve(JSON.parse(JSON.stringify(finalProfile)));
   }
   async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
-    console.warn("[SampleDataAdapter] updateUserProfile not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const index = this.localData.sampleUserProfiles.findIndex(u => u.uid === userId);
+    if (index === -1) return { success: false, message: "Usuário não encontrado." };
+    this.localData.sampleUserProfiles[index] = { ...this.localData.sampleUserProfiles[index], ...data, updatedAt: new Date() } as UserProfileWithPermissions;
+    this._persistData();
+    return { success: true, message: "Perfil atualizado com sucesso." };
   }
   async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileWithPermissions; }> {
       const existingUser = this.localData.sampleUserProfiles.find(u => u.uid === userId || u.email === email);
@@ -1068,3 +1088,185 @@ export class SampleDataAdapter implements IDatabaseAdapter {
       return { success: true, message: 'Documento salvo para análise.' };
   }
 }
+
+```
+- src/lib/storage.ts:
+```ts
+// src/lib/storage.ts
+import type { IStorageAdapter } from '@/types';
+import { LocalStorageAdapter } from './storage/local.adapter';
+import { FirebaseStorageAdapter } from './storage/firebase.adapter';
+import { getPlatformSettings } from './admin/settings/actions'; // Using the action to get settings
+
+let storageInstance: IStorageAdapter | undefined;
+
+export async function getStorageAdapter(): Promise<IStorageAdapter> {
+  // This logic now runs only on the server, ensuring process.env is reliable.
+  const provider = process.env.STORAGE_PROVIDER?.toUpperCase() || 'LOCAL';
+  
+  if (storageInstance && 
+      ( (provider === 'LOCAL' && storageInstance instanceof LocalStorageAdapter) ||
+        (provider === 'FIREBASE' && storageInstance instanceof FirebaseStorageAdapter) )
+     ) {
+    return storageInstance;
+  }
+
+  console.log(`[getStorageAdapter] Initializing storage adapter for provider: ${provider}`);
+
+  switch (provider) {
+    case 'FIREBASE':
+      storageInstance = new FirebaseStorageAdapter();
+      break;
+    case 'LOCAL':
+    default:
+      storageInstance = new LocalStorageAdapter();
+      break;
+  }
+
+  return storageInstance;
+}
+
+```
+- tailwind.config.ts:
+```ts
+import type { Config } from "tailwindcss"
+
+const config = {
+  darkMode: ["class"],
+  content: [
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
+	],
+  prefix: "",
+  theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
+    extend: {
+      fontFamily: {
+        body: ['Open Sans', 'sans-serif'],
+        headline: ['Open Sans', 'sans-serif'], // Use a more distinct font for headlines if desired
+      },
+      colors: {
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+        chart: {
+          '1': 'hsl(var(--chart-1))',
+          '2': 'hsl(var(--chart-2))',
+          '3': 'hsl(var(--chart-3))',
+          '4': 'hsl(var(--chart-4))',
+          '5': 'hsl(var(--chart-5))',
+        },
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+      },
+    },
+  },
+  plugins: [require("tailwindcss-animate")],
+} satisfies Config
+
+export default config
+```
+- tsconfig.json:
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "src/lib/database/sample-data.adapter.js",
+    "src/lib/database/mysql.adapter.js",
+    "src/lib/database/postgres.adapter.js",
+    "scripts/initialize-db.js",
+    "scripts/setup-admin-user.js",
+    "scripts/copy-sample-images-to-public.js"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
+```
