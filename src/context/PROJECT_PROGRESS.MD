@@ -18,7 +18,7 @@
 - **Refatoração do Modelo de Dados:** Status e datas foram removidos do modelo de `Lot` e agora são derivados do `Auction` principal, garantindo consistência.
 
 ## DOING
-- **(Finalizado nesta sessão)** Polimento final da UI, limpeza de código e verificação geral da consistência da plataforma.
+- **Item 5.1:** Corrigir erro "Map container is already initialized" em todas as instâncias para garantir estabilidade no ambiente de desenvolvimento.
 
 ## NEXT
 - **Item 1.1 (Avançado):** Implementar atualização em tempo real para volume de ofertas e lances via WebSockets para uma experiência de leilão ainda mais dinâmica.
@@ -29,3 +29,10 @@
 - **Item 4.1:** Desenvolver um sistema completo de notificações (Web Push e Email) para alertar usuários sobre novos lances, status de arremate, etc.
 - **Item 4.3:** Pesquisar e, se viável, implementar uma camada de certificação via blockchain para o registro de lances e arremates, aumentando a transparência e a segurança.
 - **Relatórios Avançados:** Criar uma seção de relatórios detalhados no painel de administração e do comitente com gráficos e análises de performance.
+
+---
+
+### 5. Technical Debt e Correções
+
+- **(This Task)** **5.1. Componentes de Mapa (Leaflet)**
+  - Corrigir erro "Map container is already initialized" em todas as instâncias para garantir estabilidade no ambiente de desenvolvimento.

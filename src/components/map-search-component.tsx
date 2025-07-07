@@ -1,8 +1,8 @@
 // src/components/map-search-component.tsx
 'use client';
 
-import React, { useEffect, useMemo, useCallback, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import React, { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L, { type LatLngBounds } from 'leaflet';
 import type { Lot, Auction } from '@/types';
@@ -18,24 +18,20 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-
 // Helper component to handle map events and imperative calls
-function MapController({ items, onBoundsChange, shouldFitBounds }: {
-  items: (Lot | Auction)[],
+function MapEvents({ onBoundsChange, items, shouldFitBounds }: {
   onBoundsChange: (bounds: LatLngBounds) => void;
+  items: (Lot | Auction)[];
   shouldFitBounds: boolean;
 }) {
-  const map = useMap();
-
-  useEffect(() => {
-    const handleMoveEnd = () => {
+  const map = useMapEvents({
+    moveend: () => {
       onBoundsChange(map.getBounds());
-    };
-    map.on('moveend', handleMoveEnd);
-    return () => {
-      map.off('moveend', handleMoveEnd);
-    };
-  }, [map, onBoundsChange]);
+    },
+    zoomend: () => {
+        onBoundsChange(map.getBounds());
+    }
+  });
 
   useEffect(() => {
     if (shouldFitBounds) {
@@ -52,64 +48,6 @@ function MapController({ items, onBoundsChange, shouldFitBounds }: {
 
   return null;
 }
-
-interface MapDisplayProps {
-    items: (Lot | Auction)[];
-    itemType: 'lots' | 'auctions';
-    mapCenter: [number, number];
-    mapZoom: number;
-    onBoundsChange: (bounds: LatLngBounds) => void;
-    shouldFitBounds: boolean;
-}
-
-// Define the map renderer as a separate component OUTSIDE the main component.
-// This prevents it from being re-created on every render.
-const MapDisplay = React.memo(({ items, itemType, mapCenter, mapZoom, onBoundsChange, shouldFitBounds }: MapDisplayProps) => {
-    return (
-        <MapContainer
-            key={`map-search-container-${mapCenter.join('-')}`} // Key to help with re-initialization if center drastically changes
-            center={mapCenter}
-            zoom={mapZoom}
-            scrollWheelZoom={true}
-            className="w-full h-full rounded-lg z-0"
-        >
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            {items.map(item => {
-                if (item.latitude && item.longitude) {
-                    const url = itemType === 'lots'
-                        ? `/auctions/${(item as Lot).auctionId}/lots/${item.publicId || item.id}`
-                        : `/auctions/${item.publicId || item.id}`;
-
-                    const priceOrLots = itemType === 'lots'
-                        ? `Lance: R$ ${((item as Lot).price || 0).toLocaleString('pt-BR')}`
-                        : `Lotes: ${(item as Auction).totalLots || 0}`;
-
-                    return (
-                        <Marker key={item.id} position={[item.latitude, item.longitude]}>
-                            <Popup>
-                                <div style={{ fontFamily: 'sans-serif', fontSize: '14px' }}>
-                                    <strong>
-                                        <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#1a73e8', textDecoration: 'none' }}>
-                                            {item.title}
-                                        </a>
-                                    </strong>
-                                    <p style={{ margin: '4px 0 0' }}>{priceOrLots}</p>
-                                </div>
-                            </Popup>
-                        </Marker>
-                    );
-                }
-                return null;
-            })}
-            <MapController items={items} onBoundsChange={onBoundsChange} shouldFitBounds={shouldFitBounds} />
-        </MapContainer>
-    );
-});
-MapDisplay.displayName = 'MapDisplay';
-
 
 interface MapSearchComponentProps {
   items: (Lot | Auction)[];
@@ -139,13 +77,49 @@ export default function MapSearchComponent({
   }
 
   return (
-    <MapDisplay 
-        items={items}
-        itemType={itemType}
-        mapCenter={mapCenter}
-        mapZoom={mapZoom}
-        onBoundsChange={onBoundsChange}
-        shouldFitBounds={shouldFitBounds}
-    />
+    <MapContainer
+        key={`map-search-container-${mapCenter.join('-')}`}
+        center={mapCenter}
+        zoom={mapZoom}
+        scrollWheelZoom={true}
+        className="w-full h-full rounded-lg z-0"
+    >
+        <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        {items.map(item => {
+            if (item.latitude && item.longitude) {
+                const url = itemType === 'lots'
+                    ? `/auctions/${(item as Lot).auctionId}/lots/${item.publicId || item.id}`
+                    : `/auctions/${item.publicId || item.id}`;
+
+                const priceOrLots = itemType === 'lots'
+                    ? `Lance: R$ ${((item as Lot).price || 0).toLocaleString('pt-BR')}`
+                    : `Lotes: ${(item as Auction).totalLots || 0}`;
+
+                return (
+                    <Marker key={item.id} position={[item.latitude, item.longitude]}>
+                        <Popup>
+                            <div style={{ fontFamily: 'sans-serif', fontSize: '14px' }}>
+                                <strong>
+                                    <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#1a73e8', textDecoration: 'none' }}>
+                                        {item.title}
+                                    </a>
+                                </strong>
+                                <p style={{ margin: '4px 0 0' }}>{priceOrLots}</p>
+                            </div>
+                        </Popup>
+                    </Marker>
+                );
+            }
+            return null;
+        })}
+        <MapEvents 
+            onBoundsChange={onBoundsChange}
+            items={items}
+            shouldFitBounds={shouldFitBounds}
+        />
+    </MapContainer>
   );
 }
