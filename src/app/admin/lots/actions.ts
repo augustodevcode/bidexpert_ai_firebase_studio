@@ -7,6 +7,8 @@ import type { Lot, LotFormData, LotDbData, Bem, Auction } from '@/types';
 
 async function recalculateLotCount(auctionId: string) {
     const db = await getDatabaseAdapter();
+    // This is a simplified approach. For large auctions, a direct increment/decrement would be better.
+    // However, this ensures correctness after any operation.
     const lots = await db.getLots(auctionId);
     const auction = await db.getAuction(auctionId);
     if(auction && auction.totalLots !== lots.length) {
@@ -139,22 +141,23 @@ export async function deleteLot(
   auctionId?: string
 ): Promise<{ success: boolean; message: string; }> {
   const db = await getDatabaseAdapter();
-  const lot = await db.getLot(idOrPublicId);
+  const lot = await db.getLot(idOrPublicId); // I need the lot to get auctionId before deleting
 
-  // Rollback bem status if lot is deleted
+  // Rollback bem status if lot is deleted (this is good, keep it)
   if(lot && lot.bemIds && lot.bemIds.length > 0) {
     await db.updateBensStatus(lot.bemIds, 'DISPONIVEL');
   }
-
+  
   const result = await db.deleteLot(idOrPublicId, auctionId);
   if (result.success) {
+    const finalAuctionId = auctionId || lot?.auctionId;
+    if (finalAuctionId) {
+        await recalculateLotCount(finalAuctionId);
+        revalidatePath(`/admin/auctions/${finalAuctionId}/edit`);
+    }
     revalidatePath('/admin/lots');
     revalidatePath('/admin/bens');
     revalidatePath('/admin/lotting');
-    if (auctionId) {
-      await recalculateLotCount(auctionId);
-      revalidatePath(`/admin/auctions/${auctionId}/edit`);
-    }
   }
   return result;
 }

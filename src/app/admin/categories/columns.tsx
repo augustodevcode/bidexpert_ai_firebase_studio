@@ -1,4 +1,3 @@
-
 // src/app/admin/categories/columns.tsx
 'use client';
 
@@ -32,11 +31,4 @@ export const createColumns = (): ColumnDef<LotCategory>[] => [
     ),
     enableGrouping: true,
   },
-  {
-    accessorKey: "itemCount",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Contagem de Itens (Exemplo)" />,
-    cell: ({ row }) => <div className="text-center">{row.getValue("itemCount") || 0}</div>
-  },
 ];
-
-    
