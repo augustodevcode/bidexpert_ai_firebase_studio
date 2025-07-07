@@ -1,4 +1,3 @@
-
 // src/lib/database/mysql.adapter.ts
 import { createPool, type RowDataPacket, type Pool, type PoolConnection, type ResultSetHeader } from 'mysql2/promise';
 import type {
@@ -477,6 +476,17 @@ function mapToBidInfo(row: any): BidInfo {
     };
 }
 
+function mapToNotification(row: any): Notification {
+    return {
+        id: String(row.id),
+        userId: row.userId,
+        message: row.message,
+        link: row.link,
+        isRead: Boolean(row.isRead),
+        createdAt: new Date(row.createdAt),
+    };
+}
+
 function mapToUserLotMaxBid(row: any): UserLotMaxBid {
     return {
         id: String(row.id),
@@ -582,6 +592,14 @@ export class MySqlAdapter implements IDatabaseAdapter {
     getPool();
   }
   
+  async getNotificationsForUser(userId: string): Promise<Notification[]> {
+    const [rows] = await getPool().execute<RowDataPacket[]>(
+        `SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC`,
+        [userId]
+    );
+    return mapMySqlRowsToCamelCase(rows).map(mapToNotification);
+  }
+
   async createAuctionWithLots(wizardData: WizardData): Promise<{ success: boolean; message: string; auctionId?: string; }> {
     console.warn("[MySqlAdapter] createAuctionWithLots is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
@@ -715,6 +733,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] getWinsForUser is not yet implemented for MySQL.");
     return Promise.resolve([]);
   }
+  async getBidsForUser(userId: string): Promise<UserBid[]> {
+    console.warn("[MySqlAdapter] getBidsForUser is not yet implemented for MySQL.");
+    return Promise.resolve([]);
+  }
   
   async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> {
     console.warn("[MySqlAdapter] answerQuestion is not yet implemented for MySQL.");
@@ -797,7 +819,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
     const connection = await getPool().getConnection();
     const errors: any[] = [];
     
-    // Lista de todas as queries de criação de tabela
     const queries = [
         `CREATE TABLE IF NOT EXISTS roles ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100) NOT NULL UNIQUE, name_normalized VARCHAR(100) NOT NULL UNIQUE, description TEXT, permissions JSON, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP );`,
         `CREATE TABLE IF NOT EXISTS users ( uid VARCHAR(255) PRIMARY KEY, email VARCHAR(255) NOT NULL UNIQUE, full_name VARCHAR(255), password_text VARCHAR(255), role_id INT, status VARCHAR(50), habilitation_status VARCHAR(50), cpf VARCHAR(20), rg_number VARCHAR(20), rg_issuer VARCHAR(50), rg_issue_date DATE, rg_state VARCHAR(2), date_of_birth DATE, cell_phone VARCHAR(20), home_phone VARCHAR(20), gender VARCHAR(50), profession VARCHAR(100), nationality VARCHAR(100), marital_status VARCHAR(50), property_regime VARCHAR(50), spouse_name VARCHAR(255), spouse_cpf VARCHAR(20), zip_code VARCHAR(10), street VARCHAR(255), number VARCHAR(20), complement VARCHAR(100), neighborhood VARCHAR(100), city VARCHAR(100), state VARCHAR(100), opt_in_marketing BOOLEAN DEFAULT FALSE, avatar_url TEXT, data_ai_hint VARCHAR(255), account_type VARCHAR(50), razao_social VARCHAR(255), cnpj VARCHAR(20), inscricao_estadual VARCHAR(50), website_comitente VARCHAR(255), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE SET NULL );`,
@@ -817,7 +838,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
         `CREATE TABLE IF NOT EXISTS process_parties ( id INT AUTO_INCREMENT PRIMARY KEY, process_id INT NOT NULL, name VARCHAR(255) NOT NULL, document_number VARCHAR(50), party_type VARCHAR(50) NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (process_id) REFERENCES judicial_processes(id) ON DELETE CASCADE );`,
         `CREATE TABLE IF NOT EXISTS bens ( id INT AUTO_INCREMENT PRIMARY KEY, public_id VARCHAR(255) UNIQUE, title VARCHAR(255) NOT NULL, description TEXT, judicial_process_id INT, status VARCHAR(50) DEFAULT 'DISPONIVEL', category_id INT, subcategory_id INT, image_url TEXT, image_media_id VARCHAR(255), data_ai_hint VARCHAR(255), evaluation_value DECIMAL(15, 2), location_city VARCHAR(100), location_state VARCHAR(100), address VARCHAR(255), latitude DECIMAL(10, 8), longitude DECIMAL(11, 8), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (judicial_process_id) REFERENCES judicial_processes(id), FOREIGN KEY (category_id) REFERENCES lot_categories(id), FOREIGN KEY (subcategory_id) REFERENCES subcategories(id) );`,
         `CREATE TABLE IF NOT EXISTS user_wins ( id INT AUTO_INCREMENT PRIMARY KEY, user_id VARCHAR(255) NOT NULL, lot_id INT NOT NULL, winning_bid_amount DECIMAL(15, 2) NOT NULL, win_date DATETIME NOT NULL, payment_status VARCHAR(50) DEFAULT 'PENDENTE', invoice_url TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(uid), FOREIGN KEY (lot_id) REFERENCES lots(id) );`,
-        `CREATE TABLE IF NOT EXISTS bids ( id INT AUTO_INCREMENT PRIMARY KEY, lot_id INT NOT NULL, auction_id INT, bidder_id VARCHAR(255) NOT NULL, bidder_display_name VARCHAR(255), amount DECIMAL(15,2) NOT NULL, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (lot_id) REFERENCES lots(id) ON DELETE CASCADE );`
+        `CREATE TABLE IF NOT EXISTS bids ( id INT AUTO_INCREMENT PRIMARY KEY, lot_id INT NOT NULL, auction_id INT, bidder_id VARCHAR(255) NOT NULL, bidder_display_name VARCHAR(255), amount DECIMAL(15,2) NOT NULL, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (lot_id) REFERENCES lots(id) ON DELETE CASCADE );`,
+        `CREATE TABLE IF NOT EXISTS notifications ( id INT AUTO_INCREMENT PRIMARY KEY, user_id VARCHAR(255) NOT NULL, message TEXT NOT NULL, link TEXT, is_read BOOLEAN DEFAULT FALSE, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(uid) ON DELETE CASCADE );`
     ];
 
     try {
@@ -825,7 +847,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
         console.log('[MySqlAdapter] Executing schema creation queries...');
         for (const [index, query] of queries.entries()) {
             try {
-                // Remove trailing semicolon if exists
                 const cleanQuery = query.trim().endsWith(';') ? query.trim().slice(0, -1) : query.trim();
                 await connection.execute(cleanQuery);
                 console.log(`  - Query ${index + 1}/${queries.length} executed successfully.`);
@@ -902,40 +923,12 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] getLotCategory is not yet implemented for MySQL.");
     return null;
   }
-  async getLotCategoryByName(name: string): Promise<LotCategory | null> {
-    console.warn("[MySqlAdapter] getLotCategoryByName is not yet implemented for MySQL.");
-    return null;
-  }
   async updateLotCategory(id: string, data: Partial<CategoryFormData>): Promise<{ success: boolean; message: string; }> {
     console.warn("[MySqlAdapter] updateLotCategory is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async deleteLotCategory(id: string): Promise<{ success: boolean; message: string; }> {
     console.warn("[MySqlAdapter] deleteLotCategory is not yet implemented for MySQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> {
-    console.warn("[MySqlAdapter] createSubcategory is not yet implemented for MySQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getSubcategories(parentCategoryId: string): Promise<Subcategory[]> {
-    console.warn("[MySqlAdapter] getSubcategories is not yet implemented for MySQL.");
-    return [];
-  }
-  async getSubcategory(id: string): Promise<Subcategory | null> {
-    console.warn("[MySqlAdapter] getSubcategory is not yet implemented for MySQL.");
-    return null;
-  }
-  async getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null> {
-    console.warn("[MySqlAdapter] getSubcategoryBySlug is not yet implemented for MySQL.");
-    return null;
-  }
-  async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[MySqlAdapter] updateSubcategory is not yet implemented for MySQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[MySqlAdapter] deleteSubcategory is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> {
@@ -1053,10 +1046,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }> {
     console.warn("[MySqlAdapter] deleteLot is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> {
-    console.warn("[MySqlAdapter] getBidsForLot is not yet implemented for MySQL.");
-    return [];
   }
   async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }> {
     console.warn("[MySqlAdapter] placeBidOnLot is not yet implemented for MySQL.");
@@ -1237,4 +1226,3 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return null;
   }
 }
-

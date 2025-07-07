@@ -1,4 +1,3 @@
-
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -446,6 +445,17 @@ function mapToBidInfo(row: QueryResultRow): BidInfo {
     };
 }
 
+function mapToNotification(row: QueryResultRow): Notification {
+    return {
+        id: String(row.id),
+        userId: row.user_id,
+        message: row.message,
+        link: row.link,
+        isRead: row.is_read,
+        createdAt: new Date(row.created_at),
+    };
+}
+
 function mapToUserLotMaxBid(row: QueryResultRow): UserLotMaxBid {
     return {
         id: String(row.id),
@@ -550,6 +560,14 @@ export class PostgresAdapter implements IDatabaseAdapter {
   constructor() {
     getPool();
   }
+  
+  async getNotificationsForUser(userId: string): Promise<Notification[]> {
+    const { rows } = await getPool().query(
+        `SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC`,
+        [userId]
+    );
+    return rows.map(mapToNotification);
+  }
 
   async getWinsForUser(userId: string): Promise<UserWin[]> {
     const { rows } = await getPool().query(
@@ -568,11 +586,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
             l.title as l_title,
             l.number as l_number,
             l.image_url as l_image_url,
-            l.data_ai_hint as l_data_ai_hint,
-            l.status as l_status,
-            l.price as l_price,
-            l.end_date as l_end_date,
-            l.bids_count as l_bids_count
+            l.data_ai_hint as l_data_ai_hint
             
         FROM user_wins w
         JOIN lots l ON w.lot_id = l.id
@@ -653,7 +667,15 @@ export class PostgresAdapter implements IDatabaseAdapter {
               amount: userBidAmount,
               timestamp: new Date(row.timestamp),
               lot: lot,
-              bidStatus: bidStatus
+              bidStatus: bidStatus,
+              lotId: lot.id,
+              auctionId: lot.auctionId,
+              lotTitle: lot.title,
+              lotImageUrl: lot.imageUrl || '',
+              userBidAmount: userBidAmount,
+              currentLotPrice: lot.price,
+              bidDate: new Date(row.timestamp),
+              lotEndDate: lot.endDate || new Date(),
           };
       });
       return userBids;
@@ -742,7 +764,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `CREATE TABLE IF NOT EXISTS process_parties ( id SERIAL PRIMARY KEY, process_id INTEGER NOT NULL REFERENCES judicial_processes(id) ON DELETE CASCADE, name VARCHAR(255) NOT NULL, document_number VARCHAR(50), party_type VARCHAR(50) NOT NULL, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS bens ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, title VARCHAR(255) NOT NULL, description TEXT, judicial_process_id INTEGER REFERENCES judicial_processes(id), status VARCHAR(50) DEFAULT 'DISPONIVEL', category_id INTEGER REFERENCES lot_categories(id), subcategory_id INTEGER REFERENCES subcategories(id), image_url TEXT, image_media_id VARCHAR(255), data_ai_hint VARCHAR(255), evaluation_value NUMERIC(15, 2), location_city VARCHAR(100), location_state VARCHAR(100), address VARCHAR(255), latitude NUMERIC(10, 8), longitude NUMERIC(11, 8), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS user_wins ( id SERIAL PRIMARY KEY, user_id VARCHAR(255) NOT NULL REFERENCES users(uid), lot_id INTEGER NOT NULL REFERENCES lots(id), winning_bid_amount NUMERIC(15, 2) NOT NULL, win_date TIMESTAMPTZ NOT NULL, payment_status VARCHAR(50) DEFAULT 'PENDENTE', invoice_url TEXT, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS bids ( id SERIAL PRIMARY KEY, lot_id INTEGER NOT NULL REFERENCES lots(id) ON DELETE CASCADE, auction_id INTEGER, bidder_id VARCHAR(255) NOT NULL, bidder_display_name VARCHAR(255), amount NUMERIC(15,2) NOT NULL, timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`
+      `CREATE TABLE IF NOT EXISTS bids ( id SERIAL PRIMARY KEY, lot_id INTEGER NOT NULL REFERENCES lots(id) ON DELETE CASCADE, auction_id INTEGER, bidder_id VARCHAR(255) NOT NULL, bidder_display_name VARCHAR(255), amount NUMERIC(15,2) NOT NULL, timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS notifications ( id SERIAL PRIMARY KEY, user_id VARCHAR(255) NOT NULL REFERENCES users(uid) ON DELETE CASCADE, message TEXT NOT NULL, link TEXT, is_read BOOLEAN DEFAULT FALSE, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`
     ];
 
     try {
@@ -1161,4 +1184,3 @@ export class PostgresAdapter implements IDatabaseAdapter {
     }
   }
 }
-
