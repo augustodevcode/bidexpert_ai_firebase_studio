@@ -1,3 +1,4 @@
+
 // src/components/map-search-component.tsx
 'use client';
 
@@ -71,9 +72,20 @@ export default function MapSearchComponent({
   onBoundsChange,
   shouldFitBounds
 }: MapSearchComponentProps) {
+  const [isClient, setIsClient] = useState(false);
+  const mapKeyRef = useRef(`map-${Date.now()}-${Math.random()}`); // Stable key
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
+  if (!isClient) {
+    return <Skeleton className="w-full h-full rounded-lg" />;
+  }
 
   return (
     <MapContainer
+      key={mapKeyRef.current} // Use a stable key
       center={mapCenter}
       zoom={mapZoom}
       scrollWheelZoom={true}

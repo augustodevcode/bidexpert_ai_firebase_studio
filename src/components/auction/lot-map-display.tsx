@@ -1,3 +1,4 @@
+
 // src/components/auction/lot-map-display.tsx
 'use client';
 
@@ -8,6 +9,7 @@ import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { Button } from '../ui/button';
 
 // Fix for default Leaflet icon paths in Next.js
 // This needs to be done once, outside the component render.
@@ -24,9 +26,10 @@ L.Icon.Default.mergeOptions({
 interface LotMapDisplayProps {
   lot: Lot;
   platformSettings?: PlatformSettings;
+  onOpenMapModal?: () => void;
 }
 
-export default function LotMapDisplay({ lot }: LotMapDisplayProps) {
+export default function LotMapDisplay({ lot, onOpenMapModal }: LotMapDisplayProps) {
   const { latitude, longitude, mapAddress, title } = lot;
   
   const displayAddressTextForLink = mapAddress || (lot.cityName && lot.stateUf ? `${lot.cityName}, ${lot.stateUf}` : "Localização do Lote");
@@ -64,6 +67,7 @@ export default function LotMapDisplay({ lot }: LotMapDisplayProps) {
         <div className="aspect-square w-full rounded-b-md overflow-hidden border-t relative">
           {hasCoords ? (
             <MapContainer
+              key={lot.id} // Add key to force re-creation on lot change
               center={[latitude, longitude]}
               zoom={15}
               scrollWheelZoom={false}
@@ -84,6 +88,13 @@ export default function LotMapDisplay({ lot }: LotMapDisplayProps) {
               <Info className="h-12 w-12 mb-2" />
               <p>Mapa indisponível para este lote.</p>
               <p className="text-xs">Não foram fornecidas coordenadas de localização.</p>
+            </div>
+          )}
+           {hasCoords && onOpenMapModal && (
+            <div className="absolute top-2 right-2 z-10">
+              <Button size="sm" variant="secondary" onClick={onOpenMapModal} className="shadow-md">
+                Ampliar Mapa
+              </Button>
             </div>
           )}
         </div>
