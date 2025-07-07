@@ -2,7 +2,7 @@
 import { Pool, type QueryResultRow } from 'pg';
 import type {
   IDatabaseAdapter,
-  LotCategory, StateInfo, StateFormData,
+  LotCategory, StateInfo, StateFormData, CategoryFormData,
   CityInfo, CityFormData,
   AuctioneerProfileInfo, AuctioneerFormData,
   SellerProfileInfo, SellerFormData,
@@ -23,7 +23,11 @@ import type {
   JudicialDistrict, JudicialDistrictFormData,
   JudicialBranch, JudicialBranchFormData,
   JudicialProcess, JudicialProcessFormData,
-  Bem, BemFormData
+  Bem, BemFormData,
+  UserDocument,
+  DocumentType,
+  Notification,
+  BlogPost
 } from '@/types';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -543,104 +547,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
     getPool();
   }
 
-  async createAuctionWithLots(wizardData: WizardData): Promise<{ success: boolean; message: string; auctionId?: string; }> {
-    const client = await getPool().connect();
-    try {
-        await client.query('BEGIN');
-
-        // 1. Create Auction
-        const auctionDetails = wizardData.auctionDetails || {};
-        const auctionPublicId = `AUC-PUB-${uuidv4()}`;
-        
-        const auctionQuery = `
-            INSERT INTO auctions (public_id, title, description, status, auction_type, auction_date, end_date, seller_id, auctioneer_id, category_id, judicial_process_id) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
-            RETURNING id`;
-        
-        const auctionRes = await client.query(auctionQuery, [
-            auctionPublicId,
-            auctionDetails.title,
-            auctionDetails.description || null,
-            'RASCUNHO', // Always start as draft
-            wizardData.auctionType,
-            auctionDetails.auctionDate,
-            auctionDetails.endDate || null,
-            auctionDetails.sellerId || null,
-            auctionDetails.auctioneerId || null,
-            auctionDetails.categoryId || null,
-            wizardData.judicialProcess?.id || null,
-        ]);
-        const newAuctionId = auctionRes.rows[0].id;
-        console.log(`[PG Adapter] Created auction with ID: ${newAuctionId}`);
-
-        // 2. Create Lots and collect all bemIds
-        const allBemIdsToUpdate = new Set<string>();
-        if (wizardData.createdLots && wizardData.createdLots.length > 0) {
-            for (const lotDef of wizardData.createdLots) {
-                const lotPublicId = `LOT-PUB-${uuidv4()}`;
-                const lotQuery = `
-                    INSERT INTO lots (public_id, auction_id, number, title, description, status, price, initial_price, bid_increment_step, category_id, subcategory_id, bem_ids)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-                    RETURNING id`;
-                
-                await client.query(lotQuery, [
-                    lotPublicId,
-                    newAuctionId,
-                    lotDef.number || null,
-                    lotDef.title,
-                    lotDef.description || null,
-                    'EM_BREVE', // Start lots as upcoming
-                    lotDef.price,
-                    lotDef.initialPrice || lotDef.price,
-                    lotDef.bidIncrementStep || null,
-                    lotDef.categoryId || null,
-                    lotDef.subcategoryId || null,
-                    lotDef.bemIds ? JSON.stringify(lotDef.bemIds) : null,
-                ]);
-
-                (lotDef.bemIds || []).forEach(id => allBemIdsToUpdate.add(id));
-            }
-             console.log(`[PG Adapter] Created ${wizardData.createdLots.length} lots for auction ${newAuctionId}.`);
-        }
-
-        // 3. Update status of all associated Bens
-        if (allBemIdsToUpdate.size > 0) {
-            const bemIdsArray = Array.from(allBemIdsToUpdate);
-            await this.updateBensStatus(bemIdsArray, 'LOTEADO', client);
-        }
-        
-        // 4. Update lot count on auction
-        const updateAuctionCountQuery = `UPDATE auctions SET total_lots = $1 WHERE id = $2`;
-        await client.query(updateAuctionCountQuery, [wizardData.createdLots?.length || 0, newAuctionId]);
-
-        await client.query('COMMIT');
-        return { success: true, message: `Leilão e ${wizardData.createdLots?.length || 0} lotes vinculados com sucesso.`, auctionId: String(newAuctionId) };
-    } catch (error: any) {
-        await client.query('ROLLBACK');
-        console.error("[PostgresAdapter - createAuctionWithLots] Error:", error);
-        return { success: false, message: error.message };
-    } finally {
-        client.release();
-    }
-  }
-
-  async updateBensStatus(bemIds: string[], status: Bem['status'], connection?: any): Promise<{ success: boolean; message: string; }> {
-    if (bemIds.length === 0) {
-        return { success: true, message: 'Nenhum bem para atualizar.' };
-    }
-    const client = connection || getPool();
-    const query = `UPDATE bens SET status = $1 WHERE id = ANY($2::int[])`;
-    try {
-        const result = await client.query(query, [status, bemIds]);
-        const rowCount = result.rowCount || 0;
-        console.log(`[PostgresAdapter] Updated status for ${rowCount} bens to ${status}.`);
-        return { success: true, message: `${rowCount} bens atualizados.` };
-    } catch (e: any) {
-        console.error("[PostgresAdapter - updateBensStatus] Error:", e);
-        return { success: false, message: e.message };
-    }
-  }
-
   async getWinsForUser(userId: string): Promise<UserWin[]> {
     const { rows } = await getPool().query(
         `SELECT
@@ -767,8 +673,9 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `CREATE TABLE IF NOT EXISTS auctioneers ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, registration_number VARCHAR(50), contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since TIMESTAMPTZ, rating NUMERIC(3, 2), auctions_conducted_count INTEGER DEFAULT 0, total_value_sold NUMERIC(15, 2) DEFAULT 0, user_id VARCHAR(255), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS sellers ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since TIMESTAMPTZ, rating NUMERIC(3, 2), active_lots_count INTEGER, total_sales_value NUMERIC(15, 2), auctions_facilitated_count INTEGER, user_id VARCHAR(255), cnpj VARCHAR(20), razao_social VARCHAR(255), inscricao_estadual VARCHAR(50), is_judicial BOOLEAN DEFAULT FALSE, judicial_branch_id INTEGER, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS auctions ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), auction_type VARCHAR(50), category_id INTEGER REFERENCES lot_categories(id), auctioneer_id INTEGER REFERENCES auctioneers(id), seller_id INTEGER REFERENCES sellers(id), judicial_process_id INTEGER, auction_date TIMESTAMPTZ NOT NULL, end_date TIMESTAMPTZ, city VARCHAR(100), state VARCHAR(2), image_url TEXT, data_ai_hint VARCHAR(255), documents_url TEXT, visits INTEGER DEFAULT 0, initial_offer NUMERIC(15, 2), soft_close_enabled BOOLEAN DEFAULT FALSE, soft_close_minutes INTEGER, automatic_bidding_enabled BOOLEAN DEFAULT FALSE, silent_bidding_enabled BOOLEAN DEFAULT FALSE, allow_multiple_bids_per_user BOOLEAN DEFAULT TRUE, allow_installment_bids BOOLEAN, estimated_revenue NUMERIC(15, 2), achieved_revenue NUMERIC(15, 2), total_habilitated_users INTEGER, total_lots INTEGER, is_featured_on_marketplace BOOLEAN, marketplace_announcement_title VARCHAR(150), auction_stages JSONB, auto_relist_settings JSONB, decrement_amount NUMERIC(15, 2), decrement_interval_seconds INTEGER, floor_price NUMERIC(15, 2), original_auction_id INTEGER REFERENCES auctions(id), relist_count INTEGER, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS lots ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, auction_id INTEGER REFERENCES auctions(id) ON DELETE SET NULL, bem_ids JSONB, number VARCHAR(50), title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), price NUMERIC(15, 2), initial_price NUMERIC(15, 2), bid_increment_step NUMERIC(15,2), category_id INTEGER, subcategory_id INTEGER, bids_count INTEGER DEFAULT 0, is_featured BOOLEAN DEFAULT FALSE, reserve_price NUMERIC(15, 2), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS platform_settings ( id SERIAL PRIMARY KEY, site_title VARCHAR(255), site_tagline TEXT, gallery_image_base_path VARCHAR(255), storage_provider VARCHAR(50), firebase_storage_bucket VARCHAR(255), active_theme_name VARCHAR(100), themes JSONB, platform_public_id_masks JSONB, map_settings JSONB, search_pagination_type VARCHAR(50), search_items_per_page INTEGER, search_load_more_count INTEGER, show_countdown_on_lot_detail BOOLEAN, show_countdown_on_cards BOOLEAN, show_related_lots_on_lot_detail BOOLEAN, related_lots_count INTEGER, mental_trigger_settings JSONB, section_badge_visibility JSONB, homepage_sections JSONB, variable_increment_table JSONB, bidding_settings JSONB, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS lots ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, auction_id INTEGER REFERENCES auctions(id) ON DELETE SET NULL, bem_ids JSONB, media_item_ids JSONB, number VARCHAR(50), title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), price NUMERIC(15, 2), initial_price NUMERIC(15, 2), bids_count INTEGER DEFAULT 0, is_featured BOOLEAN DEFAULT FALSE, reserve_price NUMERIC(15, 2), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS media_items ( id SERIAL PRIMARY KEY, file_name VARCHAR(255) NOT NULL, uploaded_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, uploaded_by VARCHAR(255), storage_path VARCHAR(512), title VARCHAR(255), alt_text VARCHAR(255), caption VARCHAR(500), description TEXT, mime_type VARCHAR(100) NOT NULL, size_bytes BIGINT, dimensions_width INTEGER, dimensions_height INTEGER, url_original TEXT NOT NULL, url_thumbnail TEXT, url_medium TEXT, url_large TEXT, linked_lot_ids JSONB, data_ai_hint VARCHAR(255), updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS platform_settings ( id SERIAL PRIMARY KEY, site_title VARCHAR(255), site_tagline TEXT, gallery_image_base_path VARCHAR(255), storage_provider VARCHAR(50), firebase_storage_bucket VARCHAR(255), active_theme_name VARCHAR(100), themes JSONB, platform_public_id_masks JSONB, map_settings JSONB, search_pagination_type VARCHAR(50), search_items_per_page INTEGER, search_load_more_count INTEGER, show_countdown_on_lot_detail BOOLEAN, show_countdown_on_cards BOOLEAN, show_related_lots_on_lot_detail BOOLEAN, related_lots_count INTEGER, mental_trigger_settings JSONB, section_badge_visibility JSONB, homepage_sections JSONB, variable_increment_table JSONB, bidding_settings JSONB, default_list_items_per_page INTEGER, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS courts ( id SERIAL PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, website TEXT, state_uf VARCHAR(2) NOT NULL, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS judicial_districts ( id SERIAL PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, court_id INTEGER NOT NULL REFERENCES courts(id) ON DELETE RESTRICT, state_id INTEGER NOT NULL REFERENCES states(id) ON DELETE RESTRICT, zip_code VARCHAR(10), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, UNIQUE (slug, state_id) );`,
       `CREATE TABLE IF NOT EXISTS judicial_branches ( id SERIAL PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, district_id INTEGER NOT NULL REFERENCES judicial_districts(id) ON DELETE CASCADE, contact_name VARCHAR(150), phone VARCHAR(20), email VARCHAR(150), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, UNIQUE (slug, district_id) );`,
@@ -862,7 +769,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.warn("[PostgresAdapter] getLotCategoryByName is not yet implemented for PostgreSQL.");
     return null;
   }
-  async updateLotCategory(id: string, data: Partial<{ name: string; description?: string; hasSubcategories?: boolean; }>): Promise<{ success: boolean; message: string; }> {
+  async updateLotCategory(id: string, data: Partial<CategoryFormData>): Promise<{ success: boolean; message: string; }> {
     console.warn("[PostgresAdapter] updateLotCategory is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
@@ -1046,7 +953,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.warn("[PostgresAdapter] updateUserProfile is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
-  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, "cpf" | "cellPhone" | "dateOfBirth" | "password" | "accountType" | "razaoSocial" | "cnpj" | "inscricaoEstadual" | "websiteComitente" | "zipCode" | "street" | "number" | "complement" | "neighborhood" | "city" | "state" | "optInMarketing">>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileWithPermissions; }> {
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileWithPermissions; }> {
     console.warn("[PostgresAdapter] ensureUserRole is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
@@ -1090,7 +997,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.warn("[PostgresAdapter] deleteRole is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
-  async createMediaItem(data: Omit<MediaItem, "id" | "uploadedAt" | "urlOriginal" | "urlThumbnail" | "urlMedium" | "urlLarge" | "storagePath">, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> {
+  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> {
     console.warn("[PostgresAdapter] createMediaItem is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
@@ -1102,7 +1009,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.warn("[PostgresAdapter] getMediaItem is not yet implemented for PostgreSQL.");
     return null;
   }
-  async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, "title" | "altText" | "caption" | "description">>): Promise<{ success: boolean; message: string; }> {
+  async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> {
     console.warn("[PostgresAdapter] updateMediaItemMetadata is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
