@@ -17,14 +17,18 @@ function getCookie(name: string): string | undefined {
 
 export default function DevDbIndicator() {
   const [dbSystem, setDbSystem] = useState('');
+  const [source, setSource] = useState('...');
 
   useEffect(() => {
-    // This component now relies solely on the client-side readable cookie.
-    // The server-side logic is now robust enough to handle its own context.
     const dbFromCookie = getCookie('dev-config-db');
-    // We fall back to the public env var, which is also available on the client.
-    const dbFromEnv = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
-    setDbSystem(dbFromCookie || dbFromEnv);
+    if (dbFromCookie) {
+      setDbSystem(dbFromCookie);
+      setSource('Cookie');
+    } else {
+      const dbFromEnv = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
+      setDbSystem(dbFromEnv);
+      setSource('Environment');
+    }
   }, []);
 
   if (process.env.NODE_ENV !== 'development' || !dbSystem) {
@@ -33,7 +37,7 @@ export default function DevDbIndicator() {
 
   return (
     <p className="text-xs text-muted-foreground mt-2">
-      Active DB System: <span className="font-semibold text-primary">{dbSystem.toUpperCase()}</span> (Dev Only)
+      Active DB: <span className="font-semibold text-primary">{dbSystem.toUpperCase()}</span> ({source}) (Dev Only)
     </p>
   );
 }
