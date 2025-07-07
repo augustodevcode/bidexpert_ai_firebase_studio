@@ -21,7 +21,7 @@ export async function getBens(filter?: { judicialProcessId?: string, sellerId?: 
   return db.getBens(filter);
 }
 
-export async function getBensByIdsAction(ids: string[]): Promise<Bem[]> {
+export async function getBensByIds(ids: string[]): Promise<Bem[]> {
   if (!ids || ids.length === 0) return [];
   const db = await getDatabaseAdapter();
   return db.getBensByIds(ids);

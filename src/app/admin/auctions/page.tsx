@@ -1,4 +1,3 @@
-
 // src/app/admin/auctions/page.tsx
 'use client';
 
@@ -91,6 +90,12 @@ export default function AdminAuctionsPage() {
     allAuctioneers.map(a => ({ value: a.name, label: a.name })),
   [allAuctioneers]);
 
+  const facetedFilterColumns = useMemo(() => [
+    { id: 'status', title: 'Status', options: statusOptions },
+    { id: 'seller', title: 'Comitente', options: sellerOptions },
+    { id: 'auctioneer', title: 'Leiloeiro', options: auctioneerOptions }
+  ], [statusOptions, sellerOptions, auctioneerOptions]);
+
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
@@ -118,11 +123,7 @@ export default function AdminAuctionsPage() {
             error={error}
             searchColumnId="title"
             searchPlaceholder="Buscar por título..."
-            facetedFilterColumns={[
-              { id: 'status', title: 'Status', options: statusOptions },
-              { id: 'seller', title: 'Comitente', options: sellerOptions },
-              { id: 'auctioneer', title: 'Leiloeiro', options: auctioneerOptions }
-            ]}
+            facetedFilterColumns={facetedFilterColumns}
           />
         </CardContent>
       </Card>
