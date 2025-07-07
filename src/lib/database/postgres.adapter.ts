@@ -1,3 +1,4 @@
+
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {
@@ -27,7 +28,8 @@ import type {
   UserDocument,
   DocumentType,
   Notification,
-  BlogPost
+  BlogPost,
+  UserBid
 } from '@/types';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -380,6 +382,8 @@ function mapToLot(row: QueryResultRow): Lot {
     itbiValue: row.itbi_value !== null ? Number(row.itbi_value) : undefined,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
+    winningBidderId: row.winning_bidder_id || null,
+    winningBidAmount: row.winning_bid_amount !== null ? Number(row.winning_bid_amount) : null,
   };
 }
 
@@ -564,7 +568,11 @@ export class PostgresAdapter implements IDatabaseAdapter {
             l.title as l_title,
             l.number as l_number,
             l.image_url as l_image_url,
-            l.data_ai_hint as l_data_ai_hint
+            l.data_ai_hint as l_data_ai_hint,
+            l.status as l_status,
+            l.price as l_price,
+            l.end_date as l_end_date,
+            l.bids_count as l_bids_count
             
         FROM user_wins w
         JOIN lots l ON w.lot_id = l.id
@@ -598,6 +606,57 @@ export class PostgresAdapter implements IDatabaseAdapter {
         };
     });
     return wins;
+  }
+  
+  async getBidsForUser(userId: string): Promise<UserBid[]> {
+      const query = `
+        WITH UserLatestBids AS (
+            SELECT 
+                lot_id,
+                MAX(timestamp) as latest_timestamp
+            FROM bids
+            WHERE bidder_id = $1
+            GROUP BY lot_id
+        )
+        SELECT
+            b.id as bid_id,
+            b.amount,
+            b.timestamp,
+            l.*, 
+            a.title as auction_name
+        FROM bids b
+        JOIN UserLatestBids ulb ON b.lot_id = ulb.lot_id AND b.timestamp = ulb.latest_timestamp
+        JOIN lots l ON b.lot_id = l.id
+        LEFT JOIN auctions a ON l.auction_id = a.id
+        WHERE b.bidder_id = $1
+        ORDER BY b.timestamp DESC;
+      `;
+      const { rows } = await getPool().query(query, [userId]);
+      const userBids = rows.map(row => {
+          const lot = mapToLot(row);
+          const userBidAmount = parseFloat(row.amount);
+          
+          let bidStatus: UserBidStatus;
+          
+          if (lot.status === 'VENDIDO') {
+              bidStatus = lot.winningBidderId === userId ? 'ARREMATADO' : 'NAO_ARREMATADO';
+          } else if (lot.status === 'NAO_VENDIDO' || lot.status === 'ENCERRADO') {
+              bidStatus = 'NAO_ARREMATADO';
+          } else if (lot.status === 'CANCELADO') {
+              bidStatus = 'CANCELADO';
+          } else { // ABERTO_PARA_LANCES or EM_BREVE
+              bidStatus = userBidAmount >= lot.price ? 'GANHANDO' : 'PERDENDO';
+          }
+
+          return {
+              id: String(row.bid_id),
+              amount: userBidAmount,
+              timestamp: new Date(row.timestamp),
+              lot: lot,
+              bidStatus: bidStatus
+          };
+      });
+      return userBids;
   }
   
   async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> {
@@ -673,7 +732,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `CREATE TABLE IF NOT EXISTS auctioneers ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, registration_number VARCHAR(50), contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since TIMESTAMPTZ, rating NUMERIC(3, 2), auctions_conducted_count INTEGER DEFAULT 0, total_value_sold NUMERIC(15, 2) DEFAULT 0, user_id VARCHAR(255), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS sellers ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since TIMESTAMPTZ, rating NUMERIC(3, 2), active_lots_count INTEGER, total_sales_value NUMERIC(15, 2), auctions_facilitated_count INTEGER, user_id VARCHAR(255), cnpj VARCHAR(20), razao_social VARCHAR(255), inscricao_estadual VARCHAR(50), is_judicial BOOLEAN DEFAULT FALSE, judicial_branch_id INTEGER, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS auctions ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), auction_type VARCHAR(50), category_id INTEGER REFERENCES lot_categories(id), auctioneer_id INTEGER REFERENCES auctioneers(id), seller_id INTEGER REFERENCES sellers(id), judicial_process_id INTEGER, auction_date TIMESTAMPTZ NOT NULL, end_date TIMESTAMPTZ, city VARCHAR(100), state VARCHAR(2), image_url TEXT, data_ai_hint VARCHAR(255), documents_url TEXT, visits INTEGER DEFAULT 0, initial_offer NUMERIC(15, 2), soft_close_enabled BOOLEAN DEFAULT FALSE, soft_close_minutes INTEGER, automatic_bidding_enabled BOOLEAN DEFAULT FALSE, silent_bidding_enabled BOOLEAN DEFAULT FALSE, allow_multiple_bids_per_user BOOLEAN DEFAULT TRUE, allow_installment_bids BOOLEAN, estimated_revenue NUMERIC(15, 2), achieved_revenue NUMERIC(15, 2), total_habilitated_users INTEGER, total_lots INTEGER, is_featured_on_marketplace BOOLEAN, marketplace_announcement_title VARCHAR(150), auction_stages JSONB, auto_relist_settings JSONB, decrement_amount NUMERIC(15, 2), decrement_interval_seconds INTEGER, floor_price NUMERIC(15, 2), original_auction_id INTEGER REFERENCES auctions(id), relist_count INTEGER, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS lots ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, auction_id INTEGER REFERENCES auctions(id) ON DELETE SET NULL, bem_ids JSONB, media_item_ids JSONB, number VARCHAR(50), title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), price NUMERIC(15, 2), initial_price NUMERIC(15, 2), bids_count INTEGER DEFAULT 0, is_featured BOOLEAN DEFAULT FALSE, reserve_price NUMERIC(15, 2), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS lots ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, auction_id INTEGER REFERENCES auctions(id) ON DELETE SET NULL, bem_ids JSONB, media_item_ids JSONB, number VARCHAR(50), title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), price NUMERIC(15, 2), initial_price NUMERIC(15, 2), bids_count INTEGER DEFAULT 0, is_featured BOOLEAN DEFAULT FALSE, reserve_price NUMERIC(15, 2), end_date TIMESTAMPTZ, winning_bidder_id VARCHAR(255) REFERENCES users(uid) ON DELETE SET NULL, winning_bid_amount NUMERIC(15, 2), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS media_items ( id SERIAL PRIMARY KEY, file_name VARCHAR(255) NOT NULL, uploaded_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, uploaded_by VARCHAR(255), storage_path VARCHAR(512), title VARCHAR(255), alt_text VARCHAR(255), caption VARCHAR(500), description TEXT, mime_type VARCHAR(100) NOT NULL, size_bytes BIGINT, dimensions_width INTEGER, dimensions_height INTEGER, url_original TEXT NOT NULL, url_thumbnail TEXT, url_medium TEXT, url_large TEXT, linked_lot_ids JSONB, data_ai_hint VARCHAR(255), updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS platform_settings ( id SERIAL PRIMARY KEY, site_title VARCHAR(255), site_tagline TEXT, gallery_image_base_path VARCHAR(255), storage_provider VARCHAR(50), firebase_storage_bucket VARCHAR(255), active_theme_name VARCHAR(100), themes JSONB, platform_public_id_masks JSONB, map_settings JSONB, search_pagination_type VARCHAR(50), search_items_per_page INTEGER, search_load_more_count INTEGER, show_countdown_on_lot_detail BOOLEAN, show_countdown_on_cards BOOLEAN, show_related_lots_on_lot_detail BOOLEAN, related_lots_count INTEGER, mental_trigger_settings JSONB, section_badge_visibility JSONB, homepage_sections JSONB, variable_increment_table JSONB, bidding_settings JSONB, default_list_items_per_page INTEGER, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS courts ( id SERIAL PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, website TEXT, state_uf VARCHAR(2) NOT NULL, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
@@ -1102,3 +1161,4 @@ export class PostgresAdapter implements IDatabaseAdapter {
     }
   }
 }
+

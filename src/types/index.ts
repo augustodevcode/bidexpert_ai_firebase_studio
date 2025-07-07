@@ -478,6 +478,8 @@ export interface Lot {
   auctionDate?: AnyTimestamp;
   stateId?: string;
   cityId?: string;
+  winningBidderId?: string | null;
+  winningBidAmount?: number | null;
 }
 
 export type LotFormData = Omit<Lot,
@@ -508,7 +510,7 @@ export type BidInfo = {
   timestamp: AnyTimestamp;
 };
 
-export type UserBidStatus = 'GANHANDO' | 'PERDENDO' | 'SUPERADO_POR_OUTRO' | 'SUPERADO_PELO_PROPRIO_MAXIMO' | 'ARREMATADO' | 'NAO_ARREMATADO';
+export type UserBidStatus = 'GANHANDO' | 'PERDENDO' | 'ARREMATADO' | 'NAO_ARREMATADO' | 'ENCERRADO' | 'CANCELADO';
 export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO';
 
 export interface UserWin {
@@ -522,7 +524,10 @@ export interface UserWin {
   invoiceUrl?: string; 
 }
 
-export interface UserBid extends BidInfo {
+export interface UserBid {
+  id: string;
+  amount: number;
+  timestamp: AnyTimestamp;
   lot: Lot;
   bidStatus: UserBidStatus;
 }
@@ -1108,7 +1113,7 @@ export interface IDatabaseAdapter {
   deleteDirectSaleOffer(id: string): Promise<{ success: boolean; message: string; }>;
 
   getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]>;
-  getBidsForUser?(userId: string): Promise<UserBid[]>;
+  getBidsForUser(userId: string): Promise<UserBid[]>;
   placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }>;
   getWinsForUser(userId: string): Promise<UserWin[]>;
   
@@ -1208,3 +1213,4 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
+

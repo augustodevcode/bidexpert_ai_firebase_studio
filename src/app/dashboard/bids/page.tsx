@@ -1,10 +1,10 @@
+
 // src/app/dashboard/bids/page.tsx
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gavel, ListFilter, Loader2, AlertCircle } from 'lucide-react';
+import { Gavel, ListFilter, Loader2, AlertCircle, ShoppingBag, XCircle, CheckCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/contexts/auth-context';
 import { useState, useEffect, useCallback } from 'react';
@@ -13,6 +13,27 @@ import { getBidsForUser } from './actions';
 import { useToast } from '@/hooks/use-toast';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+
+const getBidStatusInfo = (bidStatus: UserBid['bidStatus']) => {
+    switch(bidStatus) {
+        case 'GANHANDO':
+            return { text: 'Ganhando', icon: CheckCircle, color: 'text-green-600' };
+        case 'PERDENDO':
+            return { text: 'Superado', icon: AlertCircle, color: 'text-yellow-600' };
+        case 'ARREMATADO':
+            return { text: 'Arrematado', icon: Gavel, color: 'text-blue-600' };
+        case 'NAO_ARREMATADO':
+            return { text: 'Não Arrematado', icon: XCircle, color: 'text-muted-foreground' };
+        case 'ENCERRADO':
+            return { text: 'Encerrado', icon: Clock, color: 'text-muted-foreground' };
+        case 'CANCELADO':
+            return { text: 'Cancelado', icon: XCircle, color: 'text-destructive' };
+        default:
+            return { text: 'Indefinido', icon: AlertCircle, color: 'text-muted-foreground' };
+    }
+}
+
 
 export default function MyBidsPage() {
   const { userProfileWithPermissions } = useAuth();
@@ -83,37 +104,43 @@ export default function MyBidsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Lote</TableHead>
-                  <TableHead>Meu Lance (R$)</TableHead>
-                  <TableHead>Lance Atual (R$)</TableHead>
-                  <TableHead>Status da Disputa</TableHead>
-                  <TableHead>Ações</TableHead>
+                  <TableHead className="text-right">Meu Lance</TableHead>
+                  <TableHead className="text-right">Lance Atual</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {bids.map((bid) => (
-                  <TableRow key={bid.id}>
-                    <TableCell>
-                      <Link href={`/auctions/${bid.lot.auctionId}/lots/${bid.lot.publicId || bid.lot.id}`} className="hover:text-primary font-medium">
-                        {bid.lot.title}
-                      </Link>
-                      <p className="text-xs text-muted-foreground">Leilão: {bid.lot.auctionName}</p>
-                    </TableCell>
-                    <TableCell className="font-semibold">
-                      {bid.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </TableCell>
-                     <TableCell>
-                      {bid.lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell>
-                      {getAuctionStatusText(bid.bidStatus)}
-                    </TableCell>
-                    <TableCell>
-                       <Button variant="outline" size="sm" asChild>
-                         <Link href={`/auctions/${bid.lot.auctionId}/lots/${bid.lot.publicId || bid.lot.id}`}>Ver Lote</Link>
-                       </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {bids.map((bid) => {
+                  const statusInfo = getBidStatusInfo(bid.bidStatus);
+                  return (
+                      <TableRow key={bid.id}>
+                        <TableCell>
+                          <Link href={`/auctions/${bid.lot.auctionId}/lots/${bid.lot.publicId || bid.lot.id}`} className="hover:text-primary font-medium">
+                            {bid.lot.title}
+                          </Link>
+                          <p className="text-xs text-muted-foreground">Leilão: {bid.lot.auctionName}</p>
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {bid.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {bid.lot.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </TableCell>
+                        <TableCell>
+                            <Badge variant="outline" className={statusInfo.color}>
+                                <statusInfo.icon className="h-3.5 w-3.5 mr-1.5"/>
+                                {statusInfo.text}
+                            </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/auctions/${bid.lot.auctionId}/lots/${bid.lot.publicId || bid.lot.id}`}>Ver Lote</Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
@@ -122,3 +149,4 @@ export default function MyBidsPage() {
     </div>
   );
 }
+

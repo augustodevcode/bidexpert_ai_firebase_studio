@@ -1,4 +1,5 @@
 
+// src/app/dashboard/wins/page.tsx
 'use client';
 
 import Link from 'next/link';
@@ -31,7 +32,7 @@ const getPaymentStatusColor = (status: string) => {
 };
 
 export default function MyWinsPage() {
-  const { user, userProfileWithPermissions } = useAuth();
+  const { userProfileWithPermissions } = useAuth();
   const { toast } = useToast();
   const [wins, setWins] = useState<UserWin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,13 +55,12 @@ export default function MyWinsPage() {
   }, [toast]);
 
   useEffect(() => {
-    const currentUserId = user?.uid || userProfileWithPermissions?.uid;
-    if (currentUserId) {
-      fetchWins(currentUserId);
+    if (userProfileWithPermissions?.uid) {
+      fetchWins(userProfileWithPermissions.uid);
     } else {
       setIsLoading(false); // No user, stop loading
     }
-  }, [user, userProfileWithPermissions, fetchWins]);
+  }, [userProfileWithPermissions, fetchWins]);
 
   if (isLoading) {
     return (
@@ -194,3 +194,4 @@ export default function MyWinsPage() {
     </div>
   );
 }
+
