@@ -4,11 +4,10 @@
 import type { Lot, PlatformSettings } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Info, ExternalLink } from 'lucide-react';
-import React, { useRef, useState, useEffect } from 'react';
+import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { Skeleton } from '@/components/ui/skeleton';
 
 // Fix for default Leaflet icon paths in Next.js
 // This needs to be done once, outside the component render.
@@ -29,15 +28,7 @@ interface LotMapDisplayProps {
 
 export default function LotMapDisplay({ lot }: LotMapDisplayProps) {
   const { latitude, longitude, mapAddress, title } = lot;
-  // This stable key, unique per component instance and lot, prevents the re-initialization error.
-  const mapKey = useRef(`map-${lot.id}-${Math.random()}`).current;
   
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
   const displayAddressTextForLink = mapAddress || (lot.cityName && lot.stateUf ? `${lot.cityName}, ${lot.stateUf}` : "Localização do Lote");
   const hasCoords = latitude !== undefined && latitude !== null && longitude !== undefined && longitude !== null;
 
@@ -71,11 +62,8 @@ export default function LotMapDisplay({ lot }: LotMapDisplayProps) {
       </CardHeader>
       <CardContent className="p-0">
         <div className="aspect-square w-full rounded-b-md overflow-hidden border-t relative">
-          {!isClient ? (
-             <Skeleton className="w-full h-full" />
-          ) : hasCoords ? (
+          {hasCoords ? (
             <MapContainer
-              key={mapKey}
               center={[latitude, longitude]}
               zoom={15}
               scrollWheelZoom={false}

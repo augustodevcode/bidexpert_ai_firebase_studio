@@ -71,20 +71,9 @@ export default function MapSearchComponent({
   onBoundsChange,
   shouldFitBounds
 }: MapSearchComponentProps) {
-  const mapKey = useRef(`map-instance-${Math.random()}`).current;
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!isClient) {
-    return <Skeleton className="w-full h-full rounded-lg" />;
-  }
 
   return (
     <MapContainer
-      key={mapKey}
       center={mapCenter}
       zoom={mapZoom}
       scrollWheelZoom={true}

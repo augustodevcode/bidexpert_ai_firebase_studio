@@ -17,20 +17,16 @@ import { getLots } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import type { LatLngBounds } from 'leaflet';
 import dynamic from 'next/dynamic';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const MapSearchComponent = dynamic(() => import('@/components/map-search-component'), {
+    ssr: false,
+    loading: () => <Skeleton className="w-full h-full rounded-lg" />,
+});
 
 export default function MapSearchPage() {
   const router = useRouter();
   const searchParamsHook = useSearchParams();
-
-  const MapSearchComponent = useMemo(() => dynamic(() => import('@/components/map-search-component'), {
-    ssr: false,
-    loading: () => (
-      <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="ml-2 text-muted-foreground">Carregando Mapa...</p>
-      </div>
-    ),
-  }), []);
 
   const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
   const [allLots, setAllLots] = useState<Lot[]>([]);
@@ -198,21 +194,15 @@ export default function MapSearchPage() {
         </Card>
 
         <div className="flex-grow h-full md:h-auto rounded-lg overflow-hidden shadow-lg relative z-0">
-             {mapCenter ? (
-                <MapSearchComponent
-                    items={filteredItems}
-                    itemType={searchType}
-                    mapCenter={mapCenter}
-                    mapZoom={mapZoom}
-                    onBoundsChange={handleBoundsChange}
-                    shouldFitBounds={!isUserInteraction}
-                />
-            ) : (
-                <div className="relative w-full h-full bg-muted rounded-lg flex items-center justify-center">
-                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                    <p className="ml-2 text-muted-foreground">Obtendo localização...</p>
-                </div>
-            )}
+             {mapCenter && <MapSearchComponent
+                items={filteredItems}
+                itemType={searchType}
+                mapCenter={mapCenter}
+                mapZoom={mapZoom}
+                onBoundsChange={handleBoundsChange}
+                shouldFitBounds={!isUserInteraction}
+            />
+            }
         </div>
     </div>
   );
