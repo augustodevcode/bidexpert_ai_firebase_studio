@@ -28,7 +28,9 @@ import type {
   DocumentType,
   Notification,
   BlogPost,
-  UserBid
+  UserBid,
+  AdminDashboardStats,
+  ConsignorDashboardStats
 } from '@/types';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -579,6 +581,72 @@ export class MySqlAdapter implements IDatabaseAdapter {
     getPool();
   }
   
+  async getConsignorDashboardStats(sellerId: string): Promise<ConsignorDashboardStats> {
+     const defaultStats: ConsignorDashboardStats = {
+      totalLotsConsigned: 0,
+      activeLots: 0,
+      soldLots: 0,
+      totalSalesValue: 0,
+      salesRate: 0,
+      salesByMonth: [],
+    };
+     try {
+      const [totalLotsRows] = await getPool().execute<RowDataPacket[]>('SELECT COUNT(*) as count FROM lots WHERE seller_id = ?', [sellerId]);
+      const [activeLotsRows] = await getPool().execute<RowDataPacket[]>("SELECT COUNT(*) as count FROM lots WHERE seller_id = ? AND status = 'ABERTO_PARA_LANCES'", [sellerId]);
+      const [soldLotsRows] = await getPool().execute<RowDataPacket[]>("SELECT COUNT(*) as count, SUM(price) as totalValue FROM lots WHERE seller_id = ? AND status = 'VENDIDO'", [sellerId]);
+
+      const totalLotsConsigned = totalLotsRows[0]?.count || 0;
+      const soldLots = soldLotsRows[0]?.count || 0;
+      const salesRate = totalLotsConsigned > 0 ? (soldLots / totalLotsConsigned) * 100 : 0;
+      
+      const salesByMonthQuery = `
+        SELECT DATE_FORMAT(updated_at, '%Y-%m') as month, SUM(price) as sales
+        FROM lots
+        WHERE seller_id = ? AND status = 'VENDIDO' AND updated_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+        GROUP BY month
+        ORDER BY month ASC;
+      `;
+      const [salesByMonthRows] = await getPool().execute<RowDataPacket[]>(salesByMonthQuery, [sellerId]);
+
+      return {
+        totalLotsConsigned,
+        activeLots: activeLotsRows[0]?.count || 0,
+        soldLots,
+        totalSalesValue: soldLotsRows[0]?.totalValue || 0,
+        salesRate,
+        salesByMonth: salesByMonthRows.map(row => ({ name: row.month, sales: parseFloat(row.sales) }))
+      };
+    } catch (error: any) {
+      console.error(`[MySqlAdapter - getConsignorDashboardStats for seller ${sellerId}] Error:`, error);
+      return defaultStats;
+    }
+  }
+
+  async getAdminDashboardStats(): Promise<AdminDashboardStats> {
+    const defaultStats: AdminDashboardStats = {
+      users: 0,
+      auctions: 0,
+      lots: 0,
+      sellers: 0,
+    };
+    try {
+      const [userRows] = await getPool().execute<RowDataPacket[]>('SELECT COUNT(*) as count FROM users');
+      const [auctionRows] = await getPool().execute<RowDataPacket[]>('SELECT COUNT(*) as count FROM auctions');
+      const [lotRows] = await getPool().execute<RowDataPacket[]>('SELECT COUNT(*) as count FROM lots');
+      const [sellerRows] = await getPool().execute<RowDataPacket[]>('SELECT COUNT(*) as count FROM sellers');
+
+      return {
+        users: userRows[0]?.count || 0,
+        auctions: auctionRows[0]?.count || 0,
+        lots: lotRows[0]?.count || 0,
+        sellers: sellerRows[0]?.count || 0,
+      };
+    } catch (error: any) {
+      console.error("[MySqlAdapter - getAdminDashboardStats] Error:", error);
+      return defaultStats;
+    }
+  }
+
   async createAuctionWithLots(wizardData: WizardData): Promise<{ success: boolean; message: string; auctionId?: string; }> {
     console.warn("[MySqlAdapter] createAuctionWithLots is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
@@ -710,6 +778,16 @@ export class MySqlAdapter implements IDatabaseAdapter {
   
   async getWinsForUser(userId: string): Promise<UserWin[]> {
     console.warn("[MySqlAdapter] getWinsForUser is not yet implemented for MySQL.");
+    return Promise.resolve([]);
+  }
+
+  async getBidsForUser(userId: string): Promise<UserBid[]> {
+    console.warn("[MySqlAdapter] getBidsForUser is not yet implemented for MySQL.");
+    return Promise.resolve([]);
+  }
+  
+  async getNotificationsForUser(userId: string): Promise<Notification[]> {
+    console.warn("[MySqlAdapter] getNotificationsForUser is not yet implemented for MySQL.");
     return Promise.resolve([]);
   }
   

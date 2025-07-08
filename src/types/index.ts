@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -22,11 +21,8 @@ export interface LotCategory {
     itemCount?: number;
     hasSubcategories?: boolean;
     logoUrl?: string | null;
-    logoMediaId?: string | null;
     coverImageUrl?: string | null;
-    coverImageMediaId?: string | null;
     megaMenuImageUrl?: string | null;
-    megaMenuImageMediaId?: string | null;
     dataAiHintLogo?: string | null;
     dataAiHintCover?: string | null;
     dataAiHintMegaMenu?: string | null;
@@ -299,22 +295,27 @@ export interface Bem {
   longitude?: number;
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
-  area?: number;
-  bedrooms?: number;
-  bathrooms?: number;
-  parkingSpaces?: number;
-  propertyType?: string;
-  amenities?: string[];
   plate?: string;
-  make?: string; model?: string;
+  make?: string; model?: string; version?: string;
   year?: number; modelYear?: number;
   mileage?: number;
-  color?: string; fuelType?: string; transmissionType?: string;
+  color?: string; fuelType?: string; transmissionType?: string; bodyType?: string;
+  vin?: string; renavam?: string;
+  enginePower?: string; numberOfDoors?: number; vehicleOptions?: string;
+  detranStatus?: string; debts?: string;
+  runningCondition?: string; bodyCondition?: string; tiresCondition?: string;
   hasKey?: boolean;
-  serialNumber?: string;
-  hoursUsed?: number;
-  breed?: string; age?: string; sex?: 'Macho' | 'Fêmea';
+
+  propertyRegistrationNumber?: string; iptuNumber?: string;
   isOccupied?: boolean;
+  area?: number; totalArea?: number; builtArea?: number;
+  bedrooms?: number; suites?: number; bathrooms?: number; parkingSpaces?: number;
+  constructionType?: string; finishes?: string; infrastructure?: string;
+  condoDetails?: string; improvements?: string; topography?: string;
+  liensAndEncumbrances?: string; propertyDebts?: string;
+  unregisteredRecords?: string; hasHabiteSe?: boolean;
+  zoningRestrictions?: string;
+  amenities?: string[];
 }
 
 export type BemFormData = Omit<Bem, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName' | 'galleryImageUrls' | 'mediaItemIds' | 'amenities'> & {
@@ -860,6 +861,13 @@ export interface Notification {
   createdAt: AnyTimestamp;
 }
 
+export interface AdminDashboardStats {
+    users: number;
+    auctions: number;
+    lots: number;
+    sellers: number;
+}
+
 export interface IStorageAdapter {
   upload(fileName: string, contentType: string, buffer: Buffer): Promise<{ publicUrl: string; storagePath: string; }>;
   delete(storagePath: string): Promise<{ success: boolean; message: string; }>;
@@ -986,6 +994,8 @@ export interface CnjSearchResponse {
 export interface IDatabaseAdapter {
   initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[], rolesProcessed?: number }>;
   disconnect?(): Promise<void>;
+  
+  getAdminDashboardStats(): Promise<AdminDashboardStats>;
 
   createLotCategory(data: { name: string; description?: string }): Promise<{ success: boolean; message: string; categoryId?: string; }>;
   getLotCategories(): Promise<LotCategory[]>;

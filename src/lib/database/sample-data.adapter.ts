@@ -1,4 +1,3 @@
-
 // src/lib/database/sample-data.adapter.ts
 import * as fs from 'fs';
 import * as path from 'path';
@@ -36,7 +35,9 @@ import type {
   UserDocument,
   Notification,
   BlogPost,
-  UserBid
+  UserBid,
+  AdminDashboardStats,
+  ConsignorDashboardStats
 } from '@/types';
 import { slugify, getEffectiveLotEndDate } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
@@ -133,6 +134,61 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return Promise.resolve();
   }
   
+  async getConsignorDashboardStats(sellerId: string): Promise<ConsignorDashboardStats> {
+    const defaultStats: ConsignorDashboardStats = {
+      totalLotsConsigned: 0, activeLots: 0, soldLots: 0, totalSalesValue: 0, salesRate: 0, salesByMonth: [],
+    };
+    if (!sellerId) return Promise.resolve(defaultStats);
+    
+    const sellerLots = (this.localData.sampleLots || []).filter(lot => lot.sellerId === sellerId);
+    if (!sellerLots.length) return Promise.resolve(defaultStats);
+    
+    const totalLotsConsigned = sellerLots.length;
+    const activeLots = sellerLots.filter(lot => lot.status === 'ABERTO_PARA_LANCES').length;
+    const soldLots = sellerLots.filter(lot => lot.status === 'VENDIDO');
+    const totalSalesValue = soldLots.reduce((sum, lot) => sum + lot.price, 0);
+    const salesRate = totalLotsConsigned > 0 ? (soldLots.length / totalLotsConsigned) * 100 : 0;
+    
+    // Aggregate sales by month for the last 12 months
+    const salesByMonthMap = new Map<string, number>();
+    const now = new Date();
+    for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        salesByMonthMap.set(monthKey, 0);
+    }
+
+    soldLots.forEach(lot => {
+        const saleDate = new Date(lot.updatedAt as string); // Assuming updatedAt is sale date
+        const monthKey = `${saleDate.getFullYear()}-${String(saleDate.getMonth() + 1).padStart(2, '0')}`;
+        if (salesByMonthMap.has(monthKey)) {
+            salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + lot.price);
+        }
+    });
+
+    const salesByMonth = Array.from(salesByMonthMap.entries())
+      .map(([name, sales]) => ({ name, sales }))
+      .sort((a,b) => a.name.localeCompare(b.name));
+
+    return Promise.resolve({
+      totalLotsConsigned,
+      activeLots,
+      soldLots: soldLots.length,
+      totalSalesValue,
+      salesRate,
+      salesByMonth
+    });
+  }
+
+  async getAdminDashboardStats(): Promise<AdminDashboardStats> {
+    return Promise.resolve({
+      users: this.localData.sampleUserProfiles?.length || 0,
+      auctions: this.localData.sampleAuctions?.length || 0,
+      lots: this.localData.sampleLots?.length || 0,
+      sellers: this.localData.sampleSellers?.length || 0,
+    });
+  }
+
    async createAuctionWithLots(wizardData: WizardData): Promise<{ success: boolean; message: string; auctionId?: string; }> {
     const auctionDetails = wizardData.auctionDetails || {};
     const newAuction: Auction = {
@@ -588,6 +644,11 @@ export class SampleDataAdapter implements IDatabaseAdapter {
       return Promise.resolve(JSON.parse(JSON.stringify(enrichedBids)));
   }
 
+  async getNotificationsForUser(userId: string): Promise<Notification[]> {
+    const userNotifications = (this.localData.sampleNotifications || []).filter(n => n.userId === userId);
+    return Promise.resolve(JSON.parse(JSON.stringify(userNotifications)));
+  }
+
   // --- Reviews ---
   async getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> {
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleLotReviews.filter(r => r.lotId === lotIdOrPublicId))));
@@ -613,7 +674,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
 
 
   // --- Users ---
-  async getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null> {
+  async getUserProfileData(userId: string): Promise<UserProfileData | null> {
     const profile = this.localData.sampleUserProfiles.find(p => p.uid === userId);
     if (!profile) return null;
     const finalProfile: UserProfileWithPermissions = {

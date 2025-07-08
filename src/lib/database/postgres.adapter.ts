@@ -28,7 +28,9 @@ import type {
   DocumentType,
   Notification,
   BlogPost,
-  UserBid
+  UserBid,
+  AdminDashboardStats,
+  ConsignorDashboardStats
 } from '@/types';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -547,6 +549,82 @@ export class PostgresAdapter implements IDatabaseAdapter {
   constructor() {
     getPool();
   }
+  
+  async getAdminDashboardStats(): Promise<AdminDashboardStats> {
+    const defaultStats: AdminDashboardStats = {
+      users: 0,
+      auctions: 0,
+      lots: 0,
+      sellers: 0,
+    };
+    try {
+      const [userRes, auctionRes, lotRes, sellerRes] = await Promise.all([
+        getPool().query('SELECT COUNT(*) FROM users'),
+        getPool().query('SELECT COUNT(*) FROM auctions'),
+        getPool().query('SELECT COUNT(*) FROM lots'),
+        getPool().query('SELECT COUNT(*) FROM sellers'),
+      ]);
+      
+      return {
+        users: parseInt(userRes.rows[0].count, 10) || 0,
+        auctions: parseInt(auctionRes.rows[0].count, 10) || 0,
+        lots: parseInt(lotRes.rows[0].count, 10) || 0,
+        sellers: parseInt(sellerRes.rows[0].count, 10) || 0,
+      };
+
+    } catch (error: any) {
+      console.error("[PostgresAdapter - getAdminDashboardStats] Error:", error);
+      return defaultStats;
+    }
+  }
+
+  async getConsignorDashboardStats(sellerId: string): Promise<ConsignorDashboardStats> {
+    const defaultStats: ConsignorDashboardStats = {
+      totalLotsConsigned: 0,
+      activeLots: 0,
+      soldLots: 0,
+      totalSalesValue: 0,
+      salesRate: 0,
+      salesByMonth: [],
+    };
+    try {
+      const query = `
+        SELECT
+          (SELECT COUNT(*) FROM lots WHERE seller_id = $1) as total_lots,
+          (SELECT COUNT(*) FROM lots WHERE seller_id = $1 AND status = 'ABERTO_PARA_LANCES') as active_lots,
+          (SELECT COUNT(*) FROM lots WHERE seller_id = $1 AND status = 'VENDIDO') as sold_lots,
+          (SELECT SUM(price) FROM lots WHERE seller_id = $1 AND status = 'VENDIDO') as total_value;
+      `;
+      const salesByMonthQuery = `
+        SELECT TO_CHAR(updated_at, 'YYYY-MM') as month, SUM(price) as sales
+        FROM lots
+        WHERE seller_id = $1 AND status = 'VENDIDO' AND updated_at >= NOW() - INTERVAL '12 months'
+        GROUP BY month
+        ORDER BY month ASC;
+      `;
+      
+      const [statsRes, salesByMonthRes] = await Promise.all([
+          getPool().query(query, [sellerId]),
+          getPool().query(salesByMonthQuery, [sellerId])
+      ]);
+      
+      const stats = statsRes.rows[0];
+      const totalLotsConsigned = parseInt(stats.total_lots, 10) || 0;
+      const soldLots = parseInt(stats.sold_lots, 10) || 0;
+      
+      return {
+        totalLotsConsigned,
+        activeLots: parseInt(stats.active_lots, 10) || 0,
+        soldLots,
+        totalSalesValue: parseFloat(stats.total_value) || 0,
+        salesRate: totalLotsConsigned > 0 ? (soldLots / totalLotsConsigned) * 100 : 0,
+        salesByMonth: salesByMonthRes.rows.map(row => ({ name: row.month, sales: parseFloat(row.sales) }))
+      };
+    } catch (error: any) {
+      console.error(`[PostgresAdapter - getConsignorDashboardStats for seller ${sellerId}] Error:`, error);
+      return defaultStats;
+    }
+  }
 
   async getWinsForUser(userId: string): Promise<UserWin[]> {
     const { rows } = await getPool().query(
@@ -689,7 +767,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `CREATE TABLE IF NOT EXISTS process_parties ( id SERIAL PRIMARY KEY, process_id INTEGER NOT NULL REFERENCES judicial_processes(id) ON DELETE CASCADE, name VARCHAR(255) NOT NULL, document_number VARCHAR(50), party_type VARCHAR(50) NOT NULL, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS bens ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, title VARCHAR(255) NOT NULL, description TEXT, judicial_process_id INTEGER REFERENCES judicial_processes(id), status VARCHAR(50) DEFAULT 'DISPONIVEL', category_id INTEGER REFERENCES lot_categories(id), subcategory_id INTEGER REFERENCES subcategories(id), image_url TEXT, image_media_id VARCHAR(255), data_ai_hint VARCHAR(255), evaluation_value NUMERIC(15, 2), location_city VARCHAR(100), location_state VARCHAR(100), address VARCHAR(255), latitude NUMERIC(10, 8), longitude NUMERIC(11, 8), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS user_wins ( id SERIAL PRIMARY KEY, user_id VARCHAR(255) NOT NULL REFERENCES users(uid), lot_id INTEGER NOT NULL REFERENCES lots(id), winning_bid_amount NUMERIC(15, 2) NOT NULL, win_date TIMESTAMPTZ NOT NULL, payment_status VARCHAR(50) DEFAULT 'PENDENTE', invoice_url TEXT, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS bids ( id SERIAL PRIMARY KEY, lot_id INTEGER NOT NULL REFERENCES lots(id) ON DELETE CASCADE, auction_id INTEGER, bidder_id VARCHAR(255) NOT NULL, bidder_display_name VARCHAR(255), amount NUMERIC(15,2) NOT NULL, timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`
+      `CREATE TABLE IF NOT EXISTS bids ( id SERIAL PRIMARY KEY, lot_id INTEGER NOT NULL REFERENCES lots(id) ON DELETE CASCADE, auction_id INTEGER, bidder_id VARCHAR(255) NOT NULL, bidder_display_name VARCHAR(255), amount NUMERIC(15,2) NOT NULL, timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS notifications ( id SERIAL PRIMARY KEY, user_id VARCHAR(255) NOT NULL REFERENCES users(uid), message TEXT NOT NULL, link VARCHAR(255), is_read BOOLEAN DEFAULT FALSE, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`
     ];
 
     try {
