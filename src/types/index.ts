@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 import type { 
     User, Role, UserDocument, DocumentType, Auction, Lot, Bid, 
@@ -5,6 +6,7 @@ import type {
     State as StateInfo, City as CityInfo, Subcategory,
     Court, JudicialDistrict, JudicialBranch, JudicialProcess, ProcessParty, Bem,
     Notification, BlogPost,
+    Review, LotQuestion, UserLotMaxBid, // Added new models
     Prisma
 } from '@prisma/client';
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
@@ -27,7 +29,8 @@ export type {
     UserWin, Seller as SellerProfileInfo, Auctioneer as AuctioneerProfileInfo, 
     DirectSaleOffer, MediaItem, LotCategory, StateInfo, CityInfo, Subcategory,
     Court, JudicialDistrict, JudicialBranch, JudicialProcess, ProcessParty, Bem,
-    Notification, BlogPost
+    Notification, BlogPost,
+    Review, LotQuestion, UserLotMaxBid // Exporting new types
 };
 
 
@@ -65,6 +68,21 @@ export type DirectSaleOfferType = 'BUY_NOW' | 'ACCEPTS_PROPOSALS';
 export type DirectSaleOfferStatus = 'ACTIVE' | 'SOLD' | 'EXPIRED' | 'PENDING_APPROVAL';
 export type ProcessPartyType = 'AUTOR' | 'REU' | 'ADVOGADO_AUTOR' | 'ADVOGADO_REU' | 'JUIZ' | 'ESCRIVAO' | 'PERITO' | 'ADMINISTRADOR_JUDICIAL' | 'TERCEIRO_INTERESSADO' | 'OUTRO';
 
+export interface UserBid {
+    id: string;
+    lotId: string;
+    auctionId: string;
+    lotTitle: string;
+    lotImageUrl: string;
+    lotImageAiHint?: string;
+    userBidAmount: number;
+    currentLotPrice: number;
+    bidStatus: 'GANHANDO' | 'PERDENDO' | 'SUPERADO_POR_OUTRO' | 'SUPERADO_PELO_PROPRIO_MAXIMO' | 'ARREMATADO' | 'NAO_ARREMATADO' | 'ENCERRADO' | 'CANCELADO';
+    bidDate: AnyTimestamp;
+    lotEndDate: AnyTimestamp;
+    lot: Lot; // Include full lot for linking
+}
+
 // --- FORM DATA TYPES ---
 // These types define the shape of data coming from forms, before it's processed for the database.
 
@@ -81,9 +99,10 @@ export type JudicialBranchFormData = Omit<JudicialBranch, 'id' | 'slug' | 'creat
 export type JudicialProcessFormData = Omit<JudicialProcess, 'id' | 'publicId' | 'createdAt' | 'updatedAt'> & {
   parties: Array<Partial<ProcessParty>>; 
 };
-export type BemFormData = Omit<Bem, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName' | 'galleryImageUrls' | 'mediaItemIds'> & {
+export type BemFormData = Omit<Bem, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName' | 'galleryImageUrls' | 'mediaItemIds' | 'amenities'> & {
   galleryImageUrls?: string[];
   mediaItemIds?: string[];
+  amenities?: { value: string }[];
 };
 
 export type AuctionFormData = Omit<Auction, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'totalLots'> & {
@@ -245,6 +264,10 @@ export type PlatformSettingsFormData = Omit<PlatformSettings, 'id' | 'updatedAt'
 
 
 export interface AdminReportData {
+  users: number;
+  auctions: number;
+  lots: number;
+  sellers: number;
   totalRevenue: number;
   newUsersLast30Days: number;
   activeAuctions: number;
@@ -277,3 +300,5 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
+
+    

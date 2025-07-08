@@ -6,7 +6,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import type { UserBid } from '@/types';
+import type { UserBid, UserWin } from '@/types';
 
 /**
  * Fetches all bids placed by a specific user.
@@ -27,23 +27,43 @@ export async function getBidsForUserAction(userId: string): Promise<UserBid[]> {
       include: {
         lot: {
           include: {
-            auction: true
+            auction: true,
+            bids: {
+              orderBy: { amount: 'desc' },
+              take: 1
+            },
+            wins: {
+              take: 1
+            }
           }
         }
       },
       orderBy: { timestamp: 'desc' }
     });
 
-    const userBids = bids.map(bid => {
-      // This logic needs to be smarter in a real app, especially with winning bids
-      let bidStatus: UserBid['bidStatus'] = 'PERDENDO';
-      if (bid.lot.price === bid.amount) {
-          bidStatus = 'GANHANDO';
+    // Create a distinct list of lots to find winning bids for
+    const lotIds = [...new Set(bids.map(b => b.lotId))];
+    const winningBidsForLots = await prisma.userWin.findMany({
+      where: {
+        lotId: { in: lotIds },
+        userId: userId
       }
-      if (bid.lot.status === 'VENDIDO' && (bid.lot as any).winningBidderId === userId) {
-          bidStatus = 'ARREMATADO';
-      } else if (bid.lot.status === 'VENDIDO' || bid.lot.status === 'NAO_VENDIDO') {
-          bidStatus = 'NAO_ARREMATADO';
+    });
+    const winningBidMap = new Map(winningBidsForLots.map(wb => [wb.lotId, wb]));
+
+
+    const userBids = bids.map(bid => {
+      let bidStatus: UserBid['bidStatus'] = 'PERDENDO';
+      const highestBid = bid.lot.bids[0]?.amount;
+
+      if (bid.lot.status === 'VENDIDO') {
+        bidStatus = winningBidMap.has(bid.lotId) ? 'ARREMATADO' : 'NAO_ARREMATADO';
+      } else if (bid.lot.status === 'ENCERRADO' || bid.lot.status === 'NAO_VENDIDO') {
+        bidStatus = 'NAO_ARREMATADO';
+      } else if (bid.lot.status === 'CANCELADO') {
+        bidStatus = 'CANCELADO';
+      } else if (highestBid && bid.amount >= highestBid) {
+        bidStatus = 'GANHANDO';
       }
 
       return {
@@ -64,9 +84,19 @@ export async function getBidsForUserAction(userId: string): Promise<UserBid[]> {
       } as unknown as UserBid;
     });
 
-    return userBids;
+    // De-duplicate to show only the highest bid per lot for the user
+    const latestBidsMap = new Map<string, UserBid>();
+    for (const bid of userBids) {
+        if (!latestBidsMap.has(bid.lotId)) {
+            latestBidsMap.set(bid.lotId, bid);
+        }
+    }
+
+    return Array.from(latestBidsMap.values());
   } catch (error) {
     console.error(`[Action - getBidsForUser] Error fetching bids for user ${userId}:`, error);
     return [];
   }
 }
+
+    
