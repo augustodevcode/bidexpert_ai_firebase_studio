@@ -1,10 +1,11 @@
-// src/types/index.ts
+
+      // src/types/index.ts
 import type { 
     User, Role, UserDocument, DocumentType, Auction, Lot, Bid, 
     UserWin, Seller, Auctioneer, DirectSaleOffer, MediaItem, LotCategory, 
     State as StateInfo, City as CityInfo, Subcategory,
     Court, JudicialDistrict, JudicialBranch, JudicialProcess, ProcessParty, Bem,
-    Notification, BlogPost,
+    Notification, BlogPost, ContactMessage, // Added ContactMessage
     Review, LotQuestion, UserLotMaxBid, // Added new models
     Prisma
 } from '@prisma/client';
@@ -28,7 +29,7 @@ export type {
     UserWin, Seller as SellerProfileInfo, Auctioneer as AuctioneerProfileInfo, 
     DirectSaleOffer, MediaItem, LotCategory, StateInfo, CityInfo, Subcategory,
     Court, JudicialDistrict, JudicialBranch, JudicialProcess, ProcessParty, Bem,
-    Notification, BlogPost,
+    Notification, BlogPost, ContactMessage, // Exporting ContactMessage
     Review, LotQuestion, UserLotMaxBid // Exporting new types
 };
 
@@ -191,7 +192,7 @@ export interface MentalTriggerSettings {
     showDiscountBadge?: boolean;
     showUrgencyTimer?: boolean;
     urgencyTimerThresholdDays?: number;
-    urgencyTimerThresholdHours?: number;
+    urgencyThresholdHours?: number;
     showPopularityBadge?: boolean;
     popularityViewThreshold?: number;
     showHotBidBadge?: boolean;
@@ -302,3 +303,5 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
+
+    

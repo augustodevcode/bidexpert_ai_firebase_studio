@@ -17,9 +17,8 @@ import { getLotStatusColor, getAuctionStatusText, slugify } from '@/lib/sample-d
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
-
-// Placeholder for authentication check
-const isAuthenticated = true; 
+import { useAuth } from '@/contexts/auth-context';
+import { hasPermission } from '@/lib/permissions';
 
 interface OfferDetailClientProps {
   offer: DirectSaleOffer;
@@ -28,10 +27,14 @@ interface OfferDetailClientProps {
 export default function OfferDetailClient({ offer }: OfferDetailClientProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const { userProfileWithPermissions } = useAuth();
   
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [proposalAmount, setProposalAmount] = useState<string>('');
   const [isSubmittingProposal, setIsSubmittingProposal] = useState(false);
+  
+  const canBuyNow = hasPermission(userProfileWithPermissions, 'direct_sales:buy_now');
+  const canMakeProposal = hasPermission(userProfileWithPermissions, 'direct_sales:place_proposal');
   
   const galleryImages = useMemo(() => {
     if (!offer) return ['https://placehold.co/800x600.png?text=Imagem+Indispon%C3%ADvel'];
@@ -51,18 +54,26 @@ export default function OfferDetailClient({ offer }: OfferDetailClientProps) {
 
 
   const handleBuyNow = () => {
-    if (!isAuthenticated) {
+    if (!userProfileWithPermissions) {
         toast({ title: "Ação Requerida", description: "Por favor, faça login para comprar.", variant: "destructive"});
         router.push('/auth/login?redirect=/direct-sales/' + offer.id);
+        return;
+    }
+    if (!canBuyNow) {
+        toast({ title: "Permissão Negada", description: "Você não tem permissão para comprar itens. Verifique sua habilitação.", variant: "destructive"});
         return;
     }
     toast({ title: "Compra Iniciada (Simulação)", description: `Você demonstrou interesse em comprar "${offer.title}". Em um sistema real, você seria redirecionado para o checkout.`});
   };
   
   const handleMakeProposal = () => {
-    if (!isAuthenticated) {
+    if (!userProfileWithPermissions) {
         toast({ title: "Ação Requerida", description: "Por favor, faça login para fazer uma proposta.", variant: "destructive"});
         router.push('/auth/login?redirect=/direct-sales/' + offer.id);
+        return;
+    }
+    if (!canMakeProposal) {
+        toast({ title: "Permissão Negada", description: "Você não tem permissão para fazer propostas. Verifique sua habilitação.", variant: "destructive"});
         return;
     }
     if (!proposalAmount || parseFloat(proposalAmount) <= 0) {
@@ -226,7 +237,7 @@ export default function OfferDetailClient({ offer }: OfferDetailClientProps) {
             </CardContent>
             <CardFooter className="flex flex-col gap-3">
               {offer.status === 'ACTIVE' && offer.offerType === 'BUY_NOW' && (
-                <Button className="w-full" size="lg" onClick={handleBuyNow}>
+                <Button className="w-full" size="lg" onClick={handleBuyNow} disabled={!canBuyNow}>
                   <ShoppingCart className="mr-2 h-5 w-5" /> Comprar Agora
                 </Button>
               )}
@@ -240,14 +251,14 @@ export default function OfferDetailClient({ offer }: OfferDetailClientProps) {
                         className="pl-10 text-md h-11"
                         value={proposalAmount}
                         onChange={(e) => setProposalAmount(e.target.value)}
-                        disabled={isSubmittingProposal}
+                        disabled={isSubmittingProposal || !canMakeProposal}
                     />
                   </div>
                   <Button 
                     className="w-full" 
                     size="lg" 
                     onClick={handleMakeProposal}
-                    disabled={isSubmittingProposal || !proposalAmount}
+                    disabled={isSubmittingProposal || !proposalAmount || !canMakeProposal}
                   >
                     {isSubmittingProposal ? <Loader2 className="animate-spin mr-2" /> : <Edit className="mr-2 h-5 w-5" />}
                     Enviar Proposta

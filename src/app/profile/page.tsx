@@ -1,5 +1,5 @@
 
-'use client';
+      'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -7,11 +7,13 @@ import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, UserCog, Mail, Phone, Home, Building, Briefcase, Calendar, ShieldCheck, BadgeInfo, FileText, Edit, AlertCircle } from 'lucide-react';
+import { Loader2, UserCog, Mail, Phone, Home, Building, Briefcase, Calendar, ShieldCheck, BadgeInfo, FileText, Edit, AlertCircle, Award } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType, label: string, value?: string | null, href?: string }) => {
   if (!value) return null;
@@ -28,6 +30,11 @@ const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType,
       </div>
     </div>
   );
+};
+
+const badgeMap: Record<string, { icon: React.ElementType, label: string, description: string }> = {
+    'PRIMEIRO_ARREMATE': { icon: Award, label: "Primeiro Arremate", description: "Parabéns por seu primeiro lote arrematado!" },
+    // Add other badges here
 };
 
 export default function ProfilePage() {
@@ -59,7 +66,8 @@ export default function ProfilePage() {
   const { 
     fullName, email, avatarUrl, dataAiHint, roleName, habilitationStatus,
     cellPhone, homePhone, cpf, dateOfBirth, street, number, complement,
-    neighborhood, city, state, zipCode, accountType, razaoSocial, cnpj
+    neighborhood, city, state, zipCode, accountType, razaoSocial, cnpj,
+    badges
   } = userProfileWithPermissions;
   
   const userInitial = fullName ? fullName.charAt(0).toUpperCase() : (email ? email.charAt(0).toUpperCase() : "U");
@@ -93,6 +101,34 @@ export default function ProfilePage() {
                 <div className="flex items-center"><strong className="w-24">Habilitação:</strong> <Badge variant="outline">{habilitationStatus || 'Pendente'}</Badge></div>
              </CardContent>
           </Card>
+          
+          {badges && badges.length > 0 && (
+            <section>
+                 <h3 className="text-lg font-semibold text-primary border-b pb-1 mb-3 flex items-center"><Award className="mr-2 h-5 w-5"/>Conquistas e Medalhas</h3>
+                 <div className="flex flex-wrap gap-4">
+                    {badges.map(badgeKey => {
+                        const badgeInfo = badgeMap[badgeKey as keyof typeof badgeMap];
+                        if (!badgeInfo) return null;
+                        const Icon = badgeInfo.icon;
+                        return (
+                             <TooltipProvider key={badgeKey}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className="flex flex-col items-center gap-1 p-3 rounded-md border bg-background w-24">
+                                            <Icon className="h-8 w-8 text-amber-500" />
+                                            <span className="text-xs font-medium text-center">{badgeInfo.label}</span>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{badgeInfo.description}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                             </TooltipProvider>
+                        )
+                    })}
+                 </div>
+            </section>
+          )}
 
           <section>
             <h3 className="text-lg font-semibold text-primary border-b pb-1 mb-3 flex items-center"><UserCog className="mr-2 h-5 w-5"/>Informações Pessoais</h3>
@@ -134,3 +170,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    

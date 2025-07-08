@@ -65,6 +65,10 @@ export const predefinedPermissions = [
   { id: 'view_auctions', label: 'Público: Ver Leilões', group: 'Usuário Final' },
   { id: 'view_lots', label: 'Público: Ver Lotes', group: 'Usuário Final' },
   { id: 'place_bids', label: 'Público: Fazer Lances', group: 'Usuário Final' },
+  // Direct Sales
+  { id: 'direct_sales:manage_own', label: 'Venda Direta: Gerenciar Próprias', group: 'Venda Direta' },
+  { id: 'direct_sales:place_proposal', label: 'Venda Direta: Fazer Propostas', group: 'Venda Direta' },
+  { id: 'direct_sales:buy_now', label: 'Venda Direta: Comprar Agora', group: 'Venda Direta' },
   // Winner-specific Permissions
   { id: 'view_wins', label: 'Arrematante: Ver Arremates', group: 'Arrematante' },
   { id: 'manage_payments', label: 'Arrematante: Gerenciar Pagamentos', group: 'Arrematante' },

@@ -1,4 +1,5 @@
-// src/app/admin/lots/lot-form.tsx
+
+      // src/app/admin/lots/lot-form.tsx
 'use client';
 
 import * as React from 'react';
@@ -21,9 +22,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
 import type { Lot, LotCategory, Auction, Bem, StateInfo, CityInfo, MediaItem, Subcategory, PlatformSettings } from '@/types';
-import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, ImageIcon, PackagePlus, Eye } from 'lucide-react';
+import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, ImageIcon, PackagePlus, Eye, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { getSubcategoriesByParentIdAction } from '@/app/admin/subcategories/actions';
+import { getSubcategoriesByParentIdAction } from '../subcategories/actions';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
@@ -32,11 +33,22 @@ import { createColumns as createBemColumns } from '@/components/admin/bens/colum
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
 import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
-import { getBens } from '@/app/admin/bens/actions';
+import { getBens, finalizeLot } from '@/app/admin/bens/actions';
 import { getAuction } from '@/app/admin/auctions/actions';
 import SearchResultsFrame from '@/components/search-results-frame';
 import { Badge } from '@/components/ui/badge';
 import { samplePlatformSettings } from '@/lib/sample-data';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface LotFormProps {
   initialData?: Lot | null;
@@ -50,6 +62,51 @@ interface LotFormProps {
   formDescription: string;
   submitButtonText: string;
   defaultAuctionId?: string;
+}
+
+function FinalizeLotButton({ lot, onFinalized }: { lot: Lot; onFinalized: () => void }) {
+    const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast();
+
+    const handleFinalize = async () => {
+        setIsLoading(true);
+        const result = await finalizeLot(lot.id);
+        if (result.success) {
+            toast({ title: "Sucesso!", description: result.message });
+            onFinalized();
+        } else {
+            toast({ title: "Erro ao Finalizar Lote", description: result.message, variant: "destructive" });
+        }
+        setIsLoading(false);
+    };
+
+    const canFinalize = lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'ENCERRADO';
+
+    return (
+        <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <Button variant="secondary" disabled={!canFinalize || isLoading} className="w-full">
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                    Finalizar Lote
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Confirmar Finalização do Lote?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Esta ação irá determinar o vencedor com base no lance mais alto, atualizar o status do lote para "Vendido" (ou "Não Vendido" se não houver lances) e notificar o vencedor. Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleFinalize} disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Confirmar e Finalizar
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
 }
 
 export default function LotForm({
@@ -438,9 +495,12 @@ export default function LotForm({
                     />
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-end gap-2 border-t pt-6 p-6">
-                  <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
-                  <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{submitButtonText}</Button>
+              <CardFooter className="flex justify-between items-center p-6 border-t">
+                  {initialData && <FinalizeLotButton lot={initialData} onFinalized={() => router.refresh()} />}
+                  <div className="flex justify-end gap-2 w-full">
+                    <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
+                    <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{submitButtonText}</Button>
+                  </div>
               </CardFooter>
           </Card>
 
@@ -462,3 +522,5 @@ export default function LotForm({
     </>
   );
 }
+
+    

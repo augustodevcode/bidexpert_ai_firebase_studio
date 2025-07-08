@@ -1,5 +1,5 @@
 
-'use server';
+      'use server';
 
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
@@ -44,7 +44,7 @@ export async function createLot(data: LotFormData): Promise<{
     const { type, auctionName, ...restOfData } = lotDataForDb;
 
     const newLot = await prisma.lot.create({
-      data: restOfData,
+      data: restOfData as any,
     });
     
     if (newLot.auctionId) {
@@ -193,3 +193,94 @@ export async function updateLotTitle(idOrPublicId: string, newTitle: string): Pr
 export async function updateLotImage(lotIdOrPublicId: string, mediaItemId: string, imageUrl: string): Promise<{ success: boolean; message: string; }> {
   return updateLot(lotIdOrPublicId, { imageMediaId: mediaItemId, imageUrl: imageUrl });
 }
+
+
+/**
+ * Finalizes a lot, determining the winner and updating statuses.
+ * @param lotId - The ID of the lot to finalize.
+ * @returns {Promise<{success: boolean, message: string}>} Result of the operation.
+ */
+export async function finalizeLot(lotId: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const lot = await prisma.lot.findUnique({
+      where: { id: lotId },
+      include: {
+        bids: { orderBy: { amount: 'desc' }, take: 1 },
+      },
+    });
+    
+    if (!lot) return { success: false, message: "Lote não encontrado." };
+    if (lot.status !== 'ABERTO_PARA_LANCES' && lot.status !== 'ENCERRADO') {
+      return { success: false, message: `Lote com status '${lot.status}' não pode ser finalizado.` };
+    }
+
+    const highestBid = lot.bids[0];
+
+    return await prisma.$transaction(async (tx) => {
+      if (highestBid) {
+        // We have a winner
+        const winnerId = highestBid.bidderId;
+        
+        await tx.lot.update({
+          where: { id: lot.id },
+          data: { status: 'VENDIDO' },
+        });
+
+        // Create UserWin record
+        await tx.userWin.create({
+          data: {
+            lotId: lot.id,
+            userId: winnerId,
+            winningBidAmount: highestBid.amount,
+            winDate: new Date(),
+          },
+        });
+
+        // Send notification to winner
+        await tx.notification.create({
+          data: {
+            userId: winnerId,
+            message: `Parabéns! Você arrematou o lote "${lot.title}" por R$ ${highestBid.amount.toLocaleString('pt-BR')}.`,
+            link: `/dashboard/wins`,
+          },
+        });
+        
+        // Gamification: First Win Badge
+        const winnerWinsCount = await tx.userWin.count({ where: { userId: winnerId } });
+        if (winnerWinsCount === 1) {
+            const winner = await tx.user.findUnique({ where: { id: winnerId } });
+            if (winner) {
+                const currentBadges = Array.isArray(winner.badges) ? winner.badges as string[] : [];
+                if (!currentBadges.includes('PRIMEIRO_ARREMATE')) {
+                    await tx.user.update({
+                        where: { id: winnerId },
+                        data: { badges: [...currentBadges, 'PRIMEIRO_ARREMATE'] }
+                    });
+                }
+            }
+        }
+        
+        revalidatePath(`/admin/lots/${lot.id}/edit`);
+        revalidatePath(`/dashboard/wins`);
+        revalidatePath(`/dashboard/notifications`);
+        revalidatePath(`/profile`);
+        return { success: true, message: `Lote finalizado. Vencedor: ${highestBid.bidderDisplay}.` };
+
+      } else {
+        // No bids, lot is not sold
+        await tx.lot.update({
+          where: { id: lot.id },
+          data: { status: 'NAO_VENDIDO' },
+        });
+        revalidatePath(`/admin/lots/${lot.id}/edit`);
+        return { success: true, message: 'Lote finalizado como "Não Vendido" (sem lances).' };
+      }
+    });
+
+  } catch (error: any) {
+    console.error(`Error finalizing lot ${lotId}:`, error);
+    return { success: false, message: `Erro inesperado: ${error.message}` };
+  }
+}
+
+    

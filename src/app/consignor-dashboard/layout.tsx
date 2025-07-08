@@ -1,3 +1,4 @@
+
 // src/app/consignor-dashboard/layout.tsx
 'use client';
 
@@ -13,14 +14,14 @@ export default function ConsignorDashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, userProfileWithPermissions, loading } = useAuth();
+  const { userProfileWithPermissions, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user && !userProfileWithPermissions) {
+    if (!loading && !userProfileWithPermissions) {
       router.push('/auth/login?redirect=/consignor-dashboard/overview');
     }
-  }, [user, userProfileWithPermissions, loading, router]);
+  }, [userProfileWithPermissions, loading, router]);
 
   if (loading) {
     return (
@@ -31,7 +32,7 @@ export default function ConsignorDashboardLayout({
     );
   }
 
-  if (!user && !userProfileWithPermissions) {
+  if (!userProfileWithPermissions) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-muted-foreground">Redirecionando para login...</p>
@@ -39,7 +40,13 @@ export default function ConsignorDashboardLayout({
     );
   }
   
-  const requiredConsignorPermissions = ['auctions:manage_own', 'lots:manage_own', 'consignor_dashboard:view', 'manage_all'];
+  const requiredConsignorPermissions = [
+    'auctions:manage_own', 
+    'lots:manage_own', 
+    'direct_sales:manage_own', 
+    'consignor_dashboard:view', 
+    'manage_all'
+  ];
   const canAccessConsignorDashboard = hasAnyPermission(userProfileWithPermissions, requiredConsignorPermissions);
 
   if (!canAccessConsignorDashboard) {

@@ -1,17 +1,44 @@
-'use client';
+
+      'use client';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { saveContactMessage } from './actions';
+import { useState } from 'react';
 
 export default function ContactPage() {
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // Handle form submission logic here
-    alert('Mensagem enviada! (Isso é um placeholder)');
+    setIsLoading(true);
+
+    const formData = new FormData(event.currentTarget);
+    const formRef = event.currentTarget; // Keep a reference to the form
+    
+    const result = await saveContactMessage(formData);
+    
+    if (result.success) {
+      toast({
+        title: "Mensagem Enviada!",
+        description: result.message,
+      });
+      formRef.reset(); // Use the reference to reset
+    } else {
+      toast({
+        title: "Erro ao Enviar",
+        description: result.message,
+        variant: 'destructive',
+      });
+    }
+
+    setIsLoading(false);
   };
 
   return (
@@ -35,22 +62,25 @@ export default function ContactPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Nome Completo</Label>
-                    <Input id="name" placeholder="Seu nome completo" required />
+                    <Input id="name" name="name" placeholder="Seu nome completo" required disabled={isLoading} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Endereço de Email</Label>
-                    <Input id="email" type="email" placeholder="seu@email.com" required />
+                    <Input id="email" name="email" type="email" placeholder="seu@email.com" required disabled={isLoading} />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="subject">Assunto</Label>
-                  <Input id="subject" placeholder="Referente ao leilão..." required />
+                  <Input id="subject" name="subject" placeholder="Referente ao leilão..." required disabled={isLoading} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="message">Mensagem</Label>
-                  <Textarea id="message" placeholder="Sua mensagem aqui..." rows={5} required />
+                  <Textarea id="message" name="message" placeholder="Sua mensagem aqui..." rows={5} required disabled={isLoading} />
                 </div>
-                <Button type="submit" className="w-full sm:w-auto">Enviar Mensagem</Button>
+                <Button type="submit" className="w-full sm:w-auto" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Enviar Mensagem
+                </Button>
               </form>
             </CardContent>
           </Card>
@@ -90,3 +120,5 @@ export default function ContactPage() {
     </div>
   );
 }
+
+    

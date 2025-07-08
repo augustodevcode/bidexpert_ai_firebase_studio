@@ -1,4 +1,5 @@
-// src/app/consignor-dashboard/direct-sales/new/page.tsx
+
+      // src/app/consignor-dashboard/direct-sales/new/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -68,10 +69,10 @@ export default function NewConsignorDirectSaleOfferPage() {
    * @param {DirectSaleOfferFormData} data The form data.
    */
   async function handleCreateOffer(data: DirectSaleOfferFormData) {
-    'use server';
     if (!currentSeller) {
       return { success: false, message: "Informação do vendedor não disponível." };
     }
+    // Force the sellerName to be the one from the logged-in consignor's profile
     const dataWithSeller = { ...data, sellerName: currentSeller.name };
     return createDirectSaleOffer(dataWithSeller);
   }
@@ -104,3 +105,5 @@ export default function NewConsignorDirectSaleOfferPage() {
     />
   );
 }
+
+    
