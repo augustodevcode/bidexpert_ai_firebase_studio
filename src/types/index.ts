@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -310,7 +311,7 @@ export interface Bem {
   // Imóveis
   propertyRegistrationNumber?: string; iptuNumber?: string;
   isOccupied?: boolean;
-  totalArea?: number; builtArea?: number;
+  area?: number; 
   bedrooms?: number; suites?: number; bathrooms?: number; parkingSpaces?: number;
   constructionType?: string; finishes?: string; infrastructure?: string;
   condoDetails?: string; improvements?: string; topography?: string;
@@ -1009,7 +1010,7 @@ export interface IDatabaseAdapter {
   getAdminDashboardStats(): Promise<AdminDashboardStats>;
   getConsignorDashboardStats(sellerId: string): Promise<ConsignorDashboardStats>;
 
-  createLotCategory(data: { name: string; description?: string }): Promise<{ success: boolean; message: string; categoryId?: string; }>;
+  createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }>;
   getLotCategories(): Promise<LotCategory[]>;
   getLotCategory(idOrSlug: string): Promise<LotCategory | null>; 
   getLotCategoryByName(name: string): Promise<LotCategory | null>;
@@ -1077,6 +1078,7 @@ export interface IDatabaseAdapter {
   getLots(auctionIdParam?: string): Promise<Lot[]>;
   getLotsByIds(ids: string[]): Promise<Lot[]>;
   getLotsBySellerSlug(sellerSlugOrPublicId: string): Promise<Lot[]>;
+  getLotsForConsignor(sellerId: string): Promise<Lot[]>;
   getLot(idOrPublicId: string): Promise<Lot | null>;
   updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }>;
   deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }>;

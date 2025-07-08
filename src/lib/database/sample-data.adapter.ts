@@ -1,3 +1,4 @@
+
 // src/lib/database/sample-data.adapter.ts
 import * as fs from 'fs';
 import * as path from 'path';
@@ -129,7 +130,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     }
   }
 
-  async disconnect(): Promise<void> {
+  async disconnect?(): Promise<void> {
     console.log('[SampleDataAdapter] Disconnect not applicable for sample data.');
     return Promise.resolve();
   }
@@ -527,8 +528,8 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   }
 
   async getAuctionsByIds(ids: string[]): Promise<Auction[]> {
-    const auctions = this.localData.sampleAuctions.filter(a => ids.includes(a.id));
-    return Promise.resolve(JSON.parse(JSON.stringify(auctions)));
+    console.warn("[SampleDataAdapter] getAuctionsByIds not implemented.");
+    return [];
   }
   async getAuction(idOrPublicId: string): Promise<Auction | null> {
     const auction = this.localData.sampleAuctions.find(a => a.id === idOrPublicId || a.publicId === idOrPublicId);
@@ -558,6 +559,12 @@ export class SampleDataAdapter implements IDatabaseAdapter {
       if(!seller) return [];
       const auctions = this.localData.sampleAuctions.filter(a => a.seller === seller.name || a.sellerId === seller.id);
       return Promise.resolve(JSON.parse(JSON.stringify(auctions)));
+  }
+  
+  async getAuctionsForConsignor(sellerId: string): Promise<Auction[]> {
+    if (!sellerId) return [];
+    const auctions = this.localData.sampleAuctions.filter(a => a.sellerId === sellerId);
+    return Promise.resolve(JSON.parse(JSON.stringify(auctions)));
   }
   
   async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {
@@ -1056,7 +1063,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     if (this.localData.sampleJudicialProcesses.length < initialLength) { this._persistData(); return { success: true, message: 'Processo excluído.' }; }
     return { success: false, message: 'Processo não encontrado.'};
   }
-
+  
   // Document Handling Stubs
   async getDocumentTypes(): Promise<DocumentType[]> {
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleDocumentTypes)));

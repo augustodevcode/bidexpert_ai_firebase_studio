@@ -24,7 +24,7 @@ const sidebarNavItems = [
     title: 'Meus Lotes',
     href: '/consignor-dashboard/lots',
     icon: ListChecks,
-    disabled: true, // Placeholder
+    disabled: false, 
   },
   {
     title: 'Venda Direta',
