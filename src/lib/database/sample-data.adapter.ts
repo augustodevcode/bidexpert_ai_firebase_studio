@@ -220,6 +220,8 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async createAuctionWithLots(wizardData: WizardData): Promise<{ success: boolean; message: string; auctionId?: string; }> { return { success: false, message: "Not implemented."}; }
   async getWinsForSeller(sellerId: string): Promise<UserWin[]> { return []; }
   async getLotsForConsignor(sellerId: string): Promise<Lot[]> { return []; }
+  async getBidsForUser(userId: string): Promise<UserBid[]> { return []; }
+  async getNotificationsForUser(userId: string): Promise<Notification[]> { return []; }
   async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> { return { success: false, message: 'Not implemented' }; }
   async getLotCategories(): Promise<LotCategory[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleLotCategories))); }
   // ... a lot of other stubs ...
@@ -283,6 +285,16 @@ export class SampleDataAdapter implements IDatabaseAdapter {
    async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
     await delay(50);
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleAuctioneers)));
+  }
+
+  async getSellers(): Promise<SellerProfileInfo[]> {
+    await delay(50);
+    return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleSellers)));
+  }
+
+  async getRoles(): Promise<Role[]> {
+    await delay(50);
+    return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleRoles)));
   }
 
 }

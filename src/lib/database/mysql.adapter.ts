@@ -1017,8 +1017,13 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async getSellers(): Promise<SellerProfileInfo[]> {
-    console.warn("[MySqlAdapter] getSellers is not yet implemented for MySQL.");
-    return [];
+    try {
+      const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM sellers ORDER BY name');
+      return mapMySqlRowsToCamelCase(rows).map(mapToSellerProfileInfo);
+    } catch (error: any) {
+      console.error('[MySqlAdapter - getSellers] Error:', error);
+      return [];
+    }
   }
   async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> {
     console.warn("[MySqlAdapter] getSeller is not yet implemented for MySQL.");
@@ -1121,8 +1126,13 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async getRoles(): Promise<Role[]> {
-    console.warn("[MySqlAdapter] getRoles is not yet implemented for MySQL.");
-    return [];
+    try {
+      const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM roles ORDER BY name');
+      return mapMySqlRowsToCamelCase(rows).map(mapToRole);
+    } catch (error: any) {
+      console.error('[MySqlAdapter - getRoles] Error:', error);
+      return [];
+    }
   }
   async getRole(id: string): Promise<Role | null> {
     console.warn("[MySqlAdapter] getRole is not yet implemented for MySQL.");
@@ -1134,6 +1144,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
   async deleteRole(id: string): Promise<{ success: boolean; message: string; }> {
     console.warn("[MySqlAdapter] deleteRole is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }> {
+    console.warn("[MySqlAdapter] ensureDefaultRolesExist is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async createMediaItem(data: Omit<MediaItem, "id" | "uploadedAt" | "urlOriginal" | "urlThumbnail" | "urlMedium" | "urlLarge" | "storagePath">, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> {
@@ -1148,7 +1162,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] getMediaItem is not yet implemented for MySQL.");
     return null;
   }
-  async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, "title" | "altText" | "caption" | "description">>): Promise<{ success: boolean; message: string; }> {
+  async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> {
     console.warn("[MySqlAdapter] updateMediaItemMetadata is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }

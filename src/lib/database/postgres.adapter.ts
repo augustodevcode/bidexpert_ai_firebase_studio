@@ -883,8 +883,13 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async getSellers(): Promise<SellerProfileInfo[]> {
-    console.warn("[PostgresAdapter] getSellers is not yet implemented for PostgreSQL.");
-    return [];
+    try {
+      const { rows } = await getPool().query('SELECT * FROM sellers ORDER BY name');
+      return rows.map(mapToSellerProfileInfo);
+    } catch (error: any) {
+      console.error('[PostgresAdapter - getSellers] Error:', error);
+      return [];
+    }
   }
   async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> {
     console.warn("[PostgresAdapter] getSeller is not yet implemented for PostgreSQL.");
@@ -995,8 +1000,13 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async getRoles(): Promise<Role[]> {
-    console.warn("[PostgresAdapter] getRoles is not yet implemented for PostgreSQL.");
-    return [];
+    try {
+      const { rows } = await getPool().query('SELECT * FROM roles ORDER BY name');
+      return rows.map(mapToRole);
+    } catch (error: any) {
+      console.error('[PostgresAdapter - getRoles] Error:', error);
+      return [];
+    }
   }
   async getRole(id: string): Promise<Role | null> {
     console.warn("[PostgresAdapter] getRole is not yet implemented for PostgreSQL.");
