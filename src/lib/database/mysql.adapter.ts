@@ -1,4 +1,3 @@
-
 // src/lib/database/mysql.adapter.ts
 import { createPool, type RowDataPacket, type Pool, type PoolConnection, type ResultSetHeader } from 'mysql2/promise';
 import type {
@@ -413,8 +412,6 @@ function mapToLot(row: any): Lot {
     evaluationValue: row.evaluationValue !== null ? Number(row.evaluationValue) : undefined,
     debtAmount: row.debtAmount !== null ? Number(row.debtAmount) : undefined,
     itbiValue: row.itbiValue !== null ? Number(row.itbiValue) : undefined,
-    winningBidderId: row.winningBidderId,
-    winningBidAmount: row.winningBidAmount !== null ? Number(row.winningBidAmount) : undefined,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
   };

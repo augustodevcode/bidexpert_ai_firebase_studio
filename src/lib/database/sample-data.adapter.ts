@@ -1,4 +1,3 @@
-
 // src/lib/database/sample-data.adapter.ts
 import * as fs from 'fs';
 import * as path from 'path';
@@ -42,13 +41,13 @@ import type {
 } from '@/types';
 import { slugify, getEffectiveLotEndDate } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
-import * as sampleData from '../sample-data'; // Import all exports from the new sample-data.ts
+import * as sampleData from '@/lib/sample-data'; // Import all exports from the new sample-data.ts
 import type { WizardData } from '@/components/admin/wizard/wizard-context';
 import { ensureAdminInitialized } from '@/lib/firebase/admin';
 import type { FieldValue as FirebaseAdminFieldValue, Timestamp as FirebaseAdminTimestamp } from 'firebase-admin/firestore';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-const DATA_FILE_PATH = path.resolve(process.cwd(), 'sample-data.local.json');
+const DATA_FILE_PATH = path.resolve(process.cwd(), 'src/sample-data.local.json');
 
 
 export class SampleDataAdapter implements IDatabaseAdapter {
@@ -198,6 +197,25 @@ export class SampleDataAdapter implements IDatabaseAdapter {
       salesRate,
       salesByMonth
     });
+  }
+  
+  async getWinsForSeller(sellerId: string): Promise<UserWin[]> {
+    if (!sellerId) return [];
+    
+    const sellerLotIds = new Set(
+        this.localData.sampleLots
+            .filter(lot => lot.sellerId === sellerId)
+            .map(lot => lot.id)
+    );
+
+    const wins = (this.localData.sampleUserWins || []).filter(win => sellerLotIds.has(win.lotId));
+
+    const enrichedWins = wins.map(win => {
+        const lot = this.localData.sampleLots.find(l => l.id === win.lotId);
+        return { ...win, lot: lot ? this._enrichLotData(lot) : win.lot };
+    });
+
+    return Promise.resolve(JSON.parse(JSON.stringify(enrichedWins)));
   }
 
   async getAdminDashboardStats(): Promise<AdminDashboardStats> {
@@ -631,9 +649,55 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> {
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleBids.filter(b => b.lotId === lotIdOrPublicId))));
   }
+  
   async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }> {
-    console.warn("[SampleDataAdapter] placeBidOnLot not implemented.");
-    return { success: false, message: "Funcionalidade não implementada." };
+    const lotIndex = this.localData.sampleLots.findIndex(l => l.id === lotIdOrPublicId || l.publicId === lotIdOrPublicId);
+    if (lotIndex === -1) {
+      return { success: false, message: "Lote não encontrado."};
+    }
+    const lotData = this.localData.sampleLots[lotIndex];
+    if (bidAmount <= lotData.price) {
+      return { success: false, message: "Lance deve ser maior que o atual."};
+    }
+    const outbidUser = this.localData.sampleBids.filter(b => b.lotId === lotData.id).sort((a,b) => b.amount - a.amount)[0]?.bidderId;
+
+    const newBid: BidInfo = {
+      id: `bid-${uuidv4()}`,
+      lotId: lotData.id,
+      auctionId: lotData.auctionId,
+      bidderId: userId,
+      bidderDisplay: userDisplayName,
+      amount: bidAmount,
+      timestamp: new Date().toISOString()
+    };
+    this.localData.sampleBids.push(newBid);
+
+    lotData.price = bidAmount;
+    lotData.bidsCount = (lotData.bidsCount || 0) + 1;
+    this.localData.sampleLots[lotIndex] = lotData;
+    
+    // Create notification for outbid user
+    if (outbidUser && outbidUser !== userId) {
+      const outbidNotification: Notification = {
+        id: `notif-${uuidv4()}`,
+        userId: outbidUser,
+        message: `Seu lance de no lote "${lotData.title}" foi superado.`,
+        link: `/auctions/${lotData.auctionId}/lots/${lotData.publicId || lotData.id}`,
+        isRead: false,
+        createdAt: new Date().toISOString()
+      };
+      if (!this.localData.sampleNotifications) this.localData.sampleNotifications = [];
+      this.localData.sampleNotifications.push(outbidNotification);
+    }
+    
+    this._persistData();
+
+    return { 
+      success: true, 
+      message: "Lance registrado com sucesso!", 
+      updatedLot: { price: lotData.price, bidsCount: lotData.bidsCount }, 
+      newBid
+    };
   }
   
   async createUserLotMaxBid(userId: string, lotId: string, maxAmount: number): Promise<{ success: boolean; message: string; maxBidId?: string; }> {
@@ -671,7 +735,21 @@ export class SampleDataAdapter implements IDatabaseAdapter {
 
   async getNotificationsForUser(userId: string): Promise<Notification[]> {
     const userNotifications = (this.localData.sampleNotifications || []).filter(n => n.userId === userId);
-    return Promise.resolve(JSON.parse(JSON.stringify(userNotifications)));
+    return Promise.resolve(JSON.parse(JSON.stringify(userNotifications.sort((a,b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime()))));
+  }
+
+  async createNotification(notification: Omit<Notification, 'id' | 'createdAt'>): Promise<{ success: boolean; message: string; notificationId?: string; }> {
+    const newNotification: Notification = {
+      ...notification,
+      id: `notif-${uuidv4()}`,
+      createdAt: new Date().toISOString(),
+    };
+    if (!this.localData.sampleNotifications) {
+      this.localData.sampleNotifications = [];
+    }
+    this.localData.sampleNotifications.push(newNotification);
+    this._persistData();
+    return { success: true, message: 'Notificação criada.', notificationId: newNotification.id };
   }
 
   // --- Reviews ---
@@ -784,6 +862,15 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     const enrichedLots = lots.map(lot => this._enrichLotData(lot));
     return Promise.resolve(JSON.parse(JSON.stringify(enrichedLots)));
   }
+  
+   async getLotsForConsignor(sellerId: string): Promise<Lot[]> {
+    if (!sellerId) return [];
+    let lots = this.localData.sampleLots.filter(lot => lot.sellerId === sellerId);
+    const enrichedLots = lots.map(lot => this._enrichLotData(lot));
+    return Promise.resolve(JSON.parse(JSON.stringify(enrichedLots)));
+   }
+
+
   async getLot(idOrPublicId: string): Promise<Lot | null> {
     const lot = this.localData.sampleLots.find(l => l.id === idOrPublicId || l.publicId === idOrPublicId);
     if (!lot) return null;
@@ -873,6 +960,3 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async getUserByEmail(email: string): Promise<UserProfileWithPermissions | null> { return null; }
   async getRoleByName(name: string): Promise<Role | null> { return null; }
 }
-    
-
-    

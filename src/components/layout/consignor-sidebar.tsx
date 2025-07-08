@@ -1,4 +1,4 @@
-
+// src/components/layout/consignor-sidebar.tsx
 'use client';
 
 import Link from 'next/link';
@@ -42,7 +42,7 @@ const sidebarNavItems = [
     title: 'Financeiro',
     href: '/consignor-dashboard/financial',
     icon: DollarSign,
-    disabled: true, // Placeholder
+    disabled: false,
   },
   {
     title: 'Configurações',

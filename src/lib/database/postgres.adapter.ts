@@ -1,4 +1,3 @@
-
 // src/lib/database/postgres.adapter.ts
 import { Pool, type QueryResultRow } from 'pg';
 import type {

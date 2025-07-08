@@ -1181,6 +1181,7 @@ export interface IDatabaseAdapter {
   getBidsForUser(userId: string): Promise<UserBid[]>;
   placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }>;
   getWinsForUser(userId: string): Promise<UserWin[]>;
+  getWinsForSeller(sellerId: string): Promise<UserWin[]>;
   
   // Proxy Bidding
   createUserLotMaxBid(userId: string, lotId: string, maxAmount: number): Promise<{ success: boolean; message: string; maxBidId?: string; }>;
@@ -1278,7 +1279,3 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
-
-```
-- tailwind.config.ts
-- tsconfig.json
