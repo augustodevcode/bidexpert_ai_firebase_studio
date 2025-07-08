@@ -1210,6 +1210,7 @@ export interface IDatabaseAdapter {
   answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }>;
 
   getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null>;
+  getUsersForHabilitationReview(): Promise<UserProfileData[]>;
   updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }>;
   ensureUserRole(
     userId: string,
@@ -1297,7 +1298,3 @@ export interface RecentlyViewedLotInfo {
   dataAiHint?: string;
 }
 
-```
-- tsconfig.json
-- src/app/admin/layout.tsx
-- src/lib/database/index.ts

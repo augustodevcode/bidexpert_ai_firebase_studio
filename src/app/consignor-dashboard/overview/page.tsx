@@ -141,7 +141,7 @@ export default function ConsignorOverviewPage() {
               <h3 className="text-xl font-semibold mb-4">Seus Lotes em Próximos Leilões</h3>
               <div className="space-y-4">
                 {upcomingAuctionsWithLots.map(({ auction, lots }) => (
-                  <Card key={auction.id} className="shadow-md"><CardHeader className="flex flex-row justify-between items-start"><di v><CardTitle className="text-lg">{auction.title}</CardTitle><CardDescription>Data: {format(new Date(auction.auctionDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR })} | Status: {getAuctionStatusText(auction.status)}</CardDescription></div><Button variant="outline" size="sm" asChild><Link href={`/auctions/${auction.publicId || auction.id}`} target="_blank">Ver Leilão <ExternalLink className="ml-2 h-3 w-3"/></Link></Button></CardHeader>
+                  <Card key={auction.id} className="shadow-md"><CardHeader className="flex flex-row justify-between items-start"><div><CardTitle className="text-lg">{auction.title}</CardTitle><CardDescription>Data: {format(new Date(auction.auctionDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR })} | Status: {getAuctionStatusText(auction.status)}</CardDescription></div><Button variant="outline" size="sm" asChild><Link href={`/auctions/${auction.publicId || auction.id}`} target="_blank">Ver Leilão <ExternalLink className="ml-2 h-3 w-3"/></Link></Button></CardHeader>
                     <CardContent>
                       <p className="text-sm font-medium mb-2">Seus Lotes neste Leilão ({lots.length}):</p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">

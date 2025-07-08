@@ -1,4 +1,4 @@
-
+// src/app/admin/layout.tsx
 'use client';
 
 import { useEffect } from 'react';
@@ -13,32 +13,16 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, userProfileWithPermissions, loading } = useAuth();
+  const { userProfileWithPermissions, loading } = useAuth();
   const router = useRouter();
 
-  console.log('[AdminLayout Render] Auth State:', { 
-    loading, 
-    user: user?.email, 
-    profileEmail: userProfileWithPermissions?.email,
-    profilePermissions: userProfileWithPermissions?.permissions
-  });
-
-  const isAuthenticated = !!user || !!userProfileWithPermissions;
-
   useEffect(() => {
-    console.log('[AdminLayout useEffect] Auth State Change:', { 
-      loading, 
-      isAuthenticated 
-    });
-
-    if (!loading && !isAuthenticated) {
-      console.log('[AdminLayout useEffect] User not authenticated, redirecting to login.');
+    if (!loading && !userProfileWithPermissions) {
       router.push('/auth/login?redirect=/admin/dashboard');
     }
-  }, [isAuthenticated, loading, router]);
+  }, [userProfileWithPermissions, loading, router]);
 
   if (loading) {
-    console.log('[AdminLayout] Rendering: Auth Loading state.');
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -47,8 +31,7 @@ export default function AdminLayout({
     );
   }
 
-  if (!isAuthenticated) {
-    console.log('[AdminLayout] Rendering: User not authenticated, redirect state or showing loader if redirect is about to happen.');
+  if (!userProfileWithPermissions) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -57,25 +40,9 @@ export default function AdminLayout({
     );
   }
   
-  if (!userProfileWithPermissions) {
-    console.log('[AdminLayout] Rendering: User authenticated, but profile with permissions not yet loaded. Showing loader...');
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-3 text-muted-foreground">Carregando perfil do usuário...</p>
-      </div>
-    );
-  }
-  
   const hasAdminAccess = hasPermission(userProfileWithPermissions, 'manage_all');
-  console.log('[AdminLayout] Rendering: Permission Check:', { 
-    roleName: userProfileWithPermissions?.roleName, 
-    permissions: userProfileWithPermissions?.permissions, 
-    hasAdminAccess 
-  });
 
   if (!hasAdminAccess) {
-    console.log('[AdminLayout] Rendering: Access Denied.');
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
         <ShieldAlert className="h-16 w-16 text-destructive mb-4" />
@@ -96,7 +63,6 @@ export default function AdminLayout({
     );
   }
 
-  console.log('[AdminLayout] Rendering: Access Granted, showing children.');
   return (
     <div className="flex min-h-screen">
       <AdminSidebar />
@@ -106,3 +72,4 @@ export default function AdminLayout({
     </div>
   );
 }
+
