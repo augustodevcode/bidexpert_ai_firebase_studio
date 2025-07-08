@@ -1,7 +1,8 @@
 // src/app/dashboard/notifications/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { revalidatePath } from 'next/cache';
+import { prisma } from '@/lib/prisma';
 import type { Notification } from '@/types';
 
 /**
@@ -16,9 +17,11 @@ export async function getNotificationsForUser(userId: string): Promise<Notificat
   }
   
   try {
-    const db = await getDatabaseAdapter();
-    const notifications = await db.getNotificationsForUser(userId);
-    return notifications;
+    const notifications = await prisma.notification.findMany({
+      where: { userId: userId },
+      orderBy: { createdAt: 'desc' },
+    });
+    return notifications as unknown as Notification[];
   } catch (error) {
     console.error(`[Action - getNotificationsForUser] Error fetching notifications for user ${userId}:`, error);
     return [];
@@ -33,18 +36,50 @@ export async function getNotificationsForUser(userId: string): Promise<Notificat
 export async function getUnreadNotificationCountAction(userId: string): Promise<number> {
   if (!userId) return 0;
   try {
-    const db = await getDatabaseAdapter();
-    return await db.getUnreadNotificationCount(userId);
+    const count = await prisma.notification.count({
+      where: {
+        userId: userId,
+        isRead: false,
+      },
+    });
+    return count;
   } catch (error) {
     console.error(`[Action - getUnreadNotificationCountAction] Error for user ${userId}:`, error);
     return 0;
   }
 }
 
+/**
+ * Marks a specific notification as read for a given user.
+ * @param notificationId The ID of the notification to mark as read.
+ * @param userId The ID of the user who owns the notification.
+ * @returns A promise that resolves to an object indicating success or failure.
+ */
+export async function markNotificationAsRead(notificationId: string, userId: string): Promise<{success: boolean; message?: string}> {
+    if (!notificationId || !userId) {
+        return { success: false, message: "ID da notificação ou do usuário não fornecido."};
+    }
+    
+    try {
+        // Use updateMany to avoid crashing if the notification doesn't exist
+        const result = await prisma.notification.updateMany({
+            where: {
+                id: notificationId,
+                userId: userId, // Security check: user can only mark their own notifications
+            },
+            data: {
+                isRead: true,
+            },
+        });
 
-// In a real app, you would also have actions to mark notifications as read
-export async function markNotificationAsRead(notificationId: string): Promise<{success: boolean}> {
-    console.log(`[Action - markNotificationAsRead] Marking notification ${notificationId} as read. (Placeholder)`);
-    // Here you would call the database adapter to update the notification status.
-    return { success: true };
+        if (result.count > 0) {
+            revalidatePath('/dashboard/notifications');
+            return { success: true, message: "Notificação marcada como lida." };
+        } else {
+            return { success: false, message: "Notificação não encontrada ou não pertence ao usuário." };
+        }
+    } catch (error: any) {
+        console.error(`[Action - markNotificationAsRead] Error for notification ${notificationId}:`, error);
+        return { success: false, message: "Falha ao marcar notificação como lida." };
+    }
 }

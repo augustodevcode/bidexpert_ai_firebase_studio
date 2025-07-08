@@ -5,7 +5,81 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import type { PlatformSettings, PlatformSettingsFormData } from '@/types';
-import { samplePlatformSettings } from '@/prisma/seed-data';
+
+// Default settings object moved here to avoid invalid import paths.
+const samplePlatformSettings: PlatformSettings = {
+  id: 'global',
+  siteTitle: "BidExpert Leilões",
+  siteTagline: "Sua plataforma definitiva para leilões online.",
+  galleryImageBasePath: "/uploads/media/",
+  storageProvider: "local",
+  firebaseStorageBucket: "bidexpert-630df.appspot.com",
+  activeThemeName: "Padrão BidExpert",
+  themes: [
+    {
+      name: "Padrão BidExpert",
+      colors: {
+        "--background": "hsl(0 0% 100%)",
+        "--foreground": "hsl(0 0% 3.9%)",
+        "--primary": "hsl(25 95% 53%)",
+        "--primary-foreground": "hsl(0 0% 100%)",
+        "--secondary": "hsl(0 0% 96.1%)",
+        "--accent": "hsl(25 95% 95%)"
+      }
+    }
+  ],
+  platformPublicIdMasks: {
+    auctions: "LEIL-",
+    lots: "LOTE-",
+    auctioneers: "LEILOE-",
+    sellers: "COMIT-"
+  },
+  homepageSections: [
+    { id: "hero", type: "hero_carousel", title: "Destaques Principais", visible: true, order: 1 },
+    { id: "filter_links", type: "filter_links", title: "Explorar por Tipo", visible: true, order: 2 },
+    { id: "featured_lots", type: "featured_lots", title: "Lotes em Destaque", visible: true, order: 3, itemCount: 10 },
+    { id: "active_auctions", type: "active_auctions", title: "Leilões Ativos", visible: true, order: 4, itemCount: 10 }
+  ],
+  mentalTriggerSettings: {
+    showDiscountBadge: true,
+    showUrgencyTimer: true,
+    urgencyTimerThresholdDays: 1,
+    urgencyTimerThresholdHours: 12,
+    showPopularityBadge: true,
+    popularityViewThreshold: 500,
+    showHotBidBadge: true,
+    hotBidThreshold: 10,
+    showExclusiveBadge: true
+  },
+  sectionBadgeVisibility: {
+    featuredLots: { showStatusBadge: false, showDiscountBadge: true, showUrgencyTimer: true, showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true },
+    searchGrid: { showStatusBadge: true, showDiscountBadge: true, showUrgencyTimer: true, showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true },
+    searchList: { showStatusBadge: true, showDiscountBadge: true, showUrgencyTimer: true, showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true },
+    lotDetail: { showStatusBadge: true, showDiscountBadge: true, showUrgencyTimer: true, showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true }
+  },
+  mapSettings: {
+    defaultProvider: "openstreetmap",
+    googleMapsApiKey: "",
+    staticImageMapZoom: 15,
+    staticImageMapMarkerColor: "blue"
+  },
+  biddingSettings: {
+    instantBiddingEnabled: true,
+    getBidInfoInstantly: true,
+    biddingInfoCheckIntervalSeconds: 1,
+  },
+  searchPaginationType: "loadMore",
+  searchItemsPerPage: 12,
+  searchLoadMoreCount: 12,
+  showCountdownOnLotDetail: true,
+  showCountdownOnCards: true,
+  showRelatedLotsOnLotDetail: true,
+  relatedLotsCount: 5,
+  variableIncrementTable: [],
+  defaultListItemsPerPage: 10,
+  updatedAt: new Date().toISOString()
+};
+
 
 export async function getPlatformSettings(): Promise<PlatformSettings> {
   try {
@@ -40,7 +114,7 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
     return defaultSettings as unknown as PlatformSettings;
 
   } catch (error: any) {
-    console.error("Error fetching platform settings with Prisma, returning sample data:", error);
+    console.error("[Action - getPlatformSettings] Error fetching platform settings with Prisma, returning sample data:", error);
     // Fallback to sample data in case of DB error
     return samplePlatformSettings;
   }

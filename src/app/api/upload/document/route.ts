@@ -1,8 +1,6 @@
 // src/app/api/upload/document/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getStorageAdapter } from '@/lib/storage';
-import { getDatabaseAdapter } from '@/lib/database';
-import type { MediaItem } from '@/types';
+import { ensureAdminInitialized } from '@/lib/firebase/admin';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 
@@ -40,21 +38,25 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: false, message: `Tipo de arquivo '${file.type}' não permitido.` }, { status: 415 });
     }
 
-    const storage = await getStorageAdapter();
+    const { storage, error: storageError } = ensureAdminInitialized();
+    if (!storage || storageError) {
+        return NextResponse.json({ success: false, message: `Storage service not initialized: ${storageError?.message}` }, { status: 500 });
+    }
     
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     const sanitizedDocType = docType.replace(/[^a-zA-Z0-9-_]/g, '_');
     const uniqueFilename = `${sanitizedDocType}-${uuidv4()}${path.extname(file.name)}`;
 
     // Define user-specific path
-    const userStoragePath = `documents/${userId}/${uniqueFilename}`;
+    const storagePath = `documents/${userId}/${uniqueFilename}`;
+    const fileRef = storage.bucket().file(storagePath);
     
     // Upload to storage
-    const { publicUrl, storagePath: finalStoragePath } = await storage.upload(
-      userStoragePath,
-      file.type,
-      fileBuffer
-    );
+    await fileRef.save(fileBuffer, {
+        metadata: { contentType: file.type }
+    });
+    await fileRef.makePublic();
+    const publicUrl = fileRef.publicUrl();
 
     // This route's primary job is to store the file. The association logic
     // might happen in a separate step or can be done here if needed.
@@ -64,7 +66,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Documento enviado com sucesso!',
       publicUrl,
-      storagePath: finalStoragePath
+      storagePath: storagePath
     });
 
   } catch (error: any) {

@@ -1,7 +1,7 @@
 // src/app/api/upload/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getStorageAdapter } from '@/lib/storage';
-import { getDatabaseAdapter } from '@/lib/database';
+import { ensureAdminInitialized } from '@/lib/firebase/admin';
+import { prisma } from '@/lib/prisma';
 import type { MediaItem } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
@@ -41,13 +41,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const storage = await getStorageAdapter();
-    const db = await getDatabaseAdapter();
+    const { storage, error: storageError } = ensureAdminInitialized();
+    if (!storage || storageError) {
+        return NextResponse.json({ success: false, message: `Storage service not initialized: ${storageError?.message}` }, { status: 500 });
+    }
 
     const uploadedItems: MediaItem[] = [];
     const uploadErrors: { fileName: string; message: string }[] = [];
 
     for (const file of files) {
+      let storagePath: string | undefined = undefined;
       try {
         if (file.size > MAX_FILE_SIZE_BYTES) {
           uploadErrors.push({ 
@@ -68,39 +71,41 @@ export async function POST(request: NextRequest) {
         const fileBuffer = Buffer.from(await file.arrayBuffer());
         const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
         const uniqueFilename = `${uuidv4()}-${sanitizedFileName}`;
+        storagePath = `media/${uniqueFilename}`;
+
+        const fileRef = storage.bucket().file(storagePath);
         
-        const { publicUrl, storagePath } = await storage.upload(
-          uniqueFilename, 
-          file.type, 
-          fileBuffer
-        );
+        await fileRef.save(fileBuffer, {
+            metadata: { contentType: file.type }
+        });
+        await fileRef.makePublic();
+        const publicUrl = fileRef.publicUrl();
+
+        const newItem = await prisma.mediaItem.create({
+            data: {
+                id: `media-${uuidv4()}`,
+                fileName: file.name,
+                storagePath: storagePath,
+                title: path.basename(file.name, path.extname(file.name)),
+                altText: path.basename(file.name, path.extname(file.name)),
+                mimeType: file.type,
+                sizeBytes: file.size,
+                urlOriginal: publicUrl,
+                urlThumbnail: publicUrl,
+                urlMedium: publicUrl,
+                urlLarge: publicUrl,
+                linkedLotIds: [],
+                dataAiHint: (formData.get(`dataAiHint_${file.name}`) as string) || 'upload usuario',
+                uploadedBy: 'admin_placeholder',
+            }
+        });
         
-        const mediaItemData: Omit<MediaItem, 'id' | 'uploadedAt'> = {
-          fileName: file.name,
-          storagePath: storagePath,
-          title: path.basename(file.name, path.extname(file.name)),
-          altText: path.basename(file.name, path.extname(file.name)),
-          mimeType: file.type,
-          sizeBytes: file.size,
-          urlOriginal: publicUrl,
-          urlThumbnail: publicUrl,
-          urlMedium: publicUrl,
-          urlLarge: publicUrl,
-          linkedLotIds: [],
-          dataAiHint: (formData.get(`dataAiHint_${file.name}`) as string) || 'upload usuario',
-          uploadedBy: 'admin_placeholder',
-        };
-        
-        const dbResult = await db.createMediaItem(mediaItemData, publicUrl, 'admin_placeholder');
-        
-        if (dbResult.success && dbResult.item) {
-          uploadedItems.push(dbResult.item);
-        } else {
-          // Attempt to clean up orphaned file in storage if DB write fails
-          await storage.delete(storagePath);
-          throw new Error(dbResult.message || `Falha ao salvar ${file.name} no banco de dados.`);
-        }
+        uploadedItems.push(newItem as unknown as MediaItem);
       } catch (error: any) {
+        // Attempt to clean up orphaned file in storage if DB write fails
+        if (storagePath) {
+          await storage.bucket().file(storagePath).delete().catch(e => console.warn(`Failed to cleanup orphaned file ${storagePath}`, e));
+        }
         uploadErrors.push({ 
           fileName: file.name, 
           message: error.message || 'Erro desconhecido durante o processamento do arquivo.'
