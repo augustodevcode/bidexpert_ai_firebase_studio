@@ -25,6 +25,23 @@ export async function getNotificationsForUser(userId: string): Promise<Notificat
   }
 }
 
+/**
+ * Fetches the count of unread notifications for a specific user.
+ * @param userId The ID of the user.
+ * @returns A promise that resolves to the number of unread notifications.
+ */
+export async function getUnreadNotificationCountAction(userId: string): Promise<number> {
+  if (!userId) return 0;
+  try {
+    const db = await getDatabaseAdapter();
+    return await db.getUnreadNotificationCount(userId);
+  } catch (error) {
+    console.error(`[Action - getUnreadNotificationCountAction] Error for user ${userId}:`, error);
+    return 0;
+  }
+}
+
+
 // In a real app, you would also have actions to mark notifications as read
 export async function markNotificationAsRead(notificationId: string): Promise<{success: boolean}> {
     console.log(`[Action - markNotificationAsRead] Marking notification ${notificationId} as read. (Placeholder)`);

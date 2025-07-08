@@ -7,7 +7,7 @@ import {
 
 import type { 
   IDatabaseAdapter, 
-  LotCategory, StateInfo, StateFormData,
+  LotCategory, StateInfo, StateFormData, CategoryFormData,
   CityInfo, CityFormData,
   AuctioneerProfileInfo, AuctioneerFormData,
   SellerProfileInfo, SellerFormData,
@@ -33,7 +33,15 @@ import type {
   JudicialDistrict, JudicialDistrictFormData,
   JudicialBranch, JudicialBranchFormData,
   JudicialProcess, JudicialProcessFormData,
-  Bem, BemFormData
+  Bem, BemFormData,
+  ProcessParty,
+  DocumentType,
+  UserDocument,
+  Notification,
+  BlogPost,
+  UserBid,
+  AdminDashboardStats,
+  ConsignorDashboardStats
 } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
 import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
@@ -730,7 +738,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), timestamp: safeConvertToISOString(doc.data().timestamp) } as BidInfo));
     } catch (e: any) { return []; }
   }
-  async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, 'price' | 'bidsCount' | 'status' | 'endDate'>>; newBid?: BidInfo }> {
+  async placeBidOnLot(lotId: string, auctionId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }> {
     try {
       const lotRef = this.db.collection('lots').doc(lotId);
       const lotSnap = await lotRef.get();
@@ -997,7 +1005,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
         }
   }
 
-  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem }> {
+  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> {
     try {
       const newItemData = { ...data, uploadedAt: AdminFieldValue.serverTimestamp(), urlOriginal: filePublicUrl, urlThumbnail: filePublicUrl, urlMedium: filePublicUrl, urlLarge: filePublicUrl, storagePath: filePublicUrl, uploadedBy: uploadedBy || 'system', linkedLotIds:[]};
       const docRef = await this.db.collection('media').add(newItemData);
@@ -1110,7 +1118,7 @@ export class FirestoreAdapter implements IDatabaseAdapter {
        return { success: true, message: "Configurações da plataforma atualizadas!" };
     } catch (e: any) { console.error("[FirestoreAdapter - updatePlatformSettings] " + e.message); return { success: false, message: e.message }; }
   }
-
+  
   // --- Direct Sales
   async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
     console.warn("[FirestoreAdapter] getDirectSaleOffers not implemented.");
@@ -1131,6 +1139,20 @@ export class FirestoreAdapter implements IDatabaseAdapter {
   async deleteDirectSaleOffer(id: string): Promise<{ success: boolean; message: string; }> {
       console.warn("[FirestoreAdapter] deleteDirectSaleOffer not implemented.");
       return { success: false, message: "Funcionalidade não implementada." };
+  }
+  
+  async getUnreadNotificationCount(userId: string): Promise<number> {
+    if (!userId) return 0;
+    try {
+        const snapshot = await this.db.collection('notifications')
+            .where('userId', '==', userId)
+            .where('isRead', '==', false)
+            .get();
+        return snapshot.size;
+    } catch (error: any) {
+        console.error(`[FirestoreAdapter - getUnreadNotificationCount] Error for user ${userId}:`, error);
+        return 0;
+    }
   }
 
   // --- Judicial ---

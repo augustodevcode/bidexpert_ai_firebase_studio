@@ -1209,7 +1209,7 @@ export interface IDatabaseAdapter {
   deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }>;
   getUserByEmail(email: string): Promise<UserProfileWithPermissions | null>;
   
-  createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string }>;
+  createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }>;
   getRoles(): Promise<Role[]>;
   getRole(id: string): Promise<Role | null>;
   getRoleByName(name: string): Promise<Role | null>;
@@ -1229,6 +1229,7 @@ export interface IDatabaseAdapter {
   updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }>;
 
   getNotificationsForUser(userId: string): Promise<Notification[]>;
+  getUnreadNotificationCount(userId: string): Promise<number>;
 
   getBlogPosts?(): Promise<BlogPost[]>;
   getBlogPost?(idOrSlug: string): Promise<BlogPost | null>;
