@@ -14,6 +14,17 @@ import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
 
+/**
+ * @fileoverview Server Actions para o assistente de criação de leilões (Wizard).
+ * Agrega dados de diversas fontes e cria o leilão e seus lotes de forma transacional.
+ */
+
+
+/**
+ * Busca todos os dados iniciais necessários para popular os seletores e opções do wizard.
+ * Isso inclui dados sobre entidades judiciais, leiloeiros, comitentes, bens e categorias.
+ * @returns {Promise<{success: boolean, data?: object, message?: string}>} Um objeto com os dados ou uma mensagem de erro.
+ */
 export async function getWizardInitialData() {
   try {
     const [
@@ -55,6 +66,12 @@ export async function getWizardInitialData() {
   }
 }
 
+/**
+ * Cria um novo leilão e seus lotes associados a partir dos dados coletados no wizard.
+ * Utiliza uma transação Prisma para garantir a atomicidade da operação (ou tudo é criado, ou nada é).
+ * @param {WizardData} wizardData - O objeto de estado contendo todos os dados do assistente.
+ * @returns {Promise<{success: boolean, message: string, auctionId?: string}>} O resultado da operação.
+ */
 export async function createAuctionFromWizard(wizardData: WizardData): Promise<{success: boolean; message: string; auctionId?: string;}> {
   if (!wizardData.auctionDetails || !wizardData.auctionDetails.title || !wizardData.auctionDetails.auctioneerId || !wizardData.auctionDetails.categoryId) {
     return { success: false, message: "Detalhes do leilão incompletos." };

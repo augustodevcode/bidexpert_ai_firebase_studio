@@ -4,7 +4,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LayoutDashboard, Settings, Database, Gavel, Package, Users, Users2 } from 'lucide-react';
 import Link from 'next/link';
-import { useDevConfig } from '@/components/dev-config-provider';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import type { AdminDashboardStats } from '@/types';
@@ -34,7 +33,6 @@ function StatCard({ title, value, icon: Icon, link, description, isLoading }: { 
 
 
 export default function AdminDashboardPage() {
-  const { openConfigModal } = useDevConfig();
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -66,12 +64,6 @@ export default function AdminDashboardPage() {
               Bem-vindo à área de gerenciamento do BidExpert.
             </CardDescription>
           </div>
-          {process.env.NODE_ENV === 'development' && (
-            <Button variant="outline" onClick={openConfigModal}>
-              <Database className="mr-2 h-4 w-4" />
-              Alterar Fonte de Dados
-            </Button>
-          )}
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-muted-foreground">
