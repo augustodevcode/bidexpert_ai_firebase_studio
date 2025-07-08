@@ -282,6 +282,16 @@ export class SampleDataAdapter implements IDatabaseAdapter {
       return lots.map(l => this._enrichLotData(l));
   }
   
+  async getLotsByIds(ids: string[]): Promise<Lot[]> {
+    if (!ids || ids.length === 0) {
+      return Promise.resolve([]);
+    }
+    const lots = (this.localData.sampleLots || [])
+      .filter(lot => ids.includes(lot.id))
+      .map(lot => this._enrichLotData(lot));
+    return Promise.resolve(lots);
+  }
+
    async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
     await delay(50);
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleAuctioneers)));

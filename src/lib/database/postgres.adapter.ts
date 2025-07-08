@@ -553,12 +553,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
     getPool();
   }
 
-  async getAdminDashboardStats(): Promise<AdminDashboardStats> { console.warn("Not implemented"); return { users: 0, auctions: 0, lots: 0, sellers: 0 }; }
-  async getConsignorDashboardStats(sellerId: string): Promise<ConsignorDashboardStats> { console.warn("Not implemented"); return { totalLotsConsigned: 0, activeLots: 0, soldLots: 0, totalSalesValue: 0, salesRate: 0, salesByMonth: [] }; }
-  async getLotsForConsignor(sellerId: string): Promise<Lot[]> { console.warn("Not implemented"); return []; }
-  async getBidsForUser(userId: string): Promise<UserBid[]> { console.warn("Not implemented"); return []; }
-  async getNotificationsForUser(userId: string): Promise<Notification[]> { console.warn("Not implemented"); return []; }
-  async getUnreadNotificationCount(userId: string): Promise<number> { console.warn("Not implemented"); return 0; }
   async getWinsForUser(userId: string): Promise<UserWin[]> {
     const { rows } = await getPool().query(
         `SELECT
@@ -667,8 +661,31 @@ export class PostgresAdapter implements IDatabaseAdapter {
   }
 
   async getLotsByIds(ids: string[]): Promise<Lot[]> {
-    console.warn("[PostgresAdapter] getLotsByIds is not yet implemented for PostgreSQL.");
-    return Promise.resolve([]);
+    if (!ids || ids.length === 0) {
+      return [];
+    }
+    // PostgreSQL can handle numeric and string IDs in the same query if we cast appropriately or use text comparison
+    const numericIds = ids.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+    const textIds = ids; // publicIds are strings
+
+    const query = `
+      SELECT l.*, 
+             c.name as category_name, 
+             s.name as subcategory_name, 
+             st.uf as state_uf, 
+             city.name as city_name, 
+             a.title as auction_name
+      FROM lots l
+      LEFT JOIN auctions a ON l.auction_id = a.id
+      LEFT JOIN lot_categories c ON l.category_id = c.id
+      LEFT JOIN subcategories s ON l.subcategory_id = s.id
+      LEFT JOIN states st ON l.state_id = st.id
+      LEFT JOIN cities city ON l.city_id = city.id
+      WHERE l.id = ANY($1::int[]) OR l.public_id = ANY($2::text[])
+    `;
+    
+    const { rows } = await getPool().query(query, [numericIds, textIds]);
+    return rows.map(mapToLot);
   }
   
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[], rolesProcessed?: number }> {
