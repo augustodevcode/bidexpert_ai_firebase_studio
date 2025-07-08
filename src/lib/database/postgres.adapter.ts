@@ -636,21 +636,12 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return mapToAuctioneerProfileInfo(rows[0]);
   }
 
-  async getSellerByName(name: string): Promise<SellerProfileInfo | null> {
-    const { rows } = await getPool().query('SELECT * FROM sellers WHERE name = $1 LIMIT 1', [name]);
-    if (rows.length === 0) return null;
-    return mapToSellerProfileInfo(rows[0]);
-  }
-
-  async getSellerBySlug(slug: string): Promise<SellerProfileInfo | null> {
-    const { rows } = await getPool().query('SELECT * FROM sellers WHERE slug = $1 OR public_id = $1 LIMIT 1', [slug]);
-    if (rows.length === 0) return null;
-    return mapToSellerProfileInfo(rows[0]);
-  }
-
   async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {
-    console.warn("[PostgresAdapter] getAuctionsByAuctioneerSlug is not yet implemented for PostgreSQL.");
-    return Promise.resolve([]);
+    const { rows } = await getPool().query(
+      `SELECT a.* FROM auctions a JOIN auctioneers au ON a.auctioneer_id = au.id WHERE au.slug = $1 OR au.public_id = $1`,
+      [auctioneerSlugOrPublicId]
+    );
+    return rows.map(mapToAuction);
   }
 
   async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
@@ -661,7 +652,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async getAuctionsByIds(ids: string[]): Promise<Auction[]> {
     if (ids.length === 0) return [];
     const { rows } = await getPool().query(`
-      SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url
+      SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url,
+      (SELECT COUNT(*) FROM lots l WHERE l.auction_id = a.id) as total_lots_count
       FROM auctions a
       LEFT JOIN lot_categories cat ON a.category_id = cat.id
       LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
@@ -677,10 +669,11 @@ export class PostgresAdapter implements IDatabaseAdapter {
     const publicIds = ids.filter(id => isNaN(parseInt(id, 10)));
     
     const { rows } = await getPool().query(`
-      SELECT l.*, a.title as auction_name, cat.name as category_name
+      SELECT l.*, a.title as auction_name, cat.name as category_name, s.name as subcategory_name
       FROM lots l
       LEFT JOIN auctions a ON l.auction_id = a.id
       LEFT JOIN lot_categories cat ON l.category_id = cat.id
+      LEFT JOIN subcategories s ON l.subcategory_id = s.id
       WHERE l.id = ANY($1::int[]) OR l.public_id = ANY($2::text[])
     `, [numericIds, publicIds]);
     return rows.map(mapToLot);
@@ -784,16 +777,18 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async getLotCategories(): Promise<LotCategory[]> {
-    console.warn("[PostgresAdapter] getLotCategories is not yet implemented for PostgreSQL.");
-    return [];
+    const { rows } = await getPool().query('SELECT * FROM lot_categories ORDER BY name ASC');
+    return rows.map(mapToLotCategory);
   }
   async getLotCategory(idOrSlug: string): Promise<LotCategory | null> {
-    console.warn("[PostgresAdapter] getLotCategory is not yet implemented for PostgreSQL.");
-    return null;
+    const { rows } = await getPool().query('SELECT * FROM lot_categories WHERE id = $1 OR slug = $2 LIMIT 1', [isNaN(parseInt(idOrSlug)) ? -1 : idOrSlug, idOrSlug]);
+    if (rows.length === 0) return null;
+    return mapToLotCategory(rows[0]);
   }
   async getLotCategoryByName(name: string): Promise<LotCategory | null> {
-    console.warn("[PostgresAdapter] getLotCategoryByName is not yet implemented for PostgreSQL.");
-    return null;
+    const { rows } = await getPool().query('SELECT * FROM lot_categories WHERE name = $1 LIMIT 1', [name]);
+    if (rows.length === 0) return null;
+    return mapToLotCategory(rows[0]);
   }
   async updateLotCategory(id: string, data: Partial<CategoryFormData>): Promise<{ success: boolean; message: string; }> {
     console.warn("[PostgresAdapter] updateLotCategory is not yet implemented for PostgreSQL.");
@@ -804,42 +799,40 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   
-  // --- Auctioneer ---
-  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> {
-    try {
-        const publicId = `AUCT-PUB-${uuidv4().substring(0, 12)}`;
-        const slug = slugify(data.name);
-        const { rows } = await getPool().query(
-            `INSERT INTO auctioneers (public_id, name, slug, registration_number, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, user_id) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id`,
-            [publicId, data.name, slug, data.registrationNumber, data.contactName, data.email, data.phone, data.address, data.city, data.state, data.zipCode, data.website, data.logoUrl, data.dataAiHintLogo, data.description, data.userId]
-        );
-        return { success: true, message: 'Leiloeiro criado com sucesso!', auctioneerId: String(rows[0].id), auctioneerPublicId: publicId };
-    } catch (e: any) {
-        return { success: false, message: e.message };
-    }
+  // --- Sellers ---
+  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> {
+      const publicId = `SELL-PUB-${uuidv4().substring(0, 12)}`;
+      const slug = slugify(data.name);
+      try {
+          const { rows } = await getPool().query(
+              `INSERT INTO sellers (public_id, name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, is_judicial, judicial_branch_id) 
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id`,
+              [publicId, data.name, slug, data.contactName, data.email, data.phone, data.address, data.city, data.state, data.zipCode, data.website, data.logoUrl, data.dataAiHintLogo, data.description, data.isJudicial || false, data.judicialBranchId || null]
+          );
+          return { success: true, message: 'Comitente criado com sucesso!', sellerId: String(rows[0].id), sellerPublicId: publicId };
+      } catch (e: any) {
+          return { success: false, message: e.message };
+      }
   }
 
-  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
-      const { rows } = await getPool().query('SELECT * FROM auctioneers ORDER BY name ASC');
-      return rows.map(mapToAuctioneerProfileInfo);
+  async getSellers(): Promise<SellerProfileInfo[]> {
+      const { rows } = await getPool().query('SELECT * FROM sellers ORDER BY name ASC');
+      return rows.map(mapToSellerProfileInfo);
   }
 
-  async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
-      const { rows } = await getPool().query('SELECT * FROM auctioneers WHERE id = $1 OR public_id = $2 LIMIT 1', [isNaN(parseInt(idOrPublicId)) ? -1 : idOrPublicId, idOrPublicId]);
+  async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> {
+      const { rows } = await getPool().query('SELECT * FROM sellers WHERE id = $1 OR public_id = $2 LIMIT 1', [isNaN(parseInt(idOrPublicId)) ? -1 : idOrPublicId, idOrPublicId]);
       if (rows.length === 0) return null;
-      return mapToAuctioneerProfileInfo(rows[0]);
+      return mapToSellerProfileInfo(rows[0]);
   }
-  
-  async updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
+
+  async updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
       try {
         const setClauses: string[] = [];
         const values: any[] = [];
         let valueIndex = 1;
 
-        if (data.name) {
-            (data as any).slug = slugify(data.name);
-        }
+        if (data.name) { (data as any).slug = slugify(data.name); }
 
         for (const [key, value] of Object.entries(data)) {
             const snakeCaseKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
@@ -853,26 +846,27 @@ export class PostgresAdapter implements IDatabaseAdapter {
         const publicIdIndex = valueIndex;
         values.push(isNaN(parseInt(idOrPublicId)) ? -1 : idOrPublicId, idOrPublicId);
 
-        const updateQuery = `UPDATE auctioneers SET ${setClauses.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $${idIndex} OR public_id = $${publicIdIndex}`;
+        const updateQuery = `UPDATE sellers SET ${setClauses.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $${idIndex} OR public_id = $${publicIdIndex}`;
         
         const result = await getPool().query(updateQuery, values);
         
-        if (result.rowCount > 0) return { success: true, message: 'Leiloeiro atualizado com sucesso!' };
-        return { success: false, message: 'Leiloeiro não encontrado.' };
-      } catch (e: any) {
-          return { success: false, message: e.message };
-      }
-  }
-  
-  async deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
-      try {
-        const result = await getPool().query('DELETE FROM auctioneers WHERE id = $1 OR public_id = $2', [isNaN(parseInt(idOrPublicId)) ? -1 : idOrPublicId, idOrPublicId]);
-        if (result.rowCount > 0) return { success: true, message: 'Leiloeiro excluído com sucesso!' };
-        return { success: false, message: 'Leiloeiro não encontrado.' };
+        if (result.rowCount > 0) return { success: true, message: 'Comitente atualizado com sucesso!' };
+        return { success: false, message: 'Comitente não encontrado.' };
       } catch (e: any) {
           return { success: false, message: e.message };
       }
   }
 
-  // ... (all other stubs remain as they are for this fix)
+  async deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
+      try {
+        const result = await getPool().query('DELETE FROM sellers WHERE id = $1 OR public_id = $2', [isNaN(parseInt(idOrPublicId)) ? -1 : idOrPublicId, idOrPublicId]);
+        if (result.rowCount > 0) return { success: true, message: 'Comitente excluído com sucesso!' };
+        return { success: false, message: 'Comitente não encontrado.' };
+      } catch (e: any) {
+          return { success: false, message: e.message };
+      }
+  }
+
+  // --- Other Stubs ---
+  // ... (the rest of the stubs for other entities)
 }

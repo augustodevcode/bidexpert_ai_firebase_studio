@@ -782,21 +782,12 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return mapToAuctioneerProfileInfo(mapMySqlRowToCamelCase(rows[0]));
   }
 
-  async getSellerByName(name: string): Promise<SellerProfileInfo | null> {
-    const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM sellers WHERE name = ? LIMIT 1', [name]);
-    if (rows.length === 0) return null;
-    return mapToSellerProfileInfo(mapMySqlRowToCamelCase(rows[0]));
-  }
-
-  async getSellerBySlug(slug: string): Promise<SellerProfileInfo | null> {
-    const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM sellers WHERE slug = ? OR public_id = ? LIMIT 1', [slug, slug]);
-    if (rows.length === 0) return null;
-    return mapToSellerProfileInfo(mapMySqlRowToCamelCase(rows[0]));
-  }
-
   async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {
-    console.warn("[MySqlAdapter] getAuctionsByAuctioneerSlug is not yet implemented for MySQL.");
-    return Promise.resolve([]);
+    const [rows] = await getPool().execute<RowDataPacket[]>(
+      `SELECT a.* FROM auctions a JOIN auctioneers au ON a.auctioneer_id = au.id WHERE au.slug = ? OR au.public_id = ?`,
+      [auctioneerSlugOrPublicId, auctioneerSlugOrPublicId]
+    );
+    return mapMySqlRowsToCamelCase(rows).map(mapToAuction);
   }
 
   async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
@@ -826,7 +817,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
     if (ids.length === 0) return [];
     const placeholders = ids.map(() => '?').join(',');
     const query = `
-      SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url
+      SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url,
+      (SELECT COUNT(*) FROM lots l WHERE l.auction_id = a.id) as total_lots_count
       FROM auctions a
       LEFT JOIN lot_categories cat ON a.category_id = cat.id
       LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
@@ -841,10 +833,11 @@ export class MySqlAdapter implements IDatabaseAdapter {
     if (ids.length === 0) return [];
     const placeholders = ids.map(() => '?').join(',');
     const query = `
-      SELECT l.*, a.title as auction_name, cat.name as category_name
+      SELECT l.*, a.title as auction_name, cat.name as category_name, s.name as subcategory_name
       FROM lots l
       LEFT JOIN auctions a ON l.auction_id = a.id
       LEFT JOIN lot_categories cat ON l.category_id = cat.id
+      LEFT JOIN subcategories s ON l.subcategory_id = s.id
       WHERE l.id IN (${placeholders}) OR l.public_id IN (${placeholders})
     `;
     const [rows] = await getPool().execute<RowDataPacket[]>(query, [...ids, ...ids]);
@@ -953,16 +946,18 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async getLotCategories(): Promise<LotCategory[]> {
-    console.warn("[MySqlAdapter] getLotCategories is not yet implemented for MySQL.");
-    return [];
+    const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM lot_categories ORDER BY name ASC');
+    return mapMySqlRowsToCamelCase(rows).map(mapToLotCategory);
   }
   async getLotCategory(idOrSlug: string): Promise<LotCategory | null> {
-    console.warn("[MySqlAdapter] getLotCategory is not yet implemented for MySQL.");
-    return null;
+    const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM lot_categories WHERE id = ? OR slug = ? LIMIT 1', [idOrSlug, idOrSlug]);
+    if (rows.length === 0) return null;
+    return mapToLotCategory(mapMySqlRowToCamelCase(rows[0]));
   }
   async getLotCategoryByName(name: string): Promise<LotCategory | null> {
-    console.warn("[MySqlAdapter] getLotCategoryByName is not yet implemented for MySQL.");
-    return null;
+    const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM lot_categories WHERE name = ? LIMIT 1', [name]);
+    if (rows.length === 0) return null;
+    return mapToLotCategory(mapMySqlRowToCamelCase(rows[0]));
   }
   async updateLotCategory(id: string, data: Partial<CategoryFormData>): Promise<{ success: boolean; message: string; }> {
     console.warn("[MySqlAdapter] updateLotCategory is not yet implemented for MySQL.");
@@ -973,34 +968,34 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
 
-  // --- Auctioneer ---
-  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> {
+  // --- Sellers ---
+  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> {
+    const publicId = `SELL-PUB-${uuidv4().substring(0, 12)}`;
+    const slug = slugify(data.name);
     try {
-        const publicId = `AUCT-PUB-${uuidv4().substring(0, 12)}`;
-        const slug = slugify(data.name);
         const [result] = await getPool().execute<ResultSetHeader>(
-            `INSERT INTO auctioneers (public_id, name, slug, registration_number, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, user_id) 
+            `INSERT INTO sellers (public_id, name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, is_judicial, judicial_branch_id) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [publicId, data.name, slug, data.registrationNumber, data.contactName, data.email, data.phone, data.address, data.city, data.state, data.zipCode, data.website, data.logoUrl, data.dataAiHintLogo, data.description, data.userId]
+            [publicId, data.name, slug, data.contactName, data.email, data.phone, data.address, data.city, data.state, data.zipCode, data.website, data.logoUrl, data.dataAiHintLogo, data.description, data.isJudicial || false, data.judicialBranchId || null]
         );
-        return { success: true, message: 'Leiloeiro criado com sucesso!', auctioneerId: String(result.insertId), auctioneerPublicId: publicId };
+        return { success: true, message: 'Comitente criado com sucesso!', sellerId: String(result.insertId), sellerPublicId: publicId };
     } catch (e: any) {
         return { success: false, message: e.message };
     }
   }
-  
-  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
-      const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM auctioneers ORDER BY name ASC');
-      return mapMySqlRowsToCamelCase(rows).map(mapToAuctioneerProfileInfo);
+
+  async getSellers(): Promise<SellerProfileInfo[]> {
+      const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM sellers ORDER BY name ASC');
+      return mapMySqlRowsToCamelCase(rows).map(mapToSellerProfileInfo);
   }
 
-  async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
-      const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM auctioneers WHERE id = ? OR public_id = ? LIMIT 1', [idOrPublicId, idOrPublicId]);
+  async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> {
+      const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM sellers WHERE id = ? OR public_id = ? LIMIT 1', [idOrPublicId, idOrPublicId]);
       if (rows.length === 0) return null;
-      return mapToAuctioneerProfileInfo(mapMySqlRowToCamelCase(rows[0]));
+      return mapToSellerProfileInfo(mapMySqlRowToCamelCase(rows[0]));
   }
   
-  async updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
+  async updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
       try {
         const updateData: any = {...data};
         if(data.name) updateData.slug = slugify(data.name);
@@ -1009,30 +1004,30 @@ export class MySqlAdapter implements IDatabaseAdapter {
         const values = Object.values(updateData);
 
         const [result] = await getPool().execute<ResultSetHeader>(
-            `UPDATE auctioneers SET ${columns}, updated_at = CURRENT_TIMESTAMP WHERE id = ? OR public_id = ?`,
+            `UPDATE sellers SET ${columns}, updated_at = CURRENT_TIMESTAMP WHERE id = ? OR public_id = ?`,
             [...values, idOrPublicId, idOrPublicId]
         );
         if(result.affectedRows > 0) {
-            return { success: true, message: 'Leiloeiro atualizado com sucesso!' };
+            return { success: true, message: 'Comitente atualizado com sucesso!' };
         }
-        return { success: false, message: 'Leiloeiro não encontrado.' };
+        return { success: false, message: 'Comitente não encontrado.' };
       } catch (e: any) {
           return { success: false, message: e.message };
       }
   }
 
-  async deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
+  async deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
       try {
-        const [result] = await getPool().execute<ResultSetHeader>('DELETE FROM auctioneers WHERE id = ? OR public_id = ?', [idOrPublicId, idOrPublicId]);
+        const [result] = await getPool().execute<ResultSetHeader>('DELETE FROM sellers WHERE id = ? OR public_id = ?', [idOrPublicId, idOrPublicId]);
         if(result.affectedRows > 0) {
-            return { success: true, message: 'Leiloeiro excluído com sucesso!' };
+            return { success: true, message: 'Comitente excluído com sucesso!' };
         }
-        return { success: false, message: 'Leiloeiro não encontrado.' };
+        return { success: false, message: 'Comitente não encontrado.' };
       } catch (e: any) {
           return { success: false, message: e.message };
       }
   }
 
   // --- Other Stubs ---
-  // ... (all other stubs remain as they are for this fix)
+  // ... (the rest of the stubs for other entities)
 }
