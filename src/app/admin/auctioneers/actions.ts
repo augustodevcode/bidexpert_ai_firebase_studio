@@ -1,8 +1,9 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { AuctioneerProfileInfo, AuctioneerFormData, Auction } from '@/types';
 import { prisma } from '@/lib/prisma';
+import type { AuctioneerProfileInfo, AuctioneerFormData, Auction } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -15,7 +16,9 @@ export async function createAuctioneer(
         ...data,
         publicId: `AUCT-PUB-${uuidv4().substring(0,8)}`,
         slug: slugify(data.name),
-        userId: data.userId || null, // Ensure null if empty
+        userId: data.userId || null,
+        rating: data.rating || null,
+        memberSince: data.memberSince ? new Date(data.memberSince) : null,
       }
     });
     revalidatePath('/admin/auctioneers');
@@ -89,10 +92,20 @@ export async function getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: stri
         }
       },
       include: {
-        lots: true, // Include lots to get totalLots count
+        lots: { select: { id: true }},
+        category: { select: { name: true }},
+        auctioneer: { select: { name: true, logoUrl: true }},
+        seller: { select: { name: true }},
       }
     });
-    return auctions as unknown as Auction[];
+    return auctions.map(a => ({
+        ...a,
+        totalLots: a.lots.length,
+        category: a.category?.name,
+        auctioneer: a.auctioneer?.name,
+        auctioneerLogoUrl: a.auctioneer?.logoUrl,
+        seller: a.seller?.name,
+    })) as unknown as Auction[];
   } catch (error) {
     console.error(`Error fetching auctions for auctioneer slug/id ${auctioneerSlugOrPublicId}:`, error);
     return [];

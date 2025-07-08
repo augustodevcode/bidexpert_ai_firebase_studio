@@ -50,7 +50,7 @@ export async function getBens(filter?: { judicialProcessId?: string, sellerId?: 
   }
 }
 
-export async function getBensByIds(ids: string[]): Promise<Bem[]> {
+export async function getBensByIdsAction(ids: string[]): Promise<Bem[]> {
   if (!ids || ids.length === 0) return [];
   try {
     const bens = await prisma.bem.findMany({

@@ -59,6 +59,7 @@
     "firebase-admin": "^12.7.0",
     "genkit": "^1.8.0",
     "leaflet": "^1.9.4",
+    "lucide-react": "^0.417.0",
     "mysql2": "^3.14.1",
     "next": "15.2.3",
     "patch-package": "^8.0.0",

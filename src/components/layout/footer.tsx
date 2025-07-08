@@ -3,8 +3,6 @@ import Link from 'next/link';
 import { Coins, Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck } from 'lucide-react';
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear();
-
   const quickLinks = [
     { href: '/about', label: 'Sobre Nós' },
     { href: '/contact', label: 'Contato' },
