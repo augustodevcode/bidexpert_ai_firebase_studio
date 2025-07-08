@@ -9,20 +9,21 @@
 - **Item 2.3 (Parcial):** Página "Fale Conosco" como canal inicial de contato.
 - **Item 3.2:** Ícones de redes sociais no rodapé e botões de compartilhamento social.
 - **Item 3.5:** SEO básico implementado com metadados dinâmicos nas páginas de leilão, lote e categoria.
+- **Item 4.1 (Parcial):** Sistema de notificações (Backend e UI). Notificação de lance superado implementada.
 - **Item 4.2:** Sistema completo de Avaliações e Perguntas/Respostas na página de lotes, com envio e listagem de dados.
 - **Item 20:** Estrutura completa e funcionalidade de dados do Auditório Virtual, com seleção de lote e navegação.
 - **Item 5.1:** Correção do erro "Map container is already initialized" em todas as instâncias para garantir estabilidade.
 - **Admin Panel Foundation:** CRUDs completos e funcionais para todas as entidades principais.
 - **Database System:** Conversão para Prisma finalizada, eliminando o antigo sistema de adapters.
 - **Header & Navigation:** Implementação de megamenus dinâmicos e responsivos.
-- **Painel de Usuário:** Páginas de Favoritos, Histórico e Meus Arremates/Lances agora são funcionais.
+- **Painel de Usuário:** Páginas de Favoritos, Histórico, Meus Arremates/Lances, Notificações e Visão Geral agora são funcionais.
 - **Refatoração do Modelo de Dados:** Status e datas foram removidos do modelo de `Lot` e agora são derivados do `Auction` principal, garantindo consistência.
 - **Painel do Comitente (`/consignor-dashboard`):** Implementada a busca e exibição de dados reais (leilões, lotes, métricas financeiras) e página de configurações.
 - **Relatórios Avançados:** Adicionadas novas métricas e KPIs aos relatórios do admin.
+- **Gerenciamento de Habilitação (Admin):** Implementada a interface administrativa para revisar, aprovar e rejeitar os documentos enviados pelos usuários.
 
 ## DOING
-- **Item 4.1:** Desenvolver um sistema completo de notificações (Web Push e Email) para alertar usuários sobre novos lances, status de arremate, etc.
-  - **Status:** Estrutura do banco de dados (schema Prisma) criada. Próximo passo é criar as actions e a UI.
+- **Item 4.1 (Finalizar):** Implementar mais gatilhos de notificação (ex: leilão começando, lote arrematado, etc.) e considerar notificações por Web Push/Email.
 
 ## NEXT
 - **Item 1.1 (Avançado):** Implementar atualização em tempo real para volume de ofertas e lances via WebSockets para uma experiência de leilão ainda mais dinâmica.
