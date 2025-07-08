@@ -1,5 +1,4 @@
-
-      // src/types/index.ts
+// src/types/index.ts
 import type { 
     User, Role, UserDocument, DocumentType, Auction, Lot, Bid, 
     UserWin, Seller, Auctioneer, DirectSaleOffer, MediaItem, LotCategory, 

@@ -22,12 +22,14 @@ export async function getAuctionsForConsignorAction(sellerId: string): Promise<A
     const auctions = await prisma.auction.findMany({
       where: { sellerId: sellerId },
       include: {
-        lots: { select: { id: true }}, // for count
+        _count: {
+          select: { lots: true }
+        },
       },
       orderBy: { auctionDate: 'desc' }
     });
 
-    return auctions.map(a => ({...a, totalLots: a.lots.length})) as unknown as Auction[];
+    return auctions.map(a => ({...a, totalLots: a._count.lots})) as unknown as Auction[];
   } catch (error) {
     console.error(`[Action - getAuctionsForConsignorAction] Error fetching auctions for seller ${sellerId}:`, error);
     return [];

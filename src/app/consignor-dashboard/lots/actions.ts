@@ -30,7 +30,7 @@ export async function getLotsForConsignorAction(sellerId: string): Promise<Lot[]
                 select: { title: true } // Include parent auction's title for display
             }
         },
-        orderBy: { auctionId: 'desc' }
+        orderBy: { createdAt: 'desc' }
     });
 
     // Map to include auctionName directly for easier frontend use

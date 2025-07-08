@@ -1,4 +1,3 @@
-
 /**
  * @fileoverview Server Actions for the main admin dashboard.
  * Provides functions to aggregate key statistics for the platform overview.
@@ -15,10 +14,12 @@ import type { AdminDashboardStats } from '@/types';
  */
 export async function getAdminDashboardStatsAction(): Promise<AdminDashboardStats> {
   try {
-    const usersCount = await prisma.user.count();
-    const auctionsCount = await prisma.auction.count();
-    const lotsCount = await prisma.lot.count();
-    const sellersCount = await prisma.seller.count();
+    const [usersCount, auctionsCount, lotsCount, sellersCount] = await Promise.all([
+      prisma.user.count(),
+      prisma.auction.count(),
+      prisma.lot.count(),
+      prisma.seller.count(),
+    ]);
 
     return {
       users: usersCount,

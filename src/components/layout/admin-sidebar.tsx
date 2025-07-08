@@ -1,5 +1,4 @@
-
-      // src/components/layout/admin-sidebar.tsx
+// src/components/layout/admin-sidebar.tsx
 'use client';
 
 import Link from 'next/link';
@@ -122,5 +121,3 @@ export default function AdminSidebar() {
     </aside>
   );
 }
-
-    

@@ -67,7 +67,7 @@ export default function ConsignorReportsPage() {
 
     if (isLoading || authLoading) {
         return (
-            <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+            <div className="flex items-center justify-center min-h-[calc(100vh-20rem)]">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
             </div>
         );

@@ -20,7 +20,7 @@ import MegaMenuCategories from './mega-menu-categories';
 import MegaMenuLinkList, { type MegaMenuGroup } from './mega-menu-link-list';
 import MegaMenuAuctioneers from './mega-menu-auctioneers';
 import TwoColumnMegaMenu from './two-column-mega-menu';
-import { type HistoryListItem } from './header'; 
+import type { HistoryListItem } from './header'; 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; 
 import type { MegaMenuLinkItem } from './mega-menu-link-list'; 
 

@@ -110,6 +110,7 @@ export default function ConsignorSettingsPage() {
       formTitle="Minhas Configurações de Comitente"
       formDescription="Atualize os detalhes do seu perfil público de vendedor."
       submitButtonText="Salvar Alterações"
+      successRedirectPath="/consignor-dashboard/overview"
     />
   );
 }

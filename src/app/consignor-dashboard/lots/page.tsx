@@ -6,13 +6,15 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getLotsForConsignorAction } from './actions';
-import type { Lot } from '@/types';
+import type { Lot, Auction } from '@/types';
 import { PlusCircle, ListChecks } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createConsignorLotColumns } from './columns';
 import { useAuth } from '@/contexts/auth-context';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionsForConsignorAction } from '../auctions/actions';
+
 
 /**
  * ConsignorLotsPage displays a list of lots belonging to the currently
@@ -21,6 +23,7 @@ import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 export default function ConsignorLotsPage() {
   const { userProfileWithPermissions, loading: authLoading } = useAuth();
   const [lots, setLots] = useState<Lot[]>([]);
+  const [auctions, setAuctions] = useState<Auction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -33,8 +36,12 @@ export default function ConsignorLotsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const fetchedLots = await getLotsForConsignorAction(sellerId);
+      const [fetchedLots, fetchedAuctions] = await Promise.all([
+        getLotsForConsignorAction(sellerId),
+        getAuctionsForConsignorAction(sellerId),
+      ]);
       setLots(fetchedLots);
+      setAuctions(fetchedAuctions);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar seus lotes.";
       console.error("Error fetching consignor's lots:", e);
@@ -65,9 +72,8 @@ export default function ConsignorLotsPage() {
   [lots]);
   
   const auctionOptions = useMemo(() =>
-    [...new Set(lots.map(lot => lot.auction?.title).filter(Boolean))]
-        .map(name => ({ value: name!, label: name! })),
-  [lots]);
+    auctions.map(auc => ({ value: auc.title, label: auc.title })),
+  [auctions]);
 
   const facetedFilterColumns = useMemo(() => [
     { id: 'status', title: 'Status', options: statusOptions },
