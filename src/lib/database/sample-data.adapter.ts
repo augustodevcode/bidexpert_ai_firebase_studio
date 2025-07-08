@@ -110,8 +110,6 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   }
   
   private _persistData(): void {
-    // This function is now only for debugging or manual seeding.
-    // It's not called automatically at runtime to prevent dev server restarts.
     try {
         const dataString = JSON.stringify(this.localData, null, 2);
         fs.writeFileSync(DATA_FILE_PATH, dataString, 'utf8');
@@ -179,7 +177,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
 
     return Promise.resolve({
       totalRevenue,
-      newUsersLast30Days: Math.floor(newUsers / 2), // approximation
+      newUsersLast30Days: Math.floor(newUsers / 2),
       activeAuctions,
       lotsSoldCount: soldLots.length,
       salesData,
@@ -297,6 +295,14 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     });
     return Promise.resolve(JSON.parse(JSON.stringify(auctions)));
   }
+  
+  async getAuction(idOrPublicId: string): Promise<Auction | null> {
+    const auction = this.localData.sampleAuctions.find(a => a.id === idOrPublicId || a.publicId === idOrPublicId);
+    if (!auction) return null;
+    const lotsForAuction = this.localData.sampleLots.filter(lot => lot.auctionId === auction.id).map(l => this._enrichLotData(l));
+    const finalAuction = { ...auction, lots: lotsForAuction, totalLots: lotsForAuction.length };
+    return Promise.resolve(JSON.parse(JSON.stringify(finalAuction)));
+  }
 
   // --- Bids ---
   async getBidsForUser(userId: string): Promise<UserBid[]> {
@@ -308,14 +314,6 @@ export class SampleDataAdapter implements IDatabaseAdapter {
       if (!userId) return [];
       const notifs = (this.localData.sampleNotifications || []).filter(n => n.userId === userId);
       return Promise.resolve(JSON.parse(JSON.stringify(notifs)));
-  }
-  
-  // --- Generic Getters ---
-  async getLotCategories(): Promise<LotCategory[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleLotCategories))); }
-  async getRoleByName(name: string): Promise<Role | null> { return Promise.resolve(this.localData.sampleRoles.find(r => r.name_normalized === name.toUpperCase()) || null); }
-  async getUserByEmail(email: string): Promise<UserProfileWithPermissions | null> {
-      const user = this.localData.sampleUserProfiles.find(p => p.email.toLowerCase() === email.toLowerCase());
-      return Promise.resolve(user || null);
   }
   
   // --- Platform Settings ---
@@ -383,10 +381,44 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     }
     return Promise.resolve(JSON.parse(JSON.stringify(results)));
   }
+  
+  async getBensByIds(ids: string[]): Promise<Bem[]> {
+    const bens = this.localData.sampleBens.filter(b => ids.includes(b.id));
+    return Promise.resolve(JSON.parse(JSON.stringify(bens)));
+  }
 
   async getUsersForHabilitationReview(): Promise<UserProfileData[]> {
     const statuses: UserHabilitationStatus[] = ['PENDING_ANALYSIS', 'REJECTED_DOCUMENTS'];
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleUserProfiles.filter(p => p.habilitationStatus && statuses.includes(p.habilitationStatus)))));
+  }
+  
+  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
+    return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleAuctioneers)));
+  }
+  
+  async getSellers(): Promise<SellerProfileInfo[]> {
+    return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleSellers)));
+  }
+
+  async getUsersWithRoles(): Promise<UserProfileWithPermissions[]> {
+    return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleUserProfiles)));
+  }
+  
+  async getRoles(): Promise<Role[]> {
+    return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleRoles)));
+  }
+
+  async getStates(): Promise<StateInfo[]> {
+    return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleStates)));
+  }
+
+  async getCities(stateIdOrSlugFilter?: string): Promise<CityInfo[]> {
+    const cities = this.localData.sampleCities.filter(city => stateIdOrSlugFilter ? city.stateId === stateIdOrSlugFilter : true);
+    return Promise.resolve(JSON.parse(JSON.stringify(cities)));
+  }
+  
+  async getMediaItems(): Promise<MediaItem[]> {
+      return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleMediaItems)));
   }
 
 
@@ -447,7 +479,6 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented." }; }
   
   // --- Unimplemented Read Operations ---
-  async getBensByIds(ids: string[]): Promise<Bem[]> { return []; }
   async getBem(id: string): Promise<Bem | null> { return null; }
   async getCourts(): Promise<Court[]> { return []; }
   async getCourt(id: string): Promise<Court | null> { return null; }
@@ -456,7 +487,6 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async getJudicialBranches(): Promise<JudicialBranch[]> { return []; }
   async getJudicialBranch(id: string): Promise<JudicialBranch | null> { return null; }
   async getJudicialProcess(id: string): Promise<JudicialProcess | null> { return null; }
-  async getAuction(idOrPublicId: string): Promise<Auction | null> { return null; }
   async getAuctionsByIds(ids: string[]): Promise<Auction[]> { return []; }
   async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> { return []; }
   async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> { return []; }
@@ -470,11 +500,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]> { return []; }
   async createQuestion(question: Omit<LotQuestion, "id" | "createdAt" | "answeredAt" | "answeredByUserId" | "answeredByUserDisplayName" | "isPublic">): Promise<{ success: boolean; message: string; questionId?: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
   async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
-  async getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null> { return null; }
-  async getUsersWithRoles(): Promise<UserProfileWithPermissions[]> { return []; }
-  async getRoles(): Promise<Role[]> { return []; }
   async getRole(id: string): Promise<Role | null> { return null; }
-  async getMediaItems(): Promise<MediaItem[]> { return []; }
   async getMediaItem(id: string): Promise<MediaItem | null> { return null; }
   async getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null> { return null; }
   async getDocumentTypes(): Promise<DocumentType[]> { return []; }
