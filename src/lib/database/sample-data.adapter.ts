@@ -1,3 +1,4 @@
+
 // src/lib/database/sample-data.adapter.ts
 import * as fs from 'fs';
 import * as path from 'path';
@@ -297,6 +298,79 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return { success: true, message: "Configurações atualizadas (em memória)." };
   }
   
+  // --- Subcategories ---
+  async getSubcategories(parentCategoryId: string): Promise<Subcategory[]> {
+    await delay(20);
+    const parentCategory = this.localData.sampleLotCategories.find(c => c.id === parentCategoryId);
+    const subcats = this.localData.sampleSubcategories
+      .filter(s => s.parentCategoryId === parentCategoryId)
+      .map(s => ({
+        ...s,
+        parentCategoryName: parentCategory?.name,
+      }));
+    return Promise.resolve(JSON.parse(JSON.stringify(subcats)));
+  }
+  
+  async getSubcategory(id: string): Promise<Subcategory | null> {
+    const subcat = this.localData.sampleSubcategories.find(s => s.id === id);
+    if (!subcat) return null;
+    const parentCategory = this.localData.sampleLotCategories.find(c => c.id === subcat.parentCategoryId);
+    return Promise.resolve({ ...subcat, parentCategoryName: parentCategory?.name });
+  }
+
+  async getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null> {
+    const subcat = this.localData.sampleSubcategories.find(s => s.slug === slug && s.parentCategoryId === parentCategoryId);
+    return Promise.resolve(subcat || null);
+  }
+
+  async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> {
+    const newSubcategory: Subcategory = {
+      ...data,
+      id: `subcat-${slugify(data.name)}-${uuidv4().substring(0,4)}`,
+      slug: slugify(data.name),
+      itemCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.localData.sampleSubcategories.push(newSubcategory);
+    
+    // Update parent category
+    const parentCatIndex = this.localData.sampleLotCategories.findIndex(c => c.id === data.parentCategoryId);
+    if (parentCatIndex > -1) {
+      this.localData.sampleLotCategories[parentCatIndex].hasSubcategories = true;
+    }
+    
+    this._persistData();
+    return { success: true, message: 'Subcategoria criada com sucesso!', subcategoryId: newSubcategory.id };
+  }
+
+  async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> {
+    const index = this.localData.sampleSubcategories.findIndex(s => s.id === id);
+    if (index === -1) return { success: false, message: 'Subcategoria não encontrada.' };
+    
+    const updatedSubcat = { ...this.localData.sampleSubcategories[index], ...data };
+    if (data.name) {
+      updatedSubcat.slug = slugify(data.name);
+    }
+    this.localData.sampleSubcategories[index] = updatedSubcat;
+    this._persistData();
+    return { success: true, message: 'Subcategoria atualizada com sucesso!' };
+  }
+
+  async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> {
+    this.localData.sampleSubcategories = this.localData.sampleSubcategories.filter(s => s.id !== id);
+    // Note: This doesn't check if the parent category still has other subcategories.
+    // For sample data, this simplification is acceptable.
+    this._persistData();
+    return { success: true, message: 'Subcategoria excluída com sucesso!' };
+  }
+
+
+  // --- LotCategory ---
+  async getLotCategory(idOrSlug: string): Promise<LotCategory | null> {
+    return Promise.resolve(this.localData.sampleLotCategories.find(c => c.id === idOrSlug || c.slug === idOrSlug) || null);
+  }
+  
   // Implement other methods as needed, using the this.localData object
   // For brevity, many methods are omitted but would follow this pattern:
   // 1. Access this.localData.sample[Entity]
@@ -543,7 +617,6 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async getAuctionsByAuctioneerSlug(slug: string): Promise<Auction[]> { return []; }
   async getAuctionsBySellerSlug(slug: string): Promise<Auction[]> { return []; }
   async getAuctionsForConsignor(id: string): Promise<Auction[]> { return []; }
-  async getAuctionsByIds(ids: string[]): Promise<Auction[]> { return []; }
   async getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> { return null; }
   async getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null> { return null; }
   async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> { return null; }
@@ -555,7 +628,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async getDirectSaleOffersForSeller(id: string): Promise<DirectSaleOffer[]> { return []; }
   async getLot(id: string): Promise<Lot | null> { return null; }
   async getLotsBySellerSlug(slug: string): Promise<Lot[]> { return []; }
-  async getLotCategory(id: string): Promise<LotCategory | null> { return null; }
+  async getLotCategoryByName(name: string): Promise<LotCategory | null> { return null; }
   async getMediaItem(id: string): Promise<MediaItem | null> { return null; }
   async getMediaItems(): Promise<MediaItem[]> { return []; }
   async getRole(id: string): Promise<Role | null> { return null; }
