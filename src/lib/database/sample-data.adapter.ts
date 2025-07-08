@@ -41,7 +41,7 @@ import type {
 } from '@/types';
 import { slugify, getEffectiveLotEndDate } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
-import * as sampleData from '@/lib/sample-data'; // Import all exports from the new sample-data.ts
+import * as sampleData from '@/lib/sample-data';
 import type { WizardData } from '@/components/admin/wizard/wizard-context';
 import { ensureAdminInitialized } from '@/lib/firebase/admin';
 import type { FieldValue as FirebaseAdminFieldValue, Timestamp as FirebaseAdminTimestamp } from 'firebase-admin/firestore';
@@ -135,7 +135,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
         sellerName: seller?.name || lot.sellerName,
     };
   }
-
+  
   // --- Schema ---
   async initializeSchema(): Promise<{ success: boolean; message:string; rolesProcessed?: number }> {
     console.log('[SampleDataAdapter] Schema initialization is not required for sample data.');
@@ -225,4 +225,58 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   // ... a lot of other stubs ...
   async getRoleByName(name: string): Promise<Role | null> { return null; }
   async getUserByEmail(email: string): Promise<UserProfileWithPermissions | null> { return null; }
+  
+  // --- Platform Settings ---
+  async getPlatformSettings(): Promise<PlatformSettings> {
+    return Promise.resolve(this.localData.samplePlatformSettings);
+  }
+  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
+    console.warn("[SampleDataAdapter] updatePlatformSettings is a simulation and does not persist across server restarts.");
+    this.localData.samplePlatformSettings = { ...this.localData.samplePlatformSettings, ...data, id: 'global', updatedAt: new Date() };
+    return { success: true, message: "Configurações atualizadas (em memória)." };
+  }
+  
+  // Implement other methods as needed, using the this.localData object
+  // For brevity, many methods are omitted but would follow this pattern:
+  // 1. Access this.localData.sample[Entity]
+  // 2. Find, filter, or modify the data in the array
+  // 3. Call this._persistData() if it's a mutation (create, update, delete)
+  // 4. Return the result as a Promise
+  
+  async getAuction(idOrPublicId: string): Promise<Auction | null> {
+    await delay(50);
+    const auction = this.localData.sampleAuctions.find(a => a.id === idOrPublicId || a.publicId === idOrPublicId);
+    if (!auction) return null;
+    
+    const lotsForAuction = (this.localData.sampleLots || []).filter(lot => lot.auctionId === auction.id);
+    const enrichedLots = lotsForAuction.map(l => this._enrichLotData(l));
+    
+    return {
+        ...auction,
+        lots: enrichedLots,
+        totalLots: enrichedLots.length
+    };
+  }
+
+  async getAuctions(): Promise<Auction[]> {
+    await delay(100);
+    const auctionsWithLots = this.localData.sampleAuctions.map(auction => {
+        const lotsForAuction = this.localData.sampleLots.filter(l => l.auctionId === auction.id).map(l => this._enrichLotData(l));
+        return {
+            ...auction,
+            lots: lotsForAuction,
+            totalLots: lotsForAuction.length,
+        };
+    });
+    return auctionsWithLots;
+  }
+  
+  async getLots(auctionId?: string): Promise<Lot[]> {
+      await delay(50);
+      let lots = this.localData.sampleLots || [];
+      if (auctionId) {
+          lots = lots.filter(lot => lot.auctionId === auctionId);
+      }
+      return lots.map(l => this._enrichLotData(l));
+  }
 }
