@@ -1,79 +1,38 @@
+# Project Progress - BidExpert
 
-# Project Roadmap - BidExpert
+## DONE
+- **Item 1.1:** Correção da lógica de exibição do "Total de Lotes" nos cards e implementação da atualização do contador nas actions.
+- **Item 1.2:** Detalhamento abrangente nos cards e modal de pré-visualização de lotes, com abas para Descrição, Especificações e Documentos.
+- **Item 1.3:** Acessibilidade da documentação (editais) nas páginas de detalhe e no modal de pré-visualização.
+- **Item 2.1:** Criação de perfis detalhados para comitentes e leiloeiros com páginas públicas e listagem de leilões ativos.
+- **Item 2.2:** Implementação completa da funcionalidade de lance, soft-close, e criação das páginas "Meus Arremates" e "Meus Lances" com dados funcionais. **(Esta tarefa)**
+- **Item 2.3 (Parcial):** Página "Fale Conosco" como canal inicial de contato.
+- **Item 3.2:** Ícones de redes sociais no rodapé e botões de compartilhamento social.
+- **Item 3.5:** SEO básico implementado com metadados dinâmicos nas páginas de leilão, lote e categoria.
+- **Item 4.2:** Sistema completo de Avaliações e Perguntas/Respostas na página de lotes, com envio e listagem de dados.
+- **Item 20:** Estrutura completa e funcionalidade de dados do Auditório Virtual, com seleção de lote e navegação.
+- **Admin Panel Foundation:** CRUDs completos e funcionais para todas as entidades principais.
+- **Database System:** Adaptadores para múltiplos bancos de dados (MySQL, PostgreSQL, Firestore) e scripts de inicialização.
+- **Header & Navigation:** Implementação de megamenus dinâmicos e responsivos.
+- **Painel de Usuário:** Páginas de Favoritos, Histórico e Meus Arremates/Lances agora são funcionais. **(Esta tarefa)**
+- **Refatoração do Modelo de Dados:** Status e datas foram removidos do modelo de `Lot` e agora são derivados do `Auction` principal, garantindo consistência.
 
-Este documento acompanha o progresso do desenvolvimento com base na especificação funcional.
+## DOING
+- **Painel do Comitente (`/consignor-dashboard`):** Implementar a busca e exibição de dados reais (leilões, lotes, métricas financeiras) no painel do comitente, substituindo os dados estáticos e placeholders.
+- **Relatórios Avançados:** Criar uma seção de relatórios detalhados no painel de administração e do comitente com gráficos e análises de performance.
 
----
+## NEXT
+- **Item 1.1 (Avançado):** Implementar atualização em tempo real para volume de ofertas e lances via WebSockets para uma experiência de leilão ainda mais dinâmica.
+- **Item 2.3 (Avançado):** Criar seção formal de "Resolução de Disputas" e integrar um sistema de suporte mais robusto (tickets ou chat).
+- **Item 3.1:** Integrar um módulo de blog para marketing de conteúdo, com artigos sobre o mercado de leilões.
+- **Item 3.3:** Criar um sistema de gamificação com pontos/recompensas por atividade e um módulo para gerenciar promoções especiais.
+- **Item 3.4:** Integrar APIs de parceiros estratégicos para funcionalidades como simulação de frete e opções de financiamento.
+- **Item 4.1:** Desenvolver um sistema completo de notificações (Web Push e Email) para alertar usuários sobre novos lances, status de arremate, etc.
+- **Item 4.3:** Pesquisar e, se viável, implementar uma camada de certificação via blockchain para o registro de lances e arremates, aumentando a transparência e a segurança.
 
-### 1. Otimização da Experiência do Usuário (UI/UX)
-
-- **1.1. Apresentação Clara e Consistente de Dados**
-  - **[DOING]** Corrigir/Garantir que "Total de Lotes" seja preciso em todos os componentes.
-  - **[TODO]** Implementar atualização em tempo real para volume de ofertas.
-
-- **1.2. Detalhamento Abrangente dos Lotes**
-  - **[DONE]** Estrutura inicial dos cards de lote e pré-visualização.
-  - **[TODO]** Expandir modal de pré-visualização com mais detalhes (laudos, histórico).
-  - **[DONE]** Galeria de imagens na página de detalhes do lote.
-
-- **1.3. Acessibilidade da Documentação Associada**
-  - **[DONE]** Seção de "Documentos" (Edital) na página de detalhes do leilão.
-  - **[TODO]** Criar biblioteca central de documentos no menu principal.
-
----
-
-### 2. Transparência e Credibilidade
-
-- **2.1. Perfis Detalhados de Comitentes e Leiloeiros**
-  - **[DONE]** Páginas de perfil dedicadas para comitentes e leiloeiros.
-  - **[DOING]** Incluir mais detalhes nos perfis (histórico de transações, avaliações).
-
-- **2.2. Processo de Gestão de Lances Claro**
-  - **[DONE]** Exibição do status do lance na interface.
-  - **[DONE]** Seção "Meus Arremates" e "Favoritos" no painel do usuário.
-  - **[TODO]** Melhorar a seção "Meus Lances" com histórico detalhado.
-  - **[DONE]** Funcionalidade de "lance automático" (Proxy Bidding).
-
-- **2.3. Resolução de Disputas**
-  - **[DONE]** Página "Fale Conosco" como canal inicial.
-  - **[TODO]** Criar seção formal de "Resolução de Disputas" (FAQ/Ajuda).
-  - **[TODO]** Integrar sistema de tickets ou chat online para suporte.
 
 ---
 
-### 3. Engajamento e Alcance
+### 5. Technical Debt e Correções
 
-- **3.1. Marketing de Conteúdo (Blog)**
-  - **[TODO]** Integrar um módulo de blog na plataforma.
-
-- **3.2. Presença em Mídias Sociais**
-  - **[DONE]** Ícones e links para redes sociais no rodapé.
-  - **[DONE]** Botões de compartilhamento social na página de detalhes do lote.
-
-- **3.3. Programas de Aquisição e Retenção**
-  - **[TODO]** Criar sistema de pontos/recompensas.
-  - **[TODO]** Desenvolver módulo para gerenciar promoções.
-  - **[DONE]** Exibição do volume de ofertas (indireta, através da listagem).
-
-- **3.4. Parcerias Estratégicas**
-  - **[TODO]** Criar seção de "Parceiros" no site.
-  - **[TODO]** Integrar APIs de parceiros (simulação de frete/financiamento).
-
-- **3.5. Otimização para Motores de Busca (SEO)**
-  - **[DOING]** Implementação de meta tags e URLs amigáveis (padrão Next.js).
-  - **[DOING]** Otimização contínua de velocidade e responsividade.
-
----
-
-### 4. Melhorias Adicionais
-
-- **4.1. Funcionalidades de Conveniência**
-  - **[TODO]** Desenvolver módulo de simulação de frete.
-  - **[TODO]** Criar sistema de notificações (Push/Email).
-
-- **4.2. Canais de Feedback do Usuário**
-  - **[DONE]** Sistema de Avaliações na página de lotes.
-  - **[TODO]** Integrar formulário de feedback direto na interface.
-
-- **4.3. Credibilidade e Segurança (Blockchain)**
-  - **[TODO]** Pesquisar e implementar certificação blockchain.
+- **(DONE)** **5.1. Componentes de Mapa (Leaflet)** - Corrigido erro "Map container is already initialized" em todas as instâncias.
