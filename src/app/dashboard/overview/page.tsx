@@ -1,4 +1,4 @@
-
+// src/app/dashboard/overview/page.tsx
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,20 +6,21 @@ import { Button } from '@/components/ui/button';
 import { UserCircle, Bell, ShoppingBag, Gavel, AlertCircle, Star, Settings, Loader2, CheckCircle2, Clock, FileText, FileWarning, ShieldAlert, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import sampleData from '@/lib/sample-data.local.json';
 import { getUserHabilitationStatusInfo } from '@/lib/sample-data-helpers';
 import type { Lot, UserWin, UserBid, UserHabilitationStatus } from '@/types';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { format, differenceInHours, differenceInMinutes, isPast, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Badge } from '@/components/ui/badge'; 
+import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/auth-context';
+import { getDashboardOverviewDataAction, type DashboardOverviewData } from './actions';
+import { useToast } from '@/hooks/use-toast';
 
-const { sampleLots = [], sampleUserWins = [], sampleUserBids = [] } = sampleData;
-
-function TimeRemaining({ endDate }: { endDate: Date | string }) {
+function TimeRemaining({ endDate }: { endDate: Date | string | null | undefined }) {
   const [remaining, setRemaining] = useState('');
 
   useEffect(() => {
+    if (!endDate) return;
     const end = new Date(endDate);
     if (!isValid(end)) {
         setRemaining('Data inválida');
@@ -53,42 +54,53 @@ function TimeRemaining({ endDate }: { endDate: Date | string }) {
   return <span className="font-semibold">{remaining}</span>;
 }
 
+const initialData: DashboardOverviewData = {
+    upcomingLots: [],
+    pendingWinsCount: 0,
+    recommendedLots: [],
+    activeBidsCount: 0,
+    habilitationStatus: null,
+    auctionsWonCount: 0,
+};
+
 export default function DashboardOverviewPage() {
-  const [upcomingLots, setUpcomingLots] = useState<Lot[]>([]);
-  const [pendingWinsCount, setPendingWinsCount] = useState(0);
-  const [recommendedLots, setRecommendedLots] = useState<Lot[]>([]);
-  const [activeBidsCount, setActiveBidsCount] = useState(0);
-  const [sampleUserHabilitationStatus, setSampleUserHabilitationStatus] = useState<UserHabilitationStatus>('PENDING_DOCUMENTS');
-  const [habilitationInfo, setHabilitationInfo] = useState(getUserHabilitationStatusInfo(sampleUserHabilitationStatus));
+    const { userProfileWithPermissions, loading: authLoading } = useAuth();
+    const { toast } = useToast();
+    const [dashboardData, setDashboardData] = useState<DashboardOverviewData>(initialData);
+    const [isLoading, setIsLoading] = useState(true);
 
+    const fetchData = useCallback(async (userId: string) => {
+        setIsLoading(true);
+        try {
+            const data = await getDashboardOverviewDataAction(userId);
+            setDashboardData(data);
+        } catch (error) {
+            console.error("Error fetching dashboard overview data:", error);
+            toast({ title: "Erro", description: "Não foi possível carregar os dados do painel.", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    }, [toast]);
 
-  useEffect(() => {
-    // Próximos Encerramentos
-    const openLots = sampleLots
-      .filter((lot: Lot) => lot.status === 'ABERTO_PARA_LANCES' && lot.endDate && !isPast(new Date(lot.endDate as string)))
-      .sort((a: Lot, b: Lot) => new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime());
-    setUpcomingLots(openLots.slice(0, 3));
+    useEffect(() => {
+        if (!authLoading && userProfileWithPermissions?.uid) {
+            fetchData(userProfileWithPermissions.uid);
+        } else if (!authLoading) {
+            setIsLoading(false); // No user, stop loading
+        }
+    }, [userProfileWithPermissions, authLoading, fetchData]);
 
-    // Arremates Pendentes
-    const pending = sampleUserWins.filter((win: UserWin) => win.paymentStatus === 'PENDENTE');
-    setPendingWinsCount(pending.length);
+    const habilitationInfo = getUserHabilitationStatusInfo(dashboardData.habilitationStatus || undefined);
+    const HabilitationIcon = habilitationInfo.icon;
 
-    // Recomendações
-    setRecommendedLots(sampleLots.filter((lot: Lot) => lot.isFeatured).slice(0, 3));
-
-    // Lances Ativos
-    const currentActiveBids = (sampleUserBids || []).filter((bid: UserBid) => 
-      bid.bidStatus === 'GANHANDO' || bid.bidStatus === 'PERDENDO' || bid.bidStatus === 'SUPERADO'
-    ).length;
-    setActiveBidsCount(currentActiveBids);
-
-    // Status da Habilitação (já definido no useState inicial, mas poderia ser atualizado aqui se fosse dinâmico)
-    setHabilitationInfo(getUserHabilitationStatusInfo(sampleUserHabilitationStatus));
-
-  }, [sampleUserHabilitationStatus]);
-  
-  const auctionsWonCount = sampleUserWins.filter((win: UserWin) => win.paymentStatus === 'PAGO').length;
-  const HabilitationIcon = habilitationInfo.icon; // Alias for JSX rendering
+    if (authLoading || isLoading) {
+        return (
+            <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <p className="ml-3 text-muted-foreground">Carregando painel...</p>
+            </div>
+        );
+    }
 
   return (
     <div className="space-y-8">
@@ -111,7 +123,7 @@ export default function DashboardOverviewPage() {
                   <Gavel className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-primary">{activeBidsCount}</div>
+                  <div className="text-3xl font-bold text-primary">{dashboardData.activeBidsCount}</div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Acompanhe seus lances em andamento.
                   </p>
@@ -125,9 +137,9 @@ export default function DashboardOverviewPage() {
                   <ShoppingBag className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-primary">{auctionsWonCount}</div>
+                  <div className="text-3xl font-bold text-primary">{dashboardData.auctionsWonCount}</div>
                    <p className="text-xs text-muted-foreground mt-1">
-                    Lotes que você arrematou e pagou.
+                    Total de lotes que você arrematou.
                   </p>
                 </CardContent>
               </Card>
@@ -139,7 +151,7 @@ export default function DashboardOverviewPage() {
                   {HabilitationIcon && <HabilitationIcon className="h-5 w-5 text-muted-foreground" />}
                 </CardHeader>
                 <CardContent>
-                  <div className={`text-3xl font-bold ${habilitationInfo.color}`}>{habilitationInfo.text}</div>
+                  <div className={`text-2xl font-bold ${habilitationInfo.textColor}`}>{habilitationInfo.text}</div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Verifique e gerencie seus documentos.
                   </p>
@@ -153,7 +165,7 @@ export default function DashboardOverviewPage() {
                     <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                     </CardHeader>
                     <CardContent>
-                    <div className="text-3xl font-bold text-amber-600 dark:text-amber-400">{pendingWinsCount}</div>
+                    <div className="text-3xl font-bold text-amber-600 dark:text-amber-400">{dashboardData.pendingWinsCount}</div>
                     <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
                         Pagamentos ou retiradas pendentes.
                     </p>
@@ -164,7 +176,7 @@ export default function DashboardOverviewPage() {
         </CardContent>
       </Card>
 
-      {upcomingLots.length > 0 && (
+      {dashboardData.upcomingLots.length > 0 && (
         <Card className="shadow-md">
           <CardHeader>
             <CardTitle className="text-xl font-semibold flex items-center">
@@ -173,9 +185,9 @@ export default function DashboardOverviewPage() {
             <CardDescription>Lotes com lances terminando em breve.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {upcomingLots.map(lot => (
+            {dashboardData.upcomingLots.map(lot => (
               <Card key={lot.id} className="overflow-hidden">
-                <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
+                <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>
                   <div className="relative aspect-video bg-muted">
                     <Image src={lot.imageUrl || 'https://placehold.co/600x400.png'} alt={lot.title} fill className="object-cover" data-ai-hint={lot.dataAiHint || "lote proximo encerramento"} />
                   </div>
@@ -185,7 +197,7 @@ export default function DashboardOverviewPage() {
                     <div className="mt-2 flex justify-between items-center">
                         <p className="text-lg font-bold text-primary">R$ {lot.price.toLocaleString('pt-BR')}</p>
                         <Badge variant="outline" className="text-xs">
-                            <Clock className="h-3 w-3 mr-1" /> <TimeRemaining endDate={lot.endDate as string} />
+                            <Clock className="h-3 w-3 mr-1" /> <TimeRemaining endDate={lot.endDate} />
                         </Badge>
                     </div>
                   </div>
@@ -196,7 +208,7 @@ export default function DashboardOverviewPage() {
         </Card>
       )}
       
-      {recommendedLots.length > 0 && (
+      {dashboardData.recommendedLots.length > 0 && (
          <Card className="shadow-md">
           <CardHeader>
             <CardTitle className="text-xl font-semibold flex items-center">
@@ -205,9 +217,9 @@ export default function DashboardOverviewPage() {
             <CardDescription>Lotes selecionados que podem te interessar.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-             {recommendedLots.map(lot => (
+             {dashboardData.recommendedLots.map(lot => (
               <Card key={lot.id} className="overflow-hidden">
-                <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`}>
+                <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>
                   <div className="relative aspect-video bg-muted">
                     <Image src={lot.imageUrl || 'https://placehold.co/600x400.png'} alt={lot.title} fill className="object-cover" data-ai-hint={lot.dataAiHint || "lote recomendado"} />
                   </div>
@@ -222,40 +234,6 @@ export default function DashboardOverviewPage() {
           </CardContent>
         </Card>
       )}
-
-       <Card className="shadow-md">
-        <CardHeader>
-            <CardTitle className="text-xl font-semibold flex items-center">
-                <Bell className="h-5 w-5 mr-2 text-primary" />
-                Atividade Recente e Notificações
-            </CardTitle>
-        </CardHeader>
-        <CardContent>
-            <p className="text-sm text-muted-foreground">
-                Esta seção mostrará suas últimas ações (lances, arremates, envio de documentos) e notificações importantes do sistema.
-                (Em desenvolvimento)
-            </p>
-            <ul className="mt-4 space-y-3 text-xs">
-                <li className="flex items-center p-2 bg-secondary/30 rounded-md">
-                    <Gavel className="h-4 w-4 mr-3 text-green-500"/>
-                    <span>Você deu um lance de R$ 5.200 no Lote #LOTEVEI001 - Audi A4.</span>
-                </li>
-                <li className="flex items-center p-2 bg-secondary/30 rounded-md">
-                    <FileText className="h-4 w-4 mr-3 text-blue-500"/>
-                    <span>Seu Documento de Identidade (Frente) foi aprovado.</span>
-                </li>
-                 <li className="flex items-center p-2 bg-secondary/30 rounded-md">
-                    <ShoppingBag className="h-4 w-4 mr-3 text-amber-500"/>
-                    <span>Pagamento pendente para o Lote #LOTE002 - Casa Lauro de Freitas.</span>
-                </li>
-            </ul>
-             <div className="mt-4 text-right">
-                <Button variant="outline" size="sm" asChild>
-                    <Link href="/dashboard/notifications">Ver Todas Notificações</Link>
-                </Button>
-            </div>
-        </CardContent>
-       </Card>
     </div>
   );
 }
