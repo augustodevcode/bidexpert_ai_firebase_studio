@@ -662,7 +662,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.warn("[PostgresAdapter] getAuctionsByIds is not yet implemented for PostgreSQL.");
     return Promise.resolve([]);
   }
-
   
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[], rolesProcessed?: number }> {
     const client = await getPool().connect();
@@ -756,7 +755,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return { success: true, message: 'Perfis padrão garantidos.', rolesProcessed };
   }
   
-  // --- Create/Update/Delete stubs
+  // Stubs for other methods
   async createLotCategory(data: { name: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> {
     console.warn("[PostgresAdapter] createLotCategory is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
@@ -888,8 +887,9 @@ export class PostgresAdapter implements IDatabaseAdapter {
         
         values.push(isNaN(parseInt(idOrPublicId)) ? -1 : idOrPublicId, idOrPublicId);
         const idIndex = valueIndex++;
+        const publicIdIndex = valueIndex;
 
-        const updateQuery = `UPDATE auctioneers SET ${setClauses.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $${idIndex} OR public_id = $${idIndex + 1}`;
+        const updateQuery = `UPDATE auctioneers SET ${setClauses.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $${idIndex} OR public_id = $${publicIdIndex}`;
         
         const result = await getPool().query(updateQuery, values);
         
@@ -933,8 +933,21 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async getAuctions(): Promise<Auction[]> {
-    console.warn("[PostgresAdapter] getAuctions is not yet implemented for PostgreSQL.");
-    return [];
+    const { rows } = await getPool().query(`
+      SELECT a.*, 
+             cat.name as category_name, 
+             auct.name as auctioneer_name, 
+             s.name as seller_name,
+             auct.logo_url as auctioneer_logo_url
+      FROM auctions a
+      LEFT JOIN lot_categories cat ON a.category_id = cat.id
+      LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
+      LEFT JOIN sellers s ON a.seller_id = s.id
+      ORDER BY a.auction_date DESC
+    `);
+    const auctions = rows.map(mapToAuction);
+    // In a real app you might fetch lots here or handle it at a higher level
+    return auctions;
   }
   async updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> {
     console.warn("[PostgresAdapter] updateAuction is not yet implemented for PostgreSQL.");
@@ -953,12 +966,20 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async getLots(auctionIdParam?: string): Promise<Lot[]> {
-    console.warn("[PostgresAdapter] getLots is not yet implemented for PostgreSQL.");
-    return [];
+    let query = 'SELECT * FROM lots';
+    const params: any[] = [];
+    if (auctionIdParam) {
+      query += ' WHERE auction_id = $1';
+      params.push(auctionIdParam);
+    }
+    query += ' ORDER BY number ASC';
+    const { rows } = await getPool().query(query, params);
+    return rows.map(mapToLot);
   }
   async getLot(idOrPublicId: string): Promise<Lot | null> {
-    console.warn("[PostgresAdapter] getLot is not yet implemented for PostgreSQL.");
-    return null;
+    const { rows } = await getPool().query('SELECT * FROM lots WHERE id = $1 OR public_id = $1 LIMIT 1', [isNaN(parseInt(idOrPublicId)) ? -1 : idOrPublicId, idOrPublicId]);
+    if (rows.length === 0) return null;
+    return mapToLot(rows[0]);
   }
   async updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> {
     console.warn("[PostgresAdapter] updateLot is not yet implemented for PostgreSQL.");

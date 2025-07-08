@@ -427,11 +427,9 @@ function mapToJudicialProcess(row: any, parties: ProcessParty[] = []): JudicialP
     courtId: String(row.courtId),
     districtId: String(row.districtId),
     branchId: String(row.branchId),
-    sellerId: row.sellerId ? String(row.sellerId) : undefined,
     courtName: row.courtName,
     districtName: row.districtName,
     branchName: row.branchName,
-    sellerName: row.sellerName,
     parties,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
@@ -597,6 +595,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async createLotsFromBens(lotsToCreate: LotDbData[]): Promise<{ success: boolean; message: string; createdLots?: Lot[]; }> {
     console.warn("[MySqlAdapter] createLotsFromBens is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getAuction(idOrPublicId: string): Promise<Auction | null> {
+    console.warn("[MySqlAdapter] getAuction is not yet implemented for MySQL.");
+    return null;
   }
   async getBem(id: string): Promise<Bem | null> {
     console.warn("[MySqlAdapter] getBem is not yet implemented for MySQL.");
@@ -1057,8 +1059,17 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async getAuctions(): Promise<Auction[]> {
-    console.warn("[MySqlAdapter] getAuctions is not yet implemented for MySQL.");
-    return [];
+    const [rows] = await getPool().execute<RowDataPacket[]>(`
+      SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url
+      FROM auctions a
+      LEFT JOIN lot_categories cat ON a.category_id = cat.id
+      LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
+      LEFT JOIN sellers s ON a.seller_id = s.id
+      ORDER BY a.auction_date DESC
+    `);
+    const auctions = mapMySqlRowsToCamelCase(rows).map(mapToAuction);
+    // In a real scenario you might fetch lots here or handle it at a higher level
+    return auctions;
   }
   async updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> {
     console.warn("[MySqlAdapter] updateAuction is not yet implemented for MySQL.");
@@ -1073,12 +1084,20 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async getLots(auctionIdParam?: string): Promise<Lot[]> {
-    console.warn("[MySqlAdapter] getLots is not yet implemented for MySQL.");
-    return [];
+    let query = 'SELECT * FROM lots';
+    const params: any[] = [];
+    if (auctionIdParam) {
+      query += ' WHERE auction_id = ?';
+      params.push(auctionIdParam);
+    }
+    query += ' ORDER BY number ASC';
+    const [rows] = await getPool().execute<RowDataPacket[]>(query, params);
+    return mapMySqlRowsToCamelCase(rows).map(mapToLot);
   }
   async getLot(idOrPublicId: string): Promise<Lot | null> {
-    console.warn("[MySqlAdapter] getLot is not yet implemented for MySQL.");
-    return null;
+    const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM lots WHERE id = ? OR public_id = ? LIMIT 1', [idOrPublicId, idOrPublicId]);
+    if (rows.length === 0) return null;
+    return mapToLot(mapMySqlRowToCamelCase(rows[0]));
   }
   async updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> {
     console.warn("[MySqlAdapter] updateLot is not yet implemented for MySQL.");
@@ -1092,7 +1111,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] getBidsForLot is not yet implemented for MySQL.");
     return [];
   }
-  async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo; }> {
+  async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }> {
     console.warn("[MySqlAdapter] placeBidOnLot is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
