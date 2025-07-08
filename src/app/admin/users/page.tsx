@@ -1,4 +1,3 @@
-
 // src/app/admin/users/page.tsx
 'use client';
 
@@ -21,39 +20,52 @@ export default function AdminUsersPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const router = useRouter();
-
-  const fetchUsers = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const fetchedUsers = await getUsersWithRoles();
-      setUsers(fetchedUsers);
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar usuários.";
-      console.error("Error fetching users:", e);
-      setError(errorMessage);
-      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
+    let isMounted = true;
+    
+    const fetchUsers = async () => {
+      if (!isMounted) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        const fetchedUsers = await getUsersWithRoles();
+        if (isMounted) {
+          setUsers(fetchedUsers);
+        }
+      } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar usuários.";
+        console.error("Error fetching users:", e);
+        if (isMounted) {
+          setError(errorMessage);
+          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+    
     fetchUsers();
-  }, [fetchUsers]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [toast, refetchTrigger]);
 
   const handleDelete = useCallback(
     async (id: string) => {
       const result = await deleteUser(id);
       if (result.success) {
         toast({ title: "Sucesso!", description: result.message });
-        fetchUsers();
-        router.refresh();
+        setRefetchTrigger(c => c + 1); // Trigger refetch
       } else {
         toast({ title: 'Erro ao Excluir', description: result.message, variant: 'destructive' });
       }
     },
-    [toast, fetchUsers, router]
+    [toast]
   );
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
