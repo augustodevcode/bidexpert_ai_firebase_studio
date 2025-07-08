@@ -1,4 +1,4 @@
-
+// src/app/admin/sellers/seller-form.tsx
 'use client';
 
 import * as React from 'react';
@@ -34,6 +34,8 @@ interface SellerFormProps {
   formTitle: string;
   formDescription: string;
   submitButtonText: string;
+  /** If provided, this will be the redirect path instead of the admin page. */
+  successRedirectPath?: string;
 }
 
 export default function SellerForm({
@@ -43,6 +45,7 @@ export default function SellerForm({
   formTitle,
   formDescription,
   submitButtonText,
+  successRedirectPath
 }: SellerFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -93,7 +96,7 @@ export default function SellerForm({
           title: 'Sucesso!',
           description: result.message,
         });
-        router.push('/admin/sellers');
+        router.push(successRedirectPath || '/admin/sellers');
         router.refresh();
       } else {
         toast({
@@ -315,7 +318,7 @@ export default function SellerForm({
                     name="logoUrl"
                     render={({ field }) => (
                         <FormControl>
-                            <Input type="text" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} className="text-xs h-8" />
+                            <Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} className="text-xs h-8" />
                         </FormControl>
                     )}
                     />
@@ -353,7 +356,7 @@ export default function SellerForm({
             />
           </CardContent>
           <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/sellers')} disabled={isSubmitting}>
+            <Button type="button" variant="outline" onClick={() => router.push(successRedirectPath || '/admin/sellers')} disabled={isSubmitting}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isSubmitting}>

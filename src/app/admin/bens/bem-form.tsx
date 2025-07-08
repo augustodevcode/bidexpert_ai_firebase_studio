@@ -29,6 +29,8 @@ import Image from 'next/image';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 
 interface BemFormProps {
   initialData?: Partial<Bem> | null;
@@ -51,6 +53,21 @@ const bemStatusOptions: { value: Bem['status']; label: string }[] = [
     { value: 'REMOVIDO', label: 'Removido' },
     { value: 'INATIVADO', label: 'Inativado' },
 ];
+
+const categoryIcons: Record<string, React.ReactNode> = {
+    'veiculos': <Car className="h-4 w-4"/>,
+    'imoveis': <Building className="h-4 w-4"/>,
+    'maquinas-e-equipamentos': <Tractor className="h-4 w-4"/>,
+    'eletronicos-e-tecnologia': <TvIcon className="h-4 w-4"/>,
+    'bens-diversos': <Hammer className="h-4 w-4"/>,
+    'arte-e-antiguidades': <Paintbrush className="h-4 w-4"/>,
+    'semoventes': <PawPrint className="h-4 w-4"/>,
+    'embarcacoes': <Anchor className="h-4 w-4"/>,
+    'joias-e-acessorios': <Diamond className="h-4 w-4"/>,
+    'alimentos': <Utensils className="h-4 w-4"/>,
+    'metais-e-pedras-preciosas': <Gem className="h-4 w-4"/>,
+    'bens-florestais-e-ambientais': <Forest className="h-4 w-4"/>,
+};
 
 export default function BemForm({
   initialData,
@@ -113,18 +130,8 @@ export default function BemForm({
   const selectedCategory = categories.find(c => c.id === selectedCategoryId);
   const categorySlug = selectedCategory?.slug || '';
   
-  const categorySpecificFieldsMap: Record<string, React.ReactNode> = {
-    'veiculos': <Car/>,
-    'imoveis': <Building/>,
-    'maquinas-e-equipamentos': <Tractor/>,
-    'eletronicos-e-tecnologia': <TvIcon/>,
-    'bens-diversos': <Hammer/>,
-    'arte-e-antiguidades': <Paintbrush/>,
-    'semoventes': <PawPrint/>,
-    'embarcacoes': <Anchor/>,
-  };
+  const categorySpecificIcon = categoryIcons[categorySlug] || <Gavel className="h-4 w-4"/>;
   
-
   React.useEffect(() => {
     const fetchSubcats = async (parentId: string) => {
         setIsLoadingSubcategories(true);
@@ -222,7 +229,7 @@ export default function BemForm({
                       <TabsTrigger value="geral">Informações Gerais</TabsTrigger>
                       <TabsTrigger value="detalhes" disabled={!selectedCategoryId}>
                         <div className="flex items-center gap-2">
-                            {categorySpecificFieldsMap[categorySlug] || <Gavel className="h-4 w-4"/>} Detalhes Específicos
+                            {categorySpecificIcon} Detalhes Específicos
                         </div>
                       </TabsTrigger>
                       <TabsTrigger value="localizacao">Localização</TabsTrigger>

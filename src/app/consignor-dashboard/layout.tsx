@@ -1,4 +1,3 @@
-
 // src/app/consignor-dashboard/layout.tsx
 'use client';
 
@@ -40,14 +39,10 @@ export default function ConsignorDashboardLayout({
     );
   }
   
-  const requiredConsignorPermissions = [
-    'auctions:manage_own', 
-    'lots:manage_own', 
-    'direct_sales:manage_own', 
-    'consignor_dashboard:view', 
-    'manage_all'
-  ];
-  const canAccessConsignorDashboard = hasAnyPermission(userProfileWithPermissions, requiredConsignorPermissions);
+  const canAccessConsignorDashboard = hasAnyPermission(userProfileWithPermissions, [
+      'manage_all',
+      'consignor_dashboard:view'
+  ]);
 
   if (!canAccessConsignorDashboard) {
     return (
@@ -58,7 +53,7 @@ export default function ConsignorDashboardLayout({
           Você não tem permissão para acessar o Painel do Comitente.
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          (Perfil: {userProfileWithPermissions?.roleName || 'N/A'}, Permissões: {userProfileWithPermissions?.permissions?.join(', ') || 'Nenhuma'})
+          (Perfil: {userProfileWithPermissions?.roleName || 'N/A'})
         </p>
         <button
           onClick={() => router.push('/')}

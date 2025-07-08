@@ -40,6 +40,7 @@ export default function AdminLayout({
     );
   }
   
+  // Use a granular permission or the master admin permission
   const hasAdminAccess = hasPermission(userProfileWithPermissions, 'manage_all');
 
   if (!hasAdminAccess) {
@@ -51,7 +52,7 @@ export default function AdminLayout({
           Você não tem permissão para acessar esta área.
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          (Perfil: {userProfileWithPermissions?.roleName || 'N/A'}, Permissões: {userProfileWithPermissions?.permissions?.join(', ') || 'Nenhuma'})
+          (Perfil: {userProfileWithPermissions?.roleName || 'N/A'})
         </p>
         <button
           onClick={() => router.push('/')}
@@ -72,4 +73,3 @@ export default function AdminLayout({
     </div>
   );
 }
-

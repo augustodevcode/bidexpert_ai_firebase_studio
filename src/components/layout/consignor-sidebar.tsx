@@ -18,36 +18,30 @@ const sidebarNavItems = [
     title: 'Meus Leilões',
     href: '/consignor-dashboard/auctions',
     icon: Briefcase,
-    disabled: false,
   },
   {
     title: 'Meus Lotes',
     href: '/consignor-dashboard/lots',
     icon: ListChecks,
-    disabled: false, 
   },
   {
     title: 'Venda Direta',
     href: '/consignor-dashboard/direct-sales',
     icon: ShoppingCart,
-    disabled: false, 
   },
    {
     title: 'Relatórios',
     href: '/consignor-dashboard/reports',
     icon: BarChart3,
-    disabled: false,
   },
   {
     title: 'Financeiro',
     href: '/consignor-dashboard/financial',
     icon: DollarSign,
-    disabled: false,
   },
   {
     title: 'Configurações',
     href: '/consignor-dashboard/settings',
-    disabled: false, 
     icon: Settings,
   },
 ];
@@ -68,15 +62,14 @@ export default function ConsignorSidebar() {
           {sidebarNavItems.map((item) => (
             <Button
               key={item.title}
-              variant={pathname === item.href || (item.href !== '/consignor-dashboard/overview' && pathname.startsWith(item.href) && !item.disabled) ? 'secondary' : 'ghost'}
+              variant={pathname === item.href || (item.href !== '/consignor-dashboard/overview' && pathname.startsWith(item.href)) ? 'secondary' : 'ghost'}
               className={cn(
                 'w-full justify-start',
-                (pathname === item.href || (item.href !== '/consignor-dashboard/overview' && pathname.startsWith(item.href)) && !item.disabled) && 'font-semibold text-primary hover:text-primary'
+                (pathname === item.href || (item.href !== '/consignor-dashboard/overview' && pathname.startsWith(item.href))) && 'font-semibold text-primary hover:text-primary'
               )}
               asChild
-              disabled={item.disabled}
             >
-              <Link href={item.disabled ? '#' : item.href}>
+              <Link href={item.href}>
                 <item.icon className="mr-2 h-4 w-4" />
                 {item.title}
               </Link>
