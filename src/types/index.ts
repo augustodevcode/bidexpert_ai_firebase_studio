@@ -318,7 +318,10 @@ export interface Bem {
   liensAndEncumbrances?: string; propertyDebts?: string;
   unregisteredRecords?: string; hasHabiteSe?: boolean;
   zoningRestrictions?: string;
-  amenities?: { value: string }[];
+  amenities?: string[];
+  propertyType?: string;
+  area?: number;
+
   
   // Eletrônicos
   brand?: string;
@@ -359,7 +362,8 @@ export interface Bem {
   specialSkills?: string;
   gtaDocument?: string;
   breedRegistryDocument?: string;
-
+  vaccinationStatus?: string;
+  
   // Móveis
   furnitureType?: string;
   material?: string;
@@ -544,7 +548,7 @@ export type BidInfo = {
   timestamp: AnyTimestamp;
 };
 
-export type UserBidStatus = 'GANHANDO' | 'PERDENDO' | 'ARREMATADO' | 'NAO_ARREMATADO' | 'ENCERRADO' | 'CANCELADO' | 'SUPERADO';
+export type UserBidStatus = 'GANHANDO' | 'PERDENDO' | 'ARREMATADO' | 'NAO_ARREMATADO' | 'ENCERRADO' | 'CANCELADO' | 'SUPERADO_POR_OUTRO' | 'SUPERADO_PELO_PROPRIO_MAXIMO';
 export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO';
 
 export interface UserWin {
@@ -564,6 +568,7 @@ export interface UserBid {
   auctionId: string;
   lotTitle: string;
   lotImageUrl: string;
+  lotImageAiHint?: string;
   userBidAmount: number;
   currentLotPrice: number;
   lotEndDate: AnyTimestamp;
@@ -1291,3 +1296,8 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
+
+```
+- tsconfig.json
+- src/app/admin/layout.tsx
+- src/lib/database/index.ts
