@@ -1,4 +1,3 @@
-
 // src/app/consignor-dashboard/lots/page.tsx
 'use client';
 

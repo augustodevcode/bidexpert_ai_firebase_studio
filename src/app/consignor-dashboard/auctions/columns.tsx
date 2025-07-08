@@ -37,7 +37,7 @@ export const createConsignorAuctionColumns = (): ColumnDef<Auction>[] => [
     accessorKey: "status",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
     cell: ({ row }) => <Badge variant="outline">{getAuctionStatusText(row.getValue("status"))}</Badge>,
-    filterFn: (row, id, value) => value.includes(row.getValue(id)),
+    filterFn: (row, id, value) => (value as string[]).includes(row.getValue(id)),
   },
   {
     accessorKey: "totalLots",

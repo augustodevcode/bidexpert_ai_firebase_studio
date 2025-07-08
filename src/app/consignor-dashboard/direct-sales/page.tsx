@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from '@/app/admin/direct-sales/columns';
 import { useAuth } from '@/contexts/auth-context';
+import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 
 export default function ConsignorDirectSalesPage() {
   const { userProfileWithPermissions, loading: authLoading } = useAuth();
@@ -70,14 +71,27 @@ export default function ConsignorDirectSalesPage() {
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
+  const statusOptions = useMemo(() => 
+    [...new Set(offers.map(o => o.status))]
+      .map(status => ({ value: status, label: getAuctionStatusText(status) })),
+  [offers]);
+
+  const offerTypeOptions = useMemo(() => [
+    { value: 'BUY_NOW', label: 'Compra Imediata'},
+    { value: 'ACCEPTS_PROPOSALS', label: 'Aceita Propostas'}
+  ], []);
+
+  const facetedFilterColumns = useMemo(() => [
+    { id: 'status', title: 'Status', options: statusOptions },
+    { id: 'offerType', title: 'Tipo de Oferta', options: offerTypeOptions },
+  ], [statusOptions, offerTypeOptions]);
+
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-2xl font-bold font-headline flex items-center">
-              <ShoppingCart className="h-6 w-6 mr-2 text-primary" />Minhas Vendas Diretas
-            </CardTitle>
+            <CardTitle className="text-2xl font-bold font-headline flex items-center"><ShoppingCart className="h-6 w-6 mr-2 text-primary" />Minhas Vendas Diretas</CardTitle>
             <CardDescription>Gerencie suas ofertas de venda com preço fixo ou proposta.</CardDescription>
           </div>
           <Button asChild>
@@ -92,6 +106,7 @@ export default function ConsignorDirectSalesPage() {
             error={error}
             searchColumnId="title"
             searchPlaceholder="Buscar por título..."
+            facetedFilterColumns={facetedFilterColumns}
           />
         </CardContent>
       </Card>

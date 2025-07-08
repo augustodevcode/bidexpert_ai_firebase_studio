@@ -1,4 +1,4 @@
-
+// src/app/consignor-dashboard/layout.tsx
 'use client';
 
 import { useEffect } from 'react';
@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import ConsignorSidebar from '@/components/layout/consignor-sidebar';
-import { hasAnyPermission } from '@/lib/permissions'; // Importar hasAnyPermission
+import { hasAnyPermission } from '@/lib/permissions'; 
 
 export default function ConsignorDashboardLayout({
   children,
@@ -17,10 +17,10 @@ export default function ConsignorDashboardLayout({
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !user && !userProfileWithPermissions) {
       router.push('/auth/login?redirect=/consignor-dashboard/overview');
     }
-  }, [user, loading, router]);
+  }, [user, userProfileWithPermissions, loading, router]);
 
   if (loading) {
     return (
@@ -31,7 +31,7 @@ export default function ConsignorDashboardLayout({
     );
   }
 
-  if (!user) {
+  if (!user && !userProfileWithPermissions) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-muted-foreground">Redirecionando para login...</p>
@@ -39,8 +39,7 @@ export default function ConsignorDashboardLayout({
     );
   }
   
-  // Permissões que concedem acesso ao painel do comitente
-  const requiredConsignorPermissions = ['auctions:manage_own', 'lots:manage_own', 'manage_all'];
+  const requiredConsignorPermissions = ['auctions:manage_own', 'lots:manage_own', 'consignor_dashboard:view', 'manage_all'];
   const canAccessConsignorDashboard = hasAnyPermission(userProfileWithPermissions, requiredConsignorPermissions);
 
   if (!canAccessConsignorDashboard) {

@@ -3,24 +3,17 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Briefcase, TrendingUp, ListChecks, BarChart3, DollarSign, Edit, Eye, ExternalLink, PlusCircle, ShoppingCart } from 'lucide-react';
+import { Briefcase, TrendingUp, ListChecks, BarChart3, DollarSign, Edit, Eye, ExternalLink, PlusCircle, ShoppingCart, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { getSellerBySlug } from '@/app/admin/sellers/actions'; 
 import { getAuctionsBySellerSlug } from '@/app/admin/auctions/actions'; 
 import type { Auction, Lot, SellerProfileInfo } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Loader2 } from 'lucide-react';
-import { getAuctionStatusText, slugify } from '@/lib/sample-data-helpers';
-
-// Placeholder: In a real app, you'd get the user's associated seller ID.
-// For demonstration, Admins see the Bradesco profile.
-// A real consignor would need their profile linked to their user account.
-const ADMIN_VIEW_SELLER_SLUG = 'banco-bradesco-s-a';
-const EXAMPLE_CONSIGNOR_EMAIL = 'consignor@bidexpert.com';
+import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 
 export default function ConsignorOverviewPage() {
   const { user, userProfileWithPermissions, loading: authLoading } = useAuth();
@@ -30,6 +23,49 @@ export default function ConsignorOverviewPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchConsignorData = useCallback(async (targetSellerIdOrSlug: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [profile, auctions] = await Promise.all([
+        getSellerBySlug(targetSellerIdOrSlug),
+        getAuctionsBySellerSlug(targetSellerIdOrSlug)
+      ]);
+      
+      if (!profile) {
+        setError(`Perfil de comitente com ID/slug "${targetSellerIdOrSlug}" não encontrado.`);
+        setIsLoading(false);
+        return;
+      }
+
+      setSellerProfile(profile);
+      setSellerAuctions(auctions);
+      
+      const upcoming = auctions
+        .filter(auc => auc.status === 'EM_BREVE' || auc.status === 'ABERTO_PARA_LANCES' || auc.status === 'ABERTO')
+        .sort((a, b) => new Date(a.auctionDate as string).getTime() - new Date(b.auctionDate as string).getTime())
+        .map(auc => ({ auction: auc, lots: (auc.lots || []).filter(lot => lot.sellerId === profile.id || lot.sellerName === profile.name) }))
+        .filter(item => item.lots.length > 0)
+        .slice(0, 3);
+      setUpcomingAuctionsWithLots(upcoming);
+
+    } catch (e: any) {
+      console.error("[ConsignorOverview] Error fetching consignor data:", e);
+      setError("Erro ao carregar dados do comitente.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!authLoading && userProfileWithPermissions?.sellerProfileId) {
+      fetchConsignorData(userProfileWithPermissions.sellerProfileId);
+    } else if (!authLoading) {
+      setError("Seu perfil de usuário não está vinculado a um perfil de comitente.");
+      setIsLoading(false);
+    }
+  }, [userProfileWithPermissions, authLoading, fetchConsignorData]);
+  
   const totalLotsConsigned = sellerAuctions.reduce((sum, auc) => sum + (auc.totalLots || 0), 0);
   const totalValueSold = sellerAuctions.reduce((sum, auc) => sum + (auc.achievedRevenue || 0), 0);
   
@@ -42,69 +78,6 @@ export default function ConsignorOverviewPage() {
     return totalFinishedLots > 0 ? (soldLotsCount / totalFinishedLots) * 100 : 0;
   }, [soldLotsCount, sellerAuctions]);
 
-
-  useEffect(() => {
-    async function fetchConsignorData(targetSellerSlug: string) {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const [profile, auctions] = await Promise.all([
-          getSellerBySlug(targetSellerSlug),
-          getAuctionsBySellerSlug(targetSellerSlug)
-        ]);
-        
-        if (!profile) {
-          setError(`Perfil de comitente com slug "${targetSellerSlug}" não encontrado.`);
-          setSellerProfile(null);
-          setSellerAuctions([]);
-          setUpcomingAuctionsWithLots([]);
-          setIsLoading(false);
-          return;
-        }
-
-        setSellerProfile(profile);
-        setSellerAuctions(auctions);
-        
-        const upcoming = auctions
-          .filter(auc => auc.status === 'EM_BREVE' || auc.status === 'ABERTO_PARA_LANCES' || auc.status === 'ABERTO')
-          .sort((a, b) => new Date(a.auctionDate as string).getTime() - new Date(b.auctionDate as string).getTime())
-          .map(auc => ({ auction: auc, lots: (auc.lots || []).filter(lot => lot.sellerId === profile.id || lot.sellerName === profile.name) }))
-          .filter(item => item.lots.length > 0)
-          .slice(0, 3);
-        setUpcomingAuctionsWithLots(upcoming);
-
-      } catch (e: any) {
-        console.error("[ConsignorOverview] Error fetching consignor data:", e);
-        setError("Erro ao carregar dados do comitente.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    if (!authLoading && user) {
-      const userEmailLower = user.email?.toLowerCase();
-      const isAdminOrAnalyst = hasAnyPermission(userProfileWithPermissions, ['manage_all']);
-      const isTheExampleConsignor = userEmailLower === EXAMPLE_CONSIGNOR_EMAIL.toLowerCase();
-
-      let targetSlugToFetch: string | null = null;
-      if (isAdminOrAnalyst) {
-        targetSlugToFetch = ADMIN_VIEW_SELLER_SLUG;
-      } else if (isTheExampleConsignor) {
-        targetSlugToFetch = ADMIN_VIEW_SELLER_SLUG;
-      } else {
-        // Future: Look up the seller profile linked to the userProfileWithPermissions.uid
-        setError("Seu perfil de usuário não está vinculado a um perfil de comitente.");
-      }
-      
-      if (targetSlugToFetch) {
-        fetchConsignorData(targetSlugToFetch);
-      } else {
-        setIsLoading(false);
-      }
-    } else if (!authLoading && !user) {
-      setIsLoading(false);
-    }
-  }, [user, userProfileWithPermissions, authLoading]);
 
   if (isLoading || authLoading) {
     return (
@@ -166,7 +139,7 @@ export default function ConsignorOverviewPage() {
                       <p className="text-sm font-medium mb-2">Seus Lotes neste Leilão ({lots.length}):</p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                         {lots.map(lot => (
-                          <Link key={lot.id} href={`/auctions/${lot.auctionId}/lots/${lot.id}`} target="_blank"><Card className="hover:shadow-lg transition-shadow"><div className="relative aspect-video bg-muted rounded-t-md overflow-hidden"><Image src={lot.imageUrl || 'https://placehold.co/400x300.png'} alt={lot.title} fill className="object-cover" data-ai-hint={lot.dataAiHint || 'imagem lote consignado'} /></div><div className="p-3"><p className="text-xs font-semibold truncate">{lot.title}</p><p className="text-xs text-muted-foreground">Lance Inicial: R$ {(lot.initialPrice || lot.price).toLocaleString('pt-br')}</p></div></Card></Link>
+                          <Link key={lot.id} href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`} target="_blank"><Card className="hover:shadow-lg transition-shadow"><div className="relative aspect-video bg-muted rounded-t-md overflow-hidden"><Image src={lot.imageUrl || 'https://placehold.co/400x300.png'} alt={lot.title} fill className="object-cover" data-ai-hint={lot.dataAiHint || 'imagem lote consignado'} /></div><div className="p-3"><p className="text-xs font-semibold truncate">{lot.title}</p><p className="text-xs text-muted-foreground">Lance Inicial: R$ {(lot.initialPrice || lot.price).toLocaleString('pt-br')}</p></div></Card></Link>
                         ))}
                       </div>
                        {lots.length === 0 && <p className="text-xs text-muted-foreground">Nenhum lote seu encontrado neste leilão específico (verifique os dados de exemplo ou filtros internos).</p>}
