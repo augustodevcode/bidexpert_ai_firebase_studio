@@ -30,7 +30,17 @@ export type {
     DirectSaleOffer, MediaItem, LotCategory, StateInfo, CityInfo, Subcategory,
     Court, JudicialDistrict, JudicialBranch, JudicialProcess, ProcessParty, Bem,
     Notification, BlogPost, ContactMessage, // Exporting ContactMessage
-    Review, LotQuestion, UserLotMaxBid // Exporting new types
+    Review, LotQuestion, UserLotMaxBid, // Exporting new types
+    AuctionStatus,
+    LotStatus,
+    BemStatus,
+    UserHabilitationStatus,
+    UserDocumentStatus,
+    PaymentStatus,
+    AuctionType,
+    DirectSaleOfferType,
+    DirectSaleOfferStatus,
+    ProcessPartyType
 };
 
 
@@ -55,18 +65,6 @@ export type UserFormValues = Pick<User, 'fullName' | 'email' | 'cpf' | 'cellPhon
   roleId?: string | null; 
 };
 
-// --- ENUMS for status fields to be used in client components ---
-
-export type AuctionType = 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS' | 'DUTCH' | 'SILENT';
-export type AuctionStatus = 'RASCUNHO' | 'EM_PREPARACAO' | 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO';
-export type LotStatus = 'RASCUNHO' | 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'VENDIDO' | 'NAO_VENDIDO' | 'CANCELADO';
-export type BemStatus = 'CADASTRO' | 'DISPONIVEL' | 'LOTEADO' | 'VENDIDO' | 'REMOVIDO' | 'INATIVADO';
-export type UserDocumentStatus = 'NOT_SENT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'PENDING_ANALYSIS';
-export type UserHabilitationStatus = 'PENDING_DOCUMENTS' | 'PENDING_ANALYSIS' | 'HABILITADO' | 'REJECTED_DOCUMENTS' | 'BLOCKED';
-export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO';
-export type DirectSaleOfferType = 'BUY_NOW' | 'ACCEPTS_PROPOSALS';
-export type DirectSaleOfferStatus = 'ACTIVE' | 'SOLD' | 'EXPIRED' | 'PENDING_APPROVAL';
-export type ProcessPartyType = 'AUTOR' | 'REU' | 'ADVOGADO_AUTOR' | 'ADVOGADO_REU' | 'JUIZ' | 'ESCRIVAO' | 'PERITO' | 'ADMINISTRADOR_JUDICIAL' | 'TERCEIRO_INTERESSADO' | 'OUTRO';
 
 export interface UserBid {
     id: string;
@@ -99,7 +97,7 @@ export type JudicialBranchFormData = Omit<JudicialBranch, 'id' | 'slug' | 'creat
 export type JudicialProcessFormData = Omit<JudicialProcess, 'id' | 'publicId' | 'createdAt' | 'updatedAt'> & {
   parties: Array<Partial<ProcessParty>>; 
 };
-export type BemFormData = Omit<Bem, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName' | 'galleryImageUrls' | 'mediaItemIds' | 'amenities'> & {
+export type BemFormData = Omit<Bem, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'galleryImageUrls' | 'mediaItemIds' | 'amenities'> & {
   galleryImageUrls?: string[];
   mediaItemIds?: string[];
   amenities?: { value: string }[];
@@ -112,9 +110,34 @@ export type AuctionFormData = Omit<Auction, 'id' | 'publicId' | 'createdAt' | 'u
 
 export type LotFormData = Omit<Lot, 'id'|'publicId'|'createdAt'|'updatedAt'|'auctionId'|'categoryId'|'number'|'isFavorite'|'views'|'bidsCount'> & {
   auctionId: string;
-  categoryId: string;
-  number?: string | null;
+  type: string; // From form, maps to categoryId
+  auctionName?: string;
+  bemIds?: string[];
+  mediaItemIds?: string[];
+  latitude?: number | null;
+  longitude?: number | null;
+  mapAddress?: string | null;
+  mapEmbedUrl?: string | null;
+  mapStaticImageUrl?: string | null;
+  judicialProcessNumber?: string | null;
+  courtDistrict?: string | null;
+  courtName?: string | null;
+  publicProcessUrl?: string | null;
+  propertyRegistrationNumber?: string | null;
+  propertyLiens?: string | null;
+  knownDebts?: string | null;
+  additionalDocumentsInfo?: string | null;
+  reservePrice?: number | null;
+  evaluationValue?: number | null;
+  debtAmount?: number | null;
+  itbiValue?: number | null;
+  bidIncrementStep?: number | null;
 };
+
+export type LotDbData = Omit<LotFormData, 'type' | 'auctionName'> & {
+  categoryId: string;
+};
+
 
 export type DirectSaleOfferFormData = Omit<DirectSaleOffer, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'views' | 'proposalsCount' | 'galleryImageUrls' | 'itemsIncluded' | 'tags' | 'sellerId' | 'sellerLogoUrl' | 'dataAiHintSellerLogo' | 'latitude' | 'longitude' | 'mapAddress' | 'mapEmbedUrl' | 'mapStaticImageUrl' | 'categoryId'> & {
     expiresAt?: Date | null;
@@ -192,7 +215,7 @@ export interface MentalTriggerSettings {
     showDiscountBadge?: boolean;
     showUrgencyTimer?: boolean;
     urgencyTimerThresholdDays?: number;
-    urgencyThresholdHours?: number;
+    urgencyTimerThresholdHours?: number;
     showPopularityBadge?: boolean;
     popularityViewThreshold?: number;
     showHotBidBadge?: boolean;
@@ -303,5 +326,3 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
-
-    

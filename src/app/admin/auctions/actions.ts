@@ -47,7 +47,7 @@ export async function createAuction(data: AuctionFormData): Promise<{
         estimatedRevenue: data.estimatedRevenue,
         isFeaturedOnMarketplace: data.isFeaturedOnMarketplace,
         marketplaceAnnouncementTitle: data.marketplaceAnnouncementTitle,
-        auctionStages: data.auctionStages,
+        auctionStages: data.auctionStages || [],
         categoryId: category.id,
         auctioneerId: auctioneer.id,
         sellerId: seller?.id,
@@ -67,7 +67,9 @@ export async function getAuctions(): Promise<Auction[]> {
   try {
     const auctions = await prisma.auction.findMany({
       include: {
-        lots: { select: { id: true }}, // Include only what's needed for count
+        _count: {
+          select: { lots: true }
+        },
         auctioneer: { select: { name: true } },
         seller: { select: { name: true } },
         category: { select: { name: true } },
@@ -76,7 +78,7 @@ export async function getAuctions(): Promise<Auction[]> {
     });
     return auctions.map(auction => ({
       ...auction,
-      totalLots: auction.lots.length,
+      totalLots: auction._count.lots,
       auctioneer: auction.auctioneer?.name,
       seller: auction.seller?.name,
       category: auction.category?.name,
@@ -121,11 +123,26 @@ export async function updateAuction(
     const existingAuction = await prisma.auction.findFirst({ where: { OR: [{ id: idOrPublicId }, { publicId: idOrPublicId }] } });
     if (!existingAuction) return { success: false, message: 'Leilão não encontrado.' };
 
+    const { auctioneer, seller, category, ...restOfData } = data;
+    const updateData: any = { ...restOfData };
+    
+    if (auctioneer) {
+      const auctioneerRecord = await prisma.auctioneer.findFirst({ where: { name: auctioneer } });
+      if (auctioneerRecord) updateData.auctioneerId = auctioneerRecord.id;
+    }
+    if (seller) {
+      const sellerRecord = await prisma.seller.findFirst({ where: { name: seller } });
+      if (sellerRecord) updateData.sellerId = sellerRecord.id;
+    }
+    if (category) {
+      const categoryRecord = await prisma.lotCategory.findFirst({ where: { name: category } });
+      if (categoryRecord) updateData.categoryId = categoryRecord.id;
+    }
+
+
     await prisma.auction.update({
       where: { id: existingAuction.id },
-      data: {
-        ...data,
-      },
+      data: updateData,
     });
 
     revalidatePath('/admin/auctions');
@@ -210,9 +227,12 @@ export async function getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Pro
           OR: [{ slug: sellerSlugOrPublicId }, { publicId: sellerSlugOrPublicId }],
         },
       },
-      include: { lots: true },
+      include: { 
+          lots: true,
+          _count: { select: { lots: true }}
+      },
     });
-    return auctions as unknown as Auction[];
+    return auctions.map(a => ({...a, totalLots: a._count.lots})) as unknown as Auction[];
   } catch (error) {
     console.error(`Error fetching auctions for seller slug/id ${sellerSlugOrPublicId}:`, error);
     return [];
@@ -227,9 +247,11 @@ export async function getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: stri
           OR: [{ slug: auctioneerSlugOrPublicId }, { publicId: auctioneerSlugOrPublicId }],
         },
       },
-      include: { lots: true },
+      include: {
+         _count: { select: { lots: true }}
+      },
     });
-    return auctions as unknown as Auction[];
+    return auctions.map(a => ({...a, totalLots: a._count.lots})) as unknown as Auction[];
   } catch (error) {
     console.error(`Error fetching auctions for auctioneer slug/id ${auctioneerSlugOrPublicId}:`, error);
     return [];
