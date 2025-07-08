@@ -1,4 +1,3 @@
-
 // src/app/admin/lots/page.tsx
 'use client';
 
