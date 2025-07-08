@@ -55,7 +55,7 @@ export default function ConsignorReportsPage() {
     }, []);
 
     useEffect(() => {
-        const sellerId = userProfileWithPermissions?.sellerProfileId;
+        const sellerId = userProfileWithPermissions?.sellerId;
         if (!authLoading && sellerId) {
             fetchStats(sellerId);
         } else if (!authLoading) {

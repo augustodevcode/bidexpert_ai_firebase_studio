@@ -43,5 +43,3 @@ export async function getFinancialDataForConsignor(sellerId: string): Promise<Us
     return [];
   }
 }
-
-    

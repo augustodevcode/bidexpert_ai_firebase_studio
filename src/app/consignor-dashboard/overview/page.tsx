@@ -63,8 +63,8 @@ export default function ConsignorOverviewPage() {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && userProfileWithPermissions?.sellerProfileId) {
-      fetchConsignorData(userProfileWithPermissions.sellerProfileId);
+    if (!authLoading && userProfileWithPermissions?.sellerId) {
+      fetchConsignorData(userProfileWithPermissions.sellerId);
     } else if (!authLoading) {
       setError("Seu perfil de usuário não está vinculado a um perfil de comitente.");
       setIsLoading(false);

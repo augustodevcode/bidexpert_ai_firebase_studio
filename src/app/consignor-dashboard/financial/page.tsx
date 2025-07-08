@@ -43,7 +43,7 @@ export default function ConsignorFinancialPage() {
   }, [toast]);
   
   useEffect(() => {
-    const sellerId = userProfileWithPermissions?.sellerProfileId;
+    const sellerId = userProfileWithPermissions?.sellerId;
     if (!authLoading && sellerId) {
       fetchFinancials(sellerId);
     } else if (!authLoading) {
