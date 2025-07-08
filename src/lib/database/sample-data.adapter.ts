@@ -110,6 +110,8 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   }
   
   private _persistData(): void {
+    // NOTE: This function is preserved for potential use in explicit seed scripts,
+    // but is no longer called at runtime to prevent Next.js dev server restarts.
     try {
         const dataString = JSON.stringify(this.localData, null, 2);
         fs.writeFileSync(DATA_FILE_PATH, dataString, 'utf8');
@@ -253,7 +255,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
       createdAt: new Date(),
     };
     this.localData.sampleNotifications.unshift(newNotif);
-    this._persistData();
+    // No _persistData() call to prevent dev server restart
     return Promise.resolve({ success: true, message: "Notificação criada." });
   }
 
@@ -295,7 +297,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
         bem.status = status;
       }
     });
-    this._persistData();
+    // No _persistData() call
     return { success: true, message: 'Status dos bens atualizado com sucesso.' };
   }
   async createLotsFromBens(lotsToCreate: LotDbData[]): Promise<{ success: boolean, message: string, createdLots?: Lot[] }> {
@@ -314,7 +316,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
       this.localData.sampleLots.push(newLot);
       newLots.push(newLot);
     });
-    this._persistData();
+    // No _persistData() call
     return { success: true, message: `${newLots.length} lotes criados com sucesso.`, createdLots: newLots };
   }
   
@@ -365,11 +367,6 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return Promise.resolve({ ...subcat, parentCategoryName: parentCategory?.name });
   }
 
-  async getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null> {
-    const subcat = this.localData.sampleSubcategories.find(s => s.slug === slug && s.parentCategoryId === parentCategoryId);
-    return Promise.resolve(subcat || null);
-  }
-
   async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> {
     const newSubcategory: Subcategory = {
       ...data,
@@ -380,14 +377,11 @@ export class SampleDataAdapter implements IDatabaseAdapter {
       updatedAt: new Date(),
     };
     this.localData.sampleSubcategories.push(newSubcategory);
-    
-    // Update parent category
     const parentCatIndex = this.localData.sampleLotCategories.findIndex(c => c.id === data.parentCategoryId);
     if (parentCatIndex > -1) {
       this.localData.sampleLotCategories[parentCatIndex].hasSubcategories = true;
     }
-    
-    this._persistData();
+    // No _persistData() call
     return { success: true, message: 'Subcategoria criada com sucesso!', subcategoryId: newSubcategory.id };
   }
 
@@ -400,236 +394,107 @@ export class SampleDataAdapter implements IDatabaseAdapter {
       updatedSubcat.slug = slugify(data.name);
     }
     this.localData.sampleSubcategories[index] = updatedSubcat;
-    this._persistData();
+    // No _persistData() call
     return { success: true, message: 'Subcategoria atualizada com sucesso!' };
   }
 
   async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> {
     this.localData.sampleSubcategories = this.localData.sampleSubcategories.filter(s => s.id !== id);
-    // Note: This doesn't check if the parent category still has other subcategories.
-    // For sample data, this simplification is acceptable.
-    this._persistData();
+    // No _persistData() call
     return { success: true, message: 'Subcategoria excluída com sucesso!' };
   }
 
-
-  // --- LotCategory ---
-  async getLotCategory(idOrSlug: string): Promise<LotCategory | null> {
-    return Promise.resolve(this.localData.sampleLotCategories.find(c => c.id === idOrSlug || c.slug === idOrSlug) || null);
-  }
-  
-  // Implement other methods as needed, using the this.localData object
-  // For brevity, many methods are omitted but would follow this pattern:
-  // 1. Access this.localData.sample[Entity]
-  // 2. Find, filter, or modify the data in the array
-  // 3. Call this._persistData() if it's a mutation (create, update, delete)
-  // 4. Return the result as a Promise
-  
-  async getAuction(idOrPublicId: string): Promise<Auction | null> {
-    await delay(50);
-    const auction = this.localData.sampleAuctions.find(a => a.id === idOrPublicId || a.publicId === idOrPublicId);
-    if (!auction) return null;
-    
-    const lotsForAuction = (this.localData.sampleLots || []).filter(lot => lot.auctionId === auction.id);
-    const enrichedLots = lotsForAuction.map(l => this._enrichLotData(l));
-    
-    return {
-        ...auction,
-        lots: enrichedLots,
-        totalLots: enrichedLots.length
-    };
-  }
-
-  async getAuctions(): Promise<Auction[]> {
-    await delay(100);
-    const auctionsWithLots = this.localData.sampleAuctions.map(auction => {
-        const lotsForAuction = this.localData.sampleLots.filter(l => l.auctionId === auction.id).map(l => this._enrichLotData(l));
-        return {
-            ...auction,
-            lots: lotsForAuction,
-            totalLots: lotsForAuction.length,
-        };
-    });
-    return auctionsWithLots;
-  }
-  
-  async getLots(auctionId?: string): Promise<Lot[]> {
-      await delay(50);
-      let lots = this.localData.sampleLots || [];
-      if (auctionId) {
-          lots = lots.filter(lot => lot.auctionId === auctionId);
-      }
-      return lots.map(l => this._enrichLotData(l));
-  }
-  
-  async getLotsByIds(ids: string[]): Promise<Lot[]> {
-      if (!ids || ids.length === 0) {
-        return Promise.resolve([]);
-      }
-      const lots = (this.localData.sampleLots || [])
-        .filter(lot => ids.includes(lot.id))
-        .map(lot => this._enrichLotData(lot));
-      return Promise.resolve(lots);
-  }
-
-   async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
-    await delay(50);
-    return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleAuctioneers)));
-  }
-
-  async getSellers(): Promise<SellerProfileInfo[]> {
-    await delay(50);
-    return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleSellers)));
-  }
-
-  async getRoles(): Promise<Role[]> {
-    await delay(50);
-    return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleRoles)));
-  }
-
-  async getUsersWithRoles(): Promise<UserProfileWithPermissions[]> {
-    await delay(50);
-    // Ensure all users have a permissions array for consistency
-    const users = this.localData.sampleUserProfiles.map(u => ({
-      ...u,
-      permissions: u.permissions || [],
-    }));
-    return Promise.resolve(JSON.parse(JSON.stringify(users)));
-  }
-
-  // --- Judicial Entities ---
-  async getCourts(): Promise<Court[]> {
-    await delay(20);
-    return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleCourts)));
-  }
-
-  async getJudicialDistricts(): Promise<JudicialDistrict[]> {
-    await delay(20);
-    const districtsWithNames = this.localData.sampleJudicialDistricts.map(dist => {
-      const court = this.localData.sampleCourts.find(c => c.id === dist.courtId);
-      const state = this.localData.sampleStates.find(s => s.id === dist.stateId);
-      return {
-        ...dist,
-        courtName: court?.name,
-        stateUf: state?.uf,
-      };
-    });
-    return Promise.resolve(JSON.parse(JSON.stringify(districtsWithNames)));
-  }
-
-  async getJudicialBranches(): Promise<JudicialBranch[]> {
-    await delay(20);
-    const branchesWithNames = this.localData.sampleJudicialBranches.map(branch => {
-      const district = this.localData.sampleJudicialDistricts.find(d => d.id === branch.districtId);
-      return {
-        ...branch,
-        districtName: district?.name
-      };
-    });
-    return Promise.resolve(JSON.parse(JSON.stringify(branchesWithNames)));
-  }
-
-  async getJudicialProcesses(): Promise<JudicialProcess[]> {
-    await delay(20);
-    const processes = this.localData.sampleJudicialProcesses.map(proc => {
-        const court = this.localData.sampleCourts.find(c => c.id === proc.courtId);
-        const district = this.localData.sampleJudicialDistricts.find(d => d.id === proc.districtId);
-        const branch = this.localData.sampleJudicialBranches.find(b => b.id === proc.branchId);
-        const seller = this.localData.sampleSellers.find(s => s.id === proc.sellerId);
-        return {
-          ...proc,
-          courtName: court?.name,
-          districtName: district?.name,
-          branchName: branch?.name,
-          sellerName: seller?.name,
-        };
-    });
-    return Promise.resolve(JSON.parse(JSON.stringify(processes)));
-  }
-
-  async getJudicialProcess(id: string): Promise<JudicialProcess | null> {
-    await delay(20);
-    const process = this.localData.sampleJudicialProcesses.find(p => p.id === id);
-    if (!process) return null;
-    const court = this.localData.sampleCourts.find(c => c.id === process.courtId);
-    const district = this.localData.sampleJudicialDistricts.find(d => d.id === process.districtId);
-    const branch = this.localData.sampleJudicialBranches.find(b => b.id === process.branchId);
-    const seller = this.localData.sampleSellers.find(s => s.id === process.sellerId);
-    return Promise.resolve({
-      ...process,
-      courtName: court?.name,
-      districtName: district?.name,
-      branchName: branch?.name,
-      sellerName: seller?.name,
-    });
-  }
-  
-  // Stubs for methods not yet fully implemented in sample data adapter
-  async getBem(id: string): Promise<Bem | null> { return Promise.resolve(this.localData.sampleBens.find(b => b.id === id) || null); }
-  async getBens(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Bem[]> {
-    let bens = [...this.localData.sampleBens];
-    if (filter?.judicialProcessId) {
-      bens = bens.filter(b => b.judicialProcessId === filter.judicialProcessId);
-    }
-    if (filter?.sellerId) {
-      bens = bens.filter(b => b.sellerId === filter.sellerId);
-    }
-    return Promise.resolve(bens);
-  }
-  async getBensByIds(ids: string[]): Promise<Bem[]> { 
-    return Promise.resolve((this.localData.sampleBens || []).filter(b => ids.includes(b.id)));
-  }
-  
-  async getDocumentTypes(): Promise<DocumentType[]> {
-      return Promise.resolve(this.localData.sampleDocumentTypes);
-  }
-  async getUserDocuments(userId: string): Promise<UserDocument[]> {
-      const userDocs = this.localData.sampleUserDocuments.filter(d => d.userId === userId);
-      return Promise.resolve(userDocs);
-  }
-  async saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean; message: string; }> {
-      const existingDocIndex = this.localData.sampleUserDocuments.findIndex(d => d.userId === userId && d.documentTypeId === documentTypeId);
-      const docType = this.localData.sampleDocumentTypes.find(dt => dt.id === documentTypeId)!;
-      const newDocData: UserDocument = {
-          id: `user-doc-${uuidv4()}`,
-          userId,
-          documentTypeId,
-          fileUrl,
-          fileName,
-          status: 'PENDING_ANALYSIS',
-          uploadDate: new Date(),
-          documentType: docType
-      };
-      if (existingDocIndex > -1) {
-          this.localData.sampleUserDocuments[existingDocIndex] = newDocData;
-      } else {
-          this.localData.sampleUserDocuments.push(newDocData);
-      }
-      this._persistData();
-      return { success: true, message: "Documento salvo com sucesso." };
-  }
-  
-  async getCourt(id: string): Promise<Court | null> { return Promise.resolve(this.localData.sampleCourts.find(c => c.id === id) || null); }
-  async getJudicialDistrict(id: string): Promise<JudicialDistrict | null> { return Promise.resolve(this.localData.sampleJudicialDistricts.find(d => d.id === id) || null); }
-  async getJudicialBranch(id: string): Promise<JudicialBranch | null> { return Promise.resolve(this.localData.sampleJudicialBranches.find(b => b.id === id) || null); }
-
-  // Other stubs...
-  async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> { console.warn("[SampleDataAdapter] createJudicialProcess not implemented."); return { success: false, message: "Not implemented."}; }
-  async updateJudicialProcess(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> { console.warn("[SampleDataAdapter] updateJudicialProcess not implemented."); return { success: false, message: "Not implemented."}; }
-  async deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string; }> { console.warn("[SampleDataAdapter] deleteJudicialProcess not implemented."); return { success: false, message: "Not implemented."}; }
-  async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> { console.warn("[SampleDataAdapter] createCourt not implemented."); return { success: false, message: "Not implemented."}; }
-  async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> { console.warn("[SampleDataAdapter] updateCourt not implemented."); return { success: false, message: "Not implemented."}; }
-  async deleteCourt(id: string): Promise<{ success: boolean; message: string; }> { console.warn("[SampleDataAdapter] deleteCourt not implemented."); return { success: false, message: "Not implemented."}; }
-  async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> { console.warn("[SampleDataAdapter] createJudicialDistrict not implemented."); return { success: false, message: "Not implemented."}; }
-  async updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> { console.warn("[SampleDataAdapter] updateJudicialDistrict not implemented."); return { success: false, message: "Not implemented."}; }
-  async deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[SampleDataAdapter] deleteJudicialDistrict not implemented.");
-    return { success: false, message: "Not implemented" };
-  }
-  async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }> { console.warn("[SampleDataAdapter] createJudicialBranch not implemented."); return { success: false, message: "Not implemented."}; }
-  async updateJudicialBranch(id: string, data: Partial<JudicialBranchFormData>): Promise<{ success: boolean; message: string; }> { console.warn("[SampleDataAdapter] updateJudicialBranch not implemented."); return { success: false, message: "Not implemented."}; }
-  async deleteJudicialBranch(id: string): Promise<{ success: boolean; message: string; }> { console.warn("[SampleDataAdapter] deleteJudicialBranch not implemented."); return { success: false, message: "Not implemented."}; }
-  async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> { console.warn("[SampleDataAdapter] createBem not implemented."); return { success: false, message: "Not implemented."}; }
-  async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> { console.warn("[SampleDataAdapter] updateBem not implemented."); return { success: false, message: "Not implemented."}; }
-  async deleteBem(id: string): Promise<{ success: boolean; message: string; }> { console.warn("[SampleDataAdapter] deleteBem not implemented."); return { success: false, message: "Not implemented."}; }
+  // Stubs for remaining methods
+  async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async deleteLotCategory(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async getLotCategoryByName(name: string): Promise<LotCategory | null> { return null; }
+  async updateLotCategory(id: string, data: Partial<CategoryFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null> { return null; }
+  async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async getStates(): Promise<StateInfo[]> { return []; }
+  async getState(idOrSlugOrUf: string): Promise<StateInfo | null> { return null; }
+  async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async deleteState(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async getCities(stateIdOrSlugFilter?: string): Promise<CityInfo[]> { return []; }
+  async getCity(idOrCompositeSlug: string): Promise<CityInfo | null> { return null; }
+  async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async deleteCity(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> { return null; }
+  async updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null> { return null; }
+  async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> { return null; }
+  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> { return null; }
+  async updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null> { return null; }
+  async getSellerByName(name: string): Promise<SellerProfileInfo | null> { return null; }
+  async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async deleteAuction(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> { return []; }
+  async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> { return []; }
+  async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async getLot(idOrPublicId: string): Promise<Lot | null> { return null; }
+  async updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> { return []; }
+  async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async createUserLotMaxBid(userId: string, lotId: string, maxAmount: number): Promise<{ success: boolean; message: string; maxBidId?: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async getActiveUserLotMaxBid(userId: string, lotId: string): Promise<UserLotMaxBid | null> { return null; }
+  async getWinsForUser(userId: string): Promise<UserWin[]> { return []; }
+  async getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> { return []; }
+  async createReview(review: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<{ success: boolean; message: string; reviewId?: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]> { return []; }
+  async createQuestion(question: Omit<LotQuestion, "id" | "createdAt" | "answeredAt" | "answeredByUserId" | "answeredByUserDisplayName" | "isPublic">): Promise<{ success: boolean; message: string; questionId?: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, "cpf" | "cellPhone" | "dateOfBirth" | "password" | "accountType" | "razaoSocial" | "cnpj" | "inscricaoEstadual" | "websiteComitente" | "zipCode" | "street" | "number" | "complement" | "neighborhood" | "city" | "state" | "optInMarketing">>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileWithPermissions; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async getRole(id: string): Promise<Role | null> { return null; }
+  async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async deleteRole(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }> { return { success: true, message: "Default roles are inherent to sample data." }; }
+  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async getMediaItems(): Promise<MediaItem[]> { return []; }
+  async getMediaItem(id: string): Promise<MediaItem | null> { return null; }
+  async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, "title" | "altText" | "caption" | "description">>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null> { return null; }
+  async createDirectSaleOffer(data: DirectSaleOfferFormData): Promise<{ success: boolean; message: string; offerId?: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async updateDirectSaleOffer(id: string, data: Partial<DirectSaleOfferFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async deleteDirectSaleOffer(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
+  async getDocumentTypes(): Promise<DocumentType[]> { return []; }
+  async getUserDocuments(userId: string): Promise<UserDocument[]> { return []; }
+  async saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented." }; }
+  async getUsersForHabilitationReview(): Promise<UserProfileData[]> { return []; }
+  async getCourts(): Promise<Court[]> { return []; }
+  async getCourt(id: string): Promise<Court | null> { return null; }
+  async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> { return { success: false, message: "Not implemented."}; }
+  async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
+  async deleteCourt(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
+  async getJudicialDistricts(): Promise<JudicialDistrict[]> { return []; }
+  async getJudicialDistrict(id: string): Promise<JudicialDistrict | null> { return null; }
+  async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> { return { success: false, message: "Not implemented."}; }
+  async updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
+  async deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
+  async getJudicialBranches(): Promise<JudicialBranch[]> { return []; }
+  async getJudicialBranch(id: string): Promise<JudicialBranch | null> { return null; }
+  async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }> { return { success: false, message: "Not implemented."}; }
+  async updateJudicialBranch(id: string, data: Partial<JudicialBranchFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
+  async deleteJudicialBranch(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
+  async getJudicialProcesses(): Promise<JudicialProcess[]> { return []; }
+  async getJudicialProcess(id: string): Promise<JudicialProcess | null> { return null; }
+  async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> { return { success: false, message: "Not implemented."}; }
+  async updateJudicialProcess(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
+  async deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
+  async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> { return { success: false, message: "Not implemented."}; }
+  async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
+  async deleteBem(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
 }
