@@ -31,7 +31,7 @@ export default function WizardFlow() {
     const xGap = 280;
     const yGap = 120;
     
-    // Define common styles and statuses to avoid repetition and fix bugs
+    // --- Define common styles and statuses to avoid repetition and fix bugs ---
     const commonIsActive = !!selectedType;
     const commonEdgeStyle = { stroke: pathColors.COMMON };
     const judicialPathIsActive = !selectedType || selectedType === 'JUDICIAL';
