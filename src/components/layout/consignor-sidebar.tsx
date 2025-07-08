@@ -17,8 +17,8 @@ const sidebarNavItems = [
   {
     title: 'Meus Leilões',
     href: '/consignor-dashboard/auctions',
-    icon: Briefcase, // ou Gavel
-    disabled: true, // Placeholder
+    icon: Briefcase,
+    disabled: false,
   },
   {
     title: 'Meus Lotes',

@@ -295,6 +295,7 @@ export interface Bem {
   longitude?: number;
   createdAt: AnyTimestamp;
   updatedAt: AnyTimestamp;
+  // Veículos
   plate?: string;
   make?: string; model?: string; version?: string;
   year?: number; modelYear?: number;
@@ -306,9 +307,10 @@ export interface Bem {
   runningCondition?: string; bodyCondition?: string; tiresCondition?: string;
   hasKey?: boolean;
 
+  // Imóveis
   propertyRegistrationNumber?: string; iptuNumber?: string;
   isOccupied?: boolean;
-  area?: number; totalArea?: number; builtArea?: number;
+  totalArea?: number; builtArea?: number;
   bedrooms?: number; suites?: number; bathrooms?: number; parkingSpaces?: number;
   constructionType?: string; finishes?: string; infrastructure?: string;
   condoDetails?: string; improvements?: string; topography?: string;
@@ -868,6 +870,15 @@ export interface AdminDashboardStats {
     sellers: number;
 }
 
+export interface ConsignorDashboardStats {
+    totalLotsConsigned: number;
+    activeLots: number;
+    soldLots: number;
+    totalSalesValue: number;
+    salesRate: number;
+    salesByMonth: { name: string; sales: number }[];
+}
+
 export interface IStorageAdapter {
   upload(fileName: string, contentType: string, buffer: Buffer): Promise<{ publicUrl: string; storagePath: string; }>;
   delete(storagePath: string): Promise<{ success: boolean; message: string; }>;
@@ -996,6 +1007,7 @@ export interface IDatabaseAdapter {
   disconnect?(): Promise<void>;
   
   getAdminDashboardStats(): Promise<AdminDashboardStats>;
+  getConsignorDashboardStats(sellerId: string): Promise<ConsignorDashboardStats>;
 
   createLotCategory(data: { name: string; description?: string }): Promise<{ success: boolean; message: string; categoryId?: string; }>;
   getLotCategories(): Promise<LotCategory[]>;
@@ -1048,6 +1060,7 @@ export interface IDatabaseAdapter {
   updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string }>;
   deleteAuction(idOrPublicId: string): Promise<{ success: boolean; message: string; }>;
   getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]>;
+  getAuctionsForConsignor(sellerId: string): Promise<Auction[]>;
   getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]>;
 
   // BENS
