@@ -33,7 +33,7 @@ const initialStats: ConsignorDashboardStats = {
   soldLots: 0,
   totalSalesValue: 0,
   salesRate: 0,
-  salesByMonth: [],
+  salesData: [],
 };
 
 export default function ConsignorReportsPage() {
@@ -133,13 +133,13 @@ export default function ConsignorReportsPage() {
           </CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={stats.salesByMonth} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+              <LineChart data={stats.salesData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" stroke="#888888" fontSize={12} />
                 <YAxis stroke="#888888" fontSize={12} tickFormatter={(value) => `R$${value/1000}k`} />
                 <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`}/>
                 <Legend />
-                <Line type="monotone" dataKey="sales" name="Vendas" stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
+                <Line type="monotone" dataKey="Sales" name="Suas Vendas" stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>

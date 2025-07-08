@@ -6,6 +6,8 @@
 
 import { prisma } from '@/lib/prisma';
 import type { ConsignorDashboardStats } from '@/types';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 /**
  * Fetches and calculates key performance indicators for a consignor's dashboard.
@@ -20,7 +22,7 @@ export async function getConsignorDashboardStatsAction(sellerId: string): Promis
     soldLots: 0,
     totalSalesValue: 0,
     salesRate: 0,
-    salesByMonth: [],
+    salesData: [],
   };
 
   if (!sellerId) {
@@ -29,29 +31,56 @@ export async function getConsignorDashboardStatsAction(sellerId: string): Promis
   }
   
   try {
-    const lotsQuery = {
-      where: { auction: { sellerId: sellerId } },
-    };
+    // Base query for lots belonging to this seller's auctions
+    const lotsQueryWhere = { auction: { sellerId: sellerId } };
 
-    const totalLotsConsigned = await prisma.lot.count(lotsQuery);
+    const totalLotsConsigned = await prisma.lot.count({ where: lotsQueryWhere });
     const activeLots = await prisma.lot.count({
-      where: { ...lotsQuery.where, status: 'ABERTO_PARA_LANCES' },
+      where: { ...lotsQueryWhere, status: 'ABERTO_PARA_LANCES' },
     });
     const soldLotsRecords = await prisma.lot.findMany({
-        where: { ...lotsQuery.where, status: 'VENDIDO' }
+        where: { ...lotsQueryWhere, status: 'VENDIDO' }
     });
     
     const soldLots = soldLotsRecords.length;
     const totalSalesValue = soldLotsRecords.reduce((sum, lot) => sum + (lot.price || 0), 0);
     const salesRate = totalLotsConsigned > 0 ? (soldLots / totalLotsConsigned) * 100 : 0;
     
-    // This is a placeholder for a more complex time-series query.
-    // A real implementation would group sales by month from the `UserWin` table.
-    const salesByMonth = [
-        { name: "Jan", sales: 0 }, { name: "Fev", sales: 0 },
-        { name: "Mar", sales: 0 }, { name: "Abr", sales: 0 },
-        { name: "Mai", sales: 0 }, { name: "Jun", sales: 0 },
-    ];
+    // --- Process Sales Data by Month ---
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+    const winsLastYear = await prisma.userWin.findMany({
+      where: {
+        lot: {
+          auction: { sellerId: sellerId },
+        },
+        winDate: {
+          gte: oneYearAgo,
+        },
+      },
+    });
+
+    const salesByMonthMap: { [key: string]: number } = {};
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const monthKey = format(d, 'MMM/yy', { locale: ptBR });
+        salesByMonthMap[monthKey] = 0;
+    }
+
+    winsLastYear.forEach(win => {
+        const monthKey = format(new Date(win.winDate), 'MMM/yy', { locale: ptBR });
+        if (salesByMonthMap.hasOwnProperty(monthKey)) {
+            salesByMonthMap[monthKey] += win.winningBidAmount;
+        }
+    });
+
+    const salesData = Object.entries(salesByMonthMap).map(([name, sales]) => ({
+        name,
+        Sales: sales, // Using capital 'S' for consistency with Admin reports
+    }));
+
 
     return {
       totalLotsConsigned,
@@ -59,7 +88,7 @@ export async function getConsignorDashboardStatsAction(sellerId: string): Promis
       soldLots,
       totalSalesValue,
       salesRate,
-      salesByMonth,
+      salesData,
     };
   } catch (error) {
     console.error(`[Action - getConsignorDashboardStatsAction] Error for seller ${sellerId}:`, error);

@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 import type { 
     User, Role, UserDocument, DocumentType, Auction, Lot, Bid, 
@@ -289,7 +288,7 @@ export interface ConsignorDashboardStats {
     soldLots: number;
     totalSalesValue: number;
     salesRate: number;
-    salesByMonth: { name: string; sales: number }[];
+    salesData: { name: string; Sales: number }[];
 }
 
 
@@ -300,5 +299,3 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
-
-    

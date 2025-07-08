@@ -1,51 +1,71 @@
 /**
  * @fileoverview Server Actions for the main admin reports page.
- * Provides functions to aggregate key statistics and data for platform-wide reports.
+ * Provides functions to aggregate key statistics for the platform overview.
  */
 'use server';
 
 import { prisma } from '@/lib/prisma';
 import type { AdminReportData } from '@/types';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 /**
- * Fetches and calculates key performance indicators for the main admin reports page.
- * This includes totals for revenue, users, auctions, lots, and data for charts.
- * @returns {Promise<AdminReportData>} A promise that resolves to an object with aggregated report data.
+ * Fetches key statistics for the admin dashboard.
+ * Counts total users, auctions, lots, and sellers.
+ * @returns {Promise<AdminReportData>} A promise that resolves to an object with platform statistics.
  */
 export async function getAdminReportDataAction(): Promise<AdminReportData> {
   try {
-    const usersCount = await prisma.user.count();
-    const auctionsCount = await prisma.auction.count();
-    const lotsCount = await prisma.lot.count();
-    const sellersCount = await prisma.seller.count();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
-    // In a real application, these would be more complex time-series queries.
-    // Here we use random data as a placeholder for the sales chart.
-    const salesData = [
-        { name: "Jan", Sales: Math.floor(Math.random() * 5000) },
-        { name: "Feb", Sales: Math.floor(Math.random() * 5000) },
-        { name: "Mar", Sales: Math.floor(Math.random() * 5000) },
-        { name: "Apr", Sales: Math.floor(Math.random() * 5000) },
-        { name: "May", Sales: Math.floor(Math.random() * 5000) },
-        { name: "Jun", Sales: Math.floor(Math.random() * 5000) },
-    ];
-
-    // Fetch lot counts grouped by category name for the category chart.
-    const categoryDataAgg = await prisma.lot.groupBy({
-        by: ['categoryId'],
-        _count: {
-            id: true,
-        },
+    const [
+      usersCount,
+      auctionsCount,
+      lotsCount,
+      sellersCount,
+      newUsersLast30Days,
+      categoryDataAgg,
+      soldLots,
+      winsLastYear,
+    ] = await Promise.all([
+      prisma.user.count(),
+      prisma.auction.count(),
+      prisma.lot.count(),
+      prisma.seller.count(),
+      prisma.user.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
+      prisma.lot.groupBy({ by: ['categoryId'], _count: { id: true }, where: { status: 'VENDIDO' }}),
+      prisma.lot.findMany({ where: { status: 'VENDIDO' } }),
+      prisma.userWin.findMany({ where: { winDate: { gte: oneYearAgo } } })
+    ]);
+    
+    // Process Sales Data by Month
+    const salesByMonth: { [key: string]: number } = {};
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        const monthKey = format(d, 'MMM/yy', { locale: ptBR });
+        salesByMonth[monthKey] = 0;
+    }
+    winsLastYear.forEach(win => {
+        const monthKey = format(new Date(win.winDate), 'MMM/yy', { locale: ptBR });
+        if (salesByMonth.hasOwnProperty(monthKey)) {
+            salesByMonth[monthKey] += win.winningBidAmount;
+        }
     });
-    const categories = await prisma.lotCategory.findMany({ where: { id: { in: categoryDataAgg.map(c => c.categoryId!) } } });
+    const salesData = Object.entries(salesByMonth).map(([name, sales]) => ({ name, Sales: sales }));
+
+    // Process Category Data
+    const categoryIds = categoryDataAgg.map(c => c.categoryId).filter((id): id is string => !!id);
+    const categories = await prisma.lotCategory.findMany({ where: { id: { in: categoryIds } } });
     const categoryMap = new Map(categories.map(c => [c.id, c.name]));
     const categoryData = categoryDataAgg.map(item => ({
         name: categoryMap.get(item.categoryId!) || 'Desconhecido',
         value: item._count.id
     }));
     
-    // Calculate total revenue from lots marked as 'VENDIDO'.
-    const soldLots = await prisma.lot.findMany({ where: { status: 'VENDIDO' }});
     const totalRevenue = soldLots.reduce((sum, lot) => sum + lot.price, 0);
 
     return {
@@ -54,7 +74,7 @@ export async function getAdminReportDataAction(): Promise<AdminReportData> {
       lots: lotsCount,
       sellers: sellersCount,
       totalRevenue: totalRevenue,
-      newUsersLast30Days: 0, // Placeholder
+      newUsersLast30Days: newUsersLast30Days,
       activeAuctions: await prisma.auction.count({ where: { status: 'ABERTO_PARA_LANCES' }}),
       lotsSoldCount: soldLots.length,
       salesData,
