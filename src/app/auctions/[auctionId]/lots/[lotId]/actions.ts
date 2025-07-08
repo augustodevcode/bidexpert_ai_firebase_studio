@@ -22,7 +22,7 @@ interface PlaceBidResult {
 /**
  * Places a manual bid on a lot.
  * It validates the bid against the lot's current status and price.
- * On success, it creates a new bid record and updates the lot's price and bids count.
+ * On success, it creates a new bid record, updates the lot's price, and notifies the previous high bidder.
  * @param lotIdOrPublicId - The ID or publicId of the lot.
  * @param auctionIdOrPublicId - The ID or publicId of the auction (for revalidation).
  * @param userId - The ID of the bidding user.
@@ -39,11 +39,21 @@ export async function placeBidOnLot(
 ): Promise<PlaceBidResult> {
     try {
         const lot = await prisma.lot.findFirst({
-            where: { OR: [{id: lotIdOrPublicId}, {publicId: lotIdOrPublicId}]}
+            where: { OR: [{id: lotIdOrPublicId}, {publicId: lotIdOrPublicId}]},
+            include: {
+                bids: {
+                    orderBy: { timestamp: 'desc' },
+                    take: 1
+                }
+            }
         });
+
         if (!lot) return { success: false, message: 'Lote não encontrado.'};
         if (lot.status !== 'ABERTO_PARA_LANCES') return { success: false, message: 'Este lote não está aberto para lances.'};
         if (bidAmount <= lot.price) return { success: false, message: `O lance deve ser maior que R$ ${lot.price.toLocaleString('pt-BR')}.`};
+
+        // Get previous high bidder before creating the new bid
+        const previousHighBid = lot.bids[0];
 
         const newBid = await prisma.bid.create({
             data: {
@@ -54,6 +64,18 @@ export async function placeBidOnLot(
                 amount: bidAmount,
             }
         });
+
+        // After creating the new bid, check if we need to send a notification
+        if (previousHighBid && previousHighBid.bidderId !== userId) {
+            await prisma.notification.create({
+                data: {
+                    userId: previousHighBid.bidderId,
+                    message: `Seu lance no lote "${lot.title}" foi superado.`,
+                    link: `/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`,
+                    isRead: false
+                }
+            });
+        }
 
         const updatedLot = await prisma.lot.update({
             where: { id: lot.id },
