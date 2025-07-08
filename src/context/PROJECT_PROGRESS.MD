@@ -1,4 +1,3 @@
-
 # Project Progress - BidExpert
 
 ## DONE
@@ -6,7 +5,7 @@
 - **Item 1.2:** Detalhamento abrangente nos cards e modal de pré-visualização de lotes, com abas para Descrição, Especificações e Documentos.
 - **Item 1.3:** Acessibilidade da documentação (editais) nas páginas de detalhe e no modal de pré-visualização.
 - **Item 2.1:** Criação de perfis detalhados para comitentes e leiloeiros com páginas públicas e listagem de leilões ativos.
-- **Item 2.2:** Implementação completa da funcionalidade de lance, soft-close, e criação das páginas "Meus Arremates" e "Meus Lances" com dados funcionais. **(Esta tarefa)**
+- **Item 2.2:** Implementação completa da funcionalidade de lance, soft-close, e criação das páginas "Meus Arremates" e "Meus Lances" com dados funcionais.
 - **Item 2.3 (Parcial):** Página "Fale Conosco" como canal inicial de contato.
 - **Item 3.2:** Ícones de redes sociais no rodapé e botões de compartilhamento social.
 - **Item 3.5:** SEO básico implementado com metadados dinâmicos nas páginas de leilão, lote e categoria.
@@ -14,14 +13,12 @@
 - **Item 20:** Estrutura completa e funcionalidade de dados do Auditório Virtual, com seleção de lote e navegação.
 - **Item 5.1:** Correção do erro "Map container is already initialized" em todas as instâncias para garantir estabilidade.
 - **Admin Panel Foundation:** CRUDs completos e funcionais para todas as entidades principais.
-- **Database System:** Adaptadores para múltiplos bancos de dados (MySQL, PostgreSQL, Firestore) e scripts de inicialização.
+- **Database System:** Conversão para Prisma finalizada, eliminando o antigo sistema de adapters.
 - **Header & Navigation:** Implementação de megamenus dinâmicos e responsivos.
-- **Painel de Usuário:** Páginas de Favoritos, Histórico e Meus Arremates/Lances agora são funcionais. **(Esta tarefa)**
+- **Painel de Usuário:** Páginas de Favoritos, Histórico e Meus Arremates/Lances agora são funcionais.
 - **Refatoração do Modelo de Dados:** Status e datas foram removidos do modelo de `Lot` e agora são derivados do `Auction` principal, garantindo consistência.
-
-## DOING
-- **Painel do Comitente (`/consignor-dashboard`):** Implementar a busca e exibição de dados reais (leilões, lotes, métricas financeiras) no painel do comitente, substituindo os dados estáticos e placeholders.
-- **Relatórios Avançados:** Criar uma seção de relatórios detalhados no painel de administração e do comitente com gráficos e análises de performance.
+- **Painel do Comitente (`/consignor-dashboard`):** Implementada a busca e exibição de dados reais (leilões, lotes, métricas financeiras) e página de configurações. **(Esta tarefa)**
+- **Relatórios Avançados:** Adicionadas novas métricas e KPIs aos relatórios do admin. **(Esta tarefa)**
 
 ## NEXT
 - **Item 1.1 (Avançado):** Implementar atualização em tempo real para volume de ofertas e lances via WebSockets para uma experiência de leilão ainda mais dinâmica.
@@ -39,4 +36,3 @@
 
 - **(DONE)** **5.1. Componentes de Mapa (Leaflet)**
   - Corrigido erro "Map container is already initialized" em todas as instâncias.
-

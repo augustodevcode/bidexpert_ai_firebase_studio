@@ -1,107 +1,75 @@
-
 // src/app/admin/users/actions.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
-import { ensureAdminInitialized } from '@/lib/firebase/admin';
-import type { UserProfileData, UserProfileWithPermissions, Role } from '@/types';
+import type { User, UserProfileWithPermissions, Role } from '@/types';
 import type { UserFormValues } from './user-form-schema';
+import bcrypt from 'bcrypt';
 
-// This function is for admin use to create a user directly
-export async function createUser(data: UserFormValues): Promise<{ success: boolean; message: string; userId?: string }> {
-    const { auth } = ensureAdminInitialized();
-    if (!auth) {
-        return { success: false, message: "Autenticação do Admin não inicializada." };
-    }
+export type UserCreationData = Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'roleId' | 'sellerId'>> & {
+  email: string;
+  password?: string | null;
+};
 
-    try {
-        const userRecord = await auth.createUser({
-            email: data.email,
-            password: data.password, // This is for admin creation
-            displayName: data.fullName,
-        });
+/**
+ * Cria um novo usuário no sistema, tanto no banco de dados quanto no provedor de autenticação.
+ * Esta action é para uso administrativo.
+ * @param data - Os dados do formulário do novo usuário.
+ * @returns Um objeto indicando o sucesso e a mensagem da operação.
+ */
+export async function createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string }> {
+  if (!data.password) {
+    return { success: false, message: "A senha é obrigatória para criar um novo usuário." };
+  }
 
-        // Now create the user in our Prisma DB
-        const defaultRole = await prisma.role.findUnique({ where: { name: 'USER' } });
-        
-        await prisma.user.create({
-            data: {
-                id: userRecord.uid,
-                email: data.email,
-                fullName: data.fullName,
-                roleId: data.roleId || defaultRole?.id,
-                habilitationStatus: 'PENDENTE_DOCUMENTOS',
-            }
-        });
-        
-        revalidatePath('/admin/users');
-        return { success: true, message: 'Usuário criado com sucesso!', userId: userRecord.uid };
-
-    } catch (error: any) {
-        console.error("[createUser Action] Error:", error);
-        return { success: false, message: error.message || "Falha ao criar usuário." };
-    }
-}
-
-
-export async function getOrCreateUserFromFirebaseAuth(
-  uid: string,
-  email: string,
-  fullName: string,
-  avatarUrl: string | null
-): Promise<UserProfileWithPermissions | null> {
   try {
-    const existingUser = await prisma.user.findUnique({
-      where: { id: uid },
-      include: { role: { include: { permissions: true } } }
-    });
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const defaultRole = await prisma.role.findFirst({ where: { name_normalized: 'USER' } });
 
-    if (existingUser) {
-      const permissions = existingUser.role?.permissions.map(p => p.name) || [];
-      return {
-        ...existingUser,
-        uid: existingUser.id,
-        permissions,
-      } as UserProfileWithPermissions;
-    }
-
-    console.log(`[getOrCreateUser] No user found for UID ${uid}. Creating new user profile.`);
-    
-    const defaultRole = await prisma.role.findUnique({
-      where: { name: 'USER' },
-    });
-
-    if (!defaultRole) {
-      throw new Error("Default 'USER' role not found in the database. Please seed the database.");
-    }
-    
     const newUser = await prisma.user.create({
       data: {
-        id: uid,
-        email: email,
-        fullName: fullName,
-        avatarUrl: avatarUrl,
+        email: data.email,
+        fullName: data.fullName,
+        password: hashedPassword,
+        accountType: data.accountType,
+        cpf: data.cpf,
+        dateOfBirth: data.dateOfBirth,
+        razaoSocial: data.razaoSocial,
+        cnpj: data.cnpj,
+        inscricaoEstadual: data.inscricaoEstadual,
+        website: data.website,
+        cellPhone: data.cellPhone,
+        zipCode: data.zipCode,
+        street: data.street,
+        number: data.number,
+        complement: data.complement,
+        neighborhood: data.neighborhood,
+        city: data.city,
+        state: data.state,
+        optInMarketing: data.optInMarketing,
         habilitationStatus: 'PENDENTE_DOCUMENTOS',
-        roleId: defaultRole.id,
-      },
-      include: { role: { include: { permissions: true } } }
+        roleId: defaultRole?.id, // Associa ao papel padrão 'USER'
+      }
     });
-    
-    const permissions = newUser.role?.permissions.map(p => p.name) || [];
-    return {
-      ...newUser,
-      uid: newUser.id,
-      permissions,
-    } as UserProfileWithPermissions;
 
-  } catch (error) {
-    console.error(`[getOrCreateUserFromFirebaseAuth] Error:`, error);
-    return null;
+    revalidatePath('/admin/users');
+    return { success: true, message: 'Usuário criado com sucesso!', userId: newUser.id };
+
+  } catch (error: any) {
+    console.error("[createUser Action] Error:", error);
+    if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
+      return { success: false, message: 'Este email já está em uso.' };
+    }
+    return { success: false, message: error.message || "Falha ao criar usuário." };
   }
 }
 
-export async function getUsersWithRoles(): Promise<UserProfileData[]> {
+/**
+ * Busca todos os usuários do banco de dados, incluindo o nome de seu perfil (role).
+ * @returns Um array de perfis de usuário.
+ */
+export async function getUsersWithRoles(): Promise<User[]> {
   const users = await prisma.user.findMany({
     include: {
       role: true,
@@ -113,11 +81,16 @@ export async function getUsersWithRoles(): Promise<UserProfileData[]> {
 
   return users.map(user => ({
     ...user,
-    uid: user.id,
+    uid: user.id, // uid é um alias comum para id em contextos de autenticação
     roleName: user.role?.name,
-  }));
+  })) as unknown as User[];
 }
 
+/**
+ * Busca o perfil completo de um usuário, incluindo suas permissões.
+ * @param userId - O ID do usuário a ser buscado.
+ * @returns O perfil do usuário com permissões, ou null se não encontrado.
+ */
 export async function getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null> {
   try {
     const user = await prisma.user.findUnique({
@@ -148,6 +121,12 @@ export async function getUserProfileData(userId: string): Promise<UserProfileWit
   }
 }
 
+/**
+ * Atualiza o perfil (role) de um usuário.
+ * @param userId - O ID do usuário a ser atualizado.
+ * @param roleId - O ID do novo perfil a ser atribuído.
+ * @returns Um objeto indicando o sucesso da operação.
+ */
 export async function updateUserRole(
   userId: string,
   roleId: string | null
@@ -166,27 +145,27 @@ export async function updateUserRole(
   }
 }
 
+/**
+ * Exclui um usuário do banco de dados.
+ * @param userId - O ID do usuário a ser excluído.
+ * @returns Um objeto indicando o sucesso da operação.
+ */
 export async function deleteUser(userId: string): Promise<{ success: boolean; message: string }> {
-  const { auth } = ensureAdminInitialized();
-  if (!auth) {
-      return { success: false, message: "Autenticação do Admin não inicializada." };
-  }
-  
   try {
-    // Transaction to ensure both deletions succeed or fail together
-    await prisma.$transaction(async (tx) => {
-        await tx.user.delete({ where: { id: userId } });
-        await auth.deleteUser(userId);
-    });
-
+    await prisma.user.delete({ where: { id: userId } });
     revalidatePath('/admin/users');
-    return { success: true, message: 'Usuário excluído com sucesso da autenticação e do banco de dados.' };
+    return { success: true, message: 'Usuário excluído com sucesso do banco de dados.' };
   } catch (error: any) {
     console.error(`Error deleting user ${userId}:`, error);
     return { success: false, message: `Falha ao excluir usuário: ${error.message}` };
   }
 }
 
+/**
+ * Busca um usuário pelo seu email.
+ * @param email - O email do usuário.
+ * @returns O perfil do usuário com permissões, ou null se não encontrado.
+ */
 export async function getUserByEmail(email: string): Promise<UserProfileWithPermissions | null> {
     try {
         const user = await prisma.user.findUnique({
@@ -207,5 +186,3 @@ export async function getUserByEmail(email: string): Promise<UserProfileWithPerm
         return null;
     }
 }
-
-export type UserFormData = Omit<UserFormValues, 'password'> & { password?: string };

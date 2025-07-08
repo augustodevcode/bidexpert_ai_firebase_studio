@@ -1,15 +1,12 @@
-
 // src/lib/firebase/admin.ts
 import admin from 'firebase-admin';
 import type { App } from 'firebase-admin/app';
 import { cert, getApp, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
-import { getAuth, type Auth } from 'firebase-admin/auth';
 import { getStorage, type Storage } from 'firebase-admin/storage';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// Types are safe to export, as they don't execute code.
 export type { FieldValue as AdminFieldValue, Timestamp as ServerTimestamp } from 'firebase-admin/firestore';
 
 let adminApp: App | undefined;
@@ -40,28 +37,24 @@ function _initializeAdminApp(): App {
 export function ensureAdminInitialized(): {
   app?: App;
   db?: Firestore;
-  auth?: Auth;
   storage?: Storage;
   error?: Error | null;
   alreadyInitialized: boolean;
 } {
-    // If there was a permanent error during the first attempt, return it.
     if (initError) {
         return { error: initError, alreadyInitialized: getApps().length > 0 };
     }
 
-    // If the app isn't initialized yet, try to initialize it.
     if (!adminApp) {
         try {
             adminApp = _initializeAdminApp();
         } catch (error: any) {
-            initError = error; // Cache the initialization error
+            initError = error; 
             console.error(`[Admin SDK] Caching initialization error: ${initError.message}`);
             return { error: initError, alreadyInitialized: getApps().length > 0 };
         }
     }
     
-    // If adminApp is still not available after trying, something is wrong.
     if (!adminApp) {
       const finalError = new Error("Firebase Admin App is not available after initialization attempt.");
       return { error: finalError, alreadyInitialized: false };
@@ -70,7 +63,6 @@ export function ensureAdminInitialized(): {
     return {
         app: adminApp,
         db: getFirestore(adminApp),
-        auth: getAuth(adminApp),
         storage: getStorage(adminApp),
         error: null,
         alreadyInitialized: true,

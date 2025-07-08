@@ -1,4 +1,3 @@
-
 // prisma/seed.ts
 import { PrismaClient } from '@prisma/client';
 import {
@@ -9,6 +8,7 @@ import {
 } from './seed-data'; // Import from the new local data file
 import { predefinedPermissions } from '../src/app/admin/roles/role-form-schema';
 import { slugify } from '../src/lib/sample-data-helpers';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -27,14 +27,14 @@ async function main() {
           name: roleData.label,
           name_normalized: roleData.id.replace(/:/g, '_').toUpperCase(),
           description: `Permissions for: ${roleData.group}`,
-          permissions: { set: [roleData.id] }
+          permissions: { connectOrCreate: [{ where: { name: roleData.id }, create: { name: roleData.id } }] }
         }
       });
     }
   }
 
   const adminRole = await prisma.role.findFirst({
-    where: { permissions: { has: 'manage_all' } },
+    where: { permissions: { some: { name: 'manage_all' } } },
   });
 
   if (!adminRole) {
@@ -43,7 +43,7 @@ async function main() {
         name: 'ADMINISTRATOR',
         name_normalized: 'ADMINISTRATOR',
         description: 'Acesso total à plataforma.',
-        permissions: { set: ['manage_all'] }
+        permissions: { connectOrCreate: [{ where: { name: 'manage_all' }, create: { name: 'manage_all' } }] }
       }
     });
   }
@@ -54,12 +54,13 @@ async function main() {
   });
   if (!adminUser) {
     const adminRoleForUser = await prisma.role.findFirst({ where: { name: 'ADMINISTRATOR' } });
+    const hashedPassword = await bcrypt.hash('admin123', 10);
     await prisma.user.create({
       data: {
         id: 'admin-bidexpert-platform-001',
         email: 'admin@bidexpert.com.br',
         fullName: 'Administrador',
-        password: 'bcrypt_hash_placeholder', // In a real app, use a hashed password
+        password: hashedPassword,
         habilitationStatus: 'HABILITADO',
         roleId: adminRoleForUser?.id,
       }
@@ -98,7 +99,7 @@ async function main() {
   }
 
   console.log('Seeding document types...');
-  await prisma.documentType.createMany({ data: sampleDocumentTypes, skipDuplicates: true });
+  await prisma.documentType.createMany({ data: sampleDocumentTypes.map(dt => ({...dt, appliesTo: dt.appliesTo as any})), skipDuplicates: true });
 
   console.log('Seeding courts...');
   await prisma.court.createMany({ data: sampleCourts, skipDuplicates: true });
@@ -141,10 +142,10 @@ async function main() {
   await prisma.bem.createMany({ data: sampleBens.map(({categoryName, subcategoryName, judicialProcessNumber, sellerName, ...b}) => b), skipDuplicates: true });
 
   console.log('Seeding auctions...');
-  await prisma.auction.createMany({ data: sampleAuctions.map(({ lots, totalLots, auctioneer, seller, category, ...a }) => a), skipDuplicates: true });
+  await prisma.auction.createMany({ data: sampleAuctions.map(({ lots, totalLots, auctioneer, seller, category, ...a }) => a as any), skipDuplicates: true });
   
   console.log('Seeding lots...');
-  await prisma.lot.createMany({ data: sampleLots.map(({ auctionName, type, cityName, stateUf, subcategoryName, seller, sellerName, auctioneerName, isFavorite, ...l}) => l), skipDuplicates: true });
+  await prisma.lot.createMany({ data: sampleLots.map(({ auctionName, type, cityName, stateUf, subcategoryName, seller, sellerName, auctioneerName, isFavorite, ...l}) => l as any), skipDuplicates: true });
 
   console.log('Seeding bids...');
   await prisma.bid.createMany({ data: sampleBids, skipDuplicates: true });

@@ -30,6 +30,9 @@ export async function getAdminReportDataAction(): Promise<AdminReportData> {
       categoryDataAgg,
       soldLots,
       winsLastYear,
+      totalBids,
+      bidsCount,
+      auctionsWithSoldLots,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.auction.count(),
@@ -38,7 +41,10 @@ export async function getAdminReportDataAction(): Promise<AdminReportData> {
       prisma.user.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
       prisma.lot.groupBy({ by: ['categoryId'], _count: { id: true }, where: { status: 'VENDIDO' }}),
       prisma.lot.findMany({ where: { status: 'VENDIDO' } }),
-      prisma.userWin.findMany({ where: { winDate: { gte: oneYearAgo } } })
+      prisma.userWin.findMany({ where: { winDate: { gte: oneYearAgo } } }),
+      prisma.bid.aggregate({ _sum: { amount: true } }),
+      prisma.bid.count(),
+      prisma.auction.count({ where: { lots: { some: { status: 'VENDIDO' } } } }),
     ]);
     
     // Process Sales Data by Month
@@ -68,6 +74,10 @@ export async function getAdminReportDataAction(): Promise<AdminReportData> {
     
     const totalRevenue = soldLots.reduce((sum, lot) => sum + lot.price, 0);
 
+    const averageBidValue = bidsCount > 0 ? (totalBids._sum.amount ?? 0) / bidsCount : 0;
+    const averageLotsPerAuction = auctionsCount > 0 ? lotsCount / auctionsCount : 0;
+    const auctionSuccessRate = auctionsCount > 0 ? (auctionsWithSoldLots / auctionsCount) * 100 : 0;
+
     return {
       users: usersCount,
       auctions: auctionsCount,
@@ -79,6 +89,9 @@ export async function getAdminReportDataAction(): Promise<AdminReportData> {
       lotsSoldCount: soldLots.length,
       salesData,
       categoryData,
+      averageBidValue,
+      averageLotsPerAuction,
+      auctionSuccessRate,
     };
   } catch (error) {
     console.error("[Action - getAdminReportDataAction] Error fetching admin stats:", error);
@@ -94,6 +107,9 @@ export async function getAdminReportDataAction(): Promise<AdminReportData> {
       lotsSoldCount: 0,
       salesData: [],
       categoryData: [],
+      averageBidValue: 0,
+      averageLotsPerAuction: 0,
+      auctionSuccessRate: 0,
     };
   }
 }

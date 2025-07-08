@@ -43,7 +43,7 @@ export type UserProfileWithPermissions = User & {
 // Represents the data coming from the user registration form
 export type UserCreationData = Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'roleId' | 'sellerId'>> & {
   email: string;
-  password?: string;
+  password?: string | null;
 };
 
 // Represents the fields that a user can edit on their own profile page
@@ -273,6 +273,9 @@ export interface AdminReportData {
   lotsSoldCount: number;
   salesData: { name: string; Sales: number }[];
   categoryData: { name: string; value: number }[];
+  averageBidValue: number;
+  averageLotsPerAuction: number;
+  auctionSuccessRate: number;
 }
 
 export interface AdminDashboardStats {

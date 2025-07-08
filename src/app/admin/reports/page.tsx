@@ -10,7 +10,10 @@ import {
     Gavel, 
     ListChecks as LotsIcon, 
     BarChart3, 
-    Loader2 
+    Loader2,
+    TrendingUp,
+    CircleDollarSign,
+    Package
 } from 'lucide-react';
 import { 
     LineChart, 
@@ -32,12 +35,19 @@ import type { AdminReportData } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const initialStats: AdminReportData = {
+  users: 0,
+  auctions: 0,
+  lots: 0,
+  sellers: 0,
   totalRevenue: 0,
   newUsersLast30Days: 0,
   activeAuctions: 0,
   lotsSoldCount: 0,
   salesData: [],
   categoryData: [],
+  averageBidValue: 0,
+  auctionSuccessRate: 0,
+  averageLotsPerAuction: 0,
 };
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF'];
@@ -123,6 +133,34 @@ export default function AdminReportsPage() {
             description="Desde o início da plataforma"
             isLoading={isLoading}
         />
+        <StatCard 
+            title="Taxa de Sucesso (Leilões)"
+            value={`${stats.auctionSuccessRate?.toFixed(1) || 0}%`}
+            icon={TrendingUp}
+            description="Leilões com pelo menos um lote vendido."
+            isLoading={isLoading}
+        />
+         <StatCard 
+            title="Valor Médio do Lance"
+            value={(stats.averageBidValue || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            icon={CircleDollarSign}
+            description="Valor médio de todos os lances feitos."
+            isLoading={isLoading}
+        />
+        <StatCard 
+            title="Média de Lotes por Leilão"
+            value={`${stats.averageLotsPerAuction?.toFixed(1) || 0}`}
+            icon={Package}
+            description="Média de lotes em cada leilão."
+            isLoading={isLoading}
+        />
+        <StatCard 
+            title="Usuários Totais"
+            value={`${stats.users || 0}`}
+            icon={Users}
+            description="Total de usuários cadastrados."
+            isLoading={isLoading}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -138,7 +176,7 @@ export default function AdminReportsPage() {
                 <YAxis stroke="#888888" fontSize={12} tickFormatter={(value) => `R$${Number(value)/1000}k`} />
                 <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`}/>
                 <Legend />
-                <Line type="monotone" dataKey="Sales" stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
+                <Line type="monotone" dataKey="Sales" name="Vendas" stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>

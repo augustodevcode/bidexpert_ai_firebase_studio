@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -9,47 +8,44 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LogIn, Loader2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { login } from './actions';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { refetchUser } = useAuth();
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = async (event: FormEvent) => {
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
     setError(null);
-    const redirectUrl = searchParams.get('redirect') || '/dashboard/overview';
+    
+    const formData = new FormData(event.currentTarget);
+    const result = await login(formData);
 
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
+    setIsLoading(false);
+
+    if (result.success) {
       toast({
         title: "Login bem-sucedido!",
         description: "Redirecionando...",
       });
-      // The onAuthStateChanged listener in AuthProvider will handle setting user state
-      // and redirecting after the profile is loaded.
+      await refetchUser(); // Pede ao AuthContext para buscar os dados do novo usuário
+      const redirectUrl = searchParams.get('redirect') || '/dashboard/overview';
       router.push(redirectUrl);
-    } catch (e: any) {
-      const errorMessage = e.code === 'auth/invalid-credential' 
-        ? 'Credenciais inválidas. Verifique seu email e senha.'
-        : 'Ocorreu um erro ao tentar fazer login.';
-      
-      setError(errorMessage);
+    } else {
+      setError(result.message);
       toast({
         title: "Erro no Login",
-        description: errorMessage,
+        description: result.message,
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -67,11 +63,10 @@ export default function LoginPage() {
               <Label htmlFor="email">Email</Label>
               <Input 
                 id="email" 
+                name="email"
                 type="email" 
                 placeholder="seu@email.com" 
                 required 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
               />
             </div>
@@ -84,10 +79,9 @@ export default function LoginPage() {
               </div>
               <Input 
                 id="password" 
+                name="password"
                 type="password" 
                 required 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
               />
             </div>

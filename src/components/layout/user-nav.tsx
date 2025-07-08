@@ -1,98 +1,46 @@
-
 'use client';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks, Tv, Briefcase as ConsignorIcon, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
-import { auth } from '@/lib/firebase'; // Ainda necessário para logout do Firebase
-import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState } from 'react';
-import { hasPermission, hasAnyPermission } from '@/lib/permissions'; // Importar as funções de permissão
-
-// Email do comitente de exemplo (para simular o próprio comitente acessando)
-const EXAMPLE_CONSIGNOR_EMAIL = 'consignor@bidexpert.com';
+import { useEffect, useState, useCallback } from 'react';
+import { hasPermission, hasAnyPermission } from '@/lib/permissions'; 
 
 export default function UserNav() {
-  const { user, userProfileWithPermissions, loading, logoutSqlUser } = useAuth();
-  const router = useRouter();
-  const { toast } = useToast();
-  const [activeSystem, setActiveSystem] = useState('FIRESTORE'); // Default
+  const { userProfileWithPermissions, loading, logout } = useAuth();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    const system = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM?.toUpperCase() || 'FIRESTORE';
-    setActiveSystem(system);
   }, []);
-
-  const handleLogout = async () => {
-    if (activeSystem === 'FIRESTORE') {
-      try {
-        await signOut(auth);
-        toast({ title: "Logout bem-sucedido!"});
-        router.push('/');
-      } catch (error: any) {
-        toast({ title: "Erro no Logout", description: error.message, variant: "destructive" });
-      }
-    } else {
-      logoutSqlUser();
-      toast({ title: `Logout bem-sucedido (${activeSystem})!`});
-    }
-  };
 
   if (loading || !isClient) {
     return (
       <div className="flex items-center space-x-2">
         <div className="h-10 w-10 bg-muted rounded-full animate-pulse"></div>
-        <div className="h-6 w-20 bg-muted rounded-md animate-pulse"></div>
       </div>
     );
   }
 
-  const isLoggedIn = activeSystem === 'FIRESTORE' ? !!user : !!userProfileWithPermissions;
-  
-  let displayName = "Usuário";
-  let userEmailDisplay = "";
-  let photoURLDisplay: string | undefined = undefined;
+  if (userProfileWithPermissions) {
+    const { fullName, email, avatarUrl, roleName } = userProfileWithPermissions;
+    const displayName = fullName || email?.split('@')[0] || "Usuário";
+    const userInitial = displayName ? displayName.charAt(0).toUpperCase() : "U";
+    
+    const showAdminSectionLinks = hasPermission(userProfileWithPermissions, 'manage_all');
+    const canSeeConsignorDashboardLink = showAdminSectionLinks || hasAnyPermission(userProfileWithPermissions, ['auctions:manage_own', 'lots:manage_own', 'consignor_dashboard:view']);
 
-  if (activeSystem === 'FIRESTORE' && user) {
-    displayName = user.displayName || user.email?.split('@')[0] || "Usuário";
-    userEmailDisplay = user.email || "";
-    photoURLDisplay = user.photoURL || undefined;
-  } else if (activeSystem !== 'FIRESTORE' && userProfileWithPermissions) {
-    displayName = userProfileWithPermissions.fullName || userProfileWithPermissions.email?.split('@')[0] || "Usuário";
-    userEmailDisplay = userProfileWithPermissions.email || "";
-    photoURLDisplay = userProfileWithPermissions.avatarUrl || undefined; 
-  }
-  
-  const userInitial = displayName ? displayName.charAt(0).toUpperCase() : "U";
-  const userEmailLowerForRoles = activeSystem === 'FIRESTORE' ? user?.email?.toLowerCase() : userProfileWithPermissions?.email?.toLowerCase();
-
-  const showAdminSectionLinks = hasPermission(userProfileWithPermissions, 'manage_all');
-  const isTheExampleConsignor = userEmailLowerForRoles === EXAMPLE_CONSIGNOR_EMAIL.toLowerCase();
-  const canSeeConsignorDashboardLink = showAdminSectionLinks || isTheExampleConsignor || hasAnyPermission(userProfileWithPermissions, ['auctions:manage_own', 'lots:manage_own']);
-
-
-  if (isLoggedIn) {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
             <Avatar className="h-10 w-10">
-              {photoURLDisplay && <AvatarImage src={photoURLDisplay} alt={displayName} data-ai-hint="profile avatar small" />}
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} data-ai-hint="profile avatar small" />}
               <AvatarFallback>{userInitial}</AvatarFallback>
             </Avatar>
           </Button>
@@ -102,7 +50,7 @@ export default function UserNav() {
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium leading-none">{displayName}</p>
               <p className="text-xs leading-none text-muted-foreground">
-                {userEmailDisplay}
+                {email}
               </p>
             </div>
           </DropdownMenuLabel>
@@ -142,21 +90,6 @@ export default function UserNav() {
              <History className="mr-2 h-4 w-4" /> Histórico de Navegação
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard/reports" className="flex items-center">
-             <BarChart className="mr-2 h-4 w-4" /> Relatórios
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/dashboard/notifications" className="flex items-center">
-             <Bell className="mr-2 h-4 w-4" /> Notificações
-            </Link>
-          </DropdownMenuItem>
-           <DropdownMenuItem asChild>
-            <Link href="/live-dashboard" className="flex items-center">
-              <Tv className="mr-2 h-4 w-4" /> Leilões Ao Vivo
-            </Link>
-          </DropdownMenuItem>
           
           {canSeeConsignorDashboardLink && (
              <>
@@ -182,7 +115,7 @@ export default function UserNav() {
           )}
 
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout}>
+          <DropdownMenuItem onClick={logout}>
             <LogOut className="mr-2 h-4 w-4" /> Sair
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -192,30 +125,12 @@ export default function UserNav() {
 
   return (
     <div className="flex items-center space-x-2">
-      <Tooltip delayDuration={300}>
-        <TooltipTrigger asChild>
-          <Button variant="default" size="icon" asChild>
-            <Link href="/auth/login">
-              <LogIn className="h-4 w-4" />
-            </Link>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          Login
-        </TooltipContent>
-      </Tooltip>
-      <Tooltip delayDuration={300}>
-        <TooltipTrigger asChild>
-          <Button size="icon" asChild>
-            <Link href="/auth/register">
-              <UserPlus className="h-4 w-4" />
-            </Link>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          Registrar
-        </TooltipContent>
-      </Tooltip>
+      <Button asChild>
+        <Link href="/auth/login">Login</Link>
+      </Button>
+      <Button variant="outline" asChild>
+        <Link href="/auth/register">Registrar</Link>
+      </Button>
     </div>
   );
 }
