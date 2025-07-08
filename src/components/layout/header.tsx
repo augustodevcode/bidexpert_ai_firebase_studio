@@ -1,4 +1,3 @@
-
       'use client';
 
 import Link from 'next/link';
@@ -93,7 +92,7 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParamsHook = useSearchParams();
-  const { user, userProfileWithPermissions } = useAuth();
+  const { userProfileWithPermissions } = useAuth();
 
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const siteTitle = platformSettings?.siteTitle || 'BidExpert';
@@ -106,21 +105,27 @@ export default function Header() {
     }
   }, [isMobileMenuOpen, setIsMobileMenuOpen]);
 
-  useEffect(() => {
-    const updateCounts = async () => {
-        setFavoriteCount(getFavoriteLotIdsFromStorage().length);
-        if (userProfileWithPermissions?.uid) {
+  const updateCounts = useCallback(async () => {
+    setFavoriteCount(getFavoriteLotIdsFromStorage().length);
+    if (userProfileWithPermissions?.uid) {
+        try {
             const count = await getUnreadNotificationCountAction(userProfileWithPermissions.uid);
             setUnreadNotificationsCount(count);
-        } else {
+        } catch (error) {
+            console.error("Failed to fetch notification count:", error);
             setUnreadNotificationsCount(0);
         }
-    };
+    } else {
+        setUnreadNotificationsCount(0);
+    }
+  }, [userProfileWithPermissions?.uid]);
+
+  useEffect(() => {
     updateCounts();
 
     const handleStorageChange = () => updateCounts();
     window.addEventListener('favorites-updated', handleStorageChange);
-    window.addEventListener('notifications-updated', handleStorageChange); // Custom event for notifications
+    window.addEventListener('notifications-updated', handleStorageChange); 
     window.addEventListener('storage', (e) => {
         if (e.key === 'bidExpertFavoriteLotIds') {
             updateCounts();
@@ -132,7 +137,7 @@ export default function Header() {
         window.removeEventListener('notifications-updated', handleStorageChange);
         window.removeEventListener('storage', handleStorageChange);
     };
-  }, [userProfileWithPermissions]);
+  }, [updateCounts]);
 
   useEffect(() => {
     async function fetchInitialData() {
@@ -537,7 +542,7 @@ export default function Header() {
                 </TooltipTrigger>
                 <TooltipContent><p>Buscar em todo o site</p></TooltipContent>
             </Tooltip>
-            {user && (
+            {userProfileWithPermissions && (
               <Button variant="ghost" size="icon" className="relative hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" asChild aria-label="Notificações">
                 <Link href="/dashboard/notifications">
                   <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -615,15 +620,3 @@ export default function Header() {
     </header>
   );
 }
-    
-      
-    
-
-    
-
-
-
-
-
-
-

@@ -7,17 +7,19 @@ import { Bell, AlertCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
 import { useState, useEffect, useCallback } from 'react';
-import { getNotificationsForUser } from './actions';
+import { getNotificationsForUser, markNotificationAsRead } from './actions';
 import type { Notification } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 
 export default function NotificationsPage() {
   const { userProfileWithPermissions } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -45,6 +47,21 @@ export default function NotificationsPage() {
       setIsLoading(false);
     }
   }, [userProfileWithPermissions, fetchNotifications]);
+  
+  const handleNotificationClick = async (notification: Notification) => {
+    if (!notification.isRead && userProfileWithPermissions?.uid) {
+      const result = await markNotificationAsRead(notification.id, userProfileWithPermissions.uid);
+      if (result.success) {
+        // Optimistically update the UI
+        setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, isRead: true } : n));
+        // Dispatch event to update header count
+        window.dispatchEvent(new CustomEvent('notifications-updated'));
+      }
+    }
+    if (notification.link) {
+      router.push(notification.link);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -81,9 +98,10 @@ export default function NotificationsPage() {
               {notifications.map(notification => (
                 <div
                   key={notification.id}
+                  onClick={() => handleNotificationClick(notification)}
                   className={cn(
-                    "relative flex items-start gap-4 p-4 border rounded-lg transition-colors",
-                    notification.isRead ? "bg-card text-muted-foreground" : "bg-accent/50 text-accent-foreground border-primary/20"
+                    "relative flex items-start gap-4 p-4 border rounded-lg transition-all cursor-pointer",
+                    notification.isRead ? "bg-card text-muted-foreground hover:bg-secondary/50" : "bg-accent/50 text-accent-foreground border-primary/20 hover:bg-accent"
                   )}
                 >
                   {!notification.isRead && (
@@ -94,9 +112,7 @@ export default function NotificationsPage() {
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                        <span>{format(new Date(notification.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
                        {notification.link && (
-                          <Button variant="link" size="sm" asChild className="p-0 h-auto text-primary">
-                              <Link href={notification.link}>Ver Detalhes</Link>
-                          </Button>
+                          <span className="text-primary font-medium">Ver Detalhes</span>
                        )}
                     </div>
                   </div>
