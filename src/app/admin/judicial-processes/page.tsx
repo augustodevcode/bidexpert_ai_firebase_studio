@@ -1,3 +1,4 @@
+
 // src/app/admin/judicial-processes/page.tsx
 'use client';
 
