@@ -1,37 +1,35 @@
-
 // src/lib/database/index.ts
 import type { IDatabaseAdapter } from '@/types';
-import { cookies } from 'next/headers'; // This is a dynamic function
+// No longer importing `cookies` from 'next/headers' to ensure static behavior on the server.
+
+// Singleton instance specifically for the SampleDataAdapter
+let sampleDbInstance: IDatabaseAdapter | undefined;
 
 export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
-  // Reading cookies opts the request into dynamic rendering.
-  
-  let dbFromCookie: string | undefined;
-  try {
-    // cookies() is a dynamic function and will only work in a request context.
-    const cookieStore = cookies();
-    dbFromCookie = cookieStore.get('dev-config-db')?.value;
-  } catch (e) {
-    // This is expected during build or in environments without a request context.
-    console.warn('[DB Factory] Could not access cookies. This is expected during build. Falling back to environment variables.');
-  }
-
+  // SERVER-SIDE ADAPTER SELECTION NOW *ONLY* USES THE ENVIRONMENT VARIABLE.
+  // The dynamic cookie-based override was fragile and caused server rendering errors.
+  // The dev modal cookie is now only used for the client-side indicator.
   const activeSystemEnv = process.env.ACTIVE_DATABASE_SYSTEM;
-  // Priority: 1. Cookie, 2. Env Var, 3. Fallback to SAMPLE_DATA
-  const activeSystem = (dbFromCookie || activeSystemEnv || 'SAMPLE_DATA').toUpperCase();
+  const activeSystem = (activeSystemEnv || 'SAMPLE_DATA').toUpperCase();
 
-  console.log(`[DB Factory - Initializing] Active System: ${activeSystem} (Cookie: ${dbFromCookie || 'N/A'}, Env: ${activeSystemEnv || 'N/A'}).`);
+  console.log(`[DB Factory - Initializing] Active System: ${activeSystem} (Source: Environment).`);
 
-  // Always create a new instance based on the determined active system.
-  // This removes the faulty singleton pattern for SampleData.
+  // If the active system is SAMPLE_DATA, use a singleton pattern for performance.
+  if (activeSystem === 'SAMPLE_DATA') {
+    if (!sampleDbInstance) {
+      const { SampleDataAdapter } = await import('./sample-data.adapter');
+      console.log('[DB Factory] Creating new singleton instance for SampleDataAdapter.');
+      sampleDbInstance = new SampleDataAdapter();
+    } else {
+      console.log('[DB Factory] Returning existing singleton instance of SampleDataAdapter.');
+    }
+    return sampleDbInstance;
+  }
+  
+  // For all other database types, create a new instance for each request (stateless).
   let newInstance: IDatabaseAdapter;
 
   switch (activeSystem) {
-    case 'SAMPLE_DATA': {
-      const { SampleDataAdapter } = await import('./sample-data.adapter');
-      newInstance = new SampleDataAdapter();
-      break;
-    }
     case 'POSTGRES': {
       const { PostgresAdapter } = await import('./postgres.adapter');
       newInstance = new PostgresAdapter();
