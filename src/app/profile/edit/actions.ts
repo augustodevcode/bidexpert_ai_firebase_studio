@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
 import type { EditableUserProfileData } from '@/types';
 
 interface UpdateProfileResult {
@@ -14,30 +14,25 @@ export async function updateUserProfile(
   userId: string,
   data: EditableUserProfileData
 ): Promise<UpdateProfileResult> {
-  console.log(`[updateUserProfile Action ENTER] Called for userId: ${userId}`);
   if (!userId) {
     return { success: false, message: 'ID do usuário não fornecido.' };
   }
   
-  const db = await getDatabaseAdapter(); // Adicionado await
-  console.log(`[updateUserProfile Action] DB Adapter Type: ${db?.constructor?.name}`);
-  console.log(`[updateUserProfile Action] typeof db.updateUserProfile: ${typeof (db as any)?.updateUserProfile}`);
-
-
-  if (!db || typeof db.updateUserProfile !== 'function') {
-    const errorMessage = `[updateUserProfile Action] CRITICAL: db.updateUserProfile is not a function. Adapter type: ${db?.constructor?.name}.`;
-    console.error(errorMessage);
-    console.error(`[updateUserProfile Action] DB Object keys: ${db ? Object.keys(db).join(', ') : 'N/A'}`);
-    console.error(`[updateUserProfile Action] DB Object prototype keys: ${db ? Object.keys(Object.getPrototypeOf(db) || {}).join(', ') : 'N/A'}`);
-    return { success: false, message: `Erro interno do servidor: Método de atualização de perfil indisponível. Adapter: ${db?.constructor?.name}` };
-  }
-  console.log(`[updateUserProfile Action] db.updateUserProfile IS a function. Calling it...`);
-  const result = await db.updateUserProfile(userId, data);
-
-  if (result.success) {
+  try {
+    await prisma.user.update({
+        where: { id: userId },
+        data: {
+            ...data
+        } as any,
+    });
+    
     revalidatePath('/profile'); 
     revalidatePath(`/profile/edit`); 
+    
+    return { success: true, message: 'Perfil atualizado com sucesso!' };
+
+  } catch (error: any) {
+    console.error(`Error updating profile for user ${userId}:`, error);
+    return { success: false, message: `Erro ao atualizar perfil: ${error.message}` };
   }
-  console.log(`[updateUserProfile Action EXIT] Result:`, result);
-  return result;
 }

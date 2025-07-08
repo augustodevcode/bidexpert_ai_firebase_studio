@@ -1,7 +1,6 @@
 
 import Link from 'next/link';
 import { Coins, Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck } from 'lucide-react';
-import DevDbIndicator from './dev-db-indicator'; // Import the new component
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -88,7 +87,6 @@ export default function Footer() {
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} BidExpert. Todos os direitos reservados.
           </p>
-          <DevDbIndicator />
         </div>
       </div>
     </footer>

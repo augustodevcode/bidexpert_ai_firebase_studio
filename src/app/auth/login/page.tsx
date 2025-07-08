@@ -12,15 +12,11 @@ import { useState, type FormEvent } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { authenticateUserSql } from '../actions'; // Nova action
-import { useAuth } from '@/contexts/auth-context'; // Para setar o usuário no contexto
-import type { UserProfileWithPermissions } from '@/types';
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { setUser, setUserProfileWithPermissions } = useAuth(); // Do AuthContext
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -30,62 +26,30 @@ export default function LoginPage() {
     event.preventDefault();
     setIsLoading(true);
     setError(null);
-    const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM?.toUpperCase() || 'FIRESTORE';
     const redirectUrl = searchParams.get('redirect') || '/dashboard/overview';
 
-    if (activeSystem === 'FIRESTORE') {
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        toast({
-          title: "Login bem-sucedido!",
-          description: "Redirecionando...",
-        });
-        // O onAuthStateChanged no AuthProvider cuidará de setar user e userProfile
-        router.push(redirectUrl);
-      } catch (e: any) {
-        setError(e.message || 'Falha ao fazer login. Verifique suas credenciais.');
-        toast({
-          title: "Erro no Login",
-          description: e.message || 'Falha ao fazer login. Verifique suas credenciais.',
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    } else { // MYSQL ou POSTGRES
-      try {
-        const result = await authenticateUserSql(email, password);
-        if (result.success && result.user) {
-          toast({
-            title: `Login bem-sucedido (${activeSystem})!`,
-            description: "Redirecionando...",
-          });
-          // Salvar no localStorage para persistência
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('userProfile', JSON.stringify(result.user));
-          }
-          // Setar no contexto para uso imediato
-          setUser(null); // Limpar qualquer usuário Firebase, se houver
-          setUserProfileWithPermissions(result.user as UserProfileWithPermissions);
-          router.push(redirectUrl);
-        } else {
-          setError(result.message);
-          toast({
-            title: `Erro no Login (${activeSystem})`,
-            description: result.message,
-            variant: "destructive",
-          });
-        }
-      } catch (e: any) {
-        setError(e.message || `Erro ao autenticar com o banco de dados ${activeSystem}.`);
-        toast({
-          title: `Erro no Login (${activeSystem})`,
-          description: e.message || `Erro ao autenticar com o banco de dados ${activeSystem}.`,
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      toast({
+        title: "Login bem-sucedido!",
+        description: "Redirecionando...",
+      });
+      // The onAuthStateChanged listener in AuthProvider will handle setting user state
+      // and redirecting after the profile is loaded.
+      router.push(redirectUrl);
+    } catch (e: any) {
+      const errorMessage = e.code === 'auth/invalid-credential' 
+        ? 'Credenciais inválidas. Verifique seu email e senha.'
+        : 'Ocorreu um erro ao tentar fazer login.';
+      
+      setError(errorMessage);
+      toast({
+        title: "Erro no Login",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 

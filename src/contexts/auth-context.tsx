@@ -7,8 +7,8 @@ import type { ReactNode, Dispatch, SetStateAction} from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { auth } from '@/lib/firebase'; 
 import { Loader2 } from 'lucide-react';
-import { ensureUserProfileInDb } from '@/app/admin/users/actions';
-import type { UserProfileData, UserProfileWithPermissions } from '@/types';
+import { getOrCreateUserFromFirebaseAuth } from '@/app/admin/users/actions';
+import type { UserProfileWithPermissions } from '@/types';
 import { useRouter } from 'next/navigation'; 
 
 interface AuthContextType {
@@ -37,60 +37,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
     
-    if (activeSystem === 'FIRESTORE') {
-      console.log("[AuthProvider UseEffect] Firestore mode: Setting up onAuthStateChanged listener.");
-      unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-        console.log(`[AuthProvider onAuthStateChanged] Firebase Auth state changed. currentUser: ${currentUser?.email}`);
-        setUser(currentUser);
-        
-        if (userProfileWithPermissions && !currentUser) {
-             console.log("[AuthProvider onAuthStateChanged] Firebase user became null, but SQL profile existed. Clearing SQL profile.");
-             setUserProfileWithPermissions(null); 
-        }
-
-        if (currentUser && currentUser.email) {
-          try {
-            const targetRoleForNewUsers = 'USER'; 
-            const profileResult = await ensureUserProfileInDb(
-              currentUser.uid, 
-              currentUser.email, 
-              currentUser.displayName || currentUser.email.split('@')[0], 
-              targetRoleForNewUsers 
-            );
-
-            if (profileResult.success && profileResult.userProfile) {
-              setUserProfileWithPermissions(profileResult.userProfile as UserProfileWithPermissions);
-            } else {
-              console.error(`[AuthProvider onAuthStateChanged] Falha ao executar ensureUserProfileInDb para ${currentUser.email}: ${profileResult?.message || 'Resultado indefinido.'}`);
-              setUserProfileWithPermissions(null); 
-            }
-          } catch (error) {
-            console.error(`[AuthProvider onAuthStateChanged] Erro ao chamar ensureUserProfileInDb para ${currentUser.email}:`, error);
-            setUserProfileWithPermissions(null); 
-          }
-        } else {
-          setUser(null); 
-          setUserProfileWithPermissions(null); 
+    // This logic now correctly handles both Firebase and "SQL" (Prisma) backends,
+    // where Firebase Auth is always the source of truth for authentication.
+    console.log("[AuthProvider UseEffect] Setting up onAuthStateChanged listener.");
+    unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      console.log(`[AuthProvider onAuthStateChanged] Firebase Auth state changed. currentUser: ${currentUser?.email}`);
+      setUser(currentUser);
+      
+      if (!currentUser) {
+        // User is logged out
+        setUserProfileWithPermissions(null);
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('userProfile');
         }
         setLoading(false);
-      });
-    } else { // SQL or Sample Data mode
-      console.log(`[AuthProvider UseEffect] Mode: ${activeSystem}. Checking for localStorage profile.`);
-      try {
-        const storedProfile = localStorage.getItem('userProfile');
-        if (storedProfile) {
-          const profile = JSON.parse(storedProfile);
-          console.log('[AuthProvider UseEffect] Profile found in localStorage, setting context state.');
-          setUserProfileWithPermissions(profile);
-        } else {
-          console.log('[AuthProvider UseEffect] No profile found in localStorage.');
+      } else {
+        // User is logged in, get or create their profile in our DB
+        try {
+          const profile = await getOrCreateUserFromFirebaseAuth(
+            currentUser.uid,
+            currentUser.email!,
+            currentUser.displayName || currentUser.email!.split('@')[0],
+            currentUser.photoURL
+          );
+
+          if (profile) {
+            setUserProfileWithPermissions(profile);
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('userProfile', JSON.stringify(profile));
+            }
+          } else {
+            console.error(`[AuthProvider onAuthStateChanged] Failed to get or create user profile for ${currentUser.email}`);
+            setUserProfileWithPermissions(null); 
+          }
+        } catch (error) {
+          console.error(`[AuthProvider onAuthStateChanged] Error calling getOrCreateUserFromFirebaseAuth for ${currentUser.email}:`, error);
+          setUserProfileWithPermissions(null);
+        } finally {
+          setLoading(false);
         }
-      } catch (e) {
-        console.error("Failed to parse user profile from localStorage", e);
-        localStorage.removeItem('userProfile');
       }
-      setLoading(false);
-    }
+    });
 
     return () => {
       if (unsubscribe) {
@@ -99,20 +86,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSystem]); 
+  }, []); 
 
-  const logoutSqlUser = () => {
-    console.log("[AuthProvider logoutSqlUser] Logging out SQL user.");
+  const logoutSqlUser = async () => {
+    console.log("[AuthProvider] Logging out user.");
+    await signOut(auth); // This will trigger onAuthStateChanged to clear state
+    setUser(null);
+    setUserProfileWithPermissions(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('userProfile');
     }
-    setUser(null);
-    setUserProfileWithPermissions(null);
     router.push('/'); 
   };
   
-  // This is the fix: Always render the provider and children.
-  // The consuming components will use the `loading` state to show their own loaders.
   return (
     <AuthContext.Provider value={{ user, userProfileWithPermissions, loading, setUser, setUserProfileWithPermissions, logoutSqlUser }}>
       {children}

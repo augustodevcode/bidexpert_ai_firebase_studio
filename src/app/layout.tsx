@@ -7,7 +7,6 @@ import Footer from '@/components/layout/footer';
 import { Toaster } from "@/components/ui/toaster"
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/contexts/auth-context';
-import DevConfigProvider from '@/components/dev-config-provider'; // Import the provider
 
 export const metadata: Metadata = {
   title: 'BidExpert - Leilões Online',
@@ -27,18 +26,16 @@ export default async function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased flex flex-col min-h-screen bg-background dark:bg-background">
-        <DevConfigProvider>
-          <AuthProvider>
-            <TooltipProvider delayDuration={0}>
-              <Header />
-              <main className="flex-grow container mx-auto px-4 py-8">
-                {children}
-              </main>
-              <Footer />
-            </TooltipProvider>
-            <Toaster />
-          </AuthProvider>
-        </DevConfigProvider>
+        <AuthProvider>
+          <TooltipProvider delayDuration={0}>
+            <Header />
+            <main className="flex-grow container mx-auto px-4 py-8">
+              {children}
+            </main>
+            <Footer />
+          </TooltipProvider>
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );

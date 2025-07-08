@@ -646,7 +646,6 @@ export interface UserProfileData {
   uid: string;
   email: string;
   fullName: string | null;
-  password?: string; 
   roleId?: string | null;
   roleName?: string; 
   permissions?: string[]; 
@@ -694,7 +693,7 @@ export type UserProfileWithPermissions = UserProfileData & {
   permissions: string[];
 };
 
-export type EditableUserProfileData = Partial<Omit<UserProfileData, 'uid' | 'email' | 'status' | 'createdAt' | 'updatedAt' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'roleId' | 'roleName' | 'sellerProfileId' | 'permissions' | 'habilitationStatus' | 'password' >> & {
+export type EditableUserProfileData = Partial<Omit<UserProfileData, 'uid' | 'email' | 'status' | 'createdAt' | 'updatedAt' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'roleId' | 'roleName' | 'sellerProfileId' | 'permissions' | 'habilitationStatus' >> & {
   dateOfBirth?: Date | null; 
   rgIssueDate?: Date | null; 
 };
@@ -704,11 +703,11 @@ export type UserFormValues = Pick<UserProfileData, 'fullName' | 'email' | 'cpf' 
   roleId?: string | null; 
 };
 
-export interface SqlAuthResult {
-  success: boolean;
-  message: string;
-  user?: UserProfileData; 
-}
+export type UserCreationData = Partial<Omit<UserProfileData, 'uid' | 'email' | 'status' | 'createdAt' | 'updatedAt' | 'activeBids' | 'auctionsWon' | 'itemsSold' | 'avatarUrl' | 'dataAiHint' | 'roleId' | 'roleName' | 'sellerProfileId' | 'permissions' | 'habilitationStatus' >> & {
+  email: string;
+  password?: string;
+};
+
 
 export type DirectSaleOfferType = 'BUY_NOW' | 'ACCEPTS_PROPOSALS';
 export type DirectSaleOfferStatus = 'ACTIVE' | 'SOLD' | 'EXPIRED' | 'PENDING_APPROVAL';
@@ -1101,194 +1100,6 @@ export interface CnjSearchResponse {
 
 // --- END JUDICIAL & CNJ ENTITIES ---
 
-
-export interface IDatabaseAdapter {
-  initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[], rolesProcessed?: number }>;
-  disconnect?(): Promise<void>;
-  
-  getAdminDashboardStats(): Promise<AdminDashboardStats>;
-  getConsignorDashboardStats(sellerId: string): Promise<ConsignorDashboardStats>;
-  getAdminReportData(): Promise<AdminReportData>;
-
-  createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }>;
-  getLotCategories(): Promise<LotCategory[]>;
-  getLotCategory(idOrSlug: string): Promise<LotCategory | null>; 
-  getLotCategoryByName(name: string): Promise<LotCategory | null>;
-  updateLotCategory(id: string, data: Partial<CategoryFormData>): Promise<{ success: boolean; message: string; }>;
-  deleteLotCategory(id: string): Promise<{ success: boolean; message: string; }>;
-
-  createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }>;
-  getSubcategories(parentCategoryId: string): Promise<Subcategory[]>;
-  getSubcategory(id: string): Promise<Subcategory | null>;
-  getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null>;
-  updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }>;
-  deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }>;
-
-  createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string }>;
-  getStates(): Promise<StateInfo[]>;
-  getState(idOrSlugOrUf: string): Promise<StateInfo | null>;
-  updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string }>;
-  deleteState(id: string): Promise<{ success: boolean; message: string; }>;
-
-  createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string }>;
-  getCities(stateIdOrSlugFilter?: string): Promise<CityInfo[]>;
-  getCity(idOrCompositeSlug: string): Promise<CityInfo | null>; 
-  updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }>;
-  deleteCity(id: string): Promise<{ success: boolean; message: string; }>;
-
-  createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }>;
-  getAuctioneers(): Promise<AuctioneerProfileInfo[]>;
-  getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null>;
-  updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }>;
-  deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }>;
-  getAuctioneerBySlug(slugOrPublicId: string): Promise<AuctioneerProfileInfo | null>;
-  getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null>;
-
-
-  createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }>;
-  getSellers(): Promise<SellerProfileInfo[]>;
-  getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null>;
-  updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }>;
-  deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }>;
-  getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null>;
-  getSellerByName(name: string): Promise<SellerProfileInfo | null>;
-
-  createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }>;
-  createAuctionWithLots(wizardData: WizardData): Promise<{ success: boolean; message: string; auctionId?: string; }>;
-  getAuctions(): Promise<Auction[]>;
-  getAuctionsByIds(ids: string[]): Promise<Auction[]>;
-  getAuction(idOrPublicId: string): Promise<Auction | null>;
-  updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string }>;
-  deleteAuction(idOrPublicId: string): Promise<{ success: boolean; message: string; }>;
-  getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]>;
-  getAuctionsForConsignor(sellerId: string): Promise<Auction[]>;
-  getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]>;
-
-  // BENS
-  getBens(filter?: { judicialProcessId?: string; sellerId?: string }): Promise<Bem[]>;
-  getBensByIds(ids: string[]): Promise<Bem[]>;
-  getBem(id: string): Promise<Bem | null>;
-  createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }>;
-  updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }>;
-  updateBensStatus(bemIds: string[], status: Bem['status'], connection?: any): Promise<{ success: boolean, message: string }>;
-  deleteBem(id: string): Promise<{ success: boolean; message: string; }>;
-
-  createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }>;
-  createLotsFromBens(lotsToCreate: LotDbData[]): Promise<{ success: boolean, message: string, createdLots?: Lot[] }>;
-  getLots(auctionIdParam?: string): Promise<Lot[]>;
-  getLotsByIds(ids: string[]): Promise<Lot[]>;
-  getLotsBySellerSlug(sellerSlugOrPublicId: string): Promise<Lot[]>;
-  getLotsForConsignor(sellerId: string): Promise<Lot[]>;
-  getLot(idOrPublicId: string): Promise<Lot | null>;
-  updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }>;
-  deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }>;
-  
-  // Direct Sales
-  getDirectSaleOffers(): Promise<DirectSaleOffer[]>;
-  getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null>;
-  getDirectSaleOffersForSeller(sellerId: string): Promise<DirectSaleOffer[]>;
-  createDirectSaleOffer(data: DirectSaleOfferFormData): Promise<{ success: boolean; message: string; offerId?: string; }>;
-  updateDirectSaleOffer(id: string, data: Partial<DirectSaleOfferFormData>): Promise<{ success: boolean; message: string; }>;
-  deleteDirectSaleOffer(id: string): Promise<{ success: boolean; message: string; }>;
-  
-
-  getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]>;
-  getBidsForUser(userId: string): Promise<UserBid[]>;
-  placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }>;
-  getWinsForUser(userId: string): Promise<UserWin[]>;
-  getWinsForSeller(sellerId: string): Promise<UserWin[]>;
-  
-  // Proxy Bidding
-  createUserLotMaxBid(userId: string, lotId: string, maxAmount: number): Promise<{ success: boolean; message: string; maxBidId?: string; }>;
-  getActiveUserLotMaxBid(userId: string, lotId: string): Promise<UserLotMaxBid | null>;
-
-  getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]>;
-  createReview(review: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; reviewId?: string; }>;
-  
-  getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]>;
-  createQuestion(question: Omit<LotQuestion, "id" | "createdAt" | "answeredAt" | "answeredByUserId" | "answeredByUserDisplayName" | "isPublic">): Promise<{ success: boolean; message: string; questionId?: string; }>;
-  answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }>;
-
-  getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null>;
-  getUsersForHabilitationReview(): Promise<UserProfileData[]>;
-  updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }>;
-  ensureUserRole(
-    userId: string,
-    email: string,
-    fullName: string | null,
-    targetRoleName: string,
-    additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>,
-    roleIdToAssign?: string
-  ): Promise<{ success: boolean; message: string; userProfile?: UserProfileWithPermissions; }>;
-  getUsersWithRoles(): Promise<UserProfileWithPermissions[]>;
-  updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }>;
-  deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }>;
-  getUserByEmail(email: string): Promise<UserProfileWithPermissions | null>;
-  
-  createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }>;
-  getRoles(): Promise<Role[]>;
-  getRole(id: string): Promise<Role | null>;
-  getRoleByName(name: string): Promise<Role | null>;
-  updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }>;
-  deleteRole(id: string): Promise<{ success: boolean; message: string; }>;
-  ensureDefaultRolesExist(connection?: any): Promise<{ success: boolean; message: string; rolesProcessed?: number }>;
-
-  createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem; }>;
-  getMediaItems(): Promise<MediaItem[]>;
-  getMediaItem(id: string): Promise<MediaItem | null>;
-  updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }>;
-  deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }>;
-  linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }>;
-  unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }>;
-  
-  getPlatformSettings(): Promise<PlatformSettings>;
-  updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }>;
-
-  getNotificationsForUser(userId: string): Promise<Notification[]>;
-  getUnreadNotificationCount(userId: string): Promise<number>;
-  createNotification(notification: Omit<Notification, 'id' | 'createdAt' | 'isRead'>): Promise<{ success: boolean; message: string }>;
-
-  getBlogPosts?(): Promise<BlogPost[]>;
-  getBlogPost?(idOrSlug: string): Promise<BlogPost | null>;
-  createBlogPost?(data: BlogPostFormData): Promise<{ success: boolean; message: string; postId?: string }>;
-  updateBlogPost?(id: string, data: Partial<BlogPostFormData>): Promise<{ success: boolean; message: string }>;
-  deleteBlogPost?(id: string): Promise<{ success: boolean; message: string; }>;
-  
-  // New Judicial CRUDs
-  getCourts(): Promise<Court[]>;
-  getCourt(id: string): Promise<Court | null>;
-  createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }>;
-  updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }>;
-  deleteCourt(id: string): Promise<{ success: boolean; message: string; }>;
-  
-  getJudicialDistricts(): Promise<JudicialDistrict[]>;
-  getJudicialDistrict(id: string): Promise<JudicialDistrict | null>;
-  createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }>;
-  updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }>;
-  deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }>;
-
-  getJudicialBranches(): Promise<JudicialBranch[]>;
-  getJudicialBranch(id: string): Promise<JudicialBranch | null>;
-  createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }>;
-  updateJudicialBranch(id: string, data: Partial<JudicialBranchFormData>): Promise<{ success: boolean; message: string; }>;
-  deleteJudicialBranch(id: string): Promise<{ success: boolean; message: string; }>;
-  
-  getJudicialProcesses(): Promise<JudicialProcess[]>;
-  getJudicialProcess(id: string): Promise<JudicialProcess | null>;
-  createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }>;
-  updateJudicialProcess(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }>;
-  deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string; }>;
-  
-  getDocumentTypes(): Promise<DocumentType[]>;
-  getUserDocuments(userId: string): Promise<UserDocument[]>;
-  saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean; message: string; }>;
-}
-
-export type UserCreationData = Pick<UserProfileData, 'fullName' | 'email' | 'cpf' | 'cellPhone' | 'dateOfBirth' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing'> & {
-  password?: string;
-  roleId?: string | null; 
-  documentUrls?: { [key: string]: string };
-};
 
 export interface RecentlyViewedLotInfo {
   id: string;
