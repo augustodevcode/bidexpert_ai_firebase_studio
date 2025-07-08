@@ -1,4 +1,6 @@
-
+/**
+ * @fileoverview Server Action for updating a user's own profile.
+ */
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -10,6 +12,13 @@ interface UpdateProfileResult {
   message: string;
 }
 
+/**
+ * Updates a user's profile with the provided data.
+ * This action is intended to be called by the user themselves to edit their own profile.
+ * @param {string} userId - The unique ID of the user whose profile is to be updated.
+ * @param {EditableUserProfileData} data - An object containing the profile fields to update.
+ * @returns {Promise<UpdateProfileResult>} An object indicating the result of the operation.
+ */
 export async function updateUserProfile(
   userId: string,
   data: EditableUserProfileData
@@ -19,6 +28,8 @@ export async function updateUserProfile(
   }
   
   try {
+    // The 'as any' cast is a temporary workaround for Prisma's strictness with partial JSON types.
+    // In a production scenario, you might have more robust type guards or data transformation.
     await prisma.user.update({
         where: { id: userId },
         data: {
@@ -26,6 +37,8 @@ export async function updateUserProfile(
         } as any,
     });
     
+    // Revalidate paths to ensure the updated data is reflected on the profile page
+    // and any other page that might display user information.
     revalidatePath('/profile'); 
     revalidatePath(`/profile/edit`); 
     

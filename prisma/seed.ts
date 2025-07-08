@@ -97,6 +97,9 @@ async function main() {
     }
   }
 
+  console.log('Seeding document types...');
+  await prisma.documentType.createMany({ data: sampleDocumentTypes, skipDuplicates: true });
+
   console.log('Seeding courts...');
   await prisma.court.createMany({ data: sampleCourts, skipDuplicates: true });
   

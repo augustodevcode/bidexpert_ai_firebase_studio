@@ -59,10 +59,8 @@ export default function UserDocumentsPage() {
   };
 
   const relevantDocTypes = allDocTypes.filter(dt => {
-      if (userProfileWithPermissions?.accountType === 'LEGAL' || userProfileWithPermissions?.accountType === 'DIRECT_SALE_CONSIGNOR') {
-          return dt.appliesTo.includes('LEGAL');
-      }
-      return dt.appliesTo.includes('PHYSICAL');
+      const userAccountType = userProfileWithPermissions?.accountType || 'PHYSICAL';
+      return dt.appliesTo.includes(userAccountType);
   });
 
   const mergedDocuments = relevantDocTypes.map(docType => {
