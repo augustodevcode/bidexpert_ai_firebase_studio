@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getDirectSaleOffersForSeller, deleteDirectSaleOffer } from '@/app/admin/direct-sales/actions';
+import { getDirectSaleOffers, deleteDirectSaleOffer } from '@/app/admin/direct-sales/actions';
 import type { DirectSaleOffer } from '@/types';
 import { PlusCircle, ShoppingCart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -14,6 +14,10 @@ import { createColumns } from '@/app/admin/direct-sales/columns';
 import { useAuth } from '@/contexts/auth-context';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 
+/**
+ * ConsignorDirectSalesPage displays a list of direct sale offers belonging to the currently
+ * logged-in consignor. It fetches data and allows for management of these offers.
+ */
 export default function ConsignorDirectSalesPage() {
   const { userProfileWithPermissions, loading: authLoading } = useAuth();
   const [offers, setOffers] = useState<DirectSaleOffer[]>([]);
@@ -22,40 +26,42 @@ export default function ConsignorDirectSalesPage() {
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
+  /**
+   * Fetches the direct sale offers for a given seller ID.
+   * @param {string} sellerId The ID of the seller/consignor.
+   */
+  const fetchOffers = useCallback(async (sellerId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const allOffers = await getDirectSaleOffers();
+      const consignorOffers = allOffers.filter(o => o.sellerId === sellerId);
+      setOffers(consignorOffers);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar suas ofertas.";
+      console.error("Error fetching consignor's direct sale offers:", e);
+      setError(errorMessage);
+      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+  
+  // Effect to trigger data fetching when the user profile is available.
   useEffect(() => {
-    let isMounted = true;
-    
-    const fetchOffers = async (sellerId: string) => {
-      if (!isMounted) return;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const fetchedOffers = await getDirectSaleOffersForSeller(sellerId);
-        if (isMounted) {
-          setOffers(fetchedOffers);
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar suas ofertas.";
-        console.error("Error fetching consignor's direct sale offers:", e);
-        if (isMounted) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    
-    if (!authLoading && userProfileWithPermissions?.sellerProfileId) {
-      fetchOffers(userProfileWithPermissions.sellerProfileId);
+    const sellerId = userProfileWithPermissions?.sellerId;
+    if (!authLoading && sellerId) {
+      fetchOffers(sellerId);
     } else if (!authLoading) {
       setError("Perfil de comitente não encontrado na sua conta.");
       setIsLoading(false);
     }
-  }, [userProfileWithPermissions, authLoading, toast, refetchTrigger]);
+  }, [userProfileWithPermissions, authLoading, toast, refetchTrigger, fetchOffers]);
   
+  /**
+   * Handles the deletion of a direct sale offer and triggers a data refetch.
+   * @param {string} id The ID of the offer to delete.
+   */
   const handleDelete = useCallback(
     async (id: string) => {
       const result = await deleteDirectSaleOffer(id);
@@ -69,6 +75,7 @@ export default function ConsignorDirectSalesPage() {
     [toast]
   );
   
+  // Memoize columns and filter options for performance.
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   const statusOptions = useMemo(() => 

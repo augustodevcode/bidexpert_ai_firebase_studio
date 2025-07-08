@@ -12,6 +12,11 @@ import { useRouter } from 'next/navigation';
 import type { LotCategory, SellerProfileInfo } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
+/**
+ * NewConsignorDirectSaleOfferPage allows a logged-in consignor to create a new
+ * direct sale offer. It pre-populates the seller information based on the
+ * user's profile.
+ */
 export default function NewConsignorDirectSaleOfferPage() {
   const { userProfileWithPermissions, loading: authLoading } = useAuth();
   const [categories, setCategories] = useState<LotCategory[]>([]);
@@ -21,8 +26,11 @@ export default function NewConsignorDirectSaleOfferPage() {
   const { toast } = useToast();
 
   useEffect(() => {
+    /**
+     * Fetches the necessary data (categories and consignor profile) to populate the form.
+     */
     async function loadData() {
-      if (!userProfileWithPermissions?.sellerProfileId) {
+      if (!userProfileWithPermissions?.sellerId) {
         toast({
           title: "Perfil de Comitente não encontrado",
           description: "Sua conta de usuário não está vinculada a um perfil de comitente.",
@@ -35,7 +43,7 @@ export default function NewConsignorDirectSaleOfferPage() {
       try {
         const [cats, seller] = await Promise.all([
           getLotCategories(),
-          getSeller(userProfileWithPermissions.sellerProfileId)
+          getSeller(userProfileWithPermissions.sellerId)
         ]);
         setCategories(cats);
         setCurrentSeller(seller);
@@ -46,6 +54,7 @@ export default function NewConsignorDirectSaleOfferPage() {
         setIsLoading(false);
       }
     }
+
     if (!authLoading && userProfileWithPermissions) {
       loadData();
     } else if (!authLoading) {
@@ -53,12 +62,16 @@ export default function NewConsignorDirectSaleOfferPage() {
     }
   }, [userProfileWithPermissions, authLoading, toast, router]);
 
+  /**
+   * Handles the form submission by calling the server action.
+   * It ensures the logged-in user's seller name is used.
+   * @param {DirectSaleOfferFormData} data The form data.
+   */
   async function handleCreateOffer(data: DirectSaleOfferFormData) {
     'use server';
     if (!currentSeller) {
       return { success: false, message: "Informação do vendedor não disponível." };
     }
-    // Ensure the sellerName from the form is the one from the logged-in user
     const dataWithSeller = { ...data, sellerName: currentSeller.name };
     return createDirectSaleOffer(dataWithSeller);
   }

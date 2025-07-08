@@ -14,6 +14,11 @@ import { createConsignorAuctionColumns } from './columns';
 import { useAuth } from '@/contexts/auth-context';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 
+/**
+ * ConsignorAuctionsPage displays a list of auctions belonging to the currently
+ * logged-in consignor. It fetches data using a server action and presents it
+ * in a filterable, sortable data table.
+ */
 export default function ConsignorAuctionsPage() {
   const { userProfileWithPermissions, loading: authLoading } = useAuth();
   const [auctions, setAuctions] = useState<Auction[]>([]);
@@ -21,6 +26,10 @@ export default function ConsignorAuctionsPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  /**
+   * Fetches the auctions for a given seller ID.
+   * @param {string} sellerId The ID of the seller/consignor.
+   */
   const fetchAuctions = useCallback(async (sellerId: string) => {
     setIsLoading(true);
     setError(null);
@@ -37,8 +46,9 @@ export default function ConsignorAuctionsPage() {
     }
   }, [toast]);
 
+  // Effect to trigger data fetching when the user profile is available.
   useEffect(() => {
-    const sellerId = userProfileWithPermissions?.sellerProfileId;
+    const sellerId = userProfileWithPermissions?.sellerId;
     if (!authLoading && sellerId) {
       fetchAuctions(sellerId);
     } else if (!authLoading) {
@@ -47,8 +57,10 @@ export default function ConsignorAuctionsPage() {
     }
   }, [userProfileWithPermissions, authLoading, fetchAuctions]);
 
+  // Memoize columns to prevent re-creation on every render.
   const columns = useMemo(() => createConsignorAuctionColumns(), []);
   
+  // Memoize options for faceted filtering.
   const statusOptions = useMemo(() => 
     [...new Set(auctions.map(a => a.status))]
       .map(status => ({ value: status, label: getAuctionStatusText(status) })),

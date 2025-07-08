@@ -1,4 +1,8 @@
-// src/app/dashboard/notifications/actions.ts
+/**
+ * @fileoverview Server Actions for managing user Notifications.
+ * Provides functions to fetch notifications for a user, get the count of unread notifications,
+ * and mark specific notifications as read.
+ */
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -7,8 +11,8 @@ import type { Notification } from '@/types';
 
 /**
  * Fetches notifications for a specific user.
- * @param userId - The ID of the user whose notifications to fetch.
- * @returns A promise that resolves to an array of Notification objects.
+ * @param {string} userId - The ID of the user whose notifications to fetch.
+ * @returns {Promise<Notification[]>} A promise that resolves to an array of Notification objects.
  */
 export async function getNotificationsForUser(userId: string): Promise<Notification[]> {
   if (!userId) {
@@ -30,8 +34,8 @@ export async function getNotificationsForUser(userId: string): Promise<Notificat
 
 /**
  * Fetches the count of unread notifications for a specific user.
- * @param userId The ID of the user.
- * @returns A promise that resolves to the number of unread notifications.
+ * @param {string} userId The ID of the user.
+ * @returns {Promise<number>} A promise that resolves to the number of unread notifications.
  */
 export async function getUnreadNotificationCountAction(userId: string): Promise<number> {
   if (!userId) return 0;
@@ -51,9 +55,9 @@ export async function getUnreadNotificationCountAction(userId: string): Promise<
 
 /**
  * Marks a specific notification as read for a given user.
- * @param notificationId The ID of the notification to mark as read.
- * @param userId The ID of the user who owns the notification.
- * @returns A promise that resolves to an object indicating success or failure.
+ * @param {string} notificationId The ID of the notification to mark as read.
+ * @param {string} userId The ID of the user who owns the notification.
+ * @returns {Promise<{success: boolean; message?: string}>} An object indicating success or failure.
  */
 export async function markNotificationAsRead(notificationId: string, userId: string): Promise<{success: boolean; message?: string}> {
     if (!notificationId || !userId) {
@@ -61,7 +65,6 @@ export async function markNotificationAsRead(notificationId: string, userId: str
     }
     
     try {
-        // Use updateMany to avoid crashing if the notification doesn't exist
         const result = await prisma.notification.updateMany({
             where: {
                 id: notificationId,

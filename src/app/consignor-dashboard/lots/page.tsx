@@ -14,6 +14,10 @@ import { createConsignorLotColumns } from './columns';
 import { useAuth } from '@/contexts/auth-context';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 
+/**
+ * ConsignorLotsPage displays a list of lots belonging to the currently
+ * logged-in consignor across all their auctions.
+ */
 export default function ConsignorLotsPage() {
   const { userProfileWithPermissions, loading: authLoading } = useAuth();
   const [lots, setLots] = useState<Lot[]>([]);
@@ -21,6 +25,10 @@ export default function ConsignorLotsPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  /**
+   * Fetches the lots for a given seller ID.
+   * @param {string} sellerId The ID of the seller/consignor.
+   */
   const fetchLots = useCallback(async (sellerId: string) => {
     setIsLoading(true);
     setError(null);
@@ -37,8 +45,9 @@ export default function ConsignorLotsPage() {
     }
   }, [toast]);
 
+  // Effect to trigger data fetching when the user profile is available.
   useEffect(() => {
-    const sellerId = userProfileWithPermissions?.sellerProfileId;
+    const sellerId = userProfileWithPermissions?.sellerId;
     if (!authLoading && sellerId) {
       fetchLots(sellerId);
     } else if (!authLoading) {
@@ -47,6 +56,7 @@ export default function ConsignorLotsPage() {
     }
   }, [userProfileWithPermissions, authLoading, fetchLots]);
 
+  // Memoize columns and filter options to optimize rendering.
   const columns = useMemo(() => createConsignorLotColumns(), []);
 
   const statusOptions = useMemo(() => 
@@ -55,7 +65,7 @@ export default function ConsignorLotsPage() {
   [lots]);
   
   const auctionOptions = useMemo(() =>
-    [...new Set(lots.map(lot => lot.auctionName).filter(Boolean))]
+    [...new Set(lots.map(lot => lot.auction?.title).filter(Boolean))]
         .map(name => ({ value: name!, label: name! })),
   [lots]);
 

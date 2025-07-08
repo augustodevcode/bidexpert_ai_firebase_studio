@@ -1,14 +1,26 @@
-
+/**
+ * @fileoverview Server Actions for managing Lot Categories.
+ * 
+ * This file provides the server-side logic for creating, reading, updating,
+ * and deleting lot categories. It uses Prisma for database interactions
+ * and revalidates Next.js cache paths to ensure the UI stays up-to-date.
+ */
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import type { LotCategory } from '@/types';
-import type { CategoryFormValues } from './category-form-schema';
+import type { CategoryFormData } from './category-form-schema';
 import { slugify } from '@/lib/sample-data-helpers';
 
+/**
+ * Creates a new lot category.
+ * @param {CategoryFormData} data - The data for the new category from the form.
+ * @returns {Promise<{ success: boolean; message: string; categoryId?: string; }>} 
+ * An object indicating the result of the operation.
+ */
 export async function createLotCategory(
-  data: CategoryFormValues
+  data: CategoryFormData
 ): Promise<{ success: boolean; message: string; categoryId?: string; }> {
   try {
     const newCategory = await prisma.lotCategory.create({
@@ -30,6 +42,10 @@ export async function createLotCategory(
   }
 }
 
+/**
+ * Fetches all lot categories from the database.
+ * @returns {Promise<LotCategory[]>} A promise that resolves to an array of categories.
+ */
 export async function getLotCategories(): Promise<LotCategory[]> {
   try {
     const categories = await prisma.lotCategory.findMany({
@@ -42,6 +58,11 @@ export async function getLotCategories(): Promise<LotCategory[]> {
   }
 }
 
+/**
+ * Fetches a single lot category by its ID.
+ * @param {string} id - The ID of the category.
+ * @returns {Promise<LotCategory | null>} The category object or null if not found.
+ */
 export async function getLotCategory(id: string): Promise<LotCategory | null> {
   try {
     const category = await prisma.lotCategory.findUnique({ where: { id } });
@@ -52,6 +73,11 @@ export async function getLotCategory(id: string): Promise<LotCategory | null> {
   }
 }
 
+/**
+ * Fetches a single lot category by its slug.
+ * @param {string} slug - The slug of the category.
+ * @returns {Promise<LotCategory | null>} The category object or null if not found.
+ */
 export async function getLotCategoryBySlug(slug: string): Promise<LotCategory | null> {
   try {
     const category = await prisma.lotCategory.findUnique({ where: { slug } });
@@ -62,6 +88,11 @@ export async function getLotCategoryBySlug(slug: string): Promise<LotCategory | 
   }
 }
 
+/**
+ * Fetches a single lot category by its name.
+ * @param {string} name - The exact name of the category.
+ * @returns {Promise<LotCategory | null>} The category object or null if not found.
+ */
 export async function getLotCategoryByName(name: string): Promise<LotCategory | null> {
   try {
     const category = await prisma.lotCategory.findFirst({ where: { name } });
@@ -72,9 +103,15 @@ export async function getLotCategoryByName(name: string): Promise<LotCategory | 
   }
 }
 
+/**
+ * Updates an existing lot category.
+ * @param {string} id - The ID of the category to update.
+ * @param {CategoryFormData} data - The updated category data.
+ * @returns {Promise<{ success: boolean; message: string; }>} An object indicating the result.
+ */
 export async function updateLotCategory(
   id: string,
-  data: CategoryFormValues
+  data: CategoryFormData
 ): Promise<{ success: boolean; message: string; }> {
   try {
     await prisma.lotCategory.update({
@@ -94,6 +131,11 @@ export async function updateLotCategory(
   }
 }
 
+/**
+ * Deletes a lot category.
+ * @param {string} id - The ID of the category to delete.
+ * @returns {Promise<{ success: boolean; message: string; }>} An object indicating the result.
+ */
 export async function deleteLotCategory(
   id: string
 ): Promise<{ success: boolean; message: string; }> {

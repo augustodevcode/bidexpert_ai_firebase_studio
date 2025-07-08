@@ -1,17 +1,26 @@
-
-
+/**
+ * @fileoverview The main home page of the BidExpert application.
+ * This server component fetches initial data for display, such as featured lots and auctions,
+ * and renders the main sections of the homepage including the hero carousel and filter links.
+ */
 import AuctionCard from '@/components/auction-card';
 import HeroCarousel from '@/components/hero-carousel';
 import FilterLinkCard from '@/components/filter-link-card';
 import LotCard from '@/components/lot-card';
 import type { Auction, Lot, PlatformSettings } from '@/types';
 import Link from 'next/link';
-import { Landmark, Scale, FileText, Tags, CalendarX, CheckSquare, Star, FileText as FileTextIcon } from 'lucide-react';
+import { Landmark, Scale, FileText as FileTextIcon, Tags, CalendarX, CheckSquare, Star, Gavel as TomadaPrecosIcon } from 'lucide-react';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getCategoryAssets } from '@/lib/sample-data-helpers';
 
+/**
+ * The main server component for the homepage.
+ * It fetches all necessary data for rendering the initial view of the site.
+ * It includes error handling to prevent crashes if data fetching fails.
+ * @returns {Promise<JSX.Element>} The rendered homepage component.
+ */
 export default async function HomePage() {
   try {
     const platformSettings = await getPlatformSettings();
@@ -20,8 +29,14 @@ export default async function HomePage() {
     const allAuctions = await getAuctions();
     const allLots = await getLots();
 
-    const auctions: Auction[] = allAuctions.slice(0, 10);
-    const featuredLots: Lot[] = allLots.filter(lot => lot.isFeatured && lot.status === 'ABERTO_PARA_LANCES').slice(0, 10);
+    // Filter for featured auctions and lots
+    const featuredAuctions = allAuctions
+      .filter(a => a.isFeaturedOnMarketplace && a.status === 'ABERTO_PARA_LANCES')
+      .slice(0, 10);
+
+    const featuredLots = allLots
+      .filter(lot => lot.isFeatured && lot.status === 'ABERTO_PARA_LANCES')
+      .slice(0, 10);
 
     const filterLinksData = [
       {
@@ -61,15 +76,6 @@ export default async function HomePage() {
         bgColorClass: 'bg-amber-50 dark:bg-amber-900/40 hover:border-amber-300',
       },
       {
-        title: 'Segunda Praça',
-        subtitle: 'Novas chances com valores atrativos.',
-        imageUrl: getCategoryAssets('Segunda Praça').bannerUrl,
-        imageAlt: 'Ícone Segunda Praça',
-        dataAiHint: getCategoryAssets('Segunda Praça').bannerAiHint,
-        link: '/search?type=auctions&stage=second_praça', // Assuming a filter for second stage
-        bgColorClass: 'bg-violet-50 dark:bg-violet-900/40 hover:border-violet-300',
-      },
-      {
         title: 'Leilões Encerrados',
         subtitle: 'Consulte o histórico de resultados.',
         imageUrl: getCategoryAssets('Leilões Encerrados').bannerUrl,
@@ -78,15 +84,6 @@ export default async function HomePage() {
         link: '/search?type=auctions&status=ENCERRADO',
         bgColorClass: 'bg-slate-50 dark:bg-slate-800/40 hover:border-slate-300',
       },
-      {
-        title: 'Leilões Cancelados',
-        subtitle: 'Veja os leilões que foram cancelados.',
-        imageUrl: getCategoryAssets('Leilões Cancelados').bannerUrl,
-        imageAlt: 'Ícone Leilões Cancelados',
-        dataAiHint: getCategoryAssets('Leilões Cancelados').bannerAiHint,
-        link: '/search?type=auctions&status=CANCELADO',
-        bgColorClass: 'bg-rose-50 dark:bg-rose-900/40 hover:border-rose-300',
-      },
     ];
 
     return (
@@ -94,8 +91,8 @@ export default async function HomePage() {
         <HeroCarousel />
 
         <section>
-          <h2 className="text-2xl font-bold text-center mb-6 font-headline">Explorar</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4 md:gap-5">
+          <h2 className="text-2xl font-bold text-center mb-6 font-headline">Explorar por Modalidade</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-5">
             {filterLinksData.map((card) => (
               <FilterLinkCard
                 key={card.title}
@@ -137,15 +134,15 @@ export default async function HomePage() {
           <h1 className="text-3xl font-bold mb-2 text-center font-headline">Leilões em Destaque</h1>
           <p className="text-muted-foreground text-center mb-8">Descubra itens únicos e faça seus lances.</p>
 
-          {auctions.length > 0 ? (
+          {featuredAuctions.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {auctions.map((auction) => (
-                <AuctionCard key={auction.id} auction={auction} />
+              {featuredAuctions.map((auction) => (
+                <AuctionCard key={auction.id} auction={auction} onUpdate={() => { /* Placeholder for potential client-side updates */ }} />
               ))}
             </div>
           ) : (
             <div className="text-center py-12">
-              <h2 className="text-xl font-semibold mb-2">Nenhum leilão encontrado</h2>
+              <h2 className="text-xl font-semibold mb-2">Nenhum leilão em destaque no momento</h2>
               <p className="text-muted-foreground">Por favor, verifique mais tarde.</p>
             </div>
           )}
