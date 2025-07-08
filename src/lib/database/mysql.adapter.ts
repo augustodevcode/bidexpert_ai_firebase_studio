@@ -24,13 +24,11 @@ import type {
   JudicialBranch, JudicialBranchFormData,
   JudicialProcess, JudicialProcessFormData,
   Bem, BemFormData,
-  UserDocument,
+  ProcessParty,
   DocumentType,
+  UserDocument,
   Notification,
-  BlogPost,
-  UserBid,
-  AdminDashboardStats,
-  ConsignorDashboardStats
+  BlogPost
 } from '@/types';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -791,27 +789,8 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
   
   async getLotsByIds(ids: string[]): Promise<Lot[]> {
-    if (!ids || ids.length === 0) {
-        return [];
-    }
-    const placeholders = ids.map(() => '?').join(',');
-    const query = `
-      SELECT l.*, 
-             c.name as category_name, 
-             s.name as subcategory_name, 
-             st.uf as state_uf, 
-             city.name as city_name, 
-             a.title as auction_name
-      FROM lots l
-      LEFT JOIN auctions a ON l.auction_id = a.id
-      LEFT JOIN lot_categories c ON l.category_id = c.id
-      LEFT JOIN subcategories s ON l.subcategory_id = s.id
-      LEFT JOIN states st ON l.state_id = st.id
-      LEFT JOIN cities city ON l.city_id = city.id
-      WHERE l.id IN (${placeholders}) OR l.public_id IN (${placeholders})
-    `;
-    const [rows] = await getPool().execute<RowDataPacket[]>(query, [...ids, ...ids]);
-    return mapMySqlRowsToCamelCase(rows).map(mapToLot);
+    console.warn("[MySqlAdapter] getLotsByIds is not yet implemented for MySQL.");
+    return Promise.resolve([]);
   }
   
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[], rolesProcessed?: number }> {
@@ -1090,7 +1069,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] getBidsForLot is not yet implemented for MySQL.");
     return [];
   }
-  async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo; }> {
+  async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo }> {
     console.warn("[MySqlAdapter] placeBidOnLot is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
@@ -1123,8 +1102,20 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async getUsersWithRoles(): Promise<UserProfileData[]> {
-    console.warn("[MySqlAdapter] getUsersWithRoles is not yet implemented for MySQL.");
-    return [];
+    const query = `
+      SELECT u.*, r.name as roleNameFromJoin, r.permissions as rolePermissionsFromJoin
+      FROM users u
+      LEFT JOIN roles r ON u.role_id = r.id
+      ORDER BY u.full_name
+    `;
+    try {
+      const [rows] = await getPool().execute<RowDataPacket[]>(query);
+      // O segundo argumento `null` indica que não estamos passando um objeto Role pré-carregado
+      return mapMySqlRowsToCamelCase(rows).map(row => mapToUserProfileData(row, null));
+    } catch (error: any) {
+      console.error('[MySqlAdapter - getUsersWithRoles] Error:', error);
+      return [];
+    }
   }
   async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
     console.warn("[MySqlAdapter] updateUserRole is not yet implemented for MySQL.");
@@ -1137,6 +1128,15 @@ export class MySqlAdapter implements IDatabaseAdapter {
   async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> {
     console.warn("[MySqlAdapter] createRole is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getRoles(): Promise<Role[]> {
+    try {
+      const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM roles ORDER BY name');
+      return mapMySqlRowsToCamelCase(rows).map(mapToRole);
+    } catch (error: any) {
+      console.error('[MySqlAdapter - getRoles] Error:', error);
+      return [];
+    }
   }
   async getRole(id: string): Promise<Role | null> {
     console.warn("[MySqlAdapter] getRole is not yet implemented for MySQL.");

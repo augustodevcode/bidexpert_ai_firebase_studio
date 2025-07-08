@@ -27,10 +27,7 @@ import type {
   UserDocument,
   DocumentType,
   Notification,
-  BlogPost,
-  UserBid,
-  AdminDashboardStats,
-  ConsignorDashboardStats
+  BlogPost
 } from '@/types';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -996,9 +993,20 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.warn("[PostgresAdapter] ensureUserRole is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
-  async getUsersWithRoles(): Promise<UserProfileData[]> {
-    console.warn("[PostgresAdapter] getUsersWithRoles is not yet implemented for PostgreSQL.");
-    return [];
+  async getUsersWithRoles(): Promise<UserProfileWithPermissions[]> {
+    const query = `
+      SELECT u.*, r.name as role_name_from_join, r.permissions as role_permissions_from_join
+      FROM users u
+      LEFT JOIN roles r ON u.role_id = r.id
+      ORDER BY u.full_name
+    `;
+    try {
+      const { rows } = await getPool().query(query);
+      return rows.map(row => mapToUserProfileData(row, null));
+    } catch (error: any) {
+      console.error('[PostgresAdapter - getUsersWithRoles] Error:', error);
+      return [];
+    }
   }
   async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
     console.warn("[PostgresAdapter] updateUserRole is not yet implemented for PostgreSQL.");

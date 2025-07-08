@@ -36,7 +36,6 @@ import type {
   Notification,
   BlogPost,
   UserBid,
-  AdminReportData,
   AdminDashboardStats,
   ConsignorDashboardStats
 } from '@/types';
@@ -362,6 +361,16 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async getRoles(): Promise<Role[]> {
     await delay(50);
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleRoles)));
+  }
+
+  async getUsersWithRoles(): Promise<UserProfileWithPermissions[]> {
+    await delay(50);
+    // Ensure all users have a permissions array for consistency
+    const users = this.localData.sampleUserProfiles.map(u => ({
+      ...u,
+      permissions: u.permissions || [],
+    }));
+    return Promise.resolve(JSON.parse(JSON.stringify(users)));
   }
 
 }
