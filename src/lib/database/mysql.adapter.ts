@@ -425,9 +425,11 @@ function mapToJudicialProcess(row: any, parties: ProcessParty[] = []): JudicialP
     courtId: String(row.courtId),
     districtId: String(row.districtId),
     branchId: String(row.branchId),
+    sellerId: row.sellerId ? String(row.sellerId) : undefined,
     courtName: row.courtName,
     districtName: row.districtName,
     branchName: row.branchName,
+    sellerName: row.sellerName,
     parties,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
@@ -594,10 +596,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] createLotsFromBens is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
-  async getAuction(idOrPublicId: string): Promise<Auction | null> {
-    console.warn("[MySqlAdapter] getAuction is not yet implemented for MySQL.");
-    return null;
-  }
   async getBem(id: string): Promise<Bem | null> {
     console.warn("[MySqlAdapter] getBem is not yet implemented for MySQL.");
     return null;
@@ -682,10 +680,33 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] deleteJudicialBranch is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
+  
   async getJudicialProcesses(): Promise<JudicialProcess[]> {
-    console.warn("[MySqlAdapter] getJudicialProcesses is not yet implemented for MySQL.");
-    return [];
+    const query = `
+      SELECT jp.*, c.name as court_name, jd.name as district_name, jb.name as branch_name, s.name as seller_name
+      FROM judicial_processes jp
+      LEFT JOIN courts c ON jp.court_id = c.id
+      LEFT JOIN judicial_districts jd ON jp.district_id = jd.id
+      LEFT JOIN judicial_branches jb ON jp.branch_id = jb.id
+      LEFT JOIN sellers s ON jp.seller_id = s.id
+      ORDER BY jp.created_at DESC;
+    `;
+    try {
+      const [processRows] = await getPool().execute<RowDataPacket[]>(query);
+      const processes = mapMySqlRowsToCamelCase(processRows);
+      
+      for (const process of processes) {
+        const [partyRows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM process_parties WHERE process_id = ?', [process.id]);
+        process.parties = mapMySqlRowsToCamelCase(partyRows);
+      }
+      return processes.map(p => mapToJudicialProcess(p, p.parties));
+
+    } catch (error: any) {
+      console.error('[MySqlAdapter - getJudicialProcesses] Error:', error);
+      return [];
+    }
   }
+
   async getJudicialProcess(id: string): Promise<JudicialProcess | null> {
     console.warn("[MySqlAdapter] getJudicialProcess is not yet implemented for MySQL.");
     return null;
@@ -1045,6 +1066,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] deleteAuction is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
+  async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
+    console.warn("[MySqlAdapter] getAuctionsBySellerSlug is not yet implemented for MySQL.");
+    return [];
+  }
   async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> {
     console.warn("[MySqlAdapter] createLot is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
@@ -1101,7 +1126,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] ensureUserRole is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
-  async getUsersWithRoles(): Promise<UserProfileData[]> {
+  async getUsersWithRoles(): Promise<UserProfileWithPermissions[]> {
     const query = `
       SELECT u.*, r.name as roleNameFromJoin, r.permissions as rolePermissionsFromJoin
       FROM users u
@@ -1265,7 +1290,4 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
   
   async getUserByEmail(email: string): Promise<UserProfileWithPermissions | null> {
-    console.warn("[MySqlAdapter] getUserByEmail is not yet implemented for MySQL.");
-    return null;
-  }
-}
+    console.warn("[MySqlAdapter] getUserByEmail is not yet implemented for
