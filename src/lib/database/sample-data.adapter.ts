@@ -36,6 +36,7 @@ import type {
   Notification,
   BlogPost,
   UserBid,
+  AdminReportData,
   AdminDashboardStats,
   ConsignorDashboardStats
 } from '@/types';
@@ -45,10 +46,13 @@ import * as sampleData from '@/lib/sample-data';
 import type { WizardData } from '@/components/admin/wizard/wizard-context';
 import { ensureAdminInitialized } from '@/lib/firebase/admin';
 import type { FieldValue as FirebaseAdminFieldValue, Timestamp as FirebaseAdminTimestamp } from 'firebase-admin/firestore';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const DATA_FILE_PATH = path.resolve(process.cwd(), 'src/sample-data.local.json');
 
+const randomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
 
 export class SampleDataAdapter implements IDatabaseAdapter {
   private localData: { [K in keyof typeof sampleData]: (typeof sampleData)[K] };
@@ -153,7 +157,35 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return Promise.resolve();
   }
   
-  // --- Dashboard ---
+  // --- Dashboard & Reports ---
+  async getAdminReportData(): Promise<AdminReportData> {
+    const totalLots = this.localData.sampleLots.length;
+    const soldLots = this.localData.sampleLots.filter(l => l.status === 'VENDIDO');
+    const totalRevenue = soldLots.reduce((sum, lot) => sum + lot.price, 0);
+    const newUsers = this.localData.sampleUserProfiles.length;
+    const activeAuctions = this.localData.sampleAuctions.filter(a => a.status === 'ABERTO_PARA_LANCES').length;
+
+    const salesData = [
+      { name: 'Jan', Sales: randomInt(20000, 50000) }, { name: 'Fev', Sales: randomInt(20000, 50000) },
+      { name: 'Mar', Sales: randomInt(20000, 50000) }, { name: 'Abr', Sales: randomInt(20000, 50000) },
+      { name: 'Mai', Sales: randomInt(20000, 50000) }, { name: 'Jun', Sales: randomInt(20000, 50000) },
+    ];
+
+    const categoryCounts = this.localData.sampleLotCategories.map(cat => ({
+      name: cat.name,
+      value: this.localData.sampleLots.filter(l => l.categoryId === cat.id).length
+    })).filter(c => c.value > 0).slice(0, 5);
+
+    return Promise.resolve({
+      totalRevenue,
+      newUsersLast30Days: Math.floor(newUsers / 2), // approximation
+      activeAuctions,
+      lotsSoldCount: soldLots.length,
+      salesData,
+      categoryData: categoryCounts
+    });
+  }
+  
   async getAdminDashboardStats(): Promise<AdminDashboardStats> {
     return Promise.resolve({
       users: this.localData.sampleUserProfiles?.length || 0,
@@ -196,7 +228,7 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     });
 
     const salesByMonth = Array.from(salesByMonthMap.entries())
-      .map(([name, sales]) => ({ name, sales }))
+      .map(([name, sales]) => ({ name: format(new Date(name), 'MMM/yy', { locale: ptBR }), sales }))
       .sort((a,b) => a.name.localeCompare(b.name));
 
     return Promise.resolve({
@@ -210,6 +242,18 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   }
 
   // --- Notifications ---
+  async createNotification(notification: Omit<Notification, 'id' | 'createdAt' | 'isRead'>): Promise<{ success: boolean; message: string; }> {
+    const newNotif: Notification = {
+      ...notification,
+      id: `notif-${uuidv4()}`,
+      isRead: false,
+      createdAt: new Date(),
+    };
+    this.localData.sampleNotifications.unshift(newNotif);
+    this._persistData();
+    return Promise.resolve({ success: true, message: "Notificação criada." });
+  }
+
   async getUnreadNotificationCount(userId: string): Promise<number> {
     if (!userId) return 0;
     const count = (this.localData.sampleNotifications || []).filter(n => n.userId === userId && !n.isRead).length;
@@ -218,10 +262,23 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   
   // Stubs and other methods...
   async createAuctionWithLots(wizardData: WizardData): Promise<{ success: boolean; message: string; auctionId?: string; }> { return { success: false, message: "Not implemented."}; }
-  async getWinsForSeller(sellerId: string): Promise<UserWin[]> { return []; }
-  async getLotsForConsignor(sellerId: string): Promise<Lot[]> { return []; }
-  async getBidsForUser(userId: string): Promise<UserBid[]> { return []; }
-  async getNotificationsForUser(userId: string): Promise<Notification[]> { return []; }
+  async getWinsForSeller(sellerId: string): Promise<UserWin[]> { 
+    return Promise.resolve(
+        (this.localData.sampleUserWins || []).filter(win => win.lot.sellerId === sellerId)
+    );
+  }
+  async getLotsForConsignor(sellerId: string): Promise<Lot[]> {
+      const lots = (this.localData.sampleLots || []).filter(lot => lot.sellerId === sellerId);
+      return Promise.resolve(lots.map(l => this._enrichLotData(l)));
+  }
+  async getBidsForUser(userId: string): Promise<UserBid[]> {
+      return Promise.resolve(this.localData.sampleUserBids.filter(b => b.userId === userId));
+  }
+  async getNotificationsForUser(userId: string): Promise<Notification[]> {
+      if (!userId) return [];
+      const notifs = (this.localData.sampleNotifications || []).filter(n => n.userId === userId);
+      return Promise.resolve(JSON.parse(JSON.stringify(notifs)));
+  }
   async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> { return { success: false, message: 'Not implemented' }; }
   async getLotCategories(): Promise<LotCategory[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleLotCategories))); }
   // ... a lot of other stubs ...

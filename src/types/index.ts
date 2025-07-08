@@ -949,6 +949,15 @@ export interface Notification {
   createdAt: AnyTimestamp;
 }
 
+export interface AdminReportData {
+  totalRevenue: number;
+  newUsersLast30Days: number;
+  activeAuctions: number;
+  lotsSoldCount: number;
+  salesData: { name: string; Sales: number }[];
+  categoryData: { name: string; value: number }[];
+}
+
 export interface AdminDashboardStats {
     users: number;
     auctions: number;
@@ -1094,6 +1103,7 @@ export interface IDatabaseAdapter {
   
   getAdminDashboardStats(): Promise<AdminDashboardStats>;
   getConsignorDashboardStats(sellerId: string): Promise<ConsignorDashboardStats>;
+  getAdminReportData(): Promise<AdminReportData>;
 
   createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }>;
   getLotCategories(): Promise<LotCategory[]>;
@@ -1230,6 +1240,7 @@ export interface IDatabaseAdapter {
 
   getNotificationsForUser(userId: string): Promise<Notification[]>;
   getUnreadNotificationCount(userId: string): Promise<number>;
+  createNotification(notification: Omit<Notification, 'id' | 'createdAt' | 'isRead'>): Promise<{ success: boolean; message: string }>;
 
   getBlogPosts?(): Promise<BlogPost[]>;
   getBlogPost?(idOrSlug: string): Promise<BlogPost | null>;

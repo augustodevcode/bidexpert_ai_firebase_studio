@@ -1,4 +1,3 @@
-
 // src/app/admin/reports/page.tsx
 'use client';
 
@@ -9,13 +8,13 @@ import {
     Users, 
     DollarSign, 
     Gavel, 
-    Tag, 
+    ListChecks as LotsIcon, 
     BarChart3, 
     Loader2 
 } from 'lucide-react';
 import { 
     LineChart, 
-    PieChart,
+    Pie,
     Bar, 
     XAxis, 
     YAxis, 
@@ -27,34 +26,58 @@ import {
     Cell 
 } from 'recharts';
 import { useState, useEffect } from 'react';
+import { getAdminReportDataAction } from './actions';
+import type { AdminReportData } from '@/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
-// Sample data - in a real app, this would be fetched from the server.
-const salesData = [
-  { name: 'Jan', Sales: 4000 }, { name: 'Feb', Sales: 3000 }, { name: 'Mar', Sales: 2000 },
-  { name: 'Apr', Sales: 2780 }, { name: 'May', Sales: 1890 }, { name: 'Jun', Sales: 2390 },
-];
+const initialStats: AdminReportData = {
+  totalRevenue: 0,
+  newUsersLast30Days: 0,
+  activeAuctions: 0,
+  lotsSoldCount: 0,
+  salesData: [],
+  categoryData: [],
+};
 
-const categoryData = [
-  { name: 'Imóveis', value: 400 }, { name: 'Veículos', value: 300 },
-  { name: 'Máquinas', value: 300 }, { name: 'Arte', value: 200 },
-];
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF'];
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+function StatCard({ title, value, icon: Icon, description, isLoading }: { title: string, value: number | string, icon: React.ElementType, description: string, isLoading: boolean }) {
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                {isLoading ? (
+                    <Skeleton className="h-8 w-1/2 mb-2" />
+                ) : (
+                    <div className="text-2xl font-bold">{value}</div>
+                )}
+                <p className="text-xs text-muted-foreground">{description}</p>
+            </CardContent>
+        </Card>
+    );
+}
 
 export default function AdminReportsPage() {
-    const [isClient, setIsClient] = useState(false);
+    const [stats, setStats] = useState<AdminReportData>(initialStats);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        setIsClient(true);
-    }, []);
-
-    if (!isClient) {
-        return (
-            <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            </div>
-        );
-    }
+        async function fetchStats() {
+          setIsLoading(true);
+          try {
+            const fetchedStats = await getAdminReportDataAction();
+            setStats(fetchedStats);
+          } catch (error) {
+            console.error("Failed to fetch dashboard stats", error);
+          } finally {
+            setIsLoading(false);
+          }
+        }
+        fetchStats();
+      }, []);
   
   return (
     <div className="space-y-6">
@@ -71,59 +94,47 @@ export default function AdminReportsPage() {
       </Card>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Faturamento Total (30d)</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">R$ 45,231.89</div>
-                <p className="text-xs text-muted-foreground">+20.1% em relação ao mês anterior</p>
-            </CardContent>
-        </Card>
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Novos Usuários (30d)</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">+2,350</div>
-                <p className="text-xs text-muted-foreground">+180.1% em relação ao mês anterior</p>
-            </CardContent>
-        </Card>
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Leilões Ativos</CardTitle>
-                <Gavel className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">+125</div>
-                <p className="text-xs text-muted-foreground">Leilões abertos para lance</p>
-            </CardContent>
-        </Card>
-         <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Taxa de Venda Média</CardTitle>
-                <Tag className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">78.5%</div>
-                <p className="text-xs text-muted-foreground">Média de lotes vendidos por leilão</p>
-            </CardContent>
-        </Card>
+        <StatCard 
+            title="Faturamento Bruto Total"
+            value={stats.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            icon={DollarSign}
+            description="Total de lotes vendidos"
+            isLoading={isLoading}
+        />
+        <StatCard 
+            title="Novos Usuários (30d)"
+            value={`+${stats.newUsersLast30Days}`}
+            icon={Users}
+            description="Novos cadastros no último mês"
+            isLoading={isLoading}
+        />
+         <StatCard 
+            title="Leilões Ativos"
+            value={stats.activeAuctions}
+            icon={Gavel}
+            description="Leilões abertos para lances"
+            isLoading={isLoading}
+        />
+         <StatCard 
+            title="Total de Lotes Vendidos"
+            value={stats.lotsSoldCount}
+            icon={LotsIcon}
+            description="Desde o início da plataforma"
+            isLoading={isLoading}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle className="flex items-center"><LineChartIcon className="mr-2 h-5 w-5"/> Vendas Mensais</CardTitle>
+            <CardTitle className="flex items-center"><LineChartIcon className="mr-2 h-5 w-5"/> Vendas Mensais (Últimos 12 meses)</CardTitle>
           </CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={salesData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+              <LineChart data={stats.salesData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" stroke="#888888" fontSize={12} />
-                <YAxis stroke="#888888" fontSize={12} tickFormatter={(value) => `R$${value/1000}k`} />
+                <YAxis stroke="#888888" fontSize={12} tickFormatter={(value) => `R$${Number(value)/1000}k`} />
                 <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`}/>
                 <Legend />
                 <Line type="monotone" dataKey="Sales" stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
@@ -133,13 +144,13 @@ export default function AdminReportsPage() {
         </Card>
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle className="flex items-center"><PieChartIcon className="mr-2 h-5 w-5"/> Leilões por Categoria</CardTitle>
+            <CardTitle className="flex items-center"><PieChartIcon className="mr-2 h-5 w-5"/> Lotes Vendidos por Categoria</CardTitle>
           </CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                    <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label>
-                         {categoryData.map((entry, index) => (
+                    <Pie data={stats.categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label>
+                         {stats.categoryData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                     </Pie>
