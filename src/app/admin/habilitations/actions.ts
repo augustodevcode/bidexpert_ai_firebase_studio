@@ -3,7 +3,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
-import type { UserProfileData, UserDocument } from '@/types';
+import type { UserProfileData, UserDocument, UserHabilitationStatus } from '@/types';
+import type { Prisma } from '@prisma/client';
 
 /**
  * Fetches users whose documents are pending review.
@@ -45,37 +46,21 @@ export async function getUserDocumentsForReview(userId: string): Promise<UserDoc
 }
 
 /**
- * Updates the status of a single user document.
- */
-async function updateUserDocumentStatus(
-  documentId: string,
-  status: 'APPROVED' | 'REJECTED',
-  rejectionReason?: string | null
-): Promise<{ success: boolean, userId?: string }> {
-  const updatedDoc = await prisma.userDocument.update({
-    where: { id: documentId },
-    data: {
-      status,
-      rejectionReason: rejectionReason,
-      analysisDate: new Date(),
-      // analystId could be added here if we track who performed the action
-    }
-  });
-  return { success: true, userId: updatedDoc.userId };
-}
-
-/**
  * Checks if a user can be fully habilitated after a document status change.
+ * If the user's overall status changes, a notification is created.
+ * @param tx - The Prisma transaction client.
+ * @param userId - The ID of the user to check.
+ * @returns The new habilitation status if it changed, otherwise null.
  */
-async function checkAndFinalizeHabilitation(userId: string): Promise<void> {
-  const user = await prisma.user.findUnique({
+async function checkAndFinalizeHabilitation(tx: Prisma.TransactionClient, userId: string): Promise<UserHabilitationStatus | null> {
+  const user = await tx.user.findUnique({
     where: { id: userId },
     select: { accountType: true }
   });
 
-  if (!user) return;
+  if (!user) return null;
   
-  const requiredDocTypes = await prisma.documentType.findMany({ 
+  const requiredDocTypes = await tx.documentType.findMany({ 
       where: { 
           isRequired: true,
           appliesTo: {
@@ -83,42 +68,85 @@ async function checkAndFinalizeHabilitation(userId: string): Promise<void> {
           }
       }
   });
-  const userDocs = await prisma.userDocument.findMany({ where: { userId } });
+  const userDocs = await tx.userDocument.findMany({ where: { userId } });
 
   const allRequiredApproved = requiredDocTypes.every(reqDoc =>
     userDocs.some(userDoc => userDoc.documentTypeId === reqDoc.id && userDoc.status === 'APPROVED')
   );
 
+  let newHabilitationStatus: UserHabilitationStatus | null = null;
   if (allRequiredApproved) {
-    await prisma.user.update({
-      where: { id: userId },
-      data: { habilitationStatus: 'HABILITADO' }
-    });
+    newHabilitationStatus = 'HABILITADO';
   } else {
-    // If not all are approved, but none are pending analysis, set status to reflect that.
     const anyRejected = userDocs.some(doc => doc.status === 'REJECTED');
     if (anyRejected) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { habilitationStatus: 'REJECTED_DOCUMENTS' }
-      });
+      newHabilitationStatus = 'REJECTED_DOCUMENTS';
     }
   }
+
+  if (newHabilitationStatus) {
+      const currentUser = await tx.user.findUnique({ where: { id: userId }, select: { habilitationStatus: true }});
+      if (currentUser?.habilitationStatus !== newHabilitationStatus) {
+          await tx.user.update({
+              where: { id: userId },
+              data: { habilitationStatus: newHabilitationStatus }
+          });
+          // Create notification for overall status change
+          if (newHabilitationStatus === 'HABILITADO') {
+            await tx.notification.create({
+               data: {
+                   userId: userId,
+                   message: "Parabéns! Seu cadastro foi habilitado. Você já pode participar dos leilões.",
+                   link: '/dashboard/documents'
+               }
+           });
+          } else if (newHabilitationStatus === 'REJECTED_DOCUMENTS') {
+            await tx.notification.create({
+                data: {
+                    userId: userId,
+                    message: "Atenção: há pendências em seus documentos. Por favor, verifique e reenvie.",
+                    link: '/dashboard/documents'
+                }
+            });
+          }
+          return newHabilitationStatus;
+      }
+  }
+  return null; // No change in overall status
 }
+
 
 export async function approveDocument(documentId: string): Promise<{ success: boolean; message: string }> {
   try {
-    const result = await updateUserDocumentStatus(documentId, 'APPROVED');
-    if (result.userId) {
-      await checkAndFinalizeHabilitation(result.userId);
-      revalidatePath('/admin/habilitations');
-      revalidatePath(`/admin/habilitations/${result.userId}`);
-      return { success: true, message: 'Documento aprovado.' };
-    }
-    return { success: false, message: 'Usuário não encontrado após aprovação.' };
+    await prisma.$transaction(async (tx) => {
+        const docToUpdate = await tx.userDocument.findUnique({ where: {id: documentId}, include: {documentType: true}});
+        if (!docToUpdate) {
+            throw new Error("Documento não encontrado.");
+        }
+
+        await tx.userDocument.update({
+            where: { id: documentId },
+            data: { status: 'APPROVED', rejectionReason: null, analysisDate: new Date() }
+        });
+        
+        await tx.notification.create({
+            data: {
+                userId: docToUpdate.userId,
+                message: `Seu documento "${docToUpdate.documentType.name}" foi APROVADO.`,
+                link: '/dashboard/documents'
+            }
+        });
+
+        await checkAndFinalizeHabilitation(tx, docToUpdate.userId);
+    });
+
+    revalidatePath('/admin/habilitations');
+    // We can't know the user ID here to revalidate their page,
+    // but client-side refetching will handle it.
+    return { success: true, message: 'Documento aprovado.' };
   } catch (error: any) {
     console.error("Error approving document:", error);
-    return { success: false, message: 'Falha ao aprovar documento.' };
+    return { success: false, message: error.message || 'Falha ao aprovar documento.' };
   }
 }
 
@@ -127,16 +155,32 @@ export async function rejectDocument(documentId: string, reason: string): Promis
     return { success: false, message: 'O motivo da rejeição é obrigatório.' };
   }
   try {
-    const result = await updateUserDocumentStatus(documentId, 'REJECTED', reason);
-    if (result.userId) {
-      await checkAndFinalizeHabilitation(result.userId);
-      revalidatePath('/admin/habilitations');
-      revalidatePath(`/admin/habilitations/${result.userId}`);
-      return { success: true, message: 'Documento rejeitado.' };
-    }
-    return { success: false, message: 'Usuário não encontrado após rejeição.' };
+    await prisma.$transaction(async (tx) => {
+        const docToUpdate = await tx.userDocument.findUnique({ where: {id: documentId}, include: {documentType: true}});
+        if (!docToUpdate) {
+            throw new Error("Documento não encontrado.");
+        }
+
+        await tx.userDocument.update({
+            where: { id: documentId },
+            data: { status: 'REJECTED', rejectionReason: reason, analysisDate: new Date() }
+        });
+        
+        await tx.notification.create({
+            data: {
+                userId: docToUpdate.userId,
+                message: `Seu documento "${docToUpdate.documentType.name}" foi REJEITADO. Motivo: ${reason}`,
+                link: '/dashboard/documents'
+            }
+        });
+
+        await checkAndFinalizeHabilitation(tx, docToUpdate.userId);
+    });
+    
+    revalidatePath('/admin/habilitations');
+    return { success: true, message: 'Documento rejeitado.' };
   } catch (error: any) {
     console.error("Error rejecting document:", error);
-    return { success: false, message: 'Falha ao rejeitar documento.' };
+    return { success: false, message: error.message || 'Falha ao rejeitar documento.' };
   }
 }

@@ -9,7 +9,7 @@
 - **Item 2.3 (Parcial):** Página "Fale Conosco" como canal inicial de contato.
 - **Item 3.2:** Ícones de redes sociais no rodapé e botões de compartilhamento social.
 - **Item 3.5:** SEO básico implementado com metadados dinâmicos nas páginas de leilão, lote e categoria.
-- **Item 4.1 (Parcial):** Sistema de notificações (Backend e UI). Notificação de lance superado implementada.
+- **Item 4.1 (Parcial):** Sistema de notificações (Backend e UI). Notificação de lance superado implementada. Notificações de aprovação/rejeição de documentos implementadas.
 - **Item 4.2:** Sistema completo de Avaliações e Perguntas/Respostas na página de lotes, com envio e listagem de dados.
 - **Item 20:** Estrutura completa e funcionalidade de dados do Auditório Virtual, com seleção de lote e navegação.
 - **Item 5.1:** Correção do erro "Map container is already initialized" em todas as instâncias para garantir estabilidade.
@@ -23,7 +23,7 @@
 - **Gerenciamento de Habilitação (Admin):** Implementada a interface administrativa para revisar, aprovar e rejeitar os documentos enviados pelos usuários.
 
 ## DOING
-- **Item 4.1 (Finalizar):** Implementar mais gatilhos de notificação (ex: leilão começando, lote arrematado, etc.) e considerar notificações por Web Push/Email.
+- **Item 4.1 (Em Andamento):** Implementar mais gatilhos de notificação. Já foram adicionadas notificações para lance superado e para aprovação/rejeição de documentos. Próximo: notificações de arremate e início de leilão.
 
 ## NEXT
 - **Item 1.1 (Avançado):** Implementar atualização em tempo real para volume de ofertas e lances via WebSockets para uma experiência de leilão ainda mais dinâmica.
