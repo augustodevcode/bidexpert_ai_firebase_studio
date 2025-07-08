@@ -1,88 +1,149 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import type { SellerProfileInfo, SellerFormData, Lot } from '@/types';
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
+import { slugify } from '@/lib/sample-data-helpers';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function createSeller(
   data: SellerFormData
 ): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> {
-  const db = await getDatabaseAdapter();
-  const result = await db.createSeller(data);
-  if (result.success) {
+  try {
+    const newSeller = await prisma.seller.create({
+      data: {
+        ...data,
+        publicId: `SELL-PUB-${uuidv4().substring(0,8)}`,
+        slug: slugify(data.name),
+        userId: data.userId || null,
+        judicialBranchId: data.judicialBranchId || null,
+      }
+    });
     revalidatePath('/admin/sellers');
-    revalidatePath('/consignor-dashboard/overview');
-    // Also revalidate pages that might use the new seller
-    revalidatePath('/admin/judicial-processes/new');
-    revalidatePath('/admin/judicial-processes/edit'); 
     revalidatePath('/admin/wizard');
+    return { success: true, message: 'Comitente criado com sucesso!', sellerId: newSeller.id, sellerPublicId: newSeller.publicId };
+  } catch (error: any) {
+    console.error("Error creating seller:", error);
+    if (error.code === 'P2002' && error.meta?.target?.includes('slug')) {
+      return { success: false, message: 'Já existe um comitente com este nome (slug). Por favor, escolha outro nome.' };
+    }
+    return { success: false, message: error.message || 'Falha ao criar comitente.' };
   }
-  return result;
 }
 
 export async function getSellers(): Promise<SellerProfileInfo[]> {
-  const db = await getDatabaseAdapter();
-  return db.getSellers();
+  try {
+    const sellers = await prisma.seller.findMany({
+      orderBy: { name: 'asc' },
+      include: { judicialBranch: { select: { name: true, district: { select: { name: true }} } }}
+    });
+    
+    return sellers.map(s => ({
+      ...s,
+      judicialBranchName: s.judicialBranch ? `${s.judicialBranch.name} - ${s.judicialBranch.district.name}` : undefined,
+    })) as unknown as SellerProfileInfo[];
+
+  } catch (error: any) {
+    console.error("Error fetching sellers:", error);
+    return [];
+  }
 }
 
 export async function getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> {
-  const db = await getDatabaseAdapter();
-  return db.getSeller(idOrPublicId);
+  try {
+    const seller = await prisma.seller.findFirst({
+      where: { OR: [{ id: idOrPublicId }, { publicId: idOrPublicId }] }
+    });
+    return seller as unknown as SellerProfileInfo | null;
+  } catch (error: any) {
+    console.error(`Error fetching seller with ID ${idOrPublicId}:`, error);
+    return null;
+  }
 }
 
 export async function getSellerBySlug(slugOrPublicId: string): Promise<SellerProfileInfo | null> {
-  const db = await getDatabaseAdapter();
-  return db.getSellerBySlug(slugOrPublicId);
+  try {
+    const seller = await prisma.seller.findFirst({
+      where: { OR: [{ slug: slugOrPublicId }, { publicId: slugOrPublicId }] }
+    });
+    return seller as unknown as SellerProfileInfo | null;
+  } catch (error: any) {
+    console.error(`Error fetching seller by slug/publicId ${slugOrPublicId}:`, error);
+    return null;
+  }
 }
 
 export async function getLotsBySellerSlug(sellerSlugOrPublicId: string): Promise<Lot[]> {
-  const db = await getDatabaseAdapter();
-  if (typeof db.getLotsBySellerSlug === 'function') {
-    return db.getLotsBySellerSlug(sellerSlugOrPublicId);
+  try {
+    const lots = await prisma.lot.findMany({
+      where: {
+        auction: {
+          seller: {
+            OR: [
+              { slug: sellerSlugOrPublicId },
+              { publicId: sellerSlugOrPublicId }
+            ]
+          }
+        }
+      },
+      include: {
+        auction: true,
+      }
+    });
+    return lots as unknown as Lot[];
+  } catch (error) {
+    console.error(`Error fetching lots for seller slug/id ${sellerSlugOrPublicId}:`, error);
+    return [];
   }
-  console.warn(`[getLotsBySellerSlug] Adapter ${db.constructor.name} does not implement getLotsBySellerSlug. This may be inefficient.`);
-  const allLots = await db.getLots();
-  const seller = await getSellerBySlug(sellerSlugOrPublicId);
-  if (!seller) return [];
-  return allLots.filter(lot => lot.sellerId === seller.id || lot.sellerName === seller.name);
 }
 
-
 export async function getSellerByName(name: string): Promise<SellerProfileInfo | null> {
-  const db = await getDatabaseAdapter();
-  return db.getSellerByName(name);
+  try {
+    const seller = await prisma.seller.findFirst({
+      where: { name }
+    });
+    return seller as unknown as SellerProfileInfo | null;
+  } catch (error: any) {
+    console.error(`Error fetching seller by name ${name}:`, error);
+    return null;
+  }
 }
 
 export async function updateSeller(
-  idOrPublicId: string,
+  id: string,
   data: Partial<SellerFormData>
 ): Promise<{ success: boolean; message: string }> {
-  const db = await getDatabaseAdapter();
-  const result = await db.updateSeller(idOrPublicId, data);
-  if (result.success) {
-    revalidatePath('/admin/sellers');
-    revalidatePath(`/admin/sellers/${idOrPublicId}/edit`);
-    revalidatePath('/consignor-dashboard/overview'); 
-    const seller = await getSeller(idOrPublicId);
-    if (seller?.slug) {
-      revalidatePath(`/sellers/${seller.slug}`);
+  try {
+    const updateData: any = { ...data };
+    if (data.name) {
+      updateData.slug = slugify(data.name);
     }
+    await prisma.seller.update({
+      where: { id },
+      data: updateData,
+    });
+    revalidatePath('/admin/sellers');
+    revalidatePath(`/admin/sellers/${id}/edit`);
+    if(updateData.slug) revalidatePath(`/sellers/${updateData.slug}`);
+    return { success: true, message: 'Comitente atualizado com sucesso!' };
+  } catch (error: any) {
+    console.error(`Error updating seller with ID ${id}:`, error);
+    return { success: false, message: error.message || 'Falha ao atualizar comitente.' };
   }
-  return result;
 }
 
 export async function deleteSeller(
-  idOrPublicId: string
+  id: string
 ): Promise<{ success: boolean; message: string }> {
-  const db = await getDatabaseAdapter();
-  const sellerToDelete = await getSeller(idOrPublicId);
-  const result = await db.deleteSeller(idOrPublicId);
-  if (result.success) {
+  try {
+    await prisma.seller.delete({ where: { id } });
     revalidatePath('/admin/sellers');
-     if (sellerToDelete?.slug) {
-      revalidatePath(`/sellers/${sellerToDelete.slug}`);
+    return { success: true, message: 'Comitente excluído com sucesso!' };
+  } catch (error: any) {
+    console.error(`Error deleting seller with ID ${id}:`, error);
+    if (error.code === 'P2003') { // Foreign key constraint failed
+      return { success: false, message: 'Não é possível excluir. Este comitente está associado a um ou mais leilões/processos.' };
     }
+    return { success: false, message: error.message || 'Falha ao excluir comitente.' };
   }
-  return result;
 }

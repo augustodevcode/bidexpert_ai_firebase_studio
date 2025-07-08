@@ -1,64 +1,55 @@
-# Firebase Studio
+# BidExpert - Powered by Firebase Studio
 
-Este é um NextJS starter em Firebase Studio.
+This is a Next.js starter application built with Firebase Studio. It's designed to provide a robust foundation for an online auction platform, complete with an admin panel, user authentication, and a flexible data layer powered by Prisma.
 
-Para começar, dê uma olhada em `src/app/page.tsx`.
+To get started, take a look at `src/app/page.tsx`.
 
 ---
 
-## Configuração do Banco de Dados (Opcional)
+## Database Setup with Prisma
 
-Por padrão, o aplicativo usa dados de exemplo em memória (`SAMPLE_DATA`) e não requer configuração adicional. Para usar um banco de dados **MySQL** ou **PostgreSQL**, siga estas etapas:
+This project uses **Prisma** as its Object-Relational Mapper (ORM) to manage database interactions. It's configured to work with PostgreSQL, but can be adapted for other SQL databases like MySQL.
 
-### 1. Crie um arquivo `.env.local`
+### 1. Create a `.env.local` File
 
-Na raiz do seu projeto, crie um arquivo chamado `.env.local`. Este arquivo armazenará suas credenciais de banco de dados com segurança e não será enviado para o controle de versão.
+In the root of your project, create a file named `.env.local`. This file will securely store your database connection string and should not be committed to version control.
 
-### 2. Adicione sua String de Conexão
+### 2. Add Your Database Connection String
 
-Adicione a variável de ambiente apropriada ao seu arquivo `.env.local`. Você pode obter a string de conexão do painel de controle do seu provedor de banco de dados (por exemplo, Neon, Supabase, PlanetScale, AWS RDS) ou construí-la se estiver executando o banco de dados localmente.
+Add the `DATABASE_URL` environment variable to your `.env.local` file. You can get the connection string from your database provider's dashboard (e.g., Neon, Supabase, PlanetScale, AWS RDS) or construct it if you're running the database locally.
 
-**Formato das Strings:**
-- **MySQL:** `mysql://[USUARIO]:[SENHA]@[HOST]:[PORTA]/[NOME_DO_BANCO]`
-- **PostgreSQL:** `postgresql://[USUARIO]:[SENHA]@[HOST]:[PORTA]/[NOME_DO_BANCO]`
+**Format for PostgreSQL:**
+`postgresql://[USER]:[PASSWORD]@[HOST]:[PORT]/[DATABASE_NAME]`
 
-**Exemplo para MySQL:**
+**Example for a local PostgreSQL database:**
 ```
-MYSQL_CONNECTION_STRING="mysql://root:sua_senha_secreta@localhost:3306/bidexpert_db"
-```
-
-**Exemplo para PostgreSQL:**
-```
-POSTGRES_CONNECTION_STRING="postgresql://postgres:sua_senha_secreta@localhost:5432/bidexpert_db"
+DATABASE_URL="postgresql://user:password@localhost:5432/bidexpert_db"
 ```
 
-### 3. Execute os Scripts de Configuração
+### 3. Initialize and Seed the Database
 
-Depois de configurar sua string de conexão, execute os seguintes scripts no terminal para preparar seu banco de dados. Certifique-se de substituir `[db]` por `mysql` ou `postgres`.
+Once your connection string is set up, run the following commands in your terminal to prepare your database.
 
-1.  **Inicializar o Esquema (Obrigatório):** Cria todas as tabelas necessárias.
+1.  **Apply Migrations:** This command reads your `prisma/schema.prisma` file and creates all the necessary tables in your database.
     ```bash
-    # Para MySQL
-    npm run db:init:mysql
+    npx prisma migrate dev --name init
+    ```
+    This will also automatically run `prisma generate` to create the Prisma Client based on your schema.
 
-    # Para PostgreSQL
-    npm run db:init:postgres
+2.  **Seed the Database (Optional):** This command executes the `prisma/seed.ts` script to populate your database with essential data like default user roles, an admin account, and sample data to make development easier.
+    ```bash
+    npx prisma db seed
     ```
 
-2.  **Configurar Usuário Admin (Recomendado):** Cria um usuário administrador padrão para você acessar o painel de admin.
-    ```bash
-    # Para MySQL
-    npm run db:setup-admin:mysql
+### 4. Start the Development Server
 
-    # Para PostgreSQL
-    npm run db:setup-admin:postgres
-    ```
-    
-3.  **Popular com Dados de Exemplo (Opcional):** Preenche o banco de dados com dados de exemplo para facilitar o desenvolvimento.
-    ```bash
-    # Para MySQL
-    npm run db:seed:mysql
+You're all set! Start the Next.js development server.
+```bash
+npm run dev
+```
 
-    # Para PostgreSQL
-    npm run db:seed:postgres
-    ```
+### Useful Prisma Commands
+
+-   **`npx prisma studio`**: Opens a visual editor for your database in the browser.
+-   **`npx prisma generate`**: Manually regenerates the Prisma Client after changes to `schema.prisma`.
+-   **`npx prisma migrate dev --name <migration-name>`**: Creates a new migration file after you modify `schema.prisma`.
