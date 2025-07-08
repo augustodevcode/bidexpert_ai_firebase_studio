@@ -17,8 +17,12 @@
 - **Header & Navigation:** Implementação de megamenus dinâmicos e responsivos.
 - **Painel de Usuário:** Páginas de Favoritos, Histórico e Meus Arremates/Lances agora são funcionais.
 - **Refatoração do Modelo de Dados:** Status e datas foram removidos do modelo de `Lot` e agora são derivados do `Auction` principal, garantindo consistência.
-- **Painel do Comitente (`/consignor-dashboard`):** Implementada a busca e exibição de dados reais (leilões, lotes, métricas financeiras) e página de configurações. **(Esta tarefa)**
-- **Relatórios Avançados:** Adicionadas novas métricas e KPIs aos relatórios do admin. **(Esta tarefa)**
+- **Painel do Comitente (`/consignor-dashboard`):** Implementada a busca e exibição de dados reais (leilões, lotes, métricas financeiras) e página de configurações.
+- **Relatórios Avançados:** Adicionadas novas métricas e KPIs aos relatórios do admin.
+
+## DOING
+- **Item 4.1:** Desenvolver um sistema completo de notificações (Web Push e Email) para alertar usuários sobre novos lances, status de arremate, etc.
+  - **Status:** Estrutura do banco de dados (schema Prisma) criada. Próximo passo é criar as actions e a UI.
 
 ## NEXT
 - **Item 1.1 (Avançado):** Implementar atualização em tempo real para volume de ofertas e lances via WebSockets para uma experiência de leilão ainda mais dinâmica.
@@ -26,7 +30,6 @@
 - **Item 3.1:** Integrar um módulo de blog para marketing de conteúdo, com artigos sobre o mercado de leilões.
 - **Item 3.3:** Criar um sistema de gamificação com pontos/recompensas por atividade e um módulo para gerenciar promoções especiais.
 - **Item 3.4:** Integrar APIs de parceiros estratégicos para funcionalidades como simulação de frete e opções de financiamento.
-- **Item 4.1:** Desenvolver um sistema completo de notificações (Web Push e Email) para alertar usuários sobre novos lances, status de arremate, etc.
 - **Item 4.3:** Pesquisar e, se viável, implementar uma camada de certificação via blockchain para o registro de lances e arremates, aumentando a transparência e a segurança.
 
 
