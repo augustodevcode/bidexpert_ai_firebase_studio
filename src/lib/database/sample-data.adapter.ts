@@ -207,7 +207,11 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     const activeLots = sellerLots.filter(lot => lot.status === 'ABERTO_PARA_LANCES').length;
     const soldLots = sellerLots.filter(lot => lot.status === 'VENDIDO');
     const totalSalesValue = soldLots.reduce((sum, lot) => sum + lot.price, 0);
-    const salesRate = totalLotsConsigned > 0 ? (soldLots.length / totalLotsConsigned) * 100 : 0;
+    
+    // To calculate sales rate, we need to know how many lots *could have been* sold.
+    // This includes lots that were sold and lots that were not sold (but are finished).
+    const finishedLotsCount = sellerLots.filter(lot => ['VENDIDO', 'NAO_VENDIDO'].includes(lot.status)).length;
+    const salesRate = finishedLotsCount > 0 ? (soldLots.length / finishedLotsCount) * 100 : 0;
     
     // Aggregate sales by month for the last 12 months
     const salesByMonthMap = new Map<string, number>();
@@ -227,8 +231,8 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     });
 
     const salesByMonth = Array.from(salesByMonthMap.entries())
-      .map(([name, sales]) => ({ name: format(new Date(name), 'MMM/yy', { locale: ptBR }), sales }))
-      .sort((a,b) => a.name.localeCompare(b.name));
+      .map(([name, sales]) => ({ name: format(new Date(name + '-02'), 'MMM/yy', { locale: ptBR }), sales })) // use -02 to avoid timezone issues with last day of month
+      .sort((a,b) => new Date(a.name).getTime() - new Date(b.name).getTime()); // This sort might be tricky with MMM/yy format
 
     return Promise.resolve({
       totalLotsConsigned,
@@ -559,9 +563,8 @@ export class SampleDataAdapter implements IDatabaseAdapter {
       sellerName: seller?.name,
     });
   }
-
-  // --- Stubs for methods not yet fully implemented in sample data adapter ---
-  // These will return empty or default values to avoid crashing the app.
+  
+  // Stubs for methods not yet fully implemented in sample data adapter
   async getBem(id: string): Promise<Bem | null> { return Promise.resolve(this.localData.sampleBens.find(b => b.id === id) || null); }
   async getBens(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Bem[]> {
     let bens = [...this.localData.sampleBens];
@@ -629,6 +632,4 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> { console.warn("[SampleDataAdapter] createBem not implemented."); return { success: false, message: "Not implemented."}; }
   async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> { console.warn("[SampleDataAdapter] updateBem not implemented."); return { success: false, message: "Not implemented."}; }
   async deleteBem(id: string): Promise<{ success: boolean; message: string; }> { console.warn("[SampleDataAdapter] deleteBem not implemented."); return { success: false, message: "Not implemented."}; }
-  
-  // Other stubs that were already there...
 }

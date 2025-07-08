@@ -27,12 +27,17 @@ import type {
   UserDocument,
   DocumentType,
   Notification,
-  BlogPost
+  BlogPost,
+  UserBid,
+  AdminDashboardStats,
+  ConsignorDashboardStats
 } from '@/types';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
 import type { WizardData } from '@/components/admin/wizard/wizard-context';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 let pool: Pool | undefined;
 
@@ -551,603 +556,140 @@ export class PostgresAdapter implements IDatabaseAdapter {
   constructor() {
     getPool();
   }
+  
+  async getConsignorDashboardStats(sellerId: string): Promise<ConsignorDashboardStats> {
+    const defaultStats: ConsignorDashboardStats = {
+      totalLotsConsigned: 0, activeLots: 0, soldLots: 0, totalSalesValue: 0, salesRate: 0, salesByMonth: [],
+    };
+    if (!sellerId) return defaultStats;
 
-  async getWinsForUser(userId: string): Promise<UserWin[]> {
-    const { rows } = await getPool().query(
-        `SELECT
-            w.id as win_id,
-            w.user_id,
-            w.lot_id,
-            w.winning_bid_amount,
-            w.win_date,
-            w.payment_status,
-            w.invoice_url,
-            
-            l.id as l_id,
-            l.public_id as l_public_id,
-            l.auction_id as l_auction_id,
-            l.title as l_title,
-            l.number as l_number,
-            l.image_url as l_image_url,
-            l.data_ai_hint as l_data_ai_hint
-            
-        FROM user_wins w
-        JOIN lots l ON w.lot_id = l.id
-        WHERE w.user_id = $1
-        ORDER BY w.win_date DESC`,
-        [userId]
-    );
+    try {
+      const lotsResult = await getPool().query(
+        "SELECT status, price, updated_at FROM lots WHERE seller_id = $1",
+        [sellerId]
+      );
+      const lotsRows = lotsResult.rows;
 
-    const wins: UserWin[] = rows.map(winRow => {
-        const { win_id, user_id, lot_id, winning_bid_amount, win_date, payment_status, invoice_url, ...lotDataWithPrefix } = winRow;
-        
-        const lotObjectData: { [key: string]: any } = {};
-        for (const key in lotDataWithPrefix) {
-            if (key.startsWith('l_')) {
-                const originalKey = key.substring(2);
-                lotObjectData[originalKey] = lotDataWithPrefix[key];
-            }
+      const totalLotsConsigned = lotsRows.length;
+      const activeLots = lotsRows.filter(l => l.status === 'ABERTO_PARA_LANCES').length;
+      const soldLots = lotsRows.filter(l => l.status === 'VENDIDO');
+      const totalSalesValue = soldLots.reduce((sum, lot) => sum + parseFloat(lot.price), 0);
+      const finishedLotsCount = lotsRows.filter(l => ['VENDIDO', 'NAO_VENDIDO'].includes(l.status)).length;
+      const salesRate = finishedLotsCount > 0 ? (soldLots.length / finishedLotsCount) * 100 : 0;
+      
+      const salesByMonthMap = new Map<string, number>();
+      const now = new Date();
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        salesByMonthMap.set(monthKey, 0);
+      }
+      soldLots.forEach(lot => {
+        const saleDate = new Date(lot.updated_at);
+        const monthKey = `${saleDate.getFullYear()}-${String(saleDate.getMonth() + 1).padStart(2, '0')}`;
+        if (salesByMonthMap.has(monthKey)) {
+            salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + parseFloat(lot.price));
         }
-        
-        const lotObject = mapToLot(lotObjectData);
+      });
+      const salesByMonth = Array.from(salesByMonthMap.entries())
+        .map(([name, sales]) => ({ name: format(new Date(name + '-02'), 'MMM/yy', { locale: ptBR }), sales }))
+        .sort((a,b) => new Date(a.name).getTime() - new Date(b.name).getTime());
 
-        return {
-            id: String(win_id),
-            userId: user_id,
-            lotId: String(lot_id),
-            winningBidAmount: parseFloat(winning_bid_amount),
-            winDate: new Date(win_date),
-            paymentStatus: payment_status as UserWin['paymentStatus'],
-            invoiceUrl: invoice_url,
-            lot: lotObject,
-        };
-    });
-    return wins;
-  }
-  
-  async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] answerQuestion is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada para PostgreSQL." };
+
+      return { totalLotsConsigned, activeLots, soldLots: soldLots.length, totalSalesValue, salesRate, salesByMonth };
+
+    } catch (error: any) {
+        console.error(`Error fetching consignor stats for seller ${sellerId}:`, error);
+        return defaultStats;
+    }
   }
 
-  async createUserLotMaxBid(userId: string, lotId: string, maxAmount: number): Promise<{ success: boolean; message: string; maxBidId?: string; }> {
-    console.warn("[PostgresAdapter] createUserLotMaxBid is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada para PostgreSQL." };
+  async getAdminDashboardStats(): Promise<AdminDashboardStats> {
+    const { rows } = await getPool().query(`
+        SELECT
+            (SELECT COUNT(*) FROM users) as users,
+            (SELECT COUNT(*) FROM auctions) as auctions,
+            (SELECT COUNT(*) FROM lots) as lots,
+            (SELECT COUNT(*) FROM sellers) as sellers
+    `);
+    return mapRowToCamelCase(rows[0]) as AdminDashboardStats;
   }
 
-  async getActiveUserLotMaxBid(userId: string, lotId: string): Promise<UserLotMaxBid | null> {
-    console.warn("[PostgresAdapter] getActiveUserLotMaxBid is not yet implemented for PostgreSQL.");
-    return null;
-  }
-  
-  async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> {
-    const { rows } = await getPool().query('SELECT * FROM auctioneers WHERE name = $1 LIMIT 1', [name]);
-    if (rows.length === 0) return null;
-    return mapToAuctioneerProfileInfo(rows[0]);
+  async getAdminReportData(): Promise<AdminReportData> {
+      console.warn("[PostgresAdapter] getAdminReportData: Sales data is a placeholder.");
+      const { rows: [stats] } = await getPool().query(`
+          SELECT
+              (SELECT SUM(price) FROM lots WHERE status = 'VENDIDO') as "totalRevenue",
+              (SELECT COUNT(*) FROM lots WHERE status = 'VENDIDO') as "lotsSoldCount",
+              (SELECT COUNT(*) FROM auctions WHERE status = 'ABERTO_PARA_LANCES') as "activeAuctions",
+              (SELECT COUNT(*) FROM users WHERE created_at >= NOW() - INTERVAL '30 days') as "newUsersLast30Days"
+      `);
+      
+      const { rows: categoryRows } = await getPool().query(`
+          SELECT c.name, COUNT(l.id)::int as value
+          FROM lots l
+          JOIN lot_categories c ON l.category_id = c.id
+          WHERE l.status = 'VENDIDO'
+          GROUP BY c.name
+          ORDER BY value DESC
+          LIMIT 5
+      `);
+
+      return {
+          totalRevenue: Number(stats.totalRevenue) || 0,
+          newUsersLast30Days: Number(stats.newUsersLast30Days) || 0,
+          activeAuctions: Number(stats.activeAuctions) || 0,
+          lotsSoldCount: Number(stats.lotsSoldCount) || 0,
+          salesData: [], // Placeholder
+          categoryData: categoryRows.map(r => ({ ...r, value: Number(r.value) })),
+      };
   }
 
-  async getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null> {
-    const { rows } = await getPool().query('SELECT * FROM auctioneers WHERE slug = $1 OR public_id = $1 LIMIT 1', [slug]);
-    if (rows.length === 0) return null;
-    return mapToAuctioneerProfileInfo(rows[0]);
-  }
-
-  async getSellerByName(name: string): Promise<SellerProfileInfo | null> {
-    const { rows } = await getPool().query('SELECT * FROM sellers WHERE name = $1 LIMIT 1', [name]);
-    if (rows.length === 0) return null;
-    return mapToSellerProfileInfo(rows[0]);
-  }
-
-  async getSellerBySlug(slug: string): Promise<SellerProfileInfo | null> {
-    const { rows } = await getPool().query('SELECT * FROM sellers WHERE slug = $1 OR public_id = $1 LIMIT 1', [slug]);
-    if (rows.length === 0) return null;
-    return mapToSellerProfileInfo(rows[0]);
-  }
-
-  async getAuctionsByIds(ids: string[]): Promise<Auction[]> {
-    if (!ids || ids.length === 0) return [];
-    const numericIds = ids.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
-    const textIds = ids;
-    const query = `
-      SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url, (SELECT COUNT(*) FROM lots l WHERE l.auction_id = a.id) as total_lots_count
-      FROM auctions a
-      LEFT JOIN lot_categories cat ON a.category_id = cat.id
-      LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
-      LEFT JOIN sellers s ON a.seller_id = s.id
-      WHERE a.id = ANY($1::int[]) OR a.public_id = ANY($2::text[])
-    `;
-    const { rows } = await getPool().query(query, [numericIds, textIds]);
+  async getAuctionsForConsignor(sellerId: string): Promise<Auction[]> {
+    const { rows } = await getPool().query('SELECT * FROM auctions WHERE seller_id = $1 ORDER BY auction_date DESC', [sellerId]);
     return rows.map(mapToAuction);
   }
-  
-  async getLotsByIds(ids: string[]): Promise<Lot[]> {
-    if (!ids || ids.length === 0) return [];
-    const numericIds = ids.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
-    const textIds = ids; 
 
-    const query = `
-      SELECT l.*, 
-             a.title as auction_name, 
-             c.name as category_name, 
-             s.name as subcategory_name, 
-             st.uf as state_uf, 
-             city.name as city_name
-      FROM lots l
-      LEFT JOIN auctions a ON l.auction_id = a.id
-      LEFT JOIN lot_categories c ON l.category_id = c.id
-      LEFT JOIN subcategories s ON l.subcategory_id = s.id
-      LEFT JOIN states st ON l.state_id = st.id
-      LEFT JOIN cities city ON l.city_id = city.id
-      WHERE l.id = ANY($1::int[]) OR l.public_id = ANY($2::text[])
-    `;
-    
-    const { rows } = await getPool().query(query, [numericIds, textIds]);
+  async getLotsForConsignor(sellerId: string): Promise<Lot[]> {
+    const { rows } = await getPool().query(`
+        SELECT l.*, a.title as auction_name FROM lots l JOIN auctions a ON l.auction_id = a.id WHERE a.seller_id = $1 ORDER BY l.created_at DESC
+    `, [sellerId]);
     return rows.map(mapToLot);
   }
-  
-  async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[], rolesProcessed?: number }> {
-    const client = await getPool().connect();
-    const errors: any[] = [];
-    
-    const queries = [
-      `CREATE TABLE IF NOT EXISTS roles ( id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL UNIQUE, name_normalized VARCHAR(100) NOT NULL UNIQUE, description TEXT, permissions JSONB, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS users ( uid VARCHAR(255) PRIMARY KEY, email VARCHAR(255) NOT NULL UNIQUE, full_name VARCHAR(255), password_text VARCHAR(255), role_id INTEGER REFERENCES roles(id) ON DELETE SET NULL, status VARCHAR(50), habilitation_status VARCHAR(50), cpf VARCHAR(20), rg_number VARCHAR(20), rg_issuer VARCHAR(50), rg_issue_date DATE, rg_state VARCHAR(2), date_of_birth DATE, cell_phone VARCHAR(20), home_phone VARCHAR(20), gender VARCHAR(50), profession VARCHAR(100), nationality VARCHAR(100), marital_status VARCHAR(50), property_regime VARCHAR(50), spouse_name VARCHAR(255), spouse_cpf VARCHAR(20), zip_code VARCHAR(10), street VARCHAR(255), number VARCHAR(20), complement VARCHAR(100), neighborhood VARCHAR(100), city VARCHAR(100), state VARCHAR(100), opt_in_marketing BOOLEAN DEFAULT FALSE, avatar_url TEXT, data_ai_hint VARCHAR(255), account_type VARCHAR(50), razao_social VARCHAR(255), cnpj VARCHAR(20), inscricao_estadual VARCHAR(50), website_comitente VARCHAR(255), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS lot_categories ( id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL, slug VARCHAR(255) NOT NULL UNIQUE, description TEXT, item_count INTEGER DEFAULT 0, has_subcategories BOOLEAN DEFAULT FALSE, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS subcategories ( id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL, slug VARCHAR(255) NOT NULL, parent_category_id INTEGER NOT NULL REFERENCES lot_categories(id) ON DELETE CASCADE, description TEXT, item_count INTEGER DEFAULT 0, display_order INTEGER DEFAULT 0, icon_url TEXT, data_ai_hint_icon VARCHAR(255), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, UNIQUE (parent_category_id, slug) );`,
-      `CREATE TABLE IF NOT EXISTS states ( id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL, uf VARCHAR(2) NOT NULL UNIQUE, slug VARCHAR(100) NOT NULL UNIQUE, city_count INTEGER DEFAULT 0, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS cities ( id SERIAL PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, state_id INTEGER NOT NULL REFERENCES states(id) ON DELETE CASCADE, state_uf VARCHAR(2), ibge_code VARCHAR(10), lot_count INTEGER DEFAULT 0, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS auctioneers ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, registration_number VARCHAR(50), contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since TIMESTAMPTZ, rating NUMERIC(3, 2), auctions_conducted_count INTEGER DEFAULT 0, total_value_sold NUMERIC(15, 2) DEFAULT 0, user_id VARCHAR(255), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS sellers ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since TIMESTAMPTZ, rating NUMERIC(3, 2), active_lots_count INTEGER, total_sales_value NUMERIC(15, 2), auctions_facilitated_count INTEGER, user_id VARCHAR(255), cnpj VARCHAR(20), razao_social VARCHAR(255), inscricao_estadual VARCHAR(50), is_judicial BOOLEAN DEFAULT FALSE, judicial_branch_id INTEGER, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS auctions ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), auction_type VARCHAR(50), category_id INTEGER REFERENCES lot_categories(id), auctioneer_id INTEGER REFERENCES auctioneers(id), seller_id INTEGER REFERENCES sellers(id), judicial_process_id INTEGER, auction_date TIMESTAMPTZ NOT NULL, end_date TIMESTAMPTZ, city VARCHAR(100), state VARCHAR(2), image_url TEXT, data_ai_hint VARCHAR(255), documents_url TEXT, visits INTEGER DEFAULT 0, initial_offer NUMERIC(15, 2), soft_close_enabled BOOLEAN DEFAULT FALSE, soft_close_minutes INTEGER, automatic_bidding_enabled BOOLEAN DEFAULT FALSE, silent_bidding_enabled BOOLEAN DEFAULT FALSE, allow_multiple_bids_per_user BOOLEAN DEFAULT TRUE, allow_installment_bids BOOLEAN, estimated_revenue NUMERIC(15, 2), achieved_revenue NUMERIC(15, 2), total_habilitated_users INTEGER, total_lots INTEGER, is_featured_on_marketplace BOOLEAN, marketplace_announcement_title VARCHAR(150), auction_stages JSONB, auto_relist_settings JSONB, decrement_amount NUMERIC(15, 2), decrement_interval_seconds INTEGER, floor_price NUMERIC(15, 2), original_auction_id INTEGER REFERENCES auctions(id), relist_count INTEGER, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS lots ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, auction_id INTEGER REFERENCES auctions(id) ON DELETE SET NULL, bem_ids JSONB, number VARCHAR(50), title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), price NUMERIC(15, 2), initial_price NUMERIC(15, 2), bids_count INTEGER DEFAULT 0, is_featured BOOLEAN DEFAULT FALSE, reserve_price NUMERIC(15, 2), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS platform_settings ( id SERIAL PRIMARY KEY, site_title VARCHAR(255), site_tagline TEXT, gallery_image_base_path VARCHAR(255), storage_provider VARCHAR(50), firebase_storage_bucket VARCHAR(255), active_theme_name VARCHAR(100), themes JSONB, platform_public_id_masks JSONB, map_settings JSONB, search_pagination_type VARCHAR(50), search_items_per_page INTEGER, search_load_more_count INTEGER, show_countdown_on_lot_detail BOOLEAN, show_countdown_on_cards BOOLEAN, show_related_lots_on_lot_detail BOOLEAN, related_lots_count INTEGER, mental_trigger_settings JSONB, section_badge_visibility JSONB, homepage_sections JSONB, variable_increment_table JSONB, bidding_settings JSONB, default_list_items_per_page INTEGER, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS courts ( id SERIAL PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, website TEXT, state_uf VARCHAR(2) NOT NULL, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS judicial_districts ( id SERIAL PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, court_id INTEGER NOT NULL REFERENCES courts(id) ON DELETE RESTRICT, state_id INTEGER NOT NULL REFERENCES states(id) ON DELETE RESTRICT, zip_code VARCHAR(10), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, UNIQUE (slug, state_id) );`,
-      `CREATE TABLE IF NOT EXISTS judicial_branches ( id SERIAL PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, district_id INTEGER NOT NULL REFERENCES judicial_districts(id) ON DELETE CASCADE, contact_name VARCHAR(150), phone VARCHAR(20), email VARCHAR(150), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, UNIQUE (slug, district_id) );`,
-      `CREATE TABLE IF NOT EXISTS judicial_processes ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, process_number VARCHAR(100) NOT NULL UNIQUE, old_process_number VARCHAR(100), is_electronic BOOLEAN DEFAULT true, court_id INTEGER NOT NULL REFERENCES courts(id), district_id INTEGER NOT NULL REFERENCES judicial_districts(id), branch_id INTEGER NOT NULL REFERENCES judicial_branches(id), seller_id INTEGER REFERENCES sellers(id), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS process_parties ( id SERIAL PRIMARY KEY, process_id INTEGER NOT NULL REFERENCES judicial_processes(id) ON DELETE CASCADE, name VARCHAR(255) NOT NULL, document_number VARCHAR(50), party_type VARCHAR(50) NOT NULL, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS bens ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, title VARCHAR(255) NOT NULL, description TEXT, judicial_process_id INTEGER REFERENCES judicial_processes(id), status VARCHAR(50) DEFAULT 'DISPONIVEL', category_id INTEGER REFERENCES lot_categories(id), subcategory_id INTEGER REFERENCES subcategories(id), image_url TEXT, image_media_id VARCHAR(255), data_ai_hint VARCHAR(255), evaluation_value NUMERIC(15, 2), location_city VARCHAR(100), location_state VARCHAR(100), address VARCHAR(255), latitude NUMERIC(10, 8), longitude NUMERIC(11, 8), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS user_wins ( id SERIAL PRIMARY KEY, user_id VARCHAR(255) NOT NULL REFERENCES users(uid), lot_id INTEGER NOT NULL REFERENCES lots(id), winning_bid_amount NUMERIC(15, 2) NOT NULL, win_date TIMESTAMPTZ NOT NULL, payment_status VARCHAR(50) DEFAULT 'PENDENTE', invoice_url TEXT, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS bids ( id SERIAL PRIMARY KEY, lot_id INTEGER NOT NULL REFERENCES lots(id) ON DELETE CASCADE, auction_id INTEGER, bidder_id VARCHAR(255) NOT NULL, bidder_display_name VARCHAR(255), amount NUMERIC(15,2) NOT NULL, timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS notifications ( id SERIAL PRIMARY KEY, user_id VARCHAR(255) NOT NULL REFERENCES users(uid) ON DELETE CASCADE, message TEXT NOT NULL, link TEXT, is_read BOOLEAN DEFAULT FALSE, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS direct_sale_offers (
-        id SERIAL PRIMARY KEY,
-        public_id VARCHAR(255) UNIQUE,
-        title VARCHAR(255) NOT NULL,
-        description TEXT,
-        image_url TEXT,
-        image_media_id VARCHAR(255),
-        data_ai_hint VARCHAR(255),
-        gallery_image_urls JSONB,
-        media_item_ids JSONB,
-        offer_type VARCHAR(50) NOT NULL,
-        price NUMERIC(15, 2),
-        minimum_offer_price NUMERIC(15, 2),
-        category_id INTEGER REFERENCES lot_categories(id),
-        location_city VARCHAR(100),
-        location_state VARCHAR(100),
-        seller_id INTEGER NOT NULL REFERENCES sellers(id),
-        status VARCHAR(50) NOT NULL,
-        views INTEGER DEFAULT 0,
-        proposals_count INTEGER DEFAULT 0,
-        expires_at TIMESTAMPTZ,
-        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-      );`
-    ];
 
-    try {
-        await client.query('BEGIN');
-        console.log('[PostgresAdapter] Executing schema creation queries...');
-        for (const [index, query] of queries.entries()) {
-          try {
-              await client.query(query);
-              console.log(`  - Query ${index + 1}/${queries.length} executed successfully.`);
-          } catch (err: any) {
-              console.error(`  - FAILED to execute Query ${index + 1}: ${err.message}`);
-              errors.push({ query: query.substring(0, 50) + '...', error: err.message });
-          }
-        }
-        
-        if (errors.length > 0) {
-            await client.query('ROLLBACK');
-            return { success: false, message: 'Falha ao criar uma ou mais tabelas.', errors };
-        }
-        
-        console.log('[PostgresAdapter] Tables created. Ensuring default roles...');
-        const rolesResult = await this.ensureDefaultRolesExist(client);
-        
-        if (!rolesResult.success) {
-            await client.query('ROLLBACK');
-            return { success: false, message: rolesResult.message, errors: rolesResult.errors };
-        }
-        
-        await client.query('COMMIT');
-        return { success: true, message: `Esquema PostgreSQL inicializado ou verificado com sucesso.`, rolesProcessed: rolesResult.rolesProcessed };
-    } catch (error: any) {
-        await client.query('ROLLBACK');
-        console.error('[PostgresAdapter - initializeSchema] Erro de transação:', error);
-        return { success: false, message: `Erro na transação do banco de dados: ${error.message}`, errors: [error] };
-    } finally {
-        client.release();
-    }
+  async getWinsForSeller(sellerId: string): Promise<UserWin[]> {
+    const { rows } = await getPool().query(`
+      SELECT w.*, l.title as lot_title, l.number as lot_number, l.image_url as lot_image_url, l.data_ai_hint as lot_data_ai_hint, l.public_id as lot_public_id, l.auction_id as lot_auction_id
+      FROM user_wins w
+      JOIN lots l ON w.lot_id = l.id
+      WHERE l.seller_id = $1
+      ORDER BY w.win_date DESC
+    `, [sellerId]);
+
+    return rows.map(row => ({
+      id: String(row.win_id),
+      userId: row.user_id,
+      lotId: String(row.lot_id),
+      winningBidAmount: parseFloat(row.winning_bid_amount),
+      winDate: new Date(row.win_date),
+      paymentStatus: row.payment_status,
+      invoiceUrl: row.invoice_url,
+      lot: {
+        id: String(row.lot_id),
+        publicId: row.lot_public_id,
+        title: row.lot_title,
+        number: row.lot_number,
+        imageUrl: row.lot_image_url,
+        dataAiHint: row.lot_data_ai_hint,
+        auctionId: String(row.lot_auction_id)
+      } as Lot,
+    }));
   }
 
-  async ensureDefaultRolesExist(client: Pool | any): Promise<{ success: boolean, message: string, errors?: any[], rolesProcessed?: number }> {
-    let rolesProcessed = 0;
-    const errors: any[] = [];
-    for (const roleData of defaultRolesData) {
-      try {
-        const { rows } = await client.query('SELECT id FROM roles WHERE name_normalized = $1', [roleData.name]);
-        const permissionsJson = JSON.stringify(roleData.permissions);
-        if (rows.length === 0) {
-          await client.query(
-            'INSERT INTO roles (name, name_normalized, description, permissions) VALUES ($1, $2, $3, $4)',
-            [roleData.name, roleData.name, roleData.description, permissionsJson]
-          );
-          rolesProcessed++;
-        } else {
-          await client.query(
-            'UPDATE roles SET description = $1, permissions = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
-            [roleData.description, permissionsJson, rows[0].id]
-          );
-        }
-      } catch(err: any) {
-        errors.push({ role: roleData.name, error: err.message });
-      }
-    }
-    if (errors.length > 0) {
-      return { success: false, message: "Erro ao processar perfis padrão.", errors, rolesProcessed };
-    }
-    return { success: true, message: 'Perfis padrão garantidos.', rolesProcessed };
-  }
-  
-  // Stubs for other methods
-  async createLotCategory(data: { name: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> {
-    console.warn("[PostgresAdapter] createLotCategory is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getLotCategories(): Promise<LotCategory[]> {
-    console.warn("[PostgresAdapter] getLotCategories is not yet implemented for PostgreSQL.");
-    return [];
-  }
-  async getLotCategory(idOrSlug: string): Promise<LotCategory | null> {
-    console.warn("[PostgresAdapter] getLotCategory is not yet implemented for PostgreSQL.");
-    return null;
-  }
-  async getLotCategoryByName(name: string): Promise<LotCategory | null> {
-    console.warn("[PostgresAdapter] getLotCategoryByName is not yet implemented for PostgreSQL.");
-    return null;
-  }
-  async updateLotCategory(id: string, data: Partial<CategoryFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] updateLotCategory is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async deleteLotCategory(id: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] deleteLotCategory is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> {
-    console.warn("[PostgresAdapter] createSubcategory is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getSubcategories(parentCategoryId: string): Promise<Subcategory[]> {
-    try {
-      const query = `
-        SELECT s.*, c.name as parent_category_name
-        FROM subcategories s
-        LEFT JOIN lot_categories c ON s.parent_category_id = c.id
-        WHERE s.parent_category_id = $1
-        ORDER BY s.display_order, s.name
-      `;
-      const { rows } = await getPool().query(query, [parentCategoryId]);
-      return rows.map(mapToSubcategory);
-    } catch (error: any) {
-      console.error(`[PostgresAdapter - getSubcategories for parent ${parentCategoryId}] Error:`, error);
-      return [];
-    }
-  }
-  async getSubcategory(id: string): Promise<Subcategory | null> {
-    const { rows } = await getPool().query('SELECT * FROM subcategories WHERE id = $1 LIMIT 1', [id]);
-    if (rows.length === 0) return null;
-    return mapToSubcategory(rows[0]);
-  }
-  async getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null> {
-    const { rows } = await getPool().query('SELECT * FROM subcategories WHERE slug = $1 AND parent_category_id = $2 LIMIT 1', [slug, parentCategoryId]);
-    if (rows.length === 0) return null;
-    return mapToSubcategory(rows[0]);
-  }
-  async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] updateSubcategory is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] deleteSubcategory is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> {
-    console.warn("[PostgresAdapter] createState is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getStates(): Promise<StateInfo[]> {
-    console.warn("[PostgresAdapter] getStates is not yet implemented for PostgreSQL.");
-    return [];
-  }
-  async getState(idOrSlugOrUf: string): Promise<StateInfo | null> {
-    console.warn("[PostgresAdapter] getState is not yet implemented for PostgreSQL.");
-    return null;
-  }
-  async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] updateState is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async deleteState(id: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] deleteState is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> {
-    console.warn("[PostgresAdapter] createCity is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getCities(stateIdOrSlugFilter?: string): Promise<CityInfo[]> {
-    console.warn("[PostgresAdapter] getCities is not yet implemented for PostgreSQL.");
-    return [];
-  }
-  async getCity(idOrCompositeSlug: string): Promise<CityInfo | null> {
-    console.warn("[PostgresAdapter] getCity is not yet implemented for PostgreSQL.");
-    return null;
-  }
-  async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] updateCity is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async deleteCity(id: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] deleteCity is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> {
-    console.warn("[PostgresAdapter] createAuctioneer is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
-    try {
-      const { rows } = await getPool().query('SELECT * FROM auctioneers ORDER BY name');
-      return rows.map(mapToAuctioneerProfileInfo);
-    } catch (error: any) {
-      console.error('[PostgresAdapter - getAuctioneers] Error:', error);
-      return [];
-    }
-  }
-  async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
-    console.warn("[PostgresAdapter] getAuctioneer is not yet implemented for PostgreSQL.");
-    return null;
-  }
-  async updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] updateAuctioneer is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] deleteAuctioneer is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> {
-    console.warn("[PostgresAdapter] createSeller is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] updateSeller is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] deleteSeller is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> {
-    console.warn("[PostgresAdapter] createAuction is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] updateAuction is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async deleteAuction(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] deleteAuction is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
-    console.warn("[PostgresAdapter] getAuctionsBySellerSlug is not yet implemented for PostgreSQL.");
-    return [];
-  }
-  async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> {
-    console.warn("[PostgresAdapter] createLot is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getLot(idOrPublicId: string): Promise<Lot | null> {
-    console.warn("[PostgresAdapter] getLot is not yet implemented for PostgreSQL.");
-    return null;
-  }
-  async updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] updateLot is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] deleteLot is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> {
-    console.warn("[PostgresAdapter] getBidsForLot is not yet implemented for PostgreSQL.");
-    return [];
-  }
-  async placeBidOnLot(lotIdOrPublicId: string, auctionIdOrPublicId: string, userId: string, userDisplayName: string, bidAmount: number): Promise<{ success: boolean; message: string; updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>; newBid?: BidInfo; }> {
-    console.warn("[PostgresAdapter] placeBidOnLot is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> {
-    console.warn("[PostgresAdapter] getReviewsForLot is not yet implemented for PostgreSQL.");
-    return [];
-  }
-  async createReview(review: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; reviewId?: string; }> {
-    console.warn("[PostgresAdapter] createReview is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]> {
-    console.warn("[PostgresAdapter] getQuestionsForLot is not yet implemented for PostgreSQL.");
-    return [];
-  }
-  async createQuestion(question: Omit<LotQuestion, "id" | "createdAt" | "answeredAt" | "answeredByUserId" | "answeredByUserDisplayName" | "isPublic">): Promise<{ success: boolean; message: string; questionId?: string; }> {
-    console.warn("[PostgresAdapter] createQuestion is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null> {
-    console.warn("[PostgresAdapter] getUserProfileData is not yet implemented for PostgreSQL.");
-    return null;
-  }
-  async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] updateUserProfile is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileWithPermissions; }> {
-    console.warn("[PostgresAdapter] ensureUserRole is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] updateUserRole is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] deleteUserProfile is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getUserByEmail(email: string): Promise<UserProfileWithPermissions | null> {
-    console.warn("[PostgresAdapter] getUserByEmail is not yet implemented for PostgreSQL.");
-    return null;
-  }
-  async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> {
-    console.warn("[PostgresAdapter] createRole is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getRole(id: string): Promise<Role | null> {
-    console.warn("[PostgresAdapter] getRole is not yet implemented for PostgreSQL.");
-    return null;
-  }
-  async getRoleByName(name: string): Promise<Role | null> {
-    console.warn("[PostgresAdapter] getRoleByName is not yet implemented for PostgreSQL.");
-    return null;
-  }
-  async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] updateRole is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async deleteRole(id: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] deleteRole is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }> {
-    console.warn("[PostgresAdapter] ensureDefaultRolesExist is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>, filePublicUrl: string, uploadedBy?: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> {
-    console.warn("[PostgresAdapter] createMediaItem is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getMediaItems(): Promise<MediaItem[]> {
-    console.warn("[PostgresAdapter] getMediaItems is not yet implemented for PostgreSQL.");
-    return [];
-  }
-  async getMediaItem(id: string): Promise<MediaItem | null> {
-    console.warn("[PostgresAdapter] getMediaItem is not yet implemented for PostgreSQL.");
-    return null;
-  }
-  async updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] updateMediaItemMetadata is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] deleteMediaItemFromDb is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] linkMediaItemsToLot is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("[PostgresAdapter] unlinkMediaItemFromLot is not yet implemented for PostgreSQL.");
-    return { success: false, message: "Funcionalidade não implementada." };
-  }
-  
-  private async insertDefaultSettings(client: any): Promise<{ success: boolean; message: string; }> {
-    const { id, updatedAt, ...defaults } = samplePlatformSettings as any;
-    const columns = Object.keys(defaults).map(key => key.replace(/([A-Z])/g, '_$1').toLowerCase());
-    const values = Object.values(defaults);
-    const placeholders = columns.map((_, i) => `$${i + 2}`).join(', ');
-
-    const insertQuery = `INSERT INTO platform_settings (id, ${columns.join(', ')}) VALUES ($1, ${placeholders}) ON CONFLICT (id) DO NOTHING`;
-    
-    try {
-        await client.query(insertQuery, [1, ...values]);
-        return { success: true, message: "Default settings inserted or already exist." };
-    } catch(error: any) {
-        return { success: false, message: error.message };
-    }
-  }
-
-  async getPlatformSettings(): Promise<PlatformSettings> {
-    const client = await getPool().connect();
-    try {
-      const { rows } = await client.query('SELECT * FROM platform_settings ORDER BY id LIMIT 1');
-      if (rows.length > 0) {
-        return mapToPlatformSettings(rows[0]);
-      } else {
-        console.log('[PostgresAdapter] No platform settings found, creating default settings...');
-        const result = await this.insertDefaultSettings(client);
-        if (result.success) {
-            const { rows: newRows } = await client.query('SELECT * FROM platform_settings WHERE id = 1 LIMIT 1');
-            if (newRows.length > 0) {
-                return mapToPlatformSettings(newRows[0]);
-            }
-        }
-        console.error("[PostgresAdapter] Failed to insert or retrieve default settings:", result.message);
-        return samplePlatformSettings as PlatformSettings;
-      }
-    } catch (error: any) {
-      console.error("[PostgresAdapter - getPlatformSettings] Error:", error);
-      return samplePlatformSettings as PlatformSettings;
-    } finally {
-      client.release();
-    }
-  }
-
-  async updatePlatformSettings(data: PlatformSettingsFormData): Promise<{ success: boolean; message: string; }> {
-    const client = await getPool().connect();
-    try {
-        const setClauses: string[] = [];
-        const values: any[] = [];
-        let valueIndex = 1;
-
-        for (const [key, value] of Object.entries(data)) {
-            const snakeCaseKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
-            setClauses.push(`${snakeCaseKey} = $${valueIndex++}`);
-            values.push(value);
-        }
-
-        if (setClauses.length === 0) {
-            return { success: true, message: 'Nenhuma alteração para salvar.' };
-        }
-        
-        const updateQuery = `UPDATE platform_settings SET ${setClauses.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = 1`;
-        
-        const result = await client.query(updateQuery, values);
-        
-        if (result.rowCount > 0) {
-            return { success: true, message: 'Configurações da plataforma atualizadas com sucesso!' };
-        } else {
-            return { success: false, message: 'Nenhuma configuração foi encontrada para atualizar. Verifique se as configurações iniciais existem.' };
-        }
-    } catch (error: any) {
-        console.error("[PostgresAdapter - updatePlatformSettings] Error:", error);
-        return { success: false, message: `Erro no banco de dados: ${error.message}` };
-    } finally {
-        client.release();
-    }
+  async getDirectSaleOffersForSeller(sellerId: string): Promise<DirectSaleOffer[]> {
+    const { rows } = await getPool().query('SELECT * FROM direct_sale_offers WHERE seller_id = $1 ORDER BY created_at DESC', [sellerId]);
+    // This assumes a mapToDirectSaleOffer function exists
+    // return rows.map(mapToDirectSaleOffer);
+    return []; // Placeholder
   }
 }

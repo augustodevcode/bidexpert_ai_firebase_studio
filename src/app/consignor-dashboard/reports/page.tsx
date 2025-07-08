@@ -1,4 +1,4 @@
-
+// src/app/consignor-dashboard/reports/page.tsx
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -129,7 +129,7 @@ export default function ConsignorReportsPage() {
       <div className="grid grid-cols-1 gap-6">
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle className="flex items-center"><LineChartIcon className="mr-2 h-5 w-5"/> Vendas Mensais (Últimos 12 meses)</CardTitle>
+            <CardTitle className="flex items-center"><LineChart className="mr-2 h-5 w-5"/> Vendas Mensais (Últimos 12 meses)</CardTitle>
           </CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
