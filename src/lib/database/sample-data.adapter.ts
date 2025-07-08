@@ -383,12 +383,18 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     const category = this.localData.sampleLotCategories.find(c => c.name.toLowerCase() === name.toLowerCase());
     return category ? Promise.resolve(JSON.parse(JSON.stringify(category))) : null;
   }
-  async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> {
+  async createLotCategory(data: CategoryFormData): Promise<{ success: boolean; message: string; categoryId?: string; }> {
     const newCategory: LotCategory = {
         id: `cat-${slugify(data.name)}-${uuidv4().substring(0,4)}`,
         name: data.name,
         slug: slugify(data.name),
         description: data.description,
+        logoUrl: data.logoUrl,
+        dataAiHintLogo: data.dataAiHintLogo,
+        coverImageUrl: data.coverImageUrl,
+        dataAiHintCover: data.dataAiHintCover,
+        megaMenuImageUrl: data.megaMenuImageUrl,
+        dataAiHintMegaMenu: data.dataAiHintMegaMenu,
         itemCount: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -418,9 +424,35 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     const subcat = this.localData.sampleSubcategories.find(s => s.id === id);
     return subcat ? Promise.resolve(JSON.parse(JSON.stringify(subcat))) : null;
   }
-   async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> { return { success: false, message: "Not implemented."}; }
-   async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
-   async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
+   async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> { 
+     const newSubcategory: Subcategory = {
+        ...data,
+        id: `subcat-${slugify(data.name)}-${uuidv4().substring(0,4)}`,
+        slug: slugify(data.name),
+        itemCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+    };
+    this.localData.sampleSubcategories.push(newSubcategory);
+    const parentCategory = this.localData.sampleLotCategories.find(c => c.id === data.parentCategoryId);
+    if(parentCategory && !parentCategory.hasSubcategories) {
+        parentCategory.hasSubcategories = true;
+    }
+    this._persistData();
+    return { success: true, message: 'Subcategoria criada.', subcategoryId: newSubcategory.id };
+   }
+   async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> {
+     const index = this.localData.sampleSubcategories.findIndex(s => s.id === id);
+     if (index === -1) return { success: false, message: 'Subcategoria não encontrada.' };
+     this.localData.sampleSubcategories[index] = { ...this.localData.sampleSubcategories[index], ...data, slug: slugify(data.name!), updatedAt: new Date() };
+     this._persistData();
+     return { success: true, message: 'Subcategoria atualizada.' };
+   }
+   async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> { 
+    this.localData.sampleSubcategories = this.localData.sampleSubcategories.filter(s => s.id !== id);
+    this._persistData();
+    return { success: true, message: 'Subcategoria excluída.' };
+   }
 
 
   async getStates(): Promise<StateInfo[]> {
@@ -430,9 +462,32 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     const state = this.localData.sampleStates.find(s => s.id === idOrSlugOrUf || s.slug === idOrSlugOrUf || s.uf === idOrSlugOrUf);
     return state ? Promise.resolve(JSON.parse(JSON.stringify(state))) : null;
   }
-  async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> { return { success: false, message: "Not implemented."}; }
-  async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
-  async deleteState(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
+  async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> { 
+    const newState: StateInfo = {
+        ...data,
+        id: `state-${slugify(data.name)}`,
+        slug: slugify(data.name),
+        cityCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+    };
+    this.localData.sampleStates.push(newState);
+    this._persistData();
+    return { success: true, message: 'Estado criado.', stateId: newState.id };
+  }
+  async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> {
+    const index = this.localData.sampleStates.findIndex(s => s.id === id);
+    if (index === -1) return { success: false, message: 'Estado não encontrado.' };
+    this.localData.sampleStates[index] = { ...this.localData.sampleStates[index], ...data, slug: slugify(data.name!), updatedAt: new Date() };
+    this._persistData();
+    return { success: true, message: 'Estado atualizado.' };
+  }
+  async deleteState(id: string): Promise<{ success: boolean; message: string; }> {
+    this.localData.sampleStates = this.localData.sampleStates.filter(s => s.id !== id);
+    this.localData.sampleCities = this.localData.sampleCities.filter(c => c.stateId !== id);
+    this._persistData();
+    return { success: true, message: 'Estado e suas cidades foram excluídos.' };
+  }
 
   async getCities(stateIdOrSlugFilter?: string): Promise<CityInfo[]> {
     const cities = this.localData.sampleCities.filter(city => stateIdOrSlugFilter ? city.stateId === stateIdOrSlugFilter : true);
@@ -442,10 +497,38 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     const city = this.localData.sampleCities.find(c => c.id === idOrCompositeSlug);
     return city ? Promise.resolve(JSON.parse(JSON.stringify(city))) : null;
   }
-   async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> { return { success: false, message: "Not implemented."}; }
-   async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
-   async deleteCity(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
-
+   async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> {
+    const parentState = this.localData.sampleStates.find(s => s.id === data.stateId);
+    if (!parentState) return { success: false, message: 'Estado pai não encontrado.' };
+    const citySlug = slugify(data.name);
+    const newCity: CityInfo = {
+        ...data,
+        id: `${parentState.slug}-${citySlug}`,
+        slug: citySlug,
+        stateUf: parentState.uf,
+        lotCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+    };
+    this.localData.sampleCities.push(newCity);
+    this._persistData();
+    return { success: true, message: 'Cidade criada.', cityId: newCity.id };
+   }
+   async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> { 
+    const index = this.localData.sampleCities.findIndex(c => c.id === id);
+    if (index === -1) return { success: false, message: 'Cidade não encontrada.' };
+    const updateData: any = {...data, updatedAt: new Date() };
+    if (data.name) updateData.slug = slugify(data.name);
+    this.localData.sampleCities[index] = { ...this.localData.sampleCities[index], ...updateData };
+    this._persistData();
+    return { success: true, message: 'Cidade atualizada.' };
+   }
+   async deleteCity(id: string): Promise<{ success: boolean; message: string; }> { 
+     this.localData.sampleCities = this.localData.sampleCities.filter(c => c.id !== id);
+     this._persistData();
+     return { success: true, message: 'Cidade excluída.' };
+   }
+  
   // ##########################################################################
   // #                        STUBBED / UNIMPLEMENTED                         #
   // ##########################################################################
@@ -462,13 +545,22 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async deleteCourt(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
   async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> { return { success: false, message: "Not implemented."}; }
   async updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
-  async deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
-  async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }> { return { success: false, message: "Not implemented."}; }
-  async updateJudicialBranch(id: string, data: Partial<JudicialBranchFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
-  async deleteJudicialBranch(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
-  async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> { return { success: false, message: "Not implemented."}; }
-  async updateJudicialProcess(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
-  async deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
+  async deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[SampleDataAdapter] deleteJudicialDistrict not implemented.");
+    return { success: false, message: "Not implemented" };
+  }
+  
+  async getJudicialBranches(): Promise<JudicialBranch[]> { console.warn("[SampleDataAdapter] getJudicialBranches not implemented."); return []; }
+  async getJudicialBranch(id: string): Promise<JudicialBranch | null> { console.warn("[SampleDataAdapter] getJudicialBranch not implemented."); return null; }
+  async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }> { console.warn("[SampleDataAdapter] createJudicialBranch not implemented."); return { success: false, message: "Not implemented." }; }
+  async updateJudicialBranch(id: string, data: Partial<JudicialBranchFormData>): Promise<{ success: boolean; message: string; }> { console.warn("[SampleDataAdapter] updateJudicialBranch not implemented."); return { success: false, message: "Not implemented." }; }
+  async deleteJudicialBranch(id: string): Promise<{ success: boolean; message: string; }> { console.warn("[SampleDataAdapter] deleteJudicialBranch not implemented."); return { success: false, message: "Not implemented." }; }
+  
+  async getJudicialProcesses(): Promise<JudicialProcess[]> { console.warn("[SampleDataAdapter] getJudicialProcesses not implemented."); return []; }
+  async getJudicialProcess(id: string): Promise<JudicialProcess | null> { console.warn("[SampleDataAdapter] getJudicialProcess not implemented."); return null; }
+  async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> { console.warn("[SampleDataAdapter] createJudicialProcess not implemented."); return { success: false, message: "Not implemented." }; }
+  async updateJudicialProcess(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> { console.warn("[SampleDataAdapter] updateJudicialProcess not implemented."); return { success: false, message: "Not implemented." }; }
+  async deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string; }> { console.warn("[SampleDataAdapter] deleteJudicialProcess not implemented."); return { success: false, message: "Not implemented." }; }
   async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
   async updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
   async deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
