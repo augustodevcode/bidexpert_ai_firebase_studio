@@ -24,8 +24,9 @@ import type {
   JudicialBranch, JudicialBranchFormData,
   JudicialProcess, JudicialProcessFormData,
   Bem, BemFormData,
-  UserDocument,
+  ProcessParty,
   DocumentType,
+  UserDocument,
   Notification,
   BlogPost,
   UserBid,
@@ -556,140 +557,273 @@ export class PostgresAdapter implements IDatabaseAdapter {
   constructor() {
     getPool();
   }
+
+  async getWinsForUser(userId: string): Promise<UserWin[]> {
+    const { rows } = await getPool().query(
+        `SELECT
+            w.id as win_id,
+            w.user_id,
+            w.lot_id,
+            w.winning_bid_amount,
+            w.win_date,
+            w.payment_status,
+            w.invoice_url,
+            
+            l.id as l_id,
+            l.public_id as l_public_id,
+            l.auction_id as l_auction_id,
+            l.title as l_title,
+            l.number as l_number,
+            l.image_url as l_image_url,
+            l.data_ai_hint as l_data_ai_hint
+            
+        FROM user_wins w
+        JOIN lots l ON w.lot_id = l.id
+        WHERE w.user_id = $1
+        ORDER BY w.win_date DESC`,
+        [userId]
+    );
+
+    const wins: UserWin[] = rows.map(winRow => {
+        const { win_id, user_id, lot_id, winning_bid_amount, win_date, payment_status, invoice_url, ...lotDataWithPrefix } = winRow;
+        
+        const lotObjectData: { [key: string]: any } = {};
+        for (const key in lotDataWithPrefix) {
+            if (key.startsWith('l_')) {
+                const originalKey = key.substring(2);
+                lotObjectData[originalKey] = lotDataWithPrefix[key];
+            }
+        }
+        
+        const lotObject = mapToLot(lotObjectData);
+
+        return {
+            id: String(win_id),
+            userId: user_id,
+            lotId: String(lot_id),
+            winningBidAmount: parseFloat(winning_bid_amount),
+            winDate: new Date(win_date),
+            paymentStatus: payment_status as UserWin['paymentStatus'],
+            invoiceUrl: invoice_url,
+            lot: lotObject,
+        };
+    });
+    return wins;
+  }
   
-  async getConsignorDashboardStats(sellerId: string): Promise<ConsignorDashboardStats> {
-    const defaultStats: ConsignorDashboardStats = {
-      totalLotsConsigned: 0, activeLots: 0, soldLots: 0, totalSalesValue: 0, salesRate: 0, salesByMonth: [],
-    };
-    if (!sellerId) return defaultStats;
+  async answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[PostgresAdapter] answerQuestion is not yet implemented for PostgreSQL.");
+    return { success: false, message: "Funcionalidade não implementada para PostgreSQL." };
+  }
+
+  async createUserLotMaxBid(userId: string, lotId: string, maxAmount: number): Promise<{ success: boolean; message: string; maxBidId?: string; }> {
+    console.warn("[PostgresAdapter] createUserLotMaxBid is not yet implemented for PostgreSQL.");
+    return { success: false, message: "Funcionalidade não implementada para PostgreSQL." };
+  }
+
+  async getActiveUserLotMaxBid(userId: string, lotId: string): Promise<UserLotMaxBid | null> {
+    console.warn("[PostgresAdapter] getActiveUserLotMaxBid is not yet implemented for PostgreSQL.");
+    return null;
+  }
+  
+  async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> {
+    const { rows } = await getPool().query('SELECT * FROM auctioneers WHERE name = $1 LIMIT 1', [name]);
+    if (rows.length === 0) return null;
+    return mapToAuctioneerProfileInfo(rows[0]);
+  }
+
+  async getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null> {
+    const { rows } = await getPool().query('SELECT * FROM auctioneers WHERE slug = $1 OR public_id = $1 LIMIT 1', [slug]);
+    if (rows.length === 0) return null;
+    return mapToAuctioneerProfileInfo(rows[0]);
+  }
+
+  async getSellerByName(name: string): Promise<SellerProfileInfo | null> {
+    const { rows } = await getPool().query('SELECT * FROM sellers WHERE name = $1 LIMIT 1', [name]);
+    if (rows.length === 0) return null;
+    return mapToSellerProfileInfo(rows[0]);
+  }
+
+  async getSellerBySlug(slug: string): Promise<SellerProfileInfo | null> {
+    const { rows } = await getPool().query('SELECT * FROM sellers WHERE slug = $1 OR public_id = $1 LIMIT 1', [slug]);
+    if (rows.length === 0) return null;
+    return mapToSellerProfileInfo(rows[0]);
+  }
+
+  async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {
+    console.warn("[PostgresAdapter] getAuctionsByAuctioneerSlug is not yet implemented for PostgreSQL.");
+    return Promise.resolve([]);
+  }
+
+  async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
+    console.warn("[PostgresAdapter] getDirectSaleOffers is not yet implemented for PostgreSQL.");
+    return Promise.resolve([]);
+  }
+
+  async getAuctionsByIds(ids: string[]): Promise<Auction[]> {
+    console.warn("[PostgresAdapter] getAuctionsByIds is not yet implemented for PostgreSQL.");
+    return Promise.resolve([]);
+  }
+
+  async getLotsByIds(ids: string[]): Promise<Lot[]> {
+    console.warn("[PostgresAdapter] getLotsByIds is not yet implemented for PostgreSQL.");
+    return Promise.resolve([]);
+  }
+  
+  async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[], rolesProcessed?: number }> {
+    const client = await getPool().connect();
+    const errors: any[] = [];
+    
+    const queries = [
+      `CREATE TABLE IF NOT EXISTS roles ( id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL UNIQUE, name_normalized VARCHAR(100) NOT NULL UNIQUE, description TEXT, permissions JSONB, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS users ( uid VARCHAR(255) PRIMARY KEY, email VARCHAR(255) NOT NULL UNIQUE, full_name VARCHAR(255), password_text VARCHAR(255), role_id INTEGER REFERENCES roles(id) ON DELETE SET NULL, status VARCHAR(50), habilitation_status VARCHAR(50), cpf VARCHAR(20), rg_number VARCHAR(20), rg_issuer VARCHAR(50), rg_issue_date DATE, rg_state VARCHAR(2), date_of_birth DATE, cell_phone VARCHAR(20), home_phone VARCHAR(20), gender VARCHAR(50), profession VARCHAR(100), nationality VARCHAR(100), marital_status VARCHAR(50), property_regime VARCHAR(50), spouse_name VARCHAR(255), spouse_cpf VARCHAR(20), zip_code VARCHAR(10), street VARCHAR(255), number VARCHAR(20), complement VARCHAR(100), neighborhood VARCHAR(100), city VARCHAR(100), state VARCHAR(100), opt_in_marketing BOOLEAN DEFAULT FALSE, avatar_url TEXT, data_ai_hint VARCHAR(255), account_type VARCHAR(50), razao_social VARCHAR(255), cnpj VARCHAR(20), inscricao_estadual VARCHAR(50), website_comitente VARCHAR(255), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS lot_categories ( id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL, slug VARCHAR(255) NOT NULL UNIQUE, description TEXT, item_count INTEGER DEFAULT 0, has_subcategories BOOLEAN DEFAULT FALSE, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS subcategories ( id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL, slug VARCHAR(255) NOT NULL, parent_category_id INTEGER NOT NULL REFERENCES lot_categories(id) ON DELETE CASCADE, description TEXT, item_count INTEGER DEFAULT 0, display_order INTEGER DEFAULT 0, icon_url TEXT, data_ai_hint_icon VARCHAR(255), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, UNIQUE (parent_category_id, slug) );`,
+      `CREATE TABLE IF NOT EXISTS states ( id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL, uf VARCHAR(2) NOT NULL UNIQUE, slug VARCHAR(100) NOT NULL UNIQUE, city_count INTEGER DEFAULT 0, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS cities ( id SERIAL PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, state_id INTEGER NOT NULL REFERENCES states(id) ON DELETE CASCADE, state_uf VARCHAR(2), ibge_code VARCHAR(10), lot_count INTEGER DEFAULT 0, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS auctioneers ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, registration_number VARCHAR(50), contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since TIMESTAMPTZ, rating NUMERIC(3, 2), auctions_conducted_count INTEGER DEFAULT 0, total_value_sold NUMERIC(15, 2) DEFAULT 0, user_id VARCHAR(255), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS sellers ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, contact_name VARCHAR(150), email VARCHAR(150), phone VARCHAR(20), address VARCHAR(200), city VARCHAR(100), state VARCHAR(50), zip_code VARCHAR(10), website TEXT, logo_url TEXT, data_ai_hint_logo VARCHAR(50), description TEXT, member_since TIMESTAMPTZ, rating NUMERIC(3, 2), active_lots_count INTEGER, total_sales_value NUMERIC(15, 2), auctions_facilitated_count INTEGER, user_id VARCHAR(255), cnpj VARCHAR(20), razao_social VARCHAR(255), inscricao_estadual VARCHAR(50), is_judicial BOOLEAN DEFAULT FALSE, judicial_branch_id INTEGER, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS auctions ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), auction_type VARCHAR(50), category_id INTEGER REFERENCES lot_categories(id), auctioneer_id INTEGER REFERENCES auctioneers(id), seller_id INTEGER REFERENCES sellers(id), judicial_process_id INTEGER, auction_date TIMESTAMPTZ NOT NULL, end_date TIMESTAMPTZ, city VARCHAR(100), state VARCHAR(2), image_url TEXT, data_ai_hint VARCHAR(255), documents_url TEXT, visits INTEGER DEFAULT 0, initial_offer NUMERIC(15, 2), soft_close_enabled BOOLEAN DEFAULT FALSE, soft_close_minutes INTEGER, automatic_bidding_enabled BOOLEAN DEFAULT FALSE, silent_bidding_enabled BOOLEAN DEFAULT FALSE, allow_multiple_bids_per_user BOOLEAN DEFAULT TRUE, allow_installment_bids BOOLEAN, estimated_revenue NUMERIC(15, 2), achieved_revenue NUMERIC(15, 2), total_habilitated_users INTEGER, total_lots INTEGER, is_featured_on_marketplace BOOLEAN, marketplace_announcement_title VARCHAR(150), auction_stages JSONB, auto_relist_settings JSONB, decrement_amount NUMERIC(15, 2), decrement_interval_seconds INTEGER, floor_price NUMERIC(15, 2), original_auction_id INTEGER REFERENCES auctions(id), relist_count INTEGER, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS lots ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, auction_id INTEGER REFERENCES auctions(id) ON DELETE SET NULL, bem_ids JSONB, number VARCHAR(50), title VARCHAR(255) NOT NULL, description TEXT, status VARCHAR(50), price NUMERIC(15, 2), initial_price NUMERIC(15, 2), bids_count INTEGER DEFAULT 0, is_featured BOOLEAN DEFAULT FALSE, reserve_price NUMERIC(15, 2), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS platform_settings ( id SERIAL PRIMARY KEY, site_title VARCHAR(255), site_tagline TEXT, gallery_image_base_path VARCHAR(255), storage_provider VARCHAR(50), firebase_storage_bucket VARCHAR(255), active_theme_name VARCHAR(100), themes JSONB, platform_public_id_masks JSONB, map_settings JSONB, search_pagination_type VARCHAR(50), search_items_per_page INTEGER, search_load_more_count INTEGER, show_countdown_on_lot_detail BOOLEAN, show_countdown_on_cards BOOLEAN, show_related_lots_on_lot_detail BOOLEAN, related_lots_count INTEGER, mental_trigger_settings JSONB, section_badge_visibility JSONB, homepage_sections JSONB, variable_increment_table JSONB, bidding_settings JSONB, default_list_items_per_page INTEGER, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS courts ( id SERIAL PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL UNIQUE, website TEXT, state_uf VARCHAR(2) NOT NULL, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS judicial_districts ( id SERIAL PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, court_id INTEGER NOT NULL REFERENCES courts(id) ON DELETE RESTRICT, state_id INTEGER NOT NULL REFERENCES states(id) ON DELETE RESTRICT, zip_code VARCHAR(10), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, UNIQUE (slug, state_id) );`,
+      `CREATE TABLE IF NOT EXISTS judicial_branches ( id SERIAL PRIMARY KEY, name VARCHAR(150) NOT NULL, slug VARCHAR(150) NOT NULL, district_id INTEGER NOT NULL REFERENCES judicial_districts(id) ON DELETE CASCADE, contact_name VARCHAR(150), phone VARCHAR(20), email VARCHAR(150), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, UNIQUE (slug, district_id) );`,
+      `CREATE TABLE IF NOT EXISTS judicial_processes ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, process_number VARCHAR(100) NOT NULL UNIQUE, old_process_number VARCHAR(100), is_electronic BOOLEAN DEFAULT true, court_id INTEGER NOT NULL REFERENCES courts(id), district_id INTEGER NOT NULL REFERENCES judicial_districts(id), branch_id INTEGER NOT NULL REFERENCES judicial_branches(id), seller_id INTEGER REFERENCES sellers(id), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS process_parties ( id SERIAL PRIMARY KEY, process_id INTEGER NOT NULL REFERENCES judicial_processes(id) ON DELETE CASCADE, name VARCHAR(255) NOT NULL, document_number VARCHAR(50), party_type VARCHAR(50) NOT NULL, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS bens ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, title VARCHAR(255) NOT NULL, description TEXT, judicial_process_id INTEGER REFERENCES judicial_processes(id), status VARCHAR(50) DEFAULT 'DISPONIVEL', category_id INTEGER REFERENCES lot_categories(id), subcategory_id INTEGER REFERENCES subcategories(id), image_url TEXT, image_media_id VARCHAR(255), data_ai_hint VARCHAR(255), evaluation_value NUMERIC(15, 2), location_city VARCHAR(100), location_state VARCHAR(100), address VARCHAR(255), latitude NUMERIC(10, 8), longitude NUMERIC(11, 8), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS user_wins ( id SERIAL PRIMARY KEY, user_id VARCHAR(255) NOT NULL REFERENCES users(uid), lot_id INTEGER NOT NULL REFERENCES lots(id), winning_bid_amount NUMERIC(15, 2) NOT NULL, win_date TIMESTAMPTZ NOT NULL, payment_status VARCHAR(50) DEFAULT 'PENDENTE', invoice_url TEXT, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS bids ( id SERIAL PRIMARY KEY, lot_id INTEGER NOT NULL REFERENCES lots(id) ON DELETE CASCADE, auction_id INTEGER, bidder_id VARCHAR(255) NOT NULL, bidder_display_name VARCHAR(255), amount NUMERIC(15,2) NOT NULL, timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`
+    ];
 
     try {
-      const lotsResult = await getPool().query(
-        "SELECT status, price, updated_at FROM lots WHERE seller_id = $1",
-        [sellerId]
-      );
-      const lotsRows = lotsResult.rows;
-
-      const totalLotsConsigned = lotsRows.length;
-      const activeLots = lotsRows.filter(l => l.status === 'ABERTO_PARA_LANCES').length;
-      const soldLots = lotsRows.filter(l => l.status === 'VENDIDO');
-      const totalSalesValue = soldLots.reduce((sum, lot) => sum + parseFloat(lot.price), 0);
-      const finishedLotsCount = lotsRows.filter(l => ['VENDIDO', 'NAO_VENDIDO'].includes(l.status)).length;
-      const salesRate = finishedLotsCount > 0 ? (soldLots.length / finishedLotsCount) * 100 : 0;
-      
-      const salesByMonthMap = new Map<string, number>();
-      const now = new Date();
-      for (let i = 0; i < 12; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        salesByMonthMap.set(monthKey, 0);
-      }
-      soldLots.forEach(lot => {
-        const saleDate = new Date(lot.updated_at);
-        const monthKey = `${saleDate.getFullYear()}-${String(saleDate.getMonth() + 1).padStart(2, '0')}`;
-        if (salesByMonthMap.has(monthKey)) {
-            salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + parseFloat(lot.price));
+        await client.query('BEGIN');
+        console.log('[PostgresAdapter] Executing schema creation queries...');
+        for (const [index, query] of queries.entries()) {
+          try {
+              await client.query(query);
+              console.log(`  - Query ${index + 1}/${queries.length} executed successfully.`);
+          } catch (err: any) {
+              console.error(`  - FAILED to execute Query ${index + 1}: ${err.message}`);
+              errors.push({ query: query.substring(0, 50) + '...', error: err.message });
+          }
         }
-      });
-      const salesByMonth = Array.from(salesByMonthMap.entries())
-        .map(([name, sales]) => ({ name: format(new Date(name + '-02'), 'MMM/yy', { locale: ptBR }), sales }))
-        .sort((a,b) => new Date(a.name).getTime() - new Date(b.name).getTime());
-
-
-      return { totalLotsConsigned, activeLots, soldLots: soldLots.length, totalSalesValue, salesRate, salesByMonth };
-
+        
+        if (errors.length > 0) {
+            await client.query('ROLLBACK');
+            return { success: false, message: 'Falha ao criar uma ou mais tabelas.', errors };
+        }
+        
+        console.log('[PostgresAdapter] Tables created. Ensuring default roles...');
+        const rolesResult = await this.ensureDefaultRolesExist(client);
+        
+        if (!rolesResult.success) {
+            await client.query('ROLLBACK');
+            return { success: false, message: rolesResult.message, errors: rolesResult.errors };
+        }
+        
+        await client.query('COMMIT');
+        return { success: true, message: `Esquema PostgreSQL inicializado ou verificado com sucesso.`, rolesProcessed: rolesResult.rolesProcessed };
     } catch (error: any) {
-        console.error(`Error fetching consignor stats for seller ${sellerId}:`, error);
-        return defaultStats;
+        await client.query('ROLLBACK');
+        console.error('[PostgresAdapter - initializeSchema] Erro de transação:', error);
+        return { success: false, message: `Erro na transação do banco de dados: ${error.message}`, errors: [error] };
+    } finally {
+        client.release();
     }
   }
 
-  async getAdminDashboardStats(): Promise<AdminDashboardStats> {
-    const { rows } = await getPool().query(`
-        SELECT
-            (SELECT COUNT(*) FROM users) as users,
-            (SELECT COUNT(*) FROM auctions) as auctions,
-            (SELECT COUNT(*) FROM lots) as lots,
-            (SELECT COUNT(*) FROM sellers) as sellers
-    `);
-    return mapRowToCamelCase(rows[0]) as AdminDashboardStats;
+  async ensureDefaultRolesExist(client: Pool | any): Promise<{ success: boolean, message: string, errors?: any[], rolesProcessed?: number }> {
+    let rolesProcessed = 0;
+    const errors: any[] = [];
+    for (const roleData of defaultRolesData) {
+      try {
+        const { rows } = await client.query('SELECT id FROM roles WHERE name_normalized = $1', [roleData.name]);
+        const permissionsJson = JSON.stringify(roleData.permissions);
+        if (rows.length === 0) {
+          await client.query(
+            'INSERT INTO roles (name, name_normalized, description, permissions) VALUES ($1, $2, $3, $4)',
+            [roleData.name, roleData.name, roleData.description, permissionsJson]
+          );
+          rolesProcessed++;
+        } else {
+          await client.query(
+            'UPDATE roles SET description = $1, permissions = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
+            [roleData.description, permissionsJson, rows[0].id]
+          );
+        }
+      } catch(err: any) {
+        errors.push({ role: roleData.name, error: err.message });
+      }
+    }
+    if (errors.length > 0) {
+      return { success: false, message: "Erro ao processar perfis padrão.", errors, rolesProcessed };
+    }
+    return { success: true, message: 'Perfis padrão garantidos.', rolesProcessed };
   }
-
-  async getAdminReportData(): Promise<AdminReportData> {
-      console.warn("[PostgresAdapter] getAdminReportData: Sales data is a placeholder.");
-      const { rows: [stats] } = await getPool().query(`
-          SELECT
-              (SELECT SUM(price) FROM lots WHERE status = 'VENDIDO') as "totalRevenue",
-              (SELECT COUNT(*) FROM lots WHERE status = 'VENDIDO') as "lotsSoldCount",
-              (SELECT COUNT(*) FROM auctions WHERE status = 'ABERTO_PARA_LANCES') as "activeAuctions",
-              (SELECT COUNT(*) FROM users WHERE created_at >= NOW() - INTERVAL '30 days') as "newUsersLast30Days"
-      `);
-      
-      const { rows: categoryRows } = await getPool().query(`
-          SELECT c.name, COUNT(l.id)::int as value
+  
+  async getAuctions(): Promise<Auction[]> {
+    const query = `
+      SELECT 
+        a.*,
+        cat.name as category_name,
+        auct.name as auctioneer_name,
+        s.name as seller_name,
+        auct.logo_url as auctioneer_logo_url,
+        (
+          SELECT json_agg(l.*)
           FROM lots l
-          JOIN lot_categories c ON l.category_id = c.id
-          WHERE l.status = 'VENDIDO'
-          GROUP BY c.name
-          ORDER BY value DESC
-          LIMIT 5
-      `);
-
-      return {
-          totalRevenue: Number(stats.totalRevenue) || 0,
-          newUsersLast30Days: Number(stats.newUsersLast30Days) || 0,
-          activeAuctions: Number(stats.activeAuctions) || 0,
-          lotsSoldCount: Number(stats.lotsSoldCount) || 0,
-          salesData: [], // Placeholder
-          categoryData: categoryRows.map(r => ({ ...r, value: Number(r.value) })),
-      };
+          WHERE l.auction_id = a.id
+        ) as lots
+      FROM auctions a
+      LEFT JOIN lot_categories cat ON a.category_id = cat.id
+      LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
+      LEFT JOIN sellers s ON a.seller_id = s.id
+      ORDER BY a.auction_date DESC
+    `;
+    
+    const { rows } = await getPool().query(query);
+    
+    return rows.map(row => {
+      const auction = mapToAuction(row);
+      auction.lots = (row.lots || []).map(mapToLot);
+      auction.totalLots = auction.lots.length;
+      return auction;
+    });
   }
 
-  async getAuctionsForConsignor(sellerId: string): Promise<Auction[]> {
-    const { rows } = await getPool().query('SELECT * FROM auctions WHERE seller_id = $1 ORDER BY auction_date DESC', [sellerId]);
-    return rows.map(mapToAuction);
-  }
+  async getAuction(idOrPublicId: string): Promise<Auction | null> {
+    const query = `
+      SELECT 
+        a.*,
+        cat.name as category_name,
+        auct.name as auctioneer_name,
+        s.name as seller_name,
+        auct.logo_url as auctioneer_logo_url,
+        (
+          SELECT json_agg(l.*) 
+          FROM lots l 
+          WHERE l.auction_id = a.id
+        ) as lots
+      FROM auctions a
+      LEFT JOIN lot_categories cat ON a.category_id = cat.id
+      LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
+      LEFT JOIN sellers s ON a.seller_id = s.id
+      WHERE a.id = $1 OR a.public_id = $2
+      LIMIT 1
+    `;
+    
+    const { rows } = await getPool().query(query, [isNaN(parseInt(idOrPublicId, 10)) ? -1 : parseInt(idOrPublicId, 10), idOrPublicId]);
+    
+    if (rows.length === 0) {
+      return null;
+    }
 
-  async getLotsForConsignor(sellerId: string): Promise<Lot[]> {
-    const { rows } = await getPool().query(`
-        SELECT l.*, a.title as auction_name FROM lots l JOIN auctions a ON l.auction_id = a.id WHERE a.seller_id = $1 ORDER BY l.created_at DESC
-    `, [sellerId]);
-    return rows.map(mapToLot);
-  }
-
-  async getWinsForSeller(sellerId: string): Promise<UserWin[]> {
-    const { rows } = await getPool().query(`
-      SELECT w.*, l.title as lot_title, l.number as lot_number, l.image_url as lot_image_url, l.data_ai_hint as lot_data_ai_hint, l.public_id as lot_public_id, l.auction_id as lot_auction_id
-      FROM user_wins w
-      JOIN lots l ON w.lot_id = l.id
-      WHERE l.seller_id = $1
-      ORDER BY w.win_date DESC
-    `, [sellerId]);
-
-    return rows.map(row => ({
-      id: String(row.win_id),
-      userId: row.user_id,
-      lotId: String(row.lot_id),
-      winningBidAmount: parseFloat(row.winning_bid_amount),
-      winDate: new Date(row.win_date),
-      paymentStatus: row.payment_status,
-      invoiceUrl: row.invoice_url,
-      lot: {
-        id: String(row.lot_id),
-        publicId: row.lot_public_id,
-        title: row.lot_title,
-        number: row.lot_number,
-        imageUrl: row.lot_image_url,
-        dataAiHint: row.lot_data_ai_hint,
-        auctionId: String(row.lot_auction_id)
-      } as Lot,
-    }));
-  }
-
-  async getDirectSaleOffersForSeller(sellerId: string): Promise<DirectSaleOffer[]> {
-    const { rows } = await getPool().query('SELECT * FROM direct_sale_offers WHERE seller_id = $1 ORDER BY created_at DESC', [sellerId]);
-    // This assumes a mapToDirectSaleOffer function exists
-    // return rows.map(mapToDirectSaleOffer);
-    return []; // Placeholder
+    const row = rows[0];
+    const auction = mapToAuction(row);
+    auction.lots = (row.lots || []).map(mapToLot);
+    auction.totalLots = auction.lots.length;
+    
+    return auction;
   }
 }
