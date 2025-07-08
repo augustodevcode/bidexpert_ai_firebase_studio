@@ -65,7 +65,7 @@ export const createColumns = ({ onOpenDetails }: { onOpenDetails?: (bem: Bem) =>
     header: ({ column }) => <DataTableColumnHeader column={column} title="Valor (R$)" />,
     cell: ({ row }) => {
       const value = parseFloat(row.getValue("evaluationValue"));
-      return <div className="text-right font-medium">{value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>;
+      return <div className="text-right font-medium">{value ? value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'N/A'}</div>;
     },
   },
 ];

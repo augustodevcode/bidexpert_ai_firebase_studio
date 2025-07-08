@@ -97,7 +97,7 @@ export default function BemForm({
       hasWarranty: initialData?.hasWarranty ?? false,
       galleryImageUrls: initialData?.galleryImageUrls || [],
       mediaItemIds: initialData?.mediaItemIds || [],
-      amenities: initialData?.amenities?.map(a => ({value: a})) || [],
+      amenities: initialData?.amenities?.map((a: any) => (typeof a === 'string' ? { value: a } : a)) || [],
     },
   });
 
@@ -118,14 +118,10 @@ export default function BemForm({
     'imoveis': <Building/>,
     'maquinas-e-equipamentos': <Tractor/>,
     'eletronicos-e-tecnologia': <TvIcon/>,
-    'casa-e-decoracao': <Hammer/>,
-    'joias-e-acessorios': <Gem/>,
+    'bens-diversos': <Hammer/>,
     'arte-e-antiguidades': <Paintbrush/>,
     'semoventes': <PawPrint/>,
     'embarcacoes': <Anchor/>,
-    'alimentos': <Utensils/>,
-    'metais-e-pedras-preciosas': <Diamond/>,
-    'bens-florestais-e-ambientais': <Forest/>,
   };
   
 
@@ -155,7 +151,7 @@ export default function BemForm({
     if (selectedCategoryId) fetchSubcats(selectedCategoryId);
      else { setAvailableSubcategories([]); form.setValue('subcategoryId', undefined); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategoryId, categories, toast]);
+  }, [selectedCategoryId, categories]);
 
   const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
     if (selectedItems.length === 0) return;
@@ -222,10 +218,12 @@ export default function BemForm({
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-6">
               <Tabs defaultValue="geral">
-                  <TabsList>
+                  <TabsList className="flex flex-wrap h-auto">
                       <TabsTrigger value="geral">Informações Gerais</TabsTrigger>
                       <TabsTrigger value="detalhes" disabled={!selectedCategoryId}>
-                        {categorySpecificFieldsMap[categorySlug] || <div className="flex items-center gap-2"><Gavel className="h-4 w-4"/>Detalhes</div>}
+                        <div className="flex items-center gap-2">
+                            {categorySpecificFieldsMap[categorySlug] || <Gavel className="h-4 w-4"/>} Detalhes Específicos
+                        </div>
                       </TabsTrigger>
                       <TabsTrigger value="localizacao">Localização</TabsTrigger>
                       <TabsTrigger value="midia">Mídia</TabsTrigger>
@@ -233,7 +231,7 @@ export default function BemForm({
 
                   <TabsContent value="geral" className="mt-4 space-y-4">
                       <FormField name="title" control={form.control} render={({ field }) => (<FormItem><FormLabel>Título/Nome do Bem</FormLabel><FormControl><Input placeholder="Ex: Apartamento 3 quartos, Trator Massey Ferguson" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField name="description" control={form.control} render={({ field }) => (<FormItem><FormLabel>Descrição Detalhada</FormLabel><FormControl><Textarea placeholder="Descreva todas as características, estado, etc." {...field} rows={5} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField name="description" control={form.control} render={({ field }) => (<FormItem><FormLabel>Descrição Detalhada</FormLabel><FormControl><Textarea placeholder="Descreva todas as características, estado, etc." {...field} value={field.value ?? ""} rows={5} /></FormControl><FormMessage /></FormItem>)} />
                       <div className="grid md:grid-cols-2 gap-4">
                         <FormField name="status" control={form.control} render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{bemStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                         <FormField name="evaluationValue" control={form.control} render={({ field }) => (<FormItem><FormLabel>Valor de Avaliação (R$)</FormLabel><FormControl><Input type="number" placeholder="150000.00" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
@@ -253,10 +251,54 @@ export default function BemForm({
                         </AccordionItem>
                       </Accordion>
                   </TabsContent>
+
                   <TabsContent value="detalhes" className="mt-4 space-y-4">
-                     {/* Placeholder for specific fields based on category */}
-                     <p>Selecione uma categoria para ver campos específicos.</p>
+                     {/* Veículos */}
+                      {categorySlug.includes('veiculo') && (
+                        <Accordion type="multiple" defaultValue={['vehicle-id']} className="w-full space-y-2">
+                          <AccordionItem value="vehicle-id">
+                            <AccordionTrigger className="text-sm font-semibold">Identificação e Mecânica</AccordionTrigger>
+                            <AccordionContent className="space-y-4 pt-4">
+                              <div className="grid md:grid-cols-2 gap-4"><FormField name="make" control={form.control} render={({ field }) => (<FormItem><FormLabel>Marca</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField name="model" control={form.control} render={({ field }) => (<FormItem><FormLabel>Modelo</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /></div>
+                              <div className="grid md:grid-cols-2 gap-4"><FormField name="year" control={form.control} render={({ field }) => (<FormItem><FormLabel>Ano Fab.</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField name="modelYear" control={form.control} render={({ field }) => (<FormItem><FormLabel>Ano Mod.</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /></div>
+                              <div className="grid md:grid-cols-2 gap-4"><FormField name="mileage" control={form.control} render={({ field }) => (<FormItem><FormLabel>KM</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField name="color" control={form.control} render={({ field }) => (<FormItem><FormLabel>Cor</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /></div>
+                              <div className="grid md:grid-cols-2 gap-4"><FormField name="fuelType" control={form.control} render={({ field }) => (<FormItem><FormLabel>Combustível</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField name="transmissionType" control={form.control} render={({ field }) => (<FormItem><FormLabel>Transmissão</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /></div>
+                              <FormField name="hasKey" control={form.control} render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Possui Chave?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                              <FormField name="vin" control={form.control} render={({ field }) => (<FormItem><FormLabel>VIN / Chassi</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+                              <FormField name="plate" control={form.control} render={({ field }) => (<FormItem><FormLabel>Placa</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                      )}
+
+                      {/* Imóveis */}
+                      {categorySlug.includes('imoveis') && (
+                        <Accordion type="multiple" defaultValue={['real-estate-id']} className="w-full space-y-2">
+                           <AccordionItem value="real-estate-id">
+                            <AccordionTrigger className="text-sm font-semibold">Características do Imóvel</AccordionTrigger>
+                            <AccordionContent className="space-y-4 pt-4">
+                              <div className="grid md:grid-cols-2 gap-4"><FormField name="propertyRegistrationNumber" control={form.control} render={({ field }) => (<FormItem><FormLabel>Nº Matrícula</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField name="iptuNumber" control={form.control} render={({ field }) => (<FormItem><FormLabel>Nº IPTU</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /></div>
+                              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3"><FormField name="totalArea" control={form.control} render={({ field }) => (<FormItem><FormLabel>Área Total (m²)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField name="builtArea" control={form.control} render={({ field }) => (<FormItem><FormLabel>Área Constr. (m²)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField name="bedrooms" control={form.control} render={({ field }) => (<FormItem><FormLabel>Quartos</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField name="suites" control={form.control} render={({ field }) => (<FormItem><FormLabel>Suítes</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /></div>
+                              <div className="grid md:grid-cols-2 gap-4"><FormField name="isOccupied" control={form.control} render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Imóvel Ocupado?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} /><FormField name="hasHabiteSe" control={form.control} render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Possui Habite-se?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} /></div>
+                              <FormField name="liensAndEncumbrances" control={form.control} render={({ field }) => (<FormItem><FormLabel>Ônus e Gravames</FormLabel><FormControl><Textarea {...field} value={field.value ?? ''} rows={3}/></FormControl></FormItem>)} />
+                              <div>
+                                <Label>Comodidades</Label>
+                                <div className="space-y-2">
+                                  {amenityFields.map((field, index) => (
+                                    <div key={field.id} className="flex items-center gap-2">
+                                      <FormField control={form.control} name={`amenities.${index}.value`} render={({ field }) => (<FormControl><Input {...field} /></FormControl>)} />
+                                      <Button type="button" variant="ghost" size="icon" onClick={() => removeAmenity(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                    </div>
+                                  ))}
+                                  <Button type="button" variant="outline" size="sm" onClick={() => appendAmenity({ value: '' })}>Adicionar Comodidade</Button>
+                                </div>
+                              </div>
+                            </AccordionContent>
+                           </AccordionItem>
+                        </Accordion>
+                      )}
                   </TabsContent>
+
                   <TabsContent value="localizacao" className="mt-4 space-y-4">
                       <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Endereço Completo</FormLabel><FormControl><Input placeholder="Rua, Número, Bairro..." {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -264,6 +306,7 @@ export default function BemForm({
                           <FormField control={form.control} name="locationState" render={({ field }) => (<FormItem><FormLabel>Estado (UF)</FormLabel><FormControl><Input placeholder="SP" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
                       </div>
                   </TabsContent>
+
                   <TabsContent value="midia" className="mt-4 space-y-4">
                       <FormItem>
                         <FormLabel>Imagem Principal</FormLabel>

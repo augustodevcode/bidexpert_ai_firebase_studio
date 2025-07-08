@@ -5,7 +5,7 @@ import { useWizard } from '../wizard-context';
 import type { Bem, Auction, Lot } from '@/types';
 import { useState, useMemo } from 'react';
 import { DataTable } from '@/components/ui/data-table';
-import { createColumns } from '@/app/admin/bens/columns'; // Using the main bem columns
+import { createColumns } from '@/components/admin/lotting/columns';
 import { Button } from '@/components/ui/button';
 import { Boxes, Box, Eye } from 'lucide-react';
 import CreateLotFromBensModal from '@/components/admin/lotting/create-lot-modal';
@@ -17,10 +17,9 @@ import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
 interface Step4LottingProps {
   availableBens: Bem[];
   auctionData: Partial<Auction>;
-  onLotCreated: () => void;
 }
 
-export default function Step4Lotting({ availableBens, auctionData, onLotCreated }: Step4LottingProps) {
+export default function Step4Lotting({ availableBens, auctionData }: Step4LottingProps) {
   const { wizardData, setWizardData } = useWizard();
   const [rowSelection, setRowSelection] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,7 +44,7 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
     setIsBemModalOpen(true);
   };
   
-  const columns = useMemo(() => createColumns({ handleDelete: handleViewBemDetails }), [handleViewBemDetails]);
+  const columns = useMemo(() => createColumns({ onOpenDetails: handleViewBemDetails }), [handleViewBemDetails]);
 
   
   const handleCreateGroupedLotClick = () => {
@@ -67,12 +66,12 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
     }
     setIsCreatingIndividualLots(true);
     const newLots: Lot[] = selectedBens.map((bem, index) => {
-      const lotNumber = (wizardData.createdLots?.length || 0) + index + 1;
+      const lotNumber = String((wizardData.createdLots?.length || 0) + index + 1).padStart(3, '0');
       return {
         id: `temp-lot-${uuidv4()}`,
         publicId: `temp-pub-${uuidv4().substring(0,8)}`,
         title: bem.title,
-        number: String(lotNumber).padStart(3, '0'),
+        number: lotNumber,
         price: bem.evaluationValue || 0,
         initialPrice: bem.evaluationValue || 0,
         bemIds: [bem.id],
@@ -108,7 +107,6 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
         createdLots: [...(prev.createdLots || []), newCompleteLot]
     }));
     setRowSelection({});
-    onLotCreated();
   }
 
   return (

@@ -1,5 +1,4 @@
-
-
+// src/components/admin/wizard/steps/step-5-review.tsx
 'use client';
 
 import { useWizard } from '../wizard-context';
@@ -14,6 +13,7 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { createAuctionFromWizard } from '../actions';
+import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 
 export default function Step5Review() {
   const { wizardData, resetWizard } = useWizard();
@@ -70,7 +70,7 @@ export default function Step5Review() {
           <p><strong>Título:</strong> <span className="text-muted-foreground">{auctionDetails?.title || 'Não definido'}</span></p>
           <p><strong>Descrição:</strong> <span className="text-muted-foreground">{auctionDetails?.description || 'Não definida'}</span></p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
-            <p><strong>Modalidade:</strong> <Badge variant="outline">{auctionTypeLabels[auctionType || ''] || 'Não definida'}</Badge></p>
+            <div className="flex items-center gap-2"><strong>Modalidade:</strong> <Badge variant="outline">{auctionTypeLabels[auctionType || ''] || 'Não definida'}</Badge></div>
             <p><strong>Leiloeiro:</strong> <span className="text-muted-foreground">{auctionDetails?.auctioneer || 'Não definido'}</span></p>
             <p><strong>Comitente:</strong> <span className="text-muted-foreground">{auctionDetails?.seller || 'Não definido'}</span></p>
             <p><strong>Data de Início:</strong> <span className="text-muted-foreground">{auctionDetails?.auctionDate ? format(new Date(auctionDetails.auctionDate), 'dd/MM/yyyy', {locale: ptBR}) : 'Não definida'}</span></p>
@@ -78,6 +78,8 @@ export default function Step5Review() {
                 <p><strong>Data de Fim:</strong> <span className="text-muted-foreground">{format(new Date(auctionDetails.endDate), 'dd/MM/yyyy', {locale: ptBR})}</span></p>
             )}
           </div>
+          <Separator className="my-3"/>
+          <AuctionStagesTimeline auctionOverallStartDate={new Date(auctionDetails?.auctionDate || Date.now())} stages={auctionDetails?.auctionStages || []} />
         </CardContent>
       </Card>
 

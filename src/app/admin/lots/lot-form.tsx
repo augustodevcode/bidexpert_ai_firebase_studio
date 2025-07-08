@@ -28,7 +28,7 @@ import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import { DataTable } from '@/components/ui/data-table';
-import { createColumns as createBemColumns } from '@/app/admin/bens/columns';
+import { createColumns as createBemColumns } from '@/components/admin/bens/columns';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
 import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
@@ -89,23 +89,14 @@ export default function LotForm({
   const form = useForm<LotFormValues>({
     resolver: zodResolver(lotFormSchema),
     defaultValues: {
-      title: initialData?.title || '',
+      ...initialData,
       auctionId: initialData?.auctionId || defaultAuctionId || searchParams.get('auctionId') || '',
-      description: initialData?.description || '',
+      type: initialData?.categoryId || initialData?.type || '',
       price: initialData?.price || 0,
       initialPrice: initialData?.initialPrice || undefined,
-      stateId: initialData?.stateId || undefined,
-      cityId: initialData?.cityId || undefined,
-      type: initialData?.categoryId || initialData?.type || '',
-      subcategoryId: initialData?.subcategoryId || undefined,
-      imageUrl: initialData?.imageUrl || '',
       bemIds: initialData?.bemIds || [],
       mediaItemIds: initialData?.mediaItemIds || [],
       galleryImageUrls: initialData?.galleryImageUrls || [],
-      judicialProcessNumber: initialData?.judicialProcessNumber || '',
-      courtDistrict: initialData?.courtDistrict || '',
-      courtName: initialData?.courtName || '',
-      evaluationValue: initialData?.evaluationValue || null,
     },
   });
   
@@ -143,14 +134,16 @@ export default function LotForm({
 
   React.useEffect(() => {
     if (watchedBemIds?.length === 1 && !form.getValues('title')) {
-      const linkedBem = currentAvailableBens.find(b => b.id === watchedBemIds[0]) || initialData?.bens?.find(b => b.id === watchedBemIds[0]);
+      const allPossibleBens = [...currentAvailableBens, ...(initialData?.bens || [])];
+      const linkedBem = allPossibleBens.find(b => b.id === watchedBemIds[0]);
+
       if (linkedBem) {
         form.setValue('title', linkedBem.title);
-        form.setValue('description', linkedBem.description);
+        form.setValue('description', linkedBem.description || '');
         form.setValue('type', linkedBem.categoryId || '', { shouldValidate: true });
         form.setValue('subcategoryId', linkedBem.subcategoryId || null, { shouldValidate: true });
         form.setValue('evaluationValue', linkedBem.evaluationValue);
-        form.setValue('imageUrl', linkedBem.imageUrl);
+        form.setValue('imageUrl', linkedBem.imageUrl || '');
         if(!form.getValues('price') || form.getValues('price') === 0) {
             form.setValue('price', linkedBem.evaluationValue || 0);
         }
@@ -246,7 +239,7 @@ export default function LotForm({
     setIsBemModalOpen(true);
   };
 
-  const bemColumns = React.useMemo(() => createBemColumns({ onOpenDetails: handleViewBemDetails }), []);
+  const bemColumns = React.useMemo(() => createBemColumns({ onOpenDetails: handleViewBemDetails, handleDelete: () => {} }), [handleViewBemDetails]);
   
   const availableBensForTable = React.useMemo(() => {
     const linkedBemIds = new Set(watchedBemIds || []);
@@ -378,7 +371,7 @@ export default function LotForm({
               <div className="grid md:grid-cols-2 gap-6">
                   {initialData?.status && (
                      <FormItem>
-                      <FormLabel>Status (Derivado do Leilão)</FormLabel>
+                      <FormLabel>Status</FormLabel>
                       <Input value={getAuctionStatusText(initialData.status)} readOnly disabled />
                     </FormItem>
                   )}
