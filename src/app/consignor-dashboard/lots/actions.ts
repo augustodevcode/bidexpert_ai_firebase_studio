@@ -1,7 +1,7 @@
-// src/app/consignor-dashboard/lots/actions.ts
+
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
 import type { Lot } from '@/types';
 
 export async function getLotsForConsignorAction(sellerId: string): Promise<Lot[]> {
@@ -11,8 +11,24 @@ export async function getLotsForConsignorAction(sellerId: string): Promise<Lot[]
   }
   
   try {
-    const db = await getDatabaseAdapter();
-    return await db.getLotsForConsignor(sellerId);
+    const lots = await prisma.lot.findMany({
+        where: {
+            auction: {
+                sellerId: sellerId,
+            }
+        },
+        include: {
+            auction: {
+                select: { title: true }
+            }
+        },
+        orderBy: { auctionId: 'desc' }
+    });
+
+    return lots.map(lot => ({
+        ...lot,
+        auctionName: lot.auction?.title
+    })) as unknown as Lot[];
   } catch (error) {
     console.error(`Error fetching lots for consignor ${sellerId}:`, error);
     return [];

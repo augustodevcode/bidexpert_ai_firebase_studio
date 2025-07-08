@@ -1,5 +1,4 @@
 
-// src/app/admin/categories/actions.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -33,9 +32,10 @@ export async function createLotCategory(
 
 export async function getLotCategories(): Promise<LotCategory[]> {
   try {
-    return await prisma.lotCategory.findMany({
+    const categories = await prisma.lotCategory.findMany({
       orderBy: { name: 'asc' },
-    }) as unknown as LotCategory[];
+    });
+    return categories as unknown as LotCategory[];
   } catch (error) {
     console.error("Error fetching categories:", error);
     return [];
@@ -66,7 +66,7 @@ export async function getLotCategoryByName(name: string): Promise<LotCategory | 
   try {
     const category = await prisma.lotCategory.findFirst({ where: { name } });
     return category as unknown as LotCategory | null;
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error fetching category by name ${name}:`, error);
     return null;
   }

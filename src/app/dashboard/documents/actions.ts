@@ -1,12 +1,20 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
 import type { DocumentType, UserDocument, Bem } from '@/types';
 
 export async function getDocumentTypes(): Promise<DocumentType[]> {
-  const db = await getDatabaseAdapter();
-  return db.getDocumentTypes();
+  try {
+    const types = await prisma.documentType.findMany({
+      orderBy: { displayOrder: 'asc' }
+    });
+    return types as unknown as DocumentType[];
+  } catch (error) {
+    console.error("Error fetching document types:", error);
+    return [];
+  }
 }
 
 export async function getUserDocuments(userId: string): Promise<UserDocument[]> {
@@ -14,8 +22,16 @@ export async function getUserDocuments(userId: string): Promise<UserDocument[]> 
     console.warn("[Action - getUserDocuments] No userId provided.");
     return [];
   }
-  const db = await getDatabaseAdapter();
-  return db.getUserDocuments(userId);
+  try {
+    const docs = await prisma.userDocument.findMany({
+        where: { userId },
+        include: { documentType: true }
+    });
+    return docs as unknown as UserDocument[];
+  } catch (error) {
+    console.error("Error fetching user documents:", error);
+    return [];
+  }
 }
 
 export async function saveUserDocument(
@@ -27,14 +43,49 @@ export async function saveUserDocument(
   if (!userId || !documentTypeId || !fileUrl) {
     return { success: false, message: "Dados insuficientes para salvar o documento." };
   }
-  const db = await getDatabaseAdapter();
-  const result = await db.saveUserDocument(userId, documentTypeId, fileUrl, fileName);
+  try {
+    await prisma.userDocument.upsert({
+        where: {
+            userId_documentTypeId: {
+                userId: userId,
+                documentTypeId: documentTypeId,
+            },
+        },
+        update: {
+            fileUrl: fileUrl,
+            fileName: fileName,
+            status: 'PENDING_ANALYSIS',
+            uploadDate: new Date(),
+            rejectionReason: null, // Clear reason on re-upload
+        },
+        create: {
+            userId: userId,
+            documentTypeId: documentTypeId,
+            fileUrl: fileUrl,
+            fileName: fileName,
+            status: 'PENDING_ANALYSIS',
+            uploadDate: new Date(),
+        }
+    });
 
-  if(result.success) {
-      // Revalidar a página de documentos para que o usuário veja a mudança de status
-      revalidatePath('/dashboard/documents');
+    // Check if all required documents are now submitted
+    const requiredDocs = await prisma.documentType.findMany({ where: { isRequired: true }});
+    const userDocs = await prisma.userDocument.findMany({ where: { userId }});
+    const submittedRequiredDocs = requiredDocs.every(reqDoc => 
+        userDocs.some(userDoc => userDoc.documentTypeId === reqDoc.id && userDoc.status !== 'NOT_SENT' && userDoc.status !== 'REJECTED')
+    );
+
+    if (submittedRequiredDocs) {
+        await prisma.user.update({
+            where: { id: userId },
+            data: { habilitationStatus: 'PENDING_ANALYSIS' }
+        });
+    }
+
+    revalidatePath('/dashboard/documents');
+    return { success: true, message: "Documento salvo para análise."};
+  } catch (error: any) {
+    console.error("Error saving user document:", error);
+    return { success: false, message: `Falha ao salvar documento: ${error.message}`};
   }
-  
-  return result;
 }
-

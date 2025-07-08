@@ -1,7 +1,8 @@
+
 // src/app/consignor-dashboard/auctions/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
 import type { Auction } from '@/types';
 
 /**
@@ -16,9 +17,15 @@ export async function getAuctionsForConsignorAction(sellerId: string): Promise<A
   }
   
   try {
-    const db = await getDatabaseAdapter();
-    const auctions = await db.getAuctionsForConsignor(sellerId);
-    return auctions;
+    const auctions = await prisma.auction.findMany({
+      where: { sellerId: sellerId },
+      include: {
+        lots: { select: { id: true }}, // for count
+      },
+      orderBy: { auctionDate: 'desc' }
+    });
+
+    return auctions.map(a => ({...a, totalLots: a.lots.length})) as unknown as Auction[];
   } catch (error) {
     console.error(`[Action - getAuctionsForConsignorAction] Error fetching auctions for seller ${sellerId}:`, error);
     return [];

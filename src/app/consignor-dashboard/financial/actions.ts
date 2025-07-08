@@ -1,7 +1,7 @@
-// src/app/consignor-dashboard/financial/actions.ts
+
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
 import type { UserWin } from '@/types';
 
 export async function getFinancialDataForConsignor(sellerId: string): Promise<UserWin[]> {
@@ -9,6 +9,26 @@ export async function getFinancialDataForConsignor(sellerId: string): Promise<Us
     console.warn("[Action - getFinancialDataForConsignor] No sellerId provided.");
     return [];
   }
-  const db = await getDatabaseAdapter();
-  return db.getWinsForSeller(sellerId);
+  
+  try {
+    const wins = await prisma.userWin.findMany({
+      where: {
+        lot: {
+          auction: {
+            sellerId: sellerId,
+          },
+        },
+      },
+      include: {
+        lot: true,
+      },
+      orderBy: {
+        winDate: 'desc',
+      },
+    });
+    return wins as unknown as UserWin[];
+  } catch (error) {
+    console.error(`[Action - getFinancialDataForConsignor] Error fetching wins for seller ${sellerId}:`, error);
+    return [];
+  }
 }

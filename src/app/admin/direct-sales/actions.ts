@@ -1,5 +1,4 @@
 
-// src/app/admin/direct-sales/actions.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -52,7 +51,8 @@ export async function getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
         include: {
             category: true,
             seller: true
-        }
+        },
+        orderBy: { createdAt: 'desc' }
     });
     return offers.map(o => ({
         ...o,

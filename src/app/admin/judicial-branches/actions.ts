@@ -1,44 +1,89 @@
-// src/app/admin/judicial-branches/actions.ts
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
 import type { JudicialBranch, JudicialBranchFormData } from '@/types';
+import { slugify } from '@/lib/sample-data-helpers';
 
 export async function createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }> {
-  const db = await getDatabaseAdapter();
-  const result = await db.createJudicialBranch(data);
-  if (result.success) {
+  try {
+    const newBranch = await prisma.judicialBranch.create({
+      data: {
+        ...data,
+        slug: slugify(data.name),
+      }
+    });
     revalidatePath('/admin/judicial-branches');
+    return { success: true, message: 'Vara criada com sucesso!', branchId: newBranch.id };
+  } catch (error: any) {
+    console.error("Error creating judicial branch:", error);
+     if (error.code === 'P2002') {
+      return { success: false, message: 'Já existe uma vara com este nome nesta comarca.' };
+    }
+    return { success: false, message: error.message || 'Falha ao criar vara.' };
   }
-  return result;
 }
 
 export async function getJudicialBranches(): Promise<JudicialBranch[]> {
-  const db = await getDatabaseAdapter();
-  return db.getJudicialBranches();
+  try {
+    const branches = await prisma.judicialBranch.findMany({
+      include: {
+        district: {
+          select: { name: true, stateUf: true }
+        }
+      },
+      orderBy: { name: 'asc' }
+    });
+    return branches.map(b => ({
+      ...b,
+      districtName: `${b.district.name} - ${b.district.stateUf}`
+    })) as unknown as JudicialBranch[];
+  } catch (error) {
+    console.error("Error fetching judicial branches:", error);
+    return [];
+  }
 }
 
 export async function getJudicialBranch(id: string): Promise<JudicialBranch | null> {
-  const db = await getDatabaseAdapter();
-  return db.getJudicialBranch(id);
+  try {
+    const branch = await prisma.judicialBranch.findUnique({ where: { id } });
+    return branch as unknown as JudicialBranch | null;
+  } catch (error) {
+    console.error(`Error fetching judicial branch with ID ${id}:`, error);
+    return null;
+  }
 }
 
 export async function updateJudicialBranch(id: string, data: Partial<JudicialBranchFormData>): Promise<{ success: boolean; message: string; }> {
-  const db = await getDatabaseAdapter();
-  const result = await db.updateJudicialBranch(id, data);
-  if (result.success) {
+  try {
+    const updateData: any = {...data};
+    if (data.name) {
+      updateData.slug = slugify(data.name);
+    }
+    await prisma.judicialBranch.update({
+      where: { id },
+      data: updateData,
+    });
     revalidatePath('/admin/judicial-branches');
     revalidatePath(`/admin/judicial-branches/${id}/edit`);
+    return { success: true, message: 'Vara atualizada com sucesso!' };
+  } catch (error: any) {
+    console.error(`Error updating judicial branch ${id}:`, error);
+    return { success: false, message: error.message || 'Falha ao atualizar vara.' };
   }
-  return result;
 }
 
 export async function deleteJudicialBranch(id: string): Promise<{ success: boolean; message: string; }> {
-  const db = await getDatabaseAdapter();
-  const result = await db.deleteJudicialBranch(id);
-  if (result.success) {
+  try {
+    await prisma.judicialBranch.delete({ where: { id } });
     revalidatePath('/admin/judicial-branches');
+    return { success: true, message: 'Vara excluída com sucesso!' };
+  } catch (error: any) {
+    console.error(`Error deleting judicial branch ${id}:`, error);
+    if (error.code === 'P2003') {
+        return { success: false, message: 'Não é possível excluir. Esta vara tem processos vinculados.' };
+    }
+    return { success: false, message: error.message || 'Falha ao excluir vara.' };
   }
-  return result;
 }
