@@ -659,13 +659,31 @@ export class PostgresAdapter implements IDatabaseAdapter {
   }
 
   async getAuctionsByIds(ids: string[]): Promise<Auction[]> {
-    console.warn("[PostgresAdapter] getAuctionsByIds is not yet implemented for PostgreSQL.");
-    return Promise.resolve([]);
+    if (ids.length === 0) return [];
+    const { rows } = await getPool().query(`
+      SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url
+      FROM auctions a
+      LEFT JOIN lot_categories cat ON a.category_id = cat.id
+      LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
+      LEFT JOIN sellers s ON a.seller_id = s.id
+      WHERE a.id = ANY($1::int[])
+    `, [ids]);
+    return rows.map(mapToAuction);
   }
 
   async getLotsByIds(ids: string[]): Promise<Lot[]> {
-    console.warn("[PostgresAdapter] getLotsByIds is not yet implemented for PostgreSQL.");
-    return Promise.resolve([]);
+    if (ids.length === 0) return [];
+    const numericIds = ids.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+    const publicIds = ids.filter(id => isNaN(parseInt(id, 10)));
+    
+    const { rows } = await getPool().query(`
+      SELECT l.*, a.title as auction_name, cat.name as category_name
+      FROM lots l
+      LEFT JOIN auctions a ON l.auction_id = a.id
+      LEFT JOIN lot_categories cat ON l.category_id = cat.id
+      WHERE l.id = ANY($1::int[]) OR l.public_id = ANY($2::text[])
+    `, [numericIds, publicIds]);
+    return rows.map(mapToLot);
   }
   
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[], rolesProcessed?: number }> {
@@ -879,7 +897,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
         let valueIndex = 1;
 
         if (data.name) {
-            data.slug = slugify(data.name);
+            (data as any).slug = slugify(data.name);
         }
 
         for (const [key, value] of Object.entries(data)) {
@@ -951,8 +969,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
       LEFT JOIN sellers s ON a.seller_id = s.id
       ORDER BY a.auction_date DESC
     `);
-    const auctions = rows.map(mapToAuction);
-    return auctions;
+    return rows.map(mapToAuction);
   }
   async updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> {
     console.warn("[PostgresAdapter] updateAuction is not yet implemented for PostgreSQL.");

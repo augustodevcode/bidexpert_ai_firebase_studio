@@ -597,8 +597,45 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async getAuction(idOrPublicId: string): Promise<Auction | null> {
-    console.warn("[MySqlAdapter] getAuction is not yet implemented for MySQL.");
-    return null;
+    const [rows] = await getPool().execute<RowDataPacket[]>(`
+      SELECT a.*, 
+             cat.name as category_name, 
+             auct.name as auctioneer_name, 
+             s.name as seller_name,
+             auct.logo_url as auctioneer_logo_url,
+             (SELECT COUNT(*) FROM lots l WHERE l.auction_id = a.id) as total_lots_count
+      FROM auctions a
+      LEFT JOIN lot_categories cat ON a.category_id = cat.id
+      LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
+      LEFT JOIN sellers s ON a.seller_id = s.id
+      WHERE a.id = ? OR a.public_id = ? 
+      LIMIT 1
+    `, [idOrPublicId, idOrPublicId]);
+    if (rows.length === 0) return null;
+    const auctionData = mapMySqlRowToCamelCase(rows[0]);
+
+    const [lotRows] = await getPool().execute<RowDataPacket[]>(`
+      SELECT l.*, 
+             c.name as category_name, 
+             s.name as subcategory_name, 
+             st.uf as state_uf, 
+             city.name as city_name,
+             a.title as auction_name
+      FROM lots l
+      LEFT JOIN auctions a ON l.auction_id = a.id
+      LEFT JOIN lot_categories c ON l.category_id = c.id
+      LEFT JOIN subcategories s ON l.subcategory_id = s.id
+      LEFT JOIN states st ON l.state_id = st.id
+      LEFT JOIN cities city ON l.city_id = city.id
+      WHERE l.auction_id = ?
+    `, [auctionData.id]);
+
+    const lots = mapMySqlRowsToCamelCase(lotRows).map(mapToLot);
+    const auction = mapToAuction(auctionData);
+    auction.lots = lots;
+    auction.totalLots = lots.length;
+
+    return auction;
   }
   async getBem(id: string): Promise<Bem | null> {
     console.warn("[MySqlAdapter] getBem is not yet implemented for MySQL.");
@@ -733,6 +770,30 @@ export class MySqlAdapter implements IDatabaseAdapter {
     return null;
   }
   
+  async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> {
+    const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM auctioneers WHERE name = ? LIMIT 1', [name]);
+    if (rows.length === 0) return null;
+    return mapToAuctioneerProfileInfo(mapMySqlRowToCamelCase(rows[0]));
+  }
+  
+  async getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null> {
+    const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM auctioneers WHERE slug = ? OR public_id = ? LIMIT 1', [slug, slug]);
+    if (rows.length === 0) return null;
+    return mapToAuctioneerProfileInfo(mapMySqlRowToCamelCase(rows[0]));
+  }
+
+  async getSellerByName(name: string): Promise<SellerProfileInfo | null> {
+    const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM sellers WHERE name = ? LIMIT 1', [name]);
+    if (rows.length === 0) return null;
+    return mapToSellerProfileInfo(mapMySqlRowToCamelCase(rows[0]));
+  }
+
+  async getSellerBySlug(slug: string): Promise<SellerProfileInfo | null> {
+    const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM sellers WHERE slug = ? OR public_id = ? LIMIT 1', [slug, slug]);
+    if (rows.length === 0) return null;
+    return mapToSellerProfileInfo(mapMySqlRowToCamelCase(rows[0]));
+  }
+
   async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {
     console.warn("[MySqlAdapter] getAuctionsByAuctioneerSlug is not yet implemented for MySQL.");
     return Promise.resolve([]);
@@ -762,13 +823,32 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
 
   async getAuctionsByIds(ids: string[]): Promise<Auction[]> {
-    console.warn("[MySqlAdapter] getAuctionsByIds is not yet implemented for MySQL.");
-    return Promise.resolve([]);
+    if (ids.length === 0) return [];
+    const placeholders = ids.map(() => '?').join(',');
+    const query = `
+      SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url
+      FROM auctions a
+      LEFT JOIN lot_categories cat ON a.category_id = cat.id
+      LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
+      LEFT JOIN sellers s ON a.seller_id = s.id
+      WHERE a.id IN (${placeholders})
+    `;
+    const [rows] = await getPool().execute<RowDataPacket[]>(query, ids);
+    return mapMySqlRowsToCamelCase(rows).map(mapToAuction);
   }
   
   async getLotsByIds(ids: string[]): Promise<Lot[]> {
-    console.warn("[MySqlAdapter] getLotsByIds is not yet implemented for MySQL.");
-    return Promise.resolve([]);
+    if (ids.length === 0) return [];
+    const placeholders = ids.map(() => '?').join(',');
+    const query = `
+      SELECT l.*, a.title as auction_name, cat.name as category_name
+      FROM lots l
+      LEFT JOIN auctions a ON l.auction_id = a.id
+      LEFT JOIN lot_categories cat ON l.category_id = cat.id
+      WHERE l.id IN (${placeholders}) OR l.public_id IN (${placeholders})
+    `;
+    const [rows] = await getPool().execute<RowDataPacket[]>(query, [...ids, ...ids]);
+    return mapMySqlRowsToCamelCase(rows).map(mapToLot);
   }
   
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[], rolesProcessed?: number }> {
@@ -1045,8 +1125,7 @@ export class MySqlAdapter implements IDatabaseAdapter {
       GROUP BY a.id
       ORDER BY a.auction_date DESC
     `);
-    const auctions = mapMySqlRowsToCamelCase(rows).map(mapToAuction);
-    return auctions;
+    return mapMySqlRowsToCamelCase(rows).map(mapToAuction);
   }
   async updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> {
     console.warn("[MySqlAdapter] updateAuction is not yet implemented for MySQL.");
@@ -1062,14 +1141,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
   async getLots(auctionIdParam?: string): Promise<Lot[]> {
     let query = `
-      SELECT l.*, c.name as category_name, s.name as subcategory_name, st.uf as state_uf, city.name as city_name, a.title as auction_name, seller.name as seller_name
+      SELECT l.*, a.title as auction_name, cat.name as category_name
       FROM lots l
       LEFT JOIN auctions a ON l.auction_id = a.id
-      LEFT JOIN lot_categories c ON l.category_id = c.id
-      LEFT JOIN subcategories s ON l.subcategory_id = s.id
-      LEFT JOIN states st ON l.state_id = st.id
-      LEFT JOIN cities city ON l.city_id = city.id
-      LEFT JOIN sellers seller ON a.seller_id = seller.id
+      LEFT JOIN lot_categories cat ON l.category_id = cat.id
     `;
     const params: any[] = [];
     if (auctionIdParam) {
@@ -1082,15 +1157,10 @@ export class MySqlAdapter implements IDatabaseAdapter {
   }
   async getLot(idOrPublicId: string): Promise<Lot | null> {
     const [rows] = await getPool().execute<RowDataPacket[]>(`
-      SELECT l.*, c.name as category_name, s.name as subcategory_name, st.uf as state_uf, city.name as city_name, a.title as auction_name, seller.name as seller_name
+      SELECT l.*, a.title as auction_name
       FROM lots l
       LEFT JOIN auctions a ON l.auction_id = a.id
-      LEFT JOIN lot_categories c ON l.category_id = c.id
-      LEFT JOIN subcategories s ON l.subcategory_id = s.id
-      LEFT JOIN states st ON l.state_id = st.id
-      LEFT JOIN cities city ON l.city_id = city.id
-      LEFT JOIN sellers seller ON a.seller_id = seller.id
-      WHERE l.id = ? OR l.public_id = ? 
+      WHERE l.id = ? OR l.public_id = ?
       LIMIT 1
     `, [idOrPublicId, idOrPublicId]);
     if (rows.length === 0) return null;
