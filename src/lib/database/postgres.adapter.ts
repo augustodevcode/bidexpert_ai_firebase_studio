@@ -557,6 +557,100 @@ export class PostgresAdapter implements IDatabaseAdapter {
   constructor() {
     getPool();
   }
+  
+  async getLots(auctionIdParam?: string): Promise<Lot[]> {
+    let query = `
+      SELECT l.*, 
+             c.name as category_name, 
+             s.name as subcategory_name, 
+             st.uf as state_uf, 
+             city.name as city_name, 
+             a.title as auction_name
+      FROM lots l
+      LEFT JOIN auctions a ON l.auction_id = a.id
+      LEFT JOIN lot_categories c ON l.category_id = c.id
+      LEFT JOIN subcategories s ON l.subcategory_id = s.id
+      LEFT JOIN states st ON l.state_id = st.id
+      LEFT JOIN cities city ON l.city_id = city.id
+    `;
+    const params = [];
+    if (auctionIdParam) {
+      query += ` WHERE l.auction_id = $1`;
+      params.push(auctionIdParam);
+    }
+    query += ` ORDER BY l.id DESC`;
+
+    const { rows } = await getPool().query(query, params);
+    return rows.map(mapToLot);
+  }
+
+  async getLot(idOrPublicId: string): Promise<Lot | null> {
+    const query = `
+      SELECT l.*, 
+             c.name as category_name, 
+             s.name as subcategory_name, 
+             st.uf as state_uf, 
+             city.name as city_name, 
+             a.title as auction_name
+      FROM lots l
+      LEFT JOIN auctions a ON l.auction_id = a.id
+      LEFT JOIN lot_categories c ON l.category_id = c.id
+      LEFT JOIN subcategories s ON l.subcategory_id = s.id
+      LEFT JOIN states st ON l.state_id = st.id
+      LEFT JOIN cities city ON l.city_id = city.id
+      WHERE l.id::text = $1 OR l.public_id = $1
+      LIMIT 1
+    `;
+    const { rows } = await getPool().query(query, [idOrPublicId]);
+    if (rows.length === 0) return null;
+    return mapToLot(rows[0]);
+  }
+
+  async getLotsByIds(ids: string[]): Promise<Lot[]> {
+    if (!ids || ids.length === 0) return [];
+    
+    const numericIds = ids.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+    const publicIds = ids.filter(id => isNaN(parseInt(id, 10)));
+
+    let query = `
+      SELECT l.*, 
+             c.name as category_name, 
+             s.name as subcategory_name, 
+             st.uf as state_uf, 
+             city.name as city_name, 
+             a.title as auction_name
+      FROM lots l
+      LEFT JOIN auctions a ON l.auction_id = a.id
+      LEFT JOIN lot_categories c ON l.category_id = c.id
+      LEFT JOIN subcategories s ON l.subcategory_id = s.id
+      LEFT JOIN states st ON l.state_id = st.id
+      LEFT JOIN cities city ON l.city_id = city.id
+      WHERE 
+    `;
+
+    const conditions: string[] = [];
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (numericIds.length > 0) {
+        conditions.push(`l.id = ANY($${paramIndex++}::int[])`);
+        params.push(numericIds);
+    }
+    if (publicIds.length > 0) {
+        conditions.push(`l.public_id = ANY($${paramIndex++}::text[])`);
+        params.push(publicIds);
+    }
+
+    if (conditions.length === 0) return [];
+
+    query += conditions.join(' OR ');
+
+    const { rows } = await getPool().query(query, params);
+    const lots = rows.map(mapToLot);
+    // Remove duplicates
+    const uniqueLots = Array.from(new Map(lots.map(lot => [lot.id, lot])).values());
+    return uniqueLots;
+  }
 
   async getWinsForUser(userId: string): Promise<UserWin[]> {
     const { rows } = await getPool().query(
@@ -657,16 +751,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
 
   async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
     console.warn("[PostgresAdapter] getDirectSaleOffers is not yet implemented for PostgreSQL.");
-    return Promise.resolve([]);
-  }
-
-  async getAuctionsByIds(ids: string[]): Promise<Auction[]> {
-    console.warn("[PostgresAdapter] getAuctionsByIds is not yet implemented for PostgreSQL.");
-    return Promise.resolve([]);
-  }
-
-  async getLotsByIds(ids: string[]): Promise<Lot[]> {
-    console.warn("[PostgresAdapter] getLotsByIds is not yet implemented for PostgreSQL.");
     return Promise.resolve([]);
   }
   
