@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useAuth } from '@/contexts/auth-context';
 import { useState, useEffect, useCallback } from 'react';
 import type { UserBid } from '@/types';
-import { getBidsForUser } from './actions';
+import { getBidsForUserAction } from './actions';
 import { useToast } from '@/hooks/use-toast';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import Link from 'next/link';
@@ -44,7 +44,7 @@ export default function MyBidsPage() {
   const fetchBids = useCallback(async (userId: string) => {
     setIsLoading(true);
     try {
-      const userBids = await getBidsForUser(userId);
+      const userBids = await getBidsForUserAction(userId);
       setBids(userBids);
     } catch (error) {
       console.error("Error fetching user bids:", error);
@@ -122,7 +122,7 @@ export default function MyBidsPage() {
                           <p className="text-xs text-muted-foreground">Leilão: {bid.lot.auctionName}</p>
                         </TableCell>
                         <TableCell className="text-right font-semibold">
-                          {bid.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          {bid.userBidAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                         </TableCell>
                         <TableCell className="text-right">
                           {bid.lot.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
@@ -149,4 +149,3 @@ export default function MyBidsPage() {
     </div>
   );
 }
-

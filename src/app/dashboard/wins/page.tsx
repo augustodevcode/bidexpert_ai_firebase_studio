@@ -14,7 +14,7 @@ import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/contexts/auth-context';
 import { useEffect, useState, useCallback } from 'react';
-import { getWins } from './actions';
+import { getWinsForUserAction } from './actions';
 import { useToast } from '@/hooks/use-toast';
 
 const getPaymentStatusColor = (status: string) => {
@@ -40,7 +40,7 @@ export default function MyWinsPage() {
   const fetchWins = useCallback(async (userId: string) => {
     setIsLoading(true);
     try {
-      const userWins = await getWins(userId);
+      const userWins = await getWinsForUserAction(userId);
       setWins(userWins);
     } catch (error) {
       console.error("Error fetching user wins:", error);
@@ -95,6 +95,9 @@ export default function MyWinsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {wins.map((win) => {
+                if (!win.lot) {
+                  return <Card key={win.id} className="p-4 text-destructive">Lote com ID {win.lotId} não encontrado.</Card>;
+                }
                 const paymentDeadline = addDays(new Date(win.winDate as string), 5); // Exemplo: 5 dias para pagar
                 const commissionRate = 0.05; // Exemplo: 5% de comissão
                 const commissionValue = win.winningBidAmount * commissionRate;

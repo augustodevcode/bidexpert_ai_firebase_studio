@@ -46,6 +46,7 @@ import type { MegaMenuLinkItem } from './mega-menu-link-list';
 import TwoColumnMegaMenu from './two-column-mega-menu';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getUnreadNotificationCountAction } from '@/app/dashboard/notifications/actions';
 
 
 // HistoryListItem é usado por MainNav quando renderiza o conteúdo do Histórico
@@ -81,6 +82,7 @@ export default function Header() {
   const [auctioneers, setAuctioneers] = useState<AuctioneerProfileInfo[]>([]);
   const [consignorMegaMenuGroups, setConsignorMegaMenuGroups] = useState<MegaMenuGroup[]>([]);
   const [favoriteCount, setFavoriteCount] = useState(0);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSearchCategorySlug, setSelectedSearchCategorySlug] = useState<string | undefined>(undefined);
@@ -91,9 +93,8 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParamsHook = useSearchParams();
-  const { user } = useAuth();
+  const { user, userProfileWithPermissions } = useAuth();
 
-  const placeholderNotificationsCount = 3;
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const siteTitle = platformSettings?.siteTitle || 'BidExpert';
   const siteTagline = platformSettings?.siteTagline;
@@ -106,22 +107,36 @@ export default function Header() {
   }, [isMobileMenuOpen, setIsMobileMenuOpen]);
 
   useEffect(() => {
-    const updateFavoriteCount = () => {
+    const updateCounts = async () => {
         setFavoriteCount(getFavoriteLotIdsFromStorage().length);
+        if (userProfileWithPermissions?.uid) {
+            const count = await getUnreadNotificationCountAction(userProfileWithPermissions.uid);
+            setUnreadNotificationsCount(count);
+        } else {
+            setUnreadNotificationsCount(0);
+        }
     };
-    updateFavoriteCount();
+    updateCounts();
 
-    const handleFavoritesChange = () => updateFavoriteCount();
-    window.addEventListener('favorites-updated', handleFavoritesChange);
+    const handleStorageChange = () => updateCounts();
+    window.addEventListener('favorites-updated', handleStorageChange);
+    window.addEventListener('notifications-updated', handleStorageChange); // Custom event for notifications
     window.addEventListener('storage', (e) => {
         if (e.key === 'bidExpertFavoriteLotIds') {
-            updateFavoriteCount();
+            updateCounts();
         }
     });
 
+    return () => {
+        window.removeEventListener('favorites-updated', handleStorageChange);
+        window.removeEventListener('notifications-updated', handleStorageChange);
+        window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [userProfileWithPermissions]);
+
+  useEffect(() => {
     async function fetchInitialData() {
       setIsLoading(true);
-      console.log('[Header fetchInitialData] Iniciando busca de dados...');
       try {
         const [settings, categories, allFetchedLots, fetchedAuctioneers, fetchedSellers] = await Promise.all([
           getPlatformSettings(),
@@ -148,7 +163,6 @@ export default function Header() {
         }];
         setConsignorMegaMenuGroups(formattedSellersForMenu.filter(group => group.items.length > 0));
 
-        // Now process recently viewed items using a server action
         const viewedIds = getRecentlyViewedIds();
         if (viewedIds.length > 0) {
           const itemsData = await getLotsByIds(viewedIds);
@@ -174,9 +188,6 @@ export default function Header() {
       }
     }
     fetchInitialData();
-    
-    return () => window.removeEventListener('favorites-updated', handleFavoritesChange);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -185,11 +196,8 @@ export default function Header() {
         setIsSearchDropdownOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -199,7 +207,6 @@ export default function Header() {
       setIsSearchLoading(false);
       return;
     }
-
     setIsSearchLoading(true);
     const debounceTimer = setTimeout(() => {
       const filtered = allLots.filter(lot => {
@@ -486,7 +493,7 @@ export default function Header() {
                               onClick={() => setIsSearchDropdownOpen(false)}
                             >
                               <div className="relative h-12 w-16 flex-shrink-0 bg-muted rounded-sm overflow-hidden mr-3">
-                                <Image src={lot.imageUrl} alt={lot.title} fill className="object-cover" data-ai-hint={lot.dataAiHint || "resultado busca"} />
+                                <Image src={lot.imageUrl || "https://placehold.co/120x90.png"} alt={lot.title} fill className="object-cover" data-ai-hint={lot.dataAiHint || "resultado busca"} />
                               </div>
                               <div className="flex-grow overflow-hidden">
                                 <p className="text-sm font-medium text-foreground truncate">{lot.title}</p>
@@ -534,9 +541,9 @@ export default function Header() {
               <Button variant="ghost" size="icon" className="relative hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" asChild aria-label="Notificações">
                 <Link href="/dashboard/notifications">
                   <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-                  {placeholderNotificationsCount > 0 && (
+                  {unreadNotificationsCount > 0 && (
                     <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-accent-foreground text-accent border-accent">
-                      {placeholderNotificationsCount}
+                      {unreadNotificationsCount}
                     </Badge>
                   )}
                 </Link>
@@ -613,6 +620,7 @@ export default function Header() {
     
 
     
+
 
 
 

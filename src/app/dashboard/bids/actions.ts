@@ -10,7 +10,7 @@ import type { UserBid } from '@/types';
  * @param userId - The ID of the user whose bids to fetch.
  * @returns A promise that resolves to an array of UserBid objects.
  */
-export async function getBidsForUser(userId: string): Promise<UserBid[]> {
+export async function getBidsForUserAction(userId: string): Promise<UserBid[]> {
   if (!userId) {
     console.warn("[Action - getBidsForUser] No userId provided.");
     return [];
@@ -25,4 +25,3 @@ export async function getBidsForUser(userId: string): Promise<UserBid[]> {
     return [];
   }
 }
-
