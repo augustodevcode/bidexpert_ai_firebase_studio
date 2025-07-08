@@ -1,3 +1,4 @@
+
 // src/app/admin/bens/page.tsx
 'use client';
 
@@ -11,6 +12,7 @@ import { PlusCircle, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
+import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
 
 export default function AdminBensPage() {
   const [bens, setBens] = useState<Bem[]>([]);
@@ -18,6 +20,8 @@ export default function AdminBensPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedBem, setSelectedBem] = useState<Bem | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -65,38 +69,50 @@ export default function AdminBensPage() {
     [toast]
   );
   
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+  const handleOpenDetails = useCallback((bem: Bem) => {
+    setSelectedBem(bem);
+    setIsModalOpen(true);
+  }, []);
+  
+  const columns = useMemo(() => createColumns({ handleDelete, onOpenDetails: handleOpenDetails }), [handleDelete, handleOpenDetails]);
 
   return (
-    <div className="space-y-6">
-      <Card className="shadow-lg">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-2xl font-bold font-headline flex items-center">
-              <Package className="h-6 w-6 mr-2 text-primary" />
-              Gerenciar Bens
-            </CardTitle>
-            <CardDescription>
-              Cadastre e gerencie os bens individuais que poderão ser loteados.
-            </CardDescription>
-          </div>
-          <Button asChild>
-            <Link href="/admin/bens/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Novo Bem
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={bens}
-            isLoading={isLoading}
-            error={error}
-            searchColumnId="title"
-            searchPlaceholder="Buscar por título ou ID do processo..."
-          />
-        </CardContent>
-      </Card>
-    </div>
+    <>
+      <div className="space-y-6">
+        <Card className="shadow-lg">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl font-bold font-headline flex items-center">
+                <Package className="h-6 w-6 mr-2 text-primary" />
+                Gerenciar Bens
+              </CardTitle>
+              <CardDescription>
+                Cadastre e gerencie os bens individuais que poderão ser loteados.
+              </CardDescription>
+            </div>
+            <Button asChild>
+              <Link href="/admin/bens/new">
+                <PlusCircle className="mr-2 h-4 w-4" /> Novo Bem
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <DataTable
+              columns={columns}
+              data={bens}
+              isLoading={isLoading}
+              error={error}
+              searchColumnId="title"
+              searchPlaceholder="Buscar por título ou ID do processo..."
+            />
+          </CardContent>
+        </Card>
+      </div>
+       <BemDetailsModal 
+        bem={selectedBem}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
+    </>
   );
 }
