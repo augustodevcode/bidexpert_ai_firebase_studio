@@ -1,3 +1,4 @@
+
 // src/app/admin/reports/page.tsx
 'use client';
 
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react';
 import { 
     LineChart, 
+    PieChart,
     Pie,
     Bar, 
     XAxis, 
