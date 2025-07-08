@@ -1214,7 +1214,7 @@ export interface IDatabaseAdapter {
     additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>,
     roleIdToAssign?: string
   ): Promise<{ success: boolean; message: string; userProfile?: UserProfileWithPermissions; }>;
-  getUsersWithRoles(): Promise<UserProfileData[]>;
+  getUsersWithRoles(): Promise<UserProfileWithPermissions[]>;
   updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }>;
   deleteUserProfile(userId: string): Promise<{ success: boolean; message: string; }>;
   getUserByEmail(email: string): Promise<UserProfileWithPermissions | null>;

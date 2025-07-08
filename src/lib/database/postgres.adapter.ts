@@ -644,36 +644,34 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return mapToSellerProfileInfo(rows[0]);
   }
 
-  async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {
-    console.warn("[PostgresAdapter] getAuctionsByAuctioneerSlug is not yet implemented for PostgreSQL.");
-    return Promise.resolve([]);
-  }
-
-  async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
-    console.warn("[PostgresAdapter] getDirectSaleOffers is not yet implemented for PostgreSQL.");
-    return Promise.resolve([]);
-  }
-
   async getAuctionsByIds(ids: string[]): Promise<Auction[]> {
-    console.warn("[PostgresAdapter] getAuctionsByIds is not yet implemented for PostgreSQL.");
-    return Promise.resolve([]);
-  }
-
-  async getLotsByIds(ids: string[]): Promise<Lot[]> {
-    if (!ids || ids.length === 0) {
-      return [];
-    }
-    // PostgreSQL can handle numeric and string IDs in the same query if we cast appropriately or use text comparison
+    if (!ids || ids.length === 0) return [];
     const numericIds = ids.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
-    const textIds = ids; // publicIds are strings
+    const textIds = ids;
+    const query = `
+      SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url, (SELECT COUNT(*) FROM lots l WHERE l.auction_id = a.id) as total_lots_count
+      FROM auctions a
+      LEFT JOIN lot_categories cat ON a.category_id = cat.id
+      LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
+      LEFT JOIN sellers s ON a.seller_id = s.id
+      WHERE a.id = ANY($1::int[]) OR a.public_id = ANY($2::text[])
+    `;
+    const { rows } = await getPool().query(query, [numericIds, textIds]);
+    return rows.map(mapToAuction);
+  }
+  
+  async getLotsByIds(ids: string[]): Promise<Lot[]> {
+    if (!ids || ids.length === 0) return [];
+    const numericIds = ids.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+    const textIds = ids; 
 
     const query = `
       SELECT l.*, 
+             a.title as auction_name, 
              c.name as category_name, 
              s.name as subcategory_name, 
              st.uf as state_uf, 
-             city.name as city_name, 
-             a.title as auction_name
+             city.name as city_name
       FROM lots l
       LEFT JOIN auctions a ON l.auction_id = a.id
       LEFT JOIN lot_categories c ON l.category_id = c.id
@@ -711,7 +709,31 @@ export class PostgresAdapter implements IDatabaseAdapter {
       `CREATE TABLE IF NOT EXISTS bens ( id SERIAL PRIMARY KEY, public_id VARCHAR(255) UNIQUE, title VARCHAR(255) NOT NULL, description TEXT, judicial_process_id INTEGER REFERENCES judicial_processes(id), status VARCHAR(50) DEFAULT 'DISPONIVEL', category_id INTEGER REFERENCES lot_categories(id), subcategory_id INTEGER REFERENCES subcategories(id), image_url TEXT, image_media_id VARCHAR(255), data_ai_hint VARCHAR(255), evaluation_value NUMERIC(15, 2), location_city VARCHAR(100), location_state VARCHAR(100), address VARCHAR(255), latitude NUMERIC(10, 8), longitude NUMERIC(11, 8), created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS user_wins ( id SERIAL PRIMARY KEY, user_id VARCHAR(255) NOT NULL REFERENCES users(uid), lot_id INTEGER NOT NULL REFERENCES lots(id), winning_bid_amount NUMERIC(15, 2) NOT NULL, win_date TIMESTAMPTZ NOT NULL, payment_status VARCHAR(50) DEFAULT 'PENDENTE', invoice_url TEXT, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
       `CREATE TABLE IF NOT EXISTS bids ( id SERIAL PRIMARY KEY, lot_id INTEGER NOT NULL REFERENCES lots(id) ON DELETE CASCADE, auction_id INTEGER, bidder_id VARCHAR(255) NOT NULL, bidder_display_name VARCHAR(255), amount NUMERIC(15,2) NOT NULL, timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
-      `CREATE TABLE IF NOT EXISTS notifications ( id SERIAL PRIMARY KEY, user_id VARCHAR(255) NOT NULL REFERENCES users(uid) ON DELETE CASCADE, message TEXT NOT NULL, link TEXT, is_read BOOLEAN DEFAULT FALSE, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`
+      `CREATE TABLE IF NOT EXISTS notifications ( id SERIAL PRIMARY KEY, user_id VARCHAR(255) NOT NULL REFERENCES users(uid) ON DELETE CASCADE, message TEXT NOT NULL, link TEXT, is_read BOOLEAN DEFAULT FALSE, created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP );`,
+      `CREATE TABLE IF NOT EXISTS direct_sale_offers (
+        id SERIAL PRIMARY KEY,
+        public_id VARCHAR(255) UNIQUE,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        image_url TEXT,
+        image_media_id VARCHAR(255),
+        data_ai_hint VARCHAR(255),
+        gallery_image_urls JSONB,
+        media_item_ids JSONB,
+        offer_type VARCHAR(50) NOT NULL,
+        price NUMERIC(15, 2),
+        minimum_offer_price NUMERIC(15, 2),
+        category_id INTEGER REFERENCES lot_categories(id),
+        location_city VARCHAR(100),
+        location_state VARCHAR(100),
+        seller_id INTEGER NOT NULL REFERENCES sellers(id),
+        status VARCHAR(50) NOT NULL,
+        views INTEGER DEFAULT 0,
+        proposals_count INTEGER DEFAULT 0,
+        expires_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );`
     ];
 
     try {
@@ -810,16 +832,30 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async getSubcategories(parentCategoryId: string): Promise<Subcategory[]> {
-    console.warn("[PostgresAdapter] getSubcategories is not yet implemented for PostgreSQL.");
-    return [];
+    try {
+      const query = `
+        SELECT s.*, c.name as parent_category_name
+        FROM subcategories s
+        LEFT JOIN lot_categories c ON s.parent_category_id = c.id
+        WHERE s.parent_category_id = $1
+        ORDER BY s.display_order, s.name
+      `;
+      const { rows } = await getPool().query(query, [parentCategoryId]);
+      return rows.map(mapToSubcategory);
+    } catch (error: any) {
+      console.error(`[PostgresAdapter - getSubcategories for parent ${parentCategoryId}] Error:`, error);
+      return [];
+    }
   }
   async getSubcategory(id: string): Promise<Subcategory | null> {
-    console.warn("[PostgresAdapter] getSubcategory is not yet implemented for PostgreSQL.");
-    return null;
+    const { rows } = await getPool().query('SELECT * FROM subcategories WHERE id = $1 LIMIT 1', [id]);
+    if (rows.length === 0) return null;
+    return mapToSubcategory(rows[0]);
   }
   async getSubcategoryBySlug(slug: string, parentCategoryId: string): Promise<Subcategory | null> {
-    console.warn("[PostgresAdapter] getSubcategoryBySlug is not yet implemented for PostgreSQL.");
-    return null;
+    const { rows } = await getPool().query('SELECT * FROM subcategories WHERE slug = $1 AND parent_category_id = $2 LIMIT 1', [slug, parentCategoryId]);
+    if (rows.length === 0) return null;
+    return mapToSubcategory(rows[0]);
   }
   async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> {
     console.warn("[PostgresAdapter] updateSubcategory is not yet implemented for PostgreSQL.");
@@ -898,19 +934,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.warn("[PostgresAdapter] createSeller is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
-  async getSellers(): Promise<SellerProfileInfo[]> {
-    try {
-      const { rows } = await getPool().query('SELECT * FROM sellers ORDER BY name');
-      return rows.map(mapToSellerProfileInfo);
-    } catch (error: any) {
-      console.error('[PostgresAdapter - getSellers] Error:', error);
-      return [];
-    }
-  }
-  async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> {
-    console.warn("[PostgresAdapter] getSeller is not yet implemented for PostgreSQL.");
-    return null;
-  }
   async updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
     console.warn("[PostgresAdapter] updateSeller is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
@@ -922,10 +945,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> {
     console.warn("[PostgresAdapter] createAuction is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getAuctions(): Promise<Auction[]> {
-    console.warn("[PostgresAdapter] getAuctions is not yet implemented for PostgreSQL.");
-    return [];
   }
   async updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> {
     console.warn("[PostgresAdapter] updateAuction is not yet implemented for PostgreSQL.");
@@ -942,10 +961,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async createLot(data: LotDbData): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }> {
     console.warn("[PostgresAdapter] createLot is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getLots(auctionIdParam?: string): Promise<Lot[]> {
-    console.warn("[PostgresAdapter] getLots is not yet implemented for PostgreSQL.");
-    return [];
   }
   async getLot(idOrPublicId: string): Promise<Lot | null> {
     console.warn("[PostgresAdapter] getLot is not yet implemented for PostgreSQL.");
@@ -995,21 +1010,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.warn("[PostgresAdapter] ensureUserRole is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
-  async getUsersWithRoles(): Promise<UserProfileWithPermissions[]> {
-    const query = `
-      SELECT u.*, r.name as role_name_from_join, r.permissions as role_permissions_from_join
-      FROM users u
-      LEFT JOIN roles r ON u.role_id = r.id
-      ORDER BY u.full_name
-    `;
-    try {
-      const { rows } = await getPool().query(query);
-      return rows.map(row => mapToUserProfileData(row, null));
-    } catch (error: any) {
-      console.error('[PostgresAdapter - getUsersWithRoles] Error:', error);
-      return [];
-    }
-  }
   async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
     console.warn("[PostgresAdapter] updateUserRole is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
@@ -1025,15 +1025,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
   async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string; }> {
     console.warn("[PostgresAdapter] createRole is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
-  }
-  async getRoles(): Promise<Role[]> {
-    try {
-      const { rows } = await getPool().query('SELECT * FROM roles ORDER BY name');
-      return rows.map(mapToRole);
-    } catch (error: any) {
-      console.error('[PostgresAdapter - getRoles] Error:', error);
-      return [];
-    }
   }
   async getRole(id: string): Promise<Role | null> {
     console.warn("[PostgresAdapter] getRole is not yet implemented for PostgreSQL.");
