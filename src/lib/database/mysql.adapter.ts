@@ -598,10 +598,6 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] createLotsFromBens is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
-  async getAuction(idOrPublicId: string): Promise<Auction | null> {
-    console.warn("[MySqlAdapter] getAuction is not yet implemented for MySQL.");
-    return null;
-  }
   async getBem(id: string): Promise<Bem | null> {
     console.warn("[MySqlAdapter] getBem is not yet implemented for MySQL.");
     return null;
@@ -982,22 +978,87 @@ export class MySqlAdapter implements IDatabaseAdapter {
     console.warn("[MySqlAdapter] deleteCity is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
+  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> {
+    try {
+        const publicId = `AUCT-PUB-${uuidv4().substring(0, 12)}`;
+        const slug = slugify(data.name);
+        const [result] = await getPool().execute<ResultSetHeader>(
+            `INSERT INTO auctioneers (public_id, name, slug, registration_number, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, user_id) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [publicId, data.name, slug, data.registrationNumber, data.contactName, data.email, data.phone, data.address, data.city, data.state, data.zipCode, data.website, data.logoUrl, data.dataAiHintLogo, data.description, data.userId]
+        );
+        return { success: true, message: 'Leiloeiro criado com sucesso!', auctioneerId: String(result.insertId), auctioneerPublicId: publicId };
+    } catch (e: any) {
+        return { success: false, message: e.message };
+    }
+  }
+  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
+      const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM auctioneers ORDER BY name ASC');
+      return mapMySqlRowsToCamelCase(rows).map(mapToAuctioneerProfileInfo);
+  }
+  async getAuctioneer(idOrPublicId: string): Promise<AuctioneerProfileInfo | null> {
+      const [rows] = await getPool().execute<RowDataPacket[]>('SELECT * FROM auctioneers WHERE id = ? OR public_id = ? LIMIT 1', [idOrPublicId, idOrPublicId]);
+      if (rows.length === 0) return null;
+      return mapToAuctioneerProfileInfo(mapMySqlRowToCamelCase(rows[0]));
+  }
+  async updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
+      try {
+        const updateData: any = {...data};
+        if(data.name) updateData.slug = slugify(data.name);
+
+        const columns = Object.keys(updateData).map(key => `${key.replace(/([A-Z])/g, '_$1').toLowerCase()} = ?`).join(', ');
+        const values = Object.values(updateData);
+
+        const [result] = await getPool().execute<ResultSetHeader>(
+            `UPDATE auctioneers SET ${columns}, updated_at = CURRENT_TIMESTAMP WHERE id = ? OR public_id = ?`,
+            [...values, idOrPublicId, idOrPublicId]
+        );
+        if(result.affectedRows > 0) {
+            return { success: true, message: 'Leiloeiro atualizado com sucesso!' };
+        }
+        return { success: false, message: 'Leiloeiro não encontrado.' };
+      } catch (e: any) {
+          return { success: false, message: e.message };
+      }
+  }
+  async deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
+      try {
+        const [result] = await getPool().execute<ResultSetHeader>('DELETE FROM auctioneers WHERE id = ? OR public_id = ?', [idOrPublicId, idOrPublicId]);
+        if(result.affectedRows > 0) {
+            return { success: true, message: 'Leiloeiro excluído com sucesso!' };
+        }
+        return { success: false, message: 'Leiloeiro não encontrado.' };
+      } catch (e: any) {
+          return { success: false, message: e.message };
+      }
+  }
+  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> {
+    console.warn("[MySqlAdapter] createSeller is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async getSellers(): Promise<SellerProfileInfo[]> {
+    console.warn("[MySqlAdapter] getSellers is not yet implemented for MySQL.");
+    return [];
+  }
+  async getSeller(idOrPublicId: string): Promise<SellerProfileInfo | null> {
+    console.warn("[MySqlAdapter] getSeller is not yet implemented for MySQL.");
+    return null;
+  }
+  async updateSeller(idOrPublicId: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] updateSeller is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
+  async deleteSeller(idOrPublicId: string): Promise<{ success: boolean; message: string; }> {
+    console.warn("[MySqlAdapter] deleteSeller is not yet implemented for MySQL.");
+    return { success: false, message: "Funcionalidade não implementada." };
+  }
   async createAuction(data: AuctionDbData): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }> {
     console.warn("[MySqlAdapter] createAuction is not yet implemented for MySQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async getAuctions(): Promise<Auction[]> {
-    const [rows] = await getPool().execute<RowDataPacket[]>(`
-      SELECT a.*, cat.name as category_name, auct.name as auctioneer_name, s.name as seller_name, auct.logo_url as auctioneer_logo_url, COUNT(l.id) as total_lots_count
-      FROM auctions a
-      LEFT JOIN lot_categories cat ON a.category_id = cat.id
-      LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
-      LEFT JOIN sellers s ON a.seller_id = s.id
-      LEFT JOIN lots l ON a.id = l.auction_id
-      GROUP BY a.id
-      ORDER BY a.auction_date DESC
-    `);
-    return mapMySqlRowsToCamelCase(rows).map(mapToAuction);
+    console.warn("[MySqlAdapter] getAuctions is not yet implemented for MySQL.");
+    return [];
   }
   async updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> {
     console.warn("[MySqlAdapter] updateAuction is not yet implemented for MySQL.");
