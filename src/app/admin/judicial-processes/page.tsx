@@ -20,25 +20,26 @@ export default function AdminJudicialProcessesPage() {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
-    let ignore = false;
+    let isMounted = true;
     
     const fetchItems = async () => {
+      if (!isMounted) return;
       setIsLoading(true);
       setError(null);
       try {
         const fetchedItems = await getJudicialProcesses();
-        if (!ignore) {
+        if (isMounted) {
           setProcesses(fetchedItems);
         }
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : "Falha ao buscar processos judiciais.";
         console.error("Error fetching judicial processes:", e);
-        if (!ignore) {
+        if (isMounted) {
           setError(errorMessage);
           toast({ title: "Erro", description: errorMessage, variant: "destructive" });
         }
       } finally {
-        if (!ignore) {
+        if (isMounted) {
           setIsLoading(false);
         }
       }
@@ -47,7 +48,7 @@ export default function AdminJudicialProcessesPage() {
     fetchItems();
 
     return () => {
-      ignore = true;
+      isMounted = false;
     };
   }, [toast, refetchTrigger]);
 
