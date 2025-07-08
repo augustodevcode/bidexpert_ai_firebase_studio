@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
 import type { Timestamp as FirebaseClientTimestamp } from 'firebase/firestore'; // Client SDK Timestamp
@@ -311,14 +310,100 @@ export interface Bem {
   // Imóveis
   propertyRegistrationNumber?: string; iptuNumber?: string;
   isOccupied?: boolean;
-  area?: number; 
+  totalArea?: number;
+  builtArea?: number;
   bedrooms?: number; suites?: number; bathrooms?: number; parkingSpaces?: number;
   constructionType?: string; finishes?: string; infrastructure?: string;
   condoDetails?: string; improvements?: string; topography?: string;
   liensAndEncumbrances?: string; propertyDebts?: string;
   unregisteredRecords?: string; hasHabiteSe?: boolean;
   zoningRestrictions?: string;
-  amenities?: string[];
+  amenities?: { value: string }[];
+  
+  // Eletrônicos
+  brand?: string;
+  serialNumber?: string;
+  itemCondition?: string;
+  specifications?: string;
+  includedAccessories?: string;
+  batteryCondition?: string;
+  hasInvoice?: boolean;
+  hasWarranty?: boolean;
+  repairHistory?: string;
+  
+  // Eletrodomésticos
+  applianceCapacity?: string;
+  voltage?: string;
+  applianceType?: string;
+  additionalFunctions?: string;
+  
+  // Máquinas e Equipamentos
+  hoursUsed?: number;
+  engineType?: string;
+  capacityOrPower?: string;
+  maintenanceHistory?: string;
+  installationLocation?: string;
+  compliesWithNR?: string;
+  operatingLicenses?: string;
+  
+  // Semoventes (Livestock)
+  breed?: string;
+  age?: string;
+  sex?: 'Macho' | 'Fêmea';
+  weight?: string;
+  individualId?: string;
+  purpose?: string;
+  sanitaryCondition?: string;
+  lineage?: string;
+  isPregnant?: boolean;
+  specialSkills?: string;
+  gtaDocument?: string;
+  breedRegistryDocument?: string;
+
+  // Móveis
+  furnitureType?: string;
+  material?: string;
+  style?: string;
+  dimensions?: string;
+  pieceCount?: number;
+  
+  // Joias
+  jewelryType?: string;
+  metal?: string;
+  gemstones?: string;
+  totalWeight?: string;
+  jewelrySize?: string;
+  authenticityCertificate?: string;
+  
+  // Obras de Arte e Antiguidades
+  workType?: string;
+  artist?: string;
+  period?: string;
+  technique?: string;
+  provenance?: string;
+  
+  // Embarcações
+  boatType?: string;
+  boatLength?: string;
+  hullMaterial?: string;
+  onboardEquipment?: string;
+  
+  // Alimentos
+  productName?: string;
+  quantity?: string;
+  packagingType?: string;
+  expirationDate?: AnyTimestamp;
+  storageConditions?: string;
+  
+  // Metais Preciosos e Pedras
+  preciousMetalType?: string;
+  purity?: string;
+  
+  // Bens Florestais
+  forestGoodsType?: string;
+  volumeOrQuantity?: string;
+  species?: string;
+  dofNumber?: string;
 }
 
 export type BemFormData = Omit<Bem, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName' | 'galleryImageUrls' | 'mediaItemIds' | 'amenities'> & {
@@ -1083,12 +1168,14 @@ export interface IDatabaseAdapter {
   updateLot(idOrPublicId: string, data: Partial<LotDbData>): Promise<{ success: boolean; message: string; }>;
   deleteLot(idOrPublicId: string, auctionId?: string): Promise<{ success: boolean; message: string; }>;
   
+  // Direct Sales
   getDirectSaleOffers(): Promise<DirectSaleOffer[]>;
   getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null>;
   getDirectSaleOffersForSeller(sellerId: string): Promise<DirectSaleOffer[]>;
   createDirectSaleOffer(data: DirectSaleOfferFormData): Promise<{ success: boolean; message: string; offerId?: string; }>;
   updateDirectSaleOffer(id: string, data: Partial<DirectSaleOfferFormData>): Promise<{ success: boolean; message: string; }>;
   deleteDirectSaleOffer(id: string): Promise<{ success: boolean; message: string; }>;
+  
 
   getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]>;
   getBidsForUser(userId: string): Promise<UserBid[]>;
@@ -1104,7 +1191,7 @@ export interface IDatabaseAdapter {
   
   getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]>;
   createQuestion(question: Omit<LotQuestion, "id" | "createdAt" | "answeredAt" | "answeredByUserId" | "answeredByUserDisplayName" | "isPublic">): Promise<{ success: boolean; message: string; questionId?: string; }>;
-  answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string }>;
+  answerQuestion(lotId: string, questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string; }>;
 
   getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null>;
   updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }>;
@@ -1191,3 +1278,7 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
+
+```
+- tailwind.config.ts
+- tsconfig.json
