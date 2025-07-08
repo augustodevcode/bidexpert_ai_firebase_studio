@@ -321,26 +321,6 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return Promise.resolve(this.localData.samplePlatformSettings);
   }
 
-  // --- Subcategories ---
-  async getSubcategories(parentCategoryId: string): Promise<Subcategory[]> {
-    await delay(20);
-    const parentCategory = this.localData.sampleLotCategories.find(c => c.id === parentCategoryId);
-    const subcats = this.localData.sampleSubcategories
-      .filter(s => s.parentCategoryId === parentCategoryId)
-      .map(s => ({
-        ...s,
-        parentCategoryName: parentCategory?.name,
-      }));
-    return Promise.resolve(JSON.parse(JSON.stringify(subcats)));
-  }
-  
-  async getSubcategory(id: string): Promise<Subcategory | null> {
-    const subcat = this.localData.sampleSubcategories.find(s => s.id === id);
-    if (!subcat) return null;
-    const parentCategory = this.localData.sampleLotCategories.find(c => c.id === subcat.parentCategoryId);
-    return Promise.resolve({ ...subcat, parentCategoryName: parentCategory?.name });
-  }
-
   // --- Lots ---
   async getLots(auctionIdParam?: string): Promise<Lot[]> {
     await delay(30);
@@ -366,27 +346,6 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return Promise.resolve(JSON.parse(JSON.stringify(enrichedLots)));
   }
   
-  // --- Judicial ---
-  async getJudicialProcesses(): Promise<JudicialProcess[]> {
-    return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleJudicialProcesses)));
-  }
-  
-  async getBens(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Bem[]> {
-    let results = this.localData.sampleBens;
-    if (filter?.judicialProcessId) {
-      results = results.filter(b => b.judicialProcessId === filter.judicialProcessId);
-    }
-    if (filter?.sellerId) {
-      results = results.filter(b => b.sellerId === filter.sellerId);
-    }
-    return Promise.resolve(JSON.parse(JSON.stringify(results)));
-  }
-  
-  async getBensByIds(ids: string[]): Promise<Bem[]> {
-    const bens = this.localData.sampleBens.filter(b => ids.includes(b.id));
-    return Promise.resolve(JSON.parse(JSON.stringify(bens)));
-  }
-
   async getUsersForHabilitationReview(): Promise<UserProfileData[]> {
     const statuses: UserHabilitationStatus[] = ['PENDING_ANALYSIS', 'REJECTED_DOCUMENTS'];
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleUserProfiles.filter(p => p.habilitationStatus && statuses.includes(p.habilitationStatus)))));
@@ -408,19 +367,84 @@ export class SampleDataAdapter implements IDatabaseAdapter {
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleRoles)));
   }
 
+  async getMediaItems(): Promise<MediaItem[]> {
+      return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleMediaItems)));
+  }
+
+  // --- CRUD for Categories, States, Cities, etc. ---
+  async getLotCategories(): Promise<LotCategory[]> {
+    return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleLotCategories)));
+  }
+  async getLotCategory(idOrSlug: string): Promise<LotCategory | null> {
+    const category = this.localData.sampleLotCategories.find(c => c.id === idOrSlug || c.slug === idOrSlug);
+    return category ? Promise.resolve(JSON.parse(JSON.stringify(category))) : null;
+  }
+  async getLotCategoryByName(name: string): Promise<LotCategory | null> {
+    const category = this.localData.sampleLotCategories.find(c => c.name.toLowerCase() === name.toLowerCase());
+    return category ? Promise.resolve(JSON.parse(JSON.stringify(category))) : null;
+  }
+  async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> {
+    const newCategory: LotCategory = {
+        id: `cat-${slugify(data.name)}-${uuidv4().substring(0,4)}`,
+        name: data.name,
+        slug: slugify(data.name),
+        description: data.description,
+        itemCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+    };
+    this.localData.sampleLotCategories.push(newCategory);
+    this._persistData();
+    return { success: true, message: 'Categoria criada.', categoryId: newCategory.id };
+  }
+  async updateLotCategory(id: string, data: Partial<CategoryFormData>): Promise<{ success: boolean; message: string; }> {
+    const index = this.localData.sampleLotCategories.findIndex(c => c.id === id);
+    if (index === -1) return { success: false, message: 'Categoria não encontrada.' };
+    this.localData.sampleLotCategories[index] = { ...this.localData.sampleLotCategories[index], ...data, slug: slugify(data.name!), updatedAt: new Date() };
+    this._persistData();
+    return { success: true, message: 'Categoria atualizada.' };
+  }
+  async deleteLotCategory(id: string): Promise<{ success: boolean; message: string; }> {
+    this.localData.sampleLotCategories = this.localData.sampleLotCategories.filter(c => c.id !== id);
+    this._persistData();
+    return { success: true, message: 'Categoria excluída.' };
+  }
+
+  async getSubcategories(parentCategoryId: string): Promise<Subcategory[]> {
+    const subcats = this.localData.sampleSubcategories.filter(s => s.parentCategoryId === parentCategoryId);
+    return Promise.resolve(JSON.parse(JSON.stringify(subcats)));
+  }
+  async getSubcategory(id: string): Promise<Subcategory | null> {
+    const subcat = this.localData.sampleSubcategories.find(s => s.id === id);
+    return subcat ? Promise.resolve(JSON.parse(JSON.stringify(subcat))) : null;
+  }
+   async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> { return { success: false, message: "Not implemented."}; }
+   async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
+   async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
+
+
   async getStates(): Promise<StateInfo[]> {
     return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleStates)));
   }
+  async getState(idOrSlugOrUf: string): Promise<StateInfo | null> {
+    const state = this.localData.sampleStates.find(s => s.id === idOrSlugOrUf || s.slug === idOrSlugOrUf || s.uf === idOrSlugOrUf);
+    return state ? Promise.resolve(JSON.parse(JSON.stringify(state))) : null;
+  }
+  async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> { return { success: false, message: "Not implemented."}; }
+  async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
+  async deleteState(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
 
   async getCities(stateIdOrSlugFilter?: string): Promise<CityInfo[]> {
     const cities = this.localData.sampleCities.filter(city => stateIdOrSlugFilter ? city.stateId === stateIdOrSlugFilter : true);
     return Promise.resolve(JSON.parse(JSON.stringify(cities)));
   }
-  
-  async getMediaItems(): Promise<MediaItem[]> {
-      return Promise.resolve(JSON.parse(JSON.stringify(this.localData.sampleMediaItems)));
+  async getCity(idOrCompositeSlug: string): Promise<CityInfo | null> {
+    const city = this.localData.sampleCities.find(c => c.id === idOrCompositeSlug);
+    return city ? Promise.resolve(JSON.parse(JSON.stringify(city))) : null;
   }
-
+   async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> { return { success: false, message: "Not implemented."}; }
+   async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
+   async deleteCity(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
 
   // ##########################################################################
   // #                        STUBBED / UNIMPLEMENTED                         #
@@ -445,9 +469,6 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> { return { success: false, message: "Not implemented."}; }
   async updateJudicialProcess(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
   async deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
-  async createLotCategory(data: { name: string; description?: string; }): Promise<{ success: boolean; message: string; categoryId?: string; }> { return { success: false, message: "Not implemented."}; }
-  async updateLotCategory(id: string, data: Partial<CategoryFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
-  async deleteLotCategory(id: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Not implemented."}; }
   async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
   async updateAuctioneer(idOrPublicId: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
   async deleteAuctioneer(idOrPublicId: string): Promise<{ success: boolean; message: string; }> { return { success: false, message: "Funcionalidade não implementada." }; }
@@ -506,3 +527,5 @@ export class SampleDataAdapter implements IDatabaseAdapter {
   async getDocumentTypes(): Promise<DocumentType[]> { return []; }
   async getUserDocuments(userId: string): Promise<UserDocument[]> { return []; }
 }
+
+  
