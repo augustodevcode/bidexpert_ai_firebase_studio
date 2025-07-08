@@ -623,35 +623,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return null;
   }
   
-  async getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null> {
-    const { rows } = await getPool().query('SELECT * FROM auctioneers WHERE name = $1 LIMIT 1', [name]);
-    if (rows.length === 0) return null;
-    return mapToAuctioneerProfileInfo(rows[0]);
-  }
-
-  async getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null> {
-    const { rows } = await getPool().query('SELECT * FROM auctioneers WHERE slug = $1 OR public_id = $1 LIMIT 1', [slug]);
-    if (rows.length === 0) return null;
-    return mapToAuctioneerProfileInfo(rows[0]);
-  }
-
-  async getSellerByName(name: string): Promise<SellerProfileInfo | null> {
-    const { rows } = await getPool().query('SELECT * FROM sellers WHERE name = $1 LIMIT 1', [name]);
-    if (rows.length === 0) return null;
-    return mapToSellerProfileInfo(rows[0]);
-  }
-
-  async getSellerBySlug(slug: string): Promise<SellerProfileInfo | null> {
-    const { rows } = await getPool().query('SELECT * FROM sellers WHERE slug = $1 OR public_id = $1 LIMIT 1', [slug]);
-    if (rows.length === 0) return null;
-    return mapToSellerProfileInfo(rows[0]);
-  }
-
-  async getAuctionsByAuctioneerSlug(auctioneerSlugOrPublicId: string): Promise<Auction[]> {
-    console.warn("[PostgresAdapter] getAuctionsByAuctioneerSlug is not yet implemented for PostgreSQL.");
-    return Promise.resolve([]);
-  }
-
   async getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
     console.warn("[PostgresAdapter] getDirectSaleOffers is not yet implemented for PostgreSQL.");
     return Promise.resolve([]);
@@ -920,7 +891,7 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.warn("[PostgresAdapter] updateUserProfile is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
-  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, "cpf" | "cellPhone" | "dateOfBirth" | "password" | "accountType" | "razaoSocial" | "cnpj" | "inscricaoEstadual" | "websiteComitente" | "zipCode" | "street" | "number" | "complement" | "neighborhood" | "city" | "state" | "optInMarketing">>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileWithPermissions; }> {
+  async ensureUserRole(userId: string, email: string, fullName: string | null, targetRoleName: string, additionalProfileData?: Partial<Pick<UserProfileData, 'cpf' | 'cellPhone' | 'dateOfBirth' | 'password' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'websiteComitente' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing' >>, roleIdToAssign?: string): Promise<{ success: boolean; message: string; userProfile?: UserProfileWithPermissions; }> {
     console.warn("[PostgresAdapter] ensureUserRole is not yet implemented for PostgreSQL.");
     return { success: false, message: "Funcionalidade não implementada." };
   }
@@ -1067,5 +1038,102 @@ export class PostgresAdapter implements IDatabaseAdapter {
     } finally {
         client.release();
     }
+  }
+  
+  // START IMPLEMENTED METHODS
+  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; auctioneerPublicId?: string; }> {
+    const { name, registrationNumber, contactName, email, phone, address, city, state, zipCode, website, logoUrl, dataAiHintLogo, description, userId } = data;
+    const slug = slugify(name);
+    const publicId = `AUCT-PUB-${uuidv4().substring(0, 8)}`;
+    const query = 'INSERT INTO auctioneers (public_id, name, slug, registration_number, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id';
+    try {
+      const res = await getPool().query(query, [publicId, name, slug, registrationNumber, contactName, email, phone, address, city, state, zipCode, website, logoUrl, dataAiHintLogo, description, userId]);
+      return { success: true, message: 'Leiloeiro criado com sucesso!', auctioneerId: String(res.rows[0].id), auctioneerPublicId: publicId };
+    } catch (e: any) {
+      console.error("[PostgresAdapter - createAuctioneer] Error:", e);
+      return { success: false, message: e.message || 'Falha ao criar leiloeiro.' };
+    }
+  }
+
+  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
+    try {
+      const { rows } = await getPool().query('SELECT * FROM auctioneers ORDER BY name ASC');
+      return rows.map(mapToAuctioneerProfileInfo);
+    } catch (e: any) {
+      console.error("[PostgresAdapter - getAuctioneers] Error:", e);
+      return [];
+    }
+  }
+
+  async getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {
+    try {
+      const query = 'SELECT * FROM auctioneers WHERE (id = $1) OR public_id = $2 LIMIT 1';
+      const { rows } = await getPool().query(query, [isNaN(parseInt(id)) ? -1 : parseInt(id), id]);
+      if (rows.length === 0) return null;
+      return mapToAuctioneerProfileInfo(rows[0]);
+    } catch (e: any) {
+      console.error(`[PostgresAdapter - getAuctioneer with ID ${id}] Error:`, e);
+      return null;
+    }
+  }
+
+  async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
+    try {
+      const existingAuctioneer = await this.getAuctioneer(id);
+      if (!existingAuctioneer) return { success: false, message: 'Leiloeiro não encontrado.' };
+      
+      const updateData: any = { ...data };
+      if (data.name) {
+        updateData.slug = slugify(data.name);
+      }
+      
+      const setClauses = Object.keys(updateData).map((key, index) => `${key.replace(/([A-Z])/g, '_$1').toLowerCase()} = $${index + 1}`).join(', ');
+      const values = Object.values(updateData);
+      
+      const query = `UPDATE auctioneers SET ${setClauses}, updated_at = CURRENT_TIMESTAMP WHERE id = $${values.length + 1}`;
+      const result = await getPool().query(query, [...values, existingAuctioneer.id]);
+      
+      if (result.rowCount > 0) {
+        return { success: true, message: 'Leiloeiro atualizado com sucesso!' };
+      }
+      return { success: false, message: 'Nenhuma linha atualizada.' };
+    } catch (e: any) {
+      console.error(`[PostgresAdapter - updateAuctioneer with ID ${id}] Error:`, e);
+      return { success: false, message: e.message || 'Falha ao atualizar leiloeiro.' };
+    }
+  }
+
+  async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> {
+    try {
+      const existingAuctioneer = await this.getAuctioneer(id);
+      if (!existingAuctioneer) return { success: false, message: 'Leiloeiro não encontrado.' };
+
+      const result = await getPool().query('DELETE FROM auctioneers WHERE id = $1', [existingAuctioneer.id]);
+      if (result.rowCount > 0) {
+        return { success: true, message: 'Leiloeiro excluído com sucesso!' };
+      }
+      return { success: false, message: 'Nenhum leiloeiro encontrado para excluir.'};
+    } catch (e: any) {
+      console.error(`[PostgresAdapter - deleteAuctioneer with ID ${id}] Error:`, e);
+      return { success: false, message: e.message || 'Falha ao excluir leiloeiro.' };
+    }
+  }
+
+  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; sellerPublicId?: string; }> {
+    const { name, contactName, email, phone, address, city, state, zipCode, website, logoUrl, dataAiHintLogo, description, userId, isJudicial, judicialBranchId } = data;
+    const slug = slugify(name);
+    const publicId = `SELL-PUB-${uuidv4().substring(0,8)}`;
+    const query = 'INSERT INTO sellers (public_id, name, slug, contact_name, email, phone, address, city, state, zip_code, website, logo_url, data_ai_hint_logo, description, user_id, is_judicial, judicial_branch_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING id';
+    try {
+      const res = await getPool().query(query, [publicId, name, slug, contactName, email, phone, address, city, state, zipCode, website, logoUrl, dataAiHintLogo, description, userId, isJudicial, judicialBranchId]);
+      return { success: true, message: 'Comitente criado!', sellerId: String(res.rows[0].id), sellerPublicId: publicId };
+    } catch (e: any) { return { success: false, message: e.message }; }
+  }
+
+  async getSellers(): Promise<SellerProfileInfo[]> {
+    try {
+      const { rows } = await getPool().query('SELECT * FROM sellers ORDER BY name ASC');
+      return rows.map(mapToSellerProfileInfo);
+    } catch (e: any) { console.error("[PostgresAdapter - getSellers] Error:", e); return []; }
   }
 }
