@@ -46,7 +46,7 @@ export const createConsignorAuctionColumns = (): ColumnDef<Auction>[] => [
   },
     {
     accessorKey: "achievedRevenue",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Faturamento" />,
+    header: () => <div className="text-right">Faturamento</div>,
     cell: ({ row }) => {
         const amount = parseFloat(row.getValue("achievedRevenue") || '0');
         return <div className="text-right font-medium">{amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>

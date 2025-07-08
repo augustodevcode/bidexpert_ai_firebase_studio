@@ -47,8 +47,8 @@ const sidebarNavItems = [
   {
     title: 'Configurações',
     href: '/consignor-dashboard/settings',
-    icon: Settings,
     disabled: false, 
+    icon: Settings,
   },
 ];
 
