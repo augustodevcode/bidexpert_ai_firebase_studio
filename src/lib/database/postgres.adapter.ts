@@ -662,6 +662,11 @@ export class PostgresAdapter implements IDatabaseAdapter {
     console.warn("[PostgresAdapter] getAuctionsByIds is not yet implemented for PostgreSQL.");
     return Promise.resolve([]);
   }
+
+  async getLotsByIds(ids: string[]): Promise<Lot[]> {
+    console.warn("[PostgresAdapter] getLotsByIds is not yet implemented for PostgreSQL.");
+    return Promise.resolve([]);
+  }
   
   async initializeSchema(): Promise<{ success: boolean; message: string; errors?: any[], rolesProcessed?: number }> {
     const client = await getPool().connect();
@@ -938,7 +943,8 @@ export class PostgresAdapter implements IDatabaseAdapter {
              cat.name as category_name, 
              auct.name as auctioneer_name, 
              s.name as seller_name,
-             auct.logo_url as auctioneer_logo_url
+             auct.logo_url as auctioneer_logo_url,
+             (SELECT COUNT(*) FROM lots l WHERE l.auction_id = a.id) as total_lots_count
       FROM auctions a
       LEFT JOIN lot_categories cat ON a.category_id = cat.id
       LEFT JOIN auctioneers auct ON a.auctioneer_id = auct.id
@@ -946,7 +952,6 @@ export class PostgresAdapter implements IDatabaseAdapter {
       ORDER BY a.auction_date DESC
     `);
     const auctions = rows.map(mapToAuction);
-    // In a real app you might fetch lots here or handle it at a higher level
     return auctions;
   }
   async updateAuction(idOrPublicId: string, data: Partial<AuctionDbData>): Promise<{ success: boolean; message: string; }> {
@@ -966,18 +971,51 @@ export class PostgresAdapter implements IDatabaseAdapter {
     return { success: false, message: "Funcionalidade não implementada." };
   }
   async getLots(auctionIdParam?: string): Promise<Lot[]> {
-    let query = 'SELECT * FROM lots';
+    let query = `
+        SELECT l.*, 
+               c.name as category_name, 
+               s.name as subcategory_name, 
+               st.uf as state_uf, 
+               city.name as city_name, 
+               a.title as auction_name,
+               seller.name as seller_name
+        FROM lots l
+        LEFT JOIN auctions a ON l.auction_id = a.id
+        LEFT JOIN lot_categories c ON l.category_id = c.id
+        LEFT JOIN subcategories s ON l.subcategory_id = s.id
+        LEFT JOIN states st ON l.state_id = st.id
+        LEFT JOIN cities city ON l.city_id = city.id
+        LEFT JOIN sellers seller ON a.seller_id = seller.id
+    `;
     const params: any[] = [];
     if (auctionIdParam) {
-      query += ' WHERE auction_id = $1';
+      query += ' WHERE l.auction_id = $1';
       params.push(auctionIdParam);
     }
-    query += ' ORDER BY number ASC';
+    query += ' ORDER BY l.number ASC';
     const { rows } = await getPool().query(query, params);
     return rows.map(mapToLot);
   }
   async getLot(idOrPublicId: string): Promise<Lot | null> {
-    const { rows } = await getPool().query('SELECT * FROM lots WHERE id = $1 OR public_id = $1 LIMIT 1', [isNaN(parseInt(idOrPublicId)) ? -1 : idOrPublicId, idOrPublicId]);
+    const { rows } = await getPool().query(`
+      SELECT l.*, 
+             c.name as category_name, 
+             s.name as subcategory_name, 
+             st.uf as state_uf, 
+             city.name as city_name, 
+             a.title as auction_name,
+             seller.name as seller_name
+      FROM lots l
+      LEFT JOIN auctions a ON l.auction_id = a.id
+      LEFT JOIN lot_categories c ON l.category_id = c.id
+      LEFT JOIN subcategories s ON l.subcategory_id = s.id
+      LEFT JOIN states st ON l.state_id = st.id
+      LEFT JOIN cities city ON l.city_id = city.id
+      LEFT JOIN sellers seller ON a.seller_id = seller.id
+      WHERE l.id = $1 OR l.public_id = $1 
+      LIMIT 1`, 
+      [isNaN(parseInt(idOrPublicId)) ? -1 : idOrPublicId, idOrPublicId]
+    );
     if (rows.length === 0) return null;
     return mapToLot(rows[0]);
   }
