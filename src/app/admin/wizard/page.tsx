@@ -148,15 +148,27 @@ function WizardContent({
       case 'type': return <Step1TypeSelection />;
       case 'judicial': return <Step2JudicialSetup processes={fetchedData.judicialProcesses} onAddNewProcess={() => setWizardMode('judicial_process')} />;
       case 'auction': return <Step3AuctionDetails categories={fetchedData.categories} auctioneers={fetchedData.auctioneers} sellers={fetchedData.sellers} />;
-      case 'lotting':
-        const bensForProcess = wizardData.auctionType === 'JUDICIAL' 
-            ? fetchedData.availableBens.filter(bem => wizardData.judicialProcess ? bem.judicialProcessId === wizardData.judicialProcess.id : true)
-            : fetchedData.availableBens;
+      case 'lotting': {
+        const bensForLotting = useMemo(() => {
+          if (!fetchedData?.availableBens) return [];
+
+          if (wizardData.auctionType === 'JUDICIAL') {
+            return wizardData.judicialProcess
+              ? fetchedData.availableBens.filter(bem => bem.judicialProcessId === wizardData.judicialProcess!.id)
+              : [];
+          } else {
+            return wizardData.auctionDetails?.sellerId
+              ? fetchedData.availableBens.filter(bem => bem.sellerId === wizardData.auctionDetails!.sellerId)
+              : [];
+          }
+        }, [fetchedData?.availableBens, wizardData.auctionType, wizardData.judicialProcess, wizardData.auctionDetails?.sellerId]);
+
         return <Step4Lotting 
-                  availableBens={bensForProcess} 
+                  availableBens={bensForLotting} 
                   auctionData={wizardData.auctionDetails as Partial<Auction>} 
                   onLotCreated={handleLotCreation}
                />;
+      }
       case 'review': return <Step5Review />;
       default: return <div className="text-center py-10"><p>Etapa "{stepsToUse[currentStep]?.title || 'Próxima'}" em desenvolvimento.</p></div>;
     }
