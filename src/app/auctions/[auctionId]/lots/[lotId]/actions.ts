@@ -1,10 +1,17 @@
-
+/**
+ * @fileoverview Server Actions for the Lot Detail page.
+ * Contains logic for placing bids, managing max bids, and fetching related data
+ * like bid history, reviews, and questions for a specific lot.
+ */
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import type { Lot, BidInfo, Review, LotQuestion, SellerProfileInfo, UserLotMaxBid } from '@/types';
 
+/**
+ * Result type for the placeBidOnLot action.
+ */
 interface PlaceBidResult {
   success: boolean;
   message: string;
@@ -12,6 +19,17 @@ interface PlaceBidResult {
   newBid?: BidInfo;
 }
 
+/**
+ * Places a manual bid on a lot.
+ * It validates the bid against the lot's current status and price.
+ * On success, it creates a new bid record and updates the lot's price and bids count.
+ * @param lotIdOrPublicId - The ID or publicId of the lot.
+ * @param auctionIdOrPublicId - The ID or publicId of the auction (for revalidation).
+ * @param userId - The ID of the bidding user.
+ * @param userDisplayName - The display name of the user for the bid history.
+ * @param bidAmount - The amount of the bid.
+ * @returns {Promise<PlaceBidResult>} The result of the bidding operation.
+ */
 export async function placeBidOnLot(
   lotIdOrPublicId: string,
   auctionIdOrPublicId: string,
@@ -45,6 +63,7 @@ export async function placeBidOnLot(
             }
         });
         
+        // Revalidate paths to update UI across the app
         revalidatePath(`/auctions/${auctionIdOrPublicId}/lots/${lotIdOrPublicId}`);
         revalidatePath(`/auctions/${auctionIdOrPublicId}/live`);
         revalidatePath(`/live-dashboard`);
@@ -64,11 +83,19 @@ export async function placeBidOnLot(
     }
 }
 
+/**
+ * Creates or updates a user's maximum bid (proxy bid) for a lot.
+ * @param lotId - The ID of the lot.
+ * @param userId - The ID of the user.
+ * @param maxAmount - The maximum amount the user is willing to bid.
+ * @returns {Promise<{ success: boolean; message: string }>} Result of the operation.
+ */
 export async function placeMaxBid(lotId: string, userId: string, maxAmount: number): Promise<{ success: boolean, message: string }> {
   try {
     const lot = await prisma.lot.findUnique({ where: { id: lotId }});
     if (!lot) return { success: false, message: 'Lote não encontrado.' };
     
+    // Use upsert to create or update the max bid record.
     await prisma.userLotMaxBid.upsert({
         where: { userId_lotId: { userId, lotId } },
         update: { maxAmount, isActive: true },
@@ -83,6 +110,12 @@ export async function placeMaxBid(lotId: string, userId: string, maxAmount: numb
   }
 }
 
+/**
+ * Fetches the active maximum bid for a user on a specific lot.
+ * @param lotIdOrPublicId - The ID or publicId of the lot.
+ * @param userId - The ID of the user.
+ * @returns {Promise<UserLotMaxBid | null>} The active max bid record or null.
+ */
 export async function getActiveUserLotMaxBid(lotIdOrPublicId: string, userId: string): Promise<UserLotMaxBid | null> {
   if (!userId) return null;
   const lot = await prisma.lot.findFirst({ where: { OR: [{id: lotIdOrPublicId}, {publicId: lotIdOrPublicId}]}});
@@ -99,6 +132,11 @@ export async function getActiveUserLotMaxBid(lotIdOrPublicId: string, userId: st
   }
 }
 
+/**
+ * Fetches the entire bid history for a lot.
+ * @param lotIdOrPublicId - The ID or publicId of the lot.
+ * @returns {Promise<BidInfo[]>} An array of bid records, ordered by most recent first.
+ */
 export async function getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> {
     const lot = await prisma.lot.findFirst({ where: { OR: [{id: lotIdOrPublicId}, {publicId: lotIdOrPublicId}]}});
     if (!lot) return [];
@@ -115,6 +153,11 @@ export async function getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]>
     }
 }
 
+/**
+ * Fetches all reviews for a lot.
+ * @param lotIdOrPublicId - The ID or publicId of the lot.
+ * @returns {Promise<Review[]>} An array of review records.
+ */
 export async function getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> {
     const lot = await prisma.lot.findFirst({ where: { OR: [{id: lotIdOrPublicId}, {publicId: lotIdOrPublicId}]}});
     if (!lot) return [];
@@ -127,6 +170,15 @@ export async function getReviewsForLot(lotIdOrPublicId: string): Promise<Review[
     }
 }
 
+/**
+ * Creates a new review for a lot.
+ * @param lotIdOrPublicId - The ID or publicId of the lot being reviewed.
+ * @param userId - The ID of the user submitting the review.
+ * @param userDisplayName - The display name of the user.
+ * @param rating - The star rating (1-5).
+ * @param comment - The review text.
+ * @returns {Promise<{ success: boolean; message: string; reviewId?: string }>} Result of the operation.
+ */
 export async function createReview(
   lotIdOrPublicId: string,
   userId: string,
@@ -149,6 +201,11 @@ export async function createReview(
   }
 }
 
+/**
+ * Fetches all questions for a lot.
+ * @param lotIdOrPublicId - The ID or publicId of the lot.
+ * @returns {Promise<LotQuestion[]>} An array of question records.
+ */
 export async function getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]> {
     const lot = await prisma.lot.findFirst({ where: { OR: [{id: lotIdOrPublicId}, {publicId: lotIdOrPublicId}]}});
     if (!lot) return [];
@@ -161,6 +218,14 @@ export async function getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQu
     }
 }
 
+/**
+ * Submits a new question about a lot.
+ * @param lotIdOrPublicId - The ID or publicId of the lot.
+ * @param userId - The ID of the user asking the question.
+ * @param userDisplayName - The user's display name.
+ * @param questionText - The text of the question.
+ * @returns {Promise<{ success: boolean; message: string; questionId?: string }>} Result of the operation.
+ */
 export async function askQuestionOnLot(
   lotIdOrPublicId: string,
   userId: string,
@@ -182,6 +247,17 @@ export async function askQuestionOnLot(
   }
 }
 
+/**
+ * Submits an answer to a question on a lot.
+ * Typically called by an admin or the lot's seller.
+ * @param questionId - The ID of the question being answered.
+ * @param answerText - The text of the answer.
+ * @param answeredByUserId - The ID of the user providing the answer.
+ * @param answeredByUserDisplayName - The display name of the answering user.
+ * @param lotId - The ID of the lot (for revalidation).
+ * @param auctionId - The ID of the auction (for revalidation).
+ * @returns {Promise<{ success: boolean; message: string }>} Result of the operation.
+ */
 export async function answerQuestionOnLot(
   questionId: string, 
   answerText: string,
@@ -203,6 +279,11 @@ export async function answerQuestionOnLot(
   }
 }
 
+/**
+ * Fetches the seller's profile information for display on the lot page.
+ * @param sellerIdOrPublicIdOrSlug - The ID, public ID, or slug of the seller.
+ * @returns {Promise<SellerProfileInfo | null>} The seller's profile or null.
+ */
 export async function getSellerDetailsForLotPage(sellerIdOrPublicIdOrSlug?: string): Promise<SellerProfileInfo | null> {
     if (!sellerIdOrPublicIdOrSlug) return null;
     try {
