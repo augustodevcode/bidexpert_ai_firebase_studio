@@ -10,15 +10,18 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { getSellerBySlug } from '@/app/admin/sellers/actions'; 
 import { getAuctionsBySellerSlug } from '@/app/admin/auctions/actions'; 
-import type { Auction, Lot, SellerProfileInfo } from '@/types';
+import { getConsignorDashboardStatsAction } from '../reports/actions';
+import type { Auction, Lot, SellerProfileInfo, ConsignorDashboardStats } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function ConsignorOverviewPage() {
-  const { user, userProfileWithPermissions, loading: authLoading } = useAuth();
+  const { userProfileWithPermissions, loading: authLoading } = useAuth();
   const [sellerProfile, setSellerProfile] = useState<SellerProfileInfo | null>(null);
   const [sellerAuctions, setSellerAuctions] = useState<Auction[]>([]);
+  const [stats, setStats] = useState<ConsignorDashboardStats | null>(null);
   const [upcomingAuctionsWithLots, setUpcomingAuctionsWithLots] = useState<{ auction: Auction; lots: Lot[] }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,9 +30,10 @@ export default function ConsignorOverviewPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const [profile, auctions] = await Promise.all([
+      const [profile, auctions, dashboardStats] = await Promise.all([
         getSellerBySlug(targetSellerIdOrSlug),
-        getAuctionsBySellerSlug(targetSellerIdOrSlug)
+        getAuctionsBySellerSlug(targetSellerIdOrSlug),
+        getConsignorDashboardStatsAction(targetSellerIdOrSlug),
       ]);
       
       if (!profile) {
@@ -40,6 +44,7 @@ export default function ConsignorOverviewPage() {
 
       setSellerProfile(profile);
       setSellerAuctions(auctions);
+      setStats(dashboardStats);
       
       const upcoming = auctions
         .filter(auc => auc.status === 'EM_BREVE' || auc.status === 'ABERTO_PARA_LANCES' || auc.status === 'ABERTO')
@@ -66,18 +71,9 @@ export default function ConsignorOverviewPage() {
     }
   }, [userProfileWithPermissions, authLoading, fetchConsignorData]);
   
-  const totalLotsConsigned = sellerAuctions.reduce((sum, auc) => sum + (auc.totalLots || 0), 0);
-  const totalValueSold = sellerAuctions.reduce((sum, auc) => sum + (auc.achievedRevenue || 0), 0);
-  
   const soldLotsCount = useMemo(() => {
     return sellerAuctions.flatMap(auc => auc.lots || []).filter(lot => lot.status === 'VENDIDO').length;
   }, [sellerAuctions]);
-
-  const salesRate = useMemo(() => {
-    const totalFinishedLots = sellerAuctions.flatMap(auc => auc.lots || []).filter(lot => ['VENDIDO', 'NAO_VENDIDO'].includes(lot.status)).length;
-    return totalFinishedLots > 0 ? (soldLotsCount / totalFinishedLots) * 100 : 0;
-  }, [soldLotsCount, sellerAuctions]);
-
 
   if (isLoading || authLoading) {
     return (
@@ -120,14 +116,25 @@ export default function ConsignorOverviewPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-secondary/30"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total de Lotes Consignados</CardTitle><ListChecks className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">{totalLotsConsigned}</div><p className="text-xs text-muted-foreground mt-1">Lotes ativos e passados.</p></CardContent></Card>
-            <Card className="bg-secondary/30"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Taxa de Venda</CardTitle><TrendingUp className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">{salesRate.toFixed(1)}%</div><p className="text-xs text-muted-foreground mt-1">Percentual de lotes vendidos.</p></CardContent></Card>
-            <Card className="bg-secondary/30"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Valor Total Arrematado</CardTitle><DollarSign className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">R$ {totalValueSold.toLocaleString('pt-BR')}</div><p className="text-xs text-muted-foreground mt-1">Soma dos valores de venda.</p></CardContent></Card>
+            <Card className="bg-secondary/30"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total de Lotes Consignados</CardTitle><ListChecks className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">{stats?.totalLotsConsigned || 0}</div><p className="text-xs text-muted-foreground mt-1">Lotes ativos e passados.</p></CardContent></Card>
+            <Card className="bg-secondary/30"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Taxa de Venda</CardTitle><TrendingUp className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">{(stats?.salesRate || 0).toFixed(1)}%</div><p className="text-xs text-muted-foreground mt-1">Percentual de lotes vendidos.</p></CardContent></Card>
+            <Card className="bg-secondary/30"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Faturamento Bruto</CardTitle><DollarSign className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">R$ {(stats?.totalSalesValue || 0).toLocaleString('pt-BR')}</div><p className="text-xs text-muted-foreground mt-1">Soma dos valores de venda.</p></CardContent></Card>
             <Card className="bg-primary/10 border-primary"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium text-primary">Próximos Leilões</CardTitle><Eye className="h-5 w-5 text-primary" /></CardHeader><CardContent><div className="text-3xl font-bold text-primary">{upcomingAuctionsWithLots.length}</div><p className="text-xs text-primary/80 mt-1">Leilões com seus lotes em breve.</p></CardContent></Card>
           </div>
           <Card>
-            <CardHeader><CardTitle className="text-xl font-semibold">Performance de Vendas (Placeholder)</CardTitle></CardHeader>
-            <CardContent className="h-72 flex items-center justify-center bg-muted/50 rounded-md"><BarChart3 className="h-16 w-16 text-muted-foreground" /><p className="ml-4 text-muted-foreground">Gráficos de Vendas por Período e Categoria aparecerão aqui.</p></CardContent>
+            <CardHeader><CardTitle className="text-xl font-semibold">Performance de Vendas (Últimos Meses)</CardTitle></CardHeader>
+            <CardContent className="h-72">
+               <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={stats?.salesByMonth} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" stroke="#888888" fontSize={12} />
+                    <YAxis stroke="#888888" fontSize={12} tickFormatter={(value) => `R$${Number(value)/1000}k`} />
+                    <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`}/>
+                    <Legend />
+                    <Line type="monotone" dataKey="sales" name="Vendas" stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+            </CardContent>
           </Card>
           {upcomingAuctionsWithLots.length > 0 && (
             <div className="mt-8">
