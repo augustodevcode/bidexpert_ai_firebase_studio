@@ -4,7 +4,9 @@
   # Which nixpkgs channel to use.
   channel = "stable-24.11"; # or "unstable"
   # Use https://search.nixos.org/packages to find packages
+  # To correctly install Prisma on idx it is necessary to have the openssl package installed.
   packages = [
+    pkgs.doas-sudo-shim
     pkgs.nodejs_20
     pkgs.zulu
   ];
