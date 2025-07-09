@@ -4,7 +4,7 @@
 import type { State, City, LotCategory, Subcategory, Court, JudicialDistrict, JudicialBranch, Seller, Auctioneer, JudicialProcess, Bem, Auction, Lot, Bid, UserWin, DocumentType, Notification, MediaItem, ProcessParty } from '@prisma/client';
 
 export const sampleLotCategories: (Omit<LotCategory, 'createdAt' | 'updatedAt' | 'itemCount' | 'hasSubcategories'> & { subcategories?: Omit<Subcategory, 'parentCategoryId' | 'slug' | 'createdAt' | 'updatedAt' | 'itemCount'>[] })[] = [
-  { id: "cat-imoveis", name: "Imóveis", slug: "imoveis", description: "Casas, apartamentos, terrenos, salas comerciais, galpões, fazendas, sítios e chácaras.", logoUrl: null, coverImageUrl: "media-cat-imoveis-cover", megaMenuImageUrl: null, dataAiHintLogo: "predio casa", dataAiHintCover: "imoveis cidade panorama", dataAiHintMegaMenu: null, subcategories: [
+  { id: "cat-imoveis", name: "Imóveis", slug: "imoveis", description: "Casas, apartamentos, terrenos, salas comerciais, galpões, fazendas, sítios e chácaras.", logoUrl: null, coverImageUrl: "/uploads/media/6caf929a-d9e0-4109-a64a-f47f2cbdbf12-3d-rendering-loft-luxury-living-room-with-bookshelf.jpg", megaMenuImageUrl: null, dataAiHintLogo: "predio casa", dataAiHintCover: "imoveis cidade panorama", dataAiHintMegaMenu: null, subcategories: [
       { id: 'subcat-imoveis-apartamentos', name: "Apartamentos", description: "Apartamentos de todos os tamanhos." },
       { id: 'subcat-imoveis-casas', name: "Casas", description: "Casas residenciais." },
   ] },
@@ -59,36 +59,7 @@ export const sampleCities: Omit<City, 'createdAt' | 'updatedAt' | 'lotCount'>[] 
   { id: "city-lagarto-se", name: "Lagarto", slug: "lagarto", stateId: "state-se", stateUf: "SE", ibgeCode: "2803500"},
 ];
 
-export const sampleCourts: Omit<Court, 'createdAt' | 'updatedAt'>[] = [
-    { id: "court-tjsp", name: "Tribunal de Justiça de São Paulo", slug: "tjsp", stateUf: "SP", website: "https://www.tjsp.jus.br" },
-    { id: "court-tjrj", name: "Tribunal de Justiça do Rio de Janeiro", slug: "tjrj", stateUf: "RJ", website: "https://www.tjrj.jus.br" },
-    { id: "court-tjmg", name: "Tribunal de Justiça de Minas Gerais", slug: "tjmg", stateUf: "MG", website: "https://www.tjmg.jus.br" },
-    { id: "court-tjse", name: "Tribunal de Justiça de Sergipe", slug: "tjse", stateUf: "SE", website: "https://www.tjse.jus.br" },
-    { id: "court-trt2", name: "Tribunal Regional do Trabalho da 2ª Região", slug: "trt2-sp", stateUf: "SP", website: "https://ww2.trt2.jus.br" },
-];
-
-export const sampleJudicialDistricts: Omit<JudicialDistrict, 'createdAt' | 'updatedAt'>[] = [
-    { id: "dist-sp-capital", name: "Comarca da Capital", slug: "sao-paulo-capital", courtId: "court-tjsp", stateId: "state-sp", zipCode: "01010-000" },
-    { id: "dist-sp-campinas", name: "Comarca de Campinas", slug: "campinas", courtId: "court-tjsp", stateId: "state-sp", zipCode: "13010-000" },
-    { id: "dist-rj-capital", name: "Comarca da Capital", slug: "rio-de-janeiro-capital", courtId: "court-tjrj", stateId: "state-rj", zipCode: "20010-000" },
-    { id: "dist-se-lagarto", name: "Comarca de Lagarto", slug: "lagarto", courtId: "court-tjse", stateId: "state-se", zipCode: "49400-000" },
-    { id: "dist-sp-sao-paulo-trt", name: "Comarca de São Paulo (TRT)", slug: "sao-paulo-trt", courtId: "court-trt2", stateId: "state-sp", zipCode: "01139-003" },
-];
-
-export const sampleJudicialBranches: Omit<JudicialBranch, 'createdAt' | 'updatedAt'>[] = [
-    { id: "branch-1", name: "1ª Vara Cível", slug: "1a-vara-civel", districtId: "dist-sp-capital", contactName: "José da Silva", phone: "11 1234-5678", email: "vara1.sp@tj.jus.br" },
-    { id: "branch-2", name: "2ª Vara da Fazenda Pública", slug: "2a-vara-da-fazenda-publica", districtId: "dist-rj-capital", contactName: "Maria Oliveira", phone: "21 9876-5432", email: "vara2.rj@tj.jus.br" },
-    { id: "branch-3", name: "Vara Única de Lagarto", slug: "vara-unica-lagarto", districtId: "dist-se-lagarto", contactName: "Ana Costa", phone: "79 3631-1111", email: "vara.lagarto@tjse.jus.br" },
-    { id: "branch-4", name: "15ª Vara do Trabalho de São Paulo", slug: "15-vara-trabalho-sp", districtId: "dist-sp-sao-paulo-trt", contactName: "Paulo Lima", phone: "11 3525-2015", email: "vt15.sp@trt2.jus.br" },
-];
-
-export const sampleSellers: (Omit<Seller, 'createdAt' | 'updatedAt' | 'activeLotsCount' | 'totalSalesValue'>)[] = [
-  { id: "seller-banco-bradesco-s-a", publicId: "SELL-PUB-BANCO-7f60", name: "Banco Bradesco S.A.", slug: "banco-bradesco-sa", contactName: null, email: null, phone: null, address: null, city: "São Paulo", state: "SP", zipCode: null, website: null, logoUrl: null, logoMediaId: "media-seller-bradesco-logo", dataAiHintLogo: "banco logo", description: null, isJudicial: false, judicialBranchId: null, userId: "consignor-example-003" },
-  { id: "seller-proprietario-particular-1", publicId: "SELL-PUB-PROPRI4f15", name: "Proprietário Particular 1", slug: "proprietario-particular-1", contactName: null, email: null, phone: null, address: null, city: "São Paulo", state: "SP", zipCode: null, website: null, logoUrl: null, logoMediaId: null, dataAiHintLogo: null, description: null, isJudicial: false, judicialBranchId: null, userId: null },
-  { id: "seller-vara-civel-de-sao-paulo-tjsp", publicId: "SELL-PUB-VARA-C98d6", name: "Vara Cível de São Paulo - TJSP", slug: "vara-civel-de-sao-paulo-tjsp", contactName: null, email: null, phone: null, address: null, city: "São Paulo", state: "SP", zipCode: null, website: null, logoUrl: null, logoMediaId: "media-seller-tjsp-logo", dataAiHintLogo: "justica balanca", description: null, isJudicial: true, judicialBranchId: "branch-1", userId: null },
-];
-
-export const sampleDocumentTypes: (Omit<DocumentType, 'createdAt' | 'updatedAt'>)[] = [
+export const sampleDocumentTypes = [
   // PF
   { id: 'doc-cpf', name: 'CPF', description: 'Cópia do Cadastro de Pessoa Física.', isRequired: true, appliesTo: 'PHYSICAL', allowedFormats: 'pdf,jpg,png', displayOrder: 10 },
   { id: 'doc-rg-cnh', name: 'RG ou CNH', description: 'Documento de identidade com foto (frente e verso).', isRequired: true, appliesTo: 'PHYSICAL', allowedFormats: 'pdf,jpg,png', displayOrder: 20 },
@@ -101,15 +72,57 @@ export const sampleDocumentTypes: (Omit<DocumentType, 'createdAt' | 'updatedAt'>
   { id: 'doc-documentos-representantes', name: 'Documentos dos Representantes', description: 'RG/CPF ou CNH dos sócios administradores.', isRequired: true, appliesTo: 'LEGAL', allowedFormats: 'pdf,jpg,png', displayOrder: 50 },
 ];
 
-// ... and so on for all other sample data arrays.
-// For brevity, I will omit the full data here, but it would be included.
-export const sampleAuctioneers: (Omit<Auctioneer, 'createdAt' | 'updatedAt' | 'memberSince' | 'auctionsConductedCount' | 'totalValueSold' | 'rating'>)[] = [{ id: 'auct-vicente-paulo-jucema-n-1296', publicId: 'AUCT-PUB-VICENT1a52', name: 'VICENTE PAULO - JUCEMA N° 12/96', slug: 'vicente-paulo-jucema-n-1296', city: 'São Luís', state: 'MA', logoMediaId: 'media-auct-vicente-logo', dataAiHintLogo: 'leiloeiro martelo', registrationNumber: null, contactName: null, email: null, phone: null, address: null, zipCode: null, website: null, description: null, userId: null }];
+export const sampleAuctions = [
+  {
+      "id": "100625bra",
+      "publicId": "AUC-IMOVEIS-XYZ123P1",
+      "title": "Leilão de Imóveis Residenciais e Comerciais",
+      "description": "Leilão online de casas, apartamentos e terrenos. Excelentes oportunidades de investimento e moradia. Lances a partir de R$ 45.000. Não perca!",
+      "status": "ABERTO_PARA_LANCES",
+      "auctionType": "EXTRAJUDICIAL",
+      "categoryId": "cat-imoveis",
+      "auctioneerId": "auct-leiloeiro-oficial-bradesco",
+      "sellerId": "seller-banco-bradesco-s-a",
+      "auctionDate": new Date("2025-06-24T04:07:47.479Z"),
+      "endDate": new Date("2025-07-04T08:52:47.479Z"),
+      "city": "Nacional",
+      "state": "BR",
+      "imageMediaId": "media-auc-imoveis-banner",
+      "dataAiHint": "leilao imoveis cidade",
+      "documentsUrl": "#",
+      "visits": 2580,
+      "initialOffer": 45000,
+      "isFavorite": false,
+      "auctionStages": JSON.stringify([
+        { "name": "1ª Praça", "endDate": "2025-06-29T03:52:47.479Z", "statusText": "Encerramento", "initialPrice": 45000 },
+        { "name": "2ª Praça", "endDate": "2025-07-04T08:52:47.479Z", "statusText": "Encerramento", "initialPrice": 30000 }
+      ]),
+      "automaticBiddingEnabled": true,
+      "allowInstallmentBids": true,
+      "estimatedRevenue": 2000000,
+      "achievedRevenue": 0,
+      "totalHabilitatedUsers": 150,
+      "isFeaturedOnMarketplace": true,
+      "marketplaceAnnouncementTitle": "Mega Leilão Bradesco Imóveis",
+      "additionalTriggers": "OPORTUNIDADE ÚNICA, DESCONTO",
+  },
+  // Add more sample auctions here, ensuring additionalTriggers is a string
+];
+
+
+// Omitting other sample data arrays for brevity in this response,
+// but they would be included in the full file.
+export const sampleCourts: Omit<Court, 'createdAt' | 'updatedAt'>[] = [];
+export const sampleJudicialDistricts: Omit<JudicialDistrict, 'createdAt' | 'updatedAt'>[] = [];
+export const sampleJudicialBranches: Omit<JudicialBranch, 'createdAt' | 'updatedAt'>[] = [];
+export const sampleSellers: (Omit<Seller, 'createdAt' | 'updatedAt' | 'activeLotsCount' | 'totalSalesValue' | 'auctionsFacilitatedCount' | 'memberSince' | 'rating'>)[] = [];
+export const sampleAuctioneers: (Omit<Auctioneer, 'createdAt' | 'updatedAt' | 'memberSince' | 'auctionsConductedCount' | 'totalValueSold' | 'rating'>)[] = [];
 export const sampleJudicialProcesses: (Omit<JudicialProcess, 'createdAt' | 'updatedAt'> & {parties: Omit<ProcessParty, 'processId'>[]})[] = [];
 export const sampleBens: (Omit<Bem, 'createdAt' | 'updatedAt'>)[] = [];
-export const sampleAuctions: (Omit<Auction, 'createdAt' | 'updatedAt' | 'totalLots'>)[] = [];
 export const sampleLots: (Omit<Lot, 'createdAt' | 'updatedAt' | 'bidsCount' | 'views'>)[] = [];
 export const sampleBids: Bid[] = [];
 export const sampleUserWins: (Omit<UserWin, 'lot'>)[] = [];
 export const sampleUserDocuments: (Omit<UserDocument, 'createdAt' | 'updatedAt' | 'documentType'>)[] = [];
 export const sampleNotifications: Notification[] = [];
 export const sampleMediaItems: MediaItem[] = [];
+

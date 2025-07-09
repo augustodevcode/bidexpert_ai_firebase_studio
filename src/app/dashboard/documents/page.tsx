@@ -60,9 +60,8 @@ export default function UserDocumentsPage() {
 
   const relevantDocTypes = allDocTypes.filter(dt => {
       const userAccountType = userProfileWithPermissions?.accountType || 'PHYSICAL';
-      // The 'appliesTo' field is now a comma-separated string
-      const appliesToArray = dt.appliesTo ? dt.appliesTo.split(',') : [];
-      return appliesToArray.includes(userAccountType);
+      const appliesTo = dt.appliesTo ? dt.appliesTo.split(',') : [];
+      return appliesTo.includes(userAccountType);
   });
 
   const mergedDocuments = relevantDocTypes.map(docType => {

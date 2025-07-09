@@ -1,4 +1,3 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -62,15 +61,18 @@ async function checkAndFinalizeHabilitation(tx: Prisma.TransactionClient, userId
   
   const requiredDocTypes = await tx.documentType.findMany({ 
       where: { 
-          isRequired: true,
-          appliesTo: {
-            contains: user.accountType || 'PHYSICAL'
-          }
+          isRequired: true
       }
   });
+
+  const applicableDocTypes = requiredDocTypes.filter(doc => {
+      const appliesTo = doc.appliesTo ? doc.appliesTo.split(',') : [];
+      return appliesTo.includes(user.accountType || 'PHYSICAL');
+  });
+
   const userDocs = await tx.userDocument.findMany({ where: { userId } });
 
-  const allRequiredApproved = requiredDocTypes.every(reqDoc =>
+  const allRequiredApproved = applicableDocTypes.every(reqDoc =>
     userDocs.some(userDoc => userDoc.documentTypeId === reqDoc.id && userDoc.status === 'APPROVED')
   );
 
@@ -78,7 +80,7 @@ async function checkAndFinalizeHabilitation(tx: Prisma.TransactionClient, userId
   if (allRequiredApproved) {
     newHabilitationStatus = 'HABILITADO';
   } else {
-    const anyRejected = userDocs.some(doc => doc.status === 'REJECTED');
+    const anyRejected = userDocs.some(doc => doc.status === 'REJECTED' && applicableDocTypes.some(rd => rd.id === doc.documentTypeId));
     if (anyRejected) {
       newHabilitationStatus = 'REJECTED_DOCUMENTS';
     }
