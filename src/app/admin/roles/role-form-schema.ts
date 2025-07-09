@@ -1,4 +1,5 @@
 
+
 import * as z from 'zod';
 
 export const predefinedPermissions = [
@@ -41,6 +42,7 @@ export const predefinedPermissions = [
   { id: 'lots:update', label: 'Lotes: Editar Todos', group: 'Lotes' },
   { id: 'lots:delete', label: 'Lotes: Excluir Todos', group: 'Lotes' },
   { id: 'lots:manage_own', label: 'Lotes: Gerenciar Próprios (Comitente)', group: 'Lotes' },
+  { id: 'lots:finalize', label: 'Lotes: Finalizar e Declarar Vencedor', group: 'Lotes' },
   // Media Library
   { id: 'media:upload', label: 'Mídia: Fazer Upload', group: 'Biblioteca de Mídia'},
   { id: 'media:read', label: 'Mídia: Ver Biblioteca', group: 'Biblioteca de Mídia'},
@@ -61,6 +63,10 @@ export const predefinedPermissions = [
   // Settings
   { id: 'settings:read', label: 'Configurações: Ver', group: 'Configurações' },
   { id: 'settings:update', label: 'Configurações: Editar', group: 'Configurações' },
+  // Document Generation
+  { id: 'documents:generate_report', label: 'Documentos: Gerar Laudo de Avaliação', group: 'Documentos Pós-Leilão' },
+  { id: 'documents:generate_certificate', label: 'Documentos: Gerar Certificado de Leilão', group: 'Documentos Pós-Leilão' },
+  { id: 'documents:generate_term', label: 'Documentos: Gerar Termo de Arrematação', group: 'Documentos Pós-Leilão' },
   // User-facing Permissions
   { id: 'view_auctions', label: 'Público: Ver Leilões', group: 'Usuário Final' },
   { id: 'view_lots', label: 'Público: Ver Lotes', group: 'Usuário Final' },

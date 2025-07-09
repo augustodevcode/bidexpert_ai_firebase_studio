@@ -11,7 +11,7 @@ import { notFound, useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers, Gavel } from 'lucide-react'; // Added Gavel
+import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers, Gavel, FileSignature } from 'lucide-react'; // Added Gavel, FileSignature
 import { format, differenceInDays, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText, slugify } from '@/lib/sample-data-helpers';
@@ -36,6 +36,9 @@ import SearchResultsFrame from '@/components/search-results-frame';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAuth } from '@/contexts/auth-context';
+import { hasAnyPermission } from '@/lib/permissions';
 
 function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotId: string; lotTitle: string; auctionId: string; onDeleteSuccess: () => void }) {
   const [isDeleting, setIsDeleting] = React.useState(false);
@@ -83,6 +86,54 @@ function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotI
       </AlertDialogContent>
     </AlertDialog>
   );
+}
+
+function AuctionActionsDisplay({ auction, userProfile }: { auction: Auction; userProfile: any }) {
+    const hasGenerateReportPerm = hasAnyPermission(userProfile, ['manage_all', 'documents:generate_report']);
+    const hasGenerateCertificatePerm = hasAnyPermission(userProfile, ['manage_all', 'documents:generate_certificate']);
+    
+    return (
+        <Card className="shadow-md">
+            <CardHeader>
+                <CardTitle className="text-lg flex items-center"><FileSignature className="mr-2 h-5 w-5 text-primary"/> Ações Pós-Leilão e Documentação</CardTitle>
+                <CardDescription>Gere laudos e certificados para este leilão.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+                 <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className="w-full">
+                                <Button className="w-full justify-start" disabled={!hasGenerateReportPerm}>
+                                    <FileText className="mr-2 h-4 w-4"/> Gerar Laudo de Avaliação (PDF)
+                                </Button>
+                            </div>
+                        </TooltipTrigger>
+                        {!hasGenerateReportPerm && <TooltipContent><p>Você não tem permissão para gerar laudos.</p></TooltipContent>}
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className="w-full">
+                                <Button className="w-full justify-start" disabled={!hasGenerateCertificatePerm}>
+                                    <CheckCircle className="mr-2 h-4 w-4"/> Gerar Certificado de Leilão (PDF)
+                                </Button>
+                            </div>
+                        </TooltipTrigger>
+                        {!hasGenerateCertificatePerm && <TooltipContent><p>Você não tem permissão para gerar certificados.</p></TooltipContent>}
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className="w-full">
+                                <Button variant="secondary" className="w-full justify-start" disabled>
+                                    <Users className="mr-2 h-4 w-4"/> Enviar Comunicação aos Arrematantes
+                                </Button>
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Funcionalidade em desenvolvimento.</p></TooltipContent>
+                    </Tooltip>
+                 </TooltipProvider>
+            </CardContent>
+        </Card>
+    );
 }
 
 function AuctionInfoDisplay({ auction }: { auction: Auction }) {
@@ -144,51 +195,6 @@ function AuctionInfoDisplay({ auction }: { auction: Auction }) {
                     <p><strong>Usuários Habilitados:</strong> {auction.totalHabilitatedUsers || 0}</p>
                 </CardContent>
             </Card>
-
-            {auction.documentsUrl && (
-                <Card className="shadow-md">
-                    <CardHeader>
-                        <CardTitle className="text-lg flex items-center"><FileText className="mr-2 h-5 w-5 text-primary" /> Documentos do Leilão</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <Button variant="link" asChild className="p-0 h-auto text-primary">
-                            <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center text-sm">
-                                Ver Edital/Documentos <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                            </a>
-                        </Button>
-                    </CardContent>
-                </Card>
-            )}
-             <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-lg flex items-center"><ListChecks className="mr-2 h-5 w-5 text-blue-500"/>Últimos Lances Registrados</CardTitle></CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                   <p>Funcionalidade de exibição dos últimos lances em desenvolvimento.</p>
-                   <p className="text-xs mt-1">(Exibirá aqui uma lista dos lances mais recentes no leilão.)</p>
-                </CardContent>
-            </Card>
-             <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-lg flex items-center"><AlertTriangle className="mr-2 h-5 w-5 text-amber-500"/>Pendências e Alertas</CardTitle></CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                   <p>Nenhum alerta crítico para este leilão no momento.</p>
-                   <p className="text-xs mt-1">(Ex: Lotes sem lance inicial, datas próximas do fim, etc.)</p>
-                </CardContent>
-            </Card>
-             <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-lg flex items-center"><PackageIcon className="mr-2 h-5 w-5 text-green-500"/>Desempenho dos Lotes</CardTitle></CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
-                   <p>Total de Lotes: {auction?.totalLots || 0}</p>
-                   <p>Lotes Vendidos: (Em breve)</p>
-                   <p>Taxa de Venda: (Em breve)</p>
-                   <p className="text-xs mt-1">(Mais estatísticas sobre o desempenho dos lotes serão exibidas aqui.)</p>
-                </CardContent>
-            </Card>
-            <Card className="shadow-md">
-                <CardHeader><CardTitle className="text-lg">Ações Rápidas</CardTitle></CardHeader>
-                <CardContent className="space-y-2">
-                    <Button variant="outline" className="w-full justify-start" disabled><Users className="mr-2 h-4 w-4"/> Gerenciar Habilitações (Em breve)</Button>
-                    <Button variant="outline" className="w-full justify-start" disabled><BarChart2 className="mr-2 h-4 w-4"/> Ver Relatórios Detalhados (Em breve)</Button>
-                </CardContent>
-            </Card>
         </div>
     );
 }
@@ -205,6 +211,7 @@ export default function EditAuctionPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const router = useRouter();
   const { toast } = useToast();
+  const { userProfileWithPermissions } = useAuth();
   
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings>(samplePlatformSettings as PlatformSettings);
   const [lotSortBy, setLotSortBy] = useState<string>('number_asc');
@@ -417,6 +424,7 @@ export default function EditAuctionPage() {
         </div>
         <div className="lg:col-span-1 space-y-6 sticky top-24">
             <AuctionInfoDisplay auction={auction} />
+            <AuctionActionsDisplay auction={auction} userProfile={userProfileWithPermissions}/>
         </div>
       </div>
 
@@ -456,3 +464,4 @@ export default function EditAuctionPage() {
     </div>
   );
 }
+

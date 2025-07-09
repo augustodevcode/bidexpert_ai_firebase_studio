@@ -24,7 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
 import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem } from '@/types';
-import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat, MicOff } from 'lucide-react';
+import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat, MicOff, FileSignature } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -100,6 +100,8 @@ export default function AuctionForm({
       state: initialData?.state || '',
       imageUrl: initialData?.imageUrl || '',
       documentsUrl: initialData?.documentsUrl || '',
+      evaluationReportUrl: initialData?.evaluationReportUrl || '',
+      auctionCertificateUrl: initialData?.auctionCertificateUrl || '',
       sellingBranch: initialData?.sellingBranch || '',
       automaticBiddingEnabled: initialData?.automaticBiddingEnabled || false,
       silentBiddingEnabled: initialData?.silentBiddingEnabled || false,
@@ -510,7 +512,7 @@ export default function AuctionForm({
             <AuctionStagesTimeline auctionOverallStartDate={watchedAuctionDate} stages={watchedStages as AuctionStage[]} />
 
             <Separator />
-            <h3 className="text-md font-semibold text-muted-foreground flex items-center"><Landmark className="h-4 w-4 mr-2"/>Localização e Detalhes Adicionais</h3>
+            <h3 className="text-md font-semibold text-muted-foreground flex items-center"><Landmark className="h-4 w-4 mr-2"/>Localização e Documentos</h3>
              <FormField
                 control={form.control}
                 name="endDate"
@@ -601,18 +603,11 @@ export default function AuctionForm({
                 </div>
               </div>
             </FormItem>
-
-             <FormField
-                control={form.control}
-                name="documentsUrl"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel>URL do Edital/Documentos (Opcional)</FormLabel>
-                    <FormControl><Input type="url" placeholder="https://exemplo.com/edital.pdf" {...field} value={field.value ?? ""} /></FormControl>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
+            
+            <FormField control={form.control} name="documentsUrl" render={({ field }) => (<FormItem><FormLabel>URL do Edital/Documentos</FormLabel><FormControl><Input type="url" placeholder="https://exemplo.com/edital.pdf" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="evaluationReportUrl" render={({ field }) => (<FormItem><FormLabel>URL do Laudo de Avaliação (Gerado)</FormLabel><FormControl><Input disabled {...field} value={field.value ?? ""} /></FormControl><FormDescription>Este campo é preenchido automaticamente após a geração do laudo.</FormDescription><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="auctionCertificateUrl" render={({ field }) => (<FormItem><FormLabel>URL do Certificado do Leilão (Gerado)</FormLabel><FormControl><Input disabled {...field} value={field.value ?? ""} /></FormControl><FormDescription>Este campo é preenchido automaticamente após a geração do certificado.</FormDescription><FormMessage /></FormItem>)} />
+            
             <FormField
                 control={form.control}
                 name="sellingBranch"

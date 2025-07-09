@@ -1,6 +1,6 @@
 // src/types/index.ts
 import type { 
-    User, Role, UserDocument, DocumentType, Auction, Lot, Bid, 
+    User, Role, UserDocument, DocumentType, Auction as PrismaAuction, Lot as PrismaLot, Bid, 
     UserWin, Seller, Auctioneer, DirectSaleOffer, MediaItem, LotCategory, 
     State as StateInfo, City as CityInfo, Subcategory,
     Court, JudicialDistrict, JudicialBranch, JudicialProcess, ProcessParty, Bem,
@@ -21,10 +21,32 @@ export type ClientTimestamp = FirebaseClientTimestamp;
 // Generic type for properties that could be any of these, or a JS Date
 export type AnyTimestamp = ServerTimestamp | ClientTimestamp | Date | string | null | undefined;
 
+// --- Redefining Prisma types to include relations or computed fields ---
+
+export type Auction = PrismaAuction & {
+  lots?: Lot[];
+  totalLots?: number;
+  auctioneer?: string;
+  seller?: string;
+  category?: string;
+  auctioneerName?: string;
+  auctioneerLogoUrl?: string;
+};
+
+export type Lot = PrismaLot & {
+    auctionName?: string;
+    type?: string;
+    subcategoryName?: string;
+    cityName?: string;
+    stateUf?: string;
+    isFavorite?: boolean;
+    bens?: Bem[];
+};
+
 // --- EXPORTING PRISMA GENERATED TYPES ---
 // This makes it easy to use the exact shape of our database models throughout the app.
 export type { 
-    User as UserProfileData, Role, UserDocument, DocumentType, Auction, Lot, Bid as BidInfo, 
+    User as UserProfileData, Role, UserDocument, DocumentType, Bid as BidInfo, 
     UserWin, Seller as SellerProfileInfo, Auctioneer as AuctioneerProfileInfo, 
     DirectSaleOffer, MediaItem, LotCategory, StateInfo, CityInfo, Subcategory,
     Court, JudicialDistrict, JudicialBranch, JudicialProcess, ProcessParty, Bem,
@@ -113,24 +135,6 @@ export type LotFormData = Omit<Lot, 'id'|'publicId'|'createdAt'|'updatedAt'|'auc
   auctionName?: string;
   bemIds?: string[];
   mediaItemIds?: string[];
-  latitude?: number | null;
-  longitude?: number | null;
-  mapAddress?: string | null;
-  mapEmbedUrl?: string | null;
-  mapStaticImageUrl?: string | null;
-  judicialProcessNumber?: string | null;
-  courtDistrict?: string | null;
-  courtName?: string | null;
-  publicProcessUrl?: string | null;
-  propertyRegistrationNumber?: string | null;
-  propertyLiens?: string | null;
-  knownDebts?: string | null;
-  additionalDocumentsInfo?: string | null;
-  reservePrice?: number | null;
-  evaluationValue?: number | null;
-  debtAmount?: number | null;
-  itbiValue?: number | null;
-  bidIncrementStep?: number | null;
 };
 
 export type LotDbData = Omit<LotFormData, 'type' | 'auctionName'> & {
@@ -325,3 +329,10 @@ export interface RecentlyViewedLotInfo {
   auctionId: string;
   dataAiHint?: string;
 }
+
+export type AuctionStage = Omit<Prisma.JsonValue, 'endDate'> & {
+  name: string;
+  endDate: AnyTimestamp;
+  statusText?: string;
+  initialPrice?: number;
+};

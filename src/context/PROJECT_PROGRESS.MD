@@ -22,9 +22,12 @@
 - **Refatoração do Modelo de Dados:** Status e datas foram removidos do modelo de `Lot` e agora são derivados do `Auction` principal, garantindo consistência.
 - **Gerenciamento de Habilitação (Admin):** Implementada a interface administrativa para revisar, aprovar e rejeitar os documentos enviados pelos usuários.
 - **Relatórios Avançados:** Criação da página `/admin/reports` com métricas detalhadas e KPIs sobre a saúde da plataforma.
+- **Formulário de Bens Dinâmico:** Implementada a exibição condicional de campos específicos por categoria.
+- **Geração de Documentos (Estrutura):** Adicionados campos ao DB, permissões e botões na UI para a futura geração de laudos e certificados.
 
 ## DOING
-- **(Refinando)** Formulário de Bens: Adicionar a exibição de campos específicos por categoria (Veículos, Imóveis, etc.) para um cadastro mais detalhado.
+- **(Refinando)** **Tomada de Preços:** Implementar completamente o fluxo de Tomada de Preços, incluindo uma interface para submissão e visualização de propostas.
+- **(Refinando)** **Finalização de Leilão:** Aprimorar a lógica de finalização para lidar com diferentes cenários (ex: preço de reserva) e gerar os documentos (Termo de Arrematação).
 
 ## NEXT
 - **Item 1.1 (Avançado):** Implementar atualização em tempo real para volume de ofertas e lances via WebSockets para uma experiência de leilão ainda mais dinâmica.

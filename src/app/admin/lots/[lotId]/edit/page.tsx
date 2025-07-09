@@ -1,6 +1,6 @@
 // src/app/admin/lots/[lotId]/edit/page.tsx
 import LotForm from '../../lot-form';
-import { getLot, updateLot, type LotFormData } from '../../actions';
+import { getLot, updateLot, type LotFormData, finalizeLot } from '../../actions';
 import { getBens as getBensForLotting } from '@/app/admin/bens/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctions, getAuction } from '@/app/admin/auctions/actions';
@@ -8,6 +8,22 @@ import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
 import { notFound } from 'next/navigation';
 import type { LotCategory, Auction, Bem, StateInfo, CityInfo } from '@/types';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { CheckCircle, FileSignature, Loader2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import React from 'react';
+
 
 export default async function EditLotPage({ params }: { params: { lotId: string } }) {
   const lotId = params.lotId;
@@ -38,20 +54,22 @@ export default async function EditLotPage({ params }: { params: { lotId: string 
     'use server';
     return updateLot(lotId, data);
   }
-
+  
   return (
-    <LotForm
-      initialData={lot}
-      categories={categories}
-      auctions={auctions}
-      states={states}
-      allCities={allCities}
-      initialAvailableBens={availableBens}
-      onSubmitAction={handleUpdateLot}
-      formTitle="Editar Lote"
-      formDescription="Modifique os detalhes do lote existente."
-      submitButtonText="Salvar Alterações"
-      defaultAuctionId={lot.auctionId}
-    />
+    <div className="space-y-6">
+       <LotForm
+          initialData={lot}
+          categories={categories}
+          auctions={auctions}
+          states={states}
+          allCities={allCities}
+          initialAvailableBens={availableBens}
+          onSubmitAction={handleUpdateLot}
+          formTitle="Editar Lote"
+          formDescription="Modifique os detalhes do lote existente."
+          submitButtonText="Salvar Alterações"
+          defaultAuctionId={lot.auctionId}
+        />
+    </div>
   );
 }
