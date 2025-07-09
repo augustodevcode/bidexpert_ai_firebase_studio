@@ -6,7 +6,6 @@ import {
   sampleDocumentTypes, sampleNotifications, sampleMediaItems, sampleCourts,
   sampleJudicialDistricts, sampleJudicialBranches, sampleJudicialProcesses, sampleBens
 } from './seed-data'; // Import from the new local data file
-import { predefinedPermissions } from '../src/app/admin/roles/role-form-schema';
 import { slugify } from '../src/lib/sample-data-helpers';
 import bcrypt from 'bcrypt';
 
@@ -15,63 +14,77 @@ const prisma = new PrismaClient();
 async function main() {
   console.log(`Start seeding ...`);
   
-  // Seed Roles
-  console.log('Seeding roles...');
-  for (const roleData of predefinedPermissions) {
-    const existingRole = await prisma.role.findUnique({
-      where: { name_normalized: roleData.id.replace(/:/g, '_').toUpperCase() }
-    });
-    if (!existingRole) {
-      await prisma.role.create({
-        data: {
-          name: roleData.label,
-          name_normalized: roleData.id.replace(/:/g, '_').toUpperCase(),
-          description: `Permissions for: ${roleData.group}`,
-          permissions: { connectOrCreate: [{ where: { name: roleData.id }, create: { name: roleData.id } }] }
-        }
-      });
-    }
-  }
-
-  const adminRole = await prisma.role.findFirst({
-    where: { permissions: { some: { name: 'manage_all' } } },
-  });
-
-  if (!adminRole) {
-    await prisma.role.create({
-      data: {
-        name: 'ADMINISTRATOR',
-        name_normalized: 'ADMINISTRATOR',
-        description: 'Acesso total à plataforma.',
-        permissions: { connectOrCreate: [{ where: { name: 'manage_all' }, create: { name: 'manage_all' } }] }
-      }
-    });
-  }
-
-  // Seed Admin User
-  const adminUser = await prisma.user.findUnique({
-    where: { email: 'admin@bidexpert.com.br' }
-  });
-  if (!adminUser) {
-    const adminRoleForUser = await prisma.role.findFirst({ where: { name: 'ADMINISTRATOR' } });
-    const hashedPassword = await bcrypt.hash('admin123', 10);
-    await prisma.user.create({
-      data: {
-        id: 'admin-bidexpert-platform-001',
-        email: 'admin@bidexpert.com.br',
-        fullName: 'Administrador',
-        password: hashedPassword,
-        habilitationStatus: 'HABILITADO',
-        roleId: adminRoleForUser?.id,
-      }
-    });
-  }
+  // --- Upsert Core Permissions and Roles ---
+  console.log('Seeding core roles and permissions...');
   
+  // Ensure 'manage_all' permission exists
+  await prisma.permission.upsert({
+    where: { name: 'manage_all' },
+    update: {},
+    create: { name: 'manage_all' },
+  });
+
+  // Ensure 'USER' role exists
+  const userRole = await prisma.role.upsert({
+    where: { name_normalized: 'USER' },
+    update: {},
+    create: {
+      name: 'User',
+      name_normalized: 'USER',
+      description: 'Usuário padrão com permissões de visualização e lance.',
+      permissions: {
+        connectOrCreate: [
+          { where: { name: 'view_auctions' }, create: { name: 'view_auctions' } },
+          { where: { name: 'place_bids' }, create: { name: 'place_bids' } },
+        ],
+      },
+    },
+  });
+
+  // Ensure 'ADMINISTRATOR' role exists and is linked to 'manage_all'
+  const adminRole = await prisma.role.upsert({
+    where: { name_normalized: 'ADMINISTRATOR' },
+    update: {
+      permissions: {
+        connectOrCreate: [{ where: { name: 'manage_all' }, create: { name: 'manage_all' } }],
+      },
+    },
+    create: {
+      name: 'Administrator',
+      name_normalized: 'ADMINISTRATOR',
+      description: 'Acesso total à plataforma.',
+      permissions: {
+        connectOrCreate: [{ where: { name: 'manage_all' }, create: { name: 'manage_all' } }],
+      },
+    },
+  });
+  
+  // --- Upsert Admin User ---
+  console.log('Seeding admin user...');
+  const hashedPassword = await bcrypt.hash('admin123', 10);
+  await prisma.user.upsert({
+    where: { email: 'admin@bidexpert.com.br' },
+    update: {
+      password: hashedPassword,
+      roleId: adminRole.id,
+      habilitationStatus: 'HABILITADO',
+    },
+    create: {
+      id: 'admin-bidexpert-platform-001',
+      email: 'admin@bidexpert.com.br',
+      fullName: 'Administrador',
+      password: hashedPassword,
+      habilitationStatus: 'HABILITADO',
+      roleId: adminRole.id,
+    },
+  });
+  
+  // --- Seed other data ---
   console.log('Seeding states...');
-  await prisma.state.createMany({ data: sampleStates.map(({cityCount, ...s}) => s), skipDuplicates: true });
+  await prisma.state.createMany({ data: sampleStates, skipDuplicates: true });
   
   console.log('Seeding cities...');
-  await prisma.city.createMany({ data: sampleCities.map(({lotCount, ...c}) => c), skipDuplicates: true });
+  await prisma.city.createMany({ data: sampleCities, skipDuplicates: true });
 
   console.log('Seeding categories and subcategories...');
   for (const categoryData of sampleLotCategories) {
@@ -111,10 +124,10 @@ async function main() {
   await prisma.judicialBranch.createMany({ data: sampleJudicialBranches, skipDuplicates: true });
 
   console.log('Seeding sellers...');
-  await prisma.seller.createMany({ data: sampleSellers.map(({rating, auctionsFacilitatedCount, ...s}) => s), skipDuplicates: true });
+  await prisma.seller.createMany({ data: sampleSellers.map(({rating, auctionsFacilitatedCount, totalSalesValue, memberSince, activeLotsCount, ...s}) => s), skipDuplicates: true });
   
   console.log('Seeding auctioneers...');
-  await prisma.auctioneer.createMany({ data: sampleAuctioneers.map(({rating, auctionsConductedCount, totalValueSold, ...a}) => a), skipDuplicates: true });
+  await prisma.auctioneer.createMany({ data: sampleAuctioneers.map(({rating, auctionsConductedCount, totalValueSold, memberSince, ...a}) => a), skipDuplicates: true });
 
   console.log('Seeding judicial processes...');
   for (const proc of sampleJudicialProcesses) {
@@ -126,8 +139,11 @@ async function main() {
     });
     if (parties) {
       for (const party of parties) {
-        await prisma.processParty.create({
-          data: {
+        // Using upsert for parties to avoid duplicate errors if seed is run again
+        await prisma.processParty.upsert({
+          where: { processId_name_partyType: { processId: createdProcess.id, name: party.name, partyType: party.partyType } },
+          update: { documentNumber: party.documentNumber },
+          create: {
             processId: createdProcess.id,
             name: party.name,
             partyType: party.partyType,
