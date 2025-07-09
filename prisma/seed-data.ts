@@ -1,4 +1,3 @@
-
 // prisma/seed-data.ts
 // This file contains the sample data for seeding the database.
 
@@ -91,20 +90,20 @@ export const sampleSellers: (Omit<Seller, 'createdAt' | 'updatedAt' | 'activeLot
 
 export const sampleDocumentTypes: (Omit<DocumentType, 'createdAt' | 'updatedAt'>)[] = [
   // PF
-  { id: 'doc-cpf', name: 'CPF', description: 'Cópia do Cadastro de Pessoa Física.', isRequired: true, appliesTo: ['PHYSICAL'], allowedFormats: ['pdf', 'jpg', 'png'], displayOrder: 10 },
-  { id: 'doc-rg-cnh', name: 'RG ou CNH', description: 'Documento de identidade com foto (frente e verso).', isRequired: true, appliesTo: ['PHYSICAL'], allowedFormats: ['pdf', 'jpg', 'png'], displayOrder: 20 },
-  { id: 'doc-comprovante-residencia', name: 'Comprovante de Residência', description: 'Conta de consumo recente (água, luz, telefone).', isRequired: true, appliesTo: ['PHYSICAL', 'LEGAL'], allowedFormats: ['pdf', 'jpg', 'png'], displayOrder: 30 },
-  { id: 'doc-comprovante-estado-civil', name: 'Comprovante de Estado Civil', description: 'Certidão de casamento ou nascimento.', isRequired: false, appliesTo: ['PHYSICAL'], allowedFormats: ['pdf', 'jpg', 'png'], displayOrder: 40 },
+  { id: 'doc-cpf', name: 'CPF', description: 'Cópia do Cadastro de Pessoa Física.', isRequired: true, appliesTo: 'PHYSICAL', allowedFormats: 'pdf,jpg,png', displayOrder: 10 },
+  { id: 'doc-rg-cnh', name: 'RG ou CNH', description: 'Documento de identidade com foto (frente e verso).', isRequired: true, appliesTo: 'PHYSICAL', allowedFormats: 'pdf,jpg,png', displayOrder: 20 },
+  { id: 'doc-comprovante-residencia', name: 'Comprovante de Residência', description: 'Conta de consumo recente (água, luz, telefone).', isRequired: true, appliesTo: 'PHYSICAL,LEGAL', allowedFormats: 'pdf,jpg,png', displayOrder: 30 },
+  { id: 'doc-comprovante-estado-civil', name: 'Comprovante de Estado Civil', description: 'Certidão de casamento ou nascimento.', isRequired: false, appliesTo: 'PHYSICAL', allowedFormats: 'pdf,jpg,png', displayOrder: 40 },
   
   // PJ
-  { id: 'doc-cartao-cnpj', name: 'Cartão CNPJ', description: 'Comprovante de Inscrição e de Situação Cadastral.', isRequired: true, appliesTo: ['LEGAL'], allowedFormats: ['pdf'], displayOrder: 10 },
-  { id: 'doc-contrato-social', name: 'Contrato Social Consolidado', description: 'Última alteração contratual ou estatuto social.', isRequired: true, appliesTo: ['LEGAL'], allowedFormats: ['pdf'], displayOrder: 20 },
-  { id: 'doc-documentos-representantes', name: 'Documentos dos Representantes', description: 'RG/CPF ou CNH dos sócios administradores.', isRequired: true, appliesTo: ['LEGAL'], allowedFormats: ['pdf', 'jpg', 'png'], displayOrder: 50 },
+  { id: 'doc-cartao-cnpj', name: 'Cartão CNPJ', description: 'Comprovante de Inscrição e de Situação Cadastral.', isRequired: true, appliesTo: 'LEGAL', allowedFormats: 'pdf', displayOrder: 10 },
+  { id: 'doc-contrato-social', name: 'Contrato Social Consolidado', description: 'Última alteração contratual ou estatuto social.', isRequired: true, appliesTo: 'LEGAL', allowedFormats: 'pdf', displayOrder: 20 },
+  { id: 'doc-documentos-representantes', name: 'Documentos dos Representantes', description: 'RG/CPF ou CNH dos sócios administradores.', isRequired: true, appliesTo: 'LEGAL', allowedFormats: 'pdf,jpg,png', displayOrder: 50 },
 ];
 
 // ... and so on for all other sample data arrays.
 // For brevity, I will omit the full data here, but it would be included.
-export const sampleAuctioneers: (Omit<Auctioneer, 'createdAt' | 'updatedAt' | 'memberSince' | 'auctionsConductedCount' | 'totalValueSold' | 'rating'>)[] = [{ id: 'auct-vicente-paulo-jucema-n-1296', publicId: 'AUCT-PUB-VICENT1a52', name: 'VICENTE PAULO - JUCEMA N° 12/96', slug: 'vicente-paulo-jucema-n-1296', city: 'São Luís', state: 'MA', logoMediaId: 'media-auct-vicente-logo', dataAiHintLogo: 'leiloeiro martelo', registrationNumber: null, contactName: null, email: null, phone: null, address: null, zipCode: null, website: null, logoUrl: null, description: null, userId: null }];
+export const sampleAuctioneers: (Omit<Auctioneer, 'createdAt' | 'updatedAt' | 'memberSince' | 'auctionsConductedCount' | 'totalValueSold' | 'rating'>)[] = [{ id: 'auct-vicente-paulo-jucema-n-1296', publicId: 'AUCT-PUB-VICENT1a52', name: 'VICENTE PAULO - JUCEMA N° 12/96', slug: 'vicente-paulo-jucema-n-1296', city: 'São Luís', state: 'MA', logoMediaId: 'media-auct-vicente-logo', dataAiHintLogo: 'leiloeiro martelo', registrationNumber: null, contactName: null, email: null, phone: null, address: null, zipCode: null, website: null, description: null, userId: null }];
 export const sampleJudicialProcesses: (Omit<JudicialProcess, 'createdAt' | 'updatedAt'> & {parties: Omit<ProcessParty, 'processId'>[]})[] = [];
 export const sampleBens: (Omit<Bem, 'createdAt' | 'updatedAt'>)[] = [];
 export const sampleAuctions: (Omit<Auction, 'createdAt' | 'updatedAt' | 'totalLots'>)[] = [];
@@ -114,5 +113,3 @@ export const sampleUserWins: (Omit<UserWin, 'lot'>)[] = [];
 export const sampleUserDocuments: (Omit<UserDocument, 'createdAt' | 'updatedAt' | 'documentType'>)[] = [];
 export const sampleNotifications: Notification[] = [];
 export const sampleMediaItems: MediaItem[] = [];
-
-

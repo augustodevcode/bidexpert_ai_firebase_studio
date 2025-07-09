@@ -64,7 +64,7 @@ async function checkAndFinalizeHabilitation(tx: Prisma.TransactionClient, userId
       where: { 
           isRequired: true,
           appliesTo: {
-            has: user.accountType || 'PHYSICAL'
+            contains: user.accountType || 'PHYSICAL'
           }
       }
   });
