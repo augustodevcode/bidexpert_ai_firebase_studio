@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, Boxes, Rocket, FileUp, BarChart, BookOpen, UserCheck, MessageSquare } from 'lucide-react';
+import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, Boxes, Rocket, FileUp, BarChart, BookOpen, UserCheck, MessageSquare, Files } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -45,6 +45,7 @@ const platformManagementItems = [
   { title: 'Cidades', href: '/admin/cities', icon: Building2 },
   { title: 'Usuários', href: '/admin/users', icon: Users },
   { title: 'Habilitações', href: '/admin/habilitations', icon: UserCheck },
+  { title: 'Templates de Documentos', href: '/admin/document-templates', icon: Files },
   { title: 'Mensagens de Contato', href: '/admin/contact-messages', icon: MessageSquare },
   { title: 'Perfis (Roles)', href: '/admin/roles', icon: ShieldCheck },
   { title: 'Relatórios', href: '/admin/reports', icon: BarChart },
