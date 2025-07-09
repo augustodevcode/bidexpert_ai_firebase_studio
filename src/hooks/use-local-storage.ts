@@ -1,6 +1,15 @@
+// src/hooks/use-local-storage.ts
 import { useState, useEffect } from 'react';
 
-function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
+/**
+ * A custom React hook that provides a state variable that is persisted to localStorage.
+ *
+ * @template T The type of the value to be stored.
+ * @param {string} key The key under which the value is stored in localStorage.
+ * @param {T} initialValue The initial value to use if nothing is found in localStorage.
+ * @returns {[T, (value: T | ((val: T) => T)) => void]} A stateful value, and a function to update it.
+ */
+export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((val: T) => T)) => void] {
   // State to store our value
   // Pass initial state function to useState so logic is only executed once
   const [storedValue, setStoredValue] = useState<T>(() => {
@@ -25,7 +34,7 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => voi
       // Allow value to be a function so we have the same API as useState
       const valueToStore =
         typeof storedValue === 'function'
-          ? storedValue(storedValue)
+          ? (storedValue as (val: T) => T)(storedValue)
           : storedValue;
       // Save state to local storage
       window.localStorage.setItem(key, JSON.stringify(valueToStore));
@@ -38,4 +47,3 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => voi
   return [storedValue, setStoredValue];
 }
 
-export default useLocalStorage;
