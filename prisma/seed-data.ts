@@ -104,7 +104,7 @@ export const sampleAuctions = [
       "totalHabilitatedUsers": 150,
       "isFeaturedOnMarketplace": true,
       "marketplaceAnnouncementTitle": "Mega Leilão Bradesco Imóveis",
-      "additionalTriggers": "OPORTUNIDADE ÚNICA, DESCONTO",
+      "additionalTriggers": "OPORTUNIDADE UNICA,DESCONTO",
   },
   // Add more sample auctions here, ensuring additionalTriggers is a string
 ];
@@ -115,8 +115,8 @@ export const sampleAuctions = [
 export const sampleCourts: Omit<Court, 'createdAt' | 'updatedAt'>[] = [];
 export const sampleJudicialDistricts: Omit<JudicialDistrict, 'createdAt' | 'updatedAt'>[] = [];
 export const sampleJudicialBranches: Omit<JudicialBranch, 'createdAt' | 'updatedAt'>[] = [];
-export const sampleSellers: (Omit<Seller, 'createdAt' | 'updatedAt' | 'activeLotsCount' | 'totalSalesValue' | 'auctionsFacilitatedCount' | 'memberSince' | 'rating'>)[] = [];
-export const sampleAuctioneers: (Omit<Auctioneer, 'createdAt' | 'updatedAt' | 'memberSince' | 'auctionsConductedCount' | 'totalValueSold' | 'rating'>)[] = [];
+export const sampleSellers: (Omit<Seller, 'createdAt' | 'updatedAt'>)[] = [];
+export const sampleAuctioneers: (Omit<Auctioneer, 'createdAt' | 'updatedAt'>)[] = [];
 export const sampleJudicialProcesses: (Omit<JudicialProcess, 'createdAt' | 'updatedAt'> & {parties: Omit<ProcessParty, 'processId'>[]})[] = [];
 export const sampleBens: (Omit<Bem, 'createdAt' | 'updatedAt'>)[] = [];
 export const sampleLots: (Omit<Lot, 'createdAt' | 'updatedAt' | 'bidsCount' | 'views'>)[] = [];
@@ -125,4 +125,334 @@ export const sampleUserWins: (Omit<UserWin, 'lot'>)[] = [];
 export const sampleUserDocuments: (Omit<UserDocument, 'createdAt' | 'updatedAt' | 'documentType'>)[] = [];
 export const sampleNotifications: Notification[] = [];
 export const sampleMediaItems: MediaItem[] = [];
+
+
+```
+- src/app/admin/roles/actions.ts:
+```ts
+// src/app/admin/roles/actions.ts
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import { prisma } from '@/lib/prisma';
+import type { Role, RoleFormData } from '@/types';
+
+export async function createRole(
+  data: RoleFormData
+): Promise<{ success: boolean; message: string; roleId?: string }> {
+  try {
+    const newRole = await prisma.role.create({
+      data: {
+        name: data.name,
+        name_normalized: data.name.toUpperCase().replace(/\s/g, '_'),
+        description: data.description,
+        permissions: {
+          connect: data.permissions?.map(id => ({ id })) || [],
+        },
+      }
+    });
+    revalidatePath('/admin/roles');
+    return { success: true, message: "Perfil criado com sucesso!", roleId: newRole.id };
+  } catch (error: any) {
+    console.error("Error creating role:", error);
+    if (error.code === 'P2002' && error.meta?.target?.includes('name')) {
+      return { success: false, message: 'Já existe um perfil com este nome.' };
+    }
+    return { success: false, message: 'Falha ao criar perfil.' };
+  }
+}
+
+export async function getRoles(): Promise<Role[]> {
+  try {
+    const roles = await prisma.role.findMany({
+      orderBy: { name: 'asc' },
+      include: { permissions: true }
+    });
+    return roles.map(role => ({
+      ...role,
+      permissions: role.permissions.map(p => p.name)
+    })) as unknown as Role[];
+  } catch (error) {
+    console.error("Error fetching roles:", error);
+    return [];
+  }
+}
+
+export async function getRole(id: string): Promise<Role | null> {
+  try {
+    const role = await prisma.role.findUnique({
+      where: { id },
+      include: { permissions: true }
+    });
+    if (!role) return null;
+    return {
+      ...role,
+      permissions: role.permissions.map(p => p.name)
+    } as unknown as Role;
+  } catch (error) {
+    console.error("Error fetching role:", error);
+    return null;
+  }
+}
+
+
+export async function updateRole(
+  id: string,
+  data: Partial<RoleFormData>
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const updateData: any = {};
+    if (data.name) {
+      updateData.name = data.name;
+      updateData.name_normalized = data.name.toUpperCase().replace(/\s/g, '_');
+    }
+    if (data.description) {
+      updateData.description = data.description;
+    }
+    if (data.permissions) {
+      updateData.permissions = {
+        set: data.permissions.map(id => ({ id })),
+      }
+    }
+
+    await prisma.role.update({
+      where: { id },
+      data: updateData,
+    });
+    revalidatePath('/admin/roles');
+    revalidatePath(`/admin/roles/${id}/edit`);
+    return { success: true, message: 'Perfil atualizado com sucesso!' };
+  } catch (error) {
+    console.error(`Error updating role ${id}:`, error);
+    return { success: false, message: 'Falha ao atualizar perfil.' };
+  }
+}
+
+export async function deleteRole(id: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const roleToDelete = await prisma.role.findUnique({ where: { id }});
+    const protectedRoles = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER', 'AUCTION_ANALYST'];
+    if (protectedRoles.includes(roleToDelete?.name_normalized || '')) {
+      return { success: false, message: 'Não é possível excluir perfis de sistema.' };
+    }
+    await prisma.role.delete({ where: { id } });
+    revalidatePath('/admin/roles');
+    return { success: true, message: 'Perfil excluído com sucesso!' };
+  } catch (error: any) {
+    console.error(`Error deleting role ${id}:`, error);
+    if (error.code === 'P2003') {
+        return { success: false, message: 'Não é possível excluir. Este perfil está em uso por um ou mais usuários.' };
+    }
+    return { success: false, message: 'Falha ao excluir perfil.' };
+  }
+}
+```
+- src/app/admin/roles/role-form-schema.ts:
+```ts
+// src/app/admin/roles/role-form-schema.ts
+import * as z from 'zod';
+
+export const roleFormSchema = z.object({
+  name: z.string().min(3, {
+    message: "O nome do perfil deve ter pelo menos 3 caracteres.",
+  }).max(100, {
+    message: "O nome do perfil não pode exceder 100 caracteres.",
+  }),
+  description: z.string().max(500, {
+    message: "A descrição não pode exceder 500 caracteres.",
+  }).optional(),
+  permissions: z.array(z.string()).optional(),
+});
+
+export type RoleFormValues = z.infer<typeof roleFormSchema>;
+
+```
+- prisma/seed.ts:
+```ts
+// prisma/seed.ts
+import { PrismaClient } from '@prisma/client';
+import {
+  sampleLotCategories, sampleStates, sampleCities, sampleAuctioneers, sampleSellers,
+  sampleAuctions, sampleLots, sampleBids, sampleUserWins, sampleUserDocuments,
+  sampleDocumentTypes, sampleNotifications, sampleMediaItems, sampleCourts,
+  sampleJudicialDistricts, sampleJudicialBranches, sampleJudicialProcesses, sampleBens
+} from './seed-data'; // Import from the new local data file
+import { slugify } from '../src/lib/sample-data-helpers';
+import bcrypt from 'bcrypt';
+import { predefinedPermissions } from '@/app/admin/roles/role-form-schema'; // Import permissions
+
+const prisma = new PrismaClient();
+
+async function main() {
+  console.log(`Start seeding ...`);
+  
+  // --- Upsert Permissions ---
+  console.log('Seeding permissions...');
+  for (const perm of predefinedPermissions) {
+    await prisma.permission.upsert({
+      where: { name: perm.id },
+      update: { description: perm.label },
+      create: { id: perm.id, name: perm.id, description: perm.label },
+    });
+  }
+  
+  // --- Upsert Core Roles ---
+  console.log('Seeding core roles...');
+  
+  const userPerms = await prisma.permission.findMany({
+    where: { name: { in: ['view_auctions', 'place_bids', 'view_lots'] } },
+  });
+  const adminPerms = await prisma.permission.findMany({
+    where: { name: 'manage_all' },
+  });
+
+  const userRole = await prisma.role.upsert({
+    where: { name_normalized: 'USER' },
+    update: {},
+    create: {
+      name: 'User',
+      name_normalized: 'USER',
+      description: 'Usuário padrão com permissões de visualização e lance.',
+      permissions: {
+        connect: userPerms.map(p => ({ id: p.id })),
+      },
+    },
+  });
+
+  const adminRole = await prisma.role.upsert({
+    where: { name_normalized: 'ADMINISTRATOR' },
+    update: {},
+    create: {
+      name: 'Administrator',
+      name_normalized: 'ADMINISTRATOR',
+      description: 'Acesso total à plataforma.',
+      permissions: {
+        connect: adminPerms.map(p => ({ id: p.id })),
+      },
+    },
+  });
+  
+  // --- Upsert Admin User ---
+  console.log('Seeding admin user...');
+  const hashedPassword = await bcrypt.hash('admin123', 10);
+  await prisma.user.upsert({
+    where: { email: 'admin@bidexpert.com.br' },
+    update: {
+      password: hashedPassword,
+      roleId: adminRole.id,
+      habilitationStatus: 'HABILITADO',
+    },
+    create: {
+      id: 'admin-bidexpert-platform-001',
+      email: 'admin@bidexpert.com.br',
+      fullName: 'Administrador',
+      password: hashedPassword,
+      habilitationStatus: 'HABILITADO',
+      roleId: adminRole.id,
+    },
+  });
+  
+  // --- Seed other data ---
+  console.log('Seeding states...');
+  await prisma.state.createMany({ data: sampleStates, skipDuplicates: true });
+  
+  console.log('Seeding cities...');
+  await prisma.city.createMany({ data: sampleCities, skipDuplicates: true });
+
+  console.log('Seeding categories and subcategories...');
+  for (const categoryData of sampleLotCategories) {
+    const { subcategories, ...cat } = categoryData;
+    const catToCreate = {
+      ...cat,
+      slug: slugify(cat.name),
+      hasSubcategories: !!subcategories && subcategories.length > 0,
+    };
+    const createdCategory = await prisma.lotCategory.upsert({
+      where: { id: cat.id },
+      update: catToCreate,
+      create: catToCreate,
+    });
+    
+    if (subcategories) {
+      for (const subCatData of subcategories) {
+         await prisma.subcategory.upsert({
+            where: { id: subCatData.id },
+            update: {...subCatData, parentCategoryId: createdCategory.id, slug: slugify(subCatData.name)},
+            create: {...subCatData, parentCategoryId: createdCategory.id, slug: slugify(subCatData.name)},
+         });
+      }
+    }
+  }
+
+  console.log('Seeding document types...');
+  await prisma.documentType.createMany({ data: sampleDocumentTypes.map(dt => ({...dt, appliesTo: dt.appliesTo as any})), skipDuplicates: true });
+
+  console.log('Seeding courts...');
+  await prisma.court.createMany({ data: sampleCourts, skipDuplicates: true });
+  
+  console.log('Seeding judicial districts...');
+  await prisma.judicialDistrict.createMany({ data: sampleJudicialDistricts, skipDuplicates: true });
+
+  console.log('Seeding judicial branches...');
+  await prisma.judicialBranch.createMany({ data: sampleJudicialBranches, skipDuplicates: true });
+
+  console.log('Seeding sellers...');
+  await prisma.seller.createMany({ data: sampleSellers as any, skipDuplicates: true });
+  
+  console.log('Seeding auctioneers...');
+  await prisma.auctioneer.createMany({ data: sampleAuctioneers as any, skipDuplicates: true });
+
+  console.log('Seeding judicial processes...');
+  for (const proc of sampleJudicialProcesses) {
+    const { parties, ...procData } = proc;
+    const createdProcess = await prisma.judicialProcess.upsert({
+      where: { id: procData.id },
+      update: procData as any,
+      create: procData as any,
+    });
+    if (parties) {
+      for (const party of parties) {
+        await prisma.processParty.upsert({
+          where: { processId_name_partyType: { processId: createdProcess.id, name: party.name, partyType: party.partyType } },
+          update: { documentNumber: party.documentNumber },
+          create: {
+            processId: createdProcess.id,
+            name: party.name,
+            partyType: party.partyType,
+            documentNumber: party.documentNumber,
+          }
+        });
+      }
+    }
+  }
+  
+  console.log('Seeding bens...');
+  await prisma.bem.createMany({ data: sampleBens.map(({categoryName, subcategoryName, judicialProcessNumber, sellerName, ...b}) => b) as any, skipDuplicates: true });
+
+  console.log('Seeding auctions...');
+  await prisma.auction.createMany({ data: sampleAuctions.map(({ lots, totalLots, auctioneer, seller, category, ...a }) => a as any), skipDuplicates: true });
+  
+  console.log('Seeding lots...');
+  await prisma.lot.createMany({ data: sampleLots.map(({ auctionName, type, cityName, stateUf, subcategoryName, seller, sellerName, auctioneerName, isFavorite, ...l}) => l as any), skipDuplicates: true });
+
+  console.log('Seeding bids...');
+  await prisma.bid.createMany({ data: sampleBids as any, skipDuplicates: true });
+  
+  console.log('Seeding wins...');
+  await prisma.userWin.createMany({ data: sampleUserWins.map(({lot, ...w}) => w) as any, skipDuplicates: true });
+  
+  console.log(`Seeding finished.`);
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
+```
+
+A única alteração necessária é no arquivo `prisma/schema.prisma`. Com esta correção, o servidor deve finalmente iniciar sem erros de validação.
 
