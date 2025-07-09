@@ -66,7 +66,7 @@ export const predefinedPermissions = [
   // Document Generation
   { id: 'documents:generate_report', label: 'Documentos: Gerar Laudo de Avaliação', group: 'Documentos Pós-Leilão' },
   { id: 'documents:generate_certificate', label: 'Documentos: Gerar Certificado de Leilão', group: 'Documentos Pós-Leilão' },
-  { id: 'documents:generate_term', label: 'Documentos: Gerar Termo de Arrematação', group: 'Documentos Pós-Leilão' },
+  { id: 'documents:generate_term', label: 'Documentos: Gerar Auto de Arrematação', group: 'Documentos Pós-Leilão' },
   // User-facing Permissions
   { id: 'view_auctions', label: 'Público: Ver Leilões', group: 'Usuário Final' },
   { id: 'view_lots', label: 'Público: Ver Lotes', group: 'Usuário Final' },

@@ -43,13 +43,28 @@ export type Lot = PrismaLot & {
     bens?: Bem[];
 };
 
+export type Bem = Prisma.BemGetPayload<{
+  include: {
+    category: true;
+    subcategory: true;
+    judicialProcess: true;
+    seller: true;
+  }
+}> & {
+  categoryName?: string;
+  subcategoryName?: string;
+  judicialProcessNumber?: string;
+  sellerName?: string;
+};
+
+
 // --- EXPORTING PRISMA GENERATED TYPES ---
 // This makes it easy to use the exact shape of our database models throughout the app.
 export type { 
     User as UserProfileData, Role, UserDocument, DocumentType, Bid as BidInfo, 
     UserWin, Seller as SellerProfileInfo, Auctioneer as AuctioneerProfileInfo, 
     DirectSaleOffer, MediaItem, LotCategory, StateInfo, CityInfo, Subcategory,
-    Court, JudicialDistrict, JudicialBranch, JudicialProcess, ProcessParty, Bem,
+    Court, JudicialDistrict, JudicialBranch, JudicialProcess, ProcessParty, // Removed Bem here
     Notification, BlogPost, ContactMessage, // Exporting ContactMessage
     Review, LotQuestion, UserLotMaxBid, // Exporting new types
     AuctionStatus,
@@ -118,7 +133,8 @@ export type JudicialBranchFormData = Omit<JudicialBranch, 'id' | 'slug' | 'creat
 export type JudicialProcessFormData = Omit<JudicialProcess, 'id' | 'publicId' | 'createdAt' | 'updatedAt'> & {
   parties: Array<Partial<ProcessParty>>; 
 };
-export type BemFormData = Omit<Bem, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'galleryImageUrls' | 'mediaItemIds' | 'amenities'> & {
+
+export type BemFormData = Omit<Prisma.BemUncheckedCreateInput, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'galleryImageUrls' | 'mediaItemIds' | 'amenities'> & {
   galleryImageUrls?: string[];
   mediaItemIds?: string[];
   amenities?: { value: string }[];
@@ -129,7 +145,7 @@ export type AuctionFormData = Omit<Auction, 'id' | 'publicId' | 'createdAt' | 'u
   endDate?: Date | null; 
 };
 
-export type LotFormData = Omit<Lot, 'id'|'publicId'|'createdAt'|'updatedAt'|'auctionId'|'categoryId'|'number'|'isFavorite'|'views'|'bidsCount'> & {
+export type LotFormData = Omit<Lot, 'id'|'publicId'|'createdAt'|'updatedAt'|'auctionId'|'categoryId'|'number'|'isFavorite'|'views'|'bidsCount'|'status'> & {
   auctionId: string;
   type: string; // From form, maps to categoryId
   auctionName?: string;
