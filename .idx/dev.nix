@@ -6,10 +6,15 @@
   # Use https://search.nixos.org/packages to find packages
   # To correctly install Prisma on idx it is necessary to have the openssl package installed.
   packages = [
+    pkgs.openssl.dev
     pkgs.doas-sudo-shim
     pkgs.nodejs_20
     pkgs.zulu
+    pkgs.neovim    
   ];
+  services.docker.enable = true;
+
+  
 
   # See: https://nixos.wiki/wiki/Mysql
   services.mysql = {
