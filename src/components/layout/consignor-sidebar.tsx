@@ -23,26 +23,31 @@ const sidebarNavItems = [
     title: 'Meus Lotes',
     href: '/consignor-dashboard/lots',
     icon: ListChecks,
+    disabled: true,
   },
   {
     title: 'Venda Direta',
     href: '/consignor-dashboard/direct-sales',
     icon: ShoppingCart,
+    disabled: true,
   },
-   {
+  {
     title: 'Relatórios',
     href: '/consignor-dashboard/reports',
     icon: BarChart3,
+    disabled: true,
   },
   {
     title: 'Financeiro',
     href: '/consignor-dashboard/financial',
     icon: DollarSign,
+    disabled: true,
   },
   {
     title: 'Configurações',
     href: '/consignor-dashboard/settings',
     icon: Settings,
+    disabled: true,
   },
 ];
 
@@ -68,6 +73,7 @@ export default function ConsignorSidebar() {
                 (pathname === item.href || (item.href !== '/consignor-dashboard/overview' && pathname.startsWith(item.href))) && 'font-semibold text-primary hover:text-primary'
               )}
               asChild
+              disabled={item.disabled}
             >
               <Link href={item.href}>
                 <item.icon className="mr-2 h-4 w-4" />
