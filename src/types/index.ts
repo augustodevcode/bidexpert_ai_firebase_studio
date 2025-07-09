@@ -4,8 +4,8 @@ import type {
     UserWin, Seller, Auctioneer, DirectSaleOffer, MediaItem, LotCategory, 
     State as StateInfo, City as CityInfo, Subcategory,
     Court, JudicialDistrict, JudicialBranch, JudicialProcess, ProcessParty, Bem,
-    Notification, BlogPost, ContactMessage, // Added ContactMessage
-    Review, LotQuestion, UserLotMaxBid, // Added new models
+    Notification, BlogPost, ContactMessage,
+    Review, LotQuestion, UserLotMaxBid,
     Prisma
 } from '@prisma/client';
 import type { Timestamp as FirebaseAdminTimestamp, FieldValue as FirebaseAdminFieldValue } from 'firebase-admin/firestore';
@@ -67,16 +67,7 @@ export type {
     Court, JudicialDistrict, JudicialBranch, JudicialProcess, ProcessParty, // Removed Bem here
     Notification, BlogPost, ContactMessage, // Exporting ContactMessage
     Review, LotQuestion, UserLotMaxBid, // Exporting new types
-    AuctionStatus,
-    LotStatus,
-    BemStatus,
-    UserHabilitationStatus,
-    UserDocumentStatus,
-    PaymentStatus,
-    AuctionType,
-    DirectSaleOfferType,
-    DirectSaleOfferStatus,
-    ProcessPartyType
+    Prisma
 };
 
 
@@ -88,13 +79,13 @@ export type UserProfileWithPermissions = User & {
 };
 
 // Represents the data coming from the user registration form
-export type UserCreationData = Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'roleId' | 'sellerId'>> & {
+export type UserCreationData = Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'roleId' | 'sellerId' | 'badges'>> & {
   email: string;
   password?: string | null;
 };
 
 // Represents the fields that a user can edit on their own profile page
-export type EditableUserProfileData = Partial<Omit<User, 'id' | 'email' | 'createdAt' | 'updatedAt' | 'roleId' | 'sellerId'>>;
+export type EditableUserProfileData = Partial<Omit<User, 'id' | 'email' | 'createdAt' | 'updatedAt' | 'roleId' | 'sellerId' | 'password' | 'badges'>>;
 
 export type UserFormValues = Pick<User, 'fullName' | 'email' | 'cpf' | 'cellPhone' | 'dateOfBirth' | 'accountType' | 'razaoSocial' | 'cnpj' | 'inscricaoEstadual' | 'website' | 'zipCode' | 'street' | 'number' | 'complement' | 'neighborhood' | 'city' | 'state' | 'optInMarketing'> & {
   password?: string;
@@ -133,6 +124,7 @@ export type JudicialBranchFormData = Omit<JudicialBranch, 'id' | 'slug' | 'creat
 export type JudicialProcessFormData = Omit<JudicialProcess, 'id' | 'publicId' | 'createdAt' | 'updatedAt'> & {
   parties: Array<Partial<ProcessParty>>; 
 };
+export type DocumentTemplateFormData = Omit<DocumentTemplate, 'id' | 'createdAt' | 'updatedAt'>;
 
 export type BemFormData = Omit<Prisma.BemUncheckedCreateInput, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'galleryImageUrls' | 'mediaItemIds' | 'amenities'> & {
   galleryImageUrls?: string[];
@@ -145,12 +137,13 @@ export type AuctionFormData = Omit<Auction, 'id' | 'publicId' | 'createdAt' | 'u
   endDate?: Date | null; 
 };
 
-export type LotFormData = Omit<Lot, 'id'|'publicId'|'createdAt'|'updatedAt'|'auctionId'|'categoryId'|'number'|'isFavorite'|'views'|'bidsCount'|'status'> & {
+export type LotFormData = Omit<Lot, 'id'|'publicId'|'createdAt'|'updatedAt'|'auctionId'|'categoryId'|'number'|'isFavorite'|'views'|'bidsCount'|'status'|'isFeatured'> & {
   auctionId: string;
   type: string; // From form, maps to categoryId
   auctionName?: string;
   bemIds?: string[];
   mediaItemIds?: string[];
+  isFeatured?: boolean;
 };
 
 export type LotDbData = Omit<LotFormData, 'type' | 'auctionName'> & {
@@ -352,3 +345,33 @@ export type AuctionStage = Omit<Prisma.JsonValue, 'endDate'> & {
   statusText?: string;
   initialPrice?: number;
 };
+
+
+// Enums for Zod schemas
+export const lotStatusValues: [LotStatus, ...LotStatus[]] = [
+  'EM_BREVE',
+  'ABERTO_PARA_LANCES',
+  'ENCERRADO',
+  'VENDIDO',
+  'NAO_VENDIDO',
+];
+
+export const auctionStatusValues: [AuctionStatus, ...AuctionStatus[]] = [
+  'RASCUNHO',
+  'EM_PREPARACAO',
+  'EM_BREVE',
+  'ABERTO', 
+  'ABERTO_PARA_LANCES',
+  'ENCERRADO',
+  'FINALIZADO', 
+  'CANCELADO',
+  'SUSPENSO'
+];
+
+export const bemStatusValues: [Bem['status'], ...Bem['status'][]] = [
+  'CADASTRO', 'DISPONIVEL', 'LOTEADO', 'VENDIDO', 'REMOVIDO', 'INATIVADO'
+];
+
+export const documentTemplateTypeValues: [DocumentTemplate['type'], ...DocumentTemplate['type'][]] = [
+  'WINNING_BID_TERM', 'EVALUATION_REPORT', 'AUCTION_CERTIFICATE'
+];

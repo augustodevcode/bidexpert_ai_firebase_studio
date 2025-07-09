@@ -1,14 +1,5 @@
 import * as z from 'zod';
-import type { LotStatus } from '@/types';
-
-// Status is now derived, so it's not part of the form schema
-// export const lotStatusValues: [LotStatus, ...LotStatus[]] = [
-//   'EM_BREVE',
-//   'ABERTO_PARA_LANCES',
-//   'ENCERRADO',
-//   'VENDIDO',
-//   'NAO_VENDIDO',
-// ];
+import { lotStatusValues } from '@/types';
 
 export const lotFormSchema = z.object({
   title: z.string().min(5, {
@@ -18,46 +9,61 @@ export const lotFormSchema = z.object({
   }),
   auctionId: z.string().min(1, { message: "O ID do Leilão é obrigatório."}),
   auctionName: z.string().optional(),
-  description: z.string().max(2000, {
-    message: "A descrição não pode exceder 2000 caracteres.",
-  }).optional(),
+  number: z.string().max(20, "Número do lote muito longo.").optional().nullable(),
+  description: z.string().max(5000, {
+    message: "A descrição não pode exceder 5000 caracteres.",
+  }).optional().nullable(),
   price: z.coerce.number().positive({
     message: "O preço (lance inicial) deve ser um número positivo.",
   }),
   initialPrice: z.coerce.number().positive().optional().nullable(),
+  secondInitialPrice: z.coerce.number().positive().optional().nullable(),
+  bidIncrementStep: z.coerce.number().positive().optional().nullable(),
+  status: z.enum(lotStatusValues),
   stateId: z.string().optional().nullable(),
   cityId: z.string().optional().nullable(),
   type: z.string().min(1, { message: "O tipo/categoria do lote é obrigatório."}).max(100),
   subcategoryId: z.string().optional().nullable(),
   imageUrl: z.string().url({ message: "Por favor, insira uma URL de imagem válida." }).optional().or(z.literal('')),
+  imageMediaId: z.string().optional().nullable(),
   winningBidTermUrl: z.string().url({ message: "URL inválida." }).optional().or(z.literal('')),
   galleryImageUrls: z.array(z.string().url({ message: "Uma das URLs da galeria é inválida." })).optional(),
   mediaItemIds: z.array(z.string()).optional(),
+  bemIds: z.array(z.string()).optional(),
   views: z.coerce.number().int().nonnegative().optional(),
   bidsCount: z.coerce.number().int().nonnegative().optional(),
+  isFeatured: z.boolean().default(false).optional(),
+  isExclusive: z.boolean().default(false).optional(),
+  discountPercentage: z.coerce.number().min(0).max(100).optional().nullable(),
+  additionalTriggers: z.array(z.string()).optional(),
   
-  // Campos de localização
   latitude: z.coerce.number().min(-90).max(90).optional().nullable(),
   longitude: z.coerce.number().min(-180).max(180).optional().nullable(),
   mapAddress: z.string().max(255, { message: "Endereço do mapa não pode exceder 255 caracteres." }).optional().nullable(),
   mapEmbedUrl: z.string().url({ message: "URL de embed do mapa inválida." }).optional().nullable().or(z.literal('')),
   mapStaticImageUrl: z.string().url({ message: "URL da imagem estática do mapa inválida."}).optional().nullable().or(z.literal('')),
 
-  // Campos de segurança e due diligence
   judicialProcessNumber: z.string().max(100).optional().nullable(),
-  courtDistrict: z.string().max(100).optional().nullable(), // Comarca
-  courtName: z.string().max(100).optional().nullable(), // Vara
+  courtDistrict: z.string().max(100).optional().nullable(),
+  courtName: z.string().max(100).optional().nullable(),
   publicProcessUrl: z.string().url({ message: "URL do processo público inválida."}).optional().nullable().or(z.literal('')),
-  propertyRegistrationNumber: z.string().max(100).optional().nullable(), // Matrícula
-  propertyLiens: z.string().max(1000).optional().nullable(), // Ônus
-  knownDebts: z.string().max(1000).optional().nullable(), // Dívidas
-  additionalDocumentsInfo: z.string().max(2000).optional().nullable(), // Observações/links para docs
+  propertyRegistrationNumber: z.string().max(100).optional().nullable(),
+  propertyLiens: z.string().max(1000).optional().nullable(),
+  knownDebts: z.string().max(1000).optional().nullable(),
+  additionalDocumentsInfo: z.string().max(2000).optional().nullable(),
 
-  // Novos campos para teoria dos leilões e conformidade
   reservePrice: z.coerce.number().positive({ message: "O preço de reserva deve ser positivo." }).optional().nullable(),
   evaluationValue: z.coerce.number().positive({ message: "O valor de avaliação deve ser positivo." }).optional().nullable(),
   debtAmount: z.coerce.number().positive({ message: "O montante da dívida deve ser positivo." }).optional().nullable(),
   itbiValue: z.coerce.number().positive({ message: "O valor do ITBI deve ser positivo." }).optional().nullable(),
+  
+  endDate: z.date().optional().nullable(),
+  lotSpecificAuctionDate: z.date().optional().nullable(),
+  secondAuctionDate: z.date().optional().nullable(),
+  condition: z.string().max(100).optional().nullable(),
+  dataAiHint: z.string().max(100).optional().nullable(),
+  sellerId: z.string().optional().nullable(),
+  auctioneerId: z.string().optional().nullable(),
 });
 
 export type LotFormValues = z.infer<typeof lotFormSchema>;

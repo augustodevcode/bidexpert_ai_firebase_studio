@@ -1,5 +1,4 @@
-
-      /**
+/**
  * @fileoverview Server Actions for the Consignor Dashboard's direct sales view.
  * Provides functions to fetch direct sale offers associated with a specific consignor.
  */
@@ -39,5 +38,3 @@ export async function getDirectSaleOffersForConsignorAction(sellerId: string): P
     return [];
   }
 }
-
-    

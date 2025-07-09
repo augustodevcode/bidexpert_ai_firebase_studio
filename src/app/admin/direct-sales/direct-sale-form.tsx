@@ -23,16 +23,16 @@ import { ptBR } from 'date-fns/locale';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { Separator } from '@/components/ui/separator';
-import { v4 as uuidv4 } from 'uuid';
 
 interface DirectSaleFormProps {
-  initialData?: DirectSaleOffer | null;
+  initialData?: Partial<DirectSaleOffer> | null;
   categories: LotCategory[];
   sellers: SellerProfileInfo[];
   onSubmitAction: (data: DirectSaleOfferFormData) => Promise<{ success: boolean; message: string; offerId?: string }>;
   formTitle: string;
   formDescription: string;
   submitButtonText: string;
+  successRedirectPath?: string;
 }
 
 export default function DirectSaleForm({
@@ -43,6 +43,7 @@ export default function DirectSaleForm({
   formTitle,
   formDescription,
   submitButtonText,
+  successRedirectPath,
 }: DirectSaleFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -93,7 +94,7 @@ export default function DirectSaleForm({
       const result = await onSubmitAction(values);
       if (result.success) {
         toast({ title: 'Sucesso!', description: result.message });
-        router.push('/admin/direct-sales');
+        router.push(successRedirectPath || '/admin/direct-sales');
         router.refresh();
       } else {
         toast({ title: 'Erro', description: result.message, variant: 'destructive' });
@@ -183,7 +184,7 @@ export default function DirectSaleForm({
 
           </CardContent>
           <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/direct-sales')} disabled={isSubmitting}>Cancelar</Button>
+            <Button type="button" variant="outline" onClick={() => router.push(successRedirectPath || '/admin/direct-sales')} disabled={isSubmitting}>Cancelar</Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               {submitButtonText}

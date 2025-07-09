@@ -12,7 +12,7 @@ import {
     ListChecks
 } from 'lucide-react';
 import { 
-    LineChart, 
+    LineChart as ReLineChart, 
     Bar, 
     XAxis, 
     YAxis, 
@@ -93,54 +93,46 @@ export default function ConsignorReportsPage() {
                 <CardTitle className="text-sm font-medium">Faturamento Bruto Total</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">R$ {stats.totalSalesValue.toLocaleString('pt-BR')}</div>
-            </CardContent>
+            <CardContent><div className="text-2xl font-bold">R$ {stats.totalSalesValue.toLocaleString('pt-BR')}</div></CardContent>
         </Card>
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total de Lotes Vendidos</CardTitle>
                 <Gavel className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">+{stats.soldLots}</div>
-            </CardContent>
+            <CardContent><div className="text-2xl font-bold">+{stats.soldLots}</div></CardContent>
         </Card>
          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Taxa de Sucesso</CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{stats.salesRate.toFixed(1)}%</div>
-            </CardContent>
+            <CardContent><div className="text-2xl font-bold">{stats.salesRate.toFixed(1)}%</div></CardContent>
         </Card>
          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Lotes Ativos</CardTitle>
                 <ListChecks className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{stats.activeLots}</div>
-            </CardContent>
+            <CardContent><div className="text-2xl font-bold">{stats.activeLots}</div></CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle className="flex items-center"><LineChart className="mr-2 h-5 w-5"/> Vendas Mensais (Últimos 12 meses)</CardTitle>
+            <CardTitle className="flex items-center"><ReLineChart className="mr-2 h-5 w-5"/> Vendas Mensais (Últimos 12 meses)</CardTitle>
           </CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={stats.salesData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+              <ReLineChart data={stats.salesData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" stroke="#888888" fontSize={12} />
                 <YAxis stroke="#888888" fontSize={12} tickFormatter={(value) => `R$${value/1000}k`} />
                 <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`}/>
                 <Legend />
                 <Line type="monotone" dataKey="Sales" name="Suas Vendas" stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
-              </LineChart>
+              </ReLineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>

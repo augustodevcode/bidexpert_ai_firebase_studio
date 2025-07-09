@@ -1,5 +1,4 @@
-
-      // src/app/consignor-dashboard/direct-sales/new/page.tsx
+// src/app/consignor-dashboard/direct-sales/new/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -102,8 +101,7 @@ export default function NewConsignorDirectSaleOfferPage() {
       formTitle="Nova Oferta de Venda Direta"
       formDescription="Preencha os detalhes para criar uma nova oferta."
       submitButtonText="Criar Oferta"
+      successRedirectPath="/consignor-dashboard/direct-sales" // Redirect back to the consignor list
     />
   );
 }
-
-    

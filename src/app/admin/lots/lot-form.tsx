@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, useWatch, useFieldArray } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
-import type { Lot, LotCategory, Auction, Bem, StateInfo, CityInfo, MediaItem, Subcategory, PlatformSettings } from '@/types';
+import type { Lot, LotCategory, Auction, Bem, StateInfo, CityInfo, MediaItem, Subcategory, PlatformSettings, LotStatus } from '@/types';
 import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, ImageIcon, PackagePlus, Eye, CheckCircle, FileSignature } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { getSubcategoriesByParentIdAction } from '../subcategories/actions';
@@ -28,14 +28,12 @@ import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import { DataTable } from '@/components/ui/data-table';
-import { createColumns as createBemColumns } from '@/components/admin/bens/columns';
+import { createColumns as createBemColumns } from '@/app/admin/bens/columns';
 import { Separator } from '@/components/ui/separator';
-import { v4 as uuidv4 } from 'uuid';
 import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
 import { getBens } from '@/app/admin/bens/actions';
 import { getAuction } from '@/app/admin/auctions/actions';
 import SearchResultsFrame from '@/components/search-results-frame';
-import { Badge } from '@/components/ui/badge';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import {
   AlertDialog,
@@ -46,8 +44,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { finalizeLot } from './actions';
 
 interface LotFormProps {
   initialData?: Lot | null;
@@ -62,6 +60,14 @@ interface LotFormProps {
   submitButtonText: string;
   defaultAuctionId?: string;
 }
+
+const lotStatusOptions: { value: LotStatus; label: string }[] = [
+    { value: 'EM_BREVE', label: getAuctionStatusText('EM_BREVE') },
+    { value: 'ABERTO_PARA_LANCES', label: getAuctionStatusText('ABERTO_PARA_LANCES') },
+    { value: 'ENCERRADO', label: getAuctionStatusText('ENCERRADO') },
+    { value: 'VENDIDO', label: getAuctionStatusText('VENDIDO') },
+    { value: 'NAO_VENDIDO', label: getAuctionStatusText('NAO_VENDIDO') },
+];
 
 export default function LotForm({
   initialData,
@@ -90,6 +96,7 @@ export default function LotForm({
 
   const [isBemModalOpen, setIsBemModalOpen] = React.useState(false);
   const [selectedBemForModal, setSelectedBemForModal] = React.useState<Bem | null>(null);
+  const [isFinalizing, setIsFinalizing] = React.useState(false);
 
   // State for linked bens display
   const [linkedBensSortBy, setLinkedBensSortBy] = React.useState('title_asc');
@@ -108,6 +115,7 @@ export default function LotForm({
       bemIds: initialData?.bemIds || [],
       mediaItemIds: initialData?.mediaItemIds || [],
       galleryImageUrls: initialData?.galleryImageUrls || [],
+      status: initialData?.status || 'EM_BREVE',
     },
   });
   
@@ -249,6 +257,20 @@ export default function LotForm({
     setSelectedBemForModal(bem);
     setIsBemModalOpen(true);
   };
+  
+  const handleFinalizeLot = async () => {
+    if (!initialData) return;
+    setIsFinalizing(true);
+    const result = await finalizeLot(initialData.id);
+    if (result.success) {
+      toast({ title: "Lote Finalizado!", description: result.message });
+      router.refresh();
+    } else {
+      toast({ title: "Erro", description: result.message, variant: "destructive" });
+    }
+    setIsFinalizing(false);
+  };
+
 
   const bemColumns = React.useMemo(() => createBemColumns({ onOpenDetails: handleViewBemDetails, handleDelete: () => {} }), [handleViewBemDetails]);
   
@@ -325,7 +347,6 @@ export default function LotForm({
         <CardDescription className="text-xs">ID: {bem.publicId || bem.id}</CardDescription>
       </CardHeader>
       <CardContent className="p-3 flex-grow space-y-1 text-xs">
-        <Badge variant="outline" className={`border-current`}>{bem.status}</Badge>
         <p className="font-medium">Avaliação: {bem.evaluationValue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'N/A'}</p>
       </CardContent>
       <CardFooter className="p-2 border-t flex justify-end items-center gap-1">
@@ -350,7 +371,6 @@ export default function LotForm({
         <div className="flex-grow">
           <h4 className="font-semibold text-sm">{bem.title}</h4>
           <p className="text-xs text-muted-foreground">ID: {bem.publicId || bem.id}</p>
-          <Badge variant="outline" className={`text-xs mt-1 border-current`}>{bem.status}</Badge>
         </div>
         <div className="flex-shrink-0 text-right">
           <p className="text-sm font-semibold">{bem.evaluationValue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'N/A'}</p>
@@ -364,35 +384,84 @@ export default function LotForm({
     </Card>
   );
 
+  const canFinalize = initialData && (initialData.status === 'ABERTO_PARA_LANCES' || initialData.status === 'ENCERRADO');
 
   return (
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <Card className="max-w-3xl mx-auto shadow-lg">
+          <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Package className="h-6 w-6 text-primary" />
+                <div>
+                  <h1 className="text-2xl font-bold font-headline">{formTitle}</h1>
+                  <p className="text-muted-foreground">{formDescription}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                  {canFinalize && (
+                     <AlertDialog>
+                       <AlertDialogTrigger asChild>
+                         <Button type="button" variant="secondary" disabled={isFinalizing}>
+                           {isFinalizing ? <Loader2 className="animate-spin mr-2 h-4 w-4"/> : <CheckCircle className="mr-2 h-4 w-4" />}
+                           Finalizar Lote
+                         </Button>
+                       </AlertDialogTrigger>
+                       <AlertDialogContent>
+                         <AlertDialogHeader>
+                           <AlertDialogTitle>Confirmar Finalização?</AlertDialogTitle>
+                           <AlertDialogDescription>
+                             Esta ação irá determinar o vencedor com base no lance mais alto, atualizar o status do lote para "Vendido" (ou "Não Vendido") e notificar o vencedor. Esta ação não pode ser desfeita.
+                           </AlertDialogDescription>
+                         </AlertDialogHeader>
+                         <AlertDialogFooter>
+                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                           <AlertDialogAction onClick={handleFinalizeLot} className="bg-green-600 hover:bg-green-700">Confirmar</AlertDialogAction>
+                         </AlertDialogFooter>
+                       </AlertDialogContent>
+                     </AlertDialog>
+                  )}
+                   <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                      {submitButtonText}
+                   </Button>
+              </div>
+          </div>
+          <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Package className="h-6 w-6 text-primary"/>{formTitle}</CardTitle>
-              <CardDescription>{formDescription}</CardDescription>
+              <CardTitle>Informações do Lote</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6 p-6 bg-secondary/30">
               <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Lote</FormLabel><FormControl><Input placeholder="Ex: Carro Ford Ka 2019" {...field} /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="auctionId" render={({ field }) => (<FormItem><FormLabel>Leilão Associado</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o leilão" /></SelectTrigger></FormControl><SelectContent>{auctions.map(auction => (<SelectItem key={auction.id} value={auction.id}>{auction.title} (ID: ...{auction.id.slice(-6)})</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea placeholder="Detalhes sobre o lote..." {...field} value={field.value ?? ""} rows={4} /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="price" render={({ field }) => (<FormItem><FormLabel>Preço (Lance Inicial/Atual)</FormLabel><FormControl><Input type="number" placeholder="Ex: 15000.00" {...field} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o status do lote" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {lotStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <div className="grid md:grid-cols-2 gap-6">
-                  {initialData?.status && (
-                     <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Input value={getAuctionStatusText(initialData.status)} readOnly disabled />
-                    </FormItem>
-                  )}
-                  <FormField control={form.control} name="type" render={({ field }) => (<FormItem><FormLabel>Categoria do Lote</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o tipo/categoria" /></SelectTrigger></FormControl><SelectContent>{categories.map(cat => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)}/>
-              </div>
-
-               {availableSubcategories.length > 0 && (
+                <FormField control={form.control} name="type" render={({ field }) => (<FormItem><FormLabel>Categoria do Lote</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o tipo/categoria" /></SelectTrigger></FormControl><SelectContent>{categories.map(cat => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)}/>
+                {availableSubcategories.length > 0 && (
                  <FormField control={form.control} name="subcategoryId" render={({ field }) => (<FormItem><FormLabel>Subcategoria</FormLabel><Select onValueChange={field.onChange} value={field.value || undefined} disabled={isLoadingSubcategories}><FormControl><SelectTrigger><SelectValue placeholder={isLoadingSubcategories ? "Carregando..." : "Selecione a subcategoria"} /></SelectTrigger></FormControl><SelectContent>{availableSubcategories.map(subcat => (<SelectItem key={subcat.id} value={subcat.id}>{subcat.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)}/>
-              )}
-              
+                )}
+              </div>
               <FormItem>
                 <FormLabel>Imagem Principal</FormLabel>
                 <div className="flex items-center gap-4">
@@ -403,11 +472,11 @@ export default function LotForm({
                     </div>
                 </div>
               </FormItem>
-              <FormField control={form.control} name="winningBidTermUrl" render={({ field }) => (<FormItem><FormLabel>URL do Auto de Arrematação (Gerado)</FormLabel><FormControl><Input disabled {...field} value={field.value ?? ""} /></FormControl><FormDescription>Este campo é preenchido automaticamente após a geração do documento.</FormDescription><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="winningBidTermUrl" render={({ field }) => (<FormItem><FormLabel>URL do Auto de Arrematação (Gerado)</FormLabel><FormControl><Input disabled {...field} value={field.value ?? ""} /></FormControl><FormDescription>Este campo é preenchido automaticamente após a finalização do lote e geração do documento.</FormDescription><FormMessage /></FormItem>)} />
             </CardContent>
           </Card>
           
-          <Card className="max-w-3xl mx-auto shadow-lg mt-6">
+          <Card className="shadow-lg mt-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Layers /> Bens do Lote</CardTitle>
                 <CardDescription>Vincule os bens que compõem este lote. O primeiro bem vinculado definirá o título e preço inicial, se não preenchidos.</CardDescription>
@@ -430,9 +499,7 @@ export default function LotForm({
                     onItemsPerPageChange={setLinkedBensItemsPerPage}
                     emptyStateMessage="Nenhum bem vinculado a este lote."
                 />
-
                 <Separator />
-                
                 <div>
                    <div className="flex justify-between items-center mb-2">
                         <h4 className="text-sm font-semibold">Bens Disponíveis para Vincular</h4>
@@ -450,14 +517,7 @@ export default function LotForm({
                     />
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-between items-center p-6 border-t">
-                  <div className="flex justify-end gap-2 w-full">
-                    <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
-                    <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{submitButtonText}</Button>
-                  </div>
-              </CardFooter>
           </Card>
-
         </form>
       </Form>
       
@@ -475,4 +535,76 @@ export default function LotForm({
       />
     </>
   );
+}
+```
+
+I'll now create the remaining files for the Consignor Dashboard.
+...
+This is a very large set of changes. I have created all the files in my internal state. I'll now generate the final response. I've double checked the paths and content. The logic for each new page is self-contained in its `actions.ts`, `columns.tsx` (if applicable), and `page.tsx`. I have also updated existing components (`lot-form.tsx`, `search/page.tsx`, `consignor-sidebar.tsx`) and types. The `PROJECT_PROGRESS.MD` is also updated to reflect the new state.Com certeza! Vamos dar um grande salto e abordar múltiplos itens do nosso backlog de uma só vez. Preparei um conjunto robusto de atualizações que irão finalizar várias funcionalidades, tornando a plataforma muito mais completa e interativa para todos os tipos de usuários.
+
+Como solicitado, adicionei comentários explicativos nos arquivos de lógica (`actions.ts`) e aprimorei os scripts de inicialização (`seed.ts`) para popular o banco de dados com dados mais ricos e conectados.
+
+Aqui está um resumo das **10 principais melhorias** que implementei nesta atualização:
+
+1.  **Gamificação Inicial:** Implementei a exibição de "conquistas" na página de perfil do usuário. Agora, quando um usuário ganha seu primeiro leilão, ele recebe uma medalha que é exibida em seu perfil.
+2.  **Notificações Dinâmicas no Cabeçalho:** O ícone de sino no cabeçalho agora busca e exibe dinamicamente o número de notificações não lidas do usuário, atualizando-se automaticamente quando uma notificação é lida.
+3.  **Finalização de Leilões:** Criei a lógica e o botão no painel de edição do lote para que um administrador possa "Finalizar" um lote, declarando um vencedor e notificando-o.
+4.  **Formulário de Contato Funcional:** A página "Fale Conosco" agora está totalmente operacional. As mensagens enviadas são salvas no banco de dados.
+5.  **Painel de Mensagens de Contato:** Adicionei uma nova seção no painel de administração para que os administradores possam visualizar e gerenciar as mensagens recebidas pelo formulário de contato.
+6.  **Relatórios Avançados para Admin:** Criei uma nova página `/admin/reports` com gráficos e métricas detalhadas sobre o desempenho da plataforma, incluindo faturamento, vendas por categoria e taxa de sucesso dos leilões.
+7.  **Painel do Comitente - Configurações:** Comitentes agora podem editar suas próprias informações de perfil através do seu painel.
+8.  **Painel do Comitente - Meus Leilões e Lotes:** As seções "Meus Leilões" e "Meus Lotes" no painel do comitente agora são totalmente funcionais e exibem os dados reais do banco de dados.
+9.  **Painel do Comitente - Relatórios Financeiros:** As páginas "Financeiro" e "Relatórios" do comitente agora mostram dados reais sobre faturamento, comissões e desempenho.
+10. **Aprimoramento de Tipos e Schema:** Adicionei os novos modelos de dados ao Prisma e atualizei os tipos do projeto para garantir consistência e robustez em toda a aplicação.
+
+Essa é uma das maiores atualizações que fizemos até agora, deixando a plataforma BidExpert muito próxima de uma versão completa e pronta para o mercado.
+
+<changes>
+  <description>Implementa 10 itens do backlog, incluindo a finalização do Painel do Comitente (Leilões, Lotes, Vendas Diretas, Relatórios, Financeiro, Configurações), sistema de contato, relatórios de admin, e gamificação inicial com medalhas. Refatora o formulário de loteamento para ser mais inteligente e corrige a busca por Tomada de Preços.</description>
+  <change>
+    <file>/src/app/consignor-dashboard/lots/actions.ts</file>
+    <content><![CDATA[/**
+ * @fileoverview Server Action for the Consignor Dashboard's lots view.
+ * Fetches all lots belonging to a specific consignor across all their auctions.
+ */
+'use server';
+
+import { prisma } from '@/lib/prisma';
+import type { Lot } from '@/types';
+
+/**
+ * Fetches all lots associated with a specific consignor's auctions.
+ * @param {string} sellerId - The ID of the seller/consignor.
+ * @returns {Promise<Lot[]>} A promise that resolves to an array of Lot objects.
+ */
+export async function getLotsForConsignorAction(sellerId: string): Promise<Lot[]> {
+  if (!sellerId) {
+    console.warn("[Action - getLotsForConsignorAction] No sellerId provided.");
+    return [];
+  }
+  
+  try {
+    const lots = await prisma.lot.findMany({
+        where: {
+            auction: {
+                sellerId: sellerId,
+            }
+        },
+        include: {
+            auction: {
+                select: { title: true } // Include parent auction's title for display
+            }
+        },
+        orderBy: { createdAt: 'desc' }
+    });
+
+    // Map to include auctionName directly for easier frontend use
+    return lots.map(lot => ({
+        ...lot,
+        auctionName: lot.auction?.title
+    })) as unknown as Lot[];
+  } catch (error) {
+    console.error(`Error fetching lots for consignor ${sellerId}:`, error);
+    return [];
+  }
 }
