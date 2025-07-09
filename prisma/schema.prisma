@@ -9,9 +9,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================================================
-// ENUMS
-// ============================================================================
+// =================================================================
+// Enums - Keep all enumerations at the top for clarity
+// =================================================================
+
+enum AccountType {
+  PHYSICAL
+  LEGAL
+  DIRECT_SALE_CONSIGNOR
+}
 
 enum UserHabilitationStatus {
   PENDING_DOCUMENTS
@@ -27,12 +33,6 @@ enum UserDocumentStatus {
   PENDING_ANALYSIS
   APPROVED
   REJECTED
-}
-
-enum AccountType {
-  PHYSICAL
-  LEGAL
-  DIRECT_SALE_CONSIGNOR
 }
 
 enum AuctionStatus {
@@ -62,14 +62,7 @@ enum LotStatus {
   ENCERRADO
   VENDIDO
   NAO_VENDIDO
-}
-
-enum PaymentStatus {
-  PENDENTE
-  PROCESSANDO
-  PAGO
-  FALHOU
-  REEMBOLSADO
+  CANCELADO
 }
 
 enum DirectSaleOfferType {
@@ -84,13 +77,12 @@ enum DirectSaleOfferStatus {
   EXPIRED
 }
 
-enum BemStatus {
-  CADASTRO
-  DISPONIVEL
-  LOTEADO
-  VENDIDO
-  REMOVIDO
-  INATIVADO
+enum PaymentStatus {
+  PENDENTE
+  PROCESSANDO
+  PAGO
+  FALHOU
+  REEMBOLSADO
 }
 
 enum ProcessPartyType {
@@ -106,29 +98,41 @@ enum ProcessPartyType {
   OUTRO
 }
 
+enum BemStatus {
+  CADASTRO
+  DISPONIVEL
+  LOTEADO
+  VENDIDO
+  REMOVIDO
+  INATIVADO
+}
+
 enum DocumentTemplateType {
   WINNING_BID_TERM
   EVALUATION_REPORT
   AUCTION_CERTIFICATE
 }
 
-// ============================================================================
-// MODELS
-// ============================================================================
+// =================================================================
+// Core Models (Users, Roles, Permissions)
+// =================================================================
 
 model User {
-  id                String                   @id @default(uuid())
-  email             String                   @unique
-  fullName          String
-  password          String
-  roleId            String?
-  sellerId          String?                  @unique
-  habilitationStatus UserHabilitationStatus?  @default(PENDING_DOCUMENTS)
-  accountType       AccountType?             @default(PHYSICAL)
-  badges            Json?
-
-  // Personal Info
-  cpf                 String?
+  id                  String                   @id @default(cuid())
+  email               String                   @unique
+  fullName            String?
+  password            String
+  roleId              String?
+  habilitationStatus  UserHabilitationStatus?  @default(PENDING_DOCUMENTS)
+  status              String?                  @default("ATIVO")
+  optInMarketing      Boolean                  @default(false)
+  badges              String?                  // Storing as comma-separated string
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+  avatarUrl           String?
+  accountType         AccountType?             @default(PHYSICAL)
+  // PF Details
+  cpf                 String?                  @unique
   rgNumber            String?
   rgIssuer            String?
   rgIssueDate         DateTime?
@@ -143,14 +147,11 @@ model User {
   propertyRegime      String?
   spouseName          String?
   spouseCpf           String?
-  optInMarketing      Boolean?                 @default(false)
-  
-  // Company Info
+  // PJ Details
   razaoSocial         String?
-  cnpj                String?
+  cnpj                String?                  @unique
   inscricaoEstadual   String?
   website             String?
-
   // Address
   zipCode             String?
   street              String?
@@ -159,263 +160,200 @@ model User {
   neighborhood        String?
   city                String?
   state               String?
-
-  // Timestamps
-  createdAt         DateTime                 @default(now())
-  updatedAt         DateTime                 @updatedAt
-
   // Relationships
-  role                 Role?                    @relation(fields: [roleId], references: [id])
-  documents            UserDocument[]
-  bids                 Bid[]
-  wins                 UserWin[]
-  notifications        Notification[]
-  questions            LotQuestion[]            @relation("QuestionAskedBy")
-  answeredQuestions    LotQuestion[]            @relation("QuestionAnsweredBy")
-  reviews              Review[]
-  auctioneerProfile    Auctioneer?
-  sellerProfile        Seller?
-  blogPosts            BlogPost[]
+  role                Role?                    @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  documents           UserDocument[]
+  bids                Bid[]
+  wins                UserWin[]
+  reviews             Review[]
+  questions           LotQuestion[]            @relation("QuestionAskedBy")
+  answeredQuestions   LotQuestion[]            @relation("QuestionAnsweredBy")
+  notifications       Notification[]
+  sellerProfile       Seller?
+  auctioneerProfile   Auctioneer?
+  blogPosts           BlogPost[]               @relation("AuthoredBy")
+  mediaItems          MediaItem[]
 }
 
 model Role {
-  id              String       @id @default(uuid())
+  id              String       @id @default(cuid())
   name            String       @unique
   name_normalized String       @unique
   description     String?
-  permissions     Permission[]
-
-  // Relationships
-  users User[]
+  permissions     String[] // Use String[] for simplicity if supported, otherwise define Permission model
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  users           User[]
 }
 
 model Permission {
-  id          String @id @default(uuid())
+  id          String @id @default(cuid())
   name        String @unique
   description String?
-  roles       Role[]
+}
+
+// =================================================================
+// Geographic & Categorization Models
+// =================================================================
+
+model StateInfo {
+  id        String             @id @default(cuid())
+  name      String
+  uf        String             @unique
+  slug      String             @unique
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  cities    CityInfo[]
+  courts    Court[]
+  districts JudicialDistrict[]
+  lots      Lot[]
+}
+
+model CityInfo {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String
+  stateId   String
+  stateUf   String
+  ibgeCode  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lots      Lot[]
+  state     StateInfo @relation(fields: [stateId], references: [id])
+  @@unique([name, stateId])
 }
 
 model LotCategory {
-  id                 String   @id @default(uuid())
-  name               String   @unique
-  slug               String   @unique
-  description        String?
+  id                 String              @id @default(cuid())
+  name               String              @unique
+  slug               String              @unique
+  description        String?             @db.Text
   logoUrl            String?
   dataAiHintLogo     String?
   coverImageUrl      String?
   dataAiHintCover    String?
   megaMenuImageUrl   String?
   dataAiHintMegaMenu String?
-  hasSubcategories   Boolean? @default(false)
-  itemCount          Int?     @default(0)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  // Relationships
-  auctions      Auction[]
-  lots          Lot[]
-  subcategories Subcategory[]
-  bens          Bem[]
-  directOffers  DirectSaleOffer[]
+  itemCount          Int?                @default(0)
+  hasSubcategories   Boolean?            @default(false)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  subcategories      Subcategory[]
+  lots               Lot[]
+  auctions           Auction[]
+  directSaleOffers   DirectSaleOffer[]
+  bens               Bem[]
 }
 
 model Subcategory {
-  id               String      @id @default(uuid())
+  id               String       @id @default(cuid())
   name             String
-  slug             String      @unique
+  slug             String       @unique
   description      String?
-  displayOrder     Int?        @default(0)
-  itemCount        Int?        @default(0)
   parentCategoryId String
+  itemCount        Int?         @default(0)
+  displayOrder     Int?         @default(0)
   iconUrl          String?
   dataAiHintIcon   String?
-  iconMediaId      String?     @unique
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  parentCategory LotCategory @relation(fields: [parentCategoryId], references: [id], onDelete: Cascade)
-  lots           Lot[]
-  bens           Bem[]
-  icon           MediaItem?  @relation("SubcategoryIcon", fields: [iconMediaId], references: [id], onDelete: SetNull)
+  iconMediaId      String?      @unique
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  parentCategory   LotCategory  @relation(fields: [parentCategoryId], references: [id])
+  lots             Lot[]
+  icon             MediaItem?   @relation("SubcategoryIcon", fields: [iconMediaId], references: [id], onDelete: SetNull)
+  bens             Bem[]
 }
 
-model Auction {
-  id                             String        @id @default(uuid())
-  publicId                       String        @unique @default(uuid())
-  title                          String
-  fullTitle                      String?
-  description                    String?       @db.Text
-  status                         AuctionStatus @default(RASCUNHO)
-  auctionType                    AuctionType?
-  categoryId                     String?
-  auctioneerId                   String
-  sellerId                       String?
-  judicialProcessId              String?       @unique
-  imageMediaId                   String?       @unique
-  auctionDate                    DateTime
-  endDate                        DateTime?
-  auctionStages                  Json?
-  city                           String?
-  state                          String?
-  imageUrl                       String?
-  dataAiHint                     String?
-  documentsUrl                   String?
-  evaluationReportUrl            String?
-  auctionCertificateUrl          String?
-  sellingBranch                  String?
-  vehicleLocation                String?
-  visits                         Int?          @default(0)
-  totalLots                      Int?          @default(0)
-  initialOffer                   Float?
-  isFavorite                     Boolean?
-  currentBid                     Float?
-  bidsCount                      Int?          @default(0)
-  automaticBiddingEnabled        Boolean?      @default(false)
-  silentBiddingEnabled           Boolean?      @default(false)
-  allowMultipleBidsPerUser       Boolean?      @default(true)
-  allowInstallmentBids           Boolean?      @default(false)
-  softCloseEnabled               Boolean?      @default(false)
-  softCloseMinutes               Int?          @default(2)
-  estimatedRevenue               Float?
-  achievedRevenue                Float?        @default(0)
-  isFeaturedOnMarketplace        Boolean?      @default(false)
-  marketplaceAnnouncementTitle   String?
-  totalHabilitatedUsers          Int?          @default(0)
-  additionalTriggers             String?
+// =================================================================
+// Judicial Models
+// =================================================================
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  category      LotCategory?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  auctioneer    Auctioneer       @relation(fields: [auctioneerId], references: [id])
-  seller        Seller?          @relation(fields: [sellerId], references: [id], onDelete: SetNull)
-  judicialProcess JudicialProcess?   @relation(fields: [judicialProcessId], references: [id], onDelete: SetNull)
-  image         MediaItem?       @relation("AuctionImage", fields: [imageMediaId], references: [id], onDelete: SetNull)
-  lots          Lot[]
-  bids          Bid[]
-  questions     LotQuestion[]
+model Court {
+  id          String             @id @default(cuid())
+  name        String             @unique
+  slug        String             @unique
+  stateUf     String
+  website     String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  districts   JudicialDistrict[]
+  processes   JudicialProcess[]
+  state       StateInfo          @relation(fields: [stateUf], references: [uf])
 }
 
-model Lot {
-  id                  String   @id @default(uuid())
-  publicId            String   @unique @default(uuid())
-  title               String
-  number              String?
-  description         String?  @db.Text
-  price               Float    @default(0)
-  initialPrice        Float?
-  secondInitialPrice  Float?
-  bidIncrementStep    Float?
-  status              LotStatus @default(EM_BREVE)
-  auctionId           String
-  categoryId          String?
-  subcategoryId       String?
-  stateId             String?
-  cityId              String?
-  imageMediaId        String?   @unique
-  winningBidTermUrl   String?
-  
-  // Triggers & Flags
-  isFeatured          Boolean? @default(false)
-  isExclusive         Boolean? @default(false)
-  discountPercentage  Float?
-  additionalTriggers  String?
+model JudicialDistrict {
+  id        String             @id @default(cuid())
+  name      String
+  slug      String             @unique
+  courtId   String
+  stateId   String
+  zipCode   String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  court     Court              @relation(fields: [courtId], references: [id])
+  state     StateInfo          @relation(fields: [stateId], references: [id])
+  branches  JudicialBranch[]
+  processes JudicialProcess[]
+  @@unique([name, courtId])
+}
 
-  // Location Details
-  latitude            Float?
-  longitude           Float?
-  mapAddress          String?
-  mapEmbedUrl         String?
-  mapStaticImageUrl   String?
-  
-  // Legal & Financial Details
-  judicialProcessNumber      String?
-  courtDistrict              String?
-  courtName                  String?
-  publicProcessUrl           String?
-  propertyRegistrationNumber String?
-  propertyLiens              String? @db.Text
-  knownDebts                 String? @db.Text
-  additionalDocumentsInfo    String? @db.Text
-  reservePrice               Float?
-  evaluationValue            Float?
-  debtAmount                 Float?
-  itbiValue                  Float?
+model JudicialBranch {
+  id          String             @id @default(cuid())
+  name        String
+  slug        String
+  districtId  String
+  contactName String?
+  phone       String?
+  email       String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  district    JudicialDistrict   @relation(fields: [districtId], references: [id])
+  processes   JudicialProcess[]
+  seller      Seller?
+  @@unique([name, districtId])
+}
 
-  // Dates
-  endDate             DateTime?
-  lotSpecificAuctionDate DateTime?
-  secondAuctionDate   DateTime?
+// =================================================================
+// Core Business Models (Auction, Lot, etc.)
+// =================================================================
 
-  // Vehicle Specific (Simplified)
-  year             Int?
-  make             String?
-  model            String?
-  series           String?
-  stockNumber      String?
-  sellingBranch    String?
-  vin              String?
-  vinStatus        String?
-  lossType         String?
-  primaryDamage    String?
-  titleInfo        String?
-  titleBrand       String?
-  startCode        String?
-  hasKey           Boolean?
-  odometer         String?
-  airbagsStatus    String?
-  bodyStyle        String?
-  engineDetails    String?
-  transmissionType String?
-  driveLineType    String?
-  fuelType         String?
-  cylinders        String?
-  restraintSystem  String?
-  exteriorInteriorColor String?
-  options          String? @db.Text
-  manufacturedIn   String?
-  vehicleClass     String?
-  vehicleLocationInBranch String?
-  laneRunNumber    String?
-  aisleStall       String?
-  actualCashValue  String?
-  estimatedRepairCost String?
-
-  // Denormalized/Calculated fields
-  views     Int? @default(0)
-  bidsCount Int? @default(0)
-  dataAiHint String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  auction        Auction           @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  category       LotCategory?      @relation(fields: [categoryId], references: [id])
-  subcategory    Subcategory?      @relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
-  state          StateInfo?        @relation(fields: [stateId], references: [id], onDelete: SetNull)
-  city           CityInfo?         @relation(fields: [cityId], references: [id], onDelete: SetNull)
-  image          MediaItem?        @relation("LotImage", fields: [imageMediaId], references: [id], onDelete: SetNull)
-  bens           Bem[]
-  mediaItems     MediaItem[]
-  bids           Bid[]
-  wins           UserWin[]
-  reviews        Review[]
-  questions      LotQuestion[]
-  maxBids        UserLotMaxBid[]
+model Seller {
+  id                         String             @id @default(cuid())
+  publicId                   String             @unique
+  name                       String             @unique
+  slug                       String             @unique
+  contactName                String?
+  email                      String?
+  phone                      String?
+  address                    String?
+  city                       String?
+  state                      String?
+  zipCode                    String?
+  website                    String?
+  logoUrl                    String?
+  dataAiHintLogo             String?
+  logoMediaId                String?            @unique
+  description                String?            @db.Text
+  isJudicial                 Boolean            @default(false)
+  judicialBranchId           String?            @unique
+  createdAt                  DateTime           @default(now())
+  updatedAt                  DateTime           @updatedAt
+  user                       User?              @relation(fields: [userId], references: [id])
+  userId                     String?            @unique
+  auctions                   Auction[]
+  lots                       Lot[]
+  judicialBranch             JudicialBranch?    @relation(fields: [judicialBranchId], references: [id], onDelete: SetNull)
+  directSaleOffers           DirectSaleOffer[]
+  bens                       Bem[]
+  judicialProcesses          JudicialProcess[]
+  blogPosts                  BlogPost[]
 }
 
 model Auctioneer {
-  id                     String   @id @default(uuid())
-  publicId               String   @unique @default(uuid())
-  name                   String   @unique
-  slug                   String   @unique
-  userId                 String?  @unique
-  logoMediaId            String?  @unique
+  id                     String    @id @default(cuid())
+  publicId               String    @unique
+  name                   String    @unique
+  slug                   String    @unique
   registrationNumber     String?
   contactName            String?
   email                  String?
@@ -427,2653 +365,469 @@ model Auctioneer {
   website                String?
   logoUrl                String?
   dataAiHintLogo         String?
-  description            String?  @db.Text
+  logoMediaId            String?   @unique
+  description            String?   @db.Text
   memberSince            DateTime?
   rating                 Float?
-  auctionsConductedCount Int?     @default(0)
-  totalValueSold         Float?   @default(0)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  auctions Auction[]
-  logo     MediaItem? @relation("AuctioneerLogo", fields: [logoMediaId], references: [id], onDelete: SetNull)
-  user     User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
-}
-
-model Seller {
-  id                         String    @id @default(uuid())
-  publicId                   String    @unique @default(uuid())
-  name                       String    @unique
-  slug                       String    @unique
-  userId                     String?   @unique
-  logoMediaId                String?   @unique
-  judicialBranchId           String?   @unique
-  contactName                String?
-  email                      String?
-  phone                      String?
-  address                    String?
-  city                       String?
-  state                      String?
-  zipCode                    String?
-  website                    String?
-  logoUrl                    String?
-  dataAiHintLogo             String?
-  description                String?   @db.Text
-  isJudicial                 Boolean?  @default(false)
-  memberSince                DateTime?
-  rating                     Float?
-  activeLotsCount            Int?
-  totalSalesValue            Float?
-  auctionsFacilitatedCount   Int?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  user             User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
-  logo             MediaItem?         @relation("SellerLogo", fields: [logoMediaId], references: [id], onDelete: SetNull)
-  auctions         Auction[]
-  directSaleOffers DirectSaleOffer[]
-  judicialBranch   JudicialBranch?    @relation(fields: [judicialBranchId], references: [id], onDelete: SetNull)
-  judicialProcesses JudicialProcess[]
-  bens             Bem[]
-  blogPosts        BlogPost[]
-}
-
-model Court {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  slug      String   @unique
-  stateUf   String
-  website   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  districts JudicialDistrict[]
-  processes JudicialProcess[]
-}
-
-model JudicialDistrict {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String
-  courtId   String
-  stateId   String
-  zipCode   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  court     Court            @relation(fields: [courtId], references: [id], onDelete: Cascade)
-  state     StateInfo        @relation(fields: [stateId], references: [id])
-  branches  JudicialBranch[]
-  processes JudicialProcess[]
-}
-
-model JudicialBranch {
-  id          String   @id @default(uuid())
-  name        String
-  slug        String
-  districtId  String
-  contactName String?
-  phone       String?
-  email       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relationships
-  district  JudicialDistrict @relation(fields: [districtId], references: [id], onDelete: Cascade)
-  processes JudicialProcess[]
-  seller    Seller?
+  auctionsConductedCount Int?      @default(0)
+  totalValueSold         Float?    @default(0)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  userId                 String?   @unique
+  user                   User?     @relation(fields: [userId], references: [id])
+  auctions               Auction[]
 }
 
 model JudicialProcess {
-  id                  String   @id @default(uuid())
-  publicId            String   @unique
-  processNumber       String   @unique
-  isElectronic        Boolean  @default(true)
-  courtId             String
-  districtId          String
-  branchId            String
-  sellerId            String?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String           @id @default(cuid())
+  publicId          String           @unique
+  processNumber     String           @unique
+  isElectronic      Boolean          @default(true)
+  courtId           String
+  districtId        String
+  branchId          String
+  sellerId          String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  auction           Auction?
+  bens              Bem[]
+  court             Court            @relation(fields: [courtId], references: [id])
+  district          JudicialDistrict @relation(fields: [districtId], references: [id])
+  branch            JudicialBranch   @relation(fields: [branchId], references: [id])
+  seller            Seller?          @relation(fields: [sellerId], references: [id])
+  parties           ProcessParty[]
+}
 
-  // Relationships
-  court    Court            @relation(fields: [courtId], references: [id])
-  district JudicialDistrict @relation(fields: [districtId], references: [id])
-  branch   JudicialBranch   @relation(fields: [branchId], references: [id])
-  seller   Seller?          @relation(fields: [sellerId], references: [id])
-  parties  ProcessParty[]
-  bens     Bem[]
-  auction  Auction?
+model Bem {
+  id                         String       @id @default(cuid())
+  publicId                   String       @unique
+  title                      String
+  description                String?      @db.Text
+  status                     BemStatus    @default(DISPONIVEL)
+  categoryId                 String?
+  subcategoryId              String?
+  judicialProcessId          String?
+  sellerId                   String?
+  evaluationValue            Float?
+  imageUrl                   String?
+  dataAiHint                 String?
+  imageMediaId               String?      @unique
+  galleryImageUrls           Json?
+  mediaItemIds               Json?
+  locationCity               String?
+  locationState              String?
+  address                    String?
+  latitude                   Float?
+  longitude                  Float?
+  plate                      String?
+  make                       String?
+  model                      String?
+  version                    String?
+  year                       Int?
+  modelYear                  Int?
+  mileage                    Int?
+  color                      String?
+  fuelType                   String?
+  transmissionType           String?
+  bodyType                   String?
+  vin                        String?
+  renavam                    String?
+  enginePower                String?
+  numberOfDoors              Int?
+  vehicleOptions             String?      @db.Text
+  detranStatus               String?
+  debts                      String?      @db.Text
+  runningCondition           String?
+  bodyCondition              String?
+  tiresCondition             String?
+  hasKey                     Boolean?
+  propertyRegistrationNumber String?
+  iptuNumber                 String?
+  isOccupied                 Boolean?
+  area                       Float?
+  bedrooms                   Int?
+  bathrooms                  Int?
+  parkingSpaces              Int?
+  amenities                  Json?
+  brand                      String?
+  serialNumber               String?
+  itemCondition              String?
+  specifications             String?      @db.Text
+  includedAccessories        String?      @db.Text
+  batteryCondition           String?
+  hasInvoice                 Boolean?
+  hasWarranty                Boolean?
+  repairHistory              String?      @db.Text
+  hoursUsed                  Int?
+  engineType                 String?
+  capacityOrPower            String?
+  maintenanceHistory         String?      @db.Text
+  breed                      String?
+  age                        String?
+  sex                        String?
+  weight                     String?
+  individualId               String?
+  purpose                    String?
+  sanitaryCondition          String?
+  lineage                    String?
+  isPregnant                 Boolean?
+  gtaDocument                String?
+  breedRegistryDocument      String?
+  createdAt                  DateTime     @default(now())
+  updatedAt                  DateTime     @updatedAt
+  category                   LotCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  subcategory                Subcategory? @relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
+  judicialProcess            JudicialProcess? @relation(fields: [judicialProcessId], references: [id], onDelete: SetNull)
+  seller                     Seller?      @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  image                      MediaItem?   @relation("BemImage", fields: [imageMediaId], references: [id], onDelete: SetNull)
+  lots                       Lot[]
+}
+
+model Auction {
+  id                             String        @id @default(cuid())
+  publicId                       String        @unique
+  title                          String
+  description                    String?       @db.Text
+  status                         AuctionStatus @default(RASCUNHO)
+  auctionType                    AuctionType?
+  categoryId                     String?
+  auctioneerId                   String
+  sellerId                       String?
+  judicialProcessId              String?       @unique
+  auctionDate                    DateTime
+  endDate                        DateTime?
+  auctionStages                  Json?
+  city                           String?
+  state                          String?
+  imageUrl                       String?
+  dataAiHint                     String?
+  imageMediaId                   String?       @unique
+  documentsUrl                   String?
+  evaluationReportUrl            String?
+  auctionCertificateUrl          String?
+  sellingBranch                  String?
+  automaticBiddingEnabled        Boolean?      @default(false)
+  silentBiddingEnabled           Boolean?      @default(false)
+  allowMultipleBidsPerUser       Boolean?      @default(true)
+  allowInstallmentBids           Boolean?      @default(false)
+  softCloseEnabled               Boolean?      @default(false)
+  softCloseMinutes               Int?          @default(2)
+  isFeaturedOnMarketplace        Boolean?      @default(false)
+  marketplaceAnnouncementTitle   String?
+  visits                         Int?          @default(0)
+  totalLots                      Int?          @default(0)
+  estimatedRevenue               Float?
+  achievedRevenue                Float?
+  totalHabilitatedUsers          Int?
+  createdAt                      DateTime      @default(now())
+  updatedAt                      DateTime      @updatedAt
+  category                       LotCategory?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  auctioneer                     Auctioneer    @relation(fields: [auctioneerId], references: [id])
+  seller                         Seller?       @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  judicialProcess                JudicialProcess? @relation(fields: [judicialProcessId], references: [id], onDelete: SetNull)
+  image                          MediaItem?    @relation("AuctionImage", fields: [imageMediaId], references: [id], onDelete: SetNull)
+  lots                           Lot[]
+  bids                           Bid[]
+  questions                      LotQuestion[]
+  reviews                        Review[]
+}
+
+model Lot {
+  id                         String      @id @default(cuid())
+  publicId                   String      @unique
+  auctionId                  String
+  number                     String?
+  title                      String
+  description                String?     @db.Text
+  price                      Float
+  initialPrice               Float?
+  secondInitialPrice         Float?
+  bidIncrementStep           Float?
+  status                     LotStatus
+  categoryId                 String?
+  subcategoryId              String?
+  stateId                    String?
+  cityId                     String?
+  sellerId                   String?
+  auctioneerId               String?
+  imageUrl                   String?
+  dataAiHint                 String?
+  imageMediaId               String?     @unique
+  winningBidTermUrl          String?
+  galleryImageUrls           Json?
+  mediaItemIds               Json?
+  bemIds                     Json?
+  views                      Int?        @default(0)
+  bidsCount                  Int?        @default(0)
+  isFeatured                 Boolean?    @default(false)
+  isExclusive                Boolean?    @default(false)
+  discountPercentage         Float?
+  additionalTriggers         Json?
+  latitude                   Float?
+  longitude                  Float?
+  mapAddress                 String?
+  mapEmbedUrl                String?
+  mapStaticImageUrl          String?
+  judicialProcessNumber      String?
+  courtDistrict              String?
+  courtName                  String?
+  publicProcessUrl           String?
+  propertyRegistrationNumber String?
+  propertyLiens              String?
+  knownDebts                 String?
+  additionalDocumentsInfo    String?     @db.Text
+  reservePrice               Float?
+  evaluationValue            Float?
+  debtAmount                 Float?
+  itbiValue                  Float?
+  endDate                    DateTime?
+  lotSpecificAuctionDate     DateTime?
+  secondAuctionDate          DateTime?
+  condition                  String?
+  createdAt                  DateTime    @default(now())
+  updatedAt                  DateTime    @updatedAt
+  auction                    Auction     @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  category                   LotCategory?@relation(fields: [categoryId], references: [id])
+  subcategory                Subcategory?@relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
+  state                      StateInfo?  @relation(fields: [stateId], references: [id], onDelete: SetNull)
+  city                       CityInfo?   @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  image                      MediaItem?  @relation("LotImage", fields: [imageMediaId], references: [id], onDelete: SetNull)
+  bens                       Bem[]
+  bids                       Bid[]
+  wins                       UserWin[]
+  reviews                    Review[]
+  questions                  LotQuestion[]
+  maxBids                    UserLotMaxBid[]
+  seller                     Seller?     @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+}
+
+// =================================================================
+// Event & Junction Models
+// =================================================================
+
+model Bid {
+  id            String   @id @default(cuid())
+  lotId         String
+  auctionId     String
+  bidderId      String
+  bidderDisplay String
+  amount        Float
+  timestamp     DateTime @default(now())
+  lot           Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  auction       Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  bidder        User     @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+}
+
+model UserWin {
+  id               String        @id @default(cuid())
+  lotId            String
+  userId           String
+  winningBidAmount Float
+  winDate          DateTime
+  paymentStatus    PaymentStatus @default(PENDENTE)
+  invoiceUrl       String?
+  lot              Lot           @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ProcessParty {
-  id             String           @id @default(uuid())
+  id             String           @id @default(cuid())
   processId      String
   name           String
-  documentNumber String?
   partyType      ProcessPartyType
-
-  // Relationships
-  process JudicialProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
-}
-
-model DirectSaleOffer {
-  id                     String                @id @default(uuid())
-  publicId               String                @unique @default(uuid())
-  title                  String
-  description            String                @db.Text
-  offerType              DirectSaleOfferType
-  status                 DirectSaleOfferStatus
-  price                  Float?
-  minimumOfferPrice      Float?
-  categoryId             String
-  sellerId               String
-  locationCity           String?
-  locationState          String?
-  imageUrl               String?
-  imageMediaId           String?               @unique
-  dataAiHint             String?
-  galleryImageUrls       Json?
-  mediaItemIds           Json?
-  itemsIncluded          Json?
-  tags                   Json?
-  views                  Int                   @default(0)
-  proposalsCount         Int                   @default(0)
-  expiresAt              DateTime?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  category             LotCategory       @relation(fields: [categoryId], references: [id])
-  seller               Seller            @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  image                MediaItem?        @relation("DirectSaleOfferImage", fields: [imageMediaId], references: [id], onDelete: SetNull)
+  documentNumber String?
+  process        JudicialProcess  @relation(fields: [processId], references: [id], onDelete: Cascade)
+  @@unique([processId, name, partyType])
 }
 
 model MediaItem {
-  id                   String   @id @default(uuid())
-  fileName             String
-  storagePath          String   @unique
-  title                String?
-  altText              String?
-  caption              String?
-  description          String?  @db.Text
-  mimeType             String
-  sizeBytes            Int
-  dimensions           Json?
-  urlOriginal          String   @db.Text
-  urlThumbnail         String?  @db.Text
-  urlMedium            String?  @db.Text
-  urlLarge             String?  @db.Text
-  uploadedBy           String?
-  linkedLotIds         Json?
-  dataAiHint           String?
-  
-  uploadedAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String             @id @default(cuid())
+  fileName        String
+  storagePath     String             @unique
+  uploadedAt      DateTime           @default(now())
+  uploadedBy      String?
+  title           String?
+  altText         String?
+  caption         String?
+  description     String?            @db.Text
+  mimeType        String
+  sizeBytes       Int
+  dimensions      Json?
+  urlOriginal     String
+  urlThumbnail    String?
+  urlMedium       String?
+  urlLarge        String?
+  dataAiHint      String?
+  auctionImage    Auction?           @relation("AuctionImage")
+  lotImage        Lot?               @relation("LotImage")
+  bemImage        Bem?               @relation("BemImage")
+  userAvatar      User?              @relation(fields: [userAvatarId], references: [id], onDelete: SetNull)
+  userAvatarId    String?            @unique
+  sellerLogo      Seller?            @relation(fields: [sellerLogoId], references: [id], onDelete: SetNull)
+  sellerLogoId    String?            @unique
+  auctioneerLogo  Auctioneer?        @relation(fields: [auctioneerLogoId], references: [id], onDelete: SetNull)
+  auctioneerLogoId String?           @unique
+  categoryLogo    LotCategory?       @relation("CategoryLogo", fields: [categoryLogoId], references: [id], onDelete: SetNull)
+  categoryLogoId  String?            @unique
+  categoryCover   LotCategory?       @relation("CategoryCover", fields: [categoryCoverId], references: [id], onDelete: SetNull)
+  categoryCoverId String?            @unique
+  categoryMegaMenu LotCategory?      @relation("CategoryMegaMenu", fields: [categoryMegaMenuId], references: [id], onDelete: SetNull)
+  categoryMegaMenuId String?         @unique
+  subcategoryIcon Subcategory?       @relation("SubcategoryIcon")
+  blogPostImage   BlogPost?          @relation("BlogPostImage", fields: [blogPostImageId], references: [id], onDelete: SetNull)
+  blogPostImageId String?            @unique
+}
 
-  // Relationships
-  auctionAsImage    Auction?          @relation("AuctionImage")
-  lotAsImage        Lot?              @relation("LotImage")
-  bemAsImage        Bem?              @relation("BemImage")
-  sellerAsLogo      Seller?           @relation("SellerLogo")
-  auctioneerAsLogo  Auctioneer?       @relation("AuctioneerLogo")
-  directSaleOfferAsImage DirectSaleOffer? @relation("DirectSaleOfferImage")
-  lots              Lot[]
-  bens              Bem[]
-  subcategoryAsIcon Subcategory?      @relation("SubcategoryIcon")
-  blogPostsAsCover  BlogPost[]        @relation("BlogPostCover")
+model UserDocument {
+  id                String             @id @default(cuid())
+  userId            String
+  documentTypeId    String
+  fileUrl           String?
+  fileName          String?
+  status            UserDocumentStatus @default(NOT_SENT)
+  uploadDate        DateTime?
+  analysisDate      DateTime?
+  analystId         String?
+  rejectionReason   String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentType      DocumentType       @relation(fields: [documentTypeId], references: [id])
+  @@unique([userId, documentTypeId])
+}
+
+model DocumentType {
+  id             String         @id @default(cuid())
+  name           String
+  description    String?
+  isRequired     Boolean        @default(false)
+  appliesTo      String?        // 'PHYSICAL,LEGAL'
+  allowedFormats String?        // 'pdf,jpg,png'
+  displayOrder   Int?
+  userDocuments  UserDocument[]
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  message   String
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Review {
-  id                String   @id @default(uuid())
+  id                String   @id @default(cuid())
   lotId             String
   auctionId         String
   userId            String
   userDisplayName   String
   rating            Int
   comment           String   @db.Text
-  isApproved        Boolean  @default(true)
-  
-  createdAt DateTime @default(now())
-  
-  // Relationships
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lot  Lot  @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lot               Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  auction           Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
 }
 
 model LotQuestion {
-  id                       String   @id @default(uuid())
-  lotId                    String
-  auctionId                String
-  userId                   String
-  userDisplayName          String
-  questionText             String   @db.Text
-  answerText               String?  @db.Text
-  answeredAt               DateTime?
-  answeredByUserId         String?
+  id                      String   @id @default(cuid())
+  lotId                   String
+  auctionId               String
+  userId                  String
+  userDisplayName         String
+  questionText            String   @db.Text
+  answerText              String?  @db.Text
+  answeredAt              DateTime?
+  answeredByUserId        String?
   answeredByUserDisplayName String?
-  isPublic                 Boolean  @default(true)
-  
-  createdAt DateTime @default(now())
-
-  // Relationships
+  isPublic                Boolean  @default(true)
+  createdAt               DateTime @default(now())
   user                    User     @relation("QuestionAskedBy", fields: [userId], references: [id], onDelete: Cascade)
   lot                     Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  answeredBy              User?    @relation("QuestionAnsweredBy", fields: [answeredByUserId], references: [id], onDelete:SetNull)
+  auction                 Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  answeredByUser          User?    @relation("QuestionAnsweredBy", fields: [answeredByUserId], references: [id], onDelete: SetNull)
 }
 
 model UserLotMaxBid {
-  id        String   @id @default(uuid())
+  id        String   @id @default(cuid())
   userId    String
   lotId     String
   maxAmount Float
   isActive  Boolean  @default(true)
-  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // Relationships
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lot  Lot  @relation(fields: [lotId], references: [id], onDelete: Cascade)
-
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lot       Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
   @@unique([userId, lotId])
 }
 
-
 model BlogPost {
-  id             String   @id @default(uuid())
-  title          String
-  slug           String   @unique
-  content        String   @db.Text
-  authorId       String
-  sellerId       String?
-  coverImageId   String?  @unique
-  published      Boolean  @default(false)
-  publishedAt    DateTime?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relationships
-  author     User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  seller     Seller?    @relation(fields: [sellerId], references: [id], onDelete: SetNull)
-  coverImage MediaItem? @relation("BlogPostCover", fields: [coverImageId], references: [id], onDelete: SetNull)
+    id String @id @default(cuid())
+    title String
+    content String @db.Text
+    authorId String
+    sellerId String?
+    publishedAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    tags Tag[]
+    image MediaItem?
+    author User @relation("AuthoredBy", fields: [authorId], references: [id])
+    seller Seller? @relation(fields: [sellerId], references: [id])
 }
 
-model StateInfo {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  uf        String   @unique
-  slug      String   @unique
-  cityCount Int?     @default(0)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relationships
-  cities    CityInfo[]
-  lots      Lot[]
-  courts    Court[]
-  districts JudicialDistrict[]
-}
-
-model CityInfo {
-  id       String   @id @default(uuid())
-  name     String
-  slug     String
-  stateId  String
-  stateUf  String
-  ibgeCode String?
-  lotCount Int?     @default(0)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  state StateInfo @relation(fields: [stateId], references: [id], onDelete: Cascade)
-  lots  Lot[]
-}
-
-model PlatformSettings {
-  id                   String @id @default("global")
-  siteTitle            String?
-  siteTagline          String?
-  galleryImageBasePath String?
-  storageProvider      String?
-  firebaseStorageBucket String?
-  activeThemeName      String?
-  themes               Json?
-  platformPublicIdMasks Json?
-  homepageSections     Json?
-  mentalTriggerSettings Json?
-  sectionBadgeVisibility Json?
-  mapSettings          Json?
-  biddingSettings      Json?
-  searchPaginationType String?
-  searchItemsPerPage   Int?
-  searchLoadMoreCount  Int?
-  showCountdownOnCards Boolean?
-  showCountdownOnLotDetail Boolean?
-  showRelatedLotsOnLotDetail Boolean?
-  relatedLotsCount     Int?
-  variableIncrementTable Json?
-  defaultListItemsPerPage Int?
-
-  updatedAt DateTime @updatedAt
-}
-
-model DocumentType {
-  id             String  @id @default(uuid())
-  name           String  @unique
-  description    String?
-  isRequired     Boolean @default(true)
-  appliesTo      String? // e.g., "PHYSICAL,LEGAL"
-  allowedFormats String?
-  displayOrder   Int     @default(0)
-  
-  // Relationships
-  userDocuments UserDocument[]
-}
-
-model UserDocument {
-  id                 String   @id @default(uuid())
-  userId             String
-  documentTypeId     String
-  fileUrl            String?  @db.Text
-  fileName           String?
-  status             UserDocumentStatus @default(NOT_SENT)
-  rejectionReason    String?
-  uploadDate         DateTime?
-  analysisDate       DateTime?
-  analystId          String?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  documentType DocumentType @relation(fields: [documentTypeId], references: [id])
-
-  @@unique([userId, documentTypeId])
-}
-
-model DocumentTemplate {
-  id        String               @id @default(uuid())
-  name      String               @unique
-  type      DocumentTemplateType
-  content   String               @db.Text
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Notification {
-  id      String   @id @default(uuid())
-  userId  String
-  message String
-  link    String?
-  isRead  Boolean  @default(false)
-
-  createdAt DateTime @default(now())
-  
-  // Relationships
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Tag {
+    id String @id @default(cuid())
+    name String @unique
+    posts BlogPost[]
 }
 
 model ContactMessage {
-  id        String   @id @default(uuid())
+  id        String   @id @default(cuid())
   name      String
   email     String
   subject   String
   message   String   @db.Text
   isRead    Boolean  @default(false)
-  
   createdAt DateTime @default(now())
 }
-```
-- src/app/admin/habilitations/actions.ts:
-```ts
-'use server';
 
-import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/prisma';
-import type { UserProfileData, UserDocument, UserHabilitationStatus } from '@/types';
-import type { Prisma } from '@prisma/client';
-
-/**
- * Fetches users whose documents are pending review.
- */
-export async function getHabilitationRequests(): Promise<UserProfileData[]> {
-  try {
-    const users = await prisma.user.findMany({
-      where: {
-        habilitationStatus: {
-          in: ['PENDING_ANALYSIS', 'REJECTED_DOCUMENTS']
-        }
-      },
-      orderBy: {
-        updatedAt: 'asc'
-      }
-    });
-    return users as unknown as UserProfileData[];
-  } catch (error) {
-    console.error("Error fetching habilitation requests:", error);
-    return [];
-  }
+model PlatformSettings {
+  id                             String @id @default("global")
+  siteTitle                      String
+  siteTagline                    String?
+  logoUrl                        String?
+  faviconUrl                     String?
+  galleryImageBasePath           String
+  storageProvider                String?
+  firebaseStorageBucket          String?
+  activeThemeName                String?
+  themes                         Json?
+  platformPublicIdMasks          Json?
+  homepageSections               Json?
+  mentalTriggerSettings          Json?
+  sectionBadgeVisibility         Json?
+  mapSettings                    Json?
+  searchPaginationType           String?
+  searchItemsPerPage             Int?
+  searchLoadMoreCount            Int?
+  showCountdownOnLotDetail       Boolean?
+  showCountdownOnCards           Boolean?
+  showRelatedLotsOnLotDetail     Boolean?
+  relatedLotsCount               Int?
+  variableIncrementTable         Json?
+  biddingSettings                Json?
+  defaultListItemsPerPage        Int?
+  defaultUrgencyTimerHours       Int?
+  updatedAt                      DateTime @updatedAt
 }
 
-/**
- * Fetches all submitted documents for a specific user.
- */
-export async function getUserDocumentsForReview(userId: string): Promise<UserDocument[]> {
-  try {
-    const documents = await prisma.userDocument.findMany({
-      where: { userId },
-      include: { documentType: true },
-      orderBy: { documentType: { displayOrder: 'asc' } },
-    });
-    return documents as unknown as UserDocument[];
-  } catch (error) {
-    console.error(`Error fetching documents for user ${userId}:`, error);
-    return [];
-  }
+model DocumentTemplate {
+  id        String               @id @default(cuid())
+  name      String               @unique
+  type      DocumentTemplateType
+  content   String               @db.Text
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
 }
-
-/**
- * Checks if a user can be fully habilitated after a document status change.
- * If the user's overall status changes, a notification is created.
- * @param tx - The Prisma transaction client.
- * @param userId - The ID of the user to check.
- * @returns The new habilitation status if it changed, otherwise null.
- */
-async function checkAndFinalizeHabilitation(tx: Prisma.TransactionClient, userId: string): Promise<UserHabilitationStatus | null> {
-  const user = await tx.user.findUnique({
-    where: { id: userId },
-    select: { accountType: true }
-  });
-
-  if (!user) return null;
-  
-  const requiredDocTypes = await tx.documentType.findMany({ 
-      where: { 
-          isRequired: true
-      }
-  });
-
-  const applicableDocTypes = requiredDocTypes.filter(doc => {
-      const appliesTo = doc.appliesTo ? doc.appliesTo.split(',') : [];
-      return appliesTo.includes(user.accountType || 'PHYSICAL');
-  });
-
-  const userDocs = await tx.userDocument.findMany({ where: { userId } });
-
-  const allRequiredApproved = applicableDocTypes.every(reqDoc =>
-    userDocs.some(userDoc => userDoc.documentTypeId === reqDoc.id && userDoc.status === 'APPROVED')
-  );
-
-  let newHabilitationStatus: UserHabilitationStatus | null = null;
-  if (allRequiredApproved) {
-    newHabilitationStatus = 'HABILITADO';
-  } else {
-    const anyRejected = userDocs.some(doc => doc.status === 'REJECTED' && applicableDocTypes.some(rd => rd.id === doc.documentTypeId));
-    if (anyRejected) {
-      newHabilitationStatus = 'REJECTED_DOCUMENTS';
-    }
-  }
-
-  if (newHabilitationStatus) {
-      const currentUser = await tx.user.findUnique({ where: { id: userId }, select: { habilitationStatus: true }});
-      if (currentUser?.habilitationStatus !== newHabilitationStatus) {
-          await tx.user.update({
-              where: { id: userId },
-              data: { habilitationStatus: newHabilitationStatus }
-          });
-          // Create notification for overall status change
-          if (newHabilitationStatus === 'HABILITADO') {
-            await tx.notification.create({
-               data: {
-                   userId: userId,
-                   message: "Parabéns! Seu cadastro foi habilitado. Você já pode participar dos leilões.",
-                   link: '/dashboard/documents'
-               }
-           });
-          } else if (newHabilitationStatus === 'REJECTED_DOCUMENTS') {
-            await tx.notification.create({
-                data: {
-                    userId: userId,
-                    message: "Atenção: há pendências em seus documentos. Por favor, verifique e reenvie.",
-                    link: '/dashboard/documents'
-                }
-            });
-          }
-          return newHabilitationStatus;
-      }
-  }
-  return null; // No change in overall status
-}
-
-
-export async function approveDocument(documentId: string): Promise<{ success: boolean; message: string }> {
-  try {
-    await prisma.$transaction(async (tx) => {
-        const docToUpdate = await tx.userDocument.findUnique({ where: {id: documentId}, include: {documentType: true}});
-        if (!docToUpdate) {
-            throw new Error("Documento não encontrado.");
-        }
-
-        await tx.userDocument.update({
-            where: { id: documentId },
-            data: { status: 'APPROVED', rejectionReason: null, analysisDate: new Date() }
-        });
-        
-        await tx.notification.create({
-            data: {
-                userId: docToUpdate.userId,
-                message: `Seu documento "${docToUpdate.documentType.name}" foi APROVADO.`,
-                link: '/dashboard/documents'
-            }
-        });
-
-        await checkAndFinalizeHabilitation(tx, docToUpdate.userId);
-    });
-
-    revalidatePath('/admin/habilitations');
-    // We can't know the user ID here to revalidate their page,
-    // but client-side refetching will handle it.
-    return { success: true, message: 'Documento aprovado.' };
-  } catch (error: any) {
-    console.error("Error approving document:", error);
-    return { success: false, message: error.message || 'Falha ao aprovar documento.' };
-  }
-}
-
-export async function rejectDocument(documentId: string, reason: string): Promise<{ success: boolean; message: string }> {
-  if (!reason) {
-    return { success: false, message: 'O motivo da rejeição é obrigatório.' };
-  }
-  try {
-    await prisma.$transaction(async (tx) => {
-        const docToUpdate = await tx.userDocument.findUnique({ where: {id: documentId}, include: {documentType: true}});
-        if (!docToUpdate) {
-            throw new Error("Documento não encontrado.");
-        }
-
-        await tx.userDocument.update({
-            where: { id: documentId },
-            data: { status: 'REJECTED', rejectionReason: reason, analysisDate: new Date() }
-        });
-        
-        await tx.notification.create({
-            data: {
-                userId: docToUpdate.userId,
-                message: `Seu documento "${docToUpdate.documentType.name}" foi REJEITADO. Motivo: ${reason}`,
-                link: '/dashboard/documents'
-            }
-        });
-
-        await checkAndFinalizeHabilitation(tx, docToUpdate.userId);
-    });
-    
-    revalidatePath('/admin/habilitations');
-    return { success: true, message: 'Documento rejeitado.' };
-  } catch (error: any) {
-    console.error("Error rejecting document:", error);
-    return { success: false, message: error.message || 'Falha ao rejeitar documento.' };
-  }
-}
-```
-- src/app/admin/layout.tsx:
-```tsx
-// src/app/admin/layout.tsx
-'use client';
-
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
-import { Loader2, ShieldAlert } from 'lucide-react';
-import AdminSidebar from '@/components/layout/admin-sidebar';
-import { hasPermission } from '@/lib/permissions'; 
-
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { userProfileWithPermissions, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && !userProfileWithPermissions) {
-      router.push('/auth/login?redirect=/admin/dashboard');
-    }
-  }, [userProfileWithPermissions, loading, router]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-3 text-muted-foreground">Verificando autenticação e permissões...</p>
-      </div>
-    );
-  }
-
-  if (!userProfileWithPermissions) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-3 text-muted-foreground">Redirecionando para login...</p>
-      </div>
-    );
-  }
-  
-  // Use a granular permission or the master admin permission
-  const hasAdminAccess = hasPermission(userProfileWithPermissions, 'manage_all');
-
-  if (!hasAdminAccess) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
-        <ShieldAlert className="h-16 w-16 text-destructive mb-4" />
-        <h1 className="text-2xl font-bold text-destructive">Acesso Negado</h1>
-        <p className="text-muted-foreground mt-2">
-          Você não tem permissão para acessar esta área.
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          (Perfil: {userProfileWithPermissions?.roleName || 'N/A'})
-        </p>
-        <button
-          onClick={() => router.push('/')}
-          className="mt-6 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-        >
-          Voltar para a Página Inicial
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex min-h-screen">
-      <AdminSidebar />
-      <main className="flex-1 p-6 md:p-8 bg-muted/30">
-        {children}
-      </main>
-    </div>
-  );
-}
-```
-- src/app/consignor-dashboard/layout.tsx:
-```tsx
-// src/app/consignor-dashboard/layout.tsx
-'use client';
-
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
-import { Loader2, ShieldAlert } from 'lucide-react';
-import ConsignorSidebar from '@/components/layout/consignor-sidebar';
-import { hasAnyPermission } from '@/lib/permissions'; 
-
-export default function ConsignorDashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { userProfileWithPermissions, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && !userProfileWithPermissions) {
-      router.push('/auth/login?redirect=/consignor-dashboard/overview');
-    }
-  }, [userProfileWithPermissions, loading, router]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-3 text-muted-foreground">Verificando autenticação e permissões...</p>
-      </div>
-    );
-  }
-
-  if (!userProfileWithPermissions) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">Redirecionando para login...</p>
-      </div>
-    );
-  }
-  
-  const canAccessConsignorDashboard = hasAnyPermission(userProfileWithPermissions, [
-      'manage_all',
-      'consignor_dashboard:view'
-  ]);
-
-  if (!canAccessConsignorDashboard) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
-        <ShieldAlert className="h-16 w-16 text-destructive mb-4" />
-        <h1 className="text-2xl font-bold text-destructive">Acesso Negado</h1>
-        <p className="text-muted-foreground mt-2">
-          Você não tem permissão para acessar o Painel do Comitente.
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          (Perfil: {userProfileWithPermissions?.roleName || 'N/A'})
-        </p>
-        <button
-          onClick={() => router.push('/')}
-          className="mt-6 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-        >
-          Voltar para a Página Inicial
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex min-h-screen">
-      <ConsignorSidebar />
-      <main className="flex-1 p-6 md:p-8 bg-muted/30">
-        {children}
-      </main>
-    </div>
-  );
-}
-```
-- src/app/admin/roles/role-form.tsx:
-```tsx
-'use client';
-
-import * as React from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Controller } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { roleFormSchema, type RoleFormValues, predefinedPermissions } from './role-form-schema';
-import type { Role } from '@/types';
-import { Loader2, Save, ShieldCheck } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-
-interface RoleFormProps {
-  initialData?: Role | null;
-  onSubmitAction: (data: RoleFormValues) => Promise<{ success: boolean; message: string; roleId?: string }>;
-  formTitle: string;
-  formDescription: string;
-  submitButtonText: string;
-}
-
-// Group permissions by their group property
-const groupedPermissions = predefinedPermissions.reduce((acc, permission) => {
-  const group = permission.group || 'Outras';
-  if (!acc[group]) {
-    acc[group] = [];
-  }
-  acc[group].push(permission);
-  return acc;
-}, {} as Record<string, typeof predefinedPermissions>);
-
-
-export default function RoleForm({
-  initialData,
-  onSubmitAction,
-  formTitle,
-  formDescription,
-  submitButtonText,
-}: RoleFormProps) {
-  const { toast } = useToast();
-  const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-
-  const form = useForm<RoleFormValues>({
-    resolver: zodResolver(roleFormSchema),
-    defaultValues: {
-      name: initialData?.name || '',
-      description: initialData?.description || '',
-      permissions: initialData?.permissions || [],
-    },
-  });
-
-  async function onSubmit(values: RoleFormValues) {
-    setIsSubmitting(true);
-    try {
-      const result = await onSubmitAction(values);
-      if (result.success) {
-        toast({
-          title: 'Sucesso!',
-          description: result.message,
-        });
-        router.push('/admin/roles');
-        router.refresh();
-      } else {
-        toast({
-          title: 'Erro',
-          description: result.message,
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Erro Inesperado',
-        description: 'Ocorreu um erro ao processar sua solicitação.',
-        variant: 'destructive',
-      });
-      console.error("Unexpected error in role form:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  return (
-    <Card className="max-w-2xl mx-auto shadow-lg">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ShieldCheck className="h-6 w-6 text-primary" /> {formTitle}
-        </CardTitle>
-        <CardDescription>{formDescription}</CardDescription>
-      </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6 p-6 bg-secondary/30">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome do Perfil</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Administrador, Comitente, Usuário" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição (Opcional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Uma breve descrição sobre este perfil de usuário."
-                      {...field}
-                      value={field.value ?? ""}
-                      rows={3}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="permissions"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base font-semibold">Permissões</FormLabel>
-                  <FormDescription>
-                    Selecione as permissões que este perfil terá.
-                  </FormDescription>
-                  <Accordion type="multiple" className="w-full bg-background p-2 rounded-md border">
-                    {Object.entries(groupedPermissions).map(([groupName, permissions]) => (
-                      <AccordionItem value={groupName} key={groupName}>
-                        <AccordionTrigger className="text-sm font-medium">{groupName}</AccordionTrigger>
-                        <AccordionContent>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 p-2 max-h-80 overflow-y-auto">
-                            {permissions.map((permission) => (
-                              <FormItem key={permission.id} className="flex flex-row items-center space-x-3 space-y-0">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(permission.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...(field.value || []), permission.id])
-                                        : field.onChange(
-                                            (field.value || []).filter(
-                                              (value) => value !== permission.id
-                                            )
-                                          );
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="text-xs font-normal cursor-pointer">
-                                  {permission.label}
-                                </FormLabel>
-                              </FormItem>
-                            ))}
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/roles')} disabled={isSubmitting}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {submitButtonText}
-            </Button>
-          </CardFooter>
-        </form>
-      </Form>
-    </Card>
-  );
-}
-```
-- src/app/admin/roles/actions.ts:
-```ts
-'use server';
-
-import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/prisma';
-import type { Role, RoleFormData } from '@/types';
-import { predefinedPermissions } from './role-form-schema';
-
-export async function createRole(
-  data: RoleFormData
-): Promise<{ success: boolean; message: string; roleId?: string }> {
-  try {
-    const newRole = await prisma.role.create({
-      data: {
-        name: data.name,
-        name_normalized: data.name.toUpperCase().replace(/\s/g, '_'),
-        description: data.description,
-        permissions: {
-          connect: data.permissions?.map(id => ({ id })) || [],
-        },
-      }
-    });
-    revalidatePath('/admin/roles');
-    return { success: true, message: "Perfil criado com sucesso!", roleId: newRole.id };
-  } catch (error: any) {
-    console.error("Error creating role:", error);
-    if (error.code === 'P2002' && error.meta?.target?.includes('name')) {
-      return { success: false, message: 'Já existe um perfil com este nome.' };
-    }
-    return { success: false, message: 'Falha ao criar perfil.' };
-  }
-}
-
-export async function getRoles(): Promise<Role[]> {
-  try {
-    const roles = await prisma.role.findMany({
-      orderBy: { name: 'asc' },
-      include: { permissions: true }
-    });
-    return roles.map(role => ({
-      ...role,
-      permissions: role.permissions.map(p => p.id)
-    })) as unknown as Role[];
-  } catch (error) {
-    console.error("Error fetching roles:", error);
-    return [];
-  }
-}
-
-export async function getRole(id: string): Promise<Role | null> {
-  try {
-    const role = await prisma.role.findUnique({
-      where: { id },
-      include: { permissions: true }
-    });
-    if (!role) return null;
-    return {
-      ...role,
-      permissions: role.permissions.map(p => p.id)
-    } as unknown as Role;
-  } catch (error) {
-    console.error("Error fetching role:", error);
-    return null;
-  }
-}
-
-export async function updateRole(
-  id: string,
-  data: Partial<RoleFormData>
-): Promise<{ success: boolean; message: string }> {
-  try {
-    const updateData: any = {};
-    if (data.name) {
-      updateData.name = data.name;
-      updateData.name_normalized = data.name.toUpperCase().replace(/\s/g, '_');
-    }
-    if (data.description !== undefined) {
-      updateData.description = data.description;
-    }
-    if (data.permissions) {
-      updateData.permissions = {
-        set: data.permissions.map(id => ({ id })),
-      }
-    }
-
-    await prisma.role.update({
-      where: { id },
-      data: updateData,
-    });
-    revalidatePath('/admin/roles');
-    revalidatePath(`/admin/roles/${id}/edit`);
-    return { success: true, message: 'Perfil atualizado com sucesso!' };
-  } catch (error: any) {
-    console.error(`Error updating role ${id}:`, error);
-    return { success: false, message: 'Falha ao atualizar perfil.' };
-  }
-}
-
-export async function deleteRole(id: string): Promise<{ success: boolean; message: string }> {
-  try {
-    const roleToDelete = await prisma.role.findUnique({ where: { id }});
-    const protectedRoles = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER', 'AUCTION_ANALYST'];
-    if (protectedRoles.includes(roleToDelete?.name_normalized || '')) {
-      return { success: false, message: 'Não é possível excluir perfis de sistema.' };
-    }
-    await prisma.role.delete({ where: { id } });
-    revalidatePath('/admin/roles');
-    return { success: true, message: 'Perfil excluído com sucesso!' };
-  } catch (error: any) {
-    console.error(`Error deleting role ${id}:`, error);
-    if (error.code === 'P2003') {
-        return { success: false, message: 'Não é possível excluir. Este perfil está em uso por um ou mais usuários.' };
-    }
-    return { success: false, message: 'Falha ao excluir perfil.' };
-  }
-}
-```
-- src/app/admin/roles/role-form-schema.ts:
-```ts
-import * as z from 'zod';
-
-export const predefinedPermissions = [
-  { id: 'manage_all', label: 'Acesso Total (Administrador)', group: 'Geral'},
-  
-  // Leilões
-  { id: 'auctions:create', label: 'Criar Leilões', group: 'Leilões' },
-  { id: 'auctions:read', label: 'Ver Todos Leilões', group: 'Leilões' },
-  { id: 'auctions:update', label: 'Editar Todos Leilões', group: 'Leilões' },
-  { id: 'auctions:delete', label: 'Excluir Todos Leilões', group: 'Leilões' },
-  { id: 'auctions:publish', label: 'Publicar Leilões', group: 'Leilões' },
-  { id: 'auctions:manage_own', label: 'Gerenciar Próprios Leilões (Comitente)', group: 'Leilões' },
-  { id: 'auctions:manage_assigned', label: 'Gerenciar Leilões Atribuídos (Leiloeiro)', group: 'Leilões' },
-  
-  // Lotes
-  { id: 'lots:create', label: 'Criar Lotes', group: 'Lotes' },
-  { id: 'lots:read', label: 'Ver Todos Lotes', group: 'Lotes' },
-  { id: 'lots:update', label: 'Editar Todos Lotes', group: 'Lotes' },
-  { id: 'lots:delete', label: 'Excluir Todos Lotes', group: 'Lotes' },
-  { id: 'lots:manage_own', label: 'Gerenciar Próprios Lotes (Comitente)', group: 'Lotes' },
-  { id: 'lots:finalize', label: 'Finalizar Lotes e Declarar Vencedor', group: 'Lotes' },
-  
-  // Usuários e Perfis
-  { id: 'users:create', label: 'Criar Usuários', group: 'Usuários e Perfis' },
-  { id: 'users:read', label: 'Ver Usuários', group: 'Usuários e Perfis' },
-  { id: 'users:update', label: 'Editar Usuários', group: 'Usuários e Perfis' },
-  { id: 'users:delete', label: 'Excluir Usuários', group: 'Usuários e Perfis' },
-  { id: 'users:assign_roles', label: 'Atribuir Perfis', group: 'Usuários e Perfis' },
-  { id: 'users:manage_habilitation', label: 'Gerenciar Habilitação de Usuários', group: 'Usuários e Perfis' },
-  { id: 'roles:create', label: 'Criar Perfis', group: 'Usuários e Perfis' },
-  { id: 'roles:read', label: 'Ver Perfis', group: 'Usuários e Perfis' },
-  { id: 'roles:update', label: 'Editar Perfis', group: 'Usuários e Perfis' },
-  { id: 'roles:delete', label: 'Excluir Perfis', group: 'Usuários e Perfis' },
-
-  // Usuário Final
-  { id: 'view_auctions', label: 'Ver Leilões (Público)', group: 'Usuário Final' },
-  { id: 'view_lots', label: 'Ver Lotes (Público)', group: 'Usuário Final' },
-  { id: 'place_bids', label: 'Fazer Lances (Requer Habilitação)', group: 'Usuário Final' },
-  
-  // Venda Direta
-  { id: 'direct_sales:manage_own', label: 'Gerenciar Vendas Diretas Próprias', group: 'Venda Direta' },
-  { id: 'direct_sales:place_proposal', label: 'Fazer Propostas', group: 'Venda Direta' },
-  { id: 'direct_sales:buy_now', label: 'Comprar Agora', group: 'Venda Direta' },
-
-  // Painéis
-  { id: 'consignor_dashboard:view', label: 'Acessar Painel do Comitente', group: 'Painéis' },
-  { id: 'admin_dashboard:view', label: 'Acessar Painel de Admin', group: 'Painéis' },
-
-] as const;
-
-
-export const roleFormSchema = z.object({
-  name: z.string().min(3, {
-    message: "O nome do perfil deve ter pelo menos 3 caracteres.",
-  }).max(100, {
-    message: "O nome do perfil não pode exceder 100 caracteres.",
-  }),
-  description: z.string().max(500, {
-    message: "A descrição não pode exceder 500 caracteres.",
-  }).optional(),
-  permissions: z.array(z.string()).optional(),
-});
-
-export type RoleFormValues = z.infer<typeof roleFormSchema>;
-```
-- src/app/admin/layout.tsx:
-```tsx
-// src/app/admin/layout.tsx
-'use client';
-
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
-import { Loader2, ShieldAlert } from 'lucide-react';
-import AdminSidebar from '@/components/layout/admin-sidebar';
-import { hasAnyPermission } from '@/lib/permissions'; 
-
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { userProfileWithPermissions, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && !userProfileWithPermissions) {
-      router.push('/auth/login?redirect=/admin/dashboard');
-    }
-  }, [userProfileWithPermissions, loading, router]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-3 text-muted-foreground">Verificando autenticação e permissões...</p>
-      </div>
-    );
-  }
-
-  if (!userProfileWithPermissions) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-3 text-muted-foreground">Redirecionando para login...</p>
-      </div>
-    );
-  }
-  
-  const hasAdminAccess = hasAnyPermission(userProfileWithPermissions, ['manage_all', 'admin_dashboard:view']);
-
-  if (!hasAdminAccess) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
-        <ShieldAlert className="h-16 w-16 text-destructive mb-4" />
-        <h1 className="text-2xl font-bold text-destructive">Acesso Negado</h1>
-        <p className="text-muted-foreground mt-2">
-          Você não tem permissão para acessar esta área.
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          (Perfil: {userProfileWithPermissions?.roleName || 'N/A'})
-        </p>
-        <button
-          onClick={() => router.push('/')}
-          className="mt-6 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-        >
-          Voltar para a Página Inicial
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex min-h-screen">
-      <AdminSidebar />
-      <main className="flex-1 p-6 md:p-8 bg-muted/30">
-        {children}
-      </main>
-    </div>
-  );
-}
-
-```
-- src/app/auth/actions.ts:
-```ts
-// src/app/auth/actions.ts
-'use server';
-
-import { redirect } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
-import bcrypt from 'bcrypt';
-import { createSession, getSession, deleteSession } from '@/lib/session';
-import type { UserProfileWithPermissions } from '@/types';
-import { revalidatePath } from 'next/cache';
-
-
-/**
- * Realiza o login de um usuário com base no email e senha.
- * Verifica as credenciais, e se forem válidas, cria uma sessão criptografada em um cookie.
- * @param formData - O FormData do formulário de login, contendo email e senha.
- * @returns Um objeto indicando o sucesso ou falha da operação.
- */
-export async function login(formData: FormData): Promise<{ success: boolean; message: string }> {
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
-
-  if (!email || !password) {
-    return { success: false, message: 'Email e senha são obrigatórios.' };
-  }
-
-  try {
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        role: {
-          include: { permissions: true }
-        }
-      }
-    });
-
-    if (!user || !user.password) {
-      return { success: false, message: 'Credenciais inválidas.' };
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      return { success: false, message: 'Credenciais inválidas.' };
-    }
-    
-    // As permissões agora vêm como { id: string, name: string... }[]
-    const permissions = user.role?.permissions.map(p => p.id) || [];
-    
-    const userProfileWithPerms: UserProfileWithPermissions = {
-      ...user,
-      uid: user.id,
-      roleName: user.role?.name || 'USER',
-      permissions: permissions,
-    };
-
-    await createSession(userProfileWithPerms);
-    
-    return { success: true, message: 'Login bem-sucedido!' };
-
-  } catch (error) {
-    console.error('[Login Action] Error:', error);
-    return { success: false, message: 'Ocorreu um erro interno durante o login.' };
-  }
-}
-
-/**
- * Realiza o logout do usuário, excluindo a sessão do cookie.
- */
-export async function logout() {
-  await deleteSession();
-  revalidatePath('/', 'layout'); // Garante que o layout seja re-renderizado como "deslogado"
-  redirect('/');
-}
-
-/**
- * Obtém os dados do usuário logado atualmente com base na sessão do cookie.
- * @returns O perfil do usuário com permissões, ou null se não houver sessão válida.
- */
-export async function getCurrentUser(): Promise<UserProfileWithPermissions | null> {
-    const session = await getSession();
-    if (!session || !session.userId) {
-        return null;
-    }
-
-    try {
-        const user = await prisma.user.findUnique({
-            where: { id: session.userId as string },
-            include: {
-                role: {
-                    include: {
-                        permissions: true,
-                    },
-                },
-            },
-        });
-        
-        if (!user) {
-            return null;
-        }
-
-        const permissions = user.role?.permissions.map(p => p.id) || [];
-
-        return {
-            ...user,
-            uid: user.id,
-            roleName: user.role?.name || 'USER',
-            permissions: permissions,
-        } as UserProfileWithPermissions;
-    } catch (error) {
-        console.error('[getCurrentUser Action] Error fetching user from DB:', error);
-        return null;
-    }
-}
-```
-- src/app/auth/register/form-schema.ts:
-```ts
-// src/app/auth/register/form-schema.ts
-import * as z from 'zod';
-
-const passwordSchema = z.string().min(6, { message: "A senha deve ter pelo menos 6 caracteres." });
-
-export const registrationFormSchema = z.object({
-  accountType: z.enum(['PHYSICAL', 'LEGAL', 'DIRECT_SALE_CONSIGNOR'], {
-    required_error: "Você deve selecionar um tipo de conta."
-  }),
-  
-  // Common fields
-  email: z.string().email({ message: "Por favor, insira um email válido." }),
-  emailConfirmation: z.string().email(),
-  cellPhone: z.string().min(10, { message: "Número de celular inválido." }),
-  cellPhoneConfirmation: z.string().min(10),
-  password: passwordSchema,
-  passwordConfirmation: passwordSchema,
-  zipCode: z.string().min(8, { message: "CEP inválido." }).optional().or(z.literal('')),
-  street: z.string().optional(),
-  number: z.string().optional(),
-  complement: z.string().optional(),
-  neighborhood: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  termsAccepted: z.boolean().refine(val => val === true, {
-    message: "Você deve aceitar os Termos de Uso e a Política de Privacidade."
-  }),
-  optInMarketing: z.boolean().default(false),
-
-  // Physical Person fields
-  fullName: z.string().optional(),
-  cpf: z.string().optional(),
-  dateOfBirth: z.date().optional().nullable(),
-  
-  // Legal Person fields
-  razaoSocial: z.string().optional(),
-  cnpj: z.string().optional(),
-  inscricaoEstadual: z.string().optional(),
-  website: z.string().url().or(z.literal('')).optional(),
-  
-  // Fields for PJ responsible person
-  responsibleName: z.string().optional(),
-  responsibleCpf: z.string().optional(),
-
-}).superRefine((data, ctx) => {
-  if (data.email !== data.emailConfirmation) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Os emails não coincidem.",
-      path: ["emailConfirmation"],
-    });
-  }
-  if (data.cellPhone !== data.cellPhoneConfirmation) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Os números de celular não coincidem.",
-      path: ["cellPhoneConfirmation"],
-    });
-  }
-  if (data.password !== data.passwordConfirmation) {
-    ctx.addIssue({
-      code: "custom",
-      message: "As senhas não coincidem.",
-      path: ["passwordConfirmation"],
-    });
-  }
-
-  // Conditional validation based on accountType
-  if (data.accountType === 'PHYSICAL') {
-    if (!data.fullName || data.fullName.length < 3) {
-      ctx.addIssue({ code: "custom", message: "Nome completo é obrigatório.", path: ["fullName"] });
-    }
-    if (!data.cpf || data.cpf.length < 11) { // Basic length check
-      ctx.addIssue({ code: "custom", message: "CPF é obrigatório.", path: ["cpf"] });
-    }
-    if (!data.dateOfBirth) {
-      ctx.addIssue({ code: "custom", message: "Data de nascimento é obrigatória.", path: ["dateOfBirth"] });
-    }
-  } else if (data.accountType === 'LEGAL' || data.accountType === 'DIRECT_SALE_CONSIGNOR') {
-    if (!data.razaoSocial || data.razaoSocial.length < 3) {
-      ctx.addIssue({ code: "custom", message: "Razão Social é obrigatória.", path: ["razaoSocial"] });
-    }
-    if (!data.cnpj || data.cnpj.length < 14) { // Basic length check
-      ctx.addIssue({ code: "custom", message: "CNPJ é obrigatório.", path: ["cnpj"] });
-    }
-    if (!data.responsibleName || data.responsibleName.length < 3) {
-      ctx.addIssue({ code: "custom", message: "Nome do responsável é obrigatório.", path: ["responsibleName"]});
-    }
-    if (!data.responsibleCpf || data.responsibleCpf.length < 11) {
-       ctx.addIssue({ code: "custom", message: "CPF do responsável é obrigatório.", path: ["responsibleCpf"]});
-    }
-  }
-});
-
-export type RegistrationFormValues = z.infer<typeof registrationFormSchema>;
-```
-- src/app/profile/edit/actions.ts:
-```ts
-/**
- * @fileoverview Server Action for updating a user's own profile.
- */
-'use server';
-
-import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/prisma';
-import type { EditableUserProfileData } from '@/types';
-
-interface UpdateProfileResult {
-  success: boolean;
-  message: string;
-}
-
-/**
- * Updates a user's profile with the provided data.
- * This action is intended to be called by the user themselves to edit their own profile.
- * @param {string} userId - The unique ID of the user whose profile is to be updated.
- * @param {EditableUserProfileData} data - An object containing the profile fields to update.
- * @returns {Promise<UpdateProfileResult>} An object indicating the result of the operation.
- */
-export async function updateUserProfile(
-  userId: string,
-  data: EditableUserProfileData
-): Promise<UpdateProfileResult> {
-  if (!userId) {
-    return { success: false, message: 'ID do usuário não fornecido.' };
-  }
-  
-  try {
-    // The 'as any' cast is a temporary workaround for Prisma's strictness with partial JSON types.
-    // In a production scenario, you might have more robust type guards or data transformation.
-    await prisma.user.update({
-        where: { id: userId },
-        data: {
-            ...data
-        } as any,
-    });
-    
-    // Revalidate paths to ensure the updated data is reflected on the profile page
-    // and any other page that might display user information.
-    revalidatePath('/profile'); 
-    revalidatePath(`/profile/edit`); 
-    
-    return { success: true, message: 'Perfil atualizado com sucesso!' };
-
-  } catch (error: any) {
-    console.error(`Error updating profile for user ${userId}:`, error);
-    return { success: false, message: `Erro ao atualizar perfil: ${error.message}` };
-  }
-}
-```
-- src/app/profile/edit/page.tsx:
-```tsx
-'use client';
-
-import { useState, useEffect, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { useAuth } from '@/contexts/auth-context';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { updateUserProfile } from './actions';
-import type { UserProfileData, EditableUserProfileData } from '@/types';
-import { cn } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Loader2, Save, CalendarIcon, UserCog } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import Link from 'next/link';
-import { getUserProfileData as getUserProfileDataAction } from '@/app/admin/users/actions';
-
-const profileFormSchema = z.object({
-  fullName: z.string().min(3, { message: 'Nome completo deve ter pelo menos 3 caracteres.' }),
-  cpf: z.string().optional(),
-  rgNumber: z.string().optional(),
-  rgIssuer: z.string().optional(),
-  rgIssueDate: z.date().optional().nullable(),
-  rgState: z.string().optional(),
-  dateOfBirth: z.date().optional().nullable(),
-  cellPhone: z.string().optional(),
-  homePhone: z.string().optional(),
-  gender: z.string().optional(),
-  profession: z.string().optional(),
-  nationality: z.string().optional(),
-  maritalStatus: z.string().optional(),
-  propertyRegime: z.string().optional(),
-  spouseName: z.string().optional(),
-  spouseCpf: z.string().optional(),
-  zipCode: z.string().optional(),
-  street: z.string().optional(),
-  number: z.string().optional(),
-  complement: z.string().optional(),
-  neighborhood: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  optInMarketing: z.boolean().default(false),
-});
-
-type ProfileFormValues = z.infer<typeof profileFormSchema>;
-
-const genderOptions = ["Masculino", "Feminino", "Outro", "Prefiro não informar"];
-const maritalStatusOptions = ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "União Estável"];
-const propertyRegimeOptions = ["Comunhão Parcial de Bens", "Comunhão Universal de Bens", "Separação Total de Bens", "Participação Final nos Aquestos"];
-
-
-export default function EditProfilePage() {
-  const { userProfileWithPermissions, loading: authLoading } = useAuth();
-  const router = useRouter();
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFetchingData, setIsFetchingData] = useState(true); // Start true to show loader initially
-  const [fetchError, setFetchError] = useState<string | null>(null);
-
-  const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileFormSchema),
-    defaultValues: {
-      fullName: '',
-      cpf: '',
-      rgNumber: '',
-      rgIssuer: '',
-      rgIssueDate: null,
-      rgState: '',
-      dateOfBirth: null,
-      cellPhone: '',
-      homePhone: '',
-      gender: '',
-      profession: '',
-      nationality: '',
-      maritalStatus: '',
-      propertyRegime: '',
-      spouseName: '',
-      spouseCpf: '',
-      zipCode: '',
-      street: '',
-      number: '',
-      complement: '',
-      neighborhood: '',
-      city: '',
-      state: '',
-      optInMarketing: false,
-    },
-  });
-
-  useEffect(() => {
-    const fetchProfileData = async (uid: string) => {
-      setIsFetchingData(true);
-      setFetchError(null);
-      console.log('Attempting to fetch profile for UID:', uid);
-      try {
-        const data = await getUserProfileDataAction(uid);
-        if (data) {
-          form.reset({
-            fullName: data.fullName || '',
-            cpf: data.cpf || '',
-            rgNumber: data.rgNumber || '',
-            rgIssuer: data.rgIssuer || '',
-            rgIssueDate: data.rgIssueDate ? new Date(data.rgIssueDate as string) : null,
-            rgState: data.rgState || '',
-            dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth as string) : null,
-            cellPhone: data.cellPhone || '',
-            homePhone: data.homePhone || '',
-            gender: data.gender || '',
-            profession: data.profession || '',
-            nationality: data.nationality || '',
-            maritalStatus: data.maritalStatus || '',
-            propertyRegime: data.propertyRegime || '',
-            spouseName: data.spouseName || '',
-            spouseCpf: data.spouseCpf || '',
-            zipCode: data.zipCode || '',
-            street: data.street || '',
-            number: data.number || '',
-            complement: data.complement || '',
-            neighborhood: data.neighborhood || '',
-            city: data.city || '',
-            state: data.state || '',
-            optInMarketing: data.optInMarketing || false,
-          });
-        } else {
-          console.error('Profile not found in DB for UID:', uid);
-          setFetchError("Perfil não encontrado no banco de dados.");
-          toast({ title: "Erro", description: "Perfil não encontrado no banco de dados.", variant: "destructive" });
-        }
-      } catch (e: any) {
-        console.error("Error fetching user profile for edit:", e);
-        setFetchError("Erro ao buscar dados do perfil para edição.");
-        toast({ title: "Erro", description: `Não foi possível carregar os dados do perfil: ${e.message}`, variant: "destructive" });
-      } finally {
-        setIsFetchingData(false);
-      }
-    };
-
-    if (authLoading) {
-      setIsFetchingData(true); // Keep showing loader if auth is still loading
-      return;
-    }
-    
-    const userId = userProfileWithPermissions?.uid;
-
-    if (!userId) {
-      toast({ title: "Acesso Negado", description: "Você precisa estar logado para editar o perfil.", variant: "destructive" });
-      router.push('/auth/login?redirect=/profile/edit');
-      setIsFetchingData(false);
-      return;
-    }
-
-    if (userId) {
-      fetchProfileData(userId);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userProfileWithPermissions, authLoading, router, form.reset, toast]);
-
-  async function onSubmit(data: ProfileFormValues) {
-    const userId = userProfileWithPermissions?.uid;
-    if (!userId) {
-      toast({ title: "Erro", description: "Usuário não autenticado.", variant: "destructive" });
-      return;
-    }
-    setIsSubmitting(true);
-    
-    const dataToUpdate: EditableUserProfileData = {
-      ...data,
-      dateOfBirth: data.dateOfBirth instanceof Date ? data.dateOfBirth : null,
-      rgIssueDate: data.rgIssueDate instanceof Date ? data.rgIssueDate : null,
-    };
-
-    const result = await updateUserProfile(userId, dataToUpdate);
-    setIsSubmitting(false);
-
-    if (result.success) {
-      toast({ title: "Sucesso!", description: result.message });
-      router.push('/profile');
-    } else {
-      toast({ title: "Erro ao atualizar", description: result.message, variant: "destructive" });
-    }
-  }
-
-  if (authLoading || isFetchingData) {
-    return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-muted-foreground">Carregando dados do perfil...</p>
-      </div>
-    );
-  }
-
-  if (fetchError && !form.formState.isDirty) { // Show error only if form hasn't been touched yet
-    const userId = userProfileWithPermissions?.uid;
-    return (
-      <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-destructive">{fetchError}</h2>
-        <Button asChild className="mt-4">
-          <Link href="/profile">Voltar ao Perfil</Link>
-        </Button>
-         <Button variant="outline" onClick={() => userId && (form.reset(), useEffect(() => { /* re-trigger fetch */ }, [userProfileWithPermissions, authLoading]))} className="mt-4 ml-2">
-          Tentar Novamente
-        </Button>
-      </div>
-    );
-  }
-  
-  const currentMaritalStatus = form.watch("maritalStatus");
-  const showSpouseFields = currentMaritalStatus === "Casado(a)" || currentMaritalStatus === "União Estável";
-
-
-  return (
-    <div className="max-w-3xl mx-auto">
-      <Card className="shadow-xl">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold font-headline flex items-center">
-            <UserCog className="h-7 w-7 mr-3 text-primary" /> Editar Perfil
-          </CardTitle>
-          <CardDescription>Atualize suas informações pessoais e de contato.</CardDescription>
-        </CardHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="space-y-6 bg-secondary/30 p-6">
-              
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold text-primary border-b pb-2">Informações Pessoais</h3>
-                <FormField
-                  control={form.control}
-                  name="fullName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome Completo</FormLabel>
-                      <FormControl><Input {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="cpf"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>CPF</FormLabel>
-                        <FormControl><Input {...field} placeholder="000.000.000-00" /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="dateOfBirth"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Data de Nascimento</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
-                              >
-                                {field.value ? format(field.value, "dd/MM/yyyy", { locale: ptBR }) : <span>Selecione uma data</span>}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                              initialFocus
-                              captionLayout="dropdown-buttons"
-                              fromYear={1920}
-                              toYear={new Date().getFullYear() - 18}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="cellPhone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Celular</FormLabel>
-                        <FormControl><Input {...field} placeholder="(00) 00000-0000" /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                   <FormField
-                    control={form.control}
-                    name="homePhone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Telefone Residencial (Opcional)</FormLabel>
-                        <FormControl><Input {...field} placeholder="(00) 0000-0000" /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                 <div className="grid md:grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="gender"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Gênero (Opcional)</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ''}>
-                            <FormControl><SelectTrigger><SelectValue placeholder="Selecione seu gênero" /></SelectTrigger></FormControl>
-                            <SelectContent>
-                                {genderOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                            </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="profession"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Profissão (Opcional)</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                     <FormField
-                        control={form.control}
-                        name="nationality"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Nacionalidade (Opcional)</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="maritalStatus"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Estado Civil (Opcional)</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ''}>
-                            <FormControl><SelectTrigger><SelectValue placeholder="Selecione seu estado civil" /></SelectTrigger></FormControl>
-                            <SelectContent>
-                                {maritalStatusOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                            </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                </div>
-
-                 {showSpouseFields && (
-                    <>
-                        <FormField
-                            control={form.control}
-                            name="propertyRegime"
-                            render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Regime de Bens (Opcional)</FormLabel>
-                                 <Select onValueChange={field.onChange} value={field.value || ''}>
-                                <FormControl><SelectTrigger><SelectValue placeholder="Selecione o regime de bens" /></SelectTrigger></FormControl>
-                                <SelectContent>
-                                    {propertyRegimeOptions.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                                </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                            )}
-                        />
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="spouseName"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Nome do Cônjuge (Opcional)</FormLabel>
-                                    <FormControl><Input {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="spouseCpf"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>CPF do Cônjuge (Opcional)</FormLabel>
-                                    <FormControl><Input {...field} placeholder="000.000.000-00" /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                        </div>
-                    </>
-                )}
-              </section>
-
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold text-primary border-b pb-2">Documentos (RG)</h3>
-                 <div className="grid md:grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="rgNumber"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Número do RG (Opcional)</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="rgIssuer"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Órgão Emissor do RG (Opcional)</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                 </div>
-                 <div className="grid md:grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="rgState"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>UF Emissor do RG (Opcional)</FormLabel>
-                            <FormControl><Input {...field} maxLength={2} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="rgIssueDate"
-                        render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                            <FormLabel>Data de Emissão do RG (Opcional)</FormLabel>
-                            <Popover>
-                            <PopoverTrigger asChild>
-                                <FormControl>
-                                <Button
-                                    variant={"outline"}
-                                    className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
-                                >
-                                    {field.value ? format(field.value, "dd/MM/yyyy", { locale: ptBR }) : <span>Selecione uma data</span>}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                                </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                                initialFocus
-                                captionLayout="dropdown-buttons"
-                                fromYear={1950}
-                                toYear={new Date().getFullYear()}
-                                />
-                            </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                 </div>
-              </section>
-
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold text-primary border-b pb-2">Endereço (Opcional)</h3>
-                <FormField
-                  control={form.control}
-                  name="zipCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CEP</FormLabel>
-                      <FormControl><Input {...field} placeholder="00000-000" /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid md:grid-cols-3 gap-4">
-                   <FormField
-                    control={form.control}
-                    name="street"
-                    render={({ field }) => (
-                      <FormItem className="md:col-span-2">
-                        <FormLabel>Logradouro</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="number"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Número</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="complement"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Complemento</FormLabel>
-                      <FormControl><Input {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid md:grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="neighborhood"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Bairro</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="city"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Cidade</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                   <FormField
-                    control={form.control}
-                    name="state"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Estado (UF)</FormLabel>
-                        <FormControl><Input {...field} maxLength={2} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </section>
-
-              <section>
-                 <h3 className="text-lg font-semibold text-primary border-b pb-2">Preferências</h3>
-                <FormField
-                  control={form.control}
-                  name="optInMarketing"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm mt-4">
-                      <div className="space-y-0.5">
-                        <FormLabel>Comunicações de Marketing</FormLabel>
-                        <FormDescription>
-                          Desejo receber e-mails sobre promoções e novidades do BidExpert.
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </section>
-
-            </CardContent>
-            <CardFooter className="flex justify-between p-6 border-t">
-              <Button type="button" variant="outline" asChild>
-                  <Link href="/profile">Cancelar</Link>
-                </Button>
-              <Button type="submit" disabled={isSubmitting || isFetchingData || authLoading} className="w-full md:w-auto">
-                {isSubmitting ? <Loader2 className="animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                Salvar Alterações
-              </Button>
-            </CardFooter>
-          </form>
-        </Form>
-      </Card>
-    </div>
-  );
-}
-```
-- src/app/profile/page.tsx:
-```tsx
-'use client';
-
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, UserCog, Mail, Phone, Home, Building, Briefcase, Calendar, ShieldCheck, BadgeInfo, FileText, Edit, AlertCircle, Award } from 'lucide-react';
-import Link from 'next/link';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
-
-const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType, label: string, value?: string | null, href?: string }) => {
-  if (!value) return null;
-  return (
-    <div className="flex items-start text-sm">
-      <Icon className="h-4 w-4 mr-3 mt-1 text-primary flex-shrink-0" />
-      <div>
-        <span className="font-semibold text-foreground">{label}:</span>{' '}
-        {href ? (
-          <a href={href} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:underline">{value}</a>
-        ) : (
-          <span className="text-muted-foreground">{value}</span>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const badgeMap: Record<string, { icon: React.ElementType, label: string, description: string }> = {
-    'PRIMEIRO_ARREMATE': { icon: Award, label: "Primeiro Arremate", description: "Parabéns por seu primeiro lote arrematado!" },
-    // Add other badges here
-};
-
-export default function ProfilePage() {
-  const { userProfileWithPermissions, loading } = useAuth();
-  const router = useRouter();
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-muted-foreground">Carregando seu perfil...</p>
-      </div>
-    );
-  }
-
-  if (!userProfileWithPermissions) {
-    return (
-      <div className="text-center py-12">
-        <AlertCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
-        <h2 className="text-xl font-semibold text-destructive">Usuário não encontrado</h2>
-        <p className="text-muted-foreground">Por favor, faça login para ver seu perfil.</p>
-        <Button asChild className="mt-4">
-          <Link href="/auth/login?redirect=/profile">Ir para Login</Link>
-        </Button>
-      </div>
-    );
-  }
-  
-  const { 
-    fullName, email, avatarUrl, dataAiHint, roleName, habilitationStatus,
-    cellPhone, homePhone, cpf, dateOfBirth, street, number, complement,
-    neighborhood, city, state, zipCode, accountType, razaoSocial, cnpj,
-    badges
-  } = userProfileWithPermissions;
-  
-  const userInitial = fullName ? fullName.charAt(0).toUpperCase() : (email ? email.charAt(0).toUpperCase() : "U");
-
-  return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <Card className="shadow-xl">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row items-center gap-6">
-            <Avatar className="h-24 w-24 border-4 border-primary/30">
-              <AvatarImage src={avatarUrl || `https://placehold.co/128x128.png`} alt={fullName || 'Avatar'} data-ai-hint={dataAiHint || "profile avatar"} />
-              <AvatarFallback className="text-4xl">{userInitial}</AvatarFallback>
-            </Avatar>
-            <div className="flex-grow text-center sm:text-left">
-              <CardTitle className="text-3xl font-bold font-headline">{fullName || email}</CardTitle>
-              <CardDescription className="text-lg mt-1">{email}</CardDescription>
-            </div>
-             <Button asChild>
-                <Link href="/profile/edit"><Edit className="mr-2 h-4 w-4" /> Editar Perfil</Link>
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6 pt-4">
-          
-          <Card className="bg-secondary/30">
-             <CardHeader className="flex-row items-center justify-between pb-2">
-                <CardTitle className="text-lg font-semibold flex items-center"><ShieldCheck className="mr-2 h-5 w-5 text-muted-foreground" />Status da Conta</CardTitle>
-             </CardHeader>
-             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center"><strong className="w-24">Perfil:</strong> <Badge variant="outline">{roleName || 'Não definido'}</Badge></div>
-                <div className="flex items-center"><strong className="w-24">Habilitação:</strong> <Badge variant="outline">{habilitationStatus || 'Pendente'}</Badge></div>
-             </CardContent>
-          </Card>
-          
-          {badges && badges.length > 0 && (
-            <section>
-                 <h3 className="text-lg font-semibold text-primary border-b pb-1 mb-3 flex items-center"><Award className="mr-2 h-5 w-5"/>Conquistas e Medalhas</h3>
-                 <div className="flex flex-wrap gap-4">
-                    {badges.map(badgeKey => {
-                        const badgeInfo = badgeMap[badgeKey as keyof typeof badgeMap];
-                        if (!badgeInfo) return null;
-                        const Icon = badgeInfo.icon;
-                        return (
-                             <TooltipProvider key={badgeKey}>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div className="flex flex-col items-center gap-1 p-3 rounded-md border bg-background w-24">
-                                            <Icon className="h-8 w-8 text-amber-500" />
-                                            <span className="text-xs font-medium text-center">{badgeInfo.label}</span>
-                                        </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>{badgeInfo.description}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                             </TooltipProvider>
-                        )
-                    })}
-                 </div>
-            </section>
-          )}
-
-          <section>
-            <h3 className="text-lg font-semibold text-primary border-b pb-1 mb-3 flex items-center"><UserCog className="mr-2 h-5 w-5"/>Informações Pessoais</h3>
-            <div className="space-y-3">
-              <InfoItem icon={BadgeInfo} label="Tipo de Conta" value={accountType === 'LEGAL' ? 'Pessoa Jurídica' : 'Pessoa Física'} />
-              {accountType === 'LEGAL' ? (
-                <>
-                  <InfoItem icon={Building} label="Razão Social" value={razaoSocial} />
-                  <InfoItem icon={FileText} label="CNPJ" value={cnpj} />
-                </>
-              ) : (
-                <>
-                  <InfoItem icon={FileText} label="CPF" value={cpf} />
-                  <InfoItem icon={Calendar} label="Data de Nascimento" value={dateOfBirth ? format(new Date(dateOfBirth as string), 'dd/MM/yyyy', { locale: ptBR }) : null} />
-                </>
-              )}
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold text-primary border-b pb-1 mb-3 flex items-center"><Mail className="mr-2 h-5 w-5"/>Contato</h3>
-            <div className="space-y-3">
-              <InfoItem icon={Phone} label="Celular" value={cellPhone} href={`tel:${cellPhone}`} />
-              <InfoItem icon={Phone} label="Telefone Fixo" value={homePhone} href={`tel:${homePhone}`} />
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-lg font-semibold text-primary border-b pb-1 mb-3 flex items-center"><Home className="mr-2 h-5 w-5"/>Endereço</h3>
-            <div className="space-y-3">
-              <InfoItem icon={Home} label="Endereço" value={`${street || ''}${number ? ', ' + number : ''}${complement ? ' - ' + complement : ''}`.trim() || null} />
-              <InfoItem icon={Home} label="Bairro" value={neighborhood} />
-              <InfoItem icon={Home} label="Cidade/UF" value={`${city || ''}${state ? ' - ' + state : ''}`.trim() || null} />
-              <InfoItem icon={Home} label="CEP" value={zipCode} />
-            </div>
-          </section>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-```
-- src/app/sellers/page.tsx:
-```tsx
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building, ArrowRight, CalendarDays, Star } from 'lucide-react';
-import Link from 'next/link';
-import { getSellers } from '@/app/admin/sellers/actions';
-import type { SellerProfileInfo } from '@/types';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-
-const getSellerInitial = (name: string) => {
-    return name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'S';
-};
-
-export default async function SellersListPage() {
-  let sellers: SellerProfileInfo[] = [];
-  let error: string | null = null;
-
-  try {
-    sellers = await getSellers();
-  } catch (e) {
-    console.error("Error fetching sellers:", e);
-    error = "Falha ao buscar comitentes.";
-  }
-
-  return (
-    <div className="max-w-4xl mx-auto space-y-8 py-8">
-      <section className="text-center py-12 bg-gradient-to-br from-primary/10 via-background to-accent/10 rounded-lg">
-        <Building className="mx-auto h-12 w-12 text-primary mb-4" />
-        <h1 className="text-4xl font-bold mb-4 font-headline">Nossos Comitentes</h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Conheça os vendedores e instituições que confiam no BidExpert para leiloar seus bens.
-        </p>
-      </section>
-      
-      {error && (
-        <div className="text-center py-12">
-          <h2 className="text-xl font-semibold text-destructive">{error}</h2>
-        </div>
-      )}
-
-      {!error && sellers.length === 0 && (
-        <Card>
-          <CardContent className="p-6 text-center text-muted-foreground">
-            Nenhum comitente cadastrado na plataforma ainda.
-          </CardContent>
-        </Card>
-      )}
-      
-      {!error && sellers.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sellers.map((seller) => (
-            <Card key={seller.id} className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-              <CardHeader className="items-center text-center p-4">
-                <Avatar className="h-24 w-24 mb-3 border-2 border-primary/30">
-                  <AvatarImage src={seller.logoUrl || `https://placehold.co/100x100.png?text=${getSellerInitial(seller.name)}`} alt={seller.name} data-ai-hint={seller.dataAiHintLogo || "logo comitente"} />
-                  <AvatarFallback>{getSellerInitial(seller.name)}</AvatarFallback>
-                </Avatar>
-                <CardTitle className="text-xl font-semibold">{seller.name}</CardTitle>
-                <CardDescription className="text-xs text-primary">{seller.isJudicial ? 'Comitente Judicial' : 'Comitente Verificado'}</CardDescription>
-                {seller.rating !== undefined && seller.rating > 0 && (
-                  <div className="flex items-center text-xs text-amber-600 mt-1">
-                    <Star className="h-4 w-4 fill-amber-500 text-amber-500 mr-1" />
-                    {seller.rating.toFixed(1)}
-                    <span className="text-muted-foreground ml-1">({Math.floor(Math.random() * 100 + (seller.auctionsFacilitatedCount || 0))} avaliações)</span>
-                  </div>
-                )}
-              </CardHeader>
-              <CardContent className="flex-grow px-4 pb-4 space-y-1 text-sm text-muted-foreground text-center">
-                {seller.city && seller.state && (
-                  <p className="text-xs">{seller.city} - {seller.state}</p>
-                )}
-                <div className="text-xs">
-                  <span className="font-medium text-foreground">{seller.activeLotsCount || 0}</span> lotes ativos
-                </div>
-                {seller.memberSince && (
-                  <div className="text-xs">
-                    Membro desde: {format(new Date(seller.memberSince as any), 'MM/yyyy', { locale: ptBR })}
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter className="p-4 border-t">
-                <Button asChild variant="outline" className="w-full">
-                  <Link href={`/sellers/${seller.slug || seller.publicId || seller.id}`}>
-                    Ver Perfil e Lotes <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-```
-- src/contexts/auth-context.tsx:
-```tsx
-'use client';
-
-import type { ReactNode, Dispatch, SetStateAction } from 'react';
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { Loader2 } from 'lucide-react';
-import { getCurrentUser, logout as logoutAction } from '@/app/auth/actions';
-import type { UserProfileWithPermissions } from '@/types';
-import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
-
-interface AuthContextType {
-  userProfileWithPermissions: UserProfileWithPermissions | null;
-  loading: boolean;
-  setUserProfileWithPermissions: Dispatch<SetStateAction<UserProfileWithPermissions | null>>;
-  logout: () => void;
-  refetchUser: () => void;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [userProfileWithPermissions, setUserProfileWithPermissions] = useState<UserProfileWithPermissions | null>(null);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const { toast } = useToast();
-
-  const fetchUser = useCallback(async () => {
-    try {
-      setLoading(true);
-      const user = await getCurrentUser();
-      setUserProfileWithPermissions(user);
-    } catch (error) {
-      console.error("Failed to fetch user session:", error);
-      setUserProfileWithPermissions(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
-
-  const logout = async () => {
-    try {
-        await logoutAction();
-        setUserProfileWithPermissions(null);
-        toast({ title: "Logout realizado com sucesso." });
-        // O redirect é feito na server action
-    } catch (error) {
-        console.error("Logout error", error);
-        toast({ title: "Erro ao fazer logout.", variant: 'destructive'});
-    }
-  };
-
-  return (
-    <AuthContext.Provider value={{
-      userProfileWithPermissions,
-      loading,
-      setUserProfileWithPermissions,
-      logout,
-      refetchUser: fetchUser
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
-```
-- src/lib/permissions.ts:
-```ts
-import type { UserProfileWithPermissions } from '@/types';
-
-/**
- * Checks if a user has a specific permission.
- *
- * @param userProfileWithPermissions The user's profile object which includes their permissions array,
- *                                   or null if the user is not logged in or profile is not loaded.
- * @param requiredPermission The permission string to check for (e.g., "auctions:create").
- * @returns True if the user has the permission or the 'manage_all' permission, false otherwise.
- */
-export function hasPermission(
-  userProfileWithPermissions: UserProfileWithPermissions | null,
-  requiredPermission: string
-): boolean {
-  if (!userProfileWithPermissions || !userProfileWithPermissions.permissions) {
-    return false;
-  }
-
-  // Admins with 'manage_all' have all permissions
-  if (userProfileWithPermissions.permissions.includes('manage_all')) {
-    return true;
-  }
-
-  return userProfileWithPermissions.permissions.includes(requiredPermission);
-}
-
-/**
- * Checks if a user has ANY of the specified permissions.
- *
- * @param userProfileWithPermissions The user's profile object with permissions.
- * @param requiredPermissions An array of permission strings.
- * @returns True if the user has at least one of the specified permissions or 'manage_all', false otherwise.
- */
-export function hasAnyPermission(
-  userProfileWithPermissions: UserProfileWithPermissions | null,
-  requiredPermissions: string[]
-): boolean {
-  if (!userProfileWithPermissions || !userProfileWithPermissions.permissions) {
-    return false;
-  }
-
-  if (userProfileWithPermissions.permissions.includes('manage_all')) {
-    return true;
-  }
-
-  return requiredPermissions.some(permission =>
-    userProfileWithPermissions.permissions.includes(permission)
-  );
-}
-
-/**
- * Checks if a user has ALL of the specified permissions.
- *
- * @param userProfileWithPermissions The user's profile object with permissions.
- * @param requiredPermissions An array of permission strings.
- * @returns True if the user has all of the specified permissions (or 'manage_all'), false otherwise.
- */
-export function hasAllPermissions(
-  userProfileWithPermissions: UserProfileWithPermissions | null,
-  requiredPermissions: string[]
-): boolean {
-  if (!userProfileWithPermissions || !userProfileWithPermissions.permissions) {
-    return false;
-  }
-  
-  if (userProfileWithPermissions.permissions.includes('manage_all')) {
-    return true;
-  }
-
-  return requiredPermissions.every(permission =>
-    userProfileWithPermissions.permissions.includes(permission)
-  );
-}
-```
-- src/lib/session.ts:
-```ts
-// src/lib/session.ts
-import 'server-only';
-import { SignJWT, jwtVerify } from 'jose';
-import { cookies } from 'next/headers';
-import type { UserProfileWithPermissions } from '@/types';
-
-const secretKey = process.env.SESSION_SECRET;
-const encodedKey = new TextEncoder().encode(secretKey);
-
-if (!secretKey || secretKey.length < 32) {
-    throw new Error('A variável de ambiente SESSION_SECRET deve ser definida e ter pelo menos 32 caracteres.');
-}
-
-/**
- * Criptografa um payload para criar um token de sessão JWT.
- * @param {object} payload - Os dados a serem incluídos no token.
- * @returns {Promise<string>} O token de sessão assinado.
- */
-export async function encrypt(payload: any) {
-    return new SignJWT(payload)
-        .setProtectedHeader({ alg: 'HS256' })
-        .setIssuedAt()
-        .setExpirationTime('7d') // A sessão expira em 7 dias
-        .sign(encodedKey);
-}
-
-/**
- * Descriptografa e verifica um token de sessão JWT.
- * @param {string | undefined} session - O token de sessão do cookie.
- * @returns {Promise<any | null>} O payload do token se for válido, caso contrário, null.
- */
-export async function decrypt(session: string | undefined = '') {
-    try {
-        const { payload } = await jwtVerify(session, encodedKey, {
-            algorithms: ['HS256'],
-        });
-        return payload;
-    } catch (error) {
-        console.log('Falha ao verificar a sessão JWT.');
-        return null;
-    }
-}
-
-/**
- * Cria uma nova sessão para o usuário e a define em um cookie HTTP-only.
- * @param {UserProfileWithPermissions} user - O objeto de perfil do usuário.
- */
-export async function createSession(user: UserProfileWithPermissions) {
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    const sessionPayload = {
-        userId: user.uid,
-        email: user.email,
-        role: user.roleName,
-        permissions: user.permissions,
-        sellerId: user.sellerId, // Add sellerId to session
-    };
-    const session = await encrypt(sessionPayload);
-
-    cookies().set('session', session, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        expires: expiresAt,
-        sameSite: 'lax',
-        path: '/',
-    });
-}
-
-/**
- * Recupera e verifica a sessão do cookie atual.
- * @returns {Promise<any | null>} O payload da sessão se válida, senão null.
- */
-export async function getSession() {
-    const cookie = cookies().get('session')?.value;
-    const session = await decrypt(cookie);
-    return session;
-}
-
-/**
- * Exclui a sessão do usuário, removendo o cookie.
- */
-export async function deleteSession() {
-    cookies().delete('session');
-}
-```
-- src/lib/utils.ts:
-```ts
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
-```
