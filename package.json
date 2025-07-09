@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "dotenv -- npx prisma migrate dev && next dev",
     "genkit:dev": "genkit start -- tsx /home/user/studio/src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "prisma generate && next build",
