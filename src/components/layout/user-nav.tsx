@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -9,7 +10,16 @@ import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart,
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useCallback } from 'react';
-import { hasPermission, hasAnyPermission } from '@/lib/permissions'; 
+import { hasPermission, hasAnyPermission } from '@/lib/permissions';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 
 export default function UserNav() {
   const { userProfileWithPermissions, loading, logout } = useAuth();
