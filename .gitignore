@@ -43,4 +43,6 @@ tsconfig.tsbuildinfo
 studio.json
 *.studio.json
 
+/node_modules/.prisma
+
 
