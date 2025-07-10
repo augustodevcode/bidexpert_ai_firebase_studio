@@ -1,5 +1,5 @@
 // src/lib/database/postgres.adapter.ts
-import type { DatabaseAdapter } from '@/types';
+import type { DatabaseAdapter, Auction } from '@/types';
 import { Pool } from 'pg';
 
 export class PostgresAdapter implements DatabaseAdapter {
@@ -39,11 +39,22 @@ export class PostgresAdapter implements DatabaseAdapter {
         }
     }
     
+    async getAuctions(): Promise<Auction[]> {
+        const client = await this.pool.connect();
+        try {
+            // Assumindo uma tabela 'Auction' no Prisma, que mapeia para "Auction".
+            // Adapte os nomes de colunas se seu schema for diferente.
+            const res = await client.query('SELECT * FROM "Auction" ORDER BY "auctionDate" DESC');
+            return res.rows;
+        } finally {
+            client.release();
+        }
+    }
+
     getLot(id: string): Promise<any | null> { return this._notImplemented('getLot'); }
     createLot(lotData: any): Promise<{ success: boolean; message: string; lotId?: string; }> { return this._notImplemented('createLot'); }
     updateLot(id: string, updates: any): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateLot'); }
     deleteLot(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteLot'); }
-    getAuctions(): Promise<any[]> { return this._notImplemented('getAuctions'); }
     getAuction(id: string): Promise<any | null> { return this._notImplemented('getAuction'); }
     getLotsByIds(ids: string[]): Promise<any[]> { return this._notImplemented('getLotsByIds'); }
     getLotCategories(): Promise<any[]> { return this._notImplemented('getLotCategories'); }

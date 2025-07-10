@@ -1,5 +1,5 @@
 // src/lib/database/mysql.adapter.ts
-import type { DatabaseAdapter } from '@/types';
+import type { DatabaseAdapter, Auction } from '@/types';
 import mysql from 'mysql2/promise';
 
 export class MySqlAdapter implements DatabaseAdapter {
@@ -37,11 +37,21 @@ export class MySqlAdapter implements DatabaseAdapter {
         }
     }
     
+    async getAuctions(): Promise<Auction[]> {
+        const connection = await this.pool.getConnection();
+        try {
+            // Assumindo uma tabela 'auctions'. Adapte os nomes de colunas se necessário.
+            const [rows] = await connection.execute('SELECT * FROM auctions ORDER BY auctionDate DESC');
+            return rows as Auction[];
+        } finally {
+            connection.release();
+        }
+    }
+
     getLot(id: string): Promise<any | null> { return this._notImplemented('getLot'); }
     createLot(lotData: any): Promise<{ success: boolean; message: string; lotId?: string; }> { return this._notImplemented('createLot'); }
     updateLot(id: string, updates: any): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateLot'); }
     deleteLot(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteLot'); }
-    getAuctions(): Promise<any[]> { return this._notImplemented('getAuctions'); }
     getAuction(id: string): Promise<any | null> { return this._notImplemented('getAuction'); }
     getLotsByIds(ids: string[]): Promise<any[]> { return this._notImplemented('getLotsByIds'); }
     getLotCategories(): Promise<any[]> { return this._notImplemented('getLotCategories'); }
