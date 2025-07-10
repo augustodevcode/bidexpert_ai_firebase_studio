@@ -2,13 +2,15 @@
   "name": "nextn",
   "version": "0.1.0",
   "private": true,
-  "scripts": {    
-    "genkit:dev": "genkit start -- tsx /home/user/studio/src/ai/dev.ts",
-    "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
+  "scripts": {
+    "dev": "prisma generate && next dev",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
-  
+    "typecheck": "tsc --noEmit",
+    "genkit:dev": "genkit start -- tsx /home/user/studio/src/ai/dev.ts",
+    "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
+    "postinstall": "patch-package"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
