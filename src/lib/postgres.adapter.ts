@@ -1,4 +1,4 @@
-// src/lib/postgres.adapter.ts
+// src/lib/database/postgres.adapter.ts
 import type { DatabaseAdapter } from '@/types';
 import { Pool } from 'pg';
 

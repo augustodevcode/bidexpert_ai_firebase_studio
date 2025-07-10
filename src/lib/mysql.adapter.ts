@@ -1,4 +1,4 @@
-// src/lib/mysql.adapter.ts
+// src/lib/database/mysql.adapter.ts
 import type { DatabaseAdapter } from '@/types';
 import mysql from 'mysql2/promise';
 

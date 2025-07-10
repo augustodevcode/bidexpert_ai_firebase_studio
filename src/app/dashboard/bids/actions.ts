@@ -5,7 +5,7 @@
  */
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { getDatabaseAdapter } from '@/lib/database/index';
 import type { UserBid } from '@/types';
 
 /**

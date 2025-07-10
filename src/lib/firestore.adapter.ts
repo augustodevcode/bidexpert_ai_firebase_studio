@@ -1,4 +1,4 @@
-// src/lib/firestore.adapter.ts
+// src/lib/database/firestore.adapter.ts
 import { db as dbAdmin, ensureAdminInitialized, AdminFieldValue, ServerTimestamp } from '@/lib/firebase/admin';
 import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
