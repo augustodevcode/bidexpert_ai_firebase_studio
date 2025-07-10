@@ -22,7 +22,6 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
 
   try {
     const db = await getDatabaseAdapter();
-    // A função getUsersWithRoles já combina usuários com seus papéis e permissões
     const usersWithRoles = await db.getUsersWithRoles();
     const user = usersWithRoles.find(u => u.email?.toLowerCase() === email.toLowerCase());
 
@@ -31,7 +30,6 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
-    // A senha no sample-data está em texto plano, então bypassamos a verificação do bcrypt para esse caso.
     const activeDbSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
     const isSampleData = activeDbSystem === 'SAMPLE_DATA';
     
@@ -46,7 +44,6 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
-    // O objeto 'user' de getUsersWithRoles já deve conter as permissões.
     const userProfileWithPerms: UserProfileWithPermissions = user;
 
     await createSession(userProfileWithPerms);
@@ -56,6 +53,4 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
 
   } catch (error) {
     console.error('[Login Action] Error:', error);
-    return { success: false, message: 'Ocorreu um erro interno durante o login.' };
-  }
-}
+    return { success: false, message:
