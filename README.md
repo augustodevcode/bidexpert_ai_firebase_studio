@@ -1,55 +1,60 @@
 # BidExpert - Powered by Firebase Studio
 
-This is a Next.js starter application built with Firebase Studio. It's designed to provide a robust foundation for an online auction platform, complete with an admin panel, user authentication, and a flexible data layer powered by Prisma.
+This is a Next.js starter application built with Firebase Studio. It's designed to provide a robust foundation for an online auction platform, complete with an admin panel, user authentication, and a flexible data layer.
 
 To get started, take a look at `src/app/page.tsx`.
 
 ---
 
-## Database Setup with Prisma
+## Database Setup (Sample Data, Firestore, SQL)
 
-This project uses **Prisma** as its Object-Relational Mapper (ORM) to manage database interactions. It's configured to work with PostgreSQL, but can be adapted for other SQL databases like MySQL.
+This project is configured with a flexible data layer that can connect to multiple database systems, managed by environment variables. By default, it uses **Sample Data** for a quick start.
 
-### 1. Create a `.env.local` File
+### Using Sample Data (Default)
 
-In the root of your project, create a file named `.env.local`. This file will securely store your database connection string and should not be committed to version control.
+No setup is required. Simply run the development server, and the application will use the mock data located in `src/lib/sample-data.ts`.
 
-### 2. Add Your Database Connection String
-
-Add the `DATABASE_URL` environment variable to your `.env.local` file. You can get the connection string from your database provider's dashboard (e.g., Neon, Supabase, PlanetScale, AWS RDS) or construct it if you're running the database locally.
-
-**Format for PostgreSQL:**
-`postgresql://[USER]:[PASSWORD]@[HOST]:[PORT]/[DATABASE_NAME]`
-
-**Example for a local PostgreSQL database:**
-```
-DATABASE_URL="postgresql://user:password@localhost:5432/bidexpert_db"
-```
-
-### 3. Initialize and Seed the Database
-
-Once your connection string is set up, run the following commands in your terminal to prepare your database.
-
-1.  **Apply Migrations:** This command reads your `prisma/schema.prisma` file and creates all the necessary tables in your database.
-    ```bash
-    npx prisma migrate dev --name init
-    ```
-    This will also automatically run `prisma generate` to create the Prisma Client based on your schema.
-
-2.  **Seed the Database (Optional):** This command executes the `prisma/seed.ts` script to populate your database with essential data like default user roles, an admin account, and sample data to make development easier.
-    ```bash
-    npx prisma db seed
-    ```
-
-### 4. Start the Development Server
-
-You're all set! Start the Next.js development server.
 ```bash
 npm run dev
 ```
 
-### Useful Prisma Commands
+### Using a Database
 
--   **`npx prisma studio`**: Opens a visual editor for your database in the browser.
--   **`npx prisma generate`**: Manually regenerates the Prisma Client after changes to `schema.prisma`.
--   **`npx prisma migrate dev --name <migration-name>`**: Creates a new migration file after you modify `schema.prisma`.
+To connect to a real database (Firestore, PostgreSQL, or MySQL), you need to:
+
+1.  **Create a `.env.local` file** in the root of your project.
+2.  **Add the appropriate environment variables** to this file.
+
+#### For Firestore:
+
+1.  Place your Firebase service account key JSON file in the root of the project (e.g., `bidexpert-service-account.json`).
+2.  Add the following to `.env.local`:
+    ```
+    NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM=FIRESTORE
+    GOOGLE_APPLICATION_CREDENTIALS=./bidexpert-service-account.json
+    ```
+
+#### For PostgreSQL or MySQL:
+
+1.  Add your database connection string to `.env.local`:
+    ```
+    # For PostgreSQL
+    NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM=POSTGRES
+    POSTGRES_DATABASE_URL="postgresql://user:password@host:port/database"
+    
+    # For MySQL
+    NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM=MYSQL
+    MYSQL_DATABASE_URL="mysql://user:password@host:port/database"
+    ```
+2.  Run the database initialization script (adapt `scripts/init-db.ts` for your specific schema if needed):
+    ```bash
+    npx tsx scripts/init-db.ts
+    ```
+
+### Seeding Data (Firestore)
+
+If you're using Firestore and want to populate it with sample data, run the seed script:
+```bash
+npm run seed:firestore
+```
+This will populate your Firestore collections with the data from `src/lib/sample-data.ts`.

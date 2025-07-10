@@ -2,12 +2,11 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
-import bcrypt from 'bcrypt';
+import { getDatabaseAdapter } from '@/lib/database';
 import { createSession, getSession, deleteSession } from '@/lib/session';
-import type { UserProfileWithPermissions } from '@/types';
+import type { UserProfileData } from '@/types';
 import { revalidatePath } from 'next/cache';
-
+import bcrypt from 'bcrypt';
 
 /**
  * Realiza o login de um usuário com base no email e senha.
@@ -22,47 +21,33 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
   if (!email || !password) {
     return { success: false, message: 'Email e senha são obrigatórios.' };
   }
+  
+  const db = await getDatabaseAdapter();
+  const users = await db.getUsersWithRoles();
+  const user = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
 
-  try {
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        role: {
-          select: { name: true, permissions: true }
-        }
-      }
-    });
-
-    if (!user || !user.password) {
-      return { success: false, message: 'Credenciais inválidas.' };
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      return { success: false, message: 'Credenciais inválidas.' };
-    }
-    
-    // As permissões agora vêm como { name: string }[]
-    const permissions = user.role?.permissions.map(p => p.name) || [];
-    
-    const userProfileWithPerms: UserProfileWithPermissions = {
-      ...user,
-      uid: user.id,
-      roleName: user.role?.name || 'USER',
-      permissions: permissions,
-    };
-
-    await createSession(userProfileWithPerms);
-    
-    // Revalidação não é necessária aqui, a criação do cookie será lida na próxima requisição.
-    // O redirecionamento será feito no lado do cliente.
-    return { success: true, message: 'Login bem-sucedido!' };
-
-  } catch (error) {
-    console.error('[Login Action] Error:', error);
-    return { success: false, message: 'Ocorreu um erro interno durante o login.' };
+  if (!user || !user.password) {
+    return { success: false, message: 'Credenciais inválidas.' };
   }
+
+  // NOTE: bcrypt should be used in a real DB scenario. 
+  // For sample data with plain text passwords, this check is simplified.
+  const isPasswordValid = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM === 'SAMPLE_DATA' 
+    ? password === user.password 
+    : await bcrypt.compare(password, user.password);
+
+  if (!isPasswordValid) {
+    return { success: false, message: 'Credenciais inválidas.' };
+  }
+  
+  // Fetch permissions based on role
+  const roles = await db.getRoles();
+  const userRole = roles.find(r => r.id === user.roleId);
+  const userWithPermissions = { ...user, permissions: userRole?.permissions || [] };
+
+  await createSession(userWithPermissions);
+    
+  return { success: true, message: 'Login bem-sucedido!' };
 }
 
 /**
@@ -78,38 +63,12 @@ export async function logout() {
  * Obtém os dados do usuário logado atualmente com base na sessão do cookie.
  * @returns O perfil do usuário com permissões, ou null se não houver sessão válida.
  */
-export async function getCurrentUser(): Promise<UserProfileWithPermissions | null> {
+export async function getCurrentUser(): Promise<UserProfileData | null> {
     const session = await getSession();
     if (!session || !session.userId) {
         return null;
     }
-
-    try {
-        const user = await prisma.user.findUnique({
-            where: { id: session.userId as string },
-            include: {
-                role: {
-                    include: {
-                        permissions: true,
-                    },
-                },
-            },
-        });
-        
-        if (!user) {
-            return null;
-        }
-
-        const permissions = user.role?.permissions.map(p => p.name) || [];
-
-        return {
-            ...user,
-            uid: user.id,
-            roleName: user.role?.name || 'USER',
-            permissions: permissions,
-        } as UserProfileWithPermissions;
-    } catch (error) {
-        console.error('[getCurrentUser Action] Error fetching user from DB:', error);
-        return null;
-    }
+    const db = await getDatabaseAdapter();
+    const user = await db.getUserProfileData(session.userId);
+    return user;
 }

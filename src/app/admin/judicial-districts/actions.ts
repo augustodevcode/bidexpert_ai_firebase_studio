@@ -1,89 +1,36 @@
-
+// src/app/admin/judicial-districts/actions.ts
 'use server';
 
-import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/prisma';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { JudicialDistrict, JudicialDistrictFormData } from '@/types';
-import { slugify } from '@/lib/sample-data-helpers';
-
-export async function createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> {
-  try {
-    const newState = await prisma.judicialDistrict.create({
-      data: {
-        ...data,
-        slug: slugify(data.name),
-      }
-    });
-    revalidatePath('/admin/judicial-districts');
-    return { success: true, message: 'Comarca criada com sucesso!', districtId: newState.id };
-  } catch (error: any) {
-    console.error("Error creating judicial district:", error);
-    if (error.code === 'P2002') {
-      return { success: false, message: 'Já existe uma comarca com este nome neste estado.' };
-    }
-    return { success: false, message: error.message || 'Falha ao criar comarca.' };
-  }
-}
+import { revalidatePath } from 'next/cache';
 
 export async function getJudicialDistricts(): Promise<JudicialDistrict[]> {
-  try {
-    const districts = await prisma.judicialDistrict.findMany({
-      include: {
-        court: true,
-        state: true,
-      },
-      orderBy: { name: 'asc' }
-    });
-    return districts.map(d => ({
-        ...d,
-        courtName: d.court.name,
-        stateUf: d.state.uf,
-    })) as unknown as JudicialDistrict[];
-  } catch (error) {
-    console.error("Error fetching judicial districts:", error);
-    return [];
-  }
+    const db = await getDatabaseAdapter();
+    // @ts-ignore - Assuming this method exists on the adapter for now
+    if (db.getJudicialDistricts) {
+        // @ts-ignore
+        return db.getJudicialDistricts();
+    }
+    return []; // Return empty if not implemented
 }
 
 export async function getJudicialDistrict(id: string): Promise<JudicialDistrict | null> {
-  try {
-    const district = await prisma.judicialDistrict.findUnique({ where: { id } });
-    return district as unknown as JudicialDistrict | null;
-  } catch (error) {
-    console.error(`Error fetching judicial district with ID ${id}:`, error);
-    return null;
-  }
+    const districts = await getJudicialDistricts();
+    return districts.find(d => d.id === id) || null;
+}
+
+export async function createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> {
+    console.warn("createJudicialDistrict with sample data adapter is not fully implemented.");
+    return { success: false, message: "Criação de comarca não implementada para este adaptador." };
 }
 
 export async function updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> {
-  try {
-    const updateData: any = {...data};
-    if (data.name) {
-      updateData.slug = slugify(data.name);
-    }
-    await prisma.judicialDistrict.update({
-      where: { id },
-      data: updateData,
-    });
-    revalidatePath('/admin/judicial-districts');
-    revalidatePath(`/admin/judicial-districts/${id}/edit`);
-    return { success: true, message: 'Comarca atualizada com sucesso!' };
-  } catch (error: any) {
-    console.error(`Error updating judicial district ${id}:`, error);
-    return { success: false, message: error.message || 'Falha ao atualizar comarca.' };
-  }
+    console.warn("updateJudicialDistrict with sample data adapter is not fully implemented.");
+    return { success: false, message: "Atualização de comarca não implementada para este adaptador." };
 }
 
 export async function deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> {
-  try {
-    await prisma.judicialDistrict.delete({ where: { id } });
-    revalidatePath('/admin/judicial-districts');
-    return { success: true, message: 'Comarca excluída com sucesso!' };
-  } catch (error: any) {
-    console.error(`Error deleting judicial district ${id}:`, error);
-    if (error.code === 'P2003') {
-        return { success: false, message: 'Não é possível excluir. Esta comarca tem varas vinculadas.' };
-    }
-    return { success: false, message: error.message || 'Falha ao excluir comarca.' };
-  }
+    console.warn("deleteJudicialDistrict with sample data adapter is not fully implemented.");
+    return { success: false, message: "Exclusão de comarca não implementada para este adaptador." };
 }
