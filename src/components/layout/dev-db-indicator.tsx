@@ -1,4 +1,5 @@
-// src/components/layout/dev-db-indicator.tsx
+
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -36,3 +37,4 @@ export default function DevDbIndicator() {
     </p>
   );
 }
+
