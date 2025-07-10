@@ -22,31 +22,36 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
 
   try {
     const db = await getDatabaseAdapter();
-    const users = await db.getUsersWithRoles();
-    const user = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+    // A função getUsersWithRoles já combina usuários com seus papéis e permissões
+    const usersWithRoles = await db.getUsersWithRoles();
+    const user = usersWithRoles.find(u => u.email?.toLowerCase() === email.toLowerCase());
 
     if (!user || !user.password) {
+      console.log(`[Login Action] User not found or password not set for email: ${email}`);
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
     // A senha no sample-data está em texto plano, então bypassamos a verificação do bcrypt para esse caso.
-    const isSampleData = (process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA') === 'SAMPLE_DATA';
-    const isPasswordValid = isSampleData ? (password === user.password) : await bcrypt.compare(password, user.password);
+    const activeDbSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
+    const isSampleData = activeDbSystem === 'SAMPLE_DATA';
+    
+    console.log(`[Login Action] Authenticating for user ${email}. System: ${activeDbSystem}. Is Sample Data: ${isSampleData}`);
+    
+    const isPasswordValid = isSampleData 
+        ? (password === user.password) 
+        : await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
+      console.log(`[Login Action] Invalid password for user: ${email}`);
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
-    const roles = await db.getRoles();
-    const userRole = roles.find(r => r.id === user.roleId);
-    
-    const userProfileWithPerms: UserProfileWithPermissions = {
-      ...user,
-      permissions: userRole?.permissions || [],
-    };
+    // O objeto 'user' de getUsersWithRoles já deve conter as permissões.
+    const userProfileWithPerms: UserProfileWithPermissions = user;
 
     await createSession(userProfileWithPerms);
     
+    console.log(`[Login Action] Session created successfully for ${email}`);
     return { success: true, message: 'Login bem-sucedido!' };
 
   } catch (error) {
