@@ -1,7 +1,7 @@
 // src/app/admin/document-templates/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database/index';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { DocumentTemplate } from '@/types';
 
 // Placeholder for a form data type

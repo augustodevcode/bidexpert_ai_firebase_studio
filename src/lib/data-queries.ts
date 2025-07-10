@@ -5,7 +5,7 @@
  * via the configured database adapter.
  */
 import 'server-only';
-import { getDatabaseAdapter } from '@/lib/database/index';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { 
     Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, 
     SellerProfileInfo, MediaItem, PlatformSettings, Bem

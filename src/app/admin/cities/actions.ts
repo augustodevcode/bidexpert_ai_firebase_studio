@@ -1,7 +1,7 @@
 // src/app/admin/cities/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database/index';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { CityInfo, CityFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
 

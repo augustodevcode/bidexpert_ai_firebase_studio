@@ -1,7 +1,7 @@
 // src/app/admin/contact-messages/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database/index';
+import { getDatabaseAdapter } from '@/lib/database';
 import { revalidatePath } from 'next/cache';
 import type { ContactMessage } from '@/types';
 

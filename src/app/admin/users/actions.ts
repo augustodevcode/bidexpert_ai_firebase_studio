@@ -1,7 +1,7 @@
 // src/app/admin/users/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database/index';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { UserProfileData, Role } from '@/types';
 import { revalidatePath } from 'next/cache';
 

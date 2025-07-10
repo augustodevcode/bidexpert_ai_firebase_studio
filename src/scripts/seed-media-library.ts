@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { promisify } from 'util';
 import dotenv from 'dotenv';
-import { getDatabaseAdapter } from '../lib/database/index';
+import { getDatabaseAdapter } from '../lib/database';
 import type { MediaItem } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 

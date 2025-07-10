@@ -1,7 +1,7 @@
 // src/app/admin/bens/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database/index';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { Bem, BemFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
 

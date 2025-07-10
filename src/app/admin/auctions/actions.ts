@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDatabaseAdapter } from '@/lib/database/index';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { Auction, AuctionFormData } from '@/types';
 import { fetchAuctions, fetchAuction, fetchAuctionsByIds, fetchAuctionsBySellerSlug, fetchAuctionsByAuctioneerSlug } from '@/lib/data-queries';
 

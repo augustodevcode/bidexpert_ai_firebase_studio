@@ -1,7 +1,7 @@
 // src/app/admin/courts/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database/index';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { Court, CourtFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
 

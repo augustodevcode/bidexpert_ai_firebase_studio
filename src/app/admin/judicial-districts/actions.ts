@@ -1,7 +1,7 @@
 // src/app/admin/judicial-districts/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database/index';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { JudicialDistrict, JudicialDistrictFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
 

@@ -1,7 +1,7 @@
 // src/app/admin/sellers/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database/index';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { SellerProfileInfo, SellerFormData, Lot } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { slugify } from '@/lib/sample-data-helpers';

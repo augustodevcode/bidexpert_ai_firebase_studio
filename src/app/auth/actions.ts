@@ -2,7 +2,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { getDatabaseAdapter } from '@/lib/database/index';
+import { getDatabaseAdapter } from '@/lib/database';
 import { createSession, getSession, deleteSession } from '@/lib/session';
 import type { UserProfileData, UserProfileWithPermissions } from '@/types';
 import { revalidatePath } from 'next/cache';

@@ -1,7 +1,7 @@
 // src/app/direct-sales/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database/index';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { DirectSaleOffer } from '@/types';
 
 export async function getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
