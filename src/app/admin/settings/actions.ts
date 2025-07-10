@@ -4,11 +4,10 @@
 import { getDatabaseAdapter } from '@/lib/database';
 import type { PlatformSettings } from '@/types';
 import { revalidatePath } from 'next/cache';
-
+import { fetchPlatformSettings } from '@/lib/data-queries';
 
 export async function getPlatformSettings(): Promise<PlatformSettings | null> {
-  const db = await getDatabaseAdapter();
-  return db.getPlatformSettings();
+  return fetchPlatformSettings();
 }
 
 export async function updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {

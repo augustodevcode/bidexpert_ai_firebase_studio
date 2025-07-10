@@ -4,15 +4,14 @@
 import { getDatabaseAdapter } from '@/lib/database';
 import type { Lot, Bem } from '@/types';
 import { revalidatePath } from 'next/cache';
+import { fetchLots, fetchLot, fetchBensByIds, fetchLotsByIds } from '@/lib/data-queries';
 
 export async function getLots(auctionId?: string): Promise<Lot[]> {
-  const db = await getDatabaseAdapter();
-  return db.getLots(auctionId);
+  return fetchLots(auctionId);
 }
 
 export async function getLot(id: string): Promise<Lot | null> {
-  const db = await getDatabaseAdapter();
-  return db.getLot(id);
+  return fetchLot(id);
 }
 
 export async function createLot(data: Partial<Lot>): Promise<{ success: boolean, message: string, lotId?: string }> {
@@ -58,20 +57,11 @@ export async function deleteLot(id: string, auctionId?: string): Promise<{ succe
 
 // These functions are helpers and might need to be adjusted based on adapter capabilities
 export async function getBensByIdsAction(ids: string[]): Promise<Bem[]> {
-  const db = await getDatabaseAdapter();
-  // Assuming adapter has a getBensByIds method, otherwise needs implementation.
-  // For sample data, this might be a simple filter.
-  // @ts-ignore
-  if (db.getBensByIds) {
-    // @ts-ignore
-    return db.getBensByIds(ids);
-  }
-  return [];
+  return fetchBensByIds(ids);
 }
 
 export async function getLotsByIds(ids: string[]): Promise<Lot[]> {
-  const db = await getDatabaseAdapter();
-  return db.getLotsByIds(ids);
+  return fetchLotsByIds(ids);
 }
 
 export async function finalizeLot(lotId: string): Promise<{ success: boolean; message: string }> {

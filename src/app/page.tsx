@@ -10,9 +10,7 @@ import LotCard from '@/components/lot-card';
 import type { Auction, Lot, PlatformSettings } from '@/types';
 import Link from 'next/link';
 import { Landmark, Scale, FileText as FileTextIcon, Tags, CalendarX, CheckSquare, Star, Gavel as TomadaPrecosIcon } from 'lucide-react';
-import { getAuctions } from '@/app/admin/auctions/actions';
-import { getLots } from '@/app/admin/lots/actions';
-import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { fetchAuctions, fetchLots, fetchPlatformSettings } from '@/lib/data-queries';
 import { getCategoryAssets } from '@/lib/sample-data-helpers';
 
 /**
@@ -23,11 +21,11 @@ import { getCategoryAssets } from '@/lib/sample-data-helpers';
  */
 export default async function HomePage() {
   try {
-    const platformSettings = await getPlatformSettings();
+    const platformSettings = await fetchPlatformSettings();
     
     // Fetch data using server actions
-    const allAuctions = await getAuctions();
-    const allLots = await getLots();
+    const allAuctions = await fetchAuctions();
+    const allLots = await fetchLots();
 
     // Filter for featured auctions and lots
     const featuredAuctions = allAuctions

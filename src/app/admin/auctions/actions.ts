@@ -4,15 +4,14 @@
 import { revalidatePath } from 'next/cache';
 import { getDatabaseAdapter } from '@/lib/database';
 import type { Auction, AuctionFormData } from '@/types';
+import { fetchAuctions, fetchAuction, fetchAuctionsByIds, fetchAuctionsBySellerSlug, fetchAuctionsByAuctioneerSlug } from '@/lib/data-queries';
 
 export async function getAuctions(): Promise<Auction[]> {
-    const db = await getDatabaseAdapter();
-    return await db.getAuctions();
+    return fetchAuctions();
 }
 
 export async function getAuction(id: string): Promise<Auction | null> {
-    const db = await getDatabaseAdapter();
-    return await db.getAuction(id);
+    return fetchAuction(id);
 }
 
 export async function createAuction(data: AuctionFormData): Promise<{ success: boolean, message: string, auctionId?: string }> {
@@ -55,25 +54,13 @@ export async function updateAuctionFeaturedStatus(id: string, newStatus: boolean
 }
 
 export async function getAuctionsByIds(ids: string[]): Promise<Auction[]> {
-  const db = await getDatabaseAdapter();
-  // @ts-ignore - Assuming a method that doesn't exist on all adapters yet
-  return db.getAuctionsByIds ? db.getAuctionsByIds(ids) : [];
+  return fetchAuctionsByIds(ids);
 }
 
 export async function getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
-    const db = await getDatabaseAdapter();
-    const allAuctions = await db.getAuctions();
-    const allSellers = await db.getSellers();
-    const seller = allSellers.find(s => s.slug === sellerSlugOrPublicId || s.publicId === sellerSlugOrPublicId);
-    if (!seller) return [];
-    return allAuctions.filter(a => a.seller === seller.name);
+    return fetchAuctionsBySellerSlug(sellerSlugOrPublicId);
 }
 
 export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
-    const db = await getDatabaseAdapter();
-    const allAuctions = await db.getAuctions();
-    const auctioneers = await db.getAuctioneers();
-    const auctioneer = auctioneers.find(a => a.slug === auctioneerSlug || a.publicId === auctioneerSlug || a.id === auctioneerSlug);
-    if (!auctioneer) return [];
-    return allAuctions.filter(a => a.auctioneer === auctioneer.name);
+    return fetchAuctionsByAuctioneerSlug(auctioneerSlug);
 }
