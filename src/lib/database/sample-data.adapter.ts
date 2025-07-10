@@ -1,6 +1,14 @@
+
 // src/lib/database/sample-data.adapter.ts
 import type { DatabaseAdapter } from '@/types';
-import { sampleLots, sampleAuctions, sampleUsers, sampleRoles, sampleCategories, sampleAuctioneers, sampleSellers, sampleStates, sampleCities, sampleSubcategories, sampleDirectSaleOffers, sampleDocumentTypes, sampleNotifications, sampleBids, sampleUserWins, sampleMediaItems, sampleCourts, sampleJudicialDistricts, sampleJudicialBranches, sampleJudicialProcesses, sampleBens, samplePlatformSettings, sampleContactMessages } from '@/lib/sample-data';
+import { 
+    sampleLots, sampleAuctions, sampleUsers, sampleRoles, sampleLotCategories, 
+    sampleAuctioneers, sampleSellers, sampleStates, sampleCities, sampleSubcategories, 
+    sampleDirectSaleOffers, sampleDocumentTypes, sampleNotifications, sampleBids, 
+    sampleUserWins, sampleMediaItems, sampleCourts, sampleJudicialDistricts, 
+    sampleJudicialBranches, sampleJudicialProcesses, sampleBens, 
+    samplePlatformSettings, sampleContactMessages 
+} from '@/lib/sample-data';
 
 export class SampleDataAdapter implements DatabaseAdapter {
     private data: Record<string, any[]> = {
@@ -8,7 +16,7 @@ export class SampleDataAdapter implements DatabaseAdapter {
         auctions: sampleAuctions,
         users: sampleUsers,
         roles: sampleRoles,
-        categories: sampleCategories,
+        categories: sampleLotCategories, // Corrigido para sampleLotCategories
         subcategories: sampleSubcategories,
         auctioneers: sampleAuctioneers,
         sellers: sampleSellers,
@@ -30,7 +38,7 @@ export class SampleDataAdapter implements DatabaseAdapter {
     };
     
     constructor() {
-        // console.log('[SampleDataAdapter] Initialized with sample data.');
+        console.log('[SampleDataAdapter] Initialized with sample data.');
     }
 
     async getLots(auctionId?: string): Promise<any[]> {
