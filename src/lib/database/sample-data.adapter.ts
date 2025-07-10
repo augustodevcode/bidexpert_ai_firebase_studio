@@ -15,7 +15,7 @@ export class SampleDataAdapter implements DatabaseAdapter {
         auctions: sampleAuctions,
         users: sampleUsers,
         roles: sampleRoles,
-        lotCategories: sampleLotCategories, // Corrected from 'categories'
+        lotCategories: sampleLotCategories,
         subcategories: sampleSubcategories,
         auctioneers: sampleAuctioneers,
         sellers: sampleSellers,
@@ -99,7 +99,7 @@ export class SampleDataAdapter implements DatabaseAdapter {
          return Promise.resolve(auction ? JSON.parse(JSON.stringify(auction)) : null);
      }
      async getAuctioneers(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.auctioneers))); }
-     async getLotCategories(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.lotCategories))); } // Corrected key
+     async getLotCategories(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.lotCategories))); }
      async getUsersWithRoles(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.users))); }
      async getUserProfileData(userId: string): Promise<any | null> {
          const user = this.data.users.find(u => u.uid === userId);
