@@ -8,6 +8,7 @@ import {
 } from './seed-data'; // Import from the new local data file
 import { slugify } from '../src/lib/sample-data-helpers';
 import bcrypt from 'bcrypt';
+import { predefinedPermissions } from '@/app/admin/roles/role-form-schema';
 
 const prisma = new PrismaClient();
 
@@ -16,7 +17,6 @@ async function main() {
   
   // --- Upsert Core Roles ---
   console.log('Seeding core roles...');
-  
   const adminRole = await prisma.role.upsert({
     where: { name_normalized: 'ADMINISTRATOR' },
     update: {},
