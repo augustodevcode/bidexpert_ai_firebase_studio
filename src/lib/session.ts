@@ -70,7 +70,8 @@ export async function createSession(user: UserProfileWithPermissions) {
  * @returns {Promise<any | null>} O payload da sessão se válida, senão null.
  */
 export async function getSession() {
-    const cookie = cookies().get('session')?.value;
+    const cookieStore = cookies();
+    const cookie = cookieStore.get('session')?.value;
     const session = await decrypt(cookie);
     return session;
 }
