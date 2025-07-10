@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react'; 
@@ -290,7 +291,7 @@ export default function MainNav({
           return ( 
             item.href ? (
               <NavigationMenuItem key={item.href}>
-                <Link href={item.href} legacyBehavior passHref>
+                <Link href={item.href} passHref>
                   <NavigationMenuLink
                     className={cn(
                       navigationMenuTriggerStyle(), 
