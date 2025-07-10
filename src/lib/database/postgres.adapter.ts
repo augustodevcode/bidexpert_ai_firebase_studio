@@ -98,6 +98,38 @@ export class PostgresAdapter implements DatabaseAdapter {
             client.release();
         }
     }
+
+    async updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }> {
+       if (!this.pool) {
+           return { success: false, message: "Conexão com o banco de dados não disponível." };
+       }
+       const client = await this.getClient();
+       try {
+           const fields = Object.keys(updates);
+           if (fields.length === 0) {
+                return { success: true, message: "Nenhuma alteração para salvar." };
+           }
+
+           const setClauses = fields.map((field, index) => `"${field}" = $${index + 1}`).join(', ');
+           const values = fields.map(field => (updates as any)[field]);
+           values.push(id);
+
+           const query = `UPDATE "Auction" SET ${setClauses} WHERE id = $${values.length}`;
+           
+           const res = await client.query(query, values);
+           
+            if (res.rowCount > 0) {
+                return { success: true, message: "Leilão atualizado com sucesso." };
+            } else {
+                return { success: false, message: "Leilão não encontrado ou nenhuma alteração foi feita." };
+            }
+       } catch (error: any) {
+           console.error(`[PostgresAdapter:updateAuction] Error updating auction ${id}: ${error.message}`);
+           return { success: false, message: `Erro ao atualizar leilão: ${error.message}` };
+       } finally {
+           client.release();
+       }
+    }
     
     getLot(id: string): Promise<any | null> { return this._notImplemented('getLot'); }
     createLot(lotData: any): Promise<{ success: boolean; message: string; lotId?: string; }> { return this._notImplemented('createLot'); }

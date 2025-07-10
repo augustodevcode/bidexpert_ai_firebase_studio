@@ -96,6 +96,39 @@ export class MySqlAdapter implements DatabaseAdapter {
             connection.release();
         }
     }
+
+    async updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }> {
+       if (!this.pool) {
+            return { success: false, message: "Conexão com o banco de dados não disponível." };
+       }
+       // Basic implementation - this should be more robust in a real app
+       const connection = await this.getConnection();
+       try {
+            // Build the SET part of the query dynamically
+            const fields = Object.keys(updates);
+            if (fields.length === 0) {
+                return { success: true, message: "Nenhuma alteração para salvar." };
+            }
+            const setClauses = fields.map(field => `${field} = ?`).join(', ');
+            const values = fields.map(field => (updates as any)[field]);
+
+            const sql = `UPDATE auctions SET ${setClauses} WHERE id = ?`;
+            values.push(id);
+
+            const [result]: [mysql.OkPacket, any] = await connection.execute(sql, values);
+
+            if (result.affectedRows > 0) {
+                return { success: true, message: "Leilão atualizado com sucesso." };
+            } else {
+                return { success: false, message: "Leilão não encontrado ou nenhuma alteração foi feita." };
+            }
+       } catch (error: any) {
+           console.error(`[MySqlAdapter:updateAuction] Error updating auction ${id}: ${error.message}`);
+           return { success: false, message: `Erro ao atualizar leilão: ${error.message}` };
+       } finally {
+           connection.release();
+       }
+    }
     
     getLot(id: string): Promise<any | null> { return this._notImplemented('getLot'); }
     createLot(lotData: any): Promise<{ success: boolean; message: string; lotId?: string; }> { return this._notImplemented('createLot'); }

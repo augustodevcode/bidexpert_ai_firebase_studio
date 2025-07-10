@@ -2,6 +2,7 @@
 import { db as dbAdmin, ensureAdminInitialized, AdminFieldValue, ServerTimestamp } from '@/lib/firebase/admin';
 import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
+import admin from 'firebase-admin';
 
 export class FirestoreAdapter implements DatabaseAdapter {
     private db: FirebaseFirestore.Firestore;
@@ -79,6 +80,14 @@ export class FirestoreAdapter implements DatabaseAdapter {
         auction.lots = await this.getLots(auction.id);
         auction.totalLots = auction.lots.length;
         return auction;
+    }
+
+    async updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }> {
+        await this.db.collection('auctions').doc(id).update({
+            ...updates,
+            updatedAt: AdminFieldValue.serverTimestamp()
+        });
+        return { success: true, message: "Leilão atualizado com sucesso." };
     }
     
     async getLotsByIds(ids: string[]): Promise<Lot[]> {
