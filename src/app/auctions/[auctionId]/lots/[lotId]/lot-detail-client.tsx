@@ -101,7 +101,7 @@ export const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
       const now = new Date();
 
       if (isPast(end) || lotStatus !== 'ABERTO_PARA_LANCES') {
-        setDisplayMessage(getAuctionStatusText(status === 'ABERTO_PARA_LANCES' && isPast(end) ? 'ENCERRADO' : lotStatus));
+        setDisplayMessage(getAuctionStatusText(lotStatus === 'ABERTO_PARA_LANCES' && isPast(end) ? 'ENCERRADO' : lotStatus));
         setTimeSegments(null);
         return;
       }
@@ -241,6 +241,15 @@ export default function LotDetailClientContent({
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [formattedAuctionEndDate, setFormattedAuctionEndDate] = useState<string | null>(null);
 
+  const mentalTriggersGlobalSettings = platformSettings.mentalTriggerSettings || {};
+  const sectionBadges = platformSettings.sectionBadgeVisibility?.lotDetail || {
+      showStatusBadge: true,
+      showDiscountBadge: true,
+      showUrgencyTimer: true,
+      showPopularityBadge: true,
+      showHotBidBadge: true,
+      showExclusiveBadge: true,
+  };
   
   const hasEditPermissions = useMemo(() => 
     hasAnyPermission(userProfileWithPermissions, ['manage_all', 'lots:update']),
