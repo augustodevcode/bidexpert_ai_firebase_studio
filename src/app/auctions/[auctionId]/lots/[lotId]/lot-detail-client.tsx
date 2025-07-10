@@ -340,8 +340,8 @@ export default function LotDetailClientContent({
 
   const handleToggleFavorite = () => {
     if (!lot || !lot.id) return;
-    const newFavoriteState = !isFavorite;
-    setIsFavorite(newFavoriteState);
+    const newFavoriteState = !isLotFavorite;
+    setIsLotFavorite(newFavoriteState);
     if (newFavoriteState) addFavoriteLotIdToStorage(lot.id);
     else removeFavoriteLotIdFromStorage(lot.id);
     toast({
@@ -361,28 +361,6 @@ export default function LotDetailClientContent({
     }
   };
 
-  const mentalTriggersGlobalSettings = platformSettings.mentalTriggerSettings || {};
-  const sectionBadges = platformSettings.sectionBadgeVisibility?.lotDetail || {
-    showStatusBadge: true, showDiscountBadge: true, showUrgencyTimer: true,
-    showPopularityBadge: true, showHotBidBadge: true, showExclusiveBadge: true,
-  };
-  const discountPercentage = useMemo(() => {
-    if (lot.initialPrice && lot.secondInitialPrice && lot.secondInitialPrice < lot.initialPrice && (lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE')) {
-      return Math.round(((lot.initialPrice - lot.secondInitialPrice) / lot.initialPrice) * 100);
-    }
-    return lot.discountPercentage || 0;
-  }, [lot.initialPrice, lot.secondInitialPrice, lot.status, lot.discountPercentage]);
-  const mentalTriggers = useMemo(() => {
-    let triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
-    const settings = mentalTriggersGlobalSettings;
-    if (sectionBadges.showPopularityBadge !== false && settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) triggers.push('MAIS VISITADO');
-    if (sectionBadges.showHotBidBadge !== false && settings.showHotBidBadge && (lot.bidsCount || 0) > (settings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') triggers.push('LANCE QUENTE');
-    if (sectionBadges.showExclusiveBadge !== false && settings.showExclusiveBadge && lot.isExclusive) triggers.push('EXCLUSIVO');
-    return Array.from(new Set(triggers));
-  }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
-
-  if (!lot || !auction) return <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]"><Loader2 className="h-8 w-8 animate-spin text-primary"/><p className="ml-2 text-muted-foreground">Carregando detalhes do lote...</p></div>;
-
   const nextImage = () => setCurrentImageIndex((prev) => (gallery.length > 0 ? (prev + 1) % gallery.length : 0));
   const prevImage = () => setCurrentImageIndex((prev) => (gallery.length > 0 ? (prev - 1 + gallery.length) % gallery.length : 0));
   const actualLotNumber = lot.number || String(lot.id).replace(/\D/g,'');
@@ -398,6 +376,8 @@ export default function LotDetailClientContent({
   const currentLotHasProcessInfo = hasProcessInfo(lot);
   const showLegalProcessTab = isJudicialAuction && currentLotHasProcessInfo;
   const legalTabTitle = showLegalProcessTab ? "Documentos e Processo" : "Documentos";
+
+ if (!lot || !auction) return <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]"><Loader2 className="h-8 w-8 animate-spin text-primary"/><p className="ml-2 text-muted-foreground">Carregando detalhes do lote...</p></div>;
 
  return (
     <>
@@ -481,7 +461,3 @@ export default function LotDetailClientContent({
     </>
     );
 }
-
-```
-- src/components/map-search-component.tsx
-- src/components/auction/lot-map-display.tsx
