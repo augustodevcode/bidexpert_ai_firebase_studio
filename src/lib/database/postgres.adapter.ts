@@ -9,7 +9,7 @@ export class PostgresAdapter implements DatabaseAdapter {
     constructor() {
         if (!process.env.POSTGRES_DATABASE_URL) {
             this.connectionError = "A variável de ambiente POSTGRES_DATABASE_URL não está definida.";
-            console.error(`[PostgresAdapter] ERRO: ${this.connectionError}`);
+            console.warn(`[PostgresAdapter] AVISO: ${this.connectionError} Usando dados vazios.`);
             return;
         }
         try {
@@ -19,7 +19,7 @@ export class PostgresAdapter implements DatabaseAdapter {
             console.log('[PostgresAdapter] Pool de conexões PostgreSQL inicializado.');
         } catch (error: any) {
             this.connectionError = `Falha ao criar o pool de conexões PostgreSQL: ${error.message}`;
-            console.error(`[PostgresAdapter] ERRO: ${this.connectionError}`);
+            console.warn(`[PostgresAdapter] AVISO: ${this.connectionError}`);
             this.pool = null;
         }
     }
@@ -45,7 +45,7 @@ export class PostgresAdapter implements DatabaseAdapter {
         if (!this.pool) return [];
         const client = await this.getClient();
         try {
-            let query = 'SELECT * FROM "Lot"';
+            let query = 'SELECT * FROM "Lot"'; // Note as aspas duplas para nomes de tabelas/colunas em maiúsculas
             const params = [];
             if (auctionId) {
                 query += ' WHERE "auctionId" = $1';

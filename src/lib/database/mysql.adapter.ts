@@ -9,7 +9,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     constructor() {
         if (!process.env.MYSQL_DATABASE_URL) {
             this.connectionError = "A variável de ambiente MYSQL_DATABASE_URL não está definida.";
-            console.error(`[MySqlAdapter] ERRO: ${this.connectionError}`);
+            console.warn(`[MySqlAdapter] AVISO: ${this.connectionError} Usando dados vazios.`);
             return;
         }
         try {
@@ -17,7 +17,7 @@ export class MySqlAdapter implements DatabaseAdapter {
             console.log('[MySqlAdapter] Pool de conexões MySQL inicializado.');
         } catch (error: any) {
             this.connectionError = `Falha ao criar o pool de conexões MySQL: ${error.message}`;
-            console.error(`[MySqlAdapter] ERRO: ${this.connectionError}`);
+            console.warn(`[MySqlAdapter] AVISO: ${this.connectionError}`);
             this.pool = null;
         }
     }
