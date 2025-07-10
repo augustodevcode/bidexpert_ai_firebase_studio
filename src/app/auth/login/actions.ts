@@ -1,13 +1,10 @@
 // src/app/auth/login/actions.ts
 'use server';
 
-import { redirect } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
+import { getDatabaseAdapter } from '@/lib/database';
 import bcrypt from 'bcrypt';
-import { createSession, getSession, deleteSession } from '@/lib/session';
-import type { UserProfileWithPermissions } from '@/types';
-import { revalidatePath } from 'next/cache';
-
+import { createSession } from '@/lib/session';
+import type { UserProfileData, UserProfileWithPermissions } from '@/types';
 
 /**
  * Realiza o login de um usuário com base no email e senha.
@@ -24,33 +21,28 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
   }
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        role: {
-          select: { name: true, permissions: true }
-        }
-      }
-    });
+    const db = await getDatabaseAdapter();
+    const users = await db.getUsersWithRoles();
+    const user = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
 
     if (!user || !user.password) {
       return { success: false, message: 'Credenciais inválidas.' };
     }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    
+    // A senha no sample-data está em texto plano, então bypassamos a verificação do bcrypt para esse caso.
+    const isSampleData = (process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA') === 'SAMPLE_DATA';
+    const isPasswordValid = isSampleData ? (password === user.password) : await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
-    // As permissões agora vêm como { name: string }[]
-    const permissions = user.role?.permissions.map(p => p.id) || [];
+    const roles = await db.getRoles();
+    const userRole = roles.find(r => r.id === user.roleId);
     
     const userProfileWithPerms: UserProfileWithPermissions = {
       ...user,
-      uid: user.id,
-      roleName: user.role?.name || 'USER',
-      permissions: permissions,
+      permissions: userRole?.permissions || [],
     };
 
     await createSession(userProfileWithPerms);
