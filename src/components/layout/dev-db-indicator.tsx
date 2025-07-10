@@ -19,10 +19,10 @@ export default function DevDbIndicator() {
 
   useEffect(() => {
     // This component now relies solely on the client-side readable cookie.
-    // The server-side logic is now handled by Prisma and the .env file.
+    // The server-side logic is now robust enough to handle its own context.
     const dbFromCookie = getCookie('dev-config-db');
     // We fall back to the public env var, which is also available on the client.
-    const dbFromEnv = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'PRISMA_POSTGRES';
+    const dbFromEnv = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
     setDbSystem(dbFromCookie || dbFromEnv);
   }, []);
 
