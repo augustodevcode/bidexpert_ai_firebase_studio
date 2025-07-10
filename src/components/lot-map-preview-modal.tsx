@@ -1,17 +1,11 @@
-
-
+// src/components/lot-map-preview-modal.tsx
 'use client';
 
 import type { Lot, PlatformSettings } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { MapPin, X } from 'lucide-react';
-import dynamic from 'next/dynamic';
-
-const LotMapDisplay = dynamic(() => import('@/components/auction/lot-map-display'), {
-  ssr: false,
-  loading: () => <div className="w-full h-full bg-muted rounded-md flex items-center justify-center"><p className="text-sm text-muted-foreground">Carregando mapa...</p></div>,
-});
+import LotMapDisplay from '@/components/auction/lot-map-display'; // Importado diretamente
 
 interface LotMapPreviewModalProps {
   lot: Lot | null;
@@ -36,6 +30,7 @@ export default function LotMapPreviewModal({ lot, platformSettings, isOpen, onCl
         </DialogHeader>
         
         <div className="p-4 max-h-[60vh] overflow-y-auto">
+          {/* O LotMapDisplay já é importado dinamicamente internamente, não precisamos fazer isso de novo aqui. */}
           <LotMapDisplay lot={lot} platformSettings={platformSettings} />
         </div>
 
