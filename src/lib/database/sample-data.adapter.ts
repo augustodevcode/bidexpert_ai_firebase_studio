@@ -1,5 +1,5 @@
 // src/lib/database/sample-data.adapter.ts
-import type { DatabaseAdapter, UserWin, DirectSaleOffer, Lot } from '@/types';
+import type { DatabaseAdapter, UserWin, DirectSaleOffer, Lot, UserProfileData, Role } from '@/types';
 import { 
     sampleLots, sampleAuctions, sampleUsers, sampleRoles, sampleLotCategories, 
     sampleSubcategories, sampleAuctioneers, sampleSellers, sampleStates, sampleCities, 
@@ -38,7 +38,7 @@ export class SampleDataAdapter implements DatabaseAdapter {
     };
     
     constructor() {
-        console.log('[SampleDataAdapter] Initialized with sample data.');
+        // console.log('[SampleDataAdapter] Initialized with sample data.');
     }
 
     async getLots(auctionId?: string): Promise<any[]> {
@@ -101,14 +101,21 @@ export class SampleDataAdapter implements DatabaseAdapter {
      }
      async getAuctioneers(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.auctioneers))); }
      async getLotCategories(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.lotCategories))); }
-     async getUsersWithRoles(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.users))); }
+     async getUsersWithRoles(): Promise<UserProfileData[]> {
+        const usersWithRoles = this.data.users.map((user: any) => {
+            const role = this.data.roles.find((r: Role) => r.id === user.roleId);
+            return {
+                ...user,
+                roleName: role?.name || 'User',
+                permissions: role?.permissions || ['view_auctions', 'place_bids']
+            };
+        });
+        return Promise.resolve(JSON.parse(JSON.stringify(usersWithRoles)));
+     }
      async getUserProfileData(userId: string): Promise<any | null> {
-         const user = this.data.users.find(u => u.uid === userId);
-         if (user) {
-             const role = this.data.roles.find(r => r.id === user.roleId);
-             return Promise.resolve({...user, permissions: role?.permissions || []});
-         }
-         return Promise.resolve(null);
+         const users = await this.getUsersWithRoles();
+         const user = users.find(u => u.uid === userId);
+         return Promise.resolve(user || null);
      }
      async getRoles(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.roles))); }
      async getMediaItems(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.mediaItems))); }
