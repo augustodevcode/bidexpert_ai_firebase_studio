@@ -1,4 +1,3 @@
-
 // src/app/admin/lots/lot-form.tsx
 'use client';
 
@@ -45,6 +44,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { finalizeLot } from './actions';
 
