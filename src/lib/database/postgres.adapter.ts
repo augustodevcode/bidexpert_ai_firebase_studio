@@ -3,30 +3,49 @@ import type { DatabaseAdapter, Auction } from '@/types';
 import { Pool } from 'pg';
 
 export class PostgresAdapter implements DatabaseAdapter {
-    private pool: Pool;
+    private pool: Pool | null = null;
+    private connectionError: string | null = null;
 
     constructor() {
         if (!process.env.POSTGRES_DATABASE_URL) {
-            throw new Error("A variável de ambiente POSTGRES_DATABASE_URL não está definida.");
+            this.connectionError = "A variável de ambiente POSTGRES_DATABASE_URL não está definida.";
+            console.error(`[PostgresAdapter] ERRO: ${this.connectionError}`);
+            return;
         }
-        this.pool = new Pool({
-            connectionString: process.env.POSTGRES_DATABASE_URL,
-        });
-        console.log('[PostgresAdapter] Pool de conexões PostgreSQL inicializado.');
+        try {
+            this.pool = new Pool({
+                connectionString: process.env.POSTGRES_DATABASE_URL,
+            });
+            console.log('[PostgresAdapter] Pool de conexões PostgreSQL inicializado.');
+        } catch (error: any) {
+            this.connectionError = `Falha ao criar o pool de conexões PostgreSQL: ${error.message}`;
+            console.error(`[PostgresAdapter] ERRO: ${this.connectionError}`);
+            this.pool = null;
+        }
+    }
+    
+    private async getClient() {
+        if (this.connectionError) {
+            throw new Error(this.connectionError);
+        }
+        if (!this.pool) {
+            throw new Error("Pool de conexões PostgreSQL não está disponível.");
+        }
+        return this.pool.connect();
     }
     
     async _notImplemented(method: string): Promise<any> {
+        if (this.connectionError) return Promise.resolve([]); // Return empty data if connection failed
         const message = `[PostgresAdapter] Método ${method} não implementado.`;
-        console.error(message);
-        throw new Error(message);
+        console.warn(message);
+        return Promise.resolve([]);
     }
-    
-    // Implemente cada método da interface aqui, fazendo as consultas SQL necessárias.
-    // Exemplo:
+
     async getLots(auctionId?: string): Promise<any[]> {
-        const client = await this.pool.connect();
+        if (!this.pool) return [];
+        const client = await this.getClient();
         try {
-            let query = 'SELECT * FROM "Lot"'; // Note as aspas duplas para nomes de tabelas/colunas em maiúsculas
+            let query = 'SELECT * FROM "Lot"';
             const params = [];
             if (auctionId) {
                 query += ' WHERE "auctionId" = $1';
@@ -34,23 +53,28 @@ export class PostgresAdapter implements DatabaseAdapter {
             }
             const res = await client.query(query, params);
             return res.rows;
+        } catch (error: any) {
+             console.error(`[PostgresAdapter:getLots] Error: ${error.message}`);
+             return [];
         } finally {
             client.release();
         }
     }
     
     async getAuctions(): Promise<Auction[]> {
-        const client = await this.pool.connect();
+        if (!this.pool) return [];
+        const client = await this.getClient();
         try {
-            // Assumindo uma tabela 'Auction' no Prisma, que mapeia para "Auction".
-            // Adapte os nomes de colunas se seu schema for diferente.
             const res = await client.query('SELECT * FROM "Auction" ORDER BY "auctionDate" DESC');
             return res.rows;
+        } catch (error: any) {
+             console.error(`[PostgresAdapter:getAuctions] Error: ${error.message}`);
+             return [];
         } finally {
             client.release();
         }
     }
-
+    
     getLot(id: string): Promise<any | null> { return this._notImplemented('getLot'); }
     createLot(lotData: any): Promise<{ success: boolean; message: string; lotId?: string; }> { return this._notImplemented('createLot'); }
     updateLot(id: string, updates: any): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateLot'); }

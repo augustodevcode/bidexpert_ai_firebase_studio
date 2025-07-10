@@ -3,26 +3,45 @@ import type { DatabaseAdapter, Auction } from '@/types';
 import mysql from 'mysql2/promise';
 
 export class MySqlAdapter implements DatabaseAdapter {
-    private pool: mysql.Pool;
+    private pool: mysql.Pool | null = null;
+    private connectionError: string | null = null;
 
     constructor() {
         if (!process.env.MYSQL_DATABASE_URL) {
-            throw new Error("A variável de ambiente MYSQL_DATABASE_URL não está definida.");
+            this.connectionError = "A variável de ambiente MYSQL_DATABASE_URL não está definida.";
+            console.error(`[MySqlAdapter] ERRO: ${this.connectionError}`);
+            return;
         }
-        this.pool = mysql.createPool(process.env.MYSQL_DATABASE_URL);
-        console.log('[MySqlAdapter] Pool de conexões MySQL inicializado.');
+        try {
+            this.pool = mysql.createPool(process.env.MYSQL_DATABASE_URL);
+            console.log('[MySqlAdapter] Pool de conexões MySQL inicializado.');
+        } catch (error: any) {
+            this.connectionError = `Falha ao criar o pool de conexões MySQL: ${error.message}`;
+            console.error(`[MySqlAdapter] ERRO: ${this.connectionError}`);
+            this.pool = null;
+        }
+    }
+    
+    private async getConnection() {
+        if (this.connectionError) {
+            throw new Error(this.connectionError);
+        }
+        if (!this.pool) {
+            throw new Error("Pool de conexões MySQL não está disponível.");
+        }
+        return this.pool.getConnection();
     }
     
     async _notImplemented(method: string): Promise<any> {
+        if (this.connectionError) return Promise.resolve([]); // Return empty data if connection failed
         const message = `[MySqlAdapter] Método ${method} não implementado.`;
-        console.error(message);
-        throw new Error(message);
+        console.warn(message);
+        return Promise.resolve([]);
     }
-    
-    // Implemente cada método da interface aqui, fazendo as consultas SQL necessárias.
-    // Exemplo:
+
     async getLots(auctionId?: string): Promise<any[]> {
-        const connection = await this.pool.getConnection();
+        if (!this.pool) return [];
+        const connection = await this.getConnection();
         try {
             let sql = 'SELECT * FROM lots';
             const params = [];
@@ -32,22 +51,28 @@ export class MySqlAdapter implements DatabaseAdapter {
             }
             const [rows] = await connection.execute(sql, params);
             return rows as any[];
+        } catch (error: any) {
+             console.error(`[MySqlAdapter:getLots] Error: ${error.message}`);
+             return [];
         } finally {
             connection.release();
         }
     }
     
     async getAuctions(): Promise<Auction[]> {
-        const connection = await this.pool.getConnection();
+        if (!this.pool) return [];
+        const connection = await this.getConnection();
         try {
-            // Assumindo uma tabela 'auctions'. Adapte os nomes de colunas se necessário.
             const [rows] = await connection.execute('SELECT * FROM auctions ORDER BY auctionDate DESC');
             return rows as Auction[];
+        } catch (error: any) {
+             console.error(`[MySqlAdapter:getAuctions] Error: ${error.message}`);
+             return [];
         } finally {
             connection.release();
         }
     }
-
+    
     getLot(id: string): Promise<any | null> { return this._notImplemented('getLot'); }
     createLot(lotData: any): Promise<{ success: boolean; message: string; lotId?: string; }> { return this._notImplemented('createLot'); }
     updateLot(id: string, updates: any): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateLot'); }
