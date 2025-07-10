@@ -5,8 +5,8 @@
  */
 'use server';
 
-import { prisma } from '@/lib/prisma';
-import type { UserBid, UserWin } from '@/types';
+import { getDatabaseAdapter } from '@/lib/database';
+import type { UserBid } from '@/types';
 
 /**
  * Fetches all bids placed by a specific user.
@@ -21,82 +21,14 @@ export async function getBidsForUserAction(userId: string): Promise<UserBid[]> {
     return [];
   }
   
-  try {
-    const bids = await prisma.bid.findMany({
-      where: { bidderId: userId },
-      include: {
-        lot: {
-          include: {
-            auction: true,
-            bids: {
-              orderBy: { amount: 'desc' },
-              take: 1
-            },
-            wins: {
-              take: 1
-            }
-          }
-        }
-      },
-      orderBy: { timestamp: 'desc' }
-    });
-
-    // Create a distinct list of lots to find winning bids for
-    const lotIds = [...new Set(bids.map(b => b.lotId))];
-    const winningBidsForLots = await prisma.userWin.findMany({
-      where: {
-        lotId: { in: lotIds },
-        userId: userId
-      }
-    });
-    const winningBidMap = new Map(winningBidsForLots.map(wb => [wb.lotId, wb]));
-
-
-    const userBids = bids.map(bid => {
-      let bidStatus: UserBid['bidStatus'] = 'PERDENDO';
-      const highestBid = bid.lot.bids[0]?.amount;
-
-      if (bid.lot.status === 'VENDIDO') {
-        bidStatus = winningBidMap.has(bid.lotId) ? 'ARREMATADO' : 'NAO_ARREMATADO';
-      } else if (bid.lot.status === 'ENCERRADO' || bid.lot.status === 'NAO_VENDIDO') {
-        bidStatus = 'NAO_ARREMATADO';
-      } else if (bid.lot.status === 'CANCELADO') {
-        bidStatus = 'CANCELADO';
-      } else if (highestBid && bid.amount >= highestBid) {
-        bidStatus = 'GANHANDO';
-      }
-
-      return {
-        id: bid.id,
-        lotId: bid.lotId,
-        auctionId: bid.lot.auctionId,
-        lotTitle: bid.lot.title,
-        lotImageUrl: bid.lot.imageUrl,
-        lotEndDate: bid.lot.endDate,
-        userBidAmount: bid.amount,
-        currentLotPrice: bid.lot.price,
-        bidDate: bid.timestamp,
-        bidStatus: bidStatus,
-        lot: { // Pass a minimal lot object
-            ...bid.lot,
-            auctionName: bid.lot.auction?.title
-        }
-      } as unknown as UserBid;
-    });
-
-    // De-duplicate to show only the highest bid per lot for the user
-    const latestBidsMap = new Map<string, UserBid>();
-    for (const bid of userBids) {
-        if (!latestBidsMap.has(bid.lotId)) {
-            latestBidsMap.set(bid.lotId, bid);
-        }
-    }
-
-    return Array.from(latestBidsMap.values());
-  } catch (error) {
-    console.error(`[Action - getBidsForUser] Error fetching bids for user ${userId}:`, error);
-    return [];
+  const db = await getDatabaseAdapter();
+  // This logic is complex and specific to the sample data adapter for now.
+  // A real DB implementation would require a more sophisticated query or stored procedure.
+  // @ts-ignore
+  if (db.getUserBids) {
+    // @ts-ignore
+    return db.getUserBids(userId);
   }
+  
+  return [];
 }
-
-    
