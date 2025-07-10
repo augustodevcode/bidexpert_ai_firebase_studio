@@ -1,6 +1,14 @@
-// src/lib/sample-data.adapter.ts
-import type { DatabaseAdapter } from '@/types';
-import { sampleLots, sampleAuctions, sampleUsers, sampleRoles, sampleCategories, sampleAuctioneers, sampleSellers, sampleStates, sampleCities, sampleSubcategories, sampleDirectSaleOffers, sampleDocumentTypes, sampleNotifications, sampleBids, sampleUserWins, sampleMediaItems, sampleCourts, sampleJudicialDistricts, sampleJudicialBranches, sampleJudicialProcesses, sampleBens, samplePlatformSettings, sampleContactMessages } from '@/lib/sample-data';
+// src/lib/database/sample-data.adapter.ts
+import type { DatabaseAdapter, UserWin, DirectSaleOffer, Lot } from '@/types';
+import { 
+    sampleLots, sampleAuctions, sampleUsers, sampleRoles, sampleLotCategories, 
+    sampleSubcategories, sampleAuctioneers, sampleSellers, sampleStates, sampleCities, 
+    sampleDirectSaleOffers, sampleDocumentTypes, sampleNotifications, sampleBids, 
+    sampleUserWins, sampleMediaItems, sampleCourts, sampleJudicialDistricts, 
+    sampleJudicialBranches, sampleJudicialProcesses, sampleBens, 
+    samplePlatformSettings, sampleContactMessages 
+} from '@/lib/sample-data';
+import { format } from 'date-fns';
 
 export class SampleDataAdapter implements DatabaseAdapter {
     private data: Record<string, any[]> = {
@@ -8,7 +16,7 @@ export class SampleDataAdapter implements DatabaseAdapter {
         auctions: sampleAuctions,
         users: sampleUsers,
         roles: sampleRoles,
-        categories: sampleCategories,
+        lotCategories: sampleLotCategories,
         subcategories: sampleSubcategories,
         auctioneers: sampleAuctioneers,
         sellers: sampleSellers,
@@ -81,8 +89,8 @@ export class SampleDataAdapter implements DatabaseAdapter {
             : Promise.resolve({ success: false, message: "Lote não encontrado." });
     }
     
-    // Implement other methods as needed, mirroring the interface...
      async getAuctions(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.auctions))); }
+     
      async getAuction(id: string): Promise<any | null> {
          const auction = this.data.auctions.find(a => a.id === id || a.publicId === id);
          if (auction) {
@@ -91,9 +99,13 @@ export class SampleDataAdapter implements DatabaseAdapter {
          }
          return Promise.resolve(auction ? JSON.parse(JSON.stringify(auction)) : null);
      }
+     
      async getAuctioneers(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.auctioneers))); }
-     async getLotCategories(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.categories))); }
+     
+     async getLotCategories(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.lotCategories))); }
+     
      async getUsersWithRoles(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.users))); }
+     
      async getUserProfileData(userId: string): Promise<any | null> {
          const user = this.data.users.find(u => u.uid === userId);
          if (user) {
@@ -102,13 +114,46 @@ export class SampleDataAdapter implements DatabaseAdapter {
          }
          return Promise.resolve(null);
      }
+     
      async getRoles(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.roles))); }
+     
      async getMediaItems(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.mediaItems))); }
+     
      async createMediaItem(item: any, url: string): Promise<any> {
          const newItem = { ...item, id: `media-${this.data.mediaItems.length + 1}`, uploadedAt: new Date().toISOString(), urlOriginal: url };
          this.data.mediaItems.push(newItem);
          return Promise.resolve({ success: true, item: newItem });
      }
+     
+    async getConsignorDashboardStats(sellerId: string) {
+        const wins = (this.data.userWins as UserWin[]).filter(win =>
+            (win.lot as Lot)?.auction?.sellerId === sellerId && win.paymentStatus === 'PAGO'
+        );
+        const totalSalesValue = wins.reduce((acc, win) => acc + win.winningBidAmount, 0);
+        
+        const totalLots = (this.data.lots as Lot[]).filter(lot => lot.sellerId === sellerId);
+        const soldLots = totalLots.filter(lot => lot.status === 'VENDIDO' || lot.status === 'PAGO');
+
+        const salesByMonth = wins.reduce((acc, win) => {
+            const month = format(new Date(win.winDate), 'MMM/yy', { locale: ptBR });
+            acc[month] = (acc[month] || 0) + win.winningBidAmount;
+            return acc;
+        }, {} as Record<string, number>);
+
+        return {
+            totalLotsConsigned: totalLots.length,
+            activeLots: totalLots.filter(lot => lot.status === 'ABERTO_PARA_LANCES').length,
+            soldLots: soldLots.length,
+            totalSalesValue,
+            salesRate: totalLots.length > 0 ? (soldLots.length / totalLots.length) * 100 : 0,
+            salesData: Object.entries(salesByMonth).map(([name, sales]) => ({ name, Sales: sales })),
+        };
+    }
+     
+    async getDirectSaleOffers(): Promise<any[]> {
+        return Promise.resolve(JSON.parse(JSON.stringify(this.data.directSales)));
+    }
+
 
      // Fallback for methods not fully implemented in sample data adapter
      async _notImplemented(method: string): Promise<any> {
