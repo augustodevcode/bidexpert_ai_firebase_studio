@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { LogIn, Loader2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { login } from './actions';
+import { login } from '@/app/auth/actions'; // Corrigido o caminho da importação
 import { useAuth } from '@/contexts/auth-context';
 
 export default function LoginPage() {
