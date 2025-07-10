@@ -1,157 +1,63 @@
-// prisma/schema.prisma
-
-datasource db {
-  provider     = "postgresql"
-  url          = env("DATABASE_URL")
-  directUrl    = env("DIRECT_DATABASE_URL")
-  relationMode = "prisma"
-}
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "debian-openssl-3.0.x"]
+  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
 }
 
-// ============================================================
-//                       ENUMS
-// ============================================================
-enum AccountType {
-  PHYSICAL
-  LEGAL
-  DIRECT_SALE_CONSIGNOR
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-enum HabilitationStatus {
-  PENDENTE_DOCUMENTOS
-  PENDING_ANALYSIS
-  REJECTED_DOCUMENTS
-  HABILITADO
-  BLOCKED
-}
-
-enum DocumentStatus {
-  NOT_SENT
-  SUBMITTED
-  PENDING_ANALYSIS
-  APPROVED
-  REJECTED
-}
-
-enum AuctionStatus {
-  RASCUNHO
-  EM_PREPARACAO
-  EM_BREVE
-  ABERTO
-  ABERTO_PARA_LANCES
-  ENCERRADO
-  FINALIZADO
-  CANCELADO
-  SUSPENSO
-}
-
-enum LotStatus {
-  EM_BREVE
-  ABERTO_PARA_LANCES
-  ENCERRADO
-  VENDIDO
-  NAO_VENDIDO
-  RETIRADO
-}
-
-enum PaymentStatus {
-  PENDENTE
-  PROCESSANDO
-  PAGO
-  FALHOU
-  REEMBOLSADO
-}
-
-enum DirectSaleOfferType {
-  BUY_NOW
-  ACCEPTS_PROPOSALS
-}
-
-enum DirectSaleOfferStatus {
-  PENDING_APPROVAL
-  ACTIVE
-  SOLD
-  EXPIRED
-}
-
-enum ProcessPartyType {
-  AUTOR
-  REU
-  ADVOGADO_AUTOR
-  ADVOGADO_REU
-  JUIZ
-  ESCRIVAO
-  PERITO
-  ADMINISTRADOR_JUDICIAL
-  TERCEIRO_INTERESSADO
-  OUTRO
-}
-
-// ============================================================
-//                    CORE MODELS
-// ============================================================
-
+// ==============================================================================
+// AUTH & USERS
+// ==============================================================================
 model Usuario {
-  id                      String                @id @default(cuid())
-  email                   String                @unique
-  fullName                String?
-  password                String
-  accountType             AccountType?
-  cpf                     String?               @unique
-  dateOfBirth             DateTime?
-  razaoSocial             String?
-  cnpj                    String?               @unique
-  inscricaoEstadual       String?
-  website                 String?
-  cellPhone               String?
-  zipCode                 String?
-  street                  String?
-  number                  String?
-  complement              String?
-  neighborhood            String?
-  city                    String?
-  state                   String?
-  optInMarketing          Boolean?              @default(false)
-  avatarUrl               String?
-  dataAiHint              String?
-  habilitationStatus      HabilitationStatus?   @default(PENDENTE_DOCUMENTOS)
-  createdAt               DateTime              @default(now())
-  updatedAt               DateTime              @updatedAt
-  roleId                  String?
-  sellerId                String?               @unique
-  leiloeiroId             String?               @unique
-  vendedor                Vendedor?
-  leiloeiro               Leiloeiro?
-  perfil                  Perfil?               @relation(fields: [roleId], references: [id])
-  documentos              DocumentoUsuario[]
-  lances                  Lance[]
-  arremates               Arremate[]
-  vendasDiretas           VendaDireta[]
-  notificacoes            Notificacao[]
-  perguntasLote           PerguntaLote[]
-  respostasLote           PerguntaLote[]        @relation("RespostasLote")
-  avaliacoes              Avaliacao[]
-  lancesMaximos           LanceMaximoUsuario[]
-  directSaleProposals     PropostaVendaDireta[]
-  favoriteLots            Lote[]                @relation("LotesFavoritosUsuario")
-  viewedLots              Lote[]                @relation("LotesVisualizadosUsuario")
-  badges                  String[]              @default([])
-  rgNumber                String?
-  rgIssuer                String?
-  rgIssueDate             DateTime?
-  rgState                 String?
-  homePhone               String?
-  gender                  String?
-  profession              String?
-  nationality             String?
-  maritalStatus           String?
-  propertyRegime          String?
-  spouseName              String?
-  spouseCpf               String?
+  id                String                 @id @default(cuid())
+  email             String                 @unique
+  fullName          String?
+  password          String
+  roleId            String?
+  role              Perfil?                @relation(fields: [roleId], references: [id])
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  cpf               String?                @unique
+  dateOfBirth       DateTime?              @db.Date
+  cellPhone         String?
+  zipCode           String?
+  street            String?
+  number            String?
+  complement        String?
+  neighborhood      String?
+  city              String?
+  state             String?
+  optInMarketing    Boolean?               @default(false)
+  avatarUrl         String?
+  dataAiHint        String?
+  accountType       String? // PHYSICAL, LEGAL, DIRECT_SALE_CONSIGNOR
+  razaoSocial       String?
+  cnpj              String?                @unique
+  inscricaoEstadual String?
+  website           String?
+  habilitationStatus UserHabilitationStatus @default(PENDENTE_DOCUMENTOS)
+  badges            String[]               @default([])
+  
+  // Relations
+  vendedor          Vendedor?              @relation("UserToSeller")
+  leiloeiro         Leiloeiro?             @relation("UserToAuctioneer")
+  bids              Lance[]
+  wins              Arremate[]
+  documents         DocumentoUsuario[]
+  notifications     Notificacao[]
+  reviews           Avaliacao[]
+  questions         QuestaoLote[]
+  maxBids           LanceMaximoUsuario[]
+  uploadedMedia     MediaItem[]            @relation("UploadedBy")
+  answeredQuestions QuestaoLote[]          @relation("AnsweredBy")
+
+  @@map("usuarios")
 }
 
 model Perfil {
@@ -159,397 +65,259 @@ model Perfil {
   name            String      @unique
   name_normalized String      @unique
   description     String?
-  permissions     String[]
+  permissions     String[]    @default([])
   usuarios        Usuario[]
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+
+  @@map("perfis")
 }
 
+// ==============================================================================
+// BUSINESS ENTITIES (AUCTIONEERS, SELLERS)
+// ==============================================================================
+model Leiloeiro {
+  id                         String    @id @default(cuid())
+  publicId                   String    @unique @default(cuid())
+  slug                       String    @unique
+  name                       String
+  registrationNumber         String?
+  contactName                String?
+  email                      String?
+  phone                      String?
+  address                    String?
+  city                       String?
+  state                      String?
+  zipCode                    String?
+  website                    String?
+  logoUrl                    String?
+  dataAiHintLogo             String?
+  description                String?
+  memberSince                DateTime?
+  rating                     Float?
+  auctionsConductedCount     Int?
+  totalValueSold             Float?
+  userId                     String?   @unique
+  usuario                    Usuario?  @relation("UserToAuctioneer", fields: [userId], references: [id])
+  leiloes                    Leilao[]
+
+  @@map("leiloeiros")
+}
+
+model Vendedor {
+  id                         String     @id @default(cuid())
+  publicId                   String     @unique @default(cuid())
+  slug                       String     @unique
+  name                       String
+  contactName                String?
+  email                      String?
+  phone                      String?
+  address                    String?
+  city                       String?
+  state                      String?
+  zipCode                    String?
+  website                    String?
+  logoUrl                    String?
+  dataAiHintLogo             String?
+  description                String?
+  isJudicial                 Boolean    @default(false)
+  judicialBranchId           String?    @unique
+  vara                       Vara?      @relation(fields: [judicialBranchId], references: [id])
+  memberSince                DateTime?
+  rating                     Float?
+  activeLotsCount            Int?
+  totalSalesValue            Float?
+  auctionsFacilitatedCount   Int?
+  userId                     String?    @unique
+  usuario                    Usuario?   @relation("UserToSeller", fields: [userId], references: [id])
+  leiloes                    Leilao[]
+  processosJudiciais         ProcessoJudicial[]
+  bens                       Bem[]
+  ofertasVendaDireta         VendaDireta[]
+
+  @@map("vendedores")
+}
+
+// ==============================================================================
+// AUCTION & LOTS
+// ==============================================================================
 model Leilao {
-  id                             String                @id @default(cuid())
-  publicId                       String?               @unique
+  id                             String        @id @default(cuid())
+  publicId                       String        @unique @default(cuid())
   title                          String
   description                    String?
-  status                         AuctionStatus         @default(RASCUNHO)
-  auctionType                    String?
+  status                         AuctionStatus @default(RASCUNHO)
+  auctionType                    AuctionType?
   auctionDate                    DateTime
   endDate                        DateTime?
   city                           String?
   state                          String?
   imageUrl                       String?
-  imageMediaId                   String?
+  imageMediaId                   String?       @unique
+  imagemPrincipal                MediaItem?    @relation("AuctionImage", fields: [imageMediaId], references: [id])
   dataAiHint                     String?
   documentsUrl                   String?
+  visits                         Int?          @default(0)
+  initialOffer                   Float?
+  isFavorite                     Boolean?      @default(false)
+  softCloseEnabled               Boolean?      @default(false)
+  softCloseMinutes               Int?          @default(2)
+  automaticBiddingEnabled        Boolean?      @default(false)
+  allowInstallmentBids           Boolean?      @default(false)
+  estimatedRevenue               Float?
+  achievedRevenue                Float?
+  totalHabilitatedUsers          Int?
+  isFeaturedOnMarketplace        Boolean?
+  marketplaceAnnouncementTitle   String?
+  additionalTriggers             String[]
+  sellingBranch                  String?
   evaluationReportUrl            String?
   auctionCertificateUrl          String?
-  visits                         Int?                  @default(0)
-  initialOffer                   Float?
-  isFavorite                     Boolean?              @default(false)
-  sellingBranch                  String?
-  automaticBiddingEnabled        Boolean?              @default(false)
-  silentBiddingEnabled           Boolean?              @default(false)
-  allowMultipleBidsPerUser       Boolean?              @default(true)
-  allowInstallmentBids           Boolean?              @default(false)
-  softCloseEnabled               Boolean?              @default(false)
-  softCloseMinutes               Int?
-  estimatedRevenue               Float?
-  achievedRevenue                Float?                @default(0)
-  totalHabilitatedUsers          Int?                  @default(0)
-  isFeaturedOnMarketplace        Boolean?              @default(false)
-  marketplaceAnnouncementTitle   String?
-  additionalTriggers             String?
-  etapas                         Json[]                @default([])
+  silentBiddingEnabled           Boolean?      @default(false)
+  allowMultipleBidsPerUser       Boolean?      @default(true)
   decrementAmount                Float?
   decrementIntervalSeconds       Int?
   floorPrice                     Float?
   autoRelistSettings             Json?
-  createdAt                      DateTime              @default(now())
-  updatedAt                      DateTime              @updatedAt
-  categoriaId                    String
-  leiloeiroId                    String
-  vendedorId                     String?
-  processoJudicialId             String?
-  categoria                      CategoriaLote         @relation(fields: [categoriaId], references: [id])
-  leiloeiro                      Leiloeiro             @relation(fields: [leiloeiroId], references: [id])
-  vendedor                       Vendedor?             @relation(fields: [vendedorId], references: [id])
-  processoJudicial               ProcessoJudicial?     @relation(fields: [processoJudicialId], references: [id])
+  auctionStages                  Json[]        @default("[]")
+  createdAt                      DateTime      @default(now())
+  updatedAt                      DateTime      @updatedAt
+  
+  // Relations
+  categoryId                     String
+  categoria                      CategoriaLote @relation(fields: [categoryId], references: [id])
+  auctioneerId                   String
+  leiloeiro                      Leiloeiro     @relation(fields: [auctioneerId], references: [id])
+  sellerId                       String?
+  vendedor                       Vendedor?     @relation(fields: [sellerId], references: [id])
+  judicialProcessId              String?
+  processoJudicial               ProcessoJudicial? @relation(fields: [judicialProcessId], references: [id])
   lotes                          Lote[]
   lances                         Lance[]
+  avaliacoes                     Avaliacao[]
+  questoes                       QuestaoLote[]
   arremates                      Arremate[]
+
+  @@map("leiloes")
 }
 
 model Lote {
-  id                             String                @id @default(cuid())
-  publicId                       String?               @unique
-  title                          String
-  number                         String?
-  description                    String?
-  price                          Float
-  initialPrice                   Float?
-  secondInitialPrice             Float?
-  bidIncrementStep               Float?
-  status                         LotStatus
-  isFeatured                     Boolean?              @default(false)
-  isExclusive                    Boolean?              @default(false)
-  discountPercentage             Float?
-  additionalTriggers             String[]              @default([])
-  latitude                       Float?
-  longitude                      Float?
-  mapAddress                     String?
-  mapEmbedUrl                    String?
-  mapStaticImageUrl              String?
-  judicialProcessNumber          String?
-  courtDistrict                  String?
-  courtName                      String?
-  publicProcessUrl               String?
-  propertyRegistrationNumber     String?
-  propertyLiens                  String?
-  knownDebts                     String?
-  additionalDocumentsInfo        String?
-  reservePrice                   Float?
-  evaluationValue                Float?
-  debtAmount                     Float?
-  itbiValue                      Float?
-  endDate                        DateTime?
-  lotSpecificAuctionDate         DateTime?
-  secondAuctionDate              DateTime?
-  condition                      String?
-  dataAiHint                     String?
-  sellerId                       String?
-  auctioneerId                   String?
-  views                          Int                   @default(0)
-  bidsCount                      Int                   @default(0)
-  winningBidTermUrl              String?
-  createdAt                      DateTime              @default(now())
-  updatedAt                      DateTime              @updatedAt
-  leilaoId                       String
-  categoriaId                    String
-  subcategoriaId                 String?
-  estadoId                       String?
-  cidadeId                       String?
-  leilao                         Leilao                @relation(fields: [leilaoId], references: [id])
-  categoria                      CategoriaLote         @relation(fields: [categoriaId], references: [id])
-  subcategoria                   Subcategoria?         @relation(fields: [subcategoriaId], references: [id])
-  lances                         Lance[]
-  arremates                      Arremate[]
-  perguntas                      PerguntaLote[]
-  avaliacoes                     Avaliacao[]
-  lancesMaximos                  LanceMaximoUsuario[]
-  favoritadoPor                  Usuario[]             @relation("LotesFavoritosUsuario")
-  visualizadoPor                 Usuario[]             @relation("LotesVisualizadosUsuario")
-  estado                         Estado?               @relation(fields: [estadoId], references: [id])
-  cidade                         Cidade?               @relation(fields: [cidadeId], references: [id])
-  bens                           Bem[]                 @relation("BemParaLote")
-  mediaItems                     MediaItem[]           @relation("LoteMediaItem")
-}
+  id                         String      @id @default(cuid())
+  publicId                   String      @unique @default(cuid())
+  number                     String?
+  title                      String
+  description                String?
+  status                     LotStatus
+  price                      Float
+  initialPrice               Float
+  secondInitialPrice         Float?
+  bidIncrementStep           Float?
+  views                      Int?        @default(0)
+  bidsCount                  Int?        @default(0)
+  isFeatured                 Boolean?    @default(false)
+  isExclusive                Boolean?    @default(false)
+  discountPercentage         Float?
+  additionalTriggers         String[]
+  imageUrl                   String?
+  imageMediaId               String?     @unique
+  imagemPrincipal            MediaItem?  @relation("LotImage", fields: [imageMediaId], references: [id])
+  galleryImageUrls           String[]
+  mediaItemIds               String[]
+  latitude                   Float?
+  longitude                  Float?
+  mapAddress                 String?
+  mapEmbedUrl                String?
+  mapStaticImageUrl          String?
+  judicialProcessNumber      String?
+  courtDistrict              String?
+  courtName                  String?
+  publicProcessUrl           String?
+  propertyRegistrationNumber String?
+  propertyLiens              String?
+  knownDebts                 String?
+  additionalDocumentsInfo    String?
+  reservePrice               Float?
+  evaluationValue            Float?
+  debtAmount                 Float?
+  itbiValue                  Float?
+  endDate                    DateTime?
+  lotSpecificAuctionDate     DateTime?
+  secondAuctionDate          DateTime?
+  condition                  String?
+  dataAiHint                 String?
+  winningBidTermUrl          String?
+  createdAt                  DateTime    @default(now())
+  updatedAt                  DateTime    @updatedAt
+  
+  // Relations
+  auctionId                  String
+  auction                    Leilao      @relation(fields: [auctionId], references: [id])
+  categoryId                 String
+  category                   CategoriaLote @relation(fields: [categoryId], references: [id])
+  subcategoryId              String?
+  subcategory                Subcategoria? @relation(fields: [subcategoryId], references: [id])
+  stateId                    String?
+  estado                     Estado?     @relation(fields: [stateId], references: [id])
+  cityId                     String?
+  cidade                     Cidade?     @relation(fields: [cityId], references: [id])
+  sellerId                   String?     // Can be inherited from auction
+  auctioneerId               String?     // Can be inherited from auction
+  bemIds                     String[]
+  bens                       Bem[]
+  bids                       Lance[]
+  wins                       Arremate[]
+  reviews                    Avaliacao[]
+  questions                  QuestaoLote[]
+  maxBids                    LanceMaximoUsuario[]
 
-model CategoriaLote {
-  id                  String         @id @default(cuid())
-  name                String         @unique
-  slug                String         @unique
-  description         String?
-  logoUrl             String?
-  coverImageUrl       String?
-  megaMenuImageUrl    String?
-  dataAiHintLogo      String?
-  dataAiHintCover     String?
-  dataAiHintMegaMenu  String?
-  itemCount           Int            @default(0)
-  hasSubcategories    Boolean        @default(false)
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
-  subcategorias       Subcategoria[]
-  lotes               Lote[]
-  leiloes             Leilao[]
-  bens                Bem[]
-}
-
-model Subcategoria {
-  id                 String        @id @default(cuid())
-  name               String
-  slug               String        @unique
-  description        String?
-  displayOrder       Int           @default(0)
-  iconUrl            String?
-  iconMediaId        String?
-  dataAiHintIcon     String?
-  itemCount          Int           @default(0)
-  parentCategoryId   String
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
-  categoriaPrincipal CategoriaLote @relation(fields: [parentCategoryId], references: [id])
-  lotes              Lote[]
-  bens               Bem[]
-
-  @@unique([parentCategoryId, name])
-}
-
-model Leiloeiro {
-  id                        String    @id @default(cuid())
-  publicId                  String?   @unique
-  name                      String
-  slug                      String    @unique
-  registrationNumber        String?
-  contactName               String?
-  email                     String?
-  phone                     String?
-  address                   String?
-  city                      String?
-  state                     String?
-  zipCode                   String?
-  website                   String?
-  logoUrl                   String?
-  logoMediaId               String?
-  dataAiHintLogo            String?
-  description               String?
-  rating                    Float?
-  auctionsConductedCount    Int?
-  totalValueSold            Float?
-  memberSince               DateTime?
-  userId                    String?   @unique
-  createdAt                 DateTime  @default(now())
-  updatedAt                 DateTime  @updatedAt
-  leiloes                   Leilao[]
-  usuario                   Usuario?  @relation(fields: [userId], references: [id])
-}
-
-model Vendedor {
-  id                        String             @id @default(cuid())
-  publicId                  String?            @unique
-  name                      String
-  slug                      String             @unique
-  contactName               String?
-  email                     String?
-  phone                     String?
-  address                   String?
-  city                      String?
-  state                     String?
-  zipCode                   String?
-  website                   String?
-  logoUrl                   String?
-  logoMediaId               String?
-  dataAiHintLogo            String?
-  description               String?
-  rating                    Float?
-  activeLotsCount           Int?
-  totalSalesValue           Float?
-  auctionsFacilitatedCount  Int?
-  memberSince               DateTime?
-  isJudicial                Boolean?           @default(false)
-  userId                    String?            @unique
-  judicialBranchId          String?            @unique
-  createdAt                 DateTime           @default(now())
-  updatedAt                 DateTime           @updatedAt
-  leiloes                   Leilao[]
-  vendasDiretas             VendaDireta[]
-  bens                      Bem[]
-  usuario                   Usuario?           @relation(fields: [userId], references: [id])
-  processosJudiciais        ProcessoJudicial[]
-  varaJudicial              Vara?              @relation(fields: [judicialBranchId], references: [id])
-}
-
-model Lance {
-  id            String   @id @default(cuid())
-  amount        Float
-  timestamp     DateTime @default(now())
-  isMaxBid      Boolean  @default(false)
-  bidderDisplay String
-  bidderId      String
-  loteId        String
-  leilaoId      String
-  licitante     Usuario  @relation(fields: [bidderId], references: [id])
-  lote          Lote     @relation(fields: [loteId], references: [id])
-  leilao        Leilao   @relation(fields: [leilaoId], references: [id])
-
-  @@index([loteId])
-}
-
-model Arremate {
-  id                 String        @id @default(cuid())
-  winningBidAmount   Float
-  winDate            DateTime
-  paymentStatus      PaymentStatus @default(PENDENTE)
-  invoiceUrl         String?
-  retrievalDeadline  DateTime?
-  userId             String
-  lotId              String        @unique
-  leilaoId           String
-  vencedor           Usuario       @relation(fields: [userId], references: [id])
-  lote               Lote          @relation(fields: [lotId], references: [id])
-  leilao             Leilao        @relation(fields: [leilaoId], references: [id])
-}
-
-// ============================================================
-//                    JUDICIAL MODELS
-// ============================================================
-
-model ProcessoJudicial {
-  id              String         @id @default(cuid())
-  publicId        String?        @unique
-  processNumber   String         @unique
-  isElectronic    Boolean        @default(true)
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  courtId         String
-  districtId      String
-  branchId        String
-  sellerId        String?
-  tribunal        Tribunal       @relation(fields: [courtId], references: [id])
-  comarca         Comarca        @relation(fields: [districtId], references: [id])
-  vara            Vara           @relation(fields: [branchId], references: [id])
-  partes          ParteProcesso[]
-  bens            Bem[]
-  leiloes         Leilao[]
-  vendedor        Vendedor?      @relation(fields: [sellerId], references: [id])
-}
-
-model Tribunal {
-  id          String             @id @default(cuid())
-  name        String
-  slug        String             @unique
-  stateUf     String
-  website     String?
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  comarcas    Comarca[]
-  processos   ProcessoJudicial[]
-  estado      Estado             @relation(fields: [stateUf], references: [uf])
-}
-
-model Comarca {
-  id        String             @id @default(cuid())
-  name      String
-  slug      String             @unique
-  zipCode   String?
-  courtId   String
-  stateId   String
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  tribunal  Tribunal           @relation(fields: [courtId], references: [id])
-  varas     Vara[]
-  processos ProcessoJudicial[]
-  estado    Estado             @relation(fields: [stateId], references: [id])
-}
-
-model Vara {
-  id          String             @id @default(cuid())
-  name        String
-  slug        String             @unique
-  contactName String?
-  phone       String?
-  email       String?
-  districtId  String
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  comarca     Comarca            @relation(fields: [districtId], references: [id])
-  processos   ProcessoJudicial[]
-  vendedores  Vendedor[]
-}
-
-model ParteProcesso {
-  id             String           @id @default(cuid())
-  name           String
-  documentNumber String?
-  partyType      ProcessPartyType
-  processoJudicialId  String
-  processo       ProcessoJudicial @relation(fields: [processoJudicialId], references: [id], onDelete: Cascade)
-
-  @@unique([processoJudicialId, name, partyType])
+  @@map("lotes")
 }
 
 model Bem {
-  id                         String      @id @default(cuid())
-  publicId                   String?     @unique
-  title                      String
-  description                String?
-  status                     String
-  evaluationValue            Float?
-  imageUrl                   String?
-  imageMediaId               String?
-  dataAiHint                 String?
-  locationCity               String?
-  locationState              String?
-  address                    String?
-  latitude                   Float?
-  longitude                  Float?
-  judicialProcessId          String?
-  sellerId                   String?
-  categoryId                 String?
-  subcategoryId              String?
-  createdAt                  DateTime    @default(now())
-  updatedAt                  DateTime    @updatedAt
-  processoJudicial           ProcessoJudicial? @relation(fields: [judicialProcessId], references: [id], onDelete: SetNull)
-  vendedor                   Vendedor?   @relation(fields: [sellerId], references: [id], onDelete: SetNull)
-  categoria                  CategoriaLote? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  subcategoria               Subcategoria?  @relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
-  lotes                      Lote[]      @relation("BemParaLote")
-  plate                      String?
-  make                       String?
-  model                      String?
-  version                    String?
-  year                       Int?
-  modelYear                  Int?
-  mileage                    Int?
-  color                      String?
-  fuelType                   String?
-  transmissionType           String?
-  bodyType                   String?
-  vin                        String?
-  renavam                    String?
-  enginePower                String?
-  numberOfDoors              Int?
-  vehicleOptions             String?
-  detranStatus               String?
-  debts                      String?
-  runningCondition           String?
-  bodyCondition              String?
-  tiresCondition             String?
-  hasKey                     Boolean?
-  propertyType               String?
+  id                    String      @id @default(cuid())
+  publicId              String      @unique @default(cuid())
+  title                 String
+  description           String?
+  status                BemStatus
+  evaluationValue       Float?
+  imageUrl              String?
+  imageMediaId          String?     @unique
+  imagemPrincipal       MediaItem?  @relation("BemImage", fields: [imageMediaId], references: [id])
+  galleryImageUrls      String[]
+  mediaItemIds          String[]
+  dataAiHint            String?
+  locationCity          String?
+  locationState         String?
+  address               String?
+  latitude              Float?
+  longitude             Float?
+  
+  // Vehicle Specific
+  plate                 String?
+  make                  String?
+  model                 String?
+  version               String?
+  year                  Int?
+  modelYear             Int?
+  mileage               Int?
+  color                 String?
+  fuelType              String?
+  transmissionType      String?
+  bodyType              String?
+  vin                   String?
+  renavam               String?
+  enginePower           String?
+  numberOfDoors         Int?
+  vehicleOptions        String?
+  detranStatus          String?
+  debts                 String?
+  runningCondition      String?
+  bodyCondition         String?
+  tiresCondition        String?
+  hasKey                Boolean?
+  
+  // Property Specific
   propertyRegistrationNumber String?
   iptuNumber                 String?
   isOccupied                 Boolean?
-  area                       Float?
   totalArea                  Float?
   builtArea                  Float?
   bedrooms                   Int?
@@ -567,171 +335,354 @@ model Bem {
   unregisteredRecords        String?
   hasHabiteSe                Boolean?
   zoningRestrictions         String?
-  amenities                  Json?
-  brand                      String?
-  serialNumber               String?
-  itemCondition              String?
-  specifications             String?
-  includedAccessories        String?
-  batteryCondition           String?
-  hasInvoice                 Boolean?
-  hasWarranty                Boolean?
-  repairHistory              String?
-  applianceCapacity          String?
-  voltage                    String?
-  applianceType              String?
-  additionalFunctions        String?
-  hoursUsed                  Int?
-  engineType                 String?
-  capacityOrPower            String?
-  maintenanceHistory         String?
-  installationLocation       String?
-  compliesWithNR             String?
-  operatingLicenses          String?
-  breed                      String?
-  age                        String?
-  sex                        String?
-  weight                     String?
-  individualId               String?
-  purpose                    String?
-  sanitaryCondition          String?
-  vaccinationStatus          String?
-  lineage                    String?
-  isPregnant                 Boolean?
-  specialSkills              String?
-  gtaDocument                String?
-  breedRegistryDocument      String?
-  furnitureType              String?
-  material                   String?
-  style                      String?
-  dimensions                 String?
-  pieceCount                 Int?
-  jewelryType                String?
-  metal                      String?
-  gemstones                  String?
-  totalWeight                String?
-  jewelrySize                String?
-  authenticityCertificate    String?
-  workType                   String?
-  artist                     String?
-  period                     String?
-  technique                  String?
-  provenance                 String?
-  boatType                   String?
-  boatLength                 String?
-  hullMaterial               String?
-  onboardEquipment           String?
-  productName                String?
-  quantity                   String?
-  packagingType              String?
-  expirationDate             DateTime?
-  storageConditions          String?
-  preciousMetalType          String?
-  purity                     String?
-  forestGoodsType            String?
-  volumeOrQuantity           String?
-  species                    String?
-  dofNumber                  String?
-  series                     String?
-  odometer                   Int?
-  engineDetails              String?
-  lossType                   String?
-  primaryDamage              String?
-  vinStatus                  String?
-  titleInfo                  String?
-  titleBrand                 String?
-  startCode                  String?
-  airbagsStatus              String?
-  driveLineType              String?
-  cylinders                  String?
-  restraintSystem            String?
-  exteriorInteriorColor      String?
-  options                    String?
-  manufacturedIn             String?
-  vehicleClass               String?
-  vehicleLocationInBranch    String?
-  aisleStall                 String?
-  laneRunNumber              String?
-  actualCashValue            Float?
-  estimatedRepairCost        Float?
+  
+  // Common for many types
+  brand                 String?
+  serialNumber          String?
+  itemCondition         String?
+  specifications        String?
+  includedAccessories   String?
+  hasInvoice            Boolean?
+  hasWarranty           Boolean?
+  repairHistory         String?
+
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  // Relations
+  categoryId          String?
+  category            CategoriaLote? @relation(fields: [categoryId], references: [id])
+  subcategoryId       String?
+  subcategory         Subcategoria? @relation(fields: [subcategoryId], references: [id])
+  judicialProcessId   String?
+  judicialProcess     ProcessoJudicial? @relation(fields: [judicialProcessId], references: [id])
+  sellerId            String?
+  seller              Vendedor?   @relation(fields: [sellerId], references: [id])
+  lotes               Lote[]
+  
+  @@map("bens")
 }
 
-// ============================================================
-//                  SUPPORTING MODELS
-// ============================================================
-
-model VendaDireta {
-  id                   String                @id @default(cuid())
-  publicId             String?               @unique
-  title                String
+model CategoriaLote {
+  id                   String        @id @default(cuid())
+  name                 String        @unique
+  slug                 String        @unique
   description          String?
-  offerType            DirectSaleOfferType
-  status               DirectSaleOfferStatus @default(PENDING_APPROVAL)
-  price                Float?
-  minimumOfferPrice    Float?
-  locationCity         String?
-  locationState        String?
-  imageUrl             String?
-  imageMediaId         String?               @unique
-  dataAiHint           String?
-  dataAiHintSellerLogo String?
-  galleryImageUrls     String[]              @default([])
-  itemsIncluded        String[]              @default([])
-  tags                 String[]              @default([])
-  views                Int                   @default(0)
-  proposalsCount       Int                   @default(0)
-  expiresAt            DateTime?
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  categoriaId          String
-  vendedorId           String
-  usuarioId            String?
-  categoria            CategoriaLote         @relation(fields: [categoriaId], references: [id])
-  vendedor             Vendedor              @relation(fields: [vendedorId], references: [id])
-  imagemPrincipal      MediaItem?            @relation("VendaDiretaImagemPrincipal", fields: [imageMediaId], references: [id], onDelete: SetNull)
-  usuario              Usuario?              @relation(fields: [usuarioId], references: [id])
+  logoUrl              String?
+  coverImageUrl        String?
+  megaMenuImageUrl     String?
+  dataAiHintLogo       String?
+  dataAiHintCover      String?
+  dataAiHintMegaMenu   String?
+  itemCount            Int           @default(0)
+  hasSubcategories     Boolean       @default(false)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  leiloes              Leilao[]
+  lotes                Lote[]
+  bens                 Bem[]
+  subcategorias        Subcategoria[]
+
+  @@map("categorias_lote")
 }
 
-model PropostaVendaDireta {
+model Subcategoria {
+  id               String       @id @default(cuid())
+  name             String
+  slug             String       @unique
+  description      String?
+  displayOrder     Int?
+  iconUrl          String?
+  iconMediaId      String?
+  dataAiHintIcon   String?
+  itemCount        Int          @default(0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  parentCategoryId String
+  parentCategory   CategoriaLote @relation(fields: [parentCategoryId], references: [id])
+  lotes            Lote[]
+  bens             Bem[]
+
+  @@map("subcategorias")
+}
+
+// ==============================================================================
+// BIDDING & WINNING
+// ==============================================================================
+model Lance {
+  id              String   @id @default(cuid())
+  amount          Float
+  timestamp       DateTime @default(now())
+  bidderDisplay   String?
+  
+  // Relations
+  lotId           String
+  lote            Lote     @relation(fields: [lotId], references: [id])
+  auctionId       String
+  leilao          Leilao   @relation(fields: [auctionId], references: [id])
+  bidderId        String
+  licitante       Usuario  @relation(fields: [bidderId], references: [id])
+
+  @@map("lances")
+}
+
+model Arremate {
+  id                 String        @id @default(cuid())
+  winningBidAmount   Float
+  winDate            DateTime      @default(now())
+  paymentStatus      PaymentStatus @default(PENDENTE)
+  invoiceUrl         String?
+  
+  // Relations
+  lotId              String
+  lote               Lote          @relation(fields: [lotId], references: [id])
+  userId             String
+  usuario            Usuario       @relation(fields: [userId], references: [id])
+
+  @@map("arremates")
+}
+
+model LanceMaximoUsuario {
+  id        String   @id @default(cuid())
+  userId    String
+  lotId     String
+  maxAmount Float
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  usuario   Usuario  @relation(fields: [userId], references: [id])
+  lote      Lote     @relation(fields: [lotId], references: [id])
+
+  @@unique([userId, lotId])
+  @@map("lances_maximos_usuario")
+}
+
+// ==============================================================================
+// LOCATION
+// ==============================================================================
+model Estado {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  uf        String   @unique
+  slug      String   @unique
+  cityCount Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cidades   Cidade[]
+  tribunais Comarca[]
+
+  @@map("estados")
+}
+
+model Cidade {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String
+  stateUf   String
+  ibgeCode  String?
+  lotCount  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  stateId   String
+  estado    Estado   @relation(fields: [stateId], references: [id])
+  lotes     Lote[]
+
+  @@map("cidades")
+}
+
+// ==============================================================================
+// JUDICIAL ENTITIES
+// ==============================================================================
+model Tribunal {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
+  stateUf     String
+  website     String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  comarcas    Comarca[]
+  processos   ProcessoJudicial[]
+
+  @@map("tribunais")
+}
+
+model Comarca {
+  id         String     @id @default(cuid())
+  name       String
+  slug       String
+  zipCode    String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  courtId    String
+  tribunal   Tribunal   @relation(fields: [courtId], references: [id])
+  stateId    String
+  estado     Estado     @relation(fields: [stateId], references: [id])
+  varas      Vara[]
+  processos  ProcessoJudicial[]
+
+  @@unique([name, stateId])
+  @@map("comarcas")
+}
+
+model Vara {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String
+  contactName String?
+  phone       String?
+  email       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  districtId  String
+  comarca     Comarca    @relation(fields: [districtId], references: [id])
+  processos   ProcessoJudicial[]
+  vendedor    Vendedor?
+
+  @@unique([name, districtId])
+  @@map("varas")
+}
+
+model ProcessoJudicial {
+  id           String    @id @default(cuid())
+  publicId     String    @unique @default(cuid())
+  processNumber String   @unique
+  isElectronic Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  // Relations
+  courtId      String
+  tribunal     Tribunal  @relation(fields: [courtId], references: [id])
+  districtId   String
+  comarca      Comarca   @relation(fields: [districtId], references: [id])
+  branchId     String
+  vara         Vara      @relation(fields: [branchId], references: [id])
+  sellerId     String?   @unique
+  vendedor     Vendedor? @relation(fields: [sellerId], references: [id])
+  partes       ParteProcesso[]
+  bens         Bem[]
+  leiloes      Leilao[]
+
+  @@map("processos_judiciais")
+}
+
+model ParteProcesso {
+  id             String         @id @default(cuid())
+  name           String
+  documentNumber String?
+  partyType      ProcessPartyType
+  processoJudicialId String
+  processo       ProcessoJudicial @relation(fields: [processoJudicialId], references: [id], onDelete: Cascade)
+
+  @@unique([processoJudicialId, name, partyType])
+  @@map("partes_processo")
+}
+
+// ==============================================================================
+// CONTENT & MISC
+// ==============================================================================
+
+model MediaItem {
   id              String      @id @default(cuid())
-  offerId         String
-  userId          String
-  proposalAmount  Float
-  message         String?
-  status          String // PENDENTE, ACEITA, RECUSADA
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  oferta          VendaDireta @relation(fields: [offerId], references: [id])
-  usuario         Usuario     @relation(fields: [userId], references: [id])
+  fileName        String
+  storagePath     String
+  title           String?
+  altText         String?
+  caption         String?
+  description     String?
+  mimeType        String
+  sizeBytes       Int
+  urlOriginal     String
+  urlThumbnail    String?
+  urlMedium       String?
+  urlLarge        String?
+  linkedLotIds    String[]
+  dataAiHint      String?
+  uploadedBy      String?
+  uploadedAt      DateTime    @default(now())
+  
+  // Relations
+  uploader        Usuario?    @relation("UploadedBy", fields: [uploadedBy], references: [id])
+  auctionImageFor Leilao?     @relation("AuctionImage")
+  lotImageFor     Lote?       @relation("LotImage")
+  bemImageFor     Bem?        @relation("BemImage")
+  
+  @@map("media_items")
 }
 
-model TipoDocumento {
-  id           String             @id @default(cuid())
-  name         String             @unique
-  description  String?
-  isRequired   Boolean            @default(false)
-  aplicaA      String // CSV like PHYSICAL,LEGAL
-  formatos     String // CSV like pdf,jpg,png
-  displayOrder Int                @default(0)
-  documentos   DocumentoUsuario[]
+model DirectSaleOffer {
+  id                  String     @id @default(cuid())
+  publicId            String     @unique @default(cuid())
+  title               String
+  description         String?
+  offerType           DirectSaleOfferType
+  status              DirectSaleOfferStatus
+  price               Float?
+  minimumOfferPrice   Float?
+  locationCity        String?
+  locationState       String?
+  imageUrl            String?
+  imageMediaId        String?
+  dataAiHint          String?
+  galleryImageUrls    String[]
+  mediaItemIds        String[]
+  itemsIncluded       String[]
+  tags                String[]
+  views               Int?
+  proposalsCount      Int?
+  expiresAt           DateTime?
+  sellerLogoUrl       String?
+  dataAiHintSellerLogo String?
+  latitude            Float?
+  longitude           Float?
+  mapAddress          String?
+  mapEmbedUrl         String?
+  mapStaticImageUrl   String?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  
+  // Relations
+  categoryId          String
+  category            CategoriaLote @relation(fields: [categoryId], references: [id])
+  sellerId            String
+  seller              Vendedor @relation(fields: [sellerId], references: [id])
+
+  @@map("ofertas_venda_direta")
 }
 
 model DocumentoUsuario {
-  id                String         @id @default(cuid())
-  userId            String
-  documentTypeId    String
-  fileUrl           String
-  fileName          String
-  status            DocumentStatus @default(NOT_SENT)
-  rejectionReason   String?
-  uploadDate        DateTime       @default(now())
-  analysisDate      DateTime?
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  usuario           Usuario        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tipoDocumento     TipoDocumento  @relation(fields: [documentTypeId], references: [id])
+  id              String             @id @default(cuid())
+  status          UserDocumentStatus @default(NOT_SENT)
+  fileUrl         String?
+  fileName        String?
+  uploadDate      DateTime?
+  analysisDate    DateTime?
+  rejectionReason String?
+  
+  // Relations
+  userId          String
+  usuario         Usuario            @relation(fields: [userId], references: [id])
+  documentTypeId  String
+  documentType    TipoDocumento      @relation(fields: [documentTypeId], references: [id])
 
   @@unique([userId, documentTypeId])
+  @@map("documentos_usuario")
+}
+
+model TipoDocumento {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  description  String?
+  isRequired   Boolean  @default(false)
+  appliesTo    String   // e.g., "PHYSICAL,LEGAL"
+  allowedFormats String?  // e.g., "pdf,jpg,png"
+  displayOrder Int?     @default(0)
+  
+  // Relations
+  userDocs     DocumentoUsuario[]
+  
+  @@map("tipos_documento")
 }
 
 model Notificacao {
@@ -739,32 +690,13 @@ model Notificacao {
   message   String
   isRead    Boolean  @default(false)
   link      String?
-  userId    String
   createdAt DateTime @default(now())
-  usuario   Usuario  @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
+  
+  // Relations
+  userId    String
+  usuario   Usuario  @relation(fields: [userId], references: [id])
 
-model MediaItem {
-  id              String        @id @default(cuid())
-  fileName        String
-  storagePath     String        @unique
-  urlOriginal     String
-  urlThumbnail    String?
-  urlMedium       String?
-  urlLarge        String?
-  title           String?
-  altText         String?
-  caption         String?
-  description     String?
-  mimeType        String
-  sizeBytes       Int
-  uploadedAt      DateTime      @default(now())
-  uploadedBy      String
-  dataAiHint      String?
-  linkedLotIds    String[]      @default([])
-  lotes           Lote[]        @relation("LoteMediaItem")
-  ofertasVendaDireta MediaItem[] @relation("VendaDiretaImagemPrincipal")
-  vendaDiretaImagem VendaDireta?  
+  @@map("notificacoes")
 }
 
 model BlogPost {
@@ -777,7 +709,7 @@ model BlogPost {
   updatedAt DateTime @updatedAt
 }
 
-model Contato {
+model ContactMessage {
   id        String   @id @default(cuid())
   name      String
   email     String
@@ -786,1592 +718,170 @@ model Contato {
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("mensagens_contato")
 }
 
 model Avaliacao {
-  id                String   @id @default(cuid())
-  rating            Int
-  comment           String?
-  userId            String
-  userDisplayName   String
-  lotId             String
-  leilaoId          String
-  createdAt         DateTime @default(now())
-  usuario           Usuario  @relation(fields: [userId], references: [id])
-  lote              Lote     @relation(fields: [lotId], references: [id])
-  leilao            Leilao   @relation(fields: [leilaoId], references: [id])
+  id              String   @id @default(cuid())
+  rating          Int
+  comment         String?
+  createdAt       DateTime @default(now())
+  
+  // Relations
+  userId          String
+  usuario         Usuario  @relation(fields: [userId], references: [id])
+  lotId           String
+  lote            Lote     @relation(fields: [lotId], references: [id])
+  auctionId       String
+  leilao          Leilao   @relation(fields: [auctionId], references: [id])
+  
+  @@map("avaliacoes")
 }
 
-model PerguntaLote {
-  id                      String   @id @default(cuid())
-  questionText            String
-  answerText              String?
-  isPublic                Boolean  @default(false)
-  createdAt               DateTime @default(now())
-  answeredAt              DateTime?
-  userId                  String
-  userDisplayName         String
+model QuestaoLote {
+  id            String   @id @default(cuid())
+  questionText  String
+  answerText    String?
+  isPublic      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  answeredAt    DateTime?
+  
+  // Relations
+  lotId         String
+  lote          Lote     @relation(fields: [lotId], references: [id])
+  auctionId     String
+  leilao        Leilao   @relation(fields: [auctionId], references: [id])
+  userId        String
+  usuario       Usuario  @relation(fields: [userId], references: [id])
   answeredByUserId        String?
-  answeredByUserDisplayName String?
-  lotId                   String
-  leilaoId                String
-  perguntaFeitaPor        Usuario  @relation(fields: [userId], references: [id])
-  respostaDadaPor         Usuario? @relation("RespostasLote", fields: [answeredByUserId], references: [id])
-  lote                    Lote     @relation(fields: [lotId], references: [id])
-  leilao                  Leilao   @relation(fields: [leilaoId], references: [id])
-}
-
-model LanceMaximoUsuario {
-  id        String   @id @default(cuid())
-  maxAmount Float
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  userId    String
-  lotId     String
-  usuario   Usuario  @relation(fields: [userId], references: [id])
-  lote      Lote     @relation(fields: [lotId], references: [id])
-
-  @@unique([userId, lotId])
-}
-
-model Estado {
-  id          String             @id @default(cuid())
-  name        String
-  uf          String             @unique
-  slug        String             @unique
-  cityCount   Int                @default(0)
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  cidades     Cidade[]
-  comarcas    Comarca[]
-  lotes       Lote[]
-  tribunais   Tribunal[]
-}
-
-model Cidade {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  ibgeCode  String?
-  stateId   String
-  stateUf   String
-  lotCount  Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  estado    Estado   @relation(fields: [stateId], references: [id])
-  lotes     Lote[]
-}
-```
-- src/components/layout/admin-sidebar.tsx:
-```tsx
-// src/components/layout/admin-sidebar.tsx
-'use client';
-
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, Boxes, Rocket, FileUp, BarChart, BookOpen, UserCheck, MessageSquare, Files } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-
-const topLevelNavItems = [
-  { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-  { title: 'Auditório Virtual', href: '/live-dashboard', icon: Tv },
-  { title: 'Wizard de Leilões', href: '/admin/wizard', icon: Rocket },
-  { title: 'Importação CNJ', href: '/admin/import/cnj', icon: FileUp },
-];
-
-const auctionManagementItems = [
-  { title: 'Leilões', href: '/admin/auctions', icon: Gavel },
-  { title: 'Loteamento', href: '/admin/lotting', icon: Boxes },
-  { title: 'Lotes', href: '/admin/lots', icon: Package },
-  { title: 'Bens', href: '/admin/bens', icon: Package },
-  { title: 'Venda Direta', href: '/admin/direct-sales', icon: ShoppingCart },
-  { title: 'Categorias de Lotes', href: '/admin/categories', icon: ListChecks },
-  { title: 'Subcategorias', href: '/admin/subcategories', icon: Layers },
-];
-
-const contentManagementItems = [
-    { title: 'Blog', href: '/admin/blog', icon: BookOpen, disabled: true },
-    { title: 'Biblioteca de Mídia', href: '/admin/media', icon: Library },
-]
-
-const judicialManagementItems = [
-    { title: 'Tribunais', href: '/admin/courts', icon: Scale },
-    { title: 'Comarcas', href: '/admin/judicial-districts', icon: Map },
-    { title: 'Varas', href: '/admin/judicial-branches', icon: Building2 },
-    { title: 'Processos', href: '/admin/judicial-processes', icon: FileText },
-]
-
-const platformManagementItems = [
-  { title: 'Comitentes', href: '/admin/sellers', icon: Users },
-  { title: 'Leiloeiros', href: '/admin/auctioneers', icon: Landmark },
-  { title: 'Estados', href: '/admin/states', icon: Map },
-  { title: 'Cidades', href: '/admin/cities', icon: Building2 },
-  { title: 'Usuários', href: '/admin/users', icon: Users },
-  { title: 'Habilitações', href: '/admin/habilitations', icon: UserCheck },
-  { title: 'Templates de Documentos', href: '/admin/document-templates', icon: Files },
-  { title: 'Mensagens de Contato', href: '/admin/contact-messages', icon: MessageSquare },
-  { title: 'Perfis (Roles)', href: '/admin/roles', icon: ShieldCheck },
-  { title: 'Relatórios', href: '/admin/reports', icon: BarChart },
-  { title: 'Configurações', href: '/admin/settings', icon: Settings },
-];
-
-const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; title: string; icon: React.ElementType; disabled?: boolean }; pathname: string; onLinkClick?: () => void; }) => (
-  <Button
-    key={item.href}
-    variant={pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href) && !item.disabled) ? 'secondary' : 'ghost'}
-    className={cn(
-      'w-full justify-start',
-      (pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href)) && !item.disabled) && 'font-semibold text-primary hover:text-primary'
-    )}
-    asChild
-    disabled={item.disabled}
-    onClick={onLinkClick}
-  >
-    <Link href={item.disabled ? '#' : item.href}>
-      <item.icon className="mr-2 h-4 w-4" />
-      {item.title}
-    </Link>
-  </Button>
-);
-
-export default function AdminSidebar() {
-  const pathname = usePathname();
-
-  return (
-    <aside className="sticky top-0 h-screen w-64 bg-background border-r flex flex-col">
-      <div className="p-4 border-b">
-        <Link href="/admin/dashboard" className="flex items-center space-x-2">
-          <LayoutDashboard className="h-7 w-7 text-primary" />
-          <span className="font-bold text-xl text-primary">BidExpert Admin</span>
-        </Link>
-      </div>
-      <ScrollArea className="flex-1">
-        <nav className="p-2 space-y-1">
-          {topLevelNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-          
-          <Accordion type="multiple" className="w-full" defaultValue={['auction-management', 'judicial-management', 'platform-management', 'content-management']}>
-              <AccordionItem value="auction-management" className="border-b-0">
-                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão de Leilões</AccordionTrigger>
-                  <AccordionContent className="pt-1 space-y-1">
-                      {auctionManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-                  </AccordionContent>
-              </AccordionItem>
-               <AccordionItem value="content-management" className="border-b-0">
-                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Conteúdo e Mídia</AccordionTrigger>
-                  <AccordionContent className="pt-1 space-y-1">
-                      {contentManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-                  </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="judicial-management" className="border-b-0">
-                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão Judicial</AccordionTrigger>
-                  <AccordionContent className="pt-1 space-y-1">
-                      {judicialManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-                  </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="platform-management" className="border-b-0">
-                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão da Plataforma</AccordionTrigger>
-                  <AccordionContent className="pt-1 space-y-1">
-                      {platformManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-                  </AccordionContent>
-              </AccordionItem>
-          </Accordion>
-        </nav>
-      </ScrollArea>
-      <div className="p-4 border-t">
-        <Button variant="outline" className="w-full" asChild>
-            <Link href="/">Voltar ao Site</Link>
-        </Button>
-      </div>
-    </aside>
-  );
-}
-
-```
-- src/app/admin/sellers/seller.actions.ts:
-```ts
-// src/app/admin/sellers/seller.actions.ts
-'use server';
-
-import { deleteSeller } from './actions';
-
-export async function handleDeleteSeller(id: string) {
-  const result = await deleteSeller(id);
-  if (!result.success) {
-      console.error("Failed to delete seller:", result.message);
-  }
-  // Optionally, revalidate path or handle UI updates as needed
-}
-```
-- src/app/dashboard/actions.ts:
-```ts
-// This file is now obsolete and will be deleted.
-// All dashboard-related actions are in their specific sub-directory actions.ts files.
-
-```
-- src/app/dashboard/queries.ts:
-```ts
-// This file is now obsolete and will be deleted.
-// Data fetching is now handled by server components and server actions.
-
-```
-- src/components/layout/admin-sidebar.tsx:
-```tsx
-// src/components/layout/admin-sidebar.tsx
-'use client';
-
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, Boxes, Rocket, FileUp, BarChart, BookOpen, UserCheck, MessageSquare, Files } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-
-const topLevelNavItems = [
-  { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-  { title: 'Auditório Virtual', href: '/live-dashboard', icon: Tv },
-  { title: 'Wizard de Leilões', href: '/admin/wizard', icon: Rocket },
-  { title: 'Importação CNJ', href: '/admin/import/cnj', icon: FileUp },
-];
-
-const auctionManagementItems = [
-  { title: 'Leilões', href: '/admin/auctions', icon: Gavel },
-  { title: 'Loteamento', href: '/admin/lotting', icon: Boxes },
-  { title: 'Lotes', href: '/admin/lots', icon: Package },
-  { title: 'Bens', href: '/admin/bens', icon: Package },
-  { title: 'Venda Direta', href: '/admin/direct-sales', icon: ShoppingCart },
-  { title: 'Categorias de Lotes', href: '/admin/categories', icon: ListChecks },
-  { title: 'Subcategorias', href: '/admin/subcategories', icon: Layers },
-];
-
-const contentManagementItems = [
-    { title: 'Blog', href: '/admin/blog', icon: BookOpen, disabled: true },
-    { title: 'Biblioteca de Mídia', href: '/admin/media', icon: Library },
-]
-
-const judicialManagementItems = [
-    { title: 'Tribunais', href: '/admin/courts', icon: Scale },
-    { title: 'Comarcas', href: '/admin/judicial-districts', icon: Map },
-    { title: 'Varas', href: '/admin/judicial-branches', icon: Building2 },
-    { title: 'Processos', href: '/admin/judicial-processes', icon: FileText },
-]
-
-const platformManagementItems = [
-  { title: 'Comitentes', href: '/admin/sellers', icon: Users },
-  { title: 'Leiloeiros', href: '/admin/auctioneers', icon: Landmark },
-  { title: 'Estados', href: '/admin/states', icon: Map },
-  { title: 'Cidades', href: '/admin/cities', icon: Building2 },
-  { title: 'Usuários', href: '/admin/users', icon: Users },
-  { title: 'Habilitações', href: '/admin/habilitations', icon: UserCheck },
-  { title: 'Templates de Documentos', href: '/admin/document-templates', icon: Files },
-  { title: 'Mensagens de Contato', href: '/admin/contact-messages', icon: MessageSquare },
-  { title: 'Perfis (Roles)', href: '/admin/roles', icon: ShieldCheck },
-  { title: 'Relatórios', href: '/admin/reports', icon: BarChart },
-  { title: 'Configurações', href: '/admin/settings', icon: Settings },
-];
-
-const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; title: string; icon: React.ElementType; disabled?: boolean }; pathname: string; onLinkClick?: () => void; }) => (
-  <Button
-    key={item.href}
-    variant={pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href) && !item.disabled) ? 'secondary' : 'ghost'}
-    className={cn(
-      'w-full justify-start',
-      (pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href)) && !item.disabled) && 'font-semibold text-primary hover:text-primary'
-    )}
-    asChild
-    disabled={item.disabled}
-    onClick={onLinkClick}
-  >
-    <Link href={item.disabled ? '#' : item.href}>
-      <item.icon className="mr-2 h-4 w-4" />
-      {item.title}
-    </Link>
-  </Button>
-);
-
-export default function AdminSidebar() {
-  const pathname = usePathname();
-
-  return (
-    <aside className="sticky top-0 h-screen w-64 bg-background border-r flex flex-col">
-      <div className="p-4 border-b">
-        <Link href="/admin/dashboard" className="flex items-center space-x-2">
-          <LayoutDashboard className="h-7 w-7 text-primary" />
-          <span className="font-bold text-xl text-primary">BidExpert Admin</span>
-        </Link>
-      </div>
-      <ScrollArea className="flex-1">
-        <nav className="p-2 space-y-1">
-          {topLevelNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-          
-          <Accordion type="multiple" className="w-full" defaultValue={['auction-management', 'judicial-management', 'platform-management', 'content-management']}>
-              <AccordionItem value="auction-management" className="border-b-0">
-                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão de Leilões</AccordionTrigger>
-                  <AccordionContent className="pt-1 space-y-1">
-                      {auctionManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-                  </AccordionContent>
-              </AccordionItem>
-               <AccordionItem value="content-management" className="border-b-0">
-                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Conteúdo e Mídia</AccordionTrigger>
-                  <AccordionContent className="pt-1 space-y-1">
-                      {contentManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-                  </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="judicial-management" className="border-b-0">
-                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão Judicial</AccordionTrigger>
-                  <AccordionContent className="pt-1 space-y-1">
-                      {judicialManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-                  </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="platform-management" className="border-b-0">
-                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão da Plataforma</AccordionTrigger>
-                  <AccordionContent className="pt-1 space-y-1">
-                      {platformManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-                  </AccordionContent>
-              </AccordionItem>
-          </Accordion>
-        </nav>
-      </ScrollArea>
-      <div className="p-4 border-t">
-        <Button variant="outline" className="w-full" asChild>
-            <Link href="/">Voltar ao Site</Link>
-        </Button>
-      </div>
-    </aside>
-  );
-}
-
-```
-- src/app/admin/sellers/seller-form.tsx:
-```tsx
-// src/app/admin/sellers/seller-form.tsx
-'use client';
-
-import * as React from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, useWatch } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { sellerFormSchema, type SellerFormValues } from './seller-form-schema';
-import type { SellerProfileInfo, MediaItem, JudicialBranch } from '@/types';
-import { Loader2, Save, Users, Image as ImageIcon, Scale } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import Image from 'next/image';
-import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-
-interface SellerFormProps {
-  initialData?: SellerProfileInfo | null;
-  judicialBranches: JudicialBranch[];
-  onSubmitAction: (data: SellerFormValues) => Promise<{ success: boolean; message: string; sellerId?: string }>;
-  formTitle: string;
-  formDescription: string;
-  submitButtonText: string;
-  /** If provided, this will be the redirect path instead of the admin page. */
-  successRedirectPath?: string;
-}
-
-export default function SellerForm({
-  initialData,
-  judicialBranches,
-  onSubmitAction,
-  formTitle,
-  formDescription,
-  submitButtonText,
-  successRedirectPath
-}: SellerFormProps) {
-  const { toast } = useToast();
-  const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
-
-  const form = useForm<SellerFormValues>({
-    resolver: zodResolver(sellerFormSchema),
-    defaultValues: {
-      name: initialData?.name || '',
-      contactName: initialData?.contactName || '',
-      email: initialData?.email || '',
-      phone: initialData?.phone || '',
-      address: initialData?.address || '',
-      city: initialData?.city || '',
-      state: initialData?.state || '',
-      zipCode: initialData?.zipCode || '',
-      website: initialData?.website || '',
-      logoUrl: initialData?.logoUrl || '',
-      dataAiHintLogo: initialData?.dataAiHintLogo || '',
-      description: initialData?.description || '',
-      judicialBranchId: initialData?.judicialBranchId || null,
-      isJudicial: initialData?.isJudicial || false,
-    },
-  });
-
-  const logoUrlPreview = useWatch({ control: form.control, name: 'logoUrl' });
-  const isJudicial = useWatch({ control: form.control, name: 'isJudicial' });
-
-  const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
-    if (selectedItems.length > 0) {
-      const selectedMediaItem = selectedItems[0];
-      if (selectedMediaItem?.urlOriginal) {
-        form.setValue('logoUrl', selectedMediaItem.urlOriginal);
-      } else {
-        toast({ title: "Seleção Inválida", description: "O item de mídia selecionado não possui uma URL válida.", variant: "destructive" });
-      }
-    }
-    setIsMediaDialogOpen(false);
-  };
-
-  async function onSubmit(values: SellerFormValues) {
-    setIsSubmitting(true);
-    try {
-      const result = await onSubmitAction(values);
-      if (result.success) {
-        toast({
-          title: 'Sucesso!',
-          description: result.message,
-        });
-        router.push(successRedirectPath || '/admin/sellers');
-        router.refresh();
-      } else {
-        toast({
-          title: 'Erro',
-          description: result.message,
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Erro Inesperado',
-        description: 'Ocorreu um erro ao processar sua solicitação.',
-        variant: 'destructive',
-      });
-      console.error("Unexpected error in seller form:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  return (
-    <>
-    <Card className="max-w-3xl mx-auto shadow-lg">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Users className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
-        <CardDescription>{formDescription}</CardDescription>
-      </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6 bg-secondary/30 p-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome do Comitente/Empresa</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Banco XYZ S.A., 1ª Vara Cível de Lagarto" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="isJudicial"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background">
-                  <div className="space-y-0.5">
-                    <FormLabel>É Comitente Judicial?</FormLabel>
-                    <FormDescription>
-                      Marque se este comitente é uma entidade judicial (Vara, Tribunal, etc).
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            {isJudicial && (
-                <FormField
-                    control={form.control}
-                    name="judicialBranchId"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="flex items-center gap-2"><Scale className="h-4 w-4"/>Vara Judicial Vinculada (Opcional)</FormLabel>
-                        <Select onValueChange={(value) => field.onChange(value === 'none' ? null : value)} value={field.value ?? 'none'}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Nenhuma vara judicial vinculada" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="none">Nenhuma</SelectItem>
-                             {judicialBranches.map(branch => (
-                                <SelectItem key={branch.id} value={branch.id}>{branch.name} - {branch.districtName}</SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>Se este comitente representa uma entidade judicial, vincule-a aqui.</FormDescription>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-            )}
-            <div className="grid md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="contactName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome do Contato (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nome do responsável" {...field} value={field.value ?? ''}/>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="contato@comitente.com" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="grid md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telefone (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="(XX) XXXXX-XXXX" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="website"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Website (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input type="url" placeholder="https://www.comitente.com" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-             <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Endereço (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Rua Exemplo, 123, Bairro" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            <div className="grid md:grid-cols-3 gap-6">
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cidade (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="São Paulo" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="state"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Estado/UF (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="SP" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="zipCode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>CEP (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="00000-000" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <FormItem>
-              <FormLabel>Logo do Comitente</FormLabel>
-              <div className="flex items-center gap-4">
-                <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">
-                  {logoUrlPreview ? (
-                    <Image src={logoUrlPreview} alt="Prévia do Logo" fill className="object-contain" data-ai-hint="previa logo comitente" />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                      <ImageIcon className="h-8 w-8" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-grow space-y-2">
-                  <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>
-                    {logoUrlPreview ? 'Alterar Logo' : 'Escolher da Biblioteca'}
-                  </Button>
-                  <FormField
-                    control={form.control}
-                    name="logoUrl"
-                    render={({ field }) => (
-                        <FormControl>
-                            <Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} className="text-xs h-8" />
-                        </FormControl>
-                    )}
-                    />
-                  <FormMessage />
-                </div>
-              </div>
-            </FormItem>
-
-            <FormField
-              control={form.control}
-              name="dataAiHintLogo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Dica para IA (Logo - Opcional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: banco logo, empresa tecnologia" {...field} value={field.value ?? ''} />
-                  </FormControl>
-                   <FormDescription>Duas palavras chave para ajudar a IA encontrar uma imagem de placeholder, se a URL do logo não for fornecida.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição/Observações (Opcional)</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Detalhes adicionais sobre o comitente..." {...field} value={field.value ?? ''} rows={4} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push(successRedirectPath || '/admin/sellers')} disabled={isSubmitting}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {submitButtonText}
-            </Button>
-          </CardFooter>
-        </form>
-      </Form>
-    </Card>
-     <ChooseMediaDialog
-        isOpen={isMediaDialogOpen}
-        onOpenChange={setIsMediaDialogOpen}
-        onMediaSelect={handleMediaSelect}
-        allowMultiple={false}
-      />
-    </>
-  );
-}
-
-```
-- src/app/admin/sellers/seller.actions.ts:
-```ts
-// src/app/admin/sellers/seller.actions.ts
-'use server';
-
-import { deleteSeller } from './actions';
-
-export async function handleDeleteSeller(id: string) {
-  const result = await deleteSeller(id);
-  if (!result.success) {
-      console.error("Failed to delete seller:", result.message);
-  }
-  // Optionally, revalidate path or handle UI updates as needed
-}
-```
-- src/app/dashboard/actions.ts:
-```ts
-// This file is now obsolete and will be deleted.
-// All dashboard-related actions are in their specific sub-directory actions.ts files.
-
-```
-- src/app/dashboard/queries.ts:
-```ts
-// This file is now obsolete and will be deleted.
-// Data fetching is now handled by server components and server actions.
-
-```
-- src/components/layout/admin-sidebar.tsx:
-```tsx
-// src/components/layout/admin-sidebar.tsx
-'use client';
-
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, Boxes, Rocket, FileUp, BarChart, BookOpen, UserCheck, MessageSquare, Files } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-
-const topLevelNavItems = [
-  { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-  { title: 'Auditório Virtual', href: '/live-dashboard', icon: Tv },
-  { title: 'Wizard de Leilões', href: '/admin/wizard', icon: Rocket },
-  { title: 'Importação CNJ', href: '/admin/import/cnj', icon: FileUp },
-];
-
-const auctionManagementItems = [
-  { title: 'Leilões', href: '/admin/auctions', icon: Gavel },
-  { title: 'Loteamento', href: '/admin/lotting', icon: Boxes },
-  { title: 'Lotes', href: '/admin/lots', icon: Package },
-  { title: 'Bens', href: '/admin/bens', icon: Package },
-  { title: 'Venda Direta', href: '/admin/direct-sales', icon: ShoppingCart },
-  { title: 'Categorias de Lotes', href: '/admin/categories', icon: ListChecks },
-  { title: 'Subcategorias', href: '/admin/subcategories', icon: Layers },
-];
-
-const contentManagementItems = [
-    { title: 'Blog', href: '/admin/blog', icon: BookOpen, disabled: true },
-    { title: 'Biblioteca de Mídia', href: '/admin/media', icon: Library },
-]
-
-const judicialManagementItems = [
-    { title: 'Tribunais', href: '/admin/courts', icon: Scale },
-    { title: 'Comarcas', href: '/admin/judicial-districts', icon: Map },
-    { title: 'Varas', href: '/admin/judicial-branches', icon: Building2 },
-    { title: 'Processos', href: '/admin/judicial-processes', icon: FileText },
-]
-
-const platformManagementItems = [
-  { title: 'Comitentes', href: '/admin/sellers', icon: Users },
-  { title: 'Leiloeiros', href: '/admin/auctioneers', icon: Landmark },
-  { title: 'Estados', href: '/admin/states', icon: Map },
-  { title: 'Cidades', href: '/admin/cities', icon: Building2 },
-  { title: 'Usuários', href: '/admin/users', icon: Users },
-  { title: 'Habilitações', href: '/admin/habilitations', icon: UserCheck },
-  { title: 'Templates de Documentos', href: '/admin/document-templates', icon: Files },
-  { title: 'Mensagens de Contato', href: '/admin/contact-messages', icon: MessageSquare },
-  { title: 'Perfis (Roles)', href: '/admin/roles', icon: ShieldCheck },
-  { title: 'Relatórios', href: '/admin/reports', icon: BarChart },
-  { title: 'Configurações', href: '/admin/settings', icon: Settings },
-];
-
-const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; title: string; icon: React.ElementType; disabled?: boolean }; pathname: string; onLinkClick?: () => void; }) => (
-  <Button
-    key={item.href}
-    variant={pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href) && !item.disabled) ? 'secondary' : 'ghost'}
-    className={cn(
-      'w-full justify-start',
-      (pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href)) && !item.disabled) && 'font-semibold text-primary hover:text-primary'
-    )}
-    asChild
-    disabled={item.disabled}
-    onClick={onLinkClick}
-  >
-    <Link href={item.disabled ? '#' : item.href}>
-      <item.icon className="mr-2 h-4 w-4" />
-      {item.title}
-    </Link>
-  </Button>
-);
-
-export default function AdminSidebar() {
-  const pathname = usePathname();
-
-  return (
-    <aside className="sticky top-0 h-screen w-64 bg-background border-r flex flex-col">
-      <div className="p-4 border-b">
-        <Link href="/admin/dashboard" className="flex items-center space-x-2">
-          <LayoutDashboard className="h-7 w-7 text-primary" />
-          <span className="font-bold text-xl text-primary">BidExpert Admin</span>
-        </Link>
-      </div>
-      <ScrollArea className="flex-1">
-        <nav className="p-2 space-y-1">
-          {topLevelNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-          
-          <Accordion type="multiple" className="w-full" defaultValue={['auction-management', 'judicial-management', 'platform-management', 'content-management']}>
-              <AccordionItem value="auction-management" className="border-b-0">
-                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão de Leilões</AccordionTrigger>
-                  <AccordionContent className="pt-1 space-y-1">
-                      {auctionManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-                  </AccordionContent>
-              </AccordionItem>
-               <AccordionItem value="content-management" className="border-b-0">
-                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Conteúdo e Mídia</AccordionTrigger>
-                  <AccordionContent className="pt-1 space-y-1">
-                      {contentManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-                  </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="judicial-management" className="border-b-0">
-                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão Judicial</AccordionTrigger>
-                  <AccordionContent className="pt-1 space-y-1">
-                      {judicialManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-                  </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="platform-management" className="border-b-0">
-                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão da Plataforma</AccordionTrigger>
-                  <AccordionContent className="pt-1 space-y-1">
-                      {platformManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-                  </AccordionContent>
-              </AccordionItem>
-          </Accordion>
-        </nav>
-      </ScrollArea>
-      <div className="p-4 border-t">
-        <Button variant="outline" className="w-full" asChild>
-            <Link href="/">Voltar ao Site</Link>
-        </Button>
-      </div>
-    </aside>
-  );
-}
-
-```
-- src/components/layout/consignor-sidebar.tsx:
-```tsx
-// src/components/layout/consignor-sidebar.tsx
-'use client';
-
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Briefcase, LayoutDashboard, ListChecks, DollarSign, ShoppingCart, BarChart3, Settings } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-
-const sidebarNavItems = [
-  {
-    title: 'Visão Geral',
-    href: '/consignor-dashboard/overview',
-    icon: LayoutDashboard,
-  },
-  {
-    title: 'Meus Leilões',
-    href: '/consignor-dashboard/auctions',
-    icon: Briefcase,
-  },
-  {
-    title: 'Meus Lotes',
-    href: '/consignor-dashboard/lots',
-    icon: ListChecks,
-  },
-  {
-    title: 'Venda Direta',
-    href: '/consignor-dashboard/direct-sales',
-    icon: ShoppingCart,
-  },
-  {
-    title: 'Relatórios',
-    href: '/consignor-dashboard/reports',
-    icon: BarChart3,
-  },
-  {
-    title: 'Financeiro',
-    href: '/consignor-dashboard/financial',
-    icon: DollarSign,
-  },
-  {
-    title: 'Configurações',
-    href: '/consignor-dashboard/settings',
-    icon: Settings,
-  },
-];
-
-export default function ConsignorSidebar() {
-  const pathname = usePathname();
-
-  return (
-    <aside className="sticky top-0 h-screen w-64 bg-background border-r flex flex-col">
-      <div className="p-4 border-b">
-        <Link href="/consignor-dashboard/overview" className="flex items-center space-x-2">
-          <Briefcase className="h-7 w-7 text-primary" />
-          <span className="font-bold text-xl text-primary">Painel Comitente</span>
-        </Link>
-      </div>
-      <ScrollArea className="flex-1">
-        <nav className="p-4 space-y-1">
-          {sidebarNavItems.map((item) => (
-            <Button
-              key={item.title}
-              variant={pathname === item.href || (item.href !== '/consignor-dashboard/overview' && pathname.startsWith(item.href)) ? 'secondary' : 'ghost'}
-              className={cn(
-                'w-full justify-start',
-                (pathname === item.href || (item.href !== '/consignor-dashboard/overview' && pathname.startsWith(item.href))) && 'font-semibold text-primary hover:text-primary'
-              )}
-              asChild
-            >
-              <Link href={item.href}>
-                <item.icon className="mr-2 h-4 w-4" />
-                {item.title}
-              </Link>
-            </Button>
-          ))}
-        </nav>
-      </ScrollArea>
-       <div className="p-4 border-t">
-        <Button variant="outline" className="w-full" asChild>
-            <Link href="/">Voltar ao Site</Link>
-        </Button>
-      </div>
-    </aside>
-  );
-}
-
-```
-- src/components/layout/main-nav.tsx:
-```tsx
-
-'use client';
-
-import * as React from 'react'; 
-import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation'; // Importado useSearchParams
-import { cn } from '@/lib/utils';
-import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, RecentlyViewedLotInfo } from '@/types';
-import { ChevronDown, History, Home, Landmark, Gavel, Percent, Phone, ListChecks, Tag, Users, FileText as FileTextIcon, BookOpen } from 'lucide-react'; 
-import { useEffect, useState, useCallback, forwardRef } from 'react'; // Adicionado useCallback e forwardRef
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuList,
-  NavigationMenuLink,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
-import MegaMenuCategories from './mega-menu-categories';
-import MegaMenuLinkList, { type MegaMenuGroup } from './mega-menu-link-list';
-import MegaMenuAuctioneers from './mega-menu-auctioneers';
-import TwoColumnMegaMenu from './two-column-mega-menu';
-import type { RecentlyViewedLotInfo as HistoryListItemType } from '@/types'; // Renomeado para evitar conflito
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; 
-import type { MegaMenuLinkItem } from './mega-menu-link-list'; 
-import Image from 'next/image';
-
-
-// Renomeado para não conflitar com o nome do componente
-export const HistoryListItem = forwardRef<
-  HTMLAnchorElement,
-  React.ComponentPropsWithoutRef<"a"> & { item: HistoryListItemType; onClick?: () => void }
->(({ className, item, onClick, ...props }, ref) => {
-  return (
-    <Link
-      href={`/auctions/${item.auctionId}/lots/${item.id}`}
-      ref={ref}
-      className={cn(
-        "flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-accent transition-colors text-xs leading-snug text-muted-foreground",
-        className
-      )}
-      onClick={onClick}
-      {...props}
-    >
-      <div className="relative h-10 w-12 flex-shrink-0 bg-muted rounded-sm overflow-hidden">
-        <Image src={item.imageUrl || 'https://placehold.co/120x100.png'} alt={item.title} fill className="object-cover" data-ai-hint={item.dataAiHint || "item visto recentemente"} />
-      </div>
-      <span className="truncate flex-grow text-foreground/90">{item.title}</span>
-    </Link>
-  );
-});
-HistoryListItem.displayName = "HistoryListItem";
-
-export interface NavItem {
-  href?: string;
-  label: string;
-  isMegaMenu?: boolean;
-  contentKey?: 'categories' | 'modalities' | 'consignors' | 'auctioneers' | 'history';
-  icon?: React.ElementType; 
-  megaMenuAlign?: "start" | "center" | "end";
-  twoColumnMegaMenuProps?: {
-    sidebarTitle?: string;
-    mainContent: {
-      imageUrl: string;
-      imageAlt: string;
-      dataAiHint: string;
-      title: string;
-      description: string;
-      buttonLink: string;
-      buttonText: string;
-    };
-  };
-  hrefPrefix?: string; 
-}
-
-const modalityMegaMenuGroups: MegaMenuGroup[] = [
-  {
-    items: [
-      { href: '/search?type=auctions&auctionType=JUDICIAL', label: 'Leilões Judiciais', description: 'Oportunidades de processos judiciais.', icon: <Gavel className="h-4 w-4" /> },
-      { href: '/search?type=auctions&auctionType=EXTRAJUDICIAL', label: 'Leilões Extrajudiciais', description: 'Negociações diretas e mais ágeis.', icon: <Landmark className="h-4 w-4" /> },
-      { href: '/search?type=auctions&auctionType=TOMADA_DE_PRECOS', label: 'Tomada de Preços', description: 'Processo de seleção e cotação.', icon: <FileTextIcon className="h-4 w-4" /> },
-      { href: '/direct-sales', label: 'Venda Direta', description: 'Compre itens com preço fixo.', icon: <Tag className="h-4 w-4" /> },
-      { href: '/search?type=auctions&auctionType=PARTICULAR', label: 'Leilões Particulares', description: 'Leilões privados ou com acesso restrito.', icon: <Users className="h-4 w-4" /> },
-    ]
-  }
-];
-
-interface MainNavProps extends React.HTMLAttributes<HTMLElement> {
-    items: NavItem[];
-    onLinkClick?: () => void;
-    isMobile?: boolean;
-    searchCategories?: LotCategory[];
-    auctioneers?: AuctioneerProfileInfo[];
-    consignorMegaMenuGroups?: MegaMenuGroup[];
-    recentlyViewedItems?: RecentlyViewedLotInfo[];
-    HistoryListItemComponent?: typeof HistoryListItem;
-}
-
-const MAX_ITEMS_IN_TW_COL_SIDEBAR = 5;
-
-
-export default function MainNav({ 
-    items, 
-    className, 
-    onLinkClick, 
-    isMobile = false,
-    searchCategories = [],
-    auctioneers = [],
-    consignorMegaMenuGroups = [],
-    recentlyViewedItems = [],
-    HistoryListItemComponent,
-    ...props 
-}: MainNavProps) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [isClient, setIsClient] = useState(false);
+  answeredByUser          Usuario? @relation("AnsweredBy", fields: [answeredByUserId], references: [id])
   
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-  
-  if (!isClient && isMobile) return null;
-
-  if (isMobile) {
-    return (
-      <nav className={cn('flex flex-col gap-1', className)} {...props}>
-        {items.map((item) => (
-          item.href && !item.isMegaMenu ? (
-            <Link
-              key={item.label} 
-              href={item.href}
-              onClick={onLinkClick}
-              className={cn(
-                'text-md font-medium transition-colors hover:text-primary flex items-center gap-2 py-2.5 px-3 rounded-md',
-                pathname === item.href ? 'bg-accent text-primary' : 'text-muted-foreground hover:bg-accent/50'
-              )}
-            >
-              {item.icon && <item.icon className="h-4 w-4" />}
-              <span>{item.label}</span>
-            </Link>
-          ) : item.isMegaMenu && item.contentKey ? ( 
-            <div key={item.label} className="py-1">
-                <Link
-                    href={item.href || '#'} 
-                    onClick={(e) => {
-                        if (!item.href && onLinkClick) { 
-                        } else if (onLinkClick) {
-                            onLinkClick(); 
-                        }
-                    }}
-                    className={cn(
-                        'text-md font-medium transition-colors hover:text-primary flex items-center justify-between gap-2 py-2.5 px-3 rounded-md',
-                        pathname === item.href ? 'bg-accent text-primary' : 'text-muted-foreground hover:bg-accent/50'
-                    )}
-                >
-                    <div className="flex items-center gap-2">
-                        {item.icon && <item.icon className="h-4 w-4" />}
-                        <span>{item.label}</span>
-                    </div>
-                    {item.contentKey !== 'history' && <ChevronDown className="h-4 w-4"/>}
-                </Link>
-                <div className="pl-6 mt-1 space-y-0.5">
-                    {item.contentKey === 'categories' && searchCategories.slice(0,3).map(cat => (
-                        <Link key={cat.slug} href={`/category/${cat.slug}`} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{cat.name}</Link>
-                    ))}
-                    {item.contentKey === 'categories' && <Link href="/search?type=lots&tab=categories" onClick={onLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todas categorias</Link>}
-                    
-                    {item.contentKey === 'modalities' && modalityMegaMenuGroups[0].items.map(mod => (
-                          <Link key={mod.href} href={mod.href} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{mod.label}</Link>
-                    ))}
-                      {item.contentKey === 'consignors' && (consignorMegaMenuGroups[0]?.items || []).slice(0,4).map(con => (
-                          <Link key={con.href} href={con.href} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{con.label}</Link>
-                    ))}
-                    {item.contentKey === 'consignors' && (consignorMegaMenuGroups[0]?.items || []).length > 4 && <Link href="/sellers" onClick={onLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todos comitentes</Link>}
-                    
-                    {item.contentKey === 'auctioneers' && auctioneers.slice(0,3).map(auc => (
-                        <Link key={auc.id} href={`/auctioneers/${auc.slug || auc.publicId || auc.id}`} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{auc.name}</Link>
-                    ))}
-                      {item.contentKey === 'auctioneers' && auctioneers.length > 3 && <Link href="/auctioneers" onClick={onLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todos leiloeiros</Link>}
-                    
-                     {item.contentKey === 'history' && HistoryListItemComponent && (
-                        <div className="mt-2 space-y-1 max-h-60 overflow-y-auto">
-                            {recentlyViewedItems.length === 0 ? (
-                                <p className="text-xs text-muted-foreground text-center py-2">Nenhum item visto recentemente.</p>
-                            ) : (
-                                recentlyViewedItems.slice(0, 5).map(rvItem => (
-                                    <HistoryListItemComponent key={rvItem.id} item={rvItem} onClick={onLinkClick} />
-                                ))
-                            )}
-                             <Link href="/dashboard/history" onClick={onLinkClick} className="block text-xs text-primary hover:underline text-center pt-1">Ver Histórico Completo</Link>
-                        </div>
-                    )}
-                </div>
-            </div>
-          ) : null
-        ))}
-      </nav>
-    );
-  }
-  
-
-  return (
-    <NavigationMenu className={cn("relative z-10 flex items-center justify-start", className)} {...props} delayDuration={0}>
-      <NavigationMenuList className={cn("group flex list-none items-center justify-start space-x-1")}>
-        {items.map((item) => {
-          let megaMenuPropsForTwoColumn: any = null; 
-          const currentParamsType = searchParams.get('type');
-          const currentCategoryParam = searchParams.get('category');
-          const currentAuctionTypeParam = searchParams.get('auctionType');
-
-          if (item.isMegaMenu && item.contentKey && item.twoColumnMegaMenuProps) {
-            let finalSidebarItems: MegaMenuLinkItem[] = [];
-            let finalViewAllLink = undefined;
-            let finalSidebarTitle = item.twoColumnMegaMenuProps.sidebarTitle;
-
-            if (item.contentKey === 'modalities') {
-              finalSidebarItems = modalityMegaMenuGroups[0]?.items || [];
-              finalSidebarTitle = item.twoColumnMegaMenuProps.sidebarTitle || 'Modalidades de Leilão';
-              finalViewAllLink = { href: '/search?type=auctions', label: 'Ver Todos os Leilões', icon: ListChecks };
-            } else if (item.contentKey === 'consignors') {
-              const consignorItems = (consignorMegaMenuGroups[0]?.items || []);
-              finalSidebarItems = consignorItems.slice(0, MAX_ITEMS_IN_TW_COL_SIDEBAR);
-              if (consignorItems.length > MAX_ITEMS_IN_TW_COL_SIDEBAR) {
-                finalViewAllLink = { href: '/sellers', label: 'Ver Todos Comitentes', icon: Users };
-              }
-              finalSidebarTitle = item.twoColumnMegaMenuProps.sidebarTitle || 'Principais Comitentes';
-            } else if (item.contentKey === 'auctioneers') {
-              const mappedAuctioneerItems: MegaMenuLinkItem[] = auctioneers.map(auc => ({
-                href: `/auctioneers/${auc.slug || auc.publicId || auc.id}`,
-                label: auc.name,
-                description: `${auc.city || ''}${auc.city && auc.state ? ' - ' : ''}${auc.state || ''}` || 'Leiloeiro Verificado',
-                icon: auc.logoUrl ? <Avatar className="h-5 w-5 border"><AvatarImage src={auc.logoUrl!} alt={auc.name} data-ai-hint={auc.dataAiHintLogo || 'logo leiloeiro'} /><AvatarFallback>{auc.name.charAt(0)}</AvatarFallback></Avatar> : undefined
-              }));
-              finalSidebarItems = mappedAuctioneerItems.slice(0, MAX_ITEMS_IN_TW_COL_SIDEBAR);
-              if (auctioneers.length > MAX_ITEMS_IN_TW_COL_SIDEBAR) {
-                finalViewAllLink = { href: '/auctioneers', label: 'Ver Todos Leiloeiros', icon: Landmark };
-              }
-              finalSidebarTitle = item.twoColumnMegaMenuProps.sidebarTitle || 'Leiloeiros em Destaque';
-            }
-            
-            megaMenuPropsForTwoColumn = {
-              ...item.twoColumnMegaMenuProps,
-              sidebarTitle: finalSidebarTitle,
-              sidebarItems: finalSidebarItems,
-              viewAllLink: finalViewAllLink,
-            };
-          }
-
-
-          if (item.isMegaMenu && item.contentKey) {
-            let isActiveTrigger = false;
-            if (item.contentKey === 'categories' && (pathname?.startsWith('/category') || (pathname === '/search' && (currentParamsType === 'lots' || currentCategoryParam)))) {
-              isActiveTrigger = true;
-            } else if (item.contentKey === 'modalities' && pathname === '/search' && currentParamsType === 'auctions' && currentAuctionTypeParam) {
-              isActiveTrigger = true;
-            } else if (item.contentKey === 'consignors' && pathname?.startsWith('/sellers')) {
-              isActiveTrigger = true;
-            } else if (item.contentKey === 'auctioneers' && pathname?.startsWith('/auctioneers')) {
-              isActiveTrigger = true;
-            } else if (item.contentKey === 'history' && pathname === '/dashboard/history') {
-              isActiveTrigger = true;
-            }
-
-
-            return (
-              <NavigationMenuItem key={item.label} value={item.label}>
-                 <NavigationMenuTrigger
-                  className={cn(
-                    navigationMenuTriggerStyle(),
-                    isActiveTrigger && 'bg-accent text-primary font-semibold'
-                  )}
-                >
-                  {item.icon && <item.icon className="mr-1.5 h-4 w-4" /> } 
-                  {item.label}
-                </NavigationMenuTrigger>
-                <NavigationMenuContent align={item.megaMenuAlign || "start"}>
-                  {item.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={onLinkClick} />}
-                  
-                  {megaMenuPropsForTwoColumn && (item.contentKey === 'modalities' || item.contentKey === 'consignors' || item.contentKey === 'auctioneers') && (
-                    <TwoColumnMegaMenu {...megaMenuPropsForTwoColumn} onLinkClick={onLinkClick} />
-                  )}
-                  
-                  {item.contentKey === 'history' && HistoryListItemComponent && (
-                     <div className="w-80 p-2">
-                        <div className="flex justify-between items-center p-2 border-b mb-1">
-                            <span className="text-sm font-medium text-foreground flex items-center"><History className="mr-1.5 h-4 w-4"/> Histórico</span>
-                        </div>
-                        {recentlyViewedItems.length === 0 ? (
-                            <p className="text-xs text-muted-foreground text-center py-3">Nenhum item visto recentemente.</p>
-                        ) : (
-                            <ul className="max-h-80 overflow-y-auto space-y-0.5">
-                                {recentlyViewedItems.slice(0, 5).map(rvItem => (
-                                <li key={rvItem.id}>
-                                    <HistoryListItemComponent item={rvItem} onClick={onLinkClick} />
-                                </li>
-                                ))}
-                            </ul>
-                        )}
-                        <div className="border-t mt-1 pt-1">
-                            <NavigationMenuLink asChild>
-                                <Link 
-                                    href="/dashboard/history" 
-                                    className={cn(navigationMenuTriggerStyle(), "w-full justify-center text-primary hover:underline text-xs py-1 h-auto bg-transparent hover:bg-accent")} 
-                                    onClick={onLinkClick}
-                                >
-                                Ver Histórico Completo
-                                </Link>
-                            </NavigationMenuLink>
-                        </div>
-                    </div>
-                  )}
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-            );
-          }
-          return ( 
-            item.href ? (
-              <NavigationMenuItem key={item.href}>
-                <Link href={item.href} legacyBehavior passHref>
-                  <NavigationMenuLink
-                    className={cn(
-                      navigationMenuTriggerStyle(), 
-                      pathname === item.href
-                        ? 'bg-accent text-primary font-semibold' 
-                        : 'text-foreground/80 hover:text-primary hover:bg-accent/70 focus:bg-accent/70' 
-                    )}
-                    onClick={onLinkClick}
-                  >
-                    {item.icon && <item.icon className="mr-1.5 h-4 w-4 flex-shrink-0" />}
-                    {item.label}
-                  </NavigationMenuLink>
-                </Link>
-              </NavigationMenuItem>
-            ) : null
-          );
-        })}
-      </NavigationMenuList>
-    </NavigationMenu>
-  );
+  @@map("questoes_lote")
 }
 
-```
-- src/components/layout/mega-menu-link-list.tsx:
-```tsx
+model PlatformSettings {
+    id                          String    @id @default("global")
+    siteTitle                   String?
+    siteTagline                 String?
+    galleryImageBasePath        String?
+    storageProvider             String?
+    firebaseStorageBucket       String?
+    activeThemeName             String?
+    themes                      Json[]
+    platformPublicIdMasks       Json?
+    homepageSections            Json[]
+    mentalTriggerSettings       Json?
+    sectionBadgeVisibility      Json?
+    mapSettings                 Json?
+    searchPaginationType        String?
+    searchItemsPerPage          Int?
+    searchLoadMoreCount         Int?
+    showCountdownOnLotDetail    Boolean?
+    showCountdownOnCards        Boolean?
+    showRelatedLotsOnLotDetail  Boolean?
+    relatedLotsCount            Int?
+    variableIncrementTable      Json[]
+    defaultListItemsPerPage     Int?
+    biddingSettings             Json?
+    updatedAt                   DateTime  @updatedAt
 
-'use client';
-
-import * as React from 'react';
-import Link from 'next/link';
-import { NavigationMenuLink } from '@/components/ui/navigation-menu';
-import { cn } from '@/lib/utils';
-import { ChevronRight } from 'lucide-react';
-
-export interface MegaMenuLinkItem {
-  href: string;
-  label: string;
-  description?: string;
-  icon?: React.ReactNode;
+    @@map("platform_settings")
 }
 
-export interface MegaMenuGroup {
-  title?: string;
-  items: MegaMenuLinkItem[];
+
+// ==============================================================================
+// ENUMS
+// ==============================================================================
+enum AuctionStatus {
+  RASCUNHO
+  EM_PREPARACAO
+  EM_BREVE
+  ABERTO
+  ABERTO_PARA_LANCES
+  ENCERRADO
+  FINALIZADO
+  CANCELADO
+  SUSPENSO
 }
 
-interface MegaMenuLinkListProps {
-  groups: MegaMenuGroup[];
-  onLinkClick?: () => void;
-  gridCols?: string; // e.g., 'md:grid-cols-2'
+enum AuctionType {
+  JUDICIAL
+  EXTRAJUDICIAL
+  PARTICULAR
+  TOMADA_DE_PRECOS
+  DUTCH
+  SILENT
 }
 
-const ListItem = React.forwardRef<
-  React.ElementRef<'a'>,
-  React.ComponentPropsWithoutRef<'a'> & { icon?: React.ReactNode; title: string }
->(({ className, title, children, icon, ...props }, ref) => {
-  return (
-    <li>
-      <NavigationMenuLink asChild>
-        <a
-          ref={ref}
-          className={cn(
-            'flex select-none items-center space-x-3 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
-            className
-          )}
-          {...props}
-        >
-          {icon && <div className="text-primary flex-shrink-0">{icon}</div>}
-          <div className="flex-grow min-w-0">
-            <div className="text-sm font-medium leading-none truncate" title={title}>{title}</div>
-            {children && (
-              <p className="line-clamp-2 text-xs leading-snug text-muted-foreground">
-                {children}
-              </p>
-            )}
-          </div>
-          {!children && <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary flex-shrink-0" />}
-        </a>
-      </NavigationMenuLink>
-    </li>
-  );
-});
-ListItem.displayName = 'ListItem';
-
-export default function MegaMenuLinkList({ groups, onLinkClick, gridCols = "md:grid-cols-1" }: MegaMenuLinkListProps) {
-  if (!groups || groups.length === 0 || groups.every(g => g.items.length === 0)) {
-    return <p className="p-4 text-sm text-muted-foreground">Nenhuma opção disponível.</p>;
-  }
-
-  return (
-    <div className="p-2">
-      {groups.map((group, groupIndex) => (
-        (group.items && group.items.length > 0) ? (
-          <div key={group.title || `group-${groupIndex}`} className={groupIndex > 0 ? "mt-3 pt-3 border-t border-border/50" : ""}>
-            {group.title && (
-              <h4 className="px-3 py-2 text-sm font-semibold text-foreground">{group.title}</h4>
-            )}
-            <ul className={cn("grid w-[300px] gap-1 p-2 md:w-[350px] lg:w-[400px]", gridCols)}>
-              {group.items.map((item) => (
-                <ListItem
-                  key={item.href}
-                  title={item.label}
-                  href={item.href}
-                  icon={item.icon}
-                  onClick={onLinkClick}
-                >
-                  {item.description}
-                </ListItem>
-              ))}
-            </ul>
-          </div>
-        ) : null
-      ))}
-    </div>
-  );
+enum LotStatus {
+  EM_BREVE
+  ABERTO_PARA_LANCES
+  ENCERRADO
+  VENDIDO
+  NAO_VENDIDO
 }
 
-```
-- src/components/layout/two-column-mega-menu.tsx:
-```tsx
-// src/components/layout/two-column-mega-menu.tsx
-'use client';
-
-import * as React from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { NavigationMenuLink } from '@/components/ui/navigation-menu';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { ChevronRight, ListChecks } from 'lucide-react';
-
-export interface MegaMenuLinkItem {
-  href: string;
-  label: string;
-  description?: string;
-  icon?: React.ReactNode;
+enum BemStatus {
+  CADASTRO
+  DISPONIVEL
+  LOTEADO
+  VENDIDO
+  REMOVIDO
+  INATIVADO
 }
 
-interface TwoColumnMegaMenuProps {
-  sidebarTitle?: string;
-  sidebarItems: MegaMenuLinkItem[];
-  mainContent: {
-    imageUrl: string;
-    imageAlt: string;
-    dataAiHint: string;
-    title: string;
-    description: string;
-    buttonLink: string;
-    buttonText: string;
-  };
-  viewAllLink?: {
-    href: string;
-    label: string;
-    icon?: React.ElementType;
-  };
-  containerWidthClasses?: string;
-  gridClasses?: string; // e.g., "grid-cols-[220px_1fr]"
-  onLinkClick?: () => void;
+enum UserDocumentStatus {
+  NOT_SENT
+  SUBMITTED
+  PENDING_ANALYSIS
+  APPROVED
+  REJECTED
 }
 
-const ListItem = React.forwardRef<
-  React.ElementRef<'a'>,
-  React.ComponentPropsWithoutRef<'a'> & { icon?: React.ReactNode; title: string }
->(({ className, title, children, icon, ...props }, ref) => {
-  return (
-    <li>
-      <NavigationMenuLink asChild>
-        <a
-          ref={ref}
-          className={cn(
-            'flex select-none items-center space-x-2 rounded-md p-2.5 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground',
-            className
-          )}
-          {...props}
-        >
-          {icon && <div className="text-primary flex-shrink-0">{icon}</div>}
-          <div className="flex-grow min-w-0">
-            <div className="text-sm font-medium leading-none truncate" title={title}>{title}</div>
-            {children && (
-              <p className="line-clamp-1 text-xs leading-snug text-muted-foreground">
-                {children}
-              </p>
-            )}
-          </div>
-          {!children && <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary flex-shrink-0" />}
-        </a>
-      </NavigationMenuLink>
-    </li>
-  );
-});
-ListItem.displayName = 'ListItem';
-
-export default function TwoColumnMegaMenu({
-  sidebarTitle,
-  sidebarItems,
-  mainContent,
-  viewAllLink,
-  containerWidthClasses = "md:w-[650px] lg:w-[750px]",
-  gridClasses = "grid-cols-[250px_1fr]",
-  onLinkClick
-}: TwoColumnMegaMenuProps) {
-
-  if (!sidebarItems || sidebarItems.length === 0) {
-    return <div className="p-4 text-sm text-muted-foreground">Nenhuma opção disponível.</div>;
-  }
-
-  return (
-    <div className={cn("grid gap-0 p-0 max-h-[calc(80vh-100px)] min-h-[350px]", containerWidthClasses, gridClasses)}>
-      {/* Left Panel: Links List */}
-      <div className="bg-background border-r border-border p-3 flex flex-col h-full">
-        {sidebarTitle && (
-          <h4 className="px-3 py-2 text-md font-semibold text-foreground mb-1 font-headline">{sidebarTitle}</h4>
-        )}
-        <div className="overflow-y-auto flex-grow pr-1">
-          <ul className="space-y-0.5">
-            {sidebarItems.map((item) => (
-              <ListItem
-                key={item.href}
-                title={item.label}
-                href={item.href}
-                icon={item.icon}
-                onClick={onLinkClick}
-              >
-                {item.description}
-              </ListItem>
-            ))}
-          </ul>
-        </div>
-        {viewAllLink && (
-          <div className="mt-auto pt-2 border-t border-border">
-            <NavigationMenuLink asChild>
-              <Link
-                href={viewAllLink.href}
-                onClick={onLinkClick}
-                className={cn(
-                  'flex select-none items-center justify-center rounded-md p-3 text-sm font-semibold text-primary hover:bg-accent hover:text-primary/90 leading-none no-underline outline-none transition-colors focus:bg-accent focus:text-primary/90'
-                )}
-              >
-                {viewAllLink.icon ? <viewAllLink.icon className="h-4 w-4 mr-2"/> : <ListChecks className="h-4 w-4 mr-2"/>}
-                <span>{viewAllLink.label}</span>
-              </Link>
-            </NavigationMenuLink>
-          </div>
-        )}
-      </div>
-
-      {/* Right Panel: Main Content / Promotion */}
-      <div className="p-4 md:p-6 h-full overflow-y-auto bg-secondary/30 flex flex-col">
-         <div className="flex-grow">
-            <h3 className="text-xl font-bold text-primary mb-2 font-headline">{mainContent.title}</h3>
-            <p className="text-xs text-muted-foreground mb-4">
-                {mainContent.description}
-            </p>
-        </div>
-        
-        <div className="mt-auto">
-            <Link href={mainContent.buttonLink} onClick={onLinkClick} className="block group">
-            <div className="relative aspect-[16/9] bg-muted rounded-md overflow-hidden mb-3">
-                <Image 
-                src={mainContent.imageUrl} 
-                alt={mainContent.imageAlt}
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-                data-ai-hint={mainContent.dataAiHint} 
-                />
-            </div>
-            </Link>
-            <Button size="sm" variant="default" className="w-full" asChild>
-                <Link href={mainContent.buttonLink} onClick={onLinkClick}>
-                    {mainContent.buttonText}
-                </Link>
-            </Button>
-        </div>
-      </div>
-    </div>
-  );
+enum UserHabilitationStatus {
+  PENDENTE_DOCUMENTOS
+  PENDING_ANALYSIS
+  HABILITADO
+  REJECTED_DOCUMENTS
+  BLOCKED
 }
 
-```
+enum PaymentStatus {
+  PENDENTE
+  PROCESSANDO
+  PAGO
+  FALHOU
+  REEMBOLSADO
+}
+
+enum DirectSaleOfferStatus {
+  ACTIVE
+  PENDING_APPROVAL
+  SOLD
+  EXPIRED
+}
+
+enum DirectSaleOfferType {
+  BUY_NOW
+  ACCEPTS_PROPOSALS
+}
+
+enum ProcessPartyType {
+  AUTOR
+  REU
+  ADVOGADO_AUTOR
+  ADVOGADO_REU
+  JUIZ
+  ESCRIVAO
+  PERITO
+  ADMINISTRADOR_JUDICIAL
+  TERCEIRO_INTERESSADO
+  OUTRO
+}
+
+enum DocumentTemplateType {
+  WINNING_BID_TERM
+  EVALUATION_REPORT
+  AUCTION_CERTIFICATE
+}
