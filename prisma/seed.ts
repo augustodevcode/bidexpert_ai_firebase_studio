@@ -8,24 +8,38 @@ import {
 } from './seed-data'; // Import from the new local data file
 import { slugify } from '../src/lib/sample-data-helpers';
 import bcrypt from 'bcrypt';
+import { predefinedPermissions } from '@/app/admin/roles/role-form-schema'; // Import permissions
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log(`Start seeding ...`);
   
-  // --- Upsert Core Permissions and Roles ---
-  console.log('Seeding core roles and permissions...');
+  // --- Upsert Permissions ---
+  console.log('Seeding permissions...');
+  if(predefinedPermissions && predefinedPermissions.length > 0) {
+    for (const perm of predefinedPermissions) {
+        await prisma.permissao.upsert({
+        where: { name: perm.id },
+        update: { description: perm.label },
+        create: { id: perm.id, name: perm.id, description: perm.label },
+        });
+    }
+  } else {
+    console.log('No predefined permissions found to seed.');
+  }
   
-  // Ensure 'manage_all' permission exists
-  await prisma.permission.upsert({
+  // --- Upsert Core Roles ---
+  console.log('Seeding core roles...');
+  
+  const userPerms = await prisma.permissao.findMany({
+    where: { name: { in: ['view_auctions', 'place_bids', 'view_lots'] } },
+  });
+  const adminPerms = await prisma.permissao.findMany({
     where: { name: 'manage_all' },
-    update: {},
-    create: { name: 'manage_all' },
   });
 
-  // Ensure 'USER' role exists
-  const userRole = await prisma.role.upsert({
+  const userRole = await prisma.perfil.upsert({
     where: { name_normalized: 'USER' },
     update: {},
     create: {
@@ -33,28 +47,20 @@ async function main() {
       name_normalized: 'USER',
       description: 'Usuário padrão com permissões de visualização e lance.',
       permissions: {
-        connectOrCreate: [
-          { where: { name: 'view_auctions' }, create: { name: 'view_auctions' } },
-          { where: { name: 'place_bids' }, create: { name: 'place_bids' } },
-        ],
+        connect: userPerms.map(p => ({ id: p.id })),
       },
     },
   });
 
-  // Ensure 'ADMINISTRATOR' role exists and is linked to 'manage_all'
-  const adminRole = await prisma.role.upsert({
+  const adminRole = await prisma.perfil.upsert({
     where: { name_normalized: 'ADMINISTRATOR' },
-    update: {
-      permissions: {
-        connectOrCreate: [{ where: { name: 'manage_all' }, create: { name: 'manage_all' } }],
-      },
-    },
+    update: {},
     create: {
       name: 'Administrator',
       name_normalized: 'ADMINISTRATOR',
       description: 'Acesso total à plataforma.',
       permissions: {
-        connectOrCreate: [{ where: { name: 'manage_all' }, create: { name: 'manage_all' } }],
+        connect: adminPerms.map(p => ({ id: p.id })),
       },
     },
   });
@@ -62,7 +68,7 @@ async function main() {
   // --- Upsert Admin User ---
   console.log('Seeding admin user...');
   const hashedPassword = await bcrypt.hash('admin123', 10);
-  await prisma.user.upsert({
+  await prisma.usuario.upsert({
     where: { email: 'admin@bidexpert.com.br' },
     update: {
       password: hashedPassword,
@@ -81,10 +87,10 @@ async function main() {
   
   // --- Seed other data ---
   console.log('Seeding states...');
-  await prisma.state.createMany({ data: sampleStates, skipDuplicates: true });
+  await prisma.estado.createMany({ data: sampleStates, skipDuplicates: true });
   
   console.log('Seeding cities...');
-  await prisma.city.createMany({ data: sampleCities, skipDuplicates: true });
+  await prisma.cidade.createMany({ data: sampleCities, skipDuplicates: true });
 
   console.log('Seeding categories and subcategories...');
   for (const categoryData of sampleLotCategories) {
@@ -94,7 +100,7 @@ async function main() {
       slug: slugify(cat.name),
       hasSubcategories: !!subcategories && subcategories.length > 0,
     };
-    const createdCategory = await prisma.lotCategory.upsert({
+    const createdCategory = await prisma.categoriaLote.upsert({
       where: { id: cat.id },
       update: catToCreate,
       create: catToCreate,
@@ -102,7 +108,7 @@ async function main() {
     
     if (subcategories) {
       for (const subCatData of subcategories) {
-         await prisma.subcategory.upsert({
+         await prisma.subcategoria.upsert({
             where: { id: subCatData.id },
             update: {...subCatData, parentCategoryId: createdCategory.id, slug: slugify(subCatData.name)},
             create: {...subCatData, parentCategoryId: createdCategory.id, slug: slugify(subCatData.name)},
@@ -112,39 +118,38 @@ async function main() {
   }
 
   console.log('Seeding document types...');
-  await prisma.documentType.createMany({ data: sampleDocumentTypes.map(dt => ({...dt, appliesTo: dt.appliesTo as any})), skipDuplicates: true });
+  await prisma.tipoDocumento.createMany({ data: sampleDocumentTypes.map(dt => ({...dt, aplicaA: dt.appliesTo, formatos: dt.allowedFormats })), skipDuplicates: true });
 
   console.log('Seeding courts...');
-  await prisma.court.createMany({ data: sampleCourts, skipDuplicates: true });
+  await prisma.tribunal.createMany({ data: sampleCourts, skipDuplicates: true });
   
   console.log('Seeding judicial districts...');
-  await prisma.judicialDistrict.createMany({ data: sampleJudicialDistricts, skipDuplicates: true });
+  await prisma.comarca.createMany({ data: sampleJudicialDistricts, skipDuplicates: true });
 
   console.log('Seeding judicial branches...');
-  await prisma.judicialBranch.createMany({ data: sampleJudicialBranches, skipDuplicates: true });
+  await prisma.vara.createMany({ data: sampleJudicialBranches, skipDuplicates: true });
 
   console.log('Seeding sellers...');
-  await prisma.seller.createMany({ data: sampleSellers.map(({rating, auctionsFacilitatedCount, totalSalesValue, memberSince, activeLotsCount, ...s}) => s), skipDuplicates: true });
+  await prisma.vendedor.createMany({ data: sampleSellers as any, skipDuplicates: true });
   
   console.log('Seeding auctioneers...');
-  await prisma.auctioneer.createMany({ data: sampleAuctioneers.map(({rating, auctionsConductedCount, totalValueSold, memberSince, ...a}) => a), skipDuplicates: true });
+  await prisma.leiloeiro.createMany({ data: sampleAuctioneers as any, skipDuplicates: true });
 
   console.log('Seeding judicial processes...');
   for (const proc of sampleJudicialProcesses) {
     const { parties, ...procData } = proc;
-    const createdProcess = await prisma.judicialProcess.upsert({
+    const createdProcess = await prisma.processoJudicial.upsert({
       where: { id: procData.id },
-      update: procData,
-      create: procData,
+      update: procData as any,
+      create: procData as any,
     });
     if (parties) {
       for (const party of parties) {
-        // Using upsert for parties to avoid duplicate errors if seed is run again
-        await prisma.processParty.upsert({
-          where: { processId_name_partyType: { processId: createdProcess.id, name: party.name, partyType: party.partyType } },
+        await prisma.parteProcesso.upsert({
+          where: { processoJudicialId_name_partyType: { processoJudicialId: createdProcess.id, name: party.name, partyType: party.partyType } },
           update: { documentNumber: party.documentNumber },
           create: {
-            processId: createdProcess.id,
+            processoJudicialId: createdProcess.id,
             name: party.name,
             partyType: party.partyType,
             documentNumber: party.documentNumber,
@@ -155,19 +160,19 @@ async function main() {
   }
   
   console.log('Seeding bens...');
-  await prisma.bem.createMany({ data: sampleBens.map(({categoryName, subcategoryName, judicialProcessNumber, sellerName, ...b}) => b), skipDuplicates: true });
+  await prisma.bem.createMany({ data: sampleBens.map(({categoryName, subcategoryName, judicialProcessNumber, sellerName, ...b}) => b) as any, skipDuplicates: true });
 
   console.log('Seeding auctions...');
-  await prisma.auction.createMany({ data: sampleAuctions.map(({ lots, totalLots, auctioneer, seller, category, ...a }) => a as any), skipDuplicates: true });
+  await prisma.leilao.createMany({ data: sampleAuctions.map(({ lots, totalLots, auctioneer, seller, category, ...a }) => ({ ...a, etapas: a.auctionStages ? JSON.stringify(a.auctionStages) : null, gatilhosMentais: a.additionalTriggers ? a.additionalTriggers.join(',') : null })) as any, skipDuplicates: true });
   
   console.log('Seeding lots...');
-  await prisma.lot.createMany({ data: sampleLots.map(({ auctionName, type, cityName, stateUf, subcategoryName, seller, sellerName, auctioneerName, isFavorite, ...l}) => l as any), skipDuplicates: true });
+  await prisma.lote.createMany({ data: sampleLots.map(({ auctionName, type, cityName, stateUf, subcategoryName, seller, sellerName, auctioneerName, isFavorite, ...l}) => l as any), skipDuplicates: true });
 
   console.log('Seeding bids...');
-  await prisma.bid.createMany({ data: sampleBids, skipDuplicates: true });
+  await prisma.lance.createMany({ data: sampleBids as any, skipDuplicates: true });
   
   console.log('Seeding wins...');
-  await prisma.userWin.createMany({ data: sampleUserWins.map(({lot, ...w}) => w), skipDuplicates: true });
+  await prisma.arremate.createMany({ data: sampleUserWins.map(({lot, ...w}) => w) as any, skipDuplicates: true });
   
   console.log(`Seeding finished.`);
 }

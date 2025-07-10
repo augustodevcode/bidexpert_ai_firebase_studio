@@ -2,19 +2,13 @@
   "name": "nextn",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "dotenv -- npx prisma migrate dev && next dev",
+  "scripts": {    
     "genkit:dev": "genkit start -- tsx /home/user/studio/src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
-    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio",
-    "db:seed": "prisma db seed",
-    "postinstall": "prisma generate"
+    "typecheck": "tsc --noEmit"
+  
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

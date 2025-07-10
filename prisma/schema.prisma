@@ -1,25 +1,28 @@
-// prisma/schema.prisma
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider     = "mysql"
+  provider     = "postgresql"
   url          = env("DATABASE_URL")
   relationMode = "prisma"
 }
 
 model Usuario {
-  id                  String              @id @default(uuid())
-  email               String              @unique
+  id                  String               @id @default(uuid())
+  email               String               @unique
   fullName            String?
   password            String
   roleId              String?
-  role                Perfil?             @relation(fields: [roleId], references: [id])
-  habilitationStatus  StatusHabilitacao   @default(PENDENTE_DOCUMENTOS)
-  accountType         TipoContaUsuario    @default(PHYSICAL)
-  cpf                 String?             @unique
+  role                Perfil?              @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  sellerId            String?              @unique
+  vendedor            Vendedor?
+  leiloeiro           Leiloeiro?
+  habilitationStatus  UserHabilitationStatus?
+  cpf                 String?              @unique
   rgNumber            String?
   rgIssuer            String?
   rgIssueDate         DateTime?
@@ -41,235 +44,244 @@ model Usuario {
   neighborhood        String?
   city                String?
   state               String?
-  optInMarketing      Boolean?            @default(false)
+  status              String?
+  optInMarketing      Boolean              @default(false)
   avatarUrl           String?
   dataAiHint          String?
+  badges              Json?
   activeBids          Int?
   auctionsWon         Int?
   itemsSold           Int?
-  sellerId            String?             @unique
-  vendedor            Vendedor?           @relation(fields: [sellerId], references: [id])
-  perfilLeiloeiro     Leiloeiro?
-  documentos          DocumentoUsuario[]  @relation("DocumentosUsuario")
-  documentosAnalisado DocumentoUsuario[]  @relation("DocumentosAnalisados")
-  lances              Lance[]
-  arremates           Arremate[]
-  avaliacoes          Avaliacao[]
-  perguntasLote       PerguntaLote[]
-  respostasLote       PerguntaLote[]      @relation("RespostasAdmin")
-  vendasDiretas       VendaDireta[]
-  notificacoes        Notificacao[]
-  uploads             MediaItem[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
   postsBlog           PostBlog[]
+  documentos          DocumentoUsuario[]   @relation("UsuarioDocumentos")
+  documentosAnalista  DocumentoUsuario[]   @relation("AnalistaDocumentos")
+  arremates           Arremate[]
+  vendasDiretas       VendaDireta[]
+  lances              Lance[]
+  notificacoes        Notificacao[]
   maxBids             UserLotMaxBid[]
-  badges              String? // Armazenado como string JSON
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-
-  @@index([roleId])
+  perguntasLote       PerguntaLote[]
+  respostasLote       PerguntaLote[]       @relation("RespostasAdmin")
+  avaliacoesLote      Avaliacao[]
+  mediaItems          MediaItem[]
 }
 
 model Perfil {
-  id              String       @id @default(uuid())
-  name            String       @unique
-  name_normalized String       @unique
-  description     String?      @db.Text
-  permissoes      Permissao[]  @relation(references: [id])
+  id              String      @id @default(uuid())
+  name            String      @unique
+  name_normalized String      @unique
+  description     String?
+  permissions     String[]
   usuarios        Usuario[]
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-}
-
-model Permissao {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  description String?
-  perfis      Perfil[] @relation(references: [id])
-}
-
-model TipoDocumento {
-  id             String             @id @default(uuid())
-  name           String             @unique
-  description    String?            @db.Text
-  isRequired     Boolean            @default(true)
-  aplicaA        String? // Comma-separated: PHYSICAL,LEGAL
-  formatos       String? // Comma-separated: pdf,jpg,png
-  displayOrder   Int                @default(0)
-  documentos     DocumentoUsuario[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 }
 
 model DocumentoUsuario {
   id              String             @id @default(uuid())
   usuarioId       String
-  usuario         Usuario            @relation("DocumentosUsuario", fields: [usuarioId], references: [id])
-  documentTypeId  String
-  tipoDocumento   TipoDocumento      @relation(fields: [documentTypeId], references: [id])
-  fileUrl         String
+  tipoDocumentoId String
+  fileUrl         String?
   fileName        String?
-  status          StatusDocumento    @default(NAO_ENVIADO)
+  status          UserDocumentStatus @default(NAO_ENVIADO)
   uploadDate      DateTime?
   analysisDate    DateTime?
   analistaId      String?
-  analista        Usuario?           @relation("DocumentosAnalisados", fields: [analistaId], references: [id], onDelete: SetNull)
-  rejectionReason String?            @db.Text
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  rejectionReason String?
+  usuario         Usuario            @relation("UsuarioDocumentos", fields: [usuarioId], references: [id], onDelete: Cascade)
+  tipoDocumento   TipoDocumento      @relation(fields: [tipoDocumentoId], references: [id])
+  analista        Usuario?           @relation("AnalistaDocumentos", fields: [analistaId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
-  @@unique([usuarioId, documentTypeId])
-  @@index([analistaId])
+  @@unique([usuarioId, tipoDocumentoId])
+}
+
+model TipoDocumento {
+  id           String             @id @default(uuid())
+  name         String             @unique
+  description  String?
+  isRequired   Boolean            @default(true)
+  aplicaA      String?
+  formatos     String?
+  displayOrder Int                @default(0)
+  documentos   DocumentoUsuario[]
 }
 
 model Leilao {
   id                             String           @id @default(uuid())
   publicId                       String           @unique
   title                          String
-  fullTitle                      String?          @db.Text
-  description                    String?          @db.Text
-  status                         StatusLeilao
-  auctionType                    ModalidadeLeilao?
-  categoryId                     String?
-  categoria                      CategoriaLote?   @relation(fields: [categoryId], references: [id])
-  auctioneerId                   String?
-  leiloeiro                      Leiloeiro?       @relation(fields: [auctioneerId], references: [id])
+  fullTitle                      String?
+  description                    String?
+  status                         AuctionStatus
+  auctionType                    AuctionType?
+  categoriaId                    String
+  leiloeiroId                    String
   sellerId                       String?
-  vendedor                       Vendedor?        @relation(fields: [sellerId], references: [id])
   auctionDate                    DateTime
   endDate                        DateTime?
-  etapas                         String?          @db.Text // Serialized JSON
+  etapas                         String?
   city                           String?
   state                          String?
-  imageMediaId                   String?          @unique
-  imagemCapa                     MediaItem?       @relation(fields: [imageMediaId], references: [id])
+  imageUrl                       String?
+  imageMediaId                   String?
   dataAiHint                     String?
   documentsUrl                   String?
-  totalLots                      Int?
+  evaluationReportUrl            String?
+  auctionCertificateUrl          String?
   visits                         Int?             @default(0)
-  lotes                          Lote[]
+  totalLots                      Int?             @default(0)
   initialOffer                   Float?
   bidsCount                      Int?             @default(0)
   sellingBranch                  String?
   vehicleLocation                String?
-  judicialProcessId              String?          @unique
-  processoJudicial               ProcessoJudicial? @relation(fields: [judicialProcessId], references: [id])
-  automaticBiddingEnabled        Boolean?
-  allowInstallmentBids           Boolean?
-  softCloseEnabled               Boolean?
-  softCloseMinutes               Int?
+  automaticBiddingEnabled        Boolean?         @default(false)
+  allowInstallmentBids           Boolean?         @default(false)
+  softCloseEnabled               Boolean?         @default(false)
+  softCloseMinutes               Int?             @default(2)
+  silentBiddingEnabled           Boolean?         @default(false)
+  allowMultipleBidsPerUser       Boolean?         @default(true)
   estimatedRevenue               Float?
-  achievedRevenue                Float?           @default(0)
+  achievedRevenue                Float?
   totalHabilitatedUsers          Int?
   isFeaturedOnMarketplace        Boolean?         @default(false)
   marketplaceAnnouncementTitle   String?
-  gatilhosMentais                String?          // Comma-separated string for tags
-  avaliacoes                     Avaliacao[]
-  perguntas                      PerguntaLote[]
-  evaluationReportUrl            String?
-  auctionCertificateUrl          String?
+  gatilhosMentais                String?
+  judicialProcessId              String?
   createdAt                      DateTime         @default(now())
   updatedAt                      DateTime         @updatedAt
-
-  @@index([categoryId])
-  @@index([auctioneerId])
-  @@index([sellerId])
+  categoria                      CategoriaLote    @relation(fields: [categoriaId], references: [id])
+  leiloeiro                      Leiloeiro        @relation(fields: [leiloeiroId], references: [id])
+  vendedor                       Vendedor?        @relation(fields: [sellerId], references: [id])
+  processoJudicial               ProcessoJudicial? @relation(fields: [judicialProcessId], references: [id], onDelete: SetNull)
+  imagemCapa                     MediaItem?       @relation("LeilaoImagemCapa", fields: [imageMediaId], references: [id], onDelete: SetNull)
+  lotes                          Lote[]
+  lances                         Lance[]
+  arremates                      Arremate[]
+  perguntas                      PerguntaLote[]
+  avaliacoes                     Avaliacao[]
 }
 
 model Lote {
-  id                         String            @id @default(uuid())
-  publicId                   String            @unique
-  auctionId                  String
-  leilao                     Leilao            @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  title                      String
-  number                     String?
-  imageUrl                   String?
-  imageMediaId               String?           @unique
-  imagemCapa                 MediaItem?        @relation(fields: [imageMediaId], references: [id])
-  dataAiHint                 String?
-  galleryImageUrls           String?           @db.Text // Serialized JSON
-  mediaItems                 MediaItem[]
-  status                     StatusLote
-  stateId                    String?
-  estado                     Estado?           @relation(fields: [stateId], references: [id])
-  cityId                     String?
-  cidade                     Cidade?           @relation(fields: [cityId], references: [id])
-  categoryId                 String?
-  categoria                  CategoriaLote?    @relation(fields: [categoryId], references: [id])
-  subcategoryId              String?
-  subcategoria               Subcategoria?     @relation(fields: [subcategoryId], references: [id])
-  views                      Int?              @default(0)
-  price                      Float
-  initialPrice               Float?
-  auctionDate                DateTime?
-  secondAuctionDate          DateTime?
-  secondInitialPrice         Float?
-  endDate                    DateTime?
-  bidsCount                  Int?              @default(0)
-  isFeatured                 Boolean?          @default(false)
-  description                String?           @db.Text
-  sellerId                   String?
-  vendedor                   Vendedor?         @relation(fields: [sellerId], references: [id])
-  condition                  String?
-  lotSpecificAuctionDate     DateTime?
-  reservePrice               Float?
-  evaluationValue            Float?
-  debtAmount                 Float?
-  itbiValue                  Float?
-  isExclusive                Boolean?          @default(false)
-  discountPercentage         Float?
-  gatilhosMentais            String?           // Comma-separated string for tags
-  judicialProcessNumber      String?
-  courtDistrict              String?
-  courtName                  String?
-  publicProcessUrl           String?
-  propertyRegistrationNumber String?
-  propertyLiens              String?           @db.Text
-  knownDebts                 String?           @db.Text
-  additionalDocumentsInfo    String?           @db.Text
-  winningBidTermUrl          String?
-  lances                     Lance[]
-  arremate                   Arremate?
-  avaliacoes                 Avaliacao[]
-  perguntas                  PerguntaLote[]
-  bens                       Bem[]             @relation(references: [id])
-  maxBids                    UserLotMaxBid[]
-  createdAt                  DateTime          @default(now())
-  updatedAt                  DateTime          @updatedAt
-
-  @@index([auctionId])
-  @@index([stateId])
-  @@index([cityId])
-  @@index([categoryId])
-  @@index([subcategoryId])
-  @@index([sellerId])
+  id                           String        @id @default(uuid())
+  publicId                     String        @unique
+  auctionId                    String
+  title                        String
+  number                       String?
+  imageUrl                     String?
+  imageMediaId                 String?
+  dataAiHint                   String?
+  galleryImageUrls             String?
+  status                       LotStatus
+  stateId                      String?
+  cityId                       String?
+  categoryId                   String
+  subcategoryId                String?
+  views                        Int           @default(0)
+  price                        Float
+  initialPrice                 Float?
+  auctionDate                  DateTime?
+  secondAuctionDate            DateTime?
+  secondInitialPrice           Float?
+  endDate                      DateTime?
+  bidsCount                    Int           @default(0)
+  isFeatured                   Boolean?      @default(false)
+  description                  String?
+  year                         Int?
+  make                         String?
+  model                        String?
+  series                       String?
+  stockNumber                  String?
+  sellingBranch                String?
+  vin                          String?
+  vinStatus                    String?
+  lossType                     String?
+  primaryDamage                String?
+  titleInfo                    String?
+  titleBrand                   String?
+  startCode                    String?
+  hasKey                       Boolean?
+  odometer                     String?
+  airbagsStatus                String?
+  bodyStyle                    String?
+  engineDetails                String?
+  transmissionType             String?
+  driveLineType                String?
+  fuelType                     String?
+  cylinders                    String?
+  restraintSystem              String?
+  exteriorInteriorColor        String?
+  options                      String?
+  manufacturedIn               String?
+  vehicleClass                 String?
+  lotSpecificAuctionDate       DateTime?
+  vehicleLocationInBranch      String?
+  laneRunNumber                String?
+  aisleStall                   String?
+  actualCashValue              String?
+  estimatedRepairCost          String?
+  sellerId                     String?
+  auctioneerId                 String?
+  condition                    String?
+  isExclusive                  Boolean?      @default(false)
+  discountPercentage           Float?
+  bidIncrementStep             Float?
+  gatilhosMentais              String?
+  reservePrice                 Float?
+  evaluationValue              Float?
+  debtAmount                   Float?
+  itbiValue                    Float?
+  latitude                     Float?
+  longitude                    Float?
+  mapAddress                   String?
+  mapEmbedUrl                  String?
+  mapStaticImageUrl            String?
+  judicialProcessNumber        String?
+  courtDistrict                String?
+  courtName                    String?
+  publicProcessUrl             String?
+  propertyRegistrationNumber   String?
+  propertyLiens                String?
+  knownDebts                   String?
+  winningBidTermUrl            String?
+  additionalDocumentsInfo      String?
+  createdAt                    DateTime      @default(now())
+  updatedAt                    DateTime      @updatedAt
+  leilao                       Leilao        @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  categoria                    CategoriaLote @relation(fields: [categoryId], references: [id])
+  subcategoria                 Subcategoria? @relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
+  vendedor                     Vendedor?     @relation(fields: [sellerId], references: [id])
+  estado                       Estado?       @relation(fields: [stateId], references: [id])
+  cidade                       Cidade?       @relation(fields: [cityId], references: [id])
+  lances                       Lance[]
+  arremates                    Arremate[]
+  maxBids                      UserLotMaxBid[]
+  perguntas                    PerguntaLote[]
+  avaliacoes                   Avaliacao[]
+  bens                         Bem[]         @relation("BemParaLote")
+  mediaItems                   MediaItem[]   @relation("MediaParaLote")
 }
 
 model Bem {
-  id                         String            @id @default(uuid())
-  publicId                   String            @unique
+  id                         String    @id @default(uuid())
+  publicId                   String    @unique
   title                      String
-  description                String?           @db.Text
-  status                     StatusBem
+  description                String?
+  status                     BemStatus
   categoryId                 String?
-  categoria                  CategoriaLote?    @relation(fields: [categoryId], references: [id])
   subcategoryId              String?
-  subcategoria               Subcategoria?     @relation(fields: [subcategoryId], references: [id])
   judicialProcessId          String?
-  processoJudicial           ProcessoJudicial? @relation(fields: [judicialProcessId], references: [id])
   sellerId                   String?
-  vendedor                   Vendedor?         @relation(fields: [sellerId], references: [id])
-  lotes                      Lote[]            @relation(references: [id])
   evaluationValue            Float?
   imageUrl                   String?
-  imageMediaId               String?           @unique
-  imagemCapa                 MediaItem?        @relation(fields: [imageMediaId], references: [id])
-  galleryImageUrls           String?           @db.Text
-  mediaItemIds               String?           @db.Text // Serialized JSON array of mediaItem IDs
+  imageMediaId               String?
   dataAiHint                 String?
   locationCity               String?
   locationState              String?
   address                    String?
   latitude                   Float?
   longitude                  Float?
-  // Campos de Veículo
   plate                      String?
   make                       String?
   model                      String?
@@ -281,21 +293,20 @@ model Bem {
   fuelType                   String?
   transmissionType           String?
   bodyType                   String?
-  vin                        String?
-  renavam                    String?
+  vin                        String?   @unique
+  renavam                    String?   @unique
   enginePower                String?
   numberOfDoors              Int?
-  vehicleOptions             String?           @db.Text
+  vehicleOptions             String?
   detranStatus               String?
-  debts                      String?           @db.Text
+  debts                      String?
   runningCondition           String?
   bodyCondition              String?
   tiresCondition             String?
-  hasKey                     Boolean?
-  // Campos de Imóvel
+  hasKey                     Boolean?  @default(false)
   propertyRegistrationNumber String?
   iptuNumber                 String?
-  isOccupied                 Boolean?
+  isOccupied                 Boolean?  @default(false)
   totalArea                  Float?
   builtArea                  Float?
   bedrooms                   Int?
@@ -303,145 +314,205 @@ model Bem {
   bathrooms                  Int?
   parkingSpaces              Int?
   constructionType           String?
-  finishes                   String?           @db.Text
-  infrastructure             String?           @db.Text
-  condoDetails               String?           @db.Text
-  improvements               String?           @db.Text
+  finishes                   String?
+  infrastructure             String?
+  condoDetails               String?
+  improvements               String?
   topography                 String?
-  liensAndEncumbrances       String?           @db.Text
-  propertyDebts              String?           @db.Text
-  unregisteredRecords        String?           @db.Text
-  hasHabiteSe                Boolean?
+  liensAndEncumbrances       String?
+  propertyDebts              String?
+  unregisteredRecords        String?
+  hasHabiteSe                Boolean?  @default(false)
   zoningRestrictions         String?
-  // Campos de Eletrônicos
+  amenities                  String?
   brand                      String?
-  serialNumber               String?
+  serialNumber               String?   @unique
   itemCondition              String?
-  specifications             String?           @db.Text
-  includedAccessories        String?           @db.Text
+  specifications             String?
+  includedAccessories        String?
   batteryCondition           String?
-  hasInvoice                 Boolean?
-  hasWarranty                Boolean?
-  repairHistory              String?           @db.Text
-  // Campos de Eletrodomésticos
+  hasInvoice                 Boolean?  @default(false)
+  hasWarranty                Boolean?  @default(false)
+  repairHistory              String?
   applianceCapacity          String?
   voltage                    String?
   applianceType              String?
   additionalFunctions        String?
-  // Campos de Máquinas
   hoursUsed                  Int?
   engineType                 String?
   capacityOrPower            String?
-  maintenanceHistory         String?           @db.Text
+  maintenanceHistory         String?
   installationLocation       String?
   compliesWithNR             String?
   operatingLicenses          String?
-  // Campos de Semoventes
   breed                      String?
   age                        String?
-  sex                        SexoSemovente?
+  sex                        Sexo?
   weight                     String?
-  individualId               String?
+  individualId               String?   @unique
   purpose                    String?
   sanitaryCondition          String?
   lineage                    String?
-  isPregnant                 Boolean?
+  isPregnant                 Boolean?  @default(false)
   specialSkills              String?
   gtaDocument                String?
   breedRegistryDocument      String?
-  // Campos de Móveis
   furnitureType              String?
   material                   String?
   style                      String?
   dimensions                 String?
   pieceCount                 Int?
-  // Campos de Joias
   jewelryType                String?
   metal                      String?
   gemstones                  String?
   totalWeight                String?
   jewelrySize                String?
   authenticityCertificate    String?
-  // Campos de Arte
   workType                   String?
   artist                     String?
   period                     String?
   technique                  String?
   provenance                 String?
-  // Campos de Embarcações
   boatType                   String?
   boatLength                 String?
   hullMaterial               String?
-  onboardEquipment           String?           @db.Text
-  // Campos de Alimentos
+  onboardEquipment           String?
   productName                String?
   quantity                   String?
   packagingType              String?
   expirationDate             DateTime?
   storageConditions          String?
-  // Metais e Pedras
   preciousMetalType          String?
   purity                     String?
-  // Bens Florestais
   forestGoodsType            String?
   volumeOrQuantity           String?
   species                    String?
   dofNumber                  String?
-  createdAt                  DateTime          @default(now())
-  updatedAt                  DateTime          @updatedAt
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
 
-  @@index([categoryId])
-  @@index([subcategoryId])
-  @@index([judicialProcessId])
-  @@index([sellerId])
+  categoria       CategoriaLote?   @relation(fields: [categoryId], references: [id])
+  subcategoria    Subcategoria?    @relation(fields: [subcategoryId], references: [id])
+  processoJudicial ProcessoJudicial? @relation(fields: [judicialProcessId], references: [id])
+  vendedor         Vendedor?        @relation(fields: [sellerId], references: [id])
+  lotes            Lote[]           @relation("BemParaLote")
 }
 
 model Lance {
   id            String   @id @default(uuid())
-  lotId         String
-  lote          Lote     @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  auctionId     String
-  leilao        Leilao   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  bidderId      String
-  licitante     Usuario  @relation(fields: [bidderId], references: [id])
+  loteId        String
+  leilaoId      String
+  licitanteId   String
   bidderDisplay String
   amount        Float
   timestamp     DateTime @default(now())
 
-  @@index([lotId])
-  @@index([bidderId])
+  lote    Lote    @relation(fields: [loteId], references: [id], onDelete: Cascade)
+  leilao  Leilao  @relation(fields: [leilaoId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [licitanteId], references: [id], onDelete: Cascade)
+
+  @@index([loteId, timestamp])
 }
 
 model Arremate {
-  id                String          @id @default(uuid())
-  lotId             String          @unique
-  lote              Lote            @relation(fields: [lotId], references: [id])
-  userId            String
-  usuario           Usuario         @relation(fields: [userId], references: [id])
-  winningBidAmount  Float
-  winDate           DateTime
-  paymentStatus     StatusPagamento @default(PENDENTE)
-  invoiceUrl        String?
-  commissionPaid    Boolean         @default(false)
-  retrievalStatus   String?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  id               String        @id @default(uuid())
+  loteId           String        @unique
+  leilaoId         String
+  usuarioId        String
+  winningBidAmount Float
+  winDate          DateTime      @default(now())
+  paymentStatus    PaymentStatus @default(PENDENTE)
+  invoiceUrl       String?
 
-  @@index([userId])
+  lote    Lote    @relation(fields: [loteId], references: [id], onDelete: Cascade)
+  leilao  Leilao  @relation(fields: [leilaoId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
 }
 
 model UserLotMaxBid {
-  id        String   @id @default(uuid())
-  userId    String
-  lotId     String
+  id       String  @id @default(uuid())
+  userId   String
+  lotId    String
   maxAmount Float
-  isActive  Boolean  @default(true)
-  usuario   Usuario  @relation(fields: [userId], references: [id])
-  lote      Lote     @relation(fields: [lotId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isActive Boolean @default(true)
+
+  usuario Usuario @relation(fields: [userId], references: [id])
+  lote    Lote    @relation(fields: [lotId], references: [id])
 
   @@unique([userId, lotId])
+}
+
+model ProcessoJudicial {
+  id              String           @id @default(uuid())
+  publicId        String           @unique
+  processNumber   String           @unique
+  isElectronic    Boolean
+  courtId         String
+  districtId      String
+  branchId        String
+  sellerId        String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  tribunal        Tribunal         @relation(fields: [courtId], references: [id])
+  comarca         Comarca          @relation(fields: [districtId], references: [id])
+  vara            Vara             @relation(fields: [branchId], references: [id])
+  vendedor        Vendedor?        @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  partes          ParteProcesso[]
+  bens            Bem[]
+  leiloes         Leilao[]
+}
+
+model ParteProcesso {
+  id             String         @id @default(uuid())
+  processoJudicialId String
+  name           String
+  documentNumber String?
+  partyType      ProcessPartyType
+  processoJudicial ProcessoJudicial @relation(fields: [processoJudicialId], references: [id], onDelete: Cascade)
+
+  @@unique([processoJudicialId, name, partyType])
+}
+
+model Tribunal {
+  id         String             @id @default(uuid())
+  name       String             @unique
+  slug       String             @unique
+  stateUf    String
+  website    String?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  comarcas   Comarca[]
+  processos  ProcessoJudicial[]
+}
+
+model Comarca {
+  id        String             @id @default(uuid())
+  name      String
+  slug      String
+  courtId   String
+  stateId   String
+  zipCode   String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  tribunal  Tribunal           @relation(fields: [courtId], references: [id])
+  estado    Estado             @relation(fields: [stateId], references: [id])
+  varas     Vara[]
+  processos ProcessoJudicial[]
+}
+
+model Vara {
+  id                String             @id @default(uuid())
+  name              String
+  slug              String
+  districtId        String
+  contactName       String?
+  phone             String?
+  email             String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  comarca           Comarca            @relation(fields: [districtId], references: [id])
+  processos         ProcessoJudicial[]
+  comitenteVinculado Vendedor?
 }
 
 model Vendedor {
@@ -459,437 +530,272 @@ model Vendedor {
   website                  String?
   logoUrl                  String?
   dataAiHintLogo           String?
-  description              String?            @db.Text
+  description              String?
+  memberSince              DateTime?
+  rating                   Float?
+  activeLotsCount          Int?
+  totalSalesValue          Float?
+  auctionsFacilitatedCount Int?
+  userId                   String?            @unique
+  usuario                  Usuario?           @relation(fields: [userId], references: [id])
   isJudicial               Boolean            @default(false)
   judicialBranchId         String?            @unique
   varaJudicial             Vara?              @relation(fields: [judicialBranchId], references: [id])
-  userId                   String?            @unique
-  usuario                  Usuario?
-  leiloes                  Leilao[]
-  bens                     Bem[]
-  vendasDiretas            VendaDireta[]
-  processosJudiciais       ProcessoJudicial[]
   createdAt                DateTime           @default(now())
   updatedAt                DateTime           @updatedAt
+  leiloes                  Leilao[]
+  lotes                    Lote[]
+  processosJudiciais       ProcessoJudicial[]
+  vendasDiretas            VendaDireta[]
+  bens                     Bem[]
 }
 
 model Leiloeiro {
-  id                     String   @id @default(uuid())
-  publicId                 String   @unique
-  name                   String   @unique
-  slug                   String   @unique
-  registrationNumber     String?
-  contactName            String?
-  email                  String?
-  phone                  String?
-  address                String?
-  city                   String?
-  state                  String?
-  zipCode                String?
-  website                String?
-  logoUrl                String?
-  dataAiHintLogo         String?
-  description            String?  @db.Text
-  userId                 String?  @unique
-  usuario                Usuario? @relation(fields: [userId], references: [id])
-  leiloes                Leilao[]
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
-}
-
-model VendaDireta {
-  id                  String             @id @default(uuid())
-  publicId            String             @unique
-  title               String
-  description         String             @db.Text
-  offerType           TipoOfertaVenda
-  status              StatusOfertaVenda  @default(PENDENTE_APROVACAO)
-  price               Float?
-  minimumOfferPrice   Float?
-  categoryId          String?
-  categoria           CategoriaLote?     @relation(fields: [categoryId], references: [id])
-  locationCity        String?
-  locationState       String?
-  sellerId            String
-  vendedor            Vendedor           @relation(fields: [sellerId], references: [id])
-  imageUrl            String?
-  imageMediaId        String?
-  dataAiHint          String?
-  galleryImageUrls    String?            @db.Text
-  mediaItemIds        String?            @db.Text
-  expiresAt           DateTime?
-  views               Int?               @default(0)
-  proposalsCount      Int?               @default(0)
-  usuarioId           String?
-  usuario             Usuario?           @relation(fields: [usuarioId], references: [id])
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-
-  @@index([categoryId])
-  @@index([sellerId])
-  @@index([usuarioId])
-}
-
-model MediaItem {
-  id           String      @id @default(uuid())
-  fileName     String
-  storagePath  String?
-  title        String?
-  altText      String?
-  caption      String?
-  description  String?     @db.Text
-  mimeType     String
-  sizeBytes    Int
-  dimensions   String?
-  urlOriginal  String      @db.Text
-  urlThumbnail String?     @db.Text
-  urlMedium    String?     @db.Text
-  urlLarge     String?     @db.Text
-  dataAiHint   String?
-  uploadedBy   String?
-  uploader     Usuario?    @relation(fields: [uploadedBy], references: [id])
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  lotes        Lote[]
-  leiloes      Leilao[]
-  bens         Bem[]
+  id                       String    @id @default(uuid())
+  publicId                 String    @unique
+  name                     String    @unique
+  slug                     String    @unique
+  registrationNumber       String?
+  contactName              String?
+  email                    String?
+  phone                    String?
+  address                  String?
+  city                     String?
+  state                    String?
+  zipCode                  String?
+  website                  String?
+  logoUrl                  String?
+  dataAiHintLogo           String?
+  description              String?
+  memberSince              DateTime?
+  rating                   Float?
+  auctionsConductedCount   Int?
+  totalValueSold           Float?
+  userId                   String?   @unique
+  usuario                  Usuario?  @relation(fields: [userId], references: [id])
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+  leiloes                  Leilao[]
 }
 
 model CategoriaLote {
   id                 String          @id @default(uuid())
   name               String          @unique
   slug               String          @unique
-  description        String?         @db.Text
-  itemCount          Int?            @default(0)
-  hasSubcategories   Boolean         @default(false)
+  description        String?
+  itemCount          Int?
   logoUrl            String?
-  coverImageUrl      String?
-  megaMenuImageUrl   String?
   dataAiHintLogo     String?
+  coverImageUrl      String?
   dataAiHintCover    String?
+  megaMenuImageUrl   String?
   dataAiHintMegaMenu String?
-  subcategorias      Subcategoria[]
-  leiloes            Leilao[]
+  hasSubcategories   Boolean         @default(false)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
   lotes              Lote[]
+  subcategorias      Subcategoria[]
   vendasDiretas      VendaDireta[]
   bens               Bem[]
   postsBlog          PostBlog[]
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-}
-
-model Estado {
-  id        String           @id @default(uuid())
-  name      String           @unique
-  uf        String           @unique
-  slug      String           @unique
-  cityCount Int?             @default(0)
-  cidades   Cidade[]
-  comarcas  ComarcaJudicial[]
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
-}
-
-model Cidade {
-  id      String   @id @default(uuid())
-  name    String
-  slug    String
-  stateId String
-  estado  Estado   @relation(fields: [stateId], references: [id])
-  stateUf String
-  ibgeCode String?
-  lotCount Int?    @default(0)
-  lotes    Lote[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([stateId])
 }
 
 model Subcategoria {
-  id                String        @id @default(uuid())
-  name              String
-  slug              String        @unique
-  parentCategoryId  String
+  id               String        @id @default(uuid())
+  name             String
+  slug             String        @unique
+  parentCategoryId String
+  description      String?
+  itemCount        Int?
+  displayOrder     Int           @default(0)
+  iconUrl          String?
+  iconMediaId      String?
+  dataAiHintIcon   String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
   categoriaPrincipal CategoriaLote @relation(fields: [parentCategoryId], references: [id])
-  description       String?       @db.Text
-  itemCount         Int?          @default(0)
-  displayOrder      Int           @default(0)
-  iconUrl           String?
-  iconMediaId       String?
-  dataAiHintIcon    String?
-  lotes             Lote[]
-  bens              Bem[]
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-
-  @@index([parentCategoryId])
+  lotes            Lote[]
+  bens             Bem[]
 }
 
-model Tribunal {
-  id        String           @id @default(uuid())
-  name      String           @unique
-  slug      String           @unique
-  stateUf   String
-  website   String?
-  comarcas  ComarcaJudicial[]
-  processos ProcessoJudicial[]
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+model MediaItem {
+  id                   String        @id @default(uuid())
+  fileName             String
+  storagePath          String?
+  uploadedAt           DateTime      @default(now())
+  uploadedBy           String?
+  title                String?
+  altText              String?
+  caption              String?
+  description          String?
+  mimeType             String
+  sizeBytes            Int
+  dimensions           String?
+  urlOriginal          String
+  urlThumbnail         String?
+  urlMedium            String?
+  urlLarge             String?
+  dataAiHint           String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  lotes                Lote[]        @relation("MediaParaLote")
+  leiloesComoCapa      Leilao[]      @relation("LeilaoImagemCapa")
+  ofertasVendaDireta   VendaDireta[]
 }
 
-model ComarcaJudicial {
-  id        String             @id @default(uuid())
-  name      String
-  slug      String             @unique
-  courtId   String
-  tribunal  Tribunal           @relation(fields: [courtId], references: [id])
-  stateId   String
-  estado    Estado             @relation(fields: [stateId], references: [id])
-  zipCode   String?
-  varas     Vara[]
-  processos ProcessoJudicial[]
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-
-  @@index([courtId])
-  @@index([stateId])
+model VendaDireta {
+  id                   String                @id @default(uuid())
+  publicId             String                @unique
+  title                String
+  description          String
+  offerType            DirectSaleOfferType
+  status               DirectSaleOfferStatus @default(PENDENTE_APROVACAO)
+  price                Float?
+  minimumOfferPrice    Float?
+  categoriaId          String
+  locationCity         String?
+  locationState        String?
+  vendedorId           String
+  imagemPrincipalId    String?
+  dataAiHint           String?
+  expiresAt            DateTime?
+  views                Int?
+  proposalsCount       Int?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  categoria            CategoriaLote         @relation(fields: [categoriaId], references: [id])
+  vendedor             Vendedor              @relation(fields: [vendedorId], references: [id])
+  imagemPrincipal      MediaItem?            @relation(fields: [imagemPrincipalId], references: [id])
 }
 
-model Vara {
-  id          String             @id @default(uuid())
-  name        String
-  slug        String
-  districtId  String
-  comarca     ComarcaJudicial    @relation(fields: [districtId], references: [id])
-  contactName String?
-  phone       String?
-  email       String?
-  vendedor    Vendedor?
-  processos   ProcessoJudicial[]
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-
-  @@unique([name, districtId])
-  @@index([districtId])
-}
-
-model ProcessoJudicial {
-  id              String           @id @default(uuid())
-  publicId        String           @unique
-  processNumber   String           @unique
-  isElectronic    Boolean
-  courtId         String
-  tribunal        Tribunal         @relation(fields: [courtId], references: [id])
-  districtId      String
-  comarca         ComarcaJudicial  @relation(fields: [districtId], references: [id])
-  branchId        String
-  vara            Vara             @relation(fields: [branchId], references: [id])
-  sellerId        String?
-  vendedor        Vendedor?        @relation(fields: [sellerId], references: [id])
-  partes          ParteProcesso[]
-  bens            Bem[]
-  leilao          Leilao?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-
-  @@index([courtId])
-  @@index([districtId])
-  @@index([branchId])
-  @@index([sellerId])
-}
-
-model ParteProcesso {
-  id             String           @id @default(uuid())
-  processId      String
-  processo       ProcessoJudicial @relation(fields: [processId], references: [id], onDelete: Cascade)
-  name           String
-  documentNumber String?
-  partyType      TipoParteProcesso
-
-  @@unique([processId, name, partyType])
+model PostBlog {
+  id           String        @id @default(uuid())
+  title        String
+  slug         String        @unique
+  content      String
+  authorId     String
+  authorId_fk  Usuario       @relation(fields: [authorId], references: [id])
+  categoryId   String
+  categoria    CategoriaLote @relation(fields: [categoryId], references: [id])
+  imageUrl     String?
+  publishedAt  DateTime?
+  tags         String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 }
 
 model Notificacao {
   id        String   @id @default(uuid())
   userId    String
-  usuario   Usuario  @relation(fields: [userId], references: [id])
   message   String
-  isRead    Boolean  @default(false)
   link      String?
+  isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
-
-  @@index([userId])
+  usuario   Usuario  @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model PostBlog {
-  id             String         @id @default(uuid())
-  title          String
-  slug           String         @unique
-  content        String         @db.Text
-  authorId       String
-  authorId_fk    Usuario        @relation(fields: [authorId], references: [id])
-  publishedAt    DateTime?
-  status         String
-  featuredImage  String?
-  tags           String? // Comma-separated
-  categoryId     String?
-  categoria      CategoriaLote? @relation(fields: [categoryId], references: [id])
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-
-  @@index([authorId])
-  @@index([categoryId])
-}
-
-model MensagemContato {
+model Contato {
   id        String   @id @default(uuid())
   name      String
   email     String
   subject   String
-  message   String   @db.Text
+  message   String
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 }
 
 model Avaliacao {
   id              String   @id @default(uuid())
-  lotId           String
-  lote            Lote     @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  auctionId       String
-  leilao          Leilao   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  loteId          String
+  leilaoId        String
   userId          String
-  usuario         Usuario  @relation(fields: [userId], references: [id])
   userDisplayName String
   rating          Int
-  comment         String   @db.Text
+  comment         String?
   createdAt       DateTime @default(now())
-
-  @@index([lotId])
-  @@index([userId])
+  lote            Lote     @relation(fields: [loteId], references: [id], onDelete: Cascade)
+  leilao          Leilao   @relation(fields: [leilaoId], references: [id], onDelete: Cascade)
 }
 
 model PerguntaLote {
   id                      String   @id @default(uuid())
-  lotId                   String
-  lote                    Lote     @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  auctionId               String
-  leilao                  Leilao   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  loteId                  String
+  leilaoId                String
   userId                  String
-  usuario                 Usuario  @relation(fields: [userId], references: [id])
   userDisplayName         String
-  questionText            String   @db.Text
-  answerText              String?  @db.Text
+  questionText            String
+  isPublic                Boolean  @default(true)
+  answerText              String?
   answeredAt              DateTime?
   answeredByUserId        String?
   answeredByUserDisplayName String?
-  answeredBy              Usuario? @relation("RespostasAdmin", fields: [answeredByUserId], references: [id], onDelete: SetNull)
-  isPublic                Boolean  @default(true)
   createdAt               DateTime @default(now())
+  lote                    Lote     @relation(fields: [loteId], references: [id], onDelete: Cascade)
+  leilao                  Leilao   @relation(fields: [leilaoId], references: [id], onDelete: Cascade)
+  usuario                 Usuario  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminResposta           Usuario? @relation("RespostasAdmin", fields: [answeredByUserId], references: [id], onDelete: SetNull)
+}
 
-  @@index([lotId])
-  @@index([userId])
-  @@index([answeredByUserId])
+model Estado {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  uf        String    @unique
+  slug      String    @unique
+  cityCount Int?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  comarcas  Comarca[]
+  lotes     Lote[]
+  tribunais Tribunal[]
+}
+
+model Cidade {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String
+  stateId   String
+  stateUf   String
+  ibgeCode  String?
+  lotCount  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  estado    Estado   @relation(fields: [stateId], references: [id])
+  lotes     Lote[]
 }
 
 model ConfiguracoesPlataforma {
-  id                         String  @id @default("global")
-  siteTitle                  String?
-  siteTagline                String?
-  galleryImageBasePath       String?
-  storageProvider            String? @default("local") // 'local' or 'firebase'
-  firebaseStorageBucket      String?
-  activeThemeName            String?
-  temas                      String? @db.Text // Serialized JSON of Theme[]
-  platformPublicIdMasks      Json?
-  homepageSections           Json?
-  mentalTriggerSettings      Json?
-  sectionBadgeVisibility     Json?
-  mapSettings                Json?
-  searchPaginationType       String? @default("loadMore") // 'loadMore' or 'numberedPages'
-  searchItemsPerPage         Int?    @default(12)
-  searchLoadMoreCount        Int?    @default(12)
-  defaultListItemsPerPage    Int?    @default(10)
-  showCountdownOnLotDetail   Boolean? @default(true)
-  showCountdownOnCards       Boolean? @default(true)
-  showRelatedLotsOnLotDetail Boolean? @default(true)
-  relatedLotsCount           Int?    @default(5)
-  variableIncrementTable     String? @db.Text // Serialized JSON of VariableIncrementRule[]
-  biddingSettings            Json?
-  updatedAt                  DateTime @updatedAt
+  id                           String @id @default("global")
+  siteTitle                    String?
+  siteTagline                  String?
+  galleryImageBasePath         String?
+  storageProvider              String?
+  firebaseStorageBucket        String?
+  activeThemeName              String?
+  temas                        String?
+  platformPublicIdMasks        Json?
+  mapSettings                  Json?
+  searchPaginationType         String?
+  searchItemsPerPage           Int?
+  searchLoadMoreCount          Int?
+  showCountdownOnLotDetail     Boolean?
+  showCountdownOnCards         Boolean?
+  showRelatedLotsOnLotDetail   Boolean?
+  relatedLotsCount             Int?
+  defaultUrgencyTimerHours     Int?
+  variableIncrementTable       Json?
+  biddingSettings              Json?
+  defaultListItemsPerPage      Int?
+  mentalTriggerSettings        Json?
+  sectionBadgeVisibility       Json?
+  updatedAt                    DateTime @updatedAt
 }
 
-// ENUMS
-
-enum StatusHabilitacao {
-  PENDENTE_DOCUMENTOS
-  PENDENTE_ANALYSIS
-  HABILITADO
-  REJEITADO_DOCUMENTOS
-  BLOCKED
+enum Sexo {
+  MACHO
+  FEMEA
 }
 
-enum TipoContaUsuario {
-  PHYSICAL
-  LEGAL
-  DIRECT_SALE_CONSIGNOR
-}
-
-enum StatusDocumento {
-  NAO_ENVIADO
-  SUBMETIDO
-  APROVADO
-  REJEITADO
-  PENDENTE_ANALISE
-}
-
-enum ModalidadeLeilao {
-  JUDICIAL
-  EXTRAJUDICIAL
-  PARTICULAR
-  TOMADA_DE_PRECOS
-  DUTCH
-  SILENT
-}
-
-enum StatusLeilao {
-  RASCUNHO
-  EM_PREPARACAO
-  EM_BREVE
-  ABERTO
-  ABERTO_PARA_LANCES
-  ENCERRADO
-  FINALIZADO
-  CANCELADO
-  SUSPENSO
-}
-
-enum StatusLote {
-  EM_BREVE
-  ABERTO_PARA_LANCES
-  ENCERRADO
-  VENDIDO
-  NAO_VENDIDO
-}
-
-enum StatusBem {
-  CADASTRO
-  DISPONIVEL
-  LOTEADO
-  VENDIDO
-  REMOVIDO
-  INATIVADO
-}
-
-enum StatusPagamento {
-  PENDENTE
-  PROCESSANDO
-  PAGO
-  FALHOU
-  REEMBOLSADO
-}
-
-enum TipoParteProcesso {
+enum ProcessPartyType {
   AUTOR
   REU
   ADVOGADO_AUTOR
@@ -902,2566 +808,459 @@ enum TipoParteProcesso {
   OUTRO
 }
 
-enum TipoOfertaVenda {
+enum UserHabilitationStatus {
+  PENDENTE_DOCUMENTOS
+  PENDENTE_ANALYSIS
+  HABILITADO
+  REJEITADO_DOCUMENTOS
+  BLOQUEADO
+}
+
+enum UserDocumentStatus {
+  NAO_ENVIADO
+  SUBMETIDO
+  APROVADO
+  REJEITADO
+  PENDENTE_ANALYSIS
+}
+
+enum AuctionStatus {
+  RASCUNHO
+  EM_PREPARACAO
+  EM_BREVE
+  ABERTO
+  ABERTO_PARA_LANCES
+  ENCERRADO
+  FINALIZADO
+  CANCELADO
+  SUSPENSO
+}
+
+enum AuctionType {
+  JUDICIAL
+  EXTRAJUDICIAL
+  PARTICULAR
+  TOMADA_DE_PRECOS
+  DUTCH
+  SILENT
+}
+
+enum LotStatus {
+  EM_BREVE
+  ABERTO_PARA_LANCES
+  ENCERRADO
+  VENDIDO
+  NAO_VENDIDO
+  CANCELADO
+}
+
+enum BemStatus {
+  CADASTRO
+  DISPONIVEL
+  LOTEADO
+  VENDIDO
+  REMOVIDO
+  INATIVADO
+}
+
+enum PaymentStatus {
+  PENDENTE
+  PROCESSANDO
+  PAGO
+  FALHOU
+  REEMBOLSADO
+}
+
+enum DirectSaleOfferType {
   BUY_NOW
   ACCEPTS_PROPOSALS
 }
 
-enum StatusOfertaVenda {
-  ATIVO
-  VENDIDO
-  EXPIRADO
+enum DirectSaleOfferStatus {
   PENDENTE_APROVACAO
+  ACTIVE
+  SOLD
+  EXPIRED
 }
 
-enum SexoSemovente {
-  Macho
-  Fêmea
-}
-
-enum TipoTemplateDocumento {
+enum DocumentTemplateType {
   WINNING_BID_TERM
   EVALUATION_REPORT
   AUCTION_CERTIFICATE
 }
-
 ```
-- src/components/layout/dev-db-indicator.tsx:
+- src/app/profile/page.tsx:
 ```tsx
-// src/components/dev-db-indicator.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
-
-function getCookie(name: string): string | undefined {
-  if (typeof document === 'undefined') {
-    return undefined;
-  }
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) {
-    return parts.pop()?.split(';').shift();
-  }
-}
-
-export default function DevDbIndicator() {
-  const [dbSystem, setDbSystem] = useState('');
-
-  useEffect(() => {
-    // We fall back to the public env var, which is also available on the client.
-    const dbFromEnv = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'PRISMA_POSTGRES';
-    setDbSystem(dbFromEnv);
-  }, []);
-
-  if (process.env.NODE_ENV !== 'development' || !dbSystem) {
-    return null;
-  }
-
-  return (
-    <p className="text-xs text-muted-foreground mt-2">
-      DB System: <span className="font-semibold text-primary">{dbSystem.toUpperCase()}</span> (Dev Only)
-    </p>
-  );
-}
-
-```
-- src/lib/database/index.ts:
-```ts
-// This file is now obsolete and will be deleted.
-// All database queries should now go through the Prisma client in server actions.
-
-```
-- src/lib/db-config.middleware.ts:
-```ts
-// This file is now obsolete and will be deleted.
-// The database adapter selection logic has been removed.
-
-```
-- src/app/admin/roles/role-form.tsx:
-```tsx
-
-'use client';
-
-import * as React from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { roleFormSchema, type RoleFormValues } from './role-form-schema';
-import type { Role, Permission } from '@/types';
-import { Loader2, Save, ShieldCheck } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-
-interface RoleFormProps {
-  initialData?: Role | null;
-  allPermissions: Permission[];
-  onSubmitAction: (data: RoleFormValues) => Promise<{ success: boolean; message: string; roleId?: string }>;
-  formTitle: string;
-  formDescription: string;
-  submitButtonText: string;
-}
-
-export default function RoleForm({
-  initialData,
-  allPermissions,
-  onSubmitAction,
-  formTitle,
-  formDescription,
-  submitButtonText,
-}: RoleFormProps) {
-  const { toast } = useToast();
-  const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-
-  const form = useForm<RoleFormValues>({
-    resolver: zodResolver(roleFormSchema),
-    defaultValues: {
-      name: initialData?.name || '',
-      description: initialData?.description || '',
-      permissions: initialData?.permissions?.map(p => typeof p === 'object' ? p.id : p) || [],
-    },
-  });
-  
-  const groupedPermissions = React.useMemo(() => 
-    allPermissions.reduce((acc, permission) => {
-        const group = permission.group || 'Geral';
-        if (!acc[group]) {
-          acc[group] = [];
-        }
-        acc[group].push(permission);
-        return acc;
-    }, {} as Record<string, typeof allPermissions>),
-  [allPermissions]);
-
-  async function onSubmit(values: RoleFormValues) {
-    setIsSubmitting(true);
-    try {
-      const result = await onSubmitAction(values);
-      if (result.success) {
-        toast({
-          title: 'Sucesso!',
-          description: result.message,
-        });
-        router.push('/admin/roles');
-        router.refresh();
-      } else {
-        toast({
-          title: 'Erro',
-          description: result.message,
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Erro Inesperado',
-        description: 'Ocorreu um erro ao processar sua solicitação.',
-        variant: 'destructive',
-      });
-      console.error("Unexpected error in role form:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  return (
-    <Card className="max-w-2xl mx-auto shadow-lg">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ShieldCheck className="h-6 w-6 text-primary" /> {formTitle}
-        </CardTitle>
-        <CardDescription>{formDescription}</CardDescription>
-      </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6 p-6 bg-secondary/30">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome do Perfil</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Administrador, Comitente, Usuário" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição (Opcional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Uma breve descrição sobre este perfil de usuário."
-                      {...field}
-                      value={field.value ?? ""}
-                      rows={3}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="permissions"
-              render={() => (
-                <FormItem>
-                  <FormLabel className="text-base font-semibold">Permissões</FormLabel>
-                  <FormDescription>
-                    Selecione as permissões que este perfil terá.
-                  </FormDescription>
-                   <Accordion type="multiple" className="w-full bg-background p-2 rounded-md border" defaultValue={Object.keys(groupedPermissions)}>
-                    {Object.entries(groupedPermissions).map(([groupName, permissions]) => (
-                      <AccordionItem value={groupName} key={groupName}>
-                        <AccordionTrigger className="text-sm font-medium">{groupName}</AccordionTrigger>
-                        <AccordionContent>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 p-2 max-h-80 overflow-y-auto">
-                            {permissions.map((permission) => (
-                               <FormField
-                                key={permission.id}
-                                control={form.control}
-                                name="permissions"
-                                render={({ field }) => {
-                                  return (
-                                    <FormItem
-                                      key={permission.id}
-                                      className="flex flex-row items-center space-x-3 space-y-0"
-                                    >
-                                      <FormControl>
-                                        <Checkbox
-                                          checked={field.value?.includes(permission.id)}
-                                          onCheckedChange={(checked) => {
-                                            return checked
-                                              ? field.onChange([...(field.value || []), permission.id])
-                                              : field.onChange(
-                                                  (field.value || []).filter(
-                                                    (value) => value !== permission.id
-                                                  )
-                                                )
-                                          }}
-                                        />
-                                      </FormControl>
-                                      <FormLabel className="text-xs font-normal cursor-pointer">
-                                        {permission.description || permission.name}
-                                      </FormLabel>
-                                    </FormItem>
-                                  )
-                                }}
-                              />
-                            ))}
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/roles')} disabled={isSubmitting}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {submitButtonText}
-            </Button>
-          </CardFooter>
-        </form>
-      </Form>
-    </Card>
-  );
-}
-
-```
-- src/app/admin/roles/new/page.tsx:
-```tsx
-import RoleForm from '../role-form';
-import { createRole, type RoleFormData } from '../actions';
-import { prisma } from '@/lib/prisma';
-import type { Permission } from '@/types';
-
-async function getAllPermissions(): Promise<Permission[]> {
-    return (await prisma.permission.findMany()) as unknown as Permission[];
-}
-
-export default async function NewRolePage() {
-  const allPermissions = await getAllPermissions();
-
-  async function handleCreateRole(data: RoleFormData) {
-    'use server';
-    return createRole(data);
-  }
-
-  return (
-    <RoleForm
-      allPermissions={allPermissions}
-      onSubmitAction={handleCreateRole}
-      formTitle="Novo Perfil de Usuário"
-      formDescription="Defina o nome, descrição e permissões para um novo perfil."
-      submitButtonText="Criar Perfil"
-    />
-  );
-}
-
-```
-- src/app/admin/roles/role-form-schema.ts:
-```ts
-import * as z from 'zod';
-
-export const roleFormSchema = z.object({
-  name: z.string().min(3, {
-    message: "O nome do perfil deve ter pelo menos 3 caracteres.",
-  }).max(100, {
-    message: "O nome do perfil não pode exceder 100 caracteres.",
-  }),
-  description: z.string().max(500, {
-    message: "A descrição não pode exceder 500 caracteres.",
-  }).optional(),
-  permissions: z.array(z.string()).optional(),
-});
-
-export type RoleFormValues = z.infer<typeof roleFormSchema>;
-
-```
-- src/app/admin/roles/[roleId]/edit/page.tsx:
-```tsx
-import RoleForm from '../../role-form';
-import { getRole, updateRole, type RoleFormData } from '../../actions';
-import { notFound } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
-import type { Permission } from '@/types';
-
-async function getAllPermissions(): Promise<Permission[]> {
-    return (await prisma.permission.findMany()) as unknown as Permission[];
-}
-
-export default async function EditRolePage({ params }: { params: { roleId: string } }) {
-  const roleId = params.roleId;
-  const [role, allPermissions] = await Promise.all([
-      getRole(roleId),
-      getAllPermissions()
-  ]);
-
-  if (!role) {
-    notFound();
-  }
-
-  async function handleUpdateRole(data: Partial<RoleFormData>) {
-    'use server';
-    return updateRole(roleId, data);
-  }
-
-  return (
-    <RoleForm
-      initialData={role}
-      allPermissions={allPermissions}
-      onSubmitAction={handleUpdateRole}
-      formTitle="Editar Perfil de Usuário"
-      formDescription="Modifique os detalhes do perfil existente."
-      submitButtonText="Salvar Alterações"
-    />
-  );
-}
-
-```
-- src/app/admin/roles/actions.ts:
-```ts
-'use server';
-
-import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/prisma';
-import type { Role, RoleFormData } from '@/types';
-import { Prisma } from '@prisma/client';
-
-export async function createRole(
-  data: RoleFormData
-): Promise<{ success: boolean; message: string; roleId?: string }> {
-  try {
-    const newRole = await prisma.role.create({
-      data: {
-        name: data.name,
-        name_normalized: data.name.toUpperCase().replace(/\s/g, '_'),
-        description: data.description,
-        permissions: {
-          connect: data.permissions?.map(id => ({ id })) || [],
-        },
-      }
-    });
-    revalidatePath('/admin/roles');
-    return { success: true, message: "Perfil criado com sucesso!", roleId: newRole.id };
-  } catch (error: any) {
-    console.error("Error creating role:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      return { success: false, message: 'Já existe um perfil com este nome.' };
-    }
-    return { success: false, message: 'Falha ao criar perfil.' };
-  }
-}
-
-export async function getRoles(): Promise<Role[]> {
-  try {
-    const roles = await prisma.role.findMany({
-      orderBy: { name: 'asc' },
-      include: {
-        permissions: true,
-        _count: {
-          select: { usuarios: true }
-        }
-      }
-    });
-    return roles.map(role => ({
-      ...role,
-      userCount: role._count.usuarios,
-    })) as unknown as Role[];
-  } catch (error) {
-    console.error("Error fetching roles:", error);
-    return [];
-  }
-}
-
-export async function getRole(id: string): Promise<Role | null> {
-  try {
-    const role = await prisma.role.findUnique({
-      where: { id },
-      include: { permissions: true }
-    });
-    if (!role) return null;
-    return {
-      ...role,
-      permissions: role.permissions
-    } as unknown as Role;
-  } catch (error) {
-    console.error("Error fetching role:", error);
-    return null;
-  }
-}
-
-export async function updateRole(
-  id: string,
-  data: Partial<RoleFormData>
-): Promise<{ success: boolean; message: string }> {
-  try {
-    await prisma.role.update({
-      where: { id },
-      data: {
-        name: data.name,
-        name_normalized: data.name ? data.name.toUpperCase().replace(/\s/g, '_') : undefined,
-        description: data.description,
-        permissions: {
-          set: data.permissions?.map(id => ({ id })) || [],
-        },
-      },
-    });
-    revalidatePath('/admin/roles');
-    revalidatePath(`/admin/roles/${id}/edit`);
-    return { success: true, message: 'Perfil atualizado com sucesso!' };
-  } catch (error: any) {
-    console.error(`Error updating role ${id}:`, error);
-    return { success: false, message: 'Falha ao atualizar perfil.' };
-  }
-}
-
-export async function deleteRole(id: string): Promise<{ success: boolean; message: string }> {
-  try {
-    const roleToDelete = await prisma.role.findUnique({ where: { id }});
-    const protectedRoles = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER', 'AUCTION_ANALYST'];
-    if (protectedRoles.includes(roleToDelete?.name_normalized || '')) {
-      return { success: false, message: 'Não é possível excluir perfis de sistema.' };
-    }
-    await prisma.role.delete({ where: { id } });
-    revalidatePath('/admin/roles');
-    return { success: true, message: 'Perfil excluído com sucesso!' };
-  } catch (error: any) {
-    console.error(`Error deleting role ${id}:`, error);
-    if (error.code === 'P2003') {
-        return { success: false, message: 'Não é possível excluir. Este perfil está em uso por um ou mais usuários.' };
-    }
-    return { success: false, message: 'Falha ao excluir perfil.' };
-  }
-}
-
-```
-- src/app/admin/roles/columns.tsx:
-```tsx
-// src/app/admin/roles/columns.tsx
-'use client';
-
-import type { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Pencil, ShieldAlert, Trash2, Users } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Loader2, UserCog, Mail, Phone, Home, Building, Briefcase, Calendar, ShieldCheck, BadgeInfo, FileText, Edit, AlertCircle, Award } from 'lucide-react';
 import Link from 'next/link';
-import type { Role } from '@/types';
-import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-const PROTECTED_ROLES = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER', 'AUCTION_ANALYST'];
-
-export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<Role>[] => [
-  {
-    accessorKey: "name",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Nome do Perfil" />,
-    cell: ({ row }) => {
-      const isProtected = PROTECTED_ROLES.includes(row.original.name_normalized);
-      return (
-        <div className="font-medium flex items-center">
-            <Link href={`/admin/roles/${row.original.id}/edit`} className="hover:text-primary">
-              {row.getValue("name")}
-            </Link>
-            {isProtected && <ShieldAlert className="h-4 w-4 ml-2 text-amber-500" title="Perfil de Sistema Protegido"/>}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "description",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Descrição" />,
-    cell: ({ row }) => <p className="truncate max-w-[400px] text-muted-foreground">{row.getValue("description")}</p>
-  },
-  {
-    accessorKey: "userCount",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Usuários" />,
-    cell: ({ row }) => {
-        const count = row.original.userCount || 0;
-        return (
-            <div className="text-center flex items-center justify-center">
-                <Users className="h-3.5 w-3.5 mr-1 text-muted-foreground"/>
-                <span>{count}</span>
-            </div>
-        )
-    }
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => {
-      const role = row.original;
-      const isProtected = PROTECTED_ROLES.includes(role.name_normalized);
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Abrir menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Ações</DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-              <Link href={`/admin/roles/${role.id}/edit`}>
-                <Pencil className="mr-2 h-4 w-4"/>Editar
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => handleDelete(role.id)}
-              className="text-destructive"
-              disabled={isProtected}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Excluir
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-];
-
-```
-- src/app/admin/users/page.tsx:
-```tsx
-// src/app/admin/users/page.tsx
-'use client';
-
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getUsersWithRoles, deleteUser } from './actions'; // Actions do nosso app
-import { getRoles } from '@/app/admin/roles/actions';
-import type { UserProfileData, Role } from '@/types';
-import { PlusCircle, UserCog } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { DataTable } from '@/components/ui/data-table';
-import { createColumns } from './columns';
-import { getUserHabilitationStatusInfo } from '@/lib/sample-data-helpers';
-
-export default function AdminUsersPage() {
-  const [users, setUsers] = useState<UserProfileData[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchData = async () => {
-      if (!isMounted) return;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const [fetchedUsers, fetchedRoles] = await Promise.all([
-          getUsersWithRoles(),
-          getRoles()
-        ]);
-        if (isMounted) {
-          setUsers(fetchedUsers as unknown as UserProfileData[]);
-          setRoles(fetchedRoles);
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar usuários e perfis.";
-        console.error("Error fetching users/roles:", e);
-        if (isMounted) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    fetchData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [toast, refetchTrigger]);
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      const result = await deleteUser(id);
-      if (result.success) {
-        toast({ title: 'Sucesso!', description: result.message });
-        setRefetchTrigger(c => c + 1);
-      } else {
-        toast({ title: 'Erro ao Excluir', description: result.message, variant: 'destructive' });
-      }
-    },
-    [toast]
-  );
-  
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
-  
-  const roleOptions = useMemo(() => 
-    roles.map(r => ({ value: r.name, label: r.name })),
-  [roles]);
-
-  const habilitationOptions = useMemo(() => 
-    [...new Set(users.map(u => u.habilitationStatus))]
-      .filter(Boolean)
-      .map(status => ({ value: status!, label: getUserHabilitationStatusInfo(status).text })),
-  [users]);
-
-  const facetedFilterColumns = useMemo(() => [
-    { id: 'roleName', title: 'Perfil', options: roleOptions },
-    { id: 'habilitationStatus', title: 'Habilitação', options: habilitationOptions }
-  ], [roleOptions, habilitationOptions]);
-
+const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType, label: string, value?: string | null, href?: string }) => {
+  if (!value) return null;
   return (
-    <div className="space-y-6">
-      <Card className="shadow-lg">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-2xl font-bold font-headline flex items-center">
-              <UserCog className="h-6 w-6 mr-2 text-primary" />
-              Gerenciar Usuários
-            </CardTitle>
-            <CardDescription>
-              Adicione, edite, exclua e gerencie perfis de usuários.
-            </CardDescription>
-          </div>
-          <Button asChild>
-            <Link href="/admin/users/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Novo Usuário
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={users}
-            isLoading={isLoading}
-            error={error}
-            searchColumnId="fullName"
-            searchPlaceholder="Buscar por nome ou email..."
-            facetedFilterColumns={facetedFilterColumns}
-          />
-        </CardContent>
-      </Card>
+    <div className="flex items-start text-sm">
+      <Icon className="h-4 w-4 mr-3 mt-1 text-primary flex-shrink-0" />
+      <div>
+        <span className="font-semibold text-foreground">{label}:</span>{' '}
+        {href ? (
+          <a href={href} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:underline">{value}</a>
+        ) : (
+          <span className="text-muted-foreground">{value}</span>
+        )}
+      </div>
     </div>
   );
-}
+};
 
-```
-- src/app/admin/users/user-form.tsx:
-```tsx
-// src/app/admin/users/user-form.tsx
-'use client';
+const badgeMap: Record<string, { icon: React.ElementType, label: string, description: string }> = {
+    'PRIMEIRO_ARREMATE': { icon: Award, label: "Primeiro Arremate", description: "Parabéns por seu primeiro lote arrematado!" },
+    // Adicionar outras medalhas aqui conforme forem criadas
+};
 
-import * as React from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, useWatch } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { userFormSchema, type UserFormValues } from './user-form-schema';
-import type { UserProfileData, Role } from '@/types';
-import { Loader2, Save, UserPlus } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Separator } from '@/components/ui/separator';
-
-interface UserFormProps {
-  initialData?: UserProfileData | null;
-  roles: Role[];
-  onSubmitAction: (data: UserFormValues) => Promise<{ success: boolean; message: string; userId?: string }>;
-  formTitle: string;
-  formDescription: string;
-  submitButtonText: string;
-}
-
-export default function UserForm({
-  initialData,
-  roles,
-  onSubmitAction,
-  formTitle,
-  formDescription,
-  submitButtonText,
-}: UserFormProps) {
-  const { toast } = useToast();
+export default function ProfilePage() {
+  const { userProfileWithPermissions, loading } = useAuth();
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const form = useForm<UserFormValues>({
-    resolver: zodResolver(userFormSchema),
-    defaultValues: {
-      fullName: initialData?.fullName || '',
-      email: initialData?.email || '',
-      password: '', // Senha sempre vazia no formulário
-      roleId: initialData?.roleId || null,
-      accountType: initialData?.accountType || 'PHYSICAL',
-      cpf: initialData?.cpf || '',
-      razaoSocial: initialData?.razaoSocial || '',
-      cnpj: initialData?.cnpj || '',
-    },
-  });
-
-  const accountType = useWatch({ control: form.control, name: 'accountType' });
-
-  async function onSubmit(values: UserFormValues) {
-    setIsSubmitting(true);
-    try {
-      const result = await onSubmitAction(values);
-      if (result.success) {
-        toast({
-          title: 'Sucesso!',
-          description: result.message,
-        });
-        router.push('/admin/users');
-        router.refresh();
-      } else {
-        toast({
-          title: 'Erro',
-          description: result.message,
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Erro Inesperado',
-        description: 'Ocorreu um erro ao processar sua solicitação.',
-        variant: 'destructive',
-      });
-      console.error("Unexpected error in user form:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  return (
-    <Card className="max-w-2xl mx-auto shadow-lg">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <UserPlus className="h-6 w-6 text-primary" /> {formTitle}
-        </CardTitle>
-        <CardDescription>{formDescription}</CardDescription>
-      </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6 p-6 bg-secondary/30">
-            <FormField
-              control={form.control}
-              name="accountType"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel className="text-base">Tipo de Conta</FormLabel>
-                  <FormControl>
-                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4">
-                      <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="PHYSICAL" /></FormControl><FormLabel className="font-normal">Pessoa Física</FormLabel></FormItem>
-                      <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="LEGAL" /></FormControl><FormLabel className="font-normal">Pessoa Jurídica</FormLabel></FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <Separator />
-
-            {accountType === 'PHYSICAL' ? (
-              <FormField control={form.control} name="fullName" render={({ field }) => (<FormItem><FormLabel>Nome Completo</FormLabel><FormControl><Input placeholder="Ex: João da Silva" {...field} /></FormControl><FormMessage /></FormItem>)} />
-            ) : (
-              <FormField control={form.control} name="razaoSocial" render={({ field }) => (<FormItem><FormLabel>Razão Social</FormLabel><FormControl><Input placeholder="Ex: Empresa Exemplo Ltda" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>)} />
-            )}
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="usuario@exemplo.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Senha{initialData ? " (Nova)" : ""}</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder={initialData ? "Deixe em branco para não alterar" : "Defina uma senha inicial"} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               {accountType === 'PHYSICAL' ? (
-                  <FormField control={form.control} name="cpf" render={({ field }) => (<FormItem><FormLabel>CPF</FormLabel><FormControl><Input placeholder="000.000.000-00" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>)} />
-               ) : (
-                  <FormField control={form.control} name="cnpj" render={({ field }) => (<FormItem><FormLabel>CNPJ</FormLabel><FormControl><Input placeholder="00.000.000/0001-00" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>)} />
-               )}
-                <FormField
-                  control={form.control}
-                  name="roleId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Perfil do Usuário</FormLabel>
-                      <Select 
-                        onValueChange={(value) => field.onChange(value === "---NONE---" ? null : value)} 
-                        value={field.value || undefined}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um perfil" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="---NONE---">Nenhum Perfil</SelectItem>
-                          {roles.map((role) => (
-                            <SelectItem key={role.id} value={role.id}>
-                              {role.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/users')} disabled={isSubmitting}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {submitButtonText}
-            </Button>
-          </CardFooter>
-        </form>
-      </Form>
-    </Card>
-  );
-}
-
-```
-- src/hooks/use-local-storage.ts:
-```ts
-
-// src/hooks/use-local-storage.ts
-import { useState, useEffect } from 'react';
-
-/**
- * A custom React hook that provides a state variable that is persisted to localStorage.
- *
- * @template T The type of the value to be stored.
- * @param {string} key The key under which the value is stored in localStorage.
- * @param {T} initialValue The initial value to use if nothing is found in localStorage.
- * @returns {[T, (value: T | ((val: T) => T)) => void]} A stateful value, and a function to update it.
- */
-export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((val: T) => T)) => void] {
-  // State to store our value
-  // Pass initial state function to useState so logic is only executed once
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === 'undefined') {
-      return initialValue;
-    }
-    try {
-      // Get from local storage by key
-      const item = window.localStorage.getItem(key);
-      // Parse stored json or if none return initialValue
-      return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      // If error also return initialValue
-      console.error(error);
-      return initialValue;
-    }
-  });
-
-  // useEffect to update local storage when the state changes
-  useEffect(() => {
-    try {
-      if(typeof window !== 'undefined') {
-         const valueToStore =
-          typeof storedValue === 'function'
-            ? (storedValue as (val: T) => T)(storedValue)
-            : storedValue;
-        // Save state to local storage
-        window.localStorage.setItem(key, JSON.stringify(valueToStore));
-      }
-    } catch (error) {
-      // A more advanced implementation would handle the error case
-      console.error(error);
-    }
-  }, [key, storedValue]);
-
-  return [storedValue, setStoredValue];
-}
-
-```
-- src/hooks/use-media-query.ts:
-```ts
-
-'use client';
-
-import * as React from 'react';
-
-export function useMediaQuery(query: string) {
-  const [value, setValue] = React.useState(false);
-
-  React.useEffect(() => {
-    function onChange(event: MediaQueryListEvent) {
-      setValue(event.matches);
-    }
-
-    const result = matchMedia(query);
-    result.addEventListener('change', onChange);
-    setValue(result.matches);
-
-    return () => result.removeEventListener('change', onChange);
-  }, [query]);
-
-  return value;
-}
-
-```
-- src/lib/sample-data.ts:
-```ts
-// This file is now obsolete and will be deleted.
-// Sample data has been moved to prisma/seed-data.ts
-// Please do not use this file anymore.
-
-```
-- tailwind.config.ts:
-```ts
-
-import type {Config} from 'tailwindcss';
-
-const config: Config = {
-  darkMode: ['class'],
-  content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    container: {
-      center: true,
-      padding: '2rem',
-      screens: {
-        "2xl": "1400px",
-      },
-    },
-    extend: {
-      fontFamily: {
-        body: ['Open Sans', 'sans-serif'],
-        headline: ['Open Sans', 'sans-serif'],
-        code: ['monospace'],
-      },
-      colors: {
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
-        primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
-        },
-        secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
-        },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
-        },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
-        },
-        accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
-        },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
-        },
-        card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
-        },
-        chart: {
-          '1': 'hsl(var(--chart-1))',
-          '2': 'hsl(var(--chart-2))',
-          '3': 'hsl(var(--chart-3))',
-          '4': 'hsl(var(--chart-4))',
-          '5': 'hsl(var(--chart-5))',
-        },
-      },
-      borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
-      },
-      keyframes: {
-        'accordion-down': {
-          from: {
-            height: '0',
-          },
-          to: {
-            height: 'var(--radix-accordion-content-height)',
-          },
-        },
-        'accordion-up': {
-          from: {
-            height: 'var(--radix-accordion-content-height)',
-          },
-          to: {
-            height: '0',
-          },
-        },
-      },
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
-      },
-    },
-  },
-  plugins: [require('tailwindcss-animate')],
-};
-
-export default config;
-
-```
-- src/hooks/use-mobile.ts:
-```ts
-// src/hooks/use-mobile.ts
-'use client';
-import { useMediaQuery } from './use-media-query';
-
-const MOBILE_BREAKPOINT = 768;
-
-/**
- * Custom hook to determine if the current viewport is mobile-sized.
- * @returns {boolean} True if the viewport width is less than the mobile breakpoint.
- */
-export function useIsMobile(): boolean {
-  return useMediaQuery(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
-}
-
-```
-- src/lib/firebase/client.ts:
-```ts
-// src/lib/firebase.ts
-
-import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
-// Removed Firestore import as we're using Prisma
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
-};
-
-let app: FirebaseApp;
-
-const isFirebaseConfigured =
-  firebaseConfig.apiKey &&
-  firebaseConfig.authDomain &&
-  firebaseConfig.projectId &&
-  firebaseConfig.apiKey !== 'YOUR_API_KEY_HERE';
-
-if (isFirebaseConfigured && getApps().length === 0) {
-  app = initializeApp(firebaseConfig);
-} else if (getApps().length > 0) {
-  app = getApps()[0];
-} else {
-  console.warn("Firebase configuration is missing or incomplete. Some Firebase services might not be available.");
-  // Provide a mock app object if not configured to avoid hard crashes
-  app = {} as FirebaseApp; 
-}
-
-// NOTE: We are no longer using Firebase Auth for user authentication.
-// This is kept for other potential Firebase services (like Storage).
-const auth: Auth = isFirebaseConfigured ? getAuth(app) : {} as Auth;
-
-export { app, auth };
-
-```
-- src/components/ui/tooltip.tsx:
-```tsx
-"use client"
-
-import * as React from "react"
-import * as TooltipPrimitive from "@radix-ui/react-tooltip"
-
-import { cn } from "@/lib/utils"
-
-const TooltipProvider = TooltipPrimitive.Provider
-
-const Tooltip = TooltipPrimitive.Root
-
-const TooltipTrigger = TooltipPrimitive.Trigger
-
-const TooltipContent = React.forwardRef<
-  React.ElementRef<typeof TooltipPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
-  <TooltipPrimitive.Content
-    ref={ref}
-    sideOffset={sideOffset}
-    className={cn(
-      "z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-      className
-    )}
-    {...props}
-  />
-))
-TooltipContent.displayName = TooltipPrimitive.Content.displayName
-
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
-
-```
-- src/app/admin/users/page.tsx:
-```tsx
-// src/app/admin/users/page.tsx
-'use client';
-
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getUsersWithRoles, deleteUser } from './actions';
-import { getRoles } from '@/app/admin/roles/actions';
-import type { UserProfileData, Role } from '@/types';
-import { PlusCircle, UserCog } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { DataTable } from '@/components/ui/data-table';
-import { createColumns } from './columns';
-import { getUserHabilitationStatusInfo } from '@/lib/sample-data-helpers';
-
-export default function AdminUsersPage() {
-  const [users, setUsers] = useState<UserProfileData[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchData = async () => {
-      if (!isMounted) return;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const [fetchedUsers, fetchedRoles] = await Promise.all([
-          getUsersWithRoles(),
-          getRoles()
-        ]);
-        if (isMounted) {
-          setUsers(fetchedUsers as unknown as UserProfileData[]);
-          setRoles(fetchedRoles);
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar usuários e perfis.";
-        console.error("Error fetching users/roles:", e);
-        if (isMounted) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    fetchData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [toast, refetchTrigger]);
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      const result = await deleteUser(id);
-      if (result.success) {
-        toast({ title: 'Sucesso!', description: result.message });
-        setRefetchTrigger(c => c + 1);
-      } else {
-        toast({ title: 'Erro ao Excluir', description: result.message, variant: 'destructive' });
-      }
-    },
-    [toast]
-  );
-  
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
-  
-  const roleOptions = useMemo(() => 
-    roles.map(r => ({ value: r.name, label: r.name })),
-  [roles]);
-
-  const habilitationOptions = useMemo(() => 
-    [...new Set(users.map(u => u.habilitationStatus))]
-      .filter(Boolean)
-      .map(status => ({ value: status!, label: getUserHabilitationStatusInfo(status).text })),
-  [users]);
-
-  const facetedFilterColumns = useMemo(() => [
-    { id: 'roleName', title: 'Perfil', options: roleOptions },
-    { id: 'habilitationStatus', title: 'Habilitação', options: habilitationOptions }
-  ], [roleOptions, habilitationOptions]);
-
-  return (
-    <div className="space-y-6">
-      <Card className="shadow-lg">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-2xl font-bold font-headline flex items-center">
-              <UserCog className="h-6 w-6 mr-2 text-primary" />
-              Gerenciar Usuários
-            </CardTitle>
-            <CardDescription>
-              Adicione, edite, exclua e gerencie perfis de usuários.
-            </CardDescription>
-          </div>
-          <Button asChild>
-            <Link href="/admin/users/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Novo Usuário
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={users}
-            isLoading={isLoading}
-            error={error}
-            searchColumnId="fullName"
-            searchPlaceholder="Buscar por nome ou email..."
-            facetedFilterColumns={facetedFilterColumns}
-          />
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-```
-- src/app/admin/users/user-form.tsx:
-```tsx
-'use client';
-
-import * as React from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, useWatch } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { userFormSchema, type UserFormValues } from './user-form-schema';
-import type { UserProfileData, Role } from '@/types';
-import { Loader2, Save, UserPlus } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Separator } from '@/components/ui/separator';
-
-interface UserFormProps {
-  initialData?: UserProfileData | null;
-  roles: Role[];
-  onSubmitAction: (data: UserFormValues) => Promise<{ success: boolean; message: string; userId?: string }>;
-  formTitle: string;
-  formDescription: string;
-  submitButtonText: string;
-}
-
-export default function UserForm({
-  initialData,
-  roles,
-  onSubmitAction,
-  formTitle,
-  formDescription,
-  submitButtonText,
-}: UserFormProps) {
-  const { toast } = useToast();
-  const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-
-  const form = useForm<UserFormValues>({
-    resolver: zodResolver(userFormSchema),
-    defaultValues: {
-      fullName: initialData?.fullName || '',
-      email: initialData?.email || '',
-      password: '', // Senha sempre vazia no formulário
-      roleId: initialData?.roleId || null,
-      accountType: initialData?.accountType || 'PHYSICAL',
-      cpf: initialData?.cpf || '',
-      razaoSocial: initialData?.razaoSocial || '',
-      cnpj: initialData?.cnpj || '',
-    },
-  });
-
-  const accountType = useWatch({ control: form.control, name: 'accountType' });
-
-  async function onSubmit(values: UserFormValues) {
-    setIsSubmitting(true);
-    try {
-      const result = await onSubmitAction(values);
-      if (result.success) {
-        toast({
-          title: 'Sucesso!',
-          description: result.message,
-        });
-        router.push('/admin/users');
-        router.refresh();
-      } else {
-        toast({
-          title: 'Erro',
-          description: result.message,
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Erro Inesperado',
-        description: 'Ocorreu um erro ao processar sua solicitação.',
-        variant: 'destructive',
-      });
-      console.error("Unexpected error in user form:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  return (
-    <Card className="max-w-2xl mx-auto shadow-lg">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <UserPlus className="h-6 w-6 text-primary" /> {formTitle}
-        </CardTitle>
-        <CardDescription>{formDescription}</CardDescription>
-      </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6 p-6 bg-secondary/30">
-            <FormField
-              control={form.control}
-              name="accountType"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel className="text-base">Tipo de Conta</FormLabel>
-                  <FormControl>
-                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4">
-                      <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="PHYSICAL" /></FormControl><FormLabel className="font-normal">Pessoa Física</FormLabel></FormItem>
-                      <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="LEGAL" /></FormControl><FormLabel className="font-normal">Pessoa Jurídica</FormLabel></FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <Separator />
-
-            {accountType === 'PHYSICAL' ? (
-              <FormField control={form.control} name="fullName" render={({ field }) => (<FormItem><FormLabel>Nome Completo</FormLabel><FormControl><Input placeholder="Ex: João da Silva" {...field} /></FormControl><FormMessage /></FormItem>)} />
-            ) : (
-              <FormField control={form.control} name="razaoSocial" render={({ field }) => (<FormItem><FormLabel>Razão Social</FormLabel><FormControl><Input placeholder="Ex: Empresa Exemplo Ltda" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>)} />
-            )}
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="usuario@exemplo.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Senha{initialData ? " (Nova)" : ""}</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder={initialData ? "Deixe em branco para não alterar" : "Defina uma senha inicial"} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               {accountType === 'PHYSICAL' ? (
-                  <FormField control={form.control} name="cpf" render={({ field }) => (<FormItem><FormLabel>CPF</FormLabel><FormControl><Input placeholder="000.000.000-00" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>)} />
-               ) : (
-                  <FormField control={form.control} name="cnpj" render={({ field }) => (<FormItem><FormLabel>CNPJ</FormLabel><FormControl><Input placeholder="00.000.000/0001-00" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>)} />
-               )}
-                <FormField
-                  control={form.control}
-                  name="roleId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Perfil do Usuário</FormLabel>
-                      <Select 
-                        onValueChange={(value) => field.onChange(value === "---NONE---" ? null : value)} 
-                        value={field.value || undefined}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um perfil" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="---NONE---">Nenhum Perfil</SelectItem>
-                          {roles.map((role) => (
-                            <SelectItem key={role.id} value={role.id}>
-                              {role.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/users')} disabled={isSubmitting}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {submitButtonText}
-            </Button>
-          </CardFooter>
-        </form>
-      </Form>
-    </Card>
-  );
-}
-
-```
-- src/app/admin/users/actions.ts:
-```ts
-// src/app/admin/users/actions.ts
-'use server';
-
-import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/prisma';
-import type { User, UserProfileWithPermissions, Role } from '@/types';
-import type { UserFormValues } from './user-form-schema';
-import bcrypt from 'bcrypt';
-import { Prisma } from '@prisma/client';
-
-export type UserCreationData = Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'roleId' | 'sellerId' | 'badges'>> & {
-  email: string;
-  password?: string | null;
-};
-
-/**
- * Cria um novo usuário no sistema, tanto no banco de dados quanto no provedor de autenticação.
- * Esta action é para uso administrativo.
- * @param data - Os dados do formulário do novo usuário.
- * @returns Um objeto indicando o sucesso e a mensagem da operação.
- */
-export async function createUser(data: UserFormValues): Promise<{ success: boolean; message: string; userId?: string }> {
-  if (!data.password) {
-    return { success: false, message: "A senha é obrigatória para criar um novo usuário." };
-  }
-
-  try {
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-    const defaultRole = await prisma.role.findFirst({ where: { name_normalized: 'USER' } });
-
-    const newUser = await prisma.user.create({
-      data: {
-        email: data.email.trim(),
-        fullName: data.accountType === 'PHYSICAL' ? data.fullName?.trim() : data.razaoSocial?.trim(),
-        password: hashedPassword,
-        accountType: data.accountType,
-        cpf: data.accountType === 'PHYSICAL' ? data.cpf?.trim() : undefined,
-        dateOfBirth: data.accountType === 'PHYSICAL' ? data.dateOfBirth : undefined,
-        razaoSocial: data.accountType === 'LEGAL' ? data.razaoSocial?.trim() : undefined,
-        cnpj: data.accountType === 'LEGAL' ? data.cnpj?.trim() : undefined,
-        roleId: data.roleId || defaultRole?.id, // Associa ao perfil selecionado ou ao padrão 'USER'
-        habilitationStatus: 'PENDENTE_DOCUMENTOS',
-      }
-    });
-
-    revalidatePath('/admin/users');
-    return { success: true, message: 'Usuário criado com sucesso!', userId: newUser.id };
-
-  } catch (error: any) {
-    console.error("[createUser Action] Error:", error);
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002' && error.meta?.target?.includes('email')) {
-      return { success: false, message: 'Este email já está em uso.' };
-    }
-    return { success: false, message: error.message || "Falha ao criar usuário." };
-  }
-}
-
-/**
- * Busca todos os usuários do banco de dados, incluindo o nome de seu perfil (role).
- * @returns Um array de perfis de usuário.
- */
-export async function getUsersWithRoles(): Promise<User[]> {
-  const users = await prisma.user.findMany({
-    include: {
-      role: true,
-    },
-    orderBy: {
-      createdAt: 'desc'
-    }
-  });
-
-  return users.map(user => ({
-    ...user,
-    uid: user.id, // uid é um alias comum para id em contextos de autenticação
-    roleName: user.role?.name,
-  })) as unknown as User[];
-}
-
-/**
- * Busca o perfil completo de um usuário, incluindo suas permissões.
- * @param userId - O ID do usuário a ser buscado.
- * @returns O perfil do usuário com permissões, ou null se não encontrado.
- */
-export async function getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null> {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        role: {
-          include: {
-            permissoes: true,
-          },
-        },
-      },
-    });
-
-    if (!user) {
-      return null;
-    }
-
-    const permissions = user.role?.permissoes.map(p => p.id) || [];
-
-    return {
-      ...user,
-      uid: user.id,
-      roleName: user.role?.name || 'USER',
-      permissions: permissions,
-    } as unknown as UserProfileWithPermissions;
-  } catch (error) {
-    console.error(`[getUserProfileData Action] Error fetching user ${userId}:`, error);
-    return null;
-  }
-}
-
-/**
- * Atualiza o perfil (role) de um usuário.
- * @param userId - O ID do usuário a ser atualizado.
- * @param roleId - O ID do novo perfil a ser atribuído.
- * @returns Um objeto indicando o sucesso da operação.
- */
-export async function updateUserRole(
-  userId: string,
-  roleId: string | null
-): Promise<{ success: boolean; message: string }> {
-  try {
-    await prisma.user.update({
-      where: { id: userId },
-      data: { roleId: roleId },
-    });
-    revalidatePath('/admin/users');
-    revalidatePath(`/admin/users/${userId}/edit`);
-    return { success: true, message: 'Perfil do usuário atualizado com sucesso.' };
-  } catch (error) {
-    console.error(`Error updating user role for ${userId}:`, error);
-    return { success: false, message: 'Falha ao atualizar o perfil do usuário.' };
-  }
-}
-
-/**
- * Exclui um usuário do banco de dados.
- * @param userId - O ID do usuário a ser excluído.
- * @returns Um objeto indicando o sucesso da operação.
- */
-export async function deleteUser(userId: string): Promise<{ success: boolean; message: string }> {
-  try {
-    await prisma.user.delete({ where: { id: userId } });
-    revalidatePath('/admin/users');
-    return { success: true, message: 'Usuário excluído com sucesso do banco de dados.' };
-  } catch (error: any) {
-    console.error(`Error deleting user ${userId}:`, error);
-    return { success: false, message: `Falha ao excluir usuário: ${error.message}` };
-  }
-}
-
-/**
- * Busca um usuário pelo seu email.
- * @param email - O email do usuário.
- * @returns O perfil do usuário com permissões, ou null se não encontrado.
- */
-export async function getUserByEmail(email: string): Promise<UserProfileWithPermissions | null> {
-    try {
-        const user = await prisma.user.findUnique({
-            where: { email },
-            include: { role: { include: { permissoes: true } } },
-        });
-
-        if (!user) return null;
-
-        const permissions = user.role?.permissoes.map(p => p.id) || [];
-        return {
-            ...user,
-            uid: user.id,
-            roleName: user.role?.name,
-            permissions,
-        } as UserProfileWithPermissions;
-    } catch (error) {
-        console.error(`[getUserByEmail Action] Error fetching user ${email}:`, error);
-        return null;
-    }
-}
-```
-- src/app/admin/users/user-form-schema.ts:
-```tsx
-import * as z from 'zod';
-
-export const userFormSchema = z.object({
-  accountType: z.enum(['PHYSICAL', 'LEGAL']),
-  // Common fields
-  email: z.string().email({ message: "Por favor, insira um email válido." }),
-  password: z.string().min(6, {
-    message: "A senha deve ter pelo menos 6 caracteres.",
-  }).optional().or(z.literal('')),
-  roleId: z.string().optional().nullable(),
-  
-  // Physical Person fields
-  fullName: z.string().optional(),
-  cpf: z.string().optional(),
-  
-  // Legal Person fields
-  razaoSocial: z.string().optional(),
-  cnpj: z.string().optional(),
-
-}).superRefine((data, ctx) => {
-    if (data.accountType === 'PHYSICAL' && (!data.fullName || data.fullName.length < 3)) {
-        ctx.addIssue({ code: 'custom', message: 'Nome completo é obrigatório para Pessoa Física.', path: ['fullName'] });
-    }
-    if (data.accountType === 'LEGAL' && (!data.razaoSocial || data.razaoSocial.length < 3)) {
-        ctx.addIssue({ code: 'custom', message: 'Razão Social é obrigatória para Pessoa Jurídica.', path: ['razaoSocial'] });
-    }
-});
-
-
-export type UserFormValues = z.infer<typeof userFormSchema>;
-
-```
-- src/components/layout/main-nav.tsx:
-```tsx
-'use client';
-
-import * as React from 'react'; 
-import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation'; // Importado useSearchParams
-import { cn } from '@/lib/utils';
-import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, RecentlyViewedLotInfo } from '@/types';
-import { ChevronDown, History, Home, Landmark, Gavel, Percent, Phone, ListChecks, Tag, Users, FileText as FileTextIcon, BookOpen } from 'lucide-react'; 
-import { useEffect, useState, useCallback } from 'react'; // Adicionado useCallback
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuList,
-  NavigationMenuLink,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
-import MegaMenuCategories from './mega-menu-categories';
-import MegaMenuLinkList, { type MegaMenuGroup } from './mega-menu-link-list';
-import MegaMenuAuctioneers from './mega-menu-auctioneers';
-import TwoColumnMegaMenu from './two-column-mega-menu';
-import type { HistoryListItem } from './header'; 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; 
-import type { MegaMenuLinkItem } from './mega-menu-link-list'; 
-
-export interface NavItem {
-  href?: string;
-  label: string;
-  isMegaMenu?: boolean;
-  contentKey?: 'categories' | 'modalities' | 'consignors' | 'auctioneers' | 'history';
-  icon?: React.ElementType; 
-  megaMenuAlign?: "start" | "center" | "end";
-  twoColumnMegaMenuProps?: {
-    sidebarTitle?: string;
-    mainContent: {
-      imageUrl: string;
-      imageAlt: string;
-      dataAiHint: string;
-      title: string;
-      description: string;
-      buttonLink: string;
-      buttonText: string;
-    };
-  };
-  hrefPrefix?: string; 
-}
-
-const modalityMegaMenuGroups: MegaMenuGroup[] = [
-  {
-    items: [
-      { href: '/search?type=auctions&auctionType=JUDICIAL', label: 'Leilões Judiciais', description: 'Oportunidades de processos judiciais.', icon: <Gavel className="h-4 w-4" /> },
-      { href: '/search?type=auctions&auctionType=EXTRAJUDICIAL', label: 'Leilões Extrajudiciais', description: 'Negociações diretas e mais ágeis.', icon: <Landmark className="h-4 w-4" /> },
-      { href: '/search?type=auctions&auctionType=TOMADA_DE_PRECOS', label: 'Tomada de Preços', description: 'Processo de seleção e cotação.', icon: <FileTextIcon className="h-4 w-4" /> },
-      { href: '/direct-sales', label: 'Venda Direta', description: 'Compre itens com preço fixo.', icon: <Tag className="h-4 w-4" /> },
-      { href: '/search?type=auctions&auctionType=PARTICULAR', label: 'Leilões Particulares', description: 'Leilões privados ou com acesso restrito.', icon: <Users className="h-4 w-4" /> },
-    ]
-  }
-];
-
-interface MainNavProps extends React.HTMLAttributes<HTMLElement> {
-    items: NavItem[];
-    onLinkClick?: () => void;
-    isMobile?: boolean;
-    searchCategories?: LotCategory[];
-    auctioneers?: AuctioneerProfileInfo[];
-    consignorMegaMenuGroups?: MegaMenuGroup[];
-    recentlyViewedItems?: RecentlyViewedLotInfo[];
-    HistoryListItemComponent?: typeof HistoryListItem;
-}
-
-const MAX_ITEMS_IN_TW_COL_SIDEBAR = 5;
-
-
-export default function MainNav({ 
-    items, 
-    className, 
-    onLinkClick, 
-    isMobile = false,
-    searchCategories = [],
-    auctioneers = [],
-    consignorMegaMenuGroups = [],
-    recentlyViewedItems = [],
-    HistoryListItemComponent,
-    ...props 
-}: MainNavProps) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [isClient, setIsClient] = useState(false);
-  
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-  
-  if (!isClient && isMobile) return null;
-
-  if (isMobile) {
+  if (loading) {
     return (
-      <nav className={cn('flex flex-col gap-1', className)} {...props}>
-        {items.map((item) => (
-          item.href && !item.isMegaMenu ? (
-            <Link
-              key={item.label} 
-              href={item.href}
-              onClick={onLinkClick}
-              className={cn(
-                'text-md font-medium transition-colors hover:text-primary flex items-center gap-2 py-2.5 px-3 rounded-md',
-                pathname === item.href ? 'bg-accent text-primary' : 'text-muted-foreground hover:bg-accent/50'
-              )}
-            >
-              {item.icon && <item.icon className="h-4 w-4" />}
-              <span>{item.label}</span>
-            </Link>
-          ) : item.isMegaMenu && item.contentKey ? ( 
-            <div key={item.label} className="py-1">
-                <Link
-                    href={item.href || '#'} 
-                    onClick={(e) => {
-                        if (!item.href && onLinkClick) { 
-                        } else if (onLinkClick) {
-                            onLinkClick(); 
-                        }
-                    }}
-                    className={cn(
-                        'text-md font-medium transition-colors hover:text-primary flex items-center justify-between gap-2 py-2.5 px-3 rounded-md',
-                        pathname === item.href ? 'bg-accent text-primary' : 'text-muted-foreground hover:bg-accent/50'
-                    )}
-                >
-                    <div className="flex items-center gap-2">
-                        {item.icon && <item.icon className="h-4 w-4" />}
-                        <span>{item.label}</span>
-                    </div>
-                    {item.contentKey !== 'history' && <ChevronDown className="h-4 w-4"/>}
-                </Link>
-                <div className="pl-6 mt-1 space-y-0.5">
-                    {item.contentKey === 'categories' && searchCategories.slice(0,3).map(cat => (
-                        <Link key={cat.slug} href={`/category/${cat.slug}`} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{cat.name}</Link>
-                    ))}
-                    {item.contentKey === 'categories' && <Link href="/search?type=lots&tab=categories" onClick={onLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todas categorias</Link>}
-                    
-                    {item.contentKey === 'modalities' && modalityMegaMenuGroups[0].items.map(mod => (
-                          <Link key={mod.href} href={mod.href} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{mod.label}</Link>
-                    ))}
-                      {item.contentKey === 'consignors' && (consignorMegaMenuGroups[0]?.items || []).slice(0,4).map(con => (
-                          <Link key={con.href} href={con.href} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{con.label}</Link>
-                    ))}
-                    {item.contentKey === 'consignors' && (consignorMegaMenuGroups[0]?.items || []).length > 4 && <Link href="/sellers" onClick={onLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todos comitentes</Link>}
-                    
-                    {item.contentKey === 'auctioneers' && auctioneers.slice(0,3).map(auc => (
-                        <Link key={auc.id} href={`/auctioneers/${auc.slug || auc.publicId || auc.id}`} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{auc.name}</Link>
-                    ))}
-                      {item.contentKey === 'auctioneers' && auctioneers.length > 3 && <Link href="/auctioneers" onClick={onLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todos leiloeiros</Link>}
-                    
-                     {item.contentKey === 'history' && HistoryListItemComponent && (
-                        <div className="mt-2 space-y-1 max-h-60 overflow-y-auto">
-                            {recentlyViewedItems.length === 0 ? (
-                                <p className="text-xs text-muted-foreground text-center py-2">Nenhum item visto recentemente.</p>
-                            ) : (
-                                recentlyViewedItems.slice(0, 5).map(rvItem => (
-                                    <HistoryListItemComponent key={rvItem.id} item={rvItem} onClick={onLinkClick} />
-                                ))
-                            )}
-                             <Link href="/dashboard/history" onClick={onLinkClick} className="block text-xs text-primary hover:underline text-center pt-1">Ver Histórico Completo</Link>
-                        </div>
-                    )}
-                </div>
-            </div>
-          ) : null
-        ))}
-      </nav>
+      <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-4 text-muted-foreground">Carregando seu perfil...</p>
+      </div>
+    );
+  }
+
+  if (!userProfileWithPermissions) {
+    return (
+      <div className="text-center py-12">
+        <AlertCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
+        <h2 className="text-xl font-semibold text-destructive">Usuário não encontrado</h2>
+        <p className="text-muted-foreground">Por favor, faça login para ver seu perfil.</p>
+        <Button asChild className="mt-4">
+          <Link href="/auth/login?redirect=/profile">Ir para Login</Link>
+        </Button>
+      </div>
     );
   }
   
+  const { 
+    fullName, email, avatarUrl, dataAiHint, roleName, habilitationStatus,
+    cellPhone, homePhone, cpf, dateOfBirth, street, number, complement,
+    neighborhood, city, state, zipCode, accountType, razaoSocial, cnpj,
+    badges
+  } = userProfileWithPermissions;
+  
+  const userInitial = fullName ? fullName.charAt(0).toUpperCase() : (email ? email.charAt(0).toUpperCase() : "U");
+  const userBadges = Array.isArray(badges) ? badges : [];
 
   return (
-    <NavigationMenu className={cn("relative z-10 flex items-center justify-start", className)} {...props} delayDuration={0}>
-      <NavigationMenuList className={cn("group flex list-none items-center justify-start space-x-1")}>
-        {items.map((item) => {
-          let megaMenuPropsForTwoColumn: any = null; 
-          const currentParamsType = searchParams.get('type');
-          const currentCategoryParam = searchParams.get('category');
-          const currentAuctionTypeParam = searchParams.get('auctionType');
+    <div className="max-w-3xl mx-auto space-y-6">
+      <Card className="shadow-xl">
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            <Avatar className="h-24 w-24 border-4 border-primary/30">
+              <AvatarImage src={avatarUrl || `https://placehold.co/128x128.png`} alt={fullName || 'Avatar'} data-ai-hint={dataAiHint || "profile avatar"} />
+              <AvatarFallback className="text-4xl">{userInitial}</AvatarFallback>
+            </Avatar>
+            <div className="flex-grow text-center sm:text-left">
+              <CardTitle className="text-3xl font-bold font-headline">{fullName || email}</CardTitle>
+              <CardDescription className="text-lg mt-1">{email}</CardDescription>
+            </div>
+             <Button asChild>
+                <Link href="/profile/edit"><Edit className="mr-2 h-4 w-4" /> Editar Perfil</Link>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6 pt-4">
+          
+          <Card className="bg-secondary/30">
+             <CardHeader className="flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg font-semibold flex items-center"><ShieldCheck className="mr-2 h-5 w-5 text-muted-foreground" />Status da Conta</CardTitle>
+             </CardHeader>
+             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div className="flex items-center"><strong className="w-24">Perfil:</strong> <Badge variant="outline">{roleName || 'Não definido'}</Badge></div>
+                <div className="flex items-center"><strong className="w-24">Habilitação:</strong> <Badge variant="outline">{habilitationStatus || 'Pendente'}</Badge></div>
+             </CardContent>
+          </Card>
+          
+          {userBadges && userBadges.length > 0 && (
+            <section>
+                 <h3 className="text-lg font-semibold text-primary border-b pb-1 mb-3 flex items-center"><Award className="mr-2 h-5 w-5"/>Conquistas e Medalhas</h3>
+                 <div className="flex flex-wrap gap-4">
+                    {userBadges.map((badgeKey, index) => {
+                        const badgeInfo = badgeMap[badgeKey as string];
+                        if (!badgeInfo) return null;
+                        const Icon = badgeInfo.icon;
+                        return (
+                             <TooltipProvider key={`${badgeKey}-${index}`}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className="flex flex-col items-center gap-1 p-3 rounded-md border bg-background w-24">
+                                            <Icon className="h-8 w-8 text-amber-500" />
+                                            <span className="text-xs font-medium text-center">{badgeInfo.label}</span>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{badgeInfo.description}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                             </TooltipProvider>
+                        )
+                    })}
+                 </div>
+            </section>
+          )}
 
-          if (item.isMegaMenu && item.contentKey && item.twoColumnMegaMenuProps) {
-            let finalSidebarItems: MegaMenuLinkItem[] = [];
-            let finalViewAllLink = undefined;
-            let finalSidebarTitle = item.twoColumnMegaMenuProps.sidebarTitle;
+          <section>
+            <h3 className="text-lg font-semibold text-primary border-b pb-1 mb-3 flex items-center"><UserCog className="mr-2 h-5 w-5"/>Informações Pessoais</h3>
+            <div className="space-y-3">
+              <InfoItem icon={BadgeInfo} label="Tipo de Conta" value={accountType === 'LEGAL' ? 'Pessoa Jurídica' : 'Pessoa Física'} />
+              {accountType === 'LEGAL' ? (
+                <>
+                  <InfoItem icon={Building} label="Razão Social" value={razaoSocial} />
+                  <InfoItem icon={FileText} label="CNPJ" value={cnpj} />
+                </>
+              ) : (
+                <>
+                  <InfoItem icon={FileText} label="CPF" value={cpf} />
+                  <InfoItem icon={Calendar} label="Data de Nascimento" value={dateOfBirth ? format(new Date(dateOfBirth as string), 'dd/MM/yyyy', { locale: ptBR }) : null} />
+                </>
+              )}
+            </div>
+          </section>
 
-            if (item.contentKey === 'modalities') {
-              finalSidebarItems = modalityMegaMenuGroups[0]?.items || [];
-              finalSidebarTitle = item.twoColumnMegaMenuProps.sidebarTitle || 'Modalidades de Leilão';
-              finalViewAllLink = { href: '/search?type=auctions', label: 'Ver Todos os Leilões', icon: ListChecks };
-            } else if (item.contentKey === 'consignors') {
-              const consignorItems = (consignorMegaMenuGroups[0]?.items || []);
-              finalSidebarItems = consignorItems.slice(0, MAX_ITEMS_IN_TW_COL_SIDEBAR);
-              if (consignorItems.length > MAX_ITEMS_IN_TW_COL_SIDEBAR) {
-                finalViewAllLink = { href: '/sellers', label: 'Ver Todos Comitentes', icon: Users };
-              }
-              finalSidebarTitle = item.twoColumnMegaMenuProps.sidebarTitle || 'Principais Comitentes';
-            } else if (item.contentKey === 'auctioneers') {
-              const mappedAuctioneerItems: MegaMenuLinkItem[] = auctioneers.map(auc => ({
-                href: `/auctioneers/${auc.slug || auc.publicId || auc.id}`,
-                label: auc.name,
-                description: `${auc.city || ''}${auc.city && auc.state ? ' - ' : ''}${auc.state || ''}` || 'Leiloeiro Verificado',
-                icon: auc.logoUrl ? <Avatar className="h-5 w-5 border"><AvatarImage src={auc.logoUrl!} alt={auc.name} data-ai-hint={auc.dataAiHintLogo || 'logo leiloeiro'} /><AvatarFallback>{auc.name.charAt(0)}</AvatarFallback></Avatar> : undefined
-              }));
-              finalSidebarItems = mappedAuctioneerItems.slice(0, MAX_ITEMS_IN_TW_COL_SIDEBAR);
-              if (auctioneers.length > MAX_ITEMS_IN_TW_COL_SIDEBAR) {
-                finalViewAllLink = { href: '/auctioneers', label: 'Ver Todos Leiloeiros', icon: Landmark };
-              }
-              finalSidebarTitle = item.twoColumnMegaMenuProps.sidebarTitle || 'Leiloeiros em Destaque';
-            }
-            
-            megaMenuPropsForTwoColumn = {
-              ...item.twoColumnMegaMenuProps,
-              sidebarTitle: finalSidebarTitle,
-              sidebarItems: finalSidebarItems,
-              viewAllLink: finalViewAllLink,
-            };
-          }
+          <section>
+            <h3 className="text-lg font-semibold text-primary border-b pb-1 mb-3 flex items-center"><Mail className="mr-2 h-5 w-5"/>Contato</h3>
+            <div className="space-y-3">
+              <InfoItem icon={Phone} label="Celular" value={cellPhone} href={`tel:${cellPhone}`} />
+              <InfoItem icon={Phone} label="Telefone Fixo" value={homePhone} href={`tel:${homePhone}`} />
+            </div>
+          </section>
 
-
-          if (item.isMegaMenu && item.contentKey) {
-            let isActiveTrigger = false;
-            if (item.contentKey === 'categories' && (pathname?.startsWith('/category') || (pathname === '/search' && (currentParamsType === 'lots' || currentCategoryParam)))) {
-              isActiveTrigger = true;
-            } else if (item.contentKey === 'modalities' && pathname === '/search' && currentParamsType === 'auctions' && currentAuctionTypeParam) {
-              isActiveTrigger = true;
-            } else if (item.contentKey === 'consignors' && pathname?.startsWith('/sellers')) {
-              isActiveTrigger = true;
-            } else if (item.contentKey === 'auctioneers' && pathname?.startsWith('/auctioneers')) {
-              isActiveTrigger = true;
-            } else if (item.contentKey === 'history' && pathname === '/dashboard/history') {
-              isActiveTrigger = true;
-            }
-
-
-            return (
-              <NavigationMenuItem key={item.label} value={item.label}>
-                 <NavigationMenuTrigger
-                  className={cn(
-                    navigationMenuTriggerStyle(),
-                    isActiveTrigger && 'bg-accent text-primary font-semibold'
-                  )}
-                >
-                  {item.icon && <item.icon className="mr-1.5 h-4 w-4" /> } 
-                  {item.label}
-                </NavigationMenuTrigger>
-                <NavigationMenuContent align={item.megaMenuAlign || "start"}>
-                  {item.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={onLinkClick} />}
-                  
-                  {megaMenuPropsForTwoColumn && (item.contentKey === 'modalities' || item.contentKey === 'consignors' || item.contentKey === 'auctioneers') && (
-                    <TwoColumnMegaMenu {...megaMenuPropsForTwoColumn} onLinkClick={onLinkClick} />
-                  )}
-                  
-                  {item.contentKey === 'history' && HistoryListItemComponent && (
-                     <div className="w-80 p-2">
-                        <div className="flex justify-between items-center p-2 border-b mb-1">
-                            <span className="text-sm font-medium text-foreground flex items-center"><History className="mr-1.5 h-4 w-4"/> Histórico</span>
-                        </div>
-                        {recentlyViewedItems.length === 0 ? (
-                            <p className="text-xs text-muted-foreground text-center py-3">Nenhum item visto recentemente.</p>
-                        ) : (
-                            <ul className="max-h-80 overflow-y-auto space-y-0.5">
-                                {recentlyViewedItems.slice(0, 5).map(rvItem => (
-                                <li key={rvItem.id}>
-                                    <HistoryListItemComponent item={rvItem} onClick={onLinkClick} />
-                                </li>
-                                ))}
-                            </ul>
-                        )}
-                        <div className="border-t mt-1 pt-1">
-                            <NavigationMenuLink asChild>
-                                <Link 
-                                    href="/dashboard/history" 
-                                    className={cn(navigationMenuTriggerStyle(), "w-full justify-center text-primary hover:underline text-xs py-1 h-auto bg-transparent hover:bg-accent")} 
-                                    onClick={onLinkClick}
-                                >
-                                Ver Histórico Completo
-                                </Link>
-                            </NavigationMenuLink>
-                        </div>
-                    </div>
-                  )}
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-            );
-          }
-          return ( 
-            item.href ? (
-              <NavigationMenuItem key={item.href}>
-                <Link href={item.href} legacyBehavior passHref>
-                  <NavigationMenuLink
-                    className={cn(
-                      navigationMenuTriggerStyle(), 
-                      pathname === item.href
-                        ? 'bg-accent text-primary font-semibold' 
-                        : 'text-foreground/80 hover:text-primary hover:bg-accent/70 focus:bg-accent/70' 
-                    )}
-                    onClick={onLinkClick}
-                  >
-                    {item.icon && <item.icon className="mr-1.5 h-4 w-4 flex-shrink-0" />}
-                    {item.label}
-                  </NavigationMenuLink>
-                </Link>
-              </NavigationMenuItem>
-            ) : null
-          );
-        })}
-      </NavigationMenuList>
-    </NavigationMenu>
+          <section>
+            <h3 className="text-lg font-semibold text-primary border-b pb-1 mb-3 flex items-center"><Home className="mr-2 h-5 w-5"/>Endereço</h3>
+            <div className="space-y-3">
+              <InfoItem icon={Home} label="Endereço" value={`${street || ''}${number ? ', ' + number : ''}${complement ? ' - ' + complement : ''}`.trim() || null} />
+              <InfoItem icon={Home} label="Bairro" value={neighborhood} />
+              <InfoItem icon={Home} label="Cidade/UF" value={`${city || ''}${state ? ' - ' + state : ''}`.trim() || null} />
+              <InfoItem icon={Home} label="CEP" value={zipCode} />
+            </div>
+          </section>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
-
 ```
-- src/components/ui/progress.tsx:
+- src/app/sellers/page.tsx:
 ```tsx
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Building, ArrowRight, CalendarDays, Star } from 'lucide-react';
+import Link from 'next/link';
+import { getSellers } from '@/app/admin/sellers/actions';
+import type { SellerProfileInfo } from '@/types';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-"use client"
-
-import * as React from "react"
-import * as ProgressPrimitive from "@radix-ui/react-progress"
-
-import { cn } from "@/lib/utils"
-
-const Progress = React.forwardRef<
-  React.ElementRef<typeof ProgressPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root>
->(({ className, value, ...props }, ref) => (
-  <ProgressPrimitive.Root
-    ref={ref}
-    className={cn(
-      "relative h-2 w-full overflow-hidden rounded-full bg-secondary",
-      className
-    )}
-    {...props}
-  >
-    <ProgressPrimitive.Indicator
-      className="h-full w-full flex-1 bg-primary transition-all"
-      style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
-    />
-  </ProgressPrimitive.Root>
-))
-Progress.displayName = ProgressPrimitive.Root.displayName
-
-export { Progress }
-
-```
-- src/lib/database.ts:
-```ts
-// src/lib/database.ts
-
-import type { StateInfo, CityInfo, LotCategory, Auction, Lot, BidInfo, UserProfileData, Role, AuctioneerProfileInfo, SellerProfileInfo, DirectSaleOffer, MediaItem, PlatformSettings } from '@/types';
-import { sampleLots, sampleAuctions, sampleCategories, sampleStates, sampleCities, sampleAuctioneers, sampleSellers, samplePlatformSettings, sampleRoles } from '@/lib/sample-data';
-
-
-/**
- * Returns a database adapter based on the currently active system.
- * This is determined by the NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM environment variable.
- * If the variable is not set, it defaults to using local sample data.
- * @returns {IDatabaseAdapter} An instance of a database adapter.
- */
-export async function getDatabaseAdapter(): Promise<IDatabaseAdapter> {
-    const dbSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
-    // console.log(`[getDatabaseAdapter] Using database system: ${dbSystem}`);
-
-    switch (dbSystem) {
-        case 'FIRESTORE':
-             const { FirestoreAdapter } = await import('./database/firestore.adapter');
-             return new FirestoreAdapter();
-        case 'MYSQL':
-            const { MySqlAdapter } = await import('./database/mysql.adapter');
-            return new MySqlAdapter();
-        case 'POSTGRES':
-             const { PostgresAdapter } = await import('./database/postgres.adapter');
-             return new PostgresAdapter();
-        case 'SAMPLE_DATA':
-        default:
-            const { SampleDataAdapter } = await import('./database/sample-data.adapter');
-            return new SampleDataAdapter();
-    }
-}
-
-
-export interface IDatabaseAdapter {
-    // Categories
-    getLotCategories(): Promise<LotCategory[]>;
-    getLotCategory(id: string): Promise<LotCategory | null>;
-    getLotCategoryBySlug(slug: string): Promise<LotCategory | null>;
-    getLotCategoryByName(name: string): Promise<LotCategory | null>;
-    createLotCategory(data: Partial<Omit<LotCategory, 'id' | 'slug'>>, currentUserId?: string): Promise<{ success: boolean; message: string; categoryId?: string }>;
-    updateLotCategory(id: string, data: Partial<LotCategory>, currentUserId?: string): Promise<{ success: boolean; message: string }>;
-    deleteLotCategory(id: string, currentUserId?: string): Promise<{ success: boolean; message: string }>;
-
-    // States
-    getStates(): Promise<StateInfo[]>;
-    getState(id: string): Promise<StateInfo | null>;
-    createState(data: Partial<StateInfo>): Promise<{ success: boolean; message: string; stateId?: string }>;
-    updateState(id: string, data: Partial<StateInfo>): Promise<{ success: boolean; message: string }>;
-    deleteState(id: string): Promise<{ success: boolean; message: string }>;
-    
-    // Cities
-    getCities(stateId?: string): Promise<CityInfo[]>;
-    getCity(id: string): Promise<CityInfo | null>;
-    createCity(data: Partial<CityInfo>): Promise<{ success: boolean; message: string; cityId?: string }>;
-    updateCity(id: string, data: Partial<CityInfo>): Promise<{ success: boolean; message: string }>;
-    deleteCity(id: string): Promise<{ success: boolean; message: string }>;
-
-    // Auctioneers
-    getAuctioneers(): Promise<AuctioneerProfileInfo[]>;
-    getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null>;
-    getAuctioneerByName(name: string): Promise<AuctioneerProfileInfo | null>;
-    getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null>;
-    createAuctioneer(data: Partial<AuctioneerProfileInfo>): Promise<{ success: boolean; message: string; auctioneerId?: string }>;
-    updateAuctioneer(id: string, data: Partial<AuctioneerProfileInfo>): Promise<{ success: boolean; message: string }>;
-    deleteAuctioneer(id: string): Promise<{ success: boolean; message: string }>;
-
-    // Sellers
-    getSellers(): Promise<SellerProfileInfo[]>;
-    getSeller(id: string): Promise<SellerProfileInfo | null>;
-    getSellerByName(name: string): Promise<SellerProfileInfo | null>;
-    getSellerBySlug(slug: string): Promise<SellerProfileInfo | null>;
-    createSeller(data: Partial<SellerProfileInfo>): Promise<{ success: boolean; message: string; sellerId?: string }>;
-    updateSeller(id: string, data: Partial<SellerProfileInfo>): Promise<{ success: boolean; message: string }>;
-    deleteSeller(id: string): Promise<{ success: boolean; message: string }>;
-
-    // Auctions
-    getAuctions(): Promise<Auction[]>;
-    getAuction(id: string): Promise<Auction | null>;
-    getAuctionsByIds(ids: string[]): Promise<Auction[]>;
-    getAuctionsBySellerSlug(sellerSlug: string): Promise<Auction[]>;
-    getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]>;
-    createAuction(data: any): Promise<{ success: boolean; message: string; auctionId?: string; auctionPublicId?: string; }>;
-    updateAuction(id: string, data: Partial<Auction>): Promise<{ success: boolean; message: string }>;
-    deleteAuction(id: string): Promise<{ success: boolean; message: string }>;
-
-    // Lots
-    getLots(auctionId?: string): Promise<Lot[]>;
-    getLot(id: string): Promise<Lot | null>;
-    getLotsByIds(ids: string[]): Promise<Lot[]>;
-    createLot(data: any): Promise<{ success: boolean; message: string; lotId?: string; lotPublicId?: string; }>;
-    updateLot(id: string, data: Partial<Lot>): Promise<{ success: boolean; message: string }>;
-    deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string }>;
-
-    // Bids
-    getBidsForLot(lotId: string): Promise<BidInfo[]>;
-    placeBidOnLot(lotId: string, userId: string, userDisplayName: string, bidAmount: number, auctionId: string): Promise<{ success: boolean, message: string, updatedLot?: Partial<Pick<Lot, "price" | "bidsCount" | "status" | "endDate">>, newBid?: BidInfo}>;
-
-    // Users and Roles
-    getUsersWithRoles(): Promise<UserProfileData[]>;
-    getUserProfile(uid: string): Promise<UserProfileData | null>;
-    ensureUserRole(userData: Partial<UserProfileData>): Promise<UserProfileData>;
-    updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string }>;
-    deleteUserProfile(userId: string): Promise<{ success: boolean; message: string }>;
-
-    // Roles and Permissions
-    getRoles(): Promise<Role[]>;
-    getRole(id: string): Promise<Role | null>;
-    getRoleByName(name: string): Promise<Role | null>;
-    createRole(data: Partial<Role>): Promise<{ success: boolean; message: string; roleId?: string }>;
-    updateRole(id: string, data: Partial<Role>): Promise<{ success: boolean; message: string }>;
-    deleteRole(id: string): Promise<{ success: boolean; message: string }>;
-    ensureDefaultRolesExist(): Promise<{ success: boolean; message: string; rolesProcessed?: number }>;
-    
-    // Direct Sale Offers
-    getDirectSaleOffers(): Promise<DirectSaleOffer[]>;
-    getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null>;
-    createDirectSaleOffer(data: Partial<DirectSaleOffer>): Promise<{ success: boolean; message: string; offerId?: string }>;
-    updateDirectSaleOffer(id: string, data: Partial<DirectSaleOffer>): Promise<{ success: boolean; message: string }>;
-    deleteDirectSaleOffer(id: string): Promise<{ success: boolean; message: string }>;
-
-     // Media Library
-    getMediaItems(): Promise<MediaItem[]>;
-    createMediaItem(data: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal'>, url: string, uploadedBy?: string): Promise<{ success: boolean; message: string; mediaItem?: MediaItem; }>;
-    updateMediaItemMetadata(id: string, metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>): Promise<{ success: boolean; message: string }>;
-    deleteMediaItemFromDb(id: string): Promise<{ success: boolean; message: string }>;
-    linkMediaItemsToLot(lotId: string, mediaItemIds: string[]): Promise<{ success: boolean; message: string }>;
-    unlinkMediaItemFromLot(lotId: string, mediaItemId: string): Promise<{ success: boolean; message: string }>;
-
-    // Platform Settings
-    getPlatformSettings(): Promise<PlatformSettings>;
-    updatePlatformSettings(settings: PlatformSettings): Promise<{ success: boolean; message: string }>;
-}
-```
-- src/lib/firebase/client.ts:
-```ts
-// src/lib/firebase/client.ts
-
-import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
-// Removed Firestore import as we're using Prisma
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+const getSellerInitial = (name: string) => {
+    return name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'S';
 };
 
-let app: FirebaseApp;
+export default async function SellersListPage() {
+  let sellers: SellerProfileInfo[] = [];
+  let error: string | null = null;
 
-const isFirebaseConfigured =
-  firebaseConfig.apiKey &&
-  firebaseConfig.authDomain &&
-  firebaseConfig.projectId &&
-  firebaseConfig.apiKey !== 'YOUR_API_KEY_HERE';
+  try {
+    sellers = await getSellers();
+  } catch (e) {
+    console.error("Error fetching sellers:", e);
+    error = "Falha ao buscar comitentes.";
+  }
 
-if (isFirebaseConfigured && getApps().length === 0) {
-  app = initializeApp(firebaseConfig);
-} else if (getApps().length > 0) {
-  app = getApps()[0];
-} else {
-  console.warn("Firebase configuration is missing or incomplete. Some Firebase services might not be available.");
-  // Provide a mock app object if not configured to avoid hard crashes
-  app = {} as FirebaseApp; 
-}
+  return (
+    <div className="max-w-4xl mx-auto space-y-8 py-8">
+      <section className="text-center py-12 bg-gradient-to-br from-primary/10 via-background to-accent/10 rounded-lg">
+        <Building className="mx-auto h-12 w-12 text-primary mb-4" />
+        <h1 className="text-4xl font-bold mb-4 font-headline">Nossos Comitentes</h1>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          Conheça os vendedores e instituições que confiam no BidExpert para leiloar seus bens.
+        </p>
+      </section>
+      
+      {error && (
+        <div className="text-center py-12">
+          <h2 className="text-xl font-semibold text-destructive">{error}</h2>
+        </div>
+      )}
 
-// NOTE: We are no longer using Firebase Auth for user authentication.
-// This is kept for other potential Firebase services (like Storage).
-const auth: Auth = isFirebaseConfigured ? getAuth(app) : {} as Auth;
-
-export { app, auth };
-
-```
-- src/lib/firebase.ts:
-```ts
-// This file is now obsolete and will be deleted.
-// Please use src/lib/firebase/client.ts for client-side Firebase and 
-// src/lib/firebase/admin.ts for server-side Firebase Admin SDK.
-// All database access is now through Prisma.
-
-```
-- src/lib/session.ts:
-```ts
-// src/lib/session.ts
-import 'server-only';
-import { SignJWT, jwtVerify } from 'jose';
-import { cookies } from 'next/headers';
-import type { UserProfileWithPermissions } from '@/types';
-
-const secretKey = process.env.SESSION_SECRET;
-const encodedKey = new TextEncoder().encode(secretKey);
-
-if (!secretKey || secretKey.length < 32) {
-    throw new Error('A variável de ambiente SESSION_SECRET deve ser definida e ter pelo menos 32 caracteres.');
-}
-
-/**
- * Criptografa um payload para criar um token de sessão JWT.
- * @param {object} payload - Os dados a serem incluídos no token.
- * @returns {Promise<string>} O token de sessão assinado.
- */
-export async function encrypt(payload: any) {
-    return new SignJWT(payload)
-        .setProtectedHeader({ alg: 'HS256' })
-        .setIssuedAt()
-        .setExpirationTime('7d') // A sessão expira em 7 dias
-        .sign(encodedKey);
-}
-
-/**
- * Descriptografa e verifica um token de sessão JWT.
- * @param {string | undefined} session - O token de sessão do cookie.
- * @returns {Promise<any | null>} O payload do token se for válido, caso contrário, null.
- */
-export async function decrypt(session: string | undefined = '') {
-    try {
-        const { payload } = await jwtVerify(session, encodedKey, {
-            algorithms: ['HS256'],
-        });
-        return payload;
-    } catch (error) {
-        console.log('Falha ao verificar a sessão JWT.');
-        return null;
-    }
-}
-
-/**
- * Cria uma nova sessão para o usuário e a define em um cookie HTTP-only.
- * @param {UserProfileWithPermissions} user - O objeto de perfil do usuário.
- */
-export async function createSession(user: UserProfileWithPermissions) {
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    const sessionPayload = {
-        userId: user.uid,
-        email: user.email,
-        role: user.roleName,
-        permissions: user.permissions,
-        sellerId: user.sellerId,
-    };
-    const session = await encrypt(sessionPayload);
-
-    cookies().set('session', session, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        expires: expiresAt,
-        sameSite: 'lax',
-        path: '/',
-    });
-}
-
-/**
- * Recupera e verifica a sessão do cookie atual.
- * @returns {Promise<any | null>} O payload da sessão se válida, senão null.
- */
-export async function getSession() {
-    const cookie = cookies().get('session')?.value;
-    const session = await decrypt(cookie);
-    return session;
-}
-
-/**
- * Exclui a sessão do usuário, removendo o cookie.
- */
-export async function deleteSession() {
-    cookies().delete('session');
+      {!error && sellers.length === 0 && (
+        <Card>
+          <CardContent className="p-6 text-center text-muted-foreground">
+            Nenhum comitente cadastrado na plataforma ainda.
+          </CardContent>
+        </Card>
+      )}
+      
+      {!error && sellers.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {sellers.map((seller) => (
+            <Card key={seller.id} className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+              <CardHeader className="items-center text-center p-4">
+                <Avatar className="h-24 w-24 mb-3 border-2 border-primary/30">
+                  <AvatarImage src={seller.logoUrl || `https://placehold.co/100x100.png?text=${getSellerInitial(seller.name)}`} alt={seller.name} data-ai-hint={seller.dataAiHintLogo || "logo comitente"} />
+                  <AvatarFallback>{getSellerInitial(seller.name)}</AvatarFallback>
+                </Avatar>
+                <CardTitle className="text-xl font-semibold">{seller.name}</CardTitle>
+                <CardDescription className="text-xs text-primary">{seller.isJudicial ? 'Comitente Judicial' : 'Comitente Verificado'}</CardDescription>
+                {seller.rating !== undefined && seller.rating > 0 && (
+                  <div className="flex items-center text-xs text-amber-600 mt-1">
+                    <Star className="h-4 w-4 fill-amber-500 text-amber-500 mr-1" />
+                    {seller.rating.toFixed(1)}
+                    <span className="text-muted-foreground ml-1">({Math.floor(Math.random() * 100 + (seller.auctionsFacilitatedCount || 0))} avaliações)</span>
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent className="flex-grow px-4 pb-4 space-y-1 text-sm text-muted-foreground text-center">
+                {seller.city && seller.state && (
+                  <p className="text-xs">{seller.city} - {seller.state}</p>
+                )}
+                <div className="text-xs">
+                  <span className="font-medium text-foreground">{seller.activeLotsCount || 0}</span> lotes ativos
+                </div>
+                {seller.memberSince && (
+                  <div className="text-xs">
+                    Membro desde: {format(new Date(seller.memberSince as any), 'MM/yyyy', { locale: ptBR })}
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter className="p-4 border-t">
+                <Button asChild variant="outline" className="w-full">
+                  <Link href={`/sellers/${seller.slug || seller.publicId || seller.id}`}>
+                    Ver Perfil e Lotes <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 ```
-- src/lib/utils.ts:
-```ts
-// src/lib/utils.ts
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+- package.json:
+```json
+{
+  "name": "nextn",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run migrate && next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "migrate": "prisma migrate dev",
+    "seed": "prisma db seed",
+    "studio": "prisma studio",
+    "genkit:dev": "genkit start -- tsx /home/user/studio/src/ai/dev.ts",
+    "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@genkit-ai/googleai": "^1.8.0",
+    "@genkit-ai/next": "^1.8.0",
+    "@hookform/resolvers": "^4.1.3",
+    "@opentelemetry/exporter-jaeger": "^1.25.0",
+    "@prisma/client": "^5.22.0",
+    "@radix-ui/react-accordion": "^1.2.3",
+    "@radix-ui/react-alert-dialog": "^1.1.6",
+    "@radix-ui/react-avatar": "^1.1.3",
+    "@radix-ui/react-checkbox": "^1.1.4",
+    "@radix-ui/react-dialog": "^1.1.6",
+    "@radix-ui/react-dropdown-menu": "^2.1.6",
+    "@radix-ui/react-label": "^2.1.2",
+    "@radix-ui/react-menubar": "^1.1.6",
+    "@radix-ui/react-navigation-menu": "^1.2.0",
+    "@radix-ui/react-popover": "^1.1.6",
+    "@radix-ui/react-progress": "^1.1.2",
+    "@radix-ui/react-radio-group": "^1.2.3",
+    "@radix-ui/react-scroll-area": "^1.2.3",
+    "@radix-ui/react-select": "^2.1.6",
+    "@radix-ui/react-separator": "^1.1.2",
+    "@radix-ui/react-slider": "^1.2.3",
+    "@radix-ui/react-slot": "^1.1.2",
+    "@radix-ui/react-switch": "^1.1.3",
+    "@radix-ui/react-tabs": "^1.1.3",
+    "@radix-ui/react-toast": "^1.2.6",
+    "@radix-ui/react-tooltip": "^1.1.8",
+    "@tanstack-query-firebase/react": "^1.0.5",
+    "@tanstack/react-query": "^5.66.0",
+    "@tanstack/react-table": "^8.19.3",
+    "bcrypt": "^5.1.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cmdk": "0.2.1",
+    "date-fns": "^3.6.0",
+    "embla-carousel-autoplay": "^8.2.0",
+    "embla-carousel-react": "^8.2.0",
+    "firebase": "^11.8.1",
+    "firebase-admin": "^12.7.0",
+    "genkit": "^1.8.0",
+    "jose": "^5.6.3",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.417.0",
+    "mysql2": "^3.14.1",
+    "next": "^15.3.5",
+    "patch-package": "^8.0.0",
+    "pg": "^8.16.0",
+    "react": "^18.3.1",
+    "react-day-picker": "^8.10.1",
+    "react-dom": "^18.3.1",
+    "react-dropzone": "^14.2.3",
+    "react-hook-form": "^7.54.2",
+    "react-leaflet": "^4.2.1",
+    "reactflow": "^11.11.3",
+    "recharts": "^2.15.1",
+    "tailwind-merge": "^3.0.1",
+    "tailwindcss-animate": "^1.0.7",
+    "uuid": "^9.0.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@firecms/cli": "^3.0.0-beta.13",
+    "@types/bcrypt": "^5.0.2",
+    "@types/leaflet": "^1.9.12",
+    "@types/node": "^22.15.30",
+    "@types/pg": "^8.11.6",
+    "@types/react": "19.1.8",
+    "@types/uuid": "^9.0.8",
+    "@types/yargs": "^17.0.32",
+    "dotenv": "^16.5.0",
+    "dotenv-cli": "^8.0.0",
+    "genkit-cli": "^1.8.0",
+    "postcss": "^8",
+    "prisma": "^5.22.0",
+    "tailwindcss": "^3.4.1",
+    "tsx": "^4.16.0",
+    "typescript": "^5",
+    "yargs": "^17.7.2"
+  },
+  "packageManager": "yarn@4.9.2"
 }
-
-```
-- src/hooks/use-form-submission.ts:
-```ts
-// src/hooks/use-form-submission.ts
-import { useState } from 'react';
-import { useToast } from './use-toast';
-
-interface UseFormSubmissionProps<TData, TResult> {
-  submitAction: (data: TData) => Promise<TResult & { success: boolean; message: string }>;
-  onSuccess?: (result: TResult) => void;
-  onError?: (error: any) => void;
-  successToast?: string;
-  errorToast?: string;
-}
-
-/**
- * A custom hook to handle form submission logic, including loading state,
- * error handling, and toast notifications.
- * @returns An object containing the submission state and the handler function.
- */
-export function useFormSubmission<TData, TResult>({
-  submitAction,
-  onSuccess,
-  onError,
-  successToast = 'Operação realizada com sucesso!',
-  errorToast = 'Ocorreu um erro na operação.',
-}: UseFormSubmissionProps<TData, TResult>) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
-
-  const handleSubmit = async (data: TData) => {
-    setIsSubmitting(true);
-    try {
-      const result = await submitAction(data);
-      if (result.success) {
-        toast({ title: 'Sucesso!', description: result.message || successToast });
-        if (onSuccess) {
-          onSuccess(result);
-        }
-      } else {
-        toast({
-          title: 'Erro',
-          description: result.message || errorToast,
-          variant: 'destructive',
-        });
-      }
-    } catch (error: any) {
-      console.error("Form submission error:", error);
-      toast({
-        title: 'Erro Inesperado',
-        description: error.message || 'Por favor, tente novamente.',
-        variant: 'destructive',
-      });
-      if (onError) {
-        onError(error);
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return { isSubmitting, handleSubmit };
-}
-
-```
-- src/hooks/use-local-storage.ts:
-```ts
-
-'use client';
-
-import { useState, useEffect } from 'react';
-
-/**
- * A custom React hook that provides a state variable that is persisted to localStorage.
- *
- * @template T The type of the value to be stored.
- * @param {string} key The key under which the value is stored in localStorage.
- * @param {T} initialValue The initial value to use if nothing is found in localStorage.
- * @returns {[T, (value: T | ((val: T) => T)) => void]} A stateful value, and a function to update it.
- */
-export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((val: T) => T)) => void] {
-  // State to store our value
-  // Pass initial state function to useState so logic is only executed once
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === 'undefined') {
-      return initialValue;
-    }
-    try {
-      // Get from local storage by key
-      const item = window.localStorage.getItem(key);
-      // Parse stored json or if none return initialValue
-      return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      // If error also return initialValue
-      console.error(error);
-      return initialValue;
-    }
-  });
-
-  // useEffect to update local storage when the state changes
-  useEffect(() => {
-    try {
-      if(typeof window !== 'undefined') {
-         const valueToStore =
-          typeof storedValue === 'function'
-            ? (storedValue as (val: T) => T)(storedValue)
-            : storedValue;
-        // Save state to local storage
-        window.localStorage.setItem(key, JSON.stringify(valueToStore));
-      }
-    } catch (error) {
-      // A more advanced implementation would handle the error case
-      console.error(error);
-    }
-  }, [key, storedValue]);
-
-  return [storedValue, setStoredValue];
-}
-
-```
-- src/hooks/use-media-query.ts:
-```ts
-
-// src/hooks/use-media-query.ts
-'use client';
-
-import * as React from 'react';
-
-/**
- * A custom React hook to check if a CSS media query matches.
- * @param {string} query The media query string to watch.
- * @returns {boolean} True if the media query matches, false otherwise.
- */
-export function useMediaQuery(query: string) {
-  const [value, setValue] = React.useState(false);
-
-  React.useEffect(() => {
-    function onChange(event: MediaQueryListEvent) {
-      setValue(event.matches);
-    }
-
-    const result = matchMedia(query);
-    result.addEventListener('change', onChange);
-    setValue(result.matches);
-
-    return () => result.removeEventListener('change', onChange);
-  }, [query]);
-
-  return value;
-}
-
 ```
