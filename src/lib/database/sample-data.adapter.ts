@@ -1,4 +1,3 @@
-
 // src/lib/database/sample-data.adapter.ts
 import type { DatabaseAdapter } from '@/types';
 import { 
@@ -16,7 +15,7 @@ export class SampleDataAdapter implements DatabaseAdapter {
         auctions: sampleAuctions,
         users: sampleUsers,
         roles: sampleRoles,
-        categories: sampleLotCategories, // Corrigido para sampleLotCategories
+        lotCategories: sampleLotCategories, // Corrected from 'categories'
         subcategories: sampleSubcategories,
         auctioneers: sampleAuctioneers,
         sellers: sampleSellers,
@@ -100,7 +99,7 @@ export class SampleDataAdapter implements DatabaseAdapter {
          return Promise.resolve(auction ? JSON.parse(JSON.stringify(auction)) : null);
      }
      async getAuctioneers(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.auctioneers))); }
-     async getLotCategories(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.categories))); }
+     async getLotCategories(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.lotCategories))); } // Corrected key
      async getUsersWithRoles(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.users))); }
      async getUserProfileData(userId: string): Promise<any | null> {
          const user = this.data.users.find(u => u.uid === userId);
