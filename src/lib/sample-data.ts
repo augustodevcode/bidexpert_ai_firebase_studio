@@ -1,54 +1,33 @@
 // src/lib/sample-data.ts
 import { slugify } from './sample-data-helpers';
 
-import sampleLotCategories from '../sample-data.local.json';
-import sampleSubcategoriesData from '../sample-data.local.json';
-import sampleStatesData from '../sample-data.local.json';
-import sampleCitiesData from '../sample-data.local.json';
-import sampleUsersData from '../sample-data.local.json';
-import sampleRolesData from '../sample-data.local.json';
-import sampleAuctioneersData from '../sample-data.local.json';
-import sampleSellersData from '../sample-data.local.json';
-import sampleAuctionsData from '../sample-data.local.json';
-import sampleLotsData from '../sample-data.local.json';
-import sampleDirectSaleOffersData from '../sample-data.local.json';
-import sampleDocumentTypesData from '../sample-data.local.json';
-import sampleNotificationsData from '../sample-data.local.json';
-import sampleBidsData from '../sample-data.local.json';
-import sampleUserWinsData from '../sample-data.local.json';
-import sampleMediaItemsData from '../sample-data.local.json';
-import sampleCourtsData from '../sample-data.local.json';
-import sampleJudicialDistrictsData from '../sample-data.local.json';
-import sampleJudicialBranchesData from '../sample-data.local.json';
-import sampleJudicialProcessesData from '../sample-data.local.json';
-import sampleBensData from '../sample-data.local.json';
-import samplePlatformSettingsData from '../sample-data.local.json';
-import sampleContactMessagesData from '../sample-data.local.json';
+// Renomeado para evitar conflito de nome com as constantes exportadas
+import sampleData from '../sample-data.local.json';
 
 // Exportando os dados do JSON importado
-export const sampleLotCategories = (sampleLotCategories as any).sampleLotCategories;
-export const sampleSubcategories = (sampleSubcategoriesData as any).sampleSubcategories;
-export const sampleStates = (sampleStatesData as any).sampleStates;
-export const sampleCities = (sampleCitiesData as any).sampleCities;
-export const sampleUsers = (sampleUsersData as any).sampleUsers;
-export const sampleRoles = (sampleRolesData as any).sampleRoles;
-export const sampleAuctioneers = (sampleAuctioneersData as any).sampleAuctioneers;
-export const sampleSellers = (sampleSellersData as any).sampleSellers;
-export const sampleAuctions = (sampleAuctionsData as any).sampleAuctions;
-export const sampleLots = (sampleLotsData as any).sampleLots;
-export const sampleDirectSaleOffers = (sampleDirectSaleOffersData as any).sampleDirectSaleOffers;
-export const sampleDocumentTypes = (sampleDocumentTypesData as any).sampleDocumentTypes;
-export const sampleNotifications = (sampleNotificationsData as any).sampleNotifications;
-export const sampleBids = (sampleBidsData as any).sampleBids;
-export const sampleUserWins = (sampleUserWinsData as any).sampleUserWins;
-export const sampleMediaItems = (sampleMediaItemsData as any).sampleMediaItems;
-export const sampleCourts = (sampleCourtsData as any).sampleCourts;
-export const sampleJudicialDistricts = (sampleJudicialDistrictsData as any).sampleJudicialDistricts;
-export const sampleJudicialBranches = (sampleJudicialBranchesData as any).sampleJudicialBranches;
-export const sampleJudicialProcesses = (sampleJudicialProcessesData as any).sampleJudicialProcesses;
-export const sampleBens = (sampleBensData as any).sampleBens;
-export const samplePlatformSettings = (samplePlatformSettingsData as any).samplePlatformSettings;
-export const sampleContactMessages = (sampleContactMessagesData as any).sampleContactMessages;
+export const sampleLotCategories = (sampleData as any).sampleLotCategories || [];
+export const sampleSubcategories = (sampleData as any).sampleSubcategories || [];
+export const sampleStates = (sampleData as any).sampleStates || [];
+export const sampleCities = (sampleData as any).sampleCities || [];
+export const sampleUsers = (sampleData as any).sampleUsers || [];
+export const sampleRoles = (sampleData as any).sampleRoles || [];
+export const sampleAuctioneers = (sampleData as any).sampleAuctioneers || [];
+export const sampleSellers = (sampleData as any).sampleSellers || [];
+export const sampleAuctions = (sampleData as any).sampleAuctions || [];
+export const sampleLots = (sampleData as any).sampleLots || [];
+export const sampleDirectSaleOffers = (sampleData as any).sampleDirectSaleOffers || [];
+export const sampleDocumentTypes = (sampleData as any).sampleDocumentTypes || [];
+export const sampleNotifications = (sampleData as any).sampleNotifications || [];
+export const sampleBids = (sampleData as any).sampleBids || [];
+export const sampleUserWins = (sampleData as any).sampleUserWins || [];
+export const sampleMediaItems = (sampleData as any).sampleMediaItems || [];
+export const sampleCourts = (sampleData as any).sampleCourts || [];
+export const sampleJudicialDistricts = (sampleData as any).sampleJudicialDistricts || [];
+export const sampleJudicialBranches = (sampleData as any).sampleJudicialBranches || [];
+export const sampleJudicialProcesses = (sampleData as any).sampleJudicialProcesses || [];
+export const sampleBens = (sampleData as any).sampleBens || [];
+export const samplePlatformSettings = (sampleData as any).samplePlatformSettings || {};
+export const sampleContactMessages = (sampleData as any).sampleContactMessages || [];
 
 
 // Helper function to link data
