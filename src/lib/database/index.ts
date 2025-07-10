@@ -1,18 +1,9 @@
-
 // src/lib/database/index.ts
 import { FirestoreAdapter } from './firestore.adapter';
 import { MySqlAdapter } from './mysql.adapter';
 import { PostgresAdapter } from './postgres.adapter';
 import type { DatabaseAdapter } from '@/types';
 import { sampleLots, sampleAuctions, sampleUsers, sampleRoles, sampleCategories, sampleAuctioneers, sampleSellers, sampleStates, sampleCities, sampleSubcategories, sampleDirectSaleOffers, sampleDocumentTypes, sampleNotifications, sampleBids, sampleUserWins, sampleMediaItems, sampleCourts, sampleJudicialDistricts, sampleJudicialBranches, sampleJudicialProcesses, sampleBens, samplePlatformSettings, sampleContactMessages } from '@/lib/sample-data';
-
-let adapter: DatabaseAdapter | null = null;
-
-const availableSystems = ['FIRESTORE', 'MYSQL', 'POSTGRES', 'SAMPLE_DATA'];
-// Reads from NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM first, then falls back to ACTIVE_DATABASE_SYSTEM
-const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || process.env.ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
-
-console.log(`[Database] Active System: ${activeSystem}`);
 
 class SampleDataAdapter implements DatabaseAdapter {
     private data: Record<string, any[]> = {
@@ -42,7 +33,7 @@ class SampleDataAdapter implements DatabaseAdapter {
     };
     
     constructor() {
-        console.log('[SampleDataAdapter] Initialized with sample data.');
+        // console.log('[SampleDataAdapter] Initialized with sample data.');
     }
 
     async getLots(auctionId?: string): Promise<any[]> {
@@ -139,7 +130,11 @@ class SampleDataAdapter implements DatabaseAdapter {
 }
 
 
-function initializeAdapter(): DatabaseAdapter {
+export const getDatabaseAdapter = async (): Promise<DatabaseAdapter> => {
+    const availableSystems = ['FIRESTORE', 'MYSQL', 'POSTGRES', 'SAMPLE_DATA'];
+    // Reads from NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM first, then falls back to ACTIVE_DATABASE_SYSTEM
+    const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || process.env.ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
+
     if (!availableSystems.includes(activeSystem)) {
         console.error(`Invalid database system selected: ${activeSystem}. Falling back to SAMPLE_DATA.`);
         return new SampleDataAdapter();
@@ -158,18 +153,3 @@ function initializeAdapter(): DatabaseAdapter {
     // Default to SampleDataAdapter
     return new SampleDataAdapter();
 }
-
-function getAdapter(): DatabaseAdapter {
-  if (adapter) {
-    return adapter;
-  }
-  adapter = initializeAdapter();
-  return adapter;
-}
-
-// Corrected export pattern
-const getDatabaseAdapter = async (): Promise<DatabaseAdapter> => {
-  return getAdapter();
-};
-
-export { getDatabaseAdapter };
