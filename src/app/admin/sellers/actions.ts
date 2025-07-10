@@ -2,7 +2,7 @@
 'use server';
 
 import { getDatabaseAdapter } from '@/lib/database';
-import type { SellerProfileInfo, SellerFormData } from '@/types';
+import type { SellerProfileInfo, SellerFormData, Lot } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { slugify } from '@/lib/sample-data-helpers';
 
@@ -23,6 +23,22 @@ export async function getSellerBySlug(slugOrId: string): Promise<SellerProfileIn
     const db = await getDatabaseAdapter();
     const sellers = await db.getSellers();
     return sellers.find(s => s.slug === slugOrId || s.id === slugOrId || s.publicId === slugOrId) || null;
+}
+
+export async function getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]> {
+  const db = await getDatabaseAdapter();
+  // This assumes the adapter has a method to get lots by seller.
+  // It might need to be implemented on each adapter.
+  // @ts-ignore
+  if (db.getLotsBySellerSlug) {
+    // @ts-ignore
+    return await db.getLotsBySellerSlug(sellerSlugOrId);
+  }
+  // Fallback for adapters without the specific method
+  const allLots = await db.getLots();
+  const seller = await getSellerBySlug(sellerSlugOrId);
+  if (!seller) return [];
+  return allLots.filter(lot => lot.sellerId === seller.id || lot.sellerName === seller.name);
 }
 
 

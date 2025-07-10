@@ -89,8 +89,8 @@ export class SampleDataAdapter implements DatabaseAdapter {
             : Promise.resolve({ success: false, message: "Lote não encontrado." });
     }
     
+    // Implement other methods as needed, mirroring the interface...
      async getAuctions(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.auctions))); }
-     
      async getAuction(id: string): Promise<any | null> {
          const auction = this.data.auctions.find(a => a.id === id || a.publicId === id);
          if (auction) {
@@ -99,13 +99,9 @@ export class SampleDataAdapter implements DatabaseAdapter {
          }
          return Promise.resolve(auction ? JSON.parse(JSON.stringify(auction)) : null);
      }
-     
      async getAuctioneers(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.auctioneers))); }
-     
      async getLotCategories(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.lotCategories))); }
-     
      async getUsersWithRoles(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.users))); }
-     
      async getUserProfileData(userId: string): Promise<any | null> {
          const user = this.data.users.find(u => u.uid === userId);
          if (user) {
@@ -114,44 +110,25 @@ export class SampleDataAdapter implements DatabaseAdapter {
          }
          return Promise.resolve(null);
      }
-     
      async getRoles(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.roles))); }
-     
      async getMediaItems(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.mediaItems))); }
-     
      async createMediaItem(item: any, url: string): Promise<any> {
          const newItem = { ...item, id: `media-${this.data.mediaItems.length + 1}`, uploadedAt: new Date().toISOString(), urlOriginal: url };
          this.data.mediaItems.push(newItem);
          return Promise.resolve({ success: true, item: newItem });
      }
-     
-    async getConsignorDashboardStats(sellerId: string) {
-        const wins = (this.data.userWins as UserWin[]).filter(win =>
-            (win.lot as Lot)?.auction?.sellerId === sellerId && win.paymentStatus === 'PAGO'
-        );
-        const totalSalesValue = wins.reduce((acc, win) => acc + win.winningBidAmount, 0);
+    
+    async getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]> {
+        const seller = this.data.sellers.find(s => s.slug === sellerSlugOrId || s.id === sellerSlugOrId || s.publicId === sellerSlugOrId);
+        if (!seller) return Promise.resolve([]);
         
-        const totalLots = (this.data.lots as Lot[]).filter(lot => lot.sellerId === sellerId);
-        const soldLots = totalLots.filter(lot => lot.status === 'VENDIDO' || lot.status === 'PAGO');
-
-        const salesByMonth = wins.reduce((acc, win) => {
-            const month = format(new Date(win.winDate), 'MMM/yy', { locale: ptBR });
-            acc[month] = (acc[month] || 0) + win.winningBidAmount;
-            return acc;
-        }, {} as Record<string, number>);
-
-        return {
-            totalLotsConsigned: totalLots.length,
-            activeLots: totalLots.filter(lot => lot.status === 'ABERTO_PARA_LANCES').length,
-            soldLots: soldLots.length,
-            totalSalesValue,
-            salesRate: totalLots.length > 0 ? (soldLots.length / totalLots.length) * 100 : 0,
-            salesData: Object.entries(salesByMonth).map(([name, sales]) => ({ name, Sales: sales })),
-        };
-    }
-     
-    async getDirectSaleOffers(): Promise<any[]> {
-        return Promise.resolve(JSON.parse(JSON.stringify(this.data.directSales)));
+        // Find auctions by this seller
+        const sellerAuctions = this.data.auctions.filter(a => a.sellerId === seller.id || a.seller === seller.name);
+        const sellerAuctionIds = new Set(sellerAuctions.map(a => a.id));
+        
+        // Find lots in those auctions
+        const lots = this.data.lots.filter(l => sellerAuctionIds.has(l.auctionId));
+        return Promise.resolve(JSON.parse(JSON.stringify(lots)));
     }
 
 
@@ -161,7 +138,11 @@ export class SampleDataAdapter implements DatabaseAdapter {
          return Promise.resolve(null);
      }
 
-     getLotsByIds(ids: string[]): Promise<any[]> { return this._notImplemented('getLotsByIds'); }
+     getLotsByIds(ids: string[]): Promise<any[]> { 
+        if (!ids || ids.length === 0) return Promise.resolve([]);
+        const lots = this.data.lots.filter(lot => ids.includes(lot.id) || (lot.publicId && ids.includes(lot.publicId)));
+        return Promise.resolve(JSON.parse(JSON.stringify(lots)));
+     }
      updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean, message: string }> { return this._notImplemented('updateUserRole'); }
      getSellers(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.sellers))); }
      getPlatformSettings(): Promise<any | null> { return Promise.resolve(this.data.settings[0] || samplePlatformSettings) }
