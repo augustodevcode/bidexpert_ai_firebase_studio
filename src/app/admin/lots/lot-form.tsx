@@ -1,3 +1,4 @@
+
 // src/app/admin/lots/lot-form.tsx
 'use client';
 
@@ -535,76 +536,4 @@ export default function LotForm({
       />
     </>
   );
-}
-```
-
-I'll now create the remaining files for the Consignor Dashboard.
-...
-This is a very large set of changes. I have created all the files in my internal state. I'll now generate the final response. I've double checked the paths and content. The logic for each new page is self-contained in its `actions.ts`, `columns.tsx` (if applicable), and `page.tsx`. I have also updated existing components (`lot-form.tsx`, `search/page.tsx`, `consignor-sidebar.tsx`) and types. The `PROJECT_PROGRESS.MD` is also updated to reflect the new state.Com certeza! Vamos dar um grande salto e abordar múltiplos itens do nosso backlog de uma só vez. Preparei um conjunto robusto de atualizações que irão finalizar várias funcionalidades, tornando a plataforma muito mais completa e interativa para todos os tipos de usuários.
-
-Como solicitado, adicionei comentários explicativos nos arquivos de lógica (`actions.ts`) e aprimorei os scripts de inicialização (`seed.ts`) para popular o banco de dados com dados mais ricos e conectados.
-
-Aqui está um resumo das **10 principais melhorias** que implementei nesta atualização:
-
-1.  **Gamificação Inicial:** Implementei a exibição de "conquistas" na página de perfil do usuário. Agora, quando um usuário ganha seu primeiro leilão, ele recebe uma medalha que é exibida em seu perfil.
-2.  **Notificações Dinâmicas no Cabeçalho:** O ícone de sino no cabeçalho agora busca e exibe dinamicamente o número de notificações não lidas do usuário, atualizando-se automaticamente quando uma notificação é lida.
-3.  **Finalização de Leilões:** Criei a lógica e o botão no painel de edição do lote para que um administrador possa "Finalizar" um lote, declarando um vencedor e notificando-o.
-4.  **Formulário de Contato Funcional:** A página "Fale Conosco" agora está totalmente operacional. As mensagens enviadas são salvas no banco de dados.
-5.  **Painel de Mensagens de Contato:** Adicionei uma nova seção no painel de administração para que os administradores possam visualizar e gerenciar as mensagens recebidas pelo formulário de contato.
-6.  **Relatórios Avançados para Admin:** Criei uma nova página `/admin/reports` com gráficos e métricas detalhadas sobre o desempenho da plataforma, incluindo faturamento, vendas por categoria e taxa de sucesso dos leilões.
-7.  **Painel do Comitente - Configurações:** Comitentes agora podem editar suas próprias informações de perfil através do seu painel.
-8.  **Painel do Comitente - Meus Leilões e Lotes:** As seções "Meus Leilões" e "Meus Lotes" no painel do comitente agora são totalmente funcionais e exibem os dados reais do banco de dados.
-9.  **Painel do Comitente - Relatórios Financeiros:** As páginas "Financeiro" e "Relatórios" do comitente agora mostram dados reais sobre faturamento, comissões e desempenho.
-10. **Aprimoramento de Tipos e Schema:** Adicionei os novos modelos de dados ao Prisma e atualizei os tipos do projeto para garantir consistência e robustez em toda a aplicação.
-
-Essa é uma das maiores atualizações que fizemos até agora, deixando a plataforma BidExpert muito próxima de uma versão completa e pronta para o mercado.
-
-<changes>
-  <description>Implementa 10 itens do backlog, incluindo a finalização do Painel do Comitente (Leilões, Lotes, Vendas Diretas, Relatórios, Financeiro, Configurações), sistema de contato, relatórios de admin, e gamificação inicial com medalhas. Refatora o formulário de loteamento para ser mais inteligente e corrige a busca por Tomada de Preços.</description>
-  <change>
-    <file>/src/app/consignor-dashboard/lots/actions.ts</file>
-    <content><![CDATA[/**
- * @fileoverview Server Action for the Consignor Dashboard's lots view.
- * Fetches all lots belonging to a specific consignor across all their auctions.
- */
-'use server';
-
-import { prisma } from '@/lib/prisma';
-import type { Lot } from '@/types';
-
-/**
- * Fetches all lots associated with a specific consignor's auctions.
- * @param {string} sellerId - The ID of the seller/consignor.
- * @returns {Promise<Lot[]>} A promise that resolves to an array of Lot objects.
- */
-export async function getLotsForConsignorAction(sellerId: string): Promise<Lot[]> {
-  if (!sellerId) {
-    console.warn("[Action - getLotsForConsignorAction] No sellerId provided.");
-    return [];
-  }
-  
-  try {
-    const lots = await prisma.lot.findMany({
-        where: {
-            auction: {
-                sellerId: sellerId,
-            }
-        },
-        include: {
-            auction: {
-                select: { title: true } // Include parent auction's title for display
-            }
-        },
-        orderBy: { createdAt: 'desc' }
-    });
-
-    // Map to include auctionName directly for easier frontend use
-    return lots.map(lot => ({
-        ...lot,
-        auctionName: lot.auction?.title
-    })) as unknown as Lot[];
-  } catch (error) {
-    console.error(`Error fetching lots for consignor ${sellerId}:`, error);
-    return [];
-  }
 }
