@@ -1,2 +1,1 @@
-// This file is now obsolete and will be deleted.
-// The project is reverting to the database adapter pattern.
+// This file is obsolete and will be deleted as the project has reverted to the database adapter pattern.

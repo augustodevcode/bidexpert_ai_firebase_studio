@@ -1,3 +1,4 @@
+// src/app/consignor-dashboard/financial/actions.ts
 /**
  * @fileoverview Server Action for the Consignor Dashboard's financial view.
  * Fetches all winning bids for lots associated with a specific consignor to enable
@@ -5,7 +6,7 @@
  */
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { UserWin } from '@/types';
 
 /**
@@ -21,25 +22,12 @@ export async function getFinancialDataForConsignor(sellerId: string): Promise<Us
     return [];
   }
   
-  try {
-    const wins = await prisma.userWin.findMany({
-      where: {
-        lot: {
-          auction: {
-            sellerId: sellerId,
-          },
-        },
-      },
-      include: {
-        lot: true, // Include the full lot object in the response
-      },
-      orderBy: {
-        winDate: 'desc',
-      },
-    });
-    return wins as unknown as UserWin[];
-  } catch (error) {
-    console.error(`[Action - getFinancialDataForConsignor] Error fetching wins for seller ${sellerId}:`, error);
-    return [];
+  const db = await getDatabaseAdapter();
+  // @ts-ignore
+  if (db.getFinancialDataForConsignor) {
+    // @ts-ignore
+    return db.getFinancialDataForConsignor(sellerId);
   }
+  
+  return [];
 }

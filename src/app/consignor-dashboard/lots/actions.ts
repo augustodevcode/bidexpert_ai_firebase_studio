@@ -1,10 +1,11 @@
+// src/app/consignor-dashboard/lots/actions.ts
 /**
  * @fileoverview Server Action for the Consignor Dashboard's lots view.
  * Fetches all lots belonging to a specific consignor across all their auctions.
  */
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { Lot } from '@/types';
 
 /**
@@ -18,28 +19,16 @@ export async function getLotsForConsignorAction(sellerId: string): Promise<Lot[]
     return [];
   }
   
-  try {
-    const lots = await prisma.lot.findMany({
-        where: {
-            auction: {
-                sellerId: sellerId,
-            }
-        },
-        include: {
-            auction: {
-                select: { title: true } // Include parent auction's title for display
-            }
-        },
-        orderBy: { createdAt: 'desc' }
-    });
-
-    // Map to include auctionName directly for easier frontend use
-    return lots.map(lot => ({
-        ...lot,
-        auctionName: lot.auction?.title
-    })) as unknown as Lot[];
-  } catch (error) {
-    console.error(`Error fetching lots for consignor ${sellerId}:`, error);
-    return [];
+  const db = await getDatabaseAdapter();
+  // @ts-ignore
+  if (db.getLotsForConsignor) {
+    // @ts-ignore
+    return db.getLotsForConsignor(sellerId);
   }
+
+  // Fallback logic
+  const allAuctions = await db.getAuctions();
+  const consignorAuctionIds = new Set(allAuctions.filter(a => a.sellerId === sellerId).map(a => a.id));
+  const allLots = await db.getLots();
+  return allLots.filter(l => consignorAuctionIds.has(l.auctionId));
 }

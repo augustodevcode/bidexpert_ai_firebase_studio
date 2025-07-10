@@ -1,10 +1,11 @@
+// src/app/consignor-dashboard/auctions/actions.ts
 /**
  * @fileoverview Server Action for the Consignor Dashboard's auctions view.
  * This file contains the function to fetch all auctions associated with a specific consignor.
  */
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { Auction } from '@/types';
 
 /**
@@ -18,20 +19,14 @@ export async function getAuctionsForConsignorAction(sellerId: string): Promise<A
     return [];
   }
   
-  try {
-    const auctions = await prisma.auction.findMany({
-      where: { sellerId: sellerId },
-      include: {
-        _count: {
-          select: { lots: true }
-        },
-      },
-      orderBy: { auctionDate: 'desc' }
-    });
-
-    return auctions.map(a => ({...a, totalLots: a._count.lots})) as unknown as Auction[];
-  } catch (error) {
-    console.error(`[Action - getAuctionsForConsignorAction] Error fetching auctions for seller ${sellerId}:`, error);
-    return [];
+  const db = await getDatabaseAdapter();
+  // @ts-ignore
+  if (db.getAuctionsForConsignor) {
+    // @ts-ignore
+    return db.getAuctionsForConsignor(sellerId);
   }
+
+  // Fallback logic
+  const allAuctions = await db.getAuctions();
+  return allAuctions.filter(a => a.sellerId === sellerId);
 }

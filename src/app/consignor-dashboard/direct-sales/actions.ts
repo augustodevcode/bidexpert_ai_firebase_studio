@@ -1,10 +1,11 @@
+// src/app/consignor-dashboard/direct-sales/actions.ts
 /**
  * @fileoverview Server Actions for the Consignor Dashboard's direct sales view.
  * Provides functions to fetch direct sale offers associated with a specific consignor.
  */
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { DirectSaleOffer } from '@/types';
 
 /**
@@ -18,23 +19,14 @@ export async function getDirectSaleOffersForConsignorAction(sellerId: string): P
     return [];
   }
   
-  try {
-    const offers = await prisma.directSaleOffer.findMany({
-      where: { sellerId: sellerId },
-      include: {
-        category: true,
-        seller: true
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-    // Map to the composite type that includes names for easier frontend use.
-    return offers.map(o => ({
-        ...o,
-        category: o.category.name,
-        sellerName: o.seller.name,
-    })) as unknown as DirectSaleOffer[];
-  } catch (error) {
-    console.error(`[Action - getDirectSaleOffersForConsignorAction] Error fetching offers for seller ${sellerId}:`, error);
-    return [];
+  const db = await getDatabaseAdapter();
+  // @ts-ignore
+  if (db.getDirectSaleOffersForConsignor) {
+    // @ts-ignore
+    return db.getDirectSaleOffersForConsignor(sellerId);
   }
+
+  // Fallback logic
+  const allOffers = await db.getDirectSaleOffers();
+  return allOffers ? allOffers.filter(o => o.sellerId === sellerId) : [];
 }
