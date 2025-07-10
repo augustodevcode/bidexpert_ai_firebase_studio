@@ -1,7 +1,7 @@
 // src/app/auth/login/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { getDatabaseAdapter } from '@/lib/database/index';
 import bcrypt from 'bcrypt';
 import { createSession } from '@/lib/session';
 import type { UserProfileData, UserProfileWithPermissions } from '@/types';
@@ -53,4 +53,6 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
 
   } catch (error) {
     console.error('[Login Action] Error:', error);
-    return { success: false, message:
+    return { success: false, message: 'Ocorreu um erro interno durante o login.' };
+  }
+}

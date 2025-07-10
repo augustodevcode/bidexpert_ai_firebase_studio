@@ -14,7 +14,7 @@ import type { DatabaseAdapter } from '@/types';
 export const getDatabaseAdapter = async (): Promise<DatabaseAdapter> => {
   const availableSystems = ['FIRESTORE', 'MYSQL', 'POSTGRES', 'SAMPLE_DATA'];
   
-  // A variável de ambiente é a fonte única da verdade.
+  // The environment variable is the single source of truth.
   const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
 
   if (!availableSystems.includes(activeSystem)) {
@@ -36,7 +36,3 @@ export const getDatabaseAdapter = async (): Promise<DatabaseAdapter> => {
       return new SampleDataAdapter();
   }
 };
-```
-  </change>
-  <change>
-    <file>/src/

@@ -1,7 +1,7 @@
 // src/app/contact/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { getDatabaseAdapter } from '@/lib/database/index';
 import { revalidatePath } from 'next/cache';
 
 /**

@@ -1,7 +1,7 @@
 // src/app/admin/settings/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { getDatabaseAdapter } from '@/lib/database/index';
 import type { PlatformSettings } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { fetchPlatformSettings } from '@/lib/data-queries';

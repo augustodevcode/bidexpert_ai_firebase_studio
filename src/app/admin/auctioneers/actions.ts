@@ -1,7 +1,7 @@
 // src/app/admin/auctioneers/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { getDatabaseAdapter } from '@/lib/database/index';
 import type { AuctioneerProfileInfo, AuctioneerFormData, Auction } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { slugify } from '@/lib/sample-data-helpers';

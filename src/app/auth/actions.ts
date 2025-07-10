@@ -2,7 +2,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { getDatabaseAdapter } from '@/lib/database';
+import { getDatabaseAdapter } from '@/lib/database/index';
 import { createSession, getSession, deleteSession } from '@/lib/session';
 import type { UserProfileData, UserProfileWithPermissions } from '@/types';
 import { revalidatePath } from 'next/cache';
@@ -32,7 +32,9 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
 
   // NOTE: bcrypt should be used in a real DB scenario. 
   // For sample data with plain text passwords, this check is simplified.
-  const isPasswordValid = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM === 'SAMPLE_DATA' 
+  const isSampleData = (process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA') === 'SAMPLE_DATA';
+  
+  const isPasswordValid = isSampleData 
     ? password === user.password 
     : await bcrypt.compare(password, user.password);
 

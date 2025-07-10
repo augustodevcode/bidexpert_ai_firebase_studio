@@ -4,7 +4,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDatabaseAdapter } from '@/lib/database';
+import { getDatabaseAdapter } from '@/lib/database/index';
 import type { EditableUserProfileData } from '@/types';
 
 interface UpdateProfileResult {

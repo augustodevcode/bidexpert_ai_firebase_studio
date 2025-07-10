@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ensureAdminInitialized } from '@/lib/firebase/admin';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
-import { getDatabaseAdapter } from '@/lib/database';
+import { getDatabaseAdapter } from '@/lib/database/index';
 import { revalidatePath } from 'next/cache';
 
 // This is a dedicated route for user document uploads.

@@ -1,7 +1,7 @@
 // src/app/admin/categories/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { getDatabaseAdapter } from '@/lib/database/index';
 import type { LotCategory } from '@/types';
 
 export async function getLotCategories(): Promise<LotCategory[]> {

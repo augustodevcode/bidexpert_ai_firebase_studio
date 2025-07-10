@@ -1,7 +1,7 @@
 // src/app/admin/sellers/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { getDatabaseAdapter } from '@/lib/database/index';
 import type { SellerProfileInfo, SellerFormData, Lot } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -27,8 +27,6 @@ export async function getSellerBySlug(slugOrId: string): Promise<SellerProfileIn
 
 export async function getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]> {
   const db = await getDatabaseAdapter();
-  // This assumes the adapter has a method to get lots by seller.
-  // It might need to be implemented on each adapter.
   // @ts-ignore
   if (db.getLotsBySellerSlug) {
     // @ts-ignore

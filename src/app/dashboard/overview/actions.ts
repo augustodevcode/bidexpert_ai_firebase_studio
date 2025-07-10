@@ -1,7 +1,7 @@
 // src/app/dashboard/overview/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { getDatabaseAdapter } from '@/lib/database/index';
 import type { Lot, UserHabilitationStatus } from '@/types';
 import { isPast } from 'date-fns';
 

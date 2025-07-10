@@ -5,7 +5,7 @@
  * via the configured database adapter.
  */
 import 'server-only';
-import { getDatabaseAdapter } from './database';
+import { getDatabaseAdapter } from '@/lib/database/index';
 import type { 
     Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, 
     SellerProfileInfo, MediaItem, PlatformSettings, Bem
@@ -17,9 +17,13 @@ import type {
 // 3. Return the data.
 // This keeps the data-access logic clean and consistent.
 
-export async function fetchPlatformSettings(): Promise<PlatformSettings | null> {
+export async function fetchPlatformSettings(): Promise<PlatformSettings> {
   const db = await getDatabaseAdapter();
-  return db.getPlatformSettings();
+  const settings = await db.getPlatformSettings();
+  if (!settings) {
+    throw new Error("Platform settings could not be loaded.");
+  }
+  return settings;
 }
 
 export async function fetchAuctions(): Promise<Auction[]> {

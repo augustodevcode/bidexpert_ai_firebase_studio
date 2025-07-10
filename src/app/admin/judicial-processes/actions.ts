@@ -1,7 +1,7 @@
 // src/app/admin/judicial-processes/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { getDatabaseAdapter } from '@/lib/database/index';
 import type { JudicialProcess } from '@/types';
 import { revalidatePath } from 'next/cache';
 

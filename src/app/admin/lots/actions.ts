@@ -1,7 +1,7 @@
 // src/app/admin/lots/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { getDatabaseAdapter } from '@/lib/database/index';
 import type { Lot, Bem } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { fetchLots, fetchLot, fetchBensByIds, fetchLotsByIds } from '@/lib/data-queries';
