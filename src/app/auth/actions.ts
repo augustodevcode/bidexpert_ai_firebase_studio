@@ -2,7 +2,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { getDatabaseAdapter } from '@/lib/database';
+import { getDatabaseAdapter } from '@/lib/database/index';
 import { createSession, getSession, deleteSession } from '@/lib/session';
 import type { UserProfileData, UserProfileWithPermissions } from '@/types';
 import { revalidatePath } from 'next/cache';
@@ -22,34 +22,39 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
     return { success: false, message: 'Email e senha são obrigatórios.' };
   }
   
-  const db = await getDatabaseAdapter();
-  const users = await db.getUsersWithRoles();
-  const user = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+  try {
+    const db = await getDatabaseAdapter();
+    // getUsersWithRoles já retorna o perfil completo com nome da role e permissões.
+    const usersWithPermissions = await db.getUsersWithRoles();
+    const user = usersWithPermissions.find(u => u.email?.toLowerCase() === email.toLowerCase());
 
-  if (!user || !user.password) {
-    return { success: false, message: 'Credenciais inválidas.' };
-  }
+    if (!user || !user.password) {
+      console.log(`[Login Action] User not found or password not set for email: ${email}`);
+      return { success: false, message: 'Credenciais inválidas.' };
+    }
 
-  // NOTE: bcrypt should be used in a real DB scenario. 
-  // For sample data with plain text passwords, this check is simplified.
-  const isSampleData = (process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA') === 'SAMPLE_DATA';
-  
-  const isPasswordValid = isSampleData 
-    ? password === user.password 
-    : await bcrypt.compare(password, user.password);
-
-  if (!isPasswordValid) {
-    return { success: false, message: 'Credenciais inválidas.' };
-  }
-  
-  // Fetch permissions based on role
-  const roles = await db.getRoles();
-  const userRole = roles.find(r => r.id === user.roleId);
-  const userWithPermissions: UserProfileWithPermissions = { ...user, permissions: userRole?.permissions || [] };
-
-  await createSession(userWithPermissions);
+    const isSampleData = (process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA') === 'SAMPLE_DATA';
     
-  return { success: true, message: 'Login bem-sucedido!' };
+    // A senha para dados de exemplo é texto plano, para bancos de dados reais, é criptografada.
+    const isPasswordValid = isSampleData 
+      ? password === user.password 
+      : await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      console.log(`[Login Action] Invalid password for user: ${email}`);
+      return { success: false, message: 'Credenciais inválidas.' };
+    }
+    
+    // Cria a sessão usando o objeto 'user' que já contém as permissões.
+    await createSession(user);
+    
+    console.log(`[Login Action] Session created successfully for ${email}`);
+    return { success: true, message: 'Login bem-sucedido!' };
+
+  } catch (error) {
+    console.error('[Login Action] Error:', error);
+    return { success: false, message: 'Ocorreu um erro interno durante o login.' };
+  }
 }
 
 /**
@@ -74,9 +79,7 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
     const user = await db.getUserProfileData(session.userId);
 
     if (!user) return null;
-
-    const roles = await db.getRoles();
-    const userRole = roles.find(r => r.id === user.roleId);
     
-    return { ...user, permissions: userRole?.permissions || [] };
+    // A função getUserProfileData já deve retornar o usuário com as permissões.
+    return user as UserProfileWithPermissions;
 }

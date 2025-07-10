@@ -101,22 +101,25 @@ export class SampleDataAdapter implements DatabaseAdapter {
      }
      async getAuctioneers(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.auctioneers))); }
      async getLotCategories(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.lotCategories))); }
+     
      async getUsersWithRoles(): Promise<UserProfileData[]> {
         const usersWithRoles = this.data.users.map((user: any) => {
             const role = this.data.roles.find((r: Role) => r.id === user.roleId);
             return {
                 ...user,
-                roleName: role?.name || 'User',
+                roleName: role?.name || 'USER',
                 permissions: role?.permissions || ['view_auctions', 'place_bids']
             };
         });
         return Promise.resolve(JSON.parse(JSON.stringify(usersWithRoles)));
      }
+     
      async getUserProfileData(userId: string): Promise<any | null> {
          const users = await this.getUsersWithRoles();
          const user = users.find(u => u.uid === userId);
          return Promise.resolve(user || null);
      }
+
      async getRoles(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.roles))); }
      async getMediaItems(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.mediaItems))); }
      async createMediaItem(item: any, url: string): Promise<any> {
