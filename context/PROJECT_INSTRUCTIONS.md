@@ -1,4 +1,3 @@
-
 # Project Context System - Instructions for AI (BidExpert)
 
 These files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.MD`, `PROJECT_INSTRUCTIONS.md` (this file), `1st.md`) are designed to help you, the AI, maintain context and continuity across our development sessions for the BidExpert project. Please follow these instructions to ensure they are used effectively.
@@ -31,11 +30,11 @@ These files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.MD`, `PROJECT_INSTR
     *   Be comprehensive but concise. Ensure the history covers the Project Overview, Key Features, Major Decisions, and a log of significant errors/fixes.
 
 *   **`PROJECT_PROGRESS.MD`:**
-    *   Update the status of tasks by moving items between "DONE", "WORKING", and "NEXT".
+    *   Update the status of tasks by moving items between "DONE", "DOING", and "NEXT".
     *   Add newly identified tasks or features (potentially with item numbers) to the "NEXT" section.
-    *   Reflect the current development focus in the "WORKING" section.
-    *   Use clear, actionable bullet points. Ensure "DONE" items are accurately moved from "WORKING" or "NEXT".
-    *   If an item is partially done, it can remain in "WORKING" with a note on what's pending, or the completed sub-tasks can be moved to "DONE".
+    *   Reflect the current development focus in the "DOING" section.
+    *   Use clear, actionable bullet points. Ensure "DONE" items are accurately moved from "DOING" or "NEXT".
+    *   If an item is partially done, it can remain in "DOING" with a note on what's pending, or the completed sub-tasks can be moved to "DONE".
 
 *   **`PROJECT_INSTRUCTIONS.md` (This File):**
     *   Update these instructions if our process for using or updating the context files changes. This file is primarily for your reference.

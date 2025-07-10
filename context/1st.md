@@ -1,4 +1,3 @@
-
 Olá! Parece que estamos iniciando uma nova sessão ou continuando uma anterior.
 
 Para que eu possa me atualizar sobre o estado atual do nosso projeto BidExpert e garantir que estamos alinhados, por favor, me dê um momento para revisar os arquivos de contexto que preparamos.
