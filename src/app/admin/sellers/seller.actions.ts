@@ -1,3 +1,4 @@
+// src/app/admin/sellers/seller.actions.ts
 'use server';
 
 import { deleteSeller } from './actions';
