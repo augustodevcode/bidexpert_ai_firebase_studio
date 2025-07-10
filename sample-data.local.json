@@ -1,3 +1,4 @@
+
 {
   "sampleUsers": [
     {
@@ -37,6 +38,47 @@
       "razaoSocial": "Comitente Exemplo Vendas Ltda",
       "createdAt": "2024-01-03T10:00:00Z",
       "updatedAt": "2024-01-03T10:00:00Z"
+    }
+  ],
+  "sampleRoles": [
+    {
+      "id": "role-admin",
+      "name": "ADMINISTRATOR",
+      "name_normalized": "ADMINISTRATOR",
+      "description": "Acesso total à plataforma.",
+      "permissions": [
+        "manage_all"
+      ],
+      "createdAt": "2025-03-14T04:56:12.389Z",
+      "updatedAt": "2025-06-21T04:56:12.389Z"
+    },
+    {
+      "id": "role-user",
+      "name": "USER",
+      "name_normalized": "USER",
+      "description": "Usuário padrão com acesso básico.",
+      "permissions": [
+        "view_auctions",
+        "place_bids",
+        "view_lots"
+      ],
+      "createdAt": "2025-03-14T04:56:12.389Z",
+      "updatedAt": "2025-06-12T04:56:12.389Z"
+    },
+    {
+      "id": "role-consignor",
+      "name": "CONSIGNOR",
+      "name_normalized": "CONSIGNOR",
+      "description": "Comitente com permissões para gerenciar seus itens.",
+      "permissions": [
+        "auctions:manage_own",
+        "lots:manage_own",
+        "view_reports",
+        "media:upload",
+        "consignor_dashboard:view"
+      ],
+      "createdAt": "2025-03-24T04:56:12.389Z",
+      "updatedAt": "2025-06-17T04:56:12.389Z"
     }
   ],
   "sampleUserWins": [
