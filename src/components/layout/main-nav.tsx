@@ -7,7 +7,7 @@ import { usePathname, useSearchParams } from 'next/navigation'; // Importado use
 import { cn } from '@/lib/utils';
 import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, RecentlyViewedLotInfo } from '@/types';
 import { ChevronDown, History, Home, Landmark, Gavel, Percent, Phone, ListChecks, Tag, Users, FileText as FileTextIcon, BookOpen } from 'lucide-react'; 
-import { useEffect, useState, useCallback } from 'react'; // Adicionado useCallback
+import { useEffect, useState, useCallback, forwardRef } from 'react'; // Adicionado useCallback e forwardRef
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -21,9 +21,34 @@ import MegaMenuCategories from './mega-menu-categories';
 import MegaMenuLinkList, { type MegaMenuGroup } from './mega-menu-link-list';
 import MegaMenuAuctioneers from './mega-menu-auctioneers';
 import TwoColumnMegaMenu from './two-column-mega-menu';
-import type { HistoryListItem } from './header'; 
+import type { RecentlyViewedLotInfo as HistoryListItemType } from '@/types'; // Renomeado para evitar conflito
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; 
 import type { MegaMenuLinkItem } from './mega-menu-link-list'; 
+
+// Renomeado para não conflitar com o nome do componente
+export const HistoryListItem = forwardRef<
+  HTMLAnchorElement,
+  React.ComponentPropsWithoutRef<"a"> & { item: HistoryListItemType; onClick?: () => void }
+>(({ className, item, onClick, ...props }, ref) => {
+  return (
+    <Link
+      href={`/auctions/${item.auctionId}/lots/${item.id}`}
+      ref={ref}
+      className={cn(
+        "flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-accent transition-colors text-xs leading-snug text-muted-foreground",
+        className
+      )}
+      onClick={onClick}
+      {...props}
+    >
+      <div className="relative h-10 w-12 flex-shrink-0 bg-muted rounded-sm overflow-hidden">
+        <Image src={item.imageUrl || 'https://placehold.co/120x100.png'} alt={item.title} fill className="object-cover" data-ai-hint={item.dataAiHint || "item visto recentemente"} />
+      </div>
+      <span className="truncate flex-grow text-foreground/90">{item.title}</span>
+    </Link>
+  );
+});
+HistoryListItem.displayName = "HistoryListItem";
 
 export interface NavItem {
   href?: string;
@@ -43,7 +68,6 @@ export interface NavItem {
       buttonLink: string;
       buttonText: string;
     };
-    // sidebarItems e viewAllLink são construídos dinamicamente abaixo
   };
   hrefPrefix?: string; 
 }
@@ -87,7 +111,7 @@ export default function MainNav({
     ...props 
 }: MainNavProps) {
   const pathname = usePathname();
-  const searchParams = useSearchParams(); // Adicionado para verificar o tipo de pesquisa
+  const searchParams = useSearchParams();
   const [isClient, setIsClient] = useState(false);
   
   useEffect(() => {
@@ -291,20 +315,21 @@ export default function MainNav({
           return ( 
             item.href ? (
               <NavigationMenuItem key={item.href}>
-                <Link href={item.href} passHref>
-                  <NavigationMenuLink
+                <NavigationMenuLink asChild>
+                  <Link
+                    href={item.href}
                     className={cn(
-                      navigationMenuTriggerStyle(), 
+                      navigationMenuTriggerStyle(),
                       pathname === item.href
-                        ? 'bg-accent text-primary font-semibold' 
-                        : 'text-foreground/80 hover:text-primary hover:bg-accent/70 focus:bg-accent/70' 
+                        ? 'bg-accent text-primary font-semibold'
+                        : 'text-foreground/80 hover:text-primary hover:bg-accent/70 focus:bg-accent/70'
                     )}
                     onClick={onLinkClick}
                   >
                     {item.icon && <item.icon className="mr-1.5 h-4 w-4 flex-shrink-0" />}
                     {item.label}
-                  </NavigationMenuLink>
-                </Link>
+                  </Link>
+                </NavigationMenuLink>
               </NavigationMenuItem>
             ) : null
           );
@@ -313,3 +338,4 @@ export default function MainNav({
     </NavigationMenu>
   );
 }
+
