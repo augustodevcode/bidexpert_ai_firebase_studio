@@ -1,4 +1,44 @@
 {
+  "sampleUsers": [
+    {
+      "uid": "admin-bidexpert-platform-001",
+      "email": "admin@bidexpert.com.br",
+      "password": "@dmin2025",
+      "fullName": "Administrador BidExpert",
+      "roleId": "role-admin",
+      "habilitationStatus": "HABILITADO",
+      "accountType": "PHYSICAL",
+      "createdAt": "2024-01-01T10:00:00Z",
+      "updatedAt": "2024-01-01T10:00:00Z"
+    },
+    {
+      "uid": "user-test-002",
+      "email": "comprador@email.com",
+      "password": "senha123",
+      "fullName": "Comprador de Teste",
+      "roleId": "role-user",
+      "habilitationStatus": "HABILITADO",
+      "accountType": "PHYSICAL",
+      "createdAt": "2024-01-02T10:00:00Z",
+      "updatedAt": "2024-01-02T10:00:00Z",
+      "badges": [
+        "PRIMEIRO_ARREMATE"
+      ]
+    },
+    {
+      "uid": "consignor-example-003",
+      "email": "comitente@email.com",
+      "password": "senha123",
+      "fullName": "Comitente Exemplo",
+      "roleId": "role-consignor",
+      "sellerId": "seller-banco-bradesco-s-a",
+      "habilitationStatus": "HABILITADO",
+      "accountType": "LEGAL",
+      "razaoSocial": "Comitente Exemplo Vendas Ltda",
+      "createdAt": "2024-01-03T10:00:00Z",
+      "updatedAt": "2024-01-03T10:00:00Z"
+    }
+  ],
   "sampleUserWins": [
     {
       "id": "win-1",
