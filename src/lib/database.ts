@@ -1,9 +1,9 @@
 // src/lib/database.ts
 import 'server-only';
-import { FirestoreAdapter } from './database/firestore.adapter';
-import { MySqlAdapter } from './database/mysql.adapter';
-import { PostgresAdapter } from './database/postgres.adapter';
-import { SampleDataAdapter } from './database/sample-data.adapter';
+import { FirestoreAdapter } from './firestore.adapter';
+import { MySqlAdapter } from './mysql.adapter';
+import { PostgresAdapter } from './postgres.adapter';
+import { SampleDataAdapter } from './sample-data.adapter';
 import type { DatabaseAdapter } from '@/types';
 
 /**
@@ -14,7 +14,6 @@ import type { DatabaseAdapter } from '@/types';
 export const getDatabaseAdapter = async (): Promise<DatabaseAdapter> => {
   const availableSystems = ['FIRESTORE', 'MYSQL', 'POSTGRES', 'SAMPLE_DATA'];
   
-  // Reads from NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM first, then falls back to ACTIVE_DATABASE_SYSTEM
   const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || process.env.ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
 
   if (!availableSystems.includes(activeSystem)) {

@@ -1,60 +1,37 @@
-// src/lib/database/postgres.adapter.ts
+// src/lib/database.ts
+import 'server-only';
+import { FirestoreAdapter } from './firestore.adapter';
+import { MySqlAdapter } from './mysql.adapter';
+import { PostgresAdapter } from './postgres.adapter';
+import { SampleDataAdapter } from './sample-data.adapter';
 import type { DatabaseAdapter } from '@/types';
-import { Pool } from 'pg';
 
-export class PostgresAdapter implements DatabaseAdapter {
-    private pool: Pool;
+/**
+ * Dynamically determines which database adapter to use based on environment variables.
+ * This function should be called within each Server Action that needs to interact with the database.
+ * @returns {Promise<DatabaseAdapter>} A promise that resolves to an instance of the correct database adapter.
+ */
+export const getDatabaseAdapter = async (): Promise<DatabaseAdapter> => {
+  const availableSystems = ['FIRESTORE', 'MYSQL', 'POSTGRES', 'SAMPLE_DATA'];
+  
+  const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || process.env.ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
 
-    constructor() {
-        if (!process.env.POSTGRES_DATABASE_URL) {
-            throw new Error("A variável de ambiente POSTGRES_DATABASE_URL não está definida.");
-        }
-        this.pool = new Pool({
-            connectionString: process.env.POSTGRES_DATABASE_URL,
-        });
-        console.log('[PostgresAdapter] Pool de conexões PostgreSQL inicializado.');
-    }
-    
-    async _notImplemented(method: string): Promise<any> {
-        const message = `[PostgresAdapter] Método ${method} não implementado.`;
-        console.error(message);
-        throw new Error(message);
-    }
-    
-    // Implemente cada método da interface aqui, fazendo as consultas SQL necessárias.
-    // Exemplo:
-    async getLots(auctionId?: string): Promise<any[]> {
-        const client = await this.pool.connect();
-        try {
-            let query = 'SELECT * FROM "Lot"'; // Note as aspas duplas para nomes de tabelas/colunas em maiúsculas
-            const params = [];
-            if (auctionId) {
-                query += ' WHERE "auctionId" = $1';
-                params.push(auctionId);
-            }
-            const res = await client.query(query, params);
-            return res.rows;
-        } finally {
-            client.release();
-        }
-    }
-    
-    getLot(id: string): Promise<any | null> { return this._notImplemented('getLot'); }
-    createLot(lotData: any): Promise<{ success: boolean; message: string; lotId?: string; }> { return this._notImplemented('createLot'); }
-    updateLot(id: string, updates: any): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateLot'); }
-    deleteLot(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteLot'); }
-    getAuctions(): Promise<any[]> { return this._notImplemented('getAuctions'); }
-    getAuction(id: string): Promise<any | null> { return this._notImplemented('getAuction'); }
-    getLotsByIds(ids: string[]): Promise<any[]> { return this._notImplemented('getLotsByIds'); }
-    getLotCategories(): Promise<any[]> { return this._notImplemented('getLotCategories'); }
-    getSellers(): Promise<any[]> { return this._notImplemented('getSellers'); }
-    getAuctioneers(): Promise<any[]> { return this._notImplemented('getAuctioneers'); }
-    getUsersWithRoles(): Promise<any[]> { return this._notImplemented('getUsersWithRoles'); }
-    getUserProfileData(userId: string): Promise<any | null> { return this._notImplemented('getUserProfileData'); }
-    getRoles(): Promise<any[]> { return this._notImplemented('getRoles'); }
-    updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateUserRole'); }
-    getMediaItems(): Promise<any[]> { return this._notImplemented('getMediaItems'); }
-    createMediaItem(item: any, url: string, userId: string): Promise<any> { return this._notImplemented('createMediaItem'); }
-    getPlatformSettings(): Promise<any | null> { return this._notImplemented('getPlatformSettings'); }
-    updatePlatformSettings(data: any): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updatePlatformSettings'); }
-}
+  if (!availableSystems.includes(activeSystem)) {
+    console.error(`Invalid database system selected: ${activeSystem}. Falling back to SAMPLE_DATA.`);
+    return new SampleDataAdapter();
+  }
+
+  // console.log(`[Database] Using adapter for: ${activeSystem}`);
+
+  switch (activeSystem) {
+    case 'FIRESTORE':
+      return new FirestoreAdapter();
+    case 'MYSQL':
+      return new MySqlAdapter();
+    case 'POSTGRES':
+      return new PostgresAdapter();
+    case 'SAMPLE_DATA':
+    default:
+      return new SampleDataAdapter();
+  }
+};
