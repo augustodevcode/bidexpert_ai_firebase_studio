@@ -38,7 +38,7 @@ export class SampleDataAdapter implements DatabaseAdapter {
     };
     
     constructor() {
-        // console.log('[SampleDataAdapter] Initialized with sample data.');
+        console.log('[SampleDataAdapter] Initialized with sample data.');
     }
 
     async getLots(auctionId?: string): Promise<any[]> {

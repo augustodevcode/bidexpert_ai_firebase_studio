@@ -62,7 +62,7 @@ export function getSampleData() {
       const role = sampleRoles.find(r => r.id === user.roleId);
       return {
           ...user,
-          roleName: role?.name || 'User',
+          roleName: role?.name || 'USER',
           permissions: role?.permissions || ['view_auctions', 'place_bids']
       };
   });
