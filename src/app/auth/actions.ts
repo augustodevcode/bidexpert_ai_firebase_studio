@@ -18,41 +18,52 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
 
+  console.log(`[Login Action] Iniciando tentativa de login para: ${email}`);
+  
   if (!email || !password) {
+    console.log('[Login Action] Erro: Email ou senha não fornecidos.');
     return { success: false, message: 'Email e senha são obrigatórios.' };
   }
   
   try {
     const db = await getDatabaseAdapter();
-    // getUsersWithRoles já retorna o perfil completo com nome da role e permissões.
     const usersWithPermissions = await db.getUsersWithRoles();
     const user = usersWithPermissions.find(u => u.email?.toLowerCase() === email.toLowerCase());
 
     if (!user || !user.password) {
-      console.log(`[Login Action] User not found or password not set for email: ${email}`);
+      console.log(`[Login Action] Usuário não encontrado ou sem senha definida para o email: ${email}`);
       return { success: false, message: 'Credenciais inválidas.' };
     }
+    
+    console.log(`[Login Action] Usuário encontrado:`, { uid: user.uid, email: user.email, roleName: user.roleName });
+    console.log(`[Login Action] Senha do formulário: [PROTEGIDO]`);
+    console.log(`[Login Action] Senha do banco de dados (exemplo): "${user.password}"`);
 
     const isSampleData = (process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA') === 'SAMPLE_DATA';
     
-    // A senha para dados de exemplo é texto plano, para bancos de dados reais, é criptografada.
-    const isPasswordValid = isSampleData 
-      ? password === user.password 
-      : await bcrypt.compare(password, user.password);
+    let isPasswordValid = false;
+    if (isSampleData) {
+      console.log('[Login Action] Modo SampleData: Comparando senhas como texto plano.');
+      isPasswordValid = (password === user.password);
+    } else {
+      console.log('[Login Action] Modo BD Real: Comparando senhas com bcrypt.');
+      isPasswordValid = await bcrypt.compare(password, user.password);
+    }
+    
+    console.log(`[Login Action] A senha é válida? ${isPasswordValid}`);
 
     if (!isPasswordValid) {
-      console.log(`[Login Action] Invalid password for user: ${email}`);
+      console.log(`[Login Action] Senha inválida para o usuário: ${email}`);
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
-    // Cria a sessão usando o objeto 'user' que já contém as permissões.
     await createSession(user);
     
-    console.log(`[Login Action] Session created successfully for ${email}`);
+    console.log(`[Login Action] Sessão criada com sucesso para ${email}`);
     return { success: true, message: 'Login bem-sucedido!' };
 
   } catch (error) {
-    console.error('[Login Action] Error:', error);
+    console.error('[Login Action] Erro interno:', error);
     return { success: false, message: 'Ocorreu um erro interno durante o login.' };
   }
 }
@@ -80,6 +91,5 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
 
     if (!user) return null;
     
-    // A função getUserProfileData já deve retornar o usuário com as permissões.
     return user as UserProfileWithPermissions;
 }
