@@ -35,12 +35,13 @@ export class PostgresAdapter implements DatabaseAdapter {
     }
     
     async _notImplemented(method: string): Promise<any> {
-        if (this.connectionError) return Promise.resolve([]); // Return empty data if connection failed
+        if (this.connectionError) return Promise.resolve(method.endsWith('s') ? [] : null);
         const message = `[PostgresAdapter] Método ${method} não implementado.`;
         console.warn(message);
-        return Promise.resolve([]);
+        // Return an empty array for methods that fetch lists, null for single items
+        return Promise.resolve(method.endsWith('s') ? [] : null);
     }
-
+    
     async getLots(auctionId?: string): Promise<any[]> {
         if (!this.pool) return [];
         const client = await this.getClient();
@@ -66,10 +67,33 @@ export class PostgresAdapter implements DatabaseAdapter {
         const client = await this.getClient();
         try {
             const res = await client.query('SELECT * FROM "Auction" ORDER BY "auctionDate" DESC');
-            return res.rows;
+            return res.rows as Auction[];
         } catch (error: any) {
              console.error(`[PostgresAdapter:getAuctions] Error: ${error.message}`);
              return [];
+        } finally {
+            client.release();
+        }
+    }
+    
+    async getAuction(id: string): Promise<Auction | null> {
+        if (!this.pool) return null;
+        const client = await this.getClient();
+        try {
+            const res = await client.query('SELECT * FROM "Auction" WHERE id = $1', [id]);
+            if (res.rows.length === 0) {
+                return null;
+            }
+            const auction = res.rows[0] as Auction;
+
+            // Fetch lots for this auction
+            auction.lots = await this.getLots(auction.id);
+            auction.totalLots = auction.lots.length;
+            
+            return auction;
+        } catch (error: any) {
+            console.error(`[PostgresAdapter:getAuction] Error fetching auction ${id}: ${error.message}`);
+            return null;
         } finally {
             client.release();
         }
@@ -79,7 +103,6 @@ export class PostgresAdapter implements DatabaseAdapter {
     createLot(lotData: any): Promise<{ success: boolean; message: string; lotId?: string; }> { return this._notImplemented('createLot'); }
     updateLot(id: string, updates: any): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateLot'); }
     deleteLot(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteLot'); }
-    getAuction(id: string): Promise<any | null> { return this._notImplemented('getAuction'); }
     getLotsByIds(ids: string[]): Promise<any[]> { return this._notImplemented('getLotsByIds'); }
     getLotCategories(): Promise<any[]> { return this._notImplemented('getLotCategories'); }
     getSellers(): Promise<any[]> { return this._notImplemented('getSellers'); }

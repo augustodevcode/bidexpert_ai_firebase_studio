@@ -33,12 +33,13 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async _notImplemented(method: string): Promise<any> {
-        if (this.connectionError) return Promise.resolve([]); // Return empty data if connection failed
+        if (this.connectionError) return Promise.resolve(method.endsWith('s') ? [] : null);
         const message = `[MySqlAdapter] Método ${method} não implementado.`;
         console.warn(message);
-        return Promise.resolve([]);
+        // Return an empty array for methods that fetch lists, null for single items
+        return Promise.resolve(method.endsWith('s') ? [] : null);
     }
-
+    
     async getLots(auctionId?: string): Promise<any[]> {
         if (!this.pool) return [];
         const connection = await this.getConnection();
@@ -72,12 +73,34 @@ export class MySqlAdapter implements DatabaseAdapter {
             connection.release();
         }
     }
+
+    async getAuction(id: string): Promise<Auction | null> {
+        if (!this.pool) return null;
+        const connection = await this.getConnection();
+        try {
+            const [auctionRows]: [any[], any] = await connection.execute('SELECT * FROM auctions WHERE id = ?', [id]);
+            if (auctionRows.length === 0) {
+                return null;
+            }
+            const auction = auctionRows[0] as Auction;
+
+            // Fetch lots for this auction
+            auction.lots = await this.getLots(auction.id);
+            auction.totalLots = auction.lots.length;
+
+            return auction;
+        } catch (error: any) {
+            console.error(`[MySqlAdapter:getAuction] Error fetching auction ${id}: ${error.message}`);
+            return null;
+        } finally {
+            connection.release();
+        }
+    }
     
     getLot(id: string): Promise<any | null> { return this._notImplemented('getLot'); }
     createLot(lotData: any): Promise<{ success: boolean; message: string; lotId?: string; }> { return this._notImplemented('createLot'); }
     updateLot(id: string, updates: any): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateLot'); }
     deleteLot(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteLot'); }
-    getAuction(id: string): Promise<any | null> { return this._notImplemented('getAuction'); }
     getLotsByIds(ids: string[]): Promise<any[]> { return this._notImplemented('getLotsByIds'); }
     getLotCategories(): Promise<any[]> { return this._notImplemented('getLotCategories'); }
     getSellers(): Promise<any[]> { return this._notImplemented('getSellers'); }
