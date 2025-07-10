@@ -1,11 +1,10 @@
-
 /**
  * @fileoverview Server Action for updating a user's own profile.
  */
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/prisma';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { EditableUserProfileData } from '@/types';
 
 interface UpdateProfileResult {
@@ -29,21 +28,20 @@ export async function updateUserProfile(
   }
   
   try {
-    // The 'as any' cast is a temporary workaround for Prisma's strictness with partial JSON types.
-    // In a production scenario, you might have more robust type guards or data transformation.
-    await prisma.user.update({
-        where: { id: userId },
-        data: {
-            ...data
-        } as any,
-    });
+    const db = await getDatabaseAdapter();
+    // @ts-ignore
+    if (!db.updateUserProfile) {
+      return { success: false, message: "Função não implementada para este adaptador." };
+    }
+    // @ts-ignore
+    const result = await db.updateUserProfile(userId, data);
     
-    // Revalidate paths to ensure the updated data is reflected on the profile page
-    // and any other page that might display user information.
-    revalidatePath('/profile'); 
-    revalidatePath(`/profile/edit`); 
+    if (result.success) {
+      revalidatePath('/profile'); 
+      revalidatePath(`/profile/edit`); 
+    }
     
-    return { success: true, message: 'Perfil atualizado com sucesso!' };
+    return result;
 
   } catch (error: any) {
     console.error(`Error updating profile for user ${userId}:`, error);

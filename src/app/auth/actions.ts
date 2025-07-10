@@ -4,7 +4,7 @@
 import { redirect } from 'next/navigation';
 import { getDatabaseAdapter } from '@/lib/database';
 import { createSession, getSession, deleteSession } from '@/lib/session';
-import type { UserProfileData } from '@/types';
+import type { UserProfileData, UserProfileWithPermissions } from '@/types';
 import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcrypt';
 
@@ -43,7 +43,7 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
   // Fetch permissions based on role
   const roles = await db.getRoles();
   const userRole = roles.find(r => r.id === user.roleId);
-  const userWithPermissions = { ...user, permissions: userRole?.permissions || [] };
+  const userWithPermissions: UserProfileWithPermissions = { ...user, permissions: userRole?.permissions || [] };
 
   await createSession(userWithPermissions);
     
@@ -63,12 +63,18 @@ export async function logout() {
  * Obtém os dados do usuário logado atualmente com base na sessão do cookie.
  * @returns O perfil do usuário com permissões, ou null se não houver sessão válida.
  */
-export async function getCurrentUser(): Promise<UserProfileData | null> {
+export async function getCurrentUser(): Promise<UserProfileWithPermissions | null> {
     const session = await getSession();
     if (!session || !session.userId) {
         return null;
     }
     const db = await getDatabaseAdapter();
     const user = await db.getUserProfileData(session.userId);
-    return user;
+
+    if (!user) return null;
+
+    const roles = await db.getRoles();
+    const userRole = roles.find(r => r.id === user.roleId);
+    
+    return { ...user, permissions: userRole?.permissions || [] };
 }

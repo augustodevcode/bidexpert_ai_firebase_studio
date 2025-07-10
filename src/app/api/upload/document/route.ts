@@ -3,9 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ensureAdminInitialized } from '@/lib/firebase/admin';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
+import { getDatabaseAdapter } from '@/lib/database';
+import { revalidatePath } from 'next/cache';
 
 // This is a dedicated route for user document uploads.
-// It ensures that files are stored in a user-specific directory.
+// It ensures that files are stored in a user-specific directory and updates the database.
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 const MAX_FILE_SIZE_MB = 5;
@@ -19,6 +21,7 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File | null;
     const userId = formData.get('userId') as string | null;
     const docType = formData.get('docType') as string | null;
+    const documentTypeId = formData.get('documentTypeId') as string | null;
 
     if (!file) {
       return NextResponse.json({ success: false, message: 'Nenhum arquivo fornecido.' }, { status: 400 });
@@ -26,7 +29,7 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ success: false, message: 'ID do usuário não fornecido.' }, { status: 400 });
     }
-    if (!docType) {
+    if (!docType || !documentTypeId) {
         return NextResponse.json({ success: false, message: 'Tipo do documento não fornecido.' }, { status: 400 });
     }
 
@@ -58,9 +61,17 @@ export async function POST(request: NextRequest) {
     await fileRef.makePublic();
     const publicUrl = fileRef.publicUrl();
 
-    // This route's primary job is to store the file. The association logic
-    // might happen in a separate step or can be done here if needed.
-    // For now, we just return the URL.
+    // Now, save the document record in the database
+    const db = await getDatabaseAdapter();
+    // @ts-ignore
+    if (db.saveUserDocument) {
+      // @ts-ignore
+      await db.saveUserDocument(userId, documentTypeId, publicUrl, file.name);
+      revalidatePath('/dashboard/documents');
+      revalidatePath(`/admin/habilitations/${userId}`);
+    } else {
+       console.warn("db.saveUserDocument is not implemented for the current adapter.");
+    }
     
     return NextResponse.json({
       success: true,

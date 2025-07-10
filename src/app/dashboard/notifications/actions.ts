@@ -6,7 +6,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/prisma';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { Notification } from '@/types';
 
 /**
@@ -19,17 +19,9 @@ export async function getNotificationsForUser(userId: string): Promise<Notificat
     console.warn("[Action - getNotificationsForUser] No userId provided.");
     return [];
   }
-  
-  try {
-    const notifications = await prisma.notification.findMany({
-      where: { userId: userId },
-      orderBy: { createdAt: 'desc' },
-    });
-    return notifications as unknown as Notification[];
-  } catch (error) {
-    console.error(`[Action - getNotificationsForUser] Error fetching notifications for user ${userId}:`, error);
-    return [];
-  }
+  const db = await getDatabaseAdapter();
+  // @ts-ignore
+  return db.getNotificationsForUser ? db.getNotificationsForUser(userId) : [];
 }
 
 /**
@@ -40,13 +32,8 @@ export async function getNotificationsForUser(userId: string): Promise<Notificat
 export async function getUnreadNotificationCountAction(userId: string): Promise<number> {
   if (!userId) return 0;
   try {
-    const count = await prisma.notification.count({
-      where: {
-        userId: userId,
-        isRead: false,
-      },
-    });
-    return count;
+    const notifications = await getNotificationsForUser(userId);
+    return notifications.filter(n => !n.isRead).length;
   } catch (error) {
     console.error(`[Action - getUnreadNotificationCountAction] Error for user ${userId}:`, error);
     return 0;
@@ -63,26 +50,18 @@ export async function markNotificationAsRead(notificationId: string, userId: str
     if (!notificationId || !userId) {
         return { success: false, message: "ID da notificação ou do usuário não fornecido."};
     }
-    
-    try {
-        const result = await prisma.notification.updateMany({
-            where: {
-                id: notificationId,
-                userId: userId, // Security check: user can only mark their own notifications
-            },
-            data: {
-                isRead: true,
-            },
-        });
-
-        if (result.count > 0) {
-            revalidatePath('/dashboard/notifications');
-            return { success: true, message: "Notificação marcada como lida." };
-        } else {
-            return { success: false, message: "Notificação não encontrada ou não pertence ao usuário." };
-        }
-    } catch (error: any) {
-        console.error(`[Action - markNotificationAsRead] Error for notification ${notificationId}:`, error);
-        return { success: false, message: "Falha ao marcar notificação como lida." };
+    const db = await getDatabaseAdapter();
+    // @ts-ignore
+    if (!db.markNotificationAsRead) {
+      return { success: false, message: "Função não implementada para este adaptador." };
     }
+    
+    // @ts-ignore
+    const result = await db.markNotificationAsRead(notificationId, userId);
+
+    if (result.success) {
+        revalidatePath('/dashboard/notifications');
+    }
+
+    return result;
 }

@@ -1,7 +1,7 @@
 // src/app/api/upload/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureAdminInitialized } from '@/lib/firebase/admin';
-import { prisma } from '@/lib/prisma';
+import { getDatabaseAdapter } from '@/lib/database';
 import type { MediaItem } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
@@ -45,6 +45,8 @@ export async function POST(request: NextRequest) {
     if (!storage || storageError) {
         return NextResponse.json({ success: false, message: `Storage service not initialized: ${storageError?.message}` }, { status: 500 });
     }
+    
+    const db = await getDatabaseAdapter();
 
     const uploadedItems: MediaItem[] = [];
     const uploadErrors: { fileName: string; message: string }[] = [];
@@ -81,26 +83,30 @@ export async function POST(request: NextRequest) {
         await fileRef.makePublic();
         const publicUrl = fileRef.publicUrl();
 
-        const newItem = await prisma.mediaItem.create({
-            data: {
-                id: `media-${uuidv4()}`,
-                fileName: file.name,
-                storagePath: storagePath,
-                title: path.basename(file.name, path.extname(file.name)),
-                altText: path.basename(file.name, path.extname(file.name)),
-                mimeType: file.type,
-                sizeBytes: file.size,
-                urlOriginal: publicUrl,
-                urlThumbnail: publicUrl,
-                urlMedium: publicUrl,
-                urlLarge: publicUrl,
-                linkedLotIds: [],
-                dataAiHint: (formData.get(`dataAiHint_${file.name}`) as string) || 'upload usuario',
-                uploadedBy: 'admin_placeholder',
-            }
-        });
-        
-        uploadedItems.push(newItem as unknown as MediaItem);
+        const itemData: Omit<MediaItem, 'id' | 'uploadedAt'> = {
+          fileName: file.name,
+          storagePath: storagePath,
+          title: path.basename(file.name, path.extname(file.name)),
+          altText: path.basename(file.name, path.extname(file.name)),
+          mimeType: file.type,
+          sizeBytes: file.size,
+          urlOriginal: publicUrl,
+          urlThumbnail: publicUrl, // Placeholder
+          urlMedium: publicUrl, // Placeholder
+          urlLarge: publicUrl, // Placeholder
+          linkedLotIds: [],
+          dataAiHint: (formData.get(`dataAiHint_${file.name}`) as string) || 'upload usuario',
+          uploadedBy: 'admin_placeholder', // Should come from session in a real app
+        };
+
+        const createResult = await db.createMediaItem(itemData, publicUrl, 'admin_placeholder');
+
+        if (createResult.success && createResult.item) {
+          uploadedItems.push(createResult.item);
+        } else {
+          throw new Error(createResult.message);
+        }
+
       } catch (error: any) {
         // Attempt to clean up orphaned file in storage if DB write fails
         if (storagePath) {
