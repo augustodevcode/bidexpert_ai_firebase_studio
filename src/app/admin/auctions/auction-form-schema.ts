@@ -1,5 +1,3 @@
-
-
 import * as z from 'zod';
 import type { AuctionStatus, Auction } from '@/types'; // Auction importado para auctionTypeValues
 
@@ -59,8 +57,7 @@ export const auctionFormSchema = z.object({
     invalid_type_error: "Por favor, insira uma data de leilão válida.",
   }),
   endDate: z.date().optional().nullable(),
-  city: z.string().max(100).optional(),
-  state: z.string().max(2).optional(), // UF
+  mapAddress: z.string().max(300, { message: "O endereço do mapa não pode exceder 300 caracteres." }).optional().nullable(),
   imageUrl: z.string().url({ message: "URL da imagem inválida." }).optional().or(z.literal('')),
   documentsUrl: z.string().url({ message: "URL dos documentos inválida."}).optional().or(z.literal('')),
   evaluationReportUrl: z.string().url({ message: "URL inválida."}).optional().or(z.literal('')),

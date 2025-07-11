@@ -24,7 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
 import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem } from '@/types';
-import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat, MicOff, FileSignature, XCircle } from 'lucide-react';
+import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat, MicOff, FileSignature, XCircle, MapPin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -39,7 +39,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 interface AuctionFormProps {
   initialData?: Auction | null;
-  categories: LotCategory[];
   auctioneers: AuctioneerProfileInfo[]; 
   sellers: SellerProfileInfo[];    
   onSubmitAction: (data: AuctionFormValues) => Promise<{ success: boolean; message: string; auctionId?: string }>;
@@ -74,7 +73,6 @@ const auctionTypeOptions = [
 
 export default function AuctionForm({
   initialData,
-  categories,
   auctioneers, 
   sellers,    
   onSubmitAction,
@@ -101,8 +99,7 @@ export default function AuctionForm({
       seller: initialData?.seller || '',       
       auctionDate: initialData?.auctionDate ? new Date(initialData.auctionDate as Date) : new Date(),
       endDate: initialData?.endDate ? new Date(initialData.endDate as Date) : null,
-      city: initialData?.city || '',
-      state: initialData?.state || '',
+      mapAddress: initialData?.mapAddress || '',
       imageUrl: initialData?.imageUrl || '',
       documentsUrl: initialData?.documentsUrl || '',
       evaluationReportUrl: initialData?.evaluationReportUrl || '',
@@ -544,30 +541,21 @@ export default function AuctionForm({
                     </FormItem>
                 )}
                 />
-            <div className="grid md:grid-cols-2 gap-6">
-                <FormField
-                    control={form.control}
-                    name="city"
-                    render={({ field }) => (
+            
+             <FormField
+                  control={form.control}
+                  name="mapAddress"
+                  render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Cidade Principal do Leilão (Opcional)</FormLabel>
-                        <FormControl><Input placeholder="Ex: São Paulo" {...field} value={field.value ?? ""} /></FormControl>
-                        <FormMessage />
+                      <FormLabel className="flex items-center gap-2"><MapPin className="h-4 w-4"/> Endereço do Leilão (Para Mapa)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Rua Exemplo, 123, Bairro, Cidade - UF, 00000-000" {...field} value={field.value ?? ""} />
+                      </FormControl>
+                      <FormDescription>Usado para gerar o link do mapa. Seja o mais completo possível.</FormDescription>
+                      <FormMessage />
                     </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="state"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>UF (Opcional)</FormLabel>
-                        <FormControl><Input placeholder="Ex: SP" {...field} value={field.value ?? ""} maxLength={2} /></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-            </div>
+                  )}
+              />
             
             <FormItem>
               <FormLabel>Imagem de Capa (Opcional)</FormLabel>

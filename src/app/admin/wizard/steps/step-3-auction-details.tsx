@@ -1,4 +1,4 @@
-
+// src/components/admin/wizard/steps/step-3-auction-details.tsx
 'use client';
 
 import { useWizard } from '../wizard-context';
