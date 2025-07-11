@@ -29,5 +29,6 @@ export const getDatabaseAdapter = (): DatabaseAdapter => {
     return new SampleDataAdapter();
   }
 
+  // console.log(`[Database] Usando adaptador para: ${activeSystem}`);
   return new AdapterClass();
 };

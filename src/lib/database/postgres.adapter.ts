@@ -7,14 +7,14 @@ export class PostgresAdapter implements DatabaseAdapter {
     private connectionError: string | null = null;
 
     constructor() {
-        if (!process.env.DATABASE_URL) {
-            this.connectionError = "A variável de ambiente DATABASE_URL não está definida.";
+        if (!process.env.POSTGRES_DATABASE_URL) {
+            this.connectionError = "A variável de ambiente POSTGRES_DATABASE_URL não está definida.";
             console.warn(`[PostgresAdapter] AVISO: ${this.connectionError} Usando dados vazios.`);
             return;
         }
         try {
             this.pool = new Pool({
-                connectionString: process.env.DATABASE_URL,
+                connectionString: process.env.POSTGRES_DATABASE_URL,
             });
             console.log('[PostgresAdapter] Pool de conexões PostgreSQL inicializado.');
         } catch (error: any) {
@@ -129,9 +129,16 @@ export class PostgresAdapter implements DatabaseAdapter {
     createLot(lotData: any): Promise<{ success: boolean; message: string; lotId?: string; }> { return this._notImplemented('createLot'); }
     updateLot(id: string, updates: any): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateLot'); }
     deleteLot(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteLot'); }
-    createAuction(auctionData: Partial<Auction>): Promise<{ success: boolean; message: string; auctionId?: string; }> { return this._notImplemented('createAuction'); }
+    
+    async createAuction(auctionData: Partial<Auction>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
+        return this._notImplemented('createAuction');
+    }
+    
+    async deleteAuction(id: string): Promise<{ success: boolean, message: string }> {
+        return this._notImplemented('deleteAuction');
+    }
+    
     updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateAuction'); }
-    deleteAuction(id: string): Promise<{ success: boolean, message: string }> { return this._notImplemented('deleteAuction'); }
     updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateUserRole'); }
     createMediaItem(item: any, url: string, userId: string): Promise<any> { return this._notImplemented('createMediaItem'); }
     updatePlatformSettings(data: any): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updatePlatformSettings'); }
