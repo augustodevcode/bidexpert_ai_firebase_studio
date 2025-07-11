@@ -35,6 +35,7 @@ async function executeSchema(pool: Pool) {
             } catch (error: any) {
                 // Log non-critical errors (like FK errors due to dev) and continue
                 console.error(`[DB INIT - DDL] ❌ ERROR on table '${tableName}': ${error.message}`);
+                console.error(`[DB INIT - DDL] -> Failing SQL: ${statement.substring(0, 300)}...`);
             }
         }
         console.log("--- [DB INIT - DDL] MySQL Schema execution finished ---");
@@ -52,7 +53,7 @@ async function seedEssentialData(db: any) {
         // Platform Settings
         console.log('[DB INIT - DML] Checking for platform settings...');
         const settings = await db.getPlatformSettings();
-        if (!settings || Object.keys(settings).length === 0) {
+        if (!settings || Object.keys(settings).length === 0 || !settings.id) {
             console.log("[DB INIT - DML] Inserting platform settings...");
             await db.updatePlatformSettings(samplePlatformSettings);
             console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings inserted.");
