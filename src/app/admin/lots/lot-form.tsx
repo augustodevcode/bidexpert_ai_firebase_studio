@@ -28,7 +28,7 @@ import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import { DataTable } from '@/components/ui/data-table';
-import { createColumns as createBemColumns } from '@/app/admin/bens/columns';
+import { createColumns as createBemColumns } from '@/components/admin/bens/columns';
 import { Separator } from '@/components/ui/separator';
 import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
 import { getBens } from '@/app/admin/bens/actions';
@@ -334,26 +334,26 @@ export default function LotForm({
 
   const renderBemGridItem = (bem: Bem) => (
     <Card key={bem.id} className="flex flex-col shadow-sm hover:shadow-md transition-shadow">
-      <CardHeader className="p-3">
-        <div className="relative aspect-video bg-muted rounded-md overflow-hidden">
-          <Image
-            src={bem.imageUrl || 'https://placehold.co/400x300.png'}
-            alt={bem.title}
-            fill
-            className="object-cover"
-            data-ai-hint={bem.dataAiHint || bem.categoryName?.toLowerCase() || 'bem item'}
-          />
-        </div>
-        <CardTitle className="text-sm font-semibold line-clamp-2 leading-tight h-8 mt-2">{bem.title}</CardTitle>
-        <CardDescription className="text-xs">ID: {bem.publicId || bem.id}</CardDescription>
-      </CardHeader>
-      <CardContent className="p-3 flex-grow space-y-1 text-xs">
-        <p className="font-medium">Avaliação: {bem.evaluationValue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'N/A'}</p>
-      </CardContent>
-      <CardFooter className="p-2 border-t flex justify-end items-center gap-1">
-        <Button variant="ghost" size="icon" onClick={() => handleViewBemDetails(bem)} className="h-7 w-7 text-sky-600"><Eye className="h-3.5 w-3.5" /></Button>
-        <Button variant="ghost" size="icon" onClick={() => handleUnlinkBem(bem.id)} className="h-7 w-7 text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
-      </CardFooter>
+        <CardHeader className="p-3">
+            <div className="relative aspect-video bg-muted rounded-md overflow-hidden">
+                <Image
+                    src={bem.imageUrl || 'https://placehold.co/400x300.png'}
+                    alt={bem.title}
+                    fill
+                    className="object-cover"
+                    data-ai-hint={bem.dataAiHint || bem.categoryName?.toLowerCase() || 'bem item'}
+                />
+            </div>
+            <CardTitle className="text-sm font-semibold line-clamp-2 leading-tight h-8 mt-2">{bem.title}</CardTitle>
+            <CardDescription className="text-xs">ID: {bem.publicId || bem.id}</CardDescription>
+        </CardHeader>
+        <CardContent className="p-3 flex-grow space-y-1 text-xs">
+            <p className="font-medium">Avaliação: {bem.evaluationValue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'N/A'}</p>
+        </CardContent>
+        <CardFooter className="p-2 border-t flex justify-end items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={() => handleViewBemDetails(bem)} className="h-7 w-7 text-sky-600"><Eye className="h-3.5 w-3.5" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => handleUnlinkBem(bem.id)} className="h-7 w-7 text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
+        </CardFooter>
     </Card>
   );
 
