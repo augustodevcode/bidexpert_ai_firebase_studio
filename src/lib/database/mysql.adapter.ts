@@ -1,4 +1,3 @@
-
 // src/lib/database/mysql.adapter.ts
 import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, CityFormData, StateFormData } from '@/types';
 import mysql, { type Pool, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
@@ -26,7 +25,6 @@ function convertKeysToCamelCase<T extends {}>(obj: any): T {
     }
     return newObj as T;
 }
-
 
 function convertObjectToSnakeCase(obj: Record<string, any>): Record<string, any> {
     const newObj: Record<string, any> = {};
@@ -117,14 +115,14 @@ export class MySqlAdapter implements DatabaseAdapter {
       const publicId = publicIdPrefix ? `${publicIdPrefix}-PUB-${newId.substring(newId.length - 8)}` : null;
 
       const dataToInsert: Record<string, any> = { id: newId };
-      if (publicId) dataToInsert['public_id'] = publicId;
+      if (publicId) dataToInsert['publicId'] = publicId;
       if (data.name && !data.slug) dataToInsert['slug'] = slugify(data.name);
       if (data.title && !data.slug) dataToInsert['slug'] = slugify(data.title);
 
       Object.assign(dataToInsert, data);
 
-      dataToInsert['created_at'] = new Date();
-      dataToInsert['updated_at'] = new Date();
+      dataToInsert['createdAt'] = new Date();
+      dataToInsert['updatedAt'] = new Date();
       
       const snakeCaseData = convertObjectToSnakeCase(dataToInsert);
 
@@ -141,7 +139,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
 
     private async genericUpdate(tableName: string, id: string, data: Record<string, any>): Promise<{ success: boolean; message: string; }> {
-        const updates = { ...data, updated_at: new Date() };
+        const updates = { ...data, updatedAt: new Date() };
         if (updates.name && !updates.slug) updates.slug = slugify(updates.name);
         if (updates.title && !updates.slug) updates.slug = slugify(updates.title);
 
@@ -180,7 +178,14 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
 
     async createLot(lotData: Partial<Lot>): Promise<{ success: boolean; message: string; lotId?: string; }> {
-      return this.genericCreate('lots', lotData, 'lot', 'LOT');
+      const { bens, ...data } = lotData;
+      const result = await this.genericCreate('lots', data, 'lot', 'LOT');
+      if (result.success && result.insertId && bens) {
+          for (const bem of bens) {
+              await this.executeMutation('INSERT INTO `lot_bens` (`lotId`, `bemId`) VALUES (?, ?)', [result.insertId, bem.id]);
+          }
+      }
+      return { ...result, lotId: result.insertId };
     }
 
     async updateLot(id: string, updates: Partial<Lot>): Promise<{ success: boolean; message: string; }> {
@@ -220,11 +225,15 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
-        return this.genericCreate('bens', data, 'bem', 'BEM');
+      return this.genericCreate('bens', data, 'bem', 'BEM');
     }
     
     async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
         return this.genericUpdate('bens', id, data);
+    }
+
+    async deleteBem(id: string): Promise<{ success: boolean; message: string; }> {
+        return this.executeMutation('DELETE FROM `bens` WHERE id = ?', [id]);
     }
 
     async getAuctions(): Promise<Auction[]> {
@@ -246,7 +255,9 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async createAuction(auctionData: Partial<Auction>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
-      return this.genericCreate('auctions', auctionData, 'auc', 'AUC');
+      const { lots, ...data } = auctionData;
+      const result = await this.genericCreate('auctions', data, 'auc', 'AUC');
+      return { ...result, auctionId: result.insertId };
     }
     
     async deleteAuction(id: string): Promise<{ success: boolean, message: string }> {
@@ -280,16 +291,22 @@ export class MySqlAdapter implements DatabaseAdapter {
     async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { return this.executeQuery('SELECT * FROM `auctioneers` ORDER BY `name`'); }
     
     async getUsersWithRoles(): Promise<UserProfileData[]> {
-        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.role_id = r.id';
-        return this.executeQuery(sql);
+        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.roleId = r.id';
+        const users = await this.executeQuery(sql);
+        return users.map(u => ({...u, permissions: JSON.parse(u.permissions || '[]')}));
     }
     
     async getUserProfileData(userId: string): Promise<UserProfileData | null> {
-        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.role_id = r.id WHERE u.id = ? OR u.uid = ?';
-        return this.executeQueryForSingle(sql, [userId, userId]);
+        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.roleId = r.id WHERE u.id = ? OR u.uid = ?';
+        const user = await this.executeQueryForSingle(sql, [userId, userId]);
+        if(user) user.permissions = JSON.parse(user.permissions || '[]');
+        return user;
     }
     
-    async getRoles(): Promise<Role[]> { return this.executeQuery('SELECT * FROM `roles` ORDER BY `name`'); }
+    async getRoles(): Promise<Role[]> { 
+        const roles = await this.executeQuery('SELECT * FROM `roles` ORDER BY `name`'); 
+        return roles.map(r => ({...r, permissions: JSON.parse(r.permissions || '[]')}));
+    }
     async getMediaItems(): Promise<MediaItem[]> { return this.executeQuery('SELECT * FROM `media_items` ORDER BY `uploaded_at` DESC'); }
     
     async getPlatformSettings(): Promise<PlatformSettings | null> {
@@ -317,7 +334,8 @@ export class MySqlAdapter implements DatabaseAdapter {
     async getJudicialProcesses(): Promise<JudicialProcess[]> { return this.executeQuery('SELECT * FROM `judicial_processes` ORDER BY `created_at` DESC'); }
 
     async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> {
-      return this.genericCreate('courts', data, 'court');
+      const result = await this.genericCreate('courts', data, 'court');
+      return {...result, courtId: result.insertId};
     }
 
     async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> {
@@ -325,11 +343,13 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> {
-        return this.genericCreate('judicial_districts', data, 'dist');
+        const result = await this.genericCreate('judicial_districts', data, 'dist');
+        return {...result, districtId: result.insertId};
     }
 
     async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }> {
-      return this.genericCreate('judicial_branches', data, 'branch');
+      const result = await this.genericCreate('judicial_branches', data, 'branch');
+      return {...result, branchId: result.insertId};
     }
 
     async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
@@ -340,19 +360,22 @@ export class MySqlAdapter implements DatabaseAdapter {
                 await this.genericCreate('judicial_parties', { ...party, process_id: result.insertId }, 'party');
             }
         }
-        return result;
+        return {...result, processId: result.insertId};
     }
     
     async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> {
-      return this.genericCreate('states', data, `state-${data.uf.toLowerCase()}`);
+      const result = await this.genericCreate('states', data, `state-${data.uf.toLowerCase()}`);
+      return {...result, stateId: result.insertId};
     }
 
     async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> {
-        return this.genericCreate('cities', data, 'city');
+        const result = await this.genericCreate('cities', data, 'city');
+        return {...result, cityId: result.insertId};
     }
 
     async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
-      return this.genericCreate('sellers', data, 'seller', 'SELL');
+      const result = await this.genericCreate('sellers', data, 'seller', 'SELL');
+      return {...result, sellerId: result.insertId};
     }
 
     async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
@@ -368,7 +391,8 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
-        return this.genericCreate('auctioneers', data, 'auct', 'AUCT');
+        const result = await this.genericCreate('auctioneers', data, 'auct', 'AUCT');
+        return {...result, auctioneerId: result.insertId};
     }
 
     async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
@@ -395,11 +419,12 @@ export class MySqlAdapter implements DatabaseAdapter {
         return result;
     }
     
-    updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('users', userId, { role_id: roleId }); }
+    async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('users', userId, { role_id: roleId }); }
     createMediaItem(item: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> { return this._notImplemented('createMediaItem'); }
     
     async createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean; message: string; }> {
-        return this.genericCreate('lot_categories', data, 'cat');
+        const result = await this.genericCreate('lot_categories', data, 'cat');
+        return { success: result.success, message: result.message };
     }
 
     async updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
@@ -420,10 +445,6 @@ export class MySqlAdapter implements DatabaseAdapter {
 
     async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> {
        return this.executeMutation('DELETE FROM `subcategories` WHERE id = ?', [id]);
-    }
-
-    async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> {
-      return this.genericUpdate('courts', id, data);
     }
 
     async _notImplemented(method: string): Promise<any> {
