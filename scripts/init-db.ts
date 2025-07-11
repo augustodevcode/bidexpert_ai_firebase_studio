@@ -1,100 +1,150 @@
 // scripts/init-db.ts
-import { getDatabaseAdapter } from '@/lib/database';
+import dotenv from 'dotenv';
+import path from 'path';
+import { getDatabaseAdapter } from '../src/lib/database'; // Corrigido o caminho
+import fs from 'fs';
+import mysql, { type Pool } from 'mysql2/promise';
 import { sampleRoles, samplePlatformSettings, sampleLotCategories, sampleSubcategories, sampleStates, sampleCities, sampleCourts, sampleJudicialDistricts, sampleJudicialBranches } from '../src/lib/sample-data';
 
-/**
- * This script initializes the database with essential, non-deletable data
- * required for the application to function correctly.
- * It seeds Roles, PlatformSettings, Categories, and Subcategories.
- * It's safe to run multiple times, as it uses `upsert` logic (or checks for existence).
- */
-async function initializeDatabase() {
-  console.log('Initializing database with essential data...');
-  const db = getDatabaseAdapter();
 
-  try {
-    // Check for existing platform settings to determine if DB is already initialized.
-    const settings = await db.getPlatformSettings();
-    if (settings) {
-        console.log("Essential data (Platform Settings) already exists. Skipping data population.");
+// Load environment variables
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env'), override: false });
+
+async function executeSchema(pool: Pool) {
+    console.log("--- Executando Schema SQL ---");
+    const schemaPath = path.join(process.cwd(), 'schema.mysql.sql');
+    if (!fs.existsSync(schemaPath)) {
+        console.warn(`AVISO: Arquivo de schema não encontrado em ${schemaPath}. Pulando criação de tabelas.`);
         return;
     }
+    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+    const statements = schemaSql.split(/;\s*$/m).filter(s => s.trim().length > 0);
     
-    console.log("No platform settings found. Populating essential data...");
+    const connection = await pool.getConnection();
+    try {
+        console.log("Listando tabelas existentes antes da execução...");
+        const [rows] = await connection.query('SHOW TABLES;');
+        const existingTables = (rows as any[]).map(row => Object.values(row)[0]);
+        console.table(existingTables);
 
-    // Seed Roles
-    console.log('Seeding Roles...');
-    for (const role of sampleRoles) {
-      // @ts-ignore
-      await db.createRole(role);
+        for (const statement of statements) {
+            const tableNameMatch = statement.match(/CREATE TABLE IF NOT EXISTS `([^`]*)`/i);
+            const tableName = tableNameMatch ? tableNameMatch[1] : 'desconhecida';
+            try {
+                await connection.query(statement);
+                console.log(`✅ SUCESSO: Tabela '${tableName}' criada ou já existente.`);
+            } catch (error: any) {
+                console.error(`❌ ERRO ao executar para a tabela '${tableName}': ${error.message}`);
+                // Decidir se quer parar ou continuar em caso de erro. Por enquanto, continua.
+            }
+        }
+        console.log("--- Execução do Schema SQL finalizada ---");
+    } catch (error) {
+        console.error("Erro crítico durante a execução do schema:", error);
+        throw error;
+    } finally {
+        connection.release();
     }
-    console.log(`${sampleRoles.length} roles ensured.`);
+}
 
-    // Seed Platform Settings
-    console.log('Seeding Platform Settings...');
-    // @ts-ignore
-    await db.updatePlatformSettings(samplePlatformSettings); // Using update as an upsert mechanism
-    console.log('Global platform settings created.');
+async function seedEssentialData(db: any) {
+    console.log('\n--- Semeando Dados Essenciais ---');
+    // Check if seeding is necessary by looking for roles
+    const roles = await db.getRoles();
+    if (roles && roles.length > 0) {
+        console.log("Dados essenciais (Perfis) já existem. Pulando semeadura.");
+        return;
+    }
+
+    console.log('Populando dados essenciais pela primeira vez...');
+
+    if (db.createRole) {
+        console.log('Seeding Roles...');
+        for (const role of sampleRoles) await db.createRole(role);
+        console.log(`${sampleRoles.length} roles inseridos.`);
+    }
+
+    if (db.updatePlatformSettings) {
+        console.log('Seeding Platform Settings...');
+        await db.updatePlatformSettings(samplePlatformSettings);
+        console.log('Configurações globais inseridas.');
+    }
     
-    // Seed States & Cities
-    console.log('Seeding States...');
-    for (const state of sampleStates) {
-        // @ts-ignore
-        await db.createState(state);
+    if (db.createState) {
+        console.log('Seeding States...');
+        for (const state of sampleStates) await db.createState(state);
+        console.log(`${sampleStates.length} estados inseridos.`);
     }
-    console.log(`${sampleStates.length} states ensured.`);
+
+    if (db.createCity) {
+        console.log('Seeding Cities...');
+        for (const city of sampleCities) await db.createCity(city);
+        console.log(`${sampleCities.length} cidades inseridas.`);
+    }
+
+    if (db.createLotCategory) {
+        console.log('Seeding Categories...');
+        for (const category of sampleLotCategories) await db.createLotCategory(category);
+        console.log(`${sampleLotCategories.length} categorias inseridas.`);
+    }
+
+    if (db.createSubcategory) {
+        console.log('Seeding Subcategories...');
+        for (const subcategory of sampleSubcategories) await db.createSubcategory(subcategory);
+        console.log(`${sampleSubcategories.length} subcategorias inseridas.`);
+    }
     
-    console.log('Seeding Cities...');
-    for (const city of sampleCities) {
-        // @ts-ignore
-        await db.createCity(city);
+    if (db.createCourt && db.createJudicialDistrict && db.createJudicialBranch) {
+        console.log('Seeding Judicial Entities...');
+        for (const court of sampleCourts) await db.createCourt(court);
+        for (const district of sampleJudicialDistricts) await db.createJudicialDistrict(district);
+        for (const branch of sampleJudicialBranches) await db.createJudicialBranch(branch);
+        console.log('Entidades judiciais inseridas.');
     }
-    console.log(`${sampleCities.length} cities ensured.`);
+    
+    console.log('--- Semeadura de Dados Essenciais Finalizada ---');
+}
 
 
-    // Seed Categories
-    console.log('Seeding Lot Categories...');
-    for (const category of sampleLotCategories) {
-        // @ts-ignore
-        await db.createLotCategory(category);
-    }
-    console.log(`${sampleLotCategories.length} lot categories ensured.`);
-    
-    // Seed Subcategories
-    console.log('Seeding Subcategories...');
-    for (const subcategory of sampleSubcategories) {
-        // @ts-ignore
-        await db.createSubcategory(subcategory);
-    }
-    console.log(`${sampleSubcategories.length} subcategories ensured.`);
-    
-    // Seed Judicial Entities
-    console.log('Seeding Judicial Entities...');
-    for (const court of sampleCourts) {
-        // @ts-ignore
-        await db.createCourt(court);
-    }
-    for (const district of sampleJudicialDistricts) {
-        // @ts-ignore
-        await db.createJudicialDistrict(district);
-    }
-    for (const branch of sampleJudicialBranches) {
-        // @ts-ignore
-        await db.createJudicialBranch(branch);
-    }
-    console.log('Judicial entities ensured.');
+async function initializeDatabase() {
+  console.log('🚀 Iniciando script de inicialização do banco de dados...');
+  const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM;
 
-    console.log('Database initialization complete.');
+  if (activeSystem !== 'MYSQL' && activeSystem !== 'POSTGRES') {
+      console.log(`🟡 DB_INIT: Pulando inicialização para o sistema: ${activeSystem}.`);
+      return;
+  }
+  
+  const dbUrl = activeSystem === 'MYSQL' ? process.env.DATABASE_URL : process.env.POSTGRES_DATABASE_URL;
+  if (!dbUrl) {
+      console.error(`ERRO: A variável de ambiente para ${activeSystem} não está configurada.`);
+      process.exit(1);
+  }
+
+  let pool: Pool | null = null;
+  try {
+      if (activeSystem === 'MYSQL') {
+          pool = mysql.createPool(dbUrl);
+          const connection = await pool.getConnection();
+          console.log(`🔌 Conexão com o banco de dados MySQL estabelecida com sucesso.`);
+          connection.release();
+          await executeSchema(pool);
+      }
+      // Adicionar lógica para PostgreSQL se necessário no futuro
+
+      const db = getDatabaseAdapter();
+      await seedEssentialData(db);
+
   } catch (error) {
-    console.error('Error during database initialization:', error);
-    process.exit(1);
+      console.error("ERRO FATAL durante a inicialização do banco de dados:", error);
+      process.exit(1);
   } finally {
-    // @ts-ignore
-    if(db.close) {
-        // @ts-ignore
-        await db.close();
-        console.log('Database connection pool for script closed.');
-    }
+      if (pool) {
+          await pool.end();
+          console.log("🔌 Pool de conexões do banco de dados para o script foi fechado.");
+      }
+      console.log("✅ Script de inicialização finalizado.");
   }
 }
 
