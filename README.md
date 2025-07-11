@@ -8,39 +8,32 @@ To get started, take a look at `src/app/page.tsx`.
 
 ## Database Setup
 
-This project uses **Prisma ORM** with a **PostgreSQL** database as its default configuration.
+This project uses a database adapter system and is configured to use **MySQL** by default.
 
 ### 1. Environment Setup
 
 - Create a `.env` file in the root of your project.
 - Add your database connection string to this file:
     ```env
-    # Example for PostgreSQL
-    DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
+    # Example for MySQL
+    DATABASE_URL="mysql://USER:PASSWORD@HOST:PORT/DATABASE"
     ```
+- Ensure the `NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM` is set to `MYSQL` in your `.env` file if you are not using the default.
 
-### 2. Database Migration
+### 2. Database Initialization (For SQL Databases)
 
-With your `.env` file configured, run the migration command to create all the necessary tables in your database based on the schema defined in `prisma/schema.prisma`.
+When using a fresh SQL database (MySQL or PostgreSQL), you need to create the necessary tables and populate essential data.
 
-```bash
-npx prisma migrate dev
-```
-This command will also apply any pending migrations and ensure your database schema is up to date.
+- **`npm run db:init`**: This script populates **essential data** only (Roles, Platform Settings). It should be run once after setting up a new database schema. It's safe to run multiple times.
 
-### 3. Seeding the Database (Optional but Recommended)
-
-After migrating the database, you can populate it with essential data (like roles and settings) and comprehensive sample data (users, auctions, lots) using the seed script.
-
-- **`npm run db:init`**: This script populates **essential data** only (Roles, Platform Settings). It's safe to run multiple times and will not duplicate data. It's recommended to run this once after the initial migration.
-
-- **`npm run db:seed`**: This script populates the database with a **full set of sample data**. It checks if an admin user already exists to prevent duplication on subsequent runs. Use this to get a fully populated environment for development and demonstration.
+- **`npm run db:seed`**: This script populates the database with a **full set of sample data**. Use this to get a fully populated environment for development and demonstration. It will check if data already exists to prevent duplication.
 
 ```bash
-# First, run the migration if you haven't already
-npx prisma migrate dev
+# First, ensure your database schema is created (e.g., using a SQL script or a tool like DBeaver).
+# Then, run the initialization script for essential data.
+npm run db:init
 
-# Then, run the seed script to populate with sample data
+# After initialization, populate with sample data.
 npm run db:seed
 ```
 

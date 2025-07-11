@@ -1,15 +1,16 @@
-
-
+// src/app/admin/auctions/new/page.tsx
 import AuctionForm from '../auction-form';
 import { createAuction, type AuctionFormData } from '../actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
-import { getAuctioneers } from '@/app/admin/auctioneers/actions'; // Import getAuctioneers
-import { getSellers } from '@/app/admin/sellers/actions'; // Import getSellers
+import { getAuctioneers } from '@/app/admin/auctioneers/actions';
+import { getSellers } from '@/app/admin/sellers/actions';
 
 export default async function NewAuctionPage() {
-  const categories = await getLotCategories();
-  const auctioneers = await getAuctioneers(); // Fetch auctioneers
-  const sellers = await getSellers(); // Fetch sellers
+  const [categories, auctioneers, sellers] = await Promise.all([
+      getLotCategories(),
+      getAuctioneers(),
+      getSellers()
+  ]);
 
   async function handleCreateAuction(data: AuctionFormData) {
     'use server';
@@ -19,8 +20,8 @@ export default async function NewAuctionPage() {
   return (
     <AuctionForm
       categories={categories}
-      auctioneers={auctioneers} // Pass auctioneers
-      sellers={sellers}         // Pass sellers
+      auctioneers={auctioneers}
+      sellers={sellers}
       onSubmitAction={handleCreateAuction}
       formTitle="Novo Leilão"
       formDescription="Preencha os detalhes para criar um novo leilão."
@@ -28,5 +29,3 @@ export default async function NewAuctionPage() {
     />
   );
 }
-
-    

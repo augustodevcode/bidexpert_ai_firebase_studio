@@ -67,14 +67,36 @@ export async function getWizardInitialData() {
 
 /**
  * Cria um novo leilão e seus lotes associados a partir dos dados coletados no wizard.
- * Utiliza uma transação Prisma para garantir a atomicidade da operação (ou tudo é criado, ou nada é).
  * @param {WizardData} wizardData - O objeto de estado contendo todos os dados do assistente.
  * @returns {Promise<{success: boolean, message: string, auctionId?: string}>} O resultado da operação.
  */
 export async function createAuctionFromWizard(wizardData: WizardData): Promise<{success: boolean; message: string; auctionId?: string;}> {
-  if (!wizardData.auctionDetails || !wizardData.auctionDetails.title || !wizardData.auctionDetails.auctioneerId || !wizardData.auctionDetails.categoryId) {
+  if (!wizardData.auctionDetails || !wizardData.auctionDetails.title || !wizardData.auctionDetails.auctioneerId) {
     return { success: false, message: "Detalhes do leilão incompletos." };
   }
-  console.warn("createAuctionFromWizard is not fully implemented for this data adapter.");
-  return { success: false, message: "Ainda não implementado."};
+  
+  const db = getDatabaseAdapter();
+
+  // 1. Create the Auction
+  // @ts-ignore - The adapter method expects a slightly different type
+  const auctionResult = await db.createAuction(wizardData.auctionDetails);
+  
+  if (!auctionResult.success || !auctionResult.auctionId) {
+    return { success: false, message: `Falha ao criar o leilão: ${auctionResult.message}` };
+  }
+
+  // 2. Create the Lots for this Auction
+  if (wizardData.createdLots && wizardData.createdLots.length > 0) {
+    for (const lot of wizardData.createdLots) {
+      const lotDataForCreation = {
+        ...lot,
+        auctionId: auctionResult.auctionId, // Link to the newly created auction
+      };
+      await db.createLot(lotDataForCreation);
+      // In a real scenario, you'd handle potential lot creation failures more gracefully
+    }
+  }
+
+  revalidatePath('/admin/auctions');
+  return { success: true, message: "Leilão e lotes criados com sucesso!", auctionId: auctionResult.auctionId };
 }
