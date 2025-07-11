@@ -1,4 +1,30 @@
 // src/lib/database.ts
+
+// This file is now primarily a placeholder or could be used for other database-related
+// utilities in the future. The project has migrated to using Prisma ORM directly.
+// The concept of a "DatabaseAdapter" has been deprecated in favor of the Prisma Client.
+
+// We export the Prisma client instance from a central file to be used across the application.
+// This ensures we use a single instance, as recommended by Prisma.
+
+import { prisma } from '@/lib/prisma';
+
+// You can now import `prisma` from `@/lib/database` and use it in your server actions
+// and API routes to interact with the database.
+
+// The getDatabaseAdapter function is no longer needed.
+// Example:
+// import { prisma } from '@/lib/database';
+// const users = await prisma.user.findMany();
+
+// For simplicity and to avoid breaking existing import paths that might still point here,
+// we can re-export the prisma client.
+export { prisma };
+
+// The old adapter logic is maintained below for historical reference but is not used
+// if the project is consistently using the Prisma Client.
+
+/*
 import 'server-only';
 import { FirestoreAdapter } from './database/firestore.adapter';
 import { MySqlAdapter } from './database/mysql.adapter';
@@ -14,11 +40,6 @@ const adapters: { [key: string]: new () => DatabaseAdapter } = {
   SAMPLE_DATA: SampleDataAdapter,
 };
 
-/**
- * Determina dinamicamente qual adaptador de banco de dados usar com base nas variáveis de ambiente.
- * Esta função deve ser chamada dentro de cada Server Action que precisa interagir com o banco de dados.
- * @returns {DatabaseAdapter} Uma instância do adaptador de banco de dados correto.
- */
 export const getDatabaseAdapter = (): DatabaseAdapter => {
   const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
 
@@ -29,6 +50,6 @@ export const getDatabaseAdapter = (): DatabaseAdapter => {
     return new SampleDataAdapter();
   }
 
-  // console.log(`[Database] Usando adaptador para: ${activeSystem}`);
   return new AdapterClass();
 };
+*/
