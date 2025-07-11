@@ -243,6 +243,67 @@ function AuctionInfoDisplay({ auction }: { auction: Auction }) {
     );
 }
 
+function DeleteAuctionButton({ auction, onAction }: { auction: Auction; onAction: () => void; }) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const canDelete = auction.status === 'RASCUNHO';
+  const tooltipContent = canDelete 
+    ? "Excluir este leilão" 
+    : "Não é possível excluir um leilão que já foi iniciado ou possui lotes. Altere o status para 'Rascunho' e remova os lotes primeiro.";
+
+  const handleDelete = async () => {
+    if (!canDelete) return;
+    setIsDeleting(true);
+    const result = await deleteAuction(auction.id);
+    if (result.success) {
+      toast({ title: "Sucesso!", description: result.message });
+      router.push('/admin/auctions');
+    } else {
+      toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
+    }
+    setIsDeleting(false);
+  };
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div> {/* Wrapper div to allow tooltip on disabled button */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" disabled={isDeleting || !canDelete}>
+                  {isDeleting ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                  Excluir
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirmar Exclusão?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação é permanente e não pode ser desfeita. Tem certeza que deseja excluir o leilão "{auction.title}"?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                    {isDeleting ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : null}
+                    Confirmar Exclusão
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{tooltipContent}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 
 export default function EditAuctionPage() {
   const paramsHook = useParams(); 
@@ -253,6 +314,7 @@ export default function EditAuctionPage() {
   const [auctioneers, setAuctioneersList] = React.useState<AuctioneerProfileInfo[]>([]);
   const [sellers, setSellersList] = React.useState<SellerProfileInfo[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isViewMode, setIsViewMode] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
   const { userProfileWithPermissions } = useAuth();
@@ -455,6 +517,13 @@ export default function EditAuctionPage() {
 
   return (
     <div className="space-y-8">
+       <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsViewMode(!isViewMode)}>
+                {isViewMode ? <Edit className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+                {isViewMode ? 'Modo Edição' : 'Modo Visualização'}
+            </Button>
+            <DeleteAuctionButton auction={auction} onAction={fetchPageData} />
+        </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2">
           <AuctionForm
@@ -463,9 +532,11 @@ export default function EditAuctionPage() {
             auctioneers={auctioneers}
             sellers={sellers}
             onSubmitAction={handleUpdateAuction}
-            formTitle="Editar Detalhes do Leilão"
-            formDescription="Modifique as informações principais, datas e configurações do leilão."
+            formTitle={isViewMode ? "Visualizar Leilão" : "Editar Leilão"}
+            formDescription={isViewMode ? "Consulte as informações do leilão abaixo." : "Modifique os detalhes do leilão."}
             submitButtonText="Salvar Alterações do Leilão"
+            isViewMode={isViewMode}
+            onUpdateSuccess={fetchPageData}
           />
         </div>
         <div className="lg:col-span-1 space-y-6 sticky top-24">
@@ -510,3 +581,4 @@ export default function EditAuctionPage() {
     </div>
   );
 }
+
