@@ -81,6 +81,16 @@ export class FirestoreAdapter implements DatabaseAdapter {
         auction.totalLots = auction.lots.length;
         return auction;
     }
+    
+    async createAuction(auctionData: Partial<Auction>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
+        const docRef = this.db.collection('auctions').doc(); // Auto-generate ID
+        await docRef.set({
+            ...auctionData,
+            createdAt: AdminFieldValue.serverTimestamp(),
+            updatedAt: AdminFieldValue.serverTimestamp(),
+        });
+        return { success: true, message: "Leilão criado com sucesso!", auctionId: docRef.id };
+    }
 
     async updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }> {
         await this.db.collection('auctions').doc(id).update({
@@ -88,6 +98,11 @@ export class FirestoreAdapter implements DatabaseAdapter {
             updatedAt: AdminFieldValue.serverTimestamp()
         });
         return { success: true, message: "Leilão atualizado com sucesso." };
+    }
+
+    async deleteAuction(id: string): Promise<{ success: boolean; message: string; }> {
+        await this.db.collection('auctions').doc(id).delete();
+        return { success: true, message: "Leilão excluído com sucesso." };
     }
     
     async getLotsByIds(ids: string[]): Promise<Lot[]> {

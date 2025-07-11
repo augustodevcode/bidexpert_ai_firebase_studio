@@ -15,14 +15,16 @@ export async function getAuction(id: string): Promise<Auction | null> {
 }
 
 export async function createAuction(data: AuctionFormData): Promise<{ success: boolean, message: string, auctionId?: string }> {
-    console.warn("createAuction with sample data adapter is not implemented.");
-    return { success: false, message: "Criação de leilão não implementada para o adaptador de dados de exemplo." };
+    const db = await getDatabaseAdapter();
+    const result = await db.createAuction(data);
+    if (result.success) {
+        revalidatePath('/admin/auctions');
+    }
+    return result;
 }
 
 export async function updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean, message: string }> {
     const db = await getDatabaseAdapter();
-    // This is a simplification. A real adapter would have a deleteAuction method.
-    // @ts-ignore
     const result = await db.updateAuction(id, data);
     if (result.success) {
         revalidatePath('/admin/auctions');
@@ -33,9 +35,11 @@ export async function updateAuction(id: string, data: Partial<AuctionFormData>):
 
 export async function deleteAuction(id: string): Promise<{ success: boolean, message: string }> {
     const db = await getDatabaseAdapter();
-    // This is a simplification. A real adapter would have a deleteAuction method.
-    console.warn("deleteAuction with sample data adapter is not implemented.");
-    return { success: false, message: "Exclusão de leilão não implementada para o adaptador de dados de exemplo." };
+    const result = await db.deleteAuction(id);
+    if (result.success) {
+        revalidatePath('/admin/auctions');
+    }
+    return result;
 }
 
 export async function updateAuctionTitle(id: string, newTitle: string): Promise<{ success: boolean; message: string; }> {

@@ -24,16 +24,13 @@ export async function getDirectSaleOffer(id: string): Promise<DirectSaleOffer | 
 }
 
 export async function createDirectSaleOffer(data: DirectSaleOfferFormData): Promise<{ success: boolean, message: string, offerId?: string }> {
-  console.warn("createDirectSaleOffer with sample data adapter is not fully implemented.");
   return { success: false, message: "Criação de oferta de venda direta não implementada." };
 }
 
 export async function updateDirectSaleOffer(id: string, data: Partial<DirectSaleOfferFormData>): Promise<{ success: boolean, message: string }> {
-  console.warn("updateDirectSaleOffer with sample data adapter is not fully implemented.");
   return { success: false, message: "Atualização de oferta de venda direta não implementada." };
 }
 
 export async function deleteDirectSaleOffer(id: string): Promise<{ success: boolean, message: string }> {
-  console.warn("deleteDirectSaleOffer with sample data adapter is not fully implemented.");
   return { success: false, message: "Exclusão de oferta de venda direta não implementada." };
 }

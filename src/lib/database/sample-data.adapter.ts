@@ -1,5 +1,5 @@
 // src/lib/database/sample-data.adapter.ts
-import type { DatabaseAdapter, UserWin, DirectSaleOffer, Lot, UserProfileData, Role } from '@/types';
+import type { DatabaseAdapter, UserWin, DirectSaleOffer, Lot, UserProfileData, Role, Auction } from '@/types';
 import { 
     sampleLots, sampleAuctions, sampleUsers, sampleRoles, sampleLotCategories, 
     sampleSubcategories, sampleAuctioneers, sampleSellers, sampleStates, sampleCities, 
@@ -89,8 +89,8 @@ export class SampleDataAdapter implements DatabaseAdapter {
             : Promise.resolve({ success: false, message: "Lote não encontrado." });
     }
     
-    // Implement other methods as needed, mirroring the interface...
      async getAuctions(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.auctions))); }
+     
      async getAuction(id: string): Promise<any | null> {
          const auction = this.data.auctions.find(a => a.id === id || a.publicId === id);
          if (auction) {
@@ -99,6 +99,40 @@ export class SampleDataAdapter implements DatabaseAdapter {
          }
          return Promise.resolve(auction ? JSON.parse(JSON.stringify(auction)) : null);
      }
+     
+    async createAuction(auctionData: Partial<Auction>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
+        const newId = `auc-${Math.random().toString(36).substring(2, 10)}`;
+        const newAuction = {
+            ...auctionData,
+            id: newId,
+            publicId: `AUC-PUB-${newId.substring(4, 12)}`,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            lots: [],
+            totalLots: 0,
+            status: auctionData.status || 'RASCUNHO',
+        };
+        this.data.auctions.push(newAuction);
+        return Promise.resolve({ success: true, message: 'Leilão criado com sucesso!', auctionId: newId });
+    }
+    
+    async updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }> {
+        const index = this.data.auctions.findIndex(a => a.id === id || a.publicId === id);
+        if (index > -1) {
+            this.data.auctions[index] = { ...this.data.auctions[index], ...updates, updatedAt: new Date().toISOString() };
+            return Promise.resolve({ success: true, message: 'Leilão atualizado com sucesso!' });
+        }
+        return Promise.resolve({ success: false, message: 'Leilão não encontrado.' });
+    }
+
+    async deleteAuction(id: string): Promise<{ success: boolean; message: string; }> {
+        const initialLength = this.data.auctions.length;
+        this.data.auctions = this.data.auctions.filter(a => a.id !== id && a.publicId !== id);
+        return this.data.auctions.length < initialLength
+            ? Promise.resolve({ success: true, message: 'Leilão excluído com sucesso.' })
+            : Promise.resolve({ success: false, message: 'Leilão não encontrado.' });
+    }
+
      async getAuctioneers(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.auctioneers))); }
      async getLotCategories(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.lotCategories))); }
      

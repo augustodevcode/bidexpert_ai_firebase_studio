@@ -22,17 +22,14 @@ export async function getBem(id: string): Promise<Bem | null> {
 }
 
 export async function createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
-    console.warn("createBem with sample data adapter is not fully implemented.");
     return { success: false, message: "Criação de bem não implementada para este adaptador." };
 }
 
 export async function updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("updateBem with sample data adapter is not fully implemented.");
     return { success: false, message: "Atualização de bem não implementada para este adaptador." };
 }
 
 export async function deleteBem(id: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("deleteBem with sample data adapter is not fully implemented.");
     return { success: false, message: "Exclusão de bem não implementada para este adaptador." };
 }
 

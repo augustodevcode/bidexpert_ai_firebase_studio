@@ -38,16 +38,13 @@ export async function getJudicialProcess(id: string): Promise<JudicialProcess | 
 }
 
 export async function createJudicialProcessAction(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
-    console.warn("createJudicialProcessAction with sample data adapter is not fully implemented.");
     return { success: false, message: "Criação de processo judicial não implementada para este adaptador." };
 }
 
 export async function updateJudicialProcessAction(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> {
-     console.warn("updateJudicialProcessAction with sample data adapter is not fully implemented.");
     return { success: false, message: "Atualização de processo judicial não implementada para este adaptador." };
 }
 
 export async function deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string; }> {
-     console.warn("deleteJudicialProcess with sample data adapter is not fully implemented.");
     return { success: false, message: "Exclusão de processo judicial não implementada para este adaptador." };
 }

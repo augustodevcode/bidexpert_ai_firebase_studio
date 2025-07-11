@@ -27,16 +27,13 @@ export async function getDocumentTemplate(id: string): Promise<DocumentTemplate 
 }
 
 export async function createDocumentTemplate(data: DocumentTemplateFormData): Promise<{ success: boolean; message: string; templateId?: string; }> {
-     console.warn("createDocumentTemplate with sample data adapter is not fully implemented.");
     return { success: false, message: "Criação de template não implementada." };
 }
 
 export async function updateDocumentTemplate(id: string, data: Partial<DocumentTemplateFormData>): Promise<{ success: boolean; message: string; }> {
-     console.warn("updateDocumentTemplate with sample data adapter is not fully implemented.");
     return { success: false, message: "Atualização de template não implementada." };
 }
 
 export async function deleteDocumentTemplate(id: string): Promise<{ success: boolean; message: string; }> {
-     console.warn("deleteDocumentTemplate with sample data adapter is not fully implemented.");
     return { success: false, message: "Exclusão de template não implementada." };
 }

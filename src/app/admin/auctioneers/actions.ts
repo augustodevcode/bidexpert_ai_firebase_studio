@@ -31,16 +31,13 @@ export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promi
 }
 
 export async function createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean, message: string, auctioneerId?: string }> {
-    console.warn("createAuctioneer with sample data adapter is not implemented.");
     return { success: false, message: "Criação de leiloeiro não implementada para o adaptador de dados de exemplo." };
 }
 
 export async function updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean, message: string }> {
-    console.warn("updateAuctioneer with sample data adapter is not implemented.");
     return { success: false, message: "Atualização de leiloeiro não implementada para o adaptador de dados de exemplo." };
 }
 
 export async function deleteAuctioneer(id: string): Promise<{ success: boolean, message: string }> {
-    console.warn("deleteAuctioneer with sample data adapter is not implemented.");
     return { success: false, message: "Exclusão de leiloeiro não implementada para o adaptador de dados de exemplo." };
 }

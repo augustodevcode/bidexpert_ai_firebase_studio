@@ -97,6 +97,10 @@ export class MySqlAdapter implements DatabaseAdapter {
         }
     }
 
+    async createAuction(auctionData: Partial<Auction>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
+        return this._notImplemented('createAuction');
+    }
+
     async updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }> {
        if (!this.pool) {
             return { success: false, message: "Conexão com o banco de dados não disponível." };
@@ -128,6 +132,10 @@ export class MySqlAdapter implements DatabaseAdapter {
        } finally {
            connection.release();
        }
+    }
+
+    async deleteAuction(id: string): Promise<{ success: boolean, message: string }> {
+        return this._notImplemented('deleteAuction');
     }
     
     getLot(id: string): Promise<any | null> { return this._notImplemented('getLot'); }

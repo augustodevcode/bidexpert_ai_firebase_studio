@@ -41,21 +41,13 @@ export async function getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]
 
 
 export async function createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
-    const db = await getDatabaseAdapter();
-    // This is a simplification. The adapter should handle the creation logic.
-    // For sample data, this action might not be fully implemented.
-    console.warn("createSeller with sample data adapter is not fully implemented.");
     return { success: false, message: "Criação não implementada para o adaptador de dados de exemplo." };
 }
 
 export async function updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
-    const db = await getDatabaseAdapter();
-    console.warn("updateSeller with sample data adapter is not fully implemented.");
     return { success: false, message: "Atualização não implementada para o adaptador de dados de exemplo." };
 }
 
 export async function deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
-    const db = await getDatabaseAdapter();
-    console.warn("deleteSeller with sample data adapter is not fully implemented.");
     return { success: false, message: "Exclusão não implementada para o adaptador de dados de exemplo." };
 }
