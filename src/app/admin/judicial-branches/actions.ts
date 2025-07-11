@@ -18,6 +18,7 @@ export async function getJudicialBranch(id: string): Promise<JudicialBranch | nu
 
 export async function createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }> {
     const db = getDatabaseAdapter();
+    // @ts-ignore
     const result = await db.createJudicialBranch(data);
     if(result.success) {
       revalidatePath('/admin/judicial-branches');

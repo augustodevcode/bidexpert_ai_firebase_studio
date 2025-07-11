@@ -28,7 +28,7 @@ function convertKeysToCamelCase<T extends {}>(obj: any): T {
 }
 
 
-function convertKeysToSnakeCase(obj: Record<string, any>): Record<string, any> {
+function convertObjectToSnakeCase(obj: Record<string, any>): Record<string, any> {
     const newObj: Record<string, any> = {};
     for (const key in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
@@ -126,7 +126,7 @@ export class MySqlAdapter implements DatabaseAdapter {
       dataToInsert['created_at'] = new Date();
       dataToInsert['updated_at'] = new Date();
       
-      const snakeCaseData = convertKeysToSnakeCase(dataToInsert);
+      const snakeCaseData = convertObjectToSnakeCase(dataToInsert);
 
       const fields = Object.keys(snakeCaseData).map(k => `\`${k}\``).join(', ');
       const placeholders = Object.keys(snakeCaseData).map(() => '?').join(', ');
@@ -145,7 +145,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         if (updates.name && !updates.slug) updates.slug = slugify(updates.name);
         if (updates.title && !updates.slug) updates.slug = slugify(updates.title);
 
-        const snakeCaseUpdates = convertKeysToSnakeCase(updates);
+        const snakeCaseUpdates = convertObjectToSnakeCase(updates);
         
         const fieldsToUpdate = Object.keys(snakeCaseUpdates).map(key => `\`${key}\` = ?`).join(', ');
         const values = Object.values(snakeCaseUpdates);
@@ -155,6 +155,8 @@ export class MySqlAdapter implements DatabaseAdapter {
         const sql = `UPDATE \`${tableName}\` SET ${fieldsToUpdate} WHERE id = ?`;
         return this.executeMutation(sql, [...values, id]);
     }
+
+    // --- ENTITY IMPLEMENTATIONS ---
 
     async getLots(auctionId?: string): Promise<Lot[]> {
         let sql = 'SELECT * FROM `lots`';
@@ -190,15 +192,15 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async getBens(filter?: { judicialProcessId?: string; sellerId?: string; }): Promise<Bem[]> {
-        let sql = 'SELECT * FROM `bens`';
+        let sql = 'SELECT b.*, cat.name as category_name, sub.name as subcategory_name FROM `bens` b LEFT JOIN `lot_categories` cat ON b.category_id = cat.id LEFT JOIN `subcategories` sub ON b.subcategory_id = sub.id';
         const params = [];
         const whereClauses = [];
         if (filter?.judicialProcessId) {
-            whereClauses.push('`judicial_process_id` = ?');
+            whereClauses.push('b.`judicial_process_id` = ?');
             params.push(filter.judicialProcessId);
         }
         if (filter?.sellerId) {
-            whereClauses.push('`seller_id` = ?');
+            whereClauses.push('b.`seller_id` = ?');
             params.push(filter.sellerId);
         }
         if (whereClauses.length > 0) {
@@ -274,7 +276,6 @@ export class MySqlAdapter implements DatabaseAdapter {
         return this.executeQueryForSingle('SELECT * FROM `subcategories` WHERE `id` = ?', [id]);
     }
 
-
     async getSellers(): Promise<SellerProfileInfo[]> { return this.executeQuery('SELECT * FROM `sellers` ORDER BY `name`'); }
     async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { return this.executeQuery('SELECT * FROM `auctioneers` ORDER BY `name`'); }
     
@@ -309,19 +310,20 @@ export class MySqlAdapter implements DatabaseAdapter {
         }
         return settings;
     }
-    
-    async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> {
-      return this.genericCreate('states', data, `state-${data.uf.toLowerCase()}`);
-    }
 
-    async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> {
-        return this.genericCreate('cities', data, 'city');
-    }
+    async getCourts(): Promise<Court[]> { return this.executeQuery('SELECT * FROM `courts` ORDER BY `name`'); }
+    async getJudicialDistricts(): Promise<JudicialDistrict[]> { return this.executeQuery('SELECT * FROM `judicial_districts` ORDER BY `name`'); }
+    async getJudicialBranches(): Promise<JudicialBranch[]> { return this.executeQuery('SELECT * FROM `judicial_branches` ORDER BY `name`'); }
+    async getJudicialProcesses(): Promise<JudicialProcess[]> { return this.executeQuery('SELECT * FROM `judicial_processes` ORDER BY `created_at` DESC'); }
 
     async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> {
       return this.genericCreate('courts', data, 'court');
     }
 
+    async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> {
+        return this.genericUpdate('courts', id, data);
+    }
+    
     async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> {
         return this.genericCreate('judicial_districts', data, 'dist');
     }
@@ -339,6 +341,14 @@ export class MySqlAdapter implements DatabaseAdapter {
             }
         }
         return result;
+    }
+    
+    async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> {
+      return this.genericCreate('states', data, `state-${data.uf.toLowerCase()}`);
+    }
+
+    async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> {
+        return this.genericCreate('cities', data, 'city');
     }
 
     async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
@@ -385,13 +395,6 @@ export class MySqlAdapter implements DatabaseAdapter {
         return result;
     }
     
-     async _notImplemented(method: string): Promise<any> {
-        if (this.connectionError) return Promise.resolve(method.endsWith('s') ? [] : null);
-        const message = `[MySqlAdapter] Método ${method} não implementado.`;
-        console.warn(message);
-        return Promise.resolve(method.endsWith('s') ? [] : null);
-    }
-    
     updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('users', userId, { role_id: roleId }); }
     createMediaItem(item: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> { return this._notImplemented('createMediaItem'); }
     
@@ -411,15 +414,22 @@ export class MySqlAdapter implements DatabaseAdapter {
       return this.executeMutation('DELETE FROM `cities` WHERE id = ?', [id]);
     }
     
-    async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string }> {
+    async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> {
         return this.genericUpdate('subcategories', id, data);
     }
 
-    async deleteSubcategory(id: string): Promise<{ success: boolean; message: string }> {
+    async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> {
        return this.executeMutation('DELETE FROM `subcategories` WHERE id = ?', [id]);
     }
 
-    async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string }> {
+    async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> {
       return this.genericUpdate('courts', id, data);
+    }
+
+    async _notImplemented(method: string): Promise<any> {
+        if (this.connectionError) return Promise.resolve(method.endsWith('s') ? [] : null);
+        const message = `[MySqlAdapter] Método ${method} não implementado.`;
+        console.warn(message);
+        return Promise.resolve(method.endsWith('s') ? [] : null);
     }
 }

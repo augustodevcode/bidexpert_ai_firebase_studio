@@ -1,3 +1,4 @@
+
 // src/lib/database/postgres.adapter.ts
 import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, CityFormData, StateFormData } from '@/types';
 import { Pool, type QueryResult } from 'pg';
@@ -128,7 +129,14 @@ export class PostgresAdapter implements DatabaseAdapter {
     async getUserProfileData(userId: string): Promise<UserProfileData | null> { return this.executeQueryForSingle('SELECT u.*, r.name as "roleName", r.permissions FROM "User" u LEFT JOIN "Role" r ON u."roleId" = r.id WHERE u.id = $1 OR u.uid = $1', [userId]); }
     async getRoles(): Promise<Role[]> { return this.executeQuery('SELECT * FROM "Role" ORDER BY "name"'); }
     async getMediaItems(): Promise<MediaItem[]> { return this.executeQuery('SELECT * FROM "MediaItem" ORDER BY "uploadedAt" DESC'); }
-    async getPlatformSettings(): Promise<PlatformSettings | null> { return this.executeQueryForSingle('SELECT * FROM "PlatformSettings" WHERE id = $1', ['global']); }
+    async getPlatformSettings(): Promise<PlatformSettings | null> {
+        const settings = await this.executeQueryForSingle('SELECT * FROM "PlatformSettings" WHERE id = $1', ['global']);
+        if (!settings) {
+            return null;
+        }
+        // PostgreSQL JSON/JSONB columns are often automatically parsed
+        return settings;
+    }
     async getSubcategoriesByParent(parentCategoryId: string): Promise<Subcategory[]> { return this.executeQuery('SELECT * FROM "Subcategory" WHERE "parentCategoryId" = $1 ORDER BY "displayOrder"', [parentCategoryId]); }
     async getSubcategory(id: string): Promise<Subcategory | null> { return this.executeQueryForSingle('SELECT * FROM "Subcategory" WHERE id = $1', [id]); }
     getBens(filter?: { judicialProcessId?: string | undefined; sellerId?: string | undefined; }): Promise<Bem[]> { return this._notImplemented('getBens'); }

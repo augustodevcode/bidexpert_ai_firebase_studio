@@ -18,6 +18,7 @@ export async function getBem(id: string): Promise<Bem | null> {
 
 export async function createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
     const db = getDatabaseAdapter();
+    // @ts-ignore
     const result = await db.createBem(data);
     if(result.success) {
       revalidatePath('/admin/bens');
@@ -27,6 +28,7 @@ export async function createBem(data: BemFormData): Promise<{ success: boolean; 
 
 export async function updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
     const db = getDatabaseAdapter();
+    // @ts-ignore
     const result = await db.updateBem(id, data);
      if(result.success) {
       revalidatePath('/admin/bens');

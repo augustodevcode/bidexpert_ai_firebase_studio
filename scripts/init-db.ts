@@ -1,7 +1,8 @@
+
 // scripts/init-db.ts
 import dotenv from 'dotenv';
 import path from 'path';
-import { getDatabaseAdapter } from '../src/lib/database'; // Corrigido o caminho
+import { getDatabaseAdapter } from '../src/lib/database';
 import fs from 'fs';
 import mysql, { type Pool } from 'mysql2/promise';
 import { sampleRoles, samplePlatformSettings, sampleLotCategories, sampleSubcategories, sampleStates, sampleCities, sampleCourts, sampleJudicialDistricts, sampleJudicialBranches } from '../src/lib/sample-data';
@@ -19,24 +20,23 @@ async function executeSchema(pool: Pool) {
         return;
     }
     const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+    // Split by semicolon, but handle cases where it's inside quotes or comments (basic version)
     const statements = schemaSql.split(/;\s*$/m).filter(s => s.trim().length > 0);
     
     const connection = await pool.getConnection();
     try {
         console.log("Listando tabelas existentes antes da execução...");
         const [rows] = await connection.query('SHOW TABLES;');
-        const existingTables = (rows as any[]).map(row => Object.values(row)[0]);
-        console.table(existingTables);
+        console.table((rows as any[]).map(row => Object.values(row)[0]));
 
         for (const statement of statements) {
             const tableNameMatch = statement.match(/CREATE TABLE IF NOT EXISTS `([^`]*)`/i);
             const tableName = tableNameMatch ? tableNameMatch[1] : 'desconhecida';
             try {
                 await connection.query(statement);
-                console.log(`✅ SUCESSO: Tabela '${tableName}' criada ou já existente.`);
+                console.log(`✅ SUCESSO DDL: Tabela '${tableName}' processada.`);
             } catch (error: any) {
-                console.error(`❌ ERRO ao executar para a tabela '${tableName}': ${error.message}`);
-                // Decidir se quer parar ou continuar em caso de erro. Por enquanto, continua.
+                console.error(`❌ ERRO DDL na tabela '${tableName}': ${error.message}`);
             }
         }
         console.log("--- Execução do Schema SQL finalizada ---");
@@ -50,57 +50,31 @@ async function executeSchema(pool: Pool) {
 
 async function seedEssentialData(db: any) {
     console.log('\n--- Semeando Dados Essenciais ---');
-    // Check if seeding is necessary by looking for roles
-    const roles = await db.getRoles();
-    if (roles && roles.length > 0) {
-        console.log("Dados essenciais (Perfis) já existem. Pulando semeadura.");
-        return;
-    }
+    try {
+        // Platform Settings
+        const settings = await db.getPlatformSettings();
+        if (!settings) {
+            console.log("Inserindo configurações da plataforma...");
+            await db.updatePlatformSettings(samplePlatformSettings);
+            console.log("✅ SUCESSO DML: Configurações da plataforma inseridas.");
+        } else {
+            console.log("Dados essenciais (Platform Settings) já existem. Pulando.");
+        }
 
-    console.log('Populando dados essenciais pela primeira vez...');
-
-    if (db.createRole) {
-        console.log('Seeding Roles...');
-        for (const role of sampleRoles) await db.createRole(role);
-        console.log(`${sampleRoles.length} roles inseridos.`);
-    }
-
-    if (db.updatePlatformSettings) {
-        console.log('Seeding Platform Settings...');
-        await db.updatePlatformSettings(samplePlatformSettings);
-        console.log('Configurações globais inseridas.');
-    }
-    
-    if (db.createState) {
-        console.log('Seeding States...');
-        for (const state of sampleStates) await db.createState(state);
-        console.log(`${sampleStates.length} estados inseridos.`);
-    }
-
-    if (db.createCity) {
-        console.log('Seeding Cities...');
-        for (const city of sampleCities) await db.createCity(city);
-        console.log(`${sampleCities.length} cidades inseridas.`);
-    }
-
-    if (db.createLotCategory) {
-        console.log('Seeding Categories...');
-        for (const category of sampleLotCategories) await db.createLotCategory(category);
-        console.log(`${sampleLotCategories.length} categorias inseridas.`);
-    }
-
-    if (db.createSubcategory) {
-        console.log('Seeding Subcategories...');
-        for (const subcategory of sampleSubcategories) await db.createSubcategory(subcategory);
-        console.log(`${sampleSubcategories.length} subcategorias inseridas.`);
-    }
-    
-    if (db.createCourt && db.createJudicialDistrict && db.createJudicialBranch) {
-        console.log('Seeding Judicial Entities...');
-        for (const court of sampleCourts) await db.createCourt(court);
-        for (const district of sampleJudicialDistricts) await db.createJudicialDistrict(district);
-        for (const branch of sampleJudicialBranches) await db.createJudicialBranch(branch);
-        console.log('Entidades judiciais inseridas.');
+        // Roles
+        console.log("Verificando perfis (roles)...");
+        const roles = await db.getRoles();
+        if (!roles || roles.length === 0) {
+            console.log("Populando perfis (roles)...");
+            if (db.createRole) {
+                for (const role of sampleRoles) await db.createRole(role);
+                console.log(`✅ SUCESSO DML: ${sampleRoles.length} roles inseridos.`);
+            }
+        } else {
+            console.log("Perfis (Roles) já existem. Pulando.");
+        }
+    } catch (error: any) {
+        console.error(`❌ ERRO DML ao semear dados essenciais: ${error.message}`);
     }
     
     console.log('--- Semeadura de Dados Essenciais Finalizada ---');
@@ -110,6 +84,8 @@ async function seedEssentialData(db: any) {
 async function initializeDatabase() {
   console.log('🚀 Iniciando script de inicialização do banco de dados...');
   const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM;
+  console.log(`Sistema de banco de dados ativo: ${activeSystem}`);
+
 
   if (activeSystem !== 'MYSQL' && activeSystem !== 'POSTGRES') {
       console.log(`🟡 DB_INIT: Pulando inicialização para o sistema: ${activeSystem}.`);

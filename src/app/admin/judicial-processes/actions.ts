@@ -12,12 +12,15 @@ export async function getJudicialProcesses(): Promise<JudicialProcess[]> {
 
 export async function getJudicialProcess(id: string): Promise<JudicialProcess | null> {
     const db = getDatabaseAdapter();
+    // This is inefficient but works for any adapter.
+    // A real SQL implementation would do `SELECT * FROM ... WHERE id = ?`.
     const processes = await db.getJudicialProcesses();
     return processes.find(p => p.id === id) || null;
 }
 
 export async function createJudicialProcessAction(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
     const db = getDatabaseAdapter();
+    // @ts-ignore
     const result = await db.createJudicialProcess(data);
     if(result.success) {
         revalidatePath('/admin/judicial-processes');

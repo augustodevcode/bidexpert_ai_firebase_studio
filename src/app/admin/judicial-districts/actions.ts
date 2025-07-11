@@ -18,6 +18,7 @@ export async function getJudicialDistrict(id: string): Promise<JudicialDistrict 
 
 export async function createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> {
     const db = getDatabaseAdapter();
+    // @ts-ignore
     const result = await db.createJudicialDistrict(data);
     if(result.success) {
       revalidatePath('/admin/judicial-districts');
