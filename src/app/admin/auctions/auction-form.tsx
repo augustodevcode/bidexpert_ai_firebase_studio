@@ -108,13 +108,12 @@ export default function AuctionForm({
       automaticBiddingEnabled: initialData?.automaticBiddingEnabled || false,
       silentBiddingEnabled: initialData?.silentBiddingEnabled || false,
       allowMultipleBidsPerUser: initialData?.allowMultipleBidsPerUser === false ? false : true,
-      allowInstallmentBids: initialData?.allowInstallmentBids || false,
       softCloseEnabled: initialData?.softCloseEnabled || false,
       softCloseMinutes: initialData?.softCloseMinutes || 2,
       estimatedRevenue: initialData?.estimatedRevenue || undefined,
       isFeaturedOnMarketplace: initialData?.isFeaturedOnMarketplace || false,
       marketplaceAnnouncementTitle: initialData?.marketplaceAnnouncementTitle || '',
-      auctionStages: initialData?.auctionStages?.map(stage => ({ ...stage, endDate: new Date(stage.endDate as Date), initialPrice: stage.initialPrice || undefined })) || [{ name: '1ª Praça', endDate: new Date(), initialPrice: undefined }],
+      auctionStages: initialData?.auctionStages?.map(stage => ({ ...stage, endDate: new Date(stage.endDate as Date) })) || [{ name: '1ª Praça', endDate: new Date() }],
       decrementAmount: initialData?.decrementAmount || undefined,
       decrementIntervalSeconds: initialData?.decrementIntervalSeconds || undefined,
       floorPrice: initialData?.floorPrice || undefined,
@@ -482,21 +481,10 @@ export default function AuctionForm({
                     )}
                   />
                 </div>
-                <FormField
-                  control={form.control}
-                  name={`auctionStages.${index}.initialPrice`}
-                  render={({ field: stageField }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs">Lance Inicial da Praça (Opcional)</FormLabel>
-                      <FormControl><Input type="number" {...stageField} placeholder="Ex: 50000.00" value={stageField.value ?? ''} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </Card>
             ))}
             {!isViewMode && (
-                <Button type="button" variant="outline" size="sm" onClick={() => append({ name: `${fields.length + 1}ª Praça`, endDate: new Date(), initialPrice: undefined })} className="text-xs">
+                <Button type="button" variant="outline" size="sm" onClick={() => append({ name: `${fields.length + 1}ª Praça`, endDate: new Date() })} className="text-xs">
                     <PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa
                 </Button>
             )}
@@ -672,19 +660,7 @@ export default function AuctionForm({
                     )}
                 />
             )}
-            <FormField
-                control={form.control}
-                name="allowInstallmentBids"
-                render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background">
-                    <div className="space-y-0.5">
-                        <FormLabel>Permitir Lance Parcelado</FormLabel>
-                        <FormDescription>Habilitar opção de lances parcelados para este leilão?</FormDescription>
-                    </div>
-                    <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                    </FormItem>
-                )}
-            />
+            
              <FormField
                 control={form.control}
                 name="estimatedRevenue"

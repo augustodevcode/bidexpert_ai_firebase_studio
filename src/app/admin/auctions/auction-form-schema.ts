@@ -66,7 +66,6 @@ export const auctionFormSchema = z.object({
   automaticBiddingEnabled: z.boolean().optional().default(false),
   silentBiddingEnabled: z.boolean().optional().default(false),
   allowMultipleBidsPerUser: z.boolean().optional().default(true),
-  allowInstallmentBids: z.boolean().optional().default(false),
   softCloseEnabled: z.boolean().optional().default(false), 
   softCloseMinutes: z.coerce.number().int().min(1, "Mínimo de 1 minuto").max(30, "Máximo de 30 minutos").optional().default(2), 
   estimatedRevenue: z.coerce.number().positive({message: "Estimativa deve ser positiva."}).optional().nullable(),
@@ -77,7 +76,6 @@ export const auctionFormSchema = z.object({
       name: z.string().min(1, "Nome da praça é obrigatório"),
       endDate: z.date({ required_error: "Data de encerramento da praça é obrigatória" }),
       statusText: z.string().optional(),
-      initialPrice: z.coerce.number().positive("Lance inicial da praça deve ser positivo").optional(),
     })
   ).optional().default([]),
   decrementAmount: z.coerce.number().positive("O valor do decremento deve ser positivo.").optional().nullable(),

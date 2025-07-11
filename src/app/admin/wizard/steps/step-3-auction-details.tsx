@@ -24,7 +24,6 @@ import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline'
 import { Card } from '@/components/ui/card';
 
 interface Step3AuctionDetailsProps {
-  categories: LotCategory[];
   auctioneers: AuctioneerProfileInfo[];
   sellers: SellerProfileInfo[];
 }
@@ -40,18 +39,16 @@ const auctionDetailsSchema = z.object({
     z.object({
       name: z.string().min(1, "Nome da praça é obrigatório"),
       endDate: z.date({ required_error: "Data de encerramento da praça é obrigatória" }),
-      initialPrice: z.coerce.number().positive("Lance inicial da praça deve ser positivo").optional(),
     })
   ).optional(),
   automaticBiddingEnabled: z.boolean().optional().default(false),
-  allowInstallmentBids: z.boolean().optional().default(false),
   softCloseEnabled: z.boolean().optional().default(false),
   softCloseMinutes: z.coerce.number().int().min(1).max(30).optional().default(2),
 });
 
 type FormValues = z.infer<typeof auctionDetailsSchema>;
 
-export default function Step3AuctionDetails({ categories, auctioneers, sellers }: Step3AuctionDetailsProps) {
+export default function Step3AuctionDetails({ auctioneers, sellers }: Step3AuctionDetailsProps) {
   const { wizardData, setWizardData } = useWizard();
 
   const form = useForm<FormValues>({
@@ -65,7 +62,6 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
       endDate: wizardData.auctionDetails?.endDate ? new Date(wizardData.auctionDetails.endDate) : undefined,
       auctionStages: wizardData.auctionDetails?.auctionStages?.map(stage => ({...stage, endDate: new Date(stage.endDate as Date)})) || [{ name: '1ª Praça', endDate: new Date() }],
       automaticBiddingEnabled: wizardData.auctionDetails?.automaticBiddingEnabled || false,
-      allowInstallmentBids: wizardData.auctionDetails?.allowInstallmentBids || false,
       softCloseEnabled: wizardData.auctionDetails?.softCloseEnabled || false,
       softCloseMinutes: wizardData.auctionDetails?.softCloseMinutes || 2,
     }
@@ -151,7 +147,6 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
              <Separator />
             <h3 className="text-md font-semibold text-muted-foreground pt-2">Opções Adicionais</h3>
             <FormField control={form.control} name="automaticBiddingEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Robô de Lances</FormLabel><FormDescription className="text-xs">Permitir lances automáticos (robô)?</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-            <FormField control={form.control} name="allowInstallmentBids" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Lance Parcelado</FormLabel><FormDescription className="text-xs">Permitir lances parcelados?</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
             <FormField control={form.control} name="softCloseEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel className="flex items-center gap-2"><Zap className="h-4 w-4 text-amber-500" /> Soft-Close</FormLabel><FormDescription className="text-xs">Estender o tempo final com novos lances?</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
             {softCloseEnabled && (
                  <FormField control={form.control} name="softCloseMinutes" render={({ field }) => (
