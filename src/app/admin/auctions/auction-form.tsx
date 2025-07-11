@@ -97,7 +97,6 @@ export default function AuctionForm({
       description: initialData?.description || '',
       status: initialData?.status || 'RASCUNHO',
       auctionType: initialData?.auctionType || undefined,
-      category: initialData?.category || '',
       auctioneer: initialData?.auctioneer || '', 
       seller: initialData?.seller || '',       
       auctionDate: initialData?.auctionDate ? new Date(initialData.auctionDate as Date) : new Date(),
@@ -338,32 +337,6 @@ export default function AuctionForm({
             )}
             <div className="grid md:grid-cols-2 gap-6">
                 <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Categoria Principal</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                            <SelectTrigger>
-                            <SelectValue placeholder="Selecione a categoria" />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                           {categories.length === 0 ? (
-                             <p className="p-2 text-sm text-muted-foreground">Nenhuma categoria cadastrada</p>
-                           ) : (
-                             categories.map(cat => (
-                               <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                             ))
-                           )}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
                   control={form.control}
                   name="auctioneer"
                   render={({ field }) => (
@@ -389,34 +362,34 @@ export default function AuctionForm({
                     </FormItem>
                   )}
                 />
+                <FormField
+                    control={form.control}
+                    name="seller"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Comitente/Vendedor Principal (Opcional)</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl>
+                            <SelectTrigger>
+                            <SelectValue placeholder="Selecione o comitente" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {uniqueSellers.length === 0 ? (
+                                <p className="p-2 text-sm text-muted-foreground">Nenhum comitente cadastrado</p>
+                            ) : (
+                            uniqueSellers.map(sel => (
+                                <SelectItem key={sel.id} value={sel.name}>{sel.name}</SelectItem>
+                            ))
+                            )}
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
             </div>
-             <FormField
-                control={form.control}
-                name="seller"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Comitente/Vendedor Principal (Opcional)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o comitente" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                         {uniqueSellers.length === 0 ? (
-                            <p className="p-2 text-sm text-muted-foreground">Nenhum comitente cadastrado</p>
-                          ) : (
-                           uniqueSellers.map(sel => (
-                            <SelectItem key={sel.id} value={sel.name}>{sel.name}</SelectItem>
-                          ))
-                         )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
-
+            
             <Separator />
              <FormField
                 control={form.control}

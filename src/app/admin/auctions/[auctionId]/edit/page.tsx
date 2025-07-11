@@ -1,4 +1,5 @@
 
+
 'use client'; 
 
 import AuctionForm from '../../auction-form';
@@ -208,7 +209,6 @@ function AuctionInfoDisplay({ auction }: { auction: Auction }) {
                     <p><strong>Data Início:</strong> {auction.auctionDate ? format(new Date(auction.auctionDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'N/A'}</p>
                     <p><strong>Data Fim (Estimada):</strong> {auction.endDate ? format(new Date(auction.endDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'Não definida'}</p>
                     {auction.endDate && !isPast(new Date(auction.endDate as string)) && <p><strong>Tempo Restante:</strong> {getDaysRemaining(auction.endDate)}</p>}
-                    <p><strong>Categoria:</strong> {auction.category}</p>
                     <p><strong>Leiloeiro:</strong> {auction.auctioneer}</p>
                     <p><strong>Comitente:</strong> {auction.seller || 'N/A'}</p>
                 </CardContent>

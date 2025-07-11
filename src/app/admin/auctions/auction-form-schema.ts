@@ -52,7 +52,6 @@ export const auctionFormSchema = z.object({
   auctionType: z.enum(auctionTypeValues, {
     errorMap: () => ({ message: "Por favor, selecione uma modalidade válida."}),
   }).optional(),
-  category: z.string().min(1, { message: "A categoria é obrigatória."}).max(100),
   auctioneer: z.string().min(1, { message: "O nome do leiloeiro é obrigatório."}).max(150),
   seller: z.string().max(150).optional(),
   auctionDate: z.date({
