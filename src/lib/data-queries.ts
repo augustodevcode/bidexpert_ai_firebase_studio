@@ -6,7 +6,7 @@
  */
 'use server';
 
-import { getDatabaseAdapter } from './database';
+import { getDatabaseAdapter } from './database/index';
 import type { 
     Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, 
     SellerProfileInfo, MediaItem, PlatformSettings, Bem, Subcategory
