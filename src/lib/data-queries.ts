@@ -14,7 +14,7 @@ import type {
 
 
 export async function fetchPlatformSettings(): Promise<PlatformSettings> {
-  const db = await getDatabaseAdapter();
+  const db = getDatabaseAdapter();
   const settings = await db.getPlatformSettings();
   if (!settings) {
     throw new Error("Platform settings could not be loaded.");

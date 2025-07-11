@@ -7,8 +7,6 @@
 // We export the Prisma client instance from a central file to be used across the application.
 // This ensures we use a single instance, as recommended by Prisma.
 
-import { prisma } from '@/lib/prisma';
-
 // You can now import `prisma` from `@/lib/database` and use it in your server actions
 // and API routes to interact with the database.
 
@@ -19,12 +17,11 @@ import { prisma } from '@/lib/prisma';
 
 // For simplicity and to avoid breaking existing import paths that might still point here,
 // we can re-export the prisma client.
-export { prisma };
+// export { prisma }; // This line is removed to eliminate the prisma dependency.
 
 // The old adapter logic is maintained below for historical reference but is not used
 // if the project is consistently using the Prisma Client.
 
-/*
 import 'server-only';
 import { FirestoreAdapter } from './database/firestore.adapter';
 import { MySqlAdapter } from './database/mysql.adapter';
@@ -40,16 +37,34 @@ const adapters: { [key: string]: new () => DatabaseAdapter } = {
   SAMPLE_DATA: SampleDataAdapter,
 };
 
+let adapterInstance: DatabaseAdapter | null = null;
+let currentDbSystem: string | null = null;
+
+
+/**
+ * Determina dinamicamente qual adaptador de banco de dados usar com base nas variáveis de ambiente.
+ * Esta função deve ser chamada dentro de cada Server Action que precisa interagir com o banco de dados.
+ * A instância do adaptador é armazenada em cache para evitar reinicializações desnecessárias.
+ * @returns {DatabaseAdapter} Uma instância do adaptador de banco de dados correto.
+ */
 export const getDatabaseAdapter = (): DatabaseAdapter => {
   const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
 
+  // Se o sistema não mudou e já temos uma instância, retorne a instância em cache
+  if (adapterInstance && currentDbSystem === activeSystem) {
+    return adapterInstance;
+  }
+  
+  // Se o sistema mudou ou não há instância, crie uma nova
   const AdapterClass = adapters[activeSystem];
 
   if (!AdapterClass) {
     console.error(`Sistema de banco de dados inválido selecionado: ${activeSystem}. Retornando para SAMPLE_DATA.`);
-    return new SampleDataAdapter();
+    adapterInstance = new SampleDataAdapter();
+  } else {
+    adapterInstance = new AdapterClass();
   }
 
-  return new AdapterClass();
+  currentDbSystem = activeSystem;
+  return adapterInstance;
 };
-*/

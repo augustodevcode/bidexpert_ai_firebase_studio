@@ -824,6 +824,15 @@ export interface ConsignorDashboardStats {
 // ============================================================================
 // DATABASE ADAPTER INTERFACE
 // ============================================================================
+export interface SubcategoryFormData {
+  name: string;
+  parentCategoryId: string;
+  description?: string | null;
+  displayOrder?: number;
+  iconUrl?: string | null;
+  iconMediaId?: string | null;
+  dataAiHintIcon?: string | null;
+}
 
 export interface DatabaseAdapter {
     getLots(auctionId?: string): Promise<Lot[]>;
@@ -840,6 +849,13 @@ export interface DatabaseAdapter {
 
     getLotsByIds(ids: string[]): Promise<Lot[]>;
     getLotCategories(): Promise<LotCategory[]>;
+    
+    getSubcategoriesByParent(parentCategoryId: string): Promise<Subcategory[]>;
+    getSubcategory(id: string): Promise<Subcategory | null>;
+    createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string }>;
+    updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string }>;
+    deleteSubcategory(id: string): Promise<{ success: boolean; message: string }>;
+
     getSellers(): Promise<SellerProfileInfo[]>;
     getAuctioneers(): Promise<AuctioneerProfileInfo[]>;
 
