@@ -35,7 +35,7 @@ async function executeSchema(pool: Pool) {
             } catch (error: any) {
                 // Log non-critical errors (like FK errors due to dev) and continue
                 console.error(`[DB INIT - DDL] ❌ ERROR on table '${tableName}': ${error.message}`);
-                console.error(`[DB INIT - DDL] -> Failing SQL: ${statement.substring(0, 300)}...`);
+                console.error(`[DB INIT - DDL] -> Failing SQL:\n${statement}`);
             }
         }
         console.log("--- [DB INIT - DDL] MySQL Schema execution finished ---");
