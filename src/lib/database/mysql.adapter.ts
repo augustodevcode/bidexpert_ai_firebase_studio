@@ -84,7 +84,7 @@ export class MySqlAdapter implements DatabaseAdapter {
             const [rows] = await connection.execute(sql, params);
             return (rows as any[]).map(row => convertKeysToCamelCase(row));
         } catch (error: any) {
-             console.error(`[MySqlAdapter] Erro na query: "${sql.substring(0, 100)}...". Erro: ${error.message}`);
+             console.error(`[MySqlAdapter] Erro na query: "${sql}". Erro: ${error.message}`);
              throw error; 
         } finally {
             connection.release();
@@ -104,7 +104,7 @@ export class MySqlAdapter implements DatabaseAdapter {
             const header = result as ResultSetHeader;
             return { success: true, message: 'Operação realizada com sucesso.', insertId: header.insertId };
         } catch (error: any) {
-            console.error(`[MySqlAdapter] Erro na mutação: "${sql.substring(0, 100)}...". Erro: ${error.message}`);
+            console.error(`[MySqlAdapter] Erro na mutação: "${sql}". Erro: ${error.message}`);
             return { success: false, message: `Erro no banco de dados: ${error.message}` };
         } finally {
             connection.release();
@@ -296,7 +296,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.roleId = r.id';
         const users = await this.executeQuery(sql);
         return users.map(u => {
-            if (u.permissions && typeof u.permissions === 'string') {
+            if (typeof u.permissions === 'string') {
                 try { u.permissions = JSON.parse(u.permissions); } catch(e) { u.permissions = []; }
             } else if (!u.permissions) {
                 u.permissions = [];
@@ -308,7 +308,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     async getUserProfileData(userId: string): Promise<UserProfileData | null> {
         const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.roleId = r.id WHERE u.id = ? OR u.uid = ?';
         const user = await this.executeQueryForSingle(sql, [userId, userId]);
-        if(user && user.permissions && typeof user.permissions === 'string') {
+        if(user && typeof user.permissions === 'string') {
           try { user.permissions = JSON.parse(user.permissions); } catch(e) { user.permissions = []; }
         } else if (user && !user.permissions) {
           user.permissions = [];
@@ -319,7 +319,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     async getRoles(): Promise<Role[]> { 
         const roles = await this.executeQuery('SELECT * FROM `roles` ORDER BY `name`'); 
         return roles.map(r => {
-            if (r.permissions && typeof r.permissions === 'string') {
+            if (typeof r.permissions === 'string') {
                  try { r.permissions = JSON.parse(r.permissions); } catch(e) { r.permissions = []; }
             } else if (!r.permissions) {
                 r.permissions = [];
