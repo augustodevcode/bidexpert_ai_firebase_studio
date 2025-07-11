@@ -1,5 +1,6 @@
+
 // src/lib/database/mysql.adapter.ts
-import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData } from '@/types';
+import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData } from '@/types';
 import mysql, { type Pool, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -184,17 +185,22 @@ export class MySqlAdapter implements DatabaseAdapter {
     async getPlatformSettings(): Promise<PlatformSettings | null> {
         const settings = await this.executeQueryForSingle('SELECT * FROM `platform_settings` WHERE id = ?', ['global']);
         if (!settings) {
-            console.warn("[MySqlAdapter] Configurações da plataforma não encontradas no DB. Retornando dados de exemplo.");
-            return samplePlatformSettings as PlatformSettings;
+            console.warn("[MySqlAdapter] Configurações da plataforma não encontradas no DB. Retornando null.");
+            return null;
         }
-        // Assuming JSON fields need parsing
-        settings.themes = JSON.parse(settings.themes || '[]');
-        settings.homepageSections = JSON.parse(settings.homepageSections || '[]');
-        settings.mentalTriggerSettings = JSON.parse(settings.mentalTriggerSettings || '{}');
-        settings.sectionBadgeVisibility = JSON.parse(settings.sectionBadgeVisibility || '{}');
-        settings.mapSettings = JSON.parse(settings.mapSettings || '{}');
-        settings.variableIncrementTable = JSON.parse(settings.variableIncrementTable || '[]');
-        settings.biddingSettings = JSON.parse(settings.biddingSettings || '{}');
+        try {
+            // Safely parse JSON fields
+            const fieldsToParse = ['themes', 'homepageSections', 'mentalTriggerSettings', 'sectionBadgeVisibility', 'mapSettings', 'variableIncrementTable', 'biddingSettings'];
+            for (const field of fieldsToParse) {
+                if (settings[field] && typeof settings[field] === 'string') {
+                    settings[field] = JSON.parse(settings[field]);
+                }
+            }
+        } catch(e: any) {
+            console.error(`Error parsing PlatformSettings JSON from DB: ${e.message}`);
+            // Return null or throw an error if parsing fails, to avoid propagating malformed data.
+            return null;
+        }
         return settings;
     }
     
@@ -397,7 +403,15 @@ export class MySqlAdapter implements DatabaseAdapter {
     
     updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateUserRole'); }
     createMediaItem(item: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> { return this._notImplemented('createMediaItem'); }
-    updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
+    
+    async createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean; message: string; }> {
+        const snakeCaseData = convertKeysToSnakeCase(data);
+        const fields = Object.keys(snakeCaseData).map(k => `\`${k}\``).join(', ');
+        const placeholders = Object.keys(snakeCaseData).map(() => '?').join(', ');
+        return this.executeMutation(`INSERT INTO \`lot_categories\` (${fields}) VALUES (${placeholders})`, Object.values(snakeCaseData));
+    }
+
+    async updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
         const snakeCaseData = convertKeysToSnakeCase(data);
         const updateData: Record<string, any> = {};
 
