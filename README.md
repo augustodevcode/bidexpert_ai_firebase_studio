@@ -6,56 +6,42 @@ To get started, take a look at `src/app/page.tsx`.
 
 ---
 
-## Database Setup (Sample Data, Firestore, SQL)
+## Database Setup
 
-This project is configured with a flexible data layer that can connect to multiple database systems, managed by environment variables. By default, it uses **Sample Data** for a quick start.
+This project uses **Prisma ORM** with a **PostgreSQL** database as its default configuration.
 
-### Using Sample Data (Default)
+### 1. Environment Setup
 
-No setup is required. Simply run the development server, and the application will use the mock data located in `src/lib/sample-data.ts`.
+- Create a `.env` file in the root of your project.
+- Add your database connection string to this file:
+    ```env
+    # Example for PostgreSQL
+    DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
+    ```
+
+### 2. Database Migration
+
+With your `.env` file configured, run the migration command to create all the necessary tables in your database based on the schema defined in `prisma/schema.prisma`.
 
 ```bash
-npm run dev
+npx prisma migrate dev
 ```
+This command will also apply any pending migrations and ensure your database schema is up to date.
 
-### Using a Database
+### 3. Seeding the Database (Optional but Recommended)
 
-To connect to a real database (Firestore, PostgreSQL, or MySQL), you need to:
+After migrating the database, you can populate it with essential data (like roles and settings) and comprehensive sample data (users, auctions, lots) using the seed script.
 
-1.  **Create a `.env.local` file** in the root of your project.
-2.  **Add the appropriate environment variables** to this file.
+- **`npm run db:init`**: This script populates **essential data** only (Roles, Platform Settings). It's safe to run multiple times and will not duplicate data. It's recommended to run this once after the initial migration.
 
-#### For Firestore:
+- **`npm run db:seed`**: This script populates the database with a **full set of sample data**. It checks if an admin user already exists to prevent duplication on subsequent runs. Use this to get a fully populated environment for development and demonstration.
 
-1.  Place your Firebase service account key JSON file in the root of the project (e.g., `bidexpert-service-account.json`).
-2.  Add the following to `.env.local`:
-    ```
-    NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM=FIRESTORE
-    GOOGLE_APPLICATION_CREDENTIALS=./bidexpert-service-account.json
-    ```
-
-#### For PostgreSQL or MySQL:
-
-1.  Add your database connection string to `.env.local`:
-    ```
-    # For PostgreSQL
-    NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM=POSTGRES
-    POSTGRES_DATABASE_URL="postgresql://user:password@host:port/database"
-    
-    # For MySQL
-    NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM=MYSQL
-    DATABASE_URL="mysql://user:password@host:port/database"
-    ```
-2.  Run the database initialization script to create tables and seed essential data (like roles and default settings):
-    ```bash
-    npm run db:init
-    ```
-    This command reads your `.env.local` file and populates the specified database. **This is a required step when setting up a new SQL database.**
-
-### Seeding Sample Data (Firestore)
-
-If you're using Firestore and want to populate it with more comprehensive sample data, run the seed script:
 ```bash
-npm run seed:firestore
+# First, run the migration if you haven't already
+npx prisma migrate dev
+
+# Then, run the seed script to populate with sample data
+npm run db:seed
 ```
-This will populate your Firestore collections with the data from `src/lib/sample-data.ts`.
+
+Your database is now ready to use with the application.

@@ -1,37 +1,49 @@
-// src/lib/database.ts
-import 'server-only';
-import { FirestoreAdapter } from './firestore.adapter';
-import { MySqlAdapter } from './mysql.adapter';
-import { PostgresAdapter } from './postgres.adapter';
-import { SampleDataAdapter } from './sample-data.adapter';
-import type { DatabaseAdapter } from '@/types';
+// src/lib/database/firestore.adapter.ts
+// This file is deprecated as the project has migrated to Prisma ORM.
+// It is kept for historical reference or if a multi-db strategy is re-introduced.
 
-/**
- * Dynamically determines which database adapter to use based on environment variables.
- * This function should be called within each Server Action that needs to interact with the database.
- * @returns {Promise<DatabaseAdapter>} A promise that resolves to an instance of the correct database adapter.
- */
-export const getDatabaseAdapter = async (): Promise<DatabaseAdapter> => {
-  const availableSystems = ['FIRESTORE', 'MYSQL', 'POSTGRES', 'SAMPLE_DATA'];
-  
-  const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || process.env.ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
+import { db as dbAdmin, ensureAdminInitialized, type ServerTimestamp } from '@/lib/firebase/admin';
+import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings } from '@/types';
+import { samplePlatformSettings } from '@/lib/sample-data';
+import admin, { firestore } from 'firebase-admin';
 
-  if (!availableSystems.includes(activeSystem)) {
-    console.error(`Invalid database system selected: ${activeSystem}. Falling back to SAMPLE_DATA.`);
-    return new SampleDataAdapter();
-  }
+export class FirestoreAdapter implements DatabaseAdapter {
 
-  // console.log(`[Database] Using adapter for: ${activeSystem}`);
+    constructor() {
+        console.warn("[FirestoreAdapter] DEPRECATED: This adapter is no longer in active use. Project has migrated to Prisma.");
+    }
+    
+    async _notImplemented(method: string): Promise<any> {
+        console.warn(`[FirestoreAdapter] Method ${method} is not implemented as this adapter is deprecated.`);
+        return Promise.resolve(method.endsWith('s') ? [] : null);
+    }
 
-  switch (activeSystem) {
-    case 'FIRESTORE':
-      return new FirestoreAdapter();
-    case 'MYSQL':
-      return new MySqlAdapter();
-    case 'POSTGRES':
-      return new PostgresAdapter();
-    case 'SAMPLE_DATA':
-    default:
-      return new SampleDataAdapter();
-  }
-};
+    // Implementing all methods from the interface to satisfy TypeScript,
+    // but they will all call _notImplemented.
+
+    getLots(auctionId?: string): Promise<Lot[]> { return this._notImplemented('getLots'); }
+    getLot(id: string): Promise<Lot | null> { return this._notImplemented('getLot'); }
+    createLot(lotData: Partial<Lot>): Promise<{ success: boolean; message: string; lotId?: string; }> { return this._notImplemented('createLot'); }
+    updateLot(id: string, updates: Partial<Lot>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateLot'); }
+    deleteLot(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteLot'); }
+    getAuctions(): Promise<Auction[]> { return this._notImplemented('getAuctions'); }
+    getAuction(id: string): Promise<Auction | null> { return this._notImplemented('getAuction'); }
+    createAuction(auctionData: Partial<Auction>): Promise<{ success: boolean; message: string; auctionId?: string; }> { return this._notImplemented('createAuction'); }
+    updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateAuction'); }
+    deleteAuction(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteAuction'); }
+    getLotsByIds(ids: string[]): Promise<Lot[]> { return this._notImplemented('getLotsByIds'); }
+    getLotCategories(): Promise<LotCategory[]> { return this._notImplemented('getLotCategories'); }
+    getSellers(): Promise<SellerProfileInfo[]> { return this._notImplemented('getSellers'); }
+    getAuctioneers(): Promise<AuctioneerProfileInfo[]> { return this._notImplemented('getAuctioneers'); }
+    getUsersWithRoles(): Promise<UserProfileData[]> { return this._notImplemented('getUsersWithRoles'); }
+    getUserProfileData(userId: string): Promise<UserProfileData | null> { return this._notImplemented('getUserProfileData'); }
+    getRoles(): Promise<Role[]> { return this._notImplemented('getRoles'); }
+    updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateUserRole'); }
+    getMediaItems(): Promise<MediaItem[]> { return this._notImplemented('getMediaItems'); }
+    createMediaItem(item: Partial<Omit<MediaItem, "id">>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> { return this._notImplemented('createMediaItem'); }
+    getPlatformSettings(): Promise<PlatformSettings | null> {
+        console.warn("[FirestoreAdapter] Returning sample platform settings as a fallback.");
+        return Promise.resolve(samplePlatformSettings as PlatformSettings);
+    }
+    updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updatePlatformSettings'); }
+}

@@ -1,121 +1,61 @@
-
 // scripts/init-db.ts
-import dotenv from 'dotenv';
-import path from 'path';
-import mysql from 'mysql2/promise';
-import { Pool as PgPool } from 'pg';
+import { PrismaClient } from '@prisma/client';
 import { sampleRoles, samplePlatformSettings } from '../src/lib/sample-data';
-import { slugify } from '../src/lib/sample-data-helpers';
 
-// Carrega variáveis de ambiente
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
-dotenv.config({ path: path.resolve(process.cwd(), '.env'), override: false });
+const prisma = new PrismaClient();
 
-const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM?.toUpperCase();
+/**
+ * This script initializes the database with essential, non-deletable data
+ * required for the application to function correctly.
+ * It seeds Roles and PlatformSettings.
+ * It's safe to run multiple times, as it uses `upsert` to avoid creating duplicates.
+ */
+async function initializeDatabase() {
+  console.log('Initializing database with essential data...');
 
-async function initializeMySql() {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    console.error('DATABASE_URL (para MySQL) não está definida no arquivo .env.');
-    process.exit(1);
-  }
-
-  let connection;
   try {
-    connection = await mysql.createConnection(connectionString);
-    console.log('Conectado ao banco de dados MySQL.');
-
-    // Verificar e popular a tabela de perfis (roles)
-    const [roles] = await connection.execute('SELECT COUNT(*) as count FROM `roles`');
-    if (Array.isArray(roles) && roles[0] && (roles[0] as any).count === 0) {
-      console.log('Tabela `roles` vazia. Populando com dados padrão...');
-      for (const role of sampleRoles) {
-        const sql = 'INSERT INTO `roles` (id, name, name_normalized, description, permissions) VALUES (?, ?, ?, ?, ?)';
-        await connection.execute(sql, [role.id, role.name, role.name_normalized, role.description, JSON.stringify(role.permissions)]);
-      }
-      console.log(`${sampleRoles.length} perfis inseridos.`);
-    } else {
-      console.log('Tabela `roles` já contém dados.');
+    // Seed Roles
+    console.log('Checking and seeding Roles...');
+    for (const role of sampleRoles) {
+      await prisma.role.upsert({
+        where: { id: role.id },
+        update: { ...role, permissions: { set: role.permissions } }, // Ensure permissions are updated
+        create: { ...role, permissions: { set: role.permissions } },
+      });
     }
+    console.log(`${sampleRoles.length} essential roles ensured.`);
 
-    // Verificar e popular a tabela de configurações da plataforma
-    const [settings] = await connection.execute('SELECT COUNT(*) as count FROM `platform_settings` WHERE id = ?', ['global']);
-     if (Array.isArray(settings) && settings[0] && (settings[0] as any).count === 0) {
-      console.log('Configurações globais não encontradas. Inserindo dados padrão...');
-      const settingsSql = 'INSERT INTO `platform_settings` (id, settings_data) VALUES (?, ?)';
-      await connection.execute(settingsSql, ['global', JSON.stringify(samplePlatformSettings)]);
-      console.log('Configurações globais inseridas.');
-    } else {
-      console.log('Configurações globais já existem.');
-    }
-
-  } catch (error) {
-    console.error('Erro durante a inicialização do banco de dados MySQL:', error);
-    process.exit(1);
-  } finally {
-    if (connection) await connection.end();
-  }
-}
-
-async function initializePostgres() {
-  const connectionString = process.env.POSTGRES_DATABASE_URL;
-  if (!connectionString) {
-    console.error('POSTGRES_DATABASE_URL não está definida no arquivo .env.');
-    process.exit(1);
-  }
-  
-  const pool = new PgPool({ connectionString });
-  const client = await pool.connect();
-  try {
-    console.log('Conectado ao banco de dados PostgreSQL.');
-    await client.query('BEGIN');
-
-    // Verificar e popular a tabela de perfis (roles)
-    const resRoles = await client.query('SELECT COUNT(*) as count FROM "Role"');
-    if (resRoles.rows[0].count === '0') {
-      console.log('Tabela "Role" vazia. Populando com dados padrão...');
-      for (const role of sampleRoles) {
-        const sql = 'INSERT INTO "Role" (id, name, name_normalized, description, permissions) VALUES ($1, $2, $3, $4, $5)';
-        await client.query(sql, [role.id, role.name, role.name_normalized, role.description, JSON.stringify(role.permissions)]);
-      }
-      console.log(`${sampleRoles.length} perfis inseridos.`);
-    } else {
-      console.log('Tabela "Role" já contém dados.');
-    }
-
-    // Verificar e popular a tabela de configurações da plataforma
-    const resSettings = await client.query('SELECT COUNT(*) as count FROM "PlatformSettings" WHERE id = $1', ['global']);
-    if (resSettings.rows[0].count === '0') {
-      console.log('Configurações globais não encontradas. Inserindo dados padrão...');
-      const settingsSql = 'INSERT INTO "PlatformSettings" (id, "settingsData") VALUES ($1, $2)';
-      await client.query(settingsSql, ['global', JSON.stringify(samplePlatformSettings)]);
-      console.log('Configurações globais inseridas.');
-    } else {
-      console.log('Configurações globais já existem.');
-    }
+    // Seed Platform Settings
+    console.log('Checking and seeding Platform Settings...');
+    const settingsData = {
+      ...samplePlatformSettings,
+      // Prisma requires nested objects to be created explicitly
+      themes: samplePlatformSettings.themes ? { create: samplePlatformSettings.themes } : undefined,
+      platformPublicIdMasks: samplePlatformSettings.platformPublicIdMasks ? { create: samplePlatformSettings.platformPublicIdMasks } : undefined,
+      mapSettings: samplePlatformSettings.mapSettings ? { create: samplePlatformSettings.mapSettings } : undefined,
+      biddingSettings: samplePlatformSettings.biddingSettings ? { create: samplePlatformSettings.biddingSettings } : undefined,
+      mentalTriggerSettings: samplePlatformSettings.mentalTriggerSettings ? { create: samplePlatformSettings.mentalTriggerSettings } : undefined,
+      sectionBadgeVisibility: samplePlatformSettings.sectionBadgeVisibility ? { create: samplePlatformSettings.sectionBadgeVisibility } : undefined,
+      variableIncrementTable: samplePlatformSettings.variableIncrementTable ? { create: samplePlatformSettings.variableIncrementTable } : undefined,
+    };
     
-    await client.query('COMMIT');
+    // Use raw query to check for existence and then upsert to handle potential JSON issues with Prisma Client < 5
+    const existingSettings = await prisma.platformSettings.findUnique({ where: { id: 'global' }});
+    if (existingSettings) {
+        console.log('Platform settings already exist. Skipping creation.');
+    } else {
+         await prisma.platformSettings.create({ data: settingsData });
+         console.log('Global platform settings created.');
+    }
+
+
+    console.log('Database initialization complete.');
   } catch (error) {
-    await client.query('ROLLBACK');
-    console.error('Erro durante a inicialização do banco de dados PostgreSQL:', error);
+    console.error('Error during database initialization:', error);
     process.exit(1);
   } finally {
-    client.release();
-    await pool.end();
+    await prisma.$disconnect();
   }
 }
 
-async function main() {
-  console.log(`Sistema de banco de dados ativo: ${activeSystem}`);
-  if (activeSystem === 'MYSQL') {
-    await initializeMySql();
-  } else if (activeSystem === 'POSTGRES') {
-    await initializePostgres();
-  } else {
-    console.log('Script de inicialização não é necessário para SAMPLE_DATA ou FIRESTORE.');
-    process.exit(0);
-  }
-  console.log('Inicialização do banco de dados concluída com sucesso.');
-}
-
-main();
+initializeDatabase();

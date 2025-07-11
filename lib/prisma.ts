@@ -1,2 +1,21 @@
-// Este arquivo não é mais necessário e será excluído.
-// A interação com o banco de dados agora é feita através do padrão de adaptador em /lib/database/index.ts.
+// /src/lib/prisma.ts
+import { PrismaClient } from '@prisma/client';
+
+// PrismaClient is attached to the `global` object in development to prevent
+// exhausting your database connection limit.
+//
+// Learn more: https://pris.ly/d/help/next-js-best-practices
+
+const prismaClientSingleton = () => {
+  return new PrismaClient();
+};
+
+declare global {
+  var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
+}
+
+const prisma = globalThis.prisma ?? prismaClientSingleton();
+
+export { prisma };
+
+if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma;
