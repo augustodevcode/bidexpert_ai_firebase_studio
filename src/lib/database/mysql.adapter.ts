@@ -30,14 +30,15 @@ function convertObjectToSnakeCase(obj: Record<string, any>): Record<string, any>
     const newObj: Record<string, any> = {};
     for (const key in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
-            if (obj[key] instanceof Date) {
-              newObj[toSnakeCase(key)] = obj[key].toISOString().slice(0, 19).replace('T', ' ');
-            } else if (typeof obj[key] === 'boolean') {
-              newObj[toSnakeCase(key)] = obj[key] ? 1 : 0;
-            } else if (Array.isArray(obj[key]) || typeof obj[key] === 'object' && obj[key] !== null) {
-              newObj[toSnakeCase(key)] = JSON.stringify(obj[key]);
+            const value = obj[key];
+            if (value instanceof Date) {
+              newObj[toSnakeCase(key)] = value.toISOString().slice(0, 19).replace('T', ' ');
+            } else if (typeof value === 'boolean') {
+              newObj[toSnakeCase(key)] = value ? 1 : 0;
+            } else if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
+              newObj[toSnakeCase(key)] = JSON.stringify(value);
             } else {
-              newObj[toSnakeCase(key)] = obj[key];
+              newObj[toSnakeCase(key)] = value;
             }
         }
     }
@@ -225,7 +226,8 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
-      return this.genericCreate('bens', data, 'bem', 'BEM');
+      const result = await this.genericCreate('bens', data, 'bem', 'BEM');
+      return {...result, bemId: result.insertId};
     }
     
     async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
@@ -293,27 +295,44 @@ export class MySqlAdapter implements DatabaseAdapter {
     async getUsersWithRoles(): Promise<UserProfileData[]> {
         const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.roleId = r.id';
         const users = await this.executeQuery(sql);
-        return users.map(u => ({...u, permissions: JSON.parse(u.permissions || '[]')}));
+        return users.map(u => {
+            if (u.permissions && typeof u.permissions === 'string') {
+                u.permissions = JSON.parse(u.permissions);
+            } else if (!u.permissions) {
+                u.permissions = [];
+            }
+            return u;
+        });
     }
     
     async getUserProfileData(userId: string): Promise<UserProfileData | null> {
         const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.roleId = r.id WHERE u.id = ? OR u.uid = ?';
         const user = await this.executeQueryForSingle(sql, [userId, userId]);
-        if(user) user.permissions = JSON.parse(user.permissions || '[]');
+        if(user && user.permissions && typeof user.permissions === 'string') {
+          user.permissions = JSON.parse(user.permissions);
+        } else if (user && !user.permissions) {
+          user.permissions = [];
+        }
         return user;
     }
     
     async getRoles(): Promise<Role[]> { 
         const roles = await this.executeQuery('SELECT * FROM `roles` ORDER BY `name`'); 
-        return roles.map(r => ({...r, permissions: JSON.parse(r.permissions || '[]')}));
+        return roles.map(r => {
+            if (r.permissions && typeof r.permissions === 'string') {
+                r.permissions = JSON.parse(r.permissions);
+            } else if (!r.permissions) {
+                r.permissions = [];
+            }
+            return r;
+        });
     }
     async getMediaItems(): Promise<MediaItem[]> { return this.executeQuery('SELECT * FROM `media_items` ORDER BY `uploaded_at` DESC'); }
     
     async getPlatformSettings(): Promise<PlatformSettings | null> {
         const settings = await this.executeQueryForSingle('SELECT * FROM `platform_settings` WHERE id = ?', ['global']);
-        if (!settings) {
-            return null;
-        }
+        if (!settings) return null;
+        
         try {
             const fieldsToParse = ['themes', 'homepageSections', 'mentalTriggerSettings', 'sectionBadgeVisibility', 'mapSettings', 'variableIncrementTable', 'biddingSettings', 'platformPublicIdMasks'];
             for (const field of fieldsToParse) {
@@ -323,7 +342,7 @@ export class MySqlAdapter implements DatabaseAdapter {
             }
         } catch(e: any) {
             console.error(`Error parsing PlatformSettings JSON from DB: ${e.message}`);
-            return null;
+            return null; // Retorna null se houver erro no parse para evitar que a aplicação quebre
         }
         return settings;
     }
