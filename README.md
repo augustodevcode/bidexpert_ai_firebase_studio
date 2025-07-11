@@ -44,16 +44,17 @@ To connect to a real database (Firestore, PostgreSQL, or MySQL), you need to:
     
     # For MySQL
     NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM=MYSQL
-    MYSQL_DATABASE_URL="mysql://user:password@host:port/database"
+    DATABASE_URL="mysql://user:password@host:port/database"
     ```
-2.  Run the database initialization script (adapt `scripts/init-db.ts` for your specific schema if needed):
+2.  Run the database initialization script to create tables and seed essential data (like roles and default settings):
     ```bash
-    npx tsx scripts/init-db.ts
+    npm run db:init
     ```
+    This command reads your `.env.local` file and populates the specified database. **This is a required step when setting up a new SQL database.**
 
-### Seeding Data (Firestore)
+### Seeding Sample Data (Firestore)
 
-If you're using Firestore and want to populate it with sample data, run the seed script:
+If you're using Firestore and want to populate it with more comprehensive sample data, run the seed script:
 ```bash
 npm run seed:firestore
 ```
