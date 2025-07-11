@@ -1,13 +1,14 @@
+
 // scripts/init-db.ts
 import { PrismaClient } from '@prisma/client';
-import { sampleRoles, samplePlatformSettings } from '../src/lib/sample-data';
+import { sampleRoles, samplePlatformSettings, sampleLotCategories, sampleSubcategories } from '../src/lib/sample-data';
 
 const prisma = new PrismaClient();
 
 /**
  * This script initializes the database with essential, non-deletable data
  * required for the application to function correctly.
- * It seeds Roles and PlatformSettings.
+ * It seeds Roles, PlatformSettings, Categories, and Subcategories.
  * It's safe to run multiple times, as it uses `upsert` to avoid creating duplicates.
  */
 async function initializeDatabase() {
@@ -27,35 +28,50 @@ async function initializeDatabase() {
 
     // Seed Platform Settings
     console.log('Checking and seeding Platform Settings...');
-    const settingsData = {
-      ...samplePlatformSettings,
-      // Prisma requires nested objects to be created explicitly
-      themes: samplePlatformSettings.themes ? { create: samplePlatformSettings.themes } : undefined,
-      platformPublicIdMasks: samplePlatformSettings.platformPublicIdMasks ? { create: samplePlatformSettings.platformPublicIdMasks } : undefined,
-      mapSettings: samplePlatformSettings.mapSettings ? { create: samplePlatformSettings.mapSettings } : undefined,
-      biddingSettings: samplePlatformSettings.biddingSettings ? { create: samplePlatformSettings.biddingSettings } : undefined,
-      mentalTriggerSettings: samplePlatformSettings.mentalTriggerSettings ? { create: samplePlatformSettings.mentalTriggerSettings } : undefined,
-      sectionBadgeVisibility: samplePlatformSettings.sectionBadgeVisibility ? { create: samplePlatformSettings.sectionBadgeVisibility } : undefined,
-      variableIncrementTable: samplePlatformSettings.variableIncrementTable ? { create: samplePlatformSettings.variableIncrementTable } : undefined,
-    };
-    
-    // Use raw query to check for existence and then upsert to handle potential JSON issues with Prisma Client < 5
     const existingSettings = await prisma.platformSettings.findUnique({ where: { id: 'global' }});
-    if (existingSettings) {
-        console.log('Platform settings already exist. Skipping creation.');
+    if (!existingSettings) {
+        await prisma.platformSettings.create({
+            data: {
+              ...samplePlatformSettings,
+              themes: samplePlatformSettings.themes ? { create: samplePlatformSettings.themes } : undefined,
+              platformPublicIdMasks: samplePlatformSettings.platformPublicIdMasks ? { create: samplePlatformSettings.platformPublicIdMasks } : undefined,
+              mapSettings: samplePlatformSettings.mapSettings ? { create: samplePlatformSettings.mapSettings } : undefined,
+              biddingSettings: samplePlatformSettings.biddingSettings ? { create: samplePlatformSettings.biddingSettings } : undefined,
+              mentalTriggerSettings: samplePlatformSettings.mentalTriggerSettings ? { create: samplePlatformSettings.mentalTriggerSettings } : undefined,
+              sectionBadgeVisibility: samplePlatformSettings.sectionBadgeVisibility ? { create: samplePlatformSettings.sectionBadgeVisibility } : undefined,
+              variableIncrementTable: samplePlatformSettings.variableIncrementTable ? { create: samplePlatformSettings.variableIncrementTable } : undefined,
+            }
+        });
+        console.log('Global platform settings created.');
     } else {
-         await prisma.platformSettings.create({ data: settingsData });
-         console.log('Global platform settings created.');
+        console.log('Platform settings already exist. Skipping.');
     }
+
+    // Seed Categories
+    console.log('Checking and seeding Lot Categories...');
+    for (const category of sampleLotCategories) {
+        await prisma.lotCategory.upsert({
+            where: { id: category.id },
+            update: { name: category.name, description: category.description, slug: category.slug },
+            create: { ...category, hasSubcategories: sampleSubcategories.some(s => s.parentCategoryId === category.id) }
+        });
+    }
+    console.log(`${sampleLotCategories.length} lot categories ensured.`);
+    
+    // Seed Subcategories
+    console.log('Checking and seeding Subcategories...');
+    for (const subcategory of sampleSubcategories) {
+        await prisma.subcategory.upsert({
+            where: { id: subcategory.id },
+            update: { name: subcategory.name, slug: subcategory.slug, parentCategoryId: subcategory.parentCategoryId },
+            create: subcategory,
+        });
+    }
+    console.log(`${sampleSubcategories.length} subcategories ensured.`);
 
 
     console.log('Database initialization complete.');
   } catch (error) {
     console.error('Error during database initialization:', error);
     process.exit(1);
-  } finally {
-    await prisma.$disconnect();
   }
-}
-
-initializeDatabase();

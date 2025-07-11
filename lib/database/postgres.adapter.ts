@@ -1,8 +1,7 @@
 
 // src/lib/database/postgres.adapter.ts
-import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo } from '@/types';
+import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Subcategory, SubcategoryFormData } from '@/types';
 import { Pool } from 'pg';
-import { samplePlatformSettings } from '@/lib/sample-data';
 
 export class PostgresAdapter implements DatabaseAdapter {
     private pool: Pool | null = null;
@@ -26,9 +25,19 @@ export class PostgresAdapter implements DatabaseAdapter {
         }
     }
     
+    private async getClient() {
+        if (this.connectionError) {
+            throw new Error(this.connectionError);
+        }
+        if (!this.pool) {
+            throw new Error("Pool de conexões PostgreSQL não está disponível.");
+        }
+        return this.pool.connect();
+    }
+    
     private async executeQuery(query: string, params: any[] = []): Promise<any[]> {
-        if (this.connectionError || !this.pool) return [];
-        const client = await this.pool.connect();
+        if (!this.pool) return [];
+        const client = await this.getClient();
         try {
             const res = await client.query(query, params);
             return res.rows;
@@ -44,10 +53,10 @@ export class PostgresAdapter implements DatabaseAdapter {
         const rows = await this.executeQuery(query, params);
         return rows.length > 0 ? rows[0] : null;
     }
-
+    
     private async executeMutation(sql: string, params: any[] = []): Promise<{ success: boolean; message: string; insertId?: number }> {
         if (this.connectionError || !this.pool) return { success: false, message: 'Sem conexão com o banco de dados.' };
-        const client = await this.pool.connect();
+        const client = await this.getClient();
         try {
             const result = await client.query(sql, params);
             return { success: true, message: 'Operação realizada com sucesso.', insertId: result.rows[0]?.id };
@@ -82,8 +91,8 @@ export class PostgresAdapter implements DatabaseAdapter {
         }
         return settings.settings_data; // A coluna contém o JSON
     }
-    async getSubcategoriesByParentIdAction(parentCategoryId: string): Promise<any[]> { return this.executeQuery('SELECT * FROM "subcategories" WHERE "parent_category_id" = $1 ORDER BY "display_order"', [parentCategoryId]); }
-    async getSubcategoryByIdAction(subcategoryId: string): Promise<any | null> { return this.executeQueryForSingle('SELECT * FROM "subcategories" WHERE id = $1', [subcategoryId]); }
+    async getSubcategoriesByParent(parentCategoryId: string): Promise<Subcategory[]> { return this.executeQuery('SELECT * FROM "subcategories" WHERE "parent_category_id" = $1 ORDER BY "display_order"', [parentCategoryId]); }
+    async getSubcategory(id: string): Promise<Subcategory | null> { return this.executeQueryForSingle('SELECT * FROM "subcategories" WHERE id = $1', [id]); }
 
     // Métodos não implementados
     async _notImplemented(method: string): Promise<any> { if (this.connectionError) return Promise.resolve(method.endsWith('s') ? [] : null); const message = `[PostgresAdapter] Método ${method} não implementado.`; console.warn(message); return Promise.resolve(method.endsWith('s') ? [] : null); }
@@ -105,8 +114,17 @@ export class PostgresAdapter implements DatabaseAdapter {
         return this.executeMutation('DELETE FROM "auctions" WHERE id = $1', [id]);
     }
     
+    async createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean; message: string; }> {
+        const sql = 'INSERT INTO "lot_categories" (id, name, slug, description, "hasSubcategories", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7)';
+        return this.executeMutation(sql, [data.id, data.name, data.slug, data.description, data.hasSubcategories, new Date(), new Date()]);
+    }
+
+    async createSubcategory(data: Partial<Subcategory>): Promise<{ success: boolean; message: string; }> {
+        const sql = 'INSERT INTO "subcategories" (id, name, slug, "parentCategoryId", description, "displayOrder") VALUES ($1, $2, $3, $4, $5, $6)';
+        return this.executeMutation(sql, [data.id, data.name, data.slug, data.parentCategoryId, data.description, data.displayOrder]);
+    }
+    
     updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateAuction'); }
     updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateUserRole'); }
     createMediaItem(item: any, url: string, userId: string): Promise<any> { return this._notImplemented('createMediaItem'); }
-    updatePlatformSettings(data: any): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updatePlatformSettings'); }
-}
+    updatePlatformSettings(

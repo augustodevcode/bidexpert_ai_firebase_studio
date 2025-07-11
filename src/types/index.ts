@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 
 export type AuctionStatus = 'RASCUNHO' | 'EM_PREPARACAO' | 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO';
@@ -852,7 +853,8 @@ export interface DatabaseAdapter {
     
     getSubcategoriesByParent(parentCategoryId: string): Promise<Subcategory[]>;
     getSubcategory(id: string): Promise<Subcategory | null>;
-    createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string }>;
+    createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean, message: string }>;
+    createSubcategory(data: Partial<Subcategory>): Promise<{ success: boolean, message: string }>;
     updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string }>;
     deleteSubcategory(id: string): Promise<{ success: boolean; message: string }>;
 
@@ -870,3 +872,36 @@ export interface DatabaseAdapter {
     getPlatformSettings(): Promise<PlatformSettings | null>;
     updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }>;
 }
+```
+- tsconfig.json:
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}
+
+```
