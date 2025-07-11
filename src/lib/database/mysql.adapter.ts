@@ -297,7 +297,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         const users = await this.executeQuery(sql);
         return users.map(u => {
             if (u.permissions && typeof u.permissions === 'string') {
-                u.permissions = JSON.parse(u.permissions);
+                try { u.permissions = JSON.parse(u.permissions); } catch(e) { u.permissions = []; }
             } else if (!u.permissions) {
                 u.permissions = [];
             }
@@ -309,7 +309,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.roleId = r.id WHERE u.id = ? OR u.uid = ?';
         const user = await this.executeQueryForSingle(sql, [userId, userId]);
         if(user && user.permissions && typeof user.permissions === 'string') {
-          user.permissions = JSON.parse(user.permissions);
+          try { user.permissions = JSON.parse(user.permissions); } catch(e) { user.permissions = []; }
         } else if (user && !user.permissions) {
           user.permissions = [];
         }
@@ -320,7 +320,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         const roles = await this.executeQuery('SELECT * FROM `roles` ORDER BY `name`'); 
         return roles.map(r => {
             if (r.permissions && typeof r.permissions === 'string') {
-                r.permissions = JSON.parse(r.permissions);
+                 try { r.permissions = JSON.parse(r.permissions); } catch(e) { r.permissions = []; }
             } else if (!r.permissions) {
                 r.permissions = [];
             }
