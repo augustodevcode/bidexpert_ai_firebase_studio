@@ -1,13 +1,19 @@
 
 import type {NextConfig} from 'next';
 
-const nextConfig: NextConfig = {
+const config: NextConfig = {
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  experimental: {
+    allowedDevOrigins: [
+      "https://*.cluster-ve345ymguzcd6qqzuko2qbxtfe.cloudworkstations.dev",
+      "https://*.cloudworkstations.dev"
+    ],
   },
   images: {
     remotePatterns: [
@@ -27,4 +33,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default config;

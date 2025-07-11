@@ -1,465 +1,474 @@
--- BidExpert - MySQL Schema
+
+-- BidExpert MySQL Schema
 -- version 1.1
 
--- Tabela de Configurações da Plataforma
+-- Basic Setup
 CREATE TABLE IF NOT EXISTS `platform_settings` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `site_title` VARCHAR(255),
-  `site_tagline` VARCHAR(255),
-  `gallery_image_base_path` VARCHAR(255),
-  `storage_provider` VARCHAR(50),
-  `firebase_storage_bucket` VARCHAR(255),
-  `active_theme_name` VARCHAR(255),
-  `themes` JSON,
-  `platform_public_id_masks` JSON,
-  `homepage_sections` JSON,
-  `mental_trigger_settings` JSON,
-  `section_badge_visibility` JSON,
-  `map_settings` JSON,
-  `search_pagination_type` VARCHAR(50),
-  `search_items_per_page` INT,
-  `search_load_more_count` INT,
-  `show_countdown_on_lot_detail` BOOLEAN,
-  `show_countdown_on_cards` BOOLEAN,
-  `show_related_lots_on_lot_detail` BOOLEAN,
-  `related_lots_count` INT,
-  `default_urgency_timer_hours` INT,
-  `variable_increment_table` JSON,
-  `bidding_settings` JSON,
-  `default_list_items_per_page` INT,
-  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `id` VARCHAR(191) PRIMARY KEY,
+    `siteTitle` VARCHAR(255) NOT NULL,
+    `siteTagline` VARCHAR(255),
+    `galleryImageBasePath` VARCHAR(255),
+    `storageProvider` VARCHAR(50),
+    `firebaseStorageBucket` VARCHAR(255),
+    `activeThemeName` VARCHAR(100),
+    `themes` JSON,
+    `platformPublicIdMasks` JSON,
+    `homepageSections` JSON,
+    `mentalTriggerSettings` JSON,
+    `sectionBadgeVisibility` JSON,
+    `mapSettings` JSON,
+    `searchPaginationType` VARCHAR(50),
+    `searchItemsPerPage` INT,
+    `searchLoadMoreCount` INT,
+    `showCountdownOnLotDetail` BOOLEAN,
+    `showCountdownOnCards` BOOLEAN,
+    `showRelatedLotsOnLotDetail` BOOLEAN,
+    `relatedLotsCount` INT,
+    `defaultUrgencyTimerHours` INT,
+    `variableIncrementTable` JSON,
+    `biddingSettings` JSON,
+    `defaultListItemsPerPage` INT,
+    `updatedAt` DATETIME
+);
 
--- Tabela de Perfis de Usuário (Roles)
 CREATE TABLE IF NOT EXISTS `roles` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `name` VARCHAR(255) NOT NULL,
-  `name_normalized` VARCHAR(255) NOT NULL UNIQUE,
-  `description` TEXT,
-  `permissions` JSON,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `id` VARCHAR(191) PRIMARY KEY,
+    `name` VARCHAR(191) NOT NULL UNIQUE,
+    `name_normalized` VARCHAR(191) NOT NULL UNIQUE,
+    `description` TEXT,
+    `permissions` JSON,
+    `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
 
--- Tabela de Usuários
-CREATE TABLE IF NOT EXISTS `users` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `uid` VARCHAR(255) NOT NULL UNIQUE,
-  `email` VARCHAR(255) NOT NULL UNIQUE,
-  `password` VARCHAR(255),
-  `full_name` VARCHAR(255),
-  `cpf` VARCHAR(20),
-  `cell_phone` VARCHAR(20),
-  `razao_social` VARCHAR(255),
-  `cnpj` VARCHAR(20),
-  `date_of_birth` DATE,
-  `zip_code` VARCHAR(10),
-  `street` VARCHAR(255),
-  `number` VARCHAR(20),
-  `complement` VARCHAR(100),
-  `neighborhood` VARCHAR(100),
-  `city` VARCHAR(100),
-  `state` VARCHAR(50),
-  `avatar_url` VARCHAR(2048),
-  `data_ai_hint` VARCHAR(100),
-  `role_id` VARCHAR(255),
-  `seller_id` VARCHAR(255),
-  `habilitation_status` VARCHAR(50),
-  `account_type` VARCHAR(50),
-  `badges` JSON,
-  `opt_in_marketing` BOOLEAN DEFAULT FALSE,
-  `rg_number` VARCHAR(50),
-  `rg_issuer` VARCHAR(50),
-  `rg_issue_date` DATE,
-  `rg_state` VARCHAR(2),
-  `home_phone` VARCHAR(20),
-  `gender` VARCHAR(50),
-  `profession` VARCHAR(100),
-  `nationality` VARCHAR(100),
-  `marital_status` VARCHAR(50),
-  `property_regime` VARCHAR(100),
-  `spouse_name` VARCHAR(255),
-  `spouse_cpf` VARCHAR(20),
-  `inscricao_estadual` VARCHAR(50),
-  `website` VARCHAR(2048),
-  `responsible_name` VARCHAR(255),
-  `responsible_cpf` VARCHAR(20),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (`role_id`) REFERENCES `roles`(`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
--- Tabela de Leiloeiros
-CREATE TABLE IF NOT EXISTS `auctioneers` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `public_id` VARCHAR(255) UNIQUE,
-  `slug` VARCHAR(255) UNIQUE,
-  `name` VARCHAR(255) NOT NULL,
-  `registration_number` VARCHAR(100),
-  `contact_name` VARCHAR(255),
-  `email` VARCHAR(255),
-  `phone` VARCHAR(20),
-  `address` VARCHAR(255),
-  `city` VARCHAR(100),
-  `state` VARCHAR(50),
-  `zip_code` VARCHAR(10),
-  `website` VARCHAR(2048),
-  `logo_url` VARCHAR(2048),
-  `logo_media_id` VARCHAR(255),
-  `data_ai_hint_logo` VARCHAR(100),
-  `description` TEXT,
-  `user_id` VARCHAR(255),
-  `member_since` TIMESTAMP,
-  `rating` DECIMAL(2, 1),
-  `auctions_conducted_count` INT,
-  `total_value_sold` DECIMAL(15, 2),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
--- Tabela de Comitentes/Vendedores
-CREATE TABLE IF NOT EXISTS `sellers` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `public_id` VARCHAR(255) UNIQUE,
-  `slug` VARCHAR(255) UNIQUE,
-  `name` VARCHAR(255) NOT NULL,
-  `contact_name` VARCHAR(255),
-  `email` VARCHAR(255),
-  `phone` VARCHAR(20),
-  `address` VARCHAR(255),
-  `city` VARCHAR(100),
-  `state` VARCHAR(50),
-  `zip_code` VARCHAR(10),
-  `website` VARCHAR(2048),
-  `logo_url` VARCHAR(2048),
-  `logo_media_id` VARCHAR(255),
-  `data_ai_hint_logo` VARCHAR(100),
-  `description` TEXT,
-  `user_id` VARCHAR(255),
-  `member_since` TIMESTAMP,
-  `rating` DECIMAL(2, 1),
-  `active_lots_count` INT,
-  `total_sales_value` DECIMAL(15, 2),
-  `auctions_facilitated_count` INT,
-  `is_judicial` BOOLEAN DEFAULT FALSE,
-  `judicial_branch_id` VARCHAR(255),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Tabelas Judiciais
-CREATE TABLE IF NOT EXISTS `courts` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `name` VARCHAR(255) NOT NULL,
-  `slug` VARCHAR(255) UNIQUE,
-  `state_uf` VARCHAR(2) NOT NULL,
-  `website` VARCHAR(2048),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `judicial_districts` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `name` VARCHAR(255) NOT NULL,
-  `slug` VARCHAR(255) UNIQUE,
-  `court_id` VARCHAR(255),
-  `state_id` VARCHAR(255),
-  `state_uf` VARCHAR(2),
-  `zip_code` VARCHAR(10),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (`court_id`) REFERENCES `courts`(`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `judicial_branches` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `name` VARCHAR(255) NOT NULL,
-  `slug` VARCHAR(255) UNIQUE,
-  `district_id` VARCHAR(255),
-  `contact_name` VARCHAR(255),
-  `phone` VARCHAR(20),
-  `email` VARCHAR(255),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (`district_id`) REFERENCES `judicial_districts`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `judicial_processes` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `public_id` VARCHAR(255) UNIQUE,
-  `process_number` VARCHAR(255) NOT NULL UNIQUE,
-  `is_electronic` BOOLEAN DEFAULT TRUE,
-  `court_id` VARCHAR(255),
-  `district_id` VARCHAR(255),
-  `branch_id` VARCHAR(255),
-  `seller_id` VARCHAR(255),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (`court_id`) REFERENCES `courts`(`id`) ON DELETE SET NULL,
-  FOREIGN KEY (`district_id`) REFERENCES `judicial_districts`(`id`) ON DELETE SET NULL,
-  FOREIGN KEY (`branch_id`) REFERENCES `judicial_branches`(`id`) ON DELETE SET NULL,
-  FOREIGN KEY (`seller_id`) REFERENCES `sellers`(`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `judicial_parties` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `process_id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `document_number` VARCHAR(50),
-  `party_type` VARCHAR(50) NOT NULL,
-  FOREIGN KEY (`process_id`) REFERENCES `judicial_processes`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Tabela de Categorias de Lote
 CREATE TABLE IF NOT EXISTS `lot_categories` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `name` VARCHAR(255) NOT NULL,
-  `slug` VARCHAR(255) UNIQUE,
-  `description` TEXT,
-  `has_subcategories` BOOLEAN DEFAULT FALSE,
-  `logo_url` VARCHAR(2048),
-  `logo_media_id` VARCHAR(255),
-  `data_ai_hint_logo` VARCHAR(100),
-  `cover_image_url` VARCHAR(2048),
-  `cover_image_media_id` VARCHAR(255),
-  `data_ai_hint_cover` VARCHAR(100),
-  `mega_menu_image_url` VARCHAR(2048),
-  `mega_menu_image_media_id` VARCHAR(255),
-  `data_ai_hint_mega_menu` VARCHAR(100),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `id` VARCHAR(191) PRIMARY KEY,
+    `name` VARCHAR(191) NOT NULL UNIQUE,
+    `slug` VARCHAR(191) NOT NULL UNIQUE,
+    `description` TEXT,
+    `itemCount` INT DEFAULT 0,
+    `hasSubcategories` BOOLEAN DEFAULT FALSE,
+    `logoUrl` VARCHAR(255),
+    `logoMediaId` VARCHAR(191),
+    `dataAiHintLogo` VARCHAR(100),
+    `coverImageUrl` VARCHAR(255),
+    `coverImageMediaId` VARCHAR(191),
+    `dataAiHintCover` VARCHAR(100),
+    `megaMenuImageUrl` VARCHAR(255),
+    `megaMenuImageMediaId` VARCHAR(191),
+    `dataAiHintMegaMenu` VARCHAR(100),
+    `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
 
--- Tabela de Subcategorias
 CREATE TABLE IF NOT EXISTS `subcategories` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `name` VARCHAR(255) NOT NULL,
-  `slug` VARCHAR(255) UNIQUE,
-  `parent_category_id` VARCHAR(255) NOT NULL,
-  `description` TEXT,
-  `display_order` INT DEFAULT 0,
-  `icon_url` VARCHAR(2048),
-  `icon_media_id` VARCHAR(255),
-  `data_ai_hint_icon` VARCHAR(100),
-  FOREIGN KEY (`parent_category_id`) REFERENCES `lot_categories`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `id` VARCHAR(191) PRIMARY KEY,
+    `name` VARCHAR(191) NOT NULL,
+    `slug` VARCHAR(191) NOT NULL,
+    `parentCategoryId` VARCHAR(191) NOT NULL,
+    `description` TEXT,
+    `itemCount` INT DEFAULT 0,
+    `displayOrder` INT DEFAULT 0,
+    `iconUrl` VARCHAR(255),
+    `iconMediaId` VARCHAR(191),
+    `dataAiHintIcon` VARCHAR(100),
+    FOREIGN KEY (`parentCategoryId`) REFERENCES `lot_categories`(`id`) ON DELETE CASCADE
+);
 
-
--- Tabela de Bens
-CREATE TABLE IF NOT EXISTS `bens` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `public_id` VARCHAR(255) UNIQUE,
-  `title` VARCHAR(255) NOT NULL,
-  `description` TEXT,
-  `status` VARCHAR(50),
-  `category_id` VARCHAR(255),
-  `subcategory_id` VARCHAR(255),
-  `judicial_process_id` VARCHAR(255),
-  `seller_id` VARCHAR(255),
-  `evaluation_value` DECIMAL(15, 2),
-  `image_url` VARCHAR(2048),
-  `image_media_id` VARCHAR(255),
-  `gallery_image_urls` JSON,
-  `media_item_ids` JSON,
-  `data_ai_hint` VARCHAR(100),
-  `location_city` VARCHAR(100),
-  `location_state` VARCHAR(100),
-  `address` VARCHAR(255),
-  `latitude` DECIMAL(10, 8),
-  `longitude` DECIMAL(11, 8),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (`category_id`) REFERENCES `lot_categories`(`id`) ON DELETE SET NULL,
-  FOREIGN KEY (`subcategory_id`) REFERENCES `subcategories`(`id`) ON DELETE SET NULL,
-  FOREIGN KEY (`judicial_process_id`) REFERENCES `judicial_processes`(`id`) ON DELETE SET NULL,
-  FOREIGN KEY (`seller_id`) REFERENCES `sellers`(`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Tabela de Leilões
-CREATE TABLE IF NOT EXISTS `auctions` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `public_id` VARCHAR(255) UNIQUE,
-  `slug` VARCHAR(255) UNIQUE,
-  `title` VARCHAR(255) NOT NULL,
-  `description` TEXT,
-  `status` VARCHAR(50),
-  `auction_type` VARCHAR(50),
-  `auction_date` TIMESTAMP,
-  `end_date` TIMESTAMP,
-  `category_id` VARCHAR(255),
-  `auctioneer_id` VARCHAR(255),
-  `seller_id` VARCHAR(255),
-  `judicial_process_id` VARCHAR(255),
-  `initial_offer` DECIMAL(15, 2),
-  `is_featured_on_marketplace` BOOLEAN DEFAULT FALSE,
-  `marketplace_announcement_title` VARCHAR(255),
-  `image_url` VARCHAR(2048),
-  `image_media_id` VARCHAR(255),
-  `data_ai_hint` VARCHAR(100),
-  `visits` INT DEFAULT 0,
-  `documents_url` VARCHAR(2048),
-  `auction_stages` JSON,
-  `automatic_bidding_enabled` BOOLEAN,
-  `allow_installment_bids` BOOLEAN,
-  `soft_close_enabled` BOOLEAN,
-  `soft_close_minutes` INT,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (`category_id`) REFERENCES `lot_categories`(`id`) ON DELETE SET NULL,
-  FOREIGN KEY (`auctioneer_id`) REFERENCES `auctioneers`(`id`) ON DELETE SET NULL,
-  FOREIGN KEY (`seller_id`) REFERENCES `sellers`(`id`) ON DELETE SET NULL,
-  FOREIGN KEY (`judicial_process_id`) REFERENCES `judicial_processes`(`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
--- Tabela de Lotes
-CREATE TABLE IF NOT EXISTS `lots` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `public_id` VARCHAR(255) UNIQUE,
-  `auction_id` VARCHAR(255) NOT NULL,
-  `number` VARCHAR(50),
-  `title` VARCHAR(255) NOT NULL,
-  `description` TEXT,
-  `price` DECIMAL(15, 2) NOT NULL,
-  `initial_price` DECIMAL(15, 2),
-  `second_initial_price` DECIMAL(15, 2),
-  `bid_increment_step` DECIMAL(15, 2),
-  `status` VARCHAR(50),
-  `bids_count` INT DEFAULT 0,
-  `views` INT DEFAULT 0,
-  `is_featured` BOOLEAN DEFAULT FALSE,
-  `is_exclusive` BOOLEAN DEFAULT FALSE,
-  `discount_percentage` INT,
-  `additional_triggers` JSON,
-  `image_url` VARCHAR(2048),
-  `image_media_id` VARCHAR(255),
-  `gallery_image_urls` JSON,
-  `media_item_ids` JSON,
-  `category_id` VARCHAR(255),
-  `subcategory_id` VARCHAR(255),
-  `seller_id` VARCHAR(255),
-  `auctioneer_id` VARCHAR(255),
-  `city_id` VARCHAR(255),
-  `state_id` VARCHAR(255),
-  `latitude` DECIMAL(10, 8),
-  `longitude` DECIMAL(11, 8),
-  `map_address` VARCHAR(255),
-  `end_date` TIMESTAMP,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (`auction_id`) REFERENCES `auctions`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Tabela de Lotes para Bens (Many-to-Many)
-CREATE TABLE IF NOT EXISTS `lot_bens` (
-  `lot_id` VARCHAR(255) NOT NULL,
-  `bem_id` VARCHAR(255) NOT NULL,
-  PRIMARY KEY (`lot_id`, `bem_id`),
-  FOREIGN KEY (`lot_id`) REFERENCES `lots`(`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`bem_id`) REFERENCES `bens`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
--- Tabela de Estados e Cidades
 CREATE TABLE IF NOT EXISTS `states` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `name` VARCHAR(100) NOT NULL,
-  `uf` VARCHAR(2) NOT NULL UNIQUE,
-  `slug` VARCHAR(100) UNIQUE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `id` VARCHAR(191) PRIMARY KEY,
+    `name` VARCHAR(191) NOT NULL UNIQUE,
+    `uf` VARCHAR(2) NOT NULL UNIQUE,
+    `slug` VARCHAR(191) NOT NULL UNIQUE,
+    `cityCount` INT DEFAULT 0
+);
 
 CREATE TABLE IF NOT EXISTS `cities` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `name` VARCHAR(150) NOT NULL,
-  `slug` VARCHAR(150),
-  `state_id` VARCHAR(255),
-  `ibge_code` VARCHAR(7),
-  FOREIGN KEY (`state_id`) REFERENCES `states`(`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `id` VARCHAR(191) PRIMARY KEY,
+    `name` VARCHAR(191) NOT NULL,
+    `slug` VARCHAR(191) NOT NULL,
+    `stateId` VARCHAR(191) NOT NULL,
+    `stateUf` VARCHAR(2) NOT NULL,
+    `ibgeCode` VARCHAR(10),
+    `lotCount` INT DEFAULT 0,
+    FOREIGN KEY (`stateId`) REFERENCES `states`(`id`) ON DELETE CASCADE
+);
 
--- Outras tabelas...
 CREATE TABLE IF NOT EXISTS `media_items` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `file_name` VARCHAR(255) NOT NULL,
-  `storage_path` VARCHAR(2048),
-  `title` VARCHAR(255),
-  `alt_text` VARCHAR(255),
-  `caption` VARCHAR(500),
-  `description` TEXT,
-  `mime_type` VARCHAR(100),
-  `size_bytes` INT,
-  `url_original` VARCHAR(2048),
-  `url_thumbnail` VARCHAR(2048),
-  `uploaded_by` VARCHAR(255),
-  `uploaded_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `id` VARCHAR(191) PRIMARY KEY,
+    `fileName` VARCHAR(255) NOT NULL,
+    `storagePath` VARCHAR(1024) NOT NULL,
+    `title` VARCHAR(255),
+    `altText` VARCHAR(255),
+    `caption` VARCHAR(500),
+    `description` TEXT,
+    `mimeType` VARCHAR(100) NOT NULL,
+    `sizeBytes` INT NOT NULL,
+    `urlOriginal` VARCHAR(1024) NOT NULL,
+    `urlThumbnail` VARCHAR(1024),
+    `urlMedium` VARCHAR(1024),
+    `urlLarge` VARCHAR(1024),
+    `linkedLotIds` JSON,
+    `dataAiHint` VARCHAR(100),
+    `uploadedBy` VARCHAR(191),
+    `uploadedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE IF NOT EXISTS `document_templates` (
-    `id` VARCHAR(255) NOT NULL PRIMARY KEY,
+    `id` VARCHAR(191) PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL,
     `type` VARCHAR(100) NOT NULL,
-    `content` TEXT NOT NULL,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `content` TEXT,
+    `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
 
 CREATE TABLE IF NOT EXISTS `contact_messages` (
-    `id` VARCHAR(255) NOT NULL PRIMARY KEY,
+    `id` VARCHAR(191) PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL,
     `email` VARCHAR(255) NOT NULL,
-    `subject` VARCHAR(255),
+    `subject` VARCHAR(255) NOT NULL,
     `message` TEXT NOT NULL,
-    `is_read` BOOLEAN DEFAULT FALSE,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `isRead` BOOLEAN DEFAULT FALSE,
+    `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE IF NOT EXISTS `document_types` (
-    `id` VARCHAR(255) NOT NULL PRIMARY KEY,
+    `id` VARCHAR(191) PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL,
     `description` TEXT,
-    `is_required` BOOLEAN DEFAULT TRUE,
-    `applies_to` VARCHAR(50) -- e.g., 'PHYSICAL', 'LEGAL', 'ALL'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `isRequired` BOOLEAN NOT NULL DEFAULT TRUE,
+    `appliesTo` VARCHAR(50) -- e.g., 'PHYSICAL', 'LEGAL', 'ALL'
+);
+
+-- Tables with dependencies
+CREATE TABLE IF NOT EXISTS `users` (
+    `uid` VARCHAR(191) PRIMARY KEY,
+    `email` VARCHAR(255) NOT NULL UNIQUE,
+    `password` VARCHAR(255),
+    `fullName` VARCHAR(255),
+    `cpf` VARCHAR(20) UNIQUE,
+    `cellPhone` VARCHAR(20),
+    `razaoSocial` VARCHAR(255),
+    `cnpj` VARCHAR(255) UNIQUE,
+    `dateOfBirth` DATETIME,
+    `zipCode` VARCHAR(20),
+    `street` VARCHAR(255),
+    `number` VARCHAR(50),
+    `complement` VARCHAR(100),
+    `neighborhood` VARCHAR(100),
+    `city` VARCHAR(100),
+    `state` VARCHAR(50),
+    `avatarUrl` VARCHAR(1024),
+    `dataAiHint` VARCHAR(100),
+    `roleId` VARCHAR(191),
+    `sellerId` VARCHAR(191),
+    `habilitationStatus` VARCHAR(50),
+    `accountType` VARCHAR(50),
+    `badges` JSON,
+    `optInMarketing` BOOLEAN DEFAULT FALSE,
+    `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`roleId`) REFERENCES `roles`(`id`) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS `auctioneers` (
+    `id` VARCHAR(191) PRIMARY KEY,
+    `publicId` VARCHAR(191) UNIQUE,
+    `slug` VARCHAR(255) UNIQUE,
+    `name` VARCHAR(255) NOT NULL,
+    `registrationNumber` VARCHAR(100),
+    `contactName` VARCHAR(255),
+    `email` VARCHAR(255),
+    `phone` VARCHAR(20),
+    `address` VARCHAR(255),
+    `city` VARCHAR(100),
+    `state` VARCHAR(50),
+    `zipCode` VARCHAR(20),
+    `website` VARCHAR(255),
+    `logoUrl` VARCHAR(1024),
+    `logoMediaId` VARCHAR(191),
+    `dataAiHintLogo` VARCHAR(100),
+    `description` TEXT,
+    `userId` VARCHAR(191),
+    `memberSince` DATETIME,
+    `rating` FLOAT,
+    `auctionsConductedCount` INT,
+    `totalValueSold` DECIMAL(15, 2),
+    `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`userId`) REFERENCES `users`(`uid`) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS `sellers` (
+    `id` VARCHAR(191) PRIMARY KEY,
+    `publicId` VARCHAR(191) UNIQUE,
+    `slug` VARCHAR(255) UNIQUE,
+    `name` VARCHAR(255) NOT NULL,
+    `contactName` VARCHAR(255),
+    `email` VARCHAR(255),
+    `phone` VARCHAR(20),
+    `address` VARCHAR(255),
+    `city` VARCHAR(100),
+    `state` VARCHAR(50),
+    `zipCode` VARCHAR(20),
+    `website` VARCHAR(255),
+    `logoUrl` VARCHAR(1024),
+    `logoMediaId` VARCHAR(191),
+    `dataAiHintLogo` VARCHAR(100),
+    `description` TEXT,
+    `isJudicial` BOOLEAN DEFAULT FALSE,
+    `judicialBranchId` VARCHAR(191),
+    `userId` VARCHAR(191),
+    `memberSince` DATETIME,
+    `rating` FLOAT,
+    `activeLotsCount` INT,
+    `totalSalesValue` DECIMAL(15, 2),
+    `auctionsFacilitatedCount` INT,
+    `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`userId`) REFERENCES `users`(`uid`) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS `courts` (
+  `id` VARCHAR(191) PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `slug` VARCHAR(255),
+  `stateUf` VARCHAR(2),
+  `website` VARCHAR(255),
+  `createdAt` DATETIME,
+  `updatedAt` DATETIME
+);
+
+CREATE TABLE IF NOT EXISTS `judicial_districts` (
+  `id` VARCHAR(191) PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `slug` VARCHAR(255),
+  `courtId` VARCHAR(191),
+  `stateId` VARCHAR(191),
+  `zipCode` VARCHAR(20),
+  `createdAt` DATETIME,
+  `updatedAt` DATETIME,
+  FOREIGN KEY (`courtId`) REFERENCES `courts`(`id`),
+  FOREIGN KEY (`stateId`) REFERENCES `states`(`id`)
+);
+
+CREATE TABLE IF NOT EXISTS `judicial_branches` (
+  `id` VARCHAR(191) PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `slug` VARCHAR(255),
+  `districtId` VARCHAR(191),
+  `contactName` VARCHAR(255),
+  `phone` VARCHAR(20),
+  `email` VARCHAR(255),
+  `createdAt` DATETIME,
+  `updatedAt` DATETIME,
+  FOREIGN KEY (`districtId`) REFERENCES `judicial_districts`(`id`)
+);
+
+CREATE TABLE IF NOT EXISTS `judicial_processes` (
+  `id` VARCHAR(191) PRIMARY KEY,
+  `publicId` VARCHAR(191) UNIQUE,
+  `processNumber` VARCHAR(255) NOT NULL,
+  `isElectronic` BOOLEAN,
+  `courtId` VARCHAR(191),
+  `districtId` VARCHAR(191),
+  `branchId` VARCHAR(191),
+  `sellerId` VARCHAR(191),
+  `createdAt` DATETIME,
+  `updatedAt` DATETIME,
+  FOREIGN KEY (`courtId`) REFERENCES `courts`(`id`),
+  FOREIGN KEY (`districtId`) REFERENCES `judicial_districts`(`id`),
+  FOREIGN KEY (`branchId`) REFERENCES `judicial_branches`(`id`),
+  FOREIGN KEY (`sellerId`) REFERENCES `sellers`(`id`)
+);
+
+CREATE TABLE IF NOT EXISTS `judicial_parties` (
+  `id` VARCHAR(191) PRIMARY KEY,
+  `process_id` VARCHAR(191),
+  `name` VARCHAR(255) NOT NULL,
+  `documentNumber` VARCHAR(50),
+  `partyType` VARCHAR(50) NOT NULL,
+  FOREIGN KEY (`process_id`) REFERENCES `judicial_processes`(`id`) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS `bens` (
+  `id` VARCHAR(191) PRIMARY KEY,
+  `publicId` VARCHAR(191) UNIQUE,
+  `title` VARCHAR(255) NOT NULL,
+  `description` TEXT,
+  `status` VARCHAR(50),
+  `categoryId` VARCHAR(191),
+  `subcategoryId` VARCHAR(191),
+  `judicialProcessId` VARCHAR(191),
+  `sellerId` VARCHAR(191),
+  `evaluationValue` DECIMAL(15, 2),
+  `imageUrl` VARCHAR(1024),
+  `imageMediaId` VARCHAR(191),
+  `galleryImageUrls` JSON,
+  `mediaItemIds` JSON,
+  `dataAiHint` VARCHAR(100),
+  `locationCity` VARCHAR(100),
+  `locationState` VARCHAR(100),
+  `address` VARCHAR(255),
+  `latitude` DECIMAL(10, 8),
+  `longitude` DECIMAL(11, 8),
+  `plate` VARCHAR(10),
+  `make` VARCHAR(50),
+  `model` VARCHAR(50),
+  `version` VARCHAR(100),
+  `year` INT,
+  `modelYear` INT,
+  `mileage` INT,
+  `color` VARCHAR(30),
+  `fuelType` VARCHAR(30),
+  `transmissionType` VARCHAR(30),
+  `hasKey` BOOLEAN,
+  `propertyRegistrationNumber` VARCHAR(50),
+  `iptuNumber` VARCHAR(50),
+  `isOccupied` BOOLEAN,
+  `area` DECIMAL(10, 2),
+  `bedrooms` INT,
+  `bathrooms` INT,
+  `parkingSpaces` INT,
+  `amenities` JSON,
+  `hoursUsed` INT,
+  `serialNumber` VARCHAR(100),
+  `breed` VARCHAR(50),
+  `sex` VARCHAR(10),
+  `age` VARCHAR(30),
+  `vaccinationStatus` VARCHAR(200),
+  `createdAt` DATETIME,
+  `updatedAt` DATETIME,
+  FOREIGN KEY (`categoryId`) REFERENCES `lot_categories`(`id`),
+  FOREIGN KEY (`subcategoryId`) REFERENCES `subcategories`(`id`),
+  FOREIGN KEY (`judicialProcessId`) REFERENCES `judicial_processes`(`id`),
+  FOREIGN KEY (`sellerId`) REFERENCES `sellers`(`id`)
+);
+
+CREATE TABLE IF NOT EXISTS `auctions` (
+    `id` VARCHAR(191) PRIMARY KEY,
+    `publicId` VARCHAR(191) UNIQUE,
+    `slug` VARCHAR(255) UNIQUE,
+    `title` VARCHAR(255) NOT NULL,
+    `description` TEXT,
+    `status` VARCHAR(50),
+    `auctionType` VARCHAR(50),
+    `auctionDate` DATETIME NOT NULL,
+    `endDate` DATETIME,
+    `imageUrl` VARCHAR(1024),
+    `imageMediaId` VARCHAR(191),
+    `dataAiHint` VARCHAR(100),
+    `documentsUrl` VARCHAR(1024),
+    `auctioneerId` VARCHAR(191),
+    `sellerId` VARCHAR(191),
+    `categoryId` VARCHAR(191),
+    `visits` INT DEFAULT 0,
+    `totalLots` INT DEFAULT 0,
+    `isFeaturedOnMarketplace` BOOLEAN DEFAULT FALSE,
+    `marketplaceAnnouncementTitle` VARCHAR(255),
+    `automaticBiddingEnabled` BOOLEAN DEFAULT FALSE,
+    `softCloseEnabled` BOOLEAN DEFAULT FALSE,
+    `softCloseMinutes` INT DEFAULT 2,
+    `auctionStages` JSON,
+    `estimatedRevenue` DECIMAL(15, 2),
+    `achievedRevenue` DECIMAL(15, 2),
+    `totalHabilitatedUsers` INT,
+    `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`auctioneerId`) REFERENCES `auctioneers`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`sellerId`) REFERENCES `sellers`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`categoryId`) REFERENCES `lot_categories`(`id`) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS `lots` (
+    `id` VARCHAR(191) PRIMARY KEY,
+    `publicId` VARCHAR(191) UNIQUE,
+    `slug` VARCHAR(255) UNIQUE,
+    `number` VARCHAR(50),
+    `auctionId` VARCHAR(191) NOT NULL,
+    `title` VARCHAR(255) NOT NULL,
+    `description` TEXT,
+    `status` VARCHAR(50),
+    `price` DECIMAL(15, 2) NOT NULL,
+    `initialPrice` DECIMAL(15, 2),
+    `secondInitialPrice` DECIMAL(15, 2),
+    `bidIncrementStep` DECIMAL(15, 2),
+    `isFeatured` BOOLEAN DEFAULT FALSE,
+    `isExclusive` BOOLEAN,
+    `bidsCount` INT,
+    `views` INT,
+    `winnerId` VARCHAR(191),
+    `categoryId` VARCHAR(191),
+    `subcategoryId` VARCHAR(191),
+    `imageUrl` VARCHAR(1024),
+    `imageMediaId` VARCHAR(191),
+    `dataAiHint` VARCHAR(100),
+    `galleryImageUrls` JSON,
+    `mediaItemIds` JSON,
+    `bemIds` JSON,
+    `locationCity` VARCHAR(100),
+    `locationState` VARCHAR(100),
+    `address` VARCHAR(255),
+    `latitude` DECIMAL(10, 8),
+    `longitude` DECIMAL(11, 8),
+    `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`auctionId`) REFERENCES `auctions`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`winnerId`) REFERENCES `users`(`uid`) ON DELETE SET NULL,
+    FOREIGN KEY (`categoryId`) REFERENCES `lot_categories`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`subcategoryId`) REFERENCES `subcategories`(`id`) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS `lot_bens` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `lotId` VARCHAR(191) NOT NULL,
+  `bemId` VARCHAR(191) NOT NULL,
+  `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`lotId`) REFERENCES `lots`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`bemId`) REFERENCES `bens`(`id`) ON DELETE CASCADE,
+  UNIQUE (`lotId`, `bemId`)
+);
 
 CREATE TABLE IF NOT EXISTS `user_documents` (
-    `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-    `user_id` VARCHAR(255) NOT NULL,
-    `document_type_id` VARCHAR(255) NOT NULL,
-    `file_url` VARCHAR(2048) NOT NULL,
-    `file_name` VARCHAR(255),
-    `status` VARCHAR(50) NOT NULL,
-    `rejection_reason` TEXT,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`document_type_id`) REFERENCES `document_types`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` VARCHAR(191) PRIMARY KEY,
+  `userId` VARCHAR(191) NOT NULL,
+  `documentTypeId` VARCHAR(191) NOT NULL,
+  `fileUrl` VARCHAR(1024) NOT NULL,
+  `fileName` VARCHAR(255) NOT NULL,
+  `status` VARCHAR(50) NOT NULL,
+  `rejectionReason` TEXT,
+  `createdAt` DATETIME,
+  `updatedAt` DATETIME,
+  FOREIGN KEY (`userId`) REFERENCES `users`(`uid`) ON DELETE CASCADE,
+  FOREIGN KEY (`documentTypeId`) REFERENCES `document_types`(`id`) ON DELETE CASCADE
+);
 
 CREATE TABLE IF NOT EXISTS `bids` (
-    `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-    `lot_id` VARCHAR(255) NOT NULL,
-    `auction_id` VARCHAR(255) NOT NULL,
-    `bidder_id` VARCHAR(255) NOT NULL,
-    `bidder_display` VARCHAR(255),
-    `amount` DECIMAL(15, 2) NOT NULL,
-    `timestamp` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`lot_id`) REFERENCES `lots`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`auction_id`) REFERENCES `auctions`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`bidder_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` VARCHAR(191) PRIMARY KEY,
+  `lotId` VARCHAR(191) NOT NULL,
+  `auctionId` VARCHAR(191) NOT NULL,
+  `bidderId` VARCHAR(191) NOT NULL,
+  `bidderDisplay` VARCHAR(255),
+  `amount` DECIMAL(15, 2) NOT NULL,
+  `timestamp` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`lotId`) REFERENCES `lots`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`auctionId`) REFERENCES `auctions`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`bidderId`) REFERENCES `users`(`uid`) ON DELETE CASCADE
+);
 
 CREATE TABLE IF NOT EXISTS `user_wins` (
-    `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-    `lot_id` VARCHAR(255) NOT NULL UNIQUE, -- A lot can only be won once
-    `user_id` VARCHAR(255) NOT NULL,
-    `auction_id` VARCHAR(255) NOT NULL,
-    `winning_bid_amount` DECIMAL(15, 2) NOT NULL,
-    `win_date` TIMESTAMP NOT NULL,
-    `payment_status` VARCHAR(50),
-    `invoice_url` VARCHAR(2048),
-    FOREIGN KEY (`lot_id`) REFERENCES `lots`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`auction_id`) REFERENCES `auctions`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id` VARCHAR(191) PRIMARY KEY,
+  `lotId` VARCHAR(191) NOT NULL,
+  `userId` VARCHAR(191) NOT NULL,
+  `winningBidAmount` DECIMAL(15, 2) NOT NULL,
+  `winDate` DATETIME NOT NULL,
+  `paymentStatus` VARCHAR(50) NOT NULL,
+  `invoiceUrl` VARCHAR(1024),
+  FOREIGN KEY (`lotId`) REFERENCES `lots`(`id`) ON DELETE RESTRICT,
+  FOREIGN KEY (`userId`) REFERENCES `users`(`uid`) ON DELETE RESTRICT
+);
+
+-- Adicionar outras tabelas conforme necessário:
+-- direct_sale_offers, lot_questions, lot_reviews, user_lot_max_bids, etc.
+

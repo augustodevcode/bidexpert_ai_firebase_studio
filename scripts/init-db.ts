@@ -1,7 +1,8 @@
 // scripts/init-db.ts
 import dotenv from 'dotenv';
 import path from 'path';
-import { getDatabaseAdapter } from '../src/lib/database/get-adapter'; // Import from the new script-safe file
+import { getDatabaseAdapter } from '../src/lib/database/get-adapter'; 
+import { samplePlatformSettings, sampleRoles } from '../src/lib/sample-data';
 import fs from 'fs';
 import mysql, { type Pool } from 'mysql2/promise';
 
@@ -17,8 +18,7 @@ async function executeSchema(pool: Pool) {
         return;
     }
     const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-    // Split by semicolon, but handle cases where it's inside quotes or comments (basic version)
-    const statements = schemaSql.split(/;\s*$/m).filter(s => s.trim().length > 0);
+    const statements = schemaSql.split(/;\s*$/m).filter(s => s.trim().length > 0 && !s.trim().startsWith('--'));
     
     const connection = await pool.getConnection();
     try {
@@ -33,6 +33,7 @@ async function executeSchema(pool: Pool) {
                 await connection.query(statement);
                 console.log(`[DB INIT - DDL] ✅ SUCCESS: Table '${tableName}' processed.`);
             } catch (error: any) {
+                // Log non-critical errors (like FK errors due to dev) and continue
                 console.error(`[DB INIT - DDL] ❌ ERROR on table '${tableName}': ${error.message}`);
             }
         }
@@ -51,7 +52,7 @@ async function seedEssentialData(db: any) {
         // Platform Settings
         console.log('[DB INIT - DML] Checking for platform settings...');
         const settings = await db.getPlatformSettings();
-        if (!settings) {
+        if (!settings || Object.keys(settings).length === 0) {
             console.log("[DB INIT - DML] Inserting platform settings...");
             await db.updatePlatformSettings(samplePlatformSettings);
             console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings inserted.");
@@ -65,8 +66,12 @@ async function seedEssentialData(db: any) {
         if (!roles || roles.length === 0) {
             console.log("[DB INIT - DML] Populating roles...");
             if (db.createRole) {
-                for (const role of sampleRoles) await db.createRole(role);
+                for (const role of sampleRoles) {
+                    await db.createRole(role);
+                }
                 console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleRoles.length} roles inserted.`);
+            } else {
+                 console.warn("[DB INIT - DML] `createRole` function not found on adapter. Skipping role seeding.");
             }
         } else {
             console.log("[DB INIT - DML] INFO: Roles already exist. Skipping.");
@@ -83,7 +88,6 @@ async function initializeDatabase() {
   console.log('🚀 [DB INIT] Starting database initialization script...');
   const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM;
   console.log(`[DB INIT] Active database system: ${activeSystem}`);
-
 
   if (activeSystem !== 'MYSQL' && activeSystem !== 'POSTGRES') {
       console.log(`[DB INIT] 🟡 Skipping initialization for system: ${activeSystem}.`);
@@ -105,8 +109,7 @@ async function initializeDatabase() {
           connection.release();
           await executeSchema(pool);
       }
-      // Add logic for PostgreSQL if necessary in the future
-
+      
       const db = getDatabaseAdapter();
       await seedEssentialData(db);
 
