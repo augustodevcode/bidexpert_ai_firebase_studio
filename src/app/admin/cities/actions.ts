@@ -22,16 +22,44 @@ export async function getCity(id: string): Promise<CityInfo | null> {
 }
 
 export async function createCity(data: CityFormData): Promise<{ success: boolean, message: string, cityId?: string }> {
-    console.warn("createCity with sample data adapter is not fully implemented.");
-    return { success: false, message: "Criação de cidade não implementada." };
+    const db = await getDatabaseAdapter();
+    // @ts-ignore
+    if (!db.createCity) {
+      return { success: false, message: "Criação de cidade não implementada." };
+    }
+    // @ts-ignore
+    const result = await db.createCity(data);
+    if (result.success) {
+      revalidatePath('/admin/cities');
+    }
+    return result;
 }
 
 export async function updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean, message: string }> {
-    console.warn("updateCity with sample data adapter is not fully implemented.");
-    return { success: false, message: "Atualização de cidade não implementada." };
+    const db = await getDatabaseAdapter();
+    // @ts-ignore
+    if (!db.updateCity) {
+      return { success: false, message: "Atualização de cidade não implementada." };
+    }
+    // @ts-ignore
+    const result = await db.updateCity(id, data);
+    if (result.success) {
+        revalidatePath('/admin/cities');
+        revalidatePath(`/admin/cities/${id}/edit`);
+    }
+    return result;
 }
 
 export async function deleteCity(id: string): Promise<{ success: boolean, message: string }> {
-    console.warn("deleteCity with sample data adapter is not fully implemented.");
-    return { success: false, message: "Exclusão de cidade não implementada." };
+    const db = await getDatabaseAdapter();
+    // @ts-ignore
+    if (!db.deleteCity) {
+        return { success: false, message: "Exclusão de cidade não implementada." };
+    }
+    // @ts-ignore
+    const result = await db.deleteCity(id);
+    if (result.success) {
+        revalidatePath('/admin/cities');
+    }
+    return result;
 }

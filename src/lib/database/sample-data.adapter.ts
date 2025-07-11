@@ -1,5 +1,5 @@
 // src/lib/database/sample-data.adapter.ts
-import type { DatabaseAdapter, UserWin, DirectSaleOffer, Lot, UserProfileData, Role, Auction } from '@/types';
+import type { DatabaseAdapter, UserWin, DirectSaleOffer, Lot, UserProfileData, Role, Auction, StateInfo, CityInfo, CityFormData, StateFormData } from '@/types';
 import { 
     sampleLots, sampleAuctions, sampleUsers, sampleRoles, sampleLotCategories, 
     sampleSubcategories, sampleAuctioneers, sampleSellers, sampleStates, sampleCities, 
@@ -8,7 +8,7 @@ import {
     sampleJudicialBranches, sampleJudicialProcesses, sampleBens, 
     samplePlatformSettings, sampleContactMessages 
 } from '@/lib/sample-data';
-import { format } from 'date-fns';
+import { slugify } from '@/lib/sample-data-helpers';
 
 export class SampleDataAdapter implements DatabaseAdapter {
     private data: Record<string, any[]> = {
@@ -40,6 +40,75 @@ export class SampleDataAdapter implements DatabaseAdapter {
     constructor() {
         console.log('[SampleDataAdapter] Initialized with sample data.');
     }
+
+    async getStates(): Promise<StateInfo[]> {
+        return Promise.resolve(JSON.parse(JSON.stringify(this.data.states)));
+    }
+    
+    async getCities(stateIdFilter?: string): Promise<CityInfo[]> {
+        let cities = this.data.cities;
+        if (stateIdFilter) {
+            cities = cities.filter(city => city.stateId === stateIdFilter);
+        }
+        return Promise.resolve(JSON.parse(JSON.stringify(cities)));
+    }
+    
+    async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> {
+        const newState = {
+            id: `state-${slugify(data.name)}`,
+            name: data.name,
+            uf: data.uf,
+            slug: slugify(data.name),
+            cityCount: 0,
+        };
+        this.data.states.push(newState);
+        return { success: true, message: 'Estado criado com sucesso!', stateId: newState.id };
+    }
+
+    async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> {
+        const index = this.data.states.findIndex(s => s.id === id);
+        if (index > -1) {
+            this.data.states[index] = { ...this.data.states[index], ...data };
+            return { success: true, message: 'Estado atualizado com sucesso!' };
+        }
+        return { success: false, message: 'Estado não encontrado.' };
+    }
+
+    async deleteState(id: string): Promise<{ success: boolean; message: string; }> {
+        this.data.states = this.data.states.filter(s => s.id !== id);
+        return { success: true, message: 'Estado excluído com sucesso.' };
+    }
+    
+    async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> {
+        const state = this.data.states.find(s => s.id === data.stateId);
+        if (!state) return { success: false, message: 'Estado não encontrado.' };
+        const newCity = {
+            id: `city-${slugify(data.name)}-${state.uf.toLowerCase()}`,
+            name: data.name,
+            slug: slugify(data.name),
+            stateId: data.stateId,
+            stateUf: state.uf,
+            ibgeCode: data.ibgeCode,
+            lotCount: 0,
+        };
+        this.data.cities.push(newCity);
+        return { success: true, message: 'Cidade criada com sucesso!', cityId: newCity.id };
+    }
+    
+    async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> {
+        const index = this.data.cities.findIndex(c => c.id === id);
+        if (index > -1) {
+            this.data.cities[index] = { ...this.data.cities[index], ...data };
+            return { success: true, message: 'Cidade atualizada com sucesso!' };
+        }
+        return { success: false, message: 'Cidade não encontrada.' };
+    }
+    
+    async deleteCity(id: string): Promise<{ success: boolean; message: string; }> {
+        this.data.cities = this.data.cities.filter(c => c.id !== id);
+        return { success: true, message: 'Cidade excluída com sucesso.' };
+    }
+
 
     async getLots(auctionId?: string): Promise<any[]> {
         let lots = this.data.lots;
@@ -166,17 +235,14 @@ export class SampleDataAdapter implements DatabaseAdapter {
         const seller = this.data.sellers.find(s => s.slug === sellerSlugOrId || s.id === sellerSlugOrId || s.publicId === sellerSlugOrId);
         if (!seller) return Promise.resolve([]);
         
-        // Find auctions by this seller
         const sellerAuctions = this.data.auctions.filter(a => a.sellerId === seller.id || a.seller === seller.name);
         const sellerAuctionIds = new Set(sellerAuctions.map(a => a.id));
         
-        // Find lots in those auctions
         const lots = this.data.lots.filter(l => sellerAuctionIds.has(l.auctionId));
         return Promise.resolve(JSON.parse(JSON.stringify(lots)));
     }
 
 
-     // Fallback for methods not fully implemented in sample data adapter
      async _notImplemented(method: string): Promise<any> {
          console.warn(`[SampleDataAdapter] Method ${method} is not fully implemented and returns a default value.`);
          return Promise.resolve(null);

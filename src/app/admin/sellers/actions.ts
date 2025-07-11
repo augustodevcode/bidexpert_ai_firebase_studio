@@ -14,7 +14,6 @@ export async function getSellers(): Promise<SellerProfileInfo[]> {
 
 export async function getSeller(id: string): Promise<SellerProfileInfo | null> {
     const db = await getDatabaseAdapter();
-    // This is a simplification. A real implementation would query the DB.
     const sellers = await db.getSellers();
     return sellers.find(s => s.id === id || s.publicId === id) || null;
 }
@@ -41,13 +40,44 @@ export async function getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]
 
 
 export async function createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
-    return { success: false, message: "Criação não implementada para o adaptador de dados de exemplo." };
+    const db = await getDatabaseAdapter();
+    // @ts-ignore
+     if (!db.createSeller) {
+        return { success: false, message: "Criação não implementada para o adaptador de dados de exemplo." };
+    }
+    // @ts-ignore
+    const result = await db.createSeller(data);
+    if(result.success) {
+        revalidatePath('/admin/sellers');
+    }
+    return result;
 }
 
 export async function updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
-    return { success: false, message: "Atualização não implementada para o adaptador de dados de exemplo." };
+    const db = await getDatabaseAdapter();
+     // @ts-ignore
+    if (!db.updateSeller) {
+        return { success: false, message: "Atualização não implementada para o adaptador de dados de exemplo." };
+    }
+     // @ts-ignore
+    const result = await db.updateSeller(id, data);
+    if(result.success) {
+        revalidatePath('/admin/sellers');
+        revalidatePath(`/admin/sellers/${id}/edit`);
+    }
+    return result;
 }
 
 export async function deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
-    return { success: false, message: "Exclusão não implementada para o adaptador de dados de exemplo." };
+    const db = await getDatabaseAdapter();
+    // @ts-ignore
+    if (!db.deleteSeller) {
+        return { success: false, message: "Exclusão não implementada para o adaptador de dados de exemplo." };
+    }
+    // @ts-ignore
+    const result = await db.deleteSeller(id);
+    if(result.success) {
+        revalidatePath('/admin/sellers');
+    }
+    return result;
 }
