@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 
 export type AuctionStatus = 'RASCUNHO' | 'EM_PREPARACAO' | 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO';
@@ -134,6 +133,7 @@ export interface Lot {
   price: number;
   initialPrice?: number | null;
   secondInitialPrice?: number | null;
+  bidIncrementStep?: number | null;
   status: LotStatus;
   bidsCount?: number;
   views?: number;
@@ -173,19 +173,19 @@ export interface Lot {
   dataAiHint?: string;
   winnerId?: string | null;
   winningBidTermUrl?: string | null;
-  bidIncrementStep?: number | null;
   allowInstallmentBids?: boolean;
-  // Vehicle specific
-  odometer?: number;
+  // Vehicle specific from Bem
+  year?: number;
   make?: string;
   model?: string;
   series?: string;
-  year?: number;
+  odometer?: number;
   hasKey?: boolean;
   vin?: string;
   fuelType?: string;
   transmissionType?: string;
-  // Vehicle condition
+  
+  // Vehicle condition from Lot
   primaryDamage?: string;
   secondaryDamage?: string;
   lossType?: string;
@@ -205,10 +205,10 @@ export interface Lot {
   aisleStall?: string;
   startCode?: string;
   airbagsStatus?: string;
-  // Financial
+  // Financial from Lot
   actualCashValue?: number;
   estimatedRepairCost?: number;
-  // Judicial Process
+  // Judicial Process from Lot
   judicialProcessNumber?: string;
   courtDistrict?: string;
   courtName?: string;
@@ -217,7 +217,7 @@ export interface Lot {
   propertyLiens?: string;
   knownDebts?: string;
   additionalDocumentsInfo?: string;
-  // Bidding
+  // Bidding from Lot
   reservePrice?: number | null;
   evaluationValue?: number | null;
   debtAmount?: number | null;
@@ -872,36 +872,3 @@ export interface DatabaseAdapter {
     getPlatformSettings(): Promise<PlatformSettings | null>;
     updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }>;
 }
-```
-- tsconfig.json:
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
-  },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
-}
-
-```
