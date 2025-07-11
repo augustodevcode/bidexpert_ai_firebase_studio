@@ -590,6 +590,8 @@ export interface Court {
   slug: string;
   stateUf: string;
   website: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 }
 
 export interface JudicialDistrict {
@@ -601,6 +603,8 @@ export interface JudicialDistrict {
   stateId: string;
   stateUf?: string;
   zipCode?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 }
 
 export interface JudicialBranch {
@@ -612,6 +616,8 @@ export interface JudicialBranch {
   contactName?: string;
   phone?: string;
   email?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 }
 
 export interface ProcessParty {
@@ -825,6 +831,11 @@ export interface ConsignorDashboardStats {
 // ============================================================================
 // DATABASE ADAPTER INTERFACE
 // ============================================================================
+export interface StateFormData {
+  name: string;
+  uf: string;
+}
+
 export interface SubcategoryFormData {
   name: string;
   parentCategoryId: string;
@@ -834,6 +845,72 @@ export interface SubcategoryFormData {
   iconMediaId?: string | null;
   dataAiHintIcon?: string | null;
 }
+
+export interface SellerFormData {
+  name: string;
+  contactName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
+  website?: string | null;
+  logoUrl?: string | null;
+  dataAiHintLogo?: string | null;
+  description?: string | null;
+  isJudicial: boolean;
+  judicialBranchId?: string | null;
+}
+
+export interface AuctioneerFormData {
+  name: string;
+  registrationNumber?: string | null;
+  contactName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
+  website?: string | null;
+  logoUrl?: string | null;
+  dataAiHintLogo?: string | null;
+  description?: string | null;
+  userId?: string | null;
+}
+
+export interface CourtFormData {
+    name: string;
+    stateUf: string;
+    website: string;
+}
+
+export interface JudicialDistrictFormData {
+  name: string;
+  courtId: string;
+  stateId: string;
+  zipCode?: string | null;
+}
+
+export interface JudicialBranchFormData {
+  name: string;
+  districtId: string;
+  contactName?: string | null;
+  phone?: string | null;
+  email?: string | null;
+}
+
+export interface JudicialProcessFormData {
+  processNumber: string;
+  isElectronic: boolean;
+  courtId: string;
+  districtId: string;
+  branchId: string;
+  sellerId?: string | null;
+  parties: ProcessParty[];
+}
+
 
 export interface DatabaseAdapter {
     getLots(auctionId?: string): Promise<Lot[]>;
@@ -854,12 +931,43 @@ export interface DatabaseAdapter {
     getSubcategoriesByParent(parentCategoryId: string): Promise<Subcategory[]>;
     getSubcategory(id: string): Promise<Subcategory | null>;
     createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean, message: string }>;
-    createSubcategory(data: Partial<Subcategory>): Promise<{ success: boolean, message: string }>;
+    createSubcategory(data: Partial<Subcategory>): Promise<{ success: boolean, message: string, subcategoryId?: string }>;
     updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string }>;
     deleteSubcategory(id: string): Promise<{ success: boolean; message: string }>;
+    
+    getStates(): Promise<StateInfo[]>;
+    getCities(stateId?: string): Promise<CityInfo[]>;
+    createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }>;
+    updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }>;
+    deleteState(id: string): Promise<{ success: boolean; message: string; }>;
+    createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }>;
+    updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }>;
+    deleteCity(id: string): Promise<{ success: boolean; message: string; }>;
 
     getSellers(): Promise<SellerProfileInfo[]>;
+    getSeller(id: string): Promise<SellerProfileInfo | null>;
+    createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }>;
+    updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }>;
+    deleteSeller(id: string): Promise<{ success: boolean; message: string; }>;
+
     getAuctioneers(): Promise<AuctioneerProfileInfo[]>;
+    getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null>;
+    createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }>;
+    updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }>;
+    deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }>;
+
+    getCourts(): Promise<Court[]>;
+    getJudicialDistricts(): Promise<JudicialDistrict[]>;
+    getJudicialBranches(): Promise<JudicialBranch[]>;
+    getJudicialProcesses(): Promise<JudicialProcess[]>;
+    getBem(id: string): Promise<Bem | null>;
+    getBens(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Bem[]>;
+    getBensByIds(ids: string[]): Promise<Bem[]>;
+    createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }>;
+    createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }>;
+    createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }>;
+    createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }>;
+    createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }>;
 
     getUsersWithRoles(): Promise<UserProfileData[]>;
     getUserProfileData(userId: string): Promise<UserProfileData | null>;
@@ -871,4 +979,135 @@ export interface DatabaseAdapter {
 
     getPlatformSettings(): Promise<PlatformSettings | null>;
     updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }>;
+    
+    close?(): Promise<void>;
 }
+
+export type CityFormData = Omit<CityInfo, 'id' | 'slug' | 'stateUf' | 'lotCount'>;
+
+```
+- tailwind.config.ts:
+```ts
+import type {Config} from 'tailwindcss';
+
+const config: Config = {
+  darkMode: ['class'],
+  content: [
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  prefix: "",
+  theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
+    extend: {
+      fontFamily: {
+        body: ['Open Sans', 'sans-serif'],
+        headline: ['Open Sans', 'sans-serif'],
+        code: ['monospace'],
+      },
+      colors: {
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+        chart: {
+          '1': 'hsl(var(--chart-1))',
+          '2': 'hsl(var(--chart-2))',
+          '3': 'hsl(var(--chart-3))',
+          '4': 'hsl(var(--chart-4))',
+          '5': 'hsl(var(--chart-5))',
+        },
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+      },
+    },
+  },
+  plugins: [require("tailwindcss-animate")],
+}
+
+export default config;
+```
+- tsconfig.json:
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}
+```
