@@ -1,8 +1,10 @@
 // src/lib/database/firestore.adapter.ts
-import { db as dbAdmin, ensureAdminInitialized, AdminFieldValue, ServerTimestamp } from '@/lib/firebase/admin';
+import { db as dbAdmin, ensureAdminInitialized, type ServerTimestamp } from '@/lib/firebase/admin';
 import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
-import admin from 'firebase-admin';
+import admin, { firestore } from 'firebase-admin';
+
+const AdminFieldValue = firestore.FieldValue;
 
 export class FirestoreAdapter implements DatabaseAdapter {
     private db: FirebaseFirestore.Firestore;
@@ -23,7 +25,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
         }
         // Converte Timestamps para strings ISO
         Object.keys(data).forEach(key => {
-            if (data[key] instanceof ServerTimestamp) {
+            if (data[key] instanceof firestore.Timestamp) {
                 data[key] = data[key].toDate().toISOString();
             }
         });

@@ -7,7 +7,7 @@ import { getStorage, type Storage } from 'firebase-admin/storage';
 import * as fs from 'fs';
 import * as path from 'path';
 
-export type { FieldValue as AdminFieldValue, Timestamp as ServerTimestamp } from 'firebase-admin/firestore';
+export type { Timestamp as ServerTimestamp } from 'firebase-admin/firestore';
 
 let adminApp: App | undefined;
 let initError: Error | null = null;
