@@ -7,30 +7,41 @@ import { revalidatePath } from 'next/cache';
 
 export async function getJudicialDistricts(): Promise<JudicialDistrict[]> {
     const db = await getDatabaseAdapter();
-    // @ts-ignore - Assuming this method exists on the adapter for now
-    if (db.getJudicialDistricts) {
-        // @ts-ignore
-        return db.getJudicialDistricts();
-    }
-    return []; // Return empty if not implemented
+    return db.getJudicialDistricts();
 }
 
 export async function getJudicialDistrict(id: string): Promise<JudicialDistrict | null> {
-    const districts = await getJudicialDistricts();
+    const db = getDatabaseAdapter();
+    const districts = await db.getJudicialDistricts();
     return districts.find(d => d.id === id) || null;
 }
 
 export async function createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> {
-    console.warn("createJudicialDistrict with sample data adapter is not fully implemented.");
-    return { success: false, message: "Criação de comarca não implementada para este adaptador." };
+    const db = getDatabaseAdapter();
+    const result = await db.createJudicialDistrict(data);
+    if(result.success) {
+      revalidatePath('/admin/judicial-districts');
+    }
+    return result;
 }
 
 export async function updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> {
-    console.warn("updateJudicialDistrict with sample data adapter is not fully implemented.");
-    return { success: false, message: "Atualização de comarca não implementada para este adaptador." };
+    const db = getDatabaseAdapter();
+    // @ts-ignore
+    const result = await db.updateJudicialDistrict(id, data);
+    if(result.success) {
+      revalidatePath('/admin/judicial-districts');
+      revalidatePath(`/admin/judicial-districts/${id}/edit`);
+    }
+    return result;
 }
 
 export async function deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> {
-    console.warn("deleteJudicialDistrict with sample data adapter is not fully implemented.");
-    return { success: false, message: "Exclusão de comarca não implementada para este adaptador." };
+    const db = getDatabaseAdapter();
+    // @ts-ignore
+    const result = await db.deleteJudicialDistrict(id);
+    if (result.success) {
+        revalidatePath('/admin/judicial-districts');
+    }
+    return result;
 }

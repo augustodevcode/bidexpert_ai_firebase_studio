@@ -1,3 +1,4 @@
+
 // src/lib/database/index.ts
 import 'server-only';
 import { FirestoreAdapter } from './firestore.adapter';
@@ -14,34 +15,20 @@ const adapters: { [key: string]: { new (): DatabaseAdapter } } = {
   SAMPLE_DATA: SampleDataAdapter,
 };
 
-let adapterInstance: DatabaseAdapter | null = null;
-let currentDbSystem: string | null = null;
-
-
 /**
  * Determina dinamicamente qual adaptador de banco de dados usar com base nas variáveis de ambiente.
  * Esta função deve ser chamada dentro de cada Server Action que precisa interagir com o banco de dados.
- * A instância do adaptador é armazenada em cache para evitar reinicializações desnecessárias.
+ * A instância do adaptador é criada a cada chamada para garantir que a configuração mais recente seja usada.
  * @returns {DatabaseAdapter} Uma instância do adaptador de banco de dados correto.
  */
 export const getDatabaseAdapter = (): DatabaseAdapter => {
   const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
-
-  // Se o sistema não mudou e já temos uma instância, retorne a instância em cache
-  if (adapterInstance && currentDbSystem === activeSystem) {
-    return adapterInstance;
-  }
-  
-  // Se o sistema mudou ou não há instância, crie uma nova
   const AdapterClass = adapters[activeSystem];
 
   if (!AdapterClass) {
     console.error(`Sistema de banco de dados inválido selecionado: ${activeSystem}. Retornando para SAMPLE_DATA.`);
-    adapterInstance = new SampleDataAdapter();
-  } else {
-    adapterInstance = new AdapterClass();
+    return new SampleDataAdapter();
   }
 
-  currentDbSystem = activeSystem;
-  return adapterInstance;
+  return new AdapterClass();
 };

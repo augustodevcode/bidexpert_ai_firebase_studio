@@ -7,39 +7,46 @@ import { revalidatePath } from 'next/cache';
 
 
 export async function getBens(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Bem[]> {
-    const db = await getDatabaseAdapter();
-    // @ts-ignore - Assuming this method exists on the adapter for now
-    if (db.getBens) {
-        // @ts-ignore
-        return db.getBens(filter);
-    }
-    return [];
+    const db = getDatabaseAdapter();
+    return db.getBens(filter);
 }
 
 export async function getBem(id: string): Promise<Bem | null> {
-    const bens = await getBens();
-    return bens.find(b => b.id === id) || null;
+    const db = getDatabaseAdapter();
+    return db.getBem(id);
 }
 
 export async function createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
-    return { success: false, message: "Criação de bem não implementada para este adaptador." };
+    const db = getDatabaseAdapter();
+    const result = await db.createBem(data);
+    if(result.success) {
+      revalidatePath('/admin/bens');
+    }
+    return result;
 }
 
 export async function updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
-    return { success: false, message: "Atualização de bem não implementada para este adaptador." };
+    const db = getDatabaseAdapter();
+    const result = await db.updateBem(id, data);
+     if(result.success) {
+      revalidatePath('/admin/bens');
+      revalidatePath(`/admin/bens/${id}/edit`);
+    }
+    return result;
 }
 
 export async function deleteBem(id: string): Promise<{ success: boolean; message: string; }> {
-    return { success: false, message: "Exclusão de bem não implementada para este adaptador." };
+    // Em um app real, verificar se o bem está em um lote ativo antes de excluir
+    const db = getDatabaseAdapter();
+    // @ts-ignore
+    const result = await db.deleteBem(id);
+    if (result.success) {
+        revalidatePath('/admin/bens');
+    }
+    return result;
 }
 
 export async function getBensByIdsAction(ids: string[]): Promise<Bem[]> {
-  if (!ids || ids.length === 0) return [];
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  if (db.getBensByIds) {
-    // @ts-ignore
-    return db.getBensByIds(ids);
-  }
-  return [];
+  const db = getDatabaseAdapter();
+  return db.getBensByIds(ids);
 }

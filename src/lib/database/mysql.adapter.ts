@@ -1,6 +1,6 @@
 
 // src/lib/database/mysql.adapter.ts
-import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData } from '@/types';
+import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, CityFormData, StateFormData } from '@/types';
 import mysql, { type Pool, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -32,7 +32,15 @@ function convertKeysToSnakeCase(obj: Record<string, any>): Record<string, any> {
     const newObj: Record<string, any> = {};
     for (const key in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
-            newObj[toSnakeCase(key)] = obj[key];
+            if (obj[key] instanceof Date) {
+              newObj[toSnakeCase(key)] = obj[key].toISOString().slice(0, 19).replace('T', ' ');
+            } else if (typeof obj[key] === 'boolean') {
+              newObj[toSnakeCase(key)] = obj[key] ? 1 : 0;
+            } else if (Array.isArray(obj[key]) || typeof obj[key] === 'object' && obj[key] !== null) {
+              newObj[toSnakeCase(key)] = JSON.stringify(obj[key]);
+            } else {
+              newObj[toSnakeCase(key)] = obj[key];
+            }
         }
     }
     return newObj;
@@ -46,7 +54,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     constructor() {
         const dbUrl = process.env.DATABASE_URL;
         if (!dbUrl || !dbUrl.startsWith('mysql://')) {
-            this.connectionError = "A variável de ambiente MYSQL_DATABASE_URL não está definida. Usando dados vazios.";
+            this.connectionError = "A variável de ambiente DATABASE_URL (para MySQL) não está definida.";
             console.warn(`[MySqlAdapter] AVISO: ${this.connectionError}`);
             return;
         }
@@ -103,10 +111,51 @@ export class MySqlAdapter implements DatabaseAdapter {
             connection.release();
         }
     }
-
-
-    // --- READ OPERATIONS ---
     
+    private async genericCreate(tableName: string, data: Record<string, any>, idPrefix?: string, publicIdPrefix?: string): Promise<{ success: boolean; message: string; insertId?: string }> {
+      const newId = idPrefix ? `${idPrefix}-${uuidv4()}` : uuidv4();
+      const publicId = publicIdPrefix ? `${publicIdPrefix}-PUB-${newId.substring(newId.length - 8)}` : null;
+
+      const dataToInsert: Record<string, any> = { id: newId };
+      if (publicId) dataToInsert['public_id'] = publicId;
+      if (data.name && !data.slug) dataToInsert['slug'] = slugify(data.name);
+      if (data.title && !data.slug) dataToInsert['slug'] = slugify(data.title);
+
+      Object.assign(dataToInsert, data);
+
+      dataToInsert['created_at'] = new Date();
+      dataToInsert['updated_at'] = new Date();
+      
+      const snakeCaseData = convertKeysToSnakeCase(dataToInsert);
+
+      const fields = Object.keys(snakeCaseData).map(k => `\`${k}\``).join(', ');
+      const placeholders = Object.keys(snakeCaseData).map(() => '?').join(', ');
+      const values = Object.values(snakeCaseData);
+
+      const sql = `INSERT INTO \`${tableName}\` (${fields}) VALUES (${placeholders})`;
+      const result = await this.executeMutation(sql, values);
+      if (result.success) {
+        return { success: true, message: "Registro criado com sucesso!", insertId: newId };
+      }
+      return { success: false, message: result.message };
+    }
+
+    private async genericUpdate(tableName: string, id: string, data: Record<string, any>): Promise<{ success: boolean; message: string; }> {
+        const updates = { ...data, updated_at: new Date() };
+        if (updates.name && !updates.slug) updates.slug = slugify(updates.name);
+        if (updates.title && !updates.slug) updates.slug = slugify(updates.title);
+
+        const snakeCaseUpdates = convertKeysToSnakeCase(updates);
+        
+        const fieldsToUpdate = Object.keys(snakeCaseUpdates).map(key => `\`${key}\` = ?`).join(', ');
+        const values = Object.values(snakeCaseUpdates);
+
+        if (values.length === 0) return { success: true, message: "Nenhum campo para atualizar." };
+
+        const sql = `UPDATE \`${tableName}\` SET ${fieldsToUpdate} WHERE id = ?`;
+        return this.executeMutation(sql, [...values, id]);
+    }
+
     async getLots(auctionId?: string): Promise<Lot[]> {
         let sql = 'SELECT * FROM `lots`';
         const params = [];
@@ -121,19 +170,66 @@ export class MySqlAdapter implements DatabaseAdapter {
         return this.executeQueryForSingle('SELECT * FROM `lots` WHERE `id` = ? OR `public_id` = ?', [id, id]);
     }
     
-    getLotsByIds(ids: string[]): Promise<Lot[]> {
+    async getLotsByIds(ids: string[]): Promise<Lot[]> {
         if (ids.length === 0) return Promise.resolve([]);
         const placeholders = ids.map(() => '?').join(',');
         const sql = `SELECT * FROM \`lots\` WHERE \`id\` IN (${placeholders}) OR \`public_id\` IN (${placeholders})`;
         return this.executeQuery(sql, [...ids, ...ids]);
     }
 
+    async createLot(lotData: Partial<Lot>): Promise<{ success: boolean; message: string; lotId?: string; }> {
+      return this.genericCreate('lots', lotData, 'lot', 'LOT');
+    }
+
+    async updateLot(id: string, updates: Partial<Lot>): Promise<{ success: boolean; message: string; }> {
+      return this.genericUpdate('lots', id, updates);
+    }
+
+    async deleteLot(id: string): Promise<{ success: boolean; message: string; }> {
+      return this.executeMutation('DELETE FROM `lots` WHERE id = ?', [id]);
+    }
+    
+    async getBens(filter?: { judicialProcessId?: string; sellerId?: string; }): Promise<Bem[]> {
+        let sql = 'SELECT * FROM `bens`';
+        const params = [];
+        const whereClauses = [];
+        if (filter?.judicialProcessId) {
+            whereClauses.push('`judicial_process_id` = ?');
+            params.push(filter.judicialProcessId);
+        }
+        if (filter?.sellerId) {
+            whereClauses.push('`seller_id` = ?');
+            params.push(filter.sellerId);
+        }
+        if (whereClauses.length > 0) {
+            sql += ' WHERE ' + whereClauses.join(' AND ');
+        }
+        return this.executeQuery(sql, params);
+    }
+
+    async getBem(id: string): Promise<Bem | null> {
+        return this.executeQueryForSingle('SELECT * FROM `bens` WHERE `id` = ?', [id]);
+    }
+    
+    async getBensByIds(ids: string[]): Promise<Bem[]> {
+        if (!ids || ids.length === 0) return [];
+        const placeholders = ids.map(() => '?').join(',');
+        return this.executeQuery(`SELECT * FROM \`bens\` WHERE id IN (${placeholders})`, ids);
+    }
+    
+    async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
+        return this.genericCreate('bens', data, 'bem', 'BEM');
+    }
+    
+    async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
+        return this.genericUpdate('bens', id, data);
+    }
+
     async getAuctions(): Promise<Auction[]> {
         const auctions = await this.executeQuery('SELECT * FROM `auctions` ORDER BY `auction_date` DESC');
         for (const auction of auctions) {
-            const lots = await this.executeQuery('SELECT * FROM `lots` WHERE `auction_id` = ?', [auction.id]);
-            auction.lots = lots;
-            auction.totalLots = lots.length;
+            auction.lots = await this.getLots(auction.id);
+            auction.totalLots = auction.lots.length;
         }
         return auctions;
     }
@@ -147,6 +243,18 @@ export class MySqlAdapter implements DatabaseAdapter {
         return auction;
     }
     
+    async createAuction(auctionData: Partial<Auction>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
+      return this.genericCreate('auctions', auctionData, 'auc', 'AUC');
+    }
+    
+    async deleteAuction(id: string): Promise<{ success: boolean, message: string }> {
+      return this.executeMutation('DELETE FROM `auctions` WHERE `id` = ?', [id]);
+    }
+
+    async updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }> {
+       return this.genericUpdate('auctions', id, updates);
+    }
+    
     async getStates(): Promise<StateInfo[]> { return this.executeQuery('SELECT * FROM `states` ORDER BY `name`'); }
     async getCities(stateId?: string): Promise<CityInfo[]> {
         let sql = 'SELECT * FROM `cities`';
@@ -156,6 +264,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         }
         return this.executeQuery(sql + ' ORDER BY `name`');
     }
+    
     async getLotCategories(): Promise<LotCategory[]> { return this.executeQuery('SELECT * FROM `lot_categories` ORDER BY `name`'); }
     
     async getSubcategoriesByParent(parentCategoryId: string): Promise<Subcategory[]> {
@@ -185,12 +294,10 @@ export class MySqlAdapter implements DatabaseAdapter {
     async getPlatformSettings(): Promise<PlatformSettings | null> {
         const settings = await this.executeQueryForSingle('SELECT * FROM `platform_settings` WHERE id = ?', ['global']);
         if (!settings) {
-            console.warn("[MySqlAdapter] Configurações da plataforma não encontradas no DB. Retornando null.");
             return null;
         }
         try {
-            // Safely parse JSON fields
-            const fieldsToParse = ['themes', 'homepageSections', 'mentalTriggerSettings', 'sectionBadgeVisibility', 'mapSettings', 'variableIncrementTable', 'biddingSettings'];
+            const fieldsToParse = ['themes', 'homepageSections', 'mentalTriggerSettings', 'sectionBadgeVisibility', 'mapSettings', 'variableIncrementTable', 'biddingSettings', 'platformPublicIdMasks'];
             for (const field of fieldsToParse) {
                 if (settings[field] && typeof settings[field] === 'string') {
                     settings[field] = JSON.parse(settings[field]);
@@ -198,144 +305,48 @@ export class MySqlAdapter implements DatabaseAdapter {
             }
         } catch(e: any) {
             console.error(`Error parsing PlatformSettings JSON from DB: ${e.message}`);
-            // Return null or throw an error if parsing fails, to avoid propagating malformed data.
             return null;
         }
         return settings;
     }
     
-    // --- WRITE/UPDATE/DELETE OPERATIONS ---
-    
-    async createAuction(auctionData: Partial<Auction>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
-      const newId = uuidv4();
-      const publicId = `AUC-PUB-${newId.substring(0,8)}`;
-      const dataToInsert = {
-        id: newId,
-        public_id: publicId,
-        slug: slugify(auctionData.title || `auction-${newId}`),
-        ...auctionData,
-        created_at: new Date(),
-        updated_at: new Date(),
-      };
-      
-      const snakeCaseData = convertKeysToSnakeCase(dataToInsert);
-      delete snakeCaseData.lots; // Ensure lots array isn't sent to SQL
-      
-      const fields = Object.keys(snakeCaseData).map(k => `\`${k}\``).join(', ');
-      const placeholders = Object.keys(snakeCaseData).map(() => '?').join(', ');
-      const values = Object.values(snakeCaseData);
-
-      const sql = `INSERT INTO \`auctions\` (${fields}) VALUES (${placeholders})`;
-      const result = await this.executeMutation(sql, values);
-      if (result.success) {
-        return { success: true, message: "Leilão criado com sucesso!", auctionId: newId };
-      }
-      return result;
-    }
-    
-    async deleteAuction(id: string): Promise<{ success: boolean, message: string }> {
-      const result = await this.executeMutation('DELETE FROM `auctions` WHERE `id` = ?', [id]);
-      return result;
+    async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> {
+      return this.genericCreate('states', data, `state-${data.uf.toLowerCase()}`);
     }
 
-    async updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }> {
-       const snakeCaseUpdates = convertKeysToSnakeCase(updates);
-       snakeCaseUpdates['updated_at'] = new Date();
-       if (updates.title) {
-           snakeCaseUpdates['slug'] = slugify(updates.title);
-       }
-       
-       delete snakeCaseUpdates.lots; // Ensure lots array isn't sent to SQL
-
-       const fieldsToUpdate = Object.keys(snakeCaseUpdates).map(key => `\`${key}\` = ?`).join(', ');
-       const values = Object.values(snakeCaseUpdates);
-
-       const sql = `UPDATE \`auctions\` SET ${fieldsToUpdate} WHERE id = ?`;
-       return this.executeMutation(sql, [...values, id]);
+    async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> {
+        return this.genericCreate('cities', data, 'city');
     }
 
-    async createLot(lotData: Partial<Lot>): Promise<{ success: boolean; message: string; lotId?: string; }> {
-      const newId = uuidv4();
-      const publicId = `LOT-PUB-${newId.substring(0,8)}`;
-      const dataToInsert = {
-        id: newId,
-        public_id: publicId,
-        slug: slugify(lotData.title || `lot-${newId}`),
-        ...lotData,
-        created_at: new Date(),
-        updated_at: new Date(),
-      };
-
-      const snakeCaseData = convertKeysToSnakeCase(dataToInsert);
-      delete snakeCaseData.bens;
-
-      const fields = Object.keys(snakeCaseData).map(k => `\`${k}\``).join(', ');
-      const placeholders = Object.keys(snakeCaseData).map(() => '?').join(', ');
-      const values = Object.values(snakeCaseData);
-
-      const sql = `INSERT INTO \`lots\` (${fields}) VALUES (${placeholders})`;
-      const result = await this.executeMutation(sql, values);
-       if (result.success) {
-        return { success: true, message: "Lote criado com sucesso!", lotId: newId };
-      }
-      return result;
+    async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> {
+      return this.genericCreate('courts', data, 'court');
     }
 
-    async deleteLot(id: string): Promise<{ success: boolean; message: string; }> {
-      return this.executeMutation('DELETE FROM `lots` WHERE id = ?', [id]);
+    async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> {
+        return this.genericCreate('judicial_districts', data, 'dist');
     }
 
-    async updateLot(id: string, updates: Partial<Lot>): Promise<{ success: boolean; message: string; }> {
-        const snakeCaseUpdates = convertKeysToSnakeCase(updates);
-        snakeCaseUpdates['updated_at'] = new Date();
-        if (updates.title) {
-            snakeCaseUpdates['slug'] = slugify(updates.title);
+    async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }> {
+      return this.genericCreate('judicial_branches', data, 'branch');
+    }
+
+    async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
+        const { parties, ...processData } = data;
+        const result = await this.genericCreate('judicial_processes', processData, 'proc', 'PROC');
+        if (result.success && result.insertId && parties && parties.length > 0) {
+            for (const party of parties) {
+                await this.genericCreate('judicial_parties', { ...party, process_id: result.insertId }, 'party');
+            }
         }
-        delete snakeCaseUpdates.bens;
-        
-        const fieldsToUpdate = Object.keys(snakeCaseUpdates).map(key => `\`${key}\` = ?`).join(', ');
-        const values = Object.values(snakeCaseUpdates);
-
-        const sql = `UPDATE \`lots\` SET ${fieldsToUpdate} WHERE id = ?`;
-        return this.executeMutation(sql, [...values, id]);
+        return result;
     }
-    
-    async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean, message: string, subcategoryId?: string }> {
-        return this._notImplemented('createSubcategory');
-    }
-    async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean, message: string }> {
-        return this._notImplemented('updateSubcategory');
-    }
-    async deleteSubcategory(id: string): Promise<{ success: boolean, message: string }> {
-        return this._notImplemented('deleteSubcategory');
-    }
-
 
     async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
-      const newId = uuidv4();
-      const sellerData = {
-          id: newId,
-          public_id: `SELL-PUB-${newId.substring(0,8)}`,
-          slug: slugify(data.name),
-          ...data,
-          created_at: new Date(),
-          updated_at: new Date()
-      };
-      const snakeCaseData = convertKeysToSnakeCase(sellerData);
-      const fields = Object.keys(snakeCaseData).map(k => `\`${k}\``).join(', ');
-      const placeholders = Object.keys(snakeCaseData).map(() => '?').join(', ');
-      const result = await this.executeMutation(`INSERT INTO \`sellers\` (${fields}) VALUES (${placeholders})`, Object.values(snakeCaseData));
-      if (result.success) {
-          return { ...result, sellerId: newId };
-      }
-      return result;
+      return this.genericCreate('sellers', data, 'seller', 'SELL');
     }
 
     async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
-      const updates = { ...convertKeysToSnakeCase(data), updated_at: new Date() };
-      if(data.name) updates['slug'] = slugify(data.name);
-      const setClause = Object.keys(updates).map(k => `\`${k}\` = ?`).join(', ');
-      return this.executeMutation(`UPDATE \`sellers\` SET ${setClause} WHERE id = ?`, [...Object.values(updates), id]);
+      return this.genericUpdate('sellers', id, data);
     }
 
     async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
@@ -347,30 +358,11 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
-        const newId = uuidv4();
-        const auctioneerData = {
-            id: newId,
-            public_id: `AUCT-PUB-${newId.substring(0,8)}`,
-            slug: slugify(data.name),
-            ...data,
-            created_at: new Date(),
-            updated_at: new Date()
-        };
-        const snakeCaseData = convertKeysToSnakeCase(auctioneerData);
-        const fields = Object.keys(snakeCaseData).map(k => `\`${k}\``).join(', ');
-        const placeholders = Object.keys(snakeCaseData).map(() => '?').join(', ');
-        const result = await this.executeMutation(`INSERT INTO \`auctioneers\` (${fields}) VALUES (${placeholders})`, Object.values(snakeCaseData));
-        if (result.success) {
-            return { ...result, auctioneerId: newId };
-        }
-        return result;
+        return this.genericCreate('auctioneers', data, 'auct', 'AUCT');
     }
 
     async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
-        const updates = { ...convertKeysToSnakeCase(data), updated_at: new Date() };
-        if(data.name) updates['slug'] = slugify(data.name);
-        const setClause = Object.keys(updates).map(k => `\`${k}\` = ?`).join(', ');
-        return this.executeMutation(`UPDATE \`auctioneers\` SET ${setClause} WHERE id = ?`, [...Object.values(updates), id]);
+        return this.genericUpdate('auctioneers', id, data);
     }
 
     async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> {
@@ -386,7 +378,6 @@ export class MySqlAdapter implements DatabaseAdapter {
         const sql = 'INSERT INTO `user_documents` (id, user_id, document_type_id, file_url, file_name, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
         const result = await this.executeMutation(sql, [id, userId, documentTypeId, fileUrl, fileName, 'PENDING_ANALYSIS', new Date(), new Date()]);
         
-        // After inserting, update user status if needed
         if (result.success) {
             await this.executeMutation('UPDATE `users` SET habilitation_status = ? WHERE uid = ? AND habilitation_status = ?', ['PENDING_ANALYSIS', userId, 'PENDING_DOCUMENTS']);
         }
@@ -401,33 +392,34 @@ export class MySqlAdapter implements DatabaseAdapter {
         return Promise.resolve(method.endsWith('s') ? [] : null);
     }
     
-    updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateUserRole'); }
+    updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('users', userId, { role_id: roleId }); }
     createMediaItem(item: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> { return this._notImplemented('createMediaItem'); }
     
     async createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean; message: string; }> {
-        const snakeCaseData = convertKeysToSnakeCase(data);
-        const fields = Object.keys(snakeCaseData).map(k => `\`${k}\``).join(', ');
-        const placeholders = Object.keys(snakeCaseData).map(() => '?').join(', ');
-        return this.executeMutation(`INSERT INTO \`lot_categories\` (${fields}) VALUES (${placeholders})`, Object.values(snakeCaseData));
+        return this.genericCreate('lot_categories', data, 'cat');
     }
 
     async updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
-        const snakeCaseData = convertKeysToSnakeCase(data);
-        const updateData: Record<string, any> = {};
+        return this.genericUpdate('platform_settings', 'global', data);
+    }
 
-        for (const [key, value] of Object.entries(snakeCaseData)) {
-            if (typeof value === 'object' && value !== null) {
-                updateData[key] = JSON.stringify(value);
-            } else {
-                updateData[key] = value;
-            }
-        }
-        updateData['updated_at'] = new Date();
+    async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string }> {
+      return this.genericUpdate('cities', id, data);
+    }
 
-        const fieldsToUpdate = Object.keys(updateData).map(key => `\`${key}\` = ?`).join(', ');
-        const values = Object.values(updateData);
-        
-        const sql = `UPDATE \`platform_settings\` SET ${fieldsToUpdate} WHERE id = ?`;
-        return this.executeMutation(sql, [...values, 'global']);
+    async deleteCity(id: string): Promise<{ success: boolean; message: string }> {
+      return this.executeMutation('DELETE FROM `cities` WHERE id = ?', [id]);
+    }
+    
+    async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string }> {
+        return this.genericUpdate('subcategories', id, data);
+    }
+
+    async deleteSubcategory(id: string): Promise<{ success: boolean; message: string }> {
+       return this.executeMutation('DELETE FROM `subcategories` WHERE id = ?', [id]);
+    }
+
+    async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string }> {
+      return this.genericUpdate('courts', id, data);
     }
 }

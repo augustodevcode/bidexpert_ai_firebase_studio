@@ -2,49 +2,46 @@
 'use server';
 
 import { getDatabaseAdapter } from '@/lib/database';
-import type { JudicialProcess } from '@/types';
+import type { JudicialProcess, JudicialProcessFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
-
-// Placeholder for a form data type
-interface JudicialProcessFormData {
-  processNumber: string;
-  isElectronic: boolean;
-  courtId: string;
-  districtId: string;
-  branchId: string;
-  sellerId?: string | null;
-  parties: { name: string; partyType: string }[];
-}
 
 export async function getJudicialProcesses(): Promise<JudicialProcess[]> {
   const db = await getDatabaseAdapter();
-  // @ts-ignore - Assuming this method exists on the adapter for now
-  if (db.getJudicialProcesses) {
-    // @ts-ignore
-    return db.getJudicialProcesses();
-  }
-  return []; // Return empty if not implemented
+  return db.getJudicialProcesses();
 }
 
 export async function getJudicialProcess(id: string): Promise<JudicialProcess | null> {
-    const db = await getDatabaseAdapter();
-    // @ts-ignore
-    if(db.getJudicialProcess) {
-        // @ts-ignore
-        return db.getJudicialProcess(id);
-    }
-    const processes = await getJudicialProcesses();
+    const db = getDatabaseAdapter();
+    const processes = await db.getJudicialProcesses();
     return processes.find(p => p.id === id) || null;
 }
 
 export async function createJudicialProcessAction(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
-    return { success: false, message: "Criação de processo judicial não implementada para este adaptador." };
+    const db = getDatabaseAdapter();
+    const result = await db.createJudicialProcess(data);
+    if(result.success) {
+        revalidatePath('/admin/judicial-processes');
+    }
+    return result;
 }
 
 export async function updateJudicialProcessAction(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> {
-    return { success: false, message: "Atualização de processo judicial não implementada para este adaptador." };
+    const db = getDatabaseAdapter();
+    // @ts-ignore
+    const result = await db.updateJudicialProcess(id, data);
+    if (result.success) {
+        revalidatePath('/admin/judicial-processes');
+        revalidatePath(`/admin/judicial-processes/${id}/edit`);
+    }
+    return result;
 }
 
 export async function deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string; }> {
-    return { success: false, message: "Exclusão de processo judicial não implementada para este adaptador." };
+    const db = getDatabaseAdapter();
+    // @ts-ignore
+    const result = await db.deleteJudicialProcess(id);
+    if (result.success) {
+        revalidatePath('/admin/judicial-processes');
+    }
+    return result;
 }
