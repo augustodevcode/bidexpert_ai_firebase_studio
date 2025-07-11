@@ -518,10 +518,11 @@ export default function EditAuctionPage() {
   return (
     <div className="space-y-8">
        <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsViewMode(!isViewMode)}>
-                {isViewMode ? <Edit className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
-                {isViewMode ? 'Modo Edição' : 'Modo Visualização'}
+           {isViewMode ? (
+            <Button onClick={() => setIsViewMode(false)}>
+              <Edit className="mr-2 h-4 w-4" /> Entrar em Modo de Edição
             </Button>
+           ) : null}
             <DeleteAuctionButton auction={auction} onAction={fetchPageData} />
         </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -534,9 +535,13 @@ export default function EditAuctionPage() {
             onSubmitAction={handleUpdateAuction}
             formTitle={isViewMode ? "Visualizar Leilão" : "Editar Leilão"}
             formDescription={isViewMode ? "Consulte as informações do leilão abaixo." : "Modifique os detalhes do leilão."}
-            submitButtonText="Salvar Alterações do Leilão"
+            submitButtonText="Salvar Alterações"
             isViewMode={isViewMode}
-            onUpdateSuccess={fetchPageData}
+            onUpdateSuccess={() => {
+                fetchPageData();
+                setIsViewMode(true);
+            }}
+            onCancelEdit={() => setIsViewMode(true)}
           />
         </div>
         <div className="lg:col-span-1 space-y-6 sticky top-24">
@@ -581,4 +586,3 @@ export default function EditAuctionPage() {
     </div>
   );
 }
-

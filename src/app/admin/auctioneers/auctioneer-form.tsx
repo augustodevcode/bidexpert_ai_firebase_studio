@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctioneerFormSchema, type AuctioneerFormValues } from './auctioneer-form-schema';
 import type { AuctioneerProfileInfo, MediaItem } from '@/types';
-import { Loader2, Save, Landmark, Image as ImageIcon } from 'lucide-react'; // Added ImageIcon
+import { Loader2, Save, Landmark, Image as ImageIcon, XCircle } from 'lucide-react'; // Added ImageIcon, XCircle
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import Image from 'next/image'; // Added Image
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog'; // Added ChooseMediaDialog
@@ -31,6 +31,9 @@ interface AuctioneerFormProps {
   formTitle: string;
   formDescription: string;
   submitButtonText: string;
+  isViewMode?: boolean;
+  onUpdateSuccess?: () => void;
+  onCancelEdit?: () => void;
 }
 
 export default function AuctioneerForm({
@@ -39,6 +42,9 @@ export default function AuctioneerForm({
   formTitle,
   formDescription,
   submitButtonText,
+  isViewMode = false,
+  onUpdateSuccess,
+  onCancelEdit,
 }: AuctioneerFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -88,8 +94,12 @@ export default function AuctioneerForm({
           title: 'Sucesso!',
           description: result.message,
         });
-        router.push('/admin/auctioneers');
-        router.refresh();
+        if (onUpdateSuccess) {
+            onUpdateSuccess();
+        } else {
+            router.push('/admin/auctioneers');
+            router.refresh();
+        }
       } else {
         toast({
           title: 'Erro',
@@ -109,6 +119,15 @@ export default function AuctioneerForm({
     }
   }
 
+  const handleCancelClick = () => {
+    if (onCancelEdit) {
+      onCancelEdit();
+    } else {
+      router.back();
+    }
+  };
+
+
   return (
     <>
       <Card className="max-w-3xl mx-auto shadow-lg">
@@ -117,8 +136,9 @@ export default function AuctioneerForm({
           <CardDescription>{formDescription}</CardDescription>
         </CardHeader>
         <Form {...form}>
+            <fieldset disabled={isViewMode} className="group">
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="space-y-6 p-6 bg-secondary/30">
+            <CardContent className="space-y-6 p-6 bg-secondary/30 group-disabled:bg-muted/10">
               <FormField
                 control={form.control}
                 name="name"
@@ -314,16 +334,19 @@ export default function AuctioneerForm({
                 )}
               />
             </CardContent>
-            <CardFooter className="flex justify-end gap-2 p-6 border-t">
-              <Button type="button" variant="outline" onClick={() => router.push('/admin/auctioneers')} disabled={isSubmitting}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                {submitButtonText}
-              </Button>
-            </CardFooter>
+            {!isViewMode && (
+                <CardFooter className="flex justify-end gap-2 p-6 border-t">
+                    <Button type="button" variant="outline" onClick={handleCancelClick} disabled={isSubmitting}>
+                        <XCircle className="mr-2 h-4 w-4"/> Cancelar
+                    </Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        {submitButtonText}
+                    </Button>
+                </CardFooter>
+            )}
           </form>
+          </fieldset>
         </Form>
       </Card>
       <ChooseMediaDialog

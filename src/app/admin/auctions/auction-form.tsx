@@ -24,7 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
 import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem } from '@/types';
-import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat, MicOff, FileSignature } from 'lucide-react';
+import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat, MicOff, FileSignature, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -46,6 +46,9 @@ interface AuctionFormProps {
   formTitle: string;
   formDescription: string;
   submitButtonText: string;
+  isViewMode?: boolean;
+  onUpdateSuccess?: () => void;
+  onCancelEdit?: () => void;
 }
 
 const auctionStatusOptions: { value: AuctionStatus; label: string }[] = [
@@ -78,6 +81,9 @@ export default function AuctionForm({
   formTitle,
   formDescription,
   submitButtonText,
+  isViewMode = false,
+  onUpdateSuccess,
+  onCancelEdit,
 }: AuctionFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -188,8 +194,12 @@ export default function AuctionForm({
           title: 'Sucesso!',
           description: result.message,
         });
-        router.push('/admin/auctions');
-        router.refresh();
+        if (onUpdateSuccess) {
+            onUpdateSuccess();
+        } else {
+            router.push('/admin/auctions');
+            router.refresh();
+        }
       } else {
         toast({
           title: 'Erro',
@@ -208,6 +218,15 @@ export default function AuctionForm({
       setIsSubmitting(false);
     }
   }
+  
+  const handleCancelClick = () => {
+    if (onCancelEdit) {
+      onCancelEdit();
+    } else {
+      router.back();
+    }
+  };
+
 
   return (
     <TooltipProvider>
@@ -223,8 +242,9 @@ export default function AuctionForm({
         <CardDescription>{formDescription}</CardDescription>
       </CardHeader>
       <Form {...form}>
+        <fieldset disabled={isViewMode} className="group">
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6 p-6 bg-secondary/30">
+          <CardContent className="space-y-6 p-6 bg-secondary/30 group-disabled:bg-muted/10">
             <FormField
               control={form.control}
               name="title"
@@ -441,7 +461,7 @@ export default function AuctionForm({
               <Card key={field.id} className="p-4 space-y-3 bg-background">
                 <div className="flex justify-between items-center">
                   <h4 className="font-medium">Praça / Etapa {index + 1}</h4>
-                  {fields.length > 1 && (
+                  {!isViewMode && fields.length > 1 && (
                     <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:text-destructive/80 h-7 w-7">
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -505,9 +525,11 @@ export default function AuctionForm({
                 />
               </Card>
             ))}
-            <Button type="button" variant="outline" size="sm" onClick={() => append({ name: `${fields.length + 1}ª Praça`, endDate: new Date(), initialPrice: undefined })} className="text-xs">
-              <PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa
-            </Button>
+            {!isViewMode && (
+                <Button type="button" variant="outline" size="sm" onClick={() => append({ name: `${fields.length + 1}ª Praça`, endDate: new Date(), initialPrice: undefined })} className="text-xs">
+                    <PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa
+                </Button>
+            )}
             
             <AuctionStagesTimeline auctionOverallStartDate={watchedAuctionDate} stages={watchedStages as AuctionStage[]} />
 
@@ -768,16 +790,19 @@ export default function AuctionForm({
 
 
           </CardContent>
-          <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/auctions')} disabled={isSubmitting}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {submitButtonText}
-            </Button>
-          </CardFooter>
+          {!isViewMode && (
+              <CardFooter className="flex justify-end gap-2 p-6 border-t">
+                <Button type="button" variant="outline" onClick={handleCancelClick} disabled={isSubmitting}>
+                  <XCircle className="mr-2 h-4 w-4" /> Cancelar Edição
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  {submitButtonText}
+                </Button>
+              </CardFooter>
+          )}
         </form>
+        </fieldset>
       </Form>
     </Card>
     </TooltipProvider>
