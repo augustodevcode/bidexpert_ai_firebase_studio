@@ -1,5 +1,5 @@
 // src/lib/database/sample-data.adapter.ts
-import type { DatabaseAdapter, UserWin, DirectSaleOffer, Lot, UserProfileData, Role, Auction, StateInfo, CityInfo, CityFormData, StateFormData, Subcategory } from '@/types';
+import type { DatabaseAdapter, UserWin, DirectSaleOffer, Lot, UserProfileData, Role, Auction, StateInfo, CityInfo, CityFormData, StateFormData, PlatformSettings, Subcategory } from '@/types';
 import { 
     sampleLots, sampleAuctions, sampleUsers, sampleRoles, sampleLotCategories, 
     sampleSubcategories, sampleAuctioneers, sampleSellers, sampleStates, sampleCities, 
@@ -263,8 +263,22 @@ export class SampleDataAdapter implements DatabaseAdapter {
      }
      updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean, message: string }> { return this._notImplemented('updateUserRole'); }
      getSellers(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.sellers))); }
-     getPlatformSettings(): Promise<any | null> { return Promise.resolve(this.data.settings[0] || samplePlatformSettings) }
-     updatePlatformSettings(data: any): Promise<{ success: boolean; message: string; }> {
+     
+     async getPlatformSettings(): Promise<any | null> { 
+        // Ensure the settings object is created if it doesn't exist
+        if (!this.data.settings || this.data.settings.length === 0) {
+            this.data.settings = [{ ...samplePlatformSettings, id: 'global' }];
+        }
+        return Promise.resolve(this.data.settings[0]);
+     }
+
+    async createPlatformSettings(data: PlatformSettings): Promise<{ success: boolean; message: string; }> {
+        // In sample data, we just replace the existing settings
+        this.data.settings[0] = { ...data, updatedAt: new Date().toISOString() };
+        return Promise.resolve({ success: true, message: "Sample platform settings created/replaced."});
+    }
+
+     async updatePlatformSettings(data: any): Promise<{ success: boolean; message: string; }> {
          this.data.settings[0] = { ...this.data.settings[0], ...data, updatedAt: new Date().toISOString() };
          return Promise.resolve({ success: true, message: "Settings updated in sample data."});
      }
