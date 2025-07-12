@@ -30,35 +30,27 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
     const users = await db.getUsersWithRoles();
     const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
-    if (!user) {
-      console.log(`[Login Action] Usuário não encontrado para o email: ${email}`);
+    if (!user || !user.password) {
+      console.log(`[Login Action] Usuário não encontrado ou sem senha definida para o email: ${email}`);
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
-    console.log(`[Login Action] Usuário encontrado:`, { uid: user.id, email: user.email, roleName: user.roleName });
-
-    let isPasswordValid = false;
+    console.log(`[Login Action] Usuário encontrado:`, { uid: user.uid, email: user.email, roleName: user.roleName });
     
-    // DEVELOPMENT ONLY: Bypass password check for admin user
-    if (user.email.toLowerCase() === 'admin@bidexpert.com.br') {
-        console.log('[Login Action] Bypass de senha para o usuário admin ativado.');
-        isPasswordValid = true;
-    } else {
-        if (!user.password) {
-             console.log(`[Login Action] Usuário ${email} não tem senha definida.`);
-             return { success: false, message: 'Credenciais inválidas.' };
-        }
-        isPasswordValid = await bcrypt.compare(password, user.password);
-    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     
     console.log(`[Login Action] A senha é válida? ${isPasswordValid}`);
 
     if (!isPasswordValid) {
-      console.log(`[Login Action] Senha inválida para o usuário: ${email}`);
-      return { success: false, message: 'Credenciais inválidas.' };
+      // DEVELOPMENT ONLY: Bypass password check for admin user
+      if (user.email.toLowerCase() === 'admin@bidexpert.com.br') {
+        console.log('[Login Action] Bypass de senha para o usuário admin ativado.');
+      } else {
+        console.log(`[Login Action] Senha inválida para o usuário: ${email}`);
+        return { success: false, message: 'Credenciais inválidas.' };
+      }
     }
     
-    // O objeto 'user' já tem o formato UserProfileWithPermissions por causa do getUsersWithRoles
     await createSession(user);
     
     console.log(`[Login Action] Sessão criada com sucesso para ${email}`);
@@ -95,4 +87,28 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
     if (!user) return null;
     
     return user as UserProfileWithPermissions;
+}
+
+/**
+ * DEVELOPMENT ONLY: Automatically logs in the admin user if no session exists.
+ * @returns The admin user profile if successful, otherwise null.
+ */
+export async function loginAdminForDevelopment(): Promise<UserProfileWithPermissions | null> {
+    if (process.env.NODE_ENV !== 'development') {
+        return null;
+    }
+
+    console.log('[Dev Action] Tentando login automático do admin...');
+    const db = getDatabaseAdapter();
+    const users = await db.getUsersWithRoles();
+    const adminUser = users.find(u => u.email.toLowerCase() === 'admin@bidexpert.com.br');
+
+    if (adminUser) {
+        await createSession(adminUser);
+        console.log('[Dev Action] Sessão de admin criada para desenvolvimento.');
+        return adminUser as UserProfileWithPermissions;
+    }
+    
+    console.warn('[Dev Action] Usuário admin não encontrado para login automático.');
+    return null;
 }
