@@ -12,7 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { updatePlatformSettings } from '@/app/admin/settings/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, UploadCloud, Image as ImageIcon } from 'lucide-react';
+import { Loader2, UploadCloud, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 
 interface SettingsStepProps {
@@ -29,11 +29,15 @@ const settingsSchema = z.object({
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 
+const MAX_LOGO_SIZE_MB = 2;
+const MAX_LOGO_SIZE_BYTES = MAX_LOGO_SIZE_MB * 1024 * 1024;
+
 export default function SettingsStep({ onNext, onPrev }: SettingsStepProps) {
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const [fileError, setFileError] = useState<string | null>(null);
 
     const form = useForm<SettingsFormValues>({
         resolver: zodResolver(settingsSchema),
@@ -47,7 +51,14 @@ export default function SettingsStep({ onNext, onPrev }: SettingsStepProps) {
     
     const handleLogoFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
+        setFileError(null);
         if (file) {
+            if (file.size > MAX_LOGO_SIZE_BYTES) {
+                setFileError(`Arquivo muito grande. O tamanho máximo para o logo é ${MAX_LOGO_SIZE_MB}MB.`);
+                setLogoFile(null);
+                setLogoPreview(null);
+                return;
+            }
             setLogoFile(file);
             setLogoPreview(URL.createObjectURL(file));
         }
@@ -64,27 +75,22 @@ export default function SettingsStep({ onNext, onPrev }: SettingsStepProps) {
                 body: formData,
             });
 
-            if (!response.ok) {
-                let errorBodyText = 'Could not read error body from server response.';
-                try {
-                    errorBodyText = await response.text();
-                } catch (e) {
-                    // Ignore if body can't be read
-                }
-                console.error(`[Upload Error] HTTP Status: ${response.status}. Response Body:`, errorBodyText);
-                throw new Error(`Falha no servidor durante o upload (Status: ${response.status}).`);
-            }
-
             const result = await response.json();
 
+            if (!response.ok) {
+                const errorMsg = result.errors?.[0]?.message || result.message || `Falha no servidor (Status: ${response.status}).`;
+                console.error(`[Upload Error] HTTP Status: ${response.status}. Response Body:`, result);
+                throw new Error(errorMsg);
+            }
+            
             if (result.success && result.urls && result.urls.length > 0) {
                 return result.urls[0];
             } else {
+                const errorMsg = result.errors?.[0]?.message || result.message || 'Falha no upload do arquivo.';
                 console.error('[Upload Error] Server responded OK, but operation failed. Result:', result);
-                throw new Error(result.message || 'Falha no upload do arquivo. O servidor respondeu, mas a operação não foi bem-sucedida.');
+                throw new Error(errorMsg);
             }
         } catch (error: any) {
-            console.error('[Upload Error] Catch block:', error);
             toast({ title: 'Erro de Upload', description: error.message, variant: 'destructive' });
             return null;
         }
@@ -100,7 +106,7 @@ export default function SettingsStep({ onNext, onPrev }: SettingsStepProps) {
                 finalLogoUrl = uploadedUrl;
             } else {
                 setIsSaving(false);
-                return; // Stop if upload fails
+                return;
             }
         }
 
@@ -155,6 +161,8 @@ export default function SettingsStep({ onNext, onPrev }: SettingsStepProps) {
                             <FormField control={form.control} name="logoUrl" render={({ field }) => (<FormControl><Input type="text" placeholder="Ou cole a URL aqui" {...field} className="text-xs h-8" /></FormControl>)} />
                         </div>
                     </div>
+                  <FormDescription>Máximo de {MAX_LOGO_SIZE_MB}MB. Formatos: PNG, JPG, WEBP, SVG.</FormDescription>
+                  {fileError && <p className="text-sm font-medium text-destructive flex items-center gap-1"><AlertCircle className="h-4 w-4"/> {fileError}</p>}
                   <FormMessage>{form.formState.errors.logoUrl?.message}</FormMessage>
                 </FormItem>
                 <FormField control={form.control} name="faviconUrl" render={({ field }) => (<FormItem><FormLabel>URL do Favicon (Opcional)</FormLabel><FormControl><Input placeholder="Cole a URL para o seu .ico ou .png" {...field} /></FormControl><FormDescription>Ícone que aparece na aba do navegador. Upload direto será adicionado futuramente.</FormDescription><FormMessage /></FormItem>)} />
