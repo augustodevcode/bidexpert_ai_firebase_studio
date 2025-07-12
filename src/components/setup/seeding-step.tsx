@@ -1,4 +1,3 @@
-
 // src/components/setup/seeding-step.tsx
 'use client';
 
@@ -15,96 +14,33 @@ interface SeedingStepProps {
   onPrev: () => void;
 }
 
-// Dummy server action for simulation. In a real app this would call the `init-db` or `seed` script.
-async function runSeedScript(option: 'essentials' | 'full' | 'none'): Promise<{ success: boolean; message: string }> {
-  if (option === 'none') {
-    return { success: true, message: 'Nenhuma ação executada, conforme solicitado.' };
-  }
-  try {
-    const response = await fetch('/api/run-script', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ script: option === 'full' ? 'db:seed' : 'db:init' }),
-    });
-    
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.message || 'Falha ao executar o script no servidor.');
-    }
-    return result;
-  } catch (error: any) {
-    console.error(`Error running script for option: ${option}`, error);
-    return { success: false, message: error.message };
-  }
-}
-
+// NOTE: The actual seeding logic is now handled server-side by the `npm run db:init` script.
+// This component now serves as a user confirmation step to explain what happened.
 export default function SeedingStep({ onNext, onPrev }: SeedingStepProps) {
-  const [seedOption, setSeedOption] = useState<'essentials' | 'full' | 'none'>('essentials');
-  const [isSeeding, setIsSeeding] = useState(false);
-  const [seedResult, setSeedResult] = useState<{ success: boolean; message: string } | null>(null);
-
-  const handleSeed = async () => {
-    setIsSeeding(true);
-    setSeedResult(null);
-    try {
-      // Aqui, chamamos a função que executa o script no backend.
-      const result = await runSeedScript(seedOption);
-      setSeedResult(result);
-    } catch (error: any) {
-       setSeedResult({ success: false, message: `Falha ao popular o banco de dados: ${error.message}` });
-    } finally {
-        setIsSeeding(false);
-    }
-  };
+  const [userConfirmation, setUserConfirmation] = useState(false);
 
   return (
     <>
       <CardHeader>
         <CardTitle>População Inicial do Banco de Dados</CardTitle>
-        <CardDescription>Escolha quais dados você deseja inserir no seu banco. Isso só precisa ser feito uma vez.</CardDescription>
+        <CardDescription>
+          Seu banco de dados foi inicializado e os dados essenciais (como perfis e categorias) foram inseridos.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <RadioGroup value={seedOption} onValueChange={(val: any) => setSeedOption(val)} className="space-y-3">
-          <Label htmlFor="seed-essentials" className="flex items-start gap-4 p-4 border rounded-lg cursor-pointer hover:bg-accent has-[div>input:checked]:bg-accent has-[div>input:checked]:border-primary">
-            <div className="flex items-center h-full"><RadioGroupItem value="essentials" id="seed-essentials" /></div>
-            <div className="flex-grow">
-              <p className="font-semibold">Apenas Dados Essenciais (Recomendado)</p>
-              <p className="text-sm text-muted-foreground">Cria perfis, configurações, categorias e subcategorias. Ideal para começar a cadastrar seus próprios dados.</p>
-            </div>
-          </Label>
-          <Label htmlFor="seed-full" className="flex items-start gap-4 p-4 border rounded-lg cursor-pointer hover:bg-accent has-[div>input:checked]:bg-accent has-[div>input:checked]:border-primary">
-            <div className="flex items-center h-full"><RadioGroupItem value="full" id="seed-full" /></div>
-            <div className="flex-grow">
-              <p className="font-semibold">Dados Completos de Demonstração</p>
-              <p className="text-sm text-muted-foreground">Inclui todos os dados essenciais mais leilões, lotes, usuários e comitentes de exemplo para uma experiência de demonstração completa.</p>
-            </div>
-          </Label>
-          <Label htmlFor="seed-none" className="flex items-start gap-4 p-4 border rounded-lg cursor-pointer hover:bg-accent has-[div>input:checked]:bg-accent has-[div>input:checked]:border-primary">
-            <div className="flex items-center h-full"><RadioGroupItem value="none" id="seed-none" /></div>
-            <div className="flex-grow">
-              <p className="font-semibold">Não inserir nenhum dado</p>
-              <p className="text-sm text-muted-foreground">Use esta opção se você já tem dados no seu banco de dados ou prefere cadastrar tudo manualmente desde o início.</p>
-            </div>
-          </Label>
-        </RadioGroup>
-        
-        <div className="text-center">
-            <Button onClick={handleSeed} disabled={isSeeding}>
-                {isSeeding ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Populando... </> : "Executar Ação Selecionada"}
-            </Button>
-        </div>
-        
-        {seedResult && (
-            <Alert variant={seedResult.success ? 'default' : 'destructive'} className={seedResult.success ? "bg-green-50 dark:bg-green-900/20 border-green-500/50" : ""}>
-                 {seedResult.success ? <CheckCircle className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
-                <AlertTitle>{seedResult.success ? "Sucesso!" : "Erro!"}</AlertTitle>
-                <AlertDescription>{seedResult.message}</AlertDescription>
-            </Alert>
-        )}
+        <Alert variant="default" className="bg-green-50 dark:bg-green-900/20 border-green-500/50">
+          <CheckCircle className="h-4 w-4" />
+          <AlertTitle className="font-semibold">Inicialização Concluída!</AlertTitle>
+          <AlertDescription>
+            O script `db:init` foi executado automaticamente na inicialização do servidor, preparando seu banco de dados com as tabelas e dados essenciais. Você pode prosseguir com segurança.
+            <br/><br/>
+            Se desejar popular o banco com um conjunto completo de dados de **demonstração** (leilões, lotes, etc.), pare o servidor e execute o comando: <code className="font-semibold bg-muted px-1 py-0.5 rounded">npm run db:seed</code>
+          </AlertDescription>
+        </Alert>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={onPrev} disabled={isSeeding}>Voltar</Button>
-        <Button onClick={onNext} disabled={isSeeding || !seedResult}>Avançar para Configurações</Button>
+        <Button variant="outline" onClick={onPrev}>Voltar</Button>
+        <Button onClick={onNext}>Avançar para Configurações</Button>
       </CardFooter>
     </>
   );
