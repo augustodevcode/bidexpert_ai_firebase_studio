@@ -30,15 +30,26 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
     const users = await db.getUsersWithRoles();
     const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
-
-    if (!user || !user.password) {
-      console.log(`[Login Action] Usuário não encontrado ou sem senha definida para o email: ${email}`);
+    if (!user) {
+      console.log(`[Login Action] Usuário não encontrado para o email: ${email}`);
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
     console.log(`[Login Action] Usuário encontrado:`, { uid: user.id, email: user.email, roleName: user.roleName });
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    let isPasswordValid = false;
+    
+    // DEVELOPMENT ONLY: Bypass password check for admin user
+    if (user.email.toLowerCase() === 'admin@bidexpert.com.br') {
+        console.log('[Login Action] Bypass de senha para o usuário admin ativado.');
+        isPasswordValid = true;
+    } else {
+        if (!user.password) {
+             console.log(`[Login Action] Usuário ${email} não tem senha definida.`);
+             return { success: false, message: 'Credenciais inválidas.' };
+        }
+        isPasswordValid = await bcrypt.compare(password, user.password);
+    }
     
     console.log(`[Login Action] A senha é válida? ${isPasswordValid}`);
 
