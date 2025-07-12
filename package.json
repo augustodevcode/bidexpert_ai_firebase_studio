@@ -9,8 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "db:init": "tsx scripts/init-db.ts",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:init": "npx prisma migrate dev --name init",
+    "db:seed": "npx prisma db seed",
     "genkit:dev": "genkit start -- tsx /home/user/studio/src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts"
   },

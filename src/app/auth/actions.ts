@@ -2,9 +2,9 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/database';
 import { createSession, getSession, deleteSession } from '@/lib/session';
-import type { UserProfileData, UserProfileWithPermissions } from '@/types';
+import type { UserProfileWithPermissions } from '@/types';
 import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcrypt';
 
@@ -26,29 +26,19 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
   }
   
   try {
-    const db = await getDatabaseAdapter();
-    const usersWithPermissions = await db.getUsersWithRoles();
-    const user = usersWithPermissions.find(u => u.email?.toLowerCase() === email.toLowerCase());
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      include: { role: true },
+    });
 
     if (!user || !user.password) {
       console.log(`[Login Action] Usuário não encontrado ou sem senha definida para o email: ${email}`);
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
-    console.log(`[Login Action] Usuário encontrado:`, { uid: user.uid, email: user.email, roleName: user.roleName });
-    console.log(`[Login Action] Senha do formulário: [PROTEGIDO]`);
-    console.log(`[Login Action] Senha do banco de dados (exemplo): "${user.password}"`);
+    console.log(`[Login Action] Usuário encontrado:`, { uid: user.id, email: user.email, roleName: user.role?.name });
 
-    const isSampleData = (process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA') === 'SAMPLE_DATA';
-    
-    let isPasswordValid = false;
-    if (isSampleData) {
-      console.log('[Login Action] Modo SampleData: Comparando senhas como texto plano.');
-      isPasswordValid = (password === user.password);
-    } else {
-      console.log('[Login Action] Modo BD Real: Comparando senhas com bcrypt.');
-      isPasswordValid = await bcrypt.compare(password, user.password);
-    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     
     console.log(`[Login Action] A senha é válida? ${isPasswordValid}`);
 
@@ -57,7 +47,12 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
-    await createSession(user);
+    const userProfileWithPermissions = {
+      ...user,
+      permissions: user.role?.permissions as string[] || []
+    };
+    
+    await createSession(userProfileWithPermissions);
     
     console.log(`[Login Action] Sessão criada com sucesso para ${email}`);
     return { success: true, message: 'Login bem-sucedido!' };
@@ -86,10 +81,16 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
     if (!session || !session.userId) {
         return null;
     }
-    const db = await getDatabaseAdapter();
-    const user = await db.getUserProfileData(session.userId);
+    
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      include: { role: true }
+    });
 
     if (!user) return null;
     
-    return user as UserProfileWithPermissions;
+    return {
+      ...user,
+      permissions: user.role?.permissions as string[] || [],
+    };
 }

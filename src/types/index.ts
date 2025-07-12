@@ -979,6 +979,7 @@ export interface DatabaseAdapter {
     getUsersWithRoles(): Promise<UserProfileData[]>;
     getUserProfileData(userId: string): Promise<UserProfileData | null>;
     getRoles(): Promise<Role[]>;
+    createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{success: boolean;message: string;}>;
     updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }>;
 
     getMediaItems(): Promise<MediaItem[]>;

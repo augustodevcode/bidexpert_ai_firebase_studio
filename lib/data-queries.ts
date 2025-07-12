@@ -1,121 +1,143 @@
-/**
- * @fileoverview Centralized data-fetching functions.
- * These functions are server-safe and can be called from Server Components, API Routes,
- * and other Server Actions. They encapsulate the logic for retrieving data
- * via the configured database adapter.
- */
+// src/lib/data-queries.ts
 'use server';
 
-import { getDatabaseAdapter } from './database/index';
+import { prisma } from '@/lib/database';
 import type { 
-    Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, 
+    Lot, Auction, UserProfileWithPermissions, Role, LotCategory, AuctioneerProfileInfo, 
     SellerProfileInfo, MediaItem, PlatformSettings, Bem, Subcategory
 } from '@/types';
 
-
 export async function fetchPlatformSettings(): Promise<PlatformSettings> {
-  const db = getDatabaseAdapter();
-  const settings = await db.getPlatformSettings();
+  const settings = await prisma.platformSettings.findUnique({
+    where: { id: 'global' },
+    include: {
+        themes: true,
+        platformPublicIdMasks: true,
+        mapSettings: true,
+        biddingSettings: true,
+        mentalTriggerSettings: true,
+        sectionBadgeVisibility: true,
+        variableIncrementTable: true,
+    }
+  });
   if (!settings) {
     throw new Error("Platform settings could not be loaded.");
   }
-  return settings;
+  return settings as PlatformSettings;
 }
 
 export async function fetchAuctions(): Promise<Auction[]> {
-    const db = getDatabaseAdapter();
-    return db.getAuctions();
+  const auctions = await prisma.auction.findMany({
+    orderBy: { auctionDate: 'desc' },
+    include: {
+      lots: true
+    }
+  });
+  // Prisma doesn't do virtual fields, so we map it here.
+  return auctions.map(a => ({ ...a, totalLots: a.lots.length }));
 }
 
 export async function fetchAuction(id: string): Promise<Auction | null> {
-    const db = getDatabaseAdapter();
-    return db.getAuction(id);
+    const auction = await prisma.auction.findFirst({
+        where: { OR: [{ id }, { publicId: id }] },
+        include: { 
+            lots: { include: { bens: true } },
+            auctionStages: true,
+        }
+    });
+    if (!auction) return null;
+    return { ...auction, totalLots: auction.lots.length };
 }
 
+
 export async function fetchLots(auctionId?: string): Promise<Lot[]> {
-  const db = getDatabaseAdapter();
-  return db.getLots(auctionId);
+  const lots = await prisma.lot.findMany({
+    where: auctionId ? { auctionId } : {},
+    include: {
+        bens: true,
+        auction: { select: { title: true } }
+    },
+    orderBy: { number: 'asc' }
+  });
+  return lots.map(lot => ({ ...lot, auctionName: lot.auction?.title }));
 }
 
 export async function fetchLot(id: string): Promise<Lot | null> {
-  const db = getDatabaseAdapter();
-  return db.getLot(id);
+  return prisma.lot.findFirst({
+    where: { OR: [{ id }, { publicId: id }] },
+    include: { 
+        bens: true,
+        auction: true,
+    }
+  });
 }
 
 export async function fetchLotsByIds(ids: string[]): Promise<Lot[]> {
-    const db = getDatabaseAdapter();
-    return db.getLotsByIds(ids);
+  if (ids.length === 0) return [];
+  return prisma.lot.findMany({
+    where: { id: { in: ids } },
+    include: { auction: true }
+  });
 }
 
 export async function fetchBensByIds(ids: string[]): Promise<Bem[]> {
   if (!ids || ids.length === 0) return [];
-  const db = getDatabaseAdapter();
-  // @ts-ignore
-  if (db.getBensByIds) {
-      // @ts-ignore
-      return db.getBensByIds(ids);
-  }
-  return [];
+  return prisma.bem.findMany({ where: { id: { in: ids } }});
 }
 
 export async function fetchAuctionsByIds(ids: string[]): Promise<Auction[]> {
-  const db = getDatabaseAdapter();
-  // This is a helper function, assuming adapter might not have it directly.
-  const allAuctions = await db.getAuctions();
-  return allAuctions.filter(a => ids.includes(a.id) || (a.publicId && ids.includes(a.publicId)));
+  if (ids.length === 0) return [];
+  return prisma.auction.findMany({
+    where: { OR: [{id: {in: ids}}, {publicId: {in: ids}}] },
+    include: { lots: true }
+  });
 }
 
 export async function fetchSellers(): Promise<SellerProfileInfo[]> {
-  const db = getDatabaseAdapter();
-  return db.getSellers();
+  return prisma.seller.findMany({ orderBy: { name: 'asc' } });
 }
 
 export async function fetchAuctioneers(): Promise<AuctioneerProfileInfo[]> {
-  const db = getDatabaseAdapter();
-  return db.getAuctioneers();
+  return prisma.auctioneer.findMany({ orderBy: { name: 'asc' } });
 }
 
 export async function fetchCategories(): Promise<LotCategory[]> {
-    const db = getDatabaseAdapter();
-    return db.getLotCategories();
+  return prisma.lotCategory.findMany({ orderBy: { name: 'asc' } });
 }
 
 export async function fetchSubcategoriesByParent(parentCategoryId: string): Promise<Subcategory[]> {
-    const db = getDatabaseAdapter();
-    // @ts-ignore
-    if(db.getSubcategoriesByParentIdAction) {
-        // @ts-ignore
-        return db.getSubcategoriesByParentIdAction(parentCategoryId);
-    }
-    return [];
+    return prisma.subcategory.findMany({
+        where: { parentCategoryId },
+        orderBy: { displayOrder: 'asc' }
+    });
 }
 
 export async function fetchAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
-    const db = getDatabaseAdapter();
-    // @ts-ignore
-    if (db.getAuctionsBySellerSlug) {
-      // @ts-ignore
-      return db.getAuctionsBySellerSlug(sellerSlugOrPublicId);
-    }
-    // Fallback logic
-    const allAuctions = await db.getAuctions();
-    const allSellers = await db.getSellers();
-    const seller = allSellers.find(s => s.slug === sellerSlugOrPublicId || s.id === sellerSlugOrPublicId || s.publicId === sellerSlugOrPublicId);
-    if (!seller) return [];
-    return allAuctions.filter(a => a.sellerId === seller.id || a.seller === seller.name);
+  return prisma.auction.findMany({
+    where: {
+      seller: {
+        OR: [
+          { slug: sellerSlugOrPublicId },
+          { id: sellerSlugOrPublicId },
+          { publicId: sellerSlugOrPublicId }
+        ]
+      }
+    },
+    include: { lots: true }
+  });
 }
 
 export async function fetchAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
-     const db = getDatabaseAdapter();
-    // @ts-ignore
-    if (db.getAuctionsByAuctioneerSlug) {
-      // @ts-ignore
-      return db.getAuctionsByAuctioneerSlug(auctioneerSlug);
-    }
-    // Fallback logic
-    const allAuctions = await db.getAuctions();
-    const allAuctioneers = await db.getAuctioneers();
-    const auctioneer = allAuctioneers.find(a => a.slug === auctioneerSlug || a.id === auctioneerSlug || a.publicId === auctioneerSlug);
-    if (!auctioneer) return [];
-    return allAuctions.filter(a => a.auctioneerId === auctioneer.id || a.auctioneer === auctioneer.name);
+  return prisma.auction.findMany({
+    where: {
+      auctioneer: {
+        OR: [
+          { slug: auctioneerSlug },
+          { id: auctioneerSlug },
+          { publicId: auctioneerSlug }
+        ]
+      }
+    },
+    include: { lots: true }
+  });
 }

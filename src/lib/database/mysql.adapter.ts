@@ -1,12 +1,11 @@
 // src/lib/database/mysql.adapter.ts
 import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, CityFormData, StateFormData } from '@/types';
 import mysql, { type Pool, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
-import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
 
 function toSnakeCase(str: string): string {
-    if (str === 'id') return str;
+    if (str === 'id' || str === 'uid') return str;
     return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 }
 
@@ -126,7 +125,7 @@ export class MySqlAdapter implements DatabaseAdapter {
       const placeholders = Object.keys(snakeCaseData).map(() => '?').join(', ');
       const values = Object.values(snakeCaseData);
 
-      const sql = `INSERT INTO \`${tableName}\` (${fields}) VALUES (${placeholders})`;
+      const sql = `INSERT IGNORE INTO \`${tableName}\` (${fields}) VALUES (${placeholders})`;
       const result = await this.executeMutation(sql, values);
       if (result.success) {
         return { success: true, message: "Registro criado com sucesso!", insertId: result.insertId };
@@ -139,7 +138,6 @@ export class MySqlAdapter implements DatabaseAdapter {
         if (updates.name && !updates.slug) updates.slug = slugify(updates.name);
         if (updates.title && !updates.slug) updates.slug = slugify(updates.title);
         
-        // Remove 'id' from updates if it exists to avoid trying to update the primary key
         if ('id' in updates) delete updates.id;
         
         const snakeCaseUpdates = convertObjectToSnakeCase(updates);
@@ -207,15 +205,15 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async getBens(filter?: { judicialProcessId?: number; sellerId?: number; }): Promise<Bem[]> {
-        let sql = 'SELECT b.*, cat.name as category_name, sub.name as subcategory_name FROM `bens` b LEFT JOIN `lot_categories` cat ON b.categoryId = cat.id LEFT JOIN `subcategories` sub ON b.subcategoryId = sub.id';
+        let sql = 'SELECT b.*, cat.name as category_name, sub.name as subcategory_name FROM `bens` b LEFT JOIN `lot_categories` cat ON b.category_id = cat.id LEFT JOIN `subcategories` sub ON b.subcategory_id = sub.id';
         const params = [];
         const whereClauses = [];
         if (filter?.judicialProcessId) {
-            whereClauses.push('b.`judicialProcessId` = ?');
+            whereClauses.push('b.`judicial_process_id` = ?');
             params.push(filter.judicialProcessId);
         }
         if (filter?.sellerId) {
-            whereClauses.push('b.`sellerId` = ?');
+            whereClauses.push('b.`seller_id` = ?');
             params.push(filter.sellerId);
         }
         if (whereClauses.length > 0) {
@@ -293,9 +291,9 @@ export class MySqlAdapter implements DatabaseAdapter {
     
     async getSubcategoriesByParent(parentCategoryId?: number): Promise<Subcategory[]> {
         if (parentCategoryId === undefined) {
-          return this.executeQuery('SELECT * FROM `subcategories` ORDER BY `displayOrder`');
+          return this.executeQuery('SELECT * FROM `subcategories` ORDER BY `display_order`');
         }
-        return this.executeQuery('SELECT * FROM `subcategories` WHERE `parentCategoryId` = ? ORDER BY `displayOrder`', [parentCategoryId]);
+        return this.executeQuery('SELECT * FROM `subcategories` WHERE `parent_category_id` = ? ORDER BY `display_order`', [parentCategoryId]);
     }
     async getSubcategory(id: number): Promise<Subcategory | null> {
         return this.executeQueryForSingle('SELECT * FROM `subcategories` WHERE `id` = ?', [id]);
@@ -353,7 +351,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         const settings = await this.executeQueryForSingle('SELECT * FROM `platform_settings` WHERE id = ?', ['global']);
         if (!settings) return null;
         
-        const fieldsToParse = ['themes', 'homepageSections', 'mentalTriggerSettings', 'sectionBadgeVisibility', 'mapSettings', 'variableIncrementTable', 'biddingSettings', 'platformPublicIdMasks'];
+        const fieldsToParse = ['themes', 'homepage_sections', 'mental_trigger_settings', 'section_badge_visibility', 'map_settings', 'variable_increment_table', 'bidding_settings', 'platform_public_id_masks'];
         for (const field of fieldsToParse) {
             if (settings[field] && typeof settings[field] === 'string') {
                 try {
@@ -458,14 +456,14 @@ export class MySqlAdapter implements DatabaseAdapter {
         return result;
     }
     
-    async updateUserRole(userId: string, roleId: number | null): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('users', userId, { roleId: roleId }); }
+    async updateUserRole(userId: string, roleId: number | null): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('users', userId, { role_id: roleId }); }
     
     async createMediaItem(item: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> {
         const newId = uuidv4();
         const fullItem: MediaItem = {
             id: newId,
             urlOriginal: url,
-            urlThumbnail: url, // For simplicity, thumbnail is same as original in this adapter
+            urlThumbnail: url,
             uploadedAt: new Date(),
             uploadedBy: userId,
             ...item,
@@ -495,7 +493,6 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
 
     async updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
-        // Need to handle the 'id' field carefully for settings, as it's not auto-increment
         const { id, ...updates } = data;
         const snakeCaseUpdates = convertObjectToSnakeCase(updates);
         const fieldsToUpdate = Object.keys(snakeCaseUpdates).map(key => `\`${key}\` = ?`).join(', ');

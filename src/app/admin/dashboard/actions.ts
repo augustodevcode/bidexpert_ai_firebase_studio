@@ -4,7 +4,7 @@
  */
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/database';
 import type { AdminDashboardStats } from '@/types';
 
 /**
@@ -13,20 +13,12 @@ import type { AdminDashboardStats } from '@/types';
  * @returns {Promise<AdminDashboardStats>} A promise that resolves to an object with platform statistics.
  */
 export async function getAdminDashboardStatsAction(): Promise<AdminDashboardStats> {
-  const db = getDatabaseAdapter();
-  // @ts-ignore
-  if (db.getAdminDashboardStats) {
-    // @ts-ignore
-    return db.getAdminDashboardStats();
-  }
-
-  // Fallback if not implemented
   try {
     const [usersCount, auctionsCount, lotsCount, sellersCount] = await Promise.all([
-      (await db.getUsersWithRoles()).length,
-      (await db.getAuctions()).length,
-      (await db.getLots()).length,
-      (await db.getSellers()).length,
+      prisma.user.count(),
+      prisma.auction.count(),
+      prisma.lot.count(),
+      prisma.seller.count(),
     ]);
 
     return {

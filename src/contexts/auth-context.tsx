@@ -19,22 +19,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Hardcoded admin user for development purposes
-const devAdminUser: UserProfileWithPermissions = {
-  uid: 'admin-bidexpert-platform-001',
-  email: 'admin@bidexpert.com.br',
-  fullName: 'Administrador BidExpert',
-  roleId: 'role-admin',
-  habilitationStatus: 'HABILITADO',
-  accountType: 'PHYSICAL',
-  roleName: 'ADMINISTRATOR',
-  permissions: ['manage_all'],
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-  password: 'senha_nao_relevante_aqui'
-};
-
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [userProfileWithPermissions, setUserProfileWithPermissions] = useState<UserProfileWithPermissions | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,16 +26,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   const fetchUser = useCallback(async () => {
-    // --- DEVELOPMENT SHORTCUT ---
-    // If we are in development, bypass the session check and log in as admin automatically.
-    if (process.env.NODE_ENV === 'development') {
-      console.log("[AuthContext] DEV MODE: Auto-logging in as Admin.");
-      setUserProfileWithPermissions(devAdminUser);
-      setLoading(false);
-      return;
-    }
-    // --- END DEVELOPMENT SHORTCUT ---
-
     try {
       setLoading(true);
       const user = await getCurrentUser();
@@ -73,12 +47,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await logoutAction();
         setUserProfileWithPermissions(null);
         toast({ title: "Logout realizado com sucesso." });
-        // O redirect é feito na server action
+        // Redirect is handled by the server action
     } catch (error) {
         console.error("Logout error", error);
         toast({ title: "Erro ao fazer logout.", variant: 'destructive'});
     }
   };
+
+  if (loading) {
+     return (
+        <div className="flex h-screen w-screen items-center justify-center bg-background">
+            <Loader2 className="h-10 w-10 animate-spin text-primary"/>
+            <p className="ml-3 text-muted-foreground">Carregando sessão...</p>
+        </div>
+      );
+  }
 
   return (
     <AuthContext.Provider value={{

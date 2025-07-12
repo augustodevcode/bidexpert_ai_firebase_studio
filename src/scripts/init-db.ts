@@ -2,7 +2,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { getDatabaseAdapter } from '@/lib/database/get-adapter'; 
-import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories } from '../lib/sample-data';
+import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories } from '@/lib/sample-data';
 import fs from 'fs';
 import mysql, { type Pool } from 'mysql2/promise';
 
@@ -76,8 +76,10 @@ async function seedEssentialData() {
         console.log("[DB INIT - DML] Seeding roles...");
         const existingRoles = await db.getRoles();
         const rolesToCreate = sampleRoles.filter(role => !existingRoles.some(er => er.name_normalized === role.name_normalized));
-        for (const role of rolesToCreate) {
-             await db.createRole(role);
+        if (rolesToCreate.length > 0) {
+            for (const role of rolesToCreate) {
+                await db.createRole(role);
+            }
         }
         console.log(`[DB INIT - DML] ✅ SUCCESS: ${rolesToCreate.length} new roles inserted.`);
 
@@ -85,19 +87,22 @@ async function seedEssentialData() {
         console.log("[DB INIT - DML] Seeding categories...");
         const existingCategories = await db.getLotCategories();
         const categoriesToCreate = sampleLotCategories.filter(cat => !existingCategories.some(ec => ec.slug === cat.slug));
-        for (const category of categoriesToCreate) {
-            await db.createLotCategory(category);
+        if (categoriesToCreate.length > 0) {
+            for (const category of categoriesToCreate) {
+                await db.createLotCategory(category);
+            }
         }
         console.log(`[DB INIT - DML] ✅ SUCCESS: ${categoriesToCreate.length} new categories inserted.`);
         
         // Subcategories
         console.log("[DB INIT - DML] Seeding subcategories...");
-        // @ts-ignore
         const allSubcategories = await db.getSubcategoriesByParent();
         const subcategoriesToCreate = sampleSubcategories.filter(sub => !allSubcategories.some(es => es.slug === sub.slug && es.parentCategoryId === sub.parentCategoryId));
 
-        for (const subcategory of subcategoriesToCreate) {
-            await db.createSubcategory(subcategory);
+        if (subcategoriesToCreate.length > 0) {
+            for (const subcategory of subcategoriesToCreate) {
+                await db.createSubcategory(subcategory);
+            }
         }
         console.log(`[DB INIT - DML] ✅ SUCCESS: ${subcategoriesToCreate.length} new subcategories inserted.`);
 
@@ -138,11 +143,9 @@ async function initializeDatabase() {
           // Step 1: Execute DDL (table creation)
           await executeSqlFile(pool, path.join(process.cwd(), 'src', 'schema.mysql.sql'), 'DDL-CREATE');
           
-          // Step 2: Execute ALTER TABLE script to ensure schema is up-to-date
-          await executeSqlFile(pool, path.join(process.cwd(), 'src', 'alter-tables.mysql.sql'), 'DDL-ALTER');
       }
       
-      // Step 3: Seed essential data now that schema is guaranteed to be correct
+      // Step 2: Seed essential data now that schema is guaranteed to be correct
       await seedEssentialData();
 
   } catch (error) {
