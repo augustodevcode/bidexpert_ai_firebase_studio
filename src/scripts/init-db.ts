@@ -89,7 +89,7 @@ async function seedEssentialData() {
             console.log("[DB INIT - DML] INFO: Roles already exist. Skipping.");
         }
         
-        // Categories & Subcategories
+        // Categories
         console.log("[DB INIT - DML] Checking for categories...");
         const categories = await db.getLotCategories();
         if (!categories || categories.length === 0) {
@@ -98,7 +98,15 @@ async function seedEssentialData() {
                 await db.createLotCategory(category);
             }
             console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleLotCategories.length} categories inserted.`);
+        } else {
+            console.log("[DB INIT - DML] INFO: Categories already exist. Skipping.");
+        }
 
+        // Subcategories
+        console.log("[DB INIT - DML] Checking for subcategories...");
+        // @ts-ignore
+        const subcategories = await db.getSubcategoriesByParent ? await db.getSubcategoriesByParent(undefined) : []; // Assuming fetching all if no parentId
+        if (!subcategories || subcategories.length === 0) {
             console.log("[DB INIT - DML] Populating subcategories...");
             for (const subcategory of sampleSubcategories) {
                  // @ts-ignore
@@ -106,8 +114,9 @@ async function seedEssentialData() {
             }
             console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleSubcategories.length} subcategories inserted.`);
         } else {
-            console.log("[DB INIT - DML] INFO: Categories and Subcategories already exist. Skipping.");
+            console.log("[DB INIT - DML] INFO: Subcategories already exist. Skipping.");
         }
+
 
     } catch (error: any) {
         console.error(`[DB INIT - DML] ❌ ERROR seeding essential data: ${error.message}`);

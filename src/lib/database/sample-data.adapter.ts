@@ -1,5 +1,5 @@
 // src/lib/database/sample-data.adapter.ts
-import type { DatabaseAdapter, UserWin, DirectSaleOffer, Lot, UserProfileData, Role, Auction, StateInfo, CityInfo, CityFormData, StateFormData } from '@/types';
+import type { DatabaseAdapter, UserWin, DirectSaleOffer, Lot, UserProfileData, Role, Auction, StateInfo, CityInfo, CityFormData, StateFormData, Subcategory } from '@/types';
 import { 
     sampleLots, sampleAuctions, sampleUsers, sampleRoles, sampleLotCategories, 
     sampleSubcategories, sampleAuctioneers, sampleSellers, sampleStates, sampleCities, 
@@ -204,6 +204,14 @@ export class SampleDataAdapter implements DatabaseAdapter {
 
      async getAuctioneers(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.auctioneers))); }
      async getLotCategories(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.lotCategories))); }
+     
+     async getSubcategoriesByParent(parentCategoryId?: string): Promise<Subcategory[]> {
+        let subcategories = this.data.subcategories;
+        if (parentCategoryId) {
+            subcategories = subcategories.filter(sub => sub.parentCategoryId === parentCategoryId);
+        }
+        return Promise.resolve(JSON.parse(JSON.stringify(subcategories)));
+    }
      
      async getUsersWithRoles(): Promise<UserProfileData[]> {
         const usersWithRoles = this.data.users.map((user: any) => {
