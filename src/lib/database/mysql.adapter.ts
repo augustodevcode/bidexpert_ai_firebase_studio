@@ -66,7 +66,7 @@ export class MySqlAdapter implements DatabaseAdapter {
             this.pool = null;
         }
     }
-
+    
     private async getConnection() {
         if (this.connectionError) {
             throw new Error(this.connectionError);
@@ -322,6 +322,14 @@ export class MySqlAdapter implements DatabaseAdapter {
             }) : [];
             u.permissions = [...new Set(allPerms)];
             delete u.permissionsJson; // Clean up
+            
+            // Correctly transform roleNames string into an array
+            if (u.roleNames && typeof u.roleNames === 'string') {
+                u.roleNames = u.roleNames.split(',');
+            } else if (!u.roleNames) {
+                u.roleNames = [];
+            }
+            
             return u;
         });
     }
@@ -346,6 +354,11 @@ export class MySqlAdapter implements DatabaseAdapter {
             });
             user.permissions = [...new Set(allPerms)];
             delete user.permissionsJson;
+        }
+        if (user && user.roleNames && typeof user.roleNames === 'string') {
+            user.roleNames = user.roleNames.split(',');
+        } else if (user && !user.roleNames) {
+            user.roleNames = [];
         }
         return user;
     }
