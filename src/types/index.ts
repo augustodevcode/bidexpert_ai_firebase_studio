@@ -123,9 +123,9 @@ export interface PlatformSettings {
 
 
 export interface Lot {
-  id: string;
+  id: number;
   publicId: string;
-  auctionId: string;
+  auctionId: number;
   auctionPublicId?: string; // Optional public ID of parent auction
   number: string;
   title: string;
@@ -146,18 +146,18 @@ export interface Lot {
   imageMediaId?: string | null;
   galleryImageUrls?: string[];
   mediaItemIds?: string[];
-  bemIds?: string[];
+  bemIds?: number[];
   bens?: Bem[]; // Populated on demand
   type: string;
-  categoryId?: string;
+  categoryId?: number;
   subcategoryName?: string;
-  subcategoryId?: string;
+  subcategoryId?: number;
   auctionName?: string; // Denormalized for display
   sellerName?: string;  // Denormalized for display
-  sellerId?: string;
-  auctioneerId?: string;
-  cityId?: string;
-  stateId?: string;
+  sellerId?: number;
+  auctioneerId?: number;
+  cityId?: number;
+  stateId?: number;
   cityName?: string;
   stateUf?: string;
   latitude?: number | null;
@@ -171,7 +171,7 @@ export interface Lot {
   secondAuctionDate?: string | Date | null;
   condition?: string;
   dataAiHint?: string;
-  winnerId?: string | null;
+  winnerId?: number | null;
   winningBidTermUrl?: string | null;
   allowInstallmentBids?: boolean;
   // Vehicle specific from Bem
@@ -230,7 +230,7 @@ export interface Lot {
 
 
 export interface Auction {
-  id: string;
+  id: number;
   publicId: string;
   title: string;
   description: string;
@@ -240,10 +240,10 @@ export interface Auction {
   totalLots?: number;
   category?: string;
   auctioneer: string;
-  auctioneerId?: string;
+  auctioneerId?: number;
   auctioneerLogoUrl?: string; // Denormalized for display
   seller?: string;
-  sellerId?: string;
+  sellerId?: number;
   mapAddress?: string | null;
   imageUrl?: string;
   imageMediaId?: string | null;
@@ -269,7 +269,7 @@ export interface Auction {
   totalHabilitatedUsers?: number;
   isFeaturedOnMarketplace: boolean;
   marketplaceAnnouncementTitle?: string | null;
-  judicialProcessId?: string;
+  judicialProcessId?: number;
   additionalTriggers?: string[];
   // Dutch Auction Specific
   decrementAmount?: number | null;
@@ -297,6 +297,7 @@ export interface RecentlyViewedLotInfo {
 }
 
 export interface UserProfileData {
+  id: number;
   uid: string;
   email: string;
   password?: string;
@@ -315,8 +316,8 @@ export interface UserProfileData {
   state?: string;
   avatarUrl?: string;
   dataAiHint?: string;
-  roleId: string | null;
-  sellerId?: string | null;
+  roleId: number | null;
+  sellerId?: number | null;
   habilitationStatus: UserHabilitationStatus;
   accountType: AccountType;
   badges?: string[];
@@ -351,7 +352,7 @@ export interface UserProfileWithPermissions extends UserProfileData {
 }
 
 export interface Role {
-  id: string;
+  id: number;
   name: string;
   name_normalized: string;
   description: string;
@@ -373,9 +374,9 @@ export interface UserBid {
 
 export interface BidInfo {
   id: string;
-  lotId: string;
-  auctionId: string;
-  bidderId: string;
+  lotId: number;
+  auctionId: number;
+  bidderId: number;
   bidderDisplay: string;
   amount: number;
   timestamp: string | Date;
@@ -383,8 +384,8 @@ export interface BidInfo {
 
 export interface UserWin {
     id: string;
-    lotId: string;
-    userId: string;
+    lotId: number;
+    userId: number;
     winningBidAmount: number;
     winDate: string | Date;
     paymentStatus: PaymentStatus;
@@ -393,7 +394,7 @@ export interface UserWin {
 }
 
 export interface LotCategory {
-  id: string;
+  id: number;
   name: string;
   slug: string;
   description?: string;
@@ -413,10 +414,10 @@ export interface LotCategory {
 }
 
 export interface Subcategory {
-  id: string;
+  id: number;
   name: string;
   slug: string;
-  parentCategoryId: string;
+  parentCategoryId: number;
   parentCategoryName?: string;
   description?: string | null;
   itemCount?: number;
@@ -427,7 +428,7 @@ export interface Subcategory {
 }
 
 export interface StateInfo {
-  id: string;
+  id: number;
   name: string;
   uf: string;
   slug: string;
@@ -435,17 +436,17 @@ export interface StateInfo {
 }
 
 export interface CityInfo {
-  id: string;
+  id: number;
   name: string;
   slug: string;
-  stateId: string;
+  stateId: number;
   stateUf: string;
   ibgeCode?: string;
   lotCount?: number;
 }
 
 export interface AuctioneerProfileInfo {
-  id: string;
+  id: number;
   publicId: string;
   slug: string;
   name: string;
@@ -462,7 +463,7 @@ export interface AuctioneerProfileInfo {
   logoMediaId?: string | null;
   dataAiHintLogo?: string | null;
   description?: string | null;
-  userId?: string | null; // User account linked to this auctioneer
+  userId?: number | null; // User account linked to this auctioneer
   memberSince?: string | Date;
   rating?: number;
   auctionsConductedCount?: number;
@@ -472,7 +473,7 @@ export interface AuctioneerProfileInfo {
 }
 
 export interface SellerProfileInfo {
-  id: string;
+  id: number;
   publicId: string;
   slug: string;
   name: string;
@@ -488,20 +489,20 @@ export interface SellerProfileInfo {
   logoMediaId?: string | null;
   dataAiHintLogo?: string | null;
   description?: string | null;
-  userId?: string | null;
+  userId?: number | null;
   memberSince?: string | Date;
   rating?: number;
   activeLotsCount?: number;
   totalSalesValue?: number;
   auctionsFacilitatedCount?: number;
   isJudicial: boolean;
-  judicialBranchId?: string | null;
+  judicialBranchId?: number | null;
   createdAt: string | Date;
   updatedAt: string | Date;
 }
 
 export interface DirectSaleOffer {
-    id: string;
+    id: number;
     publicId: string;
     title: string;
     description: string;
@@ -510,7 +511,7 @@ export interface DirectSaleOffer {
     minimumOfferPrice?: number;
     status: DirectSaleOfferStatus;
     category: string;
-    sellerId: string;
+    sellerId: number;
     sellerName: string;
     sellerLogoUrl?: string;
     dataAiHintSellerLogo?: string;
@@ -529,7 +530,7 @@ export interface DirectSaleOffer {
 }
 
 export interface DocumentType {
-    id: string;
+    id: number;
     name: string;
     description: string;
     isRequired: boolean;
@@ -538,8 +539,8 @@ export interface DocumentType {
 
 export interface UserDocument {
     id: string;
-    userId: string;
-    documentTypeId: string;
+    userId: number;
+    documentTypeId: number;
     status: UserDocumentStatus;
     fileUrl: string;
     rejectionReason?: string | null;
@@ -548,7 +549,7 @@ export interface UserDocument {
 
 export interface Notification {
     id: string;
-    userId: string;
+    userId: number;
     message: string;
     link?: string;
     isRead: boolean;
@@ -557,8 +558,8 @@ export interface Notification {
 
 export interface UserLotMaxBid {
     id: string;
-    userId: string;
-    lotId: string;
+    userId: number;
+    lotId: number;
     maxAmount: number;
     isActive: boolean;
     createdAt: string | Date;
@@ -585,7 +586,7 @@ export interface MediaItem {
 }
 
 export interface Court {
-  id: string;
+  id: number;
   name: string;
   slug: string;
   stateUf: string;
@@ -595,12 +596,12 @@ export interface Court {
 }
 
 export interface JudicialDistrict {
-  id: string;
+  id: number;
   name: string;
   slug: string;
-  courtId: string;
+  courtId: number;
   courtName?: string;
-  stateId: string;
+  stateId: number;
   stateUf?: string;
   zipCode?: string;
   createdAt?: string | Date;
@@ -608,10 +609,10 @@ export interface JudicialDistrict {
 }
 
 export interface JudicialBranch {
-  id: string;
+  id: number;
   name: string;
   slug: string;
-  districtId: string;
+  districtId: number;
   districtName?: string;
   contactName?: string;
   phone?: string;
@@ -628,17 +629,17 @@ export interface ProcessParty {
 }
 
 export interface JudicialProcess {
-  id: string;
+  id: number;
   publicId: string;
   processNumber: string;
   isElectronic: boolean;
-  courtId: string;
+  courtId: number;
   courtName?: string;
-  districtId: string;
+  districtId: number;
   districtName?: string;
-  branchId: string;
+  branchId: number;
   branchName?: string;
-  sellerId?: string | null; // The associated seller (Comitente)
+  sellerId?: number | null; // The associated seller (Comitente)
   sellerName?: string;
   parties: ProcessParty[];
   createdAt: string | Date;
@@ -646,18 +647,18 @@ export interface JudicialProcess {
 }
 
 export interface Bem {
-  id: string;
+  id: number;
   publicId: string;
   title: string;
   description?: string | null;
   status: 'CADASTRO' | 'DISPONIVEL' | 'LOTEADO' | 'VENDIDO' | 'REMOVIDO' | 'INATIVADO';
-  categoryId: string;
+  categoryId: number;
   categoryName?: string;
-  subcategoryId?: string | null;
+  subcategoryId?: number | null;
   subcategoryName?: string;
-  judicialProcessId?: string | null;
+  judicialProcessId?: number | null;
   judicialProcessNumber?: string;
-  sellerId?: string | null;
+  sellerId?: number | null;
   sellerName?: string;
   evaluationValue?: number | null;
   imageUrl?: string | null;
@@ -838,7 +839,7 @@ export interface StateFormData {
 
 export interface SubcategoryFormData {
   name: string;
-  parentCategoryId: string;
+  parentCategoryId: number;
   description?: string | null;
   displayOrder?: number;
   iconUrl?: string | null;
@@ -860,7 +861,7 @@ export interface SellerFormData {
   dataAiHintLogo?: string | null;
   description?: string | null;
   isJudicial: boolean;
-  judicialBranchId?: string | null;
+  judicialBranchId?: number | null;
 }
 
 export interface AuctioneerFormData {
@@ -877,7 +878,7 @@ export interface AuctioneerFormData {
   logoUrl?: string | null;
   dataAiHintLogo?: string | null;
   description?: string | null;
-  userId?: string | null;
+  userId?: number | null;
 }
 
 export interface CourtFormData {
@@ -888,14 +889,14 @@ export interface CourtFormData {
 
 export interface JudicialDistrictFormData {
   name: string;
-  courtId: string;
-  stateId: string;
+  courtId: number;
+  stateId: number;
   zipCode?: string | null;
 }
 
 export interface JudicialBranchFormData {
   name: string;
-  districtId: string;
+  districtId: number;
   contactName?: string | null;
   phone?: string | null;
   email?: string | null;
@@ -904,75 +905,75 @@ export interface JudicialBranchFormData {
 export interface JudicialProcessFormData {
   processNumber: string;
   isElectronic: boolean;
-  courtId: string;
-  districtId: string;
-  branchId: string;
-  sellerId?: string | null;
+  courtId: number;
+  districtId: number;
+  branchId: number;
+  sellerId?: number | null;
   parties: ProcessParty[];
 }
 
 
 export interface DatabaseAdapter {
-    getLots(auctionId?: string): Promise<Lot[]>;
-    getLot(id: string): Promise<Lot | null>;
-    createLot(lotData: Partial<Lot>): Promise<{ success: boolean; message: string; lotId?: string; }>;
-    updateLot(id: string, updates: Partial<Lot>): Promise<{ success: boolean; message: string; }>;
-    deleteLot(id: string): Promise<{ success: boolean; message: string; }>;
+    getLots(auctionId?: number): Promise<Lot[]>;
+    getLot(id: number | string): Promise<Lot | null>;
+    createLot(lotData: Partial<Lot>): Promise<{ success: boolean; message: string; lotId?: number; }>;
+    updateLot(id: number | string, updates: Partial<Lot>): Promise<{ success: boolean; message: string; }>;
+    deleteLot(id: number | string): Promise<{ success: boolean; message: string; }>;
     
     getAuctions(): Promise<Auction[]>;
-    getAuction(id: string): Promise<Auction | null>;
-    createAuction(auctionData: Partial<Auction>): Promise<{ success: boolean; message: string; auctionId?: string; }>;
-    updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }>;
-    deleteAuction(id: string): Promise<{ success: boolean, message: string }>;
+    getAuction(id: number | string): Promise<Auction | null>;
+    createAuction(auctionData: Partial<Auction>): Promise<{ success: boolean; message: string; auctionId?: number; }>;
+    updateAuction(id: number | string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }>;
+    deleteAuction(id: number | string): Promise<{ success: boolean, message: string }>;
 
-    getLotsByIds(ids: string[]): Promise<Lot[]>;
+    getLotsByIds(ids: number[] | string[]): Promise<Lot[]>;
     getLotCategories(): Promise<LotCategory[]>;
     
-    getSubcategoriesByParent(parentCategoryId: string): Promise<Subcategory[]>;
-    getSubcategory(id: string): Promise<Subcategory | null>;
+    getSubcategoriesByParent(parentCategoryId: number): Promise<Subcategory[]>;
+    getSubcategory(id: number): Promise<Subcategory | null>;
     createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean, message: string }>;
-    createSubcategory(data: Partial<Subcategory>): Promise<{ success: boolean, message: string, subcategoryId?: string }>;
-    updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string }>;
-    deleteSubcategory(id: string): Promise<{ success: boolean; message: string }>;
+    createSubcategory(data: Partial<Subcategory>): Promise<{ success: boolean, message: string, subcategoryId?: number }>;
+    updateSubcategory(id: number, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string }>;
+    deleteSubcategory(id: number): Promise<{ success: boolean; message: string }>;
     
     getStates(): Promise<StateInfo[]>;
-    getCities(stateId?: string): Promise<CityInfo[]>;
-    createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }>;
-    updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }>;
-    deleteState(id: string): Promise<{ success: boolean; message: string; }>;
-    createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }>;
-    updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }>;
-    deleteCity(id: string): Promise<{ success: boolean; message: string; }>;
+    getCities(stateId?: number): Promise<CityInfo[]>;
+    createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: number; }>;
+    updateState(id: number, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }>;
+    deleteState(id: number): Promise<{ success: boolean; message: string; }>;
+    createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: number; }>;
+    updateCity(id: number, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }>;
+    deleteCity(id: number): Promise<{ success: boolean; message: string; }>;
 
     getSellers(): Promise<SellerProfileInfo[]>;
-    getSeller(id: string): Promise<SellerProfileInfo | null>;
-    createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }>;
-    updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }>;
-    deleteSeller(id: string): Promise<{ success: boolean; message: string; }>;
+    getSeller(id: number | string): Promise<SellerProfileInfo | null>;
+    createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: number; }>;
+    updateSeller(id: number | string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }>;
+    deleteSeller(id: number | string): Promise<{ success: boolean; message: string; }>;
 
     getAuctioneers(): Promise<AuctioneerProfileInfo[]>;
-    getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null>;
-    createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }>;
-    updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }>;
-    deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }>;
+    getAuctioneer(id: number | string): Promise<AuctioneerProfileInfo | null>;
+    createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: number; }>;
+    updateAuctioneer(id: number | string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }>;
+    deleteAuctioneer(id: number | string): Promise<{ success: boolean; message: string; }>;
 
     getCourts(): Promise<Court[]>;
     getJudicialDistricts(): Promise<JudicialDistrict[]>;
     getJudicialBranches(): Promise<JudicialBranch[]>;
     getJudicialProcesses(): Promise<JudicialProcess[]>;
-    getBem(id: string): Promise<Bem | null>;
-    getBens(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Bem[]>;
-    getBensByIds(ids: string[]): Promise<Bem[]>;
-    createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }>;
-    createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }>;
-    createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }>;
-    createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }>;
-    createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }>;
+    getBem(id: number): Promise<Bem | null>;
+    getBens(filter?: { judicialProcessId?: number, sellerId?: number }): Promise<Bem[]>;
+    getBensByIds(ids: number[]): Promise<Bem[]>;
+    createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: number; }>;
+    createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: number; }>;
+    createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: number; }>;
+    createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: number; }>;
+    createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: number; }>;
 
     getUsersWithRoles(): Promise<UserProfileData[]>;
     getUserProfileData(userId: string): Promise<UserProfileData | null>;
     getRoles(): Promise<Role[]>;
-    updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }>;
+    updateUserRole(userId: string, roleId: number | null): Promise<{ success: boolean; message: string; }>;
 
     getMediaItems(): Promise<MediaItem[]>;
     createMediaItem(item: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }>;
@@ -984,130 +985,3 @@ export interface DatabaseAdapter {
 }
 
 export type CityFormData = Omit<CityInfo, 'id' | 'slug' | 'stateUf' | 'lotCount'>;
-
-```
-- tailwind.config.ts:
-```ts
-import type {Config} from 'tailwindcss';
-
-const config: Config = {
-  darkMode: ['class'],
-  content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  prefix: "",
-  theme: {
-    container: {
-      center: true,
-      padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
-    },
-    extend: {
-      fontFamily: {
-        body: ['Open Sans', 'sans-serif'],
-        headline: ['Open Sans', 'sans-serif'],
-        code: ['monospace'],
-      },
-      colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
-        chart: {
-          '1': 'hsl(var(--chart-1))',
-          '2': 'hsl(var(--chart-2))',
-          '3': 'hsl(var(--chart-3))',
-          '4': 'hsl(var(--chart-4))',
-          '5': 'hsl(var(--chart-5))',
-        },
-      },
-      borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-      },
-      keyframes: {
-        "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
-        },
-        "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
-        },
-      },
-      animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
-      },
-    },
-  },
-  plugins: [require("tailwindcss-animate")],
-}
-
-export default config;
-```
-- tsconfig.json:
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
-}
-```

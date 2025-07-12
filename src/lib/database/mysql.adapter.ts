@@ -111,16 +111,15 @@ export class MySqlAdapter implements DatabaseAdapter {
         }
     }
     
-    private async genericCreate(tableName: string, data: Record<string, any>, idPrefix?: string, publicIdPrefix?: string): Promise<{ success: boolean; message: string; insertId?: string }> {
-      const newId = idPrefix ? `${idPrefix}-${uuidv4()}` : uuidv4();
-      const publicId = publicIdPrefix ? `${publicIdPrefix}-PUB-${newId.substring(newId.length - 8)}` : null;
-
-      const dataToInsert: Record<string, any> = { id: newId };
-      if (publicId) dataToInsert['publicId'] = publicId;
+    private async genericCreate(tableName: string, data: Record<string, any>, idPrefix?: string, publicIdPrefix?: string): Promise<{ success: boolean; message: string; insertId?: number }> {
+      const dataToInsert: Record<string, any> = { ...data };
+      if (!data.id) { // Não sobrescrever se o ID já foi fornecido (ex: user uid)
+        // Não geramos mais IDs, o banco faz isso. Removemos a lógica de uuid.
+      }
+      
+      if (publicIdPrefix) dataToInsert['publicId'] = `${publicIdPrefix}-PUB-${uuidv4().substring(0,8)}`;
       if (data.name && !data.slug) dataToInsert['slug'] = slugify(data.name);
       if (data.title && !data.slug) dataToInsert['slug'] = slugify(data.title);
-
-      Object.assign(dataToInsert, data);
 
       dataToInsert['createdAt'] = new Date();
       dataToInsert['updatedAt'] = new Date();
@@ -134,12 +133,12 @@ export class MySqlAdapter implements DatabaseAdapter {
       const sql = `INSERT INTO \`${tableName}\` (${fields}) VALUES (${placeholders})`;
       const result = await this.executeMutation(sql, values);
       if (result.success) {
-        return { success: true, message: "Registro criado com sucesso!", insertId: newId };
+        return { success: true, message: "Registro criado com sucesso!", insertId: result.insertId };
       }
       return { success: false, message: result.message };
     }
 
-    private async genericUpdate(tableName: string, id: string, data: Record<string, any>): Promise<{ success: boolean; message: string; }> {
+    private async genericUpdate(tableName: string, id: number | string, data: Record<string, any>): Promise<{ success: boolean; message: string; }> {
         const updates = { ...data, updatedAt: new Date() };
         if (updates.name && !updates.slug) updates.slug = slugify(updates.name);
         if (updates.title && !updates.slug) updates.slug = slugify(updates.title);
@@ -157,7 +156,7 @@ export class MySqlAdapter implements DatabaseAdapter {
 
     // --- ENTITY IMPLEMENTATIONS ---
 
-    async getLots(auctionId?: string): Promise<Lot[]> {
+    async getLots(auctionId?: number): Promise<Lot[]> {
         let sql = 'SELECT * FROM `lots`';
         const params = [];
         if (auctionId) {
@@ -167,20 +166,20 @@ export class MySqlAdapter implements DatabaseAdapter {
         return this.executeQuery(sql, params);
     }
     
-    async getLot(id: string): Promise<Lot | null> {
-        return this.executeQueryForSingle('SELECT * FROM `lots` WHERE `id` = ? OR `public_id` = ?', [id, id]);
+    async getLot(id: number): Promise<Lot | null> {
+        return this.executeQueryForSingle('SELECT * FROM `lots` WHERE `id` = ?', [id]);
     }
     
-    async getLotsByIds(ids: string[]): Promise<Lot[]> {
+    async getLotsByIds(ids: number[]): Promise<Lot[]> {
         if (ids.length === 0) return Promise.resolve([]);
         const placeholders = ids.map(() => '?').join(',');
-        const sql = `SELECT * FROM \`lots\` WHERE \`id\` IN (${placeholders}) OR \`public_id\` IN (${placeholders})`;
-        return this.executeQuery(sql, [...ids, ...ids]);
+        const sql = `SELECT * FROM \`lots\` WHERE \`id\` IN (${placeholders})`;
+        return this.executeQuery(sql, ids);
     }
 
-    async createLot(lotData: Partial<Lot>): Promise<{ success: boolean; message: string; lotId?: string; }> {
+    async createLot(lotData: Partial<Lot>): Promise<{ success: boolean; message: string; lotId?: number; }> {
       const { bens, ...data } = lotData;
-      const result = await this.genericCreate('lots', data, 'lot', 'LOT');
+      const result = await this.genericCreate('lots', data);
       if (result.success && result.insertId && bens) {
           for (const bem of bens) {
               await this.executeMutation('INSERT INTO `lot_bens` (`lotId`, `bemId`) VALUES (?, ?)', [result.insertId, bem.id]);
@@ -189,15 +188,15 @@ export class MySqlAdapter implements DatabaseAdapter {
       return { ...result, lotId: result.insertId };
     }
 
-    async updateLot(id: string, updates: Partial<Lot>): Promise<{ success: boolean; message: string; }> {
+    async updateLot(id: number, updates: Partial<Lot>): Promise<{ success: boolean; message: string; }> {
       return this.genericUpdate('lots', id, updates);
     }
 
-    async deleteLot(id: string): Promise<{ success: boolean; message: string; }> {
+    async deleteLot(id: number): Promise<{ success: boolean; message: string; }> {
       return this.executeMutation('DELETE FROM `lots` WHERE id = ?', [id]);
     }
     
-    async getBens(filter?: { judicialProcessId?: string; sellerId?: string; }): Promise<Bem[]> {
+    async getBens(filter?: { judicialProcessId?: number; sellerId?: number; }): Promise<Bem[]> {
         let sql = 'SELECT b.*, cat.name as category_name, sub.name as subcategory_name FROM `bens` b LEFT JOIN `lot_categories` cat ON b.category_id = cat.id LEFT JOIN `subcategories` sub ON b.subcategory_id = sub.id';
         const params = [];
         const whereClauses = [];
@@ -215,26 +214,26 @@ export class MySqlAdapter implements DatabaseAdapter {
         return this.executeQuery(sql, params);
     }
 
-    async getBem(id: string): Promise<Bem | null> {
+    async getBem(id: number): Promise<Bem | null> {
         return this.executeQueryForSingle('SELECT * FROM `bens` WHERE `id` = ?', [id]);
     }
     
-    async getBensByIds(ids: string[]): Promise<Bem[]> {
+    async getBensByIds(ids: number[]): Promise<Bem[]> {
         if (!ids || ids.length === 0) return [];
         const placeholders = ids.map(() => '?').join(',');
         return this.executeQuery(`SELECT * FROM \`bens\` WHERE id IN (${placeholders})`, ids);
     }
     
-    async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
-      const result = await this.genericCreate('bens', data, 'bem', 'BEM');
+    async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: number; }> {
+      const result = await this.genericCreate('bens', data);
       return {...result, bemId: result.insertId};
     }
     
-    async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
+    async updateBem(id: number, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
         return this.genericUpdate('bens', id, data);
     }
 
-    async deleteBem(id: string): Promise<{ success: boolean; message: string; }> {
+    async deleteBem(id: number): Promise<{ success: boolean; message: string; }> {
         return this.executeMutation('DELETE FROM `bens` WHERE id = ?', [id]);
     }
 
@@ -247,8 +246,8 @@ export class MySqlAdapter implements DatabaseAdapter {
         return auctions;
     }
 
-    async getAuction(id: string): Promise<Auction | null> {
-        const auction = await this.executeQueryForSingle('SELECT * FROM `auctions` WHERE `id` = ? OR `public_id` = ?', [id, id]);
+    async getAuction(id: number | string): Promise<Auction | null> {
+        const auction = await this.executeQueryForSingle('SELECT * FROM `auctions` WHERE `id` = ? OR `publicId` = ?', [id, id]);
         if (auction) {
             auction.lots = await this.getLots(auction.id);
             auction.totalLots = auction.lots.length;
@@ -256,22 +255,22 @@ export class MySqlAdapter implements DatabaseAdapter {
         return auction;
     }
     
-    async createAuction(auctionData: Partial<Auction>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
+    async createAuction(auctionData: Partial<Auction>): Promise<{ success: boolean; message: string; auctionId?: number; }> {
       const { lots, ...data } = auctionData;
-      const result = await this.genericCreate('auctions', data, 'auc', 'AUC');
+      const result = await this.genericCreate('auctions', data);
       return { ...result, auctionId: result.insertId };
     }
     
-    async deleteAuction(id: string): Promise<{ success: boolean, message: string }> {
+    async deleteAuction(id: number): Promise<{ success: boolean, message: string }> {
       return this.executeMutation('DELETE FROM `auctions` WHERE id = ?', [id]);
     }
 
-    async updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }> {
+    async updateAuction(id: number, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }> {
        return this.genericUpdate('auctions', id, updates);
     }
     
     async getStates(): Promise<StateInfo[]> { return this.executeQuery('SELECT * FROM `states` ORDER BY `name`'); }
-    async getCities(stateId?: string): Promise<CityInfo[]> {
+    async getCities(stateId?: number): Promise<CityInfo[]> {
         let sql = 'SELECT * FROM `cities`';
         if (stateId) {
             sql += ' WHERE `state_id` = ? ORDER BY `name`';
@@ -282,10 +281,10 @@ export class MySqlAdapter implements DatabaseAdapter {
     
     async getLotCategories(): Promise<LotCategory[]> { return this.executeQuery('SELECT * FROM `lot_categories` ORDER BY `name`'); }
     
-    async getSubcategoriesByParent(parentCategoryId: string): Promise<Subcategory[]> {
+    async getSubcategoriesByParent(parentCategoryId: number): Promise<Subcategory[]> {
         return this.executeQuery('SELECT * FROM `subcategories` WHERE `parent_category_id` = ? ORDER BY `display_order`', [parentCategoryId]);
     }
-    async getSubcategory(id: string): Promise<Subcategory | null> {
+    async getSubcategory(id: number): Promise<Subcategory | null> {
         return this.executeQueryForSingle('SELECT * FROM `subcategories` WHERE `id` = ?', [id]);
     }
 
@@ -304,8 +303,8 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async getUserProfileData(userId: string): Promise<UserProfileData | null> {
-        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.roleId = r.id WHERE u.id = ? OR u.uid = ?';
-        const user = await this.executeQueryForSingle(sql, [userId, userId]);
+        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.roleId = r.id WHERE u.uid = ?';
+        const user = await this.executeQueryForSingle(sql, [userId]);
         if(user && user.permissions && typeof user.permissions === 'string') {
           try { user.permissions = JSON.parse(user.permissions); } catch(e) { user.permissions = []; }
         }
@@ -348,78 +347,78 @@ export class MySqlAdapter implements DatabaseAdapter {
     async getJudicialBranches(): Promise<JudicialBranch[]> { return this.executeQuery('SELECT * FROM `judicial_branches` ORDER BY `name`'); }
     async getJudicialProcesses(): Promise<JudicialProcess[]> { return this.executeQuery('SELECT * FROM `judicial_processes` ORDER BY `created_at` DESC'); }
 
-    async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> {
-      const result = await this.genericCreate('courts', data, 'court');
+    async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: number; }> {
+      const result = await this.genericCreate('courts', data);
       return {...result, courtId: result.insertId};
     }
 
-    async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> {
+    async updateCourt(id: number, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> {
         return this.genericUpdate('courts', id, data);
     }
     
-    async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> {
-        const result = await this.genericCreate('judicial_districts', data, 'dist');
+    async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: number; }> {
+        const result = await this.genericCreate('judicial_districts', data);
         return {...result, districtId: result.insertId};
     }
 
-    async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }> {
-      const result = await this.genericCreate('judicial_branches', data, 'branch');
+    async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: number; }> {
+      const result = await this.genericCreate('judicial_branches', data);
       return {...result, branchId: result.insertId};
     }
 
-    async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
+    async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: number; }> {
         const { parties, ...processData } = data;
-        const result = await this.genericCreate('judicial_processes', processData, 'proc', 'PROC');
+        const result = await this.genericCreate('judicial_processes', processData);
         if (result.success && result.insertId && parties && parties.length > 0) {
             for (const party of parties) {
-                await this.genericCreate('judicial_parties', { ...party, process_id: result.insertId }, 'party');
+                await this.genericCreate('judicial_parties', { ...party, process_id: result.insertId });
             }
         }
         return {...result, processId: result.insertId};
     }
     
-    async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> {
-      const result = await this.genericCreate('states', data, `state-${data.uf.toLowerCase()}`);
+    async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: number; }> {
+      const result = await this.genericCreate('states', data);
       return {...result, stateId: result.insertId};
     }
 
-    async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> {
-        const result = await this.genericCreate('cities', data, 'city');
+    async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: number; }> {
+        const result = await this.genericCreate('cities', data);
         return {...result, cityId: result.insertId};
     }
 
-    async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
-      const result = await this.genericCreate('sellers', data, 'seller', 'SELL');
+    async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: number; }> {
+      const result = await this.genericCreate('sellers', data);
       return {...result, sellerId: result.insertId};
     }
 
-    async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
+    async updateSeller(id: number, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
       return this.genericUpdate('sellers', id, data);
     }
 
-    async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
+    async deleteSeller(id: number): Promise<{ success: boolean; message: string; }> {
         return this.executeMutation('DELETE FROM `sellers` WHERE id = ?', [id]);
     }
     
-    async getSeller(id: string): Promise<SellerProfileInfo | null> {
-        return this.executeQueryForSingle('SELECT * FROM `sellers` WHERE id = ? OR public_id = ?', [id, id]);
+    async getSeller(id: number | string): Promise<SellerProfileInfo | null> {
+        return this.executeQueryForSingle('SELECT * FROM `sellers` WHERE id = ? OR publicId = ?', [id, id]);
     }
     
-    async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
-        const result = await this.genericCreate('auctioneers', data, 'auct', 'AUCT');
+    async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: number; }> {
+        const result = await this.genericCreate('auctioneers', data);
         return {...result, auctioneerId: result.insertId};
     }
 
-    async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
+    async updateAuctioneer(id: number, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
         return this.genericUpdate('auctioneers', id, data);
     }
 
-    async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> {
+    async deleteAuctioneer(id: number): Promise<{ success: boolean; message: string; }> {
         return this.executeMutation('DELETE FROM `auctioneers` WHERE id = ?', [id]);
     }
     
-    async getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {
-        return this.executeQueryForSingle('SELECT * FROM `auctioneers` WHERE id = ? OR public_id = ?', [id, id]);
+    async getAuctioneer(id: number | string): Promise<AuctioneerProfileInfo | null> {
+        return this.executeQueryForSingle('SELECT * FROM `auctioneers` WHERE id = ? OR publicId = ?', [id, id]);
     }
 
     async saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean, message: string }> {
@@ -434,11 +433,11 @@ export class MySqlAdapter implements DatabaseAdapter {
         return result;
     }
     
-    async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('users', userId, { role_id: roleId }); }
+    async updateUserRole(userId: string, roleId: number | null): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('users', userId, { role_id: roleId }); }
     createMediaItem(item: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> { return this._notImplemented('createMediaItem'); }
     
     async createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean; message: string; }> {
-        const result = await this.genericCreate('lot_categories', data, 'cat');
+        const result = await this.genericCreate('lot_categories', data);
         return { success: result.success, message: result.message };
     }
 
@@ -446,19 +445,19 @@ export class MySqlAdapter implements DatabaseAdapter {
         return this.genericUpdate('platform_settings', 'global', data);
     }
 
-    async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string }> {
+    async updateCity(id: number, data: Partial<CityFormData>): Promise<{ success: boolean; message: string }> {
       return this.genericUpdate('cities', id, data);
     }
 
-    async deleteCity(id: string): Promise<{ success: boolean; message: string }> {
+    async deleteCity(id: number): Promise<{ success: boolean; message: string }> {
       return this.executeMutation('DELETE FROM `cities` WHERE id = ?', [id]);
     }
     
-    async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> {
+    async updateSubcategory(id: number, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> {
         return this.genericUpdate('subcategories', id, data);
     }
 
-    async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> {
+    async deleteSubcategory(id: number): Promise<{ success: boolean; message: string; }> {
        return this.executeMutation('DELETE FROM `subcategories` WHERE id = ?', [id]);
     }
 
