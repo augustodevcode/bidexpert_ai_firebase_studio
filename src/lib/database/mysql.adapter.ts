@@ -349,7 +349,7 @@ export class MySqlAdapter implements DatabaseAdapter {
             LEFT JOIN \`roles\` r ON ur.role_id = r.id
             LEFT JOIN \`sellers\` s ON u.id = s.user_id
             WHERE u.id = ? OR u.uid = ?
-            GROUP BY u.id, s.id
+            GROUP BY u.id
         `;
         const user = await this.executeQueryForSingle(sql, [userId, userId]);
         if (user) {
