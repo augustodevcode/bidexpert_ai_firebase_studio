@@ -1,4 +1,3 @@
-
 // src/lib/database/postgres.adapter.ts
 import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, CityFormData, StateFormData } from '@/types';
 import { Pool, type QueryResult } from 'pg';
@@ -117,6 +116,13 @@ export class PostgresAdapter implements DatabaseAdapter {
         return { success: result.success, message: result.message, subcategoryId: result.rows[0]?.id };
     }
 
+    async createRole(role: Omit<Role, "id" | "createdAt" | "updatedAt">): Promise<{success: boolean;message: string;}> {
+        const { id, name, name_normalized, description, permissions } = { id: `role-${slugify(role.name)}`, ...role};
+        const sql = `INSERT INTO "Role" (id, name, name_normalized, description, permissions) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING`;
+        const result = await this.executeMutation(sql, [id, name, name_normalized, description, JSON.stringify(permissions)]);
+        return { success: result.success, message: result.message };
+    }
+
     createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> { return this._notImplemented('createState'); }
     createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> { return this._notImplemented('createCity'); }
     createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> { return this._notImplemented('createSeller'); }
@@ -127,7 +133,6 @@ export class PostgresAdapter implements DatabaseAdapter {
     createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> { return this._notImplemented('createJudicialProcess'); }
     createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> { return this._notImplemented('createBem'); }
     createMediaItem(item: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> { return this._notImplemented('createMediaItem'); }
-    createRole(role: Omit<Role, "id" | "createdAt" | "updatedAt">): Promise<{success: boolean;message: string;}> { return this._notImplemented('createRole'); }
     
     // --- READ OPERATIONS ---
 

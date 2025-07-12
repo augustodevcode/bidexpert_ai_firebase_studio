@@ -1,4 +1,3 @@
-
 // src/lib/database/mysql.adapter.ts
 import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, CityFormData, StateFormData } from '@/types';
 import mysql, { type Pool, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
@@ -292,7 +291,10 @@ export class MySqlAdapter implements DatabaseAdapter {
     
     async getLotCategories(): Promise<LotCategory[]> { return this.executeQuery('SELECT * FROM `lot_categories` ORDER BY `name`'); }
     
-    async getSubcategoriesByParent(parentCategoryId: number): Promise<Subcategory[]> {
+    async getSubcategoriesByParent(parentCategoryId?: number): Promise<Subcategory[]> {
+        if (parentCategoryId === undefined) {
+          return this.executeQuery('SELECT * FROM `subcategories` ORDER BY `display_order`');
+        }
         return this.executeQuery('SELECT * FROM `subcategories` WHERE `parent_category_id` = ? ORDER BY `display_order`', [parentCategoryId]);
     }
     async getSubcategory(id: number): Promise<Subcategory | null> {
