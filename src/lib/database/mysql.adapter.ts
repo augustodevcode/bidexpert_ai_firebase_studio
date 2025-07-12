@@ -60,12 +60,32 @@ export class MySqlAdapter implements DatabaseAdapter {
         try {
             this.pool = mysql.createPool(dbUrl);
             console.log('[MySqlAdapter] Pool de conexões MySQL inicializado.');
+            this.ensureTablesExist();
         } catch (error: any) {
             this.connectionError = `Falha ao criar o pool de conexões MySQL: ${error.message}`;
             console.warn(`[MySqlAdapter] AVISO: ${this.connectionError}`);
             this.pool = null;
         }
     }
+
+    private async ensureTablesExist() {
+        const createRolesTableSql = `
+            CREATE TABLE IF NOT EXISTS \`user_roles\` (
+                \`user_id\` VARCHAR(255) NOT NULL,
+                \`role_id\` VARCHAR(255) NOT NULL,
+                PRIMARY KEY (\`user_id\`, \`role_id\`),
+                FOREIGN KEY (\`user_id\`) REFERENCES \`users\`(\`uid\`) ON DELETE CASCADE,
+                FOREIGN KEY (\`role_id\`) REFERENCES \`roles\`(\`id\`) ON DELETE CASCADE
+            );
+        `;
+         try {
+            await this.executeMutation(createRolesTableSql);
+            console.log('[MySqlAdapter] Tabela `user_roles` garantida.');
+        } catch (error) {
+            console.error('[MySqlAdapter] Falha ao garantir a tabela `user_roles`:', error);
+        }
+    }
+
 
     private async getConnection() {
         if (this.connectionError) {
@@ -303,7 +323,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     async getSellers(): Promise<SellerProfileInfo[]> { return this.executeQuery('SELECT * FROM `sellers` ORDER BY `name`'); }
     async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { return this.executeQuery('SELECT * FROM `auctioneers` ORDER BY `name`'); }
     
-    async getUsersWithRoles(): Promise<UserProfileData[]> {
+     async getUsersWithRoles(): Promise<UserProfileData[]> {
         const sql = `
             SELECT 
                 u.*, 
@@ -313,7 +333,7 @@ export class MySqlAdapter implements DatabaseAdapter {
             FROM \`users\` u
             LEFT JOIN \`user_roles\` ur ON u.uid = ur.user_id
             LEFT JOIN \`roles\` r ON ur.role_id = r.id
-            GROUP BY u.uid
+            GROUP BY u.uid, u.email, u.password, u.full_name, u.cpf, u.cell_phone, u.razao_social, u.cnpj, u.date_of_birth, u.zip_code, u.street, u.number, u.complement, u.neighborhood, u.city, u.state, u.avatar_url, u.data_ai_hint, u.seller_id, u.habilitation_status, u.account_type, u.badges, u.opt_in_marketing, u.created_at, u.updated_at, u.rg_number, u.rg_issuer, u.rg_issue_date, u.rg_state, u.home_phone, u.gender, u.profession, u.nationality, u.marital_status, u.property_regime, u.spouse_name, u.spouse_cpf, u.inscricao_estadual, u.website, u.responsible_name, u.responsible_cpf
         `;
         const users = await this.executeQuery(sql);
         return users.map(u => {
@@ -340,10 +360,10 @@ export class MySqlAdapter implements DatabaseAdapter {
             GROUP BY u.uid
         `;
         const user = await this.executeQueryForSingle(sql, [userId]);
-        if (user) {
-            const allPerms = user.permissionsJson ? user.permissionsJson.split(',').flatMap((p: string) => {
+        if (user && user.permissionsJson) {
+            const allPerms = user.permissionsJson.split(',').flatMap((p: string) => {
                 try { return JSON.parse(p); } catch { return []; }
-            }) : [];
+            });
             user.permissions = [...new Set(allPerms)];
             delete user.permissionsJson;
         }
