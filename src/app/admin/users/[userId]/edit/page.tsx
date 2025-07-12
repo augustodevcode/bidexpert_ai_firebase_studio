@@ -1,8 +1,7 @@
 
 // src/app/admin/users/[userId]/edit/page.tsx
 import UserRoleForm from '../../user-role-form'; 
-import { getUserProfileData, updateUserRole } from '../../actions'; 
-// Importar a Server Action getRoles de roles/actions.ts
+import { getUserProfileData, updateUserRoles } from '../../actions'; 
 import { getRoles } from '@/app/admin/roles/actions'; 
 import { notFound } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -22,7 +21,6 @@ export default async function EditUserPage({ params }: { params: { userId: strin
     console.error("Failed to fetch user profile for edit:", error);
   }
   
-  // Chamar a Server Action getRoles
   const roles = await getRoles(); 
 
   if (!userProfile) {
@@ -40,9 +38,9 @@ export default async function EditUserPage({ params }: { params: { userId: strin
      );
   }
 
-  async function handleUpdateUserRole(uid: string, roleId: string | null) {
+  async function handleUpdateUserRoles(uid: string, roleIds: string[]) {
     'use server';
-    return updateUserRole(uid, roleId);
+    return updateUserRoles(uid, roleIds);
   }
   
   const formattedDateOfBirth = userProfile.dateOfBirth ? format(new Date(userProfile.dateOfBirth), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
@@ -53,7 +51,7 @@ export default async function EditUserPage({ params }: { params: { userId: strin
       <UserRoleForm
         user={userProfile}
         roles={roles}
-        onSubmitAction={handleUpdateUserRole}
+        onSubmitAction={handleUpdateUserRoles}
       />
 
       <Card className="max-w-lg mx-auto shadow-md">

@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -13,18 +13,19 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { userRoleFormSchema, type UserRoleFormValues } from './user-role-form-schema';
 import type { Role, UserProfileData } from '@/types';
-import { Loader2, Save, UserCog } from 'lucide-react';
+import { Loader2, Save, UserCog, Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 interface UserRoleFormProps {
   user: UserProfileData;
   roles: Role[];
-  onSubmitAction: (userId: string, roleId: string | null) => Promise<{ success: boolean; message: string }>;
+  onSubmitAction: (userId: string, roleIds: string[]) => Promise<{ success: boolean; message: string }>;
 }
 
 export default function UserRoleForm({
@@ -39,14 +40,14 @@ export default function UserRoleForm({
   const form = useForm<UserRoleFormValues>({
     resolver: zodResolver(userRoleFormSchema),
     defaultValues: {
-      roleId: user?.roleId || null, // Handle case where roleId might be undefined or null
+      roleIds: user?.roleIds || [],
     },
   });
 
   async function onSubmit(values: UserRoleFormValues) {
     setIsSubmitting(true);
     try {
-      const result = await onSubmitAction(user.uid, values.roleId || null);
+      const result = await onSubmitAction(user.uid, values.roleIds || []);
       if (result.success) {
         toast({
           title: 'Sucesso!',
@@ -77,37 +78,56 @@ export default function UserRoleForm({
     <Card className="max-w-lg mx-auto shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <UserCog className="h-6 w-6 text-primary" /> Atribuir Perfil para {user.fullName}
+          <UserCog className="h-6 w-6 text-primary" /> Atribuir Perfis para {user.fullName}
         </CardTitle>
         <CardDescription>Email: {user.email}</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6 p-6 bg-secondary/30">
+          <CardContent className="p-6 bg-secondary/30">
             <FormField
               control={form.control}
-              name="roleId"
-              render={({ field }) => (
+              name="roleIds"
+              render={() => (
                 <FormItem>
-                  <FormLabel>Perfil do Usuário</FormLabel>
-                  <Select 
-                    onValueChange={(value) => field.onChange(value === "---NONE---" ? null : value)} 
-                    value={field.value || undefined} // Ensure undefined for placeholder
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um perfil" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="---NONE---">Nenhum (Remover Perfil)</SelectItem>
-                      {roles.map((role) => (
-                        <SelectItem key={role.id} value={role.id}>
-                          {role.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel className="text-base font-semibold">Perfis Disponíveis</FormLabel>
+                   <div className="space-y-2 mt-2">
+                    {roles.map((role) => (
+                      <FormField
+                        key={role.id}
+                        control={form.control}
+                        name="roleIds"
+                        render={({ field }) => {
+                          return (
+                            <FormItem key={role.id} className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 bg-background">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(role.id)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...(field.value || []), role.id])
+                                      : field.onChange(
+                                          (field.value || []).filter(
+                                            (value) => value !== role.id
+                                          )
+                                        )
+                                  }}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="font-medium flex items-center gap-2">
+                                  <Shield className="h-4 w-4 text-muted-foreground"/> {role.name}
+                                </FormLabel>
+                                <FormDescription className="text-xs">
+                                  {role.description}
+                                </FormDescription>
+                              </div>
+                            </FormItem>
+                          )
+                        }}
+                      />
+                    ))}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -119,7 +139,7 @@ export default function UserRoleForm({
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              Salvar Perfil
+              Salvar Perfis
             </Button>
           </CardFooter>
         </form>

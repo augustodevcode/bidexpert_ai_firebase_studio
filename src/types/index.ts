@@ -332,7 +332,7 @@ export interface UserProfileData {
   state?: string;
   avatarUrl?: string;
   dataAiHint?: string;
-  roleId: string | null;
+  roleIds: string[]; // Changed from roleId: string | null
   sellerId?: string | null;
   habilitationStatus: UserHabilitationStatus;
   accountType: AccountType;
@@ -363,7 +363,7 @@ export interface UserProfileData {
 }
 
 export interface UserProfileWithPermissions extends UserProfileData {
-  roleName?: string;
+  roleNames: string[]; // Changed from roleName
   permissions: string[];
 }
 
@@ -844,7 +844,7 @@ export interface ConsignorDashboardStats {
     salesData: { name: string; sales: number }[];
 }
 
-export type EditableUserProfileData = Partial<Omit<UserProfileData, 'id' | 'uid' | 'email' | 'roleId' | 'sellerId' | 'habilitationStatus' | 'password' | 'createdAt' | 'updatedAt' | 'roleName' | 'permissions'>>;
+export type EditableUserProfileData = Partial<Omit<UserProfileData, 'id' | 'uid' | 'email' | 'roleIds' | 'sellerId' | 'habilitationStatus' | 'password' | 'createdAt' | 'updatedAt' | 'roleNames' | 'permissions'>>;
 
 
 // ============================================================================
@@ -993,7 +993,7 @@ export interface DatabaseAdapter {
     getUserProfileData(userId: string): Promise<UserProfileData | null>;
     getRoles(): Promise<Role[]>;
     createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{success: boolean;message: string;}>;
-    updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }>;
+    updateUserRoles(userId: string, roleIds: string[]): Promise<{ success: boolean; message: string; }>;
 
     getMediaItems(): Promise<MediaItem[]>;
     createMediaItem(item: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }>;

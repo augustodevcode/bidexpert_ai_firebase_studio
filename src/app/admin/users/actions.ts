@@ -65,7 +65,7 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
     ...data,
     password: hashedPassword,
     dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
-    roleId: userRole.id,
+    roleIds: [userRole.id], // Use roleIds and set as an array
     habilitationStatus: 'PENDING_DOCUMENTS',
   };
 
@@ -80,18 +80,19 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
   return result;
 }
 
-export async function updateUserRole(userId: string, roleId: string | null): Promise<{success: boolean; message: string}> {
+export async function updateUserRoles(userId: string, roleIds: string[]): Promise<{success: boolean; message: string}> {
   try {
     const db = getDatabaseAdapter();
-    const result = await db.updateUserRole(userId, roleId);
+    // @ts-ignore
+    const result = await db.updateUserRoles(userId, roleIds);
     if (result.success) {
         revalidatePath('/admin/users');
         revalidatePath(`/admin/users/${userId}/edit`);
     }
     return result;
   } catch(error: any) {
-    console.error("Failed to update user role:", error);
-    return { success: false, message: "Falha ao atualizar perfil."};
+    console.error("Failed to update user roles:", error);
+    return { success: false, message: "Falha ao atualizar perfis."};
   }
 }
 

@@ -13,7 +13,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import { Checkbox } from '@/components/ui/checkbox';
 import type { UserProfileData } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
@@ -55,16 +54,26 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     header: ({ column }) => <DataTableColumnHeader column={column} title="Email" />,
   },
   {
-    accessorKey: "roleName",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Perfil" />,
+    accessorKey: "roleNames", // Changed from roleName to roleNames
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Perfis" />,
     cell: ({ row }) => {
-      const roleName = row.getValue("roleName");
-      return roleName ? <Badge variant="secondary">{roleName as string}</Badge> : <span className="text-xs text-muted-foreground">N/A</span>;
+      const roleNames = row.original.roleNames;
+      if (!roleNames || roleNames.length === 0) {
+        return <span className="text-xs text-muted-foreground">N/A</span>;
+      }
+      return (
+        <div className="flex flex-wrap gap-1">
+          {roleNames.map((roleName: string) => (
+            <Badge key={roleName} variant="secondary">{roleName}</Badge>
+          ))}
+        </div>
+      );
     },
     filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id))
+      const roleNames = row.original.roleNames || [];
+      return (value as string[]).some(val => roleNames.includes(val));
     },
-    enableGrouping: true,
+    enableGrouping: false, // Grouping on an array is complex, disable for now
   },
   {
     accessorKey: "habilitationStatus",
