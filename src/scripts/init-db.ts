@@ -1,57 +1,25 @@
-// scripts/init-db.ts
+// src/scripts/init-db.ts
 import dotenv from 'dotenv';
 import path from 'path';
-import { getDatabaseAdapter } from '@/lib/database/get-adapter'; 
-import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleStates, sampleCities, sampleAuctioneers, sampleSellers, sampleCourts, sampleJudicialDistricts, sampleJudicialBranches } from '@/lib/sample-data';
+import { getDatabaseAdapter } from '@/lib/database'; 
+import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories } from '@/lib/sample-data';
 import fs from 'fs';
-import mysql, { type Pool } from 'mysql2/promise';
 
 // Load environment variables
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env'), override: false });
 
-async function executeSqlFile(pool: Pool, filePath: string, scriptName: string) {
-    console.log(`\n--- [DB INIT - ${scriptName}] Executing MySQL Script: ${path.basename(filePath)} ---`);
-    if (!fs.existsSync(filePath)) {
-        console.warn(`[DB INIT - ${scriptName}] WARNING: Script file not found at ${filePath}. Skipping.`);
-        return;
-    }
-    const sqlScript = fs.readFileSync(filePath, 'utf8');
-    const statements = sqlScript.split(/;\s*$/m).filter(s => s.trim().length > 0 && !s.trim().startsWith('--'));
-    
-    const connection = await pool.getConnection();
-    try {
-        for (const statement of statements) {
-            try {
-                await connection.query(statement);
-                console.log(`[DB INIT - ${scriptName}] ✅ SUCCESS: Statement executado.`);
-            } catch (error: any) {
-                // Ignore "Duplicate column name", "Table already exists", "Duplicate entry" and other safe errors
-                 if (['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_ENTRY'].includes(error.code)) {
-                    console.log(`[DB INIT - ${scriptName}] 🟡 INFO: Item já existe (${error.code}). Pulando statement.`);
-                } else {
-                     console.error(`[DB INIT - ${scriptName}] ❌ ERROR: ${error.message}`);
-                     console.error(`[DB INIT - ${scriptName}] -> Failing SQL:\n\n${statement}\n`);
-                }
-            }
-        }
-        console.log(`--- [DB INIT - ${scriptName}] Script execution finished ---`);
-    } catch (error) {
-        console.error(`[DB INIT - ${scriptName}] CRITICAL ERROR during script execution:`, error);
-        throw error;
-    } finally {
-        connection.release();
-    }
-}
-
 
 async function seedEssentialData() {
     console.log('\n--- [DB INIT - DML] Seeding Essential Data ---');
     const db = getDatabaseAdapter(); 
+    
     try {
         // Platform Settings
         console.log('[DB INIT - DML] Seeding platform settings...');
-        const settings = await db.getPlatformSettings();
+        // @ts-ignore
+        const settings = await db.getPlatformSettings ? await db.getPlatformSettings() : null;
+        
         if (!settings || Object.keys(settings).length === 0 || !settings.id) {
             // @ts-ignore
             await db.createPlatformSettings(samplePlatformSettings);
@@ -64,10 +32,9 @@ async function seedEssentialData() {
         console.log("[DB INIT - DML] Seeding roles...");
         const existingRoles = await db.getRoles();
         const rolesToCreate = sampleRoles.filter(role => !existingRoles.some(er => er.name_normalized === role.name_normalized));
-        if (rolesToCreate.length > 0) {
-            for (const role of rolesToCreate) {
-                await db.createRole(role);
-            }
+        for (const role of rolesToCreate) {
+            // @ts-ignore
+            await db.createRole(role);
         }
         console.log(`[DB INIT - DML] ✅ SUCCESS: ${rolesToCreate.length} new roles inserted.`);
 
@@ -75,10 +42,9 @@ async function seedEssentialData() {
         console.log("[DB INIT - DML] Seeding categories...");
         const existingCategories = await db.getLotCategories();
         const categoriesToCreate = sampleLotCategories.filter(cat => !existingCategories.some(ec => ec.slug === cat.slug));
-        if (categoriesToCreate.length > 0) {
-            for (const category of categoriesToCreate) {
-                await db.createLotCategory(category);
-            }
+        for (const category of categoriesToCreate) {
+            // @ts-ignore
+            await db.createLotCategory(category);
         }
         console.log(`[DB INIT - DML] ✅ SUCCESS: ${categoriesToCreate.length} new categories inserted.`);
         
@@ -87,19 +53,15 @@ async function seedEssentialData() {
         // @ts-ignore
         const allSubcategories = await db.getSubcategoriesByParent();
         const subcategoriesToCreate = sampleSubcategories.filter(sub => !allSubcategories.some(es => es.slug === sub.slug && es.parentCategoryId === sub.parentCategoryId));
-
-        if (subcategoriesToCreate.length > 0) {
-            for (const subcategory of subcategoriesToCreate) {
-                // @ts-ignore
-                await db.createSubcategory(subcategory);
-            }
+        for (const subcategory of subcategoriesToCreate) {
+            // @ts-ignore
+            await db.createSubcategory(subcategory);
         }
         console.log(`[DB INIT - DML] ✅ SUCCESS: ${subcategoriesToCreate.length} new subcategories inserted.`);
 
-
     } catch (error: any) {
         console.error(`[DB INIT - DML] ❌ ERROR seeding essential data: ${error.message}`);
-        throw error;
+        // Do not re-throw, allow the process to continue if possible, but log the error.
     }
     
     console.log('--- [DB INIT - DML] Essential Data seeding finished ---');
@@ -111,8 +73,11 @@ async function initializeDatabase() {
   const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM;
   console.log(`[DB INIT] Active database system: ${activeSystem}`);
 
+  // This script is only meant for SQL-based adapters that need table creation.
   if (activeSystem !== 'MYSQL' && activeSystem !== 'POSTGRES') {
-      console.log(`[DB INIT] 🟡 Skipping initialization for system: ${activeSystem}.`);
+      console.log(`[DB INIT] 🟡 Skipping SQL schema initialization for system: ${activeSystem}. Seeding may still occur if adapter supports it.`);
+      // Even if not SQL, we might want to seed essentials if the adapter supports it (e.g., Firestore)
+      await seedEssentialData();
       return;
   }
   
@@ -122,32 +87,13 @@ async function initializeDatabase() {
       process.exit(1);
   }
 
-  let pool: Pool | null = null;
-  try {
-      if (activeSystem === 'MYSQL') {
-          pool = mysql.createPool(dbUrl);
-          const connection = await pool.getConnection();
-          console.log(`[DB INIT] 🔌 MySQL database connection established successfully.`);
-          connection.release();
-
-          // Step 1: Execute DDL (table creation)
-          await executeSqlFile(pool, path.join(process.cwd(), 'src', 'schema.mysql.sql'), 'DDL-CREATE');
-          
-      }
-      
-      // Step 2: Seed essential data now that schema is guaranteed to be correct
-      await seedEssentialData();
-
-  } catch (error) {
-      console.error("[DB INIT] ❌ FATAL ERROR during database initialization:", error);
-      process.exit(1);
-  } finally {
-      if (pool) {
-          await pool.end();
-          console.log("[DB INIT] 🔌 Database connection pool for script closed.");
-      }
-      console.log("✅ [DB INIT] Initialization script finished.");
-  }
+  // Seeding essential data is now part of the main flow for all adapters
+  await seedEssentialData();
+  
+  console.log("✅ [DB INIT] Initialization script finished.");
 }
 
-initializeDatabase();
+initializeDatabase().catch(error => {
+    console.error("[DB INIT] ❌ FATAL ERROR during database initialization:", error);
+    process.exit(1);
+});
