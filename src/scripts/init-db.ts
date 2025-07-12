@@ -1,6 +1,6 @@
 // src/scripts/init-db.ts
 import { getDatabaseAdapter } from '@/lib/database/get-adapter';
-import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleCourts } from '@/lib/sample-data';
+import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleCourts, sampleStates, sampleCities } from '@/lib/sample-data';
 
 async function seedEssentialData() {
     console.log('\n--- [DB INIT - DML] Seeding Essential Data ---');
@@ -46,11 +46,30 @@ async function seedEssentialData() {
         }
         console.log(`[DB INIT - DML] ✅ SUCCESS: ${subcategoriesToCreate.length} new subcategories inserted.`);
         
+        // States
+        console.log("[DB INIT - DML] Seeding states...");
+        const existingStates = await db.getStates();
+        const statesToCreate = sampleStates.filter(state => !existingStates.some(es => es.uf === state.uf));
+        for (const state of statesToCreate) {
+             await db.createState(state);
+        }
+        console.log(`[DB INIT - DML] ✅ SUCCESS: ${statesToCreate.length} new states inserted.`);
+        
+        // Cities
+        console.log("[DB INIT - DML] Seeding cities...");
+        const existingCities = await db.getCities();
+        const citiesToCreate = sampleCities.filter(city => !existingCities.some(ec => ec.slug === city.slug && ec.stateId === city.stateId));
+        for (const city of citiesToCreate) {
+             await db.createCity(city);
+        }
+        console.log(`[DB INIT - DML] ✅ SUCCESS: ${citiesToCreate.length} new cities inserted.`);
+
         // Courts
         console.log("[DB INIT - DML] Seeding courts...");
         const existingCourts = await db.getCourts();
         const courtsToCreate = sampleCourts.filter(court => !existingCourts.some(ec => ec.slug === court.slug));
         for (const court of courtsToCreate) {
+            // @ts-ignore
             await db.createCourt(court);
         }
         console.log(`[DB INIT - DML] ✅ SUCCESS: ${courtsToCreate.length} new courts inserted.`);

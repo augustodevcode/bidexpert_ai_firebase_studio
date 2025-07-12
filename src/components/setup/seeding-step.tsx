@@ -5,42 +5,79 @@ import { useState } from 'react';
 import { CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+import { CheckCircle, AlertTriangle, Loader2, Database } from 'lucide-react';
+import { runFullSeedAction } from '@/app/admin/settings/actions';
+import { useToast } from '@/hooks/use-toast';
+
 
 interface SeedingStepProps {
   onNext: () => void;
   onPrev: () => void;
 }
 
-// NOTE: The actual seeding logic is now handled server-side by the `npm run db:init` script.
-// This component now serves as a user confirmation step to explain what happened.
 export default function SeedingStep({ onNext, onPrev }: SeedingStepProps) {
-  const [userConfirmation, setUserConfirmation] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const { toast } = useToast();
+
+  const handleSeedClick = async () => {
+    setIsSeeding(true);
+    toast({
+        title: "Populando Dados...",
+        description: "Este processo pode levar alguns instantes. Por favor, aguarde.",
+    });
+
+    const result = await runFullSeedAction();
+
+    if (result.success) {
+        toast({
+            title: "Sucesso!",
+            description: result.message,
+            variant: 'default',
+        });
+    } else {
+        toast({
+            title: "Erro no Processo",
+            description: result.message,
+            variant: "destructive",
+        });
+    }
+    setIsSeeding(false);
+  };
+
 
   return (
     <>
       <CardHeader>
         <CardTitle>População Inicial do Banco de Dados</CardTitle>
         <CardDescription>
-          Seu banco de dados foi inicializado e os dados essenciais (como perfis e categorias) foram inseridos.
+          Sua plataforma já está pronta com os dados essenciais para operar. Opcionalmente, você pode adicionar dados de demonstração.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <Alert variant="default" className="bg-green-50 dark:bg-green-900/20 border-green-500/50">
           <CheckCircle className="h-4 w-4" />
-          <AlertTitle className="font-semibold">Inicialização Concluída!</AlertTitle>
+          <AlertTitle className="font-semibold">Inicialização Essencial Concluída!</AlertTitle>
           <AlertDescription>
-            O script `db:init` foi executado automaticamente na inicialização do servidor, preparando seu banco de dados com as tabelas e dados essenciais. Você pode prosseguir com segurança.
-            <br/><br/>
-            Se desejar popular o banco com um conjunto completo de dados de **demonstração** (leilões, lotes, etc.), pare o servidor e execute o comando: <code className="font-semibold bg-muted px-1 py-0.5 rounded">npm run db:seed</code>
+            Sua plataforma foi preparada com os dados básicos necessários, como perfis de usuário, categorias e localidades. Você já pode avançar para as configurações finais.
           </AlertDescription>
         </Alert>
+
+        <Alert variant="outline">
+          <Database className="h-4 w-4" />
+          <AlertTitle>Quer ver a plataforma em ação?</AlertTitle>
+          <AlertDescription>
+            Clique no botão abaixo para popular sua plataforma com um conjunto completo de dados de demonstração, incluindo leilões, lotes, usuários e comitentes. Isso é ótimo para explorar todas as funcionalidades imediatamente.
+          </AlertDescription>
+          <Button onClick={handleSeedClick} disabled={isSeeding} className="mt-4">
+             {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Database className="mr-2 h-4 w-4" />}
+             {isSeeding ? 'Populando...' : 'Popular com Dados de Demonstração'}
+          </Button>
+        </Alert>
+
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={onPrev}>Voltar</Button>
-        <Button onClick={onNext}>Avançar para Configurações</Button>
+        <Button variant="outline" onClick={onPrev} disabled={isSeeding}>Voltar</Button>
+        <Button onClick={onNext} disabled={isSeeding}>Avançar para Configurações</Button>
       </CardFooter>
     </>
   );

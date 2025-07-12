@@ -110,7 +110,8 @@ export function getSampleData() {
   
   const citiesWithDetails = sampleCities.map(city => ({
       ...city,
-      stateName: sampleStates.find(s => s.id === city.stateId)?.name
+      stateName: sampleStates.find(s => s.id === city.stateId)?.name,
+      stateUf: sampleStates.find(s => s.id === city.stateId)?.uf
   }));
   
   const subcategoriesWithDetails = sampleSubcategories.map(sub => ({
