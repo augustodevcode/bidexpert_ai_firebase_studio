@@ -315,7 +315,7 @@ export class MySqlAdapter implements DatabaseAdapter {
             LEFT JOIN \`user_roles\` ur ON u.id = ur.user_id
             LEFT JOIN \`roles\` r ON ur.role_id = r.id
             LEFT JOIN \`sellers\` s ON u.id = s.user_id
-            GROUP BY u.id
+            GROUP BY u.id, u.email, u.password, u.full_name, u.cpf, u.cell_phone, u.razao_social, u.cnpj, u.date_of_birth, u.zip_code, u.street, u.number, u.complement, u.neighborhood, u.city, u.state, u.avatar_url, u.data_ai_hint, u.seller_id, u.habilitation_status, u.account_type, u.badges, u.opt_in_marketing, u.created_at, u.updated_at, u.rg_number, u.rg_issuer, u.rg_issue_date, u.rg_state, u.home_phone, u.gender, u.profession, u.nationality, u.marital_status, u.property_regime, u.spouse_name, u.spouse_cpf, u.inscricao_estadual, u.website, u.responsible_name, u.responsible_cpf, s.id
         `;
         const users = await this.executeQuery(sql);
         return users.map(u => {
@@ -324,14 +324,9 @@ export class MySqlAdapter implements DatabaseAdapter {
             }) : [];
             u.permissions = [...new Set(allPerms)];
             u.sellerId = u.sellerId || u.sellerIdFromJoin;
+            u.roleNames = u.roleNames ? u.roleNames.split(',') : [];
             delete u.permissionsJson; // Clean up
             delete u.sellerIdFromJoin; // Clean up
-            
-            if (u.roleNames && typeof u.roleNames === 'string') {
-                u.roleNames = u.roleNames.split(',');
-            } else if (!u.roleNames) {
-                u.roleNames = [];
-            }
             return u;
         });
     }
@@ -349,7 +344,7 @@ export class MySqlAdapter implements DatabaseAdapter {
             LEFT JOIN \`roles\` r ON ur.role_id = r.id
             LEFT JOIN \`sellers\` s ON u.id = s.user_id
             WHERE u.id = ? OR u.uid = ?
-            GROUP BY u.id
+            GROUP BY u.id, u.email, u.password, u.full_name, u.cpf, u.cell_phone, u.razao_social, u.cnpj, u.date_of_birth, u.zip_code, u.street, u.number, u.complement, u.neighborhood, u.city, u.state, u.avatar_url, u.data_ai_hint, u.seller_id, u.habilitation_status, u.account_type, u.badges, u.opt_in_marketing, u.created_at, u.updated_at, u.rg_number, u.rg_issuer, u.rg_issue_date, u.rg_state, u.home_phone, u.gender, u.profession, u.nationality, u.marital_status, u.property_regime, u.spouse_name, u.spouse_cpf, u.inscricao_estadual, u.website, u.responsible_name, u.responsible_cpf, s.id
         `;
         const user = await this.executeQueryForSingle(sql, [userId, userId]);
         if (user) {
@@ -360,7 +355,7 @@ export class MySqlAdapter implements DatabaseAdapter {
                 user.permissions = [...new Set(allPerms)];
                 delete user.permissionsJson;
             }
-            if (user.roleNames && typeof user.roleNames === 'string') {
+             if (user.roleNames && typeof user.roleNames === 'string') {
                 user.roleNames = user.roleNames.split(',');
             } else if (!user.roleNames) {
                 user.roleNames = [];
@@ -373,6 +368,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     
     async getRoles(): Promise<Role[]> { 
         const roles = await this.executeQuery('SELECT * FROM `roles` ORDER BY `name`'); 
+        console.log('[MySqlAdapter.getRoles] Raw roles from DB:', JSON.stringify(roles, null, 2));
         return roles.map(r => {
             if (r.permissions && typeof r.permissions === 'string') {
                  try { r.permissions = JSON.parse(r.permissions); } catch(e) { r.permissions = []; }

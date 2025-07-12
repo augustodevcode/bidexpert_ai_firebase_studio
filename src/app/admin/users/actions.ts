@@ -56,6 +56,12 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
   const hashedPassword = await bcrypt.hash(data.password, 10);
   
   const roles = await db.getRoles();
+  console.log('[createUser Action] Roles fetched for new user:', JSON.stringify(roles, null, 2));
+
+  if (!roles || roles.length === 0) {
+    throw new Error("Nenhum perfil (role) foi encontrado no banco de dados. Execute o script de inicialização.");
+  }
+
   // Normalize the search to be case-insensitive and trim whitespace
   const userRole = roles.find(r => r.name_normalized && r.name_normalized.trim().toUpperCase() === 'USER');
 
