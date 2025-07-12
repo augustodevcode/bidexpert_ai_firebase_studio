@@ -18,7 +18,7 @@ import {
 import type { DatabaseAdapter, Role, UserProfileData } from '@/types';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-import { MySqlAdapter } from '@/lib/database/mysql.adapter';
+import type { MySqlAdapter } from '@/lib/database/mysql.adapter';
 
 async function seedFullData() {
     console.log('\n--- [DB SEED] Seeding Full Demo Data ---');
@@ -112,12 +112,21 @@ async function seedFullData() {
         type UserSample = typeof sampleUsers[0];
         if (userAdapter.createUser) {
             const existingUsers = await db.getUsersWithRoles();
-            const usersToCreate = sampleUsers.filter((u: UserSample) => !existingUsers.some((eu: UserProfileData) => eu.email === u.email));
+            const usersToCreate = sampleUsers.filter((u: UserProfileData) => !existingUsers.some((eu: UserProfileData) => eu.email === u.email));
+            
             for (const user of usersToCreate) {
                 const { password, ...userData } = user;
-                const hashedPassword = await bcrypt.hash(password, 10);
-                const fullUserData = { ...userData, password: hashedPassword, id: user.uid }; // Use uid as the primary id
-                delete (fullUserData as any).uid;
+                const hashedPassword = await bcrypt.hash(password || 'password123', 10);
+                
+                // Link admin user to first seller if it's the admin user
+                if(userData.email === 'admin@bidexpert.com.br') {
+                    const firstSeller = sampleSellers[0];
+                    if(firstSeller) {
+                        (userData as any).sellerId = firstSeller.id;
+                    }
+                }
+
+                const fullUserData = { ...userData, password: hashedPassword };
                 await userAdapter.createUser(fullUserData);
             }
             console.log(`[DB SEED] ✅ SUCCESS: ${usersToCreate.length} new users processed.`);
@@ -126,15 +135,15 @@ async function seedFullData() {
         }
         
         console.log('[DB SEED] Linking Admin user to Administrator role...');
-        if (db instanceof MySqlAdapter) {
+        if ('executeMutation' in db) {
             const adminUserSample = sampleUsers.find(u => u.email === 'admin@bidexpert.com.br');
             const adminRoleSample = sampleRoles.find((r: Role) => r.name_normalized === 'ADMINISTRATOR');
 
             if (adminUserSample && adminRoleSample) {
                 // Since we use the UID as the ID for creation, we can use it directly.
                 const adminUserId = adminUserSample.uid;
-                await db.executeMutation('INSERT IGNORE INTO `user_roles` (user_id, role_id) VALUES (?, ?)', [adminUserId, adminRoleSample.id]);
-                console.log('[DB SEED] ✅ SUCCESS: Admin user linked to Administrator role in MySQL.');
+                await (db as MySqlAdapter).executeMutation('INSERT IGNORE INTO `user_roles` (user_id, role_id) VALUES (?, ?)', [adminUserId, adminRoleSample.id]);
+                console.log('[DB SEED] ✅ SUCCESS: Admin user linked to Administrator role.');
             } else {
                  console.warn('[DB SEED] 🟡 WARNING: Could not find admin user or role in sample data to link.');
             }

@@ -309,11 +309,13 @@ export class MySqlAdapter implements DatabaseAdapter {
                 u.*, 
                 GROUP_CONCAT(r.id) as role_ids,
                 GROUP_CONCAT(r.name) as role_names,
-                GROUP_CONCAT(r.permissions) as permissions_json
+                GROUP_CONCAT(r.permissions) as permissions_json,
+                s.id as seller_id_from_join
             FROM \`users\` u
-            LEFT JOIN \`user_roles\` ur ON u.id = ur.user_id
+            LEFT JOIN \`user_roles\` ur ON u.uid = ur.user_id
             LEFT JOIN \`roles\` r ON ur.role_id = r.id
-            GROUP BY u.id
+            LEFT JOIN \`sellers\` s ON u.uid = s.user_id
+            GROUP BY u.uid, u.email, u.password, u.full_name, u.cpf, u.cell_phone, u.razao_social, u.cnpj, u.date_of_birth, u.zip_code, u.street, u.number, u.complement, u.neighborhood, u.city, u.state, u.avatar_url, u.data_ai_hint, u.habilitation_status, u.account_type, u.badges, u.opt_in_marketing, u.created_at, u.updated_at, u.rg_number, u.rg_issuer, u.rg_issue_date, u.rg_state, u.home_phone, u.gender, u.profession, u.nationality, u.marital_status, u.property_regime, u.spouse_name, u.spouse_cpf, u.inscricao_estadual, u.website, u.responsible_name, u.responsible_cpf, s.id
         `;
         const users = await this.executeQuery(sql);
         return users.map(u => {
@@ -321,15 +323,15 @@ export class MySqlAdapter implements DatabaseAdapter {
                 try { return JSON.parse(p); } catch { return []; }
             }) : [];
             u.permissions = [...new Set(allPerms)];
+            u.sellerId = u.sellerId || u.sellerIdFromJoin;
             delete u.permissionsJson; // Clean up
+            delete u.sellerIdFromJoin; // Clean up
             
-            // Correctly transform roleNames string into an array
             if (u.roleNames && typeof u.roleNames === 'string') {
                 u.roleNames = u.roleNames.split(',');
             } else if (!u.roleNames) {
                 u.roleNames = [];
             }
-            
             return u;
         });
     }
@@ -340,25 +342,31 @@ export class MySqlAdapter implements DatabaseAdapter {
                 u.*, 
                 GROUP_CONCAT(r.id) as role_ids,
                 GROUP_CONCAT(r.name) as role_names,
-                GROUP_CONCAT(r.permissions) as permissions_json
+                GROUP_CONCAT(r.permissions) as permissions_json,
+                s.id as seller_id_from_join
             FROM \`users\` u
-            LEFT JOIN \`user_roles\` ur ON u.id = ur.user_id
+            LEFT JOIN \`user_roles\` ur ON u.uid = ur.user_id
             LEFT JOIN \`roles\` r ON ur.role_id = r.id
-            WHERE u.id = ?
-            GROUP BY u.id
+            LEFT JOIN \`sellers\` s ON u.uid = s.user_id
+            WHERE u.uid = ?
+            GROUP BY u.uid, s.id
         `;
         const user = await this.executeQueryForSingle(sql, [userId]);
-        if (user && user.permissionsJson) {
-            const allPerms = user.permissionsJson.split(',').flatMap((p: string) => {
-                try { return JSON.parse(p); } catch { return []; }
-            });
-            user.permissions = [...new Set(allPerms)];
-            delete user.permissionsJson;
-        }
-        if (user && user.roleNames && typeof user.roleNames === 'string') {
-            user.roleNames = user.roleNames.split(',');
-        } else if (user && !user.roleNames) {
-            user.roleNames = [];
+        if (user) {
+            if (user.permissionsJson) {
+                const allPerms = user.permissionsJson.split(',').flatMap((p: string) => {
+                    try { return JSON.parse(p); } catch { return []; }
+                });
+                user.permissions = [...new Set(allPerms)];
+                delete user.permissionsJson;
+            }
+            if (user.roleNames && typeof user.roleNames === 'string') {
+                user.roleNames = user.roleNames.split(',');
+            } else if (!user.roleNames) {
+                user.roleNames = [];
+            }
+             user.sellerId = user.sellerId || user.sellerIdFromJoin;
+             delete user.sellerIdFromJoin;
         }
         return user;
     }
@@ -491,7 +499,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         const result = await this.executeMutation(sql, [id, userId, documentTypeId, fileUrl, fileName, 'PENDING_ANALYSIS', new Date(), new Date()]);
         
         if (result.success) {
-            await this.executeMutation('UPDATE `users` SET habilitation_status = ? WHERE id = ? AND habilitation_status = ?', ['PENDING_ANALYSIS', userId, 'PENDING_DOCUMENTS']);
+            await this.executeMutation('UPDATE `users` SET habilitation_status = ? WHERE uid = ? AND habilitation_status = ?', ['PENDING_ANALYSIS', userId, 'PENDING_DOCUMENTS']);
         }
         
         return result;
