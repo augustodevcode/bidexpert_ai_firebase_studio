@@ -1,7 +1,7 @@
 // src/app/admin/users/actions.ts
 'use server';
 
-import type { UserProfileWithPermissions, Role, AccountType } from '@/types';
+import type { UserProfileWithPermissions, Role, AccountType, UserProfileData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcrypt';
 import { getDatabaseAdapter } from '@/lib/database';
@@ -56,15 +56,16 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
   const hashedPassword = await bcrypt.hash(data.password, 10);
   
   const roles = await db.getRoles();
-  const userRole = roles.find(r => r.name_normalized === 'USER');
+  // Normalize the search to be case-insensitive and trim whitespace
+  const userRole = roles.find(r => r.name_normalized && r.name_normalized.trim().toUpperCase() === 'USER');
+
   if (!userRole) {
     throw new Error("O perfil de usuário padrão (USER) não foi encontrado no banco de dados.");
   }
   
-  const newUserPayload = {
+  const newUserPayload: Partial<UserProfileData> = {
     ...data,
     password: hashedPassword,
-    dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
     roleIds: [userRole.id], // Use roleIds and set as an array
     habilitationStatus: 'PENDING_DOCUMENTS',
   };
