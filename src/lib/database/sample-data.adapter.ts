@@ -1,5 +1,5 @@
 // src/lib/database/sample-data.adapter.ts
-import type { DatabaseAdapter, UserWin, DirectSaleOffer, Lot, UserProfileData, Role, Auction, StateInfo, CityInfo, CityFormData, StateFormData, PlatformSettings, Subcategory } from '@/types';
+import type { DatabaseAdapter, UserWin, DirectSaleOffer, Lot, UserProfileData, Role, Auction, StateInfo, CityInfo, CityFormData, StateFormData, PlatformSettings, Subcategory, Court, CourtFormData } from '@/types';
 import { 
     sampleLots, sampleAuctions, sampleUsers, sampleRoles, sampleLotCategories, 
     sampleSubcategories, sampleAuctioneers, sampleSellers, sampleStates, sampleCities, 
@@ -249,7 +249,20 @@ export class SampleDataAdapter implements DatabaseAdapter {
         const lots = this.data.lots.filter(l => sellerAuctionIds.has(l.auctionId));
         return Promise.resolve(JSON.parse(JSON.stringify(lots)));
     }
+    
+    async getCourts(): Promise<Court[]> {
+        return Promise.resolve(JSON.parse(JSON.stringify(this.data.courts)));
+    }
 
+    async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> {
+        const newCourt = {
+            id: `court-${slugify(data.name)}`,
+            slug: slugify(data.name),
+            ...data
+        };
+        this.data.courts.push(newCourt);
+        return Promise.resolve({ success: true, message: 'Tribunal criado com sucesso!', courtId: newCourt.id });
+    }
 
      async _notImplemented(method: string): Promise<any> {
          console.warn(`[SampleDataAdapter] Method ${method} is not fully implemented and returns a default value.`);
@@ -265,7 +278,6 @@ export class SampleDataAdapter implements DatabaseAdapter {
      getSellers(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.sellers))); }
      
      async getPlatformSettings(): Promise<any | null> { 
-        // Ensure the settings object is created if it doesn't exist
         if (!this.data.settings || this.data.settings.length === 0) {
             this.data.settings = [{ ...samplePlatformSettings, id: 'global' }];
         }
@@ -273,7 +285,6 @@ export class SampleDataAdapter implements DatabaseAdapter {
      }
 
     async createPlatformSettings(data: PlatformSettings): Promise<{ success: boolean; message: string; }> {
-        // In sample data, we just replace the existing settings
         this.data.settings[0] = { ...data, updatedAt: new Date().toISOString() };
         return Promise.resolve({ success: true, message: "Sample platform settings created/replaced."});
     }
