@@ -1,4 +1,3 @@
-
 // scripts/init-db.ts
 import dotenv from 'dotenv';
 import path from 'path';
@@ -24,16 +23,25 @@ async function executeSqlFile(pool: Pool, filePath: string, scriptName: string) 
     try {
         for (const statement of statements) {
             try {
-                await connection.query(statement);
-                console.log(`[DB INIT - ${scriptName}] ✅ SUCCESS: Statement executed.`);
-            } catch (error: any) {
-                // Ignore "Duplicate column name" and "Duplicate table" errors as they are expected if the script runs multiple times.
-                if (error.code === 'ER_DUP_FIELDNAME' || error.code === 'ER_TABLE_EXISTS_ERROR') {
-                    console.log(`[DB INIT - ${scriptName}] 🟡 INFO: Table or column already exists. Skipping statement.`);
-                } else {
-                    console.error(`[DB INIT - ${scriptName}] ❌ ERROR: ${error.message}`);
-                    console.error(`[DB INIT - ${scriptName}] -> Failing SQL:\n\n${statement}\n`);
+                // Specific handling for CREATE TABLE to be idempotent
+                if (statement.trim().toUpperCase().startsWith('CREATE TABLE')) {
+                    const tableNameMatch = statement.match(/CREATE TABLE `([^`]+)`/);
+                    if (tableNameMatch) {
+                        const tableName = tableNameMatch[1];
+                        const [rows] = await connection.query(`SHOW TABLES LIKE ?`, [tableName]);
+                        // @ts-ignore
+                        if (rows.length > 0) {
+                            console.log(`[DB INIT - ${scriptName}] 🟡 INFO: Tabela '${tableName}' já existe. Pulando criação.`);
+                            continue;
+                        }
+                    }
                 }
+                await connection.query(statement);
+                console.log(`[DB INIT - ${scriptName}] ✅ SUCCESS: Tabela processada.`);
+            } catch (error: any) {
+                // More specific error handling
+                 console.error(`[DB INIT - ${scriptName}] ❌ ERROR: ${error.message}`);
+                 console.error(`[DB INIT - ${scriptName}] -> Failing SQL:\n\n${statement}\n`);
             }
         }
         console.log(`--- [DB INIT - ${scriptName}] Script execution finished ---`);
@@ -105,6 +113,40 @@ async function applyAlterations(pool: Pool) {
     await addColumnIfNotExists(pool, 'roles', 'updated_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
     await addColumnIfNotExists(pool, 'roles', 'slug', 'VARCHAR(150)');
     
+    // Auctions
+    await addColumnIfNotExists(pool, 'auctions', 'end_date', 'DATETIME');
+    await addColumnIfNotExists(pool, 'auctions', 'category_id', 'INT');
+    await addColumnIfNotExists(pool, 'auctions', 'seller_id', 'INT');
+    await addColumnIfNotExists(pool, 'auctions', 'auctioneer_id', 'INT');
+    await addColumnIfNotExists(pool, 'auctions', 'image_media_id', 'VARCHAR(255)');
+    await addColumnIfNotExists(pool, 'auctions', 'data_ai_hint', 'VARCHAR(255)');
+    await addColumnIfNotExists(pool, 'auctions', 'is_favorite', 'BOOLEAN');
+    await addColumnIfNotExists(pool, 'auctions', 'visits', 'INT');
+    await addColumnIfNotExists(pool, 'auctions', 'initial_offer', 'DECIMAL(15, 2)');
+    await addColumnIfNotExists(pool, 'auctions', 'auction_stages', 'JSON');
+    await addColumnIfNotExists(pool, 'auctions', 'documents_url', 'VARCHAR(2048)');
+    await addColumnIfNotExists(pool, 'auctions', 'evaluation_report_url', 'VARCHAR(2048)');
+    await addColumnIfNotExists(pool, 'auctions', 'auction_certificate_url', 'VARCHAR(2048)');
+    await addColumnIfNotExists(pool, 'auctions', 'selling_branch', 'VARCHAR(255)');
+    await addColumnIfNotExists(pool, 'auctions', 'automatic_bidding_enabled', 'BOOLEAN');
+    await addColumnIfNotExists(pool, 'auctions', 'silent_bidding_enabled', 'BOOLEAN');
+    await addColumnIfNotExists(pool, 'auctions', 'allow_multiple_bids_per_user', 'BOOLEAN');
+    await addColumnIfNotExists(pool, 'auctions', 'allow_installment_bids', 'BOOLEAN');
+    await addColumnIfNotExists(pool, 'auctions', 'soft_close_enabled', 'BOOLEAN');
+    await addColumnIfNotExists(pool, 'auctions', 'soft_close_minutes', 'INT');
+    await addColumnIfNotExists(pool, 'auctions', 'estimated_revenue', 'DECIMAL(15, 2)');
+    await addColumnIfNotExists(pool, 'auctions', 'achieved_revenue', 'DECIMAL(15, 2)');
+    await addColumnIfNotExists(pool, 'auctions', 'total_habilitated_users', 'INT');
+    await addColumnIfNotExists(pool, 'auctions', 'is_featured_on_marketplace', 'BOOLEAN');
+    await addColumnIfNotExists(pool, 'auctions', 'marketplace_announcement_title', 'VARCHAR(255)');
+    await addColumnIfNotExists(pool, 'auctions', 'judicial_process_id', 'INT');
+    await addColumnIfNotExists(pool, 'auctions', 'additional_triggers', 'JSON');
+    await addColumnIfNotExists(pool, 'auctions', 'decrement_amount', 'DECIMAL(15, 2)');
+    await addColumnIfNotExists(pool, 'auctions', 'decrement_interval_seconds', 'INT');
+    await addColumnIfNotExists(pool, 'auctions', 'floor_price', 'DECIMAL(15, 2)');
+    await addColumnIfNotExists(pool, 'auctions', 'auto_relist_settings', 'JSON');
+
+
     console.log('--- [DB INIT - ALTER] Finished applying alterations ---');
 }
 
@@ -115,19 +157,10 @@ async function seedEssentialData(db: any) {
         // Platform Settings
         console.log('[DB INIT - DML] Checking for platform settings...');
         const settings = await db.getPlatformSettings();
-        // ** THE FIX IS HERE **
-        // If settings don't exist, INSERT them. Otherwise, UPDATE them.
         if (!settings || Object.keys(settings).length === 0 || !settings.id) {
             console.log("[DB INIT - DML] No settings found. Inserting new ones...");
-            // Assuming createPlatformSettings exists on the adapter for a clean insert
-            if (db.createPlatformSettings) {
-                await db.createPlatformSettings(samplePlatformSettings);
-                console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings inserted.");
-            } else {
-                console.warn("[DB INIT - DML] createPlatformSettings not found on adapter. Seeding may fail.");
-                // Fallback to update which might fail if no record exists
-                await db.updatePlatformSettings(samplePlatformSettings);
-            }
+            await db.createPlatformSettings(samplePlatformSettings);
+            console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings inserted.");
         } else {
             console.log("[DB INIT - DML] Platform settings found. Ensuring they are up-to-date...");
             await db.updatePlatformSettings(samplePlatformSettings);
@@ -139,14 +172,10 @@ async function seedEssentialData(db: any) {
         const roles = await db.getRoles();
         if (!roles || roles.length === 0) {
             console.log("[DB INIT - DML] Populating roles...");
-            if (db.createRole) {
-                for (const role of sampleRoles) {
-                    await db.createRole(role);
-                }
-                console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleRoles.length} roles inserted.`);
-            } else {
-                 console.warn("[DB INIT - DML] `createRole` function not found on adapter. Skipping role seeding.");
+            for (const role of sampleRoles) {
+                await db.createRole(role);
             }
+            console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleRoles.length} roles inserted.`);
         } else {
             console.log("[DB INIT - DML] INFO: Roles already exist. Skipping.");
         }

@@ -1,51 +1,7 @@
--- Adiciona colunas faltantes à tabela 'platform_settings'
-ALTER TABLE platform_settings ADD COLUMN site_title VARCHAR(255);
-ALTER TABLE platform_settings ADD COLUMN site_tagline VARCHAR(255);
-ALTER TABLE platform_settings ADD COLUMN gallery_image_base_path VARCHAR(255);
-ALTER TABLE platform_settings ADD COLUMN storage_provider VARCHAR(50);
-ALTER TABLE platform_settings ADD COLUMN firebase_storage_bucket VARCHAR(255);
-ALTER TABLE platform_settings ADD COLUMN active_theme_name VARCHAR(100);
-ALTER TABLE platform_settings ADD COLUMN platform_public_id_masks JSON;
-ALTER TABLE platform_settings ADD COLUMN homepage_sections JSON;
-ALTER TABLE platform_settings ADD COLUMN mental_trigger_settings JSON;
-ALTER TABLE platform_settings ADD COLUMN section_badge_visibility JSON;
-ALTER TABLE platform_settings ADD COLUMN map_settings JSON;
-ALTER TABLE platform_settings ADD COLUMN search_pagination_type VARCHAR(50);
-ALTER TABLE platform_settings ADD COLUMN search_items_per_page INT;
-ALTER TABLE platform_settings ADD COLUMN search_load_more_count INT;
-ALTER TABLE platform_settings ADD COLUMN show_countdown_on_lot_detail BOOLEAN;
-ALTER TABLE platform_settings ADD COLUMN show_countdown_on_cards BOOLEAN;
-ALTER TABLE platform_settings ADD COLUMN show_related_lots_on_lot_detail BOOLEAN;
-ALTER TABLE platform_settings ADD COLUMN related_lots_count INT;
-ALTER TABLE platform_settings ADD COLUMN default_urgency_timer_hours INT;
-ALTER TABLE platform_settings ADD COLUMN variable_increment_table JSON;
-ALTER TABLE platform_settings ADD COLUMN bidding_settings JSON;
-ALTER TABLE platform_settings ADD COLUMN default_list_items_per_page INT;
-ALTER TABLE platform_settings ADD COLUMN updated_at DATETIME;
+-- Este script contém comandos ALTER TABLE para atualizar o schema existente.
+-- A lógica de execução está no script `init-db.ts` para garantir que as colunas
+-- sejam adicionadas apenas se ainda não existirem.
 
--- Adiciona colunas faltantes à tabela 'roles'
-ALTER TABLE roles ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE roles ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
-ALTER TABLE roles ADD COLUMN slug VARCHAR(150);
-
--- Adiciona colunas de data e outras faltantes a mais tabelas para prevenir erros
-ALTER TABLE auctions ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE auctions ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
-ALTER TABLE lots ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE lots ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
-ALTER TABLE bens ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE bens ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
-ALTER TABLE sellers ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE sellers ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
-ALTER TABLE auctioneers ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE auctioneers ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
-ALTER TABLE judicial_processes ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE judicial_processes ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
-ALTER TABLE lot_categories ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE lot_categories ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
-ALTER TABLE subcategories ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE subcategories ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
-ALTER TABLE states ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE states ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
-ALTER TABLE cities ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE cities ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+-- As alterações agora são aplicadas programaticamente em 'scripts/init-db.ts'
+-- usando a função addColumnIfNotExists para segurança e idempotência.
+-- Este arquivo é mantido para referência histórica, mas não é mais executado diretamente.
