@@ -16,10 +16,34 @@ import {
 } from '@/lib/sample-data';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
+import type { MySqlAdapter } from '@/lib/database/mysql.adapter';
+
+async function ensureJoinTablesExist(db: any) {
+  // Check if it's a MySQL adapter to execute a specific query
+  if (db.constructor.name === 'MySqlAdapter') {
+    console.log('[DB SEED] Ensuring join tables exist for MySQL...');
+    const mysqlDb = db as MySqlAdapter;
+    const createRolesTableSql = `
+        CREATE TABLE IF NOT EXISTS \`user_roles\` (
+            \`user_id\` VARCHAR(255) NOT NULL,
+            \`role_id\` VARCHAR(255) NOT NULL,
+            PRIMARY KEY (\`user_id\`, \`role_id\`),
+            FOREIGN KEY (\`user_id\`) REFERENCES \`users\`(\`uid\`) ON DELETE CASCADE,
+            FOREIGN KEY (\`role_id\`) REFERENCES \`roles\`(\`id\`) ON DELETE CASCADE
+        );
+    `;
+    await mysqlDb.executeMutation(createRolesTableSql);
+    console.log('[DB SEED] ✅ SUCCESS: `user_roles` table ensured.');
+  }
+}
+
 
 async function seedFullData() {
     console.log('\n--- [DB SEED] Seeding Full Demo Data ---');
     const db = getDatabaseAdapter();
+
+    // Ensure join tables like user_roles are created before seeding data that depends on them.
+    await ensureJoinTablesExist(db);
 
     try {
         console.log('[DB SEED] Seeding Sellers...');

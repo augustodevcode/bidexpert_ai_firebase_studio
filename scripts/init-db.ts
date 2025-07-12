@@ -4,32 +4,9 @@ import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcate
 import type { Role, LotCategory, Subcategory, Court, StateInfo, CityInfo, CityFormData } from '@/types';
 import type { MySqlAdapter } from '@/lib/database/mysql.adapter';
 
-async function ensureJoinTablesExist(db: any) {
-  // Check if it's a MySQL adapter to execute a specific query
-  if (db.constructor.name === 'MySqlAdapter') {
-    console.log('[DB INIT] Ensuring join tables exist for MySQL...');
-    const mysqlDb = db as MySqlAdapter;
-    // This table is crucial for linking users to their roles.
-    const createUserRolesTableSql = `
-        CREATE TABLE IF NOT EXISTS \`user_roles\` (
-            \`user_id\` VARCHAR(255) NOT NULL,
-            \`role_id\` VARCHAR(255) NOT NULL,
-            PRIMARY KEY (\`user_id\`, \`role_id\`),
-            FOREIGN KEY (\`user_id\`) REFERENCES \`users\`(\`uid\`) ON DELETE CASCADE,
-            FOREIGN KEY (\`role_id\`) REFERENCES \`roles\`(\`id\`) ON DELETE CASCADE
-        );
-    `;
-    await mysqlDb.executeMutation(createUserRolesTableSql);
-    console.log('[DB INIT] ✅ SUCCESS: `user_roles` table ensured.');
-  }
-}
-
 async function seedEssentialData() {
     console.log('\n--- [DB INIT - DML] Seeding Essential Data ---');
     const db = getDatabaseAdapter(); 
-    
-    // First, ensure the necessary table structures exist
-    await ensureJoinTablesExist(db);
     
     try {
         // Platform Settings
@@ -84,13 +61,13 @@ async function seedEssentialData() {
         console.log("[DB INIT - DML] Seeding cities...");
         const allDbStates = await db.getStates(); // Get fresh states with DB-generated IDs
         const existingCities = await db.getCities();
-        const citiesToCreate: CityInfo[] = sampleCities.map(c => {
+        const citiesToCreate = sampleCities.map(c => {
             const parentState = allDbStates.find(s => s.uf === c.stateUf);
             return {
                 ...c,
                 stateId: parentState?.id,
             }
-        }).filter(c => c.stateId && !existingCities.some(ec => ec.name === c.name && ec.stateUf === c.stateUf));
+        }).filter(c => c.stateId && !existingCities.some(ec => ec.ibgeCode === c.ibgeCode));
 
         for (const city of citiesToCreate) {
             await db.createCity(city as CityFormData);
