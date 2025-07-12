@@ -1,5 +1,4 @@
 
-
 // src/lib/database/mysql.adapter.ts
 import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, CityFormData, StateFormData } from '@/types';
 import mysql, { type Pool, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
@@ -107,6 +106,9 @@ export class MySqlAdapter implements DatabaseAdapter {
             const header = result as ResultSetHeader;
             return { success: true, message: 'Operação realizada com sucesso.', insertId: header.insertId };
         } catch (error: any) {
+             if (error.code === 'ER_DUP_ENTRY') {
+                return { success: true, message: 'Item já existe, ignorado.' };
+            }
             console.error(`[MySqlAdapter] Erro na mutação: "${sql}". Erro: ${error.message}`);
             return { success: false, message: `Erro no banco de dados: ${error.message}` };
         } finally {
@@ -158,7 +160,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         const placeholders = Object.keys(snakeCaseData).map(() => '?').join(', ');
         const values = Object.values(snakeCaseData);
 
-        const sql = `INSERT INTO \`platform_settings\` (${fields}) VALUES (${placeholders})`;
+        const sql = `INSERT IGNORE INTO \`platform_settings\` (${fields}) VALUES (${placeholders})`;
         return this.executeMutation(sql, values);
     }
 
@@ -334,7 +336,13 @@ export class MySqlAdapter implements DatabaseAdapter {
 
     async createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; }> {
         const dataToInsert = { ...role, slug: slugify(role.name) };
-        return this.genericCreate('roles', dataToInsert);
+        const snakeCaseData = convertObjectToSnakeCase(dataToInsert);
+        const fields = Object.keys(snakeCaseData).map(k => `\`${k}\``).join(', ');
+        const placeholders = Object.keys(snakeCaseData).map(() => '?').join(', ');
+        const values = Object.values(snakeCaseData);
+
+        const sql = `INSERT IGNORE INTO \`roles\` (${fields}) VALUES (${placeholders})`;
+        return this.executeMutation(sql, values);
     }
     
     async getMediaItems(): Promise<MediaItem[]> { return this.executeQuery('SELECT * FROM `media_items` ORDER BY `uploaded_at` DESC'); }
@@ -449,11 +457,39 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async updateUserRole(userId: string, roleId: number | null): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('users', userId, { role_id: roleId }); }
-    createMediaItem(item: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> { return this._notImplemented('createMediaItem'); }
+    
+    async createMediaItem(item: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> {
+        const newId = uuidv4();
+        const fullItem: MediaItem = {
+            id: newId,
+            urlOriginal: url,
+            urlThumbnail: url, // For simplicity, thumbnail is same as original in this adapter
+            uploadedAt: new Date(),
+            uploadedBy: userId,
+            ...item,
+        } as MediaItem;
+        const result = await this.genericCreate('media_items', fullItem);
+        if (result.success) {
+            return { success: true, message: 'Item de mídia criado.', item: fullItem }
+        }
+        return { success: false, message: result.message };
+    }
     
     async createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean; message: string; }> {
-        const result = await this.genericCreate('lot_categories', data);
-        return { success: result.success, message: result.message };
+        const snakeData = convertObjectToSnakeCase(data);
+        const fields = Object.keys(snakeData).map(k => `\`${k}\``).join(', ');
+        const placeholders = Object.keys(snakeData).map(() => '?').join(', ');
+        const sql = `INSERT IGNORE INTO \`lot_categories\` (${fields}) VALUES (${placeholders})`;
+        return this.executeMutation(sql, Object.values(snakeData));
+    }
+
+    async createSubcategory(data: Partial<Subcategory>): Promise<{ success: boolean; message: string; subcategoryId?: number }> {
+        const snakeData = convertObjectToSnakeCase(data);
+        const fields = Object.keys(snakeData).map(k => `\`${k}\``).join(', ');
+        const placeholders = Object.keys(snakeData).map(() => '?').join(', ');
+        const sql = `INSERT IGNORE INTO \`subcategories\` (${fields}) VALUES (${placeholders})`;
+        const result = await this.executeMutation(sql, Object.values(snakeData));
+        return { ...result, subcategoryId: result.insertId };
     }
 
     async updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
