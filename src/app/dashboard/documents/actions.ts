@@ -58,7 +58,7 @@ export async function saveUserDocument(
   const db = await getDatabaseAdapter();
   // @ts-ignore
   if (!db.saveUserDocument) {
-    return { success: false, message: "Função não implementada neste adaptador."};
+    return { success: false, message: "Função não implementada para este adaptador."};
   }
   try {
     // @ts-ignore

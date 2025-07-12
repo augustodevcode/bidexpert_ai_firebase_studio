@@ -2,7 +2,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { getDatabaseAdapter } from '@/lib/database/get-adapter'; 
-import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories } from '@/lib/sample-data';
+import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleStates, sampleCities, sampleAuctioneers, sampleSellers, sampleCourts, sampleJudicialDistricts, sampleJudicialBranches } from '@/lib/sample-data';
 import fs from 'fs';
 import mysql, { type Pool } from 'mysql2/promise';
 
@@ -23,19 +23,6 @@ async function executeSqlFile(pool: Pool, filePath: string, scriptName: string) 
     try {
         for (const statement of statements) {
             try {
-                // Specific handling for CREATE TABLE to be idempotent
-                if (statement.trim().toUpperCase().startsWith('CREATE TABLE')) {
-                    const tableNameMatch = statement.match(/CREATE TABLE `([^`]+)`/);
-                    if (tableNameMatch) {
-                        const tableName = tableNameMatch[1];
-                        const [rows] = await connection.query(`SHOW TABLES LIKE ?`, [tableName]);
-                        // @ts-ignore
-                        if (rows.length > 0) {
-                            console.log(`[DB INIT - ${scriptName}] 🟡 INFO: Tabela '${tableName}' já existe. Pulando criação.`);
-                            continue;
-                        }
-                    }
-                }
                 await connection.query(statement);
                 console.log(`[DB INIT - ${scriptName}] ✅ SUCCESS: Statement executado.`);
             } catch (error: any) {
@@ -66,6 +53,7 @@ async function seedEssentialData() {
         console.log('[DB INIT - DML] Seeding platform settings...');
         const settings = await db.getPlatformSettings();
         if (!settings || Object.keys(settings).length === 0 || !settings.id) {
+            // @ts-ignore
             await db.createPlatformSettings(samplePlatformSettings);
             console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings created.");
         } else {
@@ -96,11 +84,13 @@ async function seedEssentialData() {
         
         // Subcategories
         console.log("[DB INIT - DML] Seeding subcategories...");
+        // @ts-ignore
         const allSubcategories = await db.getSubcategoriesByParent();
         const subcategoriesToCreate = sampleSubcategories.filter(sub => !allSubcategories.some(es => es.slug === sub.slug && es.parentCategoryId === sub.parentCategoryId));
 
         if (subcategoriesToCreate.length > 0) {
             for (const subcategory of subcategoriesToCreate) {
+                // @ts-ignore
                 await db.createSubcategory(subcategory);
             }
         }

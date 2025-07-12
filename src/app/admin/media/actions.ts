@@ -22,3 +22,34 @@ export async function createMediaItem(
   }
   return result;
 }
+
+export async function updateMediaItemMetadata(
+    id: string,
+    metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>
+): Promise<{ success: boolean; message: string }> {
+  const db = await getDatabaseAdapter();
+  // @ts-ignore
+  if (!db.updateMediaItemMetadata) {
+    return { success: false, message: 'Funcionalidade não implementada.' };
+  }
+  // @ts-ignore
+  const result = await db.updateMediaItemMetadata(id, metadata);
+  if (result.success) {
+    revalidatePath('/admin/media');
+  }
+  return result;
+}
+
+export async function deleteMediaItem(id: string): Promise<{ success: boolean; message: string }> {
+  const db = await getDatabaseAdapter();
+  // @ts-ignore
+  if (!db.deleteMediaItem) {
+    return { success: false, message: 'Funcionalidade não implementada.' };
+  }
+  // @ts-ignore
+  const result = await db.deleteMediaItem(id);
+  if (result.success) {
+    revalidatePath('/admin/media');
+  }
+  return result;
+}

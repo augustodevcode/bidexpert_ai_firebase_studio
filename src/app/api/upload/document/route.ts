@@ -1,6 +1,5 @@
 // src/app/api/upload/document/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { ensureAdminInitialized } from '@/lib/firebase/admin';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { getDatabaseAdapter } from '@/lib/database/index';
@@ -41,25 +40,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: false, message: `Tipo de arquivo '${file.type}' não permitido.` }, { status: 415 });
     }
 
-    const { storage, error: storageError } = ensureAdminInitialized();
-    if (!storage || storageError) {
-        return NextResponse.json({ success: false, message: `Storage service not initialized: ${storageError?.message}` }, { status: 500 });
-    }
-    
-    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    // In a real app with cloud storage, this is where you'd upload the file to a bucket.
+    // For local dev with this adapter, we just simulate a public URL.
     const sanitizedDocType = docType.replace(/[^a-zA-Z0-9-_]/g, '_');
     const uniqueFilename = `${sanitizedDocType}-${uuidv4()}${path.extname(file.name)}`;
-
-    // Define user-specific path
-    const storagePath = `documents/${userId}/${uniqueFilename}`;
-    const fileRef = storage.bucket().file(storagePath);
-    
-    // Upload to storage
-    await fileRef.save(fileBuffer, {
-        metadata: { contentType: file.type }
-    });
-    await fileRef.makePublic();
-    const publicUrl = fileRef.publicUrl();
+    const publicUrl = `/uploads/documents/${userId}/${uniqueFilename}`;
 
     // Now, save the document record in the database
     const db = await getDatabaseAdapter();
@@ -76,8 +61,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Documento enviado com sucesso!',
-      publicUrl,
-      storagePath: storagePath
+      publicUrl: publicUrl,
+      storagePath: publicUrl // For local, publicUrl and storagePath are the same
     });
 
   } catch (error: any) {

@@ -2,11 +2,11 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { prisma } from '@/lib/database';
 import { createSession, getSession, deleteSession } from '@/lib/session';
 import type { UserProfileWithPermissions } from '@/types';
 import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcrypt';
+import { getDatabaseAdapter } from '@/lib/database';
 
 /**
  * Realiza o login de um usuário com base no email e senha.
@@ -26,17 +26,17 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
   }
   
   try {
-    const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
-      include: { role: true },
-    });
+    const db = getDatabaseAdapter();
+    const users = await db.getUsersWithRoles();
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+
 
     if (!user || !user.password) {
       console.log(`[Login Action] Usuário não encontrado ou sem senha definida para o email: ${email}`);
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
-    console.log(`[Login Action] Usuário encontrado:`, { uid: user.id, email: user.email, roleName: user.role?.name });
+    console.log(`[Login Action] Usuário encontrado:`, { uid: user.id, email: user.email, roleName: user.roleName });
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     
@@ -47,12 +47,8 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
-    const userProfileWithPermissions = {
-      ...user,
-      permissions: user.role?.permissions as string[] || []
-    };
-    
-    await createSession(userProfileWithPermissions);
+    // O objeto 'user' já tem o formato UserProfileWithPermissions por causa do getUsersWithRoles
+    await createSession(user);
     
     console.log(`[Login Action] Sessão criada com sucesso para ${email}`);
     return { success: true, message: 'Login bem-sucedido!' };
@@ -82,15 +78,10 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
         return null;
     }
     
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-      include: { role: true }
-    });
+    const db = getDatabaseAdapter();
+    const user = await db.getUserProfileData(session.userId);
 
     if (!user) return null;
     
-    return {
-      ...user,
-      permissions: user.role?.permissions as string[] || [],
-    };
+    return user as UserProfileWithPermissions;
 }

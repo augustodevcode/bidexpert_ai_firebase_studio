@@ -37,7 +37,7 @@ export async function getAdminReportDataAction(): Promise<AdminReportData> {
     salesData: [],
     categoryData: [],
     averageBidValue: 0,
-    averageLotsPerAuction: 0,
     auctionSuccessRate: 0,
+    averageLotsPerAuction: 0,
   };
 }
