@@ -63,12 +63,14 @@ async function seedEssentialData() {
     const db = getDatabaseAdapter();
     
     try {
-        // Platform Settings (Upsert logic is safe)
+        // Platform Settings
         console.log('[DB INIT - DML] Seeding platform settings...');
         const settings = await db.getPlatformSettings();
         if (!settings || Object.keys(settings).length === 0 || !settings.id) {
+            // @ts-ignore
             await db.createPlatformSettings(samplePlatformSettings);
         } else {
+            // @ts-ignore
             await db.updatePlatformSettings(samplePlatformSettings);
         }
         console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings seeded.");
