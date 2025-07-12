@@ -1,0 +1,472 @@
+[
+  {
+    "nome": "Supremo Tribunal Federal (STF)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/supremo-tribunal-federal-stf/",
+    "link_oficial": "https://www.stf.jus.br"
+  },
+  {
+    "nome": "Superior Tribunal de Justiça (STJ)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/superior-tribunal-de-justica-stj/",
+    "link_oficial": "https://www.stj.jus.br"
+  },
+  {
+    "nome": "Conselho da Justiça Federal (CJF)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/conselho-da-justica-federal-cjf/",
+    "link_oficial": "https://www.cjf.jus.br"
+  },
+  {
+    "nome": "Superior Tribunal Militar (STM)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/superior-tribunal-militar-stm/",
+    "link_oficial": "https://www.stm.jus.br"
+  },
+  {
+    "nome": "Tribunal Superior do Trabalho (TST)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-superior-do-trabalho-tst/",
+    "link_oficial": "https://www.tst.jus.br"
+  },
+  {
+    "nome": "Conselho Superior da Justiça do Trabalho (CSJT)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/conselho-superior-da-justica-do-trabalho-csjt/",
+    "link_oficial": "https://www.csjt.jus.br"
+  },
+  {
+    "nome": "Tribunal Superior Eleitoral (TSE)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-superior-eleitoral-tse/",
+    "link_oficial": "https://www.tse.jus.br"
+  },
+  {
+    "nome": "Tribunal Regional Federal da 1ª Região (TRF1)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-federal-da-1a-regiao-trf1/",
+    "link_oficial": "https://www.trf1.jus.br"
+  },
+  {
+    "nome": "Tribunal Regional Federal da 2ª Região (TRF2)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-federal-da-2a-regiao-trf2/",
+    "link_oficial": "https://www.trf2.jus.br"
+  },
+  {
+    "nome": "Tribunal Regional Federal da 3ª Região (TRF3)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-federal-da-3a-regiao-trf3/",
+    "link_oficial": "https://www.trf3.jus.br"
+  },
+  {
+    "nome": "Tribunal Regional Federal da 4ª Região (TRF4)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-federal-da-4a-regiao-trf4/",
+    "link_oficial": "https://www.trf4.jus.br"
+  },
+  {
+    "nome": "Tribunal Regional Federal da 5ª Região (TRF5)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-federal-da-5a-regiao-trf5/",
+    "link_oficial": "https://www.trf5.jus.br"
+  },
+  {
+    "nome": "Tribunal Regional Federal da 6ª Região (TRF6)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-federal-da-6a-regiao-trf6/",
+    "link_oficial": "https://www.trf6.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça do Acre (TJAC)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-do-acre/",
+    "link_oficial": "https://www.tjac.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça de Alagoas (TJAL)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-de-alagoas-tjal/",
+    "link_oficial": "https://www.tjal.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça do Amapá (TJAP)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunal-de-justica-do-amapa-tjap/",
+    "link_oficial": "https://www.tjap.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça do Amazonas (TJAM)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunal-de-justica-do-amazonas-tjam/",
+    "link_oficial": "https://www.tjam.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça da Bahia (TJBA)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-da-bahia-tjba/",
+    "link_oficial": "https://www.tjba.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça do Ceará (TJCE)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-do-ceara-tjce/",
+    "link_oficial": "https://www.tjce.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça do Distrito Federal e Territórios (TJDFT)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-do-distrito-federal-e-territorios-tjdft/",
+    "link_oficial": "https://www.tjdft.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça do Espírito Santo (TJES)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-do-espirito-santo-tjes/",
+    "link_oficial": "https://www.tjes.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça de Goiás (TJGO)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-de-goias-tjgo/",
+    "link_oficial": "https://www.tjgo.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça do Maranhão (TJMA)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-do-maranhao-tjma/",
+    "link_oficial": "https://www.tjma.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça de Mato Grosso (TJMT)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-de-mato-grosso-tjmt/",
+    "link_oficial": "https://www.tjmt.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça do Mato Grosso do Sul (TJMS)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-de-mato-grosso-do-sul-tjms/",
+    "link_oficial": "https://www.tjms.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça de Minas Gerais (TJMG)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-de-minas-gerais-tjmg/",
+    "link_oficial": "https://www.tjmg.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça do Pará (TJPA)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-do-para-tjpa/",
+    "link_oficial": "https://www.tjpa.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça da Paraíba (TJPB)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-da-paraiba-tjpb/",
+    "link_oficial": "https://www.tjpb.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça do Paraná (TJPR)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-do-parana-tjpr/",
+    "link_oficial": "https://www.tjpr.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça de Pernambuco (TJPE)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-da-justica-de-pernambuco-tjpe/",
+    "link_oficial": "https://www.tjpe.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça de Piauí (TJPI)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-do-piaui-tjpi/",
+    "link_oficial": "https://www.tjpi.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça do Rio de Janeiro (TJRJ)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-do-rio-de-janeiro-tjrj/",
+    "link_oficial": "https://www.tjrj.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça do Rio Grande do Norte (TJRN)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-do-rio-grande-do-norte-tjrn/",
+    "link_oficial": "https://www.tjrn.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça do Rio Grande do Sul (TJRS)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-do-rio-grande-do-sul-tjrs/",
+    "link_oficial": "https://www.tjrs.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça de Rondônia (TJRO)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-de-rondonia-tjro/",
+    "link_oficial": "https://www.tjro.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça de Roraima (TJRR)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-de-roraima-tjrr/",
+    "link_oficial": "https://www.tjrr.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça de Santa Catarina (TJSC)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-de-santa-catarina-tjsc/",
+    "link_oficial": "https://www.tjsc.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça de São Paulo (TJSP)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-de-sao-paulo-tjsp/",
+    "link_oficial": "https://www.tjsp.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça de Sergipe (TJSE)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-de-sergipe-tjse/",
+    "link_oficial": "https://www.tjse.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça do Tocantins (TJTO)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-do-tocantins-tjto/",
+    "link_oficial": "https://www.tjto.jus.br"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral do Acre",
+    "link_cnj": "http://www.tre-ac.jus.br/",
+    "link_oficial": "http://www.tre-ac.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral de Alagoas",
+    "link_cnj": "http://www.tre-al.jus.br/",
+    "link_oficial": "http://www.tre-al.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral do Amapá",
+    "link_cnj": "http://www.tre-ap.jus.br/",
+    "link_oficial": "http://www.tre-ap.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral do Amazonas",
+    "link_cnj": "http://www.tre-am.jus.br/",
+    "link_oficial": "http://www.tre-am.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral da Bahia",
+    "link_cnj": "http://www.tre-ba.jus.br/",
+    "link_oficial": "http://www.tre-ba.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral do Ceará",
+    "link_cnj": "http://www.tre-ce.jus.br/",
+    "link_oficial": "http://www.tre-ce.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral do Distrito Federal",
+    "link_cnj": "http://www.tre-df.jus.br/",
+    "link_oficial": "http://www.tre-df.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral do Espírito Santo",
+    "link_cnj": "http://www.tre-es.jus.br/",
+    "link_oficial": "http://www.tre-es.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral de Goiás",
+    "link_cnj": "http://www.tre-go.jus.br/",
+    "link_oficial": "http://www.tre-go.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral do Maranhão",
+    "link_cnj": "http://www.tre-ma.jus.br/",
+    "link_oficial": "http://www.tre-ma.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral do Mato Grosso",
+    "link_cnj": "http://www.tre-mt.jus.br/",
+    "link_oficial": "http://www.tre-mt.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral do Mato Grosso do Sul",
+    "link_cnj": "http://www.tre-ms.jus.br/",
+    "link_oficial": "http://www.tre-ms.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral de Minas Gerais",
+    "link_cnj": "http://www.tre-mg.jus.br/",
+    "link_oficial": "http://www.tre-mg.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral do Pará",
+    "link_cnj": "http://www.tre-pa.jus.br/",
+    "link_oficial": "http://www.tre-pa.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral da Paraíba",
+    "link_cnj": "http://www.tre-pb.jus.br/",
+    "link_oficial": "http://www.tre-pb.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral do Paraná",
+    "link_cnj": "http://www.tre-pr.jus.br/",
+    "link_oficial": "http://www.tre-pr.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral de Pernambuco",
+    "link_cnj": "http://www.tre-pe.jus.br/",
+    "link_oficial": "http://www.tre-pe.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral do Piauí",
+    "link_cnj": "http://www.tre-pi.jus.br/",
+    "link_oficial": "http://www.tre-pi.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral do Rio de Janeiro",
+    "link_cnj": "http://www.tre-rj.jus.br/",
+    "link_oficial": "http://www.tre-rj.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral do Rio Grande do Norte",
+    "link_cnj": "http://www.tre-rn.jus.br/",
+    "link_oficial": "http://www.tre-rn.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral do Rio Grande do Sul",
+    "link_cnj": "http://www.tre-rs.jus.br/",
+    "link_oficial": "http://www.tre-rs.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral de Rondônia",
+    "link_cnj": "http://www.tre-ro.jus.br/",
+    "link_oficial": "http://www.tre-ro.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral de Roraima",
+    "link_cnj": "http://www.tre-rr.jus.br/",
+    "link_oficial": "http://www.tre-rr.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral de Santa Catarina",
+    "link_cnj": "http://www.tre-sc.jus.br/",
+    "link_oficial": "http://www.tre-sc.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral de São Paulo",
+    "link_cnj": "http://www.tre-sp.jus.br/",
+    "link_oficial": "http://www.tre-sp.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral de Sergipe",
+    "link_cnj": "http://www.tre-se.jus.br/",
+    "link_oficial": "http://www.tre-se.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional Eleitoral de Tocantins",
+    "link_cnj": "http://www.tre-to.jus.br/",
+    "link_oficial": "http://www.tre-to.jus.br/"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 1ª Região (TRT1)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-1a-regiao-trt1/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 2ª Região (TRT2)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-2a-regiao-trt2/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 3ª Região (TRT3)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-3a-regiao-trt3/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 4ª Região (TRT4)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-4a-regiao-trt4/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 5ª Região (TRT5)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-5a-regiao-trt5/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 6ª Região (TRT6)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-6a-regiao-trt6/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 7ª Região (TRT7)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-7a-regiao-trt7/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 8ª Região (TRT8)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-8a-regiao-trt8/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 9ª Região (TRT9)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-9a-regiao-trt9/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 10ª Região (TRT10)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-10a-regiao-trt10/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 11ª Região (TRT11)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-11ª-regiao-trt11/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 12ª Região (TRT12)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-12a-regiao-trt12/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 13ª Região (TRT13)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-13ª-regiao-trt13/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 14ª Região (TRT14)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-14a-regiao-trt14/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 15ª Região (TRT15)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-15a-regiao-trt15/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 16ª Região (TRT16)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-16ª-regiao-trt16/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 17ª Região (TRT17)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-17a-regiao-trt17/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 18ª Região (TRT18)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-18a-regiao-trt18/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 19ª Região (TRT19)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-19a-regiao-trt19/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 20ª Região (TRT20)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-20a-regiao-trt20/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 21ª Região (TRT21)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-21a-regiao-trt21/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 22ª Região (TRT22)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-22a-regiao-trt22/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 23ª Região (TRT23)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-23a-regiao-trt23/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal Regional do Trabalho da 24ª Região (TRT24)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-regional-do-trabalho-da-24a-regiao-trt24/",
+    "link_oficial": "Não encontrado"
+  },
+  {
+    "nome": "Tribunal de Justiça Militar de Minas Gerais (TJMMG)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-militar-de-minas-gerais-tjmmg/",
+    "link_oficial": "https://www.tjmmg.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça Militar do Rio Grande do Sul (TJMRS)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-militar-do-rio-grande-do-sul-tjmrs/",
+    "link_oficial": "https://www.tjmrs.jus.br"
+  },
+  {
+    "nome": "Tribunal de Justiça Militar de São Paulo (TJMSP)",
+    "link_cnj": "https://www.cnj.jus.br/poder-judiciario/tribunais/tribunal-de-justica-militar-de-sao-paulo-tjmsp/",
+    "link_oficial": "https://www.tjmsp.jus.br"
+  }
+]
