@@ -304,7 +304,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { return this.executeQuery('SELECT * FROM `auctioneers` ORDER BY `name`'); }
     
     async getUsersWithRoles(): Promise<UserProfileData[]> {
-        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.role_id = r.id';
+        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.roleId = r.id';
         const users = await this.executeQuery(sql);
         return users.map(u => {
             if (u.permissions && typeof u.permissions === 'string') {
@@ -315,7 +315,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async getUserProfileData(userId: string): Promise<UserProfileData | null> {
-        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.role_id = r.id WHERE u.uid = ?';
+        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.roleId = r.id WHERE u.uid = ?';
         const user = await this.executeQueryForSingle(sql, [userId]);
         if(user && user.permissions && typeof user.permissions === 'string') {
           try { user.permissions = JSON.parse(user.permissions); } catch(e) { user.permissions = []; }
@@ -352,7 +352,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         const settings = await this.executeQueryForSingle('SELECT * FROM `platform_settings` WHERE id = ?', ['global']);
         if (!settings) return null;
         
-        const fieldsToParse = ['themes', 'homepage_sections', 'mental_trigger_settings', 'section_badge_visibility', 'map_settings', 'variable_increment_table', 'bidding_settings', 'platform_public_id_masks'];
+        const fieldsToParse = ['themes', 'homepageSections', 'mentalTriggerSettings', 'sectionBadgeVisibility', 'mapSettings', 'variableIncrementTable', 'biddingSettings', 'platformPublicIdMasks'];
         for (const field of fieldsToParse) {
             if (settings[field] && typeof settings[field] === 'string') {
                 try {
