@@ -10,37 +10,102 @@ import mysql, { type Pool } from 'mysql2/promise';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env'), override: false });
 
-async function executeSchema(pool: Pool) {
-    console.log("\n--- [DB INIT - DDL] Executing MySQL Schema ---");
-    const schemaPath = path.join(process.cwd(), 'src', 'schema.mysql.sql');
-    if (!fs.existsSync(schemaPath)) {
-        console.warn(`[DB INIT - DDL] WARNING: Schema file not found at ${schemaPath}. Skipping table creation.`);
+async function executeSqlFile(pool: Pool, filePath: string, scriptName: string) {
+    console.log(`\n--- [DB INIT - ${scriptName}] Executing MySQL Script: ${path.basename(filePath)} ---`);
+    if (!fs.existsSync(filePath)) {
+        console.warn(`[DB INIT - ${scriptName}] WARNING: Script file not found at ${filePath}. Skipping.`);
         return;
     }
-    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-    const statements = schemaSql.split(/;\s*$/m).filter(s => s.trim().length > 0 && !s.trim().startsWith('--'));
+    const sqlScript = fs.readFileSync(filePath, 'utf8');
+    const statements = sqlScript.split(/;\s*$/m).filter(s => s.trim().length > 0 && !s.trim().startsWith('--'));
     
     const connection = await pool.getConnection();
     try {
         for (const statement of statements) {
-            const tableNameMatch = statement.match(/CREATE TABLE(?: IF NOT EXISTS)?\s*`([^`]*)`/i);
-            const tableName = tableNameMatch ? tableNameMatch[1] : 'unknown table';
             try {
                 await connection.query(statement);
-                console.log(`[DB INIT - DDL] ✅ SUCCESS: Table '${tableName}' processed.`);
+                console.log(`[DB INIT - ${scriptName}] ✅ SUCCESS: Statement executed.`);
             } catch (error: any) {
-                console.error(`[DB INIT - DDL] ❌ ERROR on table '${tableName}': ${error.message}`);
-                console.error(`[DB INIT - DDL] -> Failing SQL:\n\n${statement}\n`);
+                // Ignore "Duplicate column name" and "Duplicate table" errors as they are expected if the script runs multiple times.
+                if (error.code === 'ER_DUP_FIELDNAME' || error.code === 'ER_TABLE_EXISTS_ERROR') {
+                    console.log(`[DB INIT - ${scriptName}] 🟡 INFO: Table or column already exists. Skipping statement.`);
+                } else {
+                    console.error(`[DB INIT - ${scriptName}] ❌ ERROR: ${error.message}`);
+                    console.error(`[DB INIT - ${scriptName}] -> Failing SQL:\n\n${statement}\n`);
+                }
             }
         }
-        console.log("--- [DB INIT - DDL] MySQL Schema execution finished ---");
+        console.log(`--- [DB INIT - ${scriptName}] Script execution finished ---`);
     } catch (error) {
-        console.error("[DB INIT - DDL] CRITICAL ERROR during schema execution:", error);
+        console.error(`[DB INIT - ${scriptName}] CRITICAL ERROR during script execution:`, error);
         throw error;
     } finally {
         connection.release();
     }
 }
+
+async function addColumnIfNotExists(pool: Pool, tableName: string, columnName: string, columnDefinition: string) {
+    const connection = await pool.getConnection();
+    try {
+        const [rows] = await connection.query(
+            `SELECT COUNT(*) as count 
+             FROM INFORMATION_SCHEMA.COLUMNS 
+             WHERE TABLE_SCHEMA = DATABASE() 
+               AND TABLE_NAME = ? 
+               AND COLUMN_NAME = ?`,
+            [tableName, columnName]
+        );
+
+        // @ts-ignore
+        if (rows[0].count === 0) {
+            await connection.query(`ALTER TABLE \`${tableName}\` ADD COLUMN \`${columnName}\` ${columnDefinition}`);
+            console.log(`[DB INIT - ALTER] ✅ Coluna ${columnName} adicionada à tabela ${tableName}.`);
+        } else {
+            console.log(`[DB INIT - ALTER] 🟡 Coluna ${columnName} já existe na tabela ${tableName}. Ignorando.`);
+        }
+    } catch (error: any) {
+         console.error(`[DB INIT - ALTER] ❌ Erro ao tentar adicionar coluna ${columnName} em ${tableName}: ${error.message}`);
+    } finally {
+        connection.release();
+    }
+}
+
+async function applyAlterations(pool: Pool) {
+    console.log('\n--- [DB INIT - ALTER] Applying table alterations ---');
+    // Platform Settings
+    await addColumnIfNotExists(pool, 'platform_settings', 'site_title', 'VARCHAR(255)');
+    await addColumnIfNotExists(pool, 'platform_settings', 'site_tagline', 'VARCHAR(255)');
+    await addColumnIfNotExists(pool, 'platform_settings', 'gallery_image_base_path', 'VARCHAR(255)');
+    await addColumnIfNotExists(pool, 'platform_settings', 'storage_provider', 'VARCHAR(50)');
+    await addColumnIfNotExists(pool, 'platform_settings', 'firebase_storage_bucket', 'VARCHAR(255)');
+    await addColumnIfNotExists(pool, 'platform_settings', 'active_theme_name', 'VARCHAR(100)');
+    await addColumnIfNotExists(pool, 'platform_settings', 'themes', 'JSON');
+    await addColumnIfNotExists(pool, 'platform_settings', 'platform_public_id_masks', 'JSON');
+    await addColumnIfNotExists(pool, 'platform_settings', 'homepage_sections', 'JSON');
+    await addColumnIfNotExists(pool, 'platform_settings', 'mental_trigger_settings', 'JSON');
+    await addColumnIfNotExists(pool, 'platform_settings', 'section_badge_visibility', 'JSON');
+    await addColumnIfNotExists(pool, 'platform_settings', 'map_settings', 'JSON');
+    await addColumnIfNotExists(pool, 'platform_settings', 'search_pagination_type', 'VARCHAR(50)');
+    await addColumnIfNotExists(pool, 'platform_settings', 'search_items_per_page', 'INT');
+    await addColumnIfNotExists(pool, 'platform_settings', 'search_load_more_count', 'INT');
+    await addColumnIfNotExists(pool, 'platform_settings', 'show_countdown_on_lot_detail', 'BOOLEAN');
+    await addColumnIfNotExists(pool, 'platform_settings', 'show_countdown_on_cards', 'BOOLEAN');
+    await addColumnIfNotExists(pool, 'platform_settings', 'show_related_lots_on_lot_detail', 'BOOLEAN');
+    await addColumnIfNotExists(pool, 'platform_settings', 'related_lots_count', 'INT');
+    await addColumnIfNotExists(pool, 'platform_settings', 'default_urgency_timer_hours', 'INT');
+    await addColumnIfNotExists(pool, 'platform_settings', 'variable_increment_table', 'JSON');
+    await addColumnIfNotExists(pool, 'platform_settings', 'bidding_settings', 'JSON');
+    await addColumnIfNotExists(pool, 'platform_settings', 'default_list_items_per_page', 'INT');
+    await addColumnIfNotExists(pool, 'platform_settings', 'updated_at', 'DATETIME');
+
+    // Roles
+    await addColumnIfNotExists(pool, 'roles', 'created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+    await addColumnIfNotExists(pool, 'roles', 'updated_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+    await addColumnIfNotExists(pool, 'roles', 'slug', 'VARCHAR(150)');
+    
+    console.log('--- [DB INIT - ALTER] Finished applying alterations ---');
+}
+
 
 async function seedEssentialData(db: any) {
     console.log('\n--- [DB INIT - DML] Seeding Essential Data ---');
@@ -103,7 +168,11 @@ async function initializeDatabase() {
           const connection = await pool.getConnection();
           console.log(`[DB INIT] 🔌 MySQL database connection established successfully.`);
           connection.release();
-          await executeSchema(pool);
+
+          // Execute DDL (table creation)
+          await executeSqlFile(pool, path.join(process.cwd(), 'src', 'schema.mysql.sql'), 'DDL-CREATE');
+          // Execute ALTER TABLE script programmatically
+          await applyAlterations(pool);
       }
       
       const db = getDatabaseAdapter();
