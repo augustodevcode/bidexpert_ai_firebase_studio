@@ -1,3 +1,4 @@
+
 // scripts/init-db.ts
 import dotenv from 'dotenv';
 import path from 'path';
@@ -72,6 +73,7 @@ async function addColumnIfNotExists(pool: Pool, tableName: string, columnName: s
 
 async function applyAlterations(pool: Pool) {
     console.log('\n--- [DB INIT - ALTER] Applying table alterations ---');
+    
     // Platform Settings
     await addColumnIfNotExists(pool, 'platform_settings', 'site_title', 'VARCHAR(255)');
     await addColumnIfNotExists(pool, 'platform_settings', 'site_tagline', 'VARCHAR(255)');
@@ -113,12 +115,23 @@ async function seedEssentialData(db: any) {
         // Platform Settings
         console.log('[DB INIT - DML] Checking for platform settings...');
         const settings = await db.getPlatformSettings();
+        // ** THE FIX IS HERE **
+        // If settings don't exist, INSERT them. Otherwise, UPDATE them.
         if (!settings || Object.keys(settings).length === 0 || !settings.id) {
-            console.log("[DB INIT - DML] Inserting platform settings...");
-            await db.updatePlatformSettings(samplePlatformSettings);
-            console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings inserted.");
+            console.log("[DB INIT - DML] No settings found. Inserting new ones...");
+            // Assuming createPlatformSettings exists on the adapter for a clean insert
+            if (db.createPlatformSettings) {
+                await db.createPlatformSettings(samplePlatformSettings);
+                console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings inserted.");
+            } else {
+                console.warn("[DB INIT - DML] createPlatformSettings not found on adapter. Seeding may fail.");
+                // Fallback to update which might fail if no record exists
+                await db.updatePlatformSettings(samplePlatformSettings);
+            }
         } else {
-            console.log("[DB INIT - DML] INFO: Platform settings already exist. Skipping.");
+            console.log("[DB INIT - DML] Platform settings found. Ensuring they are up-to-date...");
+            await db.updatePlatformSettings(samplePlatformSettings);
+            console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings updated/verified.");
         }
 
         // Roles

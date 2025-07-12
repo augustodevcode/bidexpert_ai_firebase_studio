@@ -1,3 +1,4 @@
+
 // src/lib/database/mysql.adapter.ts
 import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, CityFormData, StateFormData } from '@/types';
 import mysql, { type Pool, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
@@ -151,6 +152,17 @@ export class MySqlAdapter implements DatabaseAdapter {
         const sql = `UPDATE \`${tableName}\` SET ${fieldsToUpdate} WHERE id = ?`;
         return this.executeMutation(sql, [...values, id]);
     }
+    
+    async createPlatformSettings(data: PlatformSettings): Promise<{ success: boolean; message: string; }> {
+        const snakeCaseData = convertObjectToSnakeCase(data);
+        const fields = Object.keys(snakeCaseData).map(k => `\`${k}\``).join(', ');
+        const placeholders = Object.keys(snakeCaseData).map(() => '?').join(', ');
+        const values = Object.values(snakeCaseData);
+
+        const sql = `INSERT INTO \`platform_settings\` (${fields}) VALUES (${placeholders})`;
+        return this.executeMutation(sql, values);
+    }
+
 
     // --- ENTITY IMPLEMENTATIONS ---
 
