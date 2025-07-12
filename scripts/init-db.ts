@@ -60,10 +60,10 @@ async function executeSqlFile(pool: Pool, filePath: string, scriptName: string) 
 
 async function seedEssentialData() {
     console.log('\n--- [DB INIT - DML] Seeding Essential Data ---');
-    const db = getDatabaseAdapter();
+    const db = getDatabaseAdapter(); 
     try {
-        // Platform Settings (Upsert logic)
-        console.log('[DB INIT - DML] Seeding platform settings...');
+        // Platform Settings (Upsert logic is safe)
+        console.log('[DB INIT - DML] Checking platform settings...');
         const settings = await db.getPlatformSettings();
         if (!settings || Object.keys(settings).length === 0 || !settings.id) {
             await db.createPlatformSettings(samplePlatformSettings);
@@ -72,29 +72,49 @@ async function seedEssentialData() {
         }
         console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings seeded.");
 
-        // Roles (Idempotent Insert)
-        console.log("[DB INIT - DML] Seeding roles...");
-        for (const role of sampleRoles) {
-            // @ts-ignore
-            await db.createRole(role);
+        // Roles
+        const existingRoles = await db.getRoles();
+        const existingRoleNames = new Set(existingRoles.map(r => r.name));
+        const rolesToCreate = sampleRoles.filter(r => !existingRoleNames.has(r.name));
+        if (rolesToCreate.length > 0) {
+            console.log(`[DB INIT - DML] Inserting ${rolesToCreate.length} new roles...`);
+            for (const role of rolesToCreate) {
+                // @ts-ignore
+                await db.createRole(role);
+            }
+        } else {
+            console.log("[DB INIT - DML] INFO: Roles already up-to-date.");
         }
-        console.log(`[DB INIT - DML] ✅ SUCCESS: Roles seeding process completed.`);
         
-        // Categories (Idempotent Insert)
-        console.log("[DB INIT - DML] Seeding categories...");
-        for (const category of sampleLotCategories) {
-            // @ts-ignore
-            await db.createLotCategory(category);
+        // Categories
+        const existingCategories = await db.getLotCategories();
+        const existingCategoryIds = new Set(existingCategories.map(c => c.id));
+        const categoriesToCreate = sampleLotCategories.filter(c => !existingCategoryIds.has(c.id));
+        if (categoriesToCreate.length > 0) {
+            console.log(`[DB INIT - DML] Inserting ${categoriesToCreate.length} new categories...`);
+            for (const category of categoriesToCreate) {
+                // @ts-ignore
+                await db.createLotCategory(category);
+            }
+        } else {
+            console.log("[DB INIT - DML] INFO: Categories already up-to-date.");
         }
-        console.log(`[DB INIT - DML] ✅ SUCCESS: Categories seeding process completed.`);
 
-        // Subcategories (Idempotent Insert)
-        console.log("[DB INIT - DML] Seeding subcategories...");
-        for (const subcategory of sampleSubcategories) {
-            // @ts-ignore
-            await db.createSubcategory(subcategory);
+        // Subcategories
+        // @ts-ignore
+        const existingSubcategories = await db.getSubcategoriesByParent ? await db.getSubcategoriesByParent(undefined) : [];
+        const existingSubcategoryIds = new Set(existingSubcategories.map(s => s.id));
+        const subcategoriesToCreate = sampleSubcategories.filter(s => !existingSubcategoryIds.has(s.id));
+
+        if (subcategoriesToCreate.length > 0) {
+            console.log(`[DB INIT - DML] Inserting ${subcategoriesToCreate.length} new subcategories...`);
+            for (const subcategory of subcategoriesToCreate) {
+                // @ts-ignore
+                await db.createSubcategory(subcategory);
+            }
+        } else {
+            console.log("[DB INIT - DML] INFO: Subcategories already up-to-date.");
         }
-        console.log(`[DB INIT - DML] ✅ SUCCESS: Subcategories seeding process completed.`);
 
     } catch (error: any) {
         console.error(`[DB INIT - DML] ❌ ERROR seeding essential data: ${error.message}`);
