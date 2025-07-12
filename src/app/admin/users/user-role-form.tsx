@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -115,7 +116,7 @@ export default function UserRoleForm({
                                 />
                               </FormControl>
                               <div className="space-y-1 leading-none">
-                                <FormLabel className="font-medium flex items-center gap-2">
+                                <FormLabel className="font-medium flex items-center gap-2 cursor-pointer">
                                   <Shield className="h-4 w-4 text-muted-foreground"/> {role.name}
                                 </FormLabel>
                                 <FormDescription className="text-xs">
