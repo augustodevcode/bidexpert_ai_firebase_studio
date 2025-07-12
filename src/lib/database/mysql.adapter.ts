@@ -113,9 +113,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     
     private async genericCreate(tableName: string, data: Record<string, any>, idPrefix?: string, publicIdPrefix?: string): Promise<{ success: boolean; message: string; insertId?: number }> {
       const dataToInsert: Record<string, any> = { ...data };
-      if (!data.id) { // Não sobrescrever se o ID já foi fornecido (ex: user uid)
-        // Não geramos mais IDs, o banco faz isso. Removemos a lógica de uuid.
-      }
+      if (idPrefix) dataToInsert['id'] = `${idPrefix}-${uuidv4()}`;
       
       if (publicIdPrefix) dataToInsert['publicId'] = `${publicIdPrefix}-PUB-${uuidv4().substring(0,8)}`;
       if (data.name && !data.slug) dataToInsert['slug'] = slugify(data.name);
@@ -247,7 +245,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
 
     async getAuction(id: number | string): Promise<Auction | null> {
-        const auction = await this.executeQueryForSingle('SELECT * FROM `auctions` WHERE `id` = ? OR `publicId` = ?', [id, id]);
+        const auction = await this.executeQueryForSingle('SELECT * FROM `auctions` WHERE `id` = ? OR `public_id` = ?', [id, id]);
         if (auction) {
             auction.lots = await this.getLots(auction.id);
             auction.totalLots = auction.lots.length;
@@ -292,7 +290,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { return this.executeQuery('SELECT * FROM `auctioneers` ORDER BY `name`'); }
     
     async getUsersWithRoles(): Promise<UserProfileData[]> {
-        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.roleId = r.id';
+        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.role_id = r.id';
         const users = await this.executeQuery(sql);
         return users.map(u => {
             if (u.permissions && typeof u.permissions === 'string') {
@@ -303,7 +301,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async getUserProfileData(userId: string): Promise<UserProfileData | null> {
-        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.roleId = r.id WHERE u.uid = ?';
+        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.role_id = r.id WHERE u.uid = ?';
         const user = await this.executeQueryForSingle(sql, [userId]);
         if(user && user.permissions && typeof user.permissions === 'string') {
           try { user.permissions = JSON.parse(user.permissions); } catch(e) { user.permissions = []; }
@@ -322,6 +320,11 @@ export class MySqlAdapter implements DatabaseAdapter {
             return r;
         });
     }
+
+    async createRole(role: Role): Promise<{ success: boolean; message: string; }> {
+        return this.genericCreate('roles', role);
+    }
+    
     async getMediaItems(): Promise<MediaItem[]> { return this.executeQuery('SELECT * FROM `media_items` ORDER BY `uploaded_at` DESC'); }
     
     async getPlatformSettings(): Promise<PlatformSettings | null> {
