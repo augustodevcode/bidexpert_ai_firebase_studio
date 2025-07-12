@@ -33,11 +33,19 @@ export function AppContentWrapper({ children }: { children: React.ReactNode }) {
       );
   }
 
+  const isAdminOrConsignor = pathname.startsWith('/admin') || pathname.startsWith('/consignor-dashboard');
+
   // If on the setup page, render it without the main layout
   if (pathname === '/setup') {
     return <>{children}</>;
   }
 
+  // If in admin or consignor dashboard, the layout is handled by their specific layout files
+  if (isAdminOrConsignor) {
+    return <>{children}</>;
+  }
+
+  // Default layout for public-facing pages
   return (
     <div className="flex flex-col min-h-screen">
       <Header />

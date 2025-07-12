@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Rocket, Database, Settings, Palette, CheckCircle } from 'lucide-react';
 import WelcomeStep from '@/components/setup/welcome-step';
@@ -14,7 +14,6 @@ const STEPS = [
   { id: 'welcome', title: 'Boas-Vindas', icon: Rocket },
   { id: 'seeding', title: 'Dados Iniciais', icon: Database },
   { id: 'settings', title: 'Configurações', icon: Settings },
-  { id: 'appearance', title: 'Aparência', icon: Palette },
   { id: 'finish', title: 'Finalização', icon: CheckCircle },
 ];
 
