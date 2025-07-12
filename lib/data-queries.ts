@@ -6,179 +6,116 @@
  */
 'use server';
 
-// The project has migrated to using Prisma ORM directly.
-// The functions in this file now import the Prisma client and execute queries.
-// This maintains a consistent data access layer for the rest of the application.
-
-import { prisma } from '@/lib/prisma';
+import { getDatabaseAdapter } from './database/index';
 import type { 
     Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, 
     SellerProfileInfo, MediaItem, PlatformSettings, Bem, Subcategory
 } from '@/types';
-import { slugify } from './sample-data-helpers';
+
 
 export async function fetchPlatformSettings(): Promise<PlatformSettings> {
-  try {
-    const settings = await prisma.platformSettings.findUnique({
-      where: { id: 'global' },
-      include: {
-        themes: true,
-        platformPublicIdMasks: true,
-        mapSettings: true,
-        biddingSettings: true,
-        mentalTriggerSettings: true,
-        sectionBadgeVisibility: true,
-        variableIncrementTable: {
-            orderBy: { from: 'asc' }
-        },
-      }
-    });
-    if (!settings) {
-      throw new Error("Platform settings not found in the database.");
-    }
-    return settings as unknown as PlatformSettings;
-  } catch (error) {
-    console.error("Failed to fetch platform settings:", error);
-    // In a real production app, you might have a more robust fallback or error handling
-    throw new Error("Could not load platform settings. The application cannot start.");
+  const db = getDatabaseAdapter();
+  const settings = await db.getPlatformSettings();
+  if (!settings) {
+    throw new Error("Platform settings could not be loaded.");
   }
+  return settings;
 }
 
 export async function fetchAuctions(): Promise<Auction[]> {
-    const auctions = await prisma.auction.findMany({
-        orderBy: { auctionDate: 'desc' },
-        include: {
-            lots: {
-                orderBy: { number: 'asc' }
-            }
-        }
-    });
-    return auctions.map(a => ({ ...a, totalLots: a.lots.length })) as unknown as Auction[];
+    const db = getDatabaseAdapter();
+    return db.getAuctions();
 }
 
 export async function fetchAuction(id: string): Promise<Auction | null> {
-    const auction = await prisma.auction.findFirst({
-        where: { OR: [{ id }, { publicId: id }] },
-        include: {
-            lots: { include: { bens: true }, orderBy: { number: 'asc' } },
-        },
-    });
-    if (!auction) return null;
-    return { ...auction, totalLots: auction.lots.length } as unknown as Auction;
+    const db = getDatabaseAdapter();
+    return db.getAuction(id);
 }
 
 export async function fetchLots(auctionId?: string): Promise<Lot[]> {
-  const lots = await prisma.lot.findMany({
-    where: auctionId ? { auctionId } : {},
-    include: { auction: true, category: true, subcategory: true, bens: true },
-    orderBy: { number: 'asc' },
-  });
-  
-  return lots.map(lot => ({
-      ...lot,
-      auctionName: lot.auction?.title,
-      type: lot.category?.name, // From relation
-      categoryName: lot.category?.name,
-      subcategoryName: lot.subcategory?.name,
-  })) as unknown as Lot[];
+  const db = getDatabaseAdapter();
+  return db.getLots(auctionId);
 }
 
 export async function fetchLot(id: string): Promise<Lot | null> {
-  const lot = await prisma.lot.findFirst({
-    where: { OR: [{ id }, { publicId: id }] },
-    include: { auction: true, category: true, subcategory: true, bens: true },
-  });
-  if (!lot) return null;
-  return {
-      ...lot,
-      auctionName: lot.auction?.title,
-      type: lot.category?.name,
-      categoryName: lot.category?.name,
-      subcategoryName: lot.subcategory?.name,
-  } as unknown as Lot;
+  const db = getDatabaseAdapter();
+  return db.getLot(id);
 }
 
 export async function fetchLotsByIds(ids: string[]): Promise<Lot[]> {
-    if (!ids || ids.length === 0) return [];
-    const lots = await prisma.lot.findMany({
-        where: { OR: [{ id: { in: ids } }, { publicId: { in: ids } }] },
-        include: { auction: true, category: true, subcategory: true, bens: true },
-    });
-    return lots.map(lot => ({
-        ...lot,
-        auctionName: lot.auction?.title,
-        type: lot.category?.name,
-        categoryName: lot.category?.name,
-        subcategoryName: lot.subcategory?.name,
-    })) as unknown as Lot[];
+    const db = getDatabaseAdapter();
+    return db.getLotsByIds(ids);
 }
 
 export async function fetchBensByIds(ids: string[]): Promise<Bem[]> {
   if (!ids || ids.length === 0) return [];
-  const bens = await prisma.bem.findMany({ where: { id: { in: ids } } });
-  return bens as unknown as Bem[];
+  const db = getDatabaseAdapter();
+  // @ts-ignore
+  if (db.getBensByIds) {
+      // @ts-ignore
+      return db.getBensByIds(ids);
+  }
+  return [];
 }
 
 export async function fetchAuctionsByIds(ids: string[]): Promise<Auction[]> {
-  if (!ids || ids.length === 0) return [];
-  const auctions = await prisma.auction.findMany({
-    where: { OR: [{ id: { in: ids } }, { publicId: { in: ids } }] },
-    include: { lots: true }
-  });
-  return auctions.map(a => ({ ...a, totalLots: a.lots.length })) as unknown as Auction[];
+  const db = getDatabaseAdapter();
+  // This is a helper function, assuming adapter might not have it directly.
+  const allAuctions = await db.getAuctions();
+  return allAuctions.filter(a => ids.includes(a.id) || (a.publicId && ids.includes(a.publicId)));
 }
 
 export async function fetchSellers(): Promise<SellerProfileInfo[]> {
-  const sellers = await prisma.seller.findMany({ orderBy: { name: 'asc' }});
-  return sellers as unknown as SellerProfileInfo[];
+  const db = getDatabaseAdapter();
+  return db.getSellers();
 }
 
 export async function fetchAuctioneers(): Promise<AuctioneerProfileInfo[]> {
-  const auctioneers = await prisma.auctioneer.findMany({ orderBy: { name: 'asc' }});
-  return auctioneers as unknown as AuctioneerProfileInfo[];
+  const db = getDatabaseAdapter();
+  return db.getAuctioneers();
 }
 
 export async function fetchCategories(): Promise<LotCategory[]> {
-    const categories = await prisma.lotCategory.findMany({
-        include: { subcategories: true },
-        orderBy: { name: 'asc' }
-    });
-    return categories.map(cat => ({...cat, hasSubcategories: cat.subcategories.length > 0})) as unknown as LotCategory[];
+    const db = getDatabaseAdapter();
+    return db.getLotCategories();
 }
 
 export async function fetchSubcategoriesByParent(parentCategoryId: string): Promise<Subcategory[]> {
-    const subcategories = await prisma.subcategory.findMany({
-        where: { parentCategoryId },
-        orderBy: { displayOrder: 'asc' }
-    });
-    return subcategories as unknown as Subcategory[];
+    const db = getDatabaseAdapter();
+    // @ts-ignore
+    if(db.getSubcategoriesByParentIdAction) {
+        // @ts-ignore
+        return db.getSubcategoriesByParentIdAction(parentCategoryId);
+    }
+    return [];
 }
 
-
 export async function fetchAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
-    const seller = await prisma.seller.findFirst({
-        where: { OR: [{ slug: sellerSlugOrPublicId }, { publicId: sellerSlugOrPublicId }] }
-    });
+    const db = getDatabaseAdapter();
+    // @ts-ignore
+    if (db.getAuctionsBySellerSlug) {
+      // @ts-ignore
+      return db.getAuctionsBySellerSlug(sellerSlugOrPublicId);
+    }
+    // Fallback logic
+    const allAuctions = await db.getAuctions();
+    const allSellers = await db.getSellers();
+    const seller = allSellers.find(s => s.slug === sellerSlugOrPublicId || s.id === sellerSlugOrPublicId || s.publicId === sellerSlugOrPublicId);
     if (!seller) return [];
-
-    const auctions = await prisma.auction.findMany({
-        where: { sellerId: seller.id },
-        include: { lots: true },
-        orderBy: { auctionDate: 'desc' }
-    });
-    return auctions.map(a => ({...a, totalLots: a.lots.length})) as unknown as Auction[];
+    return allAuctions.filter(a => a.sellerId === seller.id || a.seller === seller.name);
 }
 
 export async function fetchAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
-     const auctioneer = await prisma.auctioneer.findFirst({
-        where: { OR: [{ slug: auctioneerSlug }, { publicId: auctioneerSlug }, { id: auctioneerSlug }] }
-    });
+     const db = getDatabaseAdapter();
+    // @ts-ignore
+    if (db.getAuctionsByAuctioneerSlug) {
+      // @ts-ignore
+      return db.getAuctionsByAuctioneerSlug(auctioneerSlug);
+    }
+    // Fallback logic
+    const allAuctions = await db.getAuctions();
+    const allAuctioneers = await db.getAuctioneers();
+    const auctioneer = allAuctioneers.find(a => a.slug === auctioneerSlug || a.id === auctioneerSlug || a.publicId === auctioneerSlug);
     if (!auctioneer) return [];
-
-    const auctions = await prisma.auction.findMany({
-        where: { auctioneerId: auctioneer.id },
-        include: { lots: true },
-        orderBy: { auctionDate: 'desc' }
-    });
-    return auctions.map(a => ({...a, totalLots: a.lots.length})) as unknown as Auction[];
+    return allAuctions.filter(a => a.auctioneerId === auctioneer.id || a.auctioneer === auctioneer.name);
 }
