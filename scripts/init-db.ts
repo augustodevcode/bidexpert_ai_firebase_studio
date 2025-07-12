@@ -1,8 +1,8 @@
 
 // src/scripts/init-db.ts
-import { getDatabaseAdapter } from '@/lib/database/get-adapter';
-import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleCourts, getSampleStatesAndCities } from '@/lib/sample-data';
-import type { Role, LotCategory, Subcategory, Court, StateInfo, CityInfo, CityFormData } from '@/types';
+import { getDatabaseAdapter } from '../src/lib/database/get-adapter';
+import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleCourts, getSampleStatesAndCities } from '../src/lib/sample-data';
+import type { Role, LotCategory, Subcategory, Court, StateInfo, CityInfo, CityFormData } from '../src/types';
 
 async function seedEssentialData() {
     console.log('\n--- [DB INIT - DML] Seeding Essential Data ---');
@@ -61,12 +61,26 @@ async function seedEssentialData() {
         
         // Cities
         console.log("[DB INIT - DML] Seeding cities...");
+        const allDbStates = await db.getStates(); // Get fresh states with DB-generated IDs
         const existingCities = await db.getCities();
-        const citiesToCreate = cities.filter((city: CityInfo) => !existingCities.some(ec => ec.slug === city.slug && ec.stateId === city.stateId));
+        const citiesToCreate = cities.filter((city: CityInfo) => 
+            !existingCities.some(ec => ec.ibgeCode === city.ibgeCode)
+        );
+
         for (const city of citiesToCreate) {
-             await db.createCity(city as CityFormData);
+            const parentState = allDbStates.find(s => s.uf === city.stateUf);
+            if (parentState) {
+                const cityData: CityFormData = {
+                    name: city.name,
+                    stateId: parentState.id,
+                    ibgeCode: city.ibgeCode
+                };
+                 await db.createCity(cityData);
+            } else {
+                console.warn(`[DB INIT - DML] 🟡 WARNING: Could not find parent state with UF '${city.stateUf}' for city '${city.name}'. Skipping.`);
+            }
         }
-        console.log(`[DB INIT - DML] ✅ SUCCESS: ${citiesToCreate.length} new cities inserted.`);
+        console.log(`[DB INIT - DML] ✅ SUCCESS: ${citiesToCreate.length} new cities processed.`);
 
         // Courts
         console.log("[DB INIT - DML] Seeding courts...");
