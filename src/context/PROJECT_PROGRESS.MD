@@ -27,12 +27,26 @@
 - **Geração de Documentos (PDF):** Implementar a lógica de servidor para pegar os templates customizados, preenchê-los com dados do sistema e gerar um arquivo PDF para download. Isso pode envolver uma biblioteca como `puppeteer` ou `pdf-lib`.
 
 ## NEXT
+- **Suporte a Múltiplos Perfis de Usuário:** Refatorar o sistema de autenticação e o modelo de dados para permitir que um único usuário possa ter múltiplos perfis (roles) ao mesmo tempo (ex: ser Administrador e Leiloeiro). A interface administrativa de usuários deve ser atualizada para permitir a atribuição de vários perfis.
+- **Extração de Dados de Documentos:** Implementar funcionalidade de upload (PDF, DOCX, imagens, etc.) para extrair dados de processos judiciais ou contratos. Os dados extraídos (com ou sem auxílio de IA) devem preencher um formulário em uma tela de validação, onde um administrador ou analista poderá aprovar ou editar as informações antes de serem salvas no banco de dados.
+- **Melhorar o Assistente de Configuração (SaaS):** Transformar o setup inicial em um assistente de configuração para novos clientes (SaaS). O fluxo deve permitir que o cliente configure seu próprio usuário administrador e personalize a plataforma. Incluir um tour guiado pelas funcionalidades principais após a configuração inicial. O uso do wizard de leilões se tornará opcional.
 - **Item 1.1 (Avançado):** Implementar atualização em tempo real para volume de ofertas e lances via WebSockets para uma experiência de leilão ainda mais dinâmica.
 - **Item 2.3 (Avançado):** Criar seção formal de "Resolução de Disputas" e integrar um sistema de suporte mais robusto (tickets ou chat).
 - **Item 3.1:** Integrar um módulo de blog para marketing de conteúdo, com artigos sobre o mercado de leilões.
 - **Item 3.3 (Avançado):** Expandir o sistema de gamificação com mais pontos, recompensas e tipos de medalhas.
 - **Item 3.4:** Integrar APIs de parceiros estratégicos para funcionalidades como simulação de frete e opções de financiamento.
 - **Item 4.3:** Pesquisar e, se viável, implementar uma camada de certificação via blockchain para o registro de lances e arremates, aumentando a transparência e a segurança.
+- **Painel do Comitente (`/consignor-dashboard`):** Implementar a busca e exibição de dados reais (leilões, lotes, métricas financeiras) no painel do comitente, substituindo os dados estáticos e placeholders.
+- **Relatórios Avançados:** Criar uma seção de relatórios detalhados no painel de administração e do comitente com gráficos e análises de performance.
+- **Item 4.1:** Desenvolver um sistema completo de notificações (Web Push e Email) para alertar usuários sobre novos lances, status de arremate, etc.
+- **Item 1.1 (Avançado):** Implement real-time updates for bids and auction status using WebSockets.
+- **Document Generation:** Implement PDF generation for auction reports, certificates, and winning bid terms based on the created `DocumentTemplate` entities.
+- **Payment Gateway Integration:** Integrate a payment processor for handling auction deposits and final payments for won lots.
+- **Item 3.1:** Implement a blog/CMS module for content marketing.
+- **E2E Testing:** Develop a comprehensive suite of end-to-end tests using a framework like Playwright to validate key user flows.
+- **Full AI Integration:** Connect the UI to the Genkit AI flows to provide listing suggestions and predictions to users.
+
+
 
 ---
 

@@ -24,6 +24,9 @@
 - **Geração de Documentos (Estrutura):** A plataforma agora tem a estrutura (modelos, permissões, UI, fluxo Genkit) pronta para a futura implementação da geração de PDFs.
 
 ## DOING
+- **Full Data Integration:** Ensuring all components (especially complex client components) correctly fetch, display, and interact with the live database data.
+- **Refining Search & Filtering:** Improving the main search page to ensure all filters work correctly across different data types (Auctions, Lots, Venda Direta).
+- **Gamification & Notifications:** Finalizing the logic for awarding badges and ensuring all user notifications are triggered correctly.
 - **Geração de Documentos (PDF):** Implementar a lógica de servidor para pegar os templates customizados, preenchê-los com dados do sistema e gerar um arquivo PDF para download. Isso pode envolver uma biblioteca como `puppeteer` ou `pdf-lib`.
 
 ## NEXT
@@ -35,6 +38,16 @@
 - **Item 3.3 (Avançado):** Expandir o sistema de gamificação com mais pontos, recompensas e tipos de medalhas.
 - **Item 3.4:** Integrar APIs de parceiros estratégicos para funcionalidades como simulação de frete e opções de financiamento.
 - **Item 4.3:** Pesquisar e, se viável, implementar uma camada de certificação via blockchain para o registro de lances e arremates, aumentando a transparência e a segurança.
+- **Painel do Comitente (`/consignor-dashboard`):** Implementar a busca e exibição de dados reais (leilões, lotes, métricas financeiras) no painel do comitente, substituindo os dados estáticos e placeholders.
+- **Relatórios Avançados:** Criar uma seção de relatórios detalhados no painel de administração e do comitente com gráficos e análises de performance.
+- **Item 4.1:** Desenvolver um sistema completo de notificações (Web Push e Email) para alertar usuários sobre novos lances, status de arremate, etc.
+- **Item 1.1 (Avançado):** Implement real-time updates for bids and auction status using WebSockets.
+- **Document Generation:** Implement PDF generation for auction reports, certificates, and winning bid terms based on the created `DocumentTemplate` entities.
+- **Payment Gateway Integration:** Integrate a payment processor for handling auction deposits and final payments for won lots.
+- **Item 3.1:** Implement a blog/CMS module for content marketing.
+- **E2E Testing:** Develop a comprehensive suite of end-to-end tests using a framework like Playwright to validate key user flows.
+- **Full AI Integration:** Connect the UI to the Genkit AI flows to provide listing suggestions and predictions to users.
+
 
 
 ---

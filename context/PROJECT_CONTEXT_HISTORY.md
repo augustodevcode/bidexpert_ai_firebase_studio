@@ -21,7 +21,7 @@ This document summarizes the BidExpert project, including its purpose, core feat
 *   Frontend: NextJS, React, ShadCN UI components, Tailwind CSS
 *   Backend/API: NextJS API Routes / Server Actions
 *   AI: Genkit (for AI flows)
-*   Database: PostgreSQL via Prisma ORM.
+*   Database: PostgreSQL, Mysql via adapters.
 
 **Style Guidelines (from PRD):**
 *   Icons: Clean, line-based (`lucide-react`).
@@ -38,10 +38,8 @@ This document summarizes the BidExpert project, including its purpose, core feat
 ### Key Features & Functionalities Implemented/Worked On:
 
 1.  **Database & ORM Setup:**
-    *   The project was migrated from a multi-adapter system (Firestore, MySQL, PostgreSQL) to exclusively use **Prisma ORM** with a **PostgreSQL** database.
-    *   Created `prisma/schema.prisma` to define all data models.
+    *   The project is  multi-adapter system (Firestore, MySQL, PostgreSQL).
     *   Implemented a seeding mechanism (`prisma/seed.ts`) to populate the database with initial data, including users, roles, categories, and sample auctions/lots.
-    *   All data access logic (`actions.ts` files) was refactored to use the Prisma client.
 
 2.  **Admin Panel Foundation:**
     *   Full CRUD (Create, Read, Update, Delete) functionality for all major entities:
