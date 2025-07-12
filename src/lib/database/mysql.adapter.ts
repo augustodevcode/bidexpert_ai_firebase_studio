@@ -6,6 +6,7 @@ import { slugify } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
 
 function toSnakeCase(str: string): string {
+    if (str === 'id') return str;
     return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 }
 
@@ -416,4 +417,77 @@ export class MySqlAdapter implements DatabaseAdapter {
         return this.executeQueryForSingle('SELECT * FROM `sellers` WHERE id = ? OR public_id = ?', [id, id]);
     }
     
-    async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: number; }>
+    async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: number; }> {
+        const result = await this.genericCreate('auctioneers', data);
+        return {...result, auctioneerId: result.insertId};
+    }
+
+    async updateAuctioneer(id: number, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> {
+        return this.genericUpdate('auctioneers', id, data);
+    }
+
+    async deleteAuctioneer(id: number): Promise<{ success: boolean; message: string; }> {
+        return this.executeMutation('DELETE FROM `auctioneers` WHERE id = ?', [id]);
+    }
+    
+    async getAuctioneer(id: number | string): Promise<AuctioneerProfileInfo | null> {
+        return this.executeQueryForSingle('SELECT * FROM `auctioneers` WHERE id = ? OR public_id = ?', [id, id]);
+    }
+
+    async saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean, message: string }> {
+        const id = uuidv4();
+        const sql = 'INSERT INTO `user_documents` (id, user_id, document_type_id, file_url, file_name, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+        const result = await this.executeMutation(sql, [id, userId, documentTypeId, fileUrl, fileName, 'PENDING_ANALYSIS', new Date(), new Date()]);
+        
+        if (result.success) {
+            await this.executeMutation('UPDATE `users` SET habilitation_status = ? WHERE uid = ? AND habilitation_status = ?', ['PENDING_ANALYSIS', userId, 'PENDING_DOCUMENTS']);
+        }
+        
+        return result;
+    }
+    
+    async updateUserRole(userId: string, roleId: number | null): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('users', userId, { role_id: roleId }); }
+    createMediaItem(item: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> { return this._notImplemented('createMediaItem'); }
+    
+    async createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean; message: string; }> {
+        const result = await this.genericCreate('lot_categories', data);
+        return { success: result.success, message: result.message };
+    }
+
+    async updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
+        // Need to handle the 'id' field carefully for settings, as it's not auto-increment
+        const { id, ...updates } = data;
+        const snakeCaseUpdates = convertObjectToSnakeCase(updates);
+        const fieldsToUpdate = Object.keys(snakeCaseUpdates).map(key => `\`${key}\` = ?`).join(', ');
+        const values = Object.values(snakeCaseUpdates);
+
+        if (values.length === 0) return { success: true, message: "Nenhum campo para atualizar." };
+
+        const sql = `UPDATE \`platform_settings\` SET ${fieldsToUpdate} WHERE id = ?`;
+        return this.executeMutation(sql, [...values, 'global']);
+    }
+
+
+    async updateCity(id: number, data: Partial<CityFormData>): Promise<{ success: boolean; message: string }> {
+      return this.genericUpdate('cities', id, data);
+    }
+
+    async deleteCity(id: number): Promise<{ success: boolean; message: string }> {
+      return this.executeMutation('DELETE FROM `cities` WHERE id = ?', [id]);
+    }
+    
+    async updateSubcategory(id: number, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> {
+        return this.genericUpdate('subcategories', id, data);
+    }
+
+    async deleteSubcategory(id: number): Promise<{ success: boolean; message: string; }> {
+       return this.executeMutation('DELETE FROM `subcategories` WHERE id = ?', [id]);
+    }
+
+    async _notImplemented(method: string): Promise<any> {
+        if (this.connectionError) return Promise.resolve(method.endsWith('s') ? [] : null);
+        const message = `[MySqlAdapter] Método ${method} não implementado.`;
+        console.warn(message);
+        return Promise.resolve(method.endsWith('s') ? [] : null);
+    }
+}
