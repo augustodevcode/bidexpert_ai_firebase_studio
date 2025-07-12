@@ -1,4 +1,3 @@
-
 // src/app/admin/import/cnj/columns.tsx
 'use client';
 
@@ -68,5 +67,3 @@ export const createColumns = (): ColumnDef<CnjHit>[] => [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Tribunal" />,
   },
 ];
-
-    
