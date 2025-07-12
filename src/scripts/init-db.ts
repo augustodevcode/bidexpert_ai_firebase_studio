@@ -1,9 +1,8 @@
-
 // scripts/init-db.ts
 import dotenv from 'dotenv';
 import path from 'path';
 import { getDatabaseAdapter } from '../lib/database/get-adapter'; 
-import { samplePlatformSettings, sampleRoles } from '../src/lib/sample-data';
+import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories } from '../src/lib/sample-data';
 import fs from 'fs';
 import mysql, { type Pool } from 'mysql2/promise';
 
@@ -40,9 +39,9 @@ async function executeSqlFile(pool: Pool, filePath: string, scriptName: string) 
                 await connection.query(statement);
                 console.log(`[DB INIT - ${scriptName}] ✅ SUCCESS: Statement executado.`);
             } catch (error: any) {
-                // Ignore "Duplicate column name" and "Table already exists" errors
-                 if (error.code === 'ER_DUP_FIELDNAME' || error.code === 'ER_TABLE_EXISTS_ERROR') {
-                    console.log(`[DB INIT - ${scriptName}] 🟡 INFO: Item já existe. Pulando statement.`);
+                // Ignore "Duplicate column name", "Table already exists", "Duplicate entry" and other safe errors
+                 if (['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_ENTRY'].includes(error.code)) {
+                    console.log(`[DB INIT - ${scriptName}] 🟡 INFO: Item já existe (${error.code}). Pulando statement.`);
                 } else {
                      console.error(`[DB INIT - ${scriptName}] ❌ ERROR: ${error.message}`);
                      console.error(`[DB INIT - ${scriptName}] -> Failing SQL:\n\n${statement}\n`);
@@ -58,41 +57,10 @@ async function executeSqlFile(pool: Pool, filePath: string, scriptName: string) 
     }
 }
 
-async function addColumnIfNotExists(pool: Pool, tableName: string, columnName: string, columnDefinition: string) {
-    const connection = await pool.getConnection();
-    try {
-        const [rows] = await connection.query(
-            `SELECT COUNT(*) as count 
-             FROM INFORMATION_SCHEMA.COLUMNS 
-             WHERE TABLE_SCHEMA = DATABASE() 
-               AND TABLE_NAME = ? 
-               AND COLUMN_NAME = ?`,
-            [tableName, columnName]
-        );
 
-        // @ts-ignore
-        if (rows[0].count === 0) {
-            await connection.query(`ALTER TABLE \`${tableName}\` ADD COLUMN \`${columnName}\` ${columnDefinition}`);
-            console.log(`[DB INIT - ALTER] ✅ Coluna ${columnName} adicionada à tabela ${tableName}.`);
-        } else {
-            console.log(`[DB INIT - ALTER] 🟡 Coluna ${columnName} já existe na tabela ${tableName}. Ignorando.`);
-        }
-    } catch (error: any) {
-         console.error(`[DB INIT - ALTER] ❌ Erro ao tentar adicionar coluna ${columnName} em ${tableName}: ${error.message}`);
-    } finally {
-        connection.release();
-    }
-}
-
-async function applyAlterations(pool: Pool) {
-    console.log('\n--- [DB INIT - ALTER] Applying table alterations ---');
-    await executeSqlFile(pool, path.join(process.cwd(), 'src', 'alter-tables.mysql.sql'), 'DDL-ALTER');
-    console.log('--- [DB INIT - ALTER] Finished applying alterations ---');
-}
-
-
-async function seedEssentialData(db: any) {
+async function seedEssentialData() {
     console.log('\n--- [DB INIT - DML] Seeding Essential Data ---');
+    const db = getDatabaseAdapter(); // Get a fresh adapter instance AFTER schema changes
     try {
         // Platform Settings
         console.log('[DB INIT - DML] Checking for platform settings...');
@@ -113,12 +81,34 @@ async function seedEssentialData(db: any) {
         if (!roles || roles.length === 0) {
             console.log("[DB INIT - DML] Populating roles...");
             for (const role of sampleRoles) {
+                // @ts-ignore
                 await db.createRole(role);
             }
             console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleRoles.length} roles inserted.`);
         } else {
             console.log("[DB INIT - DML] INFO: Roles already exist. Skipping.");
         }
+        
+        // Categories & Subcategories
+        console.log("[DB INIT - DML] Checking for categories...");
+        const categories = await db.getLotCategories();
+        if (!categories || categories.length === 0) {
+            console.log("[DB INIT - DML] Populating categories...");
+            for (const category of sampleLotCategories) {
+                await db.createLotCategory(category);
+            }
+            console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleLotCategories.length} categories inserted.`);
+
+            console.log("[DB INIT - DML] Populating subcategories...");
+            for (const subcategory of sampleSubcategories) {
+                 // @ts-ignore
+                await db.createSubcategory(subcategory);
+            }
+            console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleSubcategories.length} subcategories inserted.`);
+        } else {
+            console.log("[DB INIT - DML] INFO: Categories and Subcategories already exist. Skipping.");
+        }
+
     } catch (error: any) {
         console.error(`[DB INIT - DML] ❌ ERROR seeding essential data: ${error.message}`);
     }
@@ -151,14 +141,15 @@ async function initializeDatabase() {
           console.log(`[DB INIT] 🔌 MySQL database connection established successfully.`);
           connection.release();
 
-          // Execute DDL (table creation)
+          // Step 1: Execute DDL (table creation)
           await executeSqlFile(pool, path.join(process.cwd(), 'src', 'schema.mysql.sql'), 'DDL-CREATE');
-          // Execute ALTER TABLE script programmatically
-          await applyAlterations(pool);
+          
+          // Step 2: Execute ALTER TABLE script to ensure schema is up-to-date
+          await executeSqlFile(pool, path.join(process.cwd(), 'src', 'alter-tables.mysql.sql'), 'DDL-ALTER');
       }
       
-      const db = getDatabaseAdapter();
-      await seedEssentialData(db);
+      // Step 3: Seed essential data now that schema is guaranteed to be correct
+      await seedEssentialData();
 
   } catch (error) {
       console.error("[DB INIT] ❌ FATAL ERROR during database initialization:", error);

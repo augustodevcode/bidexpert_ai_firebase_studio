@@ -1,4 +1,3 @@
-
 // src/lib/database/mysql.adapter.ts
 import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, CityFormData, StateFormData } from '@/types';
 import mysql, { type Pool, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
@@ -448,7 +447,24 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async updateUserRole(userId: string, roleId: number | null): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('users', userId, { role_id: roleId }); }
-    createMediaItem(item: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> { return this._notImplemented('createMediaItem'); }
+    
+    async createMediaItem(item: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> {
+        const newId = uuidv4();
+        const fullItem: MediaItem = {
+            id: newId,
+            urlOriginal: url,
+            urlThumbnail: url, // For simplicity, thumbnail is same as original in this adapter
+            uploadedAt: new Date(),
+            uploadedBy: userId,
+            ...item,
+        } as MediaItem;
+        const result = await this.genericCreate('media_items', fullItem);
+        if (result.success) {
+            return { success: true, message: 'Item de mídia criado.', item: fullItem }
+        }
+        return { success: false, message: result.message };
+    }
+
     
     async createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean; message: string; }> {
         const result = await this.genericCreate('lot_categories', data);

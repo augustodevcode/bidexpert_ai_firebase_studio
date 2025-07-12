@@ -1,17 +1,9 @@
--- /src/alter-tables.mysql.sql
+-- src/alter-tables.mysql.sql
+-- Este arquivo contém alterações no schema que podem ser aplicadas a uma base de dados já existente.
 
--- Adiciona a coluna parent_category_id na tabela subcategories, se não existir
-ALTER TABLE `subcategories` ADD COLUMN IF NOT EXISTS `parent_category_id` VARCHAR(255) NOT NULL AFTER `slug`;
-ALTER TABLE `platform_settings` ADD COLUMN IF NOT EXISTS `logo_url` VARCHAR(255) NULL AFTER `site_tagline`;
-ALTER TABLE `platform_settings` ADD COLUMN IF NOT EXISTS `favicon_url` VARCHAR(255) NULL AFTER `logo_url`;
+-- Adiciona a coluna para vincular subcategorias à sua categoria principal.
+ALTER TABLE `subcategories` ADD COLUMN `parent_category_id` VARCHAR(255) NOT NULL;
 
-ALTER TABLE `lot_categories` ADD COLUMN IF NOT EXISTS `icon_name` VARCHAR(255) NULL AFTER `has_subcategories`;
-ALTER TABLE `lot_categories` ADD COLUMN IF NOT EXISTS `data_ai_hint_icon` VARCHAR(255) NULL AFTER `icon_name`;
-ALTER TABLE `lot_categories` ADD COLUMN IF NOT EXISTS `cover_image_url` VARCHAR(255) NULL AFTER `data_ai_hint_icon`;
-ALTER TABLE `lot_categories` ADD COLUMN IF NOT EXISTS `cover_image_media_id` VARCHAR(255) NULL AFTER `cover_image_url`;
-ALTER TABLE `lot_categories` ADD COLUMN IF NOT EXISTS `data_ai_hint_cover` VARCHAR(255) NULL AFTER `cover_image_media_id`;
-ALTER TABLE `lot_categories` ADD COLUMN IF NOT EXISTS `mega_menu_image_url` VARCHAR(255) NULL AFTER `data_ai_hint_cover`;
-ALTER TABLE `lot_categories` ADD COLUMN IF NOT EXISTS `mega_menu_image_media_id` VARCHAR(255) NULL AFTER `mega_menu_image_url`;
-ALTER TABLE `lot_categories` ADD COLUMN IF NOT EXISTS `data_ai_hint_mega_menu` VARCHAR(255) NULL AFTER `mega_menu_image_media_id`;
-
-    
+-- Adiciona colunas de URL para logo e favicon nas configurações da plataforma.
+ALTER TABLE `platform_settings` ADD COLUMN `logo_url` VARCHAR(255) NULL;
+ALTER TABLE `platform_settings` ADD COLUMN `favicon_url` VARCHAR(255) NULL;
