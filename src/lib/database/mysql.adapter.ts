@@ -298,8 +298,6 @@ export class MySqlAdapter implements DatabaseAdapter {
         return users.map(u => {
             if (typeof u.permissions === 'string') {
                 try { u.permissions = JSON.parse(u.permissions); } catch(e) { u.permissions = []; }
-            } else if (!u.permissions) {
-                u.permissions = [];
             }
             return u;
         });
@@ -310,8 +308,6 @@ export class MySqlAdapter implements DatabaseAdapter {
         const user = await this.executeQueryForSingle(sql, [userId, userId]);
         if(user && typeof user.permissions === 'string') {
           try { user.permissions = JSON.parse(user.permissions); } catch(e) { user.permissions = []; }
-        } else if (user && !user.permissions) {
-          user.permissions = [];
         }
         return user;
     }
@@ -319,7 +315,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     async getRoles(): Promise<Role[]> { 
         const roles = await this.executeQuery('SELECT * FROM `roles` ORDER BY `name`'); 
         return roles.map(r => {
-            if (typeof r.permissions === 'string') {
+            if (r.permissions && typeof r.permissions === 'string') {
                  try { r.permissions = JSON.parse(r.permissions); } catch(e) { r.permissions = []; }
             } else if (!r.permissions) {
                 r.permissions = [];
@@ -335,13 +331,12 @@ export class MySqlAdapter implements DatabaseAdapter {
         
         const fieldsToParse = ['themes', 'homepageSections', 'mentalTriggerSettings', 'sectionBadgeVisibility', 'mapSettings', 'variableIncrementTable', 'biddingSettings', 'platformPublicIdMasks'];
         for (const field of fieldsToParse) {
-            // Only parse if it's a string. If the driver already parsed it, it will be an object.
             if (settings[field] && typeof settings[field] === 'string') {
                 try {
                     settings[field] = JSON.parse(settings[field]);
                 } catch(e: any) {
                     console.error(`Error parsing PlatformSettings field "${field}": ${e.message}`);
-                    settings[field] = null; // Set to null on error to avoid breaking the app.
+                    settings[field] = null;
                 }
             }
         }
