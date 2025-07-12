@@ -1,3 +1,4 @@
+
 // src/app/api/upload/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureAdminInitialized } from '@/lib/firebase/admin';
@@ -6,7 +7,8 @@ import type { MediaItem } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { revalidatePath } from 'next/cache';
-import { writeFile } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
+import { existsSync } from 'fs';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -24,9 +26,9 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const files = formData.getAll('file') as File[]; // Changed from 'files' to 'file' to match form
-    const uploadPath = formData.get('path') as string || 'media'; // 'media' or 'site-assets'
-    const userId = formData.get('userId') as string | null; // Optional userId
+    const files = formData.getAll('files') as File[];
+    const uploadPath = formData.get('path') as string || 'media';
+    const userId = formData.get('userId') as string | null;
 
     if (!files || files.length === 0) {
       return NextResponse.json(
@@ -35,10 +37,17 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Using local file system storage
     const uploadedItems: Partial<MediaItem>[] = [];
     const uploadErrors: { fileName: string; message: string }[] = [];
     const publicUrls: string[] = [];
+
+    // Define and ensure the upload directory exists
+    const relativeUploadDir = path.join('public', 'uploads', uploadPath);
+    const absoluteUploadDir = path.join(process.cwd(), relativeUploadDir);
+
+    if (!existsSync(absoluteUploadDir)) {
+        await mkdir(absoluteUploadDir, { recursive: true });
+    }
 
     for (const file of files) {
        if (file.size > MAX_FILE_SIZE_BYTES) {
@@ -56,15 +65,11 @@ export async function POST(request: NextRequest) {
         const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
         const uniqueFilename = `${uuidv4()}-${sanitizedFileName}`;
         
-        // Define path based on 'path' form data
-        const relativeUploadDir = path.join('public', 'uploads', uploadPath);
-        const absoluteUploadDir = path.join(process.cwd(), relativeUploadDir);
         await writeFile(path.join(absoluteUploadDir, uniqueFilename), buffer);
         
         const publicUrl = path.join('/uploads', uploadPath, uniqueFilename).replace(/\\/g, '/');
         publicUrls.push(publicUrl);
 
-        // For media library uploads, create a record in DB
         if (uploadPath === 'media') {
             const db = await getDatabaseAdapter();
             const itemData: Omit<MediaItem, 'id' | 'uploadedAt'> = {
@@ -75,7 +80,7 @@ export async function POST(request: NextRequest) {
                 mimeType: file.type,
                 sizeBytes: file.size,
                 urlOriginal: publicUrl,
-                urlThumbnail: publicUrl,
+                urlThumbnail: publicUrl, 
                 urlMedium: publicUrl,
                 urlLarge: publicUrl,
                 linkedLotIds: [],
@@ -109,7 +114,7 @@ export async function POST(request: NextRequest) {
       success,
       message,
       items: uploadedItems,
-      urls: publicUrls, // Return URLs for all uploads, including site-assets
+      urls: publicUrls,
       errors: uploadErrors.length > 0 ? uploadErrors : undefined,
     }, { status: statusCode });
 
